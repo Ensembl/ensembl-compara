@@ -119,6 +119,8 @@ Ensembl.PanelManager.extend({
    * Adds a panel's html to the page, or triggers an event and brings the panel to the front if it already exists
    */
   addPanel: function (id, type, html, container, params, event) {
+    var highlighted = false;
+        
     if (this.panels[id] && event) {
       Ensembl.EventManager.triggerSpecific(event, id, params);
       this.panelToFront(id);
@@ -154,7 +156,7 @@ Ensembl.PanelManager.extend({
     } else {
       this.panels[id] = new Ensembl.Panel(id, params);
     }
-    
+
     this.panels[id].panelNumber = this.panelNumber++;
     this.panels[id].panelType   = type;
     this.panels[id].init();

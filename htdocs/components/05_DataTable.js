@@ -307,7 +307,15 @@ Ensembl.DataTable = {
           $.each(settings.aoColumns, function (i, col) { 
             var no_export = $(col.nTh).hasClass('_no_export');
             if (!no_export) {
-              data[0].push(col.sTitle);
+              var div = $( "<div/>" );
+              div.append(col.sTitle);
+              var hidden = $('.hidden:not(.export)', $(div));
+              if (hidden.length) {
+                data[0].push($.trim($(div).find(hidden).remove().end().html()));
+              }
+              else {
+                data[0].push(col.sTitle);
+              }
             }
             else {
               // Storing column indexes to handle _no_export

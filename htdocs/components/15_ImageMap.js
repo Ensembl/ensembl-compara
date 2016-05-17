@@ -88,6 +88,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initImageButtons();
     this.initImagePanning();
     this.initSelector();
+    this.highlightLastUploadedUserDataTrack();
     this.markLocation(Ensembl.markedLocation);
     
     if (!this.vertical) {
@@ -274,7 +275,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var speciesNumber, c, r, start, end, scale;
 
       c = { a: this };
-      
       if (this.shape && this.shape.toLowerCase() !== 'rect') {
         c.c = [];
         $.each(this.coords, function () { c.c.push(parseInt(this, 10)); });
@@ -325,7 +325,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.drag.on({
       mousedown: function (e, e2) {
-
         e = e2 || e;
 
         if (!e.which || e.which === 1) { // Only draw the drag box for left clicks.
@@ -392,7 +391,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     });
   },
-  
+
   makeHoverLabels: function () {
     var panel = this;
 
@@ -410,12 +409,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             hoverLabel += k;
           }
         });
+
         hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
 
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
-            $('<div class="label_layer _label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
+            $('<div class="label_layer _label_layer">')
+            .append('<div class="label_layer_bg">')
+            .append(hoverLabel)
+            .appendTo(panel.elLk.container)
+            .data({area: this})
           );
         }
 
@@ -437,7 +441,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         panel.elLk.labelLayers = panel.elLk.labelLayers.add(layer);
 
         (function(layer) {
-          layer.on('mouseenter',function(e) {
+          layer.on('click',function(e) {
             if (!$(this).data('zmenu')) {
               var zmid = panel.makeZMenu(e,panel.getMapCoords(e),{'approx':2});
               $(this).data('zmenu', zmid);
@@ -457,8 +461,43 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     // add dyna loading to label layers for track description
-    this.elLk.labelLayers.on('mouseenter', function () {
-      $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
+    this.elLk.labelLayers.on ({
+      mouseenter: function () {
+        $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
+        var associated_li = panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack'))
+        associated_li.addClass('hover');
+        if(associated_li.hasClass('_new_userdata')) {
+          panel.removeUserDataHighlight();
+        }
+      },
+      mouseleave: function () {
+        panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack')).removeClass('hover');
+      },
+      click: function(e) {
+        // Hide all open menus on clicking new menu except the pinned ones.
+        $(this).siblings().not('.pinned').find('.hover_label').hide();
+        // siblings() doesnt return the current clicked element
+        // So check if the current element is pinned.
+        if ($(this).hasClass('pinned')) {
+          return;
+        }
+        // show label
+        $(this).find('.hover_label').toggle();
+        e.stopPropagation && e.stopPropagation();
+      }
+    }).find('.close')
+      .on ({
+        click: function(e) {
+          $(this).parent().hide();
+          // Remove pinned class
+          $(this).siblings('._hl_pin').removeClass('on')
+                 .closest('._label_layer').removeClass('pinned');
+          e.stopPropagation && e.stopPropagation();
+        }
+      });
+
+    $(document).on('click', function(e) {
+      $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
     });
 
     // apply css positions to the hover layers
@@ -517,8 +556,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab')).end()
 
       // init the header/pin icon that holds the hover label if clicked
-      .find('._hl_pin').off().on('click', function () {
+      .find('._hl_pin').off().on('click', function (e) {
         $(this).toggleClass('on').closest('._label_layer').toggleClass('pinned', $(this).hasClass('on'));
+        e.stopPropagation && e.stopPropagation();
       }).end()
 
       // init the extend icon to drag-change hover label's width
@@ -536,20 +576,83 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           });
         }
       });
+
+      // On highlight icon click toggle highlight
+      $(this).find('.hl-icon-highlight').on('click', function(e) {
+        var highlight_class = 'li.' + $(this).data('highlightTrack');
+        var track_element = $($(panel.elLk.boundaries).find(highlight_class));
+        panel.toggleHighlight(track_element);
+        // highlight the track highlight icon on all the highlighted tracks (f/r generally)
+        $('.hover_label.' + $(this).data('highlightTrack')).find('.hl-icon-highlight').toggleClass('selected');
+      });
     })
 
     // init config tab, fav icon and close icon
     .find('a.config').off().on('click', function (e) {
       e.preventDefault();
-
       panel.handleConfigClick(this);
-
     }).end()
 
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
     });
+  },
+
+  toggleHighlight: function(element) {
+    $(element) && $(element).toggleClass('track_highlight _highlight_on');
+  },
+
+  highlightLastUploadedUserDataTrack: function() {
+    var panel = this;
+    var count = 0;
+    var adjacent_tracks = [];
+    this.elLk.boundaries.children().each(function (i) {
+      var li  = $(this);
+      if ($(this).hasClass('_new_userdata')) {
+        adjacent_tracks.push(li);
+        count++;
+      }
+      else {
+        // If there are more than one tracks adjacent to each other
+        if(count > 1 && adjacent_tracks.length > 1) {
+          $(adjacent_tracks).each(function(i, li_element) {
+            // Top track
+            if (i == 0) {
+              $(li_element).addClass('usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+            // Middle tracks
+            else if (i !== adjacent_tracks.length - 1 ) {
+              $(li_element).addClass('usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+            // Bottom track
+            else {
+              $(li_element).addClass('usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+
+            $(li_element).on('mouseenter', function() {
+              panel.removeUserDataHighlight();
+            })
+          })
+        }
+        else {
+          // Single tracks
+          adjacent_tracks.length == 1 &&
+            $(adjacent_tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right')
+                                 .on('mouseenter', function() {
+                                    panel.removeUserDataHighlight();
+                                 })
+        }
+        // Reset array so that you get a new set of tracks
+        adjacent_tracks = [];
+        count = 0;
+      }
+    });
+
+  },
+
+  removeUserDataHighlight: function() {
+    $(this.elLk.boundaries).find('._new_userdata').removeClass('usertrack_highlight _new_userdata usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right usertrack_highlight_border_bottom');
   },
 
   handleConfigClick: function (link) {
@@ -691,14 +794,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       update: function (e, ui) {
         panel.sortUpdate(e, ui);
       }
-    }).css('visibility', 'visible').find('div.handle').on({
-      mousedown: function() {
-        $(this.parentNode).stop().animate({opacity: 0.8}, 200);
-      },
-      mouseup: function() {
-        $(this.parentNode).stop().animate({opacity: 1}, 200);
-      }
-    });
+    }).css('visibility', 'visible');
 
     // split img into two image to show top and bottom of the image separately
     this.elLk.img2 = this.elLk.img.wrap('<div>').parent().css({overflow: 'hidden', height: wrapperTop}).clone().insertAfter(this.elLk.img.parent()).css({height: 'auto'}).find('img').css({marginTop: -wrapperTop});
@@ -742,7 +838,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   sortStart: function (e, ui) {
-
     // make the placeholder similar to the actual track but slightly faded so the saturated background colour beneath gives it a highlighted effect
     ui.placeholder.css({
       backgroundImage:     ui.item.css('backgroundImage'),
@@ -750,7 +845,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
       height:              ui.item.height(),
       opacity:             0.8
-    }).html(ui.item.html()).addClass(ui.item.prop('className'));
+    }).html(ui.item.html());
 
     // add some transparency to the helper (already a clone of actual track) that moves with the mouse
     ui.helper.stop().css({opacity: 0.8}).addClass('helper');
@@ -762,7 +857,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   sortStop: function (e, ui) {
-    ui.item.stop().animate({opacity: 1}, 200);
     $(document.body).removeClass('track-reordering');
     this.dragging = false;
   },

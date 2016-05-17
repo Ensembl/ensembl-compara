@@ -326,6 +326,7 @@ sub hover_labels {
         <div class="hl-buttons">%s</div>
         <div class="hl-content">%s</div>
         <div class="spinner"></div>
+        <span class="close"></span>
       </div>),
       $label->{'class'},
       $label->{'header'},
@@ -346,6 +347,7 @@ sub hover_label_tabs {
      $desc   .= $label->{'extra_desc'};
   my $subset  = $label->{'subset'};
   my $renderers;
+  my $highlight = "true";
 
   foreach (@{$label->{'renderers'}}) {
 
@@ -390,6 +392,11 @@ sub hover_label_tabs {
     push @contents, qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>);
   }
 
+  if ($highlight) {
+    push @buttons, qq(<div class="_hl_icon hl-icon"><a class="hl-icon-highlight" data-highlight-track="$label->{'highlight'}"></a></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to turn on/off track highlighting</p></div>);
+  }
+
   return (\@buttons, \@contents);
 }
 
@@ -403,15 +410,12 @@ sub track_boundaries {
   my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
   my %strand_map      = ( f => 1, r => -1 );
   my @boundaries;
- 
   my $prev_section; 
   foreach my $glyphset (@{$container->{'glyphsets'}}) {
     next unless scalar @{$glyphset->{'glyphs'}};
-
     my $height = $glyphset->height + $spacing;
     my $type   = $glyphset->type;
     my $node;  
-    
     my $collapse = 0;
       
     if ($track_ids{$type}) {
@@ -446,14 +450,27 @@ sub moveable_tracks {
   my $url     = $image->read_url;
   my ($top, $html);
   
+  # Get latest uploaded user data to add highlight class
+  my $last_uploaded_user_data_code = {};
+
+  if ($self->hub->session->get_data(type => 'userdata_upload_code')) {
+    foreach my $hash ($self->hub->session->get_data(type => 'userdata_upload_code')) {
+      $last_uploaded_user_data_code->{'upload_'.$hash->{upload_code}} = 1;
+    }
+  }
+
+  # Purge this data so that it doesn't highlight second time.
+  $self->hub->session->purge_data(type => 'userdata_upload_code');
+  
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
-
+    my $highlight = $last_uploaded_user_data_code->{$type} || 0;
     $html .= sprintf(
-      '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
+      '<li class="%s %s %s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>
       </li>',
-      $type, $strand ? " $strand" : '',
+      $type, $strand ? "$strand" : '',
+      $highlight ? '_new_userdata usertrack_highlight' : '',
       $h, $url, 3 - $t,
       $h == 0 ? ';display:none' : '',
       $h - 1,
