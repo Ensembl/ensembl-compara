@@ -44,7 +44,6 @@ use EnsEMBL::Web::DBSQL::ConfigAdaptor;
 use EnsEMBL::Web::Exceptions qw(RedirectionRequired);
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::File::User;

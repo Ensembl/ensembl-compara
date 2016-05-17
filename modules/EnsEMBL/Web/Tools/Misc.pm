@@ -21,8 +21,6 @@ package EnsEMBL::Web::Tools::Misc;
 ## Just a bunch of useful tools
 use strict;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(Exporter);
 
 use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
@@ -53,7 +51,7 @@ sub champion(&@) {
 
 sub style_by_filesize {
   my $filesize     = shift || 0;
-  my $max_filesize = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->MAX_HIGHLIGHT_FILESIZE || MAX_HIGHLIGHT_FILESIZE;
+  my $max_filesize = MAX_HIGHLIGHT_FILESIZE;
   return $filesize > $max_filesize ? 'density_line' : 'highlight_lharrow';
 }
 

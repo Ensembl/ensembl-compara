@@ -49,7 +49,6 @@ use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
-use EnsEMBL::Web::RegObj;
 
 sub new {
   my ($class, $hub, $builder, $renderer, $id) = @_;
