@@ -346,6 +346,8 @@ sub create_tracks {
     $self->munge_densities($data);
   }
 
+  ## We need slice length for formats that assemble transcripts from individual features, e.g. GFF3
+  $self->{'slice_length'} = $slice ? $slice->length : 0;
   $self->post_process($data);
 
   ## Finally sort the completed tracks
