@@ -72,9 +72,6 @@ sub post_process {
 
 sub _structured_feature {
   my ($self, $f) = @_;
-  #my $id = $f->{'id'} || $f->{'label'};
-  #warn "------------ FEATURE $id ---------------";
-  #warn Dumper($f);
 
   if (scalar @{$f->{'children'}||[]}) {
     foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
@@ -95,7 +92,6 @@ sub _structured_feature {
     ## Exon, intron, CDS, etc
     foreach my $parent (@{$f->{'parents'}}) {
       my $transcript = $self->{'stored_features'}{$parent} || {};
-      #warn "... ELEMENT WITH PARENT ".$self->{'stored_features'}{$parent}{'id'};
       $self->_add_to_transcript($transcript, $f);  
       $self->{'stored_features'}{$parent} = $transcript;
     }
@@ -104,14 +100,6 @@ sub _structured_feature {
 
 sub _add_to_transcript {
   my ($self, $transcript, $f) = @_;
-  #my $id = $f->{'id'} || $f->{'label'};
-  #unless ($f->{'type'} eq 'intron') {
-  #  warn "############ FEATURE $id #################";
-  #  warn Dumper($f);
-  #}
-  #warn "------------ ADDING TO TRANSCRIPT ".$transcript->{'id'}." ----------------";
-  #warn "... IN CDS? ".$transcript->{'in_cds'};
-  #warn Dumper($transcript);
 
   my $type    = $f->{'type'};
   my $start   = $f->{'start'};
@@ -264,7 +252,6 @@ sub create_hash {
                       'end'         => $feature_end,
                       'strand'      => $strand,
                       };
-  #use Data::Dumper; warn ">>> HREF PARAMS ".Dumper($href_params);
 
   my @parents = split(',', $self->parser->get_attribute_by_name('Parent'));
 
