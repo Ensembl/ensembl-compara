@@ -135,6 +135,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use strict;
 use warnings;
@@ -427,6 +428,8 @@ sub preload {
     my %taxon_lookup = map {$_->taxon_id => $_} @$taxon_nodes;
     $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @$species_tree_nodes;
     $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @{$self->get_all_Members};
+
+    Bio::EnsEMBL::Compara::Utils::Preloader::_load_and_attach_all('dnafrag_id', 'dnafrag', $self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
 
     # Loads all the gene members in one go
     $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
