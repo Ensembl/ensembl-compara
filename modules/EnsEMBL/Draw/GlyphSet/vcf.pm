@@ -146,7 +146,7 @@ sub consensus_features {
    
   foreach my $f (@$raw_features) {
     my $unknown_type = 1;
-    my $vs           = $f->{'POS'} - $start + 1;
+    my $vs           = $f->{'POS'} - $start;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
     my $info_string;
