@@ -578,7 +578,7 @@ sub _build_id_cache {
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::GenomeDB;
 
-use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
 use strict;
 use warnings;
 
@@ -605,7 +605,6 @@ sub compute_keys {
                 name => lc $genome_db->name,
             ),
 
-            %{$self->SUPER::compute_keys($genome_db)},
            }
 }
 

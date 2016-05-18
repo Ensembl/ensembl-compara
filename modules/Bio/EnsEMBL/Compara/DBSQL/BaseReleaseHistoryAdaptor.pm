@@ -96,7 +96,7 @@ sub fetch_all_current {
 sub fetch_all_by_release {
     my $self = shift;
     my $release_number = shift || throw("A release number must be given");
-    return $self->_id_cache->get_all_by_additional_lookup('in_release_'.$release_number, 1);
+    return [grep {$_->is_in_release($release_number)} $self->_id_cache->cached_values()];
 }
 
 
@@ -203,32 +203,6 @@ sub _find_most_recent {
     # NOTE: Assume the objects have a "name" attribute, which is not defined in StorableWithReleaseHistory
     throw(sprintf("Could not find the best %s named '%s'. There are several objects equally recent: %s\n", ref($ties[0]), $ties[0]->name, join(",", map {$_->dbID} @ties)));
 }
-
-
-package Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory;
-
-use strict;
-use warnings;
-
-use Bio::EnsEMBL::ApiVersion;
-
-use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
-
-sub support_additional_lookups {
-    return 1;
-}
-
-sub compute_keys {
-    my ($self, $genome_db) = @_;
-    if ($genome_db->has_been_released) {
-        my $first_release = $genome_db->first_release;
-        my $last_release = $genome_db->last_release || software_version();
-        return {map {'in_release_'.$_ => 1} $first_release..$last_release};
-    } else {
-        return {};
-    }
-}
-
 
 
 1;

@@ -629,7 +629,7 @@ sub _build_id_cache {
 package Bio::EnsEMBL::DBSQL::Cache::MethodLinkSpeciesSet;
 
 
-use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
 use strict;
 use warnings;
 
@@ -646,7 +646,6 @@ sub compute_keys {
         method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set_obj->dbID),
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set_obj->genome_dbs()}),
         (map {sprintf('genome_db_%d_method_%s', $_->dbID, uc $mlss->method->type) => 1} @{$mlss->species_set_obj->genome_dbs()}),
-        %{$self->SUPER::compute_keys($mlss)},
     }
 }
 

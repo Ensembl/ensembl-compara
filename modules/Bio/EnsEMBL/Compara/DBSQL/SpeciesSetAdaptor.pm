@@ -514,7 +514,7 @@ sub _build_id_cache {
 package Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesSet;
 
 
-use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
 use strict;
 use warnings;
 
@@ -530,7 +530,6 @@ sub compute_keys {
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$ss->genome_dbs()}),
         (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
         (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
-        %{$self->SUPER::compute_keys($ss)},
     }
 }
 
