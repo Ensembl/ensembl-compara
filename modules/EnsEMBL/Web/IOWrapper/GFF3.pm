@@ -72,7 +72,8 @@ sub post_process {
 
 sub _structured_feature {
   my ($self, $f) = @_;
-  #warn "------------ FEATURE ".$f->{'id'}." ---------------";
+  #my $id = $f->{'id'} || $f->{'label'};
+  #warn "------------ FEATURE $id ---------------";
   #warn Dumper($f);
 
   if (scalar @{$f->{'children'}||[]}) {
@@ -85,13 +86,16 @@ sub _structured_feature {
       $child->{'href'}            = $self->href($child_href_params);
       $self->_structured_feature($child);
     }
+    ## Add a dummy exon to the end if the transcript extends beyond the end of the slice
+    if (scalar @{$f->{'structure'}||[]} && $f->{'end'} > $f->{'structure'}[-1]{'end'}) {
+      push @{$f->{'structure'}}, {'start' => $self->{'slice_length'} + 1, 'end' => $f->{'end'}};
+    }
   }
   else {
     ## Exon, intron, CDS, etc
-    #warn ">>> EXON";
     foreach my $parent (@{$f->{'parents'}}) {
       my $transcript = $self->{'stored_features'}{$parent} || {};
-      #warn "... WHICH HAS PARENT ".$self->{'stored_features'}{$parent}{'id'};
+      #warn "... ELEMENT WITH PARENT ".$self->{'stored_features'}{$parent}{'id'};
       $self->_add_to_transcript($transcript, $f);  
       $self->{'stored_features'}{$parent} = $transcript;
     }
@@ -100,16 +104,24 @@ sub _structured_feature {
 
 sub _add_to_transcript {
   my ($self, $transcript, $f) = @_;
-  #warn "############ TRANSCRIPT ##############";
+  #my $id = $f->{'id'} || $f->{'label'};
+  #unless ($f->{'type'} eq 'intron') {
+  #  warn "############ FEATURE $id #################";
+  #  warn Dumper($f);
+  #}
+  #warn "------------ ADDING TO TRANSCRIPT ".$transcript->{'id'}." ----------------";
   #warn "... IN CDS? ".$transcript->{'in_cds'};
   #warn Dumper($transcript);
-  #warn "------------ FEATURE ".$f->{'id'}." ---------------";
-  #warn Dumper($f);
 
   my $type    = $f->{'type'};
   my $start   = $f->{'start'};
   my $end     = $f->{'end'};
   my $strand  = $f->{'strand'};
+
+  ## Add a dummy exon if the transcript starts before the beginning of the slice
+  if (!$transcript->{'structure'} && $transcript->{'start'} < 0 && $start >= 0) {
+    push @{$transcript->{'structure'}}, {'start' => $transcript->{'start'}, 'end' => -1};
+  }
 
   ## Store max and min coordinates in case we don't have a 'real' parent in the file  
   $transcript->{'min_start'}  = $start if (!$transcript->{'min_start'} || $transcript->{'min_start'} > $start);
@@ -162,12 +174,6 @@ sub _add_to_transcript {
   }
   elsif ($type eq 'exon') {
     my $exon = {'start' => $start, 'end' => $end};
-
-    ## Exon joined to UTR
-    if (scalar @{$transcript->{'structure'}||[]} 
-        && ($transcript->{'structure'}[-1]{'utr_5'} || $transcript->{'structure'}[-1]{'utr_3'})) {
-      $transcript->{'structure'}[-1]{'end'}    = $end;
-    } 
 
     ## Non-coding exon
     if ($transcript->{'type'} eq 'transcript' && !$transcript->{'in_cds'}) {
