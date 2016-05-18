@@ -290,7 +290,7 @@ sub fetch_all_by_ancestral_taxon_id {
 sub fetch_all_by_low_coverage {  ## DEPRECATED
     my ($self) = @_;
     deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e86');
-    return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
+    return [grep {$_->is_high_coverage} @{$self->fetch_all}];
 }
 
 
@@ -328,7 +328,7 @@ sub fetch_by_core_DBAdaptor {
 
 sub fetch_all_polyploid {   ## UNUSED
     my $self = shift;
-    return $self->_id_cache->get_all_by_additional_lookup('is_polyploid', 0);
+    return [grep {$_->is_polyploid} $self->_id_cache->cached_values()];
 }
 
 
@@ -598,23 +598,11 @@ sub compute_keys {
     return {
             ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => $genome_db->_get_unique_key,
 
-            # The extant species
-            $genome_db->taxon_id ? (
-                taxon_id => $genome_db->taxon_id,
-                taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly),   ## UNUSED
-            ) : (),
+            # taxon_id -> GenoneDB
+            $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
 
-            # The species that are current and have a taxon_id (i.e. all but "ancestral_sequences")
-            ($genome_db->taxon_id and $genome_db->is_current) ? (
-                taxon_id_default_assembly => $genome_db->taxon_id,  ## UNUSED
-                is_high_coverage => $genome_db->is_high_coverage,   ## DEPRECATED
-                is_polyploid => $genome_db->is_polyploid,           ## UNUSED
-            ) : (),
-
-            # All the species (excluding their components
-            $genome_db->genome_component ? () : (
-                name => lc $genome_db->name,
-            ),
+            # name -> GenomeDB (excluding components)
+            $genome_db->genome_component ? () : (name => lc $genome_db->name),
 
            }
 }
