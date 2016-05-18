@@ -424,7 +424,10 @@ sub preload {
     }
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $self->get_all_Members, $species_tree_nodes);
+
+    my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $self->get_all_Members, $species_tree_nodes);
+    $self->adaptor->db->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
+
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
 
     $self->{_preloaded} = 1;
