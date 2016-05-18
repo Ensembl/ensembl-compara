@@ -332,8 +332,8 @@ sub genebuild {
 
 sub taxon_id {
   my $self = shift;
-  $self->{'taxon_id'} = shift if (@_);
-  return $self->{'taxon_id'};
+  $self->{'_taxon_id'} = shift if (@_);
+  return $self->{'_taxon_id'};
 }
 
 =head2 taxon
@@ -355,7 +355,7 @@ sub taxon {
     throw("can't fetch Taxon without a taxon_id and an adaptor");
   }
   my $ncbi_taxon_adaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
-  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'taxon_id'});
+  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'_taxon_id'});
   return $self->{'_taxon'};
 }
 

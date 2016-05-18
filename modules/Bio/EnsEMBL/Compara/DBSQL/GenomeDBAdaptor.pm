@@ -542,7 +542,7 @@ sub _objs_from_sth {
             'genebuild' => $genebuild,
             'has_karyotype' => $has_karyotype,
             'is_high_coverage' => $is_high_coverage,
-            'taxon_id'  => $taxon_id,
+            '_taxon_id' => $taxon_id,
             '_genome_component'  => $genome_component,
             'locator'   => $locator,
             '_first_release' => $first_release,
