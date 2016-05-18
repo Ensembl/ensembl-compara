@@ -64,6 +64,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
 use Bio::EnsEMBL::Compara::MemberSet;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -106,7 +107,8 @@ sub fetch_input {
     # Let's preload the gene members
     # Note that we have already filtered the list at this stage, to reduce
     # the number of sequences to load, and thus the memory usage
-    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members(\@good_leaves);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, \@good_leaves);
+
     Bio::EnsEMBL::Compara::MemberSet->new(-members => \@good_leaves)->_load_all_missing_sequences();
 
     # Note that if $self->param('genome_db_id') is set, the hash will

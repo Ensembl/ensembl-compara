@@ -89,6 +89,27 @@ sub load_all_NCBITaxon {
 }
 
 
+=head2 load_all_GeneMembers
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor $genemember_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : load_all_GeneMembers($genemember_adaptor, $gene_tree->get_all_leaves);
+  Description : Method to load the GeneMembers of many objects in a minimum number of queries.
+                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of most Compara objects
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GeneMember : the objects loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_GeneMembers {
+    my $genemember_adaptor = shift;
+    assert_ref($genemember_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor', 'genemember_adaptor');
+    return _load_and_attach_all('_gene_member_id', '_gene_member', $genemember_adaptor, @_);
+}
+
+
 =head2 _load_and_attach_all
 
   Arg[1]      : String $id_internal_key. Name of the key in the objects that contains the dbID of the objects to load

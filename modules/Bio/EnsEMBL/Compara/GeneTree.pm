@@ -425,9 +425,8 @@ sub preload {
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $self->get_all_Members, $species_tree_nodes);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
 
-    # Loads all the gene members in one go
-    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
     $self->{_preloaded} = 1;
 }
 

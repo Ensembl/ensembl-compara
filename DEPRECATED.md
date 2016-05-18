@@ -16,6 +16,7 @@
 * `ConstrainedElementAdaptor::fetch_all_by_dbID()`
 * `GenomicAlignBlock::get_old_consensus_genomic_align()`
 * `GenomicAlignBlock::get_old_query_genomic_align()`
+* `GeneMemberAdaptor::load_all_from_seq_members()`
 
 # Deprecated methods not yet scheduled for deletion
 
