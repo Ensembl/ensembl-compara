@@ -277,12 +277,7 @@ sub _to_text_classification {
 sub subspecies {
   my $self = shift;
 
-  unless (defined $self->{'_species'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_subspecies'});
 
   return $self->{'_species'};
 }
@@ -302,12 +297,7 @@ sub subspecies {
 sub species {
   my $self = shift;
 
-  unless (defined $self->{'_species'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_species'});
 
   return $self->{'_species'};
 }
@@ -327,15 +317,26 @@ sub species {
 sub genus {
   my $self = shift;
 
-  unless (defined $self->{'_genus'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_genus'});
 
   return $self->{'_genus'};
 }
+
+
+sub _split_name_into_parts {
+    my $self = shift;
+    if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
+        my ($genus, $species, @subspecies) = split(' ', $self->scientific_name);
+        $self->{'_species'} = $species;
+        $self->{'_genus'} = $genus;
+        $self->{'_subspecies'} = join(' ', @subspecies);
+    } else {
+        $self->{'_species'} = '';
+        $self->{'_genus'} = '';
+        $self->{'_subspecies'} = '';
+    }
+}
+
 
 =head2 common_name
 
