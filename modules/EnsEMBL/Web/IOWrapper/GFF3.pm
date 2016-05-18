@@ -78,9 +78,11 @@ sub _structured_feature {
   if (scalar @{$f->{'children'}||[]}) {
     foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
       ## Transcript or similar
+      if (scalar @{$child->{'children'}||[]}) {
+        $self->{'stored_features'}{$child->{'id'}} = $child;
+      }
       my $child_href_params       = $child->{'href_params'};
       $child->{'href'}            = $self->href($child_href_params);
-      #$self->{'stored_features'}{$child->{'id'}} = $child;
       $self->_structured_feature($child);
     }
   }
@@ -88,9 +90,8 @@ sub _structured_feature {
     ## Exon, intron, CDS, etc
     #warn ">>> EXON";
     foreach my $parent (@{$f->{'parents'}}) {
-      #warn "... WITH PARENT $parent";
       my $transcript = $self->{'stored_features'}{$parent} || {};
-      #warn "... WHICH IS TRANSCRIPT ".$self->{'stored_features'}{$parent}{'id'};
+      #warn "... WHICH HAS PARENT ".$self->{'stored_features'}{$parent}{'id'};
       $self->_add_to_transcript($transcript, $f);  
       $self->{'stored_features'}{$parent} = $transcript;
     }
@@ -100,8 +101,9 @@ sub _structured_feature {
 sub _add_to_transcript {
   my ($self, $transcript, $f) = @_;
   #warn "############ TRANSCRIPT ##############";
+  #warn "... IN CDS? ".$transcript->{'in_cds'};
   #warn Dumper($transcript);
-  #warn "------------ FEATURE ---------------";
+  #warn "------------ FEATURE ".$f->{'id'}." ---------------";
   #warn Dumper($f);
 
   my $type    = $f->{'type'};
@@ -139,17 +141,23 @@ sub _add_to_transcript {
   }
   elsif ($type eq 'CDS') {
     $transcript->{'in_cds'} = 1;
-    if (scalar @{$transcript->{'structure'}}) {
-      my ($utr, $val);
-      if ($strand == 1) {
-        $utr = 'utr_5';
-        $val = $start;
+    ## Was this CDS listed after the corresponding exon?
+    my $previous_exon = scalar @{$transcript->{'structure'}||[]} ? $transcript->{'structure'}[-1] : undef;
+    if ($previous_exon && $start >= $previous_exon->{'start'} && $start < $previous_exon->{'end'}) {
+      $previous_exon->{'non_coding'} = 0;
+      if ($start > $previous_exon->{'start'} && !$previous_exon->{'utr_5'} && !$previous_exon->{'utr_3'}) {
+        ## Divide the previous exon at the UTR point, if we don't have one already
+        my ($utr, $val);
+        if ($strand == 1) {
+          $utr = 'utr_5';
+          $val = $start;
+        }
+        else {
+          $utr = 'utr_3';
+          $val = $end;
+        }
+        $previous_exon->{$utr} = $val;
       }
-      else {
-        $utr = 'utr_3';
-        $val = $end;
-      }
-      $transcript->{'structure'}[-1]{$utr} = $val;
     }
   }
   elsif ($type eq 'exon') {
