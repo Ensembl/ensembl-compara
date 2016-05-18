@@ -423,13 +423,8 @@ sub preload {
         $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
     }
 
-    my %taxon_ids = map {$_->taxon_id => 1} @$species_tree_nodes;
-    my $taxon_nodes = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_all_by_dbID_list([keys %taxon_ids]);
-    my %taxon_lookup = map {$_->taxon_id => $_} @$taxon_nodes;
-    $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @$species_tree_nodes;
-    $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @{$self->get_all_Members};
-
-    Bio::EnsEMBL::Compara::Utils::Preloader::_load_and_attach_all('dnafrag_id', 'dnafrag', $self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $self->get_all_Members, $species_tree_nodes);
 
     # Loads all the gene members in one go
     $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );

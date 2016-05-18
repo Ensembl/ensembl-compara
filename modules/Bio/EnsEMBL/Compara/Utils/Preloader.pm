@@ -29,6 +29,9 @@ fetch.
 This module provides several methods to do a bulk-loading of objects in a
 minimum number of queries.
 
+NOTE: The subroutines declared here don't shift $self out of their parameters.
+Run Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($dnafrag_adaptor, $gene_tree->get_all_leaves)
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded by a _.
@@ -40,8 +43,50 @@ package Bio::EnsEMBL::Compara::Utils::Preloader;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Scalar qw(wrap_array);
+use Bio::EnsEMBL::Utils::Scalar qw(wrap_array assert_ref);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
+
+=head2 load_all_DnaFrags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : load_all_DnaFrags($dnafrag_adaptor, $gene_tree->get_all_leaves);
+  Description : Method to load the DnaFrags of many objects in a minimum number of queries.
+                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of most Compara objects
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::DnaFrag : the objects loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_DnaFrags {
+    my $dnafrag_adaptor = shift;
+    assert_ref($dnafrag_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor', 'dnafrag_adaptor');
+    return _load_and_attach_all('dnafrag_id', 'dnafrag', $dnafrag_adaptor, @_);
+}
+
+
+=head2 load_all_NCBITaxon
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor $ncbitaxon_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : load_all_NCBITaxons($ncbitaxon_adaptor, $gene_tree->get_all_leaves);
+  Description : Method to load the NCBITaxons of many objects in a minimum number of queries.
+                It assumes that the internal keys are '_taxon_id' and '_taxon', which is the case of most Compara objects
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::NCBITaxon : the objects loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_NCBITaxon {
+    my $ncbitaxon_adaptor = shift;
+    assert_ref($ncbitaxon_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor', 'ncbitaxon_adaptor');
+    return _load_and_attach_all('_taxon_id', '_taxon', $ncbitaxon_adaptor, @_);
+}
 
 
 =head2 _load_and_attach_all
