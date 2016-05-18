@@ -391,6 +391,14 @@ sub scientific_name {
     return $self->get_tagvalue('scientific name');
 }
 
+sub name {
+  my $self = shift;
+  my $value = shift;
+  if(defined($value)) { $self->add_tag('scientific name', $value); }
+  else { $value = $self->get_tagvalue('scientific name'); }
+  return $value;
+}
+
 =head2 binomial
 
   Example    : $ncbi->binomial;
