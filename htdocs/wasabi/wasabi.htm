@@ -7,8 +7,8 @@
   <title>Wasabi Tree</title>
   <script>
     window.onload = function() {
-
       if ('Wasabi' in window) {
+        load();
       } 
       else {
         var fileref=document.createElement('script');
@@ -19,34 +19,34 @@
         }
 
         if ('Wasabi' in window) {
+          load();
         } 
         else {
           document.getElementById('wasabi_ensembl').innerHTML = '<center><h2>Couldn\'t load Wasabi. Please try after sometime</h2></center>';
           return false;
         }
       }
+    }
 
+    function load() {
       var dataset      = [];
       var url_vars     = getUrlVars();
       var rest_url     = url_vars['rest_url'];
       var filegen_url  = url_vars['filegen_url'];
       var tree      = url_vars['tree'];
-      var alignment = url_vars['alignment'];
 
       if (rest_url) {
         dataset.push(rest_url);
         initTree(dataset);
       }
-      else if (tree || alignment) {
+      else if (tree) {
         tree && dataset.push(tree);
-        alignment && dataset.push(alignment);
         initTree(dataset);
       }
       else if (filegen_url) {
         $.get(filegen_url, function(data) {
           var path = JSON.parse(data);
           path.tree && dataset.push(path.tree);
-          path.alignment && dataset.push(path.alignment);
           initTree(dataset);
         });
       }

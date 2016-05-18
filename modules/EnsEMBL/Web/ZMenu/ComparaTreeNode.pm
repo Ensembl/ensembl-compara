@@ -395,10 +395,11 @@ sub content {
     my ($alignment_file, $tree_file, $link);
     if ($wasabi_session_data->{$wasabi_session_key}) {
       $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
-      $alignment_file = $wasabi_session_data->{$wasabi_session_key}->{alignment};
-      $link = sprintf (
-                        '/wasabi/wasabi.htm?tree=%s&alignment=%s', uri_escape($tree_file), uri_escape($alignment_file)
-                      );
+
+      # Create wasabi url to load from their end
+      $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
+        'URL' => uri_escape($hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
+      });
     }
     else {
       my $rest_url = $hub->species_defs->ENSEMBL_REST_URL
@@ -408,21 +409,19 @@ sub content {
 
       # Fall back to file generation if REST fails.
       # To make it work for e! archives
-      $ua->timeout(10);
+      $ua->timeout(30);
 	  	my $is_success = head($rest_url);
 	  	if ($is_success) {
-	      $link = sprintf (
-	                        '/wasabi/wasabi.htm?rest_url=%s',
-	                        uri_escape($rest_url)
-	                      );
-	  	}
-	  	else {
+        $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
+          'URL' => uri_escape($rest_url)
+        });
+
 	      my $filegen_url = $hub->url('Json', {
 	      										type => 'GeneTree', 
 	      										action => 'fetch_wasabi', 
 	      										node => $node_id, 
 	      										gt => $gt_id, 
-	      										treetype => 'newick'
+	      										treetype => 'phyloxml'
 	      									});
 
 	      $link = sprintf (
