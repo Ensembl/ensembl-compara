@@ -350,7 +350,7 @@ sub _split_name_into_parts {
 
 sub common_name {
   my $self = shift;
-  if ($self->has_tag('genbank common name') && $self->rank eq 'species') {
+  if ($self->rank eq 'species') {
     return $self->get_tagvalue('genbank common name');
   } else {
     return undef;
@@ -372,11 +372,7 @@ sub ensembl_alias_name {
 
   #Not checking for rank as we do above, because we do not get dog since the
   #rank for dog is subspecies (ensembl-51).
-  if ($self->has_tag('ensembl alias name')) {
     return $self->get_tagvalue('ensembl alias name');
-  } else {
-    return undef;
-  }
 }
 
 
@@ -407,7 +403,7 @@ sub scientific_name {
 
 sub binomial {
   my $self = shift;
-  if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
+  if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
       return $self->scientific_name;
   } else {
     warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef (try the scientific_name method)\n");
