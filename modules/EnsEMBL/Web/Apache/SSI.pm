@@ -26,6 +26,7 @@ use File::Spec;
 
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Exceptions;
 
 sub map_to_file {
   ## Finds out the file that maps to a url and saves it as ENSEMBL_FILENAME entry in subprocess_env
@@ -88,7 +89,13 @@ sub handler {
   }
 
   # get appropriate controller to serve this request
-  get_controller($filename)->new($r, $species_defs, {'filename' => $filename})->process;
+  my $controller = get_controller($filename)->new($r, $species_defs, {'filename' => $filename});
+
+  try {
+    $controller->process;
+  } catch {
+    $_->handle($controller);
+  };
 
   return OK;
 }

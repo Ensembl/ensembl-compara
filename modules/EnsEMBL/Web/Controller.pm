@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(RedirectionRequired);
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
@@ -88,14 +88,10 @@ sub process {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  try {
-    $self->init_cache;
-    $hub->qstore_open;
-    $self->init;
-    $hub->qstore_close;
-  } catch {
-    $_->handle($hub);
-  };
+  $self->init_cache;
+  $hub->qstore_open;
+  $self->init;
+  $hub->qstore_close;
 }
 
 sub query_form {
@@ -237,6 +233,16 @@ sub clear_cached_content {
 
   # leave an entry in logs
   warn sprintf 'CACHE CLEAR: %s', $cache_key if $self->{'cache_debug'};
+}
+
+sub redirect {
+  ## Does an http redirect
+  ## Since it actually throws an exception, code that follows this call will not get executed
+  ## @param URL to redirect to
+  ## @param Flag kept on if it's a permanent redirect
+  my ($self, $url, $permanent) = @_;
+
+  throw RedirectionRequired({'url' => $url, 'permanent' => $permanent});
 }
 
 sub upload_size_limit {

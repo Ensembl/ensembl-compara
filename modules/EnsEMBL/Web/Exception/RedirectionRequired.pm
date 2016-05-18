@@ -27,10 +27,10 @@ sub handle {
   ## Data needed to handle this exception:
   ##  - url       : URL to redirect to
   ##  - permanent : Optional flag if on will do a permanent redirect
-  my ($self, $hub) = @_;
+  my ($self, $controller) = @_;
 
-  $hub->r->subprocess_env($self->data->{'permanent'} ? 'ENSEMBL_REDIRECT_PERMANENT' : 'ENSEMBL_REDIRECT_TEMPORARY', $self->data->{'url'});
-  $hub->r->subprocess_env('LOG_REQUEST_IGNORE', 1);
+  $controller->r->subprocess_env($self->data->{'permanent'} ? 'ENSEMBL_REDIRECT_PERMANENT' : 'ENSEMBL_REDIRECT_TEMPORARY', $self->data->{'url'});
+  $controller->r->subprocess_env('LOG_REQUEST_IGNORE', 1);
 }
 
 1;

@@ -41,7 +41,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
-use EnsEMBL::Web::Exceptions qw(RedirectionRequired);
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::Session;
@@ -441,7 +441,7 @@ sub redirect {
 
   $url = $self->url($url) if $url && ref $url;
 
-  throw RedirectionRequired({'url' => $url || $self->current_url, 'permanent' => $permanent});
+  $self->controller->redirect($url || $self->current_url, $permanent);
 }
 
 sub current_url { return $_[0]->url(undef, undef, 1); }

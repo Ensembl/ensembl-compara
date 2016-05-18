@@ -23,6 +23,7 @@ use warnings;
 
 use Apache2::Const qw(:common :http :methods);
 
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
@@ -91,11 +92,17 @@ sub handler {
   # let the next handler handle it if the URL does not map to any Controller
   return unless $controller;
 
-  dynamic_require($controller)->new($r, $species_defs, {
+  $controller = dynamic_require($controller)->new($r, $species_defs, {
     'species'       => $species,
     'path_segments' => \@path_segments,
     'query'         => $query
-  })->process;
+  });
+
+  try {
+    $controller->process;
+  } catch {
+    $_->handle($controller);
+  };
 
   return OK;
 }
