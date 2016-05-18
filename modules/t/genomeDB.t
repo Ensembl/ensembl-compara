@@ -85,7 +85,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB new_fast method", sub {
                         '_db_adaptor' => $hs_dba,
                         'name'       => $name,
                         'assembly'   => $assembly,
-                        'taxon_id'   => $taxon_id,
+                        '_taxon_id'  => $taxon_id,
                         'dbID'       => $dbID,
                         'genebuild'  => $genebuild);
     
