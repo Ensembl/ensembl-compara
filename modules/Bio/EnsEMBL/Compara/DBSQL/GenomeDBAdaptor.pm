@@ -117,31 +117,40 @@ sub fetch_by_name_assembly {
 }
 
 
-=head2 fetch_all_by_taxon_id_assembly
+=head2 fetch_all_by_taxon_id
 
-  Arg[1]      : number (taxon_id)
-  Arg[2]      : (Optional) string (assembly)
-  Example     : $gdbs = $gdba->fetch_all_by_taxon_id_assembly(9606);
-  Description : Retrieves GenomeDBs from the database based on taxon_id and (optionally) the assembly name
-                If the assembly name is missing returns the GenomeDBs with the default assemblies.
-  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB's
-  Exceptions  : none
-  Caller      : general
-  Status      : Experimental
+  Arg [1]    : number (taxon_id)
+  Example    : $gdbs = $gdba->fetch_all_by_taxon_id(1234);
+  Description: Retrieves the genome db(s) using the NCBI taxon_id of the species.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $taxon_id is not given
+  Caller     : general
+  Status     : Stable
 
 =cut
 
-sub fetch_all_by_taxon_id_assembly {  ## UNUSED
+sub fetch_all_by_taxon_id {
+    my ($self, $taxon_id) = @_;
+
+    throw("taxon_id argument is required") unless($taxon_id);
+
+    return $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
+}
+
+
+sub fetch_all_by_taxon_id_assembly {  ## DEPRECATED
     my ($self, $taxon_id, $assembly) = @_;
 
+    deprecate('GenomeDBAdaptor::fetch_all_by_taxon_id_assembly() will be removed in e86');
     throw("taxon_id argument is required") unless ($taxon_id);
 
-    my $found_gdbs = $assembly ?
-        $self->_id_cache->get_all_by_additional_lookup('taxon_id_assembly', sprintf('%s____%s_', $taxon_id, lc $assembly))
-            : $self->_id_cache->get_all_by_additional_lookup('taxon_id_default_assembly', $taxon_id);
-
-    return $found_gdbs;
+    if ($assembly) {
+        return [grep {$_->assembly eq $assembly} @{ $self->fetch_all_by_taxon_id($taxon_id) }];
+    } else {
+        return $self->fetch_all_by_taxon_id($taxon_id);
+    }
 }
+
 
 =head2 fetch_by_taxon_id
 
@@ -160,6 +169,8 @@ sub fetch_all_by_taxon_id_assembly {  ## UNUSED
 
 sub fetch_by_taxon_id {
     my ($self, $taxon_id) = @_;
+
+    # FIXME: should be DEPRECATED
 
     throw("taxon_id argument is required") unless($taxon_id);
 
