@@ -122,11 +122,11 @@ sub fetch_all_by_name_type {
     return $self->generic_fetch($constraint);
 }
 
-=head2 fetch_all_model_ids
+=head2 fetch_all_by_column_names
 
   Arg [1]     : (arrayref) Column names to retrieve
   Arg [2]     : (string) (optional) Optional type for the model_ids
-  Example     : $model_ids = $hmmProfileAdaptor->fetch_all_model_ids($type)
+  Example     : $model_ids = $hmmProfileAdaptor->fetch_all_by_column_names(['model_id', 'name'],'infernal');
   Description : Returns an array ref with all the model_ids present in the database
                 (possibly pertaining to a defined $type)
   ReturnType  : hashref with the column names and values
@@ -177,37 +177,21 @@ sub _columns {
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
-    my $node_list = [];
+    my $hmm_list = [];
 
     while (my $rowhash = $sth->fetchrow_hashref) {
-        my $node = $self->create_instance_from_rowhash($rowhash);
-        push @$node_list, $node;
+        my $hmm = Bio::EnsEMBL::Compara::HMMProfile->new_fast({
+            _model_id   => $rowhash->{model_id},
+            _name       => $rowhash->{name},
+            _type       => $rowhash->{type},
+            _profile    => Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($rowhash->{compressed_profile}),
+            _consensus  => $rowhash->{consensus},
+        });
+        push @$hmm_list, $hmm;
     }
-    return $node_list;
+    return $hmm_list;
 }
 
-sub create_instance_from_rowhash {
-    my ($self, $rowhash) = @_;
-
-    my $obj = Bio::EnsEMBL::Compara::HMMProfile->new();
-    $self->init_instance_from_rowhash($obj,$rowhash);
-
-    return $obj;
-}
-
-sub init_instance_from_rowhash {
-    my ($self, $obj, $rowhash) = @_;
-
-    $obj->model_id($rowhash->{model_id});
-    $obj->name($rowhash->{name});
-    $obj->type($rowhash->{type});
-    # MySQL-style compression -UNCOMPRESS()-
-    # The first 4 bytes are the length of the text in little-endian
-    $obj->profile( Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($rowhash->{compressed_profile}) );
-    $obj->consensus($rowhash->{consensus});
-
-    return $obj;
-}
 
 sub store {
     my ($self, $obj) = @_;
