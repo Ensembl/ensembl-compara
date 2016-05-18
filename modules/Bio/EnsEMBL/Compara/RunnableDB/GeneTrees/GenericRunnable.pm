@@ -336,7 +336,7 @@ sub run_generic_command {
         if (scalar(@{$multifurcations}) > 0) {
 
             #fetch species tree
-            my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label( $self->param('mlss_id'), 'default' ) || die "Could not fetch species tree";
+            my $species_tree = $gene_tree->species_tree;
 
             #------------------
             # MRCA binarization
