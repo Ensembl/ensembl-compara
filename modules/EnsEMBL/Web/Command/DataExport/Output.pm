@@ -99,7 +99,9 @@ sub process {
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
         my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
-          $error = $self->write_alignment($component);
+          $error = $hub->param('align_type') eq 'msa_dna'
+                    ? $self->write_homologue_seq($component)
+                    : $self->write_alignment($component);
         }
         elsif (lc($format) eq 'phyloxml') {
           $error = $self->write_phyloxml($component);
