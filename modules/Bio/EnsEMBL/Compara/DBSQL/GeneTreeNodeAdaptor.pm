@@ -307,7 +307,7 @@ sub remove_seq_member {
 ###################################
 
 sub _tag_capabilities {
-    return ('gene_tree_node_tag', 'gene_tree_node_attr', 'node_id', 'node_id');
+    return ('gene_tree_node_tag', 'gene_tree_node_attr', 'node_id', 'node_id', 'tag', 'value');
 }
 
 

@@ -497,7 +497,7 @@ sub make_object_current {
 #######################################################
 
 sub _tag_capabilities {
-    return ("species_set_tag", undef, "species_set_id", "dbID");
+    return ('species_set_tag', undef, 'species_set_id', 'dbID', 'tag', 'value');
 }
 
 ############################################################

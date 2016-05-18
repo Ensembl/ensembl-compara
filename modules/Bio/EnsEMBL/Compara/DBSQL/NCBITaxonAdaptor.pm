@@ -281,6 +281,12 @@ sub fetch_node_by_node_id {
 #
 ##################################
 
+
+sub _tag_capabilities {
+    return ('ncbi_taxa_name', undef, 'taxon_id', 'taxon_id', 'name_class', 'name');
+}
+
+
 sub _tables {
   return (['ncbi_taxa_node', 't'],
          );
@@ -332,20 +338,6 @@ sub init_instance_from_rowhash {
   return $node;
 }
 
-sub _load_tagvalues {
-  my $self = shift;
-  my $node = shift;
-
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
-  $sth->execute($node->node_id);  
-  while (my ($tag, $value) = $sth->fetchrow_array()) {
-    $node->add_tag($tag,$value,1);
-  }
-  $node->add_tag('name', $node->get_value_for_tag('scientific name'));
-  $sth->finish;
-}
 
 sub update {
   my ($self, $node) = @_;

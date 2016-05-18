@@ -180,7 +180,7 @@ sub store_node {
 # tagging
 #
 sub _tag_capabilities {
-    return ('species_tree_node_tag', undef, 'node_id', 'node_id');
+    return ('species_tree_node_tag', undef, 'node_id', 'node_id', 'tag', 'value');
 }
 
 
