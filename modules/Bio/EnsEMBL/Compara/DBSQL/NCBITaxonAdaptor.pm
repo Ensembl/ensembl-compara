@@ -106,17 +106,35 @@ sub fetch_node_by_taxon_id {
 }
 
 
-=head2 fetch_all_by_taxon_ids
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $taxon->dbID
+               the database id for a ncbi taxon
+  Example    : $taxon = $nbcitaxonDBA->fetch_by_dbID($taxon_id);
+  Description: Returns an NCBITaxon object for the given NCBI Taxon id.
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : thrown if $taxon_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_dbID {
+    my $self = shift;
+    return $self->fetch_node_by_taxon_id(@_);
+}
+
+
+=head2 fetch_all_by_dbID_list
 
   Arg [1]    : Arrayref of taxon_ids (database IDs for NCBI taxa)
-  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_taxon_ids([$taxon_id1, $taxon_id2]);
+  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_dbID_list([$taxon_id1, $taxon_id2]);
   Description: Returns all the NCBITaxon objects for the given NCBI Taxon ids.
   Returntype : Arrayref of Bio::EnsEMBL::Compara::NCBITaxon
   Caller     : general
 
 =cut
 
-sub fetch_all_by_taxon_ids {
+sub fetch_all_by_dbID_list {
     my ($self, $taxon_ids) = @_;
 
     my $placeholders = join(',', ('?') x scalar(@$taxon_ids));

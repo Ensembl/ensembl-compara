@@ -424,7 +424,7 @@ sub preload {
     }
 
     my %taxon_ids = map {$_->taxon_id => 1} @$species_tree_nodes;
-    my $taxon_nodes = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_all_by_taxon_ids([keys %taxon_ids]);
+    my $taxon_nodes = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_all_by_dbID_list([keys %taxon_ids]);
     my %taxon_lookup = map {$_->taxon_id => $_} @$taxon_nodes;
     $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @$species_tree_nodes;
     $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @{$self->get_all_Members};
