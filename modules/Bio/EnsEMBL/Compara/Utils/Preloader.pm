@@ -63,18 +63,25 @@ sub _load_and_attach_all {
     my ($id_internal_key, $object_internal_key, $adaptor, @args) = @_;
 
     my %key2iniobject = ();
+    my %key2newobject = ();
     foreach my $a (@args) {
         foreach my $o (@{wrap_array($a)}) {
             next if !ref($o);                   # We need a ref to an object
             next if ref($o) !~ /::/;            # but not one of the basic types
             next if !$o->{$id_internal_key};    # It needs to have the dbID key
 
-            push @{$key2iniobject{$o->{$id_internal_key}}}, $o;
+            # Check if the target object has already been loaded
+            if ($o->{$object_internal_key}) {
+                $key2newobject{$o->{$id_internal_key}} = $o->{$object_internal_key};
+            } else {
+                push @{$key2iniobject{$o->{$id_internal_key}}}, $o;
+            }
         }
     }
 
-    my $all_new_objects = $adaptor->fetch_all_by_dbID_list([keys %key2iniobject]);
-    foreach my $o (@$all_new_objects) {
+    my @keys_to_fetch = grep {!$key2newobject{$_}} keys %key2iniobject;
+    my $all_new_objects = $adaptor->fetch_all_by_dbID_list(\@keys_to_fetch);
+    foreach my $o (@$all_new_objects, values %key2newobject) {
         $_->{$object_internal_key} = $o for @{$key2iniobject{$o->dbID}};
     }
     return $all_new_objects;
