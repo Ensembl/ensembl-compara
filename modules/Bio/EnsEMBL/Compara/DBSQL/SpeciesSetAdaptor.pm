@@ -240,7 +240,6 @@ sub _objs_from_sth {
         }
     }
 
-    $self->_load_tagvalues_multiple(\@ss_list, 1);
     return \@ss_list;
 }
 
@@ -270,7 +269,7 @@ sub _uncached_fetch_by_dbID {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    return $self->_id_cache->get_all_by_additional_lookup(sprintf('has_tag_%s', lc $tag), 1);
+    return [grep {$_->has_tag($tag)} $self->_id_cache->cached_values()];
 }
 
 
@@ -294,7 +293,7 @@ sub fetch_all_by_tag_value {
 
     # Only scalar values are accepted
     return [] if ref $value;
-    return $self->_id_cache->get_all_by_additional_lookup(sprintf('tag_%s', lc $tag), lc $value);
+    return [grep {$_->has_tag($tag) && ($_->get_value_for_tag($tag) eq $value)} $self->_id_cache->cached_values()];
 }
 
 
@@ -528,8 +527,6 @@ sub compute_keys {
         genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
         name => $ss->name,
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$ss->genome_dbs()}),
-        (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
-        (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
     }
 }
 
