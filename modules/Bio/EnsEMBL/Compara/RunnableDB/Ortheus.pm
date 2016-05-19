@@ -153,9 +153,8 @@ sub fetch_input {
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
   ## DnaFragRegions are in random order
-  $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param('synteny_region_id')) );
+  $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param_required('synteny_region_id')) );
 
-  if($self->param('dnafrag_regions')) {     # does it ever return a FALSE by design?
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     if ($self->get_species_tree) {
@@ -166,10 +165,6 @@ sub fetch_input {
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
 
     $self->_dump_fasta;
-
-  } else {
-    throw("Cannot start Ortheus job because some information is missing");
-  }
 
   return 1;
 }
@@ -1066,20 +1061,12 @@ sub get_species_tree {
 sub get_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
 
-  my @dnafrag_regions = ();
-
-  # Fail if dbID has not been provided
-  return \@dnafrag_regions if (!$synteny_region_id);
-
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
+  die "No SyntenyRegion for this dbID '$synteny_region_id'\n" unless $sr;
 
   my $regions = $sr->get_all_DnaFragRegions();
-  foreach my $dfr (@$regions) { 
-    push @dnafrag_regions, $dfr;
-  }
-
-  return \@dnafrag_regions;
+  return [@$regions];
 }
 
 
