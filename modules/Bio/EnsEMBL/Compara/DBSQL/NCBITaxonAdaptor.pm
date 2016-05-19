@@ -137,6 +137,8 @@ sub fetch_by_dbID {
 sub fetch_all_by_dbID_list {
     my ($self, $taxon_ids) = @_;
 
+    return [] unless scalar(@$taxon_ids);
+
     my $placeholders = join(',', ('?') x scalar(@$taxon_ids));
     $self->bind_param_generic_fetch($_, SQL_INTEGER) for @$taxon_ids;
     my $constraint = "t.taxon_id IN ($placeholders)";
