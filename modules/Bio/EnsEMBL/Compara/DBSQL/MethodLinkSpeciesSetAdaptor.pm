@@ -611,7 +611,7 @@ sub make_object_current {
 ###################################
 
 sub _tag_capabilities {
-    return ('method_link_species_set_tag', undef, 'method_link_species_set_id', 'dbID', 'tag', 'value');
+    return ('method_link_species_set_tag', 'method_link_species_set_attr', 'method_link_species_set_id', 'method_link_species_set_id', 'tag', 'value');
 }
 
 
