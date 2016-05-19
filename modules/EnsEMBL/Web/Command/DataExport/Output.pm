@@ -538,7 +538,12 @@ sub write_homologue_seq {
       $params{'-SEQ_TYPE'} = 'cds';
     }
     eval {
-      $data->print_sequences_to_file($file_path, %params);
+      if (ref($data) =~ /GeneTreeNode/) {
+        $data->get_AlignedMemberSet()->print_sequences_to_file($file_path, %params);
+      }
+      else {
+        $data->print_sequences_to_file($file_path, %params);
+      }
     };
     if ($@) {
       $result = {'error' => ['Error writing sequences to file']};
