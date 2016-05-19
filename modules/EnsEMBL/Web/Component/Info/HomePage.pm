@@ -50,7 +50,16 @@ sub content {
   
   $self->{'icon'}     = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-  
+ 
+  my $icon_name;
+  my $strain_of = $species_defs->IS_STRAIN_OF; 
+  if ($species_defs->IS_STRAIN_OF) {
+    $icon_name = $strain_of.'_strain';
+  }
+  else {
+    $icon_name = $hub->species;
+  }
+ 
   return sprintf('
     <div class="column-wrapper">  
       <div class="box-left">
@@ -67,7 +76,7 @@ sub content {
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     %s',
-    $img_url, $hub->species, $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'},
+    $img_url, $icon_name, $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'},
     $common_name =~ /\./ ? "<h1>$display_name</h1>" : "<h1>$common_name</h1><p>$display_name</p>",
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
