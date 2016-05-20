@@ -106,7 +106,6 @@ sub create_json {
     $tree, 
     -no_sequences => 0, 
     -aligned => 1, 
-    -cdna => 1, 
     -species_common_name => 0, 
     -exon_boundaries => 0, 
     -full_tax_info => 0
@@ -132,7 +131,6 @@ sub create_phyloxml {
   my $w = Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter->new(
       -SOURCE       => $SiteDefs::ENSEMBL_SITETYPE,
       -ALIGNED      => 1,
-      -CDNA         => 1,
       -NO_SEQUENCES => 0,
       -HANDLE       => $handle,
   );
