@@ -2,10 +2,11 @@
 <html>
 <head>
 	<meta charset="UTF-8" />
-  <script type="text/javascript" src="http://loytynojalab.biocenter.helsinki.fi/journal/wasabi.js"></script>
-  <link rel="stylesheet" type="text/css" media="screen" href="http://loytynojalab.biocenter.helsinki.fi/journal/wasabi.css" />
+  <script type="text/javascript" src="http://wasabiapp.org/ensembl/wasabi.js"></script>
+  <link rel="stylesheet" type="text/css" media="screen" href="http://wasabiapp.org/ensembl/wasabi.css" />
   <title>Wasabi Tree</title>
   <script>
+
     window.onload = function() {
       if ('Wasabi' in window) {
         load();
@@ -14,6 +15,14 @@
         var fileref=document.createElement('script');
         fileref.setAttribute("type","text/javascript");
         fileref.setAttribute("src", '/wasabi/wasabi.js');
+        if (typeof fileref!="undefined") {
+          document.getElementsByTagName("head")[0].appendChild(fileref);
+        }
+
+        fileref = "http://wasabiapp.org/ensembl/wasabi.css",
+        fileref.setAttribute("type","text/css");
+        fileref.setAttribute("href", '/wasabi/wasabi.css');
+        fileref.setAttribute("rel", 'stylesheet');
         if (typeof fileref!="undefined") {
           document.getElementsByTagName("head")[0].appendChild(fileref);
         }

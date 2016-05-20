@@ -397,9 +397,10 @@ sub content {
       $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
 
       # Create wasabi url to load from their end
-      $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
-        'URL' => uri_escape($hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
-      });
+      $link = sprintf (
+                        '/wasabi/wasabi.htm?tree=%s',
+                        uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
+                      );
     }
     else {
       my $rest_url = $hub->species_defs->ENSEMBL_REST_URL
@@ -412,16 +413,28 @@ sub content {
       $ua->timeout(30);
 	  	my $is_success = head($rest_url);
 	  	if ($is_success) {
-        $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
-          'URL' => uri_escape($rest_url)
-        });
+        my $wasabi = $hub->get_ExtURL('WASABI');
+        my $is_success = head($wasabi);
 
+        if ($is_success) {
+          $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
+            'URL' => uri_escape($rest_url)
+          });
+        }
+        else {
+          $link = sprintf (
+                            '/wasabi/wasabi.htm?rest_url=%s',
+                            uri_escape($rest_url)
+                          );
+        }
+      }
+      else {
 	      my $filegen_url = $hub->url('Json', {
 	      										type => 'GeneTree', 
-	      										action => 'fetch_wasabi', 
+	      										action => 'fetch_wasabi',
 	      										node => $node_id, 
 	      										gt => $gt_id, 
-	      										treetype => 'phyloxml'
+	      										treetype => 'json'
 	      									});
 
 	      $link = sprintf (
