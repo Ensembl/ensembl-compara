@@ -403,20 +403,19 @@ sub content {
                       );
     }
     else {
-      my $rest_url = $hub->species_defs->ENSEMBL_REST_URL
-                  .'/genetree/id/'
-                  .$gt_id
-                  .'?content-type=text/javascript&aligned=1';
+      my $rest_url = $hub->species_defs->ENSEMBL_REST_URL;
 
       # Fall back to file generation if REST fails.
       # To make it work for e! archives
-      $ua->timeout(30);
+      $ua->timeout(10);
+
 	  	my $is_success = head($rest_url);
 	  	if ($is_success) {
-        my $wasabi = $hub->get_ExtURL('WASABI');
-        my $is_success = head($wasabi);
+        $rest_url .= '/genetree/id/'
+                  .$gt_id
+                  .'?content-type=text/javascript&aligned=1';
 
-        if ($is_success) {
+        if ($hub->wasabi_status) {
           $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
             'URL' => uri_escape($rest_url)
           });
