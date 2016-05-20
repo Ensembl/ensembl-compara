@@ -36,6 +36,17 @@ sub content {
   my $stable_id = $object->stable_id;
   my $extent    = $object->extent;
   
+  # set up VCF if needed
+  my $vdb           = $object->Obj->adaptor->db->get_db_adaptor('variation');
+  my $species_defs  = $self->hub->species_defs;
+  my $collections   = $species_defs->ENSEMBL_VCF_COLLECTIONS;
+
+  if($collections && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($collections->{'CONFIG'});
+    $vdb->vcf_root_dir($species_defs->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($collections->{'ENABLED'});
+  }
+  
   # Get two slices -  gene (4/3x) transcripts (+-EXTENT)
   foreach my $slice_type (
     [ 'transcript',     'normal', '20%'  ],
