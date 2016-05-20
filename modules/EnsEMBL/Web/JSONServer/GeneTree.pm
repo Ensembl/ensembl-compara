@@ -23,6 +23,9 @@ use warnings;
 use EnsEMBL::Web::File::Dynamic;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
+use JSON;
+use URI::Escape qw(uri_escape);
 
 use parent qw(EnsEMBL::Web::JSONServer);
 
@@ -53,17 +56,20 @@ sub json_fetch_wasabi {
   my $node = $tree->find_node_by_node_id($node_id);
 
   my $filename = $gt_id . '_' . $node_id;
-  my $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => 'xml');
   my $files;
 
   # Create tree and alingment file for wasabi and return its url paths
-  if($hub->param('treetype') && $hub->param('treetype') =~m/phyloxml/i) {
-    $files = create_phyloxml($self, $node, $file);
+  if ($hub->param('treetype') && $hub->param('treetype') =~m/phyloxml/i) {
+    $files = create_phyloxml($self, $node, $filename);
+  }
+  elsif ($hub->param('treetype') && $hub->param('treetype') =~m/json/i) {
+    $files = create_json($self, $node, $filename);
   }
   else {
     $files = create_newick($self, $node);
   }
 
+  # Remove old data
   $hub->session->purge_data(
     type => 'tree_files',
     code => 'wasabi');
@@ -80,21 +86,49 @@ sub json_fetch_wasabi {
 
 # Takes a compara tree and dumps the alignment and tree as text files.
 # Returns the urls of the files that contain the trees
-sub create_phyloxml {
+sub create_json {
   my $self = shift;
   my $tree = shift || die 'Need a ProteinTree object';
-  my $file_handle = shift;
+  my $filename = shift;
   my $method_type = ref($tree) =~ /Node/ ? 'subtrees' : 'trees';     
 
   my %args = (
+                'name'            => $filename,
                 'hub'             => $self->hub,
                 'sub_dir'         => 'gene_tree',
                 'input_drivers'   => ['IO'],
-                'output_drivers'  => ['IO'],
+                'output_drivers'  => ['IO']
               );
 
-  my $handle = IO::String->new();
+  my $file_handle = EnsEMBL::Web::File::User->new(hub => $self->hub, name => $filename, extension => 'json');
 
+  my $json = my $hash = Bio::EnsEMBL::Compara::Utils::GeneTreeHash->convert (
+    $tree, 
+    -no_sequences => 0, 
+    -aligned => 1, 
+    -cdna => 1, 
+    -species_common_name => 0, 
+    -exon_boundaries => 0, 
+    -full_tax_info => 0
+  );
+
+  $file_handle->write_line(to_json($json));
+
+  return {
+    tree => $file_handle->read_url
+  };
+}
+
+# Takes a compara tree and dumps phyloxml.
+# Returns the urls of the files that contain the trees
+sub create_phyloxml {
+  my $self = shift;
+  my $tree = shift || die 'Need a ProteinTree object';
+  my $filename = shift || 'tree';
+  my $file_handle = EnsEMBL::Web::File::User->new(hub => $self->hub, name => $filename, extension => 'xml');
+
+  my $method_type = ref($tree) =~ /Node/ ? 'subtrees' : 'trees';     
+  my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter->new(
       -SOURCE       => $SiteDefs::ENSEMBL_SITETYPE,
       -ALIGNED      => 1,
