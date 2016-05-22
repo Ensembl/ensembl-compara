@@ -25,7 +25,7 @@ SET session sql_mode='TRADITIONAL';
 
 -- Alter the gene_tree_root_attr table
 ALTER TABLE gene_tree_root_attr 
-    ADD COLUMN lca                  INT(10) UNSIGNED,
+    ADD COLUMN lca_node_id          INT(10) UNSIGNED,
     ADD COLUMN taxonomic_coverage   FLOAT(5),
     ADD COLUMN ratio_species_genes  FLOAT(5),
     ADD COLUMN model_name           VARCHAR(40),
