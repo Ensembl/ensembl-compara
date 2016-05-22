@@ -41,11 +41,7 @@ my $align_slice_adaptor = $reg->get_adaptor('Multi', 'compara', 'AlignSlice');
 my $slice_adaptor = $reg->get_adaptor($reference_species, 'core', 'Slice');
 
 #get the genome_db objects for human and chimp
-my $genome_dbs;
-foreach my $this_species (split(":", $set_of_species)) {
-	my $genome_db = $genome_db_adaptor->fetch_by_registry_name("$this_species");
-	push(@$genome_dbs, $genome_db);
-}
+my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [split(":", $set_of_species)]);
 
 #get the method_link_secies_set for human-chimp blastz whole genome alignments
 my $method_link_species_set =

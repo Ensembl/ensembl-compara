@@ -391,14 +391,6 @@ my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 
 throw("Registry configuration file has no data for connecting to <$dbname>")
     if (!$genome_db_adaptor);
 
-# Fill in the @$genome_dbs array.
-foreach my $this_species (split(":", $set_of_species)) {
-  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($this_species);
-
-  # Add Bio::EnsEMBL::Compara::GenomeDB object to the list
-  push(@$genome_dbs, $genome_db);
-}
-
 ##
 ##############################################################################################
 
@@ -417,7 +409,9 @@ my $method_link_species_set;
 if($species_set_name){
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name(
    $alignment_type, "$species_set_name");
-} else {
+} elsif ($set_of_species) {
+  my $species_list = [split(":", $set_of_species)];
+  my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species_list);
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
         $alignment_type, $genome_dbs);
 }

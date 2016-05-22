@@ -59,10 +59,11 @@ use strict;
 use warnings;
 
 use List::Util qw(max);
+use Scalar::Util qw(blessed looks_like_number);
 
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert :array);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor');
 
@@ -329,6 +330,67 @@ sub fetch_by_core_DBAdaptor {
 sub fetch_all_polyploid {   ## UNUSED
     my $self = shift;
     return [grep {$_->is_polyploid} $self->_id_cache->cached_values()];
+}
+
+
+=head2 fetch_all_by_mixed_ref_lists
+
+  Arg [-SPECIES_LIST] (opt)
+              : Arrayref. List of species defined as GenomeDBs, genome_db_id, production or Registry name
+  Arg [-TAXON_LIST] (opt)
+              : Arrayref. List of taxa defined as NCBITaxons, taxon_id (internal and terminal) or name
+  Example     : $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => ['human'], -TAXON_LIST => ['Carnivora',10090]);
+  Description : Fetch all the GenomeDBs that match any ref in the lists.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_mixed_ref_lists {
+    my $self = shift;
+
+    my ($species_list, $taxon_list) = rearrange([qw(SPECIES_LIST TAXON_LIST)], @_);
+
+    my %unique_gdbs = ();
+
+    # Find all the species. Accepted values are: GenomeDBs, genome_db_ids, and species names (incl. aliases)
+    foreach my $s (@{wrap_array($species_list)}) {
+        if (ref($s)) {
+            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
+            $unique_gdbs{$s->dbID} = $s;
+        } elsif (looks_like_number($s)) {
+            $unique_gdbs{$s} = $self->fetch_by_dbID($s) || throw("Could not find a GenomeDB with dbID=$s");
+        } else {
+            my $g = $self->fetch_by_name_assembly($s);
+               $g = $self->fetch_by_registry_name($s) unless $g;
+            throw("Could not find a GenomeDB named '$s'") unless $g;
+            $unique_gdbs{$g->dbID} = $g;
+        }
+    }
+
+    # Find all the taxa. Accepted values are: NCBITaxons, taxon_ids, and taxon names
+    my $ncbi_a = $self->db->get_NCBITaxonAdaptor();
+    foreach my $t (@{wrap_array($taxon_list)}) {
+        my $tax;
+        if (ref($t)) {
+            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon');
+            $tax = $t->dbID;
+        } elsif (looks_like_number($t)) {
+            $ncbi_a->fetch_node_by_taxon_id($t) || throw("Could not find a NCBITaxon with dbID=$t");
+            $tax = $t;
+        } else {
+            my $ntax = $ncbi_a->fetch_node_by_name($t);
+            throw("Could not find a NCBITaxon named '$t'") unless $ntax;
+            $tax = $ntax->dbID;
+        }
+        foreach my $gdb (@{$self->fetch_all_by_ancestral_taxon_id($tax)}) {
+            $unique_gdbs{$gdb->dbID} = $gdb;
+        }
+    }
+
+    return [values %unique_gdbs];
 }
 
 

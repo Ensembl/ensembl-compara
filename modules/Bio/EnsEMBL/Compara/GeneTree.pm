@@ -368,20 +368,8 @@ sub preload {
     $self->clear;
 
     if ($species) {
-        my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-        my %genome_db_ids = ();
-        foreach my $s (@$species) {
-            if (looks_like_number($s)) {
-                $genome_db_ids{$s} = 1;
-                next;
-            }
-            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
-            if ($gdb) {
-                $genome_db_ids{$gdb->dbID} = 1;
-            } else {
-                warn "$s could not be found in the GenomeDB entries\n";
-            }
-        }
+        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+        my %genome_db_ids = map {$_ => 1} @$genome_dbs;
         my @to_delete;
         my $root = $self->root;
         foreach my $leaf (@{$root->get_all_leaves}) {
@@ -606,15 +594,8 @@ sub get_alignment_of_homologues {
 
     if ($species) {
         my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-        my %genome_db_ids = ();
-        foreach my $s (@$species) {
-            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
-            if ($gdb) {
-                $genome_db_ids{$gdb->dbID} = 1;
-            } else {
-                warn "$s could not be found in the GenomeDB entries\n";
-            }
-        }
+        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+        my %genome_db_ids = map {$_ => 1} @$genome_dbs;
         @homologous_genes = grep {$genome_db_ids{$_->genome_db_id}} @homologous_genes;
     }
 

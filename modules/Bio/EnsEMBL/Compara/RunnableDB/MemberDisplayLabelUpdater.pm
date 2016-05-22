@@ -148,16 +148,8 @@ sub fetch_input {
 
   my $genome_db_adaptor = $self->compara_dba()->get_GenomeDBAdaptor();  
 
-  my @genome_dbs = ();
-  foreach my $species (@$species_list) {
-    my $genome_db = ( looks_like_number( $species )
-        ? $genome_db_adaptor->fetch_by_dbID( $species )
-        : $genome_db_adaptor->fetch_by_registry_name( $species ) )
-    or die "Could not fetch genome_db object given '$species'";
-
-    push @genome_dbs, $genome_db;
-  }
-  $self->param('genome_dbs', \@genome_dbs);
+  my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species_list);
+  $self->param('genome_dbs', $genome_dbs);
 }
 
 

@@ -96,7 +96,8 @@ sub fetch_all_by_Member {
 
   if ($target_species or $target_taxon) {
     throw("-METHOD_LINK_SPECIES_SET cannot be used together with -TARGET_SPECIES or -TARGET_TAXON") if $method_link_species_set;
-    $method_link_species_set = $self->_find_target_mlsss($member->genome_db, $target_species, $target_taxon, $method_link_type);
+    my $unique_gdbs = $self->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $target_species, -TAXON_LIST => $target_taxon);
+    $method_link_species_set = $self->_find_target_mlsss($member->genome_db, $unique_gdbs, $method_link_type);
     # Since $method_link_type has been used to produce $method_link_species_set, we can unset it
     $method_link_type = undef;
 
@@ -166,50 +167,7 @@ sub fetch_all_by_Member {
 }
 
 sub _find_target_mlsss {
-    my ($self, $query_genome_db, $target_species, $target_taxon, $method_link_types) = @_;
-
-    my $gdb_a = $self->db->get_GenomeDBAdaptor();
-    my $ncbi_a = $self->db->get_NCBITaxonAdaptor();
-    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor();
-
-    my %unique_gdbs = ();
-
-    # Find all the target species. Accepted values are: object instances,
-    # genome_db_ids, and species names (incl. aliases)
-    $target_species = [$target_species] if $target_species and not ref($target_species);
-    foreach my $s (@$target_species) {
-        if (ref($s)) {
-            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
-            $unique_gdbs{$s->dbID} = $s;
-        } elsif (looks_like_number($s)) {
-            $unique_gdbs{$s} = $gdb_a->fetch_by_dbID($s) || throw("Could not find a GenomeDB with dbID=$s");
-        } else {
-            my $g = $gdb_a->fetch_by_name_assembly($s);
-               $g = $gdb_a->fetch_by_registry_name($s) unless $g;
-            throw("Could not find a GenomeDB named '$s'") unless $g;
-            $unique_gdbs{$g->dbID} = $g;
-        }
-    }
-
-    # Find all the target taxa. Accepted values are: object instances,
-    # taxon_ids, and taxon names
-    $target_taxon = [$target_taxon] if $target_taxon and not ref($target_taxon);
-    foreach my $t (@$target_taxon) {
-        my $tax;
-        if (ref($t)) {
-            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon');
-            $tax = $t->dbID;
-        } elsif (looks_like_number($t)) {
-            $tax = $t; #$ncbi_a->fetch_node_by_taxon_id($t) || throw("Could not find a NCBITaxon with dbID=$t");
-        } else {
-            my $ntax = $ncbi_a->fetch_node_by_name($t);
-            throw("Could not find a NCBITaxon named '$t'") unless $ntax;
-            $tax = $ntax->dbID;
-        }
-        foreach my $gdb (@{$gdb_a->fetch_all_by_ancestral_taxon_id($tax)}) {
-            $unique_gdbs{$gdb->dbID} = $gdb;
-        }
-    }
+    my ($self, $query_genome_db, $unique_gdbs, $method_link_types) = @_;
 
     if (not defined $method_link_types) {
         $method_link_types = [keys %single_species_ml];
@@ -218,8 +176,9 @@ sub _find_target_mlsss {
     }
 
     my @all_mlss_ids = ();
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor();
     foreach my $ml (@{$method_link_types}) {
-        foreach my $target_genome_db (values %unique_gdbs) {
+        foreach my $target_genome_db (@$unique_gdbs) {
             my $mlss;
             if ($query_genome_db->dbID == $target_genome_db->dbID) {
                 next unless $single_species_ml{$ml};
@@ -246,7 +205,8 @@ sub fetch_all_by_Member_paired_species {  ## DEPRECATED
 
   deprecate("fetch_all_by_Member_paired_species() is deprecated and will be removed in e86. Use fetch_all_by_Member(\$member, -TARGET_SPECIES => \$species) instead (possibly with -METHOD_LINK_TYPE)");
 
-  my $target_mlss = $self->_find_target_mlsss($member->genome_db, [$species], [], $method_link_types);
+  my $target_gdbs = $self->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [$species]);
+  my $target_mlss = $self->_find_target_mlsss($member->genome_db, $target_gdbs, $method_link_types);
 
   return $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $target_mlss);
 }

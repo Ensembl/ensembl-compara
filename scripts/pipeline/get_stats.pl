@@ -234,18 +234,15 @@ sub get_all_mlss_from_species_and_type {
     throw "Cannot get Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor" if (!$genome_db_adaptor);
     
     my $mlss_by_dbID;
+    my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+    throw("No species found from '$species'") unless scalar(@$genome_dbs);
   
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[0]) or
-        $genome_db_adaptor->fetch_by_registry_name($species->[0]);
-    throw("Cannot find species <$species->[0]>") if (!$genome_db);
+    my $genome_db = $genome_dbs->[0];
     $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
     $mlss_by_dbID = {map {$_->dbID, $_} @{$method_link_species_sets}};
 
-    for (my $i=1; $i<@$species; $i++) {
-      my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[$i]) or
-          $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
-      $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
-      throw("Cannot find species <$species->[$i]>") if (!$genome_db);
+    for (my $i=1; $i<@$genome_dbs; $i++) {
+      my $genome_db = $genome_dbs->[$i];
       $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
       my $these_mlss_by_dbID = {map {$_->dbID, $_} @{$method_link_species_sets}};
       foreach my $dbID (keys %$mlss_by_dbID) {

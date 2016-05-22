@@ -320,8 +320,6 @@ my $query_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region, $seq_
 throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end")
     if (!$query_slice);
 
-# Getting all the Bio::EnsEMBL::Compara::GenomeDB objects
-my $genome_db;
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 throw("Registry configuration file has no data for connecting to <$dbname>")
     if (!$genome_db_adaptor);
@@ -334,21 +332,11 @@ my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
 
 my $method_link_species_set;
 if ($set_of_species) {
-    foreach my $this_species ($query_species, split(":", $set_of_species)) {
-        #my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-        #    $this_species, 'core', 'MetaContainer');
-  #throw("Registry configuration file has no data for connecting to <$this_species>")
-        #    if (!$this_meta_container_adaptor);
-        #my $this_binomial_id = $this_meta_container_adaptor->get_scientific_name;
-        
-        # Fetch Bio::EnsEMBL::Compara::GenomeDB object
-        #$genome_db->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);
-        $genome_db->{$this_species} = $genome_db_adaptor->fetch_by_registry_name($this_species);
-    }
-    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-                                                                                                        $alignment_type, [values(%$genome_db)]);
-throw("The database does not contain any $alignment_type data for ".join(", ", keys(%$genome_db))."!")
-  if (!$method_link_species_set);
+    # Getting all the Bio::EnsEMBL::Compara::GenomeDB objects
+    my $species_list = [$query_species, split(":", $set_of_species)];
+    my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species_list);
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($alignment_type, $genome_dbs);
+    throw("The database does not contain any $alignment_type data for ".join(", ", map {$_->name} @$genome_dbs)."!") if (!$method_link_species_set);
 } elsif ($species_set_name) {
     $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($alignment_type, $species_set_name);
 }
