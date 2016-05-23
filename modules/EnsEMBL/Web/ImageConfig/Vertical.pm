@@ -264,7 +264,11 @@ sub get_bigwig_features {
 }
 
 sub create_user_features {
-## Deprecated - use load_user_track_data instead
+warn "############### DEPRECATED #################
+THIS METHOD WILL BE REMOVED IN RELEASE 86 - 
+USE load_user_track_data INSTEAD
+###########################################     
+";
   my $self   = shift;
   my $hub    = $self->hub;
   my $menu   = $self->get_node('user_data');
