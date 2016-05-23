@@ -59,9 +59,11 @@ use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::MemberSet;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
+
+use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 sub param_defaults {
     my $self = shift;
@@ -249,7 +251,7 @@ sub run {
         $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
-    $self->param('query_set')->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
     $self->compara_dba->dbc->disconnect_if_idle();
 
     my $cross_pafs = [];

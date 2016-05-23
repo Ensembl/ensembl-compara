@@ -86,6 +86,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
@@ -402,7 +403,7 @@ sub get_SimpleAlign {
         $sa->id("$self");
     }
 
-    $self->_load_all_missing_sequences($seq_type);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
 
     my $seq_hash = {};
 
@@ -660,6 +661,8 @@ sub get_4D_SimpleAlign {
     my $keep_gaps = shift;
     my $aa_must_be_identical = shift;
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
+
     my $sa = Bio::SimpleAlign->new();
 
     my %member_seqstr;
@@ -823,6 +826,8 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 sub update_alignment_stats {
     my $self = shift;
     my $seq_type = shift;
+
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);

@@ -108,8 +108,7 @@ sub fetch_input {
     # Note that we have already filtered the list at this stage, to reduce
     # the number of sequences to load, and thus the memory usage
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, \@good_leaves);
-
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => \@good_leaves)->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, \@good_leaves);
 
     # Note that if $self->param('genome_db_id') is set, the hash will
     # contain a single entry

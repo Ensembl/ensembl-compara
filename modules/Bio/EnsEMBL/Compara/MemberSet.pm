@@ -89,6 +89,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -484,7 +485,7 @@ sub print_sequences_to_file {
 
     my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
-    $self->_load_all_missing_sequences($seq_type);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self);
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
@@ -514,25 +515,7 @@ sub _load_all_missing_sequences {
     }
     my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
 
-    my $internal_sequence_key = $seq_type ? "_sequence_$seq_type" : '_sequence';
-    my $internal_key_for_adaptor = $seq_type ? 'dbID' : '_sequence_id';
-
-    my %key2member = ();
-    foreach my $set (@$sets) {
-        foreach my $member (@{$set->get_all_Members}) {
-            next if !$member->isa('Bio::EnsEMBL::Compara::SeqMember');
-            next if $member->{$internal_sequence_key};
-            next if !$member->{$internal_key_for_adaptor};
-            push @{$key2member{$member->{$internal_key_for_adaptor}}}, $member;
-        }
-    }
-    my @all_keys = keys %key2member;
-
-    my $seqs = $seq_type ? $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@all_keys, $seq_type)
-                         : $sequence_adaptor->fetch_by_dbIDs(\@all_keys);
-    while (my ($id, $seq) = each %$seqs) {
-        $_->{$internal_sequence_key} = $seq for @{$key2member{$id}};
-    }
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($sequence_adaptor, $seq_type, $sets);
 }
 
 

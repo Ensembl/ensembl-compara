@@ -43,7 +43,7 @@ package Bio::EnsEMBL::Compara::Utils::Preloader;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Scalar qw(wrap_array assert_ref);
+use Bio::EnsEMBL::Utils::Scalar qw(wrap_array assert_ref check_ref);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
@@ -151,6 +151,46 @@ sub _load_and_attach_all {
         $_->{$object_internal_key} = $o for @{$key2iniobject{$o->dbID}};
     }
     return $all_new_objects;
+}
+
+
+=head2 load_all_sequences
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor $sequence_adaptor. The adaptor that is used to retrieve the sequences
+  Arg[2]      : (optional) $seq_type. Used to load the non-default sequences
+  Arg[3..n]   : Objects or arrays. MemberSets are automatically expanded with get_all_Members()
+  Example     : load_all_sequences($sequence_adaptor, 'cds', $gene_tree);
+  Description : Method to load all the sequences (of a particular type) in SeqMembers
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_sequences {
+    my ($sequence_adaptor, $seq_type, @args) = @_;
+
+    my $internal_sequence_key = $seq_type ? "_sequence_$seq_type" : '_sequence';
+    my $internal_key_for_adaptor = $seq_type ? 'dbID' : '_sequence_id';
+
+    my %key2member = ();
+    foreach my $a (@args) {
+        my $members = check_ref($a, 'ARRAY') ? $a : (check_ref($a, 'Bio::EnsEMBL::Compara::MemberSet') ? $a->get_all_Members : [$a]);
+        foreach my $member (@$members) {
+            next if !check_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{$internal_sequence_key};
+            next if !$member->{$internal_key_for_adaptor};
+            push @{$key2member{$member->{$internal_key_for_adaptor}}}, $member;
+        }
+    }
+    my @all_keys = keys %key2member;
+
+    my $seqs = $seq_type ? $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@all_keys, $seq_type)
+                         : $sequence_adaptor->fetch_by_dbIDs(\@all_keys);
+    while (my ($id, $seq) = each %$seqs) {
+        $_->{$internal_sequence_key} = $seq for @{$key2member{$id}};
+    }
 }
 
 

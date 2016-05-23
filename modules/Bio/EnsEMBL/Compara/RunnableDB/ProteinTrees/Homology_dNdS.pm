@@ -135,7 +135,6 @@ sub calc_genetic_distance {
   #print("use codeml to get genetic distance of homology\n");
   print $homology->toString if ($self->debug);
   
-  $homology->_load_all_missing_sequences();
   my $aln = $homology->get_SimpleAlign(-seq_type => 'cds', -ID_TYPE => 'member');
 
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
