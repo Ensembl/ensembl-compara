@@ -35,7 +35,6 @@ ALTER TABLE species_set_tag
 	ADD KEY tag (tag);
  
 ALTER TABLE method_link_species_set_tag
-	ADD PRIMARY KEY (method_link_species_set_id,tag),
 	ADD KEY tag (tag);
  
 ALTER TABLE species_tree_node_tag
