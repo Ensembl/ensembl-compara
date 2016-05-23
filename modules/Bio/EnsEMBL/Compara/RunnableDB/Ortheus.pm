@@ -968,13 +968,6 @@ sub _extract_sequence {
 ##########################################
 
 
-sub synteny_region_id {
-  my ($self, $value) = shift;
-  $self->param('synteny_region_id') = shift if(@_);
-  return $self->param('synteny_region_id');
-}
-
-
 sub get_species_tree {
   my $self = shift;
 
