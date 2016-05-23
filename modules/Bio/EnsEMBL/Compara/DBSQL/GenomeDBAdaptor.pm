@@ -62,7 +62,9 @@ use List::Util qw(max);
 use Scalar::Util qw(blessed looks_like_number);
 
 use Bio::EnsEMBL::Compara::GenomeDB;
+
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :array);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor');
