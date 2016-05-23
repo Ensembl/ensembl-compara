@@ -69,7 +69,7 @@ sub content {
     ## Give preference to the GCA accession id, as it is unique
     my $assembly = $sd->get_config($hub->param('species'), 'ASSEMBLY_ACCESSION') 
                     || $sd->get_config($hub->param('species'), 'ASSEMBLY_NAME');
-    $post_content->{'assembly'} = $sd->get_config($assembly);
+    $post_content->{'assembly'} = $assembly;
   }
 
   my $args = {'method' => 'post', 'content' => $post_content};
