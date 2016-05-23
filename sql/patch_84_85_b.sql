@@ -40,4 +40,4 @@ DELETE FROM gene_tree_root_tag WHERE tag IN ( 'model_name','division');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_b.sql|add_attributes');
+  VALUES (NULL, 'patch', 'patch_84_85_b.sql|gene_tree_root_attr');

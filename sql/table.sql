@@ -2020,20 +2020,18 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '84');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '85');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_84_85_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_b.sql|gene_tree_attributes_table');
+  VALUES (NULL, 'patch', 'patch_84_85_b.sql|gene_tree_root_attr');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
+  VALUES (NULL, 'patch', 'patch_84_85_c.sql|not_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_e.sql|gene_tree_object_store');
+  VALUES (NULL, 'patch', 'patch_84_85_d.sql|wga_size_distribution');
 
