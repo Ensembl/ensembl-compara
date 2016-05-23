@@ -374,8 +374,7 @@ CREATE TABLE method_link_species_set_attr (
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  PRIMARY KEY (method_link_species_set_id),
-  UNIQUE KEY method_link_id (method_link_id,species_set_id)
+  PRIMARY KEY (method_link_species_set_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
