@@ -657,6 +657,8 @@ CREATE TABLE dnafrag_region (
   FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
+	-- NO PK: would need to do (synteny_region_id,dnafrag_id,dnafrag_start)
+
   KEY synteny (synteny_region_id,dnafrag_id),
   KEY synteny_reversed (dnafrag_id,synteny_region_id)
 
@@ -888,6 +890,8 @@ CREATE TABLE constrained_element (
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+	-- NO PK. this table is voluntarily denormalized.
 
   KEY constrained_element_id_idx (constrained_element_id),
   KEY mlssid_idx (method_link_species_set_id),
@@ -1439,6 +1443,8 @@ CREATE TABLE gene_tree_node_tag (
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
+	-- NO PK because unicity is not enforced
+
   KEY node_id_tag (node_id, tag),
   KEY tag (tag)
 
@@ -1463,6 +1469,8 @@ CREATE TABLE gene_tree_root_tag (
   value                  mediumtext NOT NULL,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+	-- NO PK because unicity is not enforced
 
   KEY root_id_tag (root_id, tag),
   KEY (root_id),
