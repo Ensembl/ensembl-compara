@@ -39,10 +39,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self         = shift @_;
     my $gene_tree_id = $self->param_required('gene_tree_id');
-    $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
-    my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label( $self->param('mlss_id'), 'default' ) ||
-      die "Could not fetch species tree";
+    my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    my $species_tree = $gene_tree->method_link_species_set->species_tree;
 
     #print Dumper $gene_tree;
     $self->param( 'gene_tree',    $gene_tree );

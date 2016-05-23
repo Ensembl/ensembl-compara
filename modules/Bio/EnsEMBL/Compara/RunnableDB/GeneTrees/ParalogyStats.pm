@@ -85,8 +85,7 @@ sub fetch_input {
 
     my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('species_tree_label'));
+    my $species_tree = $mlss->species_tree($self->param('species_tree_label'));
     my %hash_stn_id  = map {$_->dbID => $_} @{$species_tree->root->get_all_nodes()};
 
     my $data1 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies, undef, $mlss_id);
