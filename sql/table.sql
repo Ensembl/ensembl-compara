@@ -244,7 +244,8 @@ CREATE TABLE species_set_tag (
 
   FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
-  UNIQUE KEY tag_species_set_id (species_set_id,tag)
+  PRIMARY KEY (species_set_id,tag),
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -335,7 +336,8 @@ CREATE TABLE method_link_species_set_tag (
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  PRIMARY KEY tag_mlss_id (method_link_species_set_id,tag)
+  PRIMARY KEY (method_link_species_set_id,tag),
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -469,8 +471,6 @@ CREATE TABLE `species_tree_node_tag` (
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
 
   KEY `node_id_tag` (`node_id`,`tag`),
-  KEY `tag_node_id` (`tag`,`node_id`),
-  KEY `node_id` (`node_id`),
   KEY `tag` (`tag`)
   
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -1440,7 +1440,7 @@ CREATE TABLE gene_tree_node_tag (
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   KEY node_id_tag (node_id, tag),
-  KEY (node_id)
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -2012,7 +2012,8 @@ CREATE TABLE `CAFE_species_gene` (
   FOREIGN KEY (cafe_gene_family_id) REFERENCES CAFE_gene_family(cafe_gene_family_id),
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
 
-  KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
+  PRIMARY KEY (cafe_gene_family_id, node_id)
+
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
@@ -2036,4 +2037,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_d.sql|wga_size_distribution');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_e.sql|md5sum_sequence');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_f.sql|keys');
 
