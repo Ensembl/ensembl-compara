@@ -743,7 +743,7 @@ sub three_prime_co_located{
   
     return [
       'Variants with equivalent alleles',
-      sprintf('<p>This variant has <strong>%s</strong> variants with equivalent alleles - <a title="Click to show variants" rel="shifted_co_located" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="shifted_co_located twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      sprintf('<p>There are <strong>%s</strong> variants with equivalent alleles to this variant- <a title="Click to show variants" rel="shifted_co_located" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="shifted_co_located twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? 'open' : 'closed',        
         $show ? 'Hide' : 'Show',
