@@ -21,6 +21,8 @@ package Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -161,8 +163,10 @@ sub store {
 
     return 0 unless($sequence);
 
-    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-    $sth->execute($sequence, length($sequence));
+    my $md5sum = md5_hex($sequence);
+
+    my $sth = $self->prepare("INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)");
+    $sth->execute($sequence, length($sequence), $md5sum);
     my $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
     $sth->finish;
 
@@ -170,31 +174,26 @@ sub store {
 }
 
 sub store_no_redundancy {
-  my ($self, $sequence) = @_;
-  my $seqID;
+    my ($self, $sequence) = @_;
 
-  return 0 unless($sequence);
+    return 0 unless($sequence);
 
-  # NOTE: disconnect_when_inactive() OK: we need to make sure we don't
-  # disconnect just after acquiring the lock
-  # Use $self->dbc->prevent_disconnect(sub {...} ) ?
-  my $dcs = $self->dbc->disconnect_when_inactive();
-  $self->dbc->disconnect_when_inactive(0);
+    my $md5sum = md5_hex($sequence);
 
-  $self->dbc->do("LOCK TABLE sequence WRITE");
+    # We insert no matter what
+    $self->dbc->do('INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
 
-    my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
-    $sth->execute($sequence);
-    ($seqID) = $sth->fetchrow_array();
-    $sth->finish;
+    # And we delete the duplicates (the smallest sequence_id is the reference, i.e first come first served)
+    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
+    die "The sequence disappeared !\n" unless scalar(@$matching_ids);
+    my $seqID = shift @$matching_ids;
 
-  if(!$seqID) {
-    $seqID = $self->store($sequence);
-  }
+    if (scalar(@$matching_ids)) {
+        my $other_ids = join(",", @$matching_ids);
+        $self->dbc->do("DELETE FROM sequence WHERE sequence_id IN ($other_ids)");
+    }
 
-  $self->dbc->do("UNLOCK TABLES");
-  $self->dbc->disconnect_when_inactive($dcs);
-  return $seqID;
+    return $seqID;
 }
 
 sub store_other_sequence {

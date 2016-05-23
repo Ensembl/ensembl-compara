@@ -919,10 +919,11 @@ CREATE TABLE constrained_element (
 CREATE TABLE sequence (
   sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(10) NOT NULL,
+  md5sum                      CHAR(32) NOT NULL,
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),
-  KEY sequence (sequence(18))
+  KEY md5sum (md5sum)
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
@@ -2034,4 +2035,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_c.sql|not_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_d.sql|wga_size_distribution');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_e.sql|md5sum_sequence');
 
