@@ -25,6 +25,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 my $tree_id_file;
 my $one_tree_id;
@@ -163,6 +164,11 @@ foreach my $tree_id (@tree_ids) {
   $tree_id = "tree.".$tree_id;
   my %fasta_names = ('protein' => 'aa.fasta', 'ncrna' => 'nt.fasta');
 
+
+  if ($aln_out or $nh_out or $nhx_out) {
+      Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($dba->get_DnaFragAdaptor, $tree->get_all_Members);
+  }
+
   dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
@@ -178,6 +184,8 @@ foreach my $tree_id (@tree_ids) {
 sub dumpTreeMultipleAlignment {
   my $tree = shift;
   my $fh = shift;
+
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($dba->get_SequenceAdaptor, $aa ? undef : 'cds', $tree->get_all_Members);
 
   my @aligned_seqs;
   foreach my $leaf (@{$tree->get_all_leaves}) {
