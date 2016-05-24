@@ -500,24 +500,6 @@ sub print_sequences_to_file {
     return scalar(keys %seq_hash);
 }
 
-sub _load_all_missing_sequences {
-    my ($self, $seq_type, @other_sets) = @_;
-
-    my $sets = ref($self) ? [$self, @other_sets] : \@other_sets;
-    return unless scalar(@$sets);
-
-    my $one_set = $sets->[0];
-    my $random_adaptor = $one_set->adaptor;
-    unless ($random_adaptor) {
-        my $m = $one_set->get_all_Members->[0];
-        $random_adaptor = $m->adaptor if $m;
-        return unless $random_adaptor;
-    }
-    my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
-
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($sequence_adaptor, $seq_type, $sets);
-}
-
 
 #################################
 #                               #
