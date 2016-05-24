@@ -402,6 +402,8 @@ sub preload {
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
+    # We can't use _load_and_attach_all because _species_tree_node_id
+    # is not stored as a key in the hash (it's a tag)
     my $species_tree_nodes = $self->method_link_species_set->species_tree->root->get_all_nodes;
     my %stn_id_lookup = map {$_->node_id => $_} @$species_tree_nodes;
     foreach my $node (@$all_nodes) {
@@ -410,13 +412,6 @@ sub preload {
         }
         $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
     }
-
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
-
-    my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $self->get_all_Members, $species_tree_nodes);
-    $self->adaptor->db->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
-
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
 
     $self->{_preloaded} = 1;
 }
