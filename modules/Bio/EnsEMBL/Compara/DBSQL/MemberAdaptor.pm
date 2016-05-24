@@ -113,7 +113,7 @@ sub fetch_all_by_stable_id_list {
     throw('MemberAdaptor::fetch_all_by_stable_id_list() must have a list of stable_ids') if (not ref $stable_ids) or (ref $stable_ids ne 'ARRAY');
 
     return [] if (!$stable_ids or !@$stable_ids);
-    my $constraint = sprintf('m.stable_id IN ("%s")', join(q{","}, @$stable_ids));
+    my $constraint = $self->generate_in_constraint($stable_ids, 'm.stable_id', SQL_VARCHAR);
     return $self->generic_fetch($constraint);
 }
 

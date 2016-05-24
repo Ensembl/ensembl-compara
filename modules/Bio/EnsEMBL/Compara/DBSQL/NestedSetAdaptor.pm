@@ -143,11 +143,8 @@ sub fetch_all_by_dbID_list {
 
     return [] unless scalar(@$node_ids);
 
-    my $placeholders = join(',', ('?') x scalar(@$node_ids));
-    $self->bind_param_generic_fetch($_, SQL_INTEGER) for @$node_ids;
-
     my $table = ($self->_tables)[0]->[1];
-    my $constraint = "$table.node_id IN ($placeholders)";
+    my $constraint = $self->generate_in_constraint($node_ids, $table.'.node_id', SQL_INTEGER);
 
     return $self->generic_fetch($constraint);
 }
