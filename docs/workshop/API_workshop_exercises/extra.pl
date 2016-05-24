@@ -3,6 +3,8 @@ use warnings;
 
 use Bio::EnsEMBL::Registry;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 ## Load the registry automatically
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
@@ -119,6 +121,7 @@ foreach my $node (@{$this_tree->get_all_nodes}) {
             }
         }
         if ($found_safb) {
+            Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($reg->get_adaptor("Multi", "compara", "DnaFrag"), $node->get_all_leaves);
             $sarco_subtree = $node;
             print "The subtree is: ";
             $node->print_node;
@@ -154,6 +157,8 @@ foreach my $leaf (@{$sarco_subtree->get_all_leaves}) {
 foreach my $species_name (keys %species) {
     my $all_orthologies = $homology_adaptor->fetch_all_by_Member_paired_species($gene_member, $species_name, ['ENSEMBL_ORTHOLOGUES']);
     print $species_name, ": ", scalar(@{$all_orthologies}). " orthologues\n";
+
+    Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($reg->get_adaptor("Multi", "compara", "AlignedMember"), $all_orthologies);
 
     my $best_id = 0;
     my $best_orthologue = undef;
