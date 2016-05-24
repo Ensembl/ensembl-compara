@@ -788,34 +788,12 @@ sub get_imageconfig {
 }
 
 sub fetch_userdata_by_id {
+## Just a wrapper around get_data_from_session now that userdata dbs have been retired
   my ($self, $record_id) = @_;
-  
   return unless $record_id;
  
   my ($type, $code, $user_id) = split '_', $record_id;
-  my $data = {};
-  
-  if ($type eq 'user') {
-    my $user    = $self->user;
-    return unless $user && $user->id == $user_id;
-  
-    my $fa       = $self->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
-    my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
-    my $features = $fa->fetch_all_by_logic_name($record_id);
-    my $analysis = $aa->fetch_by_logic_name($record_id);
-    if ($analysis) {
-      my $config   = $analysis->web_data;
-    
-      $config->{'track_name'}  = $analysis->description   || $record_id;
-      $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
-    
-      $data->{$record_id} = { features => $features, config => $config };
-    }
-  
-  } else {
-    $data = $self->get_data_from_session($type, $code);
-  }
-  return $data;
+  return $self->get_data_from_session($type, $code);
 }
 
 sub get_data_from_session {

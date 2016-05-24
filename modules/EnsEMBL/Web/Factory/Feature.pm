@@ -284,27 +284,6 @@ sub _create_ProteinAlignFeature {
   return $features;
 }
 
-sub create_UserDataFeature {
-  my ($self, $logic_name) = @_;
-  my $hub      = $self->hub;
-  my $dba      = $hub->database('userdata');
-  my $features = [];
-  
-  return [] unless $dba;
-
-  $dba->dnadb($self->database('core'));
-
-  ## Have to do the fetch per-chromosome, since API doesn't have suitable call
-  my $chrs = $self->species_defs->ENSEMBL_CHROMOSOMES;
-  
-  foreach my $chr (@$chrs) {
-    my $slice = $self->database('core')->get_SliceAdaptor->fetch_by_region(undef, $chr);
-    push @$features, @{$dba->get_adaptor('DnaAlignFeature')->fetch_all_by_Slice($slice, $logic_name)} if $slice;
-  }
-  
-  return { UserDataAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($hub, @$features) };
-}
-
 sub _create_Gene {
   ### Fetches all the genes for a given identifier 
   ### Args: db

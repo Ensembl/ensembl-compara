@@ -749,34 +749,17 @@ sub load_user_tracks {
       };
     }
     
-    ## Uploads that have been saved to the userdata database
+    ## Uploads that have been saved to the persistent filespace 
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
-     
-      if ($entry->analyses) {
-        ## Data saved to userdata db
-        ## TODO - remove in due course
-        foreach my $analysis (split /, /, $entry->analyses) {
-          $upload_sources{$analysis} = {
-            source_name => $name,
-            source_type => 'user',
-            assembly    => $assembly,
-            style       => $entry->style,
-          };
-        
-          $self->_compare_assemblies($entry, $session);
-        }
-      }
-      else {
-        ## New saved-to-permanent-location
-        my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
-        $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
-        $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
-        my $description = 'Data that has been saved to the web server. ';
-        my $extra_desc  = $entry->description;
-        $description   .= add_links($extra_desc) if $extra_desc;
-        my $display     = $self->check_threshold($entry->display);
-        $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
+      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
+      $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
+      $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+      my $description = 'Data that has been saved to the web server. ';
+      my $extra_desc  = $entry->description;
+      $description   .= add_links($extra_desc) if $extra_desc;
+      my $display     = $self->check_threshold($entry->display);
+      $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
@@ -790,8 +773,7 @@ sub load_user_tracks {
             description     => $description, 
             display         => $display,
             default_display => $entry->display || $default,
-        }));
-      }
+      }));
     }
   }
   
@@ -825,50 +807,6 @@ sub load_user_tracks {
     }
   }
   
-  ## And finally any saved uploads
-  ## TODO - remove once we have removed the userdata databases
-  if (keys %upload_sources) {
-    my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
-    my $dba        = $dbs->get_DBAdaptor('userdata');
-    my $an_adaptor = $dba->get_adaptor('Analysis');
-    my @tracks;
-    
-    foreach my $logic_name (keys %upload_sources) {
-      my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
-      
-      next unless $analysis;
-   
-      $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
-     
-      my ($strand, $renderers, $default) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
-      my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
-      my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
-      my $caption     = encode_entities($analysis->display_label);
-         $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
-         $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
-      
-      push @tracks, [ $logic_name, $caption, {
-        external        => 'user',
-        glyphset        => '_user_data',
-        colourset       => 'userdata',
-        sub_type        => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
-        renderers       => $renderers,
-        source_name     => $source_name,
-        logic_name      => $logic_name,
-        caption         => $caption,
-        data_type       => $analysis->module,
-        description     => $description,
-        display         => 'off',
-        default_display => $default,
-        style           => $analysis->web_data,
-        format          => $analysis->program_version,
-        strand      => $strand,
-      }];
-    }
-   
-    $menu->append($self->create_track(@$_)) for sort { lc $a->[2]{'source_name'} cmp lc $b->[2]{'source_name'} || lc $a->[1] cmp lc $b->[1] } @tracks;
-  }
- 
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 

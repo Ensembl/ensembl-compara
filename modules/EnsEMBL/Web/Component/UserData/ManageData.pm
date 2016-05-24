@@ -34,8 +34,6 @@ sub _init {
   $self->ajaxable(0);
 }
 
-our $has_db_content = 0;
-
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -46,7 +44,7 @@ sub content {
   my $not_found    = 0;
   my (@data, @rows, $html);  
  
-  my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
+  my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
   push @data, map $user->get_records($_), qw(uploads urls) if $user;
   push @data, @temp_data;
@@ -94,9 +92,8 @@ sub content {
       }
 
       my $row = $self->table_row($file, $sharers);
-      
-      my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
-         ($id, $type) = (($file->{'code'} =~ /_(\d+)$/), 'session') unless $type;
+     
+      my ($id, $type) = ($file->{'code'} =~ /^(\w+)_(\d+)$/);
       
       if (                                                              # This is a shared record (belonging to another user) if:
         !($user_record && $user && $file->created_by == $user->id) && ( # it's not a user record which was created by this user             AND  (stops $shared being true for the same user id with multiple session ids)
@@ -109,14 +106,6 @@ sub content {
       }
       
       push @rows, $row;
-    }
-
-    ## TEMPORARY NOTICE
-    ## TODO - Remove in release 86 
-    if ($has_db_content) {
-      $html .= $self->warning_panel('Notice',
-       "In Release 84 we have a new, improved system for saving your uploaded data, and the old system will be retired in Release 85. If you wish to continue to use uploads saved before Release 84, please delete them and re-upload your data."
-      );
     }
 
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
@@ -214,7 +203,6 @@ sub table_row {
   }
   
   if ($user_record) {
-    $has_db_content = 1 if $file->data->{'analyses'};
     $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
@@ -251,7 +239,7 @@ sub table_row {
         r        => $file->{'nearest'},
         __clear  => 1
       }),
-      join ',', map $_ ? "$_=on" : (), $file->{'analyses'} ? split ', ', $file->{'analyses'} : join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
+      join ',', map $_ ? "$_=on" : (), join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
     );
   }
  
