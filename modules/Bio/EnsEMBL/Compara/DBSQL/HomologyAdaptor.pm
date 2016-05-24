@@ -293,7 +293,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     }
 
     if (defined $species_tree_node_ids) {
-        $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
+        return [] unless scalar(@$species_tree_node_ids);
+        $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', @$species_tree_node_ids));
     }
 
     return $self->generic_fetch($constraint);
