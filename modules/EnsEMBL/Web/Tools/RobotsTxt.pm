@@ -68,10 +68,6 @@ sub create {
     # Doxygen
     push @lines, _lines("Disallow", "/info/docs/Doxygen");
   
-    if (-e "$root/sitemaps/sitemap-index.xml") {
-      push @lines, _lines("Sitemap", "http://www.ensembl.org/sitemap-index.xml");
-    }
-  
     push @lines, _lines("User-agent", "W3C-checklink");
     push @lines, _lines("Allow", "/info");
   
