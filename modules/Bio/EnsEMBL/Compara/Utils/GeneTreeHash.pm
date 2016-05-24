@@ -134,6 +134,20 @@ sub _head_node {
     $hash->{id} = $tree->stable_id();
   }
 
+  # Bulk-load of all we need
+  my $compara_dba = $tree->adaptor->db;
+  my $members = $tree->get_all_Members;
+  my $gms = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($compara_dba->get_GeneMemberAdaptor, $members);
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $members, $gms);
+
+  my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @{$tree->get_all_nodes}], [map {$_->genome_db} @$members]);
+  $compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
+
+  unless($self->no_sequences()) {
+    my $seq_type = ($self->cdna ? 'cds' : undef);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $members);
+  }
+
   $hash->{tree} = 
     $self->_recursive_conversion($tree->root());
 
