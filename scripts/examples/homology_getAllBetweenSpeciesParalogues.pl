@@ -19,6 +19,8 @@ use warnings;
 
 use Bio::EnsEMBL::Registry;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 ## Load the registry automatically
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
@@ -53,6 +55,8 @@ foreach my $gdb ($gdb1, $gdb2) {
 
 ## Get all the homologues
 my $all_homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($this_mlss);
+
+Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($reg->get_adaptor("Multi", "compara", "AlignedMember"), $all_homologies);
 
 my %orthologues = ();
 ## For each homology
