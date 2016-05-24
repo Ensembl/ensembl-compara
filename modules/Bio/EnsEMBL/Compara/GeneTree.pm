@@ -364,8 +364,8 @@ sub preload {
     if (not defined $self->{'_root'} and defined $self->{'_root_id'}) {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
-        if ($prune_subtree and ($prune_subtree != $self->{'_root_id'}) and (my $n = $gtn_adaptor->fetch_node_by_node_id($prune_subtree))) {
-            $self->{'_root'} = $gtn_adaptor->fetch_subtree_under_node($n);
+        if ($prune_subtree and ($prune_subtree != $self->{'_root_id'})) {
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree);
         } else {
             $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
         }
