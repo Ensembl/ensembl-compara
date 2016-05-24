@@ -182,7 +182,6 @@ sub dumpTreeMultipleAlignment {
 
   my @aligned_seqs;
   foreach my $leaf (@{$tree->get_all_leaves}) {
-    my $ret = $leaf->alignment_string; # we just put this in front to make sure it doesnt leave traces in the emf file
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;

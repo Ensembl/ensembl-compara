@@ -54,7 +54,6 @@ if ($compara_url) {
 
 my $tree = $compara_dba->get_GeneTreeAdaptor()->fetch_by_dbID($tree_id);
 die "The ID supplied ($tree_id) is not a valid ProteinTree ID or NCTree ID\n" unless (defined $tree);
-$tree->preload;
 my $member_type = $tree->member_type;
 
 print "Running the script with $member_type tree with ID: $tree_id\n\n";
