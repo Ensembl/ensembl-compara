@@ -33,9 +33,9 @@ sub validate {
   ### Wrapper around the parser's validation method
   ### We have to do extra for BED because it has alternative columns
   my $self = shift;
-  my ($format, $col_count) = $self->parser->validate;
+  my ($valid, $format, $col_count) = $self->parser->validate($self->hub->param('format'));
 
-  if ($format) {
+  if ($valid) {
     $self->{'format'}       = $format;
     $self->{'column_count'} = $col_count;
     ## Update session record accordingly
@@ -47,7 +47,7 @@ sub validate {
     }
   }
 
-  return $format ? undef : 'File did not validate as format '.$format;
+  return $valid ? undef : 'File did not validate as format '.$format;
 }
 
 
