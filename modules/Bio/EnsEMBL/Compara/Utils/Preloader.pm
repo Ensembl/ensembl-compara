@@ -191,7 +191,7 @@ sub _load_and_attach_all {
   Example     : load_all_sequences($sequence_adaptor, 'cds', $gene_tree);
   Description : Method to load the sequences of many objects in a minimum number of queries.
                 Works with SeqMember, AlignedMember, GeneTreeMember, Family, Homology, GeneTree
-  Returntype  : none
+  Returntype  : Arrayref of strings: the sequences loaded from the database
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -223,6 +223,7 @@ sub load_all_sequences {
     while (my ($id, $seq) = each %$seqs) {
         $_->{$internal_sequence_key} = $seq for @{$key2member{$id}};
     }
+    return [values %$seqs];
 }
 
 
