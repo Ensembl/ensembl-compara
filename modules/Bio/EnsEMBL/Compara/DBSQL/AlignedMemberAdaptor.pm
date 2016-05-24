@@ -98,10 +98,10 @@ sub fetch_all_by_AlignedMemberSet {
 
 =head2 fetch_all_by_Homology
 
-  Arg[1]     : Homology $homology
+  Arg[1..n]  : Homology $homology
   Example    : $hom_members = $am_adaptor->fetch_all_by_Homology($homology);
   Description: Fetches from the database the two aligned members related to
-                this Homology object
+                this Homology object. Note: the method actually accepts any number of Homology
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -109,14 +109,13 @@ sub fetch_all_by_AlignedMemberSet {
 =cut
 
 sub fetch_all_by_Homology {
-    my ($self, $homology) = @_;
-    assert_ref($homology, 'Bio::EnsEMBL::Compara::Homology');
+    my $self = shift;
+    assert_ref($_, 'Bio::EnsEMBL::Compara::Homology') for @_;
 
-    my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos'];
+    my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos', 'hm.homology_id'];
     my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
-    my $constraint = 'hm.homology_id = ?';
+    my $constraint = $self->generate_in_constraint([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER);
 
-    $self->bind_param_generic_fetch($homology->dbID, SQL_INTEGER);
     return $self->generic_fetch($constraint, $join);
 }
 
@@ -210,6 +209,9 @@ sub _objs_from_sth {
         $member = Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
         foreach my $attr (qw(cigar_line cigar_start cigar_end perc_cov perc_id perc_pos)) {
             $member->$attr($rowhash->{$attr}) if defined $rowhash->{$attr};
+        }
+        foreach my $attr (qw(homology_id)) {
+            $member->{"_member_of_$attr"} = $rowhash->{$attr} if defined $rowhash->{$attr};
         }
         push @members, $member;
     }

@@ -224,4 +224,34 @@ sub load_all_sequences {
 }
 
 
+=head2 expand_Homologies
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor $aligned_member_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : expand_Homologies($aligned_member_adaptor, $homologies);
+  Description : Method to load the SeqMembers of many Homologies in a minimum number of queries (for get_all_Members)
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::SeqMember : the objects loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub expand_Homologies {
+    my $aligned_member_adaptor = shift;
+
+    my %homologies;
+    foreach my $a (@_) {
+        foreach my $o (@{wrap_array($a)}) {
+            next if !check_ref($o, 'Bio::EnsEMBL::Compara::Homology');      # It has to be an Homology
+            next if defined $o->{'_member_array'};                          # ... that doesn't have its members yet
+            $homologies{$o->dbID} = $o;
+        }
+    }
+    my $members = $aligned_member_adaptor->fetch_all_by_Homology(values %homologies);
+    $homologies{$_->{'_member_of_homology_id'}}->add_Member($_) for @$members;
+    return $members;
+}
+
+
 1;
