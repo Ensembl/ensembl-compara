@@ -261,8 +261,10 @@ sub _load_all {
     my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @$nodes], $leaves, $gms);
     $compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
 
-    my $seq_type = ($self->cdna ? 'cds' : undef);
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $leaves);
+    unless ($self->no_sequences) {
+        my $seq_type = ($self->cdna ? 'cds' : undef);
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $leaves);
+    }
 }
 
 sub _write_tree {
