@@ -64,12 +64,12 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 # FETCH methods
 ###########################
 
+
 =head2 fetch_all
 
-  Arg[1]     : -none-
   Example    : $all_trees = $proteintree_adaptor->fetch_all();
-
   Description: Fetches from the database all the nested sets.
+               Note: this does not return all the nodes but all the roots
   Returntype : arrayref of Bio::EnsEMBL::Compara::NestedSet
   Exceptions :
   Caller     :
@@ -84,6 +84,18 @@ sub fetch_all {
   return $self->generic_fetch($constraint);
 }
 
+
+=head2 fetch_node_by_node_id
+
+  Arg [1]    : int $node_id
+  Example    : $taxon = $nbcitaxonDBA->fetch_node_by_node_id($node_id);
+  Description: Fetches the node (NestedSet) for the given node ID.
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if $node_id is not defined
+  Caller     : general
+
+=cut
+
 sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
@@ -96,6 +108,50 @@ sub fetch_node_by_node_id {
   $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
   return $self->generic_fetch_one($constraint);
 }
+
+
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $node_id
+  Example    : $taxon = $nbcitaxonDBA->fetch_by_dbID($node_id);
+  Description: Fetches the node (NestedSet) for the given node ID.
+               This is the same as fetch_node_by_node_id
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if $node_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_dbID {
+    my $self = shift;
+    return $self->fetch_node_by_node_id(@_);
+}
+
+
+=head2 fetch_all_by_dbID_list
+
+  Arg [1]    : Arrayref of node_ids
+  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_dbID_list([$taxon_id1, $taxon_id2]);
+  Description: Returns all the NestedSet objects for the given node ids.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_dbID_list {
+    my ($self, $node_ids) = @_;
+
+    return [] unless scalar(@$node_ids);
+
+    my $placeholders = join(',', ('?') x scalar(@$node_ids));
+    $self->bind_param_generic_fetch($_, SQL_INTEGER) for @$node_ids;
+
+    my $table = ($self->_tables)[0]->[1];
+    my $constraint = "$table.node_id IN ($placeholders)";
+
+    return $self->generic_fetch($constraint);
+}
+
 
 =head2 fetch_parent_for_node
 
