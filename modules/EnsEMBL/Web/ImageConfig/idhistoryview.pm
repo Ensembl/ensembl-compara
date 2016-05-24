@@ -37,7 +37,7 @@ sub init {
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
   
-  $self->storable = 0;
+  $self->storable(0);
 }
 
 1;

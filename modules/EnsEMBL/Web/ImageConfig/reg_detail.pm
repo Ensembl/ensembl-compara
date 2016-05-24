@@ -79,7 +79,7 @@ sub init {
   );
   
   $self->load_tracks({ reg_minimal => 1 });
-  $self->image_resize = 1;
+  $self->image_resize(1);
 
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],

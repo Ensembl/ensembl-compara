@@ -84,7 +84,7 @@ sub init {
     information
   ));
   
-  $self->image_resize = 1;
+  $self->image_resize(1);
   my %desc = (
     contig    => 'Track showing underlying assembly contigs.',
     seq       => 'Track showing sequence in both directions. Only displayed at 1Kb and below.',

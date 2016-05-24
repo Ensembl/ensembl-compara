@@ -39,7 +39,7 @@ sub init {
   ));
 
   $self->load_tracks;
-  $self->image_resize = 1;
+  $self->image_resize(1);
  
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
   $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {

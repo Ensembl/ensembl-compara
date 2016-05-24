@@ -68,7 +68,7 @@ sub init {
   $self->add_track('information', 'info',   'Information', 'text',   { display => 'normal'                });
   
   $self->load_tracks;
-  $self->image_resize = 1;
+  $self->image_resize(1);
   
   $self->modify_configs([ 'transcript' ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation',  'variation_legend', 'structural_variation_legend' ], { display => 'off', menu => 'no' });

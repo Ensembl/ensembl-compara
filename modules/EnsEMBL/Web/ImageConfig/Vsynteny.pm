@@ -43,7 +43,7 @@ sub init {
 
   $self->create_menus('synteny');
   $self->add_tracks('synteny', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
-  $self->storable = 0;
+  $self->storable(0);
 }
 
 1;

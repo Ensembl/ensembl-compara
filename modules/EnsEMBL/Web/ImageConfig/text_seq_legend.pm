@@ -27,7 +27,7 @@ sub init {
   $self->set_parameter('show_labels', 'no');
   $self->create_menus('other');
   $self->add_tracks('other', [ 'text_seq_legend', '', 'text_seq_legend', { display => 'normal', strand => 'f' }]);
-  $self->storable = 0;
+  $self->storable(0);
 }
 
 1;

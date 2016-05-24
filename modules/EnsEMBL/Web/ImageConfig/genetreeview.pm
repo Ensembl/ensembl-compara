@@ -39,8 +39,8 @@ sub init {
     [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r', menu => 'no' }],
   );
   
-  $self->storable = 0;
-  $self->image_resize = 1;
+  $self->storable(0);
+  $self->image_resize(1);
   $self->{extra_menus} = {'display_options' => 1};
 }
 

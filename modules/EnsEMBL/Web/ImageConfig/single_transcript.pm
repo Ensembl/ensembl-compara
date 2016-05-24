@@ -43,7 +43,7 @@ sub init {
     { display => 'off', height => 32, non_coding_scale => 0.5 }
   );
   
-  $self->storable = 0;
+  $self->storable(0);
 }
 
 1;

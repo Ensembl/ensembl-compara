@@ -38,7 +38,7 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
   );
   
-  $self->storable = 0;
+  $self->storable(0);
   $self->{extra_menus} = {'display_options' => 0};
 }
 

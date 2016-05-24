@@ -215,8 +215,17 @@ sub menus {
 
 sub init   {}
 
-sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
-sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
+sub storable     { shift->_parameter('storable', @_);     } # Set to 1 if configuration can be altered
+sub image_resize { shift->_parameter('image_resize', @_); } # Set to 1 if there is image resize function
+
+sub _parameter { # the other sub parameter doesn't set false values
+  my $self  = shift;
+  my $key   = shift;
+
+  $self->{'_parameter'}{$key} = shift if @_;
+
+  return $self->{'_parameter'}{$key};
+}
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }

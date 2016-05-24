@@ -47,7 +47,7 @@ sub init {
     $self->$func if $self->can($func);
   }
   
-  $self->storable = 0;
+  $self->storable(0);
 }
 
 sub init_transcript {
