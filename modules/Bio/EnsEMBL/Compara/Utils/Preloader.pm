@@ -250,6 +250,7 @@ sub expand_Homologies {
             $homologies{$o->dbID} = $o;
         }
     }
+    return [] unless %homologies;
     my $members = $aligned_member_adaptor->fetch_all_by_Homology(values %homologies);
     $homologies{$_->{'_member_of_homology_id'}}->add_Member($_) for @$members;
     return $members;
