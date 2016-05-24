@@ -428,6 +428,8 @@ sub clear {
 sub get_all_GeneMembers {
     my ($self,$genome_db_id) = @_;
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
+
     my %seen_gene_members = ();
     foreach my $aligned_member (@{$self->get_all_Members}) {
         next unless $aligned_member->gene_member_id;
