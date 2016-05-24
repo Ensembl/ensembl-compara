@@ -366,7 +366,7 @@ sub preload {
 
     if ($species) {
         my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
-        my %genome_db_ids = map {$_ => 1} @$genome_dbs;
+        my %genome_db_ids = map {$_->dbID => 1} @$genome_dbs;
         my @to_delete;
         my $root = $self->root;
         foreach my $leaf (@{$root->get_all_leaves}) {
