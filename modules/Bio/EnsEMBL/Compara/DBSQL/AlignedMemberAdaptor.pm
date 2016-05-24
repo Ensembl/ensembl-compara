@@ -111,6 +111,7 @@ sub fetch_all_by_AlignedMemberSet {
 sub fetch_all_by_Homology {
     my $self = shift;
     assert_ref($_, 'Bio::EnsEMBL::Compara::Homology') for @_;
+    throw("At least 1 argument is expected in AlignedMemberAdaptor::fetch_all_by_Homology()") unless scalar(@_);
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos', 'hm.homology_id'];
     my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
