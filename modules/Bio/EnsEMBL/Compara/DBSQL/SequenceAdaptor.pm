@@ -60,6 +60,7 @@ sub fetch_by_dbID {
   Example    : my $sequences = $sequence_adaptor->fetch_by_dbIDs($sequence_ids);
   Description: Fetch sequences from the database in batches of $batch_size. Elements with $sequence_id of 0 (have no
                sequence stored in the database) are skipped.
+               Note: this is similar to fetch_all_by_dbID_list but the returned data is in a different format
   Returntype : Hashref of sequence_id to strings
   Exceptions : none
   Caller     :
