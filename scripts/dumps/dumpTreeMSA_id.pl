@@ -157,7 +157,6 @@ foreach my $tree_id (@tree_ids) {
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
   my $tree = $adaptor->fetch_by_root_id($tree_id);
-  $tree->preload();
   my $root = $tree->root;
   my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
