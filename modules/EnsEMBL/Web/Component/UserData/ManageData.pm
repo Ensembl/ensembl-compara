@@ -301,7 +301,7 @@ sub table_row {
   }
 
   return {
-    type    => $file->{'type'} eq 'url' ? 'URL' : ucfirst($file->{'type'}),
+    type    => $file->{'type'} =~ /url/i ? 'URL' : ucfirst($file->{'type'}),
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
