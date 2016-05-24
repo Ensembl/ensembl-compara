@@ -206,13 +206,15 @@ sub load_all_sequences {
 
     my %key2member = ();
     foreach my $a (@args) {
-        my $members = check_ref($a, 'ARRAY') ? $a : (check_ref($a, 'Bio::EnsEMBL::Compara::MemberSet') ? $a->get_all_Members : [$a]);
+      foreach my $aa (@{wrap_array($a)}) {
+        my $members = check_ref($aa, 'Bio::EnsEMBL::Compara::MemberSet') ? $aa->get_all_Members : [$aa];
         foreach my $member (@$members) {
             next if !check_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');    # Only works with SeqMember
             next if $member->{$internal_sequence_key};                          # ... that don't have a sequence yet
             next if !$member->{$internal_key_for_adaptor};                      # ... and have a sequence id
             push @{$key2member{$member->{$internal_key_for_adaptor}}}, $member;
         }
+      }
     }
     my @all_keys = keys %key2member;
 
