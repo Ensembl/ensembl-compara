@@ -352,20 +352,30 @@ sub root {
 =cut
 
 sub preload {
-    my ($self, $species) = @_;
+    my $self = shift;
+
     return unless defined $self->adaptor;
     return if $self->{_preloaded};
 
+    my ($prune_subtree, $prune_species, $prune_taxa) =
+        rearrange([qw(PRUNE_SUBTREE PRUNE_SPECIES PRUNE_TAXA)], @_);
+
+    # Preload the tree structure
     if (not defined $self->{'_root'} and defined $self->{'_root_id'}) {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
-        $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+        if ($prune_subtree and ($prune_subtree != $self->{'_root_id'}) and (my $n = $gtn_adaptor->fetch_node_by_node_id($prune_subtree))) {
+            $self->{'_root'} = $gtn_adaptor->fetch_subtree_under_node($n);
+        } else {
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+        }
         delete $gtn_adaptor->{'_ref_tree'};
     }
     $self->clear;
 
-    if ($species) {
-        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+    # And prune it immediately
+    if ($prune_species || $prune_taxa) {
+        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $prune_species, -TAXON_LIST => $prune_taxa);
         my %genome_db_ids = map {$_->dbID => 1} @$genome_dbs;
         my @to_delete;
         my $root = $self->root;
