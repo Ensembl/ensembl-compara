@@ -125,6 +125,7 @@ sub content {
                             'name'          => 'query',
                             'label'         => 'Text search',
                             'value'         => $hub->param('query') || '',
+                            'notes'         => 'Hint: Leave "text search" empty to show all track hubs for this species',
       });
  
       $fieldset->add_button({
