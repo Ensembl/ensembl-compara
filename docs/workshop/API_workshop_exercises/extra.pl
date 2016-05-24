@@ -64,8 +64,6 @@ foreach my $this_family (@{$all_families}) {
 
 ## Get the tree for this member
 my $this_tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
-# Speeds up the further operations
-$this_tree->preload();
 print "Tree: ", $this_tree->stable_id, ", ", scalar(@{$this_tree->get_all_Members}), " members\n";
 
 ## Part 4

@@ -13,9 +13,6 @@ my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
 ## Get the tree with this stable id
 my $tree = $gene_tree_adaptor->fetch_by_stable_id('ENSGT00390000003602');
 
-## To make things faster
-$tree->preload();
-
 ## Print tree in newick format
 print $tree->newick_format('simple'),"\n\n";
 
