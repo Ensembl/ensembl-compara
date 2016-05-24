@@ -299,9 +299,9 @@ sub table_row {
     my $reload_url = $hub->url({'action' => $reload_action, %url_params});
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
- 
+
   return {
-    type    => ucfirst($file->{'type'}),
+    type    => $file->{'type'} eq 'url' ? 'URL' : ucfirst($file->{'type'}),
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
