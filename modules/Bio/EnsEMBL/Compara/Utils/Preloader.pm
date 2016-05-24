@@ -53,7 +53,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
   Arg[2..n]   : Objects or arrays
   Example     : load_all_DnaFrags($dnafrag_adaptor, $gene_tree->get_all_leaves);
   Description : Method to load the DnaFrags of many objects in a minimum number of queries.
-                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of most Compara objects
+                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of:
+                  DnaFragRegion, GeneMember, SeqMember, GeneTreeMember, GenomicAlign
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::DnaFrag : the objects loaded from the database
   Exceptions  : none
   Caller      : general
@@ -72,9 +73,10 @@ sub load_all_DnaFrags {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor $ncbitaxon_adaptor. The adaptor that is used to retrieve the objects.
   Arg[2..n]   : Objects or arrays
-  Example     : load_all_NCBITaxons($ncbitaxon_adaptor, $gene_tree->get_all_leaves);
+  Example     : load_all_NCBITaxon($ncbitaxon_adaptor, $gene_tree->get_all_leaves);
   Description : Method to load the NCBITaxons of many objects in a minimum number of queries.
-                It assumes that the internal keys are '_taxon_id' and '_taxon', which is the case of most Compara objects
+                It assumes that the internal keys are '_taxon_id' and '_taxon', which is the case of:
+                  SpeciesTreeNode, GenomeDB, GeneMember, SeqMember, GeneTreeMember
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::NCBITaxon : the objects loaded from the database
   Exceptions  : none
   Caller      : general
@@ -95,7 +97,8 @@ sub load_all_NCBITaxon {
   Arg[2..n]   : Objects or arrays
   Example     : load_all_SpeciesTreeNodes($stn_adaptor, $homologies);
   Description : Method to load the SpeciesTreeNodes of many objects in a minimum number of queries.
-                It assumes that the internal keys are '_species_tree_node_id' and '_species_tree_node', which is the case of most Compara objects
+                It assumes that the internal keys are '_species_tree_node_id' and '_species_tree_node', which is the case of:
+                  Homology
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::SpeciesTreeNode : the objects loaded from the database
   Exceptions  : none
   Caller      : general
@@ -116,7 +119,8 @@ sub load_all_SpeciesTreeNodes {
   Arg[2..n]   : Objects or arrays
   Example     : load_all_GeneMembers($genemember_adaptor, $gene_tree->get_all_leaves);
   Description : Method to load the GeneMembers of many objects in a minimum number of queries.
-                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of most Compara objects
+                It assumes that the internal keys are 'dnafrag_id' and 'dnafrag', which is the case of:
+                  SeqMember
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::GeneMember : the objects loaded from the database
   Exceptions  : none
   Caller      : general
@@ -185,7 +189,8 @@ sub _load_and_attach_all {
   Arg[2]      : (optional) $seq_type. Used to load the non-default sequences
   Arg[3..n]   : Objects or arrays. MemberSets are automatically expanded with get_all_Members()
   Example     : load_all_sequences($sequence_adaptor, 'cds', $gene_tree);
-  Description : Method to load all the sequences (of a particular type) in SeqMembers
+  Description : Method to load the sequences of many objects in a minimum number of queries.
+                Works with SeqMember, AlignedMember, GeneTreeMember, Family, Homology, GeneTree
   Returntype  : none
   Exceptions  : none
   Caller      : general
