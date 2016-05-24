@@ -255,7 +255,7 @@ sub dispatch_body {
 sub _load_all {
     my ($self, $compara_dba, $nodes, $leaves) = @_;
 
-    my $gms = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($compara_dba->get_GeneMemberAdaptor, $leaves);
+    my $gms = [map {$_->gene_member} @$leaves];
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $leaves, $gms);
 
     my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @$nodes], $leaves, $gms);

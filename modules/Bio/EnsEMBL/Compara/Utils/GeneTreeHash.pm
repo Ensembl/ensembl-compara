@@ -137,7 +137,7 @@ sub _head_node {
   # Bulk-load of all we need
   my $compara_dba = $tree->adaptor->db;
   my $members = $tree->get_all_Members;
-  my $gms = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($compara_dba->get_GeneMemberAdaptor, $members);
+  my $gms = [map {$_->gene_member} @$members];
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $members, $gms);
 
   my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @{$tree->get_all_nodes}], [map {$_->genome_db} @$members]);

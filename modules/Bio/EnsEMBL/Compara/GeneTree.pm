@@ -420,6 +420,9 @@ sub preload {
         $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
     }
 
+    # Loads all the gene members in one go
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
+
     $self->{_preloaded} = 1;
 }
 
