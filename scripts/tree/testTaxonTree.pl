@@ -259,7 +259,7 @@ sub fetch_protein_tree {
   my $tree = $self->{'root'};
 
   $tree->print_tree($self->{'scale'});
-  warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
+  warn sprintf("%d proteins\n", scalar(@{$tree->get_all_leaves}));
   
   my $newick = $tree->newick_format('simple');
   warn("$newick\n");
