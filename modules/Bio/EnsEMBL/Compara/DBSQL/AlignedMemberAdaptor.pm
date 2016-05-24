@@ -99,7 +99,7 @@ sub fetch_all_by_AlignedMemberSet {
 =head2 fetch_all_by_Homology
 
   Arg[1]     : Homology $homology
-  Example    : $hom_members = $am_adaptor->fetch_all_by_AlignedMemberSet($homology);
+  Example    : $hom_members = $am_adaptor->fetch_all_by_Homology($homology);
   Description: Fetches from the database the two aligned members related to
                 this Homology object
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
