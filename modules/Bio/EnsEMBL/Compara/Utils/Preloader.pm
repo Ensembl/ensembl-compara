@@ -89,6 +89,27 @@ sub load_all_NCBITaxon {
 }
 
 
+=head2 load_all_SpeciesTreeNodes
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor $stn_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : load_all_SpeciesTreeNodes($stn_adaptor, $homologies);
+  Description : Method to load the SpeciesTreeNodes of many objects in a minimum number of queries.
+                It assumes that the internal keys are '_species_tree_node_id' and '_species_tree_node', which is the case of most Compara objects
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::SpeciesTreeNode : the objects loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_SpeciesTreeNodes {
+    my $stn_adaptor = shift;
+    assert_ref($stn_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor', 'stn_adaptor');
+    return _load_and_attach_all('_species_tree_node_id', '_species_tree_node', $stn_adaptor, @_);
+}
+
+
 =head2 load_all_GeneMembers
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor $genemember_adaptor. The adaptor that is used to retrieve the objects.
