@@ -44,10 +44,10 @@ my $this_mlss = $mlss_adaptor->fetch_by_method_link_type_registry_aliases('ENSEM
 ## The two GenomeDB objects (one is human, the other one is mouse)
 my ($gdb1, $gdb2) = @{$this_mlss->species_set_obj->genome_dbs};
 
-my %protein_to_gene = ();
+my %gene_member_id_2_stable_id = ();
 foreach my $gdb ($gdb1, $gdb2) {
     my $genes = $gene_member_adaptor->fetch_all_by_GenomeDB($gdb);
-    $protein_to_gene{$_->get_canonical_SeqMember->stable_id} = $_->stable_id for @$genes;
+    $gene_member_id_2_stable_id{$_->dbID} = $_->stable_id for @$genes;
     warn "Loaded ", scalar(@$genes), " ", $gdb->name, " gene names\n";
 }
 
@@ -74,7 +74,7 @@ sub print_pairs {
     foreach my $g1 (@$all_g1) {
         foreach my $g2 (@$all_g2) {
             if (not $orthologues{$g1->stable_id."/".$g2->stable_id}) {
-                print join("\t", $protein_to_gene{$g1->stable_id}, $g1->stable_id, $protein_to_gene{$g2->stable_id}, $g2->stable_id, @$extra), "\n";
+                print join("\t", $gene_member_id_2_stable_id{$g1->gene_member_id}, $g1->stable_id, $gene_member_id_2_stable_id{$g2->gene_member_id}, $g2->stable_id, @$extra), "\n";
             }
         }
     }
