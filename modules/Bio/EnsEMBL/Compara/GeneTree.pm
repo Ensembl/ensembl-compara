@@ -325,10 +325,7 @@ sub root {
     if (not defined $self->{'_root'}) {
         if (defined $self->{'_root_id'} and defined $self->adaptor) {
             # Loads all the nodes in one go
-            my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
-            $gtn_adaptor->{'_ref_tree'} = $self;
-            $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
-            delete $gtn_adaptor->{'_ref_tree'};
+            $self->preload;
 
         } else {
             # Creates a new GeneTreeNode object
