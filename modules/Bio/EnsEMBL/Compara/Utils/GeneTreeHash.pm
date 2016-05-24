@@ -254,18 +254,8 @@ sub _convert_node {
 
     $hash->{id} = { source => "EnsEMBL", accession => $gene->stable_id() };
 
-    my $genome_db = $node->genome_db();
-    my $taxid = $genome_db->taxon_id();
-
-    my $taxon = $genome_db->taxon;
-    $hash->{taxonomy} = 
-      { id => $taxid + 0,
-        scientific_name => $taxon->scientific_name(),
-      }
-	if $taxid;
-
     if ($self->species_common_name) {
-        $hash->{taxonomy}->{common_name} = $genome_db->taxon->ensembl_alias_name;
+        $hash->{taxonomy}->{common_name} = $node->genome_db->taxon->ensembl_alias_name;
     }
 
     $hash->{sequence} = 
