@@ -112,7 +112,7 @@ sub full_tax_info {
   if (defined ($fti)) {
     $self->{_full_tax_info} = $fti;
   }
-  return $self->{_fti};
+  return $self->{_full_tax_info};
 }
 
 sub cigar_line {
