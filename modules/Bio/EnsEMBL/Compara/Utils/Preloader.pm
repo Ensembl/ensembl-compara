@@ -130,6 +130,7 @@ sub _load_and_attach_all {
 
     my %key2iniobject = ();
     my %key2newobject = ();
+    my %seen = ();
     foreach my $a (@args) {
         foreach my $o (@{wrap_array($a)}) {
             next if !ref($o);                   # We need a ref to an object
@@ -139,8 +140,11 @@ sub _load_and_attach_all {
             # Check if the target object has already been loaded
             if ($o->{$object_internal_key}) {
                 $key2newobject{$o->{$id_internal_key}} = $o->{$object_internal_key};
-            } else {
+
+            # Check if there are redundant objects in @args
+            } elsif (!$seen{$o}) {
                 push @{$key2iniobject{$o->{$id_internal_key}}}, $o;
+                $seen{$o} = 1;
             }
         }
     }
