@@ -100,7 +100,6 @@ sub process {
 
 my $n = 0;
 foreach my $tree (@$all_protein_trees) {
-    $tree->preload();
     process($tree->root);
     # Another approach that lacks the information about the duplication node
     #my $all_g1 = $tree->get_Member_by_GenomeDB($gdb1);
