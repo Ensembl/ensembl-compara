@@ -104,6 +104,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 use base qw/Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter/;
 
 =pod
@@ -249,6 +251,25 @@ sub dispatch_body {
 
 
 ###### PROCESSORS
+
+sub _load_all {
+    my ($self, $compara_dba, $nodes, $leaves) = @_;
+
+    my $gms = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($compara_dba->get_GeneMemberAdaptor, $leaves);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $leaves, $gms);
+
+    my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @$nodes], $leaves, $gms);
+    $compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
+
+    my $seq_type = ($self->cdna ? 'cds' : undef);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $leaves);
+}
+
+sub _write_tree {
+    my ($self, $tree) = @_;
+    $self->_load_all($tree->adaptor->db, $tree->get_all_nodes, $tree->get_all_Members);
+    $self->SUPER::_write_tree($tree);
+}
 
 #tags return [ 'tag', {attributes} ]
 

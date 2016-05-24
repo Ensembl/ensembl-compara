@@ -28,6 +28,7 @@ Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter
 
 Variant of GeneTreePhyloXMLWriter that accepts Bio::EnsEMBL::Compara::GeneTreeNode
 in write_trees()
+
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
@@ -64,6 +65,8 @@ sub _write_tree {
           $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
       }
   };
+
+  $self->_load_all($tree->adaptor->db, $tree->get_all_nodes, $tree->get_all_leaves);
 
   $w->startTag('phylogeny', %attr);
   $self->_process($tree);
