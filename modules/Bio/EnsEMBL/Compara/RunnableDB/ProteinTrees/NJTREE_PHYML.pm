@@ -56,6 +56,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
@@ -91,7 +92,7 @@ sub fetch_input {
     my $gene_tree_id     = $self->param_required('gene_tree_id');
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id )
                                         or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-    $gene_tree->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
     $gene_tree->print_tree(10) if($self->debug);
 
     $self->param('gene_tree', $gene_tree);

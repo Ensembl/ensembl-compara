@@ -67,6 +67,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
@@ -77,7 +78,7 @@ sub fetch_input {
 
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-    $aln->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $aln);
 
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {

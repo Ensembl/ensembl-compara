@@ -81,6 +81,7 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -124,7 +125,7 @@ sub fetch_input {
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;
     }
 
-    $gene_tree->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
     $self->param('gene_tree', $gene_tree->root);
 
     if($self->debug) {
