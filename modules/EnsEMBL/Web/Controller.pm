@@ -36,17 +36,17 @@ use base qw(EnsEMBL::Web::Root);
 
 my @HANDLES_TO_DISCONNECT;
 
-sub r             :Getter('r');
-sub hub           :Getter('hub');
-sub species_defs  :Getter('species_defs');
-sub species       :Getter('species');
-sub path_segments :Getter('path_segments');
-sub query         :Getter('query');
-sub filename      :Getter('filename');
-sub type          :Getter('type');
-sub action        :Getter('action');
-sub function      :Getter('function');
-sub sub_function  :Getter('sub_function');
+sub r             :Getter;
+sub hub           :Getter;
+sub species_defs  :Getter;
+sub species       :Getter;
+sub path_segments :Getter;
+sub query         :Getter;
+sub filename      :Getter;
+sub type          :Getter;
+sub action        :Getter;
+sub function      :Getter;
+sub sub_function  :Getter;
 
 sub new {
   ## @constructor
