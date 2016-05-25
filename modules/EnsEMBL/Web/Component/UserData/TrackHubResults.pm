@@ -53,8 +53,6 @@ sub content {
   my $rest = EnsEMBL::Web::REST->new($hub, $registry);
   return unless $rest;
 
-  my $endpoint = 'api/search';
-
   my $post_content = {};
   my @query_params = qw(assembly type query);
   foreach (@query_params) {
@@ -80,14 +78,13 @@ sub content {
   ## Pagination
   my $entries_per_page  = 5;
   my $current_page      = $hub->param('page') || 1;
-  $post_content->{'entries_per_page'} = $entries_per_page;
-  $post_content->{'page'} = $current_page;
-  #use Data::Dumper; warn '>>> QUERYING WITH PARAMS: '.Dumper($post_content);
 
-  my $args = {'method' => 'post', 'content' => $post_content};
+  my $endpoint = 'api/search';
+
+  my $args = {'method' => 'post', 'content' => $post_content, 
+              'url_params' => {'page' => $current_page, 'entries_per_page' => $entries_per_page}};
   
   my ($result, $error) = $rest->fetch($endpoint, $args);
-  #use Data::Dumper; warn Dumper($result);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
@@ -191,7 +188,6 @@ sub _show_pagination {
 
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
   for (my $page = 1; $page <= $no_of_pages; $page++) {
-    #warn ">>> PAGE $page";
     my ($classes, $link);
     if ($page == $args->{'current_page'}) {
       $classes = 'paginate_active';
@@ -208,7 +204,6 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
-      #use Data::Dumper; warn '>>> SETTING URL '.Dumper($args->{'url_params'});
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }
