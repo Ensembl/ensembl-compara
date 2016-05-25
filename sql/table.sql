@@ -1529,7 +1529,7 @@ CREATE TABLE `gene_tree_root_attr` (
   aln_num_of_patterns               INT(10) UNSIGNED, 
   aln_shrinking_factor              FLOAT(2),
   spec_count                        INT(10) UNSIGNED,
-  tree_max_branch                   DEC(8,2),
+  tree_max_branch                   FLOAT,
   tree_max_length                   FLOAT(5),
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
@@ -1731,7 +1731,7 @@ CREATE TABLE homology (
   species_tree_node_id        int(10) unsigned,
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
-  goc_score                   int(10) unsigned,
+  goc_score                   tinyint unsigned,
   wga_coverage                DEC(5,2),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -2047,4 +2047,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_e.sql|md5sum_sequence');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_f.sql|keys');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_g.sql|smaller_datatypes');
 
