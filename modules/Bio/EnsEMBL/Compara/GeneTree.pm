@@ -346,7 +346,7 @@ sub root {
                 gene Members associated with the leaves.
   Returntype  : node
   Example     : $tree->preload();
-                $tree->preload(['human', 'mouse', 'chicken']);
+                $tree->preload(-PRUNE_SPECIES => ['human', 'mouse', 'chicken']);
   Caller      : General
 
 =cut
