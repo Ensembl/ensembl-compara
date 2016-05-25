@@ -89,6 +89,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array check_array_contents);
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 my $ortho_uri = 'http://orthoXML.org';
 
 =pod
@@ -223,6 +225,10 @@ sub source_version {
 sub write_homologies {
     my ($self, $homologies) = @_;
 
+    return unless scalar(@$homologies);
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologies->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologies->[0]->adaptor->db->GeneMemberAdaptor, $sms);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($homologies->[0]->adaptor->db->get_SpeciesTreeNodeAdaptor, $homologies);
     return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
 
