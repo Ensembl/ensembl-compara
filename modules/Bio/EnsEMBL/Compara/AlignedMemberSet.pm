@@ -926,9 +926,9 @@ sub update_alignment_stats {
             $genes->[$j]->num_matches( $nmatch_id[$j] );
             $genes->[$j]->num_pos_matches( $nmatch_pos[$j] );
             $genes->[$j]->num_mismatches( $nmismatch[$j] );
-            $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_cov( int((100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_id( 100.0 * $nmatch_id[$j] / $seq_length[$j] );
+            $genes->[$j]->perc_pos( 100.0 * $nmatch_pos[$j] / $seq_length[$j] );
+            $genes->[$j]->perc_cov( 100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] );
         }
     }
 }

@@ -1899,9 +1899,9 @@ CREATE TABLE homology_member (
   gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
   seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
-  perc_cov                    tinyint unsigned default 0,
-  perc_id                     tinyint unsigned default 0,
-  perc_pos                    tinyint unsigned default 0,
+  perc_cov                    float unsigned default 0,
+  perc_id                     float unsigned default 0,
+  perc_pos                    float unsigned default 0,
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
@@ -2049,4 +2049,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_f.sql|keys');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_g.sql|smaller_datatypes');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_h.sql|homology_member_float');
 

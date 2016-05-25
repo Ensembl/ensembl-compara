@@ -230,7 +230,7 @@ sub cigar_end {
                 perc_cov is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -254,7 +254,7 @@ sub perc_cov {
                 perc_id is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -280,7 +280,7 @@ sub perc_id {
                 perc_pos is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable
