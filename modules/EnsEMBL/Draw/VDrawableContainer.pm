@@ -52,7 +52,7 @@ sub new {
       $flag        = 1;
     }
    
-    $config->texthelper->{'_scalex'}           = $scalex;
+    $config->texthelper->scalex($scalex);
     $config->{'transform'}->{'scalex'}         = $scalex;
     $config->{'transform'}->{'absolutescalex'} = 1;
     $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
