@@ -141,7 +141,6 @@ sub get_all_trees {
         # $self is the outer var 
         my $tree = shift @$all_trees;
         return undef unless ($tree);
-        $tree->preload();
         my $root_id = $tree->root_id;
         my $name = $root_id;
         my $full_tree_members = $tree->get_all_leaves();

@@ -83,7 +83,6 @@ sub fetch_input {
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) ||
           die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
-        $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #----------------------------------------------------------------------------------------------------------------------------
@@ -111,7 +110,6 @@ sub fetch_input {
             #Get previous tree
             $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) ||
               die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-            $self->param('reuse_gene_tree')->preload();
             $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
 
             print "Fetching reuse tree: " . $self->param('stable_id') . "/" . $self->param('reuse_gene_tree')->root_id . "\n" if ( $self->debug );
@@ -262,7 +260,6 @@ sub write_output {
     #all trees from this point on, there is no need for alignment/tree inference
     else{
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-        $self->param('reuse_gene_tree')->preload();
         $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
 
         if ( $self->param('current_gene_tree')->get_value_for_tag( 'only_needs_deleting' ) ) {

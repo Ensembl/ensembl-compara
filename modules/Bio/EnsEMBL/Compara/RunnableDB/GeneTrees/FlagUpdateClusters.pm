@@ -122,7 +122,6 @@ sub run {
         #get current_gene_tree
         my $current_gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch current_gene_tree with gene_tree_id='$gene_tree_id'";
         $self->throw("no input current_gene_tree") unless $current_gene_tree;
-        $current_gene_tree->preload();
         my @current_members = @{ $current_gene_tree->get_all_Members };
         my $num_of_members  = scalar(@current_members);
 
@@ -135,7 +134,6 @@ sub run {
         my %current_members_hash;
 
         if ($reused_gene_tree) {
-            $reused_gene_tree->preload();
             @reused_members = @{ $reused_gene_tree->get_all_Members };
 
             foreach my $member (@reused_members) {

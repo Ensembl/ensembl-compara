@@ -99,7 +99,6 @@ sub fetch_input {
 
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
-  $self->param('gene_tree')->preload();
 
   if ($self->check_members) {
       $self->complete_early("Ktreedist.pm: All members have the same sequence.");
@@ -285,7 +284,6 @@ sub load_input_trees {
         #If we have a different set of alternative trees and the tags are not specified, it will skip the current tree
         next if ($self->param('ref_tree_clusterset') && (!$alternative_trees{$other_tree->clusterset_id}));
 
-        $other_tree->preload();
         #print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         print "tree:" . $other_tree->clusterset_id . "\n" if ($self->debug);
 

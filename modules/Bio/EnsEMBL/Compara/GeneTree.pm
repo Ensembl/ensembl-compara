@@ -449,7 +449,6 @@ sub alignment {
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
-    $self->preload;
     $self->seq_type($other_gene_align->seq_type);
     $self->gene_align_id($other_gene_align->dbID);
     $self->{_alignment} = $other_gene_align;
@@ -528,13 +527,9 @@ sub expand_subtrees {
     # The tree is not loaded yet, we can do a fast-loading procedure
     if (not defined $self->{'_root'}) {
 
-        # The current tree
-        $self->preload;
-
         # Gets the subtrees
         my %subtrees;
         foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
-            $subtree->preload;
             $subtrees{$subtree->root->_parent_id} = $subtree->root;
         }
 

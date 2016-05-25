@@ -470,8 +470,6 @@ sub fetch_or_create_other_tree {
         }
     }
 
-    $other_trees->{$clusterset->clusterset_id}->preload();
-
     return $other_trees->{$clusterset->clusterset_id};
 }
 

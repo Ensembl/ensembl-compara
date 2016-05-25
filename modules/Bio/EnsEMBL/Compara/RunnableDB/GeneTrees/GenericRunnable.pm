@@ -158,7 +158,6 @@ sub fetch_input {
 
     $self->param('mlss_id',   $gene_tree->method_link_species_set_id);
 
-    $gene_tree->preload();
     $gene_tree->print_tree(10) if($self->debug);
 
     # default parameters

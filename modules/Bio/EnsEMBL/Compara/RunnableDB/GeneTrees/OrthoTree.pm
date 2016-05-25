@@ -124,7 +124,6 @@ sub fetch_input {
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;
     }
 
-    $gene_tree->preload();
     $gene_tree->_load_all_missing_sequences();
     $self->param('gene_tree', $gene_tree->root);
 

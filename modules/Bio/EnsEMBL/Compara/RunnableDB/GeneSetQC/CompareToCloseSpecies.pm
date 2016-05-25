@@ -104,7 +104,6 @@ sub run {
     warn scalar(@$alltrees), " trees to process\n" if $self->debug;
     my $n = 1;
     foreach my $tree (@$alltrees) {
-        $tree->preload();
         warn $n++, " root_id=", $tree->root_id, "\n" if $self->debug;
         my $s = $self->_process($tree);
         $tree->release_tree();

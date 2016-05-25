@@ -96,7 +96,6 @@ sub fetch_input {
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
     $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param_required('gene_tree_id')));
     $self->throw("no input protein_tree") unless $self->param('protein_tree');
-    $self->param('protein_tree')->preload();
 
     print "RETRY COUNT: ".$self->input_job->retry_count()."\n" if ($self->debug);
 

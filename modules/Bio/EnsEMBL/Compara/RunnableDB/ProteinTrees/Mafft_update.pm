@@ -75,7 +75,6 @@ sub fetch_input {
     #get current tree adaptor
     $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor );
     $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "Could not fetch current_gene_tree";
-    $self->param('current_gene_tree')->preload();
 
     $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) or die "Could not fetch gene_tree with gene_tree_id='$self->param('gene_tree_id')'";

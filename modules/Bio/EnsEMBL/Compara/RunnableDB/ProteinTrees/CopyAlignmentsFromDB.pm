@@ -78,7 +78,6 @@ sub fetch_input {
         #Get gene_tree
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) );
-        $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #Get copy tree
@@ -89,7 +88,6 @@ sub fetch_input {
         $self->param( 'copy_root_id', $sth->fetchrow_array() );
         $sth->finish;
         $self->param( 'copy_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('copy_root_id') ) );
-        $self->param('copy_gene_tree')->preload();
 
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -116,7 +114,6 @@ sub fetch_input {
 
         #Get previous tree
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
-        $self->param('reuse_gene_tree')->preload();
         $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
         #Newly added genes will not be added here, only genes that were removed or altered will be excluded.
