@@ -280,6 +280,13 @@ sub set_core_params {
   $self->{'_core_params'} = $core_params;
 }
 
+sub delete_core_param {
+## Sometimes we really don't want to pass a core parameter
+  my ($self, $name) = @_;
+  return unless $name;
+  delete $self->{'_core_params'}{$name};
+}
+
 # Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
 sub data_species {
   my $self    = shift;
