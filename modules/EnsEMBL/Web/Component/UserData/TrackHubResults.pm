@@ -24,6 +24,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use POSIX qw(ceil);
+
 use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Command::UserData;
 
@@ -59,8 +61,9 @@ sub content {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
   }
   ## Registry uses species names without spaces
-  if ($hub->param('species')) {
-    (my $species = $hub->param('species')) =~ s/_/ /;
+  my $search_species = $hub->param('species') || $hub->param('search_species');
+  if ($search_species) {
+    (my $species = $search_species) =~ s/_/ /;
     $post_content->{'species'} = $species;
   }
 
@@ -73,6 +76,13 @@ sub content {
     ## WHICH MEANS THE SEARCH MAY PRODUCE NO RESULTS 
     $post_content->{'assembly'} = $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
   }
+
+  ## Pagination
+  my $entries_per_page  = 5;
+  my $current_page      = $hub->param('page') || 1;
+  $post_content->{'entries_per_page'} = $entries_per_page;
+  $post_content->{'page'} = $current_page;
+  #use Data::Dumper; warn '>>> QUERYING WITH PARAMS: '.Dumper($post_content);
 
   my $args = {'method' => 'post', 'content' => $post_content};
   
@@ -98,6 +108,21 @@ sub content {
     $html .= $self->info_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     if ($count > 0) {
+
+      my $pagination_params = {
+                                'current_page'      => $current_page,
+                                'total_entries'     => $count,
+                                'entries_per_page'  => $entries_per_page,
+                                'url_params'        => $post_content
+                              };
+      ## We want to pass the underscored version in the URL
+      delete $pagination_params->{'url_params'}{'species'};
+      $pagination_params->{'url_params'}{'search_species'} = $search_species;
+
+      if ($count > $entries_per_page) {
+        $html .= $self->_show_pagination($pagination_params);
+      }
+
       foreach (@{$result->{'items'}}) {
         (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
 
@@ -148,10 +173,52 @@ sub content {
                           $_->{'status'}{'tracks'}{'total'},
                         );
       }
+      
+      if ($count > $entries_per_page) {
+        $html .= $self->_show_pagination($pagination_params);
+      }
+
     }
   }
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Search Results</h2>%s', $html;
 
+}
+
+sub _show_pagination {
+  my ($self, $args) = @_;
+
+  my $no_of_pages = ceil($args->{'total_entries'}/$args->{'entries_per_page'});
+
+  my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
+  for (my $page = 1; $page <= $no_of_pages; $page++) {
+    #warn ">>> PAGE $page";
+    my ($classes, $link);
+    if ($page == $args->{'current_page'}) {
+      $classes = 'paginate_active';
+    }
+    else {
+      $classes = 'paginate_button';
+      $link = 1;
+    }
+    if ($page == 1) {
+      $classes .= ' first';
+    }
+    elsif ($page == $no_of_pages) {
+      $classes .= ' last';
+    }
+    if ($link) {
+      $args->{'url_params'}{'page'} = $page;
+      #use Data::Dumper; warn '>>> SETTING URL '.Dumper($args->{'url_params'});
+      my $url = $self->hub->url($args->{'url_params'});
+      $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
+    }
+    else {
+      $html .= sprintf '<div class="%s">%s</div>', $classes, $page;
+    }
+  } 
+  $html .= '</span></div><br />';
+
+  return $html;
 }
 
 1;
