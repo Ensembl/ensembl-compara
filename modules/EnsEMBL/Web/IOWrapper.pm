@@ -289,7 +289,8 @@ sub create_tracks {
       }
 
       my ($seqname, $start, $end) = $self->coords;
-      if ($slice && $extra_config->{'pix_per_bp'}) {
+      my $strand = $strandable ? $self->parser->get_strand : 0;
+      if ($slice && $extra_config->{'pix_per_bp'} && $extra_config->{'skip_overlap'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
         next if $max_seen >= $here;

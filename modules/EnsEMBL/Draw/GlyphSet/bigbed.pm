@@ -95,7 +95,15 @@ sub get_data {
     ## Omit individual feature links if this glyphset has a clickable background
     #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
+    ## Some, very compact, zoomed-out styles only need a few of the
+    ## features. We need to make sure that they receive no more than these
+    ## as to attempt to retrieve them all causes us to run out of memory.
+    ## There should maybe be an API for this. But without this optimisation,
+    ## for example, Age of Base takes nearly a minute to render at 600kb
+    ## and makes the apache worker large enough that it's then retired.
+    my $style = $self->my_config('style') || $self->my_config('display') || '';
     ## Parse the file, filtering on the current slice
+    $metadata->{'skip_overlap'} = ($style eq 'compact');
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
 
