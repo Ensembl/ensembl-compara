@@ -21,5 +21,4 @@
 100021	n_one-to-one_31_genes	14374
 100021	n_one-to-one_groups	14374
 100021	n_one-to-one_pairs	14374
-100021	threshold_on_ds	1
 100021	n_one-to-many_155_genes	2462
