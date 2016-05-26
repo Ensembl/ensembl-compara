@@ -144,7 +144,7 @@ UPDATE species_tree_node_attr sta JOIN tmp_stats_per_root t
     sta.root_min_spec=t.min_nb_spec,
     sta.root_max_spec=t.max_nb_spec,
     sta.root_avg_gene_per_spec=t.avg_nb_genes_per_spec
-	WHERE sta.node_id = t.species_tree_node_id);
+	WHERE sta.node_id = t.species_tree_node_id;
 
 #update species_tree_node_attr with tmp_stats_per_node
 UPDATE species_tree_node_attr sta JOIN tmp_stats_per_node t 
