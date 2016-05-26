@@ -105,7 +105,7 @@ sub run_treebest_best {
     while (1) {
 
         # Main arguments
-        my $args = sprintf('best -f %s', $species_tree_file);
+        my $args = sprintf('best %s -f %s', $input_aln, $species_tree_file);
         
         # Optional arguments
         $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
@@ -279,8 +279,6 @@ sub _get_alignment_filtering_cmd {
         my $tmp_align = $self->worker_temp_directory.'prog-filtalign.fa';
         $cmd .= $tmp_align;
         $cmd = sprintf($self->param('filt_cmdline'), $input_aln, $tmp_align).' ; '.$cmd;
-    } else {
-        $cmd .= $input_aln
     }
 
     return sprintf('cd %s; %s', $self->worker_temp_directory, $cmd);

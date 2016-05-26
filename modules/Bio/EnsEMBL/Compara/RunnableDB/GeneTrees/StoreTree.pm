@@ -245,6 +245,7 @@ sub interpret_treebest_tags
             $node->add_tag($db_tag, $value);
         }
     }
+    $node->add_tag('duplication_confidence_score', $treebest_tag->get_tagvalue('SIS')/100.) if $treebest_tag->has_tag('SIS');
     $node->add_tag('duplication_confidence_score', 1) if $node_type eq 'gene_split';
 
     foreach my $child (@{$node->children}) {
