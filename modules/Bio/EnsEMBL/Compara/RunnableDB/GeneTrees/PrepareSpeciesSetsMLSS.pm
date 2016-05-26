@@ -138,9 +138,9 @@ sub write_output {
     my $all_gdbs = $self->param('genome_dbs');
     my $ss = $self->_write_ss($all_gdbs);
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', 'param_name' => 'mlss_id', 'param_value' => $mlss->dbID );
 
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(grep {not $_->is_polyploid} @$all_gdbs)} );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', 'param_name' => 'species_count', 'param_value' => scalar(grep {not $_->is_polyploid} @$all_gdbs) );
 
     my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
     foreach my $genome_db (@noncomponent_gdbs) {
@@ -162,16 +162,21 @@ sub write_output {
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );
 
     # Whether all the species are reused
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1)} );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', 'param_name' => 'are_all_species_reused', 'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1) );
 
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    my $class = 'Bio::EnsEMBL::Hive::PipelineWideParameters';
+    foreach my $storable_object ( $self->db->hive_pipeline->collection_of('PipelineWideParameters')->list ) {
+        $adaptor->store_or_update_one( $storable_object, $class->unikey() );
+    }
     $self->dataflow_output_id($self->input_id, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
 }
 
 sub _write_shared_ss {
     my ($self, $name, $gdbs) = @_;
     my $ss = $self->_write_ss($gdbs, 1);
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', 'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', 'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs) );
     return $ss;
 }
 
