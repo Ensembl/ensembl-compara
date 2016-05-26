@@ -35,6 +35,19 @@ sub _init {
   $self->ajaxable(0);
 }
 
+sub header {
+  my $self = shift;
+  my $info_icon = '<img class="_ht" src="/i/16/info.png" />';
+  my $tip = encode_entities(qq{
+          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+            });
+
+  return qq{
+    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
+  };
+}
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -52,10 +65,12 @@ sub content {
   
   if (scalar @data) {
     my @columns = (
+      { key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
-      { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
+      { key => 'status',  title => 'Status',       width => '10%', align => 'left'                                  },
+      { key => 'name',    title => 'Source',       width => '30%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
-      { key => 'assembly', title => 'Assembly',      width => '20%', align => 'left', sort => 'html'                  },
+      { key => 'assembly', title => 'Assembly',    width => '15%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
     
@@ -133,21 +148,7 @@ sub content {
     $html = '<p class="space-below">You have no custom data.</p>';
   }
 
-  ## Hints
-  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
-
-  my $info_icon = '<img class="_ht" src="/i/16/info.png" />';
-  my $tip = encode_entities(qq{
-          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
-          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-          $group_sharing_info
-            });
-
-  return qq{
-    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
-    $html
-  };
-
+  return $html;
 }
 
 sub _icon_inner {
@@ -175,6 +176,40 @@ sub _no_icon {
   return '';
 }
 
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  my $params = {'action' => 'ModifyData'};
+
+  $params->{'function'} = 'enable_files';
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Enable selected data',
+                    'class'   => 'add',
+                    'modal'   => 1
+                    };
+
+  $params->{'function'} = 'disable_files';
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Disable selected data',
+                    'class'   => 'detach',
+                    'modal'   => 1
+                    };
+
+  $params->{'function'} = 'delete_files';
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Delete selected data',
+                    'class'   => 'delete',
+                    'modal'   => 1
+                    };
+
+  return @buttons;
+}
+
 sub table_row {
   my ($self, $file, $sharers) = @_;
   my $hub          = $self->hub;
@@ -182,6 +217,8 @@ sub table_row {
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
+  my $group_sharing_info = $hub->user && $hub->user->find_admin_groups ? 'You cannot share temporary data with a group until you save it to your account.' : '';
+
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
   my $reload       = $self->_no_icon;
@@ -282,8 +319,12 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
+  my $checkbox = sprintf '<input type="checkbox" class="record_selector" name="files" value="%s-%s" />', $file->{'type'}, $file->{'code'};
+
   return {
+    check   => $checkbox,
     type    => $file->{'type'} =~ /url/i ? 'URL' : ucfirst($file->{'type'}),
+    status  => ucfirst($file->{'status'}) || 'Enabled', 
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
