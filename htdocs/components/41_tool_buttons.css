@@ -50,6 +50,8 @@
 .tool_buttons .add          { background-image: url(/i/16/rev/add.png);           }
 .tool_buttons .save         { background-image: url(/i/16/rev/save.png);          }
 .tool_buttons .load         { background-image: url(/i/16/rev/paste.png);         }
+.tool_buttons .detach       { background-image: url(/i/16/rev/cross.png);         }
+.tool_buttons .delete       { background-image: url(/i/16/rev/trash.png);         }
 .tool_buttons .list         { background-image: url(/i/16/rev/list.png);          }
 .tool_buttons .share        { background-image: url(/i/16/rev/share.png);         }
 .tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }
