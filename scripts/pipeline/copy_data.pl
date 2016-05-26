@@ -319,6 +319,14 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             " FROM species_tree_root" .
             " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
+  #Copy all entries in method_link_species_set_attr table for a method_link_speceies_set_id
+  copy_data($from_dba, $to_dba,
+          "method_link_species_set_attr",
+          undef, undef, undef,
+          "SELECT mlssa.* " .
+	  "FROM method_link_species_set_attr mlssa" .
+	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,
 	  "method_link_species_set_tag",
