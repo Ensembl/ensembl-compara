@@ -45,9 +45,10 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         'mlss_id'   => undef,
+        'work_dir'  => '/nfs/users/nfs_m/mm14/scratch/109/qfo_ils/'.$self->o('iter'),
 
     # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'qfo_201104_e'.$self->o('rel_with_suffix'),
+        'pipeline_name'         => 'qfo_ils_'.$self->o('iter').'_e'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => 'qfo',
 
@@ -62,7 +63,7 @@ sub default_options {
         'outgroups'                 => { },
 
     # species tree reconciliation
-        'species_tree_input_file'   => '/nfs/users/nfs_m/mm14/workspace/src/qfo/ensembl-compara/scripts/pipeline/species_tree.qfo_2015.nw',
+        'species_tree_input_file'   => '/nfs/users/nfs_m/mm14/workspace/qfo/benchmark/ILS_datasets/ils_simulation_'.$self->o('iter').'/RealTree.nwk',
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -84,7 +85,7 @@ sub default_options {
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
-        'curr_file_sources_locs'    => [ '/nfs/users/nfs_m/mm14/workspace/src/qfo/ensembl-compara/qfo.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ '/nfs/users/nfs_m/mm14/workspace/qfo/benchmark/ILS_datasets/ils_simulation_'.$self->o('iter').'/pt.json' ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],

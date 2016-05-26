@@ -1051,7 +1051,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'load_fresh_members_from_file',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles',
             -parameters => {
-                'need_cds_seq'  => 1,
+                'need_cds_seq'  => 0,
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
