@@ -119,7 +119,7 @@ UPDATE species_tree_node_attr SET nb_seq = NULL, nb_genes_in_tree_single_species
 	nb_spec_nodes = NULL, nb_dubious_nodes = NULL, avg_dupscore = NULL, avg_dupscore_nondub = NULL;
 
 #populate the attr table with the node_id from species_tree_root table because the update syntax we are going to use to update the attr table requires that there be data already present in the table
-INSERT INTO species_tree_node_attr (node_id) SELECT node_id FROM species_tree_node stn JOIN species_tree_root str USING (root_id)  
+INSERT IGNORE INTO species_tree_node_attr (node_id) SELECT node_id FROM species_tree_node stn JOIN species_tree_root str USING (root_id)
 	WHERE label = "default";
 
 #update species_tree_node_attr with tmp_stats_per_genome
