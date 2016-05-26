@@ -134,4 +134,4 @@ DELETE FROM species_tree_node_tag WHERE tag IN ( 'nb_long_genes','nb_short_genes
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_i.sql|species_tree_node_table');
+  VALUES (NULL, 'patch', 'patch_84_85_i.sql|species_tree_node_attr');

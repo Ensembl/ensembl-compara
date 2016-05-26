@@ -89,4 +89,4 @@ DELETE FROM method_link_species_set_tag WHERE tag IN ( 'n_goc_null','n_goc_0','n
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_j.sql|method_link_species_set_table');
+  VALUES (NULL, 'patch', 'patch_84_85_j.sql|method_link_species_set_attr');

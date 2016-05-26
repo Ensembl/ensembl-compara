@@ -14,5 +14,5 @@
 16	\N	patch	patch_84_85_f.sql|keys
 17	\N	patch	patch_84_85_g.sql|smaller_datatypes
 18	\N	patch	patch_84_85_h.sql|homology_member_float
-19	\N	patch	patch_84_85_i.sql|species_tree_node_table
-20	\N	patch	patch_84_85_j.sql|method_link_species_set_table
+19	\N	patch	patch_84_85_i.sql|species_tree_node_attr
+20	\N	patch	patch_84_85_j.sql|method_link_species_set_attr

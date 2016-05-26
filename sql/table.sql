@@ -2044,4 +2044,8 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_g.sql|smaller_datatypes');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_h.sql|homology_member_float');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_i.sql|species_tree_node_attr');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_j.sql|method_link_species_set_attr');
 
