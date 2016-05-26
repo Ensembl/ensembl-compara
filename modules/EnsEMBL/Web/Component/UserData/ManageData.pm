@@ -56,7 +56,9 @@ sub content {
   my $user         = $hub->user;
   my $species_defs = $hub->species_defs;
   my $not_found    = 0;
-  my (@data, @rows, $html);  
+  my (@data, @rows);  
+
+  my $html = '<div class="js_panel" id="ManageData">';
  
   my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
@@ -147,6 +149,7 @@ sub content {
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
   }
+  $html .= '</div>';
 
   return $html;
 }
@@ -177,33 +180,27 @@ sub _no_icon {
 }
 
 sub buttons {
+### Buttons for applying methods to all selected files
+### Note they are disabled until some files are selected
   my $self    = shift;
   my $hub     = $self->hub;
   my @buttons;
 
-  my $params = {'action' => 'ModifyData'};
-
-  $params->{'function'} = 'enable_files';
   push @buttons, {
-                    'url'     => $hub->url($params),
                     'caption' => 'Enable selected data',
-                    'class'   => 'add',
+                    'class'   => 'add disabled',
                     'modal'   => 1
                     };
 
-  $params->{'function'} = 'disable_files';
   push @buttons, {
-                    'url'     => $hub->url($params),
                     'caption' => 'Disable selected data',
-                    'class'   => 'detach',
+                    'class'   => 'detach disabled',
                     'modal'   => 1
                     };
 
-  $params->{'function'} = 'delete_files';
   push @buttons, {
-                    'url'     => $hub->url($params),
                     'caption' => 'Delete selected data',
-                    'class'   => 'delete',
+                    'class'   => 'delete disabled',
                     'modal'   => 1
                     };
 
@@ -319,7 +316,7 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
-  my $checkbox = sprintf '<input type="checkbox" class="record_selector" name="files" value="%s-%s" />', $file->{'type'}, $file->{'code'};
+  my $checkbox = sprintf '<input type="checkbox" class="manage_files" value="%s_%s" />', $file->{'type'}, $file->{'code'};
 
   return {
     check   => $checkbox,
