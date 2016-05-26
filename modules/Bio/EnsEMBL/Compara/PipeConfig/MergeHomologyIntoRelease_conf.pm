@@ -93,7 +93,7 @@ sub default_options {
             -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
         },
 
-        'merged_tables'     => [ 'method_link_species_set_tag',
+        'merged_tables'     => [ 'method_link_species_set_tag','method_link_species_set_attr',
                                  'species_tree_node', 'species_tree_root' ],
         'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta', 'ktreedist_score',
                                  'method_link', 'method_link_species_set',
