@@ -165,10 +165,10 @@ sub save_remote {
 
 sub delete_upload {
 ### Delete file and session/user record for an uploaded file
-  my $self = shift;
+  my ($self, @args) = @_;
   my $hub  = $self->hub;
 
-  my $rel_path = $self->_delete_record('upload');
+  my $rel_path = $self->_delete_record('upload', @args);
   if ($rel_path) {
     ## Also remove file
     my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
@@ -182,9 +182,34 @@ sub delete_upload {
 
 sub delete_remote {
 ### Delete record for an attached file
-  my $self = shift;
-  $self->_delete_record('url');
+  my ($self, @args) = @_;
+  $self->_delete_record('url', @args);
   return undef;
+}
+
+sub delete_files {
+  my $self = shift;
+  my @files = $self->hub->param('files');
+  warn ">>> DELETING FILES @files";
+  foreach (@files) {
+    my ($source, $code, $id) = split('_', $_);
+    if ($source eq 'upload') {
+      #$self->delete_upload($source, $code, $id);
+    }
+    else {
+      #$self->delete_remote($source, $code, $id);
+    }
+  }
+}
+
+sub enable_files {
+  my $self = shift;
+
+}
+
+sub disable_files {
+  my $self = shift;
+
 }
 
 sub _set_error_message {
@@ -237,16 +262,16 @@ sub _move_to_user {
 }
 
 sub _delete_record {
-  my ($self, $type) = @_;
-  my $hub        = $self->hub;
+  my ($self, $type, $source, $code, $id) = @_;
+  my $hub       = $self->hub;
 
-  my $source     = $hub->param('source');
-  my $code       = $hub->param('code');
-  my $id         = $hub->param('id');
-  my $user       = $hub->user;
+  my $source  ||= $hub->param('source');
+  my $code    ||= $hub->param('code');
+  my $id      ||= $hub->param('id');
 
-  my $session    = $hub->session;
-  my $session_id = $session->session_id;
+  my $user        = $hub->user;
+  my $session     = $hub->session;
+  my $session_id  = $session->session_id;
   my ($file, $track_name);
 
   if ($user && $id) {
