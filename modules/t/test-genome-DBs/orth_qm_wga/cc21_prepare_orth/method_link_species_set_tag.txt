@@ -22,4 +22,3 @@
 50976	n_one-to-one_150_genes	15902
 50976	n_one-to-one_groups	15902
 50976	n_one-to-one_pairs	15902
-50976	threshold_on_ds	1
