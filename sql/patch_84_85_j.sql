@@ -65,12 +65,12 @@ CREATE TABLE method_link_species_set_attr (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+ALTER TABLE method_link_species_set_tag ADD KEY (tag);
+
 # Populate the new table with NULLs
 INSERT IGNORE INTO method_link_species_set_attr (method_link_species_set_id) SELECT method_link_species_set_id FROM method_link_species_set_tag
   WHERE tag IN ("n_goc_null","n_goc_0","n_goc_25","n_goc_50","n_goc_75","n_goc_100","perc_orth_above_goc_thresh","goc_quality_threshold",
   "wga_quality_threshold","perc_orth_above_wga_thresh","threshold_on_ds");
-
-ALTER TABLE method_link_species_set_tag ADD KEY (tag);
 
 UPDATE method_link_species_set_attr, method_link_species_set_tag SET method_link_species_set_attr.n_goc_null = method_link_species_set_tag.value WHERE method_link_species_set_tag.tag = 'n_goc_null' AND method_link_species_set_attr.method_link_species_set_id = method_link_species_set_tag.method_link_species_set_id;
 UPDATE method_link_species_set_attr, method_link_species_set_tag SET method_link_species_set_attr.n_goc_0 = method_link_species_set_tag.value WHERE method_link_species_set_tag.tag = 'n_goc_0' AND method_link_species_set_attr.method_link_species_set_id = method_link_species_set_tag.method_link_species_set_id;

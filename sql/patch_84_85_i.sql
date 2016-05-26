@@ -93,13 +93,13 @@ CREATE TABLE species_tree_node_attr (
   PRIMARY KEY (node_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+ALTER TABLE species_tree_node_tag ADD KEY (tag);
+
 # Populate the new table with NULLs
 INSERT IGNORE INTO species_tree_node_attr (node_id) SELECT node_id FROM species_tree_node_tag 
   WHERE tag IN ("nb_long_genes","nb_short_genes","avg_dupscore","avg_dupscore_nondub","nb_dubious_nodes","nb_dup_nodes","nb_genes","nb_genes_in_tree",
   "nb_genes_in_tree_multi_species","nb_genes_in_tree_single_species","nb_nodes","nb_orphan_genes","nb_seq","nb_spec_nodes","nb_gene_splits",
   "nb_split_genes","root_avg_gene","root_avg_gene_per_spec","root_avg_spec","root_max_gene","root_max_spec","root_min_gene","root_min_spec","root_nb_genes","root_nb_trees");
-
-ALTER TABLE species_tree_node_tag ADD KEY (tag);
 
 UPDATE species_tree_node_attr, species_tree_node_tag SET species_tree_node_attr.nb_long_genes = species_tree_node_tag.value WHERE species_tree_node_tag.tag = 'nb_long_genes' AND species_tree_node_attr.node_id = species_tree_node_tag.node_id;
 UPDATE species_tree_node_attr, species_tree_node_tag SET species_tree_node_attr.nb_short_genes = species_tree_node_tag.value WHERE species_tree_node_tag.tag = 'nb_short_genes' AND species_tree_node_attr.node_id = species_tree_node_tag.node_id;
