@@ -22,6 +22,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
+use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::File::User;
@@ -119,38 +120,31 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my ($tip, $more);
   if ($html) {
-    $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
+    my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
     ## Show 'add more' link at top as well, if table is long
     if (scalar(@rows) > 10) {
       $html = $more.$html;
     }
 
     $html .= $more if scalar(@rows);
-
-    ## Hints
-    my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
- 
-    $tip = qq{
-      <div class="info">
-        <h3>Tip</h3>
-        <div class="message-pad">
-          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
-          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-          $group_sharing_info
-        </div>
-      </div>
-    };
-
-    $html .= $tip;
   }
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
   }
 
+  ## Hints
+  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
+
+  my $info_icon = '<img class="_ht" src="/i/16/info.png" />';
+  my $tip = encode_entities(qq{
+          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+          $group_sharing_info
+            });
+
   return qq{
-    <h2 class="legend">Your data</h2>
+    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
     $html
   };
 
