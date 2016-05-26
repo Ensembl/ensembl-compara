@@ -356,12 +356,12 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                                                    -species_set_obj    => $species_set_obj,
                                                                                    -max_alignment_length => 1000);
 
-    $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag", "method_link_species_set_attr");
     $method_link_species_set_adaptor->store($method_link_species_set);
     is(scalar(@{$method_link_species_set_adaptor->fetch_all}), 1);
     is(scalar(@{$method_link_species_set->get_all_values_for_tag("max_align")}), 1);
 
-    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag","method_link_species_set_attr");
 
     done_testing();
 };
@@ -377,7 +377,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
     #Make sure the cache is empty
     $method_link_species_set_adaptor->{_id_cache}->clear_cache;
     #save the state
-    $multi->save("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->save("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag","method_link_species_set_attr");
 
     my $new_method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",
@@ -414,7 +414,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
     is($method_link_species_set->dbID, $this_method_link_species_set_id);
     is(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss)+1);
 
-    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag", "method_link_species_set_attr");
 
     done_testing();
 };
@@ -439,7 +439,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method
                                                                                    -species_set_obj    => $species_set_obj,
                                                                                    -max_alignment_length => 1000);
 
-    $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag","method_link_species_set_attr");
 
     $method_link_species_set_adaptor->store($method_link_species_set);
     is(scalar(@{$method_link_species_set_adaptor->fetch_all}), 1);
@@ -451,7 +451,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method
     #HACK - comment out for now - problem with caching?
     #is(scalar(@{$method_link_species_set->get_all_values_for_tag("max_align")}), 0);
 
-    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag", "method_link_species_set_attr");
 
     #HACK - comment out for now - problem with caching?
     #is(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss));
