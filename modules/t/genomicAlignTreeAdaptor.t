@@ -140,11 +140,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor::store", sub
     my $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($genomic_align_block);
     my $genomic_aligns = $genomic_align_tree->get_all_genomic_aligns_for_node;
 
-    foreach my $genomic_align (@$genomic_aligns) {
-        #get genomic_align_block object (instead of just the dbID)
-        #my $gab = $genomic_align->genomic_align_block;
-        $genomic_align->genomic_align_block_id("");
-        #$genomic_align->genomic_align_block->dbID("");
+    foreach my $genomic_align_node (@{$genomic_align_tree->get_all_nodes}) {
+        foreach my $this_genomic_align (@{$genomic_align_node->get_all_genomic_aligns_for_node}) {
+            $this_genomic_align->genomic_align_block_id("");
+        }
     }
 
     #Need to unset the genomic_align_block_id for both ancestral and modern gab (in the ga structure above). Something still wrong
