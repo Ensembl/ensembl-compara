@@ -353,8 +353,10 @@ CREATE TABLE method_link_species_set_tag (
 @column goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
 @column goc_75                              the number of orthologs with 75% gene order conservation among their neighbours
 @column goc_100                             the number of orthologs with 100% gene order conservation among their neighbours
-@column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation = 50% 
-@column ortholog_quality_threshold          the chosen threshold for "high quality" orthologs based on the whole genome alignments coverage of homologous pairs = 50%
+@column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation
+@column perc_orth_above_goc_thresh          the percentage of orthologs above the goc threshold 
+@column wga_quality_threshold               the chosen threshold for "high quality" orthologs based on the whole genome alignments coverage of homologous pairs
+@column perc_orth_above_wga_thresh          the percentage of orthologs above the wga threshold
 @column threshold_on_ds
 
 @see method_link_species_set
@@ -364,14 +366,16 @@ CREATE TABLE method_link_species_set_tag (
 
 CREATE TABLE method_link_species_set_attr (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  goc_null                    int,
-  goc_0                       int,
-  goc_25                      int,
-  goc_50                      int,
-  goc_75                      int,
-  goc_100                     int,
+  n_goc_null                    int,
+  n_goc_0                       int,
+  n_goc_25                      int,
+  n_goc_50                      int,
+  n_goc_75                      int,
+  n_goc_100                     int,
+  perc_orth_above_goc_thresh  int,
   goc_quality_threshold       int,
-  ortholog_quality_threshold  int,
+  wga_quality_threshold       int,
+  perc_orth_above_wga_thresh  int,
   threshold_on_ds             int,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -397,6 +401,7 @@ CREATE TABLE method_link_species_set_attr (
 @column node_name               A name that can be set to the taxon name or any other arbitrary name
 
 @see species_tree_node_tag
+@see species_tree_node_attr
 @see species_tree_root
 @see CAFE_gene_family
 @see CAFE_species_gene
@@ -482,9 +487,8 @@ CREATE TABLE `species_tree_node_tag` (
 @column nb_short_genes                      the number of genes shorter than the avg length of their orthologs
 @column avg_dupscore                        the average duplication score
 @column avg_dupscore_nondub                 avg_dupscore_nondub
-@column avg_gene_split_perc_id              avg_gene_split_perc_id
-@column avg_within_species_paralog_perc_id  avg_within_species_paralog_perc_id
 @column nb_dubious_nodes                    nb_dubious_nodes
+@column nb_dup_nodes                        nb_dup_nodes
 @column nb_genes                            the number of genes
 @column nb_genes_in_tree                    the number of genes in the tree 
 @column nb_genes_in_tree_multi_species      nb_genes_in_tree_multi_species
@@ -493,12 +497,8 @@ CREATE TABLE `species_tree_node_tag` (
 @column nb_orphan_genes                     nb_orphan_genes
 @column nb_seq                              the number of sequences
 @column nb_spec_nodes                       nb_spec_nodes
-@column n_gene_split_genes                  n_gene_split_genes
-@column n_gene_split_groups                 n_gene_split_groups
-@column n_gene_split_pairs                  n_gene_split_pairs
-@column nb_gene_splits                      the number split genes 
-@column n_within_species_paralog_genes      n_within_species_paralog_genes
-@column n_within_species_paralog_groups     n_within_species_paralog_groups
+@column nb_gene_splits                      the number of split gene events
+@column nb_split_genes                      the number of split genes
 @column root_avg_gene                       root_avg_gene
 @column root_avg_gene_per_spec              root_avg_gene_per_spec
 @column root_avg_spec                       root_avg_spec
@@ -521,38 +521,31 @@ CREATE TABLE `species_tree_node_tag` (
 
 CREATE TABLE `species_tree_node_attr` (
   `node_id` int(10)                         unsigned NOT NULL,
-  `nb_long_genes`                           mediumtext,
-  `nb_short_genes`                          mediumtext,
-  `avg_dupscore`                            mediumtext,
-  `avg_dupscore_nondub`                     mediumtext,
-  `avg_gene_split_perc_id`                  mediumtext,
-  `avg_within_species_paralog_perc_id`      mediumtext,
-  `nb_dubious_nodes`                        mediumtext,
-  `nb_genes`                               mediumtext,
-  `nb_genes_in_tree`                       mediumtext,
-  `nb_genes_in_tree_multi_species`         mediumtext,
-  `nb_genes_in_tree_single_species`        mediumtext,
-  `nb_nodes`                               mediumtext,
-  `nb_orphan_genes`                        mediumtext,
-  `nb_seq`                                 mediumtext,
-  `nb_spec_nodes`                          mediumtext,
-  `n_gene_split_genes`                     mediumtext,
-  `n_gene_split_groups`                    mediumtext,
-  `n_gene_split_pairs`                     mediumtext,
-  `nb_gene_splits`                         mediumtext,
-  `nb_split_genes`                         mediumtext,
-  `n_within_species_paralog_genes`         mediumtext,
-  `n_within_species_paralog_groups`        mediumtext,
-  `n_within_species_paralog_pairs`         mediumtext,
-  `root_avg_gene`                          mediumtext,
-  `root_avg_gene_per_spec`                 mediumtext,
-  `root_avg_spec`                          mediumtext,
-  `root_max_gene`                          mediumtext,
-  `root_max_spec`                          mediumtext,
-  `root_min_gene`                          mediumtext,
-  `root_min_spec`                          mediumtext,
-  `root_nb_genes`                          mediumtext,
-  `root_nb_trees`                          mediumtext,
+  `nb_long_genes`                           int,
+  `nb_short_genes`                          int,
+  `avg_dupscore`                            float,
+  `avg_dupscore_nondub`                     float,
+  `nb_dubious_nodes`                        int,
+  `nb_dup_nodes`                            int,
+  `nb_genes`                               int,
+  `nb_genes_in_tree`                       int,
+  `nb_genes_in_tree_multi_species`         int,
+  `nb_genes_in_tree_single_species`        int,
+  `nb_nodes`                               int,
+  `nb_orphan_genes`                        int,
+  `nb_seq`                                 int,
+  `nb_spec_nodes`                          int,
+  `nb_gene_splits`                         int,
+  `nb_split_genes`                         int,
+  `root_avg_gene`                          float,
+  `root_avg_gene_per_spec`                 float,
+  `root_avg_spec`                          float,
+  `root_max_gene`                          int,
+  `root_max_spec`                          int,
+  `root_min_gene`                          int,
+  `root_min_spec`                          int,
+  `root_nb_genes`                          int,
+  `root_nb_trees`                          int,
 
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
   PRIMARY KEY (node_id)
