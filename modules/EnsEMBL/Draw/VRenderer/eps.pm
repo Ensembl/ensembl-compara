@@ -110,8 +110,6 @@ sub _colour {
     $self->{'colours'}{$X} = 1;
   }
 }
-sub add_canvas_frame {
-}
 
 sub ps_rgb_by_id {
   my ($self, $id) = @_;

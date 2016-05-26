@@ -150,9 +150,6 @@ sub render {
       }
     }
   }
-    
-  # the last thing we do in the render process is add a frame so that it appears on the top of everything else
-  $self->add_canvas_frame($config, $im_width, $im_height);
 }
 
 sub canvas {

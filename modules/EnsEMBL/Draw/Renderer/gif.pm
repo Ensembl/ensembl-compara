@@ -48,26 +48,6 @@ sub init_canvas {
   $self->canvas($canvas);
 }
 
-sub add_canvas_frame {
-  my ($self, $config, $im_width, $im_height) = @_;
-	
-  return;
-  return if (defined $config->{'no_image_frame'});
-	
-  # custom || default image frame colour
-  my $imageframecol = $config->{'image_frame_colour'} || 'black';
-  my $framecolour   = $self->colour($imageframecol);
-
-  # for contigview bottom box we need an extra thick border...
-  if ($config->script() eq 'contigviewbottom'){		
-    $self->{'canvas'}->rectangle(1, 1, $im_width * $self->{sf} -2, $im_height * $self->{sf}-2, $framecolour);		
-  }
-	
-  $self->{'canvas'}->rectangle(
-	  0, 0, $im_width * $self->{sf} -1, $im_height * $self->{sf} -1, $framecolour
-  );
-}
-
 sub canvas {
   my ($self, $canvas) = @_;
 
