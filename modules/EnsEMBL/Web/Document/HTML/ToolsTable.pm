@@ -104,8 +104,8 @@ sub render {
   if ($sd->ENSEMBL_FC_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
     $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">File chameleon</a></b>', $link),
-      'desc'  => "Convert ensembl files for use with other analysis tool",
+      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
+      'desc'  => "Convert Ensembl files for use with other analysis tools",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => $tools_limit,
       'code'  => '',
