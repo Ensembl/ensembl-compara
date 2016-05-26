@@ -481,16 +481,17 @@ sub supporting_evidence_link {
       $count = 0;
     }
     my $a_url = $st->url;
+    my $source_name = $st->source_name;
     if (!defined($a_url)) {
-      $as_html .= $self->source_link($st->source,$st->name,$ext_id);
+      $as_html .= $self->source_link($source_name,$st->name,$ext_id);
     }
     # Temporary link to fix the problem of the non stable IDs for the EGA studies coming from dbGAP
     elsif ($a_url =~ /ega/ && $self->hub->species eq 'Homo_sapiens') {
-      my $source = $st->source.'_SEARCH';
+      my $source = $source_name.'_SEARCH';
       $as_html .= $self->source_link($source,$st->name,$ext_id);
     }
     else {
-      my $a_source = $st->source;
+      my $a_source = $source_name;
       if ($st->name) { $a_source = $st->name; }
       $as_html .= qq{<a rel="external" href="$a_url">[$a_source]</a>};
     }
