@@ -347,14 +347,14 @@ CREATE TABLE method_link_species_set_tag (
 @desc This table contains the distribution of the gene order conservation scores 
 @colour   #1E90FF
 @column method_link_species_set_id          internal unique ID for the orthologs
-@column goc_null                            the number of orthologs for with no neighbors
-@column goc_0                               the number of orthologs with no gene order conservation among their neighbours
-@column goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
-@column goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
-@column goc_75                              the number of orthologs with 75% gene order conservation among their neighbours
-@column goc_100                             the number of orthologs with 100% gene order conservation among their neighbours
-@column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation
+@column n_goc_null                            the number of orthologs for with no neighbors
+@column n_goc_0                               the number of orthologs with no gene order conservation among their neighbours
+@column n_goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
+@column n_goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
+@column n_goc_75                              the number of orthologs with 75% gene order conservation among their neighbours
+@column ngoc_100                             the number of orthologs with 100% gene order conservation among their neighbours
 @column perc_orth_above_goc_thresh          the percentage of orthologs above the goc threshold 
+@column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation
 @column wga_quality_threshold               the chosen threshold for "high quality" orthologs based on the whole genome alignments coverage of homologous pairs
 @column perc_orth_above_wga_thresh          the percentage of orthologs above the wga threshold
 @column threshold_on_ds
