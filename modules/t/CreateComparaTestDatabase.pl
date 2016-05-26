@@ -163,6 +163,9 @@ $dbh->do("insert into method_link_species_set select * from $srcDB.method_link_s
 #Populate method_link_species_set_tag (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO method_link_species_set_tag SELECT * FROM $srcDB.method_link_species_set_tag");
 
+#Populate method_link_species_set_attr (take all so more data can be added at a later date)
+$dbh->do("INSERT INTO method_link_species_set_attr SELECT * FROM $srcDB.method_link_species_set_attr");
+
 #Populate species_set_header (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO species_set_header SELECT * FROM $srcDB.species_set_header");
 
