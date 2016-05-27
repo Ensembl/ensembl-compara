@@ -179,11 +179,7 @@ sub _newick_dup_code {
 sub lost_taxa {
     my $self = shift;
     unless ($self->{_lost_species_tree_nodes}) {
-        my @nodes;
-        foreach my $dbID (@{$self->get_all_values_for_tag('lost_species_tree_node_id')}) {
-            push @nodes, $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($dbID);
-        }
-        $self->{_lost_species_tree_nodes} = \@nodes;
+        $self->{_lost_species_tree_nodes} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_all_by_dbID_list( $self->get_all_values_for_tag('lost_species_tree_node_id') );
     }
     return $self->{_lost_species_tree_nodes};
 }
