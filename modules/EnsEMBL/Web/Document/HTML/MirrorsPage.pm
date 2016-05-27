@@ -30,22 +30,22 @@ our @EXPORT = qw(mirrors_list);
 sub mirrors_list {
   return [
     'UK'      => {'name'  => 'UK (Sanger Institute)',
-                  'url'   => 'http://www.ensembl.org?redirect=no',
+                  'url'   => 'http://www.ensembl.org',
                   'blurb' => 'Main site, best for Europe, Africa and Middle East',
                   'flag'  => 'flag_uk.png',
                   },
     'USWEST'  => {'name'  => 'US West (Amazon AWS)',
-                  'url'   => 'http://uswest.ensembl.org?redirect=no',
+                  'url'   => 'http://uswest.ensembl.org',
                   'blurb' => 'Faster connections from the Pacific Rim',
                   'flag'  => 'flag_usa.png',
                   },
     'USEAST'  => {'name'  => 'US East (Amazon AWS)',
-                  'url'   => 'http://useast.ensembl.org?redirect=no',
+                  'url'   => 'http://useast.ensembl.org',
                   'blurb' => 'Cloud-based mirror on East Coast of US',
                   'flag'  => 'flag_usa.png',
                   },
     'ASIA'    => {'name'  => 'Asia (Amazon AWS)',
-                  'url'   => 'http://asia.ensembl.org?redirect=no',
+                  'url'   => 'http://asia.ensembl.org',
                   'blurb' => 'Cloud-based mirror in Singapore',
                   'flag'  => 'flag_sg.png',
                   },
@@ -65,7 +65,7 @@ sub render {
       push @$html, sprintf('%s %s - <span class="red">YOU ARE HERE!</span>', $flag, $site);
     } else {
       push @$html, sprintf('<a href="%s">%s</a> <a href="%1$s"><strong>%s</strong></a> - %s', 
-        $mirror->{'url'},
+        $mirror->{'url'}.'?redirect=no',
         $flag,
         $mirror->{'name'},
         $mirror->{'blurb'}
