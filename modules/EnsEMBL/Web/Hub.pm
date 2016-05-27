@@ -129,6 +129,7 @@ sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub timer       :lvalue { $_[0]{'_timer'};       }
+sub template    :lvalue { $_[0]{'_template'};    }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
