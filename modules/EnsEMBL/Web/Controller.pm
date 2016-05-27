@@ -224,7 +224,7 @@ sub configure {
     $self->node    = $node;
     $self->command = $node->data->{'command'};
     $self->filters = $node->data->{'filters'};
-    $template      = $node->data->{'template'};
+    $template      = $node->data->{'template'} || $configuration->default_template;
   }
   $hub->template = $template || 'Legacy';  
 

@@ -29,6 +29,8 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Index';
 }
 
+sub default_template { return 'Legacy::Wide'; }
+
 sub caption { 
   my $self         = shift;
   my $hub          = $self->hub;

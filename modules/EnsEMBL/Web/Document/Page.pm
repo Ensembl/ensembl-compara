@@ -438,9 +438,6 @@ sub main_class {
 
   my $here = $ENV{'REQUEST_URI'};
   if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
-        || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
-        || ($self->isa('EnsEMBL::Web::Document::Page::Static') 
-              && (($here =~ /Doxygen\/(\w|-)+/ && $here !~ /Doxygen\/index.html/) || $here !~ /^\/info/))
     ) {
     return 'widemain';
   }
@@ -483,9 +480,11 @@ sub html_template {
   ## CONTENTS OF BODY TAG DETERMINED BY TEMPLATE MODULE
   my $template_name   = $self->hub->template || 'Legacy';
   my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
+  #warn ">>> USING TEMPLATE $template_class";
 
   if ($self->dynamic_use($template_class)) {
     my $template = $template_class->new({'page' => $self, 'elements' => $elements});
+    $template->init;
     $HTML .= $template->render;
   }
 

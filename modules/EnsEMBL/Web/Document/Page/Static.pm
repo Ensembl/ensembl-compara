@@ -26,8 +26,16 @@ sub initialize_HTML {
   my $self = shift;
 
   my $here = $ENV{'REQUEST_URI'};
-  my $has_nav = $here =~ /Doxygen\/index.html/ || ($here =~ /^\/info/ && $here !~ /Doxygen\/(\w|-)+/) ? 1 : 0;
+  my $has_nav = 0;
+  my $template = 'Legacy::Wide';
+
+  if ($here =~ /Doxygen\/index.html/ || ($here =~ /^\/info/ && $here !~ /Doxygen/)) {
+    ## Documentation pages, excluding ones created by Doxygen script
+    $template = 'Legacy';
+    $has_nav = 1; 
+  }
   $self->include_navigation($has_nav);
+  $self->hub->template = $template;
 
   # General layout for static pages
   $self->add_head_elements(qw(
