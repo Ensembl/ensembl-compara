@@ -149,7 +149,7 @@ sub taxonomy_level {
 
 =head2 node_type
 
-  Description: Getter for the node_type attribute. It shows the event that took place
+  Description: Getter/setter for the node_type attribute. It shows the event that took place
                at that node. Currently, one of "duplication", "speciation", "dubious",
                and "gene_split"
 
@@ -157,7 +157,7 @@ sub taxonomy_level {
 
 sub node_type {
     my $self = shift;
-    return $self->get_value_for_tag('node_type');
+    return $self->_getter_setter_for_tag('node_type', @_);
 }
 
 sub _newick_dup_code {
@@ -191,26 +191,26 @@ sub lost_taxa {
 
 =head2 duplication_confidence_score
 
-  Description: Returns the confidence score of the duplication node (between 0 and 1)
+  Description: Getter/setter the confidence score of the duplication node (between 0 and 1)
                "dubious" nodes always return 0, "speciation" nodes always return undef
 
 =cut
 
 sub duplication_confidence_score {
     my $self = shift;
-    return $self->get_value_for_tag('duplication_confidence_score');
+    return $self->_getter_setter_for_tag('duplication_confidence_score', @_);
 }
 
 
 =head2 bootstrap
 
-  Description: Returns the bootstrap value of that node (between 0 and 100)
+  Description: Getter/setter the bootstrap value of that node (between 0 and 100)
 
 =cut
 
 sub bootstrap {
     my $self = shift;
-    return $self->get_value_for_tag('bootstrap');
+    return $self->_getter_setter_for_tag('bootstrap', @_);
 }
 
 

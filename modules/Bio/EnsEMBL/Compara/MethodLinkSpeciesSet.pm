@@ -329,13 +329,7 @@ sub get_common_classification {
 
 sub max_alignment_length {
     my $self = shift @_;
-    my $max_align = shift;
-
-    if($max_align) {
-        $self->add_tag('max_align', $max_align);
-    }
-
-    return $self->get_value_for_tag('max_align') || $DEFAULT_MAX_ALIGNMENT;
+    return $self->_getter_setter_for_tag('max_align', @_) || $DEFAULT_MAX_ALIGNMENT;
 }
 
 

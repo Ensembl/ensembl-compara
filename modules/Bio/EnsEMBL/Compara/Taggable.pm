@@ -370,6 +370,30 @@ sub get_tagvalue_hash {
     return $self->{'_tags'};
 }
 
+
+=head2 _getter_setter_for_tag
+
+  Arg[1]      : String $tag. The tag name
+  Arg[2]      : (optional) Scalar $value. Used for the "setter mode"
+  Example     : $object_name->_getter_setter_for_tag('name', @_);
+  Description : Generic method that acts like a getter/setter for a given tag
+  Returntype  : Scalar: the (new) value of this tag
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _getter_setter_for_tag {
+    my $self = shift;
+    my $tag = shift;
+    if (@_) {
+        $self->add_tag($tag, shift);
+    }
+    return $self->get_value_for_tag($tag);
+}
+
+
 =head2 _load_tags
 
   Description: loads all the tags (from the database) if possible.

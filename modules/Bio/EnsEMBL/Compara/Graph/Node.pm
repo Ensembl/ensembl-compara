@@ -163,10 +163,7 @@ sub node_id {
 
 sub name {
   my $self = shift;
-  my $value = shift;
-  if(defined($value)) { $self->add_tag('name', $value); }
-  else { $value = $self->get_value_for_tag('name'); }
-  return $value;
+  return $self->_getter_setter_for_tag('name', @_);
 }
 
 

@@ -341,7 +341,7 @@ sub _split_name_into_parts {
 =head2 common_name
 
   Example    : $ncbi->common_name;
-  Description: The comon name as defined by Genbank
+  Description: Getter/setter for the comon name as defined by Genbank
   Returntype : string
   Exceptions : returns undef if no genbank common name exists.
   Caller     : general
@@ -349,18 +349,14 @@ sub _split_name_into_parts {
 =cut
 
 sub common_name {
-  my $self = shift;
-  if ($self->rank eq 'species') {
-    return $self->get_value_for_tag('genbank common name');
-  } else {
-    return undef;
-  }
+    my $self = shift;
+    return $self->_getter_setter_for_tag('genbank common name', @_);
 }
 
 =head2 ensembl_alias_name
 
   Example    : $ncbi->ensembl_alias_name;
-  Description: The comon name as defined by ensembl alias
+  Description: Getter/setter for the comon name as defined by ensembl alias
   Returntype : string
   Exceptions : returns undef if no ensembl alias name exists.
   Caller     : general
@@ -368,18 +364,15 @@ sub common_name {
 =cut
 
 sub ensembl_alias_name {
-  my $self = shift;
-
-  #Not checking for rank as we do above, because we do not get dog since the
-  #rank for dog is subspecies (ensembl-51).
-    return $self->get_value_for_tag('ensembl alias name');
+    my $self = shift;
+    return $self->_getter_setter_for_tag('ensembl alias name', @_);
 }
 
 
 =head2 scientific_name
 
   Example    : $ncbi->scientific_name;
-  Description: The scientific name of this taxon
+  Description: Getter/setter for the scientific name of this taxon
   Returntype : string
   Exceptions :
   Caller     : general
@@ -388,15 +381,12 @@ sub ensembl_alias_name {
 
 sub scientific_name {
     my ($self) = @_;
-    return $self->get_value_for_tag('scientific name');
+    return $self->_getter_setter_for_tag('scientific name', @_);
 }
 
 sub name {
-  my $self = shift;
-  my $value = shift;
-  if(defined($value)) { $self->add_tag('scientific name', $value); }
-  else { $value = $self->get_value_for_tag('scientific name'); }
-  return $value;
+    my $self = shift;
+    return $self->scientific_name(@_);
 }
 
 =head2 binomial

@@ -253,8 +253,7 @@ sub lnl {
 
 sub threshold_on_ds {
   my $self = shift;
-  $self->method_link_species_set->add_tag('threshold_on_ds', shift) if (@_);
-  return $self->method_link_species_set->get_value_for_tag('threshold_on_ds');
+  return $self->method_link_species_set->_getter_setter_for_tag('threshold_on_ds', @_);
 }
 
 =head2 dn
