@@ -19,6 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Template::Legacy::Wide;
 
 ### Legacy page template, used by dynamic pages with no lefthand navigation
+### and also top-level static pages
 
 use parent qw(EnsEMBL::Web::Template::Legacy);
 
