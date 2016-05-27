@@ -314,19 +314,15 @@ sub rec_update_tags {
         my $node_id = $cluster->root_id;
 
         my $leafcount = scalar(@{$cluster->root->get_all_leaves});
-        $cluster->store_tag('gene_count', $leafcount);
+        $cluster->add_tag('gene_count', $leafcount);
         print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
         #We replicate needed tags into the children
         if (defined $self->param('tags_to_copy')) {
-            my @tags = @{$self->param('tags_to_copy')};
-            for my $tag (@tags) {
-                print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
-                my $value = $self->param('gene_tree')->get_tagvalue($tag);
-                $self->throw("$tag tag not found in " . $self->param('gene_tree')->root_id) unless (defined $value);
-                $cluster->store_tag($tag, $value);
-            }
+            $cluster->copy_tags_from($self->param('gene_tree'), $self->param('tags_to_copy'));
         }
+
+        $cluster->adaptor->_store_all_tags($cluster);
 
     } else {
         $node->store_tag('tree_support', 'quicktree');

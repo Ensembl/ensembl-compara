@@ -371,6 +371,32 @@ sub get_tagvalue_hash {
 }
 
 
+=head2 copy_tags_from
+
+  Arg[1]      : Bio::EnsEMBL::Compara::Taggable $source_object. Where to get the tags/values from
+  Arg[2]      : (optional) Arrayref of strings $tag_names. The names of the tags to copy (copy all otherwise)
+  Example     : $object_name->copy_tags_from($source_object);
+  Description : Copy some tags from one object to the current one.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub copy_tags_from {
+    my $self = shift;
+    my $source_object = shift;
+    my $tags_to_copy = @_ ? shift : [$source_object->get_all_tags()];
+
+    $self->_load_tags;
+    foreach my $tag (@$tags_to_copy) {
+        my $value = $source_object->{'_tags'}->{$tag};
+        $self->{'_tags'}->{$tag} = ref($value) eq 'ARRAY' ? [@$value] : $value;
+    }
+}
+
+
 =head2 _getter_setter_for_tag
 
   Arg[1]      : String $tag. The tag name
