@@ -29,12 +29,12 @@ use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions qw(WebException);
 use EnsEMBL::Web::Utils::Encryption qw(encrypt_value decrypt_value);
 
-sub name      :Accessor; ## Name of the cookie
-sub domain    :Accessor; ## Domain name for the cookie - defaults to current domain (including any sub domains if any)
-sub expires   :Accessor; ## Expiry for the cookie
-sub path      :Accessor; ## Path for the cookie - defaults to '/'
-sub httponly  :Accessor; ## Flag to tell if this cookie can only be accessed via HTTP, ie. JS can't read it
-sub retrieved :Getter;   ## Returns true if the cookie has been retrieved from http headers
+sub name      :AccessorMutator; ## Name of the cookie
+sub domain    :AccessorMutator; ## Domain name for the cookie - defaults to current domain (including any sub domains if any)
+sub expires   :AccessorMutator; ## Expiry for the cookie
+sub path      :AccessorMutator; ## Path for the cookie - defaults to '/'
+sub httponly  :AccessorMutator; ## Flag to tell if this cookie can only be accessed via HTTP, ie. JS can't read it
+sub retrieved :Accessor;        ## Returns true if the cookie has been retrieved from http headers
 
 sub new {
   ## @constructor

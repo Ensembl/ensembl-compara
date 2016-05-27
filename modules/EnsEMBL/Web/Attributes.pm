@@ -31,10 +31,9 @@ use warnings;
 
 use EnsEMBL::Web::Exceptions;
 
-sub Accessor {
-  ## Attribute to declare an accessor method
-  ## If default subroutine returns a key name, then this attribute modifies it to set/get value of that key provided object is a blessed hash
-  ## @param Key name to be accessed (defaults to the method name)
+sub AccessorMutator {
+  ## Attribute to declare a method that can act as an accessor and a mutator (read and write)
+  ## @param Key name to access or mutate the value (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {
     my $object  = shift;
@@ -43,8 +42,8 @@ sub Accessor {
   }
 }
 
-sub Getter {
-  ## Attribute to declare a getter method
+sub Accessor {
+  ## Attribute to declare a accessor method (readonly)
   ## @param Key name to get value for (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {

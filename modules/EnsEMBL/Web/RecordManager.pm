@@ -27,7 +27,7 @@ use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::RecordSet;
 use EnsEMBL::Web::Exceptions qw(WebException ORMException);
 
-sub hub :Getter;
+sub hub :Accessor;
 
 sub new {
   ## @constructor

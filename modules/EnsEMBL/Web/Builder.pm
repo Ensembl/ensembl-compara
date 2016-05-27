@@ -26,7 +26,7 @@ use parent qw(EnsEMBL::Web::Root);
 use EnsEMBL::Web::Lazy::Object;
 use EnsEMBL::Web::Attributes;
 
-sub hub :Getter('hub');
+sub hub :Accessor;
 
 sub new {
   my ($class, $hub, $object_params) = @_;
