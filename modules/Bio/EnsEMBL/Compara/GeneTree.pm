@@ -417,7 +417,10 @@ sub preload {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
+        # This is like GeneTreeNode::species_tree_node() but using the lookup
         $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
+        # This is like GeneTreeNode::lost_taxa() but using the lookup
+        $node->{_lost_species_tree_nodes} = [map {$stn_id_lookup{$_}} @{ $node->get_all_values_for_tag('lost_species_tree_node_id') }];
     }
 
     # Loads all the gene members in one go
