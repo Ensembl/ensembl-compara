@@ -38,7 +38,7 @@ sub init {
   $self->{$_}                = $view_config->{$_} for keys %$view_config;
   $self->code                = $code;
   $self->matrix_image_config = $hub->get_imageconfig($self->image_config);
-  $self->image_config        = $self->has_images = undef unless $hub->param('submit') || $hub->param('reset');
+  $self->image_config        = undef unless $hub->param('submit') || $hub->param('reset');
 }
 
 sub form {

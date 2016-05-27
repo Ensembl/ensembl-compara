@@ -28,6 +28,11 @@ use EnsEMBL::Web::IOWrapper::Indexed;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub orientation {
+  ## @override
+  return 'vertical';
+}
+
 # We load less data on vertical drawing code, as it shows regions 
 # at a much smaller scale. We also need to distinguish between
 # density features, rendered as separate tracks, and pointers,

@@ -48,7 +48,6 @@ sub new {
     options          => {},
     labels           => {},
     value_labels     => {},
-    has_images       => 0,
     image_config     => undef,
     title            => undef,
     form             => undef,
@@ -67,7 +66,6 @@ sub new {
 sub hub              :lvalue { $_[0]->{'hub'};              }
 sub title            :lvalue { $_[0]->{'title'};            }
 sub image_config     :lvalue { $_[0]->{'image_config'};     }
-sub has_images       :lvalue { $_[0]->{'has_images'};       }
 sub altered          :lvalue { $_[0]->{'altered'};          } # Set to one if the configuration has been updated
 sub code             :lvalue { $_[0]->{'code'};             }
 sub species          { return $_[0]->{'species'};           }
@@ -165,8 +163,7 @@ sub reset {
 
 sub add_image_config {
   my ($self, $image_config) = @_;  
-  $self->image_config     = $image_config;
-  $self->has_images       = 1 unless $image_config =~ /^V/;
+  $self->{'image_config'} = $image_config;
 }
 
 # Loop through the parameters and update the config based on the parameters passed
@@ -374,7 +371,7 @@ sub build_form {
   
   $self->form($object);
   
-  if ($self->has_images) {
+  if ($image_config && $image_config->orientation eq 'horizontal') {
     my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
     
     $fieldset->add_field({

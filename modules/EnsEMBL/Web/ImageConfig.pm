@@ -140,6 +140,11 @@ sub initialize {
   }
 }
 
+sub orientation {
+  ## Tell about the orientation of the image - ie. horizontal or vertical
+  return 'horizontal';
+}
+
 sub type { return $_[0]->{'type'}; }
 
 sub menus {
