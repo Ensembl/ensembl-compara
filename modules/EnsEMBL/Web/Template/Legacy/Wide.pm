@@ -24,7 +24,8 @@ use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
-  $self->{'main_class'} = 'widemain';
+  $self->{'main_class'}     = 'widemain';
+  $self->{'lefthand_menu'}  = 0;
 }
 
 1;

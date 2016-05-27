@@ -24,7 +24,8 @@ use parent qw(EnsEMBL::Web::Template);
 
 sub init {
   my $self = shift;
-  $self->{'main_class'} = 'main';
+  $self->{'main_class'}     = 'main';
+  $self->{'lefthand_menu'}  = 1;
 }
 
 sub render {
@@ -54,13 +55,13 @@ sub render {
   my $icons       = $page->icon_bar if $page->can('icon_bar');  
   my $panel_type  = $page->can('panel_type') ? $page->panel_type : '';
   my $main_holder = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
-  my $main_class  = $self->{'main_class'} || $page->main_class;  
+  my $main_class  = $self->{'main_class'};  
 
   my $nav;
   my $nav_class   = $page->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
-  if ($page->include_navigation) {
+  if ($self->{'lefthand_menu'}) {
     $nav = qq(<div id="page_nav_wrapper">
-        <div id="page_nav" class="$nav_class print_hide js_panel slide-nav floating">
+        <div id="page_nav" class="$nav_class print_hide js_panel floating">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
@@ -87,7 +88,7 @@ sub render {
 );
 
   ## FOOTER
-  my $footer_id = $page->include_navigation ? 'footer' : 'wide-footer';
+  my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
   $HTML .= qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}

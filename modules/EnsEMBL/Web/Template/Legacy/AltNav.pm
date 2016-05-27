@@ -16,14 +16,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller::AltPage;
+package EnsEMBL::Web::Template::Legacy::AltNav;
 
-### Alternative dynamic page with fluid layout
+### Legacy page template, used by pages with custom LH menu e.g. Solr search 
 
-use strict;
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
-use base qw(EnsEMBL::Web::Controller::Page);
- 
-sub page_type   { return 'Fluid'; }
+sub init {
+  my $self = shift;
+  $self->{'main_class'}     = 'main';
+  $self->{'lefthand_menu'}  = 0;
+}
 
 1;

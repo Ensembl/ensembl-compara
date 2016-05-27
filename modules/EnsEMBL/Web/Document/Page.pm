@@ -433,20 +433,6 @@ sub render_HTML {
   return $content;
 }
 
-sub main_class {
-  my ($self) = @_;
-
-  my $here = $ENV{'REQUEST_URI'};
-  if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
-    ) {
-    return 'widemain';
-  }
-  else {
-    return 'main';
-  }
-
-}
-
 sub html_template {
   ### Main page printing function
   
