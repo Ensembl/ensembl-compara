@@ -22,44 +22,21 @@ package EnsEMBL::Web::Template::Legacy;
 
 use parent qw(EnsEMBL::Web::Template);
 
+sub init {
+  my $self = shift;
+  $self->{'main_class'} = 'main';
+}
+
 sub render {
   my $self = shift;
   my $hub = $self->hub;
   my $page = $self->page;
   my $elements = $self->elements;
 
-  my $species_path        = $hub->species_defs->species_path;
-  my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
-  my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
-  my $core_params         = $hub->core_params || {};
-  my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
+  my $HTML;
 
-  my $tabs                = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
-  my $footer_id           = 'wide-footer';
-  my $panel_type          = $page->can('panel_type') ? $page->panel_type : '';
-  my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
-
-  my $main_class = $page->main_class(); 
-
-  my $nav_class           = $page->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
-  my $nav;
-  my $icons = $page->icon_bar if $page->can('icon_bar');  
-
-  if ($page->include_navigation) {
-    $nav = qq(<div id="page_nav_wrapper">
-        <div id="page_nav" class="$nav_class print_hide js_panel slide-nav floating">
-          $elements->{'navigation'}
-          $elements->{'tool_buttons'}
-          $elements->{'acknowledgements'}
-          <p class="invisible">.</p>
-        </div>
-      </div>
-    );
-    
-    $footer_id = 'footer';
-  }
-
-  my $HTML = qq(  
+  ## MASTHEAD & GLOBAL NAVIGATION
+  $HTML .= qq(
   <div id="min_width_container">
     <div id="min_width_holder">
       <div id="masthead" class="js_panel">
@@ -70,18 +47,48 @@ sub render {
           <div class="tools_holder">$elements->{'tools'}</div>
           <div class="search_holder print_hide">$elements->{'search_box'}</div>
         </div>
+);
+
+  ## LOCAL NAVIGATION & MAIN CONTENT
+  my $tabs        = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
+  my $icons       = $page->icon_bar if $page->can('icon_bar');  
+  my $panel_type  = $page->can('panel_type') ? $page->panel_type : '';
+  my $main_holder = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
+  my $main_class  = $self->{'main_class'} || $page->main_class;  
+
+  my $nav;
+  my $nav_class   = $page->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
+  if ($page->include_navigation) {
+    $nav = qq(<div id="page_nav_wrapper">
+        <div id="page_nav" class="$nav_class print_hide js_panel slide-nav floating">
+          $elements->{'navigation'}
+          $elements->{'tool_buttons'}
+          $elements->{'acknowledgements'}
+          <p class="invisible">.</p>
+        </div>
+      </div>
+    );
+  }
+
+  $HTML .= qq(
         $tabs
         $icons
       </div>
 
       $main_holder
-        $nav
-        <div id="$main_class">
+      $nav
+
+      <div id="$main_class">
           $elements->{'breadcrumbs'}
           $elements->{'message'}
           $elements->{'content'}
           $elements->{'mobile_nav'}
-        </div>
+      </div>
+);
+
+  ## FOOTER
+  my $footer_id = $page->include_navigation ? 'footer' : 'wide-footer';
+  $HTML .= qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
@@ -93,6 +100,16 @@ sub render {
       </div>
     </div>
   </div>
+);
+
+  ## JAVASCRIPT AND OTHER STUFF THAT NEEDS TO BE HIDDEN AT BOTTOM OF PAGE
+  my $species_path        = $hub->species_defs->species_path;
+  my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
+  my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
+  my $core_params         = $hub->core_params || {};
+  my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
+
+  $HTML .= qq(
   <form id="core_params" action="#" style="display:none">
     <fieldset>$core_params_html</fieldset>
   </form>
