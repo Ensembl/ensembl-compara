@@ -455,7 +455,7 @@ sub _genetreenode_body {
   _taxonomy_info_properties($w, $node->species_tree_node);
 
   # dubious_duplication is in another field
-  if ($node->get_tagvalue('node_type', '') eq 'dubious') {
+  if ($node->get_value_for_tag('node_type', '') eq 'dubious') {
      $w->emptyTag('property', 'name' => 'dubious_duplication', 'value' => 1);
   }
   

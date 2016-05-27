@@ -49,10 +49,10 @@ use warnings;
 =head2 add_tag
 
   Description: adds metadata tags to a node.  Both tag and value are added
-               as metdata with the added ability to retreive the value given
+               as metadata with the added ability to retrieve the value given
                the tag (like a perl hash). In case of one to many relation i.e.
                one tag and different values associated with it, the values are
-               returned in a array reference.
+               expected in a array reference.
   Arg [1]    : <string> tag
   Arg [2]    : <string> value
   Arg [3]    : (optional) <int> allows overloading the tag with different values
@@ -285,7 +285,7 @@ sub get_tagvalue {
                of multiple values, the first one is returned.
   Arg [1]    : <string> tag
   Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
+  Example    : $ns_node->get_value_for_tag('scientific name');
   Returntype : Scalar
   Exceptions : none
   Caller     : general
@@ -313,7 +313,7 @@ sub get_value_for_tag {
                a single value, it is wrapped with an array
   Arg [1]    : <string> tag
   Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
+  Example    : $ns_node->get_all_values_for_tag('common name');
   Returntype : ArrayRef
   Exceptions : none
   Caller     : general

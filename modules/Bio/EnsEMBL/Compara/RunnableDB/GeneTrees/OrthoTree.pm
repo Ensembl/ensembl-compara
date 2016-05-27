@@ -288,7 +288,7 @@ sub display_link_analysis
 
   #display raw feature analysis
   my ($gene1, $gene2) = $genepairlink->get_nodes;
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $ancestor = $genepairlink->get_value_for_tag('ancestor');
   printf("%21s(%7d) - %21s(%7d) : %10.3f dist : ",
     $gene1->gene_member->stable_id, $gene1->gene_member_id,
     $gene2->gene_member->stable_id, $gene2->gene_member_id,
@@ -298,7 +298,7 @@ sub display_link_analysis
   printf("%5s ", "");
 
   print("ancestor:(");
-  my $node_type = $ancestor->get_tagvalue('node_type', '');
+  my $node_type = $ancestor->get_value_for_tag('node_type', '');
   if ($node_type eq 'duplication') {
     print "DUP ";
   } elsif ($node_type eq 'dubious') {
@@ -310,14 +310,14 @@ sub display_link_analysis
   }
   printf("%9s)", $ancestor->node_id);
   if ($ancestor->has_tag('duplication_confidence_score')) {
-    printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+    printf(" %.4f ", $ancestor->get_value_for_tag('duplication_confidence_score'));
   } else {
     print " N/A    ";
   }
 
   printf(" %s %d %s\n",
-         $genepairlink->get_tagvalue('orthotree_type'), 
-         $genepairlink->get_tagvalue('is_tree_compliant'),
+         $genepairlink->get_value_for_tag('orthotree_type'),
+         $genepairlink->get_value_for_tag('is_tree_compliant'),
          $ancestor->taxonomy_level(),
         );
 }
@@ -328,7 +328,7 @@ sub get_ancestor_species_hash
     my $self = shift;
     my $node = shift;
 
-    my $species_hash = $node->get_tagvalue('species_hash');
+    my $species_hash = $node->get_value_for_tag('species_hash');
     return $species_hash if($species_hash);
 
     $species_hash = {};
@@ -420,7 +420,7 @@ sub tag_orthologues
     my $genepairlink = shift;
 
     my ($pep1, $pep2) = $genepairlink->get_nodes;
-    my $ancestor = $genepairlink->get_tagvalue('ancestor');
+    my $ancestor = $genepairlink->get_value_for_tag('ancestor');
     my $species_hash = $self->get_ancestor_species_hash($ancestor);
     my $count1 = $species_hash->{$pep1->genome_db_id};
     my $count2 = $species_hash->{$pep2->genome_db_id};
@@ -465,10 +465,10 @@ sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
 
-  my $type = $genepairlink->get_tagvalue('orthotree_type');
+  my $type = $genepairlink->get_value_for_tag('orthotree_type');
   return unless($type);
-  my $is_tree_compliant = $genepairlink->get_tagvalue('is_tree_compliant');
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $is_tree_compliant = $genepairlink->get_value_for_tag('is_tree_compliant');
+  my $ancestor = $genepairlink->get_value_for_tag('ancestor');
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 

@@ -172,8 +172,8 @@ sub _convert_node {
   my ($self, $node) = @_;
   my $hash;
 
-  my $type  = $node->get_tagvalue('node_type');
-  my $boot  = $node->get_tagvalue('bootstrap');
+  my $type  = $node->get_value_for_tag('node_type');
+  my $boot  = $node->get_value_for_tag('bootstrap');
   my $dcs   = $node->duplication_confidence_score();
   my $tax   = $node->species_tree_node();
 
@@ -185,7 +185,7 @@ sub _convert_node {
                           };
       if ($self->full_tax_info()) {
 	$hash->{taxonomy}{alias_name} = $taxon->ensembl_alias_name;
-	$hash->{taxonomy}{timetree_mya} = $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0;
+	$hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0;
       }
   }
   $hash->{confidence} = {};

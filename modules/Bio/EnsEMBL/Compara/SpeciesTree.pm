@@ -81,7 +81,7 @@ sub multifurcate_tree {
     for my $node (@{$self->root->get_all_nodes}) {
         next unless (defined $node->parent);
         my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($node->taxon_id);
-        my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya') || 0;
+        my $mya = $ncbiTaxon->get_value_for_tag('ensembl timetree mya') || 0;
         for my $child (@{$node->children()}) {
             $child->distance_to_parent(int($mya));
         }

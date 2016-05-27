@@ -124,7 +124,7 @@ my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN s
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();
-  my $model_name = $tree->stable_id() || $tree->get_tagvalue('model_name') || $root_id;
+  my $model_name = $tree->stable_id() || $tree->get_value_for_tag('model_name') || $root_id;
   $sth->execute($root_id);
 
   my %species;

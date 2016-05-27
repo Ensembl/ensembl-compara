@@ -351,7 +351,7 @@ sub _split_name_into_parts {
 sub common_name {
   my $self = shift;
   if ($self->rank eq 'species') {
-    return $self->get_tagvalue('genbank common name');
+    return $self->get_value_for_tag('genbank common name');
   } else {
     return undef;
   }
@@ -372,7 +372,7 @@ sub ensembl_alias_name {
 
   #Not checking for rank as we do above, because we do not get dog since the
   #rank for dog is subspecies (ensembl-51).
-    return $self->get_tagvalue('ensembl alias name');
+    return $self->get_value_for_tag('ensembl alias name');
 }
 
 
@@ -388,14 +388,14 @@ sub ensembl_alias_name {
 
 sub scientific_name {
     my ($self) = @_;
-    return $self->get_tagvalue('scientific name');
+    return $self->get_value_for_tag('scientific name');
 }
 
 sub name {
   my $self = shift;
   my $value = shift;
   if(defined($value)) { $self->add_tag('scientific name', $value); }
-  else { $value = $self->get_tagvalue('scientific name'); }
+  else { $value = $self->get_value_for_tag('scientific name'); }
   return $value;
 }
 

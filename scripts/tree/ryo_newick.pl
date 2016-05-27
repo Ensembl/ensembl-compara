@@ -53,9 +53,9 @@ Briefly, allowed one-letter attributes are:
 
 n --> then "name" of the node ($tree->name)
 d --> distance to parent ($tree->distance_to_parent)
-c --> the common name ($tree->get_tagvalue('genbank common name'))
+c --> the common name ($tree->get_value_for_tag('genbank common name'))
 g --> gdb_id ($tree->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($tree->taxon_id)->dbID)
-t --> timetree ($tree->get_tagvalue('ensembl timetree mya')
+t --> timetree ($tree->get_value_for_tag('ensembl timetree mya')
 l --> display_label ($tree->gene_member->display_label)
 s --> genome short name ($tree->genome_db->get_short_name)
 i --> stable_id ($tree->gene_member->stable_id)

@@ -928,10 +928,10 @@ sub string_node {
     my $str = '(';
 
     my $isdup = 0;
-    $isdup = 1 if ($self->get_tagvalue('Duplication', 0) > 0 and not $self->get_tagvalue('dubious_duplication', 0));
-    $isdup = 1 if $self->get_tagvalue('node_type', '') eq 'duplication';
+    $isdup = 1 if ($self->get_value_for_tag('Duplication', 0) > 0 and not $self->get_value_for_tag('dubious_duplication', 0));
+    $isdup = 1 if $self->get_value_for_tag('node_type', '') eq 'duplication';
 
-    my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
+    my $isdub = ($self->get_value_for_tag('node_type', '') eq 'dubious');
 
     if ($isdup) {
         if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeNode') and (defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
@@ -939,7 +939,7 @@ sub string_node {
         } else {
             $str .= "DUP ";
         }
-       my $sis = $self->get_tagvalue('duplication_confidence_score', 0) * 100;
+       my $sis = $self->get_value_for_tag('duplication_confidence_score', 0) * 100;
        $str .= sprintf('SIS=%.2f ', $sis);
     } elsif ($isdub) {
         $str .= "DD  ";

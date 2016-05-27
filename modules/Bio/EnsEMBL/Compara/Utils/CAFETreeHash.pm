@@ -74,7 +74,7 @@ sub _convert_node {
 		    'id' => $taxon_id + 0,
 		    'scientific_name' => $taxon->scientific_name,
 		    'alias_name' => $taxon->ensembl_alias_name,
-		    'timetree_mya' => $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0
+		    'timetree_mya' => $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0
 		   };
     $hash->{tax}->{'production_name'} = $node->genome_db->name if $node->genome_db_id;
   }

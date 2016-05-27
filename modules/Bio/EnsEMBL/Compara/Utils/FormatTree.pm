@@ -176,13 +176,13 @@ my $distance_to_parent_cb = sub {
 # T(genbank common name)
 my $genbank_common_name = sub {
   my ($self) = @_;
-  return $self->{tree}->get_tagvalue('genbank common name');
+  return $self->{tree}->get_value_for_tag('genbank common name');
 };
 
 # T(ensembl timetree mya)
 my $ensembl_timetree_mya_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->get_tagvalue('ensembl timetree mya');
+  return $self->{tree}->get_value_for_tag('ensembl timetree mya');
 };
 
 my $gdb_id_cb = sub {
@@ -308,7 +308,7 @@ my $empty_cb = sub {
 
 my $tag_cb = sub {
     my ($self, $token) = @_;
-    my $value = $self->{tree}->get_tagvalue($token->{tag_name});
+    my $value = $self->{tree}->get_value_for_tag($token->{tag_name});
     return $value unless exists $token->{tag_condition};
     return undef unless defined $value;
     return undef unless $value eq $token->{tag_condition};
@@ -450,9 +450,9 @@ sub _internal_format_newick {
 
 # ++ A "format" is a regular string containing string literals and "tokens". Tokens are:
 # %{n} --> then "name" of the node ($self->name)
-# %{c} --> the common name ($self->get_tagvalue('genbank common name'))
+# %{c} --> the common name ($self->get_value_for_tag('genbank common name'))
 # %{d} --> gdb_id ($self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID)
-# %{t} --> timetree ($self->get_tagvalue('ensembl timetree mya')
+# %{t} --> timetree ($self->get_value_for_tag('ensembl timetree mya')
 # %{l} --> display_label ($self->gene_member->display_label)
 # %{h} --> genome short name ($self->genome_db->get_short_name)
 # %{s} --> stable_id ($self->gene_member->stable_id)

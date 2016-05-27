@@ -64,10 +64,10 @@ sub fetch_input {
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('nc_tree', $nc_tree);
 
-    my $model_name = $nc_tree->get_tagvalue('model_name');
+    my $model_name = $nc_tree->get_value_for_tag('model_name');
     $self->param('model_name', $model_name);
 
-    my $ss_cons = $nc_tree->get_tagvalue('ss_cons');
+    my $ss_cons = $nc_tree->get_value_for_tag('ss_cons');
     $self->param('ss_cons', $ss_cons);
 
     my $input_aln = $self->_fetchMultipleAlignment();

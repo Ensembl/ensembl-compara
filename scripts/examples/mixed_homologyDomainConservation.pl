@@ -103,7 +103,7 @@ foreach my $gene (@$genes) {
   my $aln_domains_hash;
 
   my $aln = $tree->get_SimpleAlign(-id_type => 'MEMBER');
-  my $prev_aln_length = $tree->get_tagvalue("aln_length");
+  my $prev_aln_length = $tree->get_value_for_tag("aln_length");
   if ($prev_aln_length eq '') {
     my $aln_length = $aln->length; $tree->add_tag('aln_length',$aln_length);
   }

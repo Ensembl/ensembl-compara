@@ -201,7 +201,7 @@ sub include_distance_to_parent {
         unless ($node->is_leaf) {
             my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
-            my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
+            my $mya = $ncbiTaxon->get_value_for_tag('ensembl timetree mya');
             if (!$mya && $self->param('use_timetree_times')) {
                 die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n";
             }
@@ -254,7 +254,7 @@ sub mya_to_dtp_1path {
     my $d = 0;
     for (;;) {
         my $dtp = 0;
-        if ($node->get_tagvalue('revised') eq 1) {
+        if ($node->get_value_for_tag('revised') eq 1) {
             if ($node->has_parent()) {
                 $node = $node->parent();
                 next;

@@ -284,8 +284,8 @@ sub run_ncrecoverepo {
               my $description = $gene_member->description;
               $description =~ /Acc:(\w+)/;
               my $acc_description = $1 || '';
-              my $clustering_id = $self->param('nc_tree')->get_tagvalue('clustering_id');
-              my $model_id = $self->param('nc_tree')->get_tagvalue('model_id');
+              my $clustering_id = $self->param('nc_tree')->get_value_for_tag('clustering_id');
+              my $model_id = $self->param('nc_tree')->get_value_for_tag('model_id');
               if ($acc_description eq $clustering_id || $acc_description eq $model_id) {
                 $self->param('predictions_to_add')->{$found_gene_stable_id} = 1;
               } else {

@@ -239,7 +239,7 @@ sub run_infernal {
 
   my $cmalign_exe = $self->require_executable('cmalign_exe');
 
-  my $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  my $model_id = $self->param('gene_tree')->get_value_for_tag('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);

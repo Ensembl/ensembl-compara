@@ -445,7 +445,7 @@ sub quantify_mapping {
     next unless (defined($reuse_node_id));
     my $reuse_node = $reuse_gene_tree_adaptor->fetch_by_dbID($reuse_node_id);
     next unless (defined($reuse_node));
-    my $reuse_aln_runtime_value = $reuse_node->get_tagvalue('aln_runtime');
+    my $reuse_aln_runtime_value = $reuse_node->get_value_for_tag('aln_runtime');
     next if ($reuse_aln_runtime_value eq '');
     my $this_node = $current_gene_tree_adaptor->fetch_by_dbID($mapped_cluster_id);
     next unless (defined($this_node));

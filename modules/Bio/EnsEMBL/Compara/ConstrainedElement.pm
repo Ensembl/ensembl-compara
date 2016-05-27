@@ -506,7 +506,7 @@ sub get_SimpleAlign {
 		throw("unable to get a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object from this constrained element");
 	}
 
-	my $msa_mlss_id = $cons_eles_mlss->get_tagvalue("msa_mlss_id"); # The mlss_id of the alignments from which the constrained elements were generated
+	my $msa_mlss_id = $cons_eles_mlss->get_value_for_tag("msa_mlss_id"); # The mlss_id of the alignments from which the constrained elements were generated
 
 	my $msa_mlss = $mlss_adaptor->fetch_by_dbID( $msa_mlss_id );
 	
