@@ -48,7 +48,6 @@ sub create {
     push @lines, _lines("Disallow", qw(*/*view));
   
     #other misc views google bot hits
-    push @lines, _lines("Disallow", qw(/id/));
     push @lines, _lines("Disallow", qw(/*/psychic));
   
     foreach my $row (('A'..'Z','a'..'z')){
