@@ -116,6 +116,10 @@ sub default_options {
         'allow_missing_cds_seqs'    => 0,
         # highest member_id for a protein member
         'protein_members_range'     => 100000000,
+        # Genes with these logic_names will be ignored from the pipeline.
+        # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
+        # An empty string can also be used as the key to define logic_names excluded from *all* species
+        'exclude_gene_analysis'     => {},
 
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
@@ -1116,6 +1120,7 @@ sub core_pipeline_analyses {
                 'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
                 'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
+                'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
