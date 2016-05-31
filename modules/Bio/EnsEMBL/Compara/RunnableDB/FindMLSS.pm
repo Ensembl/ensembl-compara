@@ -124,7 +124,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->db->get_PipelineWideParametersAdaptor->store( $self->param('pwp') );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', %$_)for @{ $self->param('pwp') };
 }
 
 1;
