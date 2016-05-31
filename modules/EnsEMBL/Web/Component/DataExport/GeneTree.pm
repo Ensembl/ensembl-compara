@@ -115,7 +115,7 @@ sub phyloxml_settings {
   my $settings = {};
 
   my $gene = $self->hub->core_object('gene');
-  my $has_cdna = $gene->Obj->canonical_transcript->cdna_coding_start ? 1 : 0;
+  my $has_cdna = ($gene && $gene->Obj->canonical_transcript->cdna_coding_start) ? 1 : 0;
   
   if ($has_cdna) {
     $settings->{'cdna'} = {
