@@ -232,7 +232,7 @@ sub replace_element {
 sub initialize {
   my $self   = shift;
 
-  ## Set up HTML template if needed by "real" pages
+  ## Set up HTML template if needed by "real" pages, i.e. not JSON
   if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
     my $template_name   = $self->hub->template;
     if (!$template_name) {
