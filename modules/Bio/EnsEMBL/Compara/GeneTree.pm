@@ -711,7 +711,9 @@ sub add_Member {
 sub release_tree {
     my $self = shift;
 
-    $self->root->release_tree;
+    if ($self->{'_root'}) {
+        $self->{'_root'}->release_tree;
+    }
     foreach my $member (@{$self->{'_member_array'}}) {
         delete $member->{'_tree'};
     }
