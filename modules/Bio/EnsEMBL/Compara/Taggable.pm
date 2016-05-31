@@ -55,10 +55,8 @@ use warnings;
                expected in a array reference.
   Arg [1]    : <string> tag
   Arg [2]    : <string> value
-  Arg [3]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
-               $ns_node->add_tag('lost_taxon_id', 9593, 1);
+               $ns_node->add_tag('lost_taxon_id', [9593,9606]);
   Returntype : Boolean indicating if the tag has been added
   Exceptions : none
   Caller     : general
@@ -69,30 +67,18 @@ sub add_tag {
     my $self = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
-    #print STDERR "CALL add_tag $self/$tag/$value/$allow_overloading\n";
+    #print STDERR "CALL add_tag $self/$tag/$value\n";
 
     # Argument check
     unless (defined $tag)   {warn "add_tag called on $self with an undef \$tag\n"; return 0};
     unless (defined $value) {warn "add_tag called on $self with an undef value for tag '$tag'\n"; return 0};
-    $allow_overloading = 0 unless (defined $allow_overloading);
     
     $self->_load_tags;
     $tag = lc($tag);
 
     # Stores the value in the PERL object
-    if ( ! exists($self->{'_tags'}->{$tag}) || ! $allow_overloading ) {
-        # No overloading or new tag: store the value
-        $self->{'_tags'}->{$tag} = $value;
+    $self->{'_tags'}->{$tag} = $value;
 
-    } elsif ( ref($self->{'_tags'}->{$tag}) eq 'ARRAY' ) {
-        # Several values were there: we add a new one
-        push @{$self->{'_tags'}->{$tag}}, $value;
-
-    } else {
-        # One value was there, we make an array
-        $self->{'_tags'}->{$tag} = [ $self->{'_tags'}->{$tag}, $value ];
-    }
     return 1;
 }
 
@@ -103,10 +89,8 @@ sub add_tag {
                exact same arguments as add_tag
   Arg [1]    : <string> tag
   Arg [2]    : <string> value
-  Arg [3]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->store_tag('scientific name', 'Mammalia');
-               $ns_node->store_tag('lost_taxon_id', 9593, 1);
+               $ns_node->store_tag('lost_taxon_id', [9593, 9606]);
   Returntype : Boolean indicating if the tag has been stored
   Exceptions : none
   Caller     : general
@@ -117,12 +101,11 @@ sub store_tag {
     my $self = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
-    #print STDERR "CALL store_tag $self/$tag/$value/$allow_overloading\n";
+    #print STDERR "CALL store_tag $self/$tag/$value\n";
 
-    if ($self->add_tag($tag, $value, $allow_overloading)) {
+    if ($self->add_tag($tag, $value)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
-            $self->adaptor->_store_tagvalue($self, lc($tag), $value, $allow_overloading);
+            $self->adaptor->_store_tagvalue($self, lc($tag), $value);
             return 1;
         } else {
             warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";

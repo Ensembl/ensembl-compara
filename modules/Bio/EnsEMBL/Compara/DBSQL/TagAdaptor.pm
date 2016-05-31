@@ -248,8 +248,6 @@ sub _read_attr_list {
   Arg [1]    : <scalar> object
   Arg [2]    : <string> tag
   Arg [3]    : <string> value
-  Arg [4]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $speciesset_adaptor->_store_tagvalue($species_set, "colour", "red");
   Returntype : none
   Exceptions : none
@@ -262,16 +260,17 @@ sub _store_tagvalue {
     my $object = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($object);
     $self->_read_attr_list($db_attrtable, $db_keyname);
-    #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+    #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         #print STDERR "attr\n";
-        warn "Trying to overload the value of an attribute ($tag) ! This is not allowed for $self. The new value will replace the old one.\n" if $allow_overloading;
         # It is an attribute
+        if (ref($value)) {
+            die "TagAdaptor cannot store structures (".ref($value).") in the attribute table.\n";
+        }
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
         my $nrows = $sth->execute($value, $object->$perl_keyname);
         $sth->finish;
@@ -282,17 +281,28 @@ sub _store_tagvalue {
             $sth->finish;
         }
 
-    } elsif ($allow_overloading) {
-        #print STDERR "tag+\n";
-        # It is a tag with multiple values allowed
-        my $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
-        # Tests whether there is a UNIQUE key in the schema
-        if ($sth->execute($object->$perl_keyname, $tag, $value) == 0) {
-            die "The value '$value' has not been added to the tag '$tag' because it has another value and the SQL schema enforces '1 value per tag'.\n";
-        }
+    } elsif (ref($value) and (ref($value) eq 'ARRAY')) {
+        #print STDERR "tag+array\n";
+        # Each value will be stored independently
+        # We first clear the table and then insert the values one by one
+        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND $col_tag=?");
+        $sth->execute($object->$perl_keyname, $tag);
         $sth->finish;
+
+        $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
+        foreach my $v (@$value) {
+            # Tests whether there is a UNIQUE key in the schema
+            if ($sth->execute($object->$perl_keyname, $tag, $v) == 0) {
+                die "The value '$v' has not been added to the tag '$tag' (probably) because of a unique key constraint.\n";
+            }
+        }
+
+    } elsif (ref($value)) {
+        #print STDERR "tag+ref\n";
+        die "TagAdaptor cannot store complex structures such as ".ref($value)."\n";
+
     } else {
-        #print STDERR "tag\n";
+        #print STDERR "tag+scalar\n";
         # It is a tag with only one value allowed
         my $sth = $self->prepare("UPDATE $db_tagtable SET $col_value = ? WHERE $db_keyname=? AND $col_tag=?");
         my $nrows = $sth->execute($value, $object->$perl_keyname, $tag);
@@ -417,13 +427,7 @@ sub sync_tags_to_database {
         my $val = $dbtags->{$tag} = $memtags->{$tag};
 
         # Store the value in the database
-        if (ref($val) eq 'ARRAY') {
-            foreach my $value (@$val) {
-                $self->_store_tagvalue($object, $tag, $value, 1);
-            }
-        } else {
-            $self->_store_tagvalue($object, $tag, $val, 0);
-        }
+        $self->_store_tagvalue($object, $tag, $val);
     }
 }
 
@@ -488,7 +492,7 @@ sub _store_all_tags {
 
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($objects->[0]);
     $self->_read_attr_list($db_attrtable, $db_keyname);
-    #print STDERR "CALL _store_all $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+    #print STDERR "CALL _store_all $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
 
     # First the attributes
     if (defined $db_attrtable) {
