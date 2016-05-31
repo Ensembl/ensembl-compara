@@ -274,7 +274,7 @@ sub load_input_trees {
     my $tree = $self->param('gene_tree');
     $self->param('inputtrees_unrooted', {});
 
-    my %alternative_trees = undef;
+    my %alternative_trees;
     if ($self->param('ref_tree_clusterset')){
         %alternative_trees = map { $_ => 1 } @{$self->param('alternative_trees')};
     }
