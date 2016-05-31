@@ -505,6 +505,9 @@ sub _store_all_tags {
             my $tag_hash = $object->get_tagvalue_hash;
             my @defined_attrs = grep {$tag_hash->{$_}} @attr_names;
             if (scalar(@defined_attrs)) {
+                if (grep {ref($tag_hash->{$_})} @attr_names) {
+                    die "TagAdaptor cannot store structures in the attribute table.\n";
+                }
                 $sth->execute($object->$perl_keyname, map {$tag_hash->{$_}} @attr_names);
             }
         }
@@ -522,6 +525,8 @@ sub _store_all_tags {
                 foreach my $value (@{$tag_hash->{$tag}}) {
                     $sth->execute($object_key, $tag, $value);
                 }
+            } elsif (ref($tag_hash->{$tag})) {
+                die "TagAdaptor cannot store complex structures such as ".ref($tag_hash->{$tag})."\n";
             } else {
                 $sth->execute($object_key, $tag, $tag_hash->{$tag});
             }
