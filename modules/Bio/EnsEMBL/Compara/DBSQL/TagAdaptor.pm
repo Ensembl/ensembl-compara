@@ -402,6 +402,8 @@ sub sync_tags_to_database {
             #print STDERR "Tag both in db and in memory: $tag=", $dbtags->{$tag}, "|", $memtags->{$tag}, "\n";
             if ((ref($dbtags->{$tag}) eq 'ARRAY') and (ref($memtags->{$tag}) eq 'ARRAY')) {
                 #print STDERR "Comparing arrays: DB=", join("/", @{$dbtags->{$tag}}), " MEM=", join("/", @{$memtags->{$tag}}),"\n";
+                # Note: the order is not guaranteed in the database, so
+                # we're just comparing the content as multisets
                 my %seen;
                 $seen{$_}++ for @{$dbtags->{$tag}};
                 $seen{$_}-- for @{$memtags->{$tag}};

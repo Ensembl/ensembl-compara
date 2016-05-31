@@ -459,14 +459,22 @@ our $AUTOLOAD;
 
 sub AUTOLOAD {
     my $self = shift;
+    # $AUTOLOAD is a string like 'Bio::EnsEMBL::Compara::GeneTreeNode::get_value_for_bootstrap'
     #print "AUTOLOAD $AUTOLOAD\n";
+
+        # Example: $node->get_value_for_bootstrap()
     if ( $AUTOLOAD =~ m/::get_value_for_(\w+)$/ ) {
         #print "MATCHED $1\n";
         return $self->get_value_for_tag($1);
+
+        # Example: $node->get_all_values_for_lost_species_tree_node_id()
     } elsif ( $AUTOLOAD =~ m/::get_all_values_for_(\w+)$/ ) {
         return $self->get_all_values_for_tag($1);
+
+        # Example: $node->get_bootstrap_value()
     } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
         return $self->get_tagvalue($1);
+
     } elsif( $AUTOLOAD !~ /::DESTROY$/) {
         use Carp;
         croak "$self does not understand method $AUTOLOAD\n";
