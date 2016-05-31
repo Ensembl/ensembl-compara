@@ -26,6 +26,7 @@ sub init {
   my $self = shift;
   $self->{'main_class'}     = 'main';
   $self->{'lefthand_menu'}  = 0;
+  $self->add_HTML_elements;
 }
 
 1;

@@ -43,11 +43,6 @@ sub page {
   return $self->{'page'}; 
 }
 
-sub elements { 
-  my $self = shift;
-  return $self->{'elements'}; 
-}
-
 sub render {}
 
 1;
