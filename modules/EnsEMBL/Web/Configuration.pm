@@ -67,6 +67,8 @@ sub new_for_components {
   return $self->get_configurable_components(undef, $action, $function);
 }
 
+sub default_template {}
+
 sub init {
   my $self       = shift;
   my $hub        = $self->hub;

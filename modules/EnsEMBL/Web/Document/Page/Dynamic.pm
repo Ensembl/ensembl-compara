@@ -25,8 +25,6 @@ use base qw(EnsEMBL::Web::Document::Page);
 sub initialize_HTML {
   my $self = shift;
 
-  $self->include_navigation(1);
-  
   # General layout for dynamic pages
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::Element::Title

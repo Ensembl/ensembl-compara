@@ -336,7 +336,7 @@ our $OBJECT_TO_SCRIPT = {
   Phenotype           => 'Page',
   Experiment          => 'Page',
 
-  Info                => 'AltPage',
+  Info                => 'Page',
   Search              => 'Page',
   
   UserConfig          => 'Modal',

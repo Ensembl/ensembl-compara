@@ -29,26 +29,7 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Index';
 }
 
-sub caption { 
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species_defs = $hub->species_defs;
-  my $species      = $hub->species;
-  my $path         = $hub->species_path;
-  my $sound        = $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'};
-  my ($heading, $subhead);
-
-  $heading .= qq(<a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" title="$sound" /></a>);
-  my $common_name = $species_defs->SPECIES_COMMON_NAME;
-  if ($common_name =~ /\./) {
-    $heading .= $species_defs->SPECIES_BIO_NAME;
-  }
-  else {
-    $heading .= $common_name;
-    $subhead = '('.$species_defs->SPECIES_BIO_NAME.')';
-  }
-  return [$heading, $subhead];
-}
+sub default_template { return 'Legacy::Wide'; }
 
 sub short_caption { return 'About this species'; }
 
@@ -57,6 +38,12 @@ sub availability {
   my $hash = $self->get_availability;
   $hash->{'database.variation'} = exists $self->hub->species_defs->databases->{'DATABASE_VARIATION'} ? 1 : 0;
   return $hash;
+}
+
+sub modify_page_elements {
+  my $self = shift;
+  my $page = $self->page;
+  $page->remove_body_element('summary');
 }
 
 sub populate_tree {

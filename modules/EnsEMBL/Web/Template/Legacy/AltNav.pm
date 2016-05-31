@@ -16,23 +16,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Info::Summary;
+package EnsEMBL::Web::Template::Legacy::AltNav;
 
-use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
+### Legacy page template, used by pages with custom LH menu e.g. Solr search 
 
-sub _init {
+use parent qw(EnsEMBL::Web::Template::Legacy);
+
+sub init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-}
-
-
-sub content {
-  my $self   = shift;
-  return '';
+  $self->{'main_class'}     = 'main';
+  $self->{'lefthand_menu'}  = 0;
 }
 
 1;

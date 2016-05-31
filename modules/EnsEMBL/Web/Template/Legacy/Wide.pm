@@ -16,23 +16,17 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Info::Summary;
+package EnsEMBL::Web::Template::Legacy::Wide;
 
-use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
+### Legacy page template, used by dynamic pages with no lefthand navigation
+### and also top-level static pages
 
-sub _init {
+use parent qw(EnsEMBL::Web::Template::Legacy);
+
+sub init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-}
-
-
-sub content {
-  my $self   = shift;
-  return '';
+  $self->{'main_class'}     = 'widemain';
+  $self->{'lefthand_menu'}  = 0;
 }
 
 1;
