@@ -380,7 +380,7 @@ sub ensembl_alias_name {
 =cut
 
 sub scientific_name {
-    my ($self) = @_;
+    my $self = shift;
     return $self->_getter_setter_for_tag('scientific name', @_);
 }
 
