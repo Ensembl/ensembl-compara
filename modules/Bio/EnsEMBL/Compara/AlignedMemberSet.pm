@@ -827,7 +827,7 @@ sub update_alignment_stats {
     my $self = shift;
     my $seq_type = shift;
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self) if $self->adaptor;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
