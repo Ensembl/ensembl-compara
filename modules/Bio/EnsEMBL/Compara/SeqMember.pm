@@ -132,7 +132,7 @@ sub copy {
   
   my $mycopy = $self->SUPER::copy(@_);
   
-  $self->sequence;  # To make sure the sequence is loaded
+  $self->sequence;  # To make sure the sequence is loaded because the new copy doesn't have an adaptor
   # And now we can copy all the sequence keys
   foreach my $key (keys %$self) {
       if (($key =~ /^_seq_/) or ($key =~ /^_sequence/)) {
