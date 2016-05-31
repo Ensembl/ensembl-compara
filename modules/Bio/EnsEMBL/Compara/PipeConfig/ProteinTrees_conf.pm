@@ -792,6 +792,7 @@ sub core_pipeline_analyses {
                 'new_label'     => 'binary',
                 'tree_fmt'      => '%{-x"*"}:%{d}',
                 'label'         => 'default',
+                'use_timetree_times' => $self->o('use_timetree_times'),
             },
             -flow_into     => {
                 2 => [ 'hc_binary_species_tree' ],
