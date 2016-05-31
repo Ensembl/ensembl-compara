@@ -364,7 +364,7 @@ sub _write_data {
   foreach my $object (@{$list_data_objects}) {
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
       $self->_find_valid_genetree_roots($object->root);
-      $object->root->release_tree() if ! $self->no_release_trees;
+      $object->release_tree() if ! $self->no_release_trees;
     } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
       $self->_find_valid_genetree_roots($object);
     } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
