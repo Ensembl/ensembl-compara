@@ -181,6 +181,8 @@ sub default_options {
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
+        'copy_tree_capacity'        => 100,
+        'cluster_tagging_capacity'  => 200,
 
     # hive priority for non-LOCAL health_check analysis:
 
