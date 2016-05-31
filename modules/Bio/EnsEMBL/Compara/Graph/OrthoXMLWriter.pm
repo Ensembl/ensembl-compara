@@ -227,7 +227,7 @@ sub write_homologies {
 
     return unless scalar(@$homologies);
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologies->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologies);
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologies->[0]->adaptor->db->GeneMemberAdaptor, $sms);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologies->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($homologies->[0]->adaptor->db->get_SpeciesTreeNodeAdaptor, $homologies);
     return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
