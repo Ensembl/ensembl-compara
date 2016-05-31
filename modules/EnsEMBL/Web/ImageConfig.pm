@@ -26,6 +26,7 @@ use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Draw::Utils::TextHelper;
+use EnsEMBL::Draw::Utils::Transform;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::Command::UserData::AddFile;
@@ -55,6 +56,7 @@ sub new {
     _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
     _font_size       => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
     _texthelper      => EnsEMBL::Draw::Utils::TextHelper->new,
+    transform_object => EnsEMBL::Draw::Utils::Transform->new,
     code             => $code,
     type             => $type,
     species          => $species,
@@ -240,7 +242,7 @@ sub species_defs        { return $_[0]->hub->species_defs;                      
 sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);   }
 sub databases           { return $_[0]->sd_call('databases');                                  }
 sub texthelper          { return $_[0]->{'_texthelper'};                                       }
-sub transform           { return $_[0]->{'transform'};                                         }
+sub transform_object    { return $_[0]->{'transform_object'};                                  }
 sub tree                { return $_[0]->{'_tree'};                                             }
 sub species             { return $_[0]->{'species'};                                           }
 sub legend              { return $_[0]->{'_legend'};                                           }

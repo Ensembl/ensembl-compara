@@ -79,7 +79,7 @@ sub draw_mark_line {
   my ($self, $v_value, $height) = @_;
 
   my $vclen      = $self->image_config->container_width;
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->image_config->transform_object->scalex;
 
   # Mark line
   my $line_colour = $self->track_config->get('line') || 'red';
@@ -158,7 +158,7 @@ sub draw_plots {
 sub draw_focus_variant {
   my ($self, $height, $feature) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->image_config->transform_object->scalex;
 
   my $start = $feature->{'start'};
   my $end   = $feature->{'end'};

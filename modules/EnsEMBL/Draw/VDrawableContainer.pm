@@ -51,12 +51,15 @@ sub new {
       @chromosomes = reverse @chromosomes if $container->{'format'} && $container->{'format'} eq 'pdf'; # reverse the order for drawing
       $flag        = 1;
     }
-   
+
     $config->texthelper->scalex($scalex);
-    $config->{'transform'}->{'scalex'}         = $scalex;
-    $config->{'transform'}->{'absolutescalex'} = 1;
-    $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
-    
+
+    my $transform_obj = $config->transform_object;
+
+    $transform_obj->scalex($scalex);
+    $transform_obj->absolutescalex(1);
+    $transform_obj->translatex($transform_obj->translatex + $config->get_parameter('top_margin'));
+
     foreach my $chr (@chromosomes) {
       $container->{'chr'} = $chr;
       
@@ -166,7 +169,7 @@ sub new {
 
     my $translateX = shift @min;
     
-    $config->{'transform'}->{'translatex'} -= $translateX * $scalex;
+    $transform_obj->translatex($transform_obj->translatex - $translateX * $scalex);
     
     my $xoffset   = -$translateX * $scalex;
     my $row_index = 0;
@@ -180,7 +183,7 @@ sub new {
         $xoffset  += $config->image_width - $translateX * $scalex;
         
         ## Shift down - and then close up gap!
-        $config->{'transform'}->{'translatex'} += $config->image_width - $translateX * $scalex;
+        $transform_obj->translatex($transform_obj->translatex + $config->image_width - $translateX * $scalex);
       }
       
       $config->set_parameter('max_width', $xoffset + $config->get_parameter('image_width'));
@@ -245,7 +248,7 @@ sub new {
       }
       
       ########## remove any whitespace at the top of this row
-      $config->{'transform'}->{'translatey'} = -$glyphset->miny + $spacing/2 + $yoffset;
+      $transform_obj->translatey(-$glyphset->miny + $spacing/2 + $yoffset);
       $glyphset->transform;
       
       ########## translate the top of the next row to the bottom of this one

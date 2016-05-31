@@ -39,7 +39,7 @@ sub render_normal {
   my @transcripts      = $config->{'transcripts'}; 
   my $y                = 0;
   my $h                = 8; # Single transcript mode - set height to 30 - width to 8
-  my $pix_per_bp       = $config->transform->{'scalex'};
+  my $pix_per_bp       = $config->transform_object->scalex;
   my $bitmap_length    = $config->image_width;
   my $length           = $config->container_width;
   my $transcript_drawn = 0;

@@ -84,11 +84,13 @@ sub new {
        $w = $container->length if !$w && $container->can('length');
        
     my $x_scale = $w ? $panel_width /$w : 1; 
-    
-    $config->{'transform'}->{'scalex'}         = $x_scale; ## set scaling factor for base-pairs -> pixels
-    $config->{'transform'}->{'absolutescalex'} = 1;
-    $config->{'transform'}->{'translatex'}     = $panel_start; ## because our label starts are < 0, translate everything back onto canvas
-    
+
+    my $transform_obj = $config->transform_object;
+
+    $transform_obj->scalex($x_scale); ## set scaling factor for base-pairs -> pixels
+    $transform_obj->absolutescalex(1);
+    $transform_obj->translatex($panel_start); ## because our label starts are < 0, translate everything back onto canvas
+
     $config->set_parameters({
       panel_width        => $panel_width,
       image_end          => ($panel_width + $margin + $padding) / $x_scale, # the right edge of the image, used to find labels which would be drawn too far to the right, and bring them back inside
@@ -290,8 +292,8 @@ sub new {
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
-      
-        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height;
+
+        $transform_obj->translatey(-$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip

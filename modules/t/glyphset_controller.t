@@ -40,9 +40,9 @@ my $panel_start = $label_start + $label_width + $margin;
 my $panel_width = $image_width - $panel_start - $margin;
 my $x_scale     = $panel_width / $slice->length;
 
-$image_config->{'transform'}->{'scalex'}         = $x_scale; 
-$image_config->{'transform'}->{'absolutescalex'} = 1;
-$image_config->{'transform'}->{'translatex'}     = $panel_start;
+$image_config->transform_object->scalex($x_scale);
+$image_config->transform_object->absolutescalex(1);
+$image_config->transform_object->translatex($panel_start);
 
 ok($image_config, 'ImageConfig created');
 
