@@ -728,8 +728,8 @@ sub core_pipeline_analyses {
             -hive_capacity => 30,
             -rc_name => '8Gb_job',
             -flow_into => {
-                2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
-                3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
+                2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
+                3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
             },
         },
 
@@ -922,7 +922,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '500Mb_job',
             -flow_into => {
-                2 => [ ':////sequence' ],
+                2 => [ '?table_name=sequence' ],
                 1 => [ 'seq_member_table_reuse' ],
             },
         },
@@ -986,7 +986,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                2 => [ ':////other_member_sequence' ],
+                2 => [ '?table_name=other_member_sequence' ],
                 1 => [ 'hmm_annot_table_reuse' ],
             },
         },
@@ -1000,7 +1000,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
             -flow_into => {
-                2 => [ ':////hmm_annot' ],
+                2 => [ '?table_name=hmm_annot' ],
                 1 => [ 'hc_members_per_genome' ],
             },
         },
