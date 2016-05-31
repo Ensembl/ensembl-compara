@@ -16,18 +16,35 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Template::Legacy::AltNav;
+package EnsEMBL::Web::Template::Legacy::Configurator;
 
-### Legacy page template, used by pages with custom LH menu e.g. Solr search 
+### Legacy page template, used by modal pages such as the control panel 
 
 use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
+
   $self->{'main_class'}     = 'main';
-  $self->{'lefthand_menu'}  = 0;
+  $self->{'lefthand_menu'}  = 1;
+  $self->{'tabs'}           = 1;
+
   $self->add_head;
   $self->add_body;
+}
+
+sub add_body {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->add_body_elements(qw(
+    logo            EnsEMBL::Web::Document::Element::Logo
+    tabs            EnsEMBL::Web::Document::Element::ModalTabs
+    navigation      EnsEMBL::Web::Document::Element::Navigation
+    tool_buttons    EnsEMBL::Web::Document::Element::ModalButtons
+    content         EnsEMBL::Web::Document::Element::Configurator
+    body_javascript EnsEMBL::Web::Document::Element::BodyJavascript
+  ));
 }
 
 1;

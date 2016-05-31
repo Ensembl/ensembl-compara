@@ -69,9 +69,11 @@ sub new {
   $self->{$_} = $defaults->{$_} for grep { $data->{$_} && !exists $document_types->{$data->{$_}} } qw(doc_type doc_type_version);
  
   bless $self, $class;
+
   return $self;
 }
 
+sub template           { return $_[0]->{'template'};   }
 sub head_order :lvalue { $_[0]{'head_order'}           }
 sub body_order :lvalue { $_[0]{'body_order'}           }
 sub renderer   :lvalue { $_[0]{'renderer'}             }
@@ -229,6 +231,28 @@ sub replace_element {
 
 sub initialize {
   my $self   = shift;
+
+  ## Set up HTML template if needed by "real" pages, i.e. not JSON
+  if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
+    my $template_name   = $self->hub->template;
+    if (!$template_name) {
+      my @namespace   = split('::', ref $self);
+      $template_name  = 'Legacy::'.$namespace[-1];
+    }
+
+    my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
+    #warn "... USING TEMPLATE $template_class";
+
+    if ($self->dynamic_use($template_class)) {
+      my $template = $template_class->new({'page' => $self});
+      if ($template) {
+        $template->init;
+        $self->{'template'} = $template;
+      }
+    }
+  }
+
+  ## Additional format-specific initialisation 
   my $method = 'initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('initialize_error') ? 'error' : $self->{'format'});
   
   $self->$method;
@@ -464,15 +488,8 @@ sub html_template {
 );
 
   ## CONTENTS OF BODY TAG DETERMINED BY TEMPLATE MODULE
-  my $template_name   = $self->hub->template || 'Legacy';
-  my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
-  #warn ">>> USING TEMPLATE $template_class";
-
-  if ($self->dynamic_use($template_class)) {
-    my $template = $template_class->new({'page' => $self, 'elements' => $elements});
-    $template->init;
-    $HTML .= $template->render;
-  }
+  my $template = $self->template;
+  $HTML .= $template->render($elements);
 
   ## END OF PAGE - COMPULSORY
   $HTML .= qq(

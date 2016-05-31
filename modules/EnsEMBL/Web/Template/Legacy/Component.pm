@@ -16,33 +16,20 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Template;
+package EnsEMBL::Web::Template::Legacy::Component;
 
-### Base class for new HTML templates, which can be used independently
-### of the Controller-defined Page types 
+## Not really a template - Component "pages" are used to create
+## individual chunks of content for AJAX requests
 
-use strict;
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
-sub new {
-  my ($class, $self) = @_;
-
-  bless $self, $class;
-
-  return $self;
-}
-
-sub init {}
-
-sub hub { 
+sub init {
   my $self = shift;
-  return $self->{'page'}->hub; 
+  my $page = $self->page;
+  
+  $page->add_body_elements(qw(
+    content          EnsEMBL::Web::Document::Element::Content
+  ));
 }
-
-sub page { 
-  my $self = shift;
-  return $self->{'page'}; 
-}
-
-sub render {}
 
 1;

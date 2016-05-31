@@ -16,39 +16,80 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Template::Legacy::Wide;
+package EnsEMBL::Web::Template::Legacy::Static;
 
-### Legacy page template, used by dynamic pages with no lefthand navigation
-### and also top-level static pages
+### Legacy page template, used by most static pages such as site documentation
+### Note that since static pages have no Configuration module, we can only use
+### a single template at present and tweak it based on URL
 
 use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
-  $self->{'main_class'}     = 'widemain';
-  $self->{'lefthand_menu'}  = 0;
+
+  my $here = $ENV{'REQUEST_URI'};
+
+  if ($here =~ /Doxygen\/index.html/ || ($here =~ /^\/info/ && $here !~ /Doxygen/)) {
+    ## Standard documentation page
+    $self->{'main_class'}     = 'main';
+    $self->{'lefthand_menu'}  = 1;
+    $self->{'tabs'}           = 1;
+  }
+  else {
+    ## Full-width page with no navigation 
+    $self->{'main_class'}     = 'widemain';
+  }
+
   $self->add_head;
   $self->add_body;
+}
+
+sub add_head {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->add_head_elements(qw(
+    title      EnsEMBL::Web::Document::Element::Title
+    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
+    javascript EnsEMBL::Web::Document::Element::Javascript
+    links      EnsEMBL::Web::Document::Element::Links
+    meta       EnsEMBL::Web::Document::Element::Meta
+    prefetch   EnsEMBL::Web::Document::Element::Prefetch
+  ));
 }
 
 sub add_body {
   my $self = shift;
   my $page = $self->page;
-
+  
   $page->add_body_elements(qw(
     logo             EnsEMBL::Web::Document::Element::Logo
     account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
+  ));
+
+  if ($self->{'tabs'}) {
+    $page->add_body_elements(qw(
+      tabs             EnsEMBL::Web::Document::Element::StaticTabs
+    ));
+  }
+
+  if ($self->{'lefthand_menu'}) {
+    $page->add_body_elements(qw(
+      navigation       EnsEMBL::Web::Document::Element::StaticNav
+    ));
+  }
+
+  $page->add_body_elements(qw(
+    breadcrumbs      EnsEMBL::Web::Document::Element::BreadCrumbs
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
-    mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }
-
 
 1;

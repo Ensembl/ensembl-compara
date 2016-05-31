@@ -26,18 +26,68 @@ sub init {
   my $self = shift;
   $self->{'main_class'}     = 'main';
   $self->{'lefthand_menu'}  = 1;
+  $self->add_head;
+  $self->add_body;
+}
+
+sub add_head {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->add_head_elements(qw(
+    title      EnsEMBL::Web::Document::Element::Title
+    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
+    links      EnsEMBL::Web::Document::Element::Links
+    meta       EnsEMBL::Web::Document::Element::Meta
+    prefetch   EnsEMBL::Web::Document::Element::Prefetch
+  ));
+}
+
+sub add_body {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->add_body_elements(qw(
+    logo             EnsEMBL::Web::Document::Element::Logo
+    account          EnsEMBL::Web::Document::Element::AccountLinks
+    search_box       EnsEMBL::Web::Document::Element::SearchBox
+    tools            EnsEMBL::Web::Document::Element::ToolLinks
+    tabs             EnsEMBL::Web::Document::Element::Tabs
+    navigation       EnsEMBL::Web::Document::Element::Navigation
+    tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
+    summary          EnsEMBL::Web::Document::Element::Summary
+    content          EnsEMBL::Web::Document::Element::Content
+    modal            EnsEMBL::Web::Document::Element::Modal
+    acknowledgements EnsEMBL::Web::Document::Element::Acknowledgements
+    mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
+    copyright        EnsEMBL::Web::Document::Element::Copyright
+    footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
+    fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+    body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
+  ));
 }
 
 sub render {
-  my $self = shift;
+  my ($self, $elements) = @_;
   my $hub = $self->hub;
-  my $page = $self->page;
-  my $elements = $self->elements;
-
   my $HTML;
 
+  $HTML .= $self->render_masthead($elements);
+  $HTML .= $self->render_content($elements);
+  $HTML .= $self->render_footer($elements);
+  $HTML .= $self->render_page_end($elements);
+
+  return $HTML;
+}
+
+
+sub render_masthead {
+  my ($self, $elements) = @_;
+  my $hub = $self->hub;
+  my $page = $self->page;
+
   ## MASTHEAD & GLOBAL NAVIGATION
-  $HTML .= qq(
+  return qq(
   <div id="min_width_container">
     <div id="min_width_holder">
       <div id="masthead" class="js_panel">
@@ -48,10 +98,17 @@ sub render {
           <div class="tools_holder">$elements->{'tools'}</div>
           <div class="search_holder print_hide">$elements->{'search_box'}</div>
         </div>
-);
+  );
+}
+
+sub render_content {
+  my ($self, $elements) = @_;
+  my $hub = $self->hub;
+  my $page = $self->page;
 
   ## LOCAL NAVIGATION & MAIN CONTENT
   my $tabs        = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
+
   my $icons       = $page->icon_bar if $page->can('icon_bar');  
   my $panel_type  = $page->can('panel_type') ? $page->panel_type : '';
   my $main_holder = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
@@ -60,7 +117,8 @@ sub render {
   my $nav;
   my $nav_class   = $page->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
   if ($self->{'lefthand_menu'}) {
-    $nav = qq(<div id="page_nav_wrapper">
+    $nav = qq(
+      <div id="page_nav_wrapper">
         <div id="page_nav" class="$nav_class print_hide js_panel floating">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
@@ -71,7 +129,7 @@ sub render {
     );
   }
 
-  $HTML .= qq(
+  return qq(
         $tabs
         $icons
       </div>
@@ -85,9 +143,14 @@ sub render {
           $elements->{'content'}
           $elements->{'mobile_nav'}
       </div>
-);
+  );
+}
 
-  ## FOOTER
+sub render_footer {
+  my ($self, $elements) = @_;
+  my $hub = $self->hub;
+  my $page = $self->page;
+
   my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
   $HTML .= qq(
         <div id="$footer_id">
@@ -98,10 +161,13 @@ sub render {
             <p class="invisible">.</p>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-);
+  );
+}
+
+sub render_page_end {
+  my ($self, $elements) = @_;
+  my $hub = $self->hub;
+  my $page = $self->page;
 
   ## JAVASCRIPT AND OTHER STUFF THAT NEEDS TO BE HIDDEN AT BOTTOM OF PAGE
   my $species_path        = $hub->species_defs->species_path;
@@ -110,18 +176,20 @@ sub render {
   my $core_params         = $hub->core_params || {};
   my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
 
-  $HTML .= qq(
+  return qq(
+      </div>
+    </div>
+  </div>
   <form id="core_params" action="#" style="display:none">
     <fieldset>$core_params_html</fieldset>
   </form>
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
-  $elements->{'modal'}
-  $elements->{'body_javascript'}
-);
-
-  return $HTML;
+    $elements->{'modal'}
+    $elements->{'body_javascript'}
+  );
+  
 }
 
 1;
