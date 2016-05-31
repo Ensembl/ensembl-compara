@@ -22,10 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Page);
 
-sub initialize_HTML {
-  my $self = shift;
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Element::Content));
-}
+sub initialize_HTML {}
 
 sub initialize_Text {
   my $self = shift; 

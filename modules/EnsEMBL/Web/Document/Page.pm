@@ -232,15 +232,23 @@ sub replace_element {
 sub initialize {
   my $self   = shift;
 
-  ## Set up template
-  my $template_name   = $self->hub->template || 'Legacy';
-  my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
+  ## Set up HTML template if needed by "real" pages
+  if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
+    my $template_name   = $self->hub->template;
+    if (!$template_name) {
+      my @namespace   = split('::', ref $self);
+      $template_name  = 'Legacy::'.$namespace[-1];
+    }
 
-  if ($self->dynamic_use($template_class)) {
-    my $template = $template_class->new({'page' => $self});
-    if ($template) {
-      $template->init;
-      $self->{'template'} = $template;
+    my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
+    #warn "... USING TEMPLATE $template_class";
+
+    if ($self->dynamic_use($template_class)) {
+      my $template = $template_class->new({'page' => $self});
+      if ($template) {
+        $template->init;
+        $self->{'template'} = $template;
+      }
     }
   }
 

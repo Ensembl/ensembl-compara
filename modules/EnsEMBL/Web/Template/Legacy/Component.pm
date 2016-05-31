@@ -16,12 +16,20 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::Page::Static;
+package EnsEMBL::Web::Template::Legacy::Component;
 
-use strict;
+## Not really a template - Component "pages" are used to create
+## individual chunks of content for AJAX requests
 
-use base qw(EnsEMBL::Web::Document::Page);
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
-sub initialize_HTML {}
+sub init {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->add_body_elements(qw(
+    content          EnsEMBL::Web::Document::Element::Content
+  ));
+}
 
 1;
