@@ -667,7 +667,14 @@ sub get_all_Members {
     my ($self) = @_;
 
     unless (defined $self->{'_member_array'}) {
-        $self->preload;
+        if ($self->{_preloaded}) {
+            $self->clear;
+            foreach my $leaf (@{$self->root->get_all_leaves}) {
+                $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+            }
+        } else {
+            $self->preload;
+        }
     }
     return $self->{'_member_array'};
 }
