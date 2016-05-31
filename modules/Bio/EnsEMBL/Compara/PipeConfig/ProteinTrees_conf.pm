@@ -1808,6 +1808,7 @@ sub core_pipeline_analyses {
                 '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'split_genes',
             ),
+            -rc_name    => '250Mb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
