@@ -163,7 +163,9 @@ sub fetch_input {
 
             # load the prev.release registry:
             foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
-                Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release, -verbose => $self->debug );
+                my %reg_params = %{ $prev_reg_conn };
+                $reg_params{'-db_version'} = $prev_release unless $reg_params{'-db_version'};
+                Bio::EnsEMBL::Registry->load_registry_from_db( %reg_params, -species_suffix => $suffix_separator.$prev_release, -verbose => $self->debug );
             }
             $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
 
