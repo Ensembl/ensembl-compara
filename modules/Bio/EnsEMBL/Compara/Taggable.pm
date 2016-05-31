@@ -371,6 +371,26 @@ sub get_tagvalue_hash {
 }
 
 
+=head2 set_tagvalue_hash
+
+  Description: sets the underlying hash that contains all
+               the tags
+  Example    : $ns_node->set_tagvalue_hash( { 'colour' => 'black' } );
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub set_tagvalue_hash {
+    my $self = shift;
+    my $tags = shift;
+
+    die "Must give a reference hash" unless ref($tags) and (ref($tags) eq 'HASH');
+    $self->{'_tags'} = $tags;
+}
+
+
 =head2 copy_tags_from
 
   Arg[1]      : Bio::EnsEMBL::Compara::Taggable $source_object. Where to get the tags/values from
