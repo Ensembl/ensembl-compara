@@ -518,7 +518,7 @@ sub get_all_nodes_by_tag_value {
   my $value = shift;
   my @found;
   foreach my $node( @{$self->get_all_nodes} ){
-    my $tval = $node->get_tagvalue($tag);
+    my $tval = $node->get_value_for_tag($tag);
     if( defined $tval and $value ? $tval eq $value : 1 ){
       push @found, $node;
     }
