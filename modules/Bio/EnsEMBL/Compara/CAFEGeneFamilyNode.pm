@@ -80,12 +80,6 @@ sub lambdas {
     return $lambdas;
 }
 
-sub new_from_SpeciesTree {
-    my ($self, $tree) = @_;
-#    my $speciesTree = SUPER::new_from_NestedSet($tree);
-    return $tree->cast('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
-}
-
 
 sub cafe_gene_family_id {
     my ($self, $id) = @_;
