@@ -403,7 +403,7 @@ sub get_SimpleAlign {
         $sa->id("$self");
     }
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self);
 
     my $seq_hash = {};
 
@@ -661,7 +661,7 @@ sub get_4D_SimpleAlign {
     my $keep_gaps = shift;
     my $aa_must_be_identical = shift;
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, 'cds', $self);
 
     my $sa = Bio::SimpleAlign->new();
 
@@ -827,7 +827,7 @@ sub update_alignment_stats {
     my $self = shift;
     my $seq_type = shift;
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, undef, $self) if $self->adaptor;
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if $self->adaptor;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
