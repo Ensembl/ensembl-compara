@@ -154,30 +154,14 @@ sub fetch_all_by_taxon_id_assembly {  ## DEPRECATED
     }
 }
 
-
-=head2 fetch_by_taxon_id
-
-  Arg [1]    : number (taxon_id)
-  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
-  Description: Retrieves a genome db using the NCBI taxon_id of the species.
-               If more than one GenomeDB is found in the database with the same
-               taxon_id, gives the first one found.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if $taxon_id is not given, or if there are more than 1
-               GenomeDB with this taxon_id.
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_by_taxon_id {
+sub fetch_by_taxon_id { ## DEPRECATED
     my ($self, $taxon_id) = @_;
 
-    # FIXME: should be DEPRECATED
+    deprecate('GenomeDBAdaptor::fetch_by_taxon_id() will be removed in e88');
 
     throw("taxon_id argument is required") unless($taxon_id);
 
-    return $self->_id_cache->get_by_additional_lookup('taxon_id', $taxon_id);   # Will throw if there are more than 1 GenomeDB
+    return $self->fetch_all_by_taxon_id($taxon_id)->[0];
 }
 
 

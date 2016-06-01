@@ -20,6 +20,7 @@
 
 * `GenomeDBAdaptor::fetch_all_by_low_coverage()`
 * `GenomeDBAdaptor::fetch_all_by_taxon_id_assembly()`
+* `GenomeDBAdaptor::fetch_by_taxon_id()`
 * `GeneMemberAdaptor::load_all_from_seq_members()`
 
 # Deprecated methods not yet scheduled for deletion

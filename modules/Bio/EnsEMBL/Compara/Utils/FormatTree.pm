@@ -194,7 +194,7 @@ my $gdb_id_cb = sub {
     return $self->{tree}->genome_db_id;
 
   } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
-    return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+    return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_taxon_id($self->{tree}->taxon_id)->[0]->dbID;
   }
 };
 
@@ -276,7 +276,7 @@ my $sp_name_cb = sub {
   } elsif ($self->{tree}->can('taxon_id')) {
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
-      my $genome_db = $genome_db_adaptor->fetch_by_taxon_id($taxon_id);
+      my $genome_db = $genome_db_adaptor->fetch_all_by_taxon_id($taxon_id)->[0];
       return $genome_db ? $genome_db->name() : $taxon_id;
   }
   return undef;
@@ -451,7 +451,7 @@ sub _internal_format_newick {
 # ++ A "format" is a regular string containing string literals and "tokens". Tokens are:
 # %{n} --> then "name" of the node ($self->name)
 # %{c} --> the common name ($self->get_value_for_tag('genbank common name'))
-# %{d} --> gdb_id ($self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID)
+# %{d} --> gdb_id ($self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_taxon_id($self->taxon_id)->[0]->dbID)
 # %{t} --> timetree ($self->get_value_for_tag('ensembl timetree mya')
 # %{l} --> display_label ($self->gene_member->display_label)
 # %{h} --> genome short name ($self->genome_db->get_short_name)
