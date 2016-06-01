@@ -311,10 +311,6 @@ sub _binarize {
         $newNode->taxon_id($child->taxon_id);
         $taxon_ids->{$child->parent->taxon_id}++;
         $newNode->genome_db_id($child->genome_db_id);
-        # We make sure that we don't have spaces in the names of internal nodes (for example Testudines + Archosauria group)
-        my $name = $child->name() || $child->taxon_id;
-        $name =~ s/\ /./g;
-        $newNode->name($name);
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
         $newNode->node_name($child->name);
@@ -326,7 +322,6 @@ sub _binarize {
                 $newBranch->add_child($c);
             }
             $binTree->add_child($newBranch);
-            $newBranch->name($newBranch->parent->name);
             $newBranch->taxon_id($newBranch->parent->taxon_id);
             $newBranch->genome_db_id($newBranch->parent->genome_db_id);
             my $suffix = $taxon_ids->{$newBranch->parent->taxon_id} ? ".dup" . $taxon_ids->{$newBranch->parent->taxon_id} : "";
