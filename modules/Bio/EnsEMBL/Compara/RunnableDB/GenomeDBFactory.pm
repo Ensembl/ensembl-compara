@@ -81,9 +81,8 @@ sub fetch_input {
     if ($self->param('species_set_id')) {
         my $species_set_id = $self->param_required('species_set_id');
         die unless looks_like_number($species_set_id);
-        # Currently, empty species sets cannot be represented
-        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id); # or die "Could not fetch ss with dbID=$species_set_id";
-        $genome_dbs        = $species_set ? $species_set->genome_dbs() : [];
+        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or die "Could not fetch ss with dbID=$species_set_id";
+        $genome_dbs        = $species_set->genome_dbs();
 
     } elsif ($self->param('mlss_id')) {
         my $mlss_id = $self->param('mlss_id');
