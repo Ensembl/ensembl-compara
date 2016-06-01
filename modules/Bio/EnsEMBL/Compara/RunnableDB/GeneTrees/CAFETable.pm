@@ -330,53 +330,6 @@ LABEL:    while (1) {
     return $lambda;
 }
 
-sub get_normalized_table {
-    my ($self, $table, $n) = @_;
-    my ($header, @table) = split /\n/, $table;
-    my @species = split /\t/, $header;
-    my @headers = @species[0,1];
-    @species = @species[2..$#species];
-
-    my $data;
-    my $fams;
-
-    for my $row (@table) {
-        chomp $row;
-        my @flds = split/\t/, $row;
-        push @$fams, [@flds];
-        for my $i (2..$#flds) {
-            push @{$data->{$species[$i-2]}}, $flds[$i];
-        }
-    }
-    my $means_a;
-    for my $sp (@species) {
-        my $mean = mean(@{$data->{$sp}});
-        my $stdev = stdev($mean, @{$data->{$sp}});
-        #  $means->{$sp} = {mean => $mean, stdev => $stdev};
-        push @$means_a, {mean => $mean, stdev => $stdev};
-    }
-
-    my $newTable = join "\t", @headers, @species;
-    $newTable .= "\n";
-    my $nfams = 0;
-    for my $famdata (@$fams) {
-        my $v = 0;
-        for my $i (0 .. $#species) {
-            my $vmean = $means_a->[$i]->{mean};
-            my $vstdev = $means_a->[$i]->{stdev};
-            my $vreal = $famdata->[$i+2];
-
-            $v++ if (($vreal > ($vmean - $vstdev/$n)) && ($vreal < ($vmean + $vstdev/$n)));
-        }
-        if ($v == scalar(@species)) {
-            $newTable .= join "\t", @$famdata;
-            $newTable .= "\n";
-            $nfams++;
-        }
-    }
-    print STDERR "$nfams families written in tbl file\n" if ($self->debug());
-    return $newTable;
-}
 
 sub get_table_file {
     my ($self, $table) = @_;

@@ -150,7 +150,7 @@ sub get_normalized_table {
     my ($header, @table) = split /\n/, $table;
     my @species = split /\t/, $header;
 
-    ## n_headers method has to be defined in the parent class,
+    ## n_headers method has to be defined in the sub class,
     ## allowing for differentiation between 2-column names (ids, and names)
     ## as is needed by CAFE and 1-column names needed by badiRate
     my @headers = @species[0..$self->n_headers-1];
@@ -194,8 +194,7 @@ sub get_normalized_table {
         }
     }
     print STDERR "$nfams families written in tbl file\n" if ($self->debug());
-    $self->param('table', $newTable);
-    return;
+    return $newTable;
 }
 
 sub mean {
