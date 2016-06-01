@@ -1555,8 +1555,9 @@ sub get_extended_reg_region_slice {
   $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
 
 
-  ## Now we need to extend the slice!! Default is to add 2kb to either end of slice, if gene_reg slice is
+  ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
   ## extends more than this use the values returned from this
+  my $extension = 250*1000;
   my $start = $self->Obj->start;
   my $end   = $self->Obj->end;
 
@@ -1564,14 +1565,14 @@ sub get_extended_reg_region_slice {
   my $gr_end = $gr_slice->end;
   my ($new_start, $new_end);
 
-  if ( ($start  - 2000) < $gr_start) {
-     $new_start = 2000;
+  if ( ($start  - $extension) < $gr_start) {
+     $new_start = $extension;
   } else {
      $new_start = $start - $gr_start;
   }
 
-  if ( ($end +2000) > $gr_end) {
-    $new_end = 2000;
+  if ( ($end +$extension) > $gr_end) {
+    $new_end = $extension;
   }else {
     $new_end = $gr_end - $end;
   }
