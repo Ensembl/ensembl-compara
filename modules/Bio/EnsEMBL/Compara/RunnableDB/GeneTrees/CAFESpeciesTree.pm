@@ -175,13 +175,6 @@ sub write_output {
 ## Internal methods #########
 #############################
 
-sub get_taxon_id_from_dbID {
-    my ($self, $dbID) = @_;
-    my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
-    my $genomeDB = $genomeDB_Adaptor->fetch_by_dbID($dbID);
-    return $genomeDB->taxon_id();
-}
-
 
 
 sub include_distance_to_parent {
