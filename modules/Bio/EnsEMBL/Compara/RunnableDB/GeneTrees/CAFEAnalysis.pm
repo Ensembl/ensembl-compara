@@ -320,7 +320,6 @@ sub parse_cafe_output {
             }
 
             print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
-#            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
             my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_name($n, $node->is_leaf);
 
             for my $cafe_node (@$cafe_nodes) {

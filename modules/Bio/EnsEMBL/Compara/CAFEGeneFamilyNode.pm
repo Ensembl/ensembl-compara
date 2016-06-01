@@ -52,15 +52,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
-sub find_nodes_by_taxon_id_or_species_name {
-    my ($self, $val, $is_leaf) = @_;
-    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
-    if ($is_leaf) {
-        my $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
-        return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
-    }
-    return $self->find_nodes_by_field_value('taxon_id', $val);
-}
 
 sub find_nodes_by_name {
     my ($self, $val, $is_leaf) = @_;
