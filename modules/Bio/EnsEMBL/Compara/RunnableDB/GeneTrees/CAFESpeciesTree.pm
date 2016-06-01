@@ -131,7 +131,6 @@ sub run {
     $self->include_distance_to_parent($species_tree_root);
     $self->fix_ensembl_timetree_mya($species_tree_root);
     $self->ensembl_timetree_mya_to_distance_to_parent($species_tree_root);
-    $self->include_names($species_tree_root);
     $self->ultrametrize($species_tree_root);
     my $binTree = $self->binarize($species_tree_root);
     $self->fix_zeros($binTree);
@@ -268,17 +267,6 @@ sub mya_to_dtp_1path {
     }
 }
 
-sub include_names {
-    my ($self, $tree) = @_;
-    my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
-    my $leaves = $tree->get_all_leaves();
-    for my $leaf ( @$leaves ) {
-        next if $leaf->name;
-        my $name = $leaf->genome_db->name();
-        $name =~ s/_/\./g;
-        $leaf->name($name);
-    }
-}
 
 sub ultrametrize {
     my ($self, $tree) = @_;
