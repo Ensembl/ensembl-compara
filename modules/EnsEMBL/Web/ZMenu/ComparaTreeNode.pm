@@ -412,12 +412,6 @@ sub content {
             'URL' => uri_escape($rest_url)
           });
         }
-        else {
-          $link = sprintf (
-                            '/wasabi/wasabi.htm?rest_url=%s',
-                            uri_escape($rest_url)
-                          );
-        }
       }
       else {
 	      my $filegen_url = $hub->url('Json', {
@@ -433,16 +427,15 @@ sub content {
 	                        uri_escape($filegen_url)
 	                      );
 	  	}
-
     }
 
     # Wasabi Tree Link
     $self->add_entry({
       type       => 'View sub-tree',
-      label      => 'View in Wasabi',
+      label      => $link ? 'View in Wasabi' : 'Not available' ,
       link_class => 'popup',
       order      => 16,
-      link       => $link
+      link       => $link || ''
     });
   }
 }
