@@ -175,6 +175,7 @@ sub write_output {
     );
 
     $self->dataflow_output_id($self->input_id, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
+    $self->db->hive_pipeline->save_collections();
 }
 
 sub _write_shared_ss {
