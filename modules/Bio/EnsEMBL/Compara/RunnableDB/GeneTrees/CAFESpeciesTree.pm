@@ -93,7 +93,6 @@ sub fetch_input {
     my $CAFETree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor();
     $self->param('cafeTree_Adaptor', $CAFETree_Adaptor);
 
-#    my $full_species_tree = $self->get_species_tree_string($label); ## Now in Runnable::BaseRunnable
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 

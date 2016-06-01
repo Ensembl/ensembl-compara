@@ -54,28 +54,6 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub get_tree_string_from_mlss_tag {
-    my ($self) = @_;
-    my $mlss_id = $self->param('mlss_id');
-
-    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = 'cafe_tree_string' AND method_link_species_set_id = ?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($mlss_id);
-
-    my ($cafe_tree_string) = $sth->fetchrow_array();
-    $sth->finish;
-    print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
-    return $cafe_tree_string;
-}
-
-sub get_cafe_tree_from_string {
-    my ($self) = @_;
-    my $cafe_tree_string = $self->param('species_tree_string');
-    print STDERR "$cafe_tree_string\n" if ($self->debug());
-    my $cafe_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafe_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
-    $self->param('cafe_tree', $cafe_tree);
-    return;
-}
 
 sub load_split_genes {
     my ($self) = @_;
