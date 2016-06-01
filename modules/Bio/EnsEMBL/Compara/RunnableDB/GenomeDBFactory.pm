@@ -102,7 +102,7 @@ sub fetch_input {
     $genome_dbs = [grep {$_->name ne 'ancestral_sequences'} @$genome_dbs] if not $self->param('ancestral_genomes');
     $genome_dbs = [grep {not $_->is_polyploid} @$genome_dbs] if not $self->param('polyploid_genomes');
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
-    $genome_dbs = [grep {$_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
+    $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
 
     $self->param('genome_dbs', $genome_dbs);
 }
