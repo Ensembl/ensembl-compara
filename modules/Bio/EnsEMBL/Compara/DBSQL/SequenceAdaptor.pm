@@ -177,7 +177,7 @@ sub store {
 sub store_no_redundancy {
     my ($self, $sequence) = @_;
 
-    return 0 unless($sequence);
+    throw("store_no_redundancy() called without a sequence") unless $sequence;
 
     my $md5sum = md5_hex($sequence);
 
