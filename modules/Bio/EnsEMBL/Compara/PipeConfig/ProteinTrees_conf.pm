@@ -155,6 +155,7 @@ sub default_options {
         'treebreak_gene_count'      => 400,
         'split_genes_gene_count'    => 5000,
 
+        'mcoffee_short_gene_count'  => 20,
         'mcoffee_himem_gene_count'  => 250,
         'mafft_gene_count'          => 300,
         'mafft_himem_gene_count'    => 400,
@@ -1674,6 +1675,7 @@ sub core_pipeline_analyses {
                     'reuse_aln_runtime'   => 0,
                 },
 
+                'mcoffee_short_gene_count'  => $self->o('mcoffee_short_gene_count'),
                 'mcoffee_himem_gene_count'  => $self->o('mcoffee_himem_gene_count'),
                 'mafft_gene_count'          => $self->o('mafft_gene_count'),
                 'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
@@ -1682,7 +1684,8 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#tree_gene_count# <  #mcoffee_himem_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
+                    '(#tree_gene_count# <  #mcoffee_short_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_short',
+                    '(#tree_gene_count# >= #mcoffee_short_gene_count# and #tree_gene_count# < #mcoffee_himem_gene_count#)   and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
                     '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)           and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_himem',
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
@@ -1734,6 +1737,23 @@ sub core_pipeline_analyses {
 
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
+
+        {   -logic_name => 'mcoffee_short',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'method'                => 'cmcoffee',
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mafft_home'            => $self->o('mafft_home'),
+                'escape_branch'         => -1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -batch_size           => 10,
+            -rc_name    => '1Gb_job',
+            -flow_into => {
+               -1 => [ 'mcoffee' ],  # MEMLIMIT
+               -2 => [ 'mafft' ],
+            },
+        },
 
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
