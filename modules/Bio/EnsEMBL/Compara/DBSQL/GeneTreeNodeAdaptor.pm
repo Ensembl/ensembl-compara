@@ -276,16 +276,19 @@ sub delete_nodes_not_in_tree
   my $self = shift;
   my $tree = shift;
 
+  # NOTE: $tree is assumed to be a root node
   assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  my %node_hash;
+  foreach my $node (@{$tree->get_all_nodes}) {
+    $node_hash{$node->node_id} = $node;
+  }
   #print("delete_nodes_not_present under ", $tree->node_id, "\n");
-  my $dbtree = $self->fetch_node_by_node_id($tree->node_id);
-  my @all_db_nodes = $dbtree->get_all_subnodes;
-  foreach my $dbnode (@all_db_nodes) {
-    next if($tree->find_node_by_node_id($dbnode->node_id));
+  my $all_db_nodes = $self->fetch_all_by_root_id($tree->node_id);
+  foreach my $dbnode (@$all_db_nodes) {
+    next if $node_hash{$dbnode->node_id};
     #print "Deleting unused node ", $dbnode->node_id, "\n";
     $self->delete_node($dbnode);
   }
-  $dbtree->release_tree;
 }
 
 

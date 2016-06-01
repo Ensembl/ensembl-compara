@@ -256,6 +256,25 @@ sub fetch_tree_by_root_id {
 }
 
 
+=head2 fetch_all_by_root_id
+
+  Arg[1]     : root_id: integer
+  Example    : $all_nodes = $proteintree_adaptor->fetch_all_by_root_id(3);
+  Description: Fetches from the database all the nodes linked to this root_id
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_root_id {
+  my ($self, $root_id) = @_;
+
+  my $table = ($self->_tables)[0]->[1];
+  my $constraint = "$table.root_id = ?";
+  $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
+  return $self->generic_fetch($constraint);
+}
+
 
 =head2 fetch_root_by_node
 
