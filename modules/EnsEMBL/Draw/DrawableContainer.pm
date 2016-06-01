@@ -230,8 +230,8 @@ sub new {
         my $text = $glyphset->label_text;
         $glyphset->recast_label(
             $label_width-$img_width,$glyphset->max_label_rows,
-            $text,$config->{'_font_face'} || 'arial',
-            $config->{'_font_size'} || 100,
+            $text, $config->font_face || 'arial',
+            $config->font_size || 100,
             $colours->{lc $glyphset->{'my_config'}->get('_class')}
                       {'default'} || 'black'
         );
