@@ -30,8 +30,8 @@ sub convert {
 
   my $self = bless {}, $caller;
 
-  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
-    rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);
+  my ($no_sequences, $aligned, $cdna, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
+    rearrange([qw(NO_SEQUENCES ALIGNED CDNA EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);
 
   if (defined $no_sequences) {
       $self->no_sequences($no_sequences);
@@ -41,9 +41,6 @@ sub convert {
   }
   if (defined $cdna) {
       $self->cdna($cdna);
-  }
-  if (defined $species_common_name) {
-      $self->species_common_name($species_common_name);
   }
   if (defined $exon_boundaries) {
       $self->exon_boundaries($exon_boundaries);
@@ -81,14 +78,6 @@ sub cdna {
         $self->{_cdna} = $cdna;
     }
     return $self->{_cdna};
-}
-
-sub species_common_name {
-    my ($self, $sp_flag) = @_;
-    if (defined ($sp_flag)) {
-        $self->{_species_common_name} = $sp_flag;
-    }
-    return $self->{_species_common_name};
 }
 
 sub exon_boundaries {
@@ -175,17 +164,18 @@ sub _convert_node {
   my $type  = $node->get_value_for_tag('node_type');
   my $boot  = $node->get_value_for_tag('bootstrap');
   my $dcs   = $node->duplication_confidence_score();
-  my $tax   = $node->species_tree_node();
+  my $stn   = $node->species_tree_node();
 
   $hash->{branch_length} = $node->distance_to_parent() + 0;
-  if($tax) {
-      my $taxon = $tax->taxon;
-      $hash->{taxonomy} = { id => $tax->taxon_id + 0,
-                            scientific_name => $tax->node_name,
-                          };
+  if($stn) {
+      $hash->{taxonomy} = {
+          id => $stn->taxon_id + 0,
+          scientific_name => $stn->node_name,
+      };
       if ($self->full_tax_info()) {
-	$hash->{taxonomy}{alias_name} = $taxon->ensembl_alias_name;
-	$hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0;
+          my $taxon = $stn->taxon;
+          $hash->{taxonomy}{common_name}  = $taxon->ensembl_alias_name || $taxon->common_name;
+          $hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0;
       }
   }
   $hash->{confidence} = {};
@@ -267,10 +257,6 @@ sub _convert_node {
     }
 
     $hash->{id} = { source => "EnsEMBL", accession => $gene->stable_id() };
-
-    if ($self->species_common_name) {
-        $hash->{taxonomy}->{common_name} = $node->genome_db->taxon->ensembl_alias_name;
-    }
 
     $hash->{sequence} = 
       { 
