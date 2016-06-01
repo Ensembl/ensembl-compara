@@ -126,7 +126,8 @@ sub default_options {
 
             # CAFE parameters
             'initialise_cafe_pipeline'  => 1,
-            'cafe_species'          => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+            # Use production names here
+            'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
 
             # Other parameters
             'raxml_number_of_cores' => 4,

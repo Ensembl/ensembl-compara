@@ -108,7 +108,8 @@ sub fetch_input {
         $self->param('cafe_species', undef);
         $self->param('n_missing_species_in_tree', 0);
     } else {
-        $self->param('cafe_species', $cafe_species);
+        my %gdb_ids = map {$_->dbID => 1} map {$genomeDB_Adaptor->fetch_by_name_assembly($_) || die "Could not find a GenomeDB named '$_'"} @$cafe_species;
+        $self->param('cafe_species', \%gdb_ids);
         $self->param('n_missing_species_in_tree', scalar(@{$genomeDB_Adaptor->fetch_all()})-scalar(@{$cafe_species}));
     }
 
@@ -183,15 +184,6 @@ sub get_taxon_id_from_dbID {
 }
 
 
-sub is_in {
-    my ($item, $arref) = @_;
-    for my $elem (@$arref) {
-        if ($item eq $elem) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 sub include_distance_to_parent {
     my ($self, $tree) = @_;
@@ -384,51 +376,11 @@ sub fix_zeros_1 {
 
 sub prune_tree {
     my ($self, $tree, $species_to_keep) = @_;
-    my $leaves = $tree->get_all_leaves();
-    my %species_to_remove;
-    for my $leaf (@$leaves) {
-        my $name = $leaf->name();
-        $species_to_remove{$name} = 1;
-    }
-    for my $sp (@$species_to_keep) {
-        die "$sp is not in the full species-tree, cannot remove it." unless exists $species_to_remove{$sp};
-        delete $species_to_remove{$sp};
-    }
-    my $newTree = remove_nodes($tree, [keys %species_to_remove]);
-    return $newTree;
+
+    my @nodes_to_remove = grep {!$species_to_keep->{$_->genome_db_id}} @{$tree->get_all_leaves};
+    return $tree->remove_nodes(\@nodes_to_remove);
 }
 
-sub remove_nodes {
-    my ($tree, $nodes) = @_;
-    my $leaves = $tree->get_all_leaves();
-    for my $node (@$leaves) {
-        if (is_in($node->name, $nodes)) {
-            if ($node->has_parent()) {
-                my $parent = $node->parent();
-                my $siblings = $node->siblings;
-                if (scalar @$siblings > 1) {
-                    die "The tree is not binary";
-                }
-                $node->disavow_parent();
-                if ($parent->has_parent) {
-                    ## We avoid having "_dup" nodes without no "_dup" versions
-                    if ($siblings->[0]->node_name =~ /_dup$/) {
-                        $siblings->[0]->node_name($parent->node_name);
-                    }
-                    my $grandpa = $parent->parent();
-                    my $dtg = $parent->distance_to_parent();
-                    $parent->disavow_parent();
-                    my $newsdtp = $siblings->[0]->distance_to_parent() + $dtg;
-                    $grandpa->add_child($siblings->[0], $newsdtp);
-                } else {
-                    $siblings->[0]->disavow_parent();
-                    $tree=$siblings->[0];
-                }
-            }
-        }
-    }
-    return $tree;
-}
 
 sub check_tree {
   my ($self, $tree) = @_;
