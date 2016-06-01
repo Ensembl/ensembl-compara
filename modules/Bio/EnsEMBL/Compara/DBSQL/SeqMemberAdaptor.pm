@@ -368,7 +368,7 @@ sub store {
 
 
 
-
+# NOTE: this is never called
 sub update_sequence {
   my ($self, $member) = @_;
 
