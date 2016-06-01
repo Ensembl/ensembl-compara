@@ -40,7 +40,6 @@ sub content {
   
   my $image_config = $object->get_imageconfig('chromosome');
   $image_config->container_width($object->seq_region_length);
-  $image_config->set_width($object->param('image_width'));
 
   my $image = $self->new_image($slice, $image_config);
   

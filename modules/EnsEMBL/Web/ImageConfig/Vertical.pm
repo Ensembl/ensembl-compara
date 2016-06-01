@@ -101,7 +101,6 @@ sub load_user_track_data {
   my $species_defs = $hub->species_defs;
   my $bins         = 150;
   my $bin_size     = int($self->container_width / $bins);
-  my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
   
