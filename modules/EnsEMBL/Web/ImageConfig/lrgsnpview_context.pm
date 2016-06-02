@@ -26,12 +26,12 @@ sub init {
   my $self = shift; 
 
   $self->set_parameters({
-    title            => 'Context slice',
-    show_labels      => 'yes', # show track names on left-hand side
-    label_width      => 100,   # width of labels on left-hand side
-    features         => [],
-    opt_halfheight   => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,     # include empty tracks..
+    title             => 'Context slice',
+    no_labels         => 1, # show track names on left-hand side
+    label_width       => 100,   # width of labels on left-hand side
+    features          => [],
+    opt_halfheight    => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,     # include empty tracks..
   });
   
   $self->create_menus(

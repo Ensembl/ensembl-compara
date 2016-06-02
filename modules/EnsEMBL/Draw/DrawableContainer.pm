@@ -47,7 +47,7 @@ sub new {
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
   my $sortable_tracks = $primary_config->get_parameter('sortable_tracks') eq 'drag';
-  my $show_labels     = $primary_config->get_parameter('show_labels')    || 'yes';
+  my $no_labels       = $primary_config->get_parameter('no_labels');
   my $label_width     = $primary_config->get_parameter('label_width')    || 100;
   my $margin          = $primary_config->get_parameter('margin')         || 5;
   my $padding         = $primary_config->get_parameter('padding')        || 0;
@@ -55,7 +55,7 @@ sub new {
   my $image_width     = $primary_config->get_parameter('image_width')    || 700;
   my $colours         = $primary_config->species_defs->colour('classes') || {};
   my $label_start     = $margin;
-  my $panel_start     = $label_start + ($show_labels  eq 'yes' ? $label_width  + $margin : 0) + ($sortable_tracks ? 10 : 0);
+  my $panel_start     = $label_start + ($no_labels ? 0 : $label_width + $margin) + ($sortable_tracks ? 10 : 0);
   my $panel_width     = $image_width - $panel_start - $margin;
   my $yoffset         = $margin;
   my $iteration       = 0;
@@ -393,7 +393,7 @@ sub new {
         }
 
         ## set up the "bumping button" label for this strip
-        if ($glyphset->label && $show_labels eq 'yes') {
+        if ($glyphset->label && !$no_labels) {
           my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
 
           my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);

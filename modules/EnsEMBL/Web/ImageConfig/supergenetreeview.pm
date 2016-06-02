@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    show_labels => 'no',
+    no_labels   => 1,
     bgcolor     => 'background1',
     bgcolour1   => 'background1',
     bgcolour2   => 'background1',

@@ -27,7 +27,7 @@ sub init {
 
   $self->set_parameters({
     image_resizeable  => 1,
-    show_labels       => 'no',
+    no_labels         => 1,
     bgcolor           => 'background1',
     bgcolour1         => 'background1',
     bgcolour2         => 'background1',

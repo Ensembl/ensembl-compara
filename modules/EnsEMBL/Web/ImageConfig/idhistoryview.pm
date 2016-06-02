@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    show_labels => 'no',
+    no_labels => 1,
   });
 
   $self->create_menus('idhistory');
