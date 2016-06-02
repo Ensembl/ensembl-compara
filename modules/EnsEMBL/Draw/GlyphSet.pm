@@ -602,7 +602,7 @@ sub init_label {
       header    => $name,
       desc      => $desc,
       class     => "$class $track",
-      component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
+      component => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off",

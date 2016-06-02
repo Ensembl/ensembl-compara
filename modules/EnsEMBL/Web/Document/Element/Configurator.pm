@@ -84,7 +84,7 @@ sub init_config {
   $view_config->build_form($controller->object, $image_config);
   
   if ($image_config) {
-    if ($image_config->multi_species) {
+    if ($image_config->get_parameter('multi_species')) {
 
       my @sp = @{$image_config->species_list};
 
