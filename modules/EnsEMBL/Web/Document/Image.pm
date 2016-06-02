@@ -59,6 +59,8 @@ sub introduction       :lvalue { $_[0]->{'introduction'};       }
 sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
 sub caption            :lvalue { $_[0]->{'caption'};            }
 
+sub has_moveable_tracks { 0 }
+
 sub image_width { 
   my $self = shift;
   if ($self->{'image_configs'}) {
