@@ -210,6 +210,8 @@ sub write_output {
 
     print "writing outs\n" if ( $self->debug );
 
+    my @data_flow;
+
     #-----------------------------------------------------------------------------------------------------------------------------------------------
     # When a genome is updated it may contain the same sequences and stable ids, but the seq_member_ids will be different
     #   since it was re-inserted into the database.
@@ -217,10 +219,10 @@ sub write_output {
     # We just store the mapping now, it will later be used by copy_trees_from_previous_release.
     #-----------------------------------------------------------------------------------------------------------------------------------------------
     foreach my $stable_id ( keys %{ $self->param('seq_member_id_map') } ) {
-        $self->dataflow_output_id( {  'stable_id'             => $stable_id,
-                                      'seq_member_id_reused'  => $self->param('seq_member_id_map')->{$stable_id}->{'reused'},
-                                      'seq_member_id_current' => $self->param('seq_member_id_map')->{$stable_id}->{'current'} },
-                                   1 );
+        push(@data_flow, {  'stable_id' => $stable_id,
+                              'seq_member_id_reused'  => $self->param('seq_member_id_map')->{$stable_id}->{'reused'},
+                              'seq_member_id_current' => $self->param('seq_member_id_map')->{$stable_id}->{'current'} }
+                          );
     }
 
     my %flagged;
@@ -268,6 +270,7 @@ sub write_output {
         }
     } ## end foreach my $current_stable_id...
 
+    $self->dataflow_output_id( \@data_flow, 1 );
 } ## end sub write_output
 
 ##########################################
