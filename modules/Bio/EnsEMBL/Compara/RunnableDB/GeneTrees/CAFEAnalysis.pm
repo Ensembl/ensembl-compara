@@ -228,16 +228,15 @@ sub parse_cafe_output {
         # Tree with member counts
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
-        $pvalue_pairs =~ tr/(/[/;
-        $pvalue_pairs =~ tr/)/]/;
-        $pvalue_pairs =~ tr/-/1/;
-        $pvalue_pairs = eval $pvalue_pairs;
-
-        die "Problem processing the $pvalue_pairs\n" if (ref $pvalue_pairs ne "ARRAY");
+        print STDERR "pvalue_pairs $pvalue_pairs\n" if ($self->debug);
+        my @pvalue_pairs;
+        while ($pvalue_pairs =~ /\(([^,(]+),([^,)]+)\)/g) {
+            push @pvalue_pairs, [$1+0,$2+0];
+        }
 
         my %pvalue_by_node;
-        for (my $i=0; $i<scalar(@$pvalue_pairs); $i++) {
-            my ($val_fst, $val_snd) = @{$pvalue_pairs->[$i]};
+        for (my $i=0; $i<scalar(@pvalue_pairs); $i++) {
+            my ($val_fst, $val_snd) = @{$pvalue_pairs[$i]};
             my ($node_id1, $node_id2) = @{$format_pairs_nodeIDs[$i]};
             $pvalue_by_node{$node_id1} = $val_fst if (! defined $pvalue_by_node{$node_id1} || $pvalue_by_node{$node_id1} > $val_fst);
             $pvalue_by_node{$node_id2} = $val_snd if (! defined $pvalue_by_node{$node_id2} || $pvalue_by_node{$node_id2} > $val_snd);
