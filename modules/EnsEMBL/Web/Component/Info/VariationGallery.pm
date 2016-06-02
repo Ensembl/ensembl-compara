@@ -343,7 +343,7 @@ sub _get_pages {
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_exons',
-                                  'caption' => 'Variations within each exon sequence',
+                                  'caption' => 'Variants within each exon sequence',
                                   'multi'     => $multi_transcript,  
                                   'disabled'  => $no_gene,  
                                 },
