@@ -322,31 +322,6 @@ sub get_script {
     return $script_file;
 }
 
-sub mean {
-    my (@items) = @_;
-    return sum(@items) / (scalar @items);
-}
-
-sub sum {
-    my (@items) = @_;
-    my $res;
-    for my $next (@items) {
-        die unless (defined $next);
-        $res += $next;
-    }
-    return $res;
-}
-
-sub stdev {
-    my ($mean, @items) = @_;
-    my $var = 0;
-    my $n_items = scalar @items;
-    for my $item (@items) {
-        $var += ($mean - $item) * ($mean - $item);
-    }
-    return sqrt($var / (scalar @items));
-}
-
 
 sub n_headers {
     return 2;
