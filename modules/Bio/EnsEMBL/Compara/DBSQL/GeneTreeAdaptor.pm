@@ -403,7 +403,7 @@ sub delete_tree {
     assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
 
     # Remove all the nodes but the root
-    my $gene_tree_node_Adaptor = $tree->root->adaptor;
+    my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
         next if ($node->node_id() == $tree->root->node_id());
         $gene_tree_node_Adaptor->delete_node($node);
