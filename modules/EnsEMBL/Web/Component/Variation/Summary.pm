@@ -757,7 +757,7 @@ sub snpedia {
     my $object = $self->object;
     my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
     if (!$snpedia_wiki_results->{'pageid'}) {
-      $cache->set($key, 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, 'no_entry', 60*60*24*7);
       return ();
     }
     
@@ -785,7 +785,7 @@ sub snpedia {
         $snpedia_search_link
       );
 
-      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
 
       return [
         'Description from SNPedia',
@@ -794,7 +794,7 @@ sub snpedia {
     }
     else {
       $desc = $snpedia_wiki_results->{'desc'}[0];
-      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
       return $count ? 
         [ 'Description from SNPedia',  $desc]
         : ();
