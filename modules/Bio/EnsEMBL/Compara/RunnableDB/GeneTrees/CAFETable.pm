@@ -56,7 +56,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon');
 
 sub param_defaults {
     return {
-            'tree_fmt'         => '%{n}%{":"d}',
+            'tree_fmt'         => '%{o}%{":"d}',
             'norm_factor'      => 0.1,
             'norm_factor_step' => 0.1,
             'label'            => 'cafe',
@@ -152,7 +152,7 @@ sub get_full_cafe_table_from_db {
     my ($self) = @_;
     my $cafe_tree = $self->param('cafe_tree');
 
-    my $species = [map {$_->name} @{$cafe_tree->get_all_leaves()}];
+    my $species = [map {$_->node_id} @{$cafe_tree->get_all_leaves()}];
 
     my $table = "FAMILY_DESC\tFAMILY\t" . join("\t", @$species);
     $table .= "\n";
@@ -161,15 +161,9 @@ sub get_full_cafe_table_from_db {
     my $ok_fams = 0;
 
     while (my ($name, $id, $vals) = $all_trees->()) {
-        my %species;
-        for my $href (@$vals) {
-            $species{$href->{species}} = $href->{members};
-        }
-
         last unless (defined $name);
-        my @species_in_tree = grep {$species{$_} != 0} keys %species;
-        if ($self->has_member_at_root([@species_in_tree])) {
-            my @vals = map {$_->{members}} @$vals;
+        if ($self->has_member_at_root($vals)) {
+            my @vals = map {$vals->{$_}} @$species;
             $ok_fams++;
             $table .= join ("\t", ($name, $id, @vals));
             $table .= "\n";
@@ -186,51 +180,31 @@ sub get_per_family_cafe_table_from_db {
     my $fmt = $self->param('tree_fmt');
     my $cafe_tree = $self->param('cafe_tree');
 
-    my $species;
-    for my $sp (@{$cafe_tree->get_all_leaves()}) {
-        push @$species, $sp->name();
-    }
+    my $species = [map {$_->node_id} @{$cafe_tree->get_all_leaves()}];
 
     my $all_trees = $self->get_all_trees($species); ## Returns a closure
     my $ok_fams = 0;
     my @all_fams = ();
     while (my ($name, $id, $vals) = $all_trees->()) {
-        my %species;
-        for my $href (@$vals) {
-            $species{$href->{species}} = $href->{members};
-        }
-
         last unless (defined $name);
-        my @species_in_tree = grep {$species{$_} != 0} keys %species;
-
+        my @species_in_tree = grep {$vals->{$_}} @$species;
         print STDERR scalar @species_in_tree , " species for this tree\n";
         next if (scalar @species_in_tree < 4);
 
         #TODO: Should we filter out low-coverage genomes?
-        my @leaves = ();
-        for my $node (@{$cafe_tree->get_all_leaves}) {
-            if (is_in($node->name, \@species_in_tree)) {
-                push @leaves, $node;
-            }
-        }
-        next unless (scalar @leaves > 1);
-        my $lca = $cafe_tree->find_first_shared_ancestor_from_leaves([@leaves]);
+        my $lca = $self->lca($vals);
         next unless (defined $lca);
         my $lca_str = $lca->newick_format('ryo', $fmt);
         print STDERR "TREE FOR THIS FAM: \n$lca_str\n" if ($self->debug());
         my $fam_table = "FAMILY_DESC\tFAMILY";
         my $all_species_in_tree = $lca->get_all_leaves();
         for my $sp_node (@$all_species_in_tree) {
-            my $sp = $sp_node->name();
+            my $sp = $sp_node->node_id();
             $fam_table .= "\t$sp";
         }
         $fam_table .= "\n";
 
-        my @flds = ($name, $id);
-        for my $sp_node (@$all_species_in_tree) {
-            my $sp = $sp_node->name();
-            push @flds, ($species{$sp} || 0);
-        }
+        my @flds = ($name, $id, map {$vals->{$_->node_id}} @$all_species_in_tree);
         $fam_table .= join("\t", @flds). "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
@@ -245,41 +219,25 @@ sub get_per_family_cafe_table_from_db {
     return;
 }
 
-sub has_member_at_root {
+sub lca {
     my ($self, $sps) = @_;
     my $cafe_tree = $self->param('cafe_tree');
     my $tree_leaves = $cafe_tree->get_all_leaves();
-    my @leaves;
-    for my $sp (@$sps) {
-        my $leaf = get_leaf($sp, $tree_leaves);
-        if (defined $leaf) {
-            push @leaves, $leaf
-        }
-    }
+    my @leaves = grep {$sps->{$_->node_id}} @$tree_leaves;
     if (scalar @leaves == 0) {
-        return 0;
+        return undef;
     }
-    my $lca = $cafe_tree->find_first_shared_ancestor_from_leaves([@leaves]);
-    return !$lca->has_parent();
+    return $cafe_tree->find_first_shared_ancestor_from_leaves([@leaves]);
 }
 
-sub get_leaf {
-    my ($sp, $leaves) = @_;
-    for my $leaf (@$leaves) {
-        if ($leaf->name() eq $sp) {
-            return $leaf;
-        }
-    }
-    return undef;
+
+sub has_member_at_root {
+    my ($self, $sps) = @_;
+    my $lca = $self->lca($sps);
+    return ($lca && !$lca->has_parent());
 }
 
-sub is_in {
-    my ($name, $listref) = @_;
-    for my $item (@$listref) {
-        return 1 if ($item eq $name);
-    }
-    return 0;
-}
+
 
 ########################################
 ## Subroutines for lambda calculation

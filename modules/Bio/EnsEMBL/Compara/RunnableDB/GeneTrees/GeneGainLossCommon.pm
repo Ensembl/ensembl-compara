@@ -114,6 +114,7 @@ sub get_all_trees {
     my ($self, $species) = @_;
     my $adaptor = $self->param('adaptor');
     my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
+    my %stn_id_lookup = map {$_->genome_db_id => $_->node_id} @{ $self->param('cafe_tree')->get_all_leaves };
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     return sub {
         # $self is the outer var 
@@ -124,23 +125,13 @@ sub get_all_trees {
         my $full_tree_members = $tree->get_all_leaves();
         my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
 
-        my %species;
+        my %species = map {$_ => 0} @$species;
         for my $member (@$tree_members) {
-            my $sp;
-            eval {$sp = $member->genome_db->name};
-            next if ($@);
-            $sp =~ s/_/\./g;
-            $species{$sp}++;
+            $species{$stn_id_lookup{$member->genome_db_id}}++;
         }
 
-        my @flds = map {
-            { "species" => $_,
-              "members" => $species{$_} || 0
-            }
-        } @$species;
-
         $tree->release_tree();
-        return ($name, $root_id, [@flds]);
+        return ($name, $root_id, \%species);
     };
 }
 
