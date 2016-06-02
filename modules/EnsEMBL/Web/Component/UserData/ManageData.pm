@@ -66,6 +66,9 @@ sub content {
   push @data, @temp_data;
   
   if (scalar @data) {
+
+    $html .= $self->_add_buttons;
+
     my @columns = (
       { key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
@@ -179,32 +182,23 @@ sub _no_icon {
   return '';
 }
 
-sub buttons {
+sub _add_buttons {
 ### Buttons for applying methods to all selected files
 ### Note they are disabled until some files are selected
   my $self    = shift;
   my $hub     = $self->hub;
-  my @buttons;
 
-  push @buttons, {
-                    'caption' => 'Enable selected data',
-                    'class'   => 'add disabled',
-                    'modal'   => 1
-                    };
+  my $html = '<div class="component-tools tool_buttons"><b>Update selected</b>: ';
+  my @buttons = qw(enable disable delete);
 
-  push @buttons, {
-                    'caption' => 'Disable selected data',
-                    'class'   => 'detach disabled',
-                    'modal'   => 1
-                    };
+  foreach (@buttons) {
+    $html .= sprintf('<div class="modal_link disabled %s">%s</div>',
+                      $_, ucfirst($_));
+  }
 
-  push @buttons, {
-                    'caption' => 'Delete selected data',
-                    'class'   => 'delete disabled',
-                    'modal'   => 1
-                    };
+  $html .= '</div>';  
 
-  return @buttons;
+  return $html;
 }
 
 sub table_row {
