@@ -107,31 +107,42 @@ sub format_gallery {
 
   return unless $all_pages;
 
+  my %page_count;
+
   foreach my $group (@$layout) {
     my @pages = @{$group->{'pages'}||[]};
-    #next unless scalar @pages;
+    next unless scalar @pages;
 
     my $title = $group->{'title'};
     my $icon  = $group->{'icon'};
-    push @toc, sprintf('<a href="#%s"><img src="/i/48/%s" class="alongside" /></a><a href="#%s" class="notext">%s</a>', lc($title), $icon, lc($title), $title);
+    push @toc, sprintf('<div class="gallery-nav"><a href="#%s"><img src="/i/48/%s" class="alongside" /></a><br /><a href="#%s" class="notext gallery-navlabel">%s</a></div>', lc($title), $icon, lc($title), $title);
 
     $html .= $self->_sub_header($title);
 
     $html .= '<div class="gallery">';
 
+    my $entry_template = '<div class="gallery_preview">
+                          %s
+                          <h3>%s</h3>
+                          <p class="preview_caption">%s</p>';
+
     foreach (@pages) {
       my $page = $all_pages->{$_};
       next unless $page;
-      my $url = $self->hub->url($page->{'link_to'});
 
-      $html .= '<div class="gallery_preview">';
+      ## Count unique pages
+      $page_count{$page->{'link_to'}} = 1;
+
+      my $url = $self->hub->url($page->{'link_to'});
 
       my $label = $self->hub->param('default') ? 'label_1' : 'label_2';
 
+      my ($caption, $link, $unavailable, $thumbnail, $miniform);
+
       if ($page->{'disabled'}) {
         ## Disable views that are invalid for this feature
-        $html .= sprintf('<img src="/i/gallery/%s.png" class="disabled" /></a>', $page->{'img'});
-        $html .= sprintf('<div class="preview_caption">%s<br />[Not available for this %s]</div><br />', $page->{'caption'}, lc($header_info->{$type}{'term'}));
+        $thumbnail = sprintf('<img src="/i/gallery/%s.png" class="disabled" />', $page->{'img'});
+        $unavailable = sprintf 'Not available for this %s', lc($header_info->{$type}{'term'});
       }
       elsif ($page->{'multi'}) {
         my $image = sprintf('<img src="/i/gallery/%s.png" /></a>', $page->{'img'});
@@ -144,14 +155,14 @@ sub format_gallery {
             $params->{"link_$k"} = $v;
           }
           my $zmenu_link  = $self->hub->url($params);
-          $html .= sprintf('<a href="%s" class="_zmenu">%s</a>', $zmenu_link, $image);
-          $html .= sprintf('<div class="preview_caption">%s<br /><br />This %s maps to <a href="%s" class="_zmenu">multiple %s</a></div><br />', $page->{'caption'}, $data_type->{$type}{'term'}, $zmenu_link, lc($multi_type).'s');
+          #$html .= sprintf('<a href="%s" class="_zmenu">%s</a>', $zmenu_link, $image);
+          $caption = sprintf('%s</p><p>This %s maps to <a href="%s" class="_zmenu">multiple %s</a>', $page->{'caption'}, $data_type->{$type}{'term'}, $zmenu_link, lc($multi_type).'s');
         }
         else {
           ## Disable links on views that can't be mapped to a single feature/location
-          $html .= $image;
+          #$html .= $image;
           my $data_param  = $page->{'multi'}{'param'};
-          $html .= sprintf('<div class="preview_caption">%s<br /><br />This %s maps to multiple %s</div><br />', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
+          $caption = sprintf('%s</p><p>This %s maps to multiple %s', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
 
           my $link_to = $page->{'link_to'};
           my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
@@ -170,19 +181,19 @@ sub format_gallery {
                                         'values'  => $page->{'multi'}{'values'},
                                         });
           $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
-          $html .= $multi_form->render;
+          #$html .= $multi_form->render;
         }
       }
       else {
-        $html .= sprintf('<a href="%s"><img src="/i/gallery/%s.png" /></a>', $url, $page->{'img'});
-        $html .= sprintf('<div class="preview_caption"><a href="%s" class="nodeco">%s</a></div><br />', $url, $page->{'caption'});
+        $thumbnail = sprintf('<img src="/i/gallery/%s.png" />', $page->{'img'});
+        $caption = sprintf('<a href="%s" class="nodeco">%s</a>', $url, $page->{'caption'});
 
       }
 
       my $form = $self->new_form({'action' => $url, 'method' => 'post', 'class' => 'freeform'});
 
       my $data_param = $data_type->{$type}{'param'};
-      my $value           = $self->hub->param('default') ? $self->hub->param($data_param) : undef;
+      my $value      = $self->hub->param('default') ? $self->hub->param($data_param) : undef;
       my $field      = $form->add_field({
                                         'type'  => 'String',
                                         'size'  => 10,
@@ -193,16 +204,21 @@ sub format_gallery {
 
       $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
-      $html .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
+      #$html .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
+
+      $html .= sprintf($entry_template, $thumbnail, $_, $page->{'caption'});
 
       $html .= '</div>';
     }
 
     $html .= '</div>';
   }
-  my $toc_string = sprintf('<p class="center">%s</p>', join(' &middot; &middot; &middot; ', @toc));
 
-  return $toc_string.$html;
+  my $page_header = sprintf('<h1>%s views for %s data</h1>', scalar keys %page_count, $hub->param('data_type'));
+
+  my $toc_string = sprintf('<div class="gallery-toc center">%s</div>', join(' ', @toc));
+
+  return $page_header.$toc_string.$html;
 }
 
 sub gene_name {
