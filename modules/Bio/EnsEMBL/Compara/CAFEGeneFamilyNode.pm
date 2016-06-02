@@ -53,20 +53,6 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
 
-sub find_nodes_by_name {
-    my ($self, $val, $is_leaf) = @_;
-    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
-    my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor();
-    my $taxon_id;
-    if ($is_leaf) {
-        $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
-    } else {
-        # We make sure we don't have a dup node
-        $val =~ s/_dup\d+//;
-        $taxon_id = $NCBITaxonAdaptor->fetch_node_by_name($val)->taxon_id();
-    }
-    return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
-}
 
 # For now, lambdas are fetched from the root table.
 # In the future we would need to have links from the nodes to the header object
