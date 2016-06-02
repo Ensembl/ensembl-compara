@@ -362,11 +362,13 @@ sub preload {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
         if ($prune_subtree and ($prune_subtree != $self->{'_root_id'})) {
-            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree);
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree) || die "Could not fetch a subtree from node_id '$prune_subtree'\n";
         } else {
-            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'}) || die "Could not fetch a tree with the root_id '".$self->{'_root_id'}."\n";
         }
         delete $gtn_adaptor->{'_ref_tree'};
+    } elsif (not defined $self->{'_root'}) {
+        die "This tree has no root node, and no root_id. This is not valid.\n";
     }
     $self->clear;
 
