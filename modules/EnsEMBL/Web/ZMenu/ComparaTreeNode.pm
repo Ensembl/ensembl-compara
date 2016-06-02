@@ -401,11 +401,11 @@ sub content {
       # To make it work for e! archives
       $ua->timeout(10);
 
-	  	my $is_success = head($rest_url);
-	  	if ($is_success) {
-        $rest_url .= '/genetree/id/'
-                  .$gt_id
-                  .'?content-type=text/javascript&aligned=1';
+      my $is_success = head($rest_url);
+      if ($is_success) {
+        $rest_url .= sprintf('/genetree/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s',
+                     $gt_id,
+                     $node_id);
 
         if ($hub->wasabi_status) {
           $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
@@ -414,19 +414,19 @@ sub content {
         }
       }
       else {
-	      my $filegen_url = $hub->url('Json', {
-	      										type => 'GeneTree', 
-	      										action => 'fetch_wasabi',
-	      										node => $node_id, 
-	      										gt => $gt_id, 
-	      										treetype => 'json'
-	      									});
+        my $filegen_url = $hub->url('Json', {
+                            type => 'GeneTree', 
+                            action => 'fetch_wasabi',
+                            node => $node_id, 
+                            gt => $gt_id, 
+                            treetype => 'json'
+                          });
 
-	      $link = sprintf (
-	                        '/wasabi/wasabi.htm?filegen_url=%s',
-	                        uri_escape($filegen_url)
-	                      );
-	  	}
+        $link = sprintf (
+                          '/wasabi/wasabi.htm?filegen_url=%s',
+                          uri_escape($filegen_url)
+                        );
+      }
     }
 
     # Wasabi Tree Link
