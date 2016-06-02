@@ -60,6 +60,7 @@ sub param_defaults {
             'norm_factor'      => 0.1,
             'norm_factor_step' => 0.1,
             'label'            => 'cafe',
+            'no_split_genes'   => 0,
     };
 }
 
@@ -260,8 +261,8 @@ LABEL:    while (1) {
         chmod 0755, $script;
         $self->compara_dba->dbc->disconnect_if_idle();
         open my $cafe_proc, "-|", $script or die $!;  ## clean after! (cafe leaves output files)
-        my $inf;
-        my $inf_in_row;
+        my $inf = 0;
+        my $inf_in_row = 0;
         while (<$cafe_proc>) {
             chomp;
             next unless (/^Lambda\s+:\s+(0\.\d+)\s+&\s+Score\s*:\s+(.+)/);
