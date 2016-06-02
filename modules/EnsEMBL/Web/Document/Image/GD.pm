@@ -57,7 +57,7 @@ sub new {
   };
 
   if ($image_configs) {
-    $self->{'toolbars'}{$_} = $image_configs->[0]->toolbars->{$_} for qw(top bottom);
+    $self->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
   }
 
   bless $self, $class;

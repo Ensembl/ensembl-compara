@@ -41,7 +41,7 @@ sub init {
   
   $self->set_parameters({
     image_resizeable  => 1,
-    toolbars          => { top => 1, bottom => 1 },
+    bottom_toolbar    => 1,
     sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
     can_trackhubs     => 1,      # allow track hubs
     opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]

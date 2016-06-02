@@ -27,7 +27,7 @@ sub init {
 
   $self->set_parameters({
     storable        => 0,
-    toolbars        => {'top' => 1, 'bottom' => 1},
+    bottom_toolbar  => 1,
     label           => 'above',
     band_labels     => 'off',
     image_height    => 500,

@@ -22,9 +22,6 @@ package EnsEMBL::Web::Document::Image;
 
 ### Examples
 
-### To use the blue toolbar in an image, pass a hashref e.g. 
-### $args->{'toolbars'} = {'top' => 1, 'bottom' => 0}
-
 use strict;
 
 use POSIX qw(ceil);
