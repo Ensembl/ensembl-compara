@@ -2800,7 +2800,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
             -parameters => {
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'input_clusterset_id'   => 'raxml',
+                'input_clusterset_id'   => 'notung',
                 'output_clusterset_id'  => 'raxml_bl',
             },
             -hive_capacity        => $self->o('copy_tree_capacity'),
