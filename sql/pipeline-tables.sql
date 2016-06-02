@@ -302,3 +302,61 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'long_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store genes that are longer than the avg length of their orthologs
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  n_species                         -n_species
+--  n_orth                            -n_orth
+--  avg_cov                           -avg_cov
+
+CREATE TABLE long_orth_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128),
+  n_species INT,
+  n_orth INT,
+  avg_cov INT
+ 
+        
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'long_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store genes that are shorter than the avg length of their orthologs
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  n_species                         -n_species
+--  n_orth                            -n_orth
+--  avg_cov                           -avg_cov
+
+CREATE TABLE short_orth_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128),
+  n_species INT,
+  n_orth INT,
+  avg_cov INT
+            
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'long_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store the split genes
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  seq_member_id                     -seq_member_id
+
+CREATE TABLE QC_split_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128),
+  seq_member_id int(10) NOT NULL
+
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
