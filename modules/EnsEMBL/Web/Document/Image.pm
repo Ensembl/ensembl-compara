@@ -105,7 +105,7 @@ sub render_toolbar {
   }
 
   ## Increase/decrease image size icon  
-  if (grep $_->image_resize, @{$self->{'image_configs'}}) {
+  if (grep $_->get_parameter('image_resizeable'), @{$self->{'image_configs'}}) {
     push @$icons, $self->add_resize_icon;
     $extra_html .= $self->add_resize_menu;
   }

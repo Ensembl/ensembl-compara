@@ -40,11 +40,12 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    toolbars        => { top => 1, bottom => 1 },
-    sortable_tracks => 'drag', # allow the user to reorder tracks on the image
-    trackhubs        => 1,      # allow track hubs
-    opt_halfheight  => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_lines       => 1,      # draw registry lines
+    image_resizeable  => 1,
+    toolbars          => { top => 1, bottom => 1 },
+    sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
+    trackhubs         => 1,      # allow track hubs
+    opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_lines         => 1,      # draw registry lines
   });
   
   # First add menus in the order you want them for this display
@@ -83,8 +84,7 @@ sub init {
     decorations
     information
   ));
-  
-  $self->image_resize(1);
+
   my %desc = (
     contig    => 'Track showing underlying assembly contigs.',
     seq       => 'Track showing sequence in both directions. Only displayed at 1Kb and below.',

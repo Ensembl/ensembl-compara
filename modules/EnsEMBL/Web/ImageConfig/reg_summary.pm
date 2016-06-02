@@ -26,8 +26,9 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    sortable_tracks => 1,
-    opt_lines       => 1,
+    image_resizeable  => 1,
+    sortable_tracks   => 1,
+    opt_lines         => 1,
   });  
 
   $self->create_menus(qw(
@@ -76,8 +77,7 @@ sub init {
   );
   
   $self->load_tracks;
-  $self->image_resize(1);
-  
+
   $self->modify_configs(
     [ 'regulatory_features', 'functional_other_regulatory_regions' ],
     { display => 'normal' }

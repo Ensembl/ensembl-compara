@@ -26,8 +26,9 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    sortable_tracks => 1, # allow the user to reorder tracks
-    opt_lines       => 1, # draw registry lines
+    image_resizeable  => 1,
+    sortable_tracks   => 1, # allow the user to reorder tracks
+    opt_lines         => 1, # draw registry lines
   });
 
   $self->create_menus(qw(
@@ -43,8 +44,7 @@ sub init {
     other
     information
   ));
-  $self->image_resize(1);
-  
+
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
   $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
     labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
