@@ -66,6 +66,8 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
+
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -3049,7 +3051,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_stat_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                1 => ['group_genomes_under_taxa', 'goc_group_genomes_under_taxa'],
+                1 => ['group_genomes_under_taxa', 'goc_group_genomes_under_taxa','get_species_set'],
             },
         },
 
@@ -3172,6 +3174,7 @@ sub core_pipeline_analyses {
 
 #        $self->o('initialise_goc_pipeline') ? (
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
   #          ): (),
     ];
 }
