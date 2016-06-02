@@ -52,10 +52,10 @@ CREATE TABLE method_link_species_set_attr (
   n_goc_50                      int,
   n_goc_75                      int,
   n_goc_100                     int,
-  perc_orth_above_goc_thresh  int,
+  perc_orth_above_goc_thresh  float,
   goc_quality_threshold       int,
   wga_quality_threshold       int,
-  perc_orth_above_wga_thresh  int,
+  perc_orth_above_wga_thresh  float,
   threshold_on_ds             int,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
