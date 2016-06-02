@@ -144,7 +144,7 @@ sub fetch_all_by_taxon_id {
 sub fetch_all_by_taxon_id_assembly {  ## DEPRECATED
     my ($self, $taxon_id, $assembly) = @_;
 
-    deprecate('GenomeDBAdaptor::fetch_all_by_taxon_id_assembly() will be removed in e86');
+    deprecate('GenomeDBAdaptor::fetch_all_by_taxon_id_assembly() will be removed in e88');
     throw("taxon_id argument is required") unless ($taxon_id);
 
     if ($assembly) {
@@ -292,7 +292,7 @@ sub fetch_all_by_ancestral_taxon_id {
 
 sub fetch_all_by_low_coverage {  ## DEPRECATED
     my ($self) = @_;
-    deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e86');
+    deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e88');
     return [grep {$_->is_high_coverage} @{$self->fetch_all}];
 }
 

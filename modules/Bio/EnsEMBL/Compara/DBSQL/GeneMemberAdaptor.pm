@@ -95,7 +95,7 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 
 
 sub load_all_from_seq_members {     ## DEPRECATED
-    deprecate('GeneMemberAdaptor::load_all_from_seq_members() is deprecated and will be removed in e86. Use Utils::Preloader::load_all_GeneMembers instead');
+    deprecate('GeneMemberAdaptor::load_all_from_seq_members() is deprecated and will be removed in e88. Use Utils::Preloader::load_all_GeneMembers instead');
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers(@_);
 }
 

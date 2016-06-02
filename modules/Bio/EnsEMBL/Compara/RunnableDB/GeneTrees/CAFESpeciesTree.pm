@@ -254,7 +254,7 @@ sub mya_to_dtp_1path {
     my $d = 0;
     for (;;) {
         my $dtp = 0;
-        if ($node->get_value_for_tag('revised') eq 1) {
+        if ($node->has_tag('revised')) {
             if ($node->has_parent()) {
                 $node = $node->parent();
                 next;
