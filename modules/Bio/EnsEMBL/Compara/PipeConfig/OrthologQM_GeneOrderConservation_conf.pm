@@ -124,7 +124,6 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'      => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
         '16Gb_job'      => {'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
     };
@@ -181,16 +180,42 @@ sub pipeline_analyses {
             -logic_name => 'get_max_orth_percent',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                1 => [ 'store_goc_dist_asTags' ],
+                1 => { 'get_genetic_distance' => "INPUT_PLUS" },
             },
             -rc_name => '16Gb_job',
         },
 
         {
+            -logic_name => 'get_genetic_distance',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
+            -flow_into => {
+                1 =>    ['threshold_calculator'],
+                },
+        },
+
+        {
+            -logic_name => 'threshold_calculator',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
+            -flow_into => {
+                1 =>    ['get_perc_above_threshold'],
+                },
+        },
+
+        {
+            -logic_name => 'get_perc_above_threshold',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
+            -flow_into => {
+                1 =>    ['store_goc_dist_asTags'],
+                },
+        },
+
+        {
             -logic_name => 'store_goc_dist_asTags',
-            -module 	=> 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
+            -module 	=> 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
 #            -parameters =>	{'compara_db' => $self->o('compara_db') },
         },
+
+        
     ];
 }
 

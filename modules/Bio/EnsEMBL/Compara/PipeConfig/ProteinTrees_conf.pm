@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
-use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -343,7 +343,10 @@ sub default_options {
             'cafe_species'             => [],
 
         # Do we want to initialise the Ortholog quality metric part now ?
-        'initialise_orthologQM_pipeline'  => undef,
+#        'initialise_goc_pipeline'  => undef,
+        # Data needed for goc
+        'goc_taxlevels'                 => [],
+        # affects 'group_genomes_under_taxa'
 
     };
 }
@@ -3024,7 +3027,8 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'group_genomes_under_taxa' ],
+                'A->1' => [ 'homology_stat_entry_point' ],
+                
             },
         },
 
@@ -3040,6 +3044,13 @@ sub core_pipeline_analyses {
         {   -logic_name => 'move_back_component_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
             -hive_capacity => $self->o('reuse_capacity'),
+        },
+
+        {   -logic_name => 'homology_stat_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => ['group_genomes_under_taxa', 'goc_group_genomes_under_taxa'],
+            },
         },
 
         {   -logic_name => 'group_genomes_under_taxa',
@@ -3094,6 +3105,32 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
 
+        {   -logic_name => 'goc_group_genomes_under_taxa',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => $self->o('goc_taxlevels'),
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                '2' => [ 'goc_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'goc_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -parameters => {
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                },
+            },
+            -flow_into => {
+                2 => {
+                    'get_orthologs' => { 'mlss_id' => '#homo_mlss_id#' },    
+                },
+            },
+        },
+
+
         {   -logic_name => 'homology_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
             -parameters => {
@@ -3105,14 +3142,12 @@ sub core_pipeline_analyses {
             -flow_into => {
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
-                    $self->o('initialise_orthologQM_pipeline') ? ('get_orthologs' => undef) : (),
                 },
                 3 => {
                     'paralogy_stats' => { 'homo_mlss_id' => '#mlss_id#' },
                 },
             },
         },
-
 
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
@@ -3121,6 +3156,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
+
 
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
@@ -3134,9 +3170,9 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
 
-        $self->o('initialise_orthologQM_pipeline') ? (
-            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf::pipeline_analyses($self) },
-            ): (),
+#        $self->o('initialise_goc_pipeline') ? (
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
+  #          ): (),
     ];
 }
 
