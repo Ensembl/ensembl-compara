@@ -26,9 +26,10 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    label_width      => 100, # width of labels on left-hand side
-    opt_halfheight   => 0,   # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,   # include empty tracks..
+    storable          => 0,
+    label_width       => 100, # width of labels on left-hand side
+    opt_halfheight    => 0,   # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,   # include empty tracks..
   });
   
   $self->create_menus(qw(
@@ -46,8 +47,7 @@ sub init {
     my $func = "init_$self->{'code'}";
     $self->$func if $self->can($func);
   }
-  
-  $self->storable(0);
+
 }
 
 sub init_transcript {

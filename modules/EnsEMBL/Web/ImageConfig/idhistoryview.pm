@@ -26,6 +26,7 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
+    storable  => 0,
     no_labels => 1,
   });
 
@@ -36,8 +37,7 @@ sub init {
   $self->add_tracks('idhistory',
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
-  
-  $self->storable(0);
+
 }
 
 1;

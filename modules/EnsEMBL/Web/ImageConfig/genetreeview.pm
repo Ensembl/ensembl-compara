@@ -26,6 +26,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
+    storable          => 0,
     image_resizeable  => 1,
     no_labels         => 1,
     bgcolor           => 'background1',
@@ -39,8 +40,7 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
     [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r', menu => 'no' }],
   );
-  
-  $self->storable(0);
+
   $self->{extra_menus} = {'display_options' => 1};
 }
 

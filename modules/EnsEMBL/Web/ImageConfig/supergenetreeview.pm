@@ -26,6 +26,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
+    storable    => 0,
     no_labels   => 1,
     bgcolor     => 'background1',
     bgcolour1   => 'background1',
@@ -37,8 +38,7 @@ sub init {
   $self->add_tracks('other',
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
   );
-  
-  $self->storable(0);
+
   $self->{extra_menus} = {'display_options' => 0};
 }
 
