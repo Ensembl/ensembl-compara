@@ -25,6 +25,7 @@ use strict;
 use EnsEMBL::Draw::Style::Plot::LD;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
+use EnsEMBL::Web::REST;
 use POSIX qw(floor ceil);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
@@ -63,15 +64,29 @@ sub _init {
   my $features = [];
 
   my $slice = $self->{'container'};
-  foreach my $i (0..100) {
-    push @$features,{
-      start => ($slice->length*$i/100),
-      end => ($slice->length*$i/100)+1,
-      label => $i,
-      colour => [qw(red orange yellow green blue violet)]->[$i%6],
-      href => '#',
-      score => int($i%10)/10,
-    };
+  my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
+  my $data = $rest->fetch_via_ini('Homo_sapiens','gtex',{
+    stableid => $self->{'config'}->hub->param('g'),
+    tissue => $self->{'my_config'}->get('tissue'),
+  });
+  my $vdba = $slice->adaptor->db->get_db_adaptor('variation');
+  my $va = $vdba->get_VariationAdaptor;
+  foreach my $f (@$data) {
+    my $v = $va->fetch_by_name($f->{'snp'});
+    next unless $v;
+    foreach my $vf (@{$v->get_all_VariationFeatures()||[]}) {
+      my $start = $vf->start - $slice->start+1;
+      my $end = $vf->end - $slice->start+1;
+      next if $start < 1 or $end > $slice->length;
+      push @$features,{
+        start => $start,
+        end => $end,
+        label => $vf->name,
+        colour => 'violet',
+        href => '#',
+        score => $f->{'value'}
+      };
+    }
   }
 
   if (!scalar(@$features)) {
