@@ -380,6 +380,15 @@ sub content {
       order       => 14,
     }); 
 
+    $params->{'align_type'} = 'msa_dna';
+    $self->add_entry({
+      type        => 'Export sub-tree',
+      label       => 'Sequences',
+      link        => $hub->url($params),
+      link_class  => 'modal_link',
+      order       => 15,
+    }); 
+
     # Jalview
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
     $self->add_entry({

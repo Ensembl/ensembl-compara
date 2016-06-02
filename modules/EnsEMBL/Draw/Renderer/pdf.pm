@@ -42,9 +42,6 @@ sub init_canvas {
   $self->{'canvas'}{'g'}->linewidth(0.5);
 }
 
-sub add_canvas_frame {
-}
-
 sub canvas {
   my ($self, $canvas) = @_;
 

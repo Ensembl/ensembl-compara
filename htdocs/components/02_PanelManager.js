@@ -47,19 +47,31 @@ Ensembl.PanelManager.extend({
   },
   
   init: function (panels) {
-    panels.each(function () {
-      var panelType   = $('input.panel_type', this).val();
-      var parentPanel = {};
-      
-      Ensembl.PanelManager.generateId(this);
-      
-      $(this).parents('.js_panel').each(function () {
-        parentPanel[Ensembl.PanelManager.panels[this.id].panelType] = 1;
-      });
-      
-      if (!parentPanel[panelType]) {
-        Ensembl.PanelManager.createPanel(this.id, panelType);
-      }
+    /* Give priority to panels with AJAX, so that they can send the
+       requests off while we setup tables, etc */
+    var priopanels = [[],[]];
+    panels.each(function() {
+      priopanels[0+!!$(this).find('.ajax').length].push(this);
+    });
+    panels = priopanels[1].concat(priopanels[0]);
+
+    $.each(panels,function () {
+      (function(panel) {
+        setTimeout(function () {
+          var panelType   = $('input.panel_type',panel).val();
+          var parentPanel = {};
+
+          Ensembl.PanelManager.generateId(panel);
+
+          $(panel).parents('.js_panel').each(function () {
+            parentPanel[Ensembl.PanelManager.panels[this.id].panelType] = 1;
+          });
+
+          if (!parentPanel[panelType]) {
+            Ensembl.PanelManager.createPanel(panel.id, panelType);
+          }
+        },0);
+      })(this);
     });
   },
   
@@ -107,6 +119,8 @@ Ensembl.PanelManager.extend({
    * Adds a panel's html to the page, or triggers an event and brings the panel to the front if it already exists
    */
   addPanel: function (id, type, html, container, params, event) {
+    var highlighted = false;
+        
     if (this.panels[id] && event) {
       Ensembl.EventManager.triggerSpecific(event, id, params);
       this.panelToFront(id);
@@ -142,7 +156,7 @@ Ensembl.PanelManager.extend({
     } else {
       this.panels[id] = new Ensembl.Panel(id, params);
     }
-    
+
     this.panels[id].panelNumber = this.panelNumber++;
     this.panels[id].panelType   = type;
     this.panels[id].init();

@@ -9,7 +9,7 @@ use EnsEMBL::Web::File::Utils::IO qw/:all/;
 
 my $SERVERROOT = dirname( $Bin );
 
-my $test_file = $SERVERROOT."/t/data.bed";
+my $test_file = $SERVERROOT."/t/input/data.bed";
 
 ok(file_exists($test_file), 'Test file exists');
 

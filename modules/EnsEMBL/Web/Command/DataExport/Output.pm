@@ -55,7 +55,7 @@ sub process {
     }
   }
 
-  my ($file, $filename, $extension, $compression);
+  my ($file, $name, $filename, $extension, $compression, $download_type);
   my %data_info = %{$hub->species_defs->multi_val('DATA_FORMAT_INFO')};
   my $format_info = $data_info{lc($format)};
  
@@ -65,6 +65,8 @@ sub process {
   ## Compress file by default
   $extension   = $format_info->{'ext'};
   $compression = $hub->param('compression');
+  $download_type = $hub->param('download_type');
+  $name = $hub->param('name');
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -76,7 +78,12 @@ sub process {
     my $component;
     ($component, $error) = $self->object->create_component;
 
-    $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => $extension, compression => $compression);
+    $file = EnsEMBL::Web::File::User->new(
+      hub => $hub, 
+      name => $filename, 
+      extension => $extension, 
+      compression => $compression eq 'gz' ? 'gz' : ''
+    );
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
@@ -92,7 +99,9 @@ sub process {
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
         my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
-          $error = $self->write_alignment($component);
+          $error = $hub->param('align_type') eq 'msa_dna'
+                    ? $self->write_homologue_seq($component)
+                    : $self->write_alignment($component);
         }
         elsif (lc($format) eq 'phyloxml') {
           $error = $self->write_phyloxml($component);
@@ -130,8 +139,9 @@ sub process {
   }
   else {
     ## Parameters for file download
-    $controller                     = 'Download' if $compression || $format eq 'RTF';    # if uncompressed format, user should be able to preview the file
-    $url_params->{'action'}         = $compression || $format eq 'RTF' ? '' : 'Results'; # same as above
+    $controller                     = 'Download' if $compression =~m/gz|uncompressed/ || $format eq 'RTF';    # if uncompressed format, user should be able to preview the file
+    $url_params->{'action'}         = $compression =~m/gz|uncompressed/ || $format eq 'RTF' ? '' : 'Results'; # same as above
+    $url_params->{'name'}           = $name;
     $url_params->{'filename'}       = $file->read_name;
     $url_params->{'format'}         = $format;
     $url_params->{'file'}           = $file->read_location;
@@ -528,7 +538,12 @@ sub write_homologue_seq {
       $params{'-SEQ_TYPE'} = 'cds';
     }
     eval {
-      $data->print_sequences_to_file($file_path, %params);
+      if (ref($data) =~ /GeneTreeNode/) {
+        $data->get_AlignedMemberSet()->print_sequences_to_file($file_path, %params);
+      }
+      else {
+        $data->print_sequences_to_file($file_path, %params);
+      }
     };
     if ($@) {
       $result = {'error' => ['Error writing sequences to file']};

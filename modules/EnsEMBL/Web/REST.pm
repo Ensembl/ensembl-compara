@@ -71,7 +71,8 @@ sub fetch {
 ###           converted from json
   my ($self, $endpoint, $args) = @_;
   my $format = delete $args->{'format'} || 'json';
-
+  my $delimiter = $args->{url_params}->{_delimiter} || ';';
+  delete $args->{'url_params'}->{'_delimiter'};
   my $hub   = $self->hub;
   $args->{'hub'} = $hub;
   
@@ -82,7 +83,7 @@ sub fetch {
   if ($args->{'url_params'}) {
     $url .= '?';
     while (my($k, $v) = each (%{$args->{'url_params'}||{}})) {
-      $url .= sprintf('%s=%s;', $k, $v);
+      $url .= sprintf('%s=%s%s', $k, $v, $delimiter);
     }
     delete $args->{'url_params'};
   }

@@ -56,9 +56,4 @@ sub redirect {
   return $json;
 }
 
-sub call_js_panel_method {
-  my ($self, $method_name, $method_args) = @_;
-  return {'panelMethod' => [ $method_name, @{$method_args || []} ]};
-}
-
 1;

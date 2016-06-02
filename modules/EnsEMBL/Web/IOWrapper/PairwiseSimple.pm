@@ -78,27 +78,33 @@ sub create_hash {
                   {'start' => $feature_2_start, 'end' => $feature_2_end},
                   ];
 
-  my $feature_strand = $metadata->{'default_strand'} || 1;
   my $href = $self->href({
                         'seq_region'  => $seqname,
                         'start'       => $click_start,
                         'end'         => $click_end,
-                        'strand'      => $feature_strand,
+                        'strand'      => 0,
                         });
 
   my $direction = $self->parser->get_direction;
-  return {
-    'start'         => $feature_1_start,
-    'end'           => $feature_2_end,
+  my $feature = {
     'seq_region'    => $self->parser->get_seqname,
     'direction'     => $direction,
     'score'         => $score,
     'colour'        => $colour, 
-    'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'structure'     => $structure,
     'extra'         => [{'name' => 'Direction', 'value' => $direction}],
   };
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $click_start;
+    $feature->{'end'}   = $click_end;
+  }
+  else {
+    $feature->{'start'} = $feature_1_start;
+    $feature->{'end'}   = $feature_2_end;
+    $feature->{'href'}  = $href;
+  }
+  return $feature;
 }
 
 1;

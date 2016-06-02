@@ -92,6 +92,33 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .ajax_error                { margin: 12px; }
 .modal_content .modal_wrapper .ajax_error { margin-left: 232px; }
 
+.modal_content .modal_wrapper .export_buttons_div { 
+  display: flex; 
+  justify-content: center; 
+  background: #F7F7F7;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  margin: 8px 0px 16px 0px;
+}
+.modal_content .export_buttons_div div { padding: 8px 4px;}
+.modal_content .export_buttons_div div input { 
+  padding: 4px 8px 5px 26px;
+  background-position: 6px;
+  background-repeat: no-repeat;
+}
+.modal_content .export_buttons_div div input[name="preview"] { 
+  background-image: url('/i/16/rev/eye.png');
+}
+.modal_content .export_buttons_div div input[name="uncompressed"] { 
+  background-image: url('/i/16/rev/download.png');
+}
+.modal_content .export_buttons_div div input[name="gz"] { 
+  background-image: url('/i/16/rev/zip.png');
+}
+.modal_content .export_buttons_div div input[name="back"] { 
+  background-image: url('/i/16/rev/back2.png');
+}
+
 .modal_content .config_wrapper                 { overflow: hidden; }
 .modal_content .config_wrapper .panel .content { padding: 12px 12px 0; }
 

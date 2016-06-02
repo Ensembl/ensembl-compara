@@ -78,7 +78,7 @@ sub render {
   if ($sd->ENSEMBL_AC_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action AssemblyConverter)});
     $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">Assembly converter</a></b>', $link),
+      'name'  => sprintf('<b><a class="nodeco" href="%s">Assembly Converter</a></b>', $link),
       'desc'  => "Map (liftover) your data's coordinates to the current assembly.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => $tools_limit,
@@ -91,7 +91,7 @@ sub render {
   if ($sd->ENSEMBL_IDM_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action IDMapper)});
     $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">ID History converter</a></b>', $link),
+      'name'  => sprintf('<b><a class="nodeco" href="%s">ID History Converter</a></b>', $link),
       'desc'  => 'Convert a set of Ensembl IDs from a previous release into their current equivalents.',
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => $tools_limit,
@@ -99,6 +99,20 @@ sub render {
       'docs'  => '',
     });
   }
+
+  ## File chameleon
+  if ($sd->ENSEMBL_FC_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
+      'desc'  => "Convert Ensembl files for use with other analysis tools",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => $tools_limit,
+      'code'  => '',
+      'docs'  => '',
+    });
+  }
+
 
   $html .= $table->render;
 

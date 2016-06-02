@@ -54,25 +54,31 @@ sub create_hash {
                         };
 
   my $colour = $self->set_colour($colour_params);
-  my $feature_strand = $metadata->{'default_strand'} || 1;
 
-  my $href = $self->href({
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        'strand'      => $feature_strand,
-                        });
-
-  return {
-    'start'         => $start,
-    'end'           => $end,
+  my $feature = {
     'seq_region'    => $seqname,
     'score'         => $score,
     'colour'        => $colour,
-    'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'label_colour'  => $metadata->{'label_colour'} || $colour,
   };
+
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
+  }
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+    $feature->{'href'}  = $self->href({
+                                        'seq_region'  => $seqname,
+                                        'start'       => $feature_start,
+                                        'end'         => $feature_end,
+                                        'strand'      => 0,
+                                      });
+  }
+
+  return $feature;
 }
 
 1;

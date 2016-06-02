@@ -30,10 +30,6 @@ sub init_canvas {
   $self->canvas([]);
 }
 
-sub add_canvas_frame {
-  return;
-}
-
 sub render_Ellipse {}
 sub render_Intron  {}
 sub render_Arc  {}

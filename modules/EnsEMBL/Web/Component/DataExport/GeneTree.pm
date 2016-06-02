@@ -40,61 +40,66 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = $viewconfig->form_fields('export');
+  $settings->{'Hidden'} = [qw(align align_type node)];
 
   ## Add export-specific settings
-  my $nhx_values = [];
-  my $newick_values = [];
+  my $fields_by_format;
+  if ($hub->param('align_type') eq 'msa_dna') {
+    $fields_by_format = {'FASTA' => []};
+  }
+  else {
+    my $nhx_values = [];
+    my $newick_values = [];
 
-  my %nhx = EnsEMBL::Web::Constants::NHX_OPTIONS;
-  foreach my $k (sort {lc($a) cmp lc($b)} keys %nhx) {
-    push @$nhx_values, {'value' => $k, 'caption' => $nhx{$k}};
-  }  
-  my %newick = EnsEMBL::Web::Constants::NEWICK_OPTIONS;
-  foreach my $k (sort {lc($a) cmp lc($b)} keys %newick) {
-    push @$newick_values, {'value' => $k, 'caption' => $newick{$k}};
-  } 
+    my %nhx = EnsEMBL::Web::Constants::NHX_OPTIONS;
+    foreach my $k (sort {lc($a) cmp lc($b)} keys %nhx) {
+      push @$nhx_values, {'value' => $k, 'caption' => $nhx{$k}};
+    }  
+    my %newick = EnsEMBL::Web::Constants::NEWICK_OPTIONS;
+    foreach my $k (sort {lc($a) cmp lc($b)} keys %newick) {
+      push @$newick_values, {'value' => $k, 'caption' => $newick{$k}};
+    } 
 
-
-  $settings->{'Hidden'} = ['align', 'node'];
-  $settings->{'nhx_mode'}     = {
+    $settings->{'nhx_mode'}     = {
                               'type'    => 'DropDown',
                               'label'   => 'Mode for NHX tree dumping',
                               'value'   => 'full',
                               'values'  => $nhx_values,
                             };
-  $settings->{'newick_mode'}  = {
+    $settings->{'newick_mode'}  = {
                               'type'    => 'DropDown',
                               'label'   => 'Mode for Newick tree dumping',
                               'value'   => 'full_web',
                               'values'  => $newick_values,
                               };
-  $settings->{'scale'}        = {
+    $settings->{'scale'}        = {
                               'type'    => 'NonNegInt',
                               'label'   => 'Scale for text tree dump',
                               'value'   => 150,
                               };
 
-  ## Add phyloxml settings
-  my $hash = $self->phyloxml_settings;
-  while (my ($key, $params) = each (%$hash)) {
-    $settings->{$key} = $params;
-  }
+    ## Add phyloxml settings
+    my $hash = $self->phyloxml_settings;
+    while (my ($key, $params) = each (%$hash)) {
+      $settings->{$key} = $params;
+    }
 
-  ## Options per format
-  my $fields_by_format = [{'Tree formats' => {
-                                'Newick'    => [qw(newick_mode clusterset_id)],
-                                'NHX'       => [qw(nhx_mode clusterset_id)],
-                                'Text'      => [qw(scale clusterset_id)],
-                                'OrthoXML'  => [],
-                                'PhyloXML'  => $self->phyloxml_fields, 
-                          }}];
+    ## Options per format
+    $fields_by_format = [{'Tree formats' => {
+                                    'Newick'    => [qw(newick_mode clusterset_id)],
+                                    'NHX'       => [qw(nhx_mode clusterset_id)],
+                                    'Text'      => [qw(scale clusterset_id)],
+                                    'OrthoXML'  => [],
+                                    'PhyloXML'  => $self->phyloxml_fields, 
+                            }}];
 
-  ## Add formats output by BioPerl
-  my $align_formats = {};
-  foreach ($self->alignment_formats) {
-    $align_formats->{$_} = [];
+    ## Add formats output by BioPerl
+    my $align_formats = {};
+    foreach ($self->alignment_formats) {
+      $align_formats->{$_} = [];
+    } 
+    push @$fields_by_format, {'Alignment formats' => $align_formats};
   }
-  push @$fields_by_format, {'Alignment formats' => $align_formats};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
@@ -105,7 +110,13 @@ sub content {
 sub default_file_name {
   my $self = shift;
 
-  my $name = $self->hub->param('gene_name').'_gene_tree';
+  my $name = $self->hub->param('gene_name');
+  if ($self->hub->param('align_type') && $self->hub->param('align_type') eq 'msa_dna') {
+    $name .= '_homologue_sequences';
+  }
+  else {
+    $name .= '_gene_tree';
+  }
   return $name;
 }
 
@@ -115,7 +126,7 @@ sub phyloxml_settings {
   my $settings = {};
 
   my $gene = $self->hub->core_object('gene');
-  my $has_cdna = $gene->Obj->canonical_transcript->cdna_coding_start ? 1 : 0;
+  my $has_cdna = ($gene && $gene->Obj->canonical_transcript->cdna_coding_start) ? 1 : 0;
   
   if ($has_cdna) {
     $settings->{'cdna'} = {

@@ -35,10 +35,6 @@ sub init_canvas {
   shift->canvas([]);
 }
 
-sub add_canvas_frame {
-	return;	
-}
-
 sub render_Circle  {}
 sub render_Line    {}
 sub render_Ellipse {}

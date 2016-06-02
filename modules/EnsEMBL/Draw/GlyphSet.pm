@@ -273,7 +273,6 @@ sub init { return []; } ## New method used by refactored glyphsets
 
 sub features {
   my $self = shift;
-  warn ">>>> DEPRECATED METHOD 'features' CALLED BY $self - please use 'get_data' instead.";
   return $self->get_data(@_);
 }
 
@@ -555,8 +554,8 @@ sub init_label {
   
   return $self->label(undef) if defined $self->{'config'}->{'_no_label'};
   
-  my $text = $self->my_config('caption');
-  
+  my $text = $self->my_config('caption'); 
+
   my $img = $self->my_config('caption_img');
   $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
   if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
@@ -575,7 +574,7 @@ sub init_label {
   my $track     = $self->type;
   my $node      = $config->get_node($track);
   my $component = $config->get_parameter('component');
-  my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $hover     = ($text =~m/Legend/)? 0 : $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
   ## Store this where the glyphset can find it later...
   $self->{'hover_label_class'} = $class;
@@ -603,6 +602,7 @@ sub init_label {
       header    => $name,
       desc      => $desc,
       class     => "$class $track",
+      highlight => $track,
       component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],

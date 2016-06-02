@@ -22,38 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Page);
 
-sub initialize_HTML {
-  my $self = shift;
-
-  $self->include_navigation(1);
-  
-  # General layout for dynamic pages
-  $self->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
-    prefetch   EnsEMBL::Web::Document::Element::Prefetch
-  ));
-  $self->add_body_elements(qw(
-    logo             EnsEMBL::Web::Document::Element::Logo
-    account          EnsEMBL::Web::Document::Element::AccountLinks
-    search_box       EnsEMBL::Web::Document::Element::SearchBox
-    tools            EnsEMBL::Web::Document::Element::ToolLinks
-    tabs             EnsEMBL::Web::Document::Element::Tabs
-    navigation       EnsEMBL::Web::Document::Element::Navigation
-    tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
-    summary          EnsEMBL::Web::Document::Element::Summary
-    content          EnsEMBL::Web::Document::Element::Content
-    modal            EnsEMBL::Web::Document::Element::Modal
-    acknowledgements EnsEMBL::Web::Document::Element::Acknowledgements
-    mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
-    copyright        EnsEMBL::Web::Document::Element::Copyright
-    footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
-    fatfooter        EnsEMBL::Web::Document::Element::FatFooter
-    body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
-  ));
-}
+sub initialize_HTML {}
 
 sub initialize_Text {
   my $self = shift; 

@@ -69,9 +69,11 @@ sub new {
   $self->{$_} = $defaults->{$_} for grep { $data->{$_} && !exists $document_types->{$data->{$_}} } qw(doc_type doc_type_version);
  
   bless $self, $class;
+
   return $self;
 }
 
+sub template           { return $_[0]->{'template'};   }
 sub head_order :lvalue { $_[0]{'head_order'}           }
 sub body_order :lvalue { $_[0]{'body_order'}           }
 sub renderer   :lvalue { $_[0]{'renderer'}             }
@@ -229,6 +231,28 @@ sub replace_element {
 
 sub initialize {
   my $self   = shift;
+
+  ## Set up HTML template if needed by "real" pages, i.e. not JSON
+  if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
+    my $template_name   = $self->hub->template;
+    if (!$template_name) {
+      my @namespace   = split('::', ref $self);
+      $template_name  = 'Legacy::'.$namespace[-1];
+    }
+
+    my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
+    #warn "... USING TEMPLATE $template_class";
+
+    if ($self->dynamic_use($template_class)) {
+      my $template = $template_class->new({'page' => $self});
+      if ($template) {
+        $template->init;
+        $self->{'template'} = $template;
+      }
+    }
+  }
+
+  ## Additional format-specific initialisation 
   my $method = 'initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('initialize_error') ? 'error' : $self->{'format'});
   
   $self->$method;
@@ -280,6 +304,7 @@ sub modify_elements     {} # Implemented in plugins: configuration before _init
 sub extra_configuration {} # Implemented in plugins: configuration after  _init
 
 sub clear_body_attr {
+##### UNUSED? ###########
   my ($self, $key) = @_;
   delete $self->{'body_attr'}{$key};
 }
@@ -393,6 +418,7 @@ sub render_JSON {
 }
 
 sub render_TextGz {
+#### ONLY USED BY OLD EXPORT ########
   my $self     = shift;
   my $renderer = EnsEMBL::Web::Document::Renderer::GzFile->new($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
   
@@ -431,28 +457,14 @@ sub render_HTML {
   return $content;
 }
 
-sub main_class {
-  my ($self) = @_;
-
-  my $here = $ENV{'REQUEST_URI'};
-  if ( ($self->isa('EnsEMBL::Web::Document::Page::Fluid') && $here !~ /\/Search\//) 
-        || ($self->isa('EnsEMBL::Web::Document::Page::Dynamic') && $here =~ /\/Info\//)
-        || ($self->isa('EnsEMBL::Web::Document::Page::Static') 
-              && (($here =~ /Doxygen\/(\w|-)+/ && $here !~ /Doxygen\/index.html/) || $here !~ /^\/info/))
-    ) {
-    return 'widemain';
-  }
-  else {
-    return 'main';
-  }
-
-}
-
 sub html_template {
   ### Main page printing function
   
   my ($self, $elements) = @_;
-  
+ 
+  my $HTML;
+
+  ## HTML TAG AND HEADER - ALL PAGES NEED THIS! 
   $self->set_doc_type('HTML',  '5');
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
@@ -462,88 +474,29 @@ sub html_template {
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   $self->add_body_attr('data-pace',$SiteDefs::PACED_MULTI||8);
+  my $body_attrs = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
+
+  my $html_tag = join '',   $self->doc_type, $self->html_tag;
+
+  my $head = join "\n", map $elements->{$_->[0]} || (), @{$self->head_order};
   
-  my $species_path        = $self->species_defs->species_path;
-  my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
-  my $max_region_length   = 1000100 * ($self->species_defs->ENSEMBL_GENOME_SIZE || 1);
-  my $core_params         = $self->hub ? $self->hub->core_params : {};
-  my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
-  my $html_tag            = join '',   $self->doc_type, $self->html_tag;
-  my $head                = join "\n", map $elements->{$_->[0]} || (), @{$self->head_order};  
-  my $body_attrs          = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
-  my $tabs                = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
-  my $footer_id           = 'wide-footer';
-  my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
-  my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
-
-  my $main_class = $self->main_class();        
-
-  my $nav_class           = $self->isa('EnsEMBL::Web::Document::Page::Configurator') ? 'cp_nav' : 'nav';
-  my $nav;
-  my $icons = $self->icon_bar if $self->can('icon_bar');  
-
-  if ($self->include_navigation) {
-    $nav = qq(<div id="page_nav_wrapper">
-        <div id="page_nav" class="$nav_class print_hide js_panel slide-nav floating">
-          $elements->{'navigation'}
-          $elements->{'tool_buttons'}
-          $elements->{'acknowledgements'}
-          <p class="invisible">.</p>
-        </div>
-      </div>
-    );
-    
-    $footer_id = 'footer';
-  }
-  
-  return qq($html_tag
+  $HTML = qq($html_tag
 <head>
   $head
 </head>
 <body $body_attrs>
-  <div id="min_width_container">
-    <div id="min_width_holder">
-      <div id="masthead" class="js_panel">
-        <input type="hidden" class="panel_type" value="Masthead" />
-        <div class="logo_holder">$elements->{'logo'}</div>
-        <div class="mh print_hide">
-          <div class="account_holder">$elements->{'account'}</div>
-          <div class="tools_holder">$elements->{'tools'}</div>
-          <div class="search_holder print_hide">$elements->{'search_box'}</div>
-        </div>
-        $tabs
-        $icons
-      </div>
-      $main_holder
-        $nav
-        <div id="$main_class">
-          $elements->{'breadcrumbs'}
-          $elements->{'message'}
-          $elements->{'content'}
-          $elements->{'mobile_nav'}
-        </div>
-        <div id="$footer_id">
-          <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
-            <p class="invisible">.</p>
-          </div>
-          <div class="column-wrapper">$elements->{'fatfooter'}
-            <p class="invisible">.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <form id="core_params" action="#" style="display:none">
-    <fieldset>$core_params_html</fieldset>
-  </form>
-  <input type="hidden" id="species_path" name="species_path" value="$species_path" />
-  <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
-  <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
-  $elements->{'modal'}
-  $elements->{'body_javascript'}
+);
+
+  ## CONTENTS OF BODY TAG DETERMINED BY TEMPLATE MODULE
+  my $template = $self->template;
+  $HTML .= $template->render($elements);
+
+  ## END OF PAGE - COMPULSORY
+  $HTML .= qq(
 </body>
 </html>
 );
+
 }
 
 1;

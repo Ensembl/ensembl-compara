@@ -23,7 +23,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   
   init: function () {
     var panel = this;
-    
+
     this.activeLink = false;
     
     this.base();
@@ -59,6 +59,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     this.initialize();
+    this.initFromHash();
   },
   
   initialize: function () {
@@ -82,7 +83,13 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.el.find('._stt').selectToToggle({}, this.el);
     this.el.find('._sdd').speciesDropdown();
   },
-  
+
+  initFromHash: function() {
+    if (this.params.hash) {
+      this.elLk.links.filter(':has(a.' + this.params.hash + ')').trigger('click');
+    }
+  },
+
   getContent: function (link, url) {
     this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
 
@@ -120,7 +127,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   
   formSubmit: function (form, data) {
     data = data || form.serialize();
-    
+
     $.ajax({
       url: form.attr('action'),
       type: form.attr('method'),
@@ -156,16 +163,33 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   updateContent: function (json) {
+    var panel = this;
+
     if (json.wrapper) {
       this.elLk.content.wrapInner(json.wrapper);
     }
   
     this.elLk.content.html(json.content);
-       
+
     if ($('.modal_reload', this.el).length) {
       Ensembl.EventManager.trigger('queuePageReload', '', false, false, $('.modal_reload', this.el).attr('href'));
     }
     
+    if ($('.export_buttons_preview', this.el).length) {
+      $('.export_buttons_preview', this.el).on('click', function() {
+        var action = $('input[name="' + this.name + '"]:hidden', panel.el);
+        if (this.name === 'uncompressed') {
+          window.location = $(action).val();
+          Ensembl.EventManager.trigger('modalClose');
+          return;
+        }
+        else if (this.name === 'gz') {
+          $('form#export', this.el).attr('action', $(action).val())
+            .find('input[name="compression"]').val('gz');
+        }
+        $('form#export', this.el).submit();
+      });
+    }
     this.initialize();
   },
   

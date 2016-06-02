@@ -42,6 +42,10 @@ sub content {
   my $external_urls = $hub->species_defs->ENSEMBL_EXTERNAL_URLS;
   (my $href         = $external_urls->{'LRG'}) =~ s/###ID###/$lrg_id/;
 
+  ## We don't need the standard core params in these links - they just
+  ## cause anomalies in the available tabs 
+  $hub->delete_core_param('g');
+  $hub->delete_core_param('t');
 
   my %url_params = (
     type   => 'LRG',
@@ -56,13 +60,13 @@ sub content {
   if ($hgnc_symbol) {
     $self->add_entry({
       type       => 'HGNC symbol',
-      label_html => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', lrg => $lrg_id, lrgt => $lrg_tr, g => $hgnc_symbol}), $hgnc_symbol),
+      label_html => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $hgnc_symbol}), $hgnc_symbol),
     });
   }
 
   $self->add_entry({
     type       => 'Gene',
-    label_html => sprintf('<a href="%s">%s</a>', $hub->url({ %url_params, action => 'Summary', lrgt => $lrg_tr }), $lrg_id)
+    label_html => sprintf('<a href="%s">%s</a>', $hub->url({ %url_params, action => 'Summary'}), $lrg_id)
   });
 
   $self->add_entry({

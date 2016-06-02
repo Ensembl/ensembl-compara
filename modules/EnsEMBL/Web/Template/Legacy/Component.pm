@@ -16,21 +16,20 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Filter::UserData;
+package EnsEMBL::Web::Template::Legacy::Component;
 
-### Error messages for userdata database actions
+## Not really a template - Component "pages" are used to create
+## individual chunks of content for AJAX requests
 
-use strict;
-
-use base qw(EnsEMBL::Web::Filter);
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
+  my $page = $self->page;
   
-  $self->messages = {
-    no_file => 'Unable to save uploaded file contents to your account',
-    no_url  => 'Unable to save remote URL to your account',
-  };
+  $page->add_body_elements(qw(
+    content          EnsEMBL::Web::Document::Element::Content
+  ));
 }
 
 1;

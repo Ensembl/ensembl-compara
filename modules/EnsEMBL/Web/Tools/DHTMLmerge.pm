@@ -22,6 +22,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Utils::FileSystem qw(list_dir_contents);
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use EnsEMBL::Web::Exceptions;
 
 # Set to something truthy for more verbose logging of minification
@@ -59,7 +60,7 @@ sub merge_all {
 
   try {
     foreach my $type (qw(js css ie7css image)) {
-      push @{$configs->{$type}}, map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
+      push @{$configs->{$type}}, grep { !$_->empty } map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
     }
     for (@{$configs->{'image'}}) {
       delete $_->{'files'};
@@ -162,6 +163,10 @@ sub new {
   return $self;
 }
 
+sub empty {
+  return !(scalar @{shift->{'files'}});
+}
+
 sub name {
   ## @return Name of the group
   return shift->{'group_name'};
@@ -241,6 +246,9 @@ sub _merge_files {
 
     push @contents, {$key => ''} unless @contents && exists $contents[-1]->{$key}; # add a new entry to the array if last one doesn't contain the required key
     $contents[-1]->{$key} .= "$content\n";
+  }
+  if($type eq 'image') {
+    $combined .= file_get_contents($species_defs->ENSEMBL_WEBROOT."/conf/images.yaml");
   }
 
   my $plugin_list = join("\n",_list_plugins());

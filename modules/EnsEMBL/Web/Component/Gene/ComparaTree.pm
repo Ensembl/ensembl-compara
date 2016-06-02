@@ -335,9 +335,9 @@ sub content {
   $image->{'remove_reset'}  = 1;
 
   $image->set_button('drag', 'title' => 'Drag to select region');
-  
+  my $default_view_url = $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene });
   if ($gene) {
-    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene }), $highlight_gene ? 'View current genes only'        : 'View current gene only';
+    push @view_links, sprintf '<li><a href="%s">%s</a> (Default) </li>', $default_view_url, $highlight_gene ? 'View current genes only' : 'View current gene only';
     push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_para, g1 => $highlight_gene }), $highlight_gene ? 'View paralogs of current genes' : 'View paralogs of current gene';
   }
   
@@ -346,7 +346,7 @@ sub content {
   push @view_links, sprintf $li_tmpl, $unhighlight, 'Switch off highlighting' if $highlight_gene;
 
   {
-    my @rank_options = ( q{<option value="/">-- Select a rank--</option>} );
+    my @rank_options = ( q{<option value="#">-- Select a rank--</option>} );
     my $selected_rank = $hub->param('gtr') || '';
     foreach my $rank (qw(species genus family order class phylum kingdom)) {
       my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);

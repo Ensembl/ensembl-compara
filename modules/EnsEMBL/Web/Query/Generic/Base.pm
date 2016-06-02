@@ -52,6 +52,16 @@ sub fixup_unique {
   }
 }
 
+sub species_defs {
+  return $_[0]->source('SpeciesDefs');
+}
+
+sub database_dbc {
+  my ($self,$species,$type) = @_;
+
+  return $self->source('Adaptors')->database_dbc($species,$type);
+}
+
 sub phase { return $_[0]->{'_phase'}; }
 sub data { return $_[0]->{'_data'}; }
 sub context { return $_[0]->{'_context'}; }

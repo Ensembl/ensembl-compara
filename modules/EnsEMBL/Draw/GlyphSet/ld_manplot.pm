@@ -74,7 +74,7 @@ sub _init {
   if (!scalar(@$features)) {
     $self->{'my_config'}->set('height', $self->subtitle_height);
     $self->{'label_y_offset'} = 0;
-    my $track_name = $self->my_config('name');
+    my $track_name = $self->my_config('caption');
     $self->errorTrack("No $track_name data for this region");
   }
   else {
@@ -101,7 +101,7 @@ sub features {
   } else {
     $features_list = $self->fetch_features() || [];
     if (!scalar(@$features_list)) {
-      my $track_name = $self->my_config('name'); 
+      my $track_name = $self->my_config('caption'); 
       $self->errorTrack("No $track_name data for this region");
     }
   }

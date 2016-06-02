@@ -65,7 +65,7 @@ sub render {
       push @$html, sprintf('%s %s - <span class="red">YOU ARE HERE!</span>', $flag, $site);
     } else {
       push @$html, sprintf('<a href="%s">%s</a> <a href="%1$s"><strong>%s</strong></a> - %s', 
-        $mirror->{'url'},
+        $mirror->{'url'}.'?redirect=no',
         $flag,
         $mirror->{'name'},
         $mirror->{'blurb'}

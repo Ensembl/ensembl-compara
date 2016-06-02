@@ -22,6 +22,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
+use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::File::User;
@@ -34,7 +35,18 @@ sub _init {
   $self->ajaxable(0);
 }
 
-our $has_db_content = 0;
+sub header {
+  my $self = shift;
+  my $info_icon = '<img class="_ht" src="/i/16/info.png" />';
+  my $tip = encode_entities(qq{
+          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+            });
+
+  return qq{
+    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
+  };
+}
 
 sub content {
   my $self         = shift;
@@ -44,19 +56,26 @@ sub content {
   my $user         = $hub->user;
   my $species_defs = $hub->species_defs;
   my $not_found    = 0;
-  my (@data, @rows, $html);  
+  my (@data, @rows);  
+
+  my $html = '<div class="js_panel" id="ManageData">';
  
-  my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
+  my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
   push @data, map $user->get_records($_), qw(uploads urls) if $user;
   push @data, @temp_data;
   
   if (scalar @data) {
+
+    $html .= $self->_add_buttons;
+
     my @columns = (
+      { key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
-      { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
+      { key => 'status',  title => 'Status',       width => '10%', align => 'left'                                  },
+      { key => 'name',    title => 'Source',       width => '30%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
-      { key => 'assembly', title => 'Assembly',      width => '20%', align => 'left', sort => 'html'                  },
+      { key => 'assembly', title => 'Assembly',    width => '15%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
     
@@ -94,9 +113,8 @@ sub content {
       }
 
       my $row = $self->table_row($file, $sharers);
-      
-      my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
-         ($id, $type) = (($file->{'code'} =~ /_(\d+)$/), 'session') unless $type;
+     
+      my ($id, $type) = ($file->{'code'} =~ /^(\w+)_(\d+)$/);
       
       if (                                                              # This is a shared record (belonging to another user) if:
         !($user_record && $user && $file->created_by == $user->id) && ( # it's not a user record which was created by this user             AND  (stops $shared being true for the same user id with multiple session ids)
@@ -111,14 +129,6 @@ sub content {
       push @rows, $row;
     }
 
-    ## TEMPORARY NOTICE
-    ## TODO - Remove in release 86 
-    if ($has_db_content) {
-      $html .= $self->warning_panel('Notice',
-       "In Release 84 we have a new, improved system for saving your uploaded data, and the old system will be retired in Release 85. If you wish to continue to use uploads saved before Release 84, please delete them and re-upload your data."
-      );
-    }
-
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
       my $plural = $old_assemblies > 1 ? '' : 's';
@@ -130,41 +140,21 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my ($tip, $more);
   if ($html) {
-    $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
+    my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
     ## Show 'add more' link at top as well, if table is long
     if (scalar(@rows) > 10) {
       $html = $more.$html;
     }
 
     $html .= $more if scalar(@rows);
-
-    ## Hints
-    my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
- 
-    $tip = qq{
-      <div class="info">
-        <h3>Tip</h3>
-        <div class="message-pad">
-          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
-          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-          $group_sharing_info
-        </div>
-      </div>
-    };
-
-    $html .= $tip;
   }
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
   }
+  $html .= '</div>';
 
-  return qq{
-    <h2 class="legend">Your data</h2>
-    $html
-  };
-
+  return $html;
 }
 
 sub _icon_inner {
@@ -192,6 +182,25 @@ sub _no_icon {
   return '';
 }
 
+sub _add_buttons {
+### Buttons for applying methods to all selected files
+### Note they are disabled until some files are selected
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  my $html = '<div class="component-tools tool_buttons"><b>Update selected</b>: ';
+  my @buttons = qw(enable disable delete);
+
+  foreach (@buttons) {
+    $html .= sprintf('<div class="modal_link disabled %s">%s</div>',
+                      $_, ucfirst($_));
+  }
+
+  $html .= '</div>';  
+
+  return $html;
+}
+
 sub table_row {
   my ($self, $file, $sharers) = @_;
   my $hub          = $self->hub;
@@ -199,6 +208,8 @@ sub table_row {
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
+  my $group_sharing_info = $hub->user && $hub->user->find_admin_groups ? 'You cannot share temporary data with a group until you save it to your account.' : '';
+
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
   my $reload       = $self->_no_icon;
@@ -214,7 +225,6 @@ sub table_row {
   }
   
   if ($user_record) {
-    $has_db_content = 1 if $file->data->{'analyses'};
     $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
@@ -251,32 +261,16 @@ sub table_row {
         r        => $file->{'nearest'},
         __clear  => 1
       }),
-      join ',', map $_ ? "$_=on" : (), $file->{'analyses'} ? split ', ', $file->{'analyses'} : join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
+      join ',', map $_ ? "$_=on" : (), join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
     );
   }
-  
-  if ($file->{'format'} eq 'VEP_OUTPUT' || $file->{'filetype'}) {
-    my %params = $file->{'format'} eq 'VEP_OUTPUT' ? (
-      action       => 'ConsequenceCalculator',
-      data_format  => 'snp',
-      convert_file => "$file->{'filename'}:$file->{'name'}",
-      code         => $file->{'code'},
-    ) : $file->{'filetype'} eq 'ID History Converter' ? (
-      action       => 'IDConversion',
-      data_format  => 'id',
-      convert_file => "upload_$file->{'code'}:$file->{'name'}",
-      id_limit     => 30,
-    ) : (
-      action    => 'PreviewConvert',
-      converted => "$file->{'filename'}:$file->{'name'}",
-    );
-  
-    $name .= sprintf '<a href="%s" class="modal_link">View results</a><br />', $hub->url({ species => $file->{'species'}, __clear => 1, %params });
-    $save  = $self->_no_icon;
-    $share = $self->_no_icon if $file->{'filetype'} eq 'ID History Converter';
+ 
+  if ($file->{'format'} eq 'TRACKHUB') {
+    $name .= $file->{'description'};
   }
-  
-  $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
+  else { 
+    $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
+  }
 
   ## Link for valid datahub  
   my ($config_link, $conf_template);
@@ -315,9 +309,13 @@ sub table_row {
     my $reload_url = $hub->url({'action' => $reload_action, %url_params});
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
- 
+
+  my $checkbox = sprintf '<input type="checkbox" class="manage_files" value="%s_%s" />', $file->{'type'}, $file->{'code'};
+
   return {
-    type    => ucfirst($file->{'type'}),
+    check   => $checkbox,
+    type    => $file->{'type'} =~ /url/i ? 'URL' : ucfirst($file->{'type'}),
+    status  => ucfirst($file->{'status'}) || 'Enabled', 
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,

@@ -32,6 +32,10 @@ use EnsEMBL::Web::Document::Panel;
 
 use base qw(EnsEMBL::Web::Root);
 
+use Time::HiRes qw(time);
+
+my $DEBUG_TIME = 0;
+
 my @HANDLES_TO_DISCONNECT;
 
 sub OBJECT_PARAMS {
@@ -104,9 +108,14 @@ sub new {
     $self->set_cache_params;
   }
   
+  my $time_a = time if $DEBUG_TIME;
   $hub->qstore_open;
   $self->init;
   $hub->qstore_close;
+  if($DEBUG_TIME) {
+    my $time_b = time;
+    warn sprintf("%s : %dms\n",$self->{'hub'}->apache_handle->unparsed_uri,($time_b-$time_a)*1000);
+  }
   return $self;
 }
 
@@ -209,13 +218,16 @@ sub configure {
   my $assume_valid = 0;
   $assume_valid = 1 if $hub->script eq 'Component';
   my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function,$assume_valid));
+  my $template;
   
   if ($node) {
     $self->node    = $node;
     $self->command = $node->data->{'command'};
     $self->filters = $node->data->{'filters'};
+    $template      = $node->data->{'template'} || $configuration->default_template;
   }
-  
+  $hub->template = $template || 'Legacy';  
+
   if ($hub->object_types->{$hub->type}) {
     $hub->components = $configuration->get_configurable_components($node);
   } elsif ($self->request eq 'modal') {

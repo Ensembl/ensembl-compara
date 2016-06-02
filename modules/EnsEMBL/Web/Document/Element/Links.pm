@@ -54,11 +54,13 @@ sub init {
   my $species      = $hub->species;
   my $species_defs = $self->species_defs;
   
-  $self->add_link({ 
-    rel  => 'icon',
-    type => 'image/png',
-    href => $species_defs->img_url . $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}
-  });
+  if ($species_defs->ENSEMBL_STYLE && $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}) {
+    $self->add_link({ 
+      rel  => 'icon',
+      type => 'image/png',
+      href => $species_defs->img_url . $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}
+    });
+  }
 
   $self->add_link({ 
     rel  => 'apple-touch-icon',

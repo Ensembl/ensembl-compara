@@ -300,8 +300,7 @@ sub draw_tree {
     #No alignment found
     return;
   } elsif ($class =~ /pairwise/) {
-    $html = $self->info_panel("Species Tree", "<p>No tree is drawn for pairwise alignments");
-    return $html;
+    return;
   }
 
   $image_config->set_parameters({

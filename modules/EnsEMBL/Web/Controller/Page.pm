@@ -103,60 +103,23 @@ sub process_command {
   my $command = $self->command;
   my $action  = $self->action;
   
-  return unless $command || $action eq 'Wizard';
-  
   my $object  = $self->object;
   my $page    = $self->page;
   my $builder = $self->builder;
   my $hub     = $self->hub;
   my $node    = $self->node;
   
-  if ($command eq 'db_frontend') {
-    my $type     = $self->type;
-    my $function = $self->function || 'Display';
-
-    # Look for all possible modules for this URL, in order of specificity and likelihood
-    my @classes = (
-      "EnsEMBL::Web::Component::${type}::${action}::$function",
-      "EnsEMBL::Web::Command::${type}::${action}::$function",
-      "EnsEMBL::Web::Component::DbFrontend::$function",
-      "EnsEMBL::Web::Command::DbFrontend::$function"
-    );
-
-    foreach my $class (@classes) {
-      if ($self->dynamic_use($class)) {
-        if ($class =~ /Command/) {
-          my $command_module = $class->new({
-            object => $object,
-            hub    => $hub,
-            page   => $page,
-            node   => $node
-          });
-          
-          my $rtn = $command_module->process;
-          
-          return defined $rtn ? $rtn : 1;
-        } else {
-          $self->SUPER::render_page;
-        }
-      }
-    }
-  } else {
-    # Normal command module
-    my $class = $action eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $command;
+  if ($command && $self->dynamic_use($command)) {
+    my $command_module = $command->new({
+      object => $object,
+      hub    => $hub,
+      page   => $page,
+      node   => $node
+    });
     
-    if ($class && $self->dynamic_use($class)) {
-      my $command_module = $class->new({
-        object => $object,
-        hub    => $hub,
-        page   => $page,
-        node   => $node
-      });
-      
-      my $rtn = $command_module->process;
-      
-      return defined $rtn ? $rtn : 1;
-    }
+    my $rtn = $command_module->process;
+     
+    return defined $rtn ? $rtn : 1;
   }
 }
 

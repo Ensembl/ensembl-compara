@@ -156,7 +156,8 @@ sub add_species {
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
   my @no_species;
-  my $paralogues;
+  my $paralogues = 0;
+  my @haplotypes;
   my @remove;
   
   my ($i) = sort { $b <=> $a } grep { s/^s(\d+)$/$1/ && $self->param("s$_") } $self->param;
@@ -182,6 +183,9 @@ sub add_species {
       if ($valid_species{$species}) {
         if ($species eq $self->species) {
           $paralogues++ unless $seq_region_name;
+          if ($seq_region_name) {
+            push @haplotypes, $self->species_defs->species_label($species) . $seq_region_name;
+          }
         } else {
           push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
         }
@@ -217,6 +221,17 @@ sub add_species {
     );
   }
   
+  if (scalar @haplotypes) {
+    $session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'missing_species',
+      message  => scalar @haplotypes > 1 ? 
+        'There are no alignments in this region for the following haplotypes / patches: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
+        'There is no alignment in this region for ' . $haplotypes[0]
+    );
+  }
+
   if ($paralogues) {
     $session->add_data(
       type     => 'message',

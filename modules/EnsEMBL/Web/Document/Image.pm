@@ -279,11 +279,11 @@ sub add_image_export_icon {
   my $hub  = $self->hub;
 
   my $params = {
-                'type' => 'ImageExport',
-                'action' => 'ImageFormats',
-                'data_type' => $hub->type,
-                'component' => $self->component,
-                'pre_action'  => $hub->action,
+                'type'        => 'ImageExport',
+                'action'      => 'ImageFormats',
+                'data_type'   => $hub->type,
+                'data_action' => $hub->action,
+                'component'   => $self->component,
                 };
 
   foreach (@{$self->{'export_params'}||[]}) {

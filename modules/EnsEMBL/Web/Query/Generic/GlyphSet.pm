@@ -101,7 +101,7 @@ sub fixup_label_width {
 }
 
 sub fixup_location {
-  my ($self,$key,$slice_key,$end,$duds) = @_;
+  my ($self,$key,$slice_key,$end,$duds,$aux) = @_;
 
   my @route = split('/',$key);
   $key = pop @route;
@@ -109,20 +109,37 @@ sub fixup_location {
     my $data = $self->data;
     my $container = $self->context->{'container'};
     foreach my $f (@{$self->_route(\@route,$data)}) {
-      $f->{$key} -= $container->start+1;
+      if($container->strand>0) {
+        $f->{$key} = $f->{$key} - $container->start + 1;
+      } else {
+        $f->{$key} = $container->end - $f->{$key} + 1;
+      }
       if($end) {
         $f->{'__dud'} = 1 if $f->{$key} < 0 and not $duds;
-        $f->{$key} = min($container->length,$f->{$key});
+        my $overhang = $f->{$key} - $container->length;
+        if($overhang>0) {
+          $f->{$key} -= $overhang;
+          $f->{$_} -= $overhang for(@{$aux||[]});
+        }
       } else {
         $f->{'__dud'} = 1 if $f->{$key} > $container->length and not $duds;
-        $f->{$key} = max($f->{$key},0);
+        my $underhang = -$f->{$key};
+        if($underhang>0) {
+          $f->{$key} += $underhang;
+          $f->{$_} -= $underhang for(@{$aux||[]});
+        }
       }
     }
     @$data = @{$self->_remove_duds(\@route,$data)};
   } elsif($self->phase eq 'post_generate') {
     my $data = $self->data;
     foreach my $f (@{$self->_route(\@route,$data)}) {
-      $f->{$key} += $self->args->{$slice_key}->start+1;
+      my $slice = $self->args->{$slice_key};
+      if($slice->strand>0) {
+        $f->{$key} = $f->{$key} + $slice->start - 1;
+      } else {
+        $f->{$key} = $slice->end - $f->{$key} + 1;
+      }
     } 
   }
 }

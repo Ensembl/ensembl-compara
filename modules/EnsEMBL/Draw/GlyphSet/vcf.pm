@@ -24,8 +24,11 @@ package EnsEMBL::Draw::GlyphSet::vcf;
 use strict;
 no warnings 'uninitialized';
 
-use Role::Tiny;
 use List::Util qw(max);
+
+use Role::Tiny::With;
+with 'EnsEMBL::Draw::Role::Wiggle';
+with 'EnsEMBL::Draw::Role::Default';
 
 use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -33,13 +36,8 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
-sub can_json { return 1; }
-
 sub init {
   my $self = shift;
-
-  my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
-  Role::Tiny->apply_roles_to_object($self, @roles);
 
   ## Cache raw VCF features
   $self->{'data'} = $self->get_data;
@@ -49,13 +47,13 @@ sub init {
 
 sub render_histogram {
   my $self = shift;
-  my $features = $self->get_data->[0]{'features'}{'1'};
+  my $features = $self->get_data->[0]{'features'};
   return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_simple;
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->get_data->[0]{'features'}{'1'}} > 200) {
+  if (scalar @{$self->get_data->[0]{'features'}} > 200) {
     $self->too_many_features;
     return undef;
   }
@@ -64,7 +62,7 @@ sub render_simple {
     $self->{'my_config'}->set('height', 12);
     $self->{'my_config'}->set('default_strand', 1);
     $self->{'my_config'}->set('drawing_style', ['Feature']);
-    $self->{'data'}[0]{'features'}{'1'} = $self->consensus_features;
+    $self->{'data'}[0]{'features'} = $self->consensus_features;
     $self->draw_features;
   }
 }
@@ -91,7 +89,6 @@ sub render_density_bar {
 sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
-  $self->{'my_config'}->set('default_strand', 1);
   $self->{'my_config'}->set('show_subtitle', 1);
 
   unless ($self->{'data'} && scalar @{$self->{'data'}}) {
@@ -119,7 +116,7 @@ sub get_data {
                                         'name'    => $self->{'my_config'}->get('name'),
                                         'colour'  => $colour,
                                        }, 
-                        'features' => {'1' => $consensus}
+                        'features' => $consensus
                             }];
   }
   return $self->{'data'};
@@ -129,7 +126,7 @@ sub consensus_features {
 ### Turn raw features into consensus features for drawing
 ### @return Arrayref of hashes
   my $self = shift;
-  my $raw_features  = $self->{'data'}[0]{'features'}{'1'};
+  my $raw_features  = $self->{'data'}[0]{'features'};
   my $config        = $self->{'config'};
   my $slice         = $self->{'container'};
   my $start         = $slice->start;
@@ -146,7 +143,7 @@ sub consensus_features {
    
   foreach my $f (@$raw_features) {
     my $unknown_type = 1;
-    my $vs           = $f->{'POS'} - $start + 1;
+    my $vs           = $f->{'POS'} - $start;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
     my $info_string;

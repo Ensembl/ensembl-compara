@@ -18,15 +18,21 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
 
   init: function () {
     var panel = this;
-
     this.base();
 
     this.elLk.form      = this.el.find('form').first();
     this.elLk.images    = this.elLk.form.find('div._export_formats div').on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
     this.elLk.dropdown  = this.elLk.form.find('select._export_formats').on('change',  function() { panel.selectOption(this.value, true); });
-    this.elLk.cSwitch   = this.elLk.form.find('input[name=compression]').on('change', function() { panel.resetButtonVal(); });
+    // Highlight previosly selected option when users come back from preview
+    panel.selectOption(this.elLk.form.find('select._export_formats').val(), true)
 
-    this.resetButtonVal();
+    this.elLk.form.find('input.export_buttons').on('click', function() {
+      var compression = panel.elLk.form.find('input[name="compression"]');
+      if(panel.elLk.form.find('select._export_formats').val() !== '') {
+        $(compression).val(this.name);
+        panel.elLk.form.submit();
+      }
+    });
   },
 
   selectOption: function(val, dropdown) {
@@ -35,10 +41,15 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
       this.elLk.dropdown.find('option[value=' + val + ']').prop('selected', true).end().selectToToggle('trigger');
     }
 
-    this.resetButtonVal();
-  },
+    // Enable/disable download buttons
+    var buttons = this.elLk.form.find('input.export_buttons');
+    buttons.addClass('disabled');
+    buttons.prop('disabled', val === '');
+    val !== '' && buttons.removeClass('disabled')
 
-  resetButtonVal: function() {
-    this.elLk.form.find('input[type=submit]').val(this.elLk.cSwitch.filter(':checked').val() || this.elLk.dropdown.find('option:selected').val() === 'RTF' ? 'Download' : 'Preview');
+    // Disable preview for RTF
+    var rtf_button = this.elLk.form.find('input.export_buttons[name="preview"]');
+    val === 'RTF' && rtf_button.prop('disabled', true).addClass('disabled');
   }
+
 });

@@ -58,10 +58,14 @@ sub create_hash {
   my ($seqname_2, $feature_2_start, $feature_2_end, $score) = @{$self->parser->get_information};
   return if $seqname_2 ne $slice->seq_region_name;
 
+  ## Capture real start and end coordinates for use in zmenu link
+  my $click_start     = $self->parser->get_start;
+  my $click_end       = $feature_2_end;
+
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $offset = $slice->start - 1;
-  my $feature_1_start = $self->parser->get_start - $offset;
+  my $feature_1_start = $click_start - $offset;
   my $feature_1_end   = $self->parser->get_end - $offset;
   $feature_2_start   -= $offset;
   $feature_2_end     -= $offset;
@@ -87,9 +91,7 @@ sub create_hash {
                   {'start' => $feature_2_start, 'end' => $feature_2_end},
                   ];
 
-  return {
-    'start'         => $feature_1_start,
-    'end'           => $feature_2_end,
+  my $feature = {
     'seq_region'    => $self->parser->get_seqname,
     'direction'     => $self->parser->get_direction,
     'score'         => $score,
@@ -98,6 +100,15 @@ sub create_hash {
     'label_colour'  => $metadata->{'label_colour'} || $colour,
     'structure'     => $structure,
   };
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $click_start;
+    $feature->{'end'}   = $click_end;
+  }
+  else {
+    $feature->{'start'} = $feature_1_start;
+    $feature->{'end'}   = $feature_2_end;
+  }
+  return $feature;
 }
 
 1;

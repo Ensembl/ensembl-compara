@@ -94,7 +94,7 @@ sub go {
   }
   if($DEBUG) {
     my $name = ref($self->{'impl'});
-    $name =~ s/^.*:://;
+    $name =~ s/^.*::(.+::.+)$/$1/;
     warn sprintf("%25s: hits=%d misses=%d get+post=total %.3f+%.3f=%.3f\n",
                  $name,$hits,$misses,$D-$C,$E-$D,$B-$A);
   }
@@ -118,6 +118,8 @@ sub precache {
     next unless ($k % $n) == $i;
     push @parts,$all_parts->[$k];
   }
+  my $TIME_TOT = 0;
+  my $TIME_NUM  = 0;
   $self->{'store'}->open($r||0);
   my $start = time();
   foreach my $args (@parts) {
@@ -125,13 +127,19 @@ sub precache {
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
       next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
-      warn "  -> $kind ".$a->{'__name'}." [$i]\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();
         $self->{'store'}->open(-1);
         $start = time();
       }
+      my $TIME_A = time;
       $self->run_miss($a,1);
+      my $TIME_B = time;
+      $TIME_TOT += $TIME_B - $TIME_A;
+      $TIME_NUM++;
+      warn sprintf("  -> %s %s [%d] %6dms avg %6dms\n",
+                    $kind,$a->{'__name'},$i,($TIME_B-$TIME_A)*1000,
+                    $TIME_TOT*1000/$TIME_NUM);
     }
   }
   $self->{'store'}->close();      

@@ -32,12 +32,6 @@ sub init_canvas {
   $self->canvas($canvas);
 }
 
-sub add_canvas_frame {
-  my ($self, $config, $im_height, $im_width) = @_;
-  
-  return;
-}
-
 sub canvas {
   my ($self, $canvas) = @_;
   if(defined $canvas) {

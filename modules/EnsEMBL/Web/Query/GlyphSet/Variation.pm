@@ -192,6 +192,7 @@ sub fetch_features {
   my $slice = $args->{'slice'}; 
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
+  return [] unless $vdb;
   my $orig_failed_flag = $vdb->include_failed_variations;
   $vdb->include_failed_variations(0);
  
@@ -222,7 +223,7 @@ sub fetch_features {
       # Enable the display of failed variations in order to display the failed variation track
       $vdb->include_failed_variations(1) if $track_set =~ /failed/i;
         
-      @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object, $var_db) || []}; 
+      @vari_features = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_VariationSet($slice, $set_object) || []};
         
       # Reset the flag for displaying of failed variations to its original state
       $vdb->include_failed_variations($orig_failed_flag);

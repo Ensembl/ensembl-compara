@@ -42,24 +42,24 @@ sub render_signal {
 sub my_url { return $_[0]->my_config('url'); }
 
 sub get_data {
-  my ($self, $url)    = @_;
-  my $hub             = $self->{'config'}->hub;
-  $url              ||= $self->my_url;
-  my $container       = $self->{'container'};
-  my ($default_strand, $force_strand) = $self->configure_strand; 
+  my ($self, $url) = @_;
+  my $hub         = $self->{'config'}->hub;
+  $url          ||= $self->my_url;
+  my $container   = $self->{'container'};
+  my $data        = [];
+
+  my ($skip, $strand_to_omit) = $self->get_strand_filters; 
+  return $data if $skip == $self->strand;
 
   my $args            = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                        'default_strand'  => $default_strand,
-                        'drawn_strand'    => $self->strand
                         };
                         
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
-  my $data;
 
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
@@ -70,8 +70,7 @@ sub get_data {
     my $metadata = {
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
-                    'default_strand'  => $default_strand,
-                    'force_strand'    => $force_strand, 
+                    'strand_to_omit'  => $strand_to_omit,
                     'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
@@ -95,7 +94,15 @@ sub get_data {
     ## Omit individual feature links if this glyphset has a clickable background
     #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
+    ## Some, very compact, zoomed-out styles only need a few of the
+    ## features. We need to make sure that they receive no more than these
+    ## as to attempt to retrieve them all causes us to run out of memory.
+    ## There should maybe be an API for this. But without this optimisation,
+    ## for example, Age of Base takes nearly a minute to render at 600kb
+    ## and makes the apache worker large enough that it's then retired.
+    my $style = $self->my_config('style') || $self->my_config('display') || '';
     ## Parse the file, filtering on the current slice
+    $metadata->{'skip_overlap'} = ($style eq 'compact');
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
 

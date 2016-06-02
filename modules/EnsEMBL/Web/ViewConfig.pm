@@ -675,7 +675,7 @@ sub build_imageconfig_menus {
       $desc .= "<h1>Trackhub description: $data->{'description'}</h1>" if $data->{'description'} && $desc_url;
       $desc .= qq(<div class="_dyna_load"><a class="hidden" href="$desc_url">No description found for this composite track.</a>Loading&#133;</div>) if $desc_url;
     } else {
-      $desc .= $desc_url ? qq(<div class="_dyna_load"><a class="hidden" href="$desc_url">$data->{'description'}</a>Loading&#133;</div>) : $data->{'description'};
+      $desc .= $desc_url ? sprintf(q(<div class="_dyna_load"><a class="hidden" href="%s">%s</a>Loading&#133;</div>), $desc_url, encode_entities($data->{'description'})) : $data->{'description'};
     }
 
     if ($desc) {
@@ -770,11 +770,8 @@ sub add_select_all {
       $popup = $self->{'select_all_menu'}{$id};
     }
     
-    my $info;
-    #my $description = $data->{'description'};
-    #if ($description) {
-    #  $info = sprintf('<span class="info_icon">%s</span>', $description);
-    #}
+    my $description = $data->{'description'} ? sprintf('<br /><i>%s</i>', $data->{'description'}) 
+                                                : '';
 
     $menu->before('div', {
       class      => 'select_all config_menu',
@@ -784,7 +781,7 @@ sub add_select_all {
           $popup
         </ul>
         <strong>$caption</strong>
-        $info
+        $description
       )
     });
   } elsif ($caption && !$external) {
@@ -803,12 +800,12 @@ sub reg_renderer {
     foreach my $node (@{$menu->child_nodes}) {
       my $old = $node->get('display');
       my $renderer = firstidx { $old eq $_ }
-        qw(off compact tiling tiling_feature);
+        qw(off compact signal signal_feature);
       next if $renderer <= 0;
       $renderer |= $mask if $state;
       $renderer &=~ $mask unless $state;
       $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
+      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
       $image_config->update_track_renderer($node->id,$renderer);
     }
   }

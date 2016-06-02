@@ -86,20 +86,11 @@ sub dynamic_use {
   return 0 if exists $FAILED_MODULES{$classname};
   return 1 if exists $SOME_SUCCESSFUL_MODULES{$classname};
 
-  my ($parent_namespace, $module) = $classname =~ /^(.*::)(.*)$/ ? ($1, $2) : ('::', $classname);
-
-  {
-    no strict 'refs';
-    if ($parent_namespace->{$module.'::'}) {
-      my %namespace_hash = %{$parent_namespace->{$module.'::'} || {}};
-      foreach my $key (keys %namespace_hash) {
-        $namespace_hash{$key} =~ /$_/ and delete $namespace_hash{$key} and last for keys %FAILED_MODULES;
-      }
-      if(keys %namespace_hash) { # return if already used
-        $SOME_SUCCESSFUL_MODULES{$classname} = 1;
-        return 1;
-      }
-    }
+  my $inc_filename = $classname.".pm";
+  $inc_filename =~ s!::!/!g;
+  if($INC{$inc_filename}) {
+    $SOME_SUCCESSFUL_MODULES{$classname} = 1;
+    return 1;
   }
 
   eval "require $classname";

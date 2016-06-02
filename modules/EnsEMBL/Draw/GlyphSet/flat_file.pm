@@ -33,12 +33,16 @@ sub get_data {
 ### Method to parse a data file and return information to be displayed
 ### @return Arrayref - see parent
   my $self         = shift;
+  my $data         = [];
+  
+  my ($skip, $strand_to_omit) = $self->get_strand_filters;
+  return $data if $skip == $self->strand;
+
   my $container    = $self->{'container'};
   my $hub          = $self->{'config'}->hub;
   my $species_defs = $self->species_defs;
   my $type         = $self->my_config('type');
   my $format       = $self->my_config('format');
-  my $data         = [];
   my $legend       = {};
 
   ## Get the file contents
@@ -63,10 +67,9 @@ sub get_data {
                                             'config_type' => $self->{'config'}{'type'},
                                             'track'       => $self->{'my_config'}{'id'},
                                             );
-
   if ($iow) {
     my $extra_config = {
-                        'default_strand'  => 1,
+                        'strand_to_omit'  => $strand_to_omit,
                         'display'         => $self->{'display'},
                         'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         };

@@ -112,7 +112,6 @@ sub _render_coverage {
   }
 
   ## Munge into a format suitable for the Style module
-  my $default_strand = $self->{'my_config'}->get('default_strand');
   my $name = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
   my $data = {'features' => [], 
               'metadata' => {
@@ -192,9 +191,8 @@ sub _render_reads {
   my $read_colour = $self->my_colour('read');
   $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
 
-  my $all_features    = $self->get_data->[0]{'features'};
-  my $default_strand  = $self->{'my_config'}->get('default_strand');
-  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$all_features->{$default_strand}} ];
+  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } 
+            @{$self->get_data->[0]{'features'}} ];
 
   my $features = pre_filter_depth($fs, $max_depth, $pix_per_bp, $slice->start, $slice->end);
   $features = [reverse @$features] if $slice->strand == -1;
@@ -291,8 +289,6 @@ sub _render {
 ### Wrapper around the individual subtrack renderers, with lots of
 ### error/timeout handling to cope with the large size of BAM files
   my ($self, $options) = @_;
-  my $default_strand = $options->{'default_strand'} || 1;
-  $self->{'my_config'}->set('default_strand', $default_strand);
 
   ## check threshold
   my $slice = $self->{'container'};
@@ -311,7 +307,7 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    my $features = $self->get_data->[0]{'features'}{$default_strand};
+    my $features = $self->get_data->[0]{'features'};
     if (!scalar(@$features)) {
       $self->no_features;
     } else {
@@ -325,10 +321,9 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    die unless $@ eq "alarm\n"; # propagate unexpected errors
-    # timed-out
+    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
+    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
   }
 }
 
@@ -364,9 +359,8 @@ sub get_data {
 
     $self->{_cache}->{data} = $data;
   }
-  my $default_strand = $self->{'my_config'}->get('default_strand') || 1;
   ## Return data in standard format expected by other modules
-  return [{'features' => {$default_strand => $self->{_cache}->{data}},
+  return [{'features' => $self->{_cache}->{data},
             'metadata' => {'zmenu_caption' => 'Aligned reads'},
           }];
 } 
@@ -671,9 +665,7 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
 
-  my $all_features    = $self->get_data->[0]{'features'};
-  my $default_strand  = $self->{'my_config'}->get('default_strand');
-  my $features        = $all_features->{$default_strand};
+  my $features    = $self->get_data->[0]{'features'};
 
   my $slice       = $self->{'container'};
   my $START       = $slice->start;

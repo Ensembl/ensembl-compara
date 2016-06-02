@@ -49,12 +49,14 @@ use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
+use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
+use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -127,6 +129,7 @@ sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub timer       :lvalue { $_[0]{'_timer'};       }
+sub template    :lvalue { $_[0]{'_template'};    }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
@@ -276,6 +279,13 @@ sub set_core_params {
   }
 
   $self->{'_core_params'} = $core_params;
+}
+
+sub delete_core_param {
+## Sometimes we really don't want to pass a core parameter
+  my ($self, $name) = @_;
+  return unless $name;
+  delete $self->{'_core_params'}{$name};
 }
 
 # Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
@@ -676,7 +686,7 @@ sub get_ext_seq {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     } else {
-      $indexer = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'PFETCH';
+      $indexer = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'DBFETCH';
       $exe     = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
     }
     if ($exe) {
@@ -786,38 +796,12 @@ sub get_imageconfig {
 }
 
 sub fetch_userdata_by_id {
+## Just a wrapper around get_data_from_session now that userdata dbs have been retired
   my ($self, $record_id) = @_;
-  
   return unless $record_id;
-  
-  my ($type, $code) = split '_', $record_id, 2;
-  my $data = {};
-  
-  if ($type eq 'user') {
-    my $user    = $self->user;
-    my $user_id = [ split '_', $record_id ]->[1];
-    
-    return unless $user && $user->id == $user_id;
-  } else {
-    $data = $self->get_data_from_session($type, $code);
-  }
-  
-  if (!scalar keys %$data) {
-    my $fa       = $self->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
-    my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
-    my $features = $fa->fetch_all_by_logic_name($record_id);
-    my $analysis = $aa->fetch_by_logic_name($record_id);
-    if ($analysis) {
-      my $config   = $analysis->web_data;
-    
-      $config->{'track_name'}  = $analysis->description   || $record_id;
-      $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
-    
-      $data->{$record_id} = { features => $features, config => $config };
-    }
-  }
-  
-  return $data;
+ 
+  my ($type, $code, $user_id) = split '_', $record_id;
+  return $self->get_data_from_session($type, $code);
 }
 
 sub get_data_from_session {
@@ -843,21 +827,7 @@ sub get_data_from_session {
   }
 
   my $file = EnsEMBL::Web::File::User->new(%file_params);
-  my $result = $file->read;
-  if ($result->{'error'}) {
-    ## TODO - do something useful with the error!
-    warn ">>> ERROR READING FILE: ".$result->{'error'};
-    return {};
-  }
-  else {
-=pod
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
-
-    $parser->parse($result->{'content'}, $tempdata->{'format'});
-
-    return { parser => $parser, name => $name };
-=cut
-  }
+  return $file;
 }
 
 sub get_favourite_species {
@@ -922,6 +892,18 @@ sub ie_version {
   return $1;
 }
 
+# check to see if SNPedia site is up or down
+# if $out then site is up
+sub snpedia_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
+  my $out      = $failover->get_cached;
+
+  return $out;
+}
+
 # Query Store stuff
 
 sub query_store_setup {
@@ -940,7 +922,8 @@ sub query_store_setup {
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
-    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs)
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs),
+    SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($self->species_defs),
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 }
 

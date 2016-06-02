@@ -48,7 +48,6 @@ sub create {
     push @lines, _lines("Disallow", qw(*/*view));
   
     #other misc views google bot hits
-    push @lines, _lines("Disallow", qw(/id/));
     push @lines, _lines("Disallow", qw(/*/psychic));
   
     foreach my $row (('A'..'Z','a'..'z')){
@@ -67,10 +66,6 @@ sub create {
   
     # Doxygen
     push @lines, _lines("Disallow", "/info/docs/Doxygen");
-  
-    if (-e "$root/sitemaps/sitemap-index.xml") {
-      push @lines, _lines("Sitemap", "http://www.ensembl.org/sitemap-index.xml");
-    }
   
     push @lines, _lines("User-agent", "W3C-checklink");
     push @lines, _lines("Allow", "/info");

@@ -38,9 +38,6 @@ sub init_canvas {
   $self->canvas('');
 }
 
-sub add_canvas_frame {
-}
-
 sub svg_rgb_by_name {
     my ($self, $name) = @_;
     return 'none' if($name eq 'transparent');

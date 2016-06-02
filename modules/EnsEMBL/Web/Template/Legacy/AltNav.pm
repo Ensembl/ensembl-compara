@@ -16,38 +16,18 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::tagged_snp;
+package EnsEMBL::Web::Template::Legacy::AltNav;
 
-### Draws the Tagged SNPs track on /Location/LD
+### Legacy page template, used by pages with custom LH menu e.g. Solr search 
 
-use strict;
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
-
-use base qw(EnsEMBL::Draw::GlyphSet::_variation);
-
-sub my_label { return "Tagged SNPs"; }
-
-sub features {
-  my ($self) = @_;
-  my $Config   = $self->{'config'};
-  my $genotyped_vari = $Config->{'snps'};
-  return unless ref $genotyped_vari eq 'ARRAY';  
-
-  my @return;
-  my @pops     = @{ $Config->{'_ld_population'} || [] }; 
-  
-  foreach my $vari (@$genotyped_vari) { 
-    foreach my $pop  (@{ $vari->is_tagged }) { 
-      if ($pop->name eq $pops[0]) {
-	push @return, $vari;
-	last;
-      }
-    };
-  }
-  return \@return;
+sub init {
+  my $self = shift;
+  $self->{'main_class'}     = 'main';
+  $self->{'lefthand_menu'}  = 0;
+  $self->add_head;
+  $self->add_body;
 }
 
-
-
 1;
-

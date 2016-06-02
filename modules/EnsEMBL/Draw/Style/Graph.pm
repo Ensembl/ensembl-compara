@@ -59,25 +59,30 @@ sub create_glyphs {
   my $data            = $self->data;
   my $track_config    = $self->track_config;
 
-  # Merge metadata of subtracks
-  # dan -> anne : presumably, sometimes merging is wrong and we want
-  # multiple graphs, so this will need a conditional revert when we've
-  # worked out the right conditional. This is the correct behaviour for
-  # regulation, though, which is the most prominent exmaple of multiple
-  # wiggles.
-  my $metadata = $data->[0]{'metadata'};
-  $metadata->{'max_score'} =
-    max(map { $_->{'metadata'}{'max_score'} } @$data);
-  $metadata->{'min_score'} =
-    min(map { $_->{'metadata'}{'min_score'} } @$data);
+  my $graph_conf    = {};
+  my $multi_wiggle  = $track_config->get('multi');
+  if ($multi_wiggle) {
+    # Merge metadata of subtracks
+    my $metadata = $data->[0]{'metadata'};
+    $metadata->{'max_score'} =
+      max(map { $_->{'metadata'}{'max_score'} } @$data);
+    $metadata->{'min_score'} =
+      min(map { $_->{'metadata'}{'min_score'} } @$data);
 
-  ## Draw any axes, track labels, etc
-  my $graph_conf = $self->draw_graph_base($metadata);
+    ## Draw any axes, track labels, etc
+    $graph_conf = $self->draw_graph_base($metadata);
+  }
+
   my $height   = $track_config->get('height');
 
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
     my $features = $subtrack->{'features'};
+
+    unless ($multi_wiggle) {
+      ## Draw any axes, track labels, etc
+      $graph_conf = $self->draw_graph_base($metadata);
+    }
 
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';

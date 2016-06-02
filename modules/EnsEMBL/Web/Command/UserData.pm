@@ -84,13 +84,19 @@ sub upload {
 
     ## Look for the nearest feature
     my ($chr, $start, $end, $count) = $iow->nearest_feature;
-    $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    if ($chr && $start) {
+      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    }
     $params->{'count'}   = $count;
 
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
-
+    # Store last uploaded userdata to highlight on pageload
+    $hub->session->add_data(
+      type => 'userdata_upload_code',
+      upload_code => $file->code
+    );
   } 
  
   return $params;
@@ -181,7 +187,11 @@ sub attach {
 
     foreach (@$assemblies) {
 
-      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}||[]};
+      ## Try with and without species name, as it depends on format
+      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}
+                                                    || $ensembl_assemblies->{$hub->species.'_'.$_} || []};
+      
+
 
       ## This is a bit messy, but there are so many permutations!
       if ($assembly) {
@@ -204,11 +214,12 @@ sub attach {
           }
         }
 
+        my $t_code = join('_', md5_hex($name . $current_species . $assembly . $url), 
+                                  $hub->session->create_session_id); 
         unless ($is_old) {
           my $data = $hub->session->add_data(
                                         type        => 'url',
-                                        code        => join('_', md5_hex($name . $current_species . $assembly . $url), 
-                                                                  $hub->session->create_session_id),
+                                        code        => $t_code,
                                         url         => $url,
                                         name        => $name,
                                         format      => $attachable->name,
@@ -222,7 +233,11 @@ sub attach {
           $hub->session->configure_user_data('url', $data);
 
           $code = $data->{'code'};
-    
+          # Store last uploaded userdata to highlight on pageload
+          $hub->session->add_data(
+            type => 'userdata_upload_code',
+            upload_code => $code
+          );    
           $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
         }
       }

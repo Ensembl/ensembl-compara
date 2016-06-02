@@ -81,13 +81,7 @@ sub create_form {
       {'caption' => '-- Choose Format --'},
       @format_info
     ];
-  ## Don't update this field from params, as there's no back 
-  ## button for compressed formats!
-  my $compress = [
-      {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
-      {'caption' => 'Gzip', 'value' => 'gz'},
-      #{'caption' => 'Zip', 'value' => 'zip'},
-  ];
+
   $fieldset->add_field([
     {
       'type'    => 'String',
@@ -124,15 +118,26 @@ sub create_form {
       },
     ]);
   }
-  $fieldset->add_field([
-    {
-      'type'    => 'Radiolist',
-      'name'    => 'compression',
-      'label'   => 'Output',
-      'values'  => $compress,
-      'notes'   => 'Select "uncompressed" to get a preview of your file',
-    },
+
+  # Value of download_type and compression hidden inputs are changed using jQuery 
+  # before submit based on the button clicked
+  $fieldset->add_hidden([
+    { 'name'    => 'compression', 'value'   => '' }
   ]);
+
+  my $buttons = $fieldset->add_element([
+    { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
+    { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
+    { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
+  ]);
+
+  my $div = $self->dom->create_element('div', {
+    class => 'export_buttons_div',
+    children => $buttons
+  });
+
+  $fieldset->append_child($div);
+
   ## Hidden fields needed to fetch and process data
   $fieldset->add_hidden([
     {
@@ -176,58 +181,52 @@ sub create_form {
 
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%ok_formats)) {
-    my $legend = scalar(@$fields) ? 'Settings' : '';
-    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
+    if (scalar(@$fields) > 0) {
+      my $legend = scalar(@$fields) ? 'Settings' : '';
+      my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
-    ## Add custom fields for this data type and format
-    foreach my $name (@$fields) {
-      ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
-      ## in background that alters the contents of $settings!
-      my %field_info = %{$settings->{$name}||{}};
-      next unless keys %field_info;
-      ## Reset field name to include format, so we have unique field names
-      $name .= '_'.$format;
-      $field_info{'name'} = $name;
-      my @values = @{$field_info{'values'}||[]};
-      ## Deal with multiple values, which have to be passed
-      ## to Form::Fieldset as an arrayref
-      my $params;
-      if (scalar @values > 1) { ## Dropdown
-        if ($field_info{'type'} eq 'Hidden') {
-          $params = [];
-          foreach my $v (@values) {
-            my %info = %field_info;
-            $info{'value'} = $v;
-            push @$params, \%info;
+      ## Add custom fields for this data type and format
+      foreach my $name (@$fields) {
+        ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
+        ## in background that alters the contents of $settings!
+        my %field_info = %{$settings->{$name}||{}};
+        next unless keys %field_info;
+        ## Reset field name to include format, so we have unique field names
+        $name .= '_'.$format;
+        $field_info{'name'} = $name;
+        my @values = @{$field_info{'values'}||[]};
+        ## Deal with multiple values, which have to be passed
+        ## to Form::Fieldset as an arrayref
+        my $params;
+        if (scalar @values > 1) { ## Dropdown
+          if ($field_info{'type'} eq 'Hidden') {
+            $params = [];
+            foreach my $v (@values) {
+              my %info = %field_info;
+              $info{'value'} = $v;
+              push @$params, \%info;
+            }
+          }
+          else {
+            $params = \%field_info;
           }
         }
         else {
+          if ($field_info{'type'} =~ /Checkbox|CheckBox/) {
+            $field_info{'selected'} = 1 if $field_info{'value'} eq 'on';
+            $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+          }
           $params = \%field_info;
         }
-      }
-      else {
-        if ($field_info{'type'} =~ /Checkbox|CheckBox/) {
-          $field_info{'selected'} = 1 if $field_info{'value'} eq 'on';
-          $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+        ## Add to form
+        if ($field_info{'type'} eq 'Hidden') {
+          $settings_fieldset->add_hidden($params);
         }
-        $params = \%field_info;
-      }
-      ## Add to form
-      if ($field_info{'type'} eq 'Hidden') {
-        $settings_fieldset->add_hidden($params);
-      }
-      else { 
-        $settings_fieldset->add_field($params);
+        else { 
+          $settings_fieldset->add_field($params);
+        }
       }
     }
-
-    ## Doesn't matter that each fieldset has a submit button, as we only ever
-    ## display one of them - and putting it here forces user to choose format!
-    $settings_fieldset->add_button({
-      'type'    => 'Submit',
-      'name'    => 'submit',
-      'value'   => 'Download',
-    });
   }
 
   ## Add images fieldset
@@ -242,9 +241,10 @@ sub create_form {
   }
 
   return $self->dom->create_element('div', {
-    'id'        => 'DataExport',
-    'class'     => 'js_panel',
-    'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'DataExport', 'type' => 'hidden' }, $form ]
+    'children'  => [
+      {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'DataExport', 'type' => 'hidden' },
+      $form
+    ]
   });
 }
 

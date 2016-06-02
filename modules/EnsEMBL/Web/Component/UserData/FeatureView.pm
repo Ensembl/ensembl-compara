@@ -43,7 +43,7 @@ sub content {
   my $add_track_link  = $hub->url({qw(type UserData action SelectFile __clear 1)});
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
-    <p>Using this form, you can select Ensembl features to display on a karyotype (formerly known as FeatureView).</p>
+    <p>Using this form, you can select Ensembl features to display on a karyotype.</p>
     <p>If you want to use your own data file, please go to the <a href="$add_track_link" class="modal_link" rel="modal_user_data">Add custom track</a> page instead.</p>
   }});
 

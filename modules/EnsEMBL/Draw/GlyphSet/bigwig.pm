@@ -23,14 +23,17 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
+use Role::Tiny::With;
+with 'EnsEMBL::Draw::Role::BigWig';
+with 'EnsEMBL::Draw::Role::Wiggle';
+with 'EnsEMBL::Draw::Role::Default';
+
 use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 sub can_json { return 1; }
 
 sub init {
   my $self = shift;
-  my @roles = ('EnsEMBL::Draw::Role::BigWig', 'EnsEMBL::Draw::Role::Wiggle');
-  Role::Tiny->apply_roles_to_object($self, @roles);
   $self->{'data'} = $self->get_data;
 }
 

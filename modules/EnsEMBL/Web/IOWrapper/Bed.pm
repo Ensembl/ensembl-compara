@@ -29,6 +29,28 @@ use List::Util qw(first);
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
+sub validate {
+  ### Wrapper around the parser's validation method
+  ### We have to do extra for BED because it has alternative columns
+  my $self = shift;
+  my ($valid, $format, $col_count) = $self->parser->validate($self->hub->param('format'));
+
+  if ($valid) {
+    $self->{'format'}       = $format;
+    $self->{'column_count'} = $col_count;
+    ## Update session record accordingly
+    my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
+    if ($record) {
+      $record->{'format'}       = $format;
+      $record->{'column_count'} = $col_count;
+      $self->hub->session->set_data(%$record);
+    }
+  }
+
+  return $valid ? undef : 'File did not validate as format '.$format;
+}
+
+
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
@@ -73,7 +95,6 @@ sub create_hash {
 
   my $id = $self->parser->can('get_id') ? $self->parser->get_id
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
-  my $feature_strand = $strand || $metadata->{'default_strand'};
 
   my $href = $self->href({
                         'id'          => $id,
@@ -81,12 +102,12 @@ sub create_hash {
                         'seq_region'  => $seqname,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
-                        'strand'      => $feature_strand,
+                        'strand'      => $strand,
                         }) unless $metadata->{'omit_feature_links'};
 
+  ## Don't set start and end yet, as drawing code and zmenu want
+  ## different values
   my $feature = {
-    'start'         => $start,
-    'end'           => $end,
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
@@ -94,9 +115,13 @@ sub create_hash {
     'colour'        => $colour,
     'href'          => $href,
   };
+
   if ($metadata->{'display'} eq 'text') {
+    ## Want the real coordinates, not relative to the slice
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
     ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
-    my $column_map  = $self->parser->{'column_map'};
+    my $column_map      = $self->parser->{'column_map'};
     if ($column_map) {
       $feature->{'extra'} = [];
       ## Skip standard columns used in zmenus
@@ -136,6 +161,8 @@ sub create_hash {
     ## TODO Put RNAcentral link here
   }
   else {
+    $feature->{'start'}         = $start;
+    $feature->{'end'}           = $end;
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;

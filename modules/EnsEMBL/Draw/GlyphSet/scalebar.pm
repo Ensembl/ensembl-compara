@@ -199,7 +199,7 @@ sub render {
 
       if ($res[0] && !(($box_start*$contig_strand) % $labmaj)) {
         $self->push($self->Text({
-          x         => $box_start - $global_start,
+          x         => ($box_start - $global_start + 0.5) - ($res[2]/2) / $self->scalex,
           y         => defined $y ? $y - $res[3] - 1 : 5,
           height    => $res[3],
           font      => $fontname,

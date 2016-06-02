@@ -58,6 +58,8 @@ sub new {
     type             => $type,
     species          => $species,
     altered          => [],
+    user_track_count => 0,
+    load_threshold   => $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 20,
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -141,6 +143,16 @@ sub initialize {
   
   # Add user defined data sources
   $self->load_user_tracks;
+  my $threshold = $self->{'load_threshold'} || 0;
+  my $hidden_tracks = $self->{'user_track_count'} - $threshold;
+  if ($hidden_tracks > 0) {
+    $self->hub->session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'threshold_warning',
+      message  => "You have turned on too many tracks for the browser to load, so $hidden_tracks have been hidden. Please use Configure This Page to select a subset of $threshold tracks to display.",
+    );
+  }
   
   # Combine info and decorations into a single menu
   my $decorations = $self->get_node('decorations') || $self->get_node('other');
@@ -635,6 +647,24 @@ sub alphabetise_tracks {
   }
 }
 
+sub check_threshold {
+### Check if we've already loaded as many user tracks as we can cope with
+### @param display String
+### @return 1 if still OK, 0 if check fails i.e. threshold exceeded
+  my ($self, $display) = @_;
+  #warn ">>> DISPLAY $display";
+  $display ||= 'off';
+  return $display if $display eq 'off';
+  ## Track is supposed to be on, so compare with threshold
+  if ($self->{'user_track_count'} >= $self->{'load_threshold'}) {
+    $display = 'off';
+  }
+  else {
+    $self->{'user_track_count'}++;
+  }
+  return $display;
+}
+
 sub load_user_tracks {
   my $self = shift;
   my $menu = $self->get_node('user_data');
@@ -653,7 +683,9 @@ sub load_user_tracks {
   foreach my $entry ($session->get_data(type => 'url')) {
     next if $entry->{'no_attach'};
     next unless $entry->{'species'} eq $self->{'species'};
-    
+   
+    my $display = $self->check_threshold($entry->{'display'});
+ 
     $url_sources{"url_$entry->{'code'}"} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
@@ -663,7 +695,7 @@ sub load_user_tracks {
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
       renderers   => $entry->{'renderers'},
-      display     => $entry->{'display'},
+      display     => $display,
       timestamp   => $entry->{'timestamp'} || time,
     };
   }
@@ -677,7 +709,9 @@ sub load_user_tracks {
     $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
     my $description = 'Data that has been temporarily uploaded to the web server.';
     $description   .= add_links($entry->{'description'}) if $entry->{'description'};
-      
+     
+    my $display = $self->check_threshold($entry->{'display'});
+ 
     $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
         glyphset        => 'flat_file',
@@ -689,7 +723,7 @@ sub load_user_tracks {
         caption         => $entry->{'name'},
         renderers       => $renderers,
         description     => $description,
-        display         => $entry->{'display'} || 'off',
+        display         => $display,
         default_display => $entry->{'display'} || $default,
         strand          => $strand,
     }));
@@ -715,33 +749,17 @@ sub load_user_tracks {
       };
     }
     
-    ## Uploads that have been saved to the userdata database
+    ## Uploads that have been saved to the persistent filespace 
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
-     
-      if ($entry->analyses) {
-        ## Data saved to userdata db
-        ## TODO - remove in due course
-        foreach my $analysis (split /, /, $entry->analyses) {
-          $upload_sources{$analysis} = {
-            source_name => $name,
-            source_type => 'user',
-            assembly    => $assembly,
-            style       => $entry->style,
-          };
-        
-          $self->_compare_assemblies($entry, $session);
-        }
-      }
-      else {
-        ## New saved-to-permanent-location
-        my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
-        $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
-        $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
-        my $description = 'Data that has been saved to the web server. ';
-        my $extra_desc  = $entry->description;
-        $description   .= add_links($extra_desc) if $extra_desc;
-        $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
+      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
+      $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
+      $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+      my $description = 'Data that has been saved to the web server. ';
+      my $extra_desc  = $entry->description;
+      $description   .= add_links($extra_desc) if $extra_desc;
+      my $display     = $self->check_threshold($entry->display);
+      $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
@@ -753,10 +771,9 @@ sub load_user_tracks {
             strand          => $strand,
             renderers       => $renderers,
             description     => $description, 
-            display         => $entry->display || 'off',
+            display         => $display,
             default_display => $entry->display || $default,
-        }));
-      }
+      }));
     }
   }
   
@@ -790,50 +807,6 @@ sub load_user_tracks {
     }
   }
   
-  ## And finally any saved uploads
-  ## TODO - remove once we have removed the userdata databases
-  if (keys %upload_sources) {
-    my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
-    my $dba        = $dbs->get_DBAdaptor('userdata');
-    my $an_adaptor = $dba->get_adaptor('Analysis');
-    my @tracks;
-    
-    foreach my $logic_name (keys %upload_sources) {
-      my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
-      
-      next unless $analysis;
-   
-      $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
-     
-      my ($strand, $renderers, $default) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
-      my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
-      my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
-      my $caption     = encode_entities($analysis->display_label);
-         $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
-         $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
-      
-      push @tracks, [ $logic_name, $caption, {
-        external        => 'user',
-        glyphset        => '_user_data',
-        colourset       => 'userdata',
-        sub_type        => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
-        renderers       => $renderers,
-        source_name     => $source_name,
-        logic_name      => $logic_name,
-        caption         => $caption,
-        data_type       => $analysis->module,
-        description     => $description,
-        display         => 'off',
-        default_display => $default,
-        style           => $analysis->web_data,
-        format          => $analysis->program_version,
-        strand      => $strand,
-      }];
-    }
-   
-    $menu->append($self->create_track(@$_)) for sort { lc $a->[2]{'source_name'} cmp lc $b->[2]{'source_name'} || lc $a->[1] cmp lc $b->[1] } @tracks;
-  }
- 
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
@@ -949,10 +922,11 @@ sub _add_trackhub_tracks {
   my %tracks;
 
   my %options = (
-    menu_key     => $name,
-    menu_name    => $name,
-    submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
-    submenu_name => $data->{'shortLabel'},
+    menu_key      => $name,
+    menu_name     => $name,
+    submenu_key   => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
+    submenu_name  => $data->{'shortLabel'},
+    submenu_desc  => $data->{'longLabel'},
     trackhub      => 1,
   );
 
@@ -976,7 +950,8 @@ sub _add_trackhub_tracks {
   }
   
   my $submenu = $self->create_submenu($options{'submenu_key'}, $options{'submenu_name'}, {
-    external => 1,
+    external    => 1,
+    description => $options{'submenu_desc'},
     ($matrix ? (
       menu   => 'matrix',
       url    => $options{'matrix_url'},
@@ -1026,8 +1001,14 @@ sub _add_trackhub_tracks {
 
     my $on_off = $config->{'on_off'} || $track->{'on_off'};
     ## Turn track on if there's no higher setting turning it off
-    if (!$config->{'on_off'} && !$track->{'on_off'}) {
+    if ($track->{'visibility'}  eq 'hide') {
+      $on_off = 'off';
+    }
+    elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
       $on_off = 'on';
+    }
+    elsif ($self->check_threshold($on_off) eq 'off') {
+      $on_off = 'off';
     }
 
     my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
@@ -1045,7 +1026,6 @@ sub _add_trackhub_tracks {
     ## Set track style if appropriate 
     if ($on_off && $on_off eq 'on') {
       $options{'display'} = $default_display;
-      $count_visible++;
     }
     else {
       $options{'display'} = 'off';
@@ -1057,7 +1037,7 @@ sub _add_trackhub_tracks {
       name        => $track->{'track'},
       source_name => $source_name,
       desc_url    => $track->{'description_url'},
-      description => $track->{'longLabel'},
+      description => $name.': '.$track->{'longLabel'},
       longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
@@ -1099,7 +1079,6 @@ sub _add_trackhub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
-  #warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
@@ -1394,6 +1373,8 @@ sub _add_flat_file_track {
 
   my ($strand, $renderers, $default) = $self->_user_track_settings($options{'style'}, $options{'format'});
 
+  $options{'display'} = $self->check_threshold($options{'display'});
+
   my $track = $self->create_track($key, $name, {
     display         => 'off',
     strand          => $strand,
@@ -1444,6 +1425,7 @@ sub _add_file_format_track {
     }
   }
  
+  $args{'options'}->{'display'} = $self->check_threshold($args{'options'}->{'display'});
   $self->generic_add($menu, undef, $args{'key'}, {}, {
     display     => 'off',
     strand      => 'f',
@@ -1678,6 +1660,8 @@ sub update_from_url {
           message  => $message,
       );
     } else {
+      ($url, $renderer) = split /=/, $v;
+      $renderer ||= 'normal';
       $self->update_track_renderer($url, $renderer, $hub->param('toggle_tracks'));
     }
   }

@@ -16,14 +16,33 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller::AltPage;
+package EnsEMBL::Web::Template;
 
-### Alternative dynamic page with fluid layout
+### Base class for new HTML templates, which can be used independently
+### of the Controller-defined Page types 
 
 use strict;
 
-use base qw(EnsEMBL::Web::Controller::Page);
- 
-sub page_type   { return 'Fluid'; }
+sub new {
+  my ($class, $self) = @_;
+
+  bless $self, $class;
+
+  return $self;
+}
+
+sub init {}
+
+sub hub { 
+  my $self = shift;
+  return $self->{'page'}->hub; 
+}
+
+sub page { 
+  my $self = shift;
+  return $self->{'page'}; 
+}
+
+sub render {}
 
 1;

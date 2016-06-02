@@ -15,20 +15,7 @@
  */
 
 Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
-  constructor: function (id) {
-    this.base(id);
-    
-    Ensembl.EventManager.register('modalOpen',        this, this.open);
-    Ensembl.EventManager.register('modalClose',       this, this.hide);
-    Ensembl.EventManager.register('modalOverlayShow', this, this.showOverlay);
-    Ensembl.EventManager.register('modalOverlayHide', this, this.hideOverlay);
-    Ensembl.EventManager.register('modalPanelResize', this, this.resizeOverlay);
-    Ensembl.EventManager.register('queuePageReload',  this, this.setPageReload);
-    Ensembl.EventManager.register('addModalContent',  this, this.addContent);
-    Ensembl.EventManager.register('setActivePanel',   this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
-    Ensembl.EventManager.register('modalReload',      this, function (panelId) { this.modalReload[panelId] = true; });
-  },
-  
+
   init: function () {
     var panel = this;
     
@@ -89,6 +76,16 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       
       return false;
     });
+
+    Ensembl.EventManager.register('modalOpen',        this, this.open);
+    Ensembl.EventManager.register('modalClose',       this, this.hide);
+    Ensembl.EventManager.register('modalOverlayShow', this, this.showOverlay);
+    Ensembl.EventManager.register('modalOverlayHide', this, this.hideOverlay);
+    Ensembl.EventManager.register('modalPanelResize', this, this.resizeOverlay);
+    Ensembl.EventManager.register('queuePageReload',  this, this.setPageReload);
+    Ensembl.EventManager.register('addModalContent',  this, this.addContent);
+    Ensembl.EventManager.register('setActivePanel',   this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
+    Ensembl.EventManager.register('modalReload',      this, function (panelId) { this.modalReload[panelId] = true; });
   },
   
   open: function (el) {

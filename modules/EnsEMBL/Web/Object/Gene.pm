@@ -52,48 +52,14 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
-      my %clusters    = $self->hub->species_defs->multiX('ONTOLOGIES');
-      
-      my $member      = $self->database('compara') ? $self->database('compara')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
-      my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
-      my $counts      = $self->counts($member, $pan_member);
-      my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-      my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-
-      $availability->{'history'}              = !!$rows;
-      $availability->{'gene'}                 = 1;
-      $availability->{'core'}                 = $self->get_db eq 'core';
-      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;
-      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
-      if ($availability->{'can_r2r'}) {
-        my $tree = $availability->{'has_gene_tree'} ? $self->database('compara')->get_GeneTreeAdaptor->fetch_default_for_Member($member) : undef;
-        $availability->{'has_2ndary_cons'}    = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
-        $availability->{'has_2ndary'}         = ($availability->{'has_2ndary_cons'} || ($obj->canonical_transcript && scalar(@{$obj->canonical_transcript->get_all_Attributes('ncRNA')}))) ? 1 : 0;
-      }
-      $availability->{'has_gxa'}              = $self->gxa_check;
-
-      $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-      $availability->{'regulation'}           = !!$funcgen_res; 
-      $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
-      $availability->{'family'}               = !!$counts->{families};
-      $availability->{'family_count'}         = $counts->{families};
-      $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
-      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
-      $availability->{"has_go_$_"}            = $self->count_go($_) for (keys %clusters);
-      $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
-      $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
-      $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
-      $availability->{'not_human'}            = $self->species eq 'Homo_sapiens' ? 0 : 1;
-
-      if ($self->database('variation')) {
-        $availability->{'has_phenotypes'} = $self->get_phenotype; 
-      }
-      
-      if ($self->database('compara_pan_ensembl')) {
-        $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        $availability->{'has_gene_tree_pan'}  = !!($pan_member && $pan_member->has_GeneTree);
-        $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
-      }
+      $availability =
+        $self->hub->get_query('Availability::Gene')->go($self,{
+          species => $self->hub->species,
+          type => $self->get_db,
+          gene => $self->Obj,
+        })->[0];
+      $availability->{'has_gxa'} = $self->gxa_check;
+      $availability->{'logged_in'} = $self->user;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
@@ -112,61 +78,9 @@ sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? '
 
 sub counts {
   my ($self, $member, $pan_member) = @_;
-  my $obj = $self->Obj;
 
-  return {} unless $obj->isa('Bio::EnsEMBL::Gene');
-  
-  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g');
-  my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
-  
-  if (!$counts) {
-    $counts = {
-      transcripts        => scalar @{$obj->get_all_Transcripts},
-      exons              => scalar @{$obj->get_all_Exons},
-#      similarity_matches => $self->count_xrefs
-      similarity_matches => $self->get_xref_available,
-      operons => 0,
-      alternative_alleles =>  scalar @{$self->get_alt_alleles},
-    };
-    if ($obj->feature_Slice->can('get_all_Operons')){
-      $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
-    }
-    $counts->{structural_variation} = 0;
-
-    if ($self->database('variation')){ 
-      my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
-      $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
-      $counts->{phenotypes} = $self->get_phenotype;
-    }
-    if ($member) {
-      $counts->{'orthologs'}  = $member->number_of_orthologues;
-      $counts->{'paralogs'}   = $member->number_of_paralogues;
-      $counts->{'families'}   = $member->number_of_families;
-    }
-    my $alignments = $self->count_alignments;
-    $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
-    $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
-
-    ## Add pan-compara if available 
-    if ($pan_member) {
-      my $compara_dbh = $self->database('compara_pan_ensembl')->dbc->db_handle;
-
-      $counts->{'orthologs_pan'}  = $pan_member->number_of_orthologues;
-      $counts->{'paralogs_pan'}   = $pan_member->number_of_paralogues;
-      $counts->{'families_pan'}   = $pan_member->number_of_families;
-
-      $counts->{'alignments_pan'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
-    }    
-
-    ## Add counts from plugins
-    $counts = {%$counts, %{$self->_counts($member, $pan_member)}};
-
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
-    $self->{'_counts'} = $counts;
-  }
-  
-  return $counts;
+  return {} unless $self->Obj->isa('Bio::EnsEMBL::Gene');
+  return $self->availability->{'counts'};
 }
 
 =head2 get_go_list
@@ -377,11 +291,12 @@ sub insdc_accession {
 sub count_go {
   my ($self, $goid) = @_;
 
-  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
-  my $counts   = $MEMD && $MEMD->get($key) ? $MEMD->get($key) : "";
   my $go_name;
-
-  if (!$counts) {
+  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
+  my $counts;
+  $counts = $MEMD->get($key) if $MEMD;
+  $counts = 0 if $counts==-1; # Can't to store 0 in memcached!
+  if (!defined $counts) {
     foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
       my $transcript = $trans_obj->Obj;   
 
@@ -412,22 +327,24 @@ sub count_go {
           
       }    
     }
-    next unless $go_name;
-    $go_name =~ s/,$//g;
+    if($go_name) {
+      $go_name =~ s/,$//g;
 
-    my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
-    
-    my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
-    
-    my $sth = $goadaptor->prepare($go_sql);
-    $sth->execute();
-    
-    foreach (@{$sth->fetchall_arrayref}) {    
-      $counts = $_->[1] if($_->[0] eq "$goid");
-      $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+      my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+
+      my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
+
+      my $sth = $goadaptor->prepare($go_sql);
+      $sth->execute();
+
+      foreach (@{$sth->fetchall_arrayref}) {
+        $counts = $_->[1] if($_->[0] eq "$goid");
+      }
     }
+    $counts ||= -1;
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
-  
+  $counts = 0 if $counts == -1;
   return $counts;
 }
 
@@ -1638,8 +1555,9 @@ sub get_extended_reg_region_slice {
   $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
 
 
-  ## Now we need to extend the slice!! Default is to add 2kb to either end of slice, if gene_reg slice is
+  ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
   ## extends more than this use the values returned from this
+  my $extension = 250*1000;
   my $start = $self->Obj->start;
   my $end   = $self->Obj->end;
 
@@ -1647,14 +1565,14 @@ sub get_extended_reg_region_slice {
   my $gr_end = $gr_slice->end;
   my ($new_start, $new_end);
 
-  if ( ($start  - 2000) < $gr_start) {
-     $new_start = 2000;
+  if ( ($start  - $extension) < $gr_start) {
+     $new_start = $extension;
   } else {
      $new_start = $start - $gr_start;
   }
 
-  if ( ($end +2000) > $gr_end) {
-    $new_end = 2000;
+  if ( ($end +$extension) > $gr_end) {
+    $new_end = $extension;
   }else {
     $new_end = $gr_end - $end;
   }

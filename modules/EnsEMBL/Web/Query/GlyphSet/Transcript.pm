@@ -99,8 +99,8 @@ sub fixup {
   $self->fixup_location('end','slice',1);
   $self->fixup_location('transcripts/*/start','slice',0);
   $self->fixup_location('transcripts/*/end','slice',1);
-  $self->fixup_location('transcripts/*/exons/*/start','slice',0,1);
-  $self->fixup_location('transcripts/*/exons/*/end','slice',1,1);
+  $self->fixup_location('transcripts/*/exons/*/start','slice',0,1,['coding_start']);
+  $self->fixup_location('transcripts/*/exons/*/end','slice',1,1,['coding_end']);
   $self->fixup_unique('_unique');
   $self->fixup_unique('transcripts/*/_unique');
   $self->fixup_unique('transcripts/*/exons/*/_unique');

@@ -135,7 +135,7 @@ sub get_DBAdaptor {
   # Funcgen Database Files Overwrite
   if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}) {
     my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, $self->{'species_defs'}->ASSEMBLY_VERSION;
-    $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if -e $file_path && -d $file_path;
+    $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if ($dba && -e $file_path && -d $file_path);
   }  
   
   $self->{'_dbs'}{$species}{$database} = $dba;
@@ -349,24 +349,6 @@ sub _get_db_with_dnadb {
     $default_species_db->{'core'}->add_db_adaptor($db, $default_species_db->{$db} );
     $default_species_db->{$db}->add_db_adaptor('core', $default_species_db->{'core'} );
   }
-}
-
-=head2 _get_userupload_database
-
- Arg[1]      : String  
-                Species name
- 
- Example     : $self->_get_userupload_database($species)
- Description : Gets est database connection
- Return type : Bio::EnsEMBL::DBSQL::DBAdaptor
-
-=cut
-
-sub _get_userdata_database{
-    my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'DATABASE_USERDATA' ) ||
-        die( "No est database for this species" );
-    return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' ); 
 }
 
 =head2 _get_compara_database
