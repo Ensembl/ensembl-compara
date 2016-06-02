@@ -231,13 +231,13 @@ foreach my $result (@{$results}) {
   is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
 }
 
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags');
-standaloneJob(
-  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
-  {
-    'compara_db' => $dbc->url,
-    'mlss_id'=>'100021',
-  },
-);
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags');
+#standaloneJob(
+#  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
+#  {
+#    'compara_db' => $dbc->url,
+#    'mlss_id'=>'100021',
+#  },
+#);
 
 done_testing();
