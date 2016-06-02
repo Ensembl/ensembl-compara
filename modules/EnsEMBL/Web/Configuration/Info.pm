@@ -69,15 +69,15 @@ sub populate_tree {
     ));
   }
 
-  $self->create_node('GeneGallery', 'Explore gene views',
+  $self->create_node('GeneGallery', '',
       [qw(gene_gallery EnsEMBL::Web::Component::Info::GeneGallery)],
       { 'availability' => 1 }
   );
-  $self->create_node('VariationGallery', 'Explore variation views',
+  $self->create_node('VariationGallery', '',
       [qw(var_gallery EnsEMBL::Web::Component::Info::VariationGallery)],
       { 'availability' => 'database:variation' }
   );
-  $self->create_node('LocationGallery', 'Explore location views',
+  $self->create_node('LocationGallery', '',
       [qw(loc_gallery EnsEMBL::Web::Component::Info::LocationGallery)],
       { 'availability' => 1 }
   );
