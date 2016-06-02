@@ -983,19 +983,13 @@ sub _summarise_archive_db {
 
 sub _build_compara_default_aligns {
   my ($self,$dbh,$dest) = @_;
-
   my $sth = $dbh->prepare(qq(
     select mlss.method_link_species_set_id
       from method_link_species_set as mlss
-      join species_set as ss
-        on mlss.species_set_id = ss.species_set_id
-      join method_link as ml
-        on mlss.method_link_id = ml.method_link_id
-      join species_set_tag as sst
-        on ss.species_set_id = sst.species_set_id
-      where sst.tag = 'name'
-        and ml.type = ?
-        and sst.value = ?
+      join method_link as ml on mlss.method_link_id = ml.method_link_id
+      join species_set_header as ssh on mlss.species_set_id = ssh.species_set_id
+     where ml.type = ?
+       and ssh.name = ?
   ));
   my @defaults;
   my $cda_conf = $self->full_tree->{'MULTI'}{'COMPARA_DEFAULT_ALIGNMENTS'};
