@@ -109,19 +109,6 @@ sub write_output {
 ## Internal methods #######################
 ###########################################
 
-# sub get_tree_string_from_meta {
-#     my ($self) = @_;
-#     my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
-
-#     my $sql = "SELECT meta_value FROM meta WHERE meta_key = ?";
-#     my $sth = $self->compara_dba->dbc->prepare($sql);
-#     $sth->execute($cafe_tree_string_meta_key);
-
-#     my ($cafe_tree_string) = $sth->fetchrow_array();
-#     $sth->finish;
-#     print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
-#     return $cafe_tree_string;
-# }
 
 sub run_cafe_script {
     my ($self) = @_;
@@ -202,7 +189,6 @@ sub parse_cafe_output {
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
     $tree_str .= ";";
-#    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFEGeneFamily");
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str);
     print STDERR "CAFE TREE: $tree_str\n" if ($self->debug);
 
