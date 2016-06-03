@@ -42,7 +42,8 @@ sub get_json {
 sub label_classes {
   return {
     'Configure this page' => 'config',
-    'Custom tracks'       => 'data',
+    'Manage your data'    => 'data',
+    'Add your data'       => 'data',
     'Export data'         => 'export',
     'Share this page'     => 'share',
   };
@@ -81,6 +82,7 @@ sub init {
   my @components = @{$hub->components};
   my $session    = $hub->session;
   my $user       = $hub->user;
+  my $has_data   = $self->_has_data;
   my $view_config;
      $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
   
@@ -107,13 +109,13 @@ sub init {
   }
   
   $self->add_entry({
-    caption => 'Custom tracks',
+    caption => $has_data ? 'Manage your data' : 'Add your data',
     class   => 'modal_link',
     rel     => 'modal_user_data',
     url     => $hub->url({
       time    => time,
       type    => 'UserData',
-      action  => 'ManageData',
+      action  => $has_data ? 'ManageData' : 'SelectFile',
       __clear => 1
     })
   });
@@ -161,6 +163,14 @@ sub export_url {
   }
   
   return $hub->url({ type => 'Export', action => $export, function => $type });
+}
+
+sub _has_data {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+
+  return !!grep $session->get_data(type => $_), qw(upload url);
 }
 
 1;
