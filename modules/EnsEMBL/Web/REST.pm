@@ -70,16 +70,10 @@ sub fetch {
 ### @return - type depends on format requested. Defaults to a hashref which has been
 ###           converted from json
   my ($self, $endpoint, $args) = @_;
-  my $format = delete $args->{'format'} || 'json';
+
+  my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $delimiter = $args->{url_params}->{_delimiter} || ';';
   delete $args->{'url_params'}->{'_delimiter'};
-  my $hub   = $self->hub;
-  $args->{'hub'} = $hub;
-  
-  my $url   = sprintf('%s/%s', $self->server, $endpoint);
-  my $type  = $content_type{lc($format)};
-  $args->{'headers'}{'Content-Type'} ||= $type;
-
   if ($args->{'url_params'}) {
     $url .= '?';
     while (my($k, $v) = each (%{$args->{'url_params'}||{}})) {
@@ -87,6 +81,17 @@ sub fetch {
     }
     delete $args->{'url_params'};
   }
+  return $self->fetch_url($url,$args);
+}
+
+sub fetch_url {
+  my ($self, $url, $args) = @_;
+  my $format = delete $args->{'format'} || 'json';
+  my $hub   = $self->hub;
+  $args->{'hub'} = $hub;
+
+  my $type  = $content_type{lc($format)};
+  $args->{'headers'}{'Content-Type'} ||= $type;
 
   if ($args->{'method'} && $args->{'method'} eq 'post') {
     my $json = to_json($args->{'content'});
@@ -108,6 +113,20 @@ sub fetch {
     }
     return $response;
   }
+}
+
+sub fetch_via_ini {
+  my ($self,$species,$name,$params,$args) = @_;
+
+  my $sources = $self->hub->species_defs->get_config($species,'REST_SOURCES') || {};
+  return undef unless $sources->{$name};
+  my $type = $sources->{$name};
+  my $ini = $self->hub->species_defs->get_config($species,$type);
+  return undef unless $ini;
+  my $url = $ini->{'url'};
+  return undef unless $url;
+  $url =~ s/<<(.*?)>>/$params->{$1}/eg;
+  return $self->fetch_url($url,$args);
 }
 
 1;

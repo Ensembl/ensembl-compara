@@ -61,6 +61,25 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
+
+  my @gtex_tissues = qw(
+    Adipose_Subcutaneous          Artery_Aorta      Artery_Tibial
+    Cells_Transformed_fibroblasts Esophagus_Mucosa  Esophagus_Muscularis
+    Heart_Left_Ventricle          Lung              Muscle_Skeletal
+    Nerve_Tibial                  Skin_Sun_Exposed_Lower_leg
+    Stomach                       Thyroid           Whole_Blood);
+  my $gtex_tissue_example = "Whole_Blood";
+
+  foreach my $tissue (@gtex_tissues) {
+    my $tissue_readable = $tissue;
+    $tissue_readable =~ s/_/ /g;
+    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","GTEX Manhattan plot ($tissue_readable)",'reg_manplot',{
+      tissue => $tissue,
+      display => ($tissue eq $gtex_tissue_example)?'normal':'off',
+      strand => 'r',
+      colours     => $self->species_defs->colour('variation'),
+    });
+  }
   
   $self->add_tracks('other',
     [ 'ruler',     '',  'ruler',     { display => 'normal', strand => 'r', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
