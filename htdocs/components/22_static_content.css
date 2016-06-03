@@ -188,6 +188,10 @@ div.gallery-nav     { display:inline-block; padding: 4px; width:15%; border:1px 
 a.gallery-navlabel  { font-size: 150%; font-weight:bold; }
 div.gallery_preview { display:block; margin:0 12px 1em 12px; padding: 6px; height: 120px; 
                       vertical-align:top; border: 1px solid [[PANEL_BORDER]]; }
-div.gallery_preview img { width:150px; height:100px; border: 1px solid [[PANEL_BORDER]]; float:right; text-align:right; vertical-align: top; }
+div.gallery_preview .page-preview { float:right; }
+div.gallery_preview .page-preview img { width:150px; height:100px; 
+                      border: 1px solid [[PANEL_BORDER]]; 
+                      text-align:right; vertical-align: top; }
+div.gallery_preview img.disabled { opacity: 0.5; filter: alpha(opacity=50); }
 div.preview_caption { display:inline-block; margin: 8px 0; }
 

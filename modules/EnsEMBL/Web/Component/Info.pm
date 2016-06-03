@@ -115,16 +115,29 @@ sub format_gallery {
 
     my $title = $group->{'title'};
     my $icon  = $group->{'icon'};
-    push @toc, sprintf('<div class="gallery-nav"><a href="#%s"><img src="/i/48/%s" class="alongside" /></a><br /><a href="#%s" class="notext gallery-navlabel">%s</a></div>', lc($title), $icon, lc($title), $title);
+    push @toc, sprintf('<div class="gallery-nav">
+                          <span class="ht _ht">
+                            <span class="_ht_tip hidden">Jump to views associated with %s</span>
+                            <a href="#%s"><img src="/i/48/%s" class="alongside" /></a><br />
+                            <a href="#%s" class="notext gallery-navlabel">%s</a>
+                          </span>
+                        </div>', 
+                          lc($title), lc($title), $icon, lc($title), $title);
 
     $html .= $self->_sub_header($title);
 
     $html .= '<div class="gallery">';
 
     my $entry_template = '<div class="gallery_preview">
-                          %s
+                          <div class="page-preview">
+                            <span class="ht _ht">
+                              <span class="_ht_tip hidden">%s</span>%s
+                            </span>
+                          </div>
                           <h3>%s</h3>
-                          <p class="preview_caption">%s</p>';
+                          <p class="preview_caption">%s</p>
+                          <p%s>%s</p>
+                          </div>';
 
     foreach (@pages) {
       my $page = $all_pages->{$_};
@@ -137,15 +150,17 @@ sub format_gallery {
 
       my $label = $self->hub->param('default') ? 'label_1' : 'label_2';
 
-      my ($caption, $link, $unavailable, $thumbnail, $miniform);
+      my ($description, $img_disabled, $img_title, $next_action);
+      my $action_class = '';
+      my $link_class = '';
 
       if ($page->{'disabled'}) {
         ## Disable views that are invalid for this feature
-        $thumbnail = sprintf('<img src="/i/gallery/%s.png" class="disabled" />', $page->{'img'});
-        $unavailable = sprintf 'Not available for this %s', lc($header_info->{$type}{'term'});
+        $img_disabled = 1;
+        $next_action = sprintf 'Sorry, this view is not available for this %s', lc($header_info->{$type}{'term'});
+        $img_title    = $next_action;
       }
       elsif ($page->{'multi'}) {
-        my $image = sprintf('<img src="/i/gallery/%s.png" /></a>', $page->{'img'});
         my $multi_type = $page->{'multi'}{'type'};
         if ($page->{'multi'}{'zmenu'}) {
           ## Link to a zmenu of features
@@ -155,14 +170,16 @@ sub format_gallery {
             $params->{"link_$k"} = $v;
           }
           my $zmenu_link  = $self->hub->url($params);
-          #$html .= sprintf('<a href="%s" class="_zmenu">%s</a>', $zmenu_link, $image);
-          $caption = sprintf('%s</p><p>This %s maps to <a href="%s" class="_zmenu">multiple %s</a>', $page->{'caption'}, $data_type->{$type}{'term'}, $zmenu_link, lc($multi_type).'s');
+          $url            = $zmenu_link;
+          $link_class     = ' class="_zmenu"';
+          my $choose    = $data_type->{$multi_type} ? $data_type->{$multi_type}{'label_1'} : 'Choose a '.lc($multi_type);
+          $description  = sprintf('%s</p><p><b>This %s maps to multiple %s</b></p><p class="button"><a href="%s" class="_zmenu">%s</a></p>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s', $zmenu_link, $choose);
+          $img_title    = sprintf 'This %s maps to multiple %s. Click to select one', $data_type->{$type}{'term'}, lc($multi_type).'s';
         }
         else {
           ## Disable links on views that can't be mapped to a single feature/location
-          #$html .= $image;
           my $data_param  = $page->{'multi'}{'param'};
-          $caption = sprintf('%s</p><p>This %s maps to multiple %s', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
+          $description = sprintf('%s</p><p><b>This %s maps to multiple %s</b>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
 
           my $link_to = $page->{'link_to'};
           my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
@@ -180,16 +197,18 @@ sub format_gallery {
                                         'name'    => $data_param,
                                         'values'  => $page->{'multi'}{'values'},
                                         });
-          $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
-          #$html .= $multi_form->render;
+          $field->add_element({'type' => 'submit', 'value' => 'Show me'}, 1);
+          $next_action = $multi_form->render;
         }
       }
       else {
-        $thumbnail = sprintf('<img src="/i/gallery/%s.png" />', $page->{'img'});
-        $caption = sprintf('<a href="%s" class="nodeco">%s</a>', $url, $page->{'caption'});
-
+        $description  = $page->{'caption'};
+        $img_title    = 'Click to preview';
+        $action_class = ' class = "button"';
+        $next_action  = sprintf '<a href="%s">Show me</a>', $url;
       }
 
+=pod
       my $form = $self->new_form({'action' => $url, 'method' => 'post', 'class' => 'freeform'});
 
       my $data_param = $data_type->{$type}{'param'};
@@ -205,10 +224,21 @@ sub format_gallery {
       $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
       #$html .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
+=cut  
+      my $image;
+      if ($img_disabled) {
+        $image = sprintf '<img src="/i/gallery/%s.png" title="%s" class="disabled"/>', 
+                            $page->{'img'};
+      }
+      else {
+        $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" /></a>', 
+                            $url, $link_class, $page->{'img'};
 
-      $html .= sprintf($entry_template, $thumbnail, $_, $page->{'caption'});
+      }
 
-      $html .= '</div>';
+      $html .= sprintf($entry_template, $img_title, $image, $_, $description, 
+                                        $action_class, $next_action);
+
     }
 
     $html .= '</div>';

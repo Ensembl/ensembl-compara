@@ -228,7 +228,7 @@ sub _get_pages {
                                                   'v'      => $v,
                                                  },
                                   'img'       => 'variation_location',
-                                  'caption'   => 'Region where your variant is located',
+                                  'caption'   => 'View the region where your variant is located, alongside genes and other features, in our genome browser',
                                   'multi'     => $multi_location,  
                                   'disabled'  => $no_location,  
                                 },
@@ -238,7 +238,7 @@ sub _get_pages {
                                                   'v'      => $v,
                                                  },
                                   'img'       => 'variation_genomic',
-                                  'caption'   => 'Genomic context of your variant',
+                                  'caption'   => 'The context of your variant within a 5 kilobase region of the genome',
                                 },
           'Flanking Sequence' => {
                                   'link_to'   => {'type'    => 'Variation',
@@ -246,7 +246,7 @@ sub _get_pages {
                                                   'v'      => $v,
                                                   },
                                   'img'     => 'variation_sequence',
-                                  'caption' => 'Flanking sequence for your variant',
+                                  'caption' => 'Flanking sequence for your variant, optionally showing other nearby variants',
                                   },
           'Phylogenetic Context' => {
                                   'link_to'     => {'type'    => 'Variation',
@@ -254,7 +254,7 @@ sub _get_pages {
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_phylogenetic',
-                                  'caption' => 'Phylogenetic context of your variant',
+                                  'caption' => 'Phylogenetic context of your variant, using any of our comparative multiple alignments',
                                   },
           'Gene Sequence' => {
                                   'link_to'       => {'type'  => 'Gene',
@@ -296,7 +296,7 @@ sub _get_pages {
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_mappings',
-                                  'caption' => 'Genes and regulatory features around your variant',
+                                  'caption' => 'Tables listing genes and regulatory features around your variant',
                                 },
           'Citations' => {
                                   'link_to'     => {'type'    => 'Variation',
