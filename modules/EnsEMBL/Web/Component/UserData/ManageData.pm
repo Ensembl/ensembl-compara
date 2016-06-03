@@ -59,7 +59,6 @@ sub content {
   my (@data, @rows);  
 
   my $html = sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
-  $html .= $self->_add_buttons;
  
   my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
