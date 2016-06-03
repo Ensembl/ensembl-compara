@@ -67,12 +67,12 @@ sub content {
   
   if (scalar @data) {
 
-    $html .= $self->_add_buttons;
+    #$html .= $self->_add_buttons;
 
     my @columns = (
-      { key => 'check',   title => '',             width => '5%', align => 'center'                                  },
+      #{ key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
-      { key => 'status',  title => 'Status',       width => '10%', align => 'left'                                  },
+      #{ key => 'status',  title => 'Status',       width => '10%', align => 'left'                                  },
       { key => 'name',    title => 'Source',       width => '30%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
       { key => 'assembly', title => 'Assembly',    width => '15%', align => 'left', sort => 'html'                  },
