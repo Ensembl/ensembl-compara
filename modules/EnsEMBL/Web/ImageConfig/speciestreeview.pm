@@ -22,6 +22,10 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub init_extra_menus {
+  shift->add_extra_menu('display_option');
+}
+
 sub init {
   my $self = shift;
 
@@ -40,8 +44,6 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no'}],
     [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r', menu => 'no'}],
   );
-
-  $self->{extra_menus} = {'display_options' => 1};
 }
 
 1;

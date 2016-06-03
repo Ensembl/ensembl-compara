@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig::Vertical);
 
+sub init_extra_menus {}
+
 sub init {
   my $self = shift;
 
@@ -131,7 +133,6 @@ sub init {
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
   
-  $self->{'extra_menus'} = {};
 }
 
 1;

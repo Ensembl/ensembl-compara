@@ -440,7 +440,7 @@ sub build_form {
   }
   
   if ($image_config) {
-    my $extra_menus = $image_config->{'extra_menus'};
+    my $extra_menus = $image_config->{'_extra_menus'}; # TODO - dont access private variable
     my $tree        = $self->tree;
     $_->remove for map $extra_menus->{$_} == 0 ? $tree->get_node($_) || () : (), keys %$extra_menus;
   }
@@ -451,7 +451,7 @@ sub build_imageconfig_form {
   my $image_config = shift;
   my $img_url      = $self->img_url;
   my $hub          = $self->hub;
-  my $extra_menus  = $image_config->{'extra_menus'};
+  my $extra_menus  = $image_config->{'_extra_menus'};
   my $tree         = $self->tree;
   my $form         = $self->get_form;
   my %node_options = ( availability => 1, url => '#', rel => 'multi' );

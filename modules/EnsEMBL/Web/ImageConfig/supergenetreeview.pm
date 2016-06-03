@@ -22,6 +22,10 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub init_extra_menus {
+  shift->remove_extra_menu('display_option');
+}
+
 sub init {
   my $self = shift;
 
@@ -39,7 +43,6 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
   );
 
-  $self->{extra_menus} = {'display_options' => 0};
 }
 
 1;
