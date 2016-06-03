@@ -294,11 +294,13 @@ sub maybe_generate_sprite {
   my $num = 0;
   my %attrs;
   my $outq = '"';
-  while($num<20 and $attrs =~ s/\s*(\w+)=(['"])//) {
-    my ($key,$quot) = ($1,$2);
+  while($num<20 and $attrs =~ s/\s*(\w+)=(\\?)(['"])//) {
+    my ($key,$backslash,$quot) = ($1,$2,$3);
     last unless $attrs =~ s/^([^$quot]*)$quot//;
     $attrs{$key} = $1;
+    $attrs{$key} =~ s/\\$// if $backslash;
     $outq = $quot;
+    $outq = q(\\).$quot if $backslash;
     $num++;
   }
   if($attrs =~ /\S/ or !$attrs{'src'}) {
@@ -397,7 +399,7 @@ sub maybe_generate_sprite {
   $classes = join(' ',@classes) if @classes;
   my $more_attrs = '';
   $more_attrs = join(' ', @more_attrs) if @more_attrs;
-  return qq(<img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="autosprite-src-$s_t $classes" $style $more_attrs/>);
+  return qq(<img src=${outq}data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==$outq class=${outq}autosprite-src-$s_t $classes$outq $style $more_attrs/>);
 }
 
 sub load_config {
