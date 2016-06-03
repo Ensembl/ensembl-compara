@@ -204,31 +204,31 @@ sub _render_reads {
 
   ## Now set some positioning
   my $y_start = $self->{'my_config'}->get('height');
-  $y_start += $text_fits ? -10 : 2;
+  $y_start += $text_fits ? 10 : 2;
   $self->{'my_config'}->set('y_start', $y_start);
   $self->{'my_config'}->set('height', 1);
   $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('vspacing', 0);
-  $self->{'my_config'}->set('y_start', 35);
 
   my $total_count = scalar @$fs;
   my $drawn_count = scalar @$features;
   my $data = {'features' => [], 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
   foreach my $f (@$features) {
-    my $fstart = $f->start;
-    my $fend = $f->end;
+    my $fstart  = $f->start;
+    my $fend    = $f->end;
+    my $strand  = $f->reversed ? -1 : 1;
 
-    next unless $fstart and $fend;
-
+    next unless $fstart and $fend and $strand == $self->strand;
     ## Munge coordinates
-    my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
-    my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
+    my $start  = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
+    my $end    = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
 
     ## Build the feature hash  
     my $fhash = {
                 'start'     => $start,
                 'end'       => $end + 1,
+                'strand'    => $strand,
                 'colour'    => $read_colour,
                 'title'     => $self->_feature_title($f),
                 'arrow'     => {},
@@ -237,7 +237,7 @@ sub _render_reads {
     };
 
     ## Work out details of arrow, if any
-    if (($f->reversed and $fstart >= $slicestart) or (!$f->reversed and $fend <= $sliceend)) {
+    if (($strand == -1 and $fstart >= $slicestart) or ($strand == 1 and $fend <= $sliceend)) {
       $fhash->{'arrow'}{'colour'}     = $self->my_colour('type_' . $self->_read_type($f));
       $fhash->{'arrow'}{'position'}   = $f->reversed ^ ($slicestrand == -1) ? 'start' : 'end';
     }
@@ -685,7 +685,7 @@ sub calc_coverage {
 
   #warn "sample_size = $sample_size";
 
-  my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
+  my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START, $self->strand);
      $coverage = [reverse @$coverage] if $slice->strand == -1;
 
   return $coverage;
@@ -694,7 +694,7 @@ sub calc_coverage {
 use Inline C => <<'END_OF_CALC_COV_C_CODE';
 
 #include "sam.h"
-AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START) {
+AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START, int STRAND) {
   AV *ret_cov = newAV();
   int *coverage = calloc(lbin+1,sizeof(int));
   int i;
@@ -724,6 +724,10 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
     }
 
     f = (bam1_t *)SvIV(SvRV(*elem));
+
+    //if ((f->reversed && STRAND == 1) || (!f->reversed && STRAND == -1)) {
+    //  continue;
+    //}
 
     fstart = f->core.pos+1;
     fend = bam_endpos(f);

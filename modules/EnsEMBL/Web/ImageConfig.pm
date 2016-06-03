@@ -1235,6 +1235,7 @@ sub _add_htslib_track {
   ## Override default renderer (mainly used by trackhubs)
   my %options;
   $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+  $options{'strand'}  = 'b';
  
   $self->_add_file_format_track(
     format      => 'BAM',
