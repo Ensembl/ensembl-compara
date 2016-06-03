@@ -12,11 +12,10 @@ our $VERSION = 1;
 sub precache {
   return {
     'seq-cdna-only' => {
-      loop => 'transcripts',
+      loop => ['species','transcripts'],
       args => {
         conseq_filter => ["off"],
         adorn => "only",
-        species => "Homo_sapiens",
         type => "core",
         config => {
           hide_long_snps => "",
@@ -26,17 +25,15 @@ sub precache {
           translation => 1,
           exons => 1,
           rna => 0,
-          species => "Homo_sapiens",
           snp_display => 1
         }
       }
     },
     'seq-cdna-none' => {
-      loop => 'transcripts',
+      loop => ['species','transcripts'],
       args => {
         conseq_filter => ["off"],
         adorn => "none",
-        species => "Homo_sapiens",
         type => "core",
         config => {
           hide_long_snps => "",
@@ -46,7 +43,6 @@ sub precache {
           translation => 1,
           exons => 1,
           rna => 0,
-          species => "Homo_sapiens",
           snp_display => 1
         }
       }

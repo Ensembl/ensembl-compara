@@ -68,4 +68,17 @@ sub context { return $_[0]->{'_context'}; }
 sub args { return $_[0]->{'_args'}; }
 sub fixup {}
 
+sub loop_species {
+  my ($self,$args) = @_;
+
+  my @out;
+  foreach my $sp (qw(Homo_sapiens Mus_musculus Danio_rerio)) {
+    my %out = %$args;
+    $out{'species'} = $sp;
+    $out{'__name'} = $sp;
+    push @out,\%out;
+  }
+  return \@out;
+}
+
 1;

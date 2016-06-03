@@ -33,17 +33,16 @@ use Bio::EnsEMBL::Gene;
 sub precache {
   return {
     ccds => {
-      loop => "genome",
+      loop => ['species','genome'],
       args => {
         db => "otherfeatures",
-        species => "Homo_sapiens",
         pattern => "[logic_name]",
         label_key => "[biotype]",
         logic_names => ["ccds_import"],
       }
     },
     transcript => {
-      loop => "genome",
+      loop => ['species','genome'],
       args => {
         db => "core",
         logic_names => [qw(
@@ -56,12 +55,11 @@ sub precache {
           proj_havana_ig_gene             proj_ncrna
         )],
         label_key => '[biotype]',
-        species => "Homo_sapiens",
         pattern => '[biotype]',
       }
     },
     gencode => {
-      loop => "genome",
+      loop => ['species','genome'],
       args => {
         logic_names => [qw(
           assembly_patch_ensembl    ensembl      ensembl_havana_gene
@@ -73,17 +71,15 @@ sub precache {
           proj_havana_ig_gene       proj_ncrna
         )],
         label_key => "[biotype]",
-        species => "Homo_sapiens",
         only_attrib => "gencode_basic"
       }
     },
     genscan => {
-      loop => "genome",
+      loop => ['species','genome'],
       args => {
         db => "core",
         logic_names => ['genscan'],
         label_key => "[display_label]",
-        species => "Homo_sapiens",
         pattern => "genscan",
         prediction => 1
       }

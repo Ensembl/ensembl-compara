@@ -111,12 +111,25 @@ sub precache {
   my ($self,$kind,$i,$n,$r) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
-  my $fn = "loop_$conf->{'loop'}";
-  my $all_parts = $self->{'impl'}->$fn($conf->{'args'});
+  my $fns = $conf->{'loop'};
+  $fns = [$fns] unless ref $fns eq 'ARRAY';
+  my @all = ($conf->{'args'});
+  foreach my $lfn (@$fns) {
+    my $fn = "loop_$lfn";
+    my @next;
+    foreach my $p (@all) {
+      push @next,@{$self->{'impl'}->$fn($p)};
+    }
+    foreach my $n (@next) {
+      $n->{'__full_name'} = [@{$n->{'__full_name'}||=[]}];
+      push @{$n->{'__full_name'}},$n->{'__name'};
+    }
+    @all = @next;
+  }
   my @parts;
-  for(my $k=0;$k<@$all_parts;$k++) {
+  for(my $k=0;$k<@all;$k++) {
     next unless ($k % $n) == $i;
-    push @parts,$all_parts->[$k];
+    push @parts,$all[$k];
   }
   my $TIME_TOT = 0;
   my $TIME_NUM  = 0;
@@ -138,7 +151,7 @@ sub precache {
       $TIME_TOT += $TIME_B - $TIME_A;
       $TIME_NUM++;
       warn sprintf("  -> %s %s [%d] %6dms avg %6dms\n",
-                    $kind,$a->{'__name'},$i,($TIME_B-$TIME_A)*1000,
+                    $kind,join(' ',@{$a->{'__full_name'}}),$i,($TIME_B-$TIME_A)*1000,
                     $TIME_TOT*1000/$TIME_NUM);
     }
   }

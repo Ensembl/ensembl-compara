@@ -22,9 +22,8 @@ sub colour_key { return lc $_[1]->marker->type; }
 sub precache {
   return {
     markers => {
-      loop => 'genome',
+      loop => ['species','genome'],
       args => {
-        species => "Homo_sapiens"
       }
     }
   }

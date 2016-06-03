@@ -37,9 +37,8 @@ sub fixup {
 sub precache {
   return {
     '1kgindels' => {
-      loop => 'genome',
+      loop => ['species','genome'],
       args => {
-        species => 'Homo_sapiens',
         id => 'variation_set_1kg_3',
         config => {
           no_label => 1,
@@ -52,9 +51,8 @@ sub precache {
       }
     },
     'ph-short' => {
-      loop => 'genome',
+      loop => ['species','genome'],
       args => {
-        'species' => 'Homo_sapiens',
         'id' => 'variation_set_ph_variants',
         'config' => {
           'no_label' => 1,
