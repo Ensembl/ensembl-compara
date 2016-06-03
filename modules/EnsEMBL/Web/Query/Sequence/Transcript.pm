@@ -20,20 +20,13 @@ sub precache {
         type => "core",
         config => {
           hide_long_snps => "",
-          number => 1,
           utr => 1,
-          transcript => 1,
           codons => 1,
-          exons_case => 0,
           hide_rare_snps => "off",
           translation => 1,
           exons => 1,
-          maintain_colour => 1,
           rna => 0,
-          line_numbering => "on",
           species => "Homo_sapiens",
-          coding_seq => 1,
-          display_width => 60,
           snp_display => 1
         }
       }
@@ -47,20 +40,13 @@ sub precache {
         type => "core",
         config => {
           hide_long_snps => "",
-          number => 1,
           utr => 1,
-          transcript => 1,
           codons => 1,
-          exons_case => 0,
           hide_rare_snps => "off",
           translation => 1,
           exons => 1,
-          maintain_colour => 1,
           rna => 0,
-          line_numbering => "on",
           species => "Homo_sapiens",
-          coding_seq => 1,
-          display_width => 60,
           snp_display => 1
         }
       }
@@ -248,9 +234,9 @@ sub get {
   }   
   delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later
 
-  $config->{'length'}    = $length;
-  $config->{'seq_order'} = [ $config->{'species'} ];
-  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
+#  $config->{'length'}    = $length;
+#  $config->{'seq_order'} = [ $config->{'species'} ];
+#  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
 
   for (0..$length - 1) {
     # Set default vaules

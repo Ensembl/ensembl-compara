@@ -27,6 +27,10 @@ use List::Util qw(max);
 sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
+  my %qconfig;
+  $qconfig{$_} = $config->{$_}
+      for(qw(hide_long_snps utr codons hide_rare_snps translation
+             exons rna species snp_display));
   my $hub = $self->hub;
   my $data = $hub->get_query('Sequence::Transcript')->go($self,{
     species => $hub->species,
@@ -35,6 +39,7 @@ sub get_sequence_data {
     config => $config,
     adorn => $adorn,
     conseq_filter => [$hub->param('consequence_filter')],
+    config => \%qconfig,
   });
   return ($data->[0]{'sequence'},$data->[0]{'markup'});
 }
