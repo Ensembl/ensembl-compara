@@ -77,6 +77,7 @@ sub init {
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',
+      colours     => $self->species_defs->colour('variation'),
     });
   }
   

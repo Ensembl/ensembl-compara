@@ -82,9 +82,9 @@ sub _init {
         start => $start,
         end => $end,
         label => $vf->name,
-        colour => 'violet',
+        colour => $self->my_colour($vf->display_consequence),
         href => '#',
-        score => $f->{'value'}
+        score => -log($f->{'value'})/log(10)
       };
     }
   }
