@@ -48,6 +48,24 @@ sub gene_adaptor {
   return $self->_get_adaptor('get_GeneAdaptor',$type||'core',$species);
 }
 
+sub transcript_adaptor {
+  my ($self,$species,$type) = @_;
+
+  return $self->_get_adaptor('get_TranscriptAdaptor',$type||'core',$species);
+}
+
+sub variation_feature_adaptor {
+  my ($self,$species) = @_;
+
+  return $self->_get_adaptor('get_VariationFeatureAdaptor','variation',$species);
+}
+
+sub transcript_variation_adaptor {
+  my ($self,$species) = @_;
+
+  return $self->_get_adaptor('get_TranscriptVariationAdaptor','variation',$species);
+}
+
 sub slice_by_name {
   my ($self,$species,$name) = @_;
 
@@ -59,6 +77,13 @@ sub gene_by_stableid {
 
   return $self->gene_adaptor($species,$type)->fetch_by_stable_id($id);
 }
+
+sub transcript_by_stableid {
+  my ($self,$species,$type,$id) = @_;
+
+  return $self->transcript_adaptor($species,$type)->fetch_by_stable_id($id);
+}
+
 
 sub compara_member {
   my ($self,$id) = @_;
