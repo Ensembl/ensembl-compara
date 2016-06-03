@@ -187,10 +187,24 @@ sub delete_remote {
   return undef;
 }
 
+sub mass_update {
+### Catchall method for enable/disable/delete buttons
+  my $self = shift;
+  if ($self->hub->param('enable_button')) {
+    $self->enable_files;
+  }
+  elsif ($self->hub->param('disable_button')) {
+    $self->disable_files;
+  }
+  elsif ($self->hub->param('delete_button')) {
+    $self->delete_files;
+  }
+}
+
 sub delete_files {
   my $self = shift;
   my @files = $self->hub->param('files');
-  warn ">>> DELETING FILES @files";
+  #warn ">>> DELETING FILES @files";
   foreach (@files) {
     my ($source, $code, $id) = split('_', $_);
     if ($source eq 'upload') {

@@ -58,13 +58,15 @@ sub content {
   my $not_found    = 0;
   my (@data, @rows);  
 
-  my $html = '<div class="js_panel" id="ManageData">';
+  my $html = sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+  $html .= $self->_add_buttons;
  
   my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
   push @data, map $user->get_records($_), qw(uploads urls) if $user;
   push @data, @temp_data;
   
+  my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
   if (scalar @data) {
 
     #$html .= $self->_add_buttons;
@@ -152,7 +154,7 @@ sub content {
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
   }
-  $html .= '</div>';
+  $html .= '</form></div>';
 
   return $html;
 }
@@ -188,15 +190,15 @@ sub _add_buttons {
   my $self    = shift;
   my $hub     = $self->hub;
 
-  my $html = '<div class="component-tools tool_buttons"><b>Update selected</b>: ';
+  my $html = '<div class="ff-inline tool_buttons"><b>Update selected</b>: ';
+
   my @buttons = qw(enable disable delete);
 
   foreach (@buttons) {
-    $html .= sprintf('<div class="modal_link disabled %s">%s</div>',
-                      $_, ucfirst($_));
+    $html .= sprintf '<input type="submit" name="%s_button" value="%s" class="%s fbutton disabled modal_link">', 
+                        $_, ucfirst($_), $_;
   }
-
-  $html .= '</div>';  
+  $html .= '</div>';
 
   return $html;
 }
@@ -310,7 +312,7 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
-  my $checkbox = sprintf '<input type="checkbox" class="manage_files" value="%s_%s" />', $file->{'type'}, $file->{'code'};
+  my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $file->{'type'}, $file->{'code'};
 
   return {
     check   => $checkbox,
