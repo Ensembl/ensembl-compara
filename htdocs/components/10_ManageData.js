@@ -21,13 +21,7 @@ Ensembl.Panel.ManageData = Ensembl.Panel.extend({
   init: function () {
     var panel = this;
 
-    this.base.apply(this, arguments);
-
-    var files = $('input.manage_files', this.el);
-
-    if (!files.length) {
-      return;
-    }
-
   }
+
 });
+
