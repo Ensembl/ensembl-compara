@@ -55,7 +55,8 @@ sub content {
 
   $self->add_entry({ label => $desc }) if $desc && $desc =~ s/^>//;
 
-  #Uniprot can't deal with versions in accessions
+  #Uniprot can't deal with versions in accessions, but the Location/Genome link needs them
+  my $orig_id = $id;
   if ($hit_db_name =~ /^Uniprot/){
     $id =~ s/(\w*)\.\d+/$1/;
   }
@@ -80,7 +81,7 @@ sub content {
       'type'    => 'Location',
       'action'  => 'Genome',
       'ftype'   => $object_type,
-      'id'      => $id,
+      'id'      => $orig_id,
       'db'      => $db,
       '__clear' => 1
     })
