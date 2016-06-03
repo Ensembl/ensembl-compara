@@ -65,7 +65,6 @@ CREATE TABLE method_link_species_set_attr (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-ALTER TABLE method_link_species_set_tag ADD KEY (tag);
 
 # Populate the new table with NULLs
 INSERT IGNORE INTO method_link_species_set_attr (method_link_species_set_id) SELECT method_link_species_set_id FROM method_link_species_set_tag
