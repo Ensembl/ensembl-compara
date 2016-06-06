@@ -114,7 +114,7 @@ sub default_options {
         'HMMer_classify_capacity' => 100,
 
         # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
 
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara1/mm14_ensembl_compara_master', };
