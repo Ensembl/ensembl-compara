@@ -81,7 +81,7 @@ sub upload_or_attach {
       $url_params->{'action'} = $new_action;
     }
     else {
-      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
+      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $hub->param('trackline') || '', 'registry' => $hub->param('registry') || 0);
       my $attachable;
 
       if ($attach eq 'error') {
