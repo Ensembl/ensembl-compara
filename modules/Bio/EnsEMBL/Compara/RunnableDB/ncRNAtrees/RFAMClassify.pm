@@ -192,7 +192,7 @@ sub build_hash_models {
       my $family_id = $family_ids[0];
       if (defined $family_id) {
         $transcript_model_id = $family_id;
-      } else {
+      } elsif (defined $gene_description) {
         if ($gene_description =~ /\w+\-(mir-\S+)\ / || $gene_description =~ /\w+\-(let-\S+)\ /) {
           # We take the mir and let ids from the gene description
           $transcript_model_id = $1;
@@ -203,6 +203,8 @@ sub build_hash_models {
         } else {
             print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n" if ($self->debug);
         }
+      } else {
+        print STDERR "$transcript_model_id has no description. Cannot guess its family\n" if ($self->debug);
       }
     }
     # A simple hash classified by the Acc model ids
