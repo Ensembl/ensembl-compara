@@ -182,8 +182,7 @@ sub add_userdata_icon {
   my $hub       = $self->hub;
   my $session = $hub->session;
 
-  my $has_data = !!grep $session->get_data(type => $_), qw(upload url);
-  my $icon_key = $has_data ? 'userdata_manage' : 'userdata_add';
+  my $icon_key = 'userdata';
   my $data_url  = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
   return {
           'href'      => $data_url,
