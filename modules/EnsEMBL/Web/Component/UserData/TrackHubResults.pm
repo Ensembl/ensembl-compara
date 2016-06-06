@@ -152,8 +152,8 @@ sub content {
           $button = qq(<p class="warn button float-right"><a href="$config_url#$anchor">$label</a></p>);
         }
         else {
-          my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s', $species, $species, $_->{'hub'}{'url'});
-        $button = qq(<p class="button float-right"><a href="$attachment_url" class="modal_link">Attach this hub</a></p>);
+          my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s;registry=1', $species, $species, $_->{'hub'}{'url'});
+          $button = qq(<p class="button float-right"><a href="$attachment_url" class="modal_link">Attach this hub</a></p>);
         }
 
         $html .= sprintf('<div class="plain-box">
