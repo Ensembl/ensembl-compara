@@ -38,6 +38,9 @@ UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.division 
 -- Delete old values
 DELETE FROM gene_tree_root_tag WHERE tag IN ( 'model_name','division');
 
+-- For the foreign key
+ALTER TABLE gene_tree_root_attr ADD KEY (lca_node_id);
+
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_b.sql|gene_tree_root_attr');

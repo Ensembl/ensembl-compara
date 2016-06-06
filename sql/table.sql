@@ -1536,7 +1536,8 @@ CREATE TABLE `gene_tree_root_attr` (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
   FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),
 
-  PRIMARY KEY (root_id)
+  PRIMARY KEY (root_id),
+  KEY (lca_node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
