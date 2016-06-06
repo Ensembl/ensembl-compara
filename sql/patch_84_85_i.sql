@@ -93,8 +93,6 @@ CREATE TABLE species_tree_node_attr (
   PRIMARY KEY (node_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-ALTER TABLE species_tree_node_tag ADD KEY (tag);
-
 # Populate the new table with NULLs
 INSERT IGNORE INTO species_tree_node_attr (node_id) SELECT node_id FROM species_tree_node_tag 
   WHERE tag IN ("nb_long_genes","nb_short_genes","avg_dupscore","avg_dupscore_nondub","nb_dubious_nodes","nb_dup_nodes","nb_genes","nb_genes_in_tree",
