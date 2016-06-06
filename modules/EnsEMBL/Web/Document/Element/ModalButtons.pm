@@ -30,7 +30,7 @@ sub label_classes {
     'Load configuration'       => 'config-load',
     'Reset configuration'      => 'config-reset',
     'Reset track order'        => 'order-reset',
-    'Add your data'            => 'data',
+    'Custom tracks'            => 'data',
   };
 }
 
@@ -89,11 +89,11 @@ sub init {
       }
       
       $self->add_entry({
-        caption => 'Add your data',
+        caption => 'Custom tracks',
         class   => 'modal_link',
         url     => $hub->url({
           type    => 'UserData',
-          action  => 'SelectFile',
+          action  => 'ManageData',
           __clear => 1
         })
       });
