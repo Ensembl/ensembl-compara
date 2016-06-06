@@ -115,6 +115,14 @@ sub default_options {
         'taxlevels_protists'        => ['Alveolata', 'Amoebozoa', 'Choanoflagellida', 'Cryptophyta', 'Fornicata', 'Haptophyceae', 'Kinetoplastida', 'Rhizaria', 'Rhodophyta', 'Stramenopiles'],
         'taxlevels_vb'              => ['Calyptratae', 'Culicidae'],
 
+    # Gene-order conservation analysis:
+        'goc_taxlevels'             => [],  # this is the default default
+        'goc_taxlevels_fungi'       => [],
+        'goc_taxlevels_metazoa'     => [],
+        'goc_taxlevels_plants'      => [],
+        'goc_taxlevels_protists'    => [],
+        'goc_taxlevels_vb'          => [],
+
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 1,
@@ -307,6 +315,11 @@ sub tweak_analyses {
     if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'taxlevels_'.$self->o('division')})) {
         if (stringify($self->default_options()->{'taxlevels'}) eq stringify($self->o('taxlevels'))) {
             $analyses_by_name->{'group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
+        }
+    }
+    if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'goc_taxlevels_'.$self->o('division')})) {
+        if (stringify($self->default_options()->{'goc_taxlevels'}) eq stringify($self->o('goc_taxlevels'))) {
+            $analyses_by_name->{'goc_group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
         }
     }
 }
