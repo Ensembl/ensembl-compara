@@ -341,6 +341,27 @@ sub _render_features {
   return $html;
 }
 
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  my $params = {
+                'type'    => 'UserData',
+                'action'  => 'FeatureView',
+                };
+
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Add features',
+                    'class'   => 'add',
+                    'modal'   => 1
+                    };
+
+  return @buttons;
+}
+
+
 sub _feature_table {
   my ($self, $feat_type, $feature_set, $default_column_info) = @_;
   my $html;
