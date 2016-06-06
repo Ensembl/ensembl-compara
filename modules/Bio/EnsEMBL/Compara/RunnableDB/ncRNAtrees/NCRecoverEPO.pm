@@ -328,13 +328,13 @@ sub run_ncrecoverepo {
 sub run_low_coverage_best_in_alignment {
   my $self = shift;
 
-  $self->param('epo_low_cov_gdbs', {});
+  my $epo_low_cov_gdbs = {};
   $self->compara_dba->dbc->disconnect_if_idle();
 
   my $epo_low_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE'); ## This is now an array
   for my $epo_low_mlss (@{$epo_low_mlsss}) {
       foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
-          $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
+          $epo_low_cov_gdbs->{$genome_db->dbID}++;
       }
   }
 
@@ -344,7 +344,7 @@ sub run_low_coverage_best_in_alignment {
   # First round to get the candidate GenomicAlignTrees
   # We first iterate over the interesting genome_dbs to group the
   # connections to the same core database
-  foreach my $gdb_id (keys %{$self->param('epo_low_cov_gdbs')}) {
+  foreach my $gdb_id (keys %{$epo_low_cov_gdbs}) {
    next if (defined($self->param('epo_gdb')->{$gdb_id}));
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
@@ -368,7 +368,7 @@ sub run_low_coverage_best_in_alignment {
     foreach my $genomic_align_block (@$genomic_align_blocks) {
       if (!defined($genomic_align_block->dbID)) {
         # It's considered 2x in the epo_low_cov, so add to the list and skip
-        $self->param('epo_low_cov_gdbs')->{$gdb_id}++;
+        $epo_low_cov_gdbs->{$gdb_id}++;
         next;
       }
       my $epo_low_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
@@ -407,7 +407,7 @@ sub run_low_coverage_best_in_alignment {
 
   # Second round to get the low-covs on the max_gabID
   # We apply the same trick as above
-  foreach my $gdb_id (keys %{$self->param('epo_low_cov_gdbs')}) {
+  foreach my $gdb_id (keys %{$epo_low_cov_gdbs}) {
    next unless (defined($self->param('epo_gdb')->{$gdb_id}));
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
