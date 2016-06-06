@@ -273,7 +273,7 @@ sub load_mirbase_families {
     $self->throw("error deleting previously downloaded file $!\n");
   }
 
-  my $cmd = "gunzip $tmp_file";
+  $cmd = "gunzip $tmp_file";
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
     $self->throw("error expanding mirbase families $!\n");
