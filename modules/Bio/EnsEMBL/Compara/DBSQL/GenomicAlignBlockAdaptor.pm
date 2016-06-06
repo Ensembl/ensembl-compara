@@ -1395,7 +1395,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
                 $gab->reference_genomic_align($ref_genomic_align);
                 push(@gabs, $gab);
             }
-            last if ( defined $limit && scalar(@gabs) >= $limit );
+            last if ( $limit && scalar(@gabs) >= $limit );
         }
     }
     return \@gabs;
