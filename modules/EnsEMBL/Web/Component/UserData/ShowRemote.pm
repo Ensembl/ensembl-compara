@@ -48,7 +48,7 @@ sub content {
     $fieldset->add_field({'type'=>'checkbox', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @urls;
   }
 
-  $fieldset->add_notes("You have no temporary data sources to save. Click on 'Add your data' in the left-hand menu to add sources.") unless $has_data;
+  $fieldset->add_notes("You have no temporary data sources to save. Click on 'Custom tracks' in the left-hand menu to add sources.") unless $has_data;
 
   return $form->render;
 }

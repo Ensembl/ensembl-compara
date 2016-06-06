@@ -100,7 +100,7 @@ sub process {
           my $key       = sprintf('hub_%s', $p);
 
           if ($messages{$key}) {
-            ## Open control panel at Manage Your Data if chosen species not supported
+            ## Open control panel at Custom tracks if chosen species not supported
             if ($params->{'species_flag'} && $params->{'species_flag'} eq 'other_only') {
               $anchor = 'modal_user_data';
             }
