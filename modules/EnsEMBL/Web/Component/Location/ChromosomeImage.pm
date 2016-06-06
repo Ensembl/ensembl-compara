@@ -157,4 +157,24 @@ sub legend {
   return;
 }
 
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  my $params = {
+                'type'    => 'UserData',
+                'action'  => 'FeatureView',
+                };
+
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Add features',
+                    'class'   => 'add',
+                    'modal'   => 1
+                    };
+
+  return @buttons;
+}
+
 1;
