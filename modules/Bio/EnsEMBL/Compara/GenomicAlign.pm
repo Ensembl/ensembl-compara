@@ -176,6 +176,9 @@ use Bio::EnsEMBL::Mapper;
 
 use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
+use Data::Dumper;
+$Data::Dumper::Pad = '<br>';
+
 =head2 new (CONSTRUCTOR)
 
   Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
@@ -257,7 +260,8 @@ sub new {
 
     $self->adaptor( $adaptor ) if defined $adaptor;
     $self->cigar_line( $cigar_line ) if defined $cigar_line;
-    
+    $self->aligned_sequence( $aligned_sequence ) if defined $aligned_sequence;
+
     $self->dbID($dbID) if (defined($dbID));
     $self->genomic_align_block($genomic_align_block) if (defined($genomic_align_block));
     $self->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
@@ -673,7 +677,11 @@ sub length {
 sub cigar_line {
   my ($self, $arg) = @_;
 
+  my $debug = 0;
+  print "*CIGAR LINE SUB!!!!<br>" if ( $debug >= 2 );
+
   if (defined($arg)) {
+      print "setting new cigar...<br>" if ( $debug >= 1 );
     if ($arg) {
       $self->{'cigar_line'} = $arg;
     } else {
@@ -681,24 +689,31 @@ sub cigar_line {
     }
     $self->{'cigar_arrayref'} = undef;
 
-  } elsif (!defined($self->{'cigar_line'})) {
+  } elsif (!defined($self->{'cigar_line'}) || $self->{'cigar_line'} eq '') {
     # Try to get the cigar_line from other sources...
+      if ( $debug >= 1 ) {
+    	  print "trying to find cigar from elsewhere.......";
+    	  my $is_aln_seq = defined($self->{'aligned_sequence'}) ? "defined" : "undef";
+    	  print "aligned_sequence is $is_aln_seq .......<br>";
+      }
     if (defined($self->{'aligned_sequence'})) {
-      # ...from the aligned sequence
-
-
-      my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
-      $self->cigar_line($cigar_line);
+        # ...from the aligned sequence
+	   print "aligned seq??<br>" if ( $debug >= 2 );
+        my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
+        $self->cigar_line($cigar_line);
     
     } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-      # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-      $self->adaptor->retrieve_all_direct_attributes($self);
+        # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+	   print "Trying to find cigar line in DB!!!!!!<db>" if ( $debug >= 2 );
+	   $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
       warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->cigar_line".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
+
+  print "returning cigar: " . $self->{'cigar_line'} . "<br>" if ( $debug >= 2 );
 
   return $self->{'cigar_line'};
 }
@@ -1038,7 +1053,26 @@ sub _print {    ## DEPRECATED
   
   $FILEH ||= \*STDOUT;
 
-  print $FILEH
+#   print $FILEH
+# "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
+#   dbID = ".($self->dbID or "-undef-")."
+#   adaptor = ".($self->adaptor or "-undef-")."
+#   genomic_align_block = ".($self->genomic_align_block or "-undef-")."
+#   genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
+#   method_link_species_set = ".($self->method_link_species_set or "-undef-")."
+#   method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
+#   dnafrag = ".($self->dnafrag or "-undef-")."
+#   dnafrag_id = ".($self->dnafrag_id or "-undef-")."
+#   dnafrag_start = ".($self->dnafrag_start or "-undef-")."
+#   dnafrag_end = ".($self->dnafrag_end or "-undef-")."
+#   dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
+#   cigar_line = ".($self->cigar_line or "-undef-")."
+#   visible = ".($self->visible or "-undef-")."
+#   original_sequence = ".($self->original_sequence or "-undef-")."
+#   aligned_sequence = ".($self->aligned_sequence or "-undef-")."
+  
+# ";
+    print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
   dbID = ".($self->dbID or "-undef-")."
   adaptor = ".($self->adaptor or "-undef-")."
@@ -1046,8 +1080,6 @@ sub _print {    ## DEPRECATED
   genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
   method_link_species_set = ".($self->method_link_species_set or "-undef-")."
   method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
-  dnafrag = ".($self->dnafrag or "-undef-")."
-  dnafrag_id = ".($self->dnafrag_id or "-undef-")."
   dnafrag_start = ".($self->dnafrag_start or "-undef-")."
   dnafrag_end = ".($self->dnafrag_end or "-undef-")."
   dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
@@ -1057,6 +1089,7 @@ sub _print {    ## DEPRECATED
   aligned_sequence = ".($self->aligned_sequence or "-undef-")."
   
 ";
+
   verbose($verbose);
 
 }
@@ -1310,7 +1343,10 @@ sub get_Mapper {
       }
     } else {
       my $cigar_line = $self->cigar_line;
+      #print "-------GENOMICALIGN---------";
+      #print $self->display_id . "\tcigar: '" . $self->cigar_line . "'\n";
       if (!$cigar_line) {
+	       #print Dumper $self;
         throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
       my $alignment_position = (eval{$self->genomic_align_block->start} or 1);
@@ -1729,6 +1765,8 @@ sub restrict {
   my $number_of_columns_to_trim_from_the_start = $start - 1;
   my $number_of_columns_to_trim_from_the_end = $aligned_seq_length - $end;
 
+  #print "removing $number_of_columns_to_trim_from_the_start bp from start, $number_of_columns_to_trim_from_the_end from end<br>";
+
   my $cigar_arrayref = [@{$self->get_cigar_arrayref}]; # Make a new copy
 
   ## Trim start of cigar_line if needed
@@ -1842,9 +1880,13 @@ sub restrict {
   }
 
   ## Save genomic_align's cigar_line
-  $restricted_genomic_align->{aligned_sequence} = undef;
+  my $l = ($end-$start) > 0 ? ($end-$start) : ($start-$end);
+  #print "Adding new aligned_sequence!! $l bp from $start-1 <br>";
+  $restricted_genomic_align->{aligned_sequence} = substr( $self->{aligned_sequence}, $start, $l );
   $restricted_genomic_align->{cigar_line} = join("", @$cigar_arrayref);
   $restricted_genomic_align->{cigar_arrayref} = $cigar_arrayref;
+
+  #print Dumper {'restricted_genomic_align::GenomicAlign::1867' => $restricted_genomic_align};
 
   return $restricted_genomic_align;
 }

@@ -127,6 +127,7 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::HAL::HALAdaptor;
@@ -418,7 +419,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
-  if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
+  if ( $method_link_species_set->method->type =~ /CACTUS_HAL/ ) {
       throw( "fetch_all_by_MethodLinkSpeciesSet is not supported for this method type (CACTUS_HAL)\n" );
   #       my @genome_dbs = @{ $method_link_species_set->species_set_obj->genome_dbs };
   #       my $ref_gdb = pop( @genome_dbs );
@@ -682,11 +683,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $query_dnafrag_id = $dnafrag->dbID;
   throw("[$dnafrag] has no dbID") if (!$query_dnafrag_id);
 
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
   throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
       unless ($method_link_species_set and ref $method_link_species_set and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
-  if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
+  if ( $method_link_species_set->method->type =~ /CACTUS_HAL/ ) {
         #return $self->fetch_all_by_MethodLinkSpeciesSet_Slice( $method_link_species_set, $dnafrag->slice );
 
         my $hal_file = $method_link_species_set->url;
@@ -694,7 +696,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         
         my $ref = $dnafrag->genome_db;
         my @targets = grep { $_->dbID != $ref->dbID } @{ $method_link_species_set->species_set_obj->genome_dbs };
-        
+
         my $block_start = defined $start ? $start : $dnafrag->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag->slice->end;
         return $self->_get_GenomicAlignBlocks_from_HAL( $hal_file, $ref, \@targets, $dnafrag->name, $block_start, $block_end, $method_link_species_set, $limit_number );
@@ -1256,74 +1258,139 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $hal_file, $ref_gdb, $targets_gdb, $seq_region, $start, $end, $mlss, $limit, $target_seq_reg) = @_;
     my @gabs = ();
 
+    my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
+
     my %species_map = %{ eval $mlss->get_tagvalue('HAL_mapping') }; # read species name mapping hash from mlss_tag
     my $ref = $species_map{ $ref_gdb->dbID };
 
     my $hal_fh = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file)->hal_filehandle;
+    my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $dnafrag_adaptor);
+
+    my $id_base  = $mlss->dbID * 10000000000;
+    my $id_count = 0;
 
     foreach my $target_gdb (@$targets_gdb) {
         my $target = $species_map{ $target_gdb->dbID };
-        print "hal_file is $hal_file\n";
-        print "ref is $ref\n";
-        print "target is $target\n";
-        print "seq_region is $seq_region\n";
-        my $tsr = $target_seq_reg || "undef";
-        print "target_seq_region is $tsr\n";
-        print "start is $start\n";
-        print "end is $end\n";
+	
+        # my $linebreak = "<br>";
+
+        # print "hal_file is $hal_file $linebreak";
+        # print "ref is $ref $linebreak";
+        # print "target is $target $linebreak";
+        # print "seq_region is $hal_seq_reg $linebreak";
+        # print "target_seq_region is $target_seq_reg $linebreak" if (defined $target_seq_reg);
+        # print "start is $start $linebreak";
+        # print "end is $end $linebreak";
+
         my @blocks;
         if ( $target_seq_reg ){
-          @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $seq_region, $start, $end, "chr$target_seq_reg");
-          @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $seq_region, $start, $end, $target_seq_reg) unless ( defined $blocks[0] );
+	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $dnafrag_adaptor );
+            @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
         }
         else {
-          @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $seq_region, $start, $end);
+            @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
         }
 
-        print Dumper \@blocks;
+        #print Dumper \@blocks;
         
         foreach my $entry (@blocks) {
+	    #
+	    # $entry = (target_seq_region, n, n, length,);
+	    #
+
             if (defined $entry) {
+                next if (@$entry[3] < 200 );
+
+		        #print Dumper $entry;
                 my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
                     -length => @$entry[3],
-                    -method_link_species_set => $mlss
+                    -method_link_species_set => $mlss,
+		            -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
                 );
+		
+		        # Create cigar strings
+		        my ($ref_aln_seq, $target_aln_seq) = ( $entry->[6], $entry->[5] );
+		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
+		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
+		        #print "REF CIGAR: $ref_cigar\nTARG CIGAR: $target_cigar\n";
+
                 # normalize seq by removing "chr" prefix.
-                # FIXME: remove
-                my $seq_name = @$entry[0];
-                $seq_name =~ s/^chr//;
-                # next if ( defined $target_seq_reg && $seq_name ne $target_seq_reg );
+                my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
+		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
+                next unless ( defined $target_dnafrag );
                 my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                     -genomic_align_block => $gab,
-                    -aligned_sequence => @$entry[5],
-                    -dnafrag => Bio::EnsEMBL::Compara::DnaFrag->new(
-                         -name => $seq_name,
-                         -genome_db => $target_gdb,
-                         -coord_system_name => "chromosome"),
+                    -aligned_sequence => $target_aln_seq, #@$entry[5],
+                    -dnafrag => $target_dnafrag,
                     -dnafrag_start => @$entry[2],
                     -dnafrag_end => @$entry[2] + @$entry[3],
-                    -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1
-                    );
-                my $ref_seq_name = $seq_region;
-                $ref_seq_name =~ s/^chr//;
+                    -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
+		            -cigar_line => $target_cigar,
+                    -dbID => $id_base + $id_count,
+		        );
+                $id_count++;
+
+                my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
+		        my $ref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($ref_gdb, $ref_seq_name);
+                print "fetch_by_GenomeDB_and_name( " . $ref_gdb->name . ", $ref_seq_name )\n" if ( !defined $ref_dnafrag );
                 my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                     -genomic_align_block => $gab,
-                    -aligned_sequence => @$entry[6],
-                    -dnafrag => Bio::EnsEMBL::Compara::DnaFrag->new(
-                         -name => $ref_seq_name,
-                         -genome_db => $ref_gdb,
-                         -coord_system_name => "chromosome"),
+                    -aligned_sequence => $ref_aln_seq, #@$entry[6],
+                    -dnafrag => $ref_dnafrag,
                     -dnafrag_start => @$entry[1],
                     -dnafrag_end => @$entry[1] + @$entry[3],
-                    -dnafrag_strand => 1);
-                $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
+                    -dnafrag_strand => 1,
+		            -cigar_line => $ref_cigar,
+                    -dbID => $id_base + $id_count,
+		        );
+                $id_count++;
+
+        		#print "** targ ga: aligned_sequence: " . $genomic_align->{'aligned_sequence'} . "<br>";
+        		#print "**  ref ga: aligned_sequence: " . $ref_genomic_align->{'aligned_sequence'} . "<br>";
+
+		        $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
                 $gab->reference_genomic_align($ref_genomic_align);
                 push(@gabs, $gab);
             }
             last if ( $limit && scalar(@gabs) >= $limit );
         }
     }
+    
+    #my $gas = $gabs[1]->get_all_GenomicAligns;
+    #foreach my $ga ( @$gas ) {
+    #	print "* aligned_sequence: '" . $ga->{'aligned_sequence'} . "'     cigar_line: '" . $ga->cigar_line . "'<br>";
+    #}
+
+    #print Dumper {"returning gabs[0]::GABAdaptor::1428" => $gabs[0]};
     return \@gabs;
+}
+
+sub _seq_region_ensembl_ucsc {
+    my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
+
+    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name( $gdb, $seq_reg );
+    my @syns = @{ $dnafrag->slice->get_all_synonyms('UCSC') };
+
+    unless( defined $syns[0] ) {
+	   print "Can't find any UCSC synonyms for $seq_reg in " . $gdb->name . ".. Trying chr$seq_reg...\n";
+	   return "chr" . $seq_reg; # !!! REMOVE: when all species have synonyms in core DBs
+    }
+
+    return $syns[0]->name;
+}
+
+sub _seq_region_ucsc_ensembl {
+    my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
+
+    my $species_name = $gdb->name;
+    my $slice_adaptor = $gdb->db_adaptor->get_SliceAdaptor;
+    my $slice = $slice_adaptor->fetch_by_region('chromosome', $seq_reg);
+    if ( defined $slice ) {
+        my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+        return $dnafrag->name;
+    }
+    $seq_reg =~ s/chr//; # !!! REMOVE: when all species have synonyms in core DBs
+    return $seq_reg;
 }
 
 1;

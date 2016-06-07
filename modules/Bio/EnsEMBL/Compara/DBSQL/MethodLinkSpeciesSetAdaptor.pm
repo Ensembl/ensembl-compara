@@ -445,7 +445,7 @@ sub fetch_all_by_method_link_type_GenomeDB {
                        $mouse_genome_db])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link and the given set of
-               Bio::EnsEMBL::Compara::GenomeDB objects
+               Bio::EnsEMBL::Compara::GenomeDB objects.
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
@@ -470,7 +470,6 @@ sub fetch_by_method_link_type_GenomeDBs {
 
     return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
 }
-
 
 =head2 fetch_by_method_link_type_genome_db_ids
 
