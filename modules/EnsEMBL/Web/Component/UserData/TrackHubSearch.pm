@@ -57,10 +57,7 @@ sub content {
   my ($rest_species, $error) = $rest->fetch($endpoint);
 
   if ($error) {
-    $html = $self->warning_panel('Oops!', 'Sorry, we are unable to fetch data from the Track Hub Registry at the moment');
-
-    ## Show internally configured list
-    $html .= $self->_show_configured_hubs;
+    $html = $self->warning_panel('Oops!', 'Sorry, we are unable to fetch data from the Track Hub Registry at the moment. You may wish to <a href="http://www.trackhubregistry.org/" rel="external">visit the registry</a> directly to search for a hub.');
   }
   else {
     my $ok_species   = {};
@@ -144,77 +141,6 @@ sub content {
 
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Search the Track Hub Registry</h2>%s', $html;
 
-}
-
-sub _show_configured_hubs {
-    my $self          = shift;
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-
-  ## Get current Ensembl species
-  my $species   = $hub->species;
-  my $assembly  = $species_defs->ASSEMBLY_VERSION;
-
-  my $trackhubs = [];
-  my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
-
-  ## This is all a bit hacky, but makes configuration of multi-species trackhubs simpler
-  my %sp_hubs = (%{$species_defs->PUBLIC_TRACKHUBS||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_TRACKHUBS'));
-
-  ## Get hub information
-  if (keys %sp_hubs) {
-    while (my($key,$menu) = each (%sp_hubs)) {
-      ## multiX returns a hash, not a hash ref, and Perl gets confused
-      ## if you try to assign hashes and hashrefs to same variable
-      my %multi = $species_defs->multiX($key);
-      my %config = keys %multi ? %multi : %{$species_defs->get_config($species, $key)||{}};
-      next unless keys %config;
-
-      my $trackhub;
-      my %assemblies;
-      if ($config{'assemblies'}) {
-        %assemblies = @{$config{'assemblies'}};
-      }
-      else {
-        foreach (@{$config{'assembly'}}) {
-          $assemblies{$_} = 1;
-        }
-      }
-      next unless $assemblies{$assembly};
-
-      $config{'priority'} = 0 unless $config{'priority'};
-      $trackhub = {'menu' => $menu, %config};
-
-      push @$trackhubs, $trackhub;
-    }
-  }
-
-  return unless scalar @$trackhubs;
-
-  my $common_name = $species_defs->SPECIES_COMMON_NAME;
-
-  my $html = "<p>We maintain the following static list of popular hubs for $common_name assembly $assembly, but cannot guarantee they will be online:</p>";
-
-  $html .= '<ul>';
-
-  foreach my $hub_info (@$trackhubs) {
-
-    my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
-    my $link = sprintf('<a href="/%s/Location/View?r=%s;contigviewbottom=url:%s;format=TRACKHUB;menu=%s#modal_user_data">%s</a>',
-                         $species, $location,
-                         $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'name'}
-                        );
-
-    $html .= sprintf '<li>%s: %s</li>', $link, $hub_info->{'description'};
-  }
-
-  $html .= '</ul>';
-  
-  if ($species eq 'Homo_sapiens' && $assembly eq 'GRCh37') {
-    $html .= '<p>Track hubs for Human GRCh37 can be found on our <a href="http://grch37.ensembl.org">archive site</a>.</p>';
-  }
-
-  return $html; 
 }
 
 1;

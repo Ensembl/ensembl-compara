@@ -99,10 +99,10 @@ sub content {
                                 'query'     => $hub->param('query') || '',
                                 });
     $html .= sprintf('<p>Found %s track hub%s for this assembly - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
-    my $registry = 
+    my $registry = $hub->species_defs->TRACKHUB_REGISTRY_URL; 
 
     my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
-    $html .= $self->info_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
+    $html .= $self->info_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     if ($count > 0) {
 
