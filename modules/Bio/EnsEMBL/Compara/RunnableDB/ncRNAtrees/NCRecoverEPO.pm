@@ -406,6 +406,7 @@ sub run_low_coverage_best_in_alignment {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
+        last;
       }
     }
    }
