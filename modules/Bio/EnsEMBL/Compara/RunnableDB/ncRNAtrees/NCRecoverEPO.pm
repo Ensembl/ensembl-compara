@@ -344,7 +344,6 @@ sub run_low_coverage_best_in_alignment {
       push @{ $members_per_genome_db_id{$member->genome_db_id} }, $member;
   }
 
-  my %epo_low_restricted_gab_hash = ();
   my %epo_low_restricted_gabIDs = ();
 
   # First round to get the candidate GenomicAlignTrees
@@ -364,16 +363,6 @@ sub run_low_coverage_best_in_alignment {
     next unless(0 < scalar(@$genomic_align_blocks));
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
-      my $epo_low_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
-      next unless (defined($epo_low_restricted_gab));
-      my $gab_start = $epo_low_restricted_gab->{restricted_aln_start};
-      my $gab_end   = $genomic_align_block->length - $epo_low_restricted_gab->{restricted_aln_end};
-      my $boundary = 10;
-      $epo_low_restricted_gab_hash{$gdb_id}{gabID}          = $genomic_align_block->dbID;
-      $epo_low_restricted_gab_hash{$gdb_id}{start}          = $gab_start;
-      $epo_low_restricted_gab_hash{$gdb_id}{end}            = $gab_end;
-      $epo_low_restricted_gab_hash{$gdb_id}{slice_length}   = $slice->length;
-      $epo_low_restricted_gab_hash{$gdb_id}{gdb_name}       = $gdb_name;
       $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
     }
    }
