@@ -125,6 +125,19 @@ sub run {
 
     $self->param('core_db')->dbc->prevent_disconnect( sub { $self->compara_dba->dbc->prevent_disconnect( sub {
       foreach my $slice (@slices) {
+
+        ### ochotona_princeps datafix
+        # some scaffolds that belong to genescaffolds are marked as
+        # toplevel, but they shouldn't. Skip them !
+        if (($self->param('genome_db') eq 'ochotona_princeps') and ($slice->coord_system_name eq 'scaffold')) {
+          my $mapped_slice = $slice->project('genescaffold')->[0];
+          if (defined($mapped_slice)) {
+            print STDERR $slice->seq_region_name, " is redundant with a genescaffold\n";
+            next;
+          }
+        }
+        ### ochotona_princeps datafix
+
         foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
             if ($gene->biotype =~ /rna/i) {
 #                my $gene_stable_id = $gene->stable_id or die "Could not get stable_id from gene with id=".$gene->dbID();
