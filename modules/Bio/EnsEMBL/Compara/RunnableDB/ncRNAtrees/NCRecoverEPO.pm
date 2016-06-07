@@ -337,6 +337,8 @@ sub run_low_coverage_best_in_alignment {
   my $hc_gdb_id = shift;
   my $lc_gdb_id = shift;
 
+  my %gdb_per_dbID = map {$_->dbID => $_} @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all() };
+  # now we can disconnect
   $self->compara_dba->dbc->disconnect_if_idle();
 
   my %members_per_genome_db_id;
@@ -351,7 +353,7 @@ sub run_low_coverage_best_in_alignment {
   # This way, we group the queries to the same core database
   foreach my $gdb_id (keys %{$hc_gdb_id}) {
 
-   my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+   my $genome_db = $gdb_per_dbID{$gdb_id};
    my $gdb_name = $genome_db->name;
    my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
@@ -384,7 +386,7 @@ sub run_low_coverage_best_in_alignment {
   # We apply the same trick as above
   foreach my $gdb_id (keys %{$lc_gdb_id}) {
 
-   my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+   my $genome_db = $gdb_per_dbID{$gdb_id};
    my $gdb_name = $genome_db->name;
    my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
