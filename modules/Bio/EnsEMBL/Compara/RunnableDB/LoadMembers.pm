@@ -172,7 +172,7 @@ sub loadMembersFromCoreSlices {
 
     my %excluded_logic_names = ();
     if ($self->param('exclude_gene_analysis')) {
-        foreach my $key (('', $$self->param('genome_db_id'), $self->param('genome_db')->name)) {
+        foreach my $key (('', $self->param('genome_db_id'), $self->param('genome_db')->name)) {
             $excluded_logic_names{$_} = 1 for @{ $self->param('exclude_gene_analysis')->{$key} || [] };
         }
     }
