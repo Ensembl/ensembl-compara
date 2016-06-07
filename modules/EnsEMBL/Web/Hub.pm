@@ -57,6 +57,7 @@ use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
+use EnsEMBL::Web::Tools::FailOver::Wasabi;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -931,5 +932,17 @@ sub get_query {return $_[0]->{'_query_store'}->get($_[1]); }
 
 sub qstore_open { return $_[0]->{'_query_store'}->open; }
 sub qstore_close { return $_[0]->{'_query_store'}->close; }
+
+# check to see if Wasabi site is up or down
+# if $out then site is up
+sub wasabi_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::Wasabi->new($self);
+  my $out      = $failover->get_cached;
+
+  return $out;
+}
 
 1;

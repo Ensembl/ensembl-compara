@@ -1,0 +1,144 @@
+<!DOCTYPE html> 
+<html>
+<head>
+	<meta charset="UTF-8" />
+  <script type="text/javascript" src="http://wasabiapp.org/ensembl/wasabi.js"></script>
+  <link rel="stylesheet" type="text/css" media="screen" href="http://wasabiapp.org/ensembl/wasabi.css" />
+  <title>Wasabi Tree</title>
+  <script>
+
+    window.onload = function() {
+      if ('Wasabi' in window) {
+        load();
+      } 
+      else {
+        var fileref=document.createElement('script');
+        fileref.setAttribute("type","text/javascript");
+        fileref.setAttribute("src", '/wasabi/wasabi.js');
+        if (typeof fileref!="undefined") {
+          document.getElementsByTagName("head")[0].appendChild(fileref);
+        }
+
+        fileref = "http://wasabiapp.org/ensembl/wasabi.css",
+        fileref.setAttribute("type","text/css");
+        fileref.setAttribute("href", '/wasabi/wasabi.css');
+        fileref.setAttribute("rel", 'stylesheet');
+        if (typeof fileref!="undefined") {
+          document.getElementsByTagName("head")[0].appendChild(fileref);
+        }
+
+        if ('Wasabi' in window) {
+          load();
+        } 
+        else {
+          document.getElementById('wasabi_ensembl').innerHTML = '<center><h2>Couldn\'t load Wasabi. Please try after sometime</h2></center>';
+          return false;
+        }
+      }
+    }
+
+    function load() {
+      var dataset      = [];
+      var url_vars     = getUrlVars();
+      var rest_url     = url_vars['rest_url'];
+      var filegen_url  = url_vars['filegen_url'];
+      var tree      = url_vars['tree'];
+
+      if (rest_url) {
+        dataset.push(rest_url);
+        initTree(dataset);
+      }
+      else if (tree) {
+        tree && dataset.push(tree);
+        initTree(dataset);
+      }
+      else if (filegen_url) {
+        $.get(filegen_url, function(data) {
+          var path = JSON.parse(data);
+          path.tree && dataset.push(path.tree);
+          initTree(dataset);
+        });
+      }
+    }
+
+    function initTree(dataset) {
+      if (dataset) {
+        var options = {
+            'allanim': false, 
+            'disable': 'logo',
+            'colorscheme': 'Clustal',
+            'translate': 'codons',
+            'sharelinks': true
+        };
+        var w = new Wasabi(dataset.length > 1 ? dataset : dataset[0], '#wasabi_ensembl', options);
+      }
+      else {
+        $('#wasabi_ensembl').html("<h2>Couldn't load. Please try again later.</h2>")
+      }
+    }
+
+    // Read a page's GET URL variables and return them as an associative array.
+    function getUrlVars()
+    {
+      var vars   = {};
+      var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+      for(var i = 0; i < hashes.length; i++)
+      {
+          hash          = hashes[i].split('=');
+          vars[hash[0]] = unescape(hash[1]);
+      }
+      return vars;
+    }
+
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; 
+      font-size: 80%;
+      background: url("images/bg_beige.jpg");
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+    #wasabi_ensembl {
+      height: calc(100% - 25px);
+    }
+    footer {
+      padding: 4px;
+      color: #777;
+      position: fixed;
+      height: 15px;
+      bottom: 0px;
+      width: 100%;
+    }
+    footer a {
+      text-decoration: none;
+      color: #D85F14;
+    }
+    footer img{
+      float: right;
+      padding: 0px 10px;
+      width: 80px;
+    }
+  </style>
+</head>
+
+<body>
+  <section id="wasabi_ensembl">
+    <div class="loading"><p class="spinner"></p></div>
+  </section>
+  <footer>
+    Thanks to 
+    <a target="_blank" href="http://loytynojalab.biocenter.helsinki.fi/">
+      Löytynoja lab | University of Helsinki
+    </a>
+    <a target="_blank" href="http://wasabiapp.org/">
+      <img src="images/wasabi_logo.png">
+    </a>
+  </footer>
+</body>
+</html>

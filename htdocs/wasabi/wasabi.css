@@ -1,0 +1,2308 @@
+/* CSS styling for Wasabi webapp (http://wasabiapp.org). Test target: latest versions of Chrome/Firefox. */
+/* Copyright Andres Veidenberg (andres.veidenberg{at}helsinki.fi), University of Helsinki (2015) */
+/* Distributed under AGPL license (http://www.gnu.org/licenses/agpl) */
+
+.wasabi .notransition, .wasabi .notransition * { /* animations turn-off switch */
+  -webkit-transition: none !important;
+  transition: none !important;
+}
+
+/* Background */	
+.wasabi{
+	display: block !important;
+	position: relative !important;
+	background:url("images/bg_beige.jpg") repeat scroll left top white !important;
+	border: 1px solid #bbb !important;
+	border-radius: 3px !important;
+	font: 14px arial, sans-serif !important;
+	overflow: hidden !important;
+}
+
+.wasabi #page{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.wasabi #page noscript div{
+	position: absolute;
+	top: 30%;
+	left: 30%;
+	padding: 10px 10px 10px 40px;
+	border: 3px solid red;
+	border-radius: 5px;
+	background: white;
+	box-shadow: 0 2px 0 white, 0 1px 3px #666 inset;
+	font-size: 20px;
+	z-index: 100;
+}
+.wasabi #page noscript div img{
+	margin: 0 10px -15px -30px;
+}
+
+.wasabi #startup:before,
+.wasabi #startup:after,
+.wasabi #startup {
+    border-radius: 100%;
+    width: 1em;
+    height: 1em;
+    box-shadow: 0 2px 3px #888 inset;
+    -webkit-animation: loading 1.4s cubic-bezier(0.17, 0.46, 0.21, 0.98) infinite;
+    animation: loading 1.4s cubic-bezier(0.17, 0.46, 0.21, 0.98) infinite;
+    box-shadow: 
+}
+.wasabi #startup {
+    position: relative;
+	margin: 100px auto;
+	font-size: 20px;
+    -webkit-animation-delay: 0.4s;
+    animation-delay: 0.4s;
+}
+.wasabi #startup:before {
+  left: -1.5em;
+  -webkit-animation-delay: 0s;
+  animation-delay: 0s;
+}
+.wasabi #startup:after {
+  left: 1.5em;
+  -webkit-animation-delay: 0.8s;
+  animation-delay: 0.8s;
+}
+.wasabi #startup:before,
+.wasabi #startup:after {
+  content: '';
+  position: absolute;
+  top: 0;
+}
+@-webkit-keyframes loading {
+  0% { background-color: #005abf; }
+  100% { background-color: transparent; }
+}
+@keyframes loading {
+  0% { background-color: #005abf; }
+  100% { background-color: transparent; }
+}
+
+
+/* Top bar (buttons, menus) */
+.wasabi #top{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 90px;
+	-webkit-transform: translateY(0px);
+	transform: translateY(0px);
+	background: url(images/bg_top.jpg) repeat-x bottom left;
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.7), 0 -1px 0 0 rgba(255, 255, 255, 0.4) inset;
+	-webkit-transition: height 0.5s, top 0.3s, -webkit-transform 0.5s;
+	transition: height 0.5s, top 0.3s, transform 0.5s;
+	z-index: 50;
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+.wasabi #top.away{
+	-webkit-transform: translateY(-100px);
+	transform: translateY(-100px);
+}
+
+.wasabi #top, .wasabi #left, .wasabi #right {
+	-webkit-touch-callout: none; /* disable zoomglass on touch hold */
+}
+
+/* collapsed/hidden menubar */
+.wasabi.mintop #top{ height: 50px; }
+.wasabi.mintop #page.hiddentop #top{ top: -40px; }
+.wasabi.mintop #page.hiddentop #top.hidden:hover{ top: 0; }
+.wasabi.mintop #top div.title, .wasabi.mintop #top div.toptext, .wasabi.mintop #bottom{ opacity: 0; }
+.wasabi.mintop #top div.buttonblock{ top: -3px; }
+.wasabi.mintop #top #logo{ top: -6px; }
+.wasabi.mintop #page.hiddentop #top #logo{ top: -11px; }
+.wasabi.mintop #top div.buttonmenuwrap{ top: 47px; }
+
+.wasabi.mintop #left{ top: 90px; bottom: 28px; }
+.wasabi.mintop #page.hiddentop #left{ top: 33px; bottom: 8px; }
+.wasabi.mintop #namesborderDragline{ top: 70px; }
+.wasabi.mintop #page.hiddentop #namesborderDragline{ top: 23px; }
+.wasabi.mintop #page.hiddentop #namesborderDrag{ height: 15px; line-height: 15px; font-size: 14px; top: -3px; }
+.wasabi.mintop #page.hiddentop #namesborderDragline:hover #namesborderDrag{ height: 20px; line-height: 20px; }
+
+.wasabi.mintop #right{ top: 60px; bottom: 0; }
+.wasabi.mintop #page.hiddentop #right{ top: 15px; }
+.wasabi.mintop #horizontalDragger{ bottom: 1px; right: 8px; }
+.wasabi.mintop #verticalDragger{ bottom: 8px; right: 1px; }
+.wasabi.mintop #seqwindow{ right: 8px; bottom: 8px; }
+.wasabi.mintop #ruler{ height: 15px; margin-top: 0; }
+.wasabi.mintop #ruler > span{ height: 13px; line-height: 13px; font-size: 14px; }
+
+.wasabi #page.notop #top{ display: none; }
+.wasabi #page.notop #left, .wasabi.mintop #page.notop #left{ top: 20px; }
+.wasabi #page.notop #namesborderDragline, .wasabi.mintop #page.notop #namesborderDragline{ top: 10px; }
+.wasabi #page.notop #right, .wasabi.mintop #page.notop #right{ top: 2px; }
+
+.wasabi #page .toptext{
+	position: absolute;
+	top: 45px;
+	width: 100%;
+	color: #333;
+	text-shadow: 0 1px 0 white;
+	text-align: center;
+	cursor: default;
+	white-space: nowrap;
+	transition: opacity 0.5s;
+}
+
+.wasabi #top div.title{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 25px;
+	vertical-align: middle;
+	text-align: center;
+	text-shadow: 0 1px 0 white;
+	-webkit-transition: opacity 0.5s;
+	transition: opacity 0.5s;
+}
+
+.wasabi #topcollapse{
+	bottom: 7px;
+    color: #666666;
+    cursor: pointer;
+    height: 25px;
+    left: 5px;
+    line-height: 10px;
+    padding-top: 40px;
+    position: absolute;
+    text-align: center;
+    text-shadow: 0 1px 0 white;
+    vertical-align: bottom;
+    width: 30px;
+    z-index: 2;
+}
+.wasabi #topcollapse>span{
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+.wasabi #topcollapse:hover>span{ opacity: 1; }
+
+.wasabi #page div.opaque{ opacity: 1; }
+
+.wasabi #page img{ display: inline-block; }
+
+.wasabi #page svg.icon path{
+	fill: #666;
+	stroke: none;
+}
+
+.wasabi #page span.svgicon{
+	display: inline-block;
+    padding-right: 5px;
+    vertical-align: text-bottom;
+    width: 18px;
+    height: 18px;
+}
+.wasabi #page span.svgicon[onclick]{ cursor: pointer; }
+
+.wasabi #page a, .wasabi #page a:visited, .wasabi #page a:active {
+	color: brown;
+	text-decoration: none;
+	outline: none;
+	cursor: pointer;
+}
+.wasabi #page a:hover {
+	color: red;
+	text-decoration: underline;
+}
+
+/* BUTTONS */
+.wasabi #page a.button {
+	outline: none;
+	cursor: pointer;
+    display: inline-block;
+    white-space: nowrap;
+    background-color: #d0d0d0;
+    background: -webkit-linear-gradient(#f9f9f9, #d0d0d0);
+    background: linear-gradient(#f9f9f9, #d0d0d0);
+    border: 1px solid #888;
+    padding: 6px 20px;
+    margin: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    color: #333;
+    text-shadow: 0 1px 0 rgba(255,255,255,.9);
+    border-radius: 18px;
+    box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(255,255,255,.6);
+    -ms-user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
+.wasabi #top a.button{ padding: 6px 16px; }
+
+.wasabi #page a.button:hover {
+    background-color: #fff;
+    background: -webkit-linear-gradient(#fcfcfc, #dcdcdc);
+    background: linear-gradient(#fcfcfc, #dcdcdc);
+    box-shadow: 0 0 3px #bbb;
+}
+.wasabi #top a.button:hover{
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(255,255,255,.6);
+}
+.wasabi #page a.button.disabled:hover{ box-shadow: none; }
+
+.wasabi #page a.button:active{
+    position: relative;
+    top: 1px;
+    background-color: #eee;
+    background: -webkit-linear-gradient(#dadada, #fafafa);
+    background: linear-gradient(#dadada, #fafafa);
+}
+.wasabi #page a.button span{ display: inline-block; }
+
+
+.wasabi #page a.button.square{
+	border-radius: 3px;
+	padding: 4px 8px;
+}
+.wasabi #top a.button.square{
+	padding: 5px 9px;
+}
+
+.wasabi #page a.button.round{
+	padding: 3px;
+    border-radius: 100%;
+}
+
+.wasabi #page a.button.small{
+	padding: 1px 6px;
+	margin: 0 5px;
+}
+
+.wasabi #page a.button.red, .wasabi #page span.red{ color: red; }
+.wasabi #page span.orange{ color: orange; }
+.wasabi #page span.green{ color: green; }
+
+.wasabi #page a.button.grey{
+	color: white;
+	text-shadow: 0 -1px 0 #555;
+	box-shadow: 0 1px 2px -1px white inset;
+	background: linear-gradient(#BEC0C7, #A0A2A9);
+}
+.wasabi #page a.button.grey:hover{
+	background: linear-gradient(#D2D4DB, #AAACB3);
+}
+
+.wasabi #page a.button.orange{
+	color: white;
+	text-shadow: 0 -1px 0 #333;
+	box-shadow: 0 1px 2px -1px white inset;
+	background-color: #D07000;
+	background: linear-gradient(#FFA500, #D07000);
+}
+.wasabi #page a.button.orange:hover{
+	background-color: #FFCC00;
+	background: linear-gradient(#FFCC00, #E29500);
+}
+
+.wasabi #page a.button.blue{
+	color: white;
+	text-shadow: 0 -1px 0 #333;
+	box-shadow: 0 1px 2px -1px white inset;
+	background-color: #1874CD;
+	background: linear-gradient(#4F9EEA, #1874CD);
+}
+.wasabi #page a.button.blue:hover{
+	background-color: #7DB7F0;
+	background: linear-gradient(#7DB7F0, #1874CD);
+}
+
+.wasabi #page a.button.green{
+	color: white;
+	text-shadow: 0 -1px 0 #333;
+	box-shadow: 0 1px 2px -1px white inset;
+	background-color: #18AD14;
+	background: linear-gradient(#9FEA8E, #18AD14);
+}
+.wasabi #page a.button.green:hover{
+	background-color: #28BD24;
+	background: linear-gradient(#AFFAAE, #28BD24);
+}
+
+.wasabi #page a.button.disabled{ color: #888; }
+
+.wasabi #page a.button.transparent, .wasabi #top a.button.transparent{
+	border: none;
+	background: none;
+	box-shadow: none;
+}
+.wasabi #top a.button.transparent:hover{ background: rgba(255,255,255,0.6); }
+
+.wasabi #page a.button.icon{
+	border-radius: 5px;
+	padding: 3px;
+}
+.wasabi #top a.button.icon{ padding: 2px; }
+.wasabi #top a.button.icon>img {
+	height: 32px;
+}
+
+/* toggle-button trio */
+.wasabi #page span.buttongroup{
+	display: inline-block;
+}
+.wasabi #page span.buttongroup a.button{
+	border-radius: 4px;
+	padding: 3px 5px;
+	margin: 0;
+}
+.wasabi #page span.buttongroup a.button.pressed{
+	color: green;
+	background-color: #ddd;
+    background: -webkit-linear-gradient(#dadada, #ffffff);
+    background: linear-gradient(#dadada, #ffffff);
+}
+.wasabi #page span.buttongroup a.button.left{
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: none;
+}
+.wasabi #page span.buttongroup a.button.middle{
+	border-radius: 0;
+	border-left: 2px groove white;
+	border-right: none;
+}
+.wasabi #page span.buttongroup a.button.right{
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	border-left: 2px groove white;
+}
+
+/* top menubar buttons */
+.wasabi #top a.button .before{
+    display: inline-block;
+    height: 25px;
+    margin: -6px 6px -10px -9px;
+    padding: 3px 3px 4px 0;
+    width: 25px;
+}
+
+.wasabi #top a.button .after{
+    border-radius: 0 18px 18px 0;
+    display: inline-block;
+    height: 23px;
+    line-height: 15px;
+    margin: -6px -8px -6px 6px;
+    padding: 4px 0 5px 4px;
+    width: 24px;
+    vertical-align: -6px;
+}
+.wasabi #top a.button .after svg.icon path, .wasabi #top a.button:hover .after svg.icon path{
+	stroke: none;
+	fill: #666;
+}
+
+.wasabi #top a.button.left{
+	width: 26px;
+	height: 26px;
+	border-radius: 18px 0 0 18px;
+	padding: 3px 3px 3px 5px;
+	margin-left: 20px;
+	margin-right: 0;
+	vertical-align: 12px;
+}
+.wasabi #top a.button.middle{
+	height: 26px;
+	line-height: 26px;
+	width: 72px;
+	overflow: hidden;
+	border-left: none;
+	border-right: none;
+	border-radius: 0;
+	margin-left: 0;
+	margin-right: 0;
+	padding: 3px;
+	vertical-align: top;
+	text-align: center;
+}
+.wasabi #top a.button.right{
+	width: 26px;
+	height: 26px;
+	border-radius: 0 18px 18px 0;
+	padding: 3px 5px 3px 2px;
+	margin-left: 0;
+	vertical-align: 12px;
+}
+
+.wasabi #historybtn span{
+	box-shadow: 0 3px 3px -3px;
+    float: left;
+    margin-top: -35px;
+    margin-left: -4px;
+    padding: 1px 0 2px 2px;
+    width: 76px;
+	-webkit-transition: margin-top 0.6s ease-out;
+	transition: margin-top 0.6s ease-out;
+}
+
+.wasabi #top a.button svg.icon path{
+	fill: #bbb;
+	stroke: #444;
+}
+.wasabi #top a.button:hover svg.icon path{
+	fill: orange;
+	stroke: #444;
+}
+.wasabi #top a.button.disabled svg.icon path{
+	fill: none;
+	stroke: #aaa;
+}
+
+.wasabi #top a.button span.btnsection{
+	border-left: 2px groove white;
+	padding-left: 3px;
+	margin-left: 5px;
+}
+
+.wasabi #statusbtn .nr{
+	background: #888;
+    border-radius: 10px;
+    box-shadow: 0 1px 0 white, 0 1px 3px black inset;
+    color: white;
+    font-weight: normal;
+    padding: 1px 6px;
+    text-shadow: none;
+}
+.wasabi #statusbtn .nr.green{ background: green; }
+.wasabi #statusbtn .nr.red{ background: red; }
+.wasabi #statusbtn .nr.orange{ background: orange; }
+
+.wasabi #top div.buttonblock{
+	position: absolute;
+	top: 23px;
+	-webkit-transition: top 0.5s;
+	transition: top 0.5s;
+}
+
+.wasabi #logo{
+	right: 20px;
+	cursor: pointer;
+	padding-top: 8px;
+}
+.wasabi #logo .toptext{
+	opacity: 0;
+	cursor: pointer;
+	-webkit-transition: opacity ease 0.2s;
+	transition: opacity ease 0.2s;
+	width: auto;
+	right: 130px;
+}
+.wasabi #logo:hover .toptext{ opacity: 1; }
+
+.wasabi #zoombtns { vertical-align: bottom; }
+.wasabi #top a.zoom {
+	margin: 8px 2px;
+	font-size: 32px;
+    font-weight: normal;
+    line-height: 14px;
+    padding: 9px 8px;
+    width: 18px;
+    text-align: center;
+    vertical-align: bottom;
+}
+.wasabi #top #zoomout{ padding-bottom: 11px; padding-top: 7px; }
+.wasabi #zoombtns .zoomperc{
+	top: -10px;
+	font-weight: bold;
+	opacity: 0;
+}
+.wasabi #zoombtns:hover .zoomperc{ opacity: 1 }
+
+.wasabi #page a.button span.light{
+	width: 6px;
+	height: 12px;
+	margin-right: 5px;
+	background-color: #0A7B00;
+	border: 1px solid #0A3B00;
+	box-shadow: 0 1px 0 white, 0 2px 2px #0A1B00 inset;
+	border-radius: 3px;
+	vertical-align: -1px;
+	-webkit-transition: all .2s;
+	transition: all .2s;
+}
+.wasabi #page a.button.on span.light{
+	background-color: #0ABB00;
+	border: 1px solid #0A9B00;
+	box-shadow: 0 1px 0 white, 0 2px 2px -1px white inset;
+}
+
+.wasabi #page a.button span.text{
+	width: 32px;
+	text-align: center;
+	color: #666;
+}
+.wasabi #page a.button.on span.text{ color: #333; }
+.wasabi #page a.button.disabled span.text{ color: #999; }
+
+.wasabi #page span.right{
+	display: inline-block;
+	position: absolute;
+	right: 5px;
+}
+
+
+/* Left pane (tree area) */
+.wasabi #left{
+	position: absolute;
+	opacity: 0;
+	top: 125px;
+	left: 10px;
+	bottom: 68px;
+	width: 300px;
+	overflow: hidden;
+	-webkit-transition: top 0.5s, bottom 0.5s, opacity 0.5s;
+	transition: top 0.5s, bottom 0.5s, opacity 0.5s;
+}
+
+.wasabi #treewrap{
+	position: absolute;
+	display: none;
+	top: 0;
+	margin-top: 4px;
+	left: 0;
+	right: 10px;
+	bottom: 15px;
+	box-shadow: 0 0 10px white;
+}
+
+.wasabi #tree>svg{ background-color: white; }
+ 
+.wasabi #tree circle, .wasabi #names text{
+	cursor: pointer;
+ }
+.wasabi #left.dragmode #tree circle, .wasabi #left.dragmode #names text{
+	cursor: default;
+ } 
+ 
+.wasabi #names svg{
+	-webkit-transition: font-size 0.5s;
+	transition: font-size 0.5s;
+ }
+.wasabi #treewrap.minimal #tree circle, .wasabi #treewrap.minimal #tree line[stroke-dasharray], .wasabi #treewrap.minimal #names svg{
+	display: none;
+ }
+ 
+.wasabi #tree{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 80px;
+	height: 100%;
+  }
+  
+.wasabi #tree line{
+	stroke: rgb(0,0,0);
+	stroke-width: 1;
+	stroke-linecap: round;
+  }
+  
+  
+.wasabi #left.dragmode #tree line.horizontal{
+	stroke: rgb(170,170,170);
+	stroke-width: 6;
+	stroke-dasharray: none;
+	stroke-linecap: butt;
+  }
+  
+.wasabi #left.dragmode #tree line.horizontal:hover{
+	stroke: orange;
+  }
+  
+.wasabi #notree, .wasabi #noseq{
+	position: absolute;
+	display: none;
+	top: 40%;
+	width: 80%;
+	text-align: center;
+	font-size: 36px;
+    color: #EEE9E3;
+    text-shadow: 0 0 1px #BBB9B3, 0 -1px 1px #666165;
+  }
+  
+.wasabi #names{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 80px;
+	height: 100%;
+	border-left: 1px solid white;
+	transition: border-color 0.5s;
+	-webkit-transition: border-color 0.5s;
+	box-shadow: -1px 0 0 #ccc inset, -4px 0 4px -2px #ccc inset;
+	overflow: hidden;
+	background-color: white;
+	white-space: nowrap;
+  }
+.wasabi #names span{
+	display: block;
+	position: relative;
+	cursor: default;
+	padding-left: 3px; 
+	font-family: Verdana;
+	-webkit-transition: height 0.5s;
+	transition: height 0.5s;
+  }
+.wasabi #names span:hover{
+	color: red;
+  }
+  
+.wasabi #bottomfade{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 10px;
+	background: -webkit-linear-gradient(rgba(255,255,255,0), #fef9e6);
+	background: linear-gradient(rgba(255,255,255,0), #fef9e6);
+  }
+.wasabi #topfade{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 10px;
+	background: -webkit-linear-gradient(#fef9e6, rgba(255,255,255,0));
+	background: linear-gradient(#fef9e6, rgba(255,255,255,0));
+  }
+  
+  
+.wasabi #borderDrag{
+	position: absolute;
+    right: 0;
+    top: 5px;
+    bottom: 5px;
+    width: 10px;
+    font-size: 20px;
+    color: #666;
+    text-align: center;
+    text-shadow: 0 1px 0 white;
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+ }
+.wasabi #borderDrag:hover{
+	background-color: rgba(220,220,220,0.5);
+ }
+.wasabi #borderDrag > span{
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: 100%;
+}
+
+
+.wasabi #namelabel{
+	display: none;
+	opacity: 0;
+	position: absolute;
+	font-family: Verdana;
+	color: red;
+	overflow: hidden;
+	z-index: 25;
+	border-radius: 0 3px 3px 0;
+	box-shadow: 3px 1px 2px rgba(0,0,0,0.4);
+}
+.wasabi #namelabel span, .wasabi #draggedlabel{
+	border-radius: 5px;	
+	background-color: white;
+	padding: 2px;
+	color: red;
+}
+
+.wasabi #draggedlabel{
+	position: absolute;
+	font-family: Verdana;
+	box-shadow: 2px 2px 4px #444;
+	z-index: 60;
+}
+
+.wasabi #draggedtree{
+	position: absolute;
+	opacity: 0.9;
+	box-shadow: 2px 2px 5px #444;
+	border-radius: 3px;
+	z-index: 60;
+}
+
+.wasabi #namesborderDragline{
+	position: absolute;
+	visibility: hidden;
+	left: 5px;
+	top: 110px;
+	width: 297px;
+	height: 3px;
+	box-shadow: 0 2px 2px #999 inset;
+	-webkit-transition: top 0.5s, opacity 0.5s;
+	transition: top 0.5s, opacity 0.5s;
+ }
+.wasabi #namesborderDragline.visible{ visibility: visible; opacity: 1; }
+.wasabi #namesborderDragline.dragmode{ visibility: hidden; opacity: 0; }
+.wasabi #page #namesborderDrag{
+	position: absolute;
+	left: 209px;
+	color: #999;
+	height: 20px;
+	line-height: 20px;
+	font-size: 16px;
+	width: 10px;
+	text-align: center;
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    border-radius: 3px;
+    top: -5px;
+ }
+ 
+.wasabi #page div.treescroll{
+	position: absolute;
+	left: 10px;
+	height: 32px;
+	padding-top: 2px;
+	border-radius: 5px;
+	color: #333;
+	text-align: center;
+	text-shadow: 0 1px 1px white;
+	font-size: 20px;
+	cursor: default;
+	z-index: 1;
+ }
+.wasabi #page div.treescroll.up{
+	top: 98px;
+	background: -webkit-linear-gradient(rgba(200,200,200,0.9), rgba(200,200,200,0));
+	background: linear-gradient(rgba(200,200,200,0.9), rgba(200,200,200,0));
+	box-shadow: 0 1px 1px #888 inset;
+ }
+.wasabi #page.hiddentop div.treescroll.up{ top: 18px; }
+.wasabi #page div.treescroll.down{
+	bottom: 36px;
+	line-height: 36px;
+	background: -webkit-linear-gradient(rgba(200,200,200,0), rgba(200,200,200,0.9));
+	background: linear-gradient(rgba(200,200,200,0), rgba(200,200,200,0.9));
+	box-shadow: 0 -1px 1px #888 inset;
+ }
+ .wasabi #page.hiddentop div.treescroll.down{ bottom: 3px; }
+
+.wasabi #page img#leftshadow{
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: 42px;
+}
+.wasabi #page img#rightshadow{
+	position: absolute;
+	right: -1px;
+	top: 0;
+	height: 100%;
+	width: 51px;
+}
+
+.wasabi #treebin{
+	position: absolute;
+	background: rgba(0,0,0,0.8);
+	top:0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 30;
+	display: none;
+	opacity: 0.6;
+	transition: opacity 0.4s;
+	-webkit-transition: opacity 0.4s;
+}
+.wasabi #right.dragmode #treebin{
+	display: block;
+}
+.wasabi #right.dragmode:hover #treebin{
+	opacity: 1;
+}
+.wasabi #treebin > div{
+	top: 40%;
+	left: 30%;
+	position: absolute;
+	width: 120px;
+	height: 120px;
+}
+.wasabi #treebin svg.icon path{
+	fill: white;
+}
+
+
+/* Right pane (sequence area) */
+.wasabi #right {
+	position: absolute;
+	opacity: 0;
+	left: 310px;
+	right: 0;
+	top: 100px;
+	bottom: 50px;
+	-webkit-transition: top 0.5s, bottom 0.5s, opacity 0.5s;
+	transition: top 0.5s, bottom 0.5s, opacity 0.5s;
+}
+
+.wasabi #seqwindow {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 30px;
+	bottom: 20px;
+	overflow: hidden;
+	border: 1px solid #ccc;
+	border-top: none;
+	box-shadow: 0 1px 0 white;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.wasabi #spinner{
+	display: none;
+	position: absolute;
+	opacity: 0;
+	top: 50%;
+	left: 40%;
+	-webkit-transition: opacity .3s;
+	transition: opacity .3s;
+ }
+.wasabi #spinner.show{
+	display: block;
+	opacity: 1;
+ }
+ 
+.wasabi #page div.spinnercover{
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: white;
+	opacity: 0.9;
+	z-index: 10;
+}
+.wasabi #page div.spinnercover>span{
+	position: absolute;
+	width: 100%;
+	top: 30%;
+	text-align: center;
+	font-size: 18px;
+}
+.wasabi #page div.spinnercover>span>img{ width: 36px; }
+ 
+.wasabi #page span.spinner{
+	display: block;
+	position: relative;
+	height: 18px;
+	width: 18px;
+	margin: 1px;
+	border-radius: 100%;
+	vertical-align: text-bottom;
+}
+.wasabi #page span.spinner>img{
+	display: block;
+	position: absolute;
+	width: 28px;
+	height: 28px;
+	top: -5px;
+	left: -5px;
+}
+.wasabi #page span.spinner.cancel{
+	cursor: pointer;
+}
+.wasabi #page span.spinner.cancel svg.icon>path{
+	fill: #888;
+	stroke: none;
+}
+.wasabi #page span.spinner.cancel:hover, .wasabi #page a.button:hover span.spinner.cancel{
+	background-color: #888;	
+}
+.wasabi #page span.spinner.cancel:hover>img, .wasabi #page a.button:hover span.spinner.cancel>img{
+	display: none;
+}
+.wasabi #page span.spinner.cancel:hover svg.icon>path, .wasabi #page a.button:hover span.spinner.cancel svg.icon>path{
+	fill: white;
+	stroke: none;
+}
+ 
+.wasabi #wrap {
+	position: absolute;
+	left: 0;
+}
+  
+.wasabi #ruler {
+	position: relative;
+	margin-top: 3px;
+	margin-left: -1px;
+	padding: 1px 0;
+	height: 20px;
+	font-weight: bold;
+	background-image: -webkit-linear-gradient(#dadada 20%, #efefef 60%, #ffffff 100%);
+	background-image: linear-gradient(#dadada 20%, #efefef 60%, #ffffff 100%);
+	border-top: 1px solid #ccc;
+	border-bottom: 1px solid #aaa;
+	border-left: 1px solid #bbb;
+	border-right: 1px solid #bbb;
+	border-radius: 3px;
+	box-shadow: 0 3px 5px rgba(0,0,0,0.2), 0 1px 1px white inset, 0 -2px 2px #ccc inset;
+	white-space: nowrap;
+	z-index: 1;
+	cursor: move;
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+  
+.wasabi #ruler > span{
+	display: inline-block;
+	margin-top: 1px;
+	padding-left: 2px;
+	border-left: 2px groove white;
+	height: 18px;
+	line-height: 18px;
+	width: 60px;
+	color: #444;
+	text-shadow: 0 1px 0 white;
+}
+.wasabi #ruler > span:first-child{ border-left-color: transparent; }
+.wasabi #ruler > span > span{
+	position: relative;
+	padding: 0;
+	margin: 0;
+	border: none;
+}
+.wasabi #ruler div.marker{
+	position: absolute;
+	top: 4px;
+	color: #B01;
+	text-shadow: 0 4px 3px #666;
+	cursor: pointer;
+	z-index: 21;
+	height: 20px;
+	font-size: 14px;
+	line-height: 8px;
+	width: 19px;
+	overflow: hidden;
+	text-align: center;
+}
+.wasabi #ruler div.marker.small{
+	font-size: 11px;
+}
+.wasabi #ruler div.marker.big{
+	font-size: 19px;
+}
+.wasabi #ruler div.marker div{ font-size: 12px; }
+
+.wasabi #seqwrap {
+	position: relative;
+	padding: 3px 0 5px 0;
+	margin-left: 0;
+	overflow: hidden;
+	background-color: white;
+}
+
+.wasabi #seq{ position: relative; }
+
+.wasabi #seq div.tile{
+	position: absolute;
+	display: none;
+}
+
+.wasabi #page span.progressline{
+	display: inline-block;
+	position: relative;
+	text-align: left;
+	background: #ccc;
+	box-shadow: 0 1px 3px #333 inset, 0 1px 0 white;
+    border-radius: 4px;
+    height: 6px;
+    padding: 1px;
+    vertical-align: 2px;
+}
+.wasabi #page a.button span.progressline{
+	margin: -2px -10px 12px;
+    width: 80px;
+}
+.wasabi #page a.button.square span.progressline{ margin: -1px 0 13px; }
+.wasabi #page span.progressline span.bar{
+	display: inline-block;
+    height: 100%;
+	background-color: white;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.6) inset, 0 3px 3px #ccc inset;
+    -webkit-transition: width .5s;
+	transition: width .5s; 
+}
+.wasabi #page span.progressline span.title{
+	display: block;
+	position: absolute;
+	text-align: center;
+	font-weight: normal;
+	font-size: 14px;
+	color: #888;
+	width: 100%;
+	top: 8px;
+}
+.wasabi #page a.button.orange span.progressline span.title{ color: white; }
+
+/* Sequence area scrollbars*/
+.wasabi #page .draggerline{
+	background: #eee;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px #333 inset, 0 1px 0 white;
+    height: 5px;
+}
+.wasabi #page span.draggerline{
+	display: inline-block;
+	position: relative;
+}
+.wasabi #page .draggerline.vertical{
+	height: auto;
+    width: 5px;
+    box-shadow: 1px 1px 3px #333 inset, 1px 0 0 white;
+}
+.wasabi #page span.draggerline{
+	display: inline-block;
+	width: 250px;
+	margin: 2px 5px;
+}
+.wasabi #right .draggerline{
+	position: absolute;
+	cursor: pointer;
+	z-index: 25;	
+}
+.wasabi #horizontalDragger{
+	left: 0;
+	right: 25px;
+	bottom: 3px;
+	display: none;
+}  
+.wasabi #verticalDragger{
+	top: 0;
+	right: 12px;
+	bottom: 20px;
+	display: none;
+}
+.wasabi #page .dragger{
+	position: absolute;
+	background-color: #ececec;
+	margin-top: -4px;
+	background: -webkit-linear-gradient(#fafafa, #d0d0d0);
+	background: linear-gradient(#fafafa, #d0d0d0);
+	border-radius: 7px;
+	cursor: move;
+	width: 13px;
+	height: 13px;
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 0 2px #555;
+	-webkit-transition: height 0.2s, margin 0.2s;
+	transition: height 0.2s, margin 0.2s;
+}
+.wasabi #page .draggerline.vertical .dragger{
+	margin-top: auto;
+	margin-left: -4px;
+	background: -webkit-linear-gradient(left, #fafafa, #dadada);
+	background: linear-gradient(to right, #fafafa, #dadada);
+	-webkit-transition: width 0.2s, margin 0.2s;
+	transition: width 0.2s, margin 0.2s;
+}
+.wasabi #page .dragger:hover{
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 0 3px #111;
+}
+.wasabi #horizontalDragger:hover .dragger{
+	height: 20px;
+	margin-top: -8px;
+}
+.wasabi #page #verticalDragger:hover .dragger{
+	width: 20px;
+	margin-left: -8px;
+}
+.wasabi #page .dragger.pressed, .wasabi #page .dragger.ui-draggable-dragging{
+	background: -webkit-linear-gradient(#dadada, #fafafa);
+	background: linear-gradient(#dadada, #fafafa);
+}
+.wasabi #page .draggerline.vertical .dragger.pressed{
+	background: -webkit-linear-gradient(left, #dadada, #fafafa);
+	background: linear-gradient(to right, #dadada, #fafafa);
+}
+
+/* Pop-up tooltips and menus (mouse click) */
+.wasabi #page div.tooltip, .wasabi #page div.tooltip.black{
+	position: absolute;
+	background-color: rgba(0,0,0,0.87);
+	border: 2px solid #FFF;
+	border-radius: 5px;
+	box-shadow: 0 1px 5px #333;
+	font: 15px Arial;
+	color: white;
+	padding: 1px;
+	z-index: 70;
+	white-space: nowrap;
+	opacity: 0;
+	-webkit-transition: opacity .2s ease-out, -webkit-transform .2s ease-out;
+    transition: opacity .2s ease-out, transform .2s ease-out;
+}
+.wasabi #treemenu{ padding-bottom: 0; }
+.wasabi #page div.tooltip.white{
+	background-color: rgba(250,250,250,0.98);
+	color: black;
+	box-shadow: 0 2px 6px -1px #333;
+}
+.wasabi #page div.tooltip.beige{
+	background-color: rgba(250,240,200,0.98);
+	color: black;
+	box-shadow: 0 2px 6px -1px #333;
+}
+
+.wasabi #page div.tooltip svg.icon path{ fill: white; }
+.wasabi #page div.tooltip.white svg.icon path{ fill: #444; }
+
+.wasabi #page div.tooltip.topmenu span.svgicon {
+	width: 20px;
+	height: 20px;
+}
+
+.wasabi #page div.tooltip.opaque{
+	opacity: 1;
+	-webkit-transform: translate(0,0);
+	transform: translate(0,0);
+}
+
+.wasabi #page .tooltip .arrow{
+	position: absolute;
+	display: none;
+	width: 12px;
+	height: 12px;
+	-webkit-transform: rotate(45deg) skewX(-10deg) skewY(-10deg);
+    transform: rotate(45deg) skewX(-10deg) skewY(-10deg);
+	background-color: rgba(0,0,0,0.87);
+	box-shadow: 0 0 3px #333;
+}
+.wasabi #page .tooltip.white .arrow{
+	background-color: rgba(250,250,250,0.98);
+	border: none;
+	box-shadow: -2px 2px 3px -2px #666;
+}
+.wasabi #page .tooltip.leftarrow{
+	-webkit-transform: translateX(10px);
+	transform: translateX(10px);
+}
+.wasabi #page .tooltip.leftarrow > .arrow{
+	display: block;
+	left: -9px;
+	top: 4px;
+	border-left: 2px solid #FFF;
+	border-bottom: 2px solid #FFF;
+}
+.wasabi #page .tooltip.toparrow{
+	-webkit-transform: translateY(10px);
+	transform: translateY(10px);
+}
+.wasabi #page .tooltip.toparrow > .arrow{
+	display: block;
+	left: 50%;
+	margin-left: -7px;
+	top: -8px;
+	border-left: 2px solid #FFF;
+	border-top: 2px solid #FFF;
+}
+.wasabi #page .tooltip.bottomarrow{
+	-webkit-transform: translateY(-10px);
+	transform: translateY(-10px);
+}
+.wasabi #page .tooltip.bottomarrow > .arrow{
+	display: block;
+	left: 50%;
+	margin-left: -7px;
+	top: auto;
+	bottom: -8px;
+	border-right: 2px solid #FFF;
+	border-bottom: 2px solid #FFF;
+}
+.wasabi #page .tooltip.white.toparrow > .arrow{ box-shadow: -2px -2px 3px -2px #666; border: none; } 
+.wasabi #page .tooltip.white.bottomarrow > .arrow{ box-shadow: 2px 2px 3px -2px #666; border: none; }
+
+.wasabi #page .tooltiptitle{
+	position: relative;
+	padding: 1px 5px;
+}
+.wasabi #page div.tooltip.greytitle .tooltiptitle, .wasabi #page span.grey{
+	color: #888;
+}
+.wasabi #treemenu .tooltiptitle{ padding-right: 2px; }
+.wasabi #treemenu .tooltiptitle span.svgicon{
+	margin-left:5px;
+	padding-right:0;
+}
+.wasabi #page div.tooltiptitle > span.title{
+	display: inline-block;
+	width: 100px;
+	cursor: default;
+	overflow: hidden;
+	margin-right: -4px;
+}
+.wasabi #page div.tooltip div.tooltiptitle span.right{
+	right: 5px;
+    margin-left: 3px;
+    vertical-align: 5px;
+}
+
+.wasabi #page div.tooltip span.right{
+	right: 10px;
+	line-height: 18px;
+}
+.wasabi #page div.tooltip li.arr {
+	padding-right: 13px;
+}
+.wasabi #page div.tooltip li.arr span.right{
+	right: 3px;
+}
+
+.wasabi #page div.tooltipcontentwrap{
+	position: relative;
+	-webkit-transition: height 0.5s cubic-bezier(0.2,1,0.2,1);
+	transition: height 0.5s cubic-bezier(0.2,1,0.2,1);
+}
+
+.wasabi #treemenu>div.tooltipcontentwrap{
+	height: 0;
+	overflow: hidden;
+}
+
+.wasabi #page div.tooltip ul{
+	margin: 0;
+	padding: 0;
+}
+.wasabi #page div.tooltip.bulletmenu ul{ margin: 0 5px; }
+
+.wasabi #page div.tooltip ul li{
+	list-style-image: none;
+	list-style-type:none;
+	margin: 0;
+	padding: 2px;
+	cursor: pointer;
+}
+.wasabi #page div.tooltip.nomenu ul li{ list-style: disc inside; }
+
+.wasabi #page div.tooltip ul li:first-child{
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+}
+.wasabi #page div.tooltip ul li:last-child{
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+}
+.wasabi #page div.tooltip.white ul li:first-child{
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+.wasabi #page div.tooltip.white ul li:last-child{
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+.wasabi #page div.tooltip ul li:hover{
+	text-shadow: 0 1px 3px #333;
+	color: white;                         
+	background: -webkit-linear-gradient(#6589ff,#1943f3);
+	background: linear-gradient(#6589ff,#1943f3);
+}
+.wasabi #page div.tooltip.white ul li:hover{
+	text-shadow: 0 1px 3px #333;
+	color: white;                      
+	background: -webkit-linear-gradient(#88b2ff,#3e5dff);
+	background: linear-gradient(#88b2ff,#3e5dff);
+}
+.wasabi #page div.tooltip ul li:hover div{ text-shadow: none; }
+.wasabi #page div.tooltip ul li:hover svg.icon path, .wasabi #page div.tooltip.white ul li div ul li:hover svg.icon path{ fill: white }
+.wasabi #page div.tooltip.white ul li:hover div svg.icon path{ fill: #444 } /*submenu*/
+.wasabi #page div.tooltip ul>li.active>span.svgicon>svg.icon>path{ fill: orange }
+.wasabi #page div.tooltip ul a{ color: orange }
+.wasabi #page div.tooltip.topmenu li {
+	font-size: 18px;
+	padding: 2px 5px;
+}
+
+.wasabi #infotip .tooltipcontent>span{ display: block; margin: 5px; }
+.wasabi #infotip .tooltipcontent>textarea{
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 90%;
+	height: 90%;
+	display: none;
+	z-index: 1;
+}
+.wasabi #infotip.edit .tooltiptitle{ display: none; }
+.wasabi #infotip.edit .tooltipcontent>span{ opacity: 0; min-width: 75px; min-height: 55px; }
+.wasabi #infotip.edit .tooltipcontent>textarea{ display: block; } 
+
+/* Sequence selections */
+.wasabi #seq div.selection{
+	position: absolute;
+	background-color: rgba(0,0,0,0.3);
+	color: white;
+	display: none;
+	opacity: 1;
+	z-index: 2;
+	-ms-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+.wasabi #seq div.selection div.description{
+	font: 15px Arial;
+	text-shadow: 0 0 3px black;
+	position: absolute;
+	top: 40%;
+	width: 100%;
+	text-align: center;
+	opacity: 1;
+}
+
+.wasabi #seq div.selection div.rbresize, .wasabi #seq div.selection div.ltresize{
+	position: absolute;
+	height: 50%;
+	max-height: 10px;
+	width: 50%;
+	max-width: 10px;
+	opacity: 0;
+	transition: opacity .2s;
+	-webkit-transition: opacity .2s;
+}
+.wasabi #seq div.selection div.rbresize{
+	right: 3px;
+	bottom: 3px;
+	border-right: 2px solid white;
+	border-bottom: 2px solid white;
+	cursor: se-resize;
+}
+.wasabi #seq div.selection div.ltresize{
+	left: 3px;
+	top: 3px;
+	border-left: 2px solid white;
+	border-top: 2px solid white;
+	cursor: nw-resize;
+}
+
+.wasabi #seq div.selectioncross{
+	position: absolute;
+	background-color: rgba(0,0,0,0.3);
+	display: none;
+	opacity: 1;
+	z-index: 1;
+	-ms-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+
+.wasabi #seq div.selectioncross div.rresize, .wasabi #seq div.selectioncross div.lresize{
+	position: absolute;
+	height: 100%;
+	width: 50%;
+	max-width: 10px;
+	opacity: 0;
+	-webkit-transition: opacity .2s;
+	transition: opacity .2s;
+}
+.wasabi #seq div.selectioncross div.rresize{
+	right: 2px;
+	top: 0;
+	border-right: 2px solid white;
+	cursor: e-resize;
+}
+.wasabi #seq div.selectioncross div.lresize{
+	left: 2px;
+	top: 0;
+	border-left: 2px solid white;
+	cursor: w-resize;
+}
+
+.wasabi #seq div.selectioncross div.tresize, .wasabi #seq div.selectioncross div.bresize{
+	position: absolute;
+	width: 100%;
+	height: 50%;
+	max-height: 10px;
+	opacity: 0;
+	-webkit-transition: opacity .2s;
+	transition: opacity .2s;
+}
+.wasabi #seq div.selectioncross div.tresize{
+	left: 0;
+	top: 2px;
+	border-top: 2px solid white;
+	cursor: n-resize;
+}
+.wasabi #seq div.selectioncross div.bresize{
+	left: 0;
+	bottom: 2px;
+	border-bottom: 2px solid white;
+	cursor: s-resize;
+}
+
+.wasabi #right div.rowborder{
+	position: absolute;
+	display: none;
+	opacity: 1;
+	left: 0;
+	width: 100%;
+	border: 1px solid black;
+	box-shadow: 0 0 5px black;
+	-webkit-transition: opacity .3s, top .3s linear;
+	transition: opacity .3s, top .3s linear;
+	border: 1px solid transparent;
+    z-index: 1;
+}
+
+
+/* Dialog windows */
+.wasabi #backfade{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 58;
+	background: -webkit-radial-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.9));
+	background: -o-radial-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.9));
+	background: radial-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.9));
+	display: none;
+}
+
+.wasabi #page div.zoomin{
+	opacity: 0;
+	-webkit-transform: scale(1.2);
+	transform: scale(1.2);
+	-webkit-transition: opacity .4s ease-out, -webkit-transform .4s ease-out;
+    transition: opacity .4s ease-out, transform .4s ease-out;
+}
+.wasabi #page div.zoomin.zoomed{
+	opacity: 1;
+	-webkit-transform: scale(1);
+	transform: scale(1);
+}
+.wasabi #page div.zoomin.zoomed.finished{
+	-webkit-transform: none;
+	transform: none;
+}
+
+.wasabi #page div.popupwrap{
+	position: absolute;
+	top: 50px;
+	left: 40%;
+	-webkit-perspective: 500px;
+	-moz-perspective: 700px;
+	perspective: 700px;
+	z-index: 60;
+}
+/*div.popupwrap div{ -moz-transform-style: preserve-3d; -moz-backface-visibility: hidden; }*/
+
+.wasabi #page div.popupwindow{
+	position: absolute;
+	top: 50px;
+	left: 20%;
+	background: url("images/noise.png") repeat, #f2f2f2;
+	box-shadow: 0 5px 20px -3px #000000, 0 0 1px 1px rgba(255, 255, 255, 0.8) inset;
+	text-shadow: 0 1px 0 white;
+	border-radius: 5px;
+	z-index: 60;
+}
+.wasabi #page div.popupwrap div.popupwindow{
+	top: 0;
+	left: 0;
+}
+
+.wasabi #page div.popupwindow div.sectiontitle{
+	position: relative;
+	height: 1px;
+	border-top: 2px groove white;
+	text-align: center;
+	margin: 10px 0 15px 0;
+}
+.wasabi #page div.popupwindow div.sectiontitle.small{
+	margin-bottom: 10px;
+}
+.wasabi #page div.popupwindow div.sectiontitle>span{
+	position: relative;
+	top: -10px;
+	background-color: #f0f0f0;
+	padding: 0 10px;
+	font-weight: bold;
+}
+.wasabi #page div.popupwindow div.sectiontitle.small>span{
+	font-weight: normal;
+}
+.wasabi #page div.popupwindow div.sectiontitle>span.svg{
+	position: absolute;
+	right: 0;
+	display: inline-block;
+	top: -12px;
+	background-color: #f0f0f0;
+	padding: 0 0 0 5px;
+	height: 20px;
+	width: 20px;
+}
+.wasabi #page div.popupwindow div.sectiontitle>img{
+	display: inline-block;
+	position: absolute;
+	left: 0;
+	padding-right: 5px;
+	height: 20px;
+	background-color: #f0f0f0;
+	top: -12px;
+}
+.wasabi #page div.popupwindow div.sectiontext{
+	white-space: normal;
+	padding:0 10px 10px;
+}
+
+.wasabi #page div.side{
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+    -webkit-transition: -webkit-transform 0.7s ease-in-out, opacity 0.7s ease-in;
+    transition: transform 0.7s ease-in-out, opacity 0.7s ease-in;
+}
+
+.wasabi #page div.back{
+	-webkit-transform: rotateY(-180deg);
+	transform: rotateY(-180deg);
+	z-index: 61;
+	opacity: 0;
+}
+.wasabi #page div.flipped div.back{
+	-webkit-transform: rotateY(0deg);
+	transform: rotateY(0deg);
+	z-index: 62;
+	opacity: 1;
+}
+
+.wasabi #page div.front{
+	z-index: 62;
+	opacity: 1;
+}
+.wasabi #page div.finished div.front{ backface-visibility: visible; }
+.wasabi #page div.flipped div.front{
+	backface-visibility: hidden;
+	-webkit-transform: rotateY(180deg);
+	transform: rotateY(180deg);
+	z-index: 61;
+	opacity: 0;
+}
+
+.wasabi #page span.closebtn{
+	display: block;
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    height: 16px;
+    width: 16px;
+    padding: 0;
+	background:#000;
+    border: 2px solid #fff;
+    border-radius: 10px 10px 10px 10px;
+    box-shadow: 0 2px 6px #666;
+    cursor: pointer;
+}
+
+.wasabi #page span.closebtn path{
+	fill: white;
+	stroke: none;
+}
+.wasabi #page span.closebtn:hover{
+	border-color: orange;
+}
+
+.wasabi #page div.windowtitle{
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 30px;
+	font-size: 24px;
+	text-align: center;
+	text-shadow: 0 1px 1px white;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	background: url("images/bg_top.jpg") repeat-x scroll left center white;
+	cursor: move;
+	border-bottom: 1px solid white;
+	box-shadow: 0 -5px 5px -5px rgba(0, 0, 0, 0.6) inset, 0 1px 0 0 white inset;
+}
+
+.wasabi #page div.windowheader{
+	margin-top: 40px;
+	position: relative;
+	padding: 5px 5px 5px 10px;
+}
+.wasabi #page div.windowcontent{
+	margin-bottom: 10px;
+	position: relative;
+	padding: 10px;
+	padding-top: 1px;
+	max-height: 600px;
+	min-width: 200px;
+	overflow: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+.wasabi #page .popupwindow.jobstatusus div.windowcontent{ width: 450px; }
+.wasabi #page div.windowcontent option{ padding: 0; }
+
+.wasabi #page div.windowcontent ul{ margin: 0; padding-left: 30px; }
+.wasabi #page div.windowcontent ul li{ margin-top: 5px; }
+.wasabi #page div.windowcontent ul.nowrap li{ white-space: nowrap; }
+
+.wasabi #page div.windowcontent div.btndiv{
+	text-align: center;
+	margin: 10px 0 -10px;
+}
+.wasabi #page div.windowcontent div.btndiv a.button{
+	margin: 5px;
+	border-radius: 8px;
+	font-weight: normal;
+	letter-spacing: 0.5px;
+}
+.wasabi #page div.windowcontent div.btndiv a.button:active{ top: 0 }
+
+.wasabi #page div.windowcontent span.cell{
+	display: inline-block;
+	padding: 0 10px 5px 5px;
+}
+.wasabi #page div.windowcontent span.camelcase{
+	text-transform:capitalize;
+}
+
+.wasabi #page div.filedrag{
+	display: inline-block;
+	position: relative;
+	width: 200px;
+	height: 20px;
+	margin: 10px;
+	border: 2px dashed #aaa;
+	color: #aaa;
+	font-size: 18px;
+	font-weight: bold;
+	border-radius: 5px;
+	padding: 5px;
+	text-align: center;
+}
+
+.wasabi #page div.dragover{
+	background-color: #eee;
+	text-shadow: 0 1px 1px white;
+	border-color: orange;
+}
+
+.wasabi #page input, .wasabi #page textarea{
+	display: inline-block;
+	width: 60px;
+	font: 16px arial, sans-serif;
+	border: 1px solid #999;
+	box-sizing: content-box;
+	color: black;
+	margin: 0 5px 5px 0;
+	padding-left: 5px;
+	border-radius: 3px;
+	background: white url(images/input_bg.png) top left repeat-x;
+	box-shadow: 0 1px 0 white;
+	-webkit-transition: all .4s;
+	transition: all .4s;
+}
+.wasabi #page input:hover, .wasabi #page input.transparent:hover, .wasabi #page textarea:hover, .wasabi #page input:focus, .wasabi #page input.transparent:focus, .wasabi #page input.hidden:focus, .wasabi #page textarea:focus{
+	border-color: #555;
+	background-color: white;
+}
+.wasabi #page select{ margin: 3px 5px 2px; }
+
+
+.wasabi #page div.inputdesc{ opacity:0; transition: opacity 0.2s; color: #aaa; }
+.wasabi #page input:focus+div.inputdesc{ opacity: 1; }
+
+.wasabi #page textarea.url{
+	width: 330px;
+	height: 20px;
+}
+
+.wasabi #page span.expbtn{
+	margin-left:-4px;
+	vertical-align:7px;
+}
+
+.wasabi #page input.transparent{
+	background: rgba(255,255,255,0.1);
+	border-color: rgba(100,100,100,0.1);
+	width: 250px;
+}
+.wasabi #page input.hidden, .wasabi #page input.static, .wasabi #page input.faded{
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+	width: 250px;
+}
+.wasabi #page input.hidden{ border-bottom-color: #666; }
+.wasabi #page .popupwindow.library input.hidden{ border-bottom-color: transparent; }
+.wasabi #page .popupwindow.library input.hidden:focus{ border-bottom-color: #555; }
+
+.wasabi #page input.faded, .wasabi #page input.hidden:hover{ background: rgba(255,255,255,0.6); }
+.wasabi #page .popupwindow.library input.transparent, .wasabi #page .popupwindow.library input.hidden{
+	margin: 0;
+	font-size: 14px;
+	height: 18px;
+	padding-left: 0;
+	width: 220px;
+}
+
+.wasabi #page input.static{
+	font-size: 14px;
+	text-shadow: 0 1px 0 white;
+	cursor: default;
+}
+.wasabi #page input.static.editable, .wasabi #top input.static.editable{
+	background-color: white;
+	cursor: text;
+	border-color: #999;
+    box-shadow: 0 4px 8px #ddd inset, 0 1px 0 white;
+}
+.wasabi #top input.static{
+	width: 200px;
+	max-width: 400px;
+	position: relative;
+	margin: 5px auto 0 auto;
+	cursor: pointer;
+	text-align: center;
+	-webkit-transition: border-color .4s, background-color .4s, opacity .4s;
+	transition: border-color .4s, background-color .4s, opacity .4s;
+}
+.wasabi #top input.static:hover{
+	color: #f70;
+}
+.wasabi #top input.static.editable:hover{
+	color: black;
+}
+
+.wasabi #page input[type="checkbox"]{
+	width: 16px;
+	height: 16px;
+	margin: 0 3px 5px 5px;
+	vertical-align: -2px;
+}
+
+.wasabi #page input[type="checkbox"]+span{
+	margin-right: 5px;
+}
+
+.wasabi #page div.numinput input[type="checkbox"]{ margin-left: 0; }
+.wasabi #page div.numinput input[type="text"]{ width: 33px; margin: 2px 5px 5px 5px; }
+.wasabi #page div.windowcontent input[type="text"].num{
+    padding-left: 0;
+    text-align: center;
+    width: 33px;
+}
+.wasabi #page input.nogap{ margin-right: 0; }
+
+.wasabi #page span.label{
+	cursor: default;
+	border-bottom: 1px dotted #bbb;
+	display: inline-block;
+}
+.wasabi #page span.label:hover{
+	color: orange;
+	border-bottom-color: transparent;
+}
+.wasabi #page a.button.orange span.label:hover{ color: white; }
+
+.wasabi #page a.button.urladd {
+	margin: 0 5px;
+	font-size: 25px;
+    font-weight: normal;
+    line-height: 14px;
+    padding: 4px 2px 3px;
+    width: 18px;
+    color: #444;
+    text-align: center;
+    vertical-align: 5px;
+}
+.wasabi #page a.button.urladd:hover {
+	color: black;
+	box-shadow: 0 0 2px #bbb;
+}
+
+.wasabi #page span.action, .wasabi #page span.hover{
+	color: #369;
+}
+.wasabi #page span.action{ cursor: pointer; }
+.wasabi #page span.action:hover, .wasabi #page span.hover:hover{ color: orange; }
+.wasabi #page span.icon{
+	margin-left:5px;
+	color: #666;
+}
+
+
+.wasabi #page img.icn{ height: 20px; vertical-align: bottom; }
+.wasabi #page a.button img.icn{ vertical-align: text-bottom; }
+.wasabi #page img.small{ height: 16px; }
+.wasabi #page img.icn.action{ cursor: pointer; }
+.wasabi #page img.icn.action:hover{ box-shadow: 0 1px 2px #999 inset; }
+
+.wasabi #page img.windowicn{
+    position: absolute;
+	height: 25px;
+	top: 2px;
+    left: 10px;
+}
+.wasabi #page img.optadd, .wasabi #page .rotateable{
+	display: inline-block;
+	color: #333;
+	cursor: default;
+	text-shadow: none;
+	font-size: 12px;
+	vertical-align: 1px;
+	-webkit-transition: all .2s;
+	transition: all .2s;
+}
+.wasabi #page .rotated{
+	-webkit-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+.wasabi #page .rotateddown{
+	-webkit-transform: rotate(90deg);
+	transform: rotate(90deg);
+}
+
+/* boxes for items inside dialog windows (library etc.) */
+.wasabi #page div.insidediv{
+	position: relative;
+	padding: 10px 10px 5px 10px;
+	margin: 5px 0 -10px;
+	overflow: hidden;
+	border: 1px solid white;
+	border-radius: 3px;
+	box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.4) inset, 0 -4px 3px -4px rgba(0, 0, 0, 0.4) inset;
+}
+.wasabi #page div.insidediv.incontent{
+	margin-bottom: 15px;
+	padding-top: 5px;
+}
+.wasabi #page .popupwindow.library div.insidediv{ padding: 2px 5px; }
+
+/* settings list */
+.wasabi #page div.insidediv div.row{
+	position: relative;
+	padding: 10px 5px 5px;
+	margin-bottom: 5px;
+	white-space: nowrap;
+}
+.wasabi #page div.insidediv div.row.bottombtn{ padding-bottom: 10px; }
+.wasabi #page div.insidediv>div.row:nth-child(odd), .wasabi #page div.insidediv>div.rowwrap:nth-child(odd){ background-color: rgba(255,255,255,0.6); }
+.wasabi #page div.insidediv a.button.toggle{
+	position: absolute;
+	right: 3px;
+	margin-top: -5px;
+    padding: 2px 6px 1px 6px;
+    border-radius: 3px;
+    top: auto;
+}
+.wasabi #page div.insidediv div.row.bottombtn a.button.toggle{ margin-top: -4px;}
+.wasabi #page div.insidediv div.row>span.buttongroup{ margin: -10px 0 0 5px; }
+.wasabi #page div.rowwrap{
+	position: relative;
+	height: 34px;
+	margin-top: 3px;
+	overflow: hidden;
+}
+
+.wasabi #page div.insidediv.logdiv{
+	color: #666;
+	max-width: 400px;
+	max-height: 300px;
+	overflow: auto;
+	margin-bottom: 5px;
+	padding: 5px 1px;
+	display: none;
+}
+
+/* file directory list */
+.wasabi #page div.logdiv div.row{
+	padding: 3px 5px;
+	margin: 0;
+}
+.wasabi #page div.logdiv div.row a.button{
+	position: absolute;
+	right: 5px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	margin: -3px 0 0 0;
+	z-index: 5;
+}
+.wasabi #page div.logdiv div.row span.note{
+	padding-left: 10px;
+	color: #aaa;
+	font-weight: bold;
+}
+.wasabi #page div.logdiv a.button, .wasabi #page div.logdiv span.note, .wasabi #page div.logdiv span.share{ opacity: 0; }
+.wasabi #page div.logdiv div.row:hover a.button, .wasabi #page div.logdiv div.row:hover span.note, .wasabi #page div.logdiv div.row:hover span.share{ opacity: 1; }
+
+.wasabi #page .popupwindow.jobstatusus span.importtick{
+	position: absolute;
+	right: 15px;
+	bottom: 10px;
+}
+.wasabi #page .popupwindow.jobstatusus a.button.square{ vertical-align: top; }
+
+.wasabi #page hr{
+	color: white;
+	box-shadow: 0 2px 6px #ddd;
+	margin: 5px 0;
+	border: none;
+}
+.wasabi #page div.insidediv hr:last-child{ display: none; }
+.wasabi #page .popupwindow.library div.compact + hr { margin: 2px 0; }
+
+/* items in libary/jobs list */
+.wasabi #page div.itemdiv{
+	position: relative;
+	overflow: hidden;
+	-webkit-transition: height 0.4s, border-color 0.3s, background-color 0.3s, margin-left 0.5s ease 0.2s;
+	transition: height 0.4s, border-color 0.3s, background-color 0.3s, margin-left 0.5s ease 0.2s;
+}
+.wasabi #page .popupwindow.library div.itemdiv{
+	height: 55px;
+	padding: 5px 0 0 12px;
+	width: 370px;
+	border: 2px solid transparent;
+	border-radius: 3px;
+	box-shadow: 0 0 3px #888;
+	margin: 5px 0;
+}
+.wasabi #page .popupwindow.library .activeitem{ background: white; }
+.wasabi #page .popupwindow.library div.itemdiv.shared{
+	border-color: #8DB8C6;
+	border-style: dashed;
+}
+.wasabi #page .popupwindow.library div.itemdiv.compact{
+	height: 24px;
+}
+.wasabi #page .popupwindow.library div.itemdiv.expanded{
+	height: 75px;
+}
+.wasabi #page .popupwindow.library div.itemdiv.draghover{
+	border-color: orange;
+	background-color: rgba(255,165,0,0.4);
+}
+.wasabi #page .popupwindow.library div.itemdiv.ui-draggable-dragging{
+	box-shadow: 0 3px 5px #666;
+	background-color: #fff;
+}
+.wasabi #page .popupwindow.library div.itemdiv.ui-draggable-dragging div.draghandle{ border-color: transparent; }
+
+.wasabi #page div.itemdiv div.draghandle{
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 30px;
+	border-radius: 3px 0 0 3px;
+	background: transparent;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-right: none;
+    transition: border-color 0.2s linear;
+    -webkit-transition: border-color 0.2s linear;
+}
+.wasabi #page div.itemdiv div.draghandle:hover{
+	background: -webkit-linear-gradient(left, rgb(255,255,255), rgba(255,255,255,0));
+	background: linear-gradient(to right, rgb(255,255,255), rgba(255,255,255,0));
+	border-color: #ccc;
+}
+.wasabi #page div.itemdiv div.draghandle>span{
+	display: block;
+	position: absolute;
+	top: 50%;
+	height: 18px;
+	width: 18px;
+	text-align: left;
+	padding-left: 2px;
+	font-size: 18px;
+	margin-top: -12px;
+	color: #888;
+}
+
+.wasabi #page div.itemdiv a.button.itembtn{
+	position: absolute;
+	margin: 0;
+	right: 15px;
+	top: 25%;
+}
+.wasabi #page .popupwindow.library div.itemdiv a.button.itembtn{
+	top: 8px;
+	right: 5px;
+}
+.wasabi #page .popupwindow.library div.itemdiv.compact a.button.itembtn{
+	border-radius: 3px;
+	top: 2px;
+	right: 2px;
+	padding: 2px 6px;
+}
+.wasabi #page .popupwindow.library div.itemdiv a.button.itembtn.optbtn{
+	display: none;
+	border-radius: 3px;
+    padding: 3px 8px;
+    right: 20px;
+    top: 45px;
+}
+.wasabi #page .popupwindow.library div.itemdiv.compact a.button.itembtn.optbtn{ right: 2px }
+.wasabi #page .popupwindow.library div.itemdiv.expanded a.button.itembtn.optbtn{ display:block; }
+.wasabi #page .popupwindow.library div.itemdiv a.button.itembtn.childbtn{
+	border-radius: 5px;
+    padding: 0;
+    width: 15px;
+    left: 240px;
+    right: 77px;
+    top: 26px;
+}
+.wasabi #page .popupwindow.library div.itemdiv a.button.itembtn.childbtn.expanded{
+	-webkit-transform: rotate(90deg);
+	transform: rotate(90deg);
+}
+.wasabi #page .popupwindow.library div.itemdiv a.button.itembtn.childbtn:hover, .wasabi #page a.button.itembtn.childbtn:hover:after{ border-color: orange }
+.wasabi #page .popupwindow.library div.itemdiv.compact a.button.itembtn.childbtn{
+    top: 3px;
+}
+
+.wasabi #page div.itemdiv a.button span.svg{
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	vertical-align: text-bottom;
+}
+.wasabi #page div.itemdiv a.button svg path{
+	fill: white;
+	stroke: black;
+}
+.wasabi #page div.itemdiv a.button:hover svg path{
+	fill: orange;
+	stroke: black;
+}
+
+.wasabi #page span.note{
+	display: inline-block;
+	color: #666;
+	cursor: default;
+}
+.wasabi #page .popupwindow.library div.compact span.note:first-child{ display: none; }
+.wasabi #page div.tooltip span.note{ color: #ccc; }
+
+.wasabi #page span.itemexpand{
+	position: absolute;
+	right: 5px;
+	bottom: 0;
+	color: #666;
+}
+.wasabi #page span.itemexpand:after{ content: '\25BC' }
+.wasabi #page .popupwindow.library div.expanded span.itemexpand:after{ content: '\25B2' }
+.wasabi #page .popupwindow.library div.compact span.itemexpand{
+	right: 80px;
+	bottom: 5px;
+}
+
+/* library path header */
+.wasabi #page .popupwindow.library a.back{
+	position: absolute;
+	left: 5px;
+    top: 1px;
+    margin: 0;
+    z-index: 2;
+}
+.wasabi #page .popupwindow.library span.svgicon{
+	padding-right: 0;
+}
+.wasabi #page .popupwindow.library span.svgicon.share{
+	position: absolute;
+	right: 125px;
+	cursor: pointer;
+}
+.wasabi #page .popupwindow.library div.itemdiv span.svgicon.share{
+	right: 98px;
+	top: 41px;
+}
+.wasabi #page .popupwindow.library div.itemdiv.compact span.svgicon.share{ top: 6px; }
+
+.wasabi #page span.abs{ position: absolute }
+.wasabi #page span.svgicon.blue path{ fill: #369; }
+.wasabi #page span.svgicon.light path{ fill: #aaa; }
+.wasabi #page a.button span.svgicon path{ fill: #333; }
+.wasabi #page span.svgicon.action:hover path, .wasabi #page span.svgicon.hover:hover path, .wasabi #page a.button:hover span.svgicon path{ fill: orange; }
+
+
+.wasabi #page span.dirtrail{
+	display: inline-block;
+	position: relative;
+	max-width: 400px;
+	height: 22px;
+	overflow: hidden;
+	font-weight: bold;
+	white-space: nowrap;
+}
+.wasabi #page .popupwindow.library span.dirtrail { margin: -2px 145px 0 10px; max-width: 245px; }
+.wasabi #page span.dirtrail>span{ float: right; margin-right: 10px; }
+.wasabi #page span.dirtrail a, .wasabi #page a.arrow{
+	display: inline-block;
+	position: relative;
+	font-size: 14px;
+	line-height: 20px;
+	padding: 0 0 0 15px;
+	height: 20px;
+	border-radius: 5px;
+	margin: 0 0 0 -4px;
+	box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(255,255,255,.6);
+}
+.wasabi #page span.dirtrail a:first-child, .wasabi #page a.arrow{ vertical-align: top; margin: 0; }
+.wasabi #page span.dirtrail a>span{
+	max-width: 40px;
+	padding-right: 5px;
+	overflow: hidden;
+	transition: max-width 0.4s;
+	-webkit-transition: max-width 0.4s;
+}
+.wasabi #page span.dirtrail a:first-child>span{
+	height: 16px;
+    margin: 2px 6px 0 -3px;
+    width: 16px;
+}
+.wasabi #page span.dirtrail a:hover{ background: white; }
+.wasabi #page span.dirtrail a:hover>span{ max-width: 100px; }
+.wasabi #page span.dirtrail a:after, .wasabi #page a.arrow:after{
+	content: '';
+	position: absolute;
+	top: 0; 
+	right: -9px;
+	width: 20px; 
+	height: 20px;
+	background-color: #d0d0d0;
+    background: -webkit-linear-gradient(135deg, #f9f9f9, #d0d0d0);
+    background: linear-gradient(135deg, #f9f9f9, #d0d0d0);
+    border: 1px solid #555;
+    border-left: none;
+    border-bottom: none;
+    -webkit-transform: scale(0.707) rotate(45deg);
+	transform: scale(0.707) rotate(45deg);
+	z-index: 1;
+	border-radius: 0 5px 0 50px;
+}
+.wasabi #page a.childbtn.arrow:after{
+	border-style: double double none none;
+	border-width: 4px 4px 0 0;
+	width: 18px;
+	height: 18px;
+	top: -1px;
+}
+.wasabi #page a.childbtn.activeitem.arrow:after{ background: white }
+
+.wasabi #page span.dirtrail a:hover:after{ background: white; }
+
+/* fading-end textline */
+.wasabi #page span.logline{
+	margin-right: 10px;
+	white-space:nowrap;
+	overflow:hidden;
+}
+.wasabi #page span>span.fade{
+	display: inline-block;
+	position: absolute;
+	top: 0;
+	left: 92%;
+	width: 35px;
+	height: 100%;
+	background: -webkit-linear-gradient(left, rgba(240,240,240,0), rgb(240,240,240));
+	background: linear-gradient(to right, rgba(240,240,240,0), rgb(240,240,240));
+}
+.wasabi #page .popupwindow.library span>span.fade{ left: 89%; }
+.wasabi #page div.activeitem span>span.fade{
+	background: -webkit-linear-gradient(left, rgba(255,255,255,0), rgb(255,255,255));
+	background: linear-gradient(to right, rgba(255,255,255,0), rgb(255,255,255));
+}
+.wasabi #page span>span.leftfade{
+	display: inline-block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 15px;
+	height: 100%;
+	background: -webkit-linear-gradient(left, rgb(240,240,240), rgba(240,240,240,0));
+	background: linear-gradient(to right, rgb(240,240,240), rgba(240,240,240,0));
+}
+/* file contents paper in exportwindow */
+.wasabi #page div.paper{
+	background: white;
+	min-height: 15px;
+	padding: 10px 20px;
+	margin: 5px 10px 10px 5px;
+	white-space: pre;
+	float: left;
+	border: 1px solid #bbb;
+	box-shadow: 0 2px 5px #888;
+	font-family: monospace;
+}
+
+.wasabi #page .popupwindow.about div.sectiontxt a.logo{
+	display: inline-block;
+	margin: 10px 0 0 10px;
+}
+.wasabi #page .popupwindow.about a.logo img{
+	background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    display: inline-block;
+    height: 50px;
+    margin: 3px;
+    padding: 5px;
+}
+
+.wasabi #bottom{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 40px;
+	text-align: center;
+	color: #dfac00;
+	-webkit-transition: opacity .5s;
+	transition: opacity .5s;
+}
+
+/* Plugin API interace styles*/
+.wasabi #page .errmsg, .wasabi #page .notemsg{
+	background: #d33;
+	border-radius: 3px;
+	color: white;
+	padding: 3px;
+	text-align: center;
+	text-shadow: none;
+ }
+ 
+ span.wasabisign{
+	color: white;
+    display: block;
+    font-weight: bold;
+    font-size: 18px;
+    height: 0;
+    margin: 0 auto;
+    position: relative;
+    text-align: center;
+    text-shadow: 0 0 5px #333;
+    top: 40%;
+    cursor: default;
+ }
+ 
+ .wasabitree_container {
+   min-height: 200px;
+   height: 100%;
+ }
