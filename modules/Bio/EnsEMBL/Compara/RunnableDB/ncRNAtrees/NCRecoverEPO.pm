@@ -355,6 +355,8 @@ sub run_low_coverage_best_in_alignment {
 
    my $genome_db = $gdb_per_dbID{$gdb_id};
    my $gdb_name = $genome_db->name;
+   print STDERR "doing $gdb_name\n" if $self->debug;
+
    my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
@@ -377,8 +379,7 @@ sub run_low_coverage_best_in_alignment {
     my $count = $epo_low_restricted_gabIDs{$gabID};
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
-  print STDERR "BEST_GAB: $max_gabID ($max species)\n";
-  print STDERR "MAX_MLSS: ", $epo_low_mlss->dbID, "\n" if ($self->debug);
+  print STDERR "BEST_GAB: $max_gabID ($max species)\n" if $self->debug;
 
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
 
@@ -388,6 +389,7 @@ sub run_low_coverage_best_in_alignment {
 
    my $genome_db = $gdb_per_dbID{$gdb_id};
    my $gdb_name = $genome_db->name;
+   print STDERR "working on $gdb_name\n" if $self->debug;
    my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
@@ -398,16 +400,21 @@ sub run_low_coverage_best_in_alignment {
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
       $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
+      print STDERR $leaf->stable_id, " has no alignments -> will be removed\n" if $self->debug;
       next;
     }
-    print STDERR "# EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
+    print STDERR scalar(@$low_cov_genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
+        print STDERR $leaf->stable_id, " is not in GAB $max_gabID -> will be removed\n" if $self->debug;
         last;
       }
+    }
+    unless ($self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
+      print STDERR $leaf->stable_id, " is in GAB $max_gabID -> will be kept \n" if $self->debug;
     }
    }
    } );
