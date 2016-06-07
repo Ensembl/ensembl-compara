@@ -339,6 +339,11 @@ sub run_low_coverage_best_in_alignment {
 
   $self->compara_dba->dbc->disconnect_if_idle();
 
+  my %members_per_genome_db_id;
+  foreach my $member (@{ $self->param('nc_tree')->get_all_Members }) {
+      push @{ $members_per_genome_db_id{$member->genome_db_id} }, $member;
+  }
+
   my %epo_low_restricted_gab_hash = ();
   my %epo_low_restricted_gabIDs = ();
 
@@ -349,7 +354,7 @@ sub run_low_coverage_best_in_alignment {
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
    my $gdb_name = $genome_db->name;
-   my $leaves = $self->param('nc_tree')->root->find_leaves_by_field('genome_db_id', $gdb_id);
+   my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
@@ -394,7 +399,7 @@ sub run_low_coverage_best_in_alignment {
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
    my $gdb_name = $genome_db->name;
-   my $leaves = $self->param('nc_tree')->root->find_leaves_by_field('genome_db_id', $gdb_id);
+   my $leaves = $members_per_genome_db_id{$gdb_id};
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
