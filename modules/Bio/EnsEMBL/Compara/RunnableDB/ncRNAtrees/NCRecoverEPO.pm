@@ -379,6 +379,7 @@ sub run_low_coverage_best_in_alignment {
     my $count = $epo_low_restricted_gabIDs{$gabID};
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
+  return undef unless $max;
   print STDERR "BEST_GAB: $max_gabID ($max species)\n" if $self->debug;
 
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
