@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion ();
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
@@ -215,13 +216,15 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
+            # This value works in production. Change it if you want to run the pipeline in another context, but don't commit the change !
+            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
         'eg_live' => {
             -host => 'mysql-eg-publicsql.ebi.ac.uk',
             -port => 4157,
             -user => 'anonymous',
-            -db_version => 78,
+            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
@@ -235,6 +238,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
+        # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
         'prev_rel_db' => 'mysql://ensro@compara5:3306/lg4_ensembl_compara_81',
 
         # How will the pipeline create clusters (families) ?
