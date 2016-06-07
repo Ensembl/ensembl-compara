@@ -107,7 +107,7 @@ sub render {
       'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
       'desc'  => "Convert Ensembl files for use with other analysis tools",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
-      'limit' => $tools_limit,
+      'limit' => '',
       'code'  => '',
       'docs'  => '',
     });
@@ -120,7 +120,7 @@ sub render {
       'name'  => sprintf('<b><a class="nodeco" href="%s">Allele frequency calculator</a></b>', $link),
       'desc'  => "This tool calculates population-wide allele frequency for sites within the chromosomal region defined from a VCF file and populations defined in a sample panel file.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
-      'limit' => $tools_limit,
+      'limit' => '',
       'code'  => '',
       'docs'  => sprintf('<a href="/info/docs/tools/allelefrequency/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
