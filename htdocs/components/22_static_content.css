@@ -183,10 +183,13 @@ floating archive box on help page
 /*-----------------------------------------------------------------------
 gallery page
 -------------------------------------------------------------------------*/
-div.gallery-toc       { margin:0 auto; }
-div.gallery-nav     { display:inline-block; padding: 4px; width:15%; border:1px solid [[TINT_BORDER]]; }
+div.gallery         { width: 800px; margin:0 auto; }
+div.gallery-toc     { margin:0 auto; }
+div.gallery-nav     { display:inline-block; padding: 4px; height: 100px; width:15%; 
+                      vertical-align:middle; border:1px solid [[TINT_BORDER]]; }
 a.gallery-navlabel  { font-size: 150%; font-weight:bold; }
 div.gallery_preview { display:block; margin:0 12px 1em 12px; padding: 6px; height: 120px; 
+                      
                       vertical-align:top; border: 1px solid [[PANEL_BORDER]]; }
 div.gallery_preview .page-preview { float:right; }
 div.gallery_preview .page-preview img { width:150px; height:100px; 

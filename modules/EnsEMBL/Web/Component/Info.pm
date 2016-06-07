@@ -20,6 +20,7 @@ package EnsEMBL::Web::Component::Info;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
@@ -124,9 +125,8 @@ sub format_gallery {
                         </div>', 
                           lc($title), lc($title), $icon, lc($title), $title);
 
-    $html .= $self->_sub_header($title);
-
     $html .= '<div class="gallery">';
+    $html .= $self->_sub_header($title);
 
     my $entry_template = '<div class="gallery_preview">
                           <div class="page-preview">
@@ -241,7 +241,7 @@ sub format_gallery {
 
     }
 
-    $html .= '</div>';
+    $html .= '</div></div>';
   }
 
   my $page_header = sprintf('<h1>%s views for %s data</h1>', scalar keys %page_count, $hub->param('data_type'));
