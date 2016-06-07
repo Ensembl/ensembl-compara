@@ -389,8 +389,6 @@ sub run_low_coverage_best_in_alignment {
   print STDERR "BEST_GAB: $max_gabID ($max species)\n";
   print STDERR "MAX_MLSS: ", $epo_low_mlss->dbID, "\n" if ($self->debug);
 
-  my %low_cov_leaves_pmember_id_slice_to_check_coord_system = ();
-  my %low_cov_slice_seqs = ();
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
 
   # Second round to get the low-covs on the max_gabID
@@ -405,7 +403,6 @@ sub run_low_coverage_best_in_alignment {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     die "Unable to fetch slice for this genome_db leaf: $gdb_name\n" unless (defined($slice));
-    $low_cov_slice_seqs{$gdb_id}{$leaf->seq_member_id} = $slice;
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
@@ -418,8 +415,6 @@ sub run_low_coverage_best_in_alignment {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
-      } else {
-        $low_cov_leaves_pmember_id_slice_to_check_coord_system{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
       }
     }
    }
@@ -427,44 +422,6 @@ sub run_low_coverage_best_in_alignment {
   }
   # We don't need the connection to the EPO database any more;
   $self->param('epo_gab_adaptor')->dbc->disconnect_if_idle();
-
-  my %low_cov_same_slice = ();
-
-  foreach my $genome_db_id (keys %low_cov_slice_seqs) {
-    my @member_ids = keys %{$low_cov_slice_seqs{$genome_db_id}};
-    next if (2 > scalar @member_ids);
-    while (my $member_id1 = shift (@member_ids)) {
-      foreach my $member_id2 (@member_ids) {
-        my $slice1 = $low_cov_slice_seqs{$genome_db_id}{$member_id1};
-        my $coord_level1 = $slice1->coord_system->is_top_level;
-        my $slice2 = $low_cov_slice_seqs{$genome_db_id}{$member_id2};
-        my $coord_level2 = $slice2->coord_system->is_top_level;
-        if ($coord_level2 < $coord_level1) {
-            my $temp_slice = $slice1; $slice1 = $slice2; $slice2 = $temp_slice;
-            my $temp_member_id = $member_id1; $member_id1 = $member_id2; $member_id2 = $temp_member_id;
-        }
-        my $mapped_slice2 = $slice2->project($slice1->coord_system->name)->[0];
-        next unless(defined($mapped_slice2)); # no projection, so pair of slices are different
-        my $proj_slice2 = $mapped_slice2->to_Slice;
-        if ($slice1->seq_region_name eq $proj_slice2->seq_region_name &&
-            $slice1->start           eq $proj_slice2->start           &&
-            $slice1->end             eq $proj_slice2->end) {
-          $low_cov_same_slice{$member_id1} = $member_id2;
-        }
-      }
-    }
-  }
-
-  foreach my $member_id1 (keys %low_cov_same_slice) {
-    my $member_id2 = $low_cov_same_slice{$member_id1};
-    if (defined ($low_cov_leaves_pmember_id_slice_to_check_coord_system{$member_id2})) {
-      # We found this slice in the genomic alignment, but it's same
-      # slice as another higher rank slice, so goes to the delete list
-      my $stable_id2 = $low_cov_leaves_pmember_id_slice_to_check_coord_system{$member_id2};
-      # $DB::single=1;1;
-      $self->param('low_cov_leaves_to_delete_pmember_id')->{$member_id2} = $stable_id2;
-    }
-  }
 
 }
 
