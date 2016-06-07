@@ -458,6 +458,7 @@ sub remove_low_cov_predictions {
   return 1;
 }
 
+# This is currently not called
 sub add_matching_predictions {
   my $self = shift;
 
