@@ -725,9 +725,9 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
 
     f = (bam1_t *)SvIV(SvRV(*elem));
 
-    //if ((f->reversed && STRAND == 1) || (!f->reversed && STRAND == -1)) {
-    //  continue;
-    //}
+    if ((bam_is_rev(f) && STRAND == 1) || (!bam_is_rev(f) && STRAND == -1)) {
+      continue;
+    }
 
     fstart = f->core.pos+1;
     fend = bam_endpos(f);
