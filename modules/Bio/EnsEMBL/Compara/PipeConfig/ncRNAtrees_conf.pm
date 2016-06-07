@@ -331,7 +331,7 @@ sub pipeline_analyses {
             %hc_params,
         },
 
-# ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
+# ---------------------------------[find the EPO database that helps defining high/low-coverage species]------------------------------
 
         {   -logic_name => 'find_epo_database',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
@@ -342,11 +342,6 @@ sub pipeline_analyses {
                 },
                 species_set_name => $self->o('epo_species_set_name'),
             },
-            -flow_into => [ 'store_lowcov_species_set' ],
-        },
-
-        {   -logic_name => 'store_lowcov_species_set',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::StoreLowCovSpeciesSet',
         },
 
 # ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
@@ -428,18 +423,8 @@ sub pipeline_analyses {
                                },
                 -flow_into     => {
                                    '2->A' => WHEN( '#skip_epo#' => 'msa_chooser', ELSE 'recover_epo' ),
-                                   'A->1' => [ 'hc_tree_final_checks' ],
+                                   'A->1' => [ 'hc_global_tree_set' ],
                                   },
-            },
-
-
-            { -logic_name       => 'hc_tree_final_checks',
-              -module           => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-              -flow_into        => {
-                                    '1->A' => ['hc_global_tree_set', 'hc_global_epo_removed_members'],
-                                    'A->1' => [ 'write_stn_tags' ],
-                                   },
-              %hc_params,
             },
 
             { -logic_name         => 'hc_global_tree_set',
@@ -447,14 +432,7 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              %hc_params,
-            },
-
-            { -logic_name      => 'hc_global_epo_removed_members',
-              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-              -parameters      => {
-                                   mode => 'epo_removed_members_globally',
-                                  },
+              -flow_into          => [ 'write_stn_tags' ],
               %hc_params,
             },
 

@@ -108,18 +108,6 @@ sub fetch_input {
   my $epo_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($epo_db);
   $self->param('epo_gab_adaptor', $epo_dba->get_GenomicAlignBlockAdaptor);
   $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
-
-  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
-
-
-  my ($epo_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage-assembly') };
-  unless($epo_ss) {
-    die "Could not fetch a SpeciesSet named 'low-coverage-assembly' from the database\n";
-  }
-  $self->param('epo_gdb', {});
-  foreach my $epo_gdb (@{$epo_ss->genome_dbs}) {
-      $self->param('epo_gdb')->{$epo_gdb->dbID} = 1;
-  }
 }
 
 =head2 run
@@ -136,7 +124,7 @@ sub run {
   my $self = shift @_;
 
   # $self->run_ncrecoverepo;
-  $self->run_low_coverage_best_in_alignment;
+  $self->iterate_over_lowcov_mlsss;
 }
 
 
@@ -176,6 +164,7 @@ sub run_ncrecoverepo {
   my %absent_gdbs      = ();
   my %present_epo_gdbs = ();
   
+  # NOTE: 'epo_gdb' used to be a hash { genome_db_id => 1 } containing all the low-coverage species
   # Find absent gdbs
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
       $present_gdbs{$leaf->genome_db_id}++;
@@ -325,27 +314,38 @@ sub run_ncrecoverepo {
 }
 
 # This one is called
+sub iterate_over_lowcov_mlsss {
+    my $self = shift @_;
+    my $epolow_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE');
+    unless (scalar(@$epolow_mlsss)) {
+        die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
+    }
+    foreach my $epo_low_mlss (@$epolow_mlsss) {
+        my $epo_hc_mlss = $self->param('epo_mlss_adaptor')->fetch_by_dbID($epo_low_mlss->get_value_for_tag('high_coverage_mlss_id'))
+            || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
+        my %hc_gdb_id = (map {$_->dbID => 1} @{$epo_hc_mlss->species_set_obj->genome_dbs});
+        my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @{$epo_low_mlss->species_set_obj->genome_dbs};
+        my %low_gdb_id = (map {$_->dbID => 1} @lowcov_gdbs);
+        $self->run_low_coverage_best_in_alignment($epo_low_mlss, \%hc_gdb_id, \%low_gdb_id);
+    }
+}
+
+# This one too
 sub run_low_coverage_best_in_alignment {
   my $self = shift;
+  my $epo_low_mlss = shift;
+  my $hc_gdb_id = shift;
+  my $lc_gdb_id = shift;
 
-  my $epo_low_cov_gdbs = {};
   $self->compara_dba->dbc->disconnect_if_idle();
-
-  my $epo_low_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE'); ## This is now an array
-  for my $epo_low_mlss (@{$epo_low_mlsss}) {
-      foreach my $genome_db (@{$epo_low_mlss->species_set_obj->genome_dbs()}) {
-          $epo_low_cov_gdbs->{$genome_db->dbID}++;
-      }
-  }
 
   my %epo_low_restricted_gab_hash = ();
   my %epo_low_restricted_gabIDs = ();
 
   # First round to get the candidate GenomicAlignTrees
-  # We first iterate over the interesting genome_dbs to group the
-  # connections to the same core database
-  foreach my $gdb_id (keys %{$epo_low_cov_gdbs}) {
-   next if (defined($self->param('epo_gdb')->{$gdb_id}));
+  # We first iterate over the high-coverage genome_dbs
+  # This way, we group the queries to the same core database
+  foreach my $gdb_id (keys %{$hc_gdb_id}) {
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
    my $gdb_name = $genome_db->name;
@@ -355,22 +355,10 @@ sub run_low_coverage_best_in_alignment {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     next unless (defined($slice));
-    my $genomic_align_blocks = [];
-    for my $epo_low_mlss (@{$epo_low_mlsss}) {
-        my $gabs = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
-        if (defined $gabs) {
-            $genomic_align_blocks = [@$genomic_align_blocks, @$gabs];
-        }
-    }
-#    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
+    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
     next unless(0 < scalar(@$genomic_align_blocks));
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
-      if (!defined($genomic_align_block->dbID)) {
-        # It's considered 2x in the epo_low_cov, so add to the list and skip
-        $epo_low_cov_gdbs->{$gdb_id}++;
-        next;
-      }
       my $epo_low_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
       next unless (defined($epo_low_restricted_gab));
       my $gab_start = $epo_low_restricted_gab->{restricted_aln_start};
@@ -386,19 +374,14 @@ sub run_low_coverage_best_in_alignment {
    }
    } );
   }
+
+  # This selects the GAB with the highest number of species
   my $max = 0; my $max_gabID;
   foreach my $gabID (keys %epo_low_restricted_gabIDs) {
     my $count = $epo_low_restricted_gabIDs{$gabID};
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
-
-  ## Once we have the max_gabID, we fix the mlss:
-  my $gab = $self->param('epo_gab_adaptor')->fetch_by_dbID($max_gabID);
-  my $epo_low_mlss;
-  if (defined $gab) {
-      $epo_low_mlss = $gab->method_link_species_set();
-  }
-
+  print STDERR "BEST_GAB: $max_gabID ($max species)\n";
   print STDERR "MAX_MLSS: ", $epo_low_mlss->dbID, "\n" if ($self->debug);
 
   my %low_cov_leaves_pmember_id_slice_to_check_coord_system = ();
@@ -407,8 +390,7 @@ sub run_low_coverage_best_in_alignment {
 
   # Second round to get the low-covs on the max_gabID
   # We apply the same trick as above
-  foreach my $gdb_id (keys %{$epo_low_cov_gdbs}) {
-   next unless (defined($self->param('epo_gdb')->{$gdb_id}));
+  foreach my $gdb_id (keys %{$lc_gdb_id}) {
 
    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
    my $gdb_name = $genome_db->name;
@@ -416,11 +398,6 @@ sub run_low_coverage_best_in_alignment {
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
-    if (! defined $epo_low_mlss) {
-        ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
-        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
-        next;
-    }
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     die "Unable to fetch slice for this genome_db leaf: $gdb_name\n" unless (defined($slice));
     $low_cov_slice_seqs{$gdb_id}{$leaf->seq_member_id} = $slice;
