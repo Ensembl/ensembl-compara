@@ -167,6 +167,9 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
+use Data::Dumper;
+#$Data::Dumper::Pad = '<br>';
+
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
@@ -1354,7 +1357,7 @@ sub restrict_between_alignment_positions {
           -method_link_species_set => $self->method_link_species_set,
           -genomic_align_array => $new_genomic_aligns,
           -group_id => $self->group_id,
-	  -level_id => $self->level_id,
+	        -level_id => $self->level_id,
       );
   $genomic_align_block->original_dbID($self->dbID or $self->original_dbID);
   $genomic_align_block->original_strand($self->original_strand);

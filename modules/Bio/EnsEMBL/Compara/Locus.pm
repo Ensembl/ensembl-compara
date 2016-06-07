@@ -365,16 +365,23 @@ sub dnafrag_strand {
 sub get_Slice {
   my ($self) = @_;
 
-  my $slice = $self->dnafrag->slice;
-  return undef if (!defined($slice));
+  if ( defined $self->{'dnafrag'} ) {
+    my $slice = $self->dnafrag->slice;
+    return undef if (!defined($slice));
 
-  $slice = $slice->sub_Slice(
-              $self->dnafrag_start,
-              $self->dnafrag_end,
-              $self->dnafrag_strand
-          );
+    $slice = $slice->sub_Slice(
+                $self->dnafrag_start,
+                $self->dnafrag_end,
+                $self->dnafrag_strand
+            );
 
-  return $slice;
+    return $slice;
+  }
+  # else {
+  #   my $slice_adaptor = $self->db_adaptor->get_SliceAdaptor;
+  #   my $slice = $slice_adaptor->fetch_by_region( 'chromosome', $self-> );
+  # }
+  return undef;
 }
 
 

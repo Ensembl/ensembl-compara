@@ -35,8 +35,10 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor;
-use Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor;
+#use Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor;
+#use Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor;
+
+use Data::Dumper;
 
 die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a valid installation of Cactus.\n" unless $ENV{'PROGRESSIVE_CACTUS_DIR'};
 
@@ -44,7 +46,8 @@ use Inline C => Config =>
              LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
              MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a"],
              INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/";
-use Inline 'C' => "./HALAdaptorSupport.c";
+#use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/compara-master/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
+use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
              #LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -lstdc++ -lhdf5 -lhdf5_cpp",
 
 =head2 new
@@ -67,6 +70,9 @@ sub new {
     } else {
         $self->{'use_hal_genomes'} = 0;
     }
+
+    #print Dumper $self;
+
     return $self;
 }
 
@@ -83,17 +89,17 @@ sub hal_filehandle {
 # FIXME: this is really bad and not at *all* what goes on in other
 # get_adaptor methods. But I'm planning on rewriting all of this
 # (there isn't much to it!) after getting the hang of perl anyway.
-sub get_adaptor {
-    my $self = shift;
-    my $class_name = shift;
-    if ($class_name eq 'GenomicAlignBlock') {
-        return Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor->new($self->{'hal_fd'}, $self);
-    } elsif ($class_name eq 'MethodLinkSpeciesSet') {
-        return Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor->new($self);
-    } else {
-        die "can't get adaptor for class $class_name";
-    }
-}
+#sub get_adaptor {
+#    my $self = shift;
+#    my $class_name = shift;
+#    if ($class_name eq 'GenomicAlignBlock') {
+#        return Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor->new($self->{'hal_fd'}, $self);
+#    } elsif ($class_name eq 'MethodLinkSpeciesSet') {
+#        return Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor->new($self);
+#    } else {
+#        die "can't get adaptor for class $class_name";
+#    }
+#}
 
 sub genome_name_from_species_and_assembly {
     my ($self, $species_name, $assembly_name) = @_;
