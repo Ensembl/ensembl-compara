@@ -320,14 +320,17 @@ sub iterate_over_lowcov_mlsss {
     unless (scalar(@$epolow_mlsss)) {
         die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
     }
+    my @gab_ids;
     foreach my $epo_low_mlss (@$epolow_mlsss) {
         my $epo_hc_mlss = $self->param('epo_mlss_adaptor')->fetch_by_dbID($epo_low_mlss->get_value_for_tag('high_coverage_mlss_id'))
             || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
         my %hc_gdb_id = (map {$_->dbID => 1} @{$epo_hc_mlss->species_set_obj->genome_dbs});
         my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @{$epo_low_mlss->species_set_obj->genome_dbs};
         my %low_gdb_id = (map {$_->dbID => 1} @lowcov_gdbs);
-        $self->run_low_coverage_best_in_alignment($epo_low_mlss, \%hc_gdb_id, \%low_gdb_id);
+        my $gab_id = $self->run_low_coverage_best_in_alignment($epo_low_mlss, \%hc_gdb_id, \%low_gdb_id);
+        push @gab_ids, $gab_id if $gab_id;
     }
+    $self->param('nc_tree')->store_tag('ncrecoverepo_filter_gab_id', \@gab_ids) if scalar(@gab_ids);
 }
 
 # This one too
@@ -423,6 +426,8 @@ sub run_low_coverage_best_in_alignment {
   # We don't need the connection to the EPO database any more;
   $self->param('epo_gab_adaptor')->dbc->disconnect_if_idle();
 
+  return $max_gabID;
+  $self->param('nc_tree')->store_tag('ncrecoverepo_best_gab_id', $max_gabID);
 }
 
 sub remove_low_cov_predictions {
