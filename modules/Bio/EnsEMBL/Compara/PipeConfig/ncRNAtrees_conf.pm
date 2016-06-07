@@ -432,7 +432,7 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags' ],
+              -flow_into          => [ 'write_stn_tags', 'write_member_counts', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
               %hc_params,
             },
 
@@ -441,7 +441,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
             },
-            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
+            -flow_into      => [ 'email_tree_stats_report' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
