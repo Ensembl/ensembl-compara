@@ -321,6 +321,7 @@ sub iterate_over_lowcov_mlsss {
         die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
     }
     my @gab_ids;
+    $self->param('low_cov_leaves_to_delete_pmember_id', {});
     foreach my $epo_low_mlss (@$epolow_mlsss) {
         my $epo_hc_mlss = $self->param('epo_mlss_adaptor')->fetch_by_dbID($epo_low_mlss->get_value_for_tag('high_coverage_mlss_id'))
             || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
@@ -384,8 +385,6 @@ sub run_low_coverage_best_in_alignment {
   }
   return undef unless $max;
   print STDERR "BEST_GAB: $max_gabID ($max species)\n" if $self->debug;
-
-  $self->param('low_cov_leaves_to_delete_pmember_id', {});
 
   # Second round to get the low-covs on the max_gabID
   # We apply the same trick as above
