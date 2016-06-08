@@ -322,7 +322,7 @@ sub hover_labels {
 
     $html .= sprintf(qq(
       <div class="hover_label floating_popup %s">
-        <p class="header _hl_pin"><span class="hl-pin"></span>%s<span class="_hl_extend hl-extend"></span></p>
+        <p class="header _hl_pin"><span class="hl-pin"></span><span class="_track_menu_header">%s</span><span class="_hl_extend hl-extend"></span></p>
         <div class="hl-buttons">%s</div>
         <div class="hl-content">%s</div>
         <div class="spinner"></div>
