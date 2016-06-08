@@ -79,62 +79,54 @@ The Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
-=item B<--compara compara_db_name_or_alias>
+=item B<[--compara compara_db_name_or_alias]>
 
 The compara database to update. You can use either the original name or any of the
 aliases given in the registry_configuration_file. DEFAULT VALUE: compara_master
 
-=item B<--method_link_type method_link_type>
+=item B<[--method_link_type method_link_type]>
 
 It should be an existing method_link_type. E.g. TRANSLATED_BLAT, BLASTZ_NET, MLAGAN...
 
-=item B<--genome_db_id>
+=item B<[--genome_db_id]>
 
 This should be a list of genome_db_ids. You can separate them by commas or specify them in
 as many --genome_db_id options as you want
 
-=item B<--name>
+=item B<[--name name]>
 
 The name for this MethodLinkSpeciesSet
 
-=item B<--source>
+=item B<[--source source]>
 
 The source for this MethodLinkSpeciesSet
 
-=item B<--url>
+=item B<[--url url]>
 
 The url for this MethodLinkSpeciesSet
 
-=item B<--pw>
+=item B<[--pw]>
 
 From a list of genome_db_id 1,2,3,4, it will create all possible pairwise combinaison 
 i.e. [1,2] [1,3] [1,4] [2,3] [2,4] [3,4] for a given  method link.
 
-=item B<--sg>
+=item B<[--sg]>
 
 From a list of genome_db_id 1,2,3,4, it will create a mlss for each single genome_db_id 
 in the list i.e. [1] [2] [3] [4] for a given  method link.
 
-=item B<--use_genomedb_ids>
+=item B<[--use_genomedb_ids]>
 
 Force the names of the create MLSS to use the Genome DB ID rather than the truncated form
 of its name (which is normally of the form H.sap).
 
-=item B<--species_set_name>
+=item B<[--species_set_name species_set_name]>
 
 Set the name for this species_set.
 
-=item B<--collection>
+=item B<[--collection]>
 
 Use all the species in that collection (more practical than giving a long list of genome_db_ids
-
-=item B<Examples>
-
-perl create_mlss.pl
-
-perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
-
-perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 species PECAN" --source "ensembl" --url "" --species_set_name "mammals"
 
 =item B<[--release]>
 
@@ -143,7 +135,13 @@ as "current", i.e. with a first_release and an undefined last_release
 
 =back
 
-=head1 INTERNAL METHODS
+=head2 EXAMPLES
+
+perl create_mlss.pl
+
+perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
+
+perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 species PECAN" --source "ensembl" --url "" --species_set_name "mammals"
 
 =cut
 
