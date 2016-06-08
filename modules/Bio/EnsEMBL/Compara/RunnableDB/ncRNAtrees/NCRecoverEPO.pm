@@ -352,7 +352,7 @@ sub run_low_coverage_best_in_alignment {
       push @{ $members_per_genome_db_id{$member->genome_db_id} }, $member;
   }
 
-  my %epo_low_restricted_gabIDs = ();
+  my %all_seen_gab_ids = ();
 
   # First round to get the candidate GenomicAlignTrees
   # We first iterate over the high-coverage genome_dbs
@@ -371,7 +371,7 @@ sub run_low_coverage_best_in_alignment {
     my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
     print STDERR scalar(@$genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
     foreach my $genomic_align_block (@$genomic_align_blocks) {
-      $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
+      $all_seen_gab_ids{$genomic_align_block->dbID}++;
     }
    }
    } );
@@ -379,8 +379,8 @@ sub run_low_coverage_best_in_alignment {
 
   # This selects the GAB with the highest number of species
   my $max = 0; my $max_gabID;
-  foreach my $gabID (keys %epo_low_restricted_gabIDs) {
-    my $count = $epo_low_restricted_gabIDs{$gabID};
+  foreach my $gabID (keys %all_seen_gab_ids) {
+    my $count = $all_seen_gab_ids{$gabID};
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
   return undef unless $max;
