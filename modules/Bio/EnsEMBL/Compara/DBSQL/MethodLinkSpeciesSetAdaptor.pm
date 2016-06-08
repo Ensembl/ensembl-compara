@@ -323,8 +323,7 @@ sub _unique_attributes {
 sub fetch_all_by_species_set_id {
     my ($self, $species_set_id) = @_;
 
-    my $mlss = $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
-    return $mlss;
+    return $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
 }
 
 
@@ -346,8 +345,7 @@ sub fetch_all_by_species_set_id {
 sub fetch_by_method_link_id_species_set_id {
     my ($self, $method_link_id, $species_set_id) = @_;
 
-    my $mlss = $self->_id_cache->get_by_additional_lookup('method_species_set', sprintf('%d_%d', $method_link_id, $species_set_id));
-    return $mlss;
+    return $self->_id_cache->get_by_additional_lookup('method_species_set', sprintf('%d_%d', $method_link_id, $species_set_id));
 }
 
 
@@ -462,9 +460,7 @@ sub fetch_by_method_link_type_GenomeDBs {
         return undef;
     }
 
-    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
-    
-    return $method_link_species_set;
+    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
 }
 
 
