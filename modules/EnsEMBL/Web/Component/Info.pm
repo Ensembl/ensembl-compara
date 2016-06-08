@@ -248,7 +248,7 @@ sub format_gallery {
   my $toc_string = sprintf('<div class="gallery-toc center">%s</div>', join(' ', @toc));
 
   return qq(
-            <div class="gallery js-panel" id="site-gallery">
+            <div class="gallery js_panel" id="site-gallery">
               <input type="hidden" class="panel_type" value="SiteGallery">
               $page_header
               $toc_string
