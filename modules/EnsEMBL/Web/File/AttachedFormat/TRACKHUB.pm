@@ -51,7 +51,15 @@ sub check_data {
     my $url = $self->{'url'};
     my $hc_error = system("$hubCheck $url -checkSettings -noTracks");
     if ($hc_error) {
-      $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>. Please contact the creator of this hub if you wish to use it with Ensembl.</p>);
+      ## Parse and ignore issues we don't care about
+      my @lines = split /\n/, $hc_error;
+      shift @lines;
+      my $problematic = 0;
+      for my $line (@lines) {
+        next if $line =~ /deprecated|cram/;
+        $problematic = 1;
+      }
+      $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>. Please contact the creator of this hub if you wish to use it with Ensembl.</p>) if $problematic;
     }
   }
  
