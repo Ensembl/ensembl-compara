@@ -14,6 +14,34 @@
  * limitations under the License.
  */
 
+Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
+
+  init: function () {
+
+    this.base.apply(this, arguments);
+
+    var $thumbnail;
+
+    this.el.find(".embiggen").each( 
+      function() {
+        $thumbnail = $(this);
+        $thumbnail.on({
+                        mouseover: function () {
+                          console.log('Thumbnail: ' + $thumbnail.attr('src'));
+                          $(this).addClass('zoom'); 
+                        }
+                      });
+        $thumbnail.on({
+                        mouseout: function () {
+                          console.log('Leaving ' + $thumbnail.attr('src'));
+                          $(this).removeClass('zoom'); 
+                        }
+                      });
+      }
+    );
+  }
+});
+
 Ensembl.Panel.SiteGalleryHome = Ensembl.Panel.Content.extend({
 
   init: function () {

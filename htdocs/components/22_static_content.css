@@ -196,6 +196,7 @@ div.gallery-preview .page-preview { float:right; }
 div.gallery-preview .page-preview img { width:150px; height:100px; 
                       border: 1px solid [[PANEL_BORDER]]; 
                       text-align:right; vertical-align: top; }
+div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; }
 div.gallery-preview img.disabled { opacity: 0.5; filter: alpha(opacity=50); }
 div.preview-caption { display:inline-block; margin: 8px 0; }
 
