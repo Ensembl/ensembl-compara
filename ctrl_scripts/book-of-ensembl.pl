@@ -30,8 +30,8 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::QueryStore;
 
-my $rebuild;
-GetOptions('r' => \$rebuild);
+my ($rebuild,$list);
+GetOptions('r' => \$rebuild,'l' => \$list);
 
 sub run1 {
   my ($query,$kind,$i,$n) = @_;
@@ -113,6 +113,11 @@ foreach my $p (@precache) {
 
 # Setup jobs
 my @jobs = keys %precache;
+if($list) {
+  print join("\n",@jobs,'');
+  exit 0;
+}
+
 @jobs = @ARGV if @ARGV;
 
 foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs) {
