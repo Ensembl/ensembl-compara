@@ -323,7 +323,7 @@ sub iterate_over_lowcov_mlsss {
         die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
     }
     my @gab_ids;
-    $self->param('low_cov_leaves_to_delete_pmember_id', {});
+    $self->param('low_cov_leaves_to_delete', []);
     foreach my $epo_low_mlss (@$epolow_mlsss) {
         my $epo_hc_mlss = $self->param('epo_mlss_adaptor')->fetch_by_dbID($epo_low_mlss->get_value_for_tag('high_coverage_mlss_id'))
             || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
@@ -404,21 +404,23 @@ sub run_low_coverage_best_in_alignment {
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
-      $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
+      push @{ $self->param('low_cov_leaves_to_delete') }, $leaf;
       print STDERR $leaf->stable_id, " has no alignments -> will be removed\n" if $self->debug;
       next;
     }
     print STDERR scalar(@$low_cov_genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
+    my $deleted = 0;
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
-        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
+        push @{ $self->param('low_cov_leaves_to_delete') }, $leaf;
         print STDERR $leaf->stable_id, " is not in GAB $max_gabID -> will be removed\n" if $self->debug;
+        $deleted = 1;
         last;
       }
     }
-    unless ($self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
+    unless ($deleted) {
       print STDERR $leaf->stable_id, " is in GAB $max_gabID -> will be kept \n" if $self->debug;
     }
    }
@@ -437,13 +439,11 @@ sub remove_low_cov_predictions {
   my $root_id = $nc_tree->root_id;
 
   # Remove low cov members that are not best in alignment
-  foreach my $leaf (@{$nc_tree->get_all_leaves}) {
-    if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
-      print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
+  foreach my $leaf_to_delete (@{ $self->param('low_cov_leaves_to_delete') }) {
+      print STDERR "removing low_cov prediction ", $leaf_to_delete->stable_id, "\n" if($self->debug);
       $self->call_within_transaction(sub {
-        $self->param('treenode_adaptor')->remove_seq_member($leaf);
+        $self->param('treenode_adaptor')->remove_seq_member($leaf_to_delete);
       });
-    }
   }
   #calc residue count total
   my $leafcount = scalar(@{$nc_tree->get_all_leaves});
