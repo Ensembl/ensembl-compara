@@ -1470,7 +1470,7 @@ sub core_pipeline_analyses {
                 'evalue_limit'              => "#expr( #all_blast_params#->{#param_index#}->[1])expr#",
                 'allow_same_species_hits'   => 1,
             },
-            -batch_size    => 10,
+            -batch_size    => 25,
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastp_capacity'),
         },
@@ -1754,7 +1754,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -batch_size           => 10,
+            -batch_size           => 20,
             -rc_name    => '1Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
