@@ -70,7 +70,8 @@ FROM (
 ';
 
 our $sql_paralogies_taxon = $sql_paralogies;
-$sql_paralogies_taxon =~ s/description/description, species_tree_node_id/g;
+$sql_paralogies_taxon =~ s/description/species_tree_node_id/g;
+$sql_paralogies_taxon =~ s/\?/? AND description != "gene_split"/;
 
 sub param_defaults {
     my $self = shift;
@@ -86,8 +87,6 @@ sub fetch_input {
     my $member_type  = $self->param_required('member_type');
     my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $species_tree = $mlss->species_tree($self->param('species_tree_label'));
-    my %hash_stn_id  = map {$_->dbID => $_} @{$species_tree->root->get_all_nodes()};
 
     my $data1 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies, undef, $mlss_id);
     foreach my $line (@$data1) {
@@ -100,12 +99,11 @@ sub fetch_input {
 
     my $data2 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies_taxon, undef, $mlss_id);
     foreach my $line (@$data2) {
-        my $homology_type = sprintf('%s_%s', $member_type, $line->[0]);
-        my $stn = $hash_stn_id{$line->[1]};
-        $stn->store_tag(sprintf('n_%s_groups', $homology_type), $line->[2]);
-        $stn->store_tag(sprintf('n_%s_pairs', $homology_type), $line->[3]);
-        $stn->store_tag(sprintf('n_%s_genes', $homology_type), $line->[4]);
-        $stn->store_tag(sprintf('avg_%s_perc_id', $homology_type), $line->[5]);
+        my $homology_type = sprintf('%s_paralogs_%s', $member_type, $line->[0]);
+        $mlss->store_tag(sprintf('n_%s_groups', $homology_type), $line->[1]);
+        $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), $line->[2]);
+        $mlss->store_tag(sprintf('n_%s_genes', $homology_type), $line->[3]);
+        $mlss->store_tag(sprintf('avg_%s_perc_id', $homology_type), $line->[4]);
     }
 }
 
