@@ -96,6 +96,8 @@ sub fetch_input {
   my $nc_tree_id = $self->param_required('gene_tree_id');
 
   $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id));
+  $self->param('nc_tree') || die "Could not fetch the tree for root_id=$nc_tree_id";
+
   if ($self->param('max_members') and scalar(@{$self->param('nc_tree')->get_all_Members}) > $self->param('max_members')) {
     $self->input_job->autoflow(0);
     $self->dataflow_output_id($self->input_id, -1);
