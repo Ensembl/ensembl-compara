@@ -368,7 +368,6 @@ sub run_low_coverage_best_in_alignment {
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
-    next unless (defined($slice));
     my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
     next unless(0 < scalar(@$genomic_align_blocks));
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
@@ -400,7 +399,6 @@ sub run_low_coverage_best_in_alignment {
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
-    die "Unable to fetch slice for this genome_db leaf: $gdb_name\n" unless (defined($slice));
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
