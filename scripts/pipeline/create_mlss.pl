@@ -232,6 +232,14 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 ##
 #################################################
 
+# It doesn't matter if @input_genome_db_ids is empty
+my @input_genome_dbs;
+foreach my $this_genome_db_id (@input_genome_db_ids) {
+    my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id)
+                        || throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
+    push @input_genome_dbs, $this_genome_db;
+}
+
 #################################################
 ## Set values interactively if needed
 if (!$method_link_type) {
@@ -258,7 +266,7 @@ if ($collection) {
   # For ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES we need to exclude the
   # component genome_dbs because they are only temporary for production
   my $gdbs = ($pairwise or $singleton) ? [grep {not $_->genome_component}  @{$ss->genome_dbs}] : $ss->genome_dbs;
-  @input_genome_db_ids = map {$_->dbID} @$gdbs;
+  @input_genome_dbs = @$gdbs;
 }
 
 # All the pairwise / singleton will share the same URL. Set it once here
@@ -287,9 +295,9 @@ if ($pairwise) {
   my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
   die "The --pw option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
 
-  while (my $gdb_id1 = shift @input_genome_db_ids) {
-    foreach my $gdb_id2 (@input_genome_db_ids) {
-      create_mlss( [$gdb_id1, $gdb_id2] );
+  while (my $gdb1 = shift @input_genome_dbs) {
+    foreach my $gdb2 (@input_genome_dbs) {
+      create_mlss( [$gdb1, $gdb2] );
     }
   }
 
@@ -301,33 +309,22 @@ if ($pairwise) {
   my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
   die "The --sg option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
 
-  foreach my $gdb_id (@input_genome_db_ids) {
-    create_mlss( [$gdb_id] );
+  foreach my $gdb (@input_genome_dbs) {
+    create_mlss( [$gdb] );
   }
 
 } else {
 
-  if (!@input_genome_db_ids) {
-    my @genome_dbs = ask_for_genome_dbs($compara_dba);
-    @input_genome_db_ids = map {$_->dbID} @genome_dbs;
+  if (!@input_genome_dbs) {
+    @input_genome_dbs = ask_for_genome_dbs($compara_dba);
   }
 
-  create_mlss( \@input_genome_db_ids, $name, $species_set_name || $collection );
+  create_mlss( \@input_genome_dbs, $name, $species_set_name || $collection );
 }
 
 
 sub create_mlss {
-  my ($genome_db_ids, $desired_mlss_name, $desired_ss_name) = @_;
-
-  ## Get the Bio::EnsEMBL::Compara::GenomeDB
-  my $all_genome_dbs;
-  foreach my $this_genome_db_id (@{$genome_db_ids}) {
-    my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id);
-    if (!UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB")) {
-      throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
-    }
-    push(@$all_genome_dbs, $this_genome_db);
-  }
+  my ($all_genome_dbs, $desired_mlss_name, $desired_ss_name) = @_;
 
   # Simple check to allow running create_mlss for homoeologues on the whole
   # collection
@@ -337,7 +334,7 @@ sub create_mlss {
   }
 
   ## Check if the MethodLinkSpeciesSet already exists
-  my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
+  my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, $all_genome_dbs);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
         join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n";
@@ -359,10 +356,9 @@ sub create_mlss {
     if (!$ss_name) {
       my @individual_names;
       if ($use_genomedb_ids) {
-        @individual_names = @{$genome_db_ids};
+        @individual_names = map {$_->dbID} @{$all_genome_dbs};
       } else {
-        foreach my $this_genome_db_id (@{$genome_db_ids}) {
-          my $gdb = $gdba->fetch_by_dbID($this_genome_db_id) || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
+        foreach my $gdb (@{$all_genome_dbs}) {
           my $species_name = $gdb->name;
           $species_name =~ s/\b(\w)/\U$1/g;
           $species_name =~ s/(\S)\S+\_/$1\./;
