@@ -218,7 +218,7 @@ sub default_options {
         #'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
+        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         #'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 

@@ -94,7 +94,6 @@ sub default_options {
         'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
-        'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
 
     # clustering parameters:
 
@@ -139,7 +138,7 @@ sub default_options {
         'hmmer3_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-3/bin/',
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.3.0+/bin/',
 
         # The following ones are currently installed by TreeFam, but should
         # also be under /nfs/panda/ensemblgenomes/external/

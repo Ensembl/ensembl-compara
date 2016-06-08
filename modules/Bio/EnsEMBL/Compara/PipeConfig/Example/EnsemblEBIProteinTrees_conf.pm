@@ -110,7 +110,7 @@ sub default_options {
         'hmmer3_home'               => 'UNDEF',
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.3.0+/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'cafe_shell'                => 'UNDEF',
         'fasttree_mp_exe'           => 'UNDEF',
