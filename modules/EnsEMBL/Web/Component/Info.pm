@@ -103,42 +103,40 @@ our $header_info = {
 
 sub format_gallery {
   my ($self, $type, $layout, $all_pages) = @_; 
-  my ($html, @toc);
   my $hub = $self->hub;
 
-  return unless $all_pages;
+  return 'Gallery not implemented' unless $all_pages;
 
-  my %page_count;
+  my ($previews, @toc, %page_count);
 
   foreach my $group (@$layout) {
     my @pages = @{$group->{'pages'}||[]};
     next unless scalar @pages;
 
+    ## Add this group to the navigation bar
     my $title = $group->{'title'};
     my $icon  = $group->{'icon'};
     push @toc, sprintf('<div class="gallery-nav">
                           <span class="ht _ht">
                             <span class="_ht_tip hidden">Jump to views associated with %s</span>
-                            <a href="#%s"><img src="/i/48/%s" class="alongside" /></a><br />
+                            <img src="/i/48/%s" /><br />
                             <a href="#%s" class="notext gallery-navlabel">%s</a>
                           </span>
                         </div>', 
-                          lc($title), lc($title), $icon, lc($title), $title);
+                          lc($title), $icon, lc($title), $title);
 
-    $html .= '<div class="gallery">';
-    $html .= $self->_sub_header($title);
+    $previews .= '<div class="gallery-group">';
+    $previews .= $self->_sub_header($title);
 
-    my $entry_template = '<div class="gallery_preview">
-                          <div class="page-preview">
-                            <span class="ht _ht">
-                              <span class="_ht_tip hidden">%s</span>%s
-                            </span>
-                          </div>
-                          <h3>%s</h3>
-                          <p class="preview_caption">%s</p>
-                          <p%s>%s</p>
+    ## Template for each entry
+    my $entry_template = '<div class="gallery-preview">
+                            <div class="page-preview">%s</div>
+                            <h3>%s</h3>
+                              <p class="preview-caption">%s</p>
+                              <p%s>%s</p>
                           </div>';
 
+    ## Add individual views
     foreach (@pages) {
       my $page = $all_pages->{$_};
       next unless $page;
@@ -158,6 +156,9 @@ sub format_gallery {
         ## Disable views that are invalid for this feature
         $img_disabled = 1;
         $next_action = sprintf 'Sorry, this view is not available for this %s', lc($header_info->{$type}{'term'});
+        if ($page->{'message'}) {
+          $next_action .= ': '.$page->{'message'};
+        }
         $img_title    = $next_action;
       }
       elsif ($page->{'multi'}) {
@@ -203,7 +204,6 @@ sub format_gallery {
       }
       else {
         $description  = $page->{'caption'};
-        $img_title    = 'Click to preview';
         $action_class = ' class = "button"';
         $next_action  = sprintf '<a href="%s">Show me</a>', $url;
       }
@@ -223,7 +223,7 @@ sub format_gallery {
 
       $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
-      #$html .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
+      #$previews .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
 =cut  
       my $image;
       if ($img_disabled) {
@@ -231,24 +231,30 @@ sub format_gallery {
                             $page->{'img'};
       }
       else {
-        $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" /></a>', 
-                            $url, $link_class, $page->{'img'};
+        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" />', $page->{'img'};
 
       }
 
-      $html .= sprintf($entry_template, $img_title, $image, $_, $description, 
+      $previews .= sprintf($entry_template, $image, $_, $description, 
                                         $action_class, $next_action);
 
     }
 
-    $html .= '</div></div>';
+    $previews .= '</div>';
   }
 
   my $page_header = sprintf('<h1>%s views for %s data</h1>', scalar keys %page_count, $hub->param('data_type'));
 
   my $toc_string = sprintf('<div class="gallery-toc center">%s</div>', join(' ', @toc));
 
-  return $page_header.$toc_string.$html;
+  return qq(
+            <div class="gallery js-panel" id="site-gallery">
+              <input type="hidden" class="panel_type" value="SiteGallery">
+              $page_header
+              $toc_string
+              $previews
+            </div>
+  );
 }
 
 sub gene_name {
