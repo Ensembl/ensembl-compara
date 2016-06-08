@@ -70,15 +70,7 @@ sub content {
                   },
                 ];
 
-  my $pages = $self->_get_pages;
-
-  if (ref($pages) eq 'HASH') {
-    return $self->format_gallery('Variation', $layout, $pages);
-  }
-  else {
-    return $pages; ## error message
-  }
-
+  return $self->format_gallery('Variation', $layout, $self->_get_pages);
 }
 
 sub _get_pages {
@@ -91,6 +83,8 @@ sub _get_pages {
   my ($no_location, $multi_location) = (0, 0);
   my ($no_location, $no_gene, $no_phenotype, $no_protein) = (0, 0, 0, 0);
   my ($multi_location, $multi_gene, $multi_transcript, $multi_protein, $multi_phenotype);
+
+  my $no_protein_message = 'does not overlap any protein-coding transcripts';
 
   my $builder   = $hub->{'_builder'};
   my $factory   = $builder->create_factory('Variation');
@@ -333,7 +327,7 @@ sub _get_pages {
                                                     'g'       => $g,
                                                     },
                                   'img'     => 'variation_trans_comp',
-                                  'caption' => "Comparison of a gene's transcripts, showing variants",
+                                  'caption' => "Comparison of a gene's transcript sequences, showing variants",
                                   'multi'     => $multi_gene,  
                                   'disabled'  => $no_gene,  
                                 },
@@ -356,6 +350,7 @@ sub _get_pages {
                                   'caption' => "Variants on a protein's domains",
                                   'multi'     => $multi_transcript,  
                                   'disabled'  => $no_protein,  
+                                  'message'   => $no_protein_message,
                                 },
           'cDNA Sequence' => {
                                   'link_to'     => {'type'    => 'Transcript',
@@ -376,6 +371,7 @@ sub _get_pages {
                                   'caption' => 'Variants on protein sequence',
                                   'multi'     => $multi_transcript,  
                                   'disabled'  => $no_protein,  
+                                  'message'   => $no_protein_message,
                                 },
           'Variation Protein' => {
                                   'link_to'     => {'type'    => 'Transcript',
@@ -386,6 +382,7 @@ sub _get_pages {
                                   'caption' => 'Table of variants for a protein',
                                   'multi'     => $multi_transcript,  
                                   'disabled'  => $no_protein,  
+                                  'message'   => $no_protein_message,
                                 },
           'Phenotype Table' => {
                                   'link_to'     => {'type'    => 'Variation',
