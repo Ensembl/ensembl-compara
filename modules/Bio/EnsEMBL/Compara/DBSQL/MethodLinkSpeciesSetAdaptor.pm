@@ -144,7 +144,7 @@ sub store {
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
-  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
+  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID) ) {
     $dbID = $already_stored_method_link_species_set->dbID;
   }
 
@@ -570,7 +570,7 @@ sub fetch_by_method_link_type_species_set_name {
 
     if ($method) {
         foreach my $this_species_set (@$all_species_sets) {
-            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID, 1);  # final 1, before we don't want a warning here if any is missing
+            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID);
             return $mlss if $mlss;
         }
     }
