@@ -45,15 +45,11 @@ sub precache {
       loop => ['species','genome'],
       args => {
         db => "core",
-        logic_names => [qw(
-          assembly_patch_ensembl ensembl                ensembl_havana_gene
-          ensembl_havana_ig_gene ensembl_havana_lincrna ensembl_lincrna 
-          havana                 havana_ig_gene         mt_genbank_import
-          ncrna                  proj_ensembl
-          proj_ensembl_havana_gene        proj_ensembl_havana_ig_gene
-          proj_ensembl_havana_lincrna     proj_havana 
-          proj_havana_ig_gene             proj_ncrna
-        )],
+        logic_names => sub {
+          my ($self,$args) = @_;
+
+          return [ sort keys %{$self->get_defaults($args->{'species'},'core','MultiBottom',['gene'])} ];
+        },
         label_key => '[biotype]',
         pattern => '[biotype]',
       }

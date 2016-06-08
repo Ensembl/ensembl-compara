@@ -131,6 +131,12 @@ sub precache {
     next unless ($k % $n) == $i;
     push @parts,$all[$k];
   }
+  foreach my $p (@parts) {
+    foreach my $k (keys %$p) {
+      next unless ref($p->{$k}) eq 'CODE';
+      $p->{$k} = $p->{$k}->($self->{'impl'},$p);
+    }
+  }
   my $TIME_TOT = 0;
   my $TIME_NUM  = 0;
   $self->{'store'}->open($r||0);

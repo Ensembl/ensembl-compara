@@ -14,6 +14,15 @@ sub new {
   return $self;
 }
 
+sub all_tables {
+  my ($self,$species,$type) = @_;
+
+  my $db_name = 'DATABASE_'.uc $type;
+  my $info = $self->{'_sd'}->get_config($species,'databases');
+  return {} unless $info and $info->{$db_name} and $info->{$db_name}{'tables'};
+  return [ keys %{$info->{$db_name}{'tables'}} ];
+}
+
 sub table_info {
   my ($self,$species,$type,$table) = @_;
 
