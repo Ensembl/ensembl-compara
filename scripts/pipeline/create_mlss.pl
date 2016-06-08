@@ -57,6 +57,9 @@ perl create_mlss.pl
     [--sg] singleton
     [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
     [--species_set_name species_set_name] 
+    [--taxon_id taxon_id]
+    [--only_with_karyotype 0/1]
+    [--only_high_coverage 0/1]
 
 =head1 OPTIONS
 
@@ -134,6 +137,18 @@ Use all the species in that collection (more practical than giving a long list o
 Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSpeciesSet)
 as "current", i.e. with a first_release and an undefined last_release
 
+=item B<[--taxon_id taxon_id]>
+
+The taxon_id of the clade to consider. Used to automatically cre4te a species-set
+
+=item B<[--only_with_karyotype 0/1]>
+
+The list of genomes will be restricted to those with a karyotype
+
+=item B<[--only_high_coverage 0/1]>
+
+The list of genomes will be restricted to those that are marked as high-coverage
+
 =back
 
 =head2 EXAMPLES
@@ -172,6 +187,9 @@ my $species_set_name;
 my $collection;
 my $method_link_class;
 my $release;
+my $taxon_id;
+my $only_with_karyotype;
+my $only_high_coverage;
 
 GetOptions(
     "help" => \$help,
@@ -190,6 +208,9 @@ GetOptions(
     "species_set_name|species_set_tag=s" => \$species_set_name,
     "collection=s" => \$collection,
     'release' => \$release,
+    'taxon_id=i' => \$taxon_id,
+    'only_with_karyotype' => \$only_with_karyotype,
+    'only_high_coverage' => \$only_high_coverage,
   );
 
 if ($pairwise && $singleton) {
@@ -285,6 +306,19 @@ if (!$source) {
   } else {
     $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
   }
+}
+
+if ($taxon_id) {
+    my %good_gdb_id = map {$_->dbID => 1} @{ $gdba->fetch_all_by_ancestral_taxon_id($taxon_id) };
+    @input_genome_dbs = grep {$good_gdb_id{$_->dbID}} @input_genome_dbs;
+}
+
+if ($only_with_karyotype) {
+    @input_genome_dbs = grep {$_->has_karyotype} @input_genome_dbs;
+}
+
+if ($only_high_coverage) {
+    @input_genome_dbs = grep {$_->is_high_coverage} @input_genome_dbs;
 }
 
 if ($pairwise) {
@@ -424,6 +458,7 @@ sub create_mlss {
   $helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
     $mlssa->make_object_current($new_mlss) if $release;
+    $new_mlss->store_tag('taxon_id', $taxon_id) if $taxon_id;
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
@@ -482,7 +517,10 @@ sub ask_for_genome_dbs {
 
   return undef if (!$compara_dba);
 
-  my $all_genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $all_genome_dbs = $taxon_id ? $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($taxon_id) : $compara_dba->get_GenomeDBAdaptor->fetch_all();
+     $all_genome_dbs = [grep {$_->has_karyotype}    @$all_genome_dbs] if $only_with_karyotype;
+     $all_genome_dbs = [grep {$_->is_high_coverage} @$all_genome_dbs] if $only_high_coverage;
+
   my $answer;
   my $genome_dbs_in = {};
   my $genome_dbs_out = {map {$_->dbID, $_} @{$all_genome_dbs}};
