@@ -155,20 +155,6 @@ sub default_options {
                        },
 
 
-#            'reg1' => {
-#                      -host   => 'ens-staging',
-#                       -port   => 3306,
- #                      -user   => 'ensro',
-  #                     -pass   => '',
-   #                   },
-
-#             'reg2' => {
-#                        -host   => 'ens-staging2',
-#                        -port   => 3306,
-#                        -user   => 'ensro',
-#                        -pass   => '',
- #                      },
-
             'master_db' => {
                             -host   => 'compara1',
                             -port   => 3306,
