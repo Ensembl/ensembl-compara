@@ -190,13 +190,13 @@ a.gallery-navlabel  { font-size: 150%; font-weight:bold; }
 
 div.gallery-group   { width: 800px; margin:0 auto; }
 div.gallery-preview { display:block; margin:0 12px 1em 12px; padding: 6px; height: 120px; 
-                      
-                      vertical-align:top; border: 1px solid [[PANEL_BORDER]]; }
-div.gallery-preview .page-preview { float:right; }
+                      position: relative; vertical-align:top; border: 1px solid [[PANEL_BORDER]]; }
+div.gallery-preview .page-preview { position: absolute; top: 4px; left: 620px; }
 div.gallery-preview .page-preview img { width:150px; height:100px; 
                       border: 1px solid [[PANEL_BORDER]]; 
-                      text-align:right; vertical-align: top; }
-div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; }
+                      z-index: 1; position: absolute; top: 0; left: 0; }
+div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; 
+                                              z-index:10; top: -50px; left: -75px; }
 div.gallery-preview img.disabled { opacity: 0.5; filter: alpha(opacity=50); }
 div.preview-caption { display:inline-block; margin: 8px 0; }
 
