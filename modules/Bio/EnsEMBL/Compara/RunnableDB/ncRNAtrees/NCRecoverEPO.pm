@@ -369,8 +369,7 @@ sub run_low_coverage_best_in_alignment {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
-    next unless(0 < scalar(@$genomic_align_blocks));
-    print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
+    print STDERR scalar(@$genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
     foreach my $genomic_align_block (@$genomic_align_blocks) {
       $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
     }
