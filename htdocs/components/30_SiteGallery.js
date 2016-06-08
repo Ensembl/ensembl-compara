@@ -17,24 +17,12 @@
 Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
 
   init: function () {
-
     this.base.apply(this, arguments);
-
-    var $thumbnail;
 
     this.el.find(".embiggen").each( 
       function() {
-        $thumbnail = $(this);
-        $thumbnail.on({
-                        mouseover: function () {
-                          $(this).addClass('zoom'); 
-                        }
-                      });
-        $thumbnail.on({
-                        mouseout: function () {
-                          $(this).removeClass('zoom'); 
-                        }
-                      });
+        $(this).on({ mouseover: function () { $(this).addClass('zoom');    } });
+        $(this).on({ mouseout:  function () { $(this).removeClass('zoom'); } });
       }
     );
   }
