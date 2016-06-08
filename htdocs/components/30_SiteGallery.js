@@ -27,13 +27,11 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
         $thumbnail = $(this);
         $thumbnail.on({
                         mouseover: function () {
-                          console.log('Thumbnail: ' + $thumbnail.attr('src'));
                           $(this).addClass('zoom'); 
                         }
                       });
         $thumbnail.on({
                         mouseout: function () {
-                          console.log('Leaving ' + $thumbnail.attr('src'));
                           $(this).removeClass('zoom'); 
                         }
                       });
