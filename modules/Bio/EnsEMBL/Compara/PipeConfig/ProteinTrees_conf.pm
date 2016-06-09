@@ -1555,7 +1555,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'clustering_max_gene_halfcount' => $self->o('clustering_max_gene_halfcount'),
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
-                'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
+                'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt; sleep 30',
             },
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
