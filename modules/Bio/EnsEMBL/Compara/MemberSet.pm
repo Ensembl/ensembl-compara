@@ -487,7 +487,7 @@ sub print_sequences_to_file {
 
     my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if ( $self->adaptor );
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
