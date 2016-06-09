@@ -38,6 +38,8 @@ sub init {
   else {
     ## Full-width page with no navigation 
     $self->{'main_class'}     = 'widemain';
+    $self->{'lefthand_menu'}  = 0;
+    $self->{'tabs'}           = 0;
   }
 
   $self->add_head;
