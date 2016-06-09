@@ -202,8 +202,12 @@ sub print_supertree {
 
 =cut
 
-
 sub write_output {
+    my $self = shift @_;
+    $self->call_within_transaction( sub { $self->_write_output } );
+}
+
+sub _write_output {
     my $self = shift @_;
 
     $self->compara_dba->get_GeneTreeAdaptor->store($self->param('gene_tree'));
