@@ -396,6 +396,7 @@ sub copy_tags_from {
     $source_object->_load_tags;
     foreach my $tag (@$tags_to_copy) {
         $tag = lc $tag;
+        next unless exists($source_object->{'_tags'}->{$tag});
         my $value = $source_object->{'_tags'}->{$tag};
         $self->{'_tags'}->{$tag} = ref($value) eq 'ARRAY' ? [@$value] : $value;
     }
