@@ -62,7 +62,9 @@ sub fetch_input {
     my $unannotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 
     # write fasta file:
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $unannotated_members)->print_sequences_to_file($self->param('fasta_file'));
+    my $member_set = Bio::EnsEMBL::Compara::MemberSet->new(-members => $unannotated_members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $member_set);
+    $member_set->print_sequences_to_file($self->param('fasta_file'));
 }
 
 sub write_output {
