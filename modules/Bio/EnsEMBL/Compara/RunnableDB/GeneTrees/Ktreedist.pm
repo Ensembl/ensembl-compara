@@ -240,7 +240,7 @@ sub run_ktreedist {
   
   $self->throw("error with newick tree") unless (defined($reference_string));
   print RTFILE "TREE    $ref_label = $reference_string\n";
-  print CTFILE "End;\n\n";
+  print RTFILE "End;\n\n";
   close RTFILE;
 
   my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
