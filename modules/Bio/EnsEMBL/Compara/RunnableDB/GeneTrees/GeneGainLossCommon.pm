@@ -127,7 +127,7 @@ sub get_all_trees {
 
         my %species = map {$_ => 0} @$species;
         for my $member (@$tree_members) {
-            $species{$stn_id_lookup{$member->genome_db_id}}++;
+            $species{$stn_id_lookup{$member->genome_db_id}}++ if exists $stn_id_lookup{$member->genome_db_id};
         }
 
         $tree->release_tree();
