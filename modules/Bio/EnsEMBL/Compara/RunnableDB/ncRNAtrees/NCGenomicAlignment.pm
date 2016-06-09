@@ -134,6 +134,7 @@ sub dump_sequences_to_workdir {
     my $residues = 0;
     my $count = 0;
     foreach my $member (@{$member_list}) {
+      $member->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
         my $gene = $gene_member -> get_Gene;
@@ -152,6 +153,7 @@ sub dump_sequences_to_workdir {
         print STDERR $member->stable_id. "\n" if ($self->debug);
         print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
+      } );
     }
     close OUTSEQ;
 
