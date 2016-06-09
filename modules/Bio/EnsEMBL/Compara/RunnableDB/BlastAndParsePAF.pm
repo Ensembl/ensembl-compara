@@ -246,12 +246,13 @@ sub run {
     my $blast_infile  = $worker_temp_directory . 'blast.in.'.$$;     # only for debugging
     my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
+
     if($self->debug) {
         print "blast_infile $blast_infile\n";
         $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
     $self->compara_dba->dbc->disconnect_if_idle();
 
     my $cross_pafs = [];
