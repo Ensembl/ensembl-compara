@@ -45,6 +45,7 @@ package Bio::EnsEMBL::Compara::Taggable;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 =head2 add_tag
 
@@ -282,7 +283,7 @@ sub get_value_for_tag {
 
     my $ret = $self->get_tagvalue($tag, $default);
     if ((defined $ret) and (ref($ret) eq 'ARRAY')) {
-        die "There are ".scalar(@$ret)." associated to the tag '$tag'. Don't know which one to return";
+        throw("There are ".scalar(@$ret)." associated to the tag '$tag'. Don't know which one to return");
     } else {
         return $ret;
     }
@@ -369,7 +370,7 @@ sub set_tagvalue_hash {
     my $self = shift;
     my $tags = shift;
 
-    die "Must give a reference hash" unless ref($tags) and (ref($tags) eq 'HASH');
+    throw("Must give a reference hash in set_tagvalue_hash()") unless ref($tags) and (ref($tags) eq 'HASH');
     $self->{'_tags'} = $tags;
 }
 
