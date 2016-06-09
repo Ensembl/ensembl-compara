@@ -59,8 +59,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
   Arg [2]    : <string> value
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
                $ns_node->add_tag('lost_taxon_id', [9593,9606]);
-  Returntype : Boolean indicating if the tag has been added
-  Exceptions : none
+  Returntype : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -72,16 +72,13 @@ sub add_tag {
     #print STDERR "CALL add_tag $self/$tag/$value\n";
 
     # Argument check
-    unless (defined $tag)   {warn "add_tag called on $self with an undef \$tag\n"; return 0};
-    unless (defined $value) {warn "add_tag called on $self with an undef value for tag '$tag'\n"; return 0};
+    throw("add_tag() called on $self with an undef \$tag\n") if not defined $tag;
     
     $self->_load_tags;
     $tag = lc($tag);
 
     # Stores the value in the PERL object
     $self->{'_tags'}->{$tag} = $value;
-
-    return 1;
 }
 
 
@@ -94,7 +91,7 @@ sub add_tag {
   Example    : $ns_node->store_tag('scientific name', 'Mammalia');
                $ns_node->store_tag('lost_taxon_id', [9593, 9606]);
   Returntype : Boolean indicating if the tag has been stored
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -105,7 +102,7 @@ sub store_tag {
     my $value = shift;
     #print STDERR "CALL store_tag $self/$tag/$value\n";
 
-    if ($self->add_tag($tag, $value)) {
+    $self->add_tag($tag, $value);
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_store_tagvalue($self, lc($tag), $value);
             return 1;
@@ -113,10 +110,6 @@ sub store_tag {
             warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";
             return 0;
         }
-    } else {
-        warn "add_tag has failed, store_tag is now skipped\n";
-        return 0;
-    }
 }
 
 
@@ -130,7 +123,7 @@ sub store_tag {
   Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
                $ns_node->remove_tag('lost_taxon_id');
   Returntype : Boolean -- 1 if something has been deleted, 0 otherwise
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -141,7 +134,7 @@ sub remove_tag {
     my $value = shift;
 
     # Arguments check
-    unless (defined $tag)   {warn "remove_tag called on $self with an undef \$tag\n"; return 0};
+    throw("remove_tag() called on $self with an undef \$tag\n") if not defined $tag;
     $tag = lc($tag);
 
     $self->_load_tags;
@@ -190,7 +183,7 @@ sub remove_tag {
   Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
                $ns_node->remove_tag('lost_taxon_id', 9593);
   Returntype : Boolean -- 1 in case of success, 0 otherwise
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -220,7 +213,7 @@ sub delete_tag {
   Arg [1]    : <string> tag
   Example    : $ns_node->has_tag('scientific name');
   Returntype : Boolean
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -229,7 +222,7 @@ sub has_tag {
     my $self = shift;
     my $tag = shift;
 
-    return 0 unless defined $tag;
+    throw("has_tag() called on $self with an undef \$tag\n") if not defined $tag;
 
     $self->_load_tags;
     return exists($self->{'_tags'}->{lc($tag)});
@@ -244,8 +237,8 @@ sub has_tag {
   Arg [2]    : (optional) <scalar> default
   Example    : $ns_node->get_tagvalue('scientific name');
   Returntype : Scalar or ArrayRef
-  Exceptions : none
-  Caller     : general
+  Exceptions : Throws if $tag is undefined
+  Caller     : internal
 
 =cut
 
@@ -254,7 +247,7 @@ sub get_tagvalue {
     my $tag = shift;
     my $default = shift;
 
-    return $default unless defined $tag;
+    throw("get_tagvalue() called on $self with an undef \$tag\n") if not defined $tag;
 
     $tag = lc($tag);
     $self->_load_tags;
@@ -272,7 +265,7 @@ sub get_tagvalue {
   Arg [2]    : (optional) <scalar> default
   Example    : $ns_node->get_value_for_tag('scientific name');
   Returntype : Scalar
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -300,7 +293,7 @@ sub get_value_for_tag {
   Arg [2]    : (optional) <scalar> default
   Example    : $ns_node->get_all_values_for_tag('common name');
   Returntype : ArrayRef
-  Exceptions : none
+  Exceptions : Throws if $tag is undefined
   Caller     : general
 
 =cut
@@ -362,7 +355,7 @@ sub get_tagvalue_hash {
                the tags
   Example    : $ns_node->set_tagvalue_hash( { 'colour' => 'black' } );
   Returntype : none
-  Exceptions : none
+  Exceptions : Throws if $tags is undefined or not a hash
   Caller     : general
 
 =cut
@@ -412,7 +405,7 @@ sub copy_tags_from {
   Example     : $object_name->_getter_setter_for_tag('name', @_);
   Description : Generic method that acts like a getter/setter for a given tag
   Returntype  : Scalar: the (new) value of this tag
-  Exceptions  : none
+  Exceptions  : Throws if $tag is undefined
   Caller      : general
   Status      : Stable
 
