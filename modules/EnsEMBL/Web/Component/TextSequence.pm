@@ -28,6 +28,7 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use HTML::Entities        qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Web::TextSequence::View;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -841,165 +842,38 @@ sub markup_line_numbers {
  
   $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
-
-sub build_sequence {
-  my ($self, $sequence, $config, $exclude_key) = @_;
-  my $line_numbers   = $config->{'line_numbers'};
-  my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
-  my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
-  my $s              = 0;
-  my ($html, @output);
-
-  my $adorn = $self->hub->param('adorn') || 'none';
- 
-  my $adid = 0;
-  my $adoff = 0;
-  my %addata;
-  my %adlookup;
-  my %adlookid;
-  my %flourishes;
-
-  foreach my $lines (@$sequence) {
-    my %current  = ( tag => 'span', class => '', title => '', href => '' );
-    my %previous = ( tag => 'span', class => '', title => '', href => '' );
-    my %new_line = ( tag => 'span', class => '', title => '', href => '' );
-    my ($row, $pre, $post, $count, $i);
   
-    foreach my $seq (@$lines) {
-      my $style;
-      
-      my $adorn = (($addata{$adid}||=[])->[$adoff] = {});
-      $previous{$_}     = $current{$_} for keys %current;
-      $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
-      $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
-      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
-      $current{'letter'} = $seq->{'new_letter'};
-
-      if ($seq->{'class'}) {
-        $current{'class'} = $seq->{'class'};
-        chomp $current{'class'};
-        if ($seq->{'class'} =~ /\b(e\w)\b/) {
-        }
-
-        if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
-          $current{'class'} .= " $1";
-        }
-      } elsif($seq->{'tag'}) {
-        $current{'class'} = $seq->{'class'};
-      } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/) {
-        $current{'class'} = $1;
-      } else {
-        $current{'class'} = '';
-      }
-      
-      $post .= $seq->{'post'};
-      
-      if ($current{'class'}) {
-        my %style_hash;
-        
-        foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $current{'class'}) {
-          my $st = $class_to_style{$_}[1];
-          map $style_hash{$_} = $st->{$_}, keys %$st;
-        }
-        
-        $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
-      }
-    
-      foreach my $k (qw(style title href tag letter)) {
-        my $v = $current{$k};
-        $v = $style if $k eq 'style';
-        $v = $seq->{'tag'} if $k eq 'tag';
-        next unless $v;
-        $adlookup{$k} ||= {};
-        $adlookid{$k} ||= 1;
-        my $id = $adlookup{$k}{$v};
-        unless(defined $id) {
-          $id = $adlookid{$k}++;
-          $adlookup{$k}{$v} = $id;
-        }
-        $adorn->{$k} = $id;
-      }
- 
-      $row .= $seq->{'letter'};
-      $adoff++;
-      
-      $count++;
-      $i++;
-      
-      if ($count == $config->{'display_width'} || $i == scalar @$lines) {
-        if ($i == $config->{'display_width'} || $single_line) {
-        } else {
-          
-          if ($new_line{'class'} eq $current{'class'}) {
-          } elsif ($new_line{'class'}) {
-            my %style_hash;
-            
-            foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $new_line{'class'}) {
-              my $st = $class_to_style{$_}[1];
-              map $style_hash{$_} = $st->{$_}, keys %$st;
-            }
-            
-          }
-        }
-        
-        if ($config->{'comparison'}) {
-          if (scalar keys %{$config->{'padded_species'}}) {
-            $pre = $config->{'padded_species'}{$config->{'seq_order'}[$s]} || $config->{'display_species'};
-          } else {
-            $pre = $config->{'display_species'};
-          }
-          
-          $pre .= '  ';
-        }
-        
-        push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
-        
-        if($post) {
-          ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
-        }
-        $adid++;
-        
-        $new_line{$_} = $current{$_} for keys %current;
-        $count        = 0;
-        $row          = '';
-        $adoff        = 0;
-        $pre          = '';
-        $post         = '';
-      }
-    }
-    
-    $s++;
-  }
+sub adorn_convert {
+  my ($self,$adlookup,$addata) = @_;
 
   my %adref;
-  foreach my $k (keys %adlookup) {
+  foreach my $k (keys %$adlookup) {
     $adref{$k} = [""];
-    $adref{$k}->[$adlookup{$k}->{$_}] = $_ for keys $adlookup{$k};
+    $adref{$k}->[$adlookup->{$k}{$_}] = $_ for keys $adlookup->{$k};
   }
 
   my %adseq;
-  foreach my $ad (keys %addata) {
+  foreach my $ad (keys %$addata) {
     $adseq{$ad} = {};
     foreach my $k (keys %adref) {
-      $adseq{$ad}->{$k} = [];
-      foreach (0..@{$addata{$ad}}-1) {
-        $adseq{$ad}->{$k}[$_] = $addata{$ad}->[$_]{$k}//undef;
+      $adseq{$ad}{$k} = [];
+      foreach (0..@{$addata->{$ad}}-1) {
+        $adseq{$ad}{$k}[$_] = $addata->{$ad}[$_]{$k}//undef;
       }
     }
   }
-
-  # We can fix this above and remove this hack when we've got the
-  # adorn system finished
-  foreach my $k (keys %adref) {
-    $adref{$k} = [ map { s/^\w+="(.*)"$/$1/s; $_; } @{$adref{$k}} ];
-  }
+  return (\%adseq,\%adref);
+}
+  
+sub adorn_compress {
+  my ($self,$adseq,$adref) = @_;
 
   # RLE
-  foreach my $a (keys %adseq) {
-    foreach my $k (keys %{$adseq{$a}}) {
+  foreach my $a (keys %$adseq) {
+    foreach my $k (keys %{$adseq->{$a}}) {
       my @rle;
       my $lastval;
-      foreach my $v (@{$adseq{$a}->{$k}}) {
+      foreach my $v (@{$adseq->{$a}{$k}}) {
         $v = -1 if !defined $v;
         if(@rle and $v == $lastval) {
           if($rle[-1] < 0) { $rle[-1]--; } else { push @rle,-1; }
@@ -1016,20 +890,20 @@ sub build_sequence {
         $rle[0]--;
       }
       if(@rle == 1 and !defined $rle[0]) {
-        delete $adseq{$a}->{$k};
+        delete $adseq->{$a}{$k};
       } else {
-        $adseq{$a}->{$k} = \@rle;
+        $adseq->{$a}{$k} = \@rle;
       }
     }
-    delete $adseq{$a} unless keys %{$adseq{$a}};
+    delete $adseq->{$a} unless keys %{$adseq->{$a}};
   }
 
   # PREFIX
-  foreach my $k (keys %adref) {
+  foreach my $k (keys %$adref) {
     # ... sort
     my @sorted;
-    foreach my $i (0..$#{$adref{$k}}) {
-      push @sorted,[$i,$adref{$k}->[$i]];
+    foreach my $i (0..$#{$adref->{$k}}) {
+      push @sorted,[$i,$adref->{$k}[$i]];
     }
     @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
     my %pmap; 
@@ -1058,10 +932,10 @@ sub build_sequence {
       $prev = $s; 
     } 
     # ... fix references
-    foreach my $a (keys %adseq) {
-      next unless $adseq{$a}->{$k};
+    foreach my $a (keys %$adseq) {
+      next unless $adseq->{$a}{$k};
       my @seq;
-      foreach my $v (@{$adseq{$a}->{$k}}) {
+      foreach my $v (@{$adseq->{$a}{$k}}) {
         if(defined $v) {
           if($v>0) {
             push @seq,$pmap{$v};
@@ -1072,13 +946,14 @@ sub build_sequence {
           push @seq,undef;
         }
       }
-      $adseq{$a}->{$k} = \@seq;
-      $adref{$k} = \@prefixes;
+      $adseq->{$a}{$k} = \@seq;
+      $adref->{$k} = \@prefixes;
     }
   }
-
+  
+  # Compress sequence
   my (@adseq_raw,@adseq);
-  foreach my $k (keys %adseq) { $adseq_raw[$k] = $adseq{$k}; }
+  foreach my $k (keys %$adseq) { $adseq_raw[$k] = $adseq->{$k}; }
   my $prev;
   foreach my $i (0..$#adseq_raw) {
     if($i and adseq_eq($prev,$adseq_raw[$i])) {
@@ -1088,39 +963,19 @@ sub build_sequence {
       push @adseq,$prev;
     }
   }
+  return \@adseq;
+}
   
-  my $key = $self->get_key($config,undef,1);
+sub format_lines {
+  my ($self,$config,$output,$line_numbers) = @_;
 
-  # Put things not in a type into a 'other' type
-  $key->{'other'} ||= {};
-  foreach my $k (keys %$key) {
-    next if $k eq '_messages';
-    if($key->{$k}{'class'}) {
-      $key->{'other'}{$k} = $key->{$k};
-      delete $key->{$k};
-    }
-  }
-
-  if($adorn eq 'only') {
-    $key->{$_}||={} for @{$config->{'loading'}||[]};
-  }
-  $key->{$_}||={} for @{$config->{'loaded'}||[]};
-
-  my $adornment = {
-    seq => \@adseq,
-    ref => \%adref,
-    flourishes => \%flourishes,
-    legend => $key,
-    loading => $config->{'loading'}||[],
-  };
-  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
-
-  my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
+  my $html = "";
+  my $length = $output->[0] ? scalar @{$output->[0]} - 1 : 0;
   
   for my $x (0..$length) {
     my $y = 0;
     
-    foreach (@output) {
+    foreach (@$output) {
       my $line = $_->[$x]{'line'};
       my $adid = $_->[$x]{'adid'};
       $line =~ s/".*?"//sg;
@@ -1155,6 +1010,139 @@ sub build_sequence {
     
     $html .= $config->{'v_space'};
   }
+  return $html;
+}
+
+# Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
+sub convert_class_to_style {
+  my ($self,$current_class) = @_;
+
+  return undef unless @$current_class;
+  my %class_to_style = %{$self->make_class_to_style_map};
+  my %style_hash;
+  foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } @$current_class) {
+    my $st = $class_to_style{$_}[1];
+    map $style_hash{$_} = $st->{$_}, keys %$st;
+  }
+  return join ';', map "$_:$style_hash{$_}", keys %style_hash;
+}
+
+sub add_to_adorn {
+  my ($self,$k,$v,$adorn,$adlookup,$adlookid) = @_;
+
+  return unless $v;
+  $adlookup->{$k} ||= {};
+  $adlookid->{$k} ||= 1;
+  my $id = $adlookup->{$k}{$v};
+  unless(defined $id) {
+    $id = $adlookid->{$k}++;
+    $adlookup->{$k}{$v} = $id;
+  }
+  $adorn->{$k} = $id;
+}
+
+sub build_sequence {
+  my ($self, $sequence, $config, $exclude_key) = @_;
+  my $line_numbers   = $config->{'line_numbers'};
+  my (@output);
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+ 
+  my %flourishes;
+
+  my $view = EnsEMBL::Web::TextSequence::View->new(
+    $config->{'display_width'}
+  );
+  foreach my $lines (@$sequence) {
+    my ($i);
+
+    my $tseq = $view->new_sequence;
+    my $line = $tseq->new_line;
+    foreach my $seq (@$lines) {
+      my ($previous_exon,$current_exon);
+      $previous_exon = $current_exon;
+
+      my @current_class;
+      if ($seq->{'class'}) {
+        @current_class = split(' ',$seq->{'class'});
+        ($current_exon) = grep { /^e\w$/ } @current_class;
+        if ($config->{'maintain_colour'} && $previous_exon && !$current_exon) {
+          push @current_class,$1;
+        }
+      } elsif($seq->{'tag'}) {
+        @current_class = split(' ',$seq->{'class'});
+        ($current_exon) = grep { /^e\w$/ } @current_class;
+      } elsif ($config->{'maintain_colour'} && $previous_exon) {
+        @current_class = ($1);
+        ($current_exon) = grep { /^e\w$/ } @current_class;
+      }
+     
+      @current_class = grep { /\S/ } @current_class;
+
+      $line->add_post($seq->{'post'});
+ 
+      my $style = $self->convert_class_to_style(\@current_class);
+
+      $line->adorn('style',$style);
+      $line->adorn('title',$seq->{'title'}||'');
+      $line->adorn('href',$seq->{'href'}||'');
+      $line->adorn('tag',$seq->{'tag'});
+      $line->adorn('letter',$seq->{'new_letter'}||'');
+
+      $line->add_letter($seq->{'letter'}); 
+      
+      $i++;
+      
+      if ($line->full || $i == scalar @$lines) {
+        if ($config->{'comparison'}) {
+          if (scalar keys %{$config->{'padded_species'}}) {
+            $line->add_pre($config->{'padded_species'}{$config->{'seq_order'}[$view->seq_num]} || $config->{'display_species'});
+          } else {
+            $line->add_pre($config->{'display_species'});
+          }
+          $line->add_pre('  '); 
+        }
+        
+        $line->add;
+        
+        if($line->post) {
+          ($flourishes{'post'}||={})->{$view->line_num} = $self->jsonify({ v => $line->post });
+        }
+        
+        $line = $tseq->new_line;
+      }
+    }
+  }
+
+  my ($adseq,$adref) = $self->adorn_convert($view->adlookup,$view->addata);
+  $adseq = $self->adorn_compress($adseq,$adref);
+
+  my $key = $self->get_key($config,undef,1);
+
+  # Put things not in a type into a 'other' type
+  $key->{'other'} ||= {};
+  foreach my $k (keys %$key) {
+    next if $k eq '_messages';
+    if($key->{$k}{'class'}) {
+      $key->{'other'}{$k} = $key->{$k};
+      delete $key->{$k};
+    }
+  }
+
+  if($adorn eq 'only') {
+    $key->{$_}||={} for @{$config->{'loading'}||[]};
+  }
+  $key->{$_}||={} for @{$config->{'loaded'}||[]};
+
+  my $adornment = {
+    seq => $adseq,
+    ref => $adref,
+    flourishes => \%flourishes,
+    legend => $key,
+    loading => $config->{'loading'}||[],
+  };
+  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
+  my $html = $self->format_lines($config,$view->output,$line_numbers);
   
   $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
   $config->{'html_template'} = sprintf $config->{'html_template'}, $html;
@@ -1242,7 +1230,7 @@ sub chunked_content {
   return $html;
 }
 
-sub class_to_style {
+sub make_class_to_style_map {
   my $self = shift;
   
   if (!$self->{'class_to_style'}) {
@@ -1323,7 +1311,7 @@ sub content_key {
 sub get_key {
   my ($self, $config, $k,$newkey) = @_;
   my $hub            = $self->hub;
-  my $class_to_style = $self->class_to_style;
+  my $class_to_style = $self->make_class_to_style_map;
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
   my $var_styles     = $hub->species_defs->colour('variation');
   my $strain         = $hub->species_defs->translate('strain') || 'strain';

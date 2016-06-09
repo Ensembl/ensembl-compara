@@ -28,10 +28,9 @@ sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
   my %qconfig;
-  my @copy = qw(hide_long_snps utr codons hide_rare_snps translation exons rna);
-  push @copy,'snp_display' if $adorn ne 'none';
-
-  $qconfig{$_} = $config->{$_} for(@copy);
+  $qconfig{$_} = $config->{$_}
+      for(qw(hide_long_snps utr codons hide_rare_snps translation
+             exons rna species snp_display coding_seq));
   my $hub = $self->hub;
   my $data = $hub->get_query('Sequence::Transcript')->go($self,{
     species => $hub->species,
@@ -42,21 +41,21 @@ sub get_sequence_data {
     conseq_filter => [$hub->param('consequence_filter')],
     config => \%qconfig,
   });
-  return ($data->[0]{'sequence'},$data->[0]{'markup'});
+  return map { $data->[0]{$_} } qw(sequence markup names length);
 }
 
 sub markup_line_numbers {
-  my ($self, $sequence, $config) = @_;
+  my ($self, $sequence, $config,$names,$length) = @_;
  
   # Keep track of which element of $sequence we are looking at
   my $n = 0;
-  
-  foreach my $sl (@{$config->{'slices'}}) {
+
+  foreach my $name (@$names) {
     my $seq  = $sequence->[$n];
-    my $data = $sl->{'slice'} ? { 
+    my $data = $name ne 'snp_display' ? {
       dir   => 1,  
       start => 1,
-      end   => $config->{'length'},
+      end   => $length,
       label => ''
     } : {};
     
@@ -67,7 +66,7 @@ sub markup_line_numbers {
     my ($start, $end);
     
     # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my $loop_end = $config->{'length'} + $config->{'display_width'};
+    my $loop_end = $length + $config->{'display_width'};
     
     while ($e < $loop_end) {
       $start = '';
@@ -88,7 +87,7 @@ sub markup_line_numbers {
       # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
       $seq_length -= length $1 if $segment =~ /^(N+)\w/;
       
-      $end   = $e < $config->{'length'} ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
+      $end   = $e < $length ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
       $start = $row_start if $seq_length;
       
       # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
@@ -143,7 +142,7 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config, $adorn);
+  my ($sequence, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
   
   $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
@@ -153,7 +152,7 @@ sub initialize {
   } else {
     push @{$config->{'loading'}||=[]},'variants';
   }
-  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+  $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   

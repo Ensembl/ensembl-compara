@@ -43,6 +43,7 @@ sub precache {
           translation => 1,
           exons => 1,
           rna => 0,
+          snp_display => 1
         }
       }
     }
@@ -304,7 +305,7 @@ sub get {
     foreach my $snp (reverse @{$self->_get_variation_data($args,$slice, $config->{'utr'}, $trans_strand,$args->{'conseq_filter'})}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
       next if $self->too_rare_snp($snp->{'vf'},$config);
-      next unless defined $snp->{'position'}; 
+      $snp->{'position'}||=0;
 
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
@@ -361,7 +362,8 @@ sub get {
 
   push @sequence, \@reference_seq;
   push @markup, $mk;
-  
+
+  my @seq_names;
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'snp_display') {
@@ -369,11 +371,14 @@ sub get {
         unshift @markup, {}; 
         unshift @{$config->{'seq_order'}}, $_->{'name'};
         unshift @{$config->{'slices'}}, {}; 
+        unshift @seq_names,$_->{'name'};
       } else {
         push @sequence, $_->{'seq'};
         push @markup, {}; 
         push @{$config->{'seq_order'}}, $_->{'name'};
-        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };      }
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
+        push @seq_names,$_->{'name'};
+      }
     }     
   }
  
@@ -406,7 +411,7 @@ sub get {
     $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
   }
  
-  return [{ sequence => \@sequence, markup => \@markup }];
+  return [{ sequence => \@sequence, markup => \@markup, names => \@seq_names, length => $length }];
 }
 
 1;

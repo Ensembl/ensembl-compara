@@ -9,7 +9,7 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 use Time::HiRes qw(time);
 use List::Util qw(shuffle);
 
-my $DEBUG = 0;
+my $DEBUG = 3;
 
 sub _new {
   my ($proto,$store,$impl) = @_;
