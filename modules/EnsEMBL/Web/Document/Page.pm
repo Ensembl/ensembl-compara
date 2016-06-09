@@ -496,7 +496,7 @@ sub html_template {
 </body>
 </html>
 );
-
+  return $HTML;
 }
 
 1;

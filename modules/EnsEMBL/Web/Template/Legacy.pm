@@ -152,7 +152,7 @@ sub render_footer {
   my $page = $self->page;
 
   my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
-  $HTML .= qq(
+  return qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
