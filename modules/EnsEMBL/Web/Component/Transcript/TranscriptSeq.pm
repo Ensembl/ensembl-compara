@@ -28,9 +28,10 @@ sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
   my %qconfig;
-  $qconfig{$_} = $config->{$_}
-      for(qw(hide_long_snps utr codons hide_rare_snps translation
-             exons rna species snp_display));
+  my @copy = qw(hide_long_snps utr codons hide_rare_snps translation exons rna);
+  push @copy,'snp_display' if $adorn ne 'none';
+
+  $qconfig{$_} = $config->{$_} for(@copy);
   my $hub = $self->hub;
   my $data = $hub->get_query('Sequence::Transcript')->go($self,{
     species => $hub->species,

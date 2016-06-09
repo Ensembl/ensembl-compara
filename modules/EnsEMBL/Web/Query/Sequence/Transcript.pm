@@ -43,7 +43,6 @@ sub precache {
           translation => 1,
           exons => 1,
           rna => 0,
-          snp_display => 1
         }
       }
     }
