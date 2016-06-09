@@ -116,10 +116,11 @@ sub run {
     print STDERR "FINAL LAMBDA IS ", $self->param('lambda'), "\n";
     if (!defined $self->param('perFamTable') || $self->param('perFamTable') == 0) {
         my $cafe_tree_string = $self->param('cafe_tree')->newick_format('ryo', $self->param('tree_fmt'));
-        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
-        $sth->execute(1, $cafe_tree_string, $table);
+        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (tree, tabledata) VALUES (?,?);");
+        $sth->execute($cafe_tree_string, $table);
         $sth->finish();
-        $self->param('all_fams', [1]);
+        my $fam_id = $self->compara_dba->dbc->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
+        $self->param('all_fams', [$fam_id]);
     } else {
         $self->get_per_family_cafe_table_from_db();
     }
@@ -208,10 +209,11 @@ sub get_per_family_cafe_table_from_db {
         $fam_table .= join("\t", @flds). "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
-        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
-        $sth->execute($name, $lca_str, $fam_table);
+        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (tree, tabledata) VALUES (?,?);");
+        $sth->execute($lca_str, $fam_table);
+        my $fam_id = $self->compara_dba->dbc->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
         $sth->finish();
-        push @all_fams, $name;
+        push @all_fams, $fam_id;
     }
 
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
