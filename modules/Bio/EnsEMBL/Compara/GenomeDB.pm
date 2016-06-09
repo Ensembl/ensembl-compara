@@ -564,7 +564,7 @@ sub component_genome_dbs {
 
 sub toString {
     my $self = shift;
-    my $txt = sprintf('GenomeDB dbID=%d %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
+    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
     $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
     $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
