@@ -403,7 +403,7 @@ sub get_SimpleAlign {
         $sa->id("$self");
     }
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if $self->adaptor;
 
     my $seq_hash = {};
 
