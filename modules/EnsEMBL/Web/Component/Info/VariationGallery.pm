@@ -203,11 +203,14 @@ sub _get_pages {
                           'param'   => 'ph',
                           'values'  => [{'value' => '', 'caption' => '-- Select phenotype --'}],
                           };
+        my %seen;
         foreach (@$pfs) {
           my $id = $_->{'_phenotype_id'};
-          my $name = $_->phenotype->description;
-          push @{$multi_phenotype->{'values'}}, {'value' => $id, 'caption' => $name};
+          next if $seen{$id};
+          $seen{$id} = 1;
+          push @{$multi_phenotype->{'values'}}, {'value' => $id, 'caption' => $_->phenotype->description};
         }
+        $multi_phenotype->{'values'} = [sort {$a->{'caption'} cmp $b->{'caption'}} @{$multi_phenotype->{'values'}}];
       }
     }
     else {
