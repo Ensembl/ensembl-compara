@@ -291,6 +291,7 @@ sub _store_tagvalue {
 
         $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
         foreach my $v (@$value) {
+            die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $v;
             # Tests whether there is a UNIQUE key in the schema
             if ($sth->execute($object->$perl_keyname, $tag, $v) == 0) {
                 die "The value '$v' has not been added to the tag '$tag' (probably) because of a unique key constraint.\n";
@@ -301,7 +302,7 @@ sub _store_tagvalue {
         #print STDERR "tag+ref\n";
         die "TagAdaptor cannot store complex structures such as ".ref($value)."\n";
 
-    } else {
+    } elsif (defined $value) {
         #print STDERR "tag+scalar\n";
         # It is a tag with only one value allowed
         my $sth = $self->prepare("UPDATE $db_tagtable SET $col_value = ? WHERE $db_keyname=? AND $col_tag=?");
@@ -321,6 +322,8 @@ sub _store_tagvalue {
             $sth->finish;
         }
 
+    } else {
+        die "Cannot store NULL in $db_tagtable for '$tag'\n";
     }
 }
 
@@ -523,11 +526,13 @@ sub _store_all_tags {
             next if defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag};
             if (ref($tag_hash->{$tag}) eq 'ARRAY') {
                 foreach my $value (@{$tag_hash->{$tag}}) {
+                    die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $value;
                     $sth->execute($object_key, $tag, $value);
                 }
             } elsif (ref($tag_hash->{$tag})) {
                 die "TagAdaptor cannot store complex structures such as ".ref($tag_hash->{$tag})."\n";
             } else {
+                die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $tag_hash->{$tag};
                 $sth->execute($object_key, $tag, $tag_hash->{$tag});
             }
         }
