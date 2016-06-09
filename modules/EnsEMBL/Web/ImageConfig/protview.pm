@@ -38,7 +38,6 @@ sub init {
     variation
     somatic
     external_data
-    user_data
     other
     information
   ));
