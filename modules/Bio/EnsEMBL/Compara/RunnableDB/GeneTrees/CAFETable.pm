@@ -306,6 +306,8 @@ sub get_script {
     my $cafe_shell = $self->param('cafe_shell');
     my $mlss_id = $self->param('mlss_id');
     my $cafe_tree_string = $self->param('cafe_tree')->newick_format('ryo', $self->param('tree_fmt'));
+    chop($cafe_tree_string); #remove final semicolon
+    $cafe_tree_string =~ s/:\d+$//; # remove last branch length
     my $script_file = "${tmp_dir}/cafe_${mlss_id}_lambda.sh";
 
     open my $sf, ">", $script_file or die "$!: $script_file\n";
