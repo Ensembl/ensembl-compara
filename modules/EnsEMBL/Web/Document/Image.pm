@@ -187,7 +187,7 @@ sub add_userdata_icon {
   return {
           'href'      => $data_url,
           'class'     => 'data modal_link',
-          'icon_key'  => $icon_key,
+          'icon_key'  => 'userdata',
           'rel'       => 'modal_user_data',
           };
 }
