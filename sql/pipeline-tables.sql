@@ -319,7 +319,7 @@ CREATE TABLE long_orth_genes (
   gene_member_stable_id varchar(128) NOT NULL,
   n_species INT NOT NULL,
   n_orth INT NOT NULL,
-  avg_cov FLOAT NOT NULL,
+  avg_cov FLOAT NOT NULL
  
         
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -340,7 +340,7 @@ CREATE TABLE short_orth_genes (
   gene_member_stable_id varchar(128) NOT NULL,
   n_species INT NOT NULL,
   n_orth INT NOT NULL,
-  avg_cov FLOAT NOT NULL,
+  avg_cov FLOAT NOT NULL
             
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -356,7 +356,7 @@ CREATE TABLE short_orth_genes (
 CREATE TABLE QC_split_genes ( 
   genome_db_id int(10) NOT NULL,
   gene_member_stable_id varchar(128) NOT NULL,
-  seq_member_id int(10) NOT NULL,
+  seq_member_id int(10) NOT NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
