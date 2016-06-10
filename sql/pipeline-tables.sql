@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   left1 INT,
   left2 INT,
   right1 INT,
-  right2 INT,
+  right2 INT
             
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
