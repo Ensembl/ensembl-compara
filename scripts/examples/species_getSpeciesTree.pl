@@ -30,6 +30,7 @@ my $mlss_id;
 my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
+my $with_distances;
 
 GetOptions(
        'url=s'          => \$url,
@@ -37,6 +38,7 @@ GetOptions(
        'method=s'       => \$method,
        'ss_name=s'      => \$ss_name,
        'label=s'        => \$label,
+       'with_distances' => \$with_distances,
 );
 
 
@@ -55,6 +57,6 @@ if ($mlss_id) {
 die "Could not fetch a MLSS with these parameters. Check your mlss_id, method and/or ss_name arguments\n" unless $mlss;
 
 my $species_tree = $mlss->species_tree($label);
-print $species_tree->root->newick_format( 'ryo', '%{n}' ), "\n";
+print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
 
 
