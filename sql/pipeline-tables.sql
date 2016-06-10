@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   left1 INT,
   left2 INT,
   right1 INT,
-  right2 INT
+  right2 INT,
             
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -316,17 +316,17 @@ CREATE TABLE `seq_member_id_current_reused_map` (
 
 CREATE TABLE long_orth_genes ( 
   genome_db_id int(10) NOT NULL,
-  gene_member_stable_id varchar(128),
-  n_species INT,
-  n_orth INT,
-  avg_cov INT
+  gene_member_stable_id varchar(128) NOT NULL,
+  n_species INT NOT NULL,
+  n_orth INT NOT NULL,
+  avg_cov FLOAT NOT NULL,
  
         
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- ----------------------------------------------------------------------------------
 --
--- Table structure for table 'long_orth_genes'
+-- Table structure for table 'short_orth_genes'
 -- overview: Add new table to be used by the genesetQC pipeline to store genes that are shorter than the avg length of their orthologs
 -- semantics:
 --  genome_db_id                      -the genome db id of the species
@@ -337,10 +337,10 @@ CREATE TABLE long_orth_genes (
 
 CREATE TABLE short_orth_genes ( 
   genome_db_id int(10) NOT NULL,
-  gene_member_stable_id varchar(128),
-  n_species INT,
-  n_orth INT,
-  avg_cov INT
+  gene_member_stable_id varchar(128) NOT NULL,
+  n_species INT NOT NULL,
+  n_orth INT NOT NULL,
+  avg_cov FLOAT NOT NULL,
             
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -355,8 +355,8 @@ CREATE TABLE short_orth_genes (
 
 CREATE TABLE QC_split_genes ( 
   genome_db_id int(10) NOT NULL,
-  gene_member_stable_id varchar(128),
-  seq_member_id int(10) NOT NULL
+  gene_member_stable_id varchar(128) NOT NULL,
+  seq_member_id int(10) NOT NULL,
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
