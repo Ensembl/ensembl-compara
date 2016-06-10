@@ -94,6 +94,7 @@ sub pipeline_analyses_GeneSetQC {
         {
             -logic_name => 'store_tags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags',
+            -analysis_capacity  => 10,
 
         },
     ];
