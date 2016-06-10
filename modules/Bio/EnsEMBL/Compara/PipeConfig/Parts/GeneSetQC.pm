@@ -65,6 +65,8 @@ sub pipeline_analyses_GeneSetQC {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
                 2   =>  [':////QC_split_genes'],
             }
+            -hive_capacity  => 50,
+            -batch_size     => 1,
         },
 
         {
@@ -74,6 +76,8 @@ sub pipeline_analyses_GeneSetQC {
             -flow_into  => {
                 2   => [':////short_orth_genes'],
             }
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
@@ -83,6 +87,8 @@ sub pipeline_analyses_GeneSetQC {
             -flow_into      =>  {
                 2   => [':////long_orth_genes'],
             }
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
