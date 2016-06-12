@@ -89,6 +89,10 @@ sub default_options {
 
     # homology_dnds parameters:
 
+    # GOC parameters
+        'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+        'goc_threshold'                 => 0,
+        
     # mapping parameters:
 
     # executable locations:
@@ -158,7 +162,8 @@ sub default_options {
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
-
+        'goc_capacity'              => 200,
+	    'genesetQC_capacity'        => 100,
     # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:
