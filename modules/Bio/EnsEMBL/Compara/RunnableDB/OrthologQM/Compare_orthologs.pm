@@ -56,45 +56,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{ $self->SUPER::param_defaults() },
-#        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#        'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84',
-#        'mlss_ID'=>'100021',
-#        'ref_species_dbid' =>155,
-#        'non_ref_species_dbid' => 31,
-#        'chr_job'   =>  { '14026395' => [
-#                          '14803',
-#                          '14469',
-#                          '46043'
-#                            ]
-
-#'14026392' => [
-#                          '59199',
-#                          '59709',
-#                          '55905',
-#                          '59127',
-#                          '59660'
-#                          '55998',
-#                          '59227',
- #                         '59734',
- #                         '56021'
-#                        ]
-
-#                        },
-
-    };
-}
-
-
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
@@ -107,22 +68,22 @@ sub fetch_input{
     $self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
     $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
     $self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-        $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
-#   print $self->param('gmember_adaptor');
-#   print $self->param('homolog_adaptor');
-        $self->param('orthology_mlss_id', $self->param('orthology_mlss')->dbID);
-#    $self->param('mlss_ID', $self->param_required('mlss_ID'));
+    $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
+    print $self->param('gmember_adaptor') if ( $self->debug >3 ); 
+    print $self->param('homolog_adaptor') if ( $self->debug >3 );
+    $self->param('orthology_mlss_id', $self->param('orthology_mlss')->dbID);
+
 }
 
 sub run {
     my $self = shift;
     my $chr_orth_hashref = $self->param('chr_job');
     $self->dbc and $self->dbc->disconnect_if_idle();
-   print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n" if ( $self->debug );
-#   print Dumper($chr_orth_hashref);
+    print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n" if ( $self->debug );
+    print Dumper($chr_orth_hashref)if ( $self->debug >3 );
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
-#       print $#ordered_orth_array , "\n\n";
+        print $#ordered_orth_array , "\n\n" if ( $self->debug >3 );
         foreach my $index (0 .. $#ordered_orth_array ) {
             my $comparion_arrayref = {};
             my ($left1, $left2, $right1, $right2, $query) = (undef,undef,undef,undef);
@@ -144,9 +105,7 @@ sub run {
 
             }
             $query = $ordered_orth_array[$index];
-#           $ref_chr_dnafragID = $ref_chr_dnafragID;
-           print $left1, " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
-#           $self->param('comparison', {'comparison' => $comparion_arrayref});
+            print $left1, " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
             $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID );
 
         }
@@ -157,8 +116,8 @@ sub run {
 sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID ) = @_;
-    print " -------------------------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
-#    print " \n\n\n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
+    print " --------------------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
+    print " \n\n\n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug >3);
     my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2, 'ref_chr_dnafragID' => $ref_chr_dnafragID);
 
     #create an array of only the present neighbours
@@ -168,7 +127,7 @@ sub _compute_ortholog_score {
     for my $pos (($left1, $left2, $query, $right1, $right2)) {
         if (defined $pos) {
             my $gtn_id = $self->param('homolog_adaptor')->fetch_by_dbID($pos)->_gene_tree_node_id();
-#            print $pos , "-------------------------", $gtn_id , "-----\n\n" if ( $self->debug );
+            print $pos , "-------------------------", $gtn_id , "-----\n\n" if ( $self->debug >3 );
             if ( not defined($homology_gtn_id_href->{$gtn_id})) {
                 $homology_gtn_id_href->{$gtn_id} = [$pos];
             }
@@ -180,8 +139,6 @@ sub _compute_ortholog_score {
     $self->param('homology_gtn_id_href', $homology_gtn_id_href);
     print Dumper($self->param('homology_gtn_id_href')) if ( $self->debug );
     print " getting homolog gene tree node id-------------------------END \n" if ( $self->debug );
-
-#    print " --------------------------------------------------------\n" if ( $self->debug );
 
     my @defined_positions;
     if (defined($left1)) {
@@ -196,8 +153,8 @@ sub _compute_ortholog_score {
             push(@defined_positions, 'right2');
         }
     }
-#    print "available positions hahahahahahahhaaahhaah \n";
-#    print Dumper(\@defined_positions);
+    print "available positions ----------------------------------- \n" if ( $self->debug >3 );
+    print Dumper(\@defined_positions) if ( $self->debug >3 );
 
     my $homology = $self->param('homolog_adaptor')->fetch_by_dbID($query);
     if (@defined_positions) {
@@ -213,7 +170,7 @@ sub _compute_ortholog_score {
     my $start = $query_non_ref_gmem_obj->dnafrag_start;
     my $end = $query_non_ref_gmem_obj->dnafrag_end;
     my $query_non_ref_dnafragID = $query_non_ref_gmem_obj->dnafrag_id() ;
-#    print $query_non_ref_dnafragID, "-------------", $start, "-------------", $end, " \n\n";
+    print $query_non_ref_dnafragID, "-------------", $start, "-------------", $end, " \n\n" if ( $self->debug >3 );
  
     #create an hash ref with the non ref member dbid of the defined positions as the values using the defined positions as the keys, also get the extreme start and end postions on the genome
     #only use non ref gene members on the same chr as the query non ref gene member to get the start and end postions.
@@ -240,7 +197,7 @@ sub _compute_ortholog_score {
 
     # get the all gene members with source name ENSEMBLPEP (ordered by their dnafrag start position)  spanning the specified start and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
     $self->param('non_ref_gmembers_ordered', $self->_get_non_ref_gmembers($query_non_ref_dnafragID, $start, $end));
-    #  print Dumper($self->param('non_ref_gmembers_ordered'));
+    print Dumper($self->param('non_ref_gmembers_ordered')) if ( $self->debug >3 );
 
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
     if ($strand == 1) {
@@ -268,9 +225,9 @@ sub _compute_ortholog_score {
     $self->param('result')->{'dnafrag_id'} = $query_ref_gmem_obj->dnafrag_id();
     $self->param('result')->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
     $self->param('result')->{'homology_id'} = $query;
-    $self->param('result')->{'method_link_species_set_id'} = $self->param('mlss_ID');
+    $self->param('result')->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
 
-    print "RESULTS hash-----------------------------------------\n \n" if ( $self->debug );
+    print "RESULTS hash-----------------------------------------\n mlss_id  -----\n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
     $self->dataflow_output_id( $self->param('result'), 2 );
     
 }
@@ -281,7 +238,7 @@ sub _get_non_ref_gmembers {
     my $self = shift;
     print "This is the _get_non_ref_members subroutine -----------------------------------------------START\n\n\n" if ( $self->debug );
     my ($dnafragID, $st, $ed)= @_;
-#	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
+	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
 
         # The query could do GROUP BY and ORDER BY, but the MySQL server would have to buffer the data, make temporary tables, etc
         # It is faster to have a straightforward query and do some processing in Perl
@@ -317,7 +274,7 @@ sub _get_non_ref_gmembers {
 #this will loop through the list of raw non ref gene members and flag tandem repeats. which will then be remove from the rest of the analyses
 sub _collapse_tandem_repeats {
     my $self = shift;
-#    print " THis is the _collapse_tandem_repeats-----------------------------------------------START\n\n" if ( $self->debug );
+    print " THis is the _collapse_tandem_repeats-----------------------------------------------START\n\n" if ( $self->debug > 3);
     my ($local_unsorted_mem) = @_;
 
     #check if the gene member is a tandem duplication by looking for it comparing gene tree node its of it homology_id
