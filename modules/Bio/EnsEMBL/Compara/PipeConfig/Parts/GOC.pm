@@ -50,23 +50,13 @@ sub pipeline_analyses_goc {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-#            -input_ids => [ { } ],
-#            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
             -flow_into => {
-                '2->A' => [ 'create_ordered_chr_based_job_arrays' ],
-                'A->1' => [ 'get_max_orth_percent' ],       
+                '2->A' => { 'create_ordered_chr_based_job_arrays' => INPUT_PLUS },
+                'A->1' => { 'get_max_orth_percent' => INPUT_PLUS },     
             },
             -rc_name => '2Gb_job',
-            -hive_capacity  =>  200,
+            -hive_capacity  =>  $self->o('goc_capacity'),
         },
-
-#        {  -logic_name => 'prepare_orthologs',
-#            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM_new::Prepare_Orthologs',
-#            -flow_into  =>  {
-#                2   =>  [ 'create_ordered_chr_based_job_arrays' ],
-#            },
-#            -rc_name => '2Gb_job',
-#        },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
@@ -74,28 +64,28 @@ sub pipeline_analyses_goc {
                 2   =>  ['check_ortholog_neighbors'],
             },
             -rc_name => '2Gb_job',
-            -hive_capacity  =>  200,
+            -analysis_capacity  => 25,
+            
         },
 
         {
             -logic_name =>  'check_ortholog_neighbors',
             -module =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-#            -input_ids => [ {'species1' => $self->o('species1')} ],
-#            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
+
             -flow_into  => {
-#                2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
                2 => [ ':////ortholog_goc_metric' ],
             },
-            -hive_capacity  =>  200,
+            -analysis_capacity  => 50,
+            
 
- #           -rc_name => '2Gb_job',
         },
 
         {
             -logic_name => 'get_max_orth_percent',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                1 => { 'get_genetic_distance' => INPUT_PLUS },
+                1 => WHEN( $self->o('goc_threshold') => {'get_perc_above_threshold' => {'goc_threshold' => $self->o('goc_threshold')} } ,
+                    ELSE ['get_genetic_distance' ] ),
             },
             -rc_name => '16Gb_job',
         },
@@ -104,7 +94,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_genetic_distance',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
             -flow_into => {
-                1 =>    ['threshold_calculator'],
+                2 =>    ['threshold_calculator'],
                 },
         },
 
@@ -112,7 +102,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'threshold_calculator',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
             -flow_into => {
-                1 =>    ['get_perc_above_threshold'],
+                2 =>    ['get_perc_above_threshold'],
                 },
         },
 
@@ -120,14 +110,14 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_perc_above_threshold',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
             -flow_into => {
-                1 =>    ['store_goc_dist_asTags'],
+                2 =>    ['store_goc_dist_asTags'],
                 },
         },
 
         {
             -logic_name => 'store_goc_dist_asTags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
-#            -parameters => {'compara_db' => $self->o('compara_db') },
+
         },
 
         
