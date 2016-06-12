@@ -53,7 +53,7 @@ standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory', #module
 	{ # input param hash
 		'compara_db' => $dbc->url,   # Parameters in the test still have to be stringified to mimic the job.input_id table
-		'mlss_id'	=>	'100021'
+		'goc_mlss_id'	=>	'100021'
 	},
 
 	[
@@ -70,7 +70,6 @@ standaloneJob(
                    },
                    'ref_species_dbid' => 31,
                    'non_ref_species_dbid' => 155,
-                   'mlss_ID' => 100021
         	},
         	2
 			
@@ -91,18 +90,9 @@ standaloneJob(
         		},
         		'ref_species_dbid' => 155,
             	'non_ref_species_dbid' => 31,
-            	'mlss_ID' => 100021
              	},
         	2
-        ],
-
-        [
-        	'DATAFLOW',
-        	{
-        		'mlss_ID' => 100021
-        		},
-        		1
-        ],
+		],
 	],
 );
 
@@ -110,7 +100,7 @@ use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs');
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
 	{ # input param hash
-	'mlss_ID'=>'100021',
+	'goc_mlss_id'=>'100021',
     'ref_species_dbid' => 31,
     'non_ref_species_dbid' => 155,
     'ortholog_info_hashref'	=>	{ '1045569' => {
@@ -138,7 +128,6 @@ standaloneJob(
         		},
         		'ref_species_dbid' => 31,
                 'non_ref_species_dbid' => 155,
-                'mlss_ID' => 100021
         	}, 
         	2
         ],
@@ -151,7 +140,7 @@ standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 	{
     'compara_db' => $dbc->url,
-		'mlss_ID'=>'100021',
+		'goc_mlss_id'=>'100021',
 		'ref_species_dbid' =>155,
         'non_ref_species_dbid' => 31,
 		'chr_job'	=>	{ '14026395' => [
@@ -219,7 +208,7 @@ standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
   {
     'compara_db' => $dbc->url,
-    'mlss_ID' => '100021',
+    'goc_mlss_id' => '100021',
   },  
 );
 
