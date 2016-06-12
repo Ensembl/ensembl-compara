@@ -36,7 +36,7 @@ use the genetic distance of a pair species to determine what the goc threshold s
 
 Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold -mlss_id -threshold
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold -goc_mlss_id -goc_threshold
 
 =cut
 
@@ -51,47 +51,33 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift;
-    return {
-            %{ $self->SUPER::param_defaults() },
-#		'mlss_id'	=>	'100021',
-#		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#		'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
-#    'compara_db' => 'mysql://ensro@compara5/cc21_ensembl_compara_84'
-    };
-}
-
-
-
 sub fetch_input {
 	my $self = shift;
-  my $mlss_id = $self->param_required('mlss_id');
+  print " START OF Calculate_goc_perc_above_threshold-------------- mlss_id ------>>>>>>\n\n  ", $self->param('goc_mlss_id'), $self->param_required('goc_threshold'), "  ---\n\n" if ($self->debug);
+  my $mlss_id = $self->param('goc_mlss_id');
   my $query = "SELECT goc_score , COUNT(*) FROM homology where method_link_species_set_id =$mlss_id GROUP BY goc_score";
   my $goc_distribution = $self->compara_dba->dbc->db_handle->selectall_arrayref($query);
   $self->param('goc_dist', $goc_distribution);
-#  print Dumper($self->param('goc_dist'));
-  my $thresh = $self->param_required('threshold');
+  print Dumper($self->param('goc_dist')) if ( $self->debug >3 );
+  my $thresh = $self->param_required('goc_threshold');
+  print "this is the goc threshold :           $thresh \n\n" if ( $self->debug );
 	$self->param('thresh', $thresh);
+
+  print " START OF Calculate_goc_perc_above_threshold-------------- mlss_id ---------------  $mlss_id  --------\n\n  " if ($self->debug);
 }
 
 sub run {
   my $self = shift;
 
   $self->param('perc_above_thresh', $self->_calculate_perc());
-#  print "\n\n"  , $self->param('perc_above_thresh') , "\n\n";
+  print "\n\n"  , $self->param('perc_above_thresh') , "\n\n" if ( $self->debug >3 );
 }
 
 sub write_output {
   	my $self = shift @_;
-#    print $self->param('threshold');
-    $self->dataflow_output_id( {'perc_above_thresh' => $self->param('perc_above_thresh'), 'goc_dist' => $self->param('goc_dist')} , 1);
+    print $self->param('thresh') , "  <<<<------ goc_threshold "if ( $self->debug >3 );
+    #goc threshold need to be dataflow'd  beacuse if it is given a default value by the user this would not have been dataflow'd atleast once, hence the next runnable after this will not be able to access it, causing failure.
+    $self->dataflow_output_id( {'perc_above_thresh' => $self->param('perc_above_thresh'), 'goc_dist' => $self->param('goc_dist'), 'goc_threshold' => $self->param('thresh')} , 2);
 }
 
 
