@@ -37,7 +37,7 @@ use the mlss id to get the species genome db ids and then get their last common 
 
 Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance  -mlss_id <>
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance  -goc_mlss_id <>
 
 =cut
 
@@ -52,28 +52,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift;
-    return {
-            %{ $self->SUPER::param_defaults() },
-#		'mlss_id'	=>	'100021',
-#		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#		'compara_db' => 'mysql://ensro@compara5/cc21_ensembl_compara_84'
-    };
-}
-
-
-
 sub fetch_input {
 
 	my $self = shift;
-	my $mlss_id = $self->param_required('mlss_id');
+	my $mlss_id = $self->param_required('goc_mlss_id');
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
   my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
 
@@ -88,8 +70,7 @@ sub fetch_input {
 	$self->param('mlss', $mlss);
   $self->param('genome_dbs' , $mlss->species_set_obj()->genome_dbs());
 
-
-
+  print "------------START OF Fetch_genetic_distance ------------\n mlss_id --------- $mlss_id \n" if ($self->debug);
   
 
 }
@@ -107,7 +88,7 @@ sub run {
 sub write_output {
 
   my $self = shift;
-  $self->dataflow_output_id( {'genetic_distance' => $self->param('genetic_dist')} , 1);
+  $self->dataflow_output_id( {'genetic_distance' => $self->param('genetic_dist')} , 2);
     
 }
 
@@ -119,7 +100,7 @@ sub _get_genetic_dist {
   
     foreach my $gdb ( @{$self->param('genome_dbs')} ) {
         my $genomeDbId = $gdb->dbID();
-#        print "\n\n   $genomeDbId   \n";
+        print "\n\n   $genomeDbId   \n" if ( $self->debug >3 );
         $genomes_list->{$genomeDbId} = 1;
     }
 
@@ -136,7 +117,7 @@ sub _get_genetic_dist {
     my $lca_node = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
     my $genetic_dist =$lca_node->taxon->get_value_for_tag('ensembl timetree mya');
-#    print "¢¢¢¢∞∞∞¢¢#∞∞##§#§#§§##§#∞##  $genetic_dist \n\n";
+    print "¢¢¢¢∞∞∞¢¢#∞∞##§#§#§§##§#∞##  $genetic_dist \n\n" if ( $self->debug >3 );
     return $genetic_dist;
 } ## end sub _get_genetic_dist
 
