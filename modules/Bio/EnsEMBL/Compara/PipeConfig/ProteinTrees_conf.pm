@@ -103,6 +103,11 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => undef,
 
+    #default parameters for the geneset qc
+
+        'coverage_threshold' => 50, #percent
+        'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
+
     # dependent parameters: updating 'base_dir' should be enough
         # Note that you can omit the trailing / in base_dir
         #'base_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/',
@@ -262,6 +267,8 @@ sub default_options {
         #'quick_tree_break_capacity' => 100,
         #'build_hmm_capacity'        => 200,
         #'ktreedist_capacity'        => 150,
+        #'goc_capacity'              => 200,
+        #'genesetQC_capacity'        => 100,
         #'other_paralogs_capacity'   => 100,
         #'homology_dNdS_capacity'    => 200,
         #'hc_capacity'               =>   4,
@@ -3129,7 +3136,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 2 => {
-                    'get_orthologs' => { 'mlss_id' => '#homo_mlss_id#' },    
+                    'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },    
                 },
             },
         },
