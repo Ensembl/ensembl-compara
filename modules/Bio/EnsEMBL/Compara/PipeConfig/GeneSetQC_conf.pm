@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara:Pipeconfig::GeneSetQC_conf;
     -coverage_threshold : minimum avg percentage coverage.
 
 Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <15> -coverage_threshold <50>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <15> -coverage_threshold <50> -compara_db <>
 
 =cut
 
@@ -174,7 +174,9 @@ sub pipeline_analyses {
             -flow_into      =>  {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
                 2   =>  [':////QC_split_genes'],
-            }
+            },
+            -hive_capacity  => 50,
+            -batch_size     => 1,
         },
 
         {
@@ -183,7 +185,9 @@ sub pipeline_analyses {
             -parameters =>  {'longer' => 0, 'compara_db'   => $self->o('compara_db')},
             -flow_into  => {
                 2   => [':////short_orth_genes'],
-            }
+            },
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
@@ -192,13 +196,15 @@ sub pipeline_analyses {
             -parameters     =>  { 'longer' => 1 , 'compara_db'   => $self->o('compara_db')},
             -flow_into      =>  {
                 2   => [':////long_orth_genes'],
-            }
+            },
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
             -logic_name => 'store_tags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags',
-
+            -analysis_capacity  => 10,
         },
     ];
 }
