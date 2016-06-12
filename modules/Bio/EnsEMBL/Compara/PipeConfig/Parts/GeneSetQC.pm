@@ -43,7 +43,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
 
 sub pipeline_analyses_GeneSetQC {
     my ($self) = @_;
@@ -55,6 +54,7 @@ sub pipeline_analyses_GeneSetQC {
                 '2->A'       => ['get_split_genes'],
                 'A->2'   =>  ['store_tags'],
             },
+            -hive_capacity  => $self->o('genesetQC_capacity'),
             -rc_name => '2Gb_job',
         },
 
@@ -64,7 +64,7 @@ sub pipeline_analyses_GeneSetQC {
             -flow_into      =>  {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
                 2   =>  [':////QC_split_genes'],
-            }
+            },
             -hive_capacity  => 50,
             -batch_size     => 1,
         },
@@ -72,10 +72,14 @@ sub pipeline_analyses_GeneSetQC {
         {
             -logic_name =>  'get_short_orth_genes',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters =>  {'longer' => 0},
+            -parameters =>  {
+                'longer' => 0, 
+                'coverage_threshold' => $self->o('coverage_threshold'), 
+                'species_threshold' => $self->o('species_threshold'), 
+                },
             -flow_into  => {
                 2   => [':////short_orth_genes'],
-            }
+            },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
         },
@@ -83,10 +87,14 @@ sub pipeline_analyses_GeneSetQC {
         {
             -logic_name     =>  'get_long_orth_genes',
             -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters     =>  { 'longer' => 1 },
+            -parameters     =>  { 
+                'longer' => 1, 
+                'coverage_threshold' => $self->o('coverage_threshold'), 
+                'species_threshold' => $self->o('species_threshold'), 
+                },
             -flow_into      =>  {
                 2   => [':////long_orth_genes'],
-            }
+            },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
         },
