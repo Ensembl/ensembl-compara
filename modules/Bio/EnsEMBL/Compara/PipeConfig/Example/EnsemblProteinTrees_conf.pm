@@ -116,7 +116,8 @@ sub default_options {
         'filter_high_coverage'      => 1,
         
     # GOC parameters
-        'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+        'goc_taxlevels'                 => ['Euteleostomi','Ciona'],
+        'goc_threshold'                 => 0,
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -184,6 +185,8 @@ sub default_options {
         'ortho_stats_capacity'      => 10,
         'copy_tree_capacity'        => 100,
         'cluster_tagging_capacity'  => 200,
+        'goc_capacity'              => 200,
+        'genesetQC_capacity'        => 200,
 
     # hive priority for non-LOCAL health_check analysis:
 
