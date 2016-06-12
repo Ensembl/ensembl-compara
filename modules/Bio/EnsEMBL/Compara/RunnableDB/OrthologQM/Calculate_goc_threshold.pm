@@ -51,46 +51,30 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift;
-    return {
-            %{ $self->SUPER::param_defaults() },
-#		'mlss_id'	=>	'100021',
-#		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#		'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
-    };
-}
-
-
-
 sub fetch_input {
 	my $self = shift;
   my $dist = $self->param_required('genetic_distance');
 	$self->param('dist', $dist);
+
+  print " START OF Calculate_goc_threshold-------------- goc_threshold -----------------------\n\n  ", $self->param('goc_mlss_id'), " <-----  goc_mlss_id\n" if ($self->debug);
 }
 
 sub run {
   my $self = shift;
 
   if ($self->param('dist') > 100) {
-    $self->param('threshold', 50);
+    $self->param('goc_threshold', 50);
   }
   else {
-    $self->param('threshold', 75); 
+    $self->param('goc_threshold', 75); 
   }
 
 }
 
 sub write_output {
   	my $self = shift @_;
-#    print $self->param('threshold');
-    $self->dataflow_output_id( {'threshold' => $self->param('threshold')} , 1);
+    print $self->param('threshold') if ( $self->debug >3 );
+    $self->dataflow_output_id( {'goc_threshold' => $self->param('goc_threshold')} , 2);
 }
 
 1;
