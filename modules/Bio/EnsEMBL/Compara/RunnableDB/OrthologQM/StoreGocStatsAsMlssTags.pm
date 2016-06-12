@@ -38,7 +38,7 @@ store distribution of goc score as tags in the mlss_tag table
 
 Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags -genome_db_id <genome_db_id> -mlss_id <>
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags -genome_db_id <genome_db_id> -goc_mlss_id <>
 
 =cut
 
@@ -53,31 +53,13 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift;
-    return {
-            %{ $self->SUPER::param_defaults() },
-#		'mlss_id'	=>	'100021',
-#		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#		'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
-    };
-}
-
-
-
 sub fetch_input {
 	my $self = shift;
-	my $mlss_id = $self->param_required('mlss_id');
-  my $thresh = $self->param_required('threshold');
+	my $mlss_id = $self->param_required('goc_mlss_id');
+  my $thresh = $self->param_required('goc_threshold');
   my $goc_dist = $self->param_required('goc_dist');
   my $perc_above_thresh = $self->param_required('perc_above_thresh');
-	print "11111111111111111111111111111111111111111111111111111111111\n\n" if ( $self->debug );
+	print "11111111111111111111 \n  mlss id ------ $mlss_id   \n 111111111111111111111111111111111111111\n\n" if ( $self->debug );
 	print Dumper($goc_dist) if ( $self->debug );
 
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
