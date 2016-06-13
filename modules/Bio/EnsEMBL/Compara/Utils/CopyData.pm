@@ -110,8 +110,8 @@ my %data_expansions = (
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
   Arg[3]      : string $table_name
-  Arg[4]      : string $where_field: the name of the column to use for the filtering
-  Arg[5]      : string $where_value: the value of the column used for the filtering
+  Arg[4]      : (opt) string $where_field: the name of the column to use for the filtering
+  Arg[5]      : (opt) string $where_value: the value of the column used for the filtering
   Arg[6]      : (opt) Bio::EnsEMBL::DBSQL::DBConnection $foreign_keys_dbc
   Arg[7]      : (bool) $expand_tables (default 0)
 
@@ -160,14 +160,25 @@ my %cached_inserts = ();
 sub _memoized_insert {
     my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
 
-    my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field, $where_value);
+    my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field||'__NA__', $where_value||'__NA__');
     return if $cached_inserts{$key};
     $cached_inserts{$key} = 1;
 
-    my $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
+    my $sql_select;
+    my @execute_args;
+    if ($where_field) {
+        if (defined $where_value) {
+            $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
+            push @execute_args, $where_value;
+        } else {
+            $sql_select = sprintf('SELECT * FROM %s WHERE %s IS NULL', $table, $where_field);
+        }
+    } else {
+        $sql_select = 'SELECT * FROM '.$table;
+    }
     #warn "<< $sql_select  using '$where_value'\n";
     my $sth = $from_dbc->prepare($sql_select);
-    $sth->execute($where_value);
+    $sth->execute(@execute_args);
     while (my $h = $sth->fetchrow_hashref()) {
         my %this_row = %$h;
 
@@ -202,7 +213,7 @@ sub _insert_related_rows {
         #warn sprintf("%s(%s) needs %s(%s)\n", $table, @$x);
         if (not defined $this_row->{$x->[0]}) {
             next;
-        } elsif (($table eq $x->[1]) and ($where_field eq $x->[2]) and ($where_value eq $this_row->{$x->[0]})) {
+        } elsif (($table eq $x->[1]) and $where_field and ($where_field eq $x->[2]) and (defined $where_value) and ($where_value eq $this_row->{$x->[0]})) {
             # self-loop catcher: the code is about to store the same row again and again
             # we fall here when trying to insert a root gene_tree_node because its root_id links to itself
             next;
