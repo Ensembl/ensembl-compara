@@ -82,9 +82,9 @@ sub pipeline_analyses_goc {
 
         {
             -logic_name => 'get_max_orth_percent',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                1 => WHEN( $self->o('goc_threshold') => {'get_perc_above_threshold' => {'goc_threshold' => $self->o('goc_threshold')} } ,
+                1 => WHEN( 'defined #goc_threshold#' => ['get_perc_above_threshold' ] ,
                     ELSE ['get_genetic_distance' ] ),
             },
             -rc_name => '16Gb_job',
@@ -94,7 +94,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_genetic_distance',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
             -flow_into => {
-                2 =>    ['threshold_calculator'],
+                1 =>    ['threshold_calculator'],
                 },
         },
 
@@ -102,7 +102,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'threshold_calculator',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
             -flow_into => {
-                2 =>    ['get_perc_above_threshold'],
+                1 =>    ['get_perc_above_threshold'],
                 },
         },
 
@@ -110,7 +110,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_perc_above_threshold',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
             -flow_into => {
-                2 =>    ['store_goc_dist_asTags'],
+                1 =>    ['store_goc_dist_asTags'],
                 },
         },
 
