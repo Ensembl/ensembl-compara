@@ -101,7 +101,7 @@ sub run {
 
 	print Dumper($orth_results) if ( $self->debug > 3);
 
-	print "111111111111111111 mlss id -----------------------------  :  ",$self->param_required('goc_mlss_id'),"  11111111111111111111111111111111111111111\n\n" if ( $self->debug );
+	print "111111111111111111 mlss id -----------------------------  :  ",$self->param_required('goc_mlss_id')," 11111111111111 \n goc threshold  \n", $self->param('goc_threshold'), "\n\n" if ( $self->debug );
 }
 
 
