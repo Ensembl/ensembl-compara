@@ -81,7 +81,11 @@ sub content {
     
     push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
    
-    my $old_assemblies = 0; 
+    my $old_assemblies  = 0; 
+    my $here            = $hub->species_defs->ENSEMBL_SERVERNAME;
+    my $data_elsewhere  = 0;
+    my %other_servers;
+
     foreach my $file (@data) {
       my @assemblies = split(', ', $file->{'assembly'});
       ## check if we have current assemblies
@@ -90,6 +94,24 @@ sub content {
         $old_assemblies++ if ($_ ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION'));
       }
       my $user_record = ref($file) =~ /Record/;
+
+      ## Hide saved records that were not uploaded on the current server
+      if ($user_record) {
+        if ($file->data->{'site'} && $file->data->{'site'} ne $here) {
+          $data_elsewhere = 1;
+          $other_servers{$file->data->{'site'}} = 1;
+          next;
+        }
+        elsif (!$file->data->{'site'}) {
+          ## Data was uploaded on release 84, before we added the site to records
+          my $path_to_file = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$file->{'file'};
+          unless (-e $path_to_file) {
+            $data_elsewhere = 1;
+            next;
+          }
+        }
+      }
+
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
      
@@ -136,6 +158,21 @@ sub content {
     }
   
     $html .= '</form></div>';
+
+    if ($data_elsewhere) {
+      my $message;
+      if (scalar keys %other_servers) {
+        $message = 'You also have uploaded data saved on the following sites:<br /><ul>';
+        foreach (keys %other_servers) {
+          $message .= sprintf('<li><a href="http://%s">%s</a></li>', $_, $_);
+        }
+        $message .= '</ul>';
+      }
+      else {
+        $message = sprintf 'You also have uploaded data saved on other %s sites (e.g. a mirror or archive) that we cannot show here.', $hub->species_defs->ENSEMBL_SITETYPE;
+      }
+      $html .= $self->info_panel('Saved data on other servers', $message); 
+    }
   }
   
   $html  .= $self->group_shared_data;
