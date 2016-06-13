@@ -82,6 +82,8 @@ our @EXPORT_OK;
 
 use Data::Dumper;
 
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
+
 my %foreign_key_cache = ();
 
 my %data_expansions = (
@@ -124,36 +126,40 @@ my %data_expansions = (
 =cut
 
 sub copy_data_with_foreign_keys_by_constraint {
-    _load_foreign_keys($_[1]);
-    _memoized_insert(@_);
+    my ($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+    my $fk_rules = _load_foreign_keys($from_dbc, $to_dbc, $foreign_keys_dbc);
+    _memoized_insert($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $fk_rules, $expand_tables);
 }
 
 # Load all the foreign keys and cache the result
 sub _load_foreign_keys {
-    my $dbc = shift;
 
-    return $foreign_key_cache{$dbc->locator} if $foreign_key_cache{$dbc->locator};
+    foreach my $dbc (@_) {
+        next unless check_ref($dbc, 'Bio::EnsEMBL::DBSQL::DBConnection');
+        return $foreign_key_cache{$dbc->locator} if $foreign_key_cache{$dbc->locator};
 
-    my $sth = $dbc->db_handle->foreign_key_info(undef, $dbc->dbname, undef, undef, undef, undef);
-    my %fk = ();
-    foreach my $x (@{ $sth->fetchall_arrayref() }) {
-        # A.x REFERENCES B.y : push @{$fk{'A'}}, ['x', 'B', 'y'];
-        push @{$fk{$x->[6]}}, [$x->[7], $x->[2], $x->[3]];
+        my $sth = $dbc->db_handle->foreign_key_info(undef, $dbc->dbname, undef, undef, undef, undef);
+        my %fk = ();
+        foreach my $x (@{ $sth->fetchall_arrayref() }) {
+            # A.x REFERENCES B.y : push @{$fk{'A'}}, ['x', 'B', 'y'];
+            push @{$fk{$x->[6]}}, [$x->[7], $x->[2], $x->[3]];
+        }
+        if (%fk) {
+            $foreign_key_cache{$dbc->locator} = \%fk;
+            return $foreign_key_cache{$dbc->locator};
+        }
     }
-    $foreign_key_cache{$dbc->locator} = \%fk;
-    return \%fk;
+    die "None of the DBConnections point to a database with foreign keys. Foreign keys are needed to populate linked tables\n";
 }
 
 
 my %cached_inserts = ();
 sub _memoized_insert {
-    my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+    my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
 
     my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field, $where_value);
     return if $cached_inserts{$key};
     $cached_inserts{$key} = 1;
-
-    $foreign_keys_dbc ||= $to_dbc;
 
     my $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
     #warn "<< $sql_select  using '$where_value'\n";
@@ -163,7 +169,7 @@ sub _memoized_insert {
         my %this_row = %$h;
 
         # First insert the requirements (to satisfy the foreign keys)
-        _insert_related_rows($from_dbc, $to_dbc, \%this_row, load_foreign_keys($foreign_keys_dbc)->{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables);
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $fk_rules->{$table}, $table, $where_field, $where_value, $fk_rules, $expand_tables);
 
         # Then the data
         my @cols = keys %this_row;
@@ -183,12 +189,12 @@ sub _memoized_insert {
         }
 
         # And the expanded stuff
-        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) if $expand_tables;
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $fk_rules, $expand_tables) if $expand_tables;
     }
 }
 
 sub _insert_related_rows {
-    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
     foreach my $x (@$rules) {
         #warn sprintf("%s(%s) needs %s(%s)\n", $table, @$x);
         if (not defined $this_row->{$x->[0]}) {
@@ -198,7 +204,7 @@ sub _insert_related_rows {
             # we fall here when trying to insert a root gene_tree_node because its root_id links to itself
             next;
         }
-        _memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc, $expand_tables);
+        _memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $fk_rules, $expand_tables);
     }
 }
 
