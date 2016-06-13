@@ -82,7 +82,6 @@ our @EXPORT_OK;
 
 use Data::Dumper;
 
-
 my %foreign_key_cache = ();
 
 my %data_expansions = (
@@ -221,10 +220,10 @@ sub clear_copy_data_cache {
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
   Arg[3]      : string $table_name
-  Arg[4]      : (opt) string $index_name
-  Arg[5]      : (opt) integer $min_id
-  Arg[6]      : (opt) integer $max_id
-  Arg[7]      : (opt) string $query
+  Arg[4]      : (opt) string $query
+  Arg[5]      : (opt) string $index_name
+  Arg[6]      : (opt) integer $min_id
+  Arg[7]      : (opt) integer $max_id
   Arg[8]      : (opt) integer $step
   Arg[9]      : (opt) boolean $disable_keys (default: true)
   Arg[10]     : (opt) boolean $reenable_keys (default: true)
@@ -237,7 +236,7 @@ sub clear_copy_data_cache {
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $disable_keys, $reenable_keys, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible) = @_;
 
     print "Copying data in table $table_name\n";
 
@@ -261,9 +260,9 @@ sub copy_data {
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
     if ($binary_mode) {
-        copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step);
+        copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
     } else {
-        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $holes_possible);
+        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible);
     }
     if ($reenable_keys // 1) {
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
@@ -279,7 +278,7 @@ sub copy_data {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible) = @_;
 
     my $user = $to_dbc->username;
     my $pass = $to_dbc->password;
@@ -353,7 +352,7 @@ sub copy_data_in_text_mode {
 =cut
 
 sub copy_data_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step) = @_;
 
     my $from_user = $from_dbc->username;
     my $from_pass = $from_dbc->password;
