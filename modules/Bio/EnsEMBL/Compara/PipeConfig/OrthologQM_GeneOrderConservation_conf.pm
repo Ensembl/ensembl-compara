@@ -67,7 +67,7 @@ sub default_options {
 #        'goc_mlss_id'     => '100021',
 #        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
-         'goc_threshold' => 0,
+         'goc_threshold' => undef,
     };
 }
 
@@ -132,7 +132,7 @@ sub pipeline_analyses {
             -logic_name => 'get_max_orth_percent',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                1 => WHEN( '#goc_threshold#' => { 'get_perc_above_threshold' => {'goc_threshold' => '#goc_threshold#' } } ,
+                1 => WHEN( 'defined #goc_threshold#' => [ 'get_perc_above_threshold'  ] ,
                     ELSE [ 'get_genetic_distance' ] ),
             },
             -rc_name => '16Gb_job',
