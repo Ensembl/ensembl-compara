@@ -125,12 +125,12 @@ my %data_expansions = (
 =cut
 
 sub copy_data_with_foreign_keys_by_constraint {
-    load_foreign_keys($_[1]);
-    memoized_insert(@_);
+    _load_foreign_keys($_[1]);
+    _memoized_insert(@_);
 }
 
 # Load all the foreign keys and cache the result
-sub load_foreign_keys {
+sub _load_foreign_keys {
     my $dbc = shift;
 
     return $foreign_key_cache{$dbc->locator} if $foreign_key_cache{$dbc->locator};
@@ -147,7 +147,7 @@ sub load_foreign_keys {
 
 
 my %cached_inserts = ();
-sub memoized_insert {
+sub _memoized_insert {
     my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
 
     my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field, $where_value);
@@ -164,7 +164,7 @@ sub memoized_insert {
         my %this_row = %$h;
 
         # First insert the requirements (to satisfy the foreign keys)
-        insert_related_rows($from_dbc, $to_dbc, \%this_row, load_foreign_keys($foreign_keys_dbc)->{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables);
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, load_foreign_keys($foreign_keys_dbc)->{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables);
 
         # Then the data
         my @cols = keys %this_row;
@@ -184,11 +184,11 @@ sub memoized_insert {
         }
 
         # And the expanded stuff
-        insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) if $expand_tables;
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) if $expand_tables;
     }
 }
 
-sub insert_related_rows {
+sub _insert_related_rows {
     my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
     foreach my $x (@$rules) {
         #warn sprintf("%s(%s) needs %s(%s)\n", $table, @$x);
@@ -199,7 +199,7 @@ sub insert_related_rows {
             # we fall here when trying to insert a root gene_tree_node because its root_id links to itself
             next;
         }
-        memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc, $expand_tables);
+        _memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc, $expand_tables);
     }
 }
 
