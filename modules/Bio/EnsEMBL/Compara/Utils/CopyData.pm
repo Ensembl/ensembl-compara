@@ -82,7 +82,7 @@ our @EXPORT_OK;
 
 use Data::Dumper;
 
-use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 
 my %foreign_key_cache = ();
 
@@ -127,6 +127,9 @@ my %data_expansions = (
 
 sub copy_data_with_foreign_keys_by_constraint {
     my ($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+    die "A table name must be given" unless $table_name;
     my $fk_rules = _load_foreign_keys($from_dbc, $to_dbc, $foreign_keys_dbc);
     _memoized_insert($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $fk_rules, $expand_tables);
 }
@@ -245,6 +248,9 @@ sub clear_copy_data_cache {
 sub copy_data {
     my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace) = @_;
 
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
     print "Copying data in table $table_name\n";
 
     my $sth = $from_dbc->db_handle->column_info($from_dbc->dbname, undef, $table_name, '%');
@@ -286,6 +292,9 @@ sub copy_data {
 
 sub copy_data_in_text_mode {
     my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $user = $to_dbc->username;
     my $pass = $to_dbc->password;
@@ -365,6 +374,9 @@ sub copy_data_in_text_mode {
 
 sub copy_data_in_binary_mode {
     my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $from_user = $from_dbc->username;
     my $from_pass = $from_dbc->password;
