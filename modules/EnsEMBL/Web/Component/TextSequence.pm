@@ -248,8 +248,7 @@ sub set_variations {
         $snps = $vf_adaptor->fetch_all_by_Slice_Population($slice_data->{'slice'}, $config->{'population'}, $config->{'min_frequency'});
       }
       elsif ($config->{'hide_rare_snps'} && $config->{'hide_rare_snps'} ne 'off') {
-        my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
-        $snps = $vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
+        $snps = $vf_adaptor->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
       }
       else {
         my @snps_list = (@{$vf_adaptor->fetch_all_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)},
