@@ -47,8 +47,8 @@ copying homology_member too when asked to copy homology_member.
   # The ", 1" at the end tells the function to "expand" the data, i.e. copy
   # extra rows to make the objects complete. Without it, it wouldn't copy
   # family_member
-  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'family', 'stable_id', 'ENSFM00730001521062', 1);
-  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'gene_tree_root', 'stable_id', 'ENSGT00390000003602', 1);
+  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'family', 'stable_id', 'ENSFM00730001521062', undef, 1);
+  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'gene_tree_root', 'stable_id', 'ENSGT00390000003602', undef, 1);
 
 =head1 AUTHORSHIP
 
