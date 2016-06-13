@@ -91,7 +91,7 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
-        'goc_threshold'                 => 0,
+        'goc_threshold'                 => undef,
         
     # mapping parameters:
 
