@@ -57,6 +57,7 @@ sub content {
     $self->evidence_status,
     $self->clinical_significance,
     $self->synonyms,
+    $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
     $self->hgvs,
     $self->sets,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
@@ -717,6 +718,48 @@ sub most_severe_consequence {
     }
   }
   return ();
+}
+
+## if an insertion/ deletion is described at its most 3' location 
+## possible, is it co-located with other variants?
+sub three_prime_co_located{
+  my $self  = shift;
+
+  my $shifted_co_located = $self->object->get_three_prime_co_located();
+
+  return undef unless defined $shifted_co_located;
+
+  my $count;
+  my @scl;
+
+  foreach my $scl (@{$shifted_co_located}){
+    my $link      = $self->hub->url({ action => 'Explore', v => $scl });
+
+    my $variation = qq{<a href="$link">$scl</a>};
+    $count++;
+    push @scl, $variation;
+  }
+
+  if ($count > 3) {
+    my $show = $self->hub->get_cookie_value('toggle_shifted_co_located') eq 'open';
+  
+    return [
+      'Variants with equivalent alleles',
+      sprintf('<p>There are <strong>%s</strong> variants with equivalent alleles to this variant- <a title="Click to show variants" rel="shifted_co_located" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="shifted_co_located twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+        $count,
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
+        $show ? '' : 'display:none',
+        join('', map "<li>$_</li>", @scl)
+      )
+    ];
+  }
+  else {
+
+    my $html = join ', ', @scl;
+    my $s = ($count > 1) ? 's' : '';
+    return ["Variant$s with equivalent alleles", $html];
+  }
 }
 
 sub text_separator {

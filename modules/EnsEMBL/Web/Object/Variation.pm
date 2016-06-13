@@ -1674,6 +1674,21 @@ sub hgvs_url {
   return [ $hub->url($p), encode_entities($refseq), encode_entities($hgvs_string) ];
 }
 
+
+## extract the names of any variants whch would be in the same location
+## if both were described at the most 3' location possible
+## insertions/ deletions only
+sub get_three_prime_co_located{
+
+    my $self = shift;
+
+    my $attribs = $self->Obj->get_all_attributes();
+
+    @{$self->{'shifted_co_located'}}  = ( exists $attribs->{"co-located allele"} ? split/\,/, $attribs->{"co-located allele"} : '');
+    return $self->{'shifted_co_located'};
+}
+
+
 ## extract data for table of publications citing this variant
 sub get_citation_data{
 
