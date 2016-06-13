@@ -357,6 +357,7 @@ sub default_options {
 #        'initialise_goc_pipeline'  => undef,
         # Data needed for goc
         'goc_taxlevels'                 => [],
+        'goc_threshold'                 => undef,
         # affects 'group_genomes_under_taxa'
 
     };
@@ -482,7 +483,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_transactions'   => $self->o('do_transactions'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
-
+        'goc_threshold'                 => $self->o('goc_threshold'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
