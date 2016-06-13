@@ -253,6 +253,7 @@ sub upload {
                       no_attach => $no_attach,
                       timestamp => time,
                       assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
+                      site      => $hub->species_defs->ENSEMBL_SERVERNAME,
                       %inputs
                      };
 

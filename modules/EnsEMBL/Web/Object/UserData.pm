@@ -259,6 +259,9 @@ sub _move_to_user {
     ($new_path = $old_path) =~ s/session_(\d+)/user_$user_id/;
     $new_path =~ s/temporary/persistent/;
     $data->{'file'} = $new_path if $new_path;
+    ## Make a note of where the file was saved, since it can't currently
+    ## be shown on other sites such as mirrors or archives
+    $data->{'site'} = $hub->species_defs->ENSEMBL_SERVERNAME;
     $record = $user->add_to_uploads($data);
   }
   else {
