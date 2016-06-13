@@ -601,7 +601,7 @@ sub init_label {
     $config->{'hover_labels'}->{$class} = {
       header    => $name,
       desc      => $desc,
-      class     => "$class $track",
+      class     => "$class $track _track_$track",
       highlight => $track,
       component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
