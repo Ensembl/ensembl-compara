@@ -87,6 +87,11 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --reg_conf $ENSEM
 
 5) Run the beekeeper
 
+*******
+There are likely to be some health check failures. These are due to the health check expecting a percentage difference < 20% between the number of genomic_align_blocks of the current database and previous database. As it is comparing the patch against the full genome this difference is expected to be much higher. Hence, we ignore this failures for now. In the future, we will make the expected percentage difference a command line argument which can be change we are only running patches, thereby eliminating this Healthcheck failures.
+
+******
+
 6) Check results
 
 select method_link_species_set_id, name, count(*) from genomic_align_block join method_link_species_set using (method_link_species_set_id) where method_link_id in (1,16) group by method_link_species_set_id;
