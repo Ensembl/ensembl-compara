@@ -116,8 +116,8 @@ sub default_options {
         'filter_high_coverage'      => 1,
         
     # GOC parameters
-        'goc_taxlevels'                 => ['Euteleostomi','Ciona'],
-        'goc_threshold'                 => 0,
+        'goc_taxlevels'                 => ['Carnivora','Ciona'], #['Euteleostomi','Ciona'],
+        'goc_threshold'                 => undef,
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
