@@ -74,7 +74,7 @@ sub run {
 sub write_output {
   	my $self = shift @_;
     print $self->param('threshold') if ( $self->debug >3 );
-    $self->dataflow_output_id( {'goc_threshold' => $self->param('goc_threshold')} , 2);
+    $self->dataflow_output_id( {'goc_threshold' => $self->param('goc_threshold')} , 1);
 }
 
 1;
