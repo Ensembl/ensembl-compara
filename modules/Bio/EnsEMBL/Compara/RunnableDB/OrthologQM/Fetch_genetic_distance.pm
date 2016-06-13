@@ -88,7 +88,7 @@ sub run {
 sub write_output {
 
   my $self = shift;
-  $self->dataflow_output_id( {'genetic_distance' => $self->param('genetic_dist')} , 2);
+  $self->dataflow_output_id( {'genetic_distance' => $self->param('genetic_dist')} , 1);
     
 }
 
