@@ -422,11 +422,6 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'source'}{'somatic'} = \%$temp_somatic;
   $self->db_details($db_name)->{'tables'}{'source'}{'type'} = \%$temp_type;
 
-#---------- Add in information about the studies from the study table
-my $study_aref = $dbh->selectall_arrayref( 'select distinct st.name, st.description from phenotype_feature pf, study st where pf.study_id=st.study_id AND st.name is not NULL' );
-my $temp_study_description = {map {$_->[0],$_->[1]} @$study_aref};
-$self->db_details($db_name)->{'tables'}{'study'}{'descriptions'} = $temp_study_description;
-
 #---------- Store dbSNP version 
  my $s_aref = $dbh->selectall_arrayref( 'select version from source where name = "dbSNP"' );
  foreach (@$s_aref){
@@ -514,8 +509,11 @@ $self->db_details($db_name)->{'tables'}{'study'}{'descriptions'} = $temp_study_d
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'descriptions'} = \%somatic_sv_descriptions;  
 #--------- Add in structural variation study information
   my $study_sv_aref = $dbh->selectall_arrayref("select distinct st.name, st.description from structural_variation sv, study st where sv.study_id=st.study_id");
-  my $study_sv_descriptions = {map {$_->[0],$_->[1]} @$study_sv_aref};
-  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'study'}{'descriptions'} = $study_sv_descriptions;
+  my %study_sv_descriptions;
+  foreach (@$study_sv_aref) {    
+   $study_sv_descriptions{$_->[0]} = $_->[1];
+  }
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'study'}{'descriptions'} = \%study_sv_descriptions;    
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
@@ -693,22 +691,40 @@ sub _summarise_funcgen_db {
   }
 
   ## Segmentations are stored differently, now they are in flat-files
-  foreach my $a (values %$analysis) {
-    next unless $a->{'logic_name'} =~ /(Segway|ChromHMM)/;
+  foreach my $current_analysis (values %$analysis) {
+    next unless $current_analysis->{'logic_name'} =~ /(Segway|ChromHMM)/;
     my $type = $1;
-    next unless $a->{'name'};
-    my $res_cell = $dbh->selectall_arrayref(qq(
-      select result_set_id,cell_type_id,display_label,cell_type.name
-        from result_set
-        join cell_type using (cell_type_id)
-        join analysis using (analysis_id)
-       where logic_name = ?),undef,$a->{'logic_name'});
+    next unless $current_analysis->{'name'};
+#     my $res_cell = $dbh->selectall_arrayref(qq(
+#       select result_set_id,cell_type_id,display_label,cell_type.name
+#         from result_set
+#         join cell_type using (cell_type_id)
+#         join analysis using (analysis_id)
+#        where logic_name = ?),undef,$current_analysis->{'logic_name'});
+
+    my $res_cell = $dbh->selectall_arrayref(
+      qq(
+	select 
+	  result_set_id, 
+	  epigenome_id,
+	  display_label,
+	  epigenome.name
+	from result_set
+	  join epigenome using (epigenome_id)
+	  join analysis using (analysis_id)
+	where 
+	  logic_name  = ?
+      ),
+      undef,
+      $current_analysis->{'logic_name'}
+    );
+
     foreach my $C (@$res_cell) {
-      my $key = $a->{'logic_name'}.':'.$C->[3];
+      my $key = $current_analysis->{'logic_name'}.':'.$C->[3];
       my $value = {
         name => qq($C->[2] Regulatory Segmentation ($type)),
         desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">$type</a> segmentation state analysis"),
-        disp => $a->{'displayable'},
+        disp => $current_analysis->{'displayable'},
         'web' => {
           celltype => $C->[1],
           celltypename => $C->[2],
@@ -720,7 +736,7 @@ sub _summarise_funcgen_db {
         },
         count => 1,
       };
-      $self->db_details($db_name)->{'tables'}{'segmentation'}{"$key$a->{'logic_name'}"} = $value;
+      $self->db_details($db_name)->{'tables'}{'segmentation'}{"$key$current_analysis->{'logic_name'}"} = $value;
     }
   }  
 
@@ -781,25 +797,33 @@ sub _summarise_funcgen_db {
 # * functional genomics tracks
 #
 
-  $f_aref = $dbh->selectall_arrayref(
-    'select ft.name, ct.name 
-       from supporting_set ss, data_set ds, feature_set fs, feature_type ft, cell_type ct  
-       where ds.data_set_id=ss.data_set_id and ds.name="RegulatoryFeatures" 
-       and fs.feature_set_id = ss.supporting_set_id and fs.feature_type_id=ft.feature_type_id 
-       and fs.cell_type_id=ct.cell_type_id 
-       order by ft.name;
-    '
-  );   
-  foreach my $row (@$f_aref) {
-    my $feature_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'feature_type'}{'analyses'}{$feature_type_key} = 2;   
-  }
+# mn1: The sql below comes up empty on the 83 and 84 databases, so I'm commenting this out.
 
+#   $f_aref = $dbh->selectall_arrayref(
+#     'select ft.name, ct.name 
+#        from supporting_set ss, data_set ds, feature_set fs, feature_type ft, cell_type ct  
+#        where ds.data_set_id=ss.data_set_id and ds.name="RegulatoryFeatures" 
+#        and fs.feature_set_id = ss.supporting_set_id and fs.feature_type_id=ft.feature_type_id 
+#        and fs.cell_type_id=ct.cell_type_id 
+#        order by ft.name;
+#     '
+#   );   
+#   foreach my $row (@$f_aref) {
+#     my $feature_type_key =  $row->[0] .':'. $row->[1];
+#     $self->db_details($db_name)->{'tables'}{'feature_type'}{'analyses'}{$feature_type_key} = 2;   
+#   }
+
+  # Find details of epigenomes that are present in the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
-    'select  ct.name, ct.cell_type_id, ct.display_label
-       from  cell_type ct, feature_set fs  
-       where  fs.type="regulatory" and ct.cell_type_id=fs.cell_type_id 
-    group by  ct.name order by ct.name'
+    'select 
+      distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
+     from 
+      epigenome 
+      join regulatory_activity using (epigenome_id) 
+      join regulatory_feature using (regulatory_feature_id) 
+      join regulatory_build using (regulatory_build_id) 
+     where regulatory_build.is_current=1
+     '
   );
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
@@ -812,8 +836,8 @@ sub _summarise_funcgen_db {
              IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
         from result_set rs
         join analysis_description a using (analysis_id)
-        join cell_type c using (cell_type_id)
-        join experiment using (cell_type_id)
+        join epigenome c using (epigenome_id)
+        join experiment using (epigenome_id)
         join experimental_group g using (experimental_group_id)
        where feature_class = 'dna_methylation'
     group by rs.result_set_id;
@@ -830,50 +854,55 @@ sub _summarise_funcgen_db {
     };
   }
 
-  my $ft_aref =  $dbh->selectall_arrayref(
-    'select ft.name, ft.feature_type_id from feature_type ft, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
-      where fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
-        and ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.feature_type_id=ft.feature_type_id 
-   group by ft.name order by ft.name'
-  );
-  foreach my $row (@$ft_aref) {
-    my $feature_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'feature_type'}{'ids'}{$feature_type_key} = 2;
-  }
+# This doesn't seem to be used anywhere, so commenting this out.
+#
+#   my $ft_aref =  $dbh->selectall_arrayref(
+#     'select ft.name, ft.feature_type_id from feature_type ft, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
+#       where fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
+#         and ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.feature_type_id=ft.feature_type_id 
+#    group by ft.name order by ft.name'
+#   );
+#   foreach my $row (@$ft_aref) {
+#     my $feature_type_key =  $row->[0] .':'. $row->[1];
+#     $self->db_details($db_name)->{'tables'}{'feature_type'}{'ids'}{$feature_type_key} = 2;
+#   }
 
-  my $rs_aref = $dbh->selectall_arrayref(
-    'select name, string 
-       from regbuild_string 
-      where name like "%regbuild%" and 
-            name like "%ids"'
-  );
-  foreach my $row (@$rs_aref ){
-    my ($regbuild_name, $regbuild_string) = @$row; 
-    $regbuild_name =~s/regbuild\.//;
-    $regbuild_name =~ /^(.*)\.(.*?)$/;
-    my @key_info = ($1,$2);
-    my %data;  
-    my @ids = split(/\,/,$regbuild_string);
-    my $sth = $dbh->prepare(
-          'select feature_type_id
-             from feature_set
-            where feature_set_id = ?'
-    );
-    foreach (@ids){
-      if($key_info[1] =~/focus/){
-        my $feature_set_id = $_;
-        $sth->bind_param(1, $feature_set_id);
-        $sth->execute;
-        my ($feature_type_id)= $sth->fetchrow_array;
-        $data{$feature_type_id} = $_;
-      }
-      else {
-        $data{$_} = 1;
-      }
-      $sth->finish;
-    } 
-    $self->db_details($db_name)->{'tables'}{'regbuild_string'}{$key_info[1]}{$key_info[0]} = \%data;
-  }
+# It is not clear, where these are used, so removing.
+#
+
+#   my $rs_aref = $dbh->selectall_arrayref(
+#     'select name, string 
+#        from regbuild_string 
+#       where name like "%regbuild%" and 
+#             name like "%ids"'
+#   );
+#   foreach my $row (@$rs_aref ){
+#     my ($regbuild_name, $regbuild_string) = @$row; 
+#     $regbuild_name =~s/regbuild\.//;
+#     $regbuild_name =~ /^(.*)\.(.*?)$/;
+#     my @key_info = ($1,$2);
+#     my %data;  
+#     my @ids = split(/\,/,$regbuild_string);
+#     my $sth = $dbh->prepare(
+#           'select feature_type_id
+#              from feature_set
+#             where feature_set_id = ?'
+#     );
+#     foreach (@ids){
+#       if($key_info[1] =~/focus/){
+#         my $feature_set_id = $_;
+#         $sth->bind_param(1, $feature_set_id);
+#         $sth->execute;
+#         my ($feature_type_id)= $sth->fetchrow_array;
+#         $data{$feature_type_id} = $_;
+#       }
+#       else {
+#         $data{$_} = 1;
+#       }
+#       $sth->finish;
+#     } 
+#     $self->db_details($db_name)->{'tables'}{'regbuild_string'}{$key_info[1]}{$key_info[0]} = \%data;
+#   }
   $dbh->disconnect();
 }
 
