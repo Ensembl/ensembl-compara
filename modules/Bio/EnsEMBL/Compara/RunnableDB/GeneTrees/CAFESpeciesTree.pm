@@ -141,6 +141,7 @@ sub run {
     } else {
         $cafe_tree_root = $binTree;
     }
+    $cafe_tree_root->distance_to_parent(0); # NULL would be more accurate
     $self->check_tree($cafe_tree_root);
     $cafe_tree_root->build_leftright_indexing();
 

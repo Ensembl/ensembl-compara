@@ -175,6 +175,11 @@ sub create_species_tree {
     }
 
     $taxon_adaptor->_id_cache->clear_cache();
+
+    # Fix the distance_to_parent fields (NCBITaxonAdaptor sets them to 0.1)
+    $root->distance_to_parent(0);                           # NULL would be more accurate
+    $_->distance_to_parent(1) for $root->get_all_subnodes;  # Convention
+
     return $root if $return_ncbi_tree;
 
     my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
