@@ -158,7 +158,6 @@ sub create_species_tree {
     }
 
         # Deleting subnodes down to a given node:
-    @subnodes = $root->get_all_subnodes;
     foreach my $extra_taxon (@$multifurcation_deletes_all_subnodes) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
         my $taxon_name = $taxon->name;
