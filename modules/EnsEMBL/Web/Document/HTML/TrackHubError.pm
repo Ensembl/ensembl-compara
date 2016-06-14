@@ -42,11 +42,13 @@ sub archive_only {
 ### Hub has no species on current assemblies - link to archives if possible
   my $self = shift;
   my $hub  = $self->hub;
-  my $message = '<p>Sorry, this hub is on an old assembly not supported by this site.';
+  my $message = '<p>Sorry, this hub is on an assembly not supported by this site.';
 
   if ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
 
     my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
+    ## Only fetch archives from 75 onwards, as we don't have track hub support
+    ## on anything earlier
     my $archive_info = $adaptor->fetch_archive_assemblies(75); 
 
     my (@species) = grep { $_ =~ /^species_/ } $hub->param;
@@ -67,12 +69,21 @@ sub archive_only {
 
     my $count = scalar keys %archives;
     if ($count) {
+      my $alt_site;
+      if ($hub->species_defs->ENSEMBL_SERVERNAME =~ /grch37|archive/) {
+        $message .= " Please try our main website:";
+        $alt_site = 'www';
+      }
+      else {
+        my $plural = $count > 1 ? 's' : '';
+        $message .= " Please try the following archive site$plural:</p><ul>";
+      }
       my $trackhub = $hub->param('url');
-      my $plural = $count > 1 ? 's' : '';
-      $message .= " Please try the following archive site$plural:</p><ul>";
+      $message .= '<ul>';
 
       foreach my $species (sort keys %archives) {
-        my $subdomain = $species eq 'Homo_sapiens' ? 'grch37' : 'e'.$archives{$species};
+        my $subdomain = $alt_site ? $alt_site 
+                          : $species eq 'Homo_sapiens' ? 'grch37' : 'e'.$archives{$species};
         my $r   = $hub->species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
         my $url = $subdomain.'.ensembl.org';
         $message .= qq(<li><a href="http://$url/$species/Location/View?r=$r;contigviewbottom=url:$trackhub;format=DATAHUB#modal_user_data">$url</a>);
