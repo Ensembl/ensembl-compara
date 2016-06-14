@@ -163,7 +163,7 @@ sub create_hash {
   else {
     $feature->{'start'}         = $start;
     $feature->{'end'}           = $end;
-    $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
+    $feature->{'structure'}     = $self->create_structure($feature_start, $feature_end, $slice->start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
   }
@@ -171,20 +171,37 @@ sub create_hash {
 }
 
 sub create_structure {
-  my ($self, $feature_start, $slice_start) = @_;
+  my ($self, $feature_start, $feature_end, $slice_start) = @_;
 
-  if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
-          || !$self->parser->get_blockStarts) {
-    return undef; 
-  } 
+  my $thick_start   = $self->parser->get_thickStart;
+  my $thick_end     = $self->parser->get_thickEnd;
+  my $block_count   = $self->parser->get_blockCount;
+
+  return unless ($block_count || ($thick_start && $thick_end));
 
   my $structure = [];
 
-  my @block_starts  = @{$self->parser->get_blockStarts};
-  my @block_lengths = @{$self->parser->get_blockSizes};
-  my $thick_start   = $self->parser->get_thickStart;
-  my $thick_end     = $self->parser->get_thickEnd;
+  ## First, create the blocks
+  if ($self->parser->get_blockCount) {
+    my @block_starts  = @{$self->parser->get_blockStarts};
+    my @block_lengths = @{$self->parser->get_blockSizes};
 
+    foreach(0..($self->parser->get_blockCount - 1)) {
+      my $start   = shift @block_starts;
+      ## Adjust to be relative to slice
+      my $offset  = $feature_start - $slice_start;
+      $start      = $start + $offset;
+      my $length  = shift @block_lengths;
+      my $end     = $start + $length;
+
+      push @$structure, {'start' => $start, 'end' => $end};
+    }
+  }
+  else {
+    ## Single-block feature
+    $structure = [{'start' => $feature_start - $slice_start, 'end' => $feature_end - $slice_start}];
+  }
+  
   ## Fix for non-intuitive configuration of non-coding transcripts
   if ($thick_start == $thick_end) {
     $thick_start  = 0;
@@ -196,19 +213,13 @@ sub create_structure {
     $thick_end   -= $slice_start;
   }
 
-  ## Does this feature have _any_ coding sequence?
+  ## Does this feature have any coding sequence?
   my $has_coding = $thick_start || $thick_end ? 1 : 0;
 
-  foreach(0..($self->parser->get_blockCount - 1)) {
-    my $start   = shift @block_starts;
-    ## Adjust to be relative to slice
-    my $offset  = $feature_start - $slice_start;
-    $start      = $start + $offset;
-    my $length  = shift @block_lengths;
-    my $end     = $start + $length;
+  foreach my $block (@$structure) {
+    my $start = $block->{'start'};
+    my $end   = $block->{'end'};
 
-    my $block = {'start' => $start, 'end' => $end};
-    
     if (!$has_coding) {
       $block->{'non_coding'} = 1; 
     }
@@ -230,7 +241,6 @@ sub create_structure {
         }
       }
     }
-    push @$structure, $block;
   }
 
   return $structure;
