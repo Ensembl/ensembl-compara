@@ -60,19 +60,24 @@ sub content {
                                         $object->bound_end);
 
   my %active;
-  my $all_objs = $object->fetch_all_objs;
-  foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ) {
-    next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
-    $active{$reg_object->feature_set->cell_type->display_label} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence == 1;
-  }
-  my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
+#my $all_objs = $object->fetch_all_objs;
+  my $reg_feat = $object->fetch_by_stable_id;
+#  foreach my $reg_object (sort { $a->feature_set->epigenome->name cmp $b->feature_set->epigenome->name } @$all_objs ) {
+#    $active{$reg_object->feature_set->epigenome->display_label} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence == 1;
+#  }
+#my $num_active = scalar(grep { $_->feature_set->epigenome->name !~ /MultiCell/ } @$all_objs);
+my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
+foreach my $ag (@{$active_epigenomes}) {
+  $active{$ag->display_label} = 1;
+}
+my $num_active = scalar( @{$active_epigenomes});
 
   my @class = ($object->feature_type->name);
 
   $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  $summary->add_row('Active in',$reg_feat->epigenome_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
 
   my $nav_buttons = $self->nav_buttons;
   return $nav_buttons.$summary->render;
