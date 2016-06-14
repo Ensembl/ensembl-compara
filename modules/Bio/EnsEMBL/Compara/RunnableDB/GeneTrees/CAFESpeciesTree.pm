@@ -287,10 +287,10 @@ sub get_longest_path {
 sub binarize {
     my ($self, $orig_tree) = @_;
     my $newTree = $orig_tree->new();
-    $newTree->name('root');
+    $newTree->name($orig_tree->name());
     $newTree->taxon_id($orig_tree->taxon_id);
     $newTree->genome_db_id($orig_tree->genome_db_id);
-    $newTree->node_id('0');
+    $newTree->node_id($orig_tree->node_id());
     _binarize($orig_tree, $newTree, {});
     return $newTree;
 }
