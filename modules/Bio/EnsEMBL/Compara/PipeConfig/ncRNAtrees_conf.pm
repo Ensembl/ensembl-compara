@@ -571,7 +571,7 @@ sub pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
-                                   1 => [ 'pre_sec_struct_tree', WHEN('create_ss_picts' => 'create_ss_picts' ) ],
+                                   1 => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
                 -rc_name       => '1Gb_job',
             },
@@ -583,7 +583,7 @@ sub pipeline_analyses {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
-                -flow_into     => [ 'pre_sec_struct_tree', WHEN('create_ss_picts' => 'create_ss_picts' ) ],
+                -flow_into     => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '2Gb_job',
             },
 
