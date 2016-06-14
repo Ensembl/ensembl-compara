@@ -190,6 +190,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Getopt::Long;
 use Data::Dumper;
 
@@ -370,35 +371,9 @@ sub copy_table {
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   $name ||= 'all';
-  $id ||= 'all';
   print "Copying table $table_name ($name) ...\n";
 
-  my $user = $to_dba->dbc->username;
-  my $pass = $to_dba->dbc->password;
-  my $host = $to_dba->dbc->host;
-  my $port = $to_dba->dbc->port;
-  my $dbname = $to_dba->dbc->dbname;
-
-  my $sth = $from_dba->dbc->prepare("SELECT $table_name.* FROM $table_name ".($constraint || ''));
-  $sth->execute();
-  my $all_rows = $sth->fetchall_arrayref();
-  $sth->finish;
-  if (!@$all_rows) {
-    print "Nothing to copy.\n";
-    return
-  }
-  my $filename = "/tmp/$table_name.populate_new_database.$id.$$.txt";
-  open(TEMP, ">$filename") or die;
-  foreach my $this_row (@$all_rows) {
-    print TEMP join("\t", map {defined $_ ? $_ : '\N'} @$this_row), "\n";
-  }
-  close(TEMP);
-  if ($pass) {
-    system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-  } else {
-    system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-  }
-  unlink("$filename");
+  copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, $table_name, "SELECT $table_name.* FROM $table_name ".($constraint || ''));
 }
 
 
@@ -658,46 +633,14 @@ sub copy_all_dnafrags {
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
-
-  my $dnafrag_fetch_MT_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
-     " WHERE genome_db_id = ? AND name = \"MT\""); 
-  my $dnafrag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM dnafrag".
-     " WHERE genome_db_id = ?");
+  my $dnafrag_fetch_MT_sql = 'SELECT * FROM dnafrag WHERE genome_db_id = ? AND name = "MT"'; 
+  my $dnafrag_fetch_sql = 'SELECT * FROM dnafrag WHERE genome_db_id = ?';
 
   foreach my $this_genome_db (@$genome_dbs) {
-    my $all_rows;
-    if ( $MT_only ) {
-        #Try first getting just MT
-        $dnafrag_fetch_MT_sth->execute($this_genome_db->dbID);
-        $all_rows = $dnafrag_fetch_MT_sth->fetchall_arrayref;
-        #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
+    my $has_copied_something = copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, 'dnafrag', ($MT_only ? $dnafrag_fetch_MT_sql : $dnafrag_fetch_sql));
+    unless ($has_copied_something) {
+      copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, 'dnafrag', $dnafrag_fetch_sql);
     }
-    
-    if (!$all_rows || !@$all_rows) {
-        $dnafrag_fetch_sth->execute($this_genome_db->dbID);
-        $all_rows = $dnafrag_fetch_sth->fetchall_arrayref;
-    }
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/dnafrag.populate_new_database.".$this_genome_db->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying dnafrag for ", $this_genome_db->name, ":\n . ";
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
   }
 }
 

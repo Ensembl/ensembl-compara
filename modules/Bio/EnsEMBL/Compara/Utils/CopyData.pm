@@ -302,6 +302,7 @@ sub copy_data_in_text_mode {
     }
     # $use_limit also tells whether $start and $end are counters or values comparable to $index_name
 
+    my $has_copied_something = 0;
     while (1) {
         #my $start_time = time();
         my $end = $start + $step - 1;
@@ -324,13 +325,14 @@ sub copy_data_in_text_mode {
             # We're told there could be holes in the data, and $end hasn't yet reached $max_id
             next if ($holes_possible and !$use_limit and ($end < $max_id));
             # Otherwise it is the end
-            return;
+            return $has_copied_something;
         }
 
         my $time = time(); 
         my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
         open(my $fh, '>', $filename) or die "could not open the file '$filename' for writing";
         print $fh join("\t", map {defined($_)?$_:'\N'} @$first_row), "\n";
+        $has_copied_something = 1;
         my $nrows = 1;
         while(my $this_row = $sth->fetchrow_arrayref) {
             print $fh join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
@@ -345,6 +347,7 @@ sub copy_data_in_text_mode {
 
         unlink($filename);
     }
+    return $has_copied_something;
 }
 
 =head2 copy_data_in_binary_mode
