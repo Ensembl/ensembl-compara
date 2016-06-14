@@ -64,10 +64,10 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-#        'goc_mlss_id'     => '100021',
-#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
+        'goc_mlss_id'     => undef, #'100021',
+        'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
-         'goc_threshold' => undef,
+        'goc_threshold' => undef,
     };
 }
 
@@ -75,7 +75,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-#        'goc_mlss_id' => $self->o('goc_mlss_id'),
+        'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
     };
@@ -96,7 +96,7 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-#            -input_ids => [ { } ],
+            -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
             -flow_into => {
                 '2->A' => { 'create_ordered_chr_based_job_arrays' => INPUT_PLUS },
@@ -142,7 +142,7 @@ sub pipeline_analyses {
             -logic_name => 'get_genetic_distance',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
             -flow_into => {
-                2 =>    ['threshold_calculator'],
+                1 =>    ['threshold_calculator'],
                 },
         },
 
@@ -150,7 +150,7 @@ sub pipeline_analyses {
             -logic_name => 'threshold_calculator',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
             -flow_into => {
-                2 =>    ['get_perc_above_threshold'],
+                1 =>    ['get_perc_above_threshold'],
                 },
         },
 
@@ -158,7 +158,7 @@ sub pipeline_analyses {
             -logic_name => 'get_perc_above_threshold',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
             -flow_into => {
-                2 =>    ['store_goc_dist_asTags'],
+                1 =>    ['store_goc_dist_asTags'],
                 },
         },
 
