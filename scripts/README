@@ -46,3 +46,7 @@ Script used to run the output of Ortheus back in the days when there was no eHiv
 This was used when the ncbi_taxa_* tables had the pruned taxonomy. This is not needed any more since
 we keep the whole taxonomy there
 
+* scripts/das/* and modules/Bio/Das/ProServer/SourceAdaptor/*
+
+Modules and scripts used to provide a DAS server out of a Compara database. DAS has been retired
+
