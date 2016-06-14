@@ -43,9 +43,52 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     // to make sure among multiple zmenu popup menus, the one that gets clicked comes on the top
     this.el.on('mousedown', '.info_popup', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
+    })
+    .hover(function() {
+      $(this).parent().siblings('div.view_full_text_seq').addClass('shake_animation');
+    },
+    function() {
+      $(this).parent().siblings('div.view_full_text_seq').removeClass('shake_animation');
     });
+
+    $('div.view_full_text_seq a').on('click', function(e) {
+      e.preventDefault();
+      // Create ajax divs to load chunked content
+      var ajax_html = panel.showFullTextSequence($(this).data('totalLength'), $(this).data('chunkLength'), $(this).data('displayWidth'))
+      // Remove initially loaded block of sequence
+      $(panel.el).children(':first').remove();
+      // Remove this button/link after click
+      $(this).remove();
+      $(panel.el).append(ajax_html);
+      // This will initialize this panel and load content via ajax
+      panel.init();
+    })
   },
   
+  // This is the client side replica of EnsEMBL::Web::Component::TextSequence::chunked_content()
+  showFullTextSequence: function(total_length, chunk_length, display_width) {
+    var panel = this;
+    var i   = 1;
+    var j   = chunk_length;
+    var end = (parseInt (total_length / j)) * j; // Find the final position covered by regular chunking - we will add the remainer once we get past this point.
+    var url = '';
+    var html = '';
+      // The display is split into a managable number of sub slices, which will be processed in parallel by requests
+      while (j <= total_length) {
+        // Replace slice start and end w.r.t different chunks 
+        url = panel.params.updateURL;
+        url = url.replace(/subslice_start=(\d+);/, 'subslice_start=' + i + ';');
+        url = url.replace(/subslice_end=(\d+);/, 'subslice_end=' + j + ';');
+        html += '<div class="ajax"><input type="hidden" class="ajax_load" value="'+ url +'" /></div>';
+
+        if (j == total_length) break;
+        i  = j + 1;
+        j += chunk_length;
+        if (j > end) j  = total_length;
+      }
+    return html;
+  },
+
   updateKey: function(el) {
     var $mydata = $('.sequence_key_json',el);
     var mydata = JSON.parse($mydata.html()||false);

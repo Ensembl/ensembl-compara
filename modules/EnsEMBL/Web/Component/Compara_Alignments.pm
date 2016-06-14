@@ -58,6 +58,7 @@ sub content {
                   });
   return $alert_box if $error;
   my ($warnings, $image_link);
+  $image_link = '';
   
   my $html = $alert_box;
   
@@ -147,14 +148,20 @@ sub content {
   }
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
-  #Note that slice_length is not set if need to display a target_slice_eable
+  #Note that slice_length is not set if need to display a target_slice_table
   if ($hub->param('export')) {
     return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
   }
   elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
     $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+
+    my $view_all_button = sprintf qq{<div class="view_full_text_seq"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">View full sequence as text </a></div><br />}, 
+                          $slice_length, 
+                          $self->{'subslice_length'},
+                          $hub->param('display_width');
+    $html .= $view_all_button;
 
   } else {
     my ($table, $padding);
@@ -404,7 +411,8 @@ sub get_slice_table {
   my $hub             = $self->hub;
   my $primary_species = $hub->species;
   
-  my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
+  my $table_rows = '';
+  $_ = 0 for my ($species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
   foreach (@$slices) {
     my $species = $_->{'display_name'} || $_->{'name'};
@@ -416,7 +424,7 @@ sub get_slice_table {
       type    => 'Location',
       action  => 'View'
     );
-    
+
     $url_params{'__clear'} = 1 unless $_->{'name'} eq $primary_species;
 
     $species_padding = length $species if $return_padding && length $species > $species_padding;

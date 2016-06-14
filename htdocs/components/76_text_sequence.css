@@ -24,3 +24,41 @@
 .adornment-key dd { width: 100%; margin: 0 0 0 110px; padding: 0; }
 .adornment-key .ad-loading { background: url("/i/loading-tiny.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0); display: inline-block; height: 20px; line-height: 20px; padding-left: 24px; text-align: center; }
 .adornment-key ul.alignment-key { margin: 1em; padding: 0 0 0 1em; }
+
+.view_full_text_seq a{
+	background: #eaeeff;
+	border: 1px solid #8b9bc1;
+	padding: 4px;
+	text-decoration: none;
+	width: 150px;
+}
+
+.view_full_text_seq a:hover {
+	background: #667aa6;
+	color: white;
+}
+
+.shake_animation {
+  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
