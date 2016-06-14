@@ -50,3 +50,7 @@ we keep the whole taxonomy there
 
 Modules and scripts used to provide a DAS server out of a Compara database. DAS has been retired
 
+* scripts/homology/InsertParaloguesPrediction.pl + comparaDirectLoadHomology.pl + transfer_homologies.pl
+
+They've been used in very old releases to load homology data into a Compara database
+
