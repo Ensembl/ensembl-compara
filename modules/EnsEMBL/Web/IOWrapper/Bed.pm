@@ -191,8 +191,8 @@ sub create_structure {
     $thick_end    = 0;
   }
   else {
-    ## Adjust to make relative to slice (and compensate for BED coords)
-    $thick_start -= ($slice_start - 1);
+    ## Adjust to make relative to slice 
+    $thick_start -= $slice_start;
     $thick_end   -= $slice_start;
   }
 
@@ -201,11 +201,11 @@ sub create_structure {
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
-    ## Adjust to be relative to slice and compensate for BED format
+    ## Adjust to be relative to slice
     my $offset  = $feature_start - $slice_start;
-    $start      = $start + $offset + 1;
+    $start      = $start + $offset;
     my $length  = shift @block_lengths;
-    my $end     = $start + $length - 1;
+    my $end     = $start + $length;
 
     my $block = {'start' => $start, 'end' => $end};
     
