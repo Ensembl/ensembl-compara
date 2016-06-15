@@ -172,7 +172,7 @@
     return "<"+otag+">"+text+"</"+ctag+">";
   }
 
-  function prepare_adorn_span(text,ref,seq,xxx) {
+  function prepare_adorn_span(text,ref,seq) {
     text = fix_letters(text,ref,seq);
     var groups = make_groups(seq,text.length);
     var pos = 0;
@@ -312,7 +312,7 @@
                 fl[k] = [fl_el,$.parseJSON(f).v];
               }
             });
-            return [el,el.text(),data.ref,values,key,fl];
+            return [el,el.text(),data.ref,values,fl];
           } else {
             return undefined;
           }
@@ -320,8 +320,8 @@
       },1000,'a');
     });
     d = loop(d,function(i,task) {
-      var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
-      return [task[0],out,task[5]];
+      var out = prepare_adorn_span(task[1],task[2],task[3]);
+      return [task[0],out,task[4]];
     },1000,'b');
     d = loop(d,function(i,change) {
       change[0].html(change[1]);
