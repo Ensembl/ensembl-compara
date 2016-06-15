@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Exception::RedirectionRequired;
+package EnsEMBL::Web::Exception::Silent;
 
 use strict;
 use warnings;
@@ -24,13 +24,10 @@ use warnings;
 use parent qw(EnsEMBL::Web::Exception);
 
 sub handle {
-  ## Data needed to handle this exception:
-  ##  - url       : URL to redirect to
-  ##  - permanent : Optional flag if on will do a permanent redirect
-  my ($self, $controller) = @_;
+  ## Just print the exception message in the log but don't break the output
+  my $self = shift;
 
-  $controller->r->subprocess_env($self->data->{'permanent'} ? 'ENSEMBL_REDIRECT_PERMANENT' : 'ENSEMBL_REDIRECT_TEMPORARY', $self->data->{'url'});
-  $controller->r->subprocess_env('LOG_REQUEST_IGNORE', 1);
+  $self->SUPER::handle(@_);
 
   return 1;
 }

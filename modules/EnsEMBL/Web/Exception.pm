@@ -64,7 +64,11 @@ sub handle {
   ## Handles the exception in a desired way
   ## Override this in the child class to provide better exception handling
   ## @return Boolean true if exception handled successfully, false otherwise
-  return warn shift->to_string;
+  my $self = shift;
+
+  warn sprintf "%s Exception:\n  %s  %s", $self->{'_type'}, $self->{'_message'} // 'No message', $self->stack_trace;
+
+  return 0;
 }
 
 sub type {

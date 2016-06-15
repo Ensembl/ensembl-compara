@@ -98,11 +98,16 @@ sub handler {
     'query'         => $query
   });
 
+  my $exception;
+
   try {
     $controller->process;
   } catch {
-    $_->handle($controller);
+    $exception = $_ unless $_->handle($controller);
   };
+
+  # TODO - print proper error page
+  print $exception if $exception;
 
   return OK;
 }
