@@ -176,7 +176,7 @@ sub _memoized_insert {
     } else {
         $sql_select = 'SELECT * FROM '.$table;
     }
-    #warn "<< $sql_select  using '$where_value'\n";
+    #warn "<< $sql_select  using '@execute_args'\n";
     my $sth = $from_dbc->prepare($sql_select);
     $sth->execute(@execute_args);
     while (my $h = $sth->fetchrow_hashref()) {
@@ -190,7 +190,7 @@ sub _memoized_insert {
         my @qms  = map {'?'} @cols;
         my @vals = @this_row{@cols};
         my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', @cols), join(',', @qms));
-        #warn ">> $insert_sql using '", join("','", @vals), "'\n";
+        #warn ">> $insert_sql using '", join("','", map {$_//'<NULL>'} @vals), "'\n";
         my $rows = $to_dbc->do($insert_sql, undef, @vals);
         #warn "".($rows ? "true" : "false")." ".($rows == 0 ? "zero" : "non-zero")."\n";
         # no rows affected is translated into '0E0' which is true and ==0 at the same time
