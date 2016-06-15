@@ -16,6 +16,8 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = {
     view => $view,
+    exon => "",
+    pre => "",
   };
   bless $self,$class;
   return $self;
@@ -31,10 +33,25 @@ sub new_line {
 sub view { return $_[0]->{'view'}; }
 sub line_num { return $_[0]->{'line'}; }
 
+# only for use in Line
+sub _exon {
+  my ($self,$val) = @_;
+
+  $self->{'exon'} = $val if @_>1;
+  return $self->{'exon'};
+}
+
 sub _add {
   my ($self,$data) = @_;
 
   $self->{'view'}->_add_line($self->{'view'}->seq_num,$data);
+}
+
+sub pre {
+  my ($self,$val) = @_;
+
+  $self->{'pre'} .= $val if @_>1;
+  return $self->{'pre'};
 }
 
 1;

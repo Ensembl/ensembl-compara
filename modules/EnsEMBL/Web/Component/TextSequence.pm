@@ -32,6 +32,8 @@ use EnsEMBL::Web::TextSequence::View;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
+use EnsEMBL::Web::TextSequence::ClassToStyle qw(create_legend);
+
 sub new {
   my $class = shift;
   my $self  = $class->SUPER::new(@_);
@@ -579,7 +581,7 @@ sub markup_codons {
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
       
       if ($class eq 'cu') {
-        $config->{'key'}{'utr'} = 1;
+        $config->{'key'}{'other'}{'utr'} = 1;
       } else {
         $config->{'key'}{'codons'}{$class} = 1;
       }
@@ -679,7 +681,7 @@ sub markup_conservation {
     }
   }
   
-  $config->{'key'}{'conservation'} = 1 if $conserved;
+  $config->{'key'}{'other'}{'conservation'} = 1 if $conserved;
 }
 
 sub adseq_eq {
@@ -1013,20 +1015,6 @@ sub format_lines {
   return $html;
 }
 
-# Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
-sub convert_class_to_style {
-  my ($self,$current_class) = @_;
-
-  return undef unless @$current_class;
-  my %class_to_style = %{$self->make_class_to_style_map};
-  my %style_hash;
-  foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } @$current_class) {
-    my $st = $class_to_style{$_}[1];
-    map $style_hash{$_} = $st->{$_}, keys %$st;
-  }
-  return join ';', map "$_:$style_hash{$_}", keys %style_hash;
-}
-
 sub add_to_adorn {
   my ($self,$k,$v,$adorn,$adlookup,$adlookid) = @_;
 
@@ -1051,83 +1039,46 @@ sub build_sequence {
   my %flourishes;
 
   my $view = EnsEMBL::Web::TextSequence::View->new(
-    $config->{'display_width'}
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
   );
   foreach my $lines (@$sequence) {
-    my ($i);
-
     my $tseq = $view->new_sequence;
-    my $line = $tseq->new_line;
-    foreach my $seq (@$lines) {
-      my ($previous_exon,$current_exon);
-      $previous_exon = $current_exon;
 
-      my @current_class;
-      if ($seq->{'class'}) {
-        @current_class = split(' ',$seq->{'class'});
-        ($current_exon) = grep { /^e\w$/ } @current_class;
-        if ($config->{'maintain_colour'} && $previous_exon && !$current_exon) {
-          push @current_class,$1;
-        }
-      } elsif($seq->{'tag'}) {
-        @current_class = split(' ',$seq->{'class'});
-        ($current_exon) = grep { /^e\w$/ } @current_class;
-      } elsif ($config->{'maintain_colour'} && $previous_exon) {
-        @current_class = ($1);
-        ($current_exon) = grep { /^e\w$/ } @current_class;
+    # Species names at start of line
+    if ($config->{'comparison'}) {
+      if (scalar keys %{$config->{'padded_species'}}) {
+        $tseq->pre($config->{'padded_species'}{$config->{'seq_order'}[$view->seq_num]} || $config->{'display_species'});
+      } else {
+        $tseq->pre($config->{'display_species'});
       }
-     
-      @current_class = grep { /\S/ } @current_class;
+      $tseq->pre('  '); 
+    }
 
+    my $line;
+    foreach my $seq (@$lines) {
+      $line = $tseq->new_line if !$line;
       $line->add_post($seq->{'post'});
- 
-      my $style = $self->convert_class_to_style(\@current_class);
-
-      $line->adorn('style',$style);
+      $line->add_letter($seq->{'letter'}); 
+      $line->adorn_classes($seq->{'class'},!$seq->{'tag'},$config);
       $line->adorn('title',$seq->{'title'}||'');
       $line->adorn('href',$seq->{'href'}||'');
       $line->adorn('tag',$seq->{'tag'});
       $line->adorn('letter',$seq->{'new_letter'}||'');
 
-      $line->add_letter($seq->{'letter'}); 
-      
-      $i++;
-      
-      if ($line->full || $i == scalar @$lines) {
-        if ($config->{'comparison'}) {
-          if (scalar keys %{$config->{'padded_species'}}) {
-            $line->add_pre($config->{'padded_species'}{$config->{'seq_order'}[$view->seq_num]} || $config->{'display_species'});
-          } else {
-            $line->add_pre($config->{'display_species'});
-          }
-          $line->add_pre('  '); 
-        }
-        
+      if ($line->full) {
         $line->add;
-        
-        if($line->post) {
-          ($flourishes{'post'}||={})->{$view->line_num} = $self->jsonify({ v => $line->post });
-        }
-        
-        $line = $tseq->new_line;
+        $line = undef;
       }
     }
+    $line->add if $line;
   }
 
   my ($adseq,$adref) = $self->adorn_convert($view->adlookup,$view->addata);
   $adseq = $self->adorn_compress($adseq,$adref);
 
   my $key = $self->get_key($config,undef,1);
-
-  # Put things not in a type into a 'other' type
-  $key->{'other'} ||= {};
-  foreach my $k (keys %$key) {
-    next if $k eq '_messages';
-    if($key->{$k}{'class'}) {
-      $key->{'other'}{$k} = $key->{$k};
-      delete $key->{$k};
-    }
-  }
 
   if($adorn eq 'only') {
     $key->{$_}||={} for @{$config->{'loading'}||[]};
@@ -1137,7 +1088,7 @@ sub build_sequence {
   my $adornment = {
     seq => $adseq,
     ref => $adref,
-    flourishes => \%flourishes,
+    flourishes => $view->flourishes,
     legend => $key,
     loading => $config->{'loading'}||[],
   };
@@ -1230,191 +1181,35 @@ sub chunked_content {
   return $html;
 }
 
-sub make_class_to_style_map {
-  my $self = shift;
-  
-  if (!$self->{'class_to_style'}) {
-    my $hub          = $self->hub;
-    my $colourmap    = $hub->colourmap;
-    my $species_defs = $hub->species_defs;
-    my $styles       = $species_defs->colour('sequence_markup');
-    my $var_styles   = $species_defs->colour('variation');
-    my $i            = 1;
-   
-    my %class_to_style = (
-      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
-      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
-      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}{'default'}" } ],
-      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}" } ],
-      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}{'default'}" } ],
-      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}{'default'}" } ],
-      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}{'default'}" } ],
-      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}{'default'}" } ],
-      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}{'default'}" } ],
-      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}{'default'}", 'font-weight' => 'bold' } ],
-      ei   => [ $i++, { 'color' => "#$styles->{'SEQ_INTRON'}{'default'}" } ],
-      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}{'default'}" } ],
-      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}{'default'}" } ],
-      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}{'default'}" } ],
-      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
-      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
-      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ],
-      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
-    );
-
-    foreach (keys %$var_styles) {
-      my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
-      
-      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'label'}) if $var_styles->{$_}{'label'};
-      
-      $class_to_style{$_} = [ $i++, $style ];
-    }
-    
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}{'default'}", 'background-color' => '#FFFFFF', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
-    
-    $self->{'class_to_style'} = \%class_to_style;
-  }
-  
-  return $self->{'class_to_style'};
-}
-
-my $cm = EnsEMBL::Draw::Utils::ColourMap->new();
-
-sub col_to_hex {
-  my ($col) = @_;
-
-  return undef unless $col;
-  return $cm->hex_by_name($col);
-}
-
-sub content_key {
-  my $self   = shift;
-  my $config = shift || {};
-  my $hub    = $self->hub;
-  
-  $config->{'site_type'} = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  
-  for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency consequence_filter)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
-  }
-  
-  $config->{'key'}{$_} = $hub->param($_) for @{$self->{'key_types'}};
-  
-  for my $p (grep $hub->param($_), qw(exons variants)) {
-    $config->{'key'}{$p}{$_} = 1 for $hub->param($p);
-  }
-
-  return $self->get_key($config);
-}
-
 sub get_key {
   my ($self, $config, $k,$newkey) = @_;
   my $hub            = $self->hub;
-  my $class_to_style = $self->make_class_to_style_map;
-  my $image_config   = $hub->get_imageconfig('text_seq_legend');
-  my $var_styles     = $hub->species_defs->colour('variation');
-  my $strain         = $hub->species_defs->translate('strain') || 'strain';
  
   my $exon_type;
-     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
-     $exon_type = ucfirst $exon_type;
+  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+  $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
+  $exon_type = ucfirst $exon_type;
   
-  my %key = (
-    utr          => { class => 'cu',  text => 'UTR'                          },
-    conservation => { class => 'con', text => 'Conserved regions'            },
-    difference   => { class => 'dif', text => 'Differs from primary species' },
-    align_change => { class => 'end', text => 'Start/end of aligned region'  },
-    codons       => {
-      co => { class => 'co', text => 'START/STOP codons'  },
-      c0 => { class => 'c0', text => 'Alternating codons' },
-      c1 => { class => 'c1', text => 'Alternating codons' },
-    },
-    exons       => {
-      exon0   => { class => 'e0', text => 'Alternating exons'                                  },
-      exon1   => { class => 'e1', text => 'Alternating exons'                                  },
-      exon2   => { class => 'e2', text => 'Residue overlap splice site'                        },
-      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
-      other   => { class => 'eo', text => "$exon_type exons"                                   },
-      compara => { class => 'e2', text => "$exon_type exons"                                   }
-    }
-  );
- 
-  if ($config->{'exons_case'}) {
-    $key{'exons'}->{'exon0'}{'text'} = 'ALTERNATING EXONS';
-    $key{'exons'}->{'exon1'} = {'text' => 'alternating exons',
-                                'class' => 'el'};
-  }
-   
-  %key = (%key, %$k) if $k;
- 
- 
-  foreach my $type (keys %key) {
-    if ($key{$type}{'class'}) {
-      my $style = $class_to_style->{$key{$type}{'class'}}[1];
-      $key{$type}{'default'} = $style->{'background-color'};
-      $key{$type}{'label'}   = $style->{'color'};
-    } else {
-      foreach (values %{$key{$type}}) {
-        my $style = $class_to_style->{$_->{'class'}}[1];
-        
-        $_->{'default'} = $style->{'background-color'};
-        $_->{'label'}   = $style->{'color'};
-      }
-    }
-  }
-  
-  $key{'variants'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  $key{'variants'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
-
   my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
 
-  if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'variants'}{'focus'} = {
-      class     => 'focus',
-      label     => 'red',
-      default   => 'white',
-      text      => 'Focus variant',
-      title     => "The Focus variant corresponds to the current variant$example",
-      extra_css => 'text-decoration: underline; font-weight: bold;',
-    };
-  }
- 
-  foreach my $type (keys %key) {
-    my @each = ($key{$type});
-    @each = values %{$key{$type}} unless($key{$type}->{'class'});
-    foreach my $v (@each) {
-      foreach my $t (qw(default label)) {
-        next unless $v->{$t};
-        $v->{$t} = col_to_hex($v->{$t});
+  my $key = create_legend($hub,{ %$config, exon_type => $exon_type, example => $example },$k);
+
+  my @messages;
+  my %out;
+  foreach my $type (keys %$key) {
+    foreach my $m (keys %{$key->{$type}}) {
+      my $k = $key->{$type}{$m}{'config'};
+      next unless $config->{'key'}{$type}{$k} or $config->{$k};
+      if($key->{$type}{$m}{'text'}) {
+        $out{$type}->{$m} = $key->{$type}{$m};
+      }
+      if($key->{$type}{$m}{'messages'}) {
+        push @messages,@{$key->{$type}{$m}{'messages'}};
       }
     }
   }
-
-  foreach my $type (keys %{$config->{'key'}}) {
-    if (ref $config->{'key'}{$type} eq 'HASH') {
-      $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
-    } elsif ($config->{'key'}{$type}) {
-      $image_config->{'legend'}{$type} = $key{$type};
-    }
-  }
-
-  my @messages;
-
-  push @messages,"Displaying variants for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
-  push @messages,'Variants are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
-  push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                            if $config->{'key'}{'conservation'};
-  push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'  if $config->{'alignment_numbering'};
-  push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",
-               "<code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)"         if $config->{'match_display'};
-  push @messages,'<code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position'                                              if $config->{'resequencing'};
-     '<code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)',
-               '<code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)'                                           if $config->{'resequencing'} && !$config->{'match_display'};
-
-  $image_config->{'legend'}{'_messages'}= \@messages;
-
-  return $image_config->{'legend'};
+  $out{'_messages'} = \@messages;
+  return \%out;
 }
 
 1;

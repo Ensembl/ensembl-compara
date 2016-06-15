@@ -614,7 +614,7 @@ sub markup_region_change {
     $i++;
   }
   
-  $config->{'key'}->{'align_change'} = 1 if $change;
+  $config->{'key'}->{'other'}{'align_change'} = 1 if $change;
 }
 
 

@@ -84,7 +84,7 @@ sub markup_conservation {
     }
   }
   
-  $config->{'key'}->{'difference'} = 1 if $difference;
+  $config->{'key'}->{'other'}{'difference'} = 1 if $difference;
 }
 
 sub content {  

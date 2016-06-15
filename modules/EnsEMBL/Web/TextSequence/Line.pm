@@ -3,6 +3,8 @@ package EnsEMBL::Web::TextSequence::Line;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::TextSequence::ClassToStyle qw(convert_class_to_style);
+
 # Represents a single line of text sequence
 
 sub new {
@@ -15,6 +17,7 @@ sub new {
     post => "",
     count => 0,
     line_num => $seq->view->_new_line_num,
+    hub => $seq->view->_hub,
     seq => $seq,
   };
   bless $self,$class;
@@ -34,7 +37,26 @@ sub full { $_[0]->{'count'} >= $_[0]->{'seq'}->view->width }
 sub adorn {
   my ($self,$k,$v) = @_;
 
-  $self->{'seq'}->view->_adorn($self->{'line_num'},$self->{'count'},$k,$v);
+  $self->{'seq'}->view->_adorn($self->{'line_num'},$self->{'count'}-1,$k,$v);
+}
+
+sub adorn_classes {
+  my ($self,$classes,$maintain,$config) = @_;
+
+  my @classes = split(' ',$classes||'');
+
+  # Find any exon classes, as exon classes must often be maintained across
+  # entries ...
+  my ($new_exon) = grep { /^e\w$/ } @classes;
+  if($new_exon) {
+    $self->{'seq'}->_exon($new_exon);    # ... set
+  } elsif($maintain and $self->{'seq'}->view->_maintain_colour) {
+    push @classes,$self->{'seq'}->_exon; # ... get
+  }
+
+  # Convert from class to style
+  my $style = convert_class_to_style($self->{'hub'},\@classes,$config);
+  $self->adorn('style',$style);
 }
 
 sub add {
@@ -43,10 +65,15 @@ sub add {
   $self->{'seq'}->_add({
     line => $self->{'letters'},
     length => $self->{'count'},
-    pre => $self->{'pre'},
+    pre => $self->{'seq'}->pre.$self->{'pre'},
     post => $self->{'post'},
     adid => $self->{'line_num'}
   });
+  # "post" can be updated by later adornment
+  if($self->{'post'}) {
+    $self->{'seq'}->view->
+      _flourish('post',$self->{'line_num'},$self->{'post'});
+  }
 }
 
 1;
