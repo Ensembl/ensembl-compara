@@ -2831,7 +2831,7 @@ sub add_regulation_builds {
   }
   @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
  
-  my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
+  my (@renderers, %matrix_menus, %matrix_rows);
 
   # FIXME: put this in db
   my %default_evidence_types = (
@@ -2895,7 +2895,7 @@ sub add_regulation_builds {
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
-    $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+    $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
       db          => $key,
       glyphset    => 'fg_segmentation_features',
       sources     => 'undef',
@@ -2924,7 +2924,7 @@ sub add_regulation_builds {
       $label = ": $cell_line";
     }
     
-    $prev_track = $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
+    $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -2940,9 +2940,9 @@ sub add_regulation_builds {
       caption     => "Regulatory Features",
     }));
 
-    # Old database-based segementation tracks
+    # Old database-based segmentation tracks
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
+      $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
         glyphset    => 'fg_segmentation_features',
         sources     => 'undef',
@@ -2980,7 +2980,7 @@ sub add_regulation_builds {
     
     next if $params->{'reg_minimal'};
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $prev_track = $self->add_matrix({
+      $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section => $cell_line,
         matrix      => {
