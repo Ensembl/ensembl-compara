@@ -21,15 +21,6 @@ package EnsEMBL::Web::Object::Regulation;
 ### NAME: EnsEMBL::Web::Object::Regulation
 ### Wrapper around a Bio::EnsEMBL::Funcgen::RegulatoryFeature object
 
-### PLUGGABLE: Yes, using Proxy::Object
-
-### STATUS: At Risk
-### Contains a lot of functionality not directly related to
-### manipulation of the underlying API object
-
-### DESCRIPTION
-
-
 use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -275,11 +266,9 @@ sub get_bound_context_slice {
   my $bound_start = $self->bound_start;
   my $bound_end = $self->bound_end;
   my $reg_feature_adaptor = $self->get_fg_db->get_RegulatoryFeatureAdaptor;
-  my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($self->stable_id);
-  foreach my $rf (@$reg_objs) {
-    if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; }
-    if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
-  }
+  my $rf                  = $reg_feature_adaptor->fetch_by_stable_id($self->stable_id);
+  if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; }
+  if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
 
   my $offset_start   = $bound_start -$padding;
   my $offset_end     = $bound_end + $padding;
