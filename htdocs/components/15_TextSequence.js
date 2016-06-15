@@ -45,10 +45,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     })
     .hover(function() {
-      $(this).parent().prev('div.info').find('div.view_full_text_seq').addClass('shake_animation');
+      $(this).parent().prev('div.info').find('div.view_full_text_seq a').addClass('button_animation');
     },
     function() {
-      $(this).parent().prev('div.info').find('div.view_full_text_seq').removeClass('shake_animation');
+      $(this).parent().prev('div.info').find('div.view_full_text_seq a').removeClass('button_animation');
     });
 
     $('div.view_full_text_seq a').on('click', function(e) {
