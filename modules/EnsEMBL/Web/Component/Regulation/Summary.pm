@@ -60,24 +60,34 @@ sub content {
                                         $object->bound_end);
 
   my %active;
-#my $all_objs = $object->fetch_all_objs;
   my $reg_feat = $object->fetch_by_stable_id;
-#  foreach my $reg_object (sort { $a->feature_set->epigenome->name cmp $b->feature_set->epigenome->name } @$all_objs ) {
-#    $active{$reg_object->feature_set->epigenome->display_label} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence == 1;
-#  }
-#my $num_active = scalar(grep { $_->feature_set->epigenome->name !~ /MultiCell/ } @$all_objs);
-my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
-foreach my $ag (@{$active_epigenomes}) {
-  $active{$ag->display_label} = 1;
-}
-my $num_active = scalar( @{$active_epigenomes});
+  my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
 
+  foreach my $ag (@{$active_epigenomes}) {
+    $active{$ag->display_label} = 1;
+  }
+  my $num_active = scalar( @{$active_epigenomes});
+
+  my $show        = $self->hub->get_cookie_value('toggle_epigenomes_list') eq 'open';
   my @class = ($object->feature_type->name);
+
+  my $epigenome_count = scalar keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}; 
 
   $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-  $summary->add_row('Active in',$reg_feat->epigenome_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  $summary->add_row('Active in', sprintf('<p>%s/%s epigenomes - <a title="Click to show list of epigenomes" rel="epigenomes_list" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p>
+                                          <div class="epigenomes_list twocol-cell">
+                                            <div class="toggleable" style="font-weight:normal;%s">
+                                              <ul>%s</ul>
+                                            </div>
+                                          </div>',
+                                          $num_active, $epigenome_count, 
+                                          $show ? 'open' : 'closed',
+                                          $show ? 'Hide' : 'Show',
+                                          $show ? '' : 'display:none',
+                                          join('', map "<li>$_</li>", sort {lc($a) cmp lc($b)} keys %active)
+                                          ));
 
   my $nav_buttons = $self->nav_buttons;
   return $nav_buttons.$summary->render;
