@@ -344,7 +344,7 @@ sub get_evidence_data {
   return { data => \%data, cells => [ keys %cells ] };
 }
 
-sub all_cell_types {
+sub all_epigenomes {
   my ($self) = @_;
   return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
 }

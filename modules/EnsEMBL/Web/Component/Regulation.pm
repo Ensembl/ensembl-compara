@@ -172,10 +172,10 @@ sub nav_buttons {
 sub cell_line_button {
   my ($self,$image_config) = @_;
 
-  my ($shown_cells,$partials) = $self->shown_cells($image_config);
-  my $cell_m = scalar @$shown_cells;
-  my $object = $self->object || $self->hub->core_object('regulation');
-  my $cell_n = scalar @{$object->all_cell_types};
+  my ($shown_cells, $partials) = $self->shown_cells($image_config);
+  my $shown_count = scalar @$shown_cells;
+  my $object      = $self->object || $self->hub->core_object('regulation');
+  my $total_count = scalar @{$object->all_epigenomes};
 
   my $url = $self->hub->url('Component', {
     action   => 'Web',
@@ -183,9 +183,9 @@ sub cell_line_button {
     image_config => $image_config,
   });
 
-  my $cell_p = scalar(@$partials);
-  my $count = "showing ".($cell_m-$cell_p)."/$cell_n";
-  $count .= " and $cell_p partially" if $cell_p;
+  my $partial_count = scalar(@$partials);
+  my $count = "showing ".($shown_count - $partial_count)."/$total_count";
+  $count   .= " and $partial_count partially" if $partial_count;
 
   push @{$self->{'buttons'}||=[]},{
     url => $url,
