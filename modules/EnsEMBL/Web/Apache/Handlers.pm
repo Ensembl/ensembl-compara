@@ -40,6 +40,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::Cookie;
 
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
@@ -303,6 +304,26 @@ sub handler {
   my $r   = shift;
   my $uri = $r->unparsed_uri;
 
+  # dev uri to clear all the cookies
+  if ($uri eq '/reset') {
+    for (EnsEMBL::Web::Cookie->new_from_header($r)) {
+
+      # clear the cookie for current domain
+      $_->clear;
+
+      my $domains = {
+        $SiteDefs::ENSEMBL_USER_COOKIE    => $SiteDefs::ENSEMBL_USER_COOKIEHOST,
+        $SiteDefs::ENSEMBL_SESSION_COOKIE => $SiteDefs::ENSEMBL_SESSION_COOKIEHOST,
+      };
+
+      $_->domain($domains->{$_->name} || '');
+
+      # clear the same cookie for any sub domain or main domain if provided explicitly
+      $_->clear if $_->domain;
+    }
+    return http_redirect($r, '/');
+  }
+
   # handle any redirects
   if (my $redirect = get_redirect_uri($uri)) {
     return http_redirect($r, $redirect, 1);
@@ -420,7 +441,6 @@ sub childExitHandler {
 
 #### Temporarily adding them here - will be moved to plugins later
 
-use EnsEMBL::Web::Cookie;
 
 sub redirect_to_mobile {}
 
