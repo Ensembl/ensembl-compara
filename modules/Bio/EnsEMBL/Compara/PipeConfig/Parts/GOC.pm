@@ -64,7 +64,7 @@ sub pipeline_analyses_goc {
                 2   =>  ['check_ortholog_neighbors'],
             },
             -rc_name => '2Gb_job',
-            -analysis_capacity  => 25,
+            -hive_capacity  => 300,
             
         },
 
@@ -75,7 +75,8 @@ sub pipeline_analyses_goc {
             -flow_into  => {
                2 => [ ':////ortholog_goc_metric' ],
             },
-            -analysis_capacity  => 50,
+            -hive_capacity  => 50,
+            -batch_size     => 50,
             
 
         },
@@ -88,6 +89,7 @@ sub pipeline_analyses_goc {
                     ELSE ['get_genetic_distance' ] ),
             },
             -rc_name => '16Gb_job',
+            -hive_capacity  => 50,
         },
 
         {
@@ -96,6 +98,7 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['threshold_calculator'],
                 },
+            -hive_capacity  => 50,
         },
 
         {
@@ -104,6 +107,7 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['get_perc_above_threshold'],
                 },
+            -hive_capacity  => 50,
         },
 
         {
@@ -112,12 +116,13 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['store_goc_dist_asTags'],
                 },
+            -hive_capacity  => 50,
         },
 
         {
             -logic_name => 'store_goc_dist_asTags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
-
+            -analysis_capacity  => 5,
         },
 
         
