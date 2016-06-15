@@ -45,10 +45,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     })
     .hover(function() {
-      $(this).parent().siblings('div.view_full_text_seq').addClass('shake_animation');
+      $(this).parent().prev('div.info').find('div.view_full_text_seq').addClass('shake_animation');
     },
     function() {
-      $(this).parent().siblings('div.view_full_text_seq').removeClass('shake_animation');
+      $(this).parent().prev('div.info').find('div.view_full_text_seq').removeClass('shake_animation');
     });
 
     $('div.view_full_text_seq a').on('click', function(e) {
@@ -58,7 +58,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       // Remove initially loaded block of sequence
       $(panel.el).children(':first').remove();
       // Remove this button/link after click
-      $(this).remove();
+      $(this).closest('div.info').remove();
       $(panel.el).append(ajax_html);
       // This will initialize this panel and load content via ajax
       panel.init();

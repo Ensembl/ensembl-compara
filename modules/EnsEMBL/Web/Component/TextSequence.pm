@@ -1231,7 +1231,6 @@ sub chunked_content {
 
   if (!$hub->param('display_full_sequence')) {
     $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
-    warn $html;
   }
   else {
     # The display is split into a managable number of sub slices, which will be processed in parallel by requests

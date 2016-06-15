@@ -155,13 +155,26 @@ sub content {
   elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
-    $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $image_link . $table;
 
-    my $view_all_button = sprintf qq{<div class="view_full_text_seq"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">View full sequence as text </a></div><br />}, 
+    # Show message saying you are only display a small block from the whole alignment
+    my $view_all_button = sprintf qq{<div class="view_full_text_seq"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
                           $slice_length, 
                           $self->{'subslice_length'},
                           $hub->param('display_width');
-    $html .= $view_all_button;
+
+    my $info = [{
+      severity => 'info',
+      title => 'Alignment',
+      message => 'Currently showing alignment for first '. $hub->param('display_width') .' bp. To display full alignment, please click the button below.' . $view_all_button
+    }];
+
+    ($alert_box, $error) = $self->show_warnings($info);
+    return $alert_box if $error;
+
+    $html .= $alert_box;
+
+    $html .= $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length })
 
   } else {
     my ($table, $padding);
@@ -176,9 +189,7 @@ sub content {
       $html .= $image_link . $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
-  
-  $html .= $self->show_warnings($warnings);
- 
+
   return $html;
 
 }
