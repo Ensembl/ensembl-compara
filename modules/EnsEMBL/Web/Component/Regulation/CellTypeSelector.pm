@@ -49,7 +49,7 @@ sub content_ajax {
 
   my $fg = $hub->database('funcgen');
   my $fgcta = $fg->get_EpigenomeAdaptor();
-  my %all_cells = map { my $k = $_; EnsEMBL::Web::Tree->clean_id($k) => $_ } @{$object->all_cell_types};
+  my %all_cells = map { my $k = $_; EnsEMBL::Web::Tree->clean_id($k) => $_ } @{$object->all_epigenomes};
 
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;
