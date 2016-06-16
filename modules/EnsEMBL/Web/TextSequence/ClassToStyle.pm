@@ -148,6 +148,9 @@ sub create_legend {
       my $section = _value($m->{'section'},$config);
       next unless $section;
       my $out = ($legend{$section}||={});
+      my $dest = ($out->{$m->{'name'}} ||= { config => $m->{'name'} });
+
+      # Text comes from explicit config key or source
       my $source;
       $source = $sources{$m->{'source'}} if $m->{'source'};
       my $source_key = ($m->{'key'}||$m->{'name'});
@@ -156,24 +159,27 @@ sub create_legend {
         $text = $source->{$source_key}{'text'};
       }
       $text = _value($text,$config);
-      my $class = _value($m->{'class'}||$m->{'name'},$config);
-      my $dest = ($out->{$m->{'name'}} ||= { config => $m->{'name'} });
       $dest->{'text'} = $text if defined $text;
+
+      # Class comes from explicit class key or name
+      my $class = _value($m->{'class'}||$m->{'name'},$config);
       $dest->{'class'} = $class if defined $class;
+
+      # Title, config and legend-css come from associated keys, if present
+      $dest->{'title'} = _value($m->{'title'},$config) if $m->{'title'};
       $dest->{'config'} = $m->{'config'} if $m->{'config'};
+      if($m->{'legend-css'}) {
+        $dest->{'extra_css'} =
+          join(' ', map { "$_: $m->{'legend-css'}{$_};" }
+                      keys %{$m->{'legend-css'}});
+      }
+
+      # Message comes from messages key, but as an array
       if($m->{'message'}) {
         $dest->{'messages'} ||= [];
         my $messages = [_value($m->{'message'},$config)];
         $messages = $messages->[0] if ref($messages->[0]) eq 'ARRAY';
         push @{$dest->{'messages'}},@$messages;
-      }
-      if($m->{'title'}) {
-        $dest->{'title'} = _value($m->{'title'},$config);
-      }
-      if($m->{'legend-css'}) {
-        $dest->{'extra_css'} =
-          join(' ', map { "$_: $m->{'legend-css'}{$_};" }
-                      keys %{$m->{'legend-css'}});
       }
     }
   }

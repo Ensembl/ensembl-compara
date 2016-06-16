@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::TextSequence::View::GeneSeq;
+
 sub _init { $_[0]->SUPER::_init(500); }
 
 sub get_object {
@@ -65,6 +67,8 @@ sub initialize {
   }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'} ne 'off';
   
+  my $view = $self->view($config);
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   return ($sequence, $config);
 }
 
@@ -145,23 +149,14 @@ sub initialize_export {
   return $self->initialize($gene->slice);
 }
 
-sub get_key {
-  my ($self, $config,$k,$new) = @_;
-  
-  my $exon_type;
-     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
-     $exon_type = ucfirst $exon_type;
-  
-  my $key = {
-    exons => {
-      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
-      other   => { class => 'eo', text => "$exon_type exons in this region" },
-      compara => { class => 'e2', text => "$exon_type exons in this region" }
-    }
-  };
-  
-  return $self->SUPER::get_key($config, $key,$new);
+sub make_view {
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::GeneSeq->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
 }
 
 1;

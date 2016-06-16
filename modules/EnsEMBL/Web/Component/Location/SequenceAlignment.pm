@@ -108,6 +108,8 @@ sub content {
     }
   }
   
+  my $view = $self->view($config);
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   return $html;
 }
 

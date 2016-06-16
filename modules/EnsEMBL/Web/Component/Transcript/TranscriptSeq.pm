@@ -147,15 +147,22 @@ sub initialize {
   $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
   if ($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
-    push @{$config->{'loaded'}||=[]},'variants';
-  } else {
-    push @{$config->{'loading'}||=[]},'variants';
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  }
+  if($config->{'snp_display'} and $config->{'snp_display'} ne 'off') {
+    if($adorn ne 'none') {
+      push @{$config->{'loaded'}||=[]},'variants';
+    } else {
+      push @{$config->{'loading'}||=[]},'variants';
+    }
   }
   $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   
+  my $view = $self->view($config);
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
+
   return ($sequence, $config);
 }
 

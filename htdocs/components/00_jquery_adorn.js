@@ -221,6 +221,11 @@
     if(!any) {  
       data['Basic Annotation'] = -1;
     }
+    // Remove old "loading" data
+    $.each(data,function(dn,dv) {
+      if(dv==-1) { delete data[dn]; }
+    });
+    // Add new "loading" data
     $.each(loading,function(i,load) {
       if(!data[load]) { data[load] = -1; }
     });
@@ -281,7 +286,7 @@
     if(!data) {
       data = $.parseJSON($('.adornment-data',outer).text());
     }
-    add_legend($outer,null,data.loading||data.provisional.loading);
+    add_legend($outer,null,data.expect||data.provisional.expect);
     var d;
     if(data.url) {
       d = $.Deferred().resolve(data.provisional);
@@ -333,7 +338,7 @@
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
       add_legend($outer,data.legend||data.provisional.legend,
-                        data.loading||data.provisional.loading);
+                        data.expect||data.provisional.expect);
     });
     if(data.url) {
       d = d.then(function() {

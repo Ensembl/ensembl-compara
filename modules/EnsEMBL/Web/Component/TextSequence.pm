@@ -32,8 +32,6 @@ use EnsEMBL::Web::TextSequence::View;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
-use EnsEMBL::Web::TextSequence::ClassToStyle qw(create_legend);
-
 sub new {
   my $class = shift;
   my $self  = $class->SUPER::new(@_);
@@ -1029,6 +1027,22 @@ sub add_to_adorn {
   $adorn->{$k} = $id;
 }
 
+sub make_view { # For IoC: override me if you want to
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
+}
+
+sub view {
+  my ($self,$config) = @_;
+
+  return ($self->{'view'} ||= $self->make_view($config));
+}
+
 sub build_sequence {
   my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
@@ -1038,11 +1052,10 @@ sub build_sequence {
  
   my %flourishes;
 
-  my $view = EnsEMBL::Web::TextSequence::View->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
-  );
+  my $view = $self->view($config);
+
+  $view->legend->final if $adorn ne 'none';
+
   foreach my $lines (@$sequence) {
     my $tseq = $view->new_sequence;
 
@@ -1075,22 +1088,17 @@ sub build_sequence {
     $line->add if $line;
   }
 
-  my ($adseq,$adref) = $self->adorn_convert($view->adlookup,$view->addata);
+  my ($adseq,$adref) = $self->adorn_convert($view->adorn->adlookup,$view->adorn->addata);
   $adseq = $self->adorn_compress($adseq,$adref);
 
-  my $key = $self->get_key($config,undef,1);
-
-  if($adorn eq 'only') {
-    $key->{$_}||={} for @{$config->{'loading'}||[]};
-  }
-  $key->{$_}||={} for @{$config->{'loaded'}||[]};
+  $view->legend->compute_legend($self->hub,$config);
 
   my $adornment = {
     seq => $adseq,
     ref => $adref,
-    flourishes => $view->flourishes,
-    legend => $key,
-    loading => $config->{'loading'}||[],
+    flourishes => $view->adorn->flourishes,
+    legend => $view->legend->legend,
+    expect => $view->legend->expect,
   };
   my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
   my $html = $self->format_lines($config,$view->output,$line_numbers);
@@ -1179,37 +1187,6 @@ sub chunked_content {
   }
 
   return $html;
-}
-
-sub get_key {
-  my ($self, $config, $k,$newkey) = @_;
-  my $hub            = $self->hub;
- 
-  my $exon_type;
-  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-  $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
-  $exon_type = ucfirst $exon_type;
-  
-  my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
-
-  my $key = create_legend($hub,{ %$config, exon_type => $exon_type, example => $example },$k);
-
-  my @messages;
-  my %out;
-  foreach my $type (keys %$key) {
-    foreach my $m (keys %{$key->{$type}}) {
-      my $k = $key->{$type}{$m}{'config'};
-      next unless $config->{'key'}{$type}{$k} or $config->{$k};
-      if($key->{$type}{$m}{'text'}) {
-        $out{$type}->{$m} = $key->{$type}{$m};
-      }
-      if($key->{$type}{$m}{'messages'}) {
-        push @messages,@{$key->{$type}{$m}{'messages'}};
-      }
-    }
-  }
-  $out{'_messages'} = \@messages;
-  return \%out;
 }
 
 1;

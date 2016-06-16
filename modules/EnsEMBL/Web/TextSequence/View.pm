@@ -6,6 +6,8 @@ use warnings;
 use JSON qw(encode_json);
 
 use EnsEMBL::Web::TextSequence::Sequence;
+use EnsEMBL::Web::TextSequence::Adorn;
+use EnsEMBL::Web::TextSequence::Legend;
 
 # A view is comprised of one or more interleaved sequences.
 
@@ -19,14 +21,23 @@ sub new {
     all_line => 0,
     width => $width,
     output => [],
-    addata => {},
-    adlookup => {},
-    adlookid => {},
-    flourishes => {},
+    adorn => EnsEMBL::Web::TextSequence::Adorn->new(),
+    legend => undef,
     maintain_colour => $maintain,
   };
   bless $self,$class;
   return $self;
+}
+
+sub make_legend { # For IoC: override me if you want to
+  return EnsEMBL::Web::TextSequence::Legend->new();
+}
+
+sub legend {
+  my ($self) = @_;
+
+  $self->{'legend'} ||= $self->make_legend;
+  return $self->{'legend'};
 }
 
 sub new_sequence {
@@ -44,33 +55,9 @@ sub _maintain_colour { return $_[0]->{'maintain_colour'}; }
 
 sub line_num { return $_[0]->{'all_line'}; }
 sub seq_num { return $_[0]->{'seq_num'}; }
-sub addata { return $_[0]->{'addata'}; }
-sub adlookup { return $_[0]->{'adlookup'}; }
 sub width { return $_[0]->{'width'}; }
 sub output { return $_[0]->{'output'}; }
-sub flourishes { return $_[0]->{'flourishes'}; }
-
-# Only to be called from Line
-sub _adorn {
-  my ($self,$line,$char,$k,$v) = @_;
-
-  $self->{'addata'}{$line}[$char]||={};
-  return unless $v;
-  $self->{'adlookup'}{$k} ||= {};
-  $self->{'adlookid'}{$k} ||= 1;
-  my $id = $self->{'adlookup'}{$k}{$v};
-  unless(defined $id) {
-    $id = $self->{'adlookid'}{$k}++;
-    $self->{'adlookup'}{$k}{$v} = $id;
-  }
-  $self->{'addata'}{$line}[$char]{$k} = $id;
-}
-sub _flourish {
-  my ($self,$type,$line,$value) = @_;
-
-  ($self->{'flourishes'}{$type}||={})->{$line} =
-    encode_json({ v => $value });
-}
+sub adorn { return $_[0]->{'adorn'}; }
 
 # Only to be called from sequence
 sub _add_line {

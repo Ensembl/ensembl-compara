@@ -37,7 +37,7 @@ sub full { $_[0]->{'count'} >= $_[0]->{'seq'}->view->width }
 sub adorn {
   my ($self,$k,$v) = @_;
 
-  $self->{'seq'}->view->_adorn($self->{'line_num'},$self->{'count'}-1,$k,$v);
+  $self->{'seq'}->view->adorn->adorn($self->{'line_num'},$self->{'count'}-1,$k,$v);
 }
 
 sub adorn_classes {
@@ -71,8 +71,8 @@ sub add {
   });
   # "post" can be updated by later adornment
   if($self->{'post'}) {
-    $self->{'seq'}->view->
-      _flourish('post',$self->{'line_num'},$self->{'post'});
+    $self->{'seq'}->view->adorn->
+      flourish('post',$self->{'line_num'},$self->{'post'});
   }
 }
 
