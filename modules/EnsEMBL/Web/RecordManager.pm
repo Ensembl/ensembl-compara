@@ -75,12 +75,13 @@ sub records {
 
   # create a callback
   my $filter_callback = sub {
-    my ($record, $column_filter, $is_column) = @_;
+    my $record = $_;
+    my ($column_filter, $is_column) = @_;
     for (keys %$column_filter) {
       return unless $column_filter->{$_} eq ($is_column->{$_} ? $record->$_ : $record->data->{$_}); # skip record for any mismatch
     }
     return 1;
-  }
+  };
 
   $filter = { 'type' => $filter } unless ref $filter; # if filter is a string, it's type of the record
 
@@ -102,15 +103,11 @@ sub get_record_data {
   ## @return Hashref (possibly empty)
   my $self    = shift;
   my $record  = $self->record(@_);
-  my $data    = {};
 
-  if ($record->count) {
-    $data = $record->data->raw;
+  return unless $record->count;
 
-    for (@{$self->_record_column_names}) {
-      $data->{$_} = $record->$_;
-    }
-  }
+  my $data = $record->data->raw;
+  $data->{$_} = $record->$_ for @{$self->_record_column_names};
 
   return $data;
 }
@@ -153,6 +150,21 @@ sub set_record_data {
   $record->$_($row->{$_}) for keys %$row;
 
   return $record->save;
+}
+
+sub delete_records {
+  ## Deletes records according to the filtering arguments
+  ## @params RecordSet object or filter params as excepted by the records method
+  my $self      = shift;
+  my $to_delete = ref $_[0] && UNIVERSAL::isa($_[0], 'EnsEMBL::Web::RecordSet') ? $_[0] : $self->records(@_);
+
+  return 0 unless $to_delete->count;
+
+  # remove the records from current record_set
+  $self->{'_record_set'} = $self->records(sub { return !$_[0]->{$_->record_id}; }, { map { $_->record_id => 1 } @$to_delete });
+
+  # delete the records from db
+  return $to_delete->delete;
 }
 
 sub store {

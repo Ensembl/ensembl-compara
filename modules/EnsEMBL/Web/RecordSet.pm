@@ -60,11 +60,11 @@ sub delete {
 sub filter {
   ## Filters the records in the set according to the subroutine provided
   ## @param Callback to filter the records ($_ gets assigned as a record when iterating through all records)
-  ## @params List of arguments to be passed to the callback along with the record object
+  ## @params List of arguments to be passed to the callback
   ## @return A new instance of the RecordSet with filtered records
   my ($self, $callback) = splice @_, 0, 2;
 
-  return $self->new(grep $callback->($_, @_), @$self);
+  return $self->new(grep $callback->(@_), @$self);
 }
 
 sub get {
