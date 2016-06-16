@@ -24,6 +24,7 @@ sub new {
     adorn => EnsEMBL::Web::TextSequence::Adorn->new(),
     legend => undef,
     maintain_colour => $maintain,
+    more => undef,
   };
   bless $self,$class;
   return $self;
@@ -69,10 +70,28 @@ sub _add_line {
 sub data {
   my ($self) = @_;
 
-  return {
+  my $out = {
     %{$self->adorn->data},
     %{$self->legend->data}
   };
+  if($self->{'more'}) {
+    $out = {
+      url => $self->continue_url($self->{'more'}),
+      provisional => $out
+    };
+  }
+  return $out;
+}
+
+sub more { $_[0]->{'more'} = $_[1]; }
+
+sub continue_url {
+  my ($self,$url) = @_;
+
+  my ($path,$params) = split(/\?/,$url,2);
+  my @params = split(/;/,$params);
+  for(@params) { $_ = 'adorn=only' if /^adorn=/; }
+  return $path.'?'.join(';',@params,'adorn=only');
 }
 
 1;

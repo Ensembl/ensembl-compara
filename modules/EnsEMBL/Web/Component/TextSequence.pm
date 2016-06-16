@@ -880,6 +880,27 @@ sub view {
   return ($self->{'view'} ||= $self->make_view($config));
 }
 
+sub panel {
+  my ($self,$key,$output,$adornment) = @_;
+
+  my $random_id = random_string(8);
+  my $id = $self->id;
+
+  return qq(
+    <div class="js_panel" id="$random_id">
+      $key
+      <div class="adornment">
+        <span class="adornment-data" style="display:none;">
+          $adornment
+        </span>
+        $output
+      </div>
+      <input type="hidden" class="panel_type" value="TextSequence"
+             name="panel_type_$id" />
+    </div>
+  );
+}
+
 sub build_sequence {
   my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
@@ -887,10 +908,7 @@ sub build_sequence {
 
   my $adorn = $self->hub->param('adorn') || 'none';
  
-  my %flourishes;
-
   my $view = $self->view($config);
-
   $view->legend->final if $adorn ne 'none';
 
   foreach my $lines (@$sequence) {
@@ -927,6 +945,7 @@ sub build_sequence {
 
   $view->legend->compute_legend($self->hub,$config);
 
+  $view->more($self->hub->apache_handle->unparsed_uri) if $adorn eq 'none';
   my $adornment = $view->data;
   my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
   my $html = $self->format_lines($config,$view->output,$line_numbers);
@@ -946,50 +965,16 @@ sub build_sequence {
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
 
-  my $random_id = random_string(8);
 
   my $key_html = '';
   unless($exclude_key) {
     $key_html = qq(<div class="_adornment_key adornment-key"></div>);
   }
 
-  my $id = $self->id;
-  my $panel_type = qq(<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_$id" />);
-  if($adorn eq 'none') {
-    my $ajax_url = $self->hub->apache_handle->unparsed_uri;
-    my ($path,$params) = split(/\?/,$ajax_url,2);
-    my @params = split(/;/,$params);
-    for(@params) { $_ = 'adorn=only' if /^adorn=/; }
-    $ajax_url = $path.'?'.join(';',@params,'adorn=only');
-    my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
-    return qq(
-      <div class="js_panel" id="$random_id">
-        $key_html
-        <div class="adornment">
-          <span class="adornment-data" style="display:none;">
-            $ajax_json
-          </span>
-          $config->{'html_template'}
-        </div>
-        $panel_type
-      </div>
-    );
-
-  } elsif($adorn eq 'only') {
+  if($adorn eq 'only') {
     return qq(<div><span class="adornment-data">$adornment_json</span></div>);
   } else {
-    return qq(
-      <div class="js_panel" id="$random_id">
-        $key_html
-        <div class="adornment">
-          <span class="adornment-data" style="display:none;">
-            $adornment_json
-          </span>
-          $config->{'html_template'}
-        </div>
-        $panel_type
-      </div>
-    );
+    return $self->panel($key_html,$config->{'html_template'},$adornment_json);
   }
 }
 
