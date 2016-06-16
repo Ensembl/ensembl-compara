@@ -26,6 +26,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     opt_lines => 1,  # draw registry lines
     opt_empty_tracks => 1,     # include empty tracks
   });

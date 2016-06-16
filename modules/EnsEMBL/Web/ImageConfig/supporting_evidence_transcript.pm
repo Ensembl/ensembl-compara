@@ -41,6 +41,7 @@ sub init {
   my $sd    = $hub->species_defs;
 
   $self->set_parameters({
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     label_width      => 115,
     opt_empty_tracks => 0,
   });
