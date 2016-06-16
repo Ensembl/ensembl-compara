@@ -754,7 +754,7 @@ sub core_pipeline_analyses {
             -rc_name => '2Gb_job',
             -flow_into => {
                 1 => [ 'make_treebest_species_tree' ],
-                2 => [ 'check_reuse_db_is_myisam' ],
+                2 => [ 'check_reuse_db_is_myisam', 'check_reuse_db_is_patched' ],
             },
         },
 
@@ -764,6 +764,15 @@ sub core_pipeline_analyses {
                 'db_conn'       => '#reuse_db#',
                 'description'   => q{The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM. So please run the following MySQL commands on the #reuse_db#: SET FOREIGN_KEY_CHECKS = 0; ALTER TABLE other_member_sequence DROP FOREIGN KEY other_member_sequence_ibfk_1; ALTER TABLE other_member_sequence ENGINE=MyISAM; },
                 'query'         => 'SHOW TABLE STATUS WHERE Name = "other_member_sequence" AND Engine NOT LIKE "MyISAM" -- limit',      # -- limit is a trick to ask SqlHealthcheck not to add "LIMIT 1" at the end of the query
+            },
+        },
+
+        {   -logic_name => 'check_reuse_db_is_patched',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'db_conn'       => '#reuse_db#',
+                'description'   => 'The schema version of the reused database must match the Core API',
+                'query'         => 'SELECT * FROM meta WHERE meta_key = "schema_version" AND meta_value != '.$self->o('ensembl_release'),
             },
         },
 
