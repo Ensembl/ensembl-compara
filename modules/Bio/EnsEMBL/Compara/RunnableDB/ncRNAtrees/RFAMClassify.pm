@@ -160,7 +160,7 @@ sub run_rfamclassify {
 
         $allclusters{$cm_id} = {'members' => [@cluster_list],
                                 'model_name' => $model_name,
-                                'clustering_id' => $cm_id,
+                                'model_id' => $cm_id,
                                }
 
     }

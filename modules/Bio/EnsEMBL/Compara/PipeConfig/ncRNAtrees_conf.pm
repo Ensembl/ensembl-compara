@@ -75,7 +75,7 @@ sub default_options {
             'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
 
             # tree break
-            'treebreak_tags_to_copy'   => ['clustering_id', 'model_name'],
+            'treebreak_tags_to_copy'   => ['model_id', 'model_name'],
 
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
