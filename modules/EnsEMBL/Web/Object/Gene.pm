@@ -80,7 +80,10 @@ sub counts {
   my ($self, $member, $pan_member) = @_;
 
   return {} unless $self->Obj->isa('Bio::EnsEMBL::Gene');
-  return $self->availability->{'counts'};
+  if(!$self->{'_availability'}) { # Check before calling subroutine to avoid recursive calls in overriding sub in EG.
+    return $self->availability->{'counts'};
+  }
+  return $self->{'_availability'}->{'counts'};
 }
 
 =head2 get_go_list
