@@ -347,7 +347,7 @@ sub hover_label_tabs {
      $desc   .= $label->{'extra_desc'};
   my $subset  = $label->{'subset'};
   my $renderers;
-  my $highlight = "true";
+  my $highlight = ($self->hub->type =~m/Location|Gene/ && $self->hub->action =~/Multi|Variation_Gene/) ? 0 : 1;
 
   foreach (@{$label->{'renderers'}}) {
 
