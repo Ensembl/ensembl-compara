@@ -73,19 +73,11 @@ sub records {
   # if filter is a callback itself
   return $self->{'_record_set'}->filter($filter, @_) if ref $filter && ref $filter eq 'CODE';
 
-  # create a callback
-  my $filter_callback = sub {
-    my $record = $_;
-    my ($column_filter, $is_column) = @_;
-    for (keys %$column_filter) {
-      return unless $column_filter->{$_} eq ($is_column->{$_} ? $record->$_ : $record->data->{$_}); # skip record for any mismatch
-    }
-    return 1;
-  };
+  # if filter is a string, it's type of the record
+  $filter = { 'type' => $filter } unless ref $filter;
 
-  $filter = { 'type' => $filter } unless ref $filter; # if filter is a string, it's type of the record
-
-  return $self->{'_record_set'}->filter($filter_callback, $filter, { map { $_ => 1 } @{$self->_record_column_names} });
+  # query records according to the hashref query
+  return $self->_query_records($filter);
 }
 
 sub record {
@@ -179,6 +171,45 @@ sub _record_column_names {
   ## save column names from the rose db meta object
   my $self = shift;
   $self->{'_record_column_names'} ||= $self->rose_manager->object_class->meta->column_names;
+}
+
+sub _query_records {
+  ## @private
+  ## Tries to create functionality as offered by 'query' parameter of Rose::DB::Object::QueryBuilder::build_select but with limited operator (OP) support
+  my ($self, $query) = @_;
+
+  my $filter_callback = sub {
+    my $record  = $_;
+    my $data    = $record->data;
+    my ($column_filter, $column_hash) = @_;
+
+    while (my ($key, $value) = each %$column_filter) {
+      my $reverse   = $key =~ s/^\!// ? 1 : 0;
+      my $cmp_value = $column_hash->{$key} ? $record->$key : $data->{$key};
+      my $match     = $reverse;
+
+      if (defined $value && $value ne '') {
+        if (ref $value) {
+          if (ref $value eq 'HASH') {
+            # TODO
+          }
+          if (ref $value eq 'ARRAY') {
+            $match = grep { $cmp_value eq $_ } @$value;
+          }
+        } else { # $value is a string
+          $match = $value eq $cmp_value;
+        }
+      } else { # $value is undef or empty string
+        $match = ($cmp_value // '') eq '';
+      }
+
+      return 0 if $match xor !$reverse;
+    }
+
+    return 1;
+  };
+
+  return $self->{'_record_set'}->filter($filter_callback, $query, { map { $_ => 1 } @{$self->_record_column_names} });
 }
 
 sub _begin_transaction {
