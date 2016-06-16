@@ -2801,11 +2801,10 @@ sub add_regulation_builds {
 
   return unless $menu;
 
-  my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
-  my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
-  my %fg_data           = (%$data_1, %$data_2);
+  my ($keys, $data) = $self->_merge($hashref->{'regulatory_build'});
   my $key_2             = 'Regulatory_Build';
-  my $type              = $fg_data{$key_2}{'type'};
+  my $build             = $data->{$key_2};
+  my $type              = $data->{$key_2}{'type'};
 
   return unless $type;
 
@@ -2829,7 +2828,7 @@ sub add_regulation_builds {
     push @cell_lines, $name;
     $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
   }
-  @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
+  @cell_lines = sort { $a cmp $b } @cell_lines; 
  
   my (@renderers, %matrix_menus, %matrix_rows);
 
@@ -2845,8 +2844,8 @@ sub add_regulation_builds {
     PolIII   => 1,
   );
 
-  if ($fg_data{$key_2}{'renderers'}) {
-    push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}};
+  if ($data->{$key_2}{'renderers'}) {
+    push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
   } else {
     @renderers = qw(off Off normal On);
   }
@@ -2863,28 +2862,34 @@ sub add_regulation_builds {
 
   foreach my $cell_line (@cell_lines) {
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
-    my $focus_sets = $db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {};
+    my $core_sets     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
+    my $non_core_sets = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
+    #warn ">>> CELL LINE $cell_line";
+    #warn "... CORE ".Dumper($core_sets);
+    #warn "... NON CORE ".Dumper($non_core_sets);
     my @sets;
 
-    push @sets, 'core'     if scalar keys %$focus_sets && scalar keys %$focus_sets <= scalar keys %$ftypes;
-    push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
+    push @sets, 'core'     if scalar keys %$core_sets && scalar keys %$core_sets <= scalar keys %$non_core_sets;
+    push @sets, 'non_core' if scalar keys %$non_core_sets != scalar keys %$core_sets;
 
     foreach my $set (@sets) {
+      #warn ">>> MATRIX FOR $set";
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
         menu   => 'matrix',
         url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
         matrix => {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
           axes        => { x => 'Cell type', y => 'Evidence type' },
         }
       }];
 
       foreach (@{$all_types{$set}||[]}) {
-        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
+        #warn ">>> CLASS $_, DB ID ".$_->dbID;
+        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $non_core_sets->{$_->dbID};
       }
+      #warn Dumper(\%matrix_rows);
     }
   }
  
@@ -2919,7 +2924,7 @@ sub add_regulation_builds {
     my ($label, %evidence_tracks);
     
     if ($cell_line eq 'MultiCell') {  
-      $display = $fg_data{$key_2}{'display'} || 'off';
+      $display = $data->{$key_2}{'display'} || 'off';
     } else {
       $label = ": $cell_line";
     }
@@ -2929,8 +2934,8 @@ sub add_regulation_builds {
       glyphset    => $type,
       sources     => 'undef',
       strand      => 'r',
-      depth       => $fg_data{$key_2}{'depth'}     || 0.5,
-      colourset   => $fg_data{$key_2}{'colourset'} || $type,
+      depth       => $data->{$key_2}{'depth'}     || 0.5,
+      colourset   => $data->{$key_2}{'colourset'} || $type,
       description => "Reg. Feats. $cell_names{$cell_line}",
       display     => $display,
       renderers   => \@renderers,
@@ -2941,7 +2946,7 @@ sub add_regulation_builds {
     }));
 
     # Old database-based segmentation tracks
-    if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
+    if ($data->{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
       $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
         glyphset    => 'fg_segmentation_features',
@@ -2951,7 +2956,7 @@ sub add_regulation_builds {
         depth       => 0,
         colourset   => 'fg_segmentation_features',
         display     => 'off',
-        description => $fg_data{"seg_$cell_line"}{'description'},
+        description => $data->{"seg_$cell_line"}{'description'},
         renderers   => \@renderers,
         cell_line   => $cell_line,
         caption     => "Reg. Segments",
@@ -2965,7 +2970,7 @@ sub add_regulation_builds {
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
       strand    => 'r',
-      depth     => $fg_data{$key_2}{'depth'} || 0.5,
+      depth     => $data->{$key_2}{'depth'} || 0.5,
       colourset => 'feature_set',
       cell_line => $cell_line,
       section   => $cell_line,
@@ -2992,7 +2997,7 @@ sub add_regulation_builds {
         column_data => {
           set         => $_,
           label       => "$evidence_info->{$_}{'label'}",
-          description => $fg_data{$key_2}{'description'}{$_},
+          description => $data->{$key_2}{'description'}{$_},
           %column_data
         }, 
       }, $matrix_menus{$_});
