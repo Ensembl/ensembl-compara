@@ -73,7 +73,7 @@ sub new_from_header {
 
   throw WebException('Apache2::RequestRec object is needed to set or access cookies.') unless ref $r && UNIVERSAL::isa($r, 'Apache2::RequestRec');
 
-  my $cookie_header = $class->_parse_cookie_header($r);
+  my $cookie_header = _parse_cookie_header($r);
   my $cookies       = {};
 
   for (keys %$cookie_header) {
@@ -94,7 +94,7 @@ sub retrieve {
   delete $self->{'value'};
   delete $self->{'_real_value'};
 
-  my $cookie_header = $class->_parse_cookie_header($self->{'_r'});
+  my $cookie_header = _parse_cookie_header($self->{'_r'});
 
   # save the real value only if cookie found in headers
   if (exists $cookie_header->{$_}) {
@@ -197,16 +197,17 @@ sub bake {
 sub clear {
   ## Clears a cookie by setting its expiry time to past
   ## @return The cookie object itself
+  my $self = shift;
   $self->value('');
-  $self->expires('now');
-  return $self->bake(0);
+  $self->expires('Mon, 01-Jan-2001 00:00:01 GMT');
+  return $self->bake();
 }
 
 sub _parse_cookie_header {
   ## @private
-  my ($self, $r) = @_;
+  my $r = shift;
 
-  my $cookie_string = $r->headers_in->{'Cookie'} =~ s/^\s+|\s+$//gr;
+  my $cookie_string = ($r->headers_in->{'Cookie'} || '') =~ s/^\s+|\s+$//gr;
   my $cookies       = {};
 
   for (grep $_, split /\s*[;,]\s*/, $cookie_string) { # each key-value pair
