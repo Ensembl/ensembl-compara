@@ -66,4 +66,13 @@ sub _add_line {
   push @{$self->{'output'}[$seq]},$data;
 }
 
+sub data {
+  my ($self) = @_;
+
+  return {
+    %{$self->adorn->data},
+    %{$self->legend->data}
+  };
+}
+
 1;

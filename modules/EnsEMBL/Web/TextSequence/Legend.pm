@@ -37,7 +37,9 @@ sub compute_legend {
   my ($self,$hub,$config) = @_;
 
   my $exon_type;
-  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+  unless(($config->{'exon_display'}||'selected') eq 'selected') {
+    $exon_type = $config->{'exon_display'};
+  }
   $exon_type = 'All' if !$exon_type || $exon_type eq 'core';
   $exon_type = ucfirst $exon_type;
 
@@ -67,6 +69,15 @@ sub expect {
   return [] if $self->{'final'};
   push @{$self->{'expect'}},$val if @_>1;
   return $self->{'expect'};
+}
+
+sub data {
+  my ($self) = @_;
+
+  return {
+    legend => $self->{'key'},
+    expect => $self->{'expect'},
+  };
 }
 
 sub legend { return $_[0]->{'key'}; }
