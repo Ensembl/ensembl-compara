@@ -673,7 +673,7 @@ sub _summarise_funcgen_db {
   }
 
   ## Get analysis information about each feature type
-  foreach my $table (qw(probe_feature feature_set result_set)) {
+  foreach my $table (qw(probe_feature feature_set result_set regulatory_build)) {
     my $res_aref = $dbh->selectall_arrayref("select analysis_id, count(*) from $table group by analysis_id");
     
     foreach my $T (@$res_aref) {
@@ -854,55 +854,34 @@ sub _summarise_funcgen_db {
     };
   }
 
-# This doesn't seem to be used anywhere, so commenting this out.
-#
-#   my $ft_aref =  $dbh->selectall_arrayref(
-#     'select ft.name, ft.feature_type_id from feature_type ft, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
-#       where fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
-#         and ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.feature_type_id=ft.feature_type_id 
-#    group by ft.name order by ft.name'
-#   );
-#   foreach my $row (@$ft_aref) {
-#     my $feature_type_key =  $row->[0] .':'. $row->[1];
-#     $self->db_details($db_name)->{'tables'}{'feature_type'}{'ids'}{$feature_type_key} = 2;
-#   }
+  my %sets = ('core' => '"Open Chromatin", "Transcription Factor"', 'non_core' => '"Histone", "Polymerase"');
 
-# It is not clear, where these are used, so removing.
-#
+  while (my ($set, $classes) = each(%sets)) {
+    my $ft_aref = $dbh->selectall_arrayref(qq(
+      select 
+        epigenome.display_label, 
+        feature_set.feature_type_id, 
+        feature_set.feature_set_id
+      from 
+        epigenome 
+      join feature_set using (epigenome_id) 
+      join feature_type using (feature_type_id) 
+      where 
+        class in ($classes) 
+    ));
 
-#   my $rs_aref = $dbh->selectall_arrayref(
-#     'select name, string 
-#        from regbuild_string 
-#       where name like "%regbuild%" and 
-#             name like "%ids"'
-#   );
-#   foreach my $row (@$rs_aref ){
-#     my ($regbuild_name, $regbuild_string) = @$row; 
-#     $regbuild_name =~s/regbuild\.//;
-#     $regbuild_name =~ /^(.*)\.(.*?)$/;
-#     my @key_info = ($1,$2);
-#     my %data;  
-#     my @ids = split(/\,/,$regbuild_string);
-#     my $sth = $dbh->prepare(
-#           'select feature_type_id
-#              from feature_set
-#             where feature_set_id = ?'
-#     );
-#     foreach (@ids){
-#       if($key_info[1] =~/focus/){
-#         my $feature_set_id = $_;
-#         $sth->bind_param(1, $feature_set_id);
-#         $sth->execute;
-#         my ($feature_type_id)= $sth->fetchrow_array;
-#         $data{$feature_type_id} = $_;
-#       }
-#       else {
-#         $data{$_} = 1;
-#       }
-#       $sth->finish;
-#     } 
-#     $self->db_details($db_name)->{'tables'}{'regbuild_string'}{$key_info[1]}{$key_info[0]} = \%data;
-#   }
+    my $data;
+    foreach my $row (@$ft_aref) {
+      if ($set eq 'core') {
+        $data->{$row->[0]}{$row->[1]} = $row->[2];
+      }
+      else {
+        $data->{$row->[0]}{$row->[1]} = 1;
+      }
+    }
+    $self->db_details($db_name)->{'tables'}{'feature_types'}{$set} = $data;
+  }
+
   $dbh->disconnect();
 }
 
