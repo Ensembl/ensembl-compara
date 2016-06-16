@@ -24,12 +24,13 @@ use base qw(EnsEMBL::Web::Component::Shared);
 
 sub shown_cells {
   my ($self,$image_config) = @_;
-
   my $hub = $self->hub;
+
   my %shown_cells;
-  my $image_config = $hub->get_imageconfig($image_config);
+  my $ic = $hub->get_imageconfig($image_config);
+
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
+    my $menu = $ic->get_node($type);
     next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(core_|non_core_)?(.*)$/;
@@ -37,7 +38,7 @@ sub shown_cells {
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  my $ev = $self->all_evidences->{'all'};
+  my $ev = $self->all_evidences($image_config)->{'all'};
   my %partials;
   foreach my $ex (values %$ev) {
     next unless $ex->{'on'};
@@ -50,12 +51,13 @@ sub shown_cells {
 }
 
 sub all_evidences {
-  my ($self) = @_;
+  my ($self, $image_config) = @_;
+  $image_config ||= 'regulation_view';
 
   my $hub = $self->hub;
   my $mode = 4;
   my %evidences;
-  my $image_config = $hub->get_imageconfig('regulation_view');
+  my $image_config = $hub->get_imageconfig($image_config);
   foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
