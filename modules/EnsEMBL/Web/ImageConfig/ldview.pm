@@ -41,6 +41,7 @@ sub init {
   my $colours = $self->species_defs->colour('variation');
   
   $self->set_parameters({
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     label_width => 100
   });
   
