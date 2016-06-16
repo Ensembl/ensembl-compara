@@ -173,6 +173,7 @@ sub create_species_tree {
         }
     }
 
+    $taxon_adaptor->_id_cache->clear_cache();
     return $root if $return_ncbi_tree;
 
     my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
