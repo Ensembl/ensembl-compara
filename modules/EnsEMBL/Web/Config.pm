@@ -176,6 +176,23 @@ sub delete_user_settings {
   return 1;
 }
 
+sub altered {
+  ## Maintains a list of configs that have been altered
+  ## @param Config name that has been altered (optional)
+  ## @return Arrayref of altered configs
+  my ($self, $altered_config) = @_;
+
+  push @{$self->{'_altered'}}, $altered_config if $altered_config;
+
+  return $self->{'_altered'};
+}
+
+sub is_altered {
+  ## Tells if any change has been applied to the config
+  ## @return 0 or 1 accordingly
+  return @{$_[0]->{'_altered'}} ? 1 : 0;
+}
+
 #TODO -------------- 
 
 sub update_from_input {
