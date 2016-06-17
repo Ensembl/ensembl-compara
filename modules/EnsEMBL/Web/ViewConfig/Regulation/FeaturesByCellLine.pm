@@ -29,7 +29,7 @@ sub init {
   $self->set_defaults({ opt_highlight => 'yes', context => 200 });
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   $self->add_fieldset('Display options');

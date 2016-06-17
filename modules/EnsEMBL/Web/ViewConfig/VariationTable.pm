@@ -38,7 +38,7 @@ sub init {
   $self->title = 'Variations';
 }
 
-sub form {
+sub init_form {
   my $self       = shift;
   my $hub        = $self->hub;
   

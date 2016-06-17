@@ -58,7 +58,7 @@ sub init {
   $self->title('Population comparison');
 }
 
-sub form {
+sub init_form {
   my $self       = shift;
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'};
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;

@@ -43,7 +43,7 @@ sub init {
   $self->image_config_type('') unless $hub->param('submit') || $hub->param('reset');
 }
 
-sub form {
+sub init_form {
   my $self          = shift;
   my $hub           = $self->hub;
   my $img_url       = $self->img_url;

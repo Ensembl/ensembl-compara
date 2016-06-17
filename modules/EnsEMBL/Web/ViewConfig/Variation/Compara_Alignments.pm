@@ -44,7 +44,7 @@ sub init {
   });
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;

@@ -22,7 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig::Gene::ComparaTree);
 
-sub form { 
+sub init_form {
   my $self = shift;
   
   $self->SUPER::form;

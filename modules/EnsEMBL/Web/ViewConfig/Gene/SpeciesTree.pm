@@ -37,7 +37,7 @@ sub init {
   $self->title('Species Tree');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   $self->add_fieldset('Display options');

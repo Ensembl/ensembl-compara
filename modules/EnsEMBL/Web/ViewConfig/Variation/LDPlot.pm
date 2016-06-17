@@ -60,7 +60,7 @@ sub extra_tabs {
 }
 
 
-sub form {
+sub init_form {
   my $self = shift;
 
   # Context

@@ -30,7 +30,7 @@ sub init {
   $self->title('Homologs');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   $self->add_fieldset('Selected species');

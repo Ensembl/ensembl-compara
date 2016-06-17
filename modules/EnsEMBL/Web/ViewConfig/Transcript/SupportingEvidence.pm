@@ -29,7 +29,7 @@ sub init {
   $self->title('Supporting evidence');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   $self->add_form_element({

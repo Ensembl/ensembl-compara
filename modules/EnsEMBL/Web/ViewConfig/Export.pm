@@ -59,7 +59,7 @@ sub init {
   $self->set_defaults($defaults);
 }
 
-sub form {
+sub init_form {
   my ($self, $object) = @_;
   
   my $hub      = $self->hub;

@@ -37,7 +37,7 @@ sub init {
   $self->title('Ensembl protein families');
 }
 
-sub form {
+sub init_form {
   my $self         = shift;
   my %formats      = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
   my $species_defs = $self->species_defs;

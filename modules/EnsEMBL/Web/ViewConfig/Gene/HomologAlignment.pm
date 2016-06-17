@@ -37,7 +37,7 @@ sub init {
   $self->title('Homologs');
 }
 
-sub form {
+sub init_form {
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 

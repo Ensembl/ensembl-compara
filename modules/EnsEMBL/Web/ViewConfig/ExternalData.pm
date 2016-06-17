@@ -28,7 +28,7 @@ sub init {
   $self->title('External Data');
 }
 
-sub form {
+sub init_form {
   my $self    = shift;
   my $hub     = $self->hub;
   my $view    = $hub->type . '/ExternalData';

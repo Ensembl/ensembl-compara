@@ -40,7 +40,7 @@ sub init {
   $self->SUPER::init;
 }
 
-sub form {
+sub init_form {
   my $self                   = shift;
   my $dbs                    = $self->species_defs->databases;
   my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;

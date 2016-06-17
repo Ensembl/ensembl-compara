@@ -32,7 +32,7 @@ sub init {
   $self->title('Cell types');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
 
   $self->image_config_type('reg_summary');

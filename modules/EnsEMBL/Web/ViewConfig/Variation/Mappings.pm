@@ -32,7 +32,7 @@ sub init {
   $self->title('Genes and regulation');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   if ($self->hub->species =~ /homo_sapiens|mus_musculus/i) {

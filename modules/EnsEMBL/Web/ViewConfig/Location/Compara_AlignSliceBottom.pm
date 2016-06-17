@@ -38,7 +38,7 @@ sub init {
   });
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   $self->add_fieldset('Comparative features');

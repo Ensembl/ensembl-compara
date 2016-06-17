@@ -58,7 +58,7 @@ sub init {
   $self->title('Alignments');
 }
 
-sub form {
+sub init_form {
 ### Override base class, because alignments have multiple configuration screens
   my $self = shift;
   my $fields = $self->form_fields;

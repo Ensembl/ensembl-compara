@@ -50,7 +50,7 @@ sub init {
   $self->title('Resequencing');
 }
 
-sub form {
+sub init_form {
   my $self       = shift;
   my $sp         = $self->species;
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};

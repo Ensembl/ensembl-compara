@@ -36,7 +36,7 @@ sub init {
   $self->title('Linkage disequilibrium');
 }
 
-sub form {
+sub init_form {
   my $self = shift;
   
   # max distance
