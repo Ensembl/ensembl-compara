@@ -17,9 +17,11 @@
 use strict;
 use warnings;
 
+use Getopt::Long;
+
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Getopt::Long;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 #
 # Script to print the species-tree used by a given method
@@ -31,6 +33,7 @@ my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
 my $with_distances;
+my $get_timetree_divergence_times;
 
 GetOptions(
        'url=s'          => \$url,
@@ -39,6 +42,7 @@ GetOptions(
        'ss_name=s'      => \$ss_name,
        'label=s'        => \$label,
        'with_distances' => \$with_distances,
+       'timetree'       => \$get_timetree_divergence_times,
 );
 
 
@@ -57,6 +61,16 @@ if ($mlss_id) {
 die "Could not fetch a MLSS with these parameters. Check your mlss_id, method and/or ss_name arguments\n" unless $mlss;
 
 my $species_tree = $mlss->species_tree($label);
+
+if ($get_timetree_divergence_times) {
+    foreach my $node (@{$species_tree->root->get_all_nodes}) {
+        next if $node->is_leaf;
+        my $d = $node->get_value_for_tag('ensembl timetree mya');
+           $d = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($node) unless defined $d;
+        $node->node_name( sprintf("%s [%s]", $node->node_name, $d) ) if $d;
+    }
+}
+
 print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
 
 
