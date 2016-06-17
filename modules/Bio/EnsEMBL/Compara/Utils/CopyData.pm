@@ -161,9 +161,10 @@ my %cached_inserts = ();
 sub _memoized_insert {
     my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
 
-    my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field||'__NA__', $where_value||'__NA__');
-    return if $cached_inserts{$key};
-    $cached_inserts{$key} = 1;
+    my $key = $table;
+    $key .= "||$where_field=" . ($where_value // '__NA__') if $where_field;
+    return if $cached_inserts{$from_dbc->locator}{$to_dbc->locator}{$key};
+    $cached_inserts{$from_dbc->locator}{$to_dbc->locator}{$key} = 1;
 
     my $sql_select;
     my @execute_args;
