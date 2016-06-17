@@ -34,6 +34,20 @@ sub id {
   return "DataExport_$id";
 }
 
+sub view_config {
+  ## @override
+  my $self = shift;
+
+  if (!exists $self->{'view_config'}) {
+    $self->{'view_config'} = $hub->get_viewconfig({
+      'component' => $hub->param('component') || '',
+      'type'      => $hub->param('data_type') || $hub->type
+    });
+  }
+
+  return $self->{'view_config'};
+}
+
 sub create_form {
 ### Builds the input form used by DataExport
 ### Note that the form consists of a generic section (file name, format)
