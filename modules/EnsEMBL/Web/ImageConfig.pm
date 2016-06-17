@@ -2817,8 +2817,23 @@ sub add_regulation_builds {
 
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
 
+  ## Main regulation track - replaces 'MultiCell'
+  $menu->append($self->create_track("regbuild", "Regulatory Build", {
+      glyphset    => 'fg_regulatory_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 0,
+      colourset   => 'fg_regulatory_features',
+      display     => 'off',
+      description => '',
+      renderers   => [qw(off Off normal On)],
+      caption     => 'Regulatory Build',
+      height      => 4,
+    }));
+
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
+  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
@@ -2937,22 +2952,17 @@ sub add_regulation_builds {
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my ($label, %evidence_tracks);
+    my $label     = ": $cell_line";
+    my %evidence_tracks;
     
-    if ($cell_line eq 'MultiCell') {  
-      $display = $data->{$key_2}{'display'} || 'off';
-    } else {
-      $label = ": $cell_line";
-    }
-    
-    $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
+    $reg_feats->append($self->create_track($track_key, "Activity in $cell_names{$cell_line}", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
       strand      => 'r',
       depth       => $data->{$key_2}{'depth'}     || 0.5,
       colourset   => $data->{$key_2}{'colourset'} || $type,
-      description => "Reg. Feats. $cell_names{$cell_line}",
+      description => "Activity in epigenome $cell_names{$cell_line}",
       display     => $display,
       renderers   => \@renderers,
       cell_line   => $cell_line,
