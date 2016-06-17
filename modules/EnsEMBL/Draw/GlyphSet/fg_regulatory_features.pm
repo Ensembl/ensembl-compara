@@ -49,16 +49,24 @@ sub features {
 sub fetch_features {
   my ($self, $db) = @_;
   my $cell_line = $self->my_config('cell_line');  
-  my $fsa       = $db->get_FeatureSetAdaptor; 
+  my $rfa       = $db->get_RegulatoryFeatureAdaptor; 
   
-  if (!$fsa) {
-    warn ("Cannot get get adaptors: $fsa");
+  if (!$rfa) {
+    warn ("Cannot get get adaptors: $rfa");
     return [];
   }
   
   my $config        = $self->{'config'};
-  my ($feature_set) = grep $_->cell_type->name =~ /\Q$cell_line\E/, @{$fsa->fetch_all_displayable_by_type('regulatory')};
-  my $reg_feats     = $feature_set ? $feature_set->get_Features_by_Slice($self->{'container'}) : [];
+
+  my $fsets;
+  if ($cell_line) {
+    my $fsa = $db->get_FeatureSetAdaptor;
+    $fsets  = $fsa->fetch_by_name($cell_line);
+    #warn ">>> FSETS $fsets";
+    $self->{'my_config'}->set('epigenome', $fsets);
+  }
+  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
+
   my $rf_url        = $config->hub->param('rf');
   my $counter       = 0;
   
@@ -108,18 +116,21 @@ sub colour_key {
   } else  {
     $type = 'Unclassified';
   }
-  if($f->can('activity')) {
-    my $activity = $f->activity;
+
+  if ($self->{'my_config'}->get('epigenome')) {
+    #warn ">>> EPIGENOME ".$self->{'my_config'}->get('epigenome');
+    my $activity = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
     # case 0: handled by pattern code
     # case 1: correct
-    if($activity == 4) {
+    if ($activity == 4) {
       $type = 'na';
-    } elsif($activity == 2) {
+    } elsif ($activity == 2) {
       $type = 'poised';
-    } elsif($activity == 3) {
+    } elsif ($activity == 3) {
       $type = 'repressed';
     }
   }
+
   return lc $type;
 }
 
@@ -128,14 +139,16 @@ sub tag {
   my $colour_key = $self->colour_key($f);
   my $colour     = $self->my_colour($colour_key);
   my $flank_colour = $colour;
-  if($colour_key eq 'promoter') {
+  if ($colour_key eq 'promoter') {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
-  my @loci       = @{$f->get_underlying_structure};
+  return unless $self->{'my_config'}->get('epigenome');
+
+  my @result;
+  my @loci       = @{$f->get_underlying_structure(@{$self->{'my_config'}->get('epigenome')})};
   my $bound_end  = pop @loci;
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
-  my @result;
  
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
@@ -162,7 +175,7 @@ sub tag {
       class  => 'group'
     };
   }
-  
+
   return @result;
 }
 
@@ -249,9 +262,9 @@ sub export_feature {
 
 sub pattern {
   my ($self,$f) = @_;
+  return undef unless $self->{'my_config'}->get('epigenome');
 
-  return undef unless $f->can('activity');
-  my $act = $f->activity;
+  my $act = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
   return ['hatch_really_thick','grey90',0] if $act==0;
   return ['hatch_really_thick','white',0] if $act==4;
   return undef;
@@ -259,9 +272,9 @@ sub pattern {
 
 sub feature_label {
   my ($self,$f) = @_;
+  return undef unless $self->{'my_config'}->get('epigenome');
 
-  return undef unless $f->can('activity');
-  my $act = $f->activity;
+  my $act = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
   return "{grey30}inactive in this cell line" if $act==0;
   return "{grey30}N/A" if $act==4;
   return undef;
