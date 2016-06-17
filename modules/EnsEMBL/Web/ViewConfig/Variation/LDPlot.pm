@@ -40,7 +40,7 @@ sub init {
   $defaults->{'d_prime_mark'} = 0.8;
  
   $self->set_defaults($defaults);
-  $self->add_image_config('ldmanplot');
+  $self->image_config_type('ldmanplot');
   $self->title = 'Manhattan Plot'; 
 }
 

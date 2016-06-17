@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->add_image_config('reg_summary');
+  $self->image_config_type('reg_summary');
   $self->title = 'Feature Context';
 }
 

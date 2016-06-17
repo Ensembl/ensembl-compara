@@ -35,7 +35,7 @@ sub init {
   }
 	
   $self->set_defaults($defaults);
-  $self->add_image_config('structural_variation');
+  $self->image_config_type('structural_variation');
   $self->title = 'Genomic context';
 }
 

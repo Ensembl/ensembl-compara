@@ -48,7 +48,7 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  $self->add_image_config('genetreeview');
+  $self->image_config_type('genetreeview');
   $self->code  = join '::', grep $_, 'Gene::ComparaTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};
   $self->title = 'Gene Tree';
 }

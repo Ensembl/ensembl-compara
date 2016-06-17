@@ -344,7 +344,7 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= "::$width";
   }
   
-  $hub->get_imageconfig($view_config->image_config) if $view_config && $view_config->image_config; # sets user_data cache tag
+  $hub->get_imageconfig($view_config->image_config_type) if $view_config && $view_config->image_config_type; # sets user_data cache tag
   
   $key = $self->set_cache_key;
   

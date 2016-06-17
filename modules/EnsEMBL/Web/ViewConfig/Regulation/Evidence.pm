@@ -35,7 +35,7 @@ sub init {
 sub form {
   my $self = shift;
 
-  $self->add_image_config('reg_summary');
+  $self->image_config_type('reg_summary');
 }
 
 sub extra_tabs { return $_[0]->reg_extra_tabs('reg_summary'); }

@@ -29,7 +29,7 @@ sub init {
     show_top_panel => 'yes'
   });
   
-  $self->add_image_config('MultiTop');
+  $self->image_config_type('MultiTop');
   $self->title = 'Comparison Overview';
   
   $self->set_defaults({

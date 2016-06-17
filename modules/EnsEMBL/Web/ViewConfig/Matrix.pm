@@ -22,11 +22,13 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Attributes;
+
 use base qw(EnsEMBL::Web::ViewConfig);
 
 # TODO: Support other track hub dimensions as filters?
 
-sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
+sub matrix_image_config :AccessorMutator;
 
 sub init {
   my $self        = shift;
@@ -37,8 +39,8 @@ sub init {
   
   $self->{$_}                = $view_config->{$_} for keys %$view_config;
   $self->code                = $code;
-  $self->matrix_image_config = $hub->get_imageconfig($self->image_config);
-  $self->image_config        = undef unless $hub->param('submit') || $hub->param('reset');
+  $self->matrix_image_config($hub->get_imageconfig($self->image_config_type));
+  $self->image_config_type('') unless $hub->param('submit') || $hub->param('reset');
 }
 
 sub form {

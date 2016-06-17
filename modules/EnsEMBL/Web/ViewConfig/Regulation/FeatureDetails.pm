@@ -32,7 +32,7 @@ sub init {
     map {( "opt_ft_$_" => 'on' )} keys %$analyses
   });
 
-  $self->add_image_config('reg_summary_page');
+  $self->image_config_type('reg_summary_page');
   $self->title = 'Summary';
 }
 

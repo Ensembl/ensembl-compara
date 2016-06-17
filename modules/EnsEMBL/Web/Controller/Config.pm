@@ -47,7 +47,7 @@ sub update_configuration {
   my $session      = $hub->session;
   my $view_config  = $hub->get_viewconfig($hub->action);
   my $code         = $view_config->code;
-  my $image_config = $view_config->image_config;  
+  my $image_config = $view_config->image_config_type;
   my $updated      = $view_config->update_from_input;
   my $existing_config;
   

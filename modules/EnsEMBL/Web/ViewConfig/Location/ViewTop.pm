@@ -30,7 +30,7 @@ sub init {
     flanking   => 0,
   });
   
-  $self->add_image_config('contigviewtop');
+  $self->image_config_type('contigviewtop');
   $self->title = 'Overview Image';
 }
 

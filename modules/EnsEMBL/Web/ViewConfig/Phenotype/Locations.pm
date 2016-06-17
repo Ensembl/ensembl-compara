@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
   
   $self->SUPER::init(@_);
-  $self->add_image_config('VPhenotype');
+  $self->image_config_type('VPhenotype');
   $self->title = 'Location on Genome';
 }
 

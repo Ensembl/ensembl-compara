@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->add_image_config('gene_summary');
+  $self->image_config_type('gene_summary');
   $self->title = 'Summary';
 }
 
