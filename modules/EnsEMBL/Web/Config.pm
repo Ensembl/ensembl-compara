@@ -32,7 +32,8 @@ sub code                :Accessor;
 sub species_defs        :Accessor;
 
 sub storable            :Abstract; ## Any changes in the config by the user are allowed to be saved in records?
-sub config_type         :Abstract; ## Should return image_config or view_config accordingly
+sub config_type         :Abstract; ## @return image_config/view_config accordingly
+sub cacheable_keys      :Abstract; ## @return Arrayref of keys of the object that should be cached in memcahced
 sub init_cacheable      :Abstract; ## Initalises the portion of the object that stays the same for all users/browsers/url params and thus can be safely cached against the cache_key
 sub init_non_cacheable  :Abstract; ## Initalises the portion of the object that should not be cached since it might contain settings that do not apply to all visitors
 sub apply_user_settings :Abstract; ## Applies changes to the config as made/saved by the user in a user/session record
@@ -60,8 +61,8 @@ sub _new {
     'species'       => $species,
     'species_defs'  => $hub->species_defs,
     'type'          => $type,
-    '_altered'      => [],
-    '_parameters'   => {}
+    '_altered'      => [], # list of the configs that have been altered
+    '_parameters'   => {}, # hash to contain all parameters
   }, $class;
 }
 
@@ -93,7 +94,7 @@ sub tree {
 }
 
 sub _init_from_cache {
-  ## @private
+  ## @protected
   my $self      = shift;
   my $cache     = $self->hub->cache;
   my $cache_key = $self->cache_key;
@@ -103,6 +104,18 @@ sub _init_from_cache {
 
   $self->{$_} = $cached->{$_} for keys %$cached;
   return 1;
+}
+
+sub _save_to_cache {
+  ## @protected
+  my $self      = shift;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
+  my $keys      = $self->cacheable_keys;
+
+  return unless $cache && $cache_key && @$keys;
+
+  $cache->set($cache_key, { map { $_ => $self->{$_} } @$keys }, undef, $self->config_type, $self->species);
 }
 
 sub set_parameters {
@@ -468,25 +481,6 @@ sub share {
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
 
   return $user_settings;
-}
-
-sub save_to_cache {
-  my $self      = shift;
-  my $cache     = $self->hub->cache;
-  my $cache_key = $self->cache_key;
-
-  if ($cache && $cache_key) {
-    $self->_hide_user_data;
-
-    my $defaults = {
-      tree          => $self->{'tree'},
-      _parameters   => $self->{'_parameters'},
-      _extra_menus  => $self->{'_extra_menus'},
-    };
-
-    $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $self->species);
-    $self->_reveal_user_data;
-  }
 }
 
 1;
