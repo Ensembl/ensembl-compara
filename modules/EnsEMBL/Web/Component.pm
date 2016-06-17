@@ -69,7 +69,6 @@ sub new {
   };
   
   if ($hub) { 
-    $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache');
     $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   }
   
@@ -120,12 +119,19 @@ sub renderer {
   return $self->{'renderer'};
 }
 
-sub view_config { 
+sub view_config {
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
   my ($self, $type) = @_;
+
+  $type ||= $hub->type;
+
   unless ($self->{'view_config'}) {
-    $self->{'view_config'} = $self->hub->get_viewconfig($self->id, $type);
+    $self->{'view_config'} = $self->hub->get_viewconfig({
+      'component' => $self->id,
+      'type'      => $type,
+      'cache'     => $type eq $hub->type
+    });
   }
   return $self->{'view_config'};
 }
