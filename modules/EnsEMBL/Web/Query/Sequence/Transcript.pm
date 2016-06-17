@@ -12,55 +12,37 @@ our $VERSION = 1;
 sub precache {
   return {
     'seq-cdna-only' => {
-      loop => 'transcripts',
+      loop => ['species','transcripts'],
       args => {
         conseq_filter => ["off"],
         adorn => "only",
-        species => "Homo_sapiens",
         type => "core",
         config => {
           hide_long_snps => "",
-          number => 1,
           utr => 1,
-          transcript => 1,
           codons => 1,
-          exons_case => 0,
           hide_rare_snps => "off",
           translation => 1,
           exons => 1,
-          maintain_colour => 1,
           rna => 0,
-          line_numbering => "on",
-          species => "Homo_sapiens",
-          coding_seq => 1,
-          display_width => 60,
           snp_display => 1
         }
       }
     },
     'seq-cdna-none' => {
-      loop => 'transcripts',
+      loop => ['species','transcripts'],
       args => {
         conseq_filter => ["off"],
         adorn => "none",
-        species => "Homo_sapiens",
         type => "core",
         config => {
           hide_long_snps => "",
-          number => 1,
           utr => 1,
-          transcript => 1,
           codons => 1,
-          exons_case => 0,
           hide_rare_snps => "off",
           translation => 1,
           exons => 1,
-          maintain_colour => 1,
           rna => 0,
-          line_numbering => "on",
-          species => "Homo_sapiens",
-          coding_seq => 1,
-          display_width => 60,
           snp_display => 1
         }
       }
@@ -248,9 +230,9 @@ sub get {
   }   
   delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later
 
-  $config->{'length'}    = $length;
-  $config->{'seq_order'} = [ $config->{'species'} ];
-  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
+#  $config->{'length'}    = $length;
+#  $config->{'seq_order'} = [ $config->{'species'} ];
+#  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
 
   for (0..$length - 1) {
     # Set default vaules
@@ -323,7 +305,7 @@ sub get {
     foreach my $snp (reverse @{$self->_get_variation_data($args,$slice, $config->{'utr'}, $trans_strand,$args->{'conseq_filter'})}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
       next if $self->too_rare_snp($snp->{'vf'},$config);
-      next unless defined $snp->{'position'}; 
+      $snp->{'position'}||=0;
 
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
@@ -380,7 +362,8 @@ sub get {
 
   push @sequence, \@reference_seq;
   push @markup, $mk;
-  
+
+  my @seq_names;
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'snp_display') {
@@ -388,11 +371,14 @@ sub get {
         unshift @markup, {}; 
         unshift @{$config->{'seq_order'}}, $_->{'name'};
         unshift @{$config->{'slices'}}, {}; 
+        unshift @seq_names,$_->{'name'};
       } else {
         push @sequence, $_->{'seq'};
         push @markup, {}; 
         push @{$config->{'seq_order'}}, $_->{'name'};
-        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };      }
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
+        push @seq_names,$_->{'name'};
+      }
     }     
   }
  
@@ -425,7 +411,7 @@ sub get {
     $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
   }
  
-  return [{ sequence => \@sequence, markup => \@markup }];
+  return [{ sequence => \@sequence, markup => \@markup, names => \@seq_names, length => $length }];
 }
 
 1;

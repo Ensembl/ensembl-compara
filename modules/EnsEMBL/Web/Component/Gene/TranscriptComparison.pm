@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::TextSequence::View::TranscriptComparison;
+
 sub _init { $_[0]->SUPER::_init(100); }
 
 sub initialize {
@@ -61,6 +63,9 @@ sub initialize {
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_comparisons($sequence, $markup, $config);
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+
+  my $view = $self->view($config);
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   
   return ($sequence, $config);
 }
@@ -331,20 +336,14 @@ sub set_variations {
   }
 }
 
-sub get_key {
-  $_[1]->{'key'}{'exons/Introns'} = 1;
-  $_[1]->{'key'}{'exons'} = 0;
-  
-  return shift->SUPER::get_key($_[0], {
-    exons           => {},
-    'exons/Introns' => {
-      exon1           => { class => 'e1',     text => 'Translated sequence'  },
-      eu              => { class => 'eu',     text => 'UTR'                  },
-      intron          => { class => 'ei',     text => 'Intron'               },
-      exon0           => { class => 'e0',     text => 'Non-coding exon'      },
-      gene            => { class => 'eg',     text => 'Gene sequence'        },
-    }
-  }, $_[2]);
+sub make_view {
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::TranscriptComparison->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
 }
 
 1;

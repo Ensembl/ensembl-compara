@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet;
+
 sub initialize {
   my ($self, $export) = @_;
   my $hub        = $self->hub;
@@ -409,22 +411,20 @@ sub add_line_numbers {
   $config->{'last_number'} = $end;
 }
 
+sub make_view {
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
+}
+
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
   $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
-}
-
-sub get_key {
-  return shift->SUPER::get_key($_[0], {
-    'exons/Introns' => {
-      exon0    => { class => 'e0', text => 'Non-coding exon'     },
-      exon1    => { class => 'e1', text => 'Translated sequence' },
-      intron   => { class => 'ei', text => 'Intron sequence'     },
-      utr      => { class => 'eu', text => 'UTR'                 },
-      flanking => { class => 'ef', text => 'Flanking sequence'   },
-    }
-  }, $_[2]);
 }
 
 1;

@@ -289,10 +289,31 @@ sub loop_genome {
   foreach my $c (@$top) {
     my %out = %$args;
     $out{'slice'} = $c->name;
+    next unless $out{'slice'} =~ /:11:/; # XXX
     $out{'__name'} = $c->name;
     push @out,\%out;
-  } 
+  }
+  $self->get_defaults($args->{'species'},'core','MultiBottom');
   return \@out;
+}
+
+sub get_defaults {
+  my ($self,$species,$type,$view,$tables) = @_;
+
+  my $sd = $self->source('SpeciesDefs');
+  $tables ||= $sd->all_tables($species,$type);
+  my %out;
+  foreach my $table (@$tables) {
+    my $ti = $sd->table_info($species,$type,$table);
+    next unless $ti->{'analyses'};
+    foreach my $an (keys %{$ti->{'analyses'}}) {
+      next unless $ti->{'analyses'}{$an}{'disp'};
+      my $def = $ti->{'analyses'}{$an}{'web'}{'default'};
+      next unless $def and $def->{$view};
+      $out{$an} = $def->{$view};
+    }
+  }
+  return \%out;
 }
 
 1;

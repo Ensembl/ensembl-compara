@@ -10,16 +10,9 @@ our $VERSION = 1;
 sub precache {
   return {
     'av-gene' => {
-      loop => 'genes',
+      loop => ['species','genes'],
       args => {
         species => "Homo_sapiens",
-        type => "core",
-      }
-    },
-    'av-gene-hh' => {
-      loop => 'genes',
-      args => {
-        species => "Erinaceus_europaeus",
         type => "core",
       }
     },

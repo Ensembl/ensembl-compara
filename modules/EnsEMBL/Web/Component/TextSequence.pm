@@ -28,6 +28,7 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use HTML::Entities        qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Web::TextSequence::View;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -110,14 +111,6 @@ sub get_sequence_data {
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
- 
-  if($config->{'snp_display'} ne 'off') {
-    if($adorn eq 'none') {
-      push @{$config->{'loading'}||=[]},'variants';
-    } else {
-      push @{$config->{'loaded'}||=[]},'variants';
-    }
-  }
  
   $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
   
@@ -578,7 +571,7 @@ sub markup_codons {
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
       
       if ($class eq 'cu') {
-        $config->{'key'}{'utr'} = 1;
+        $config->{'key'}{'other'}{'utr'} = 1;
       } else {
         $config->{'key'}{'codons'}{$class} = 1;
       }
@@ -678,25 +671,7 @@ sub markup_conservation {
     }
   }
   
-  $config->{'key'}{'conservation'} = 1 if $conserved;
-}
-
-sub adseq_eq {
-  my ($a,$b) = @_;
-
-  return 1 if !defined $a and !defined $b;
-  return 0 if !defined $a or !defined $b;
-  foreach my $k (keys %$a) { return 0 unless exists $b->{$k}; }
-  foreach my $k (keys %$b) { return 0 unless exists $a->{$k}; }
-  foreach my $k (keys %$a) {
-    return 0 unless @{$a->{$k}} == @{$b->{$k}};
-    foreach my $i (0..$#{$a->{$k}}) {
-      return 0 if defined $a->{$k}[$i] and !defined $b->{$k}[$i];
-      return 0 if defined $b->{$k}[$i] and !defined $a->{$k}[$i];
-      return 0 unless $a->{$k}[$i] == $b->{$k}[$i];
-    }
-  }
-  return 1;
+  $config->{'key'}{'other'}{'conservation'} = 1 if $conserved;
 }
 
 sub markup_line_numbers {
@@ -841,286 +816,17 @@ sub markup_line_numbers {
  
   $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
-
-sub build_sequence {
-  my ($self, $sequence, $config, $exclude_key) = @_;
-  my $line_numbers   = $config->{'line_numbers'};
-  my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
-  my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
-  my $s              = 0;
-  my ($html, @output);
-
-  my $adorn = $self->hub->param('adorn') || 'none';
- 
-  my $adid = 0;
-  my $adoff = 0;
-  my %addata;
-  my %adlookup;
-  my %adlookid;
-  my %flourishes;
-
-  foreach my $lines (@$sequence) {
-    my %current  = ( tag => 'span', class => '', title => '', href => '' );
-    my %previous = ( tag => 'span', class => '', title => '', href => '' );
-    my %new_line = ( tag => 'span', class => '', title => '', href => '' );
-    my ($row, $pre, $post, $count, $i);
   
-    foreach my $seq (@$lines) {
-      my $style;
-      
-      my $adorn = (($addata{$adid}||=[])->[$adoff] = {});
-      $previous{$_}     = $current{$_} for keys %current;
-      $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
-      $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
-      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
-      $current{'letter'} = $seq->{'new_letter'};
+sub format_lines {
+  my ($self,$config,$output,$line_numbers) = @_;
 
-      if ($seq->{'class'}) {
-        $current{'class'} = $seq->{'class'};
-        chomp $current{'class'};
-        if ($seq->{'class'} =~ /\b(e\w)\b/) {
-        }
-
-        if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
-          $current{'class'} .= " $1";
-        }
-      } elsif($seq->{'tag'}) {
-        $current{'class'} = $seq->{'class'};
-      } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/) {
-        $current{'class'} = $1;
-      } else {
-        $current{'class'} = '';
-      }
-      
-      $post .= $seq->{'post'};
-      
-      if ($current{'class'}) {
-        my %style_hash;
-        
-        foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $current{'class'}) {
-          my $st = $class_to_style{$_}[1];
-          map $style_hash{$_} = $st->{$_}, keys %$st;
-        }
-        
-        $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
-      }
-    
-      foreach my $k (qw(style title href tag letter)) {
-        my $v = $current{$k};
-        $v = $style if $k eq 'style';
-        $v = $seq->{'tag'} if $k eq 'tag';
-        next unless $v;
-        $adlookup{$k} ||= {};
-        $adlookid{$k} ||= 1;
-        my $id = $adlookup{$k}{$v};
-        unless(defined $id) {
-          $id = $adlookid{$k}++;
-          $adlookup{$k}{$v} = $id;
-        }
-        $adorn->{$k} = $id;
-      }
- 
-      $row .= $seq->{'letter'};
-      $adoff++;
-      
-      $count++;
-      $i++;
-      
-      if ($count == $config->{'display_width'} || $i == scalar @$lines) {
-        if ($i == $config->{'display_width'} || $single_line) {
-        } else {
-          
-          if ($new_line{'class'} eq $current{'class'}) {
-          } elsif ($new_line{'class'}) {
-            my %style_hash;
-            
-            foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } split ' ', $new_line{'class'}) {
-              my $st = $class_to_style{$_}[1];
-              map $style_hash{$_} = $st->{$_}, keys %$st;
-            }
-            
-          }
-        }
-        
-        if ($config->{'comparison'}) {
-          if (scalar keys %{$config->{'padded_species'}}) {
-            $pre = $config->{'padded_species'}{$config->{'seq_order'}[$s]} || $config->{'display_species'};
-          } else {
-            $pre = $config->{'display_species'};
-          }
-          
-          $pre .= '  ';
-        }
-        
-        push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
-        
-        if($post) {
-          ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
-        }
-        $adid++;
-        
-        $new_line{$_} = $current{$_} for keys %current;
-        $count        = 0;
-        $row          = '';
-        $adoff        = 0;
-        $pre          = '';
-        $post         = '';
-      }
-    }
-    
-    $s++;
-  }
-
-  my %adref;
-  foreach my $k (keys %adlookup) {
-    $adref{$k} = [""];
-    $adref{$k}->[$adlookup{$k}->{$_}] = $_ for keys $adlookup{$k};
-  }
-
-  my %adseq;
-  foreach my $ad (keys %addata) {
-    $adseq{$ad} = {};
-    foreach my $k (keys %adref) {
-      $adseq{$ad}->{$k} = [];
-      foreach (0..@{$addata{$ad}}-1) {
-        $adseq{$ad}->{$k}[$_] = $addata{$ad}->[$_]{$k}//undef;
-      }
-    }
-  }
-
-  # We can fix this above and remove this hack when we've got the
-  # adorn system finished
-  foreach my $k (keys %adref) {
-    $adref{$k} = [ map { s/^\w+="(.*)"$/$1/s; $_; } @{$adref{$k}} ];
-  }
-
-  # RLE
-  foreach my $a (keys %adseq) {
-    foreach my $k (keys %{$adseq{$a}}) {
-      my @rle;
-      my $lastval;
-      foreach my $v (@{$adseq{$a}->{$k}}) {
-        $v = -1 if !defined $v;
-        if(@rle and $v == $lastval) {
-          if($rle[-1] < 0) { $rle[-1]--; } else { push @rle,-1; }
-        } elsif($v == -1) {
-          push @rle,undef;
-        } else {
-          push @rle,$v;
-        }
-        $lastval = $v;
-      }
-      pop @rle if @rle and $rle[-1] and $rle[-1] < 0;
-      if(@rle > 1 and !defined $rle[0] and defined $rle[1] and $rle[1]<0) {
-        shift @rle;
-        $rle[0]--;
-      }
-      if(@rle == 1 and !defined $rle[0]) {
-        delete $adseq{$a}->{$k};
-      } else {
-        $adseq{$a}->{$k} = \@rle;
-      }
-    }
-    delete $adseq{$a} unless keys %{$adseq{$a}};
-  }
-
-  # PREFIX
-  foreach my $k (keys %adref) {
-    # ... sort
-    my @sorted;
-    foreach my $i (0..$#{$adref{$k}}) {
-      push @sorted,[$i,$adref{$k}->[$i]];
-    }
-    @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
-    my %pmap; 
-    foreach my $i (0..$#sorted) {
-      $pmap{$sorted[$i]->[0]} = $i;
-    }
-    @sorted = map { $_->[1] } @sorted;
-    # ... calculate prefixes
-    my @prefixes;
-    my $prev = "";
-    my $prevlen = 0;
-    foreach my $s (@sorted) {
-      if($prev) {
-        my $match = "";
-        while(substr($s,0,length($match)) eq $match and 
-              length($match) < length($prev)) {
-          $match .= substr($prev,length($match),1);
-        }
-        my $len = length($match)-1;
-        push @prefixes,[$len-$prevlen,substr($s,length($match)-1)];
-        $prevlen = $len;
-      } else {
-        push @prefixes,[-$prevlen,$s];
-        $prevlen = 0;
-      }
-      $prev = $s; 
-    } 
-    # ... fix references
-    foreach my $a (keys %adseq) {
-      next unless $adseq{$a}->{$k};
-      my @seq;
-      foreach my $v (@{$adseq{$a}->{$k}}) {
-        if(defined $v) {
-          if($v>0) {
-            push @seq,$pmap{$v};
-          } else {
-            push @seq,$v;
-          }
-        } else {
-          push @seq,undef;
-        }
-      }
-      $adseq{$a}->{$k} = \@seq;
-      $adref{$k} = \@prefixes;
-    }
-  }
-
-  my (@adseq_raw,@adseq);
-  foreach my $k (keys %adseq) { $adseq_raw[$k] = $adseq{$k}; }
-  my $prev;
-  foreach my $i (0..$#adseq_raw) {
-    if($i and adseq_eq($prev,$adseq_raw[$i])) {
-      if(defined $adseq[-1] and !ref($adseq[-1])) { $adseq[-1]--; } else { push @adseq,-1; }
-    } else {
-      $prev = $adseq_raw[$i];
-      push @adseq,$prev;
-    }
-  }
-  
-  my $key = $self->get_key($config,undef,1);
-
-  # Put things not in a type into a 'other' type
-  $key->{'other'} ||= {};
-  foreach my $k (keys %$key) {
-    next if $k eq '_messages';
-    if($key->{$k}{'class'}) {
-      $key->{'other'}{$k} = $key->{$k};
-      delete $key->{$k};
-    }
-  }
-
-  if($adorn eq 'only') {
-    $key->{$_}||={} for @{$config->{'loading'}||[]};
-  }
-  $key->{$_}||={} for @{$config->{'loaded'}||[]};
-
-  my $adornment = {
-    seq => \@adseq,
-    ref => \%adref,
-    flourishes => \%flourishes,
-    legend => $key,
-    loading => $config->{'loading'}||[],
-  };
-  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
-
-  my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
+  my $html = "";
+  my $length = $output->[0] ? scalar @{$output->[0]} - 1 : 0;
   
   for my $x (0..$length) {
     my $y = 0;
     
-    foreach (@output) {
+    foreach (@$output) {
       my $line = $_->[$x]{'line'};
       my $adid = $_->[$x]{'adid'};
       $line =~ s/".*?"//sg;
@@ -1155,6 +861,94 @@ sub build_sequence {
     
     $html .= $config->{'v_space'};
   }
+  return $html;
+}
+
+sub make_view { # For IoC: override me if you want to
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
+}
+
+sub view {
+  my ($self,$config) = @_;
+
+  return ($self->{'view'} ||= $self->make_view($config));
+}
+
+sub panel {
+  my ($self,$key,$output,$adornment) = @_;
+
+  my $random_id = random_string(8);
+  my $id = $self->id;
+
+  return qq(
+    <div class="js_panel" id="$random_id">
+      $key
+      <div class="adornment">
+        <span class="adornment-data" style="display:none;">
+          $adornment
+        </span>
+        $output
+      </div>
+      <input type="hidden" class="panel_type" value="TextSequence"
+             name="panel_type_$id" />
+    </div>
+  );
+}
+
+sub build_sequence {
+  my ($self, $sequence, $config, $exclude_key) = @_;
+  my $line_numbers   = $config->{'line_numbers'};
+  my (@output);
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+ 
+  my $view = $self->view($config);
+  $view->legend->final if $adorn ne 'none';
+
+  foreach my $lines (@$sequence) {
+    my $tseq = $view->new_sequence;
+
+    # Species names at start of line
+    if ($config->{'comparison'}) {
+      if (scalar keys %{$config->{'padded_species'}}) {
+        $tseq->pre($config->{'padded_species'}{$config->{'seq_order'}[$view->seq_num]} || $config->{'display_species'});
+      } else {
+        $tseq->pre($config->{'display_species'});
+      }
+      $tseq->pre('  '); 
+    }
+
+    my $line;
+    foreach my $seq (@$lines) {
+      $line = $tseq->new_line if !$line;
+      $line->add_post($seq->{'post'});
+      $line->add_letter($seq->{'letter'}); 
+      $line->adorn_classes($seq->{'class'},!$seq->{'tag'},$config);
+      $line->adorn('title',$seq->{'title'}||'');
+      $line->adorn('href',$seq->{'href'}||'');
+      $line->adorn('tag',$seq->{'tag'});
+      $line->adorn('letter',$seq->{'new_letter'}||'');
+
+      if ($line->full) {
+        $line->add;
+        $line = undef;
+      }
+    }
+    $line->add if $line;
+  }
+
+  $view->legend->compute_legend($self->hub,$config);
+
+  $view->more($self->hub->apache_handle->unparsed_uri) if $adorn eq 'none';
+  my $adornment = $view->data;
+  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
+  my $html = $self->format_lines($config,$view->output,$line_numbers);
   
   $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
   $config->{'html_template'} = sprintf $config->{'html_template'}, $html;
@@ -1171,50 +965,16 @@ sub build_sequence {
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
 
-  my $random_id = random_string(8);
 
   my $key_html = '';
   unless($exclude_key) {
     $key_html = qq(<div class="_adornment_key adornment-key"></div>);
   }
 
-  my $id = $self->id;
-  my $panel_type = qq(<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_$id" />);
-  if($adorn eq 'none') {
-    my $ajax_url = $self->hub->apache_handle->unparsed_uri;
-    my ($path,$params) = split(/\?/,$ajax_url,2);
-    my @params = split(/;/,$params);
-    for(@params) { $_ = 'adorn=only' if /^adorn=/; }
-    $ajax_url = $path.'?'.join(';',@params,'adorn=only');
-    my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
-    return qq(
-      <div class="js_panel" id="$random_id">
-        $key_html
-        <div class="adornment">
-          <span class="adornment-data" style="display:none;">
-            $ajax_json
-          </span>
-          $config->{'html_template'}
-        </div>
-        $panel_type
-      </div>
-    );
-
-  } elsif($adorn eq 'only') {
+  if($adorn eq 'only') {
     return qq(<div><span class="adornment-data">$adornment_json</span></div>);
   } else {
-    return qq(
-      <div class="js_panel" id="$random_id">
-        $key_html
-        <div class="adornment">
-          <span class="adornment-data" style="display:none;">
-            $adornment_json
-          </span>
-          $config->{'html_template'}
-        </div>
-        $panel_type
-      </div>
-    );
+    return $self->panel($key_html,$config->{'html_template'},$adornment_json);
   }
 }
 
@@ -1240,193 +1000,6 @@ sub chunked_content {
   }
 
   return $html;
-}
-
-sub class_to_style {
-  my $self = shift;
-  
-  if (!$self->{'class_to_style'}) {
-    my $hub          = $self->hub;
-    my $colourmap    = $hub->colourmap;
-    my $species_defs = $hub->species_defs;
-    my $styles       = $species_defs->colour('sequence_markup');
-    my $var_styles   = $species_defs->colour('variation');
-    my $i            = 1;
-   
-    my %class_to_style = (
-      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
-      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
-      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}{'default'}" } ],
-      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}" } ],
-      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}{'default'}" } ],
-      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}{'default'}" } ],
-      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}{'default'}" } ],
-      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}{'default'}" } ],
-      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}{'default'}" } ],
-      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}{'default'}", 'font-weight' => 'bold' } ],
-      ei   => [ $i++, { 'color' => "#$styles->{'SEQ_INTRON'}{'default'}" } ],
-      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}{'default'}" } ],
-      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}{'default'}" } ],
-      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}{'default'}" } ],
-      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
-      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
-      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ],
-      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
-    );
-
-    foreach (keys %$var_styles) {
-      my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
-      
-      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'label'}) if $var_styles->{$_}{'label'};
-      
-      $class_to_style{$_} = [ $i++, $style ];
-    }
-    
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}{'default'}", 'background-color' => '#FFFFFF', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
-    
-    $self->{'class_to_style'} = \%class_to_style;
-  }
-  
-  return $self->{'class_to_style'};
-}
-
-my $cm = EnsEMBL::Draw::Utils::ColourMap->new();
-
-sub col_to_hex {
-  my ($col) = @_;
-
-  return undef unless $col;
-  return $cm->hex_by_name($col);
-}
-
-sub content_key {
-  my $self   = shift;
-  my $config = shift || {};
-  my $hub    = $self->hub;
-  
-  $config->{'site_type'} = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  
-  for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency consequence_filter)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
-  }
-  
-  $config->{'key'}{$_} = $hub->param($_) for @{$self->{'key_types'}};
-  
-  for my $p (grep $hub->param($_), qw(exons variants)) {
-    $config->{'key'}{$p}{$_} = 1 for $hub->param($p);
-  }
-
-  return $self->get_key($config);
-}
-
-sub get_key {
-  my ($self, $config, $k,$newkey) = @_;
-  my $hub            = $self->hub;
-  my $class_to_style = $self->class_to_style;
-  my $image_config   = $hub->get_imageconfig('text_seq_legend');
-  my $var_styles     = $hub->species_defs->colour('variation');
-  my $strain         = $hub->species_defs->translate('strain') || 'strain';
- 
-  my $exon_type;
-     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
-     $exon_type = ucfirst $exon_type;
-  
-  my %key = (
-    utr          => { class => 'cu',  text => 'UTR'                          },
-    conservation => { class => 'con', text => 'Conserved regions'            },
-    difference   => { class => 'dif', text => 'Differs from primary species' },
-    align_change => { class => 'end', text => 'Start/end of aligned region'  },
-    codons       => {
-      co => { class => 'co', text => 'START/STOP codons'  },
-      c0 => { class => 'c0', text => 'Alternating codons' },
-      c1 => { class => 'c1', text => 'Alternating codons' },
-    },
-    exons       => {
-      exon0   => { class => 'e0', text => 'Alternating exons'                                  },
-      exon1   => { class => 'e1', text => 'Alternating exons'                                  },
-      exon2   => { class => 'e2', text => 'Residue overlap splice site'                        },
-      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
-      other   => { class => 'eo', text => "$exon_type exons"                                   },
-      compara => { class => 'e2', text => "$exon_type exons"                                   }
-    }
-  );
- 
-  if ($config->{'exons_case'}) {
-    $key{'exons'}->{'exon0'}{'text'} = 'ALTERNATING EXONS';
-    $key{'exons'}->{'exon1'} = {'text' => 'alternating exons',
-                                'class' => 'el'};
-  }
-   
-  %key = (%key, %$k) if $k;
- 
- 
-  foreach my $type (keys %key) {
-    if ($key{$type}{'class'}) {
-      my $style = $class_to_style->{$key{$type}{'class'}}[1];
-      $key{$type}{'default'} = $style->{'background-color'};
-      $key{$type}{'label'}   = $style->{'color'};
-    } else {
-      foreach (values %{$key{$type}}) {
-        my $style = $class_to_style->{$_->{'class'}}[1];
-        
-        $_->{'default'} = $style->{'background-color'};
-        $_->{'label'}   = $style->{'color'};
-      }
-    }
-  }
-  
-  $key{'variants'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  $key{'variants'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
-
-  my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
-
-  if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'variants'}{'focus'} = {
-      class     => 'focus',
-      label     => 'red',
-      default   => 'white',
-      text      => 'Focus variant',
-      title     => "The Focus variant corresponds to the current variant$example",
-      extra_css => 'text-decoration: underline; font-weight: bold;',
-    };
-  }
- 
-  foreach my $type (keys %key) {
-    my @each = ($key{$type});
-    @each = values %{$key{$type}} unless($key{$type}->{'class'});
-    foreach my $v (@each) {
-      foreach my $t (qw(default label)) {
-        next unless $v->{$t};
-        $v->{$t} = col_to_hex($v->{$t});
-      }
-    }
-  }
-
-  foreach my $type (keys %{$config->{'key'}}) {
-    if (ref $config->{'key'}{$type} eq 'HASH') {
-      $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
-    } elsif ($config->{'key'}{$type}) {
-      $image_config->{'legend'}{$type} = $key{$type};
-    }
-  }
-
-  my @messages;
-
-  push @messages,"Displaying variants for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
-  push @messages,'Variants are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
-  push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                            if $config->{'key'}{'conservation'};
-  push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'  if $config->{'alignment_numbering'};
-  push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",
-               "<code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)"         if $config->{'match_display'};
-  push @messages,'<code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position'                                              if $config->{'resequencing'};
-     '<code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)',
-               '<code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)'                                           if $config->{'resequencing'} && !$config->{'match_display'};
-
-  $image_config->{'legend'}{'_messages'}= \@messages;
-
-  return $image_config->{'legend'};
 }
 
 1;

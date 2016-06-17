@@ -37,9 +37,8 @@ sub fixup {
 sub precache {
   return {
     '1kgindels' => {
-      loop => 'genome',
+      loop => ['species','genome'],
       args => {
-        species => 'Homo_sapiens',
         id => 'variation_set_1kg_3',
         config => {
           no_label => 1,
@@ -52,9 +51,8 @@ sub precache {
       }
     },
     'ph-short' => {
-      loop => 'genome',
+      loop => ['species','genome'],
       args => {
-        'species' => 'Homo_sapiens',
         'id' => 'variation_set_ph_variants',
         'config' => {
           'no_label' => 1,
@@ -219,6 +217,7 @@ sub fetch_features {
       my $short_name = ($args->{'config'}{'sets'})->[0];
       my $track_set  = $set_name;
       my $set_object = $vdb->get_VariationSetAdaptor->fetch_by_short_name($short_name);
+      return [] unless $set_object;
        
       # Enable the display of failed variations in order to display the failed variation track
       $vdb->include_failed_variations(1) if $track_set =~ /failed/i;
