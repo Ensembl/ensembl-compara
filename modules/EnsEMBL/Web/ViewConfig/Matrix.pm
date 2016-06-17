@@ -357,7 +357,7 @@ sub init_form {
     @headers_html
   );
   
-  $self->get_form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });
+  $self->form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });
 }
 
 1;

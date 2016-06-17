@@ -83,7 +83,7 @@ sub form_fields {
   $self->add_variation_options($markup_options, { populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', caption => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
  
   ## THIS DOESN'T SEEM TO HAVE ANY EFFECT! 
-  #$_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};
+  #$_->set_flag($self->SELECT_ALL_FLAG) for @{$self->form->fieldsets};
 
   foreach ($self->field_order) {
     next unless $markup_options->{$_};

@@ -72,7 +72,7 @@ sub init_form {
   my $slice               = $object->slice;
   my $form_action         = $hub->url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
-  my $form                = $self->get_form;
+  my $form                = $self->form;
   
   $form->set_attributes({
     action => $form_action->[0],

@@ -121,7 +121,7 @@ sub init_config {
     }
   }
   
-  my $form = $view_config->get_form;
+  my $form = $view_config->form;
   
   if ($hub->param('partial')) {
     $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};

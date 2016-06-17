@@ -33,7 +33,7 @@ sub init_form {
   my $hub     = $self->hub;
   my $view    = $hub->type . '/ExternalData';
   
-  $self->get_form->force_reload_on_submit if $hub->param('reset');
+  $self->form->force_reload_on_submit if $hub->param('reset');
 }
 
 1;
