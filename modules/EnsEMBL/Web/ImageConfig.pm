@@ -2813,6 +2813,8 @@ sub add_regulation_builds {
 
   return unless $db;
 
+  use Data::Dumper;
+
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
 
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
@@ -2860,20 +2862,27 @@ sub add_regulation_builds {
     }
   }
 
-  foreach my $cell_line (@cell_lines) {
-    ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $core_sets     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
-    my $non_core_sets = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
-    #warn ">>> CELL LINE $cell_line";
-    #warn "... CORE ".Dumper($core_sets);
-    #warn "... NON CORE ".Dumper($non_core_sets);
-    my @sets;
+  my $flag = 0;
 
-    push @sets, 'core'     if scalar keys %$core_sets && scalar keys %$core_sets <= scalar keys %$non_core_sets;
-    push @sets, 'non_core' if scalar keys %$non_core_sets != scalar keys %$core_sets;
+  foreach my $cell_line (@cell_lines) {
+    #$flag = $cell_line eq 'K562' ? 1 : 0;
+    ### Add tracks for cell_line peaks and wiggles only if we have data to display
+    my $set_info;
+    $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
+    $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
+    #if ($flag) {
+    #  warn "\n\n##################### CELL LINE $cell_line";
+    #  warn "... SETS ".Dumper($set_info);
+    #}
+    my @sets;
+    my $core_count      = scalar keys %{$set_info->{'core'}};
+    my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
+
+    push @sets, 'core'     if $core_count && $core_count <= $non_core_count;
+    push @sets, 'non_core' if $non_core_count != $core_count;
 
     foreach my $set (@sets) {
-      #warn ">>> MATRIX FOR $set";
+      #warn ">>> MATRIX FOR $set" if $flag;
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
         menu   => 'matrix',
         url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
@@ -2886,11 +2895,18 @@ sub add_regulation_builds {
       }];
 
       foreach (@{$all_types{$set}||[]}) {
-        #warn ">>> CLASS $_, DB ID ".$_->dbID;
-        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $non_core_sets->{$_->dbID};
+        if ($set_info->{$set}{$_->dbID}) {
+         #warn sprintf('>>> %s (%s) = %s', $_->name, $_->class, $_->dbID) if $flag;
+          $matrix_rows{$cell_line}{$set}{$_->name} ||= {  
+                            row         => $_->name, 
+                            group       => $_->class, 
+                            group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, 
+                            on          => $default_evidence_types{$_->name} 
+                          };
+        }
       }
-      #warn Dumper(\%matrix_rows);
     }
+    #warn Dumper($matrix_rows{$cell_line}) if $flag;
   }
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
