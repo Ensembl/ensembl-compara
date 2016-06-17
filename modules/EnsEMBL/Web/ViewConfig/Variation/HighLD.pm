@@ -33,7 +33,7 @@ sub init {
     min_p_log       => 0
   });
 
-  $self->title = 'Linkage disequilibrium';
+  $self->title('Linkage disequilibrium');
 }
 
 sub form {

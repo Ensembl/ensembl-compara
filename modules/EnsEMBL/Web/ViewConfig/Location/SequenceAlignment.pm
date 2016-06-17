@@ -47,7 +47,7 @@ sub init {
     %strains
   });
 
-  $self->title = 'Resequencing';
+  $self->title('Resequencing');
 }
 
 sub form {

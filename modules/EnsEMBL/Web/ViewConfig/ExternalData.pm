@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->code = $self->type . '::ExternalData';
-  $self->title = 'External Data';
+  $self->title('External Data');
 }
 
 sub form {

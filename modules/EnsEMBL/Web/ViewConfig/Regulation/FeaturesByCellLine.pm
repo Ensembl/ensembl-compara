@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Regulation::Page);
 
 sub init {
   my $self = shift;
-  $self->title = 'Details by cell type';
+  $self->title('Details by cell type');
   $self->image_config_type('regulation_view');
   $self->set_defaults({ opt_highlight => 'yes', context => 200 });
 }

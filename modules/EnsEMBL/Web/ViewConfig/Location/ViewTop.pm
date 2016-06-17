@@ -31,7 +31,7 @@ sub init {
   });
   
   $self->image_config_type('contigviewtop');
-  $self->title = 'Overview Image';
+  $self->title('Overview Image');
 }
 
 sub form {

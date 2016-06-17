@@ -33,7 +33,7 @@ sub init {
   });
 
   $self->image_config_type('reg_summary_page');
-  $self->title = 'Summary';
+  $self->title('Summary');
 }
 
 sub form {

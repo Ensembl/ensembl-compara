@@ -37,7 +37,7 @@ sub init {
     line_numbering => 'on',
   });
   
-  $self->title = 'cDNA sequence';
+  $self->title('cDNA sequence');
   $self->SUPER::init;
 }
 

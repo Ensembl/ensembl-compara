@@ -36,7 +36,7 @@ sub init {
     line_numbering => 'sequence'
   });
 
-  $self->title = 'Sequence';
+  $self->title('Sequence');
   $self->SUPER::init;
 }
 

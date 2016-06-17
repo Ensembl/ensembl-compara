@@ -30,7 +30,7 @@ sub init {
   });
   
   $self->image_config_type('MultiTop');
-  $self->title = 'Comparison Overview';
+  $self->title('Comparison Overview');
   
   $self->set_defaults({
     opt_join_genes_top => 'off',

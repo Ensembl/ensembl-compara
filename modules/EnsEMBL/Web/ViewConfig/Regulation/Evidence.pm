@@ -29,7 +29,7 @@ sub init {
     show_bottom_panel => 'yes'
   });
   
-  $self->title = 'Cell types';
+  $self->title('Cell types');
 }
 
 sub form {

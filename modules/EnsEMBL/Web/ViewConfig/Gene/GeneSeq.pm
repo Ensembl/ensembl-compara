@@ -28,7 +28,7 @@ sub init {
   my $self = shift;
   
   $self->SUPER::init;
-  $self->title = 'Sequence';
+  $self->title('Sequence');
   
   $self->set_defaults({
     flank5_display => 600,

@@ -34,7 +34,7 @@ sub init {
   });
   
   $self->code  = 'Gene::Family';
-  $self->title = 'Ensembl protein families';
+  $self->title('Ensembl protein families');
 }
 
 sub form {

@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->image_config_type('lrg_summary');
-  $self->title = 'Summary';
+  $self->title('Summary');
 }
 
 1;

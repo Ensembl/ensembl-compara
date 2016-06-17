@@ -38,7 +38,7 @@ sub init {
     flank5_display => 0,
   });
 
-  $self->title = 'Transcript comparison';
+  $self->title('Transcript comparison');
 }
 
 sub extra_tabs {

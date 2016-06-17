@@ -37,7 +37,7 @@ sub init {
   });
 
 
-  $self->title = 'Exons';
+  $self->title('Exons');
   $self->SUPER::init;
 }
 

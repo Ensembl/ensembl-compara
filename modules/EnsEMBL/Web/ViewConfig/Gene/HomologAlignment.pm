@@ -34,7 +34,7 @@ sub init {
     text_format => 'clustalw',
   });
 
-  $self->title = 'Homologs';
+  $self->title('Homologs');
 }
 
 sub form {

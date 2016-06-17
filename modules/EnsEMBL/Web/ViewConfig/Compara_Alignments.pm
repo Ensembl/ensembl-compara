@@ -55,7 +55,7 @@ sub init {
   });
   
   $self->code  = $self->type . '::Compara_Alignments';
-  $self->title = 'Alignments';
+  $self->title('Alignments');
 }
 
 sub form {

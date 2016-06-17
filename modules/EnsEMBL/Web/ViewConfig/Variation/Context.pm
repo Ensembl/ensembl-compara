@@ -36,7 +36,7 @@ sub init {
 	
   $self->set_defaults($defaults);
   $self->image_config_type('snpview');
-  $self->title = 'Genomic context';
+  $self->title('Genomic context');
 }
 
 sub form {

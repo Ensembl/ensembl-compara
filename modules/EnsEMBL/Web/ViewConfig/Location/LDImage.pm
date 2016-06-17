@@ -36,7 +36,7 @@ sub init {
   
   $self->set_defaults($defaults);
   $self->image_config_type('ldview');
-  $self->title = 'Linkage Disequilibrium'; 
+  $self->title('Linkage Disequilibrium');
 }
 
 sub extra_tabs {

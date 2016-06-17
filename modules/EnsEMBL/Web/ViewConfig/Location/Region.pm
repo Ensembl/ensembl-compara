@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->image_config_type('cytoview');
-  $self->title = 'Region Overview';
+  $self->title('Region Overview');
 }
 
 1;

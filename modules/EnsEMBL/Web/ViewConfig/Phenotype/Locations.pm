@@ -27,7 +27,7 @@ sub init {
   
   $self->SUPER::init(@_);
   $self->image_config_type('VPhenotype');
-  $self->title = 'Location on Genome';
+  $self->title('Location on Genome');
 }
 
 1;

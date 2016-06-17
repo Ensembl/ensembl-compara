@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->title = 'Region Image';
+  $self->title('Region Image');
   $self->image_config_type('contigviewbottom');
 }
 

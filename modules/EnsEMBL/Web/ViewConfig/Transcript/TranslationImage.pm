@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->image_config_type('protview');
-  $self->title = 'Protein summary';
+  $self->title('Protein summary');
 }
 
 1;

@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
   
   $self->image_config_type('chromosome');
-  $self->title = 'Chromosome Image';
+  $self->title('Chromosome Image');
 }
 
 1;

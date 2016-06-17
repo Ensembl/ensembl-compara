@@ -32,7 +32,7 @@ sub init {
     number      => 'off'
   });
 
-  $self->title = 'Protein Sequence';
+  $self->title('Protein Sequence');
   $self->SUPER::init;
 }
 

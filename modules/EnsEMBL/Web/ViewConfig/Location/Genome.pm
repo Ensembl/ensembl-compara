@@ -27,7 +27,7 @@ sub init {
   
   $self->SUPER::init(@_);
   $self->image_config_type('Vkaryotype');
-  $self->title = 'Genome';
+  $self->title('Genome');
 }
 
 1;

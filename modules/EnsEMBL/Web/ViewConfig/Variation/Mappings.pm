@@ -29,7 +29,7 @@ sub init {
     motif_scores       => 'no'
   });
 
-  $self->title = 'Genes and regulation';
+  $self->title('Genes and regulation');
 }
 
 sub form {

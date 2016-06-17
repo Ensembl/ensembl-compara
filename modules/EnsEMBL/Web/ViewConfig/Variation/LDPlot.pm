@@ -41,7 +41,7 @@ sub init {
  
   $self->set_defaults($defaults);
   $self->image_config_type('ldmanplot');
-  $self->title = 'Manhattan Plot'; 
+  $self->title('Manhattan Plot');
 }
 
 sub extra_tabs {

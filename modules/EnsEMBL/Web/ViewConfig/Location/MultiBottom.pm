@@ -30,7 +30,7 @@ sub init {
   });
   
   $self->image_config_type('MultiBottom');
-  $self->title = 'Comparison Image';
+  $self->title('Comparison Image');
   
   $self->set_defaults({
     opt_pairwise_blastz   => 'normal',

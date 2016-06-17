@@ -34,7 +34,7 @@ sub init {
     select_sequence => 'both',
   });
 
-  $self->title = 'Flanking sequence';
+  $self->title('Flanking sequence');
 }
 
 sub field_order {
