@@ -33,7 +33,7 @@ sub init {
     map({ 'opt_'     . lc($_) => 'yes' } keys %formats)
   });
   
-  $self->code  = 'Gene::Family';
+  $self->code('Gene::Family');
   $self->title('Ensembl protein families');
 }
 

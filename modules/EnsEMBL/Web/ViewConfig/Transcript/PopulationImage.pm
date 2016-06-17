@@ -54,7 +54,7 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  $self->code  = 'Transcript::SNPView';
+  $self->code('Transcript::SNPView');
   $self->title('Population comparison');
 }
 

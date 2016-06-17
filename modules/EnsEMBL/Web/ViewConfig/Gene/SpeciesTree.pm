@@ -33,7 +33,7 @@ sub init {
      
   $self->set_defaults($defaults);
   $self->image_config_type('speciestreeview');
-  $self->code  = join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};  
+  $self->code(join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'});
   $self->title('Species Tree');
 }
 
