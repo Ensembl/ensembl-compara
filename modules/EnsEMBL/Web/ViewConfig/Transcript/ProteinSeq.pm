@@ -39,7 +39,7 @@ sub init {
 sub field_order {
   my $self = shift;
   my @order = qw(display_width exons exons_case);
-  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
+  push @order, $self->variation_fields;
   push @order, 'number';
   return @order;
 }

@@ -72,7 +72,6 @@ sub init_form {
 
 sub field_order {
   my $self = shift;
-  my $dbs   = $self->species_defs->databases;
   my @order;
   if (!$self->{'species_only'}) {
     if (!$self->{'no_flanking'}) {
@@ -81,7 +80,7 @@ sub field_order {
     push @order, qw(display_width);
     push @order, qw(strand) if $self->{'strand_option'};
     push @order, qw(exon_display exon_ori);
-    push @order, $self->variation_fields if $dbs->{'DATABASE_VARIATION'};
+    push @order, $self->variation_fields;
     push @order, qw(line_numbering codons_display conservation_display region_change_display title_options);
   }
   return @order;

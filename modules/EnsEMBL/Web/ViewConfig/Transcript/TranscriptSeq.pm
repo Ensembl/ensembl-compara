@@ -44,7 +44,7 @@ sub init {
 sub field_order {
   my $self = shift;
   my @order = qw(exons exons_case codons utr coding_seq translation rna);
-  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
+  push @order, $self->variation_fields;
   push @order, qw(line_numbering);
   return @order;
 }
