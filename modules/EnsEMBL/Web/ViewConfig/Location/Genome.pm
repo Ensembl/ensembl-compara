@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Karyotype);
 
 sub init {
   my $self = shift;
-  
+
   $self->SUPER::init(@_);
   $self->image_config_type('Vkaryotype');
   $self->title('Genome');

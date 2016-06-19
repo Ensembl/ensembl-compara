@@ -28,10 +28,10 @@ sub init {
   $self->set_defaults({
     show_bottom_panel => 'yes'
   });
-  
+
   $self->image_config_type('MultiBottom');
   $self->title('Comparison Image');
-  
+
   $self->set_defaults({
     opt_pairwise_blastz   => 'normal',
     opt_pairwise_tblat    => 'normal',
@@ -43,7 +43,7 @@ sub init {
 sub extra_tabs {
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return [
     'Select species or regions',
     $hub->url('Component', {
@@ -57,9 +57,9 @@ sub extra_tabs {
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_fieldset('Comparative features');
-  
+
   foreach ([ 'blastz', 'BLASTz/LASTz net pairwise alignments' ], [ 'tblat', 'Translated BLAT net pairwise alignments' ], [ 'lpatch', 'LASTz patch alignments' ]) {
     $self->add_form_element({
       type   => 'DropDown',
@@ -73,16 +73,16 @@ sub init_form {
       ],
     });
   }
-  
+
   $self->add_form_element({
     type  => 'CheckBox',
     label => 'Join genes',
     name  => 'opt_join_genes_bottom',
     value => 'on',
   });
-  
+
   $self->add_fieldset('Display options');
-  
+
   $self->add_form_element({ type => 'YesNo', name => 'show_bottom_panel', select => 'select', label => 'Show panel' });
 }
 

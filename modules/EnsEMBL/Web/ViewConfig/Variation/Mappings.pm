@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  
+
   $self->set_defaults({
     motif_scores       => 'no'
   });
@@ -34,7 +34,7 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   if ($self->hub->species =~ /homo_sapiens|mus_musculus/i) {
     $self->add_form_element({
       type  => 'CheckBox',

@@ -33,7 +33,7 @@ sub init {
     my %hash = %{$options{$_}};
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
-  
+
   $self->set_defaults($defaults);
   $self->image_config_type('ldview');
   $self->title('Linkage Disequilibrium');
@@ -42,7 +42,7 @@ sub init {
 sub extra_tabs {
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return [
     'Select populations',
     $hub->url('Component', {

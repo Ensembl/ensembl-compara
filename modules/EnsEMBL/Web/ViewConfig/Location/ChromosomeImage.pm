@@ -22,7 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
-sub init {  
+sub init {
   my $self = shift;
   $self->image_config_type('Vmapview');
   $self->title('Chromosome Image');

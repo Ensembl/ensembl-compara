@@ -25,8 +25,8 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self     = shift;
   my $analyses = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'} || {};
-  
-  $self->set_defaults({    
+
+  $self->set_defaults({
     context     => 200,
     opt_focus   => 'yes',
     map {( "opt_ft_$_" => 'on' )} keys %$analyses
@@ -37,10 +37,10 @@ sub init {
 }
 
 sub init_form {
-  my $self = shift;  
-  
+  my $self = shift;
+
   $self->add_fieldset('Display options');
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
@@ -57,7 +57,7 @@ sub init_form {
       { value => 5000, caption => '5000bp' }
     ]
   });
-  
+
   $self->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' });
 }
 

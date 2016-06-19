@@ -31,9 +31,9 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_fieldset('Display options');
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
@@ -50,7 +50,7 @@ sub init_form {
       { value => 5000, caption => '5000bp' }
     ]
   });
-  
+
   $self->add_form_element({ type => 'YesNo', name => 'opt_highlight', select => 'select', label => 'Highlight core region' });
 }
 

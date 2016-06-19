@@ -47,12 +47,12 @@ sub init {
 
   foreach (keys %options) {
     my %hash = %{$options{$_}};
-    
+
     foreach my $key (keys %hash){
       $defaults->{lc $key} = $hash{$key}[0];
     }
   }
-  
+
   $self->set_defaults($defaults);
   $self->code('Transcript::SNPView');
   $self->title('Population comparison');
@@ -88,23 +88,23 @@ sub init_form {
 
   # Add source selection
   $self->add_fieldset('Variation source');
-  
+
   foreach (sort keys %{$self->hub->table_info('variation', 'source')->{'counts'}}) {
     my $name = 'opt_' . lc $_;
     $name    =~ s/\s+/_/g;
-    
+
     $self->add_form_element({
-      type  => 'CheckBox', 
+      type  => 'CheckBox',
       label => $_,
       name  => $name,
       value => 'on',
       raw   => 1
     });
   }
-  
+
   # Add class selection
   $self->add_fieldset('Variation class');
-  
+
   foreach (keys %class) {
     $self->add_form_element({
       type  => 'CheckBox',
@@ -114,10 +114,10 @@ sub init_form {
       raw   => 1
     });
   }
-  
+
   # Add type selection
   $self->add_fieldset('Consequence type');
-  
+
   foreach (keys %type) {
     $self->add_form_element({
       type  => 'CheckBox',
@@ -130,7 +130,7 @@ sub init_form {
 
   # Add selection
   $self->add_fieldset('Consequence options');
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select =>, 'select',
@@ -140,8 +140,8 @@ sub init_form {
       { value => 'label',   caption => 'Sequence Ontology terms' },
       { value => 'display', caption => 'Old Ensembl terms'       },
     ]
-  });  
-  
+  });
+
   # Add context selection
   $self->add_fieldset('Intron Context');
 

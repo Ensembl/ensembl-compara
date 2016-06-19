@@ -32,7 +32,7 @@ sub init_form {
   my $self    = shift;
   my $hub     = $self->hub;
   my $view    = $hub->type . '/ExternalData';
-  
+
   $self->form->force_reload_on_submit if $hub->param('reset');
 }
 

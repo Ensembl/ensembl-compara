@@ -38,7 +38,7 @@ sub init {
   $defaults->{'ld_type'} = 'r2';
   $defaults->{'r2_mark'} = 0.8;
   $defaults->{'d_prime_mark'} = 0.8;
- 
+
   $self->set_defaults($defaults);
   $self->image_config_type('ldmanplot');
   $self->title('Manhattan Plot');
@@ -47,7 +47,7 @@ sub init {
 sub extra_tabs {
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return [
     'Select populations',
     $hub->url('Component', {

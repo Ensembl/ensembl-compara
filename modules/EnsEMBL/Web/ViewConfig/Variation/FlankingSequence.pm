@@ -27,7 +27,7 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 sub init {
   my $self = shift;
   $self->SUPER::init;
-  
+
   $self->set_defaults({
     flank_size      => 400,
     snp_display     => 'on',
@@ -48,7 +48,7 @@ sub form_fields {
   my $self            = shift;
   my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my $fields = {};
-  
+
   $markup_options->{'flank_size'} = {
     type   => 'DropDown',
     select =>, 'select',
@@ -62,10 +62,10 @@ sub form_fields {
       { value => '500',  caption => '500bp'  },
       { value => '1000', caption => '1000bp' },
     ]
-  };  
+  };
 
   $markup_options->{'select_sequence'} = {
-    type   => 'DropDown', 
+    type   => 'DropDown',
     select => 'select',
     name   => 'select_sequence',
     label  => 'Sequence selection',
@@ -75,12 +75,12 @@ sub form_fields {
       { value => 'down', caption => "Downstream sequence only (3')" },
     ]
   };
-  
-  $self->add_variation_options($markup_options, 
+
+  $self->add_variation_options($markup_options,
                                 {'label' => 'Show variants in flanking sequence',
                                  'snp_link' => 'no'}
-                              ); 
-  
+                              );
+
   foreach ($self->field_order) {
     $fields->{$_} = $markup_options->{$_};
     $fields->{$_}{'value'} = $self->get($_);

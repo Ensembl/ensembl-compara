@@ -26,10 +26,10 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
-  
+
   $self->SUPER::init;
   $self->title('Sequence');
-  
+
   $self->set_defaults({
     flank5_display => 600,
     flank3_display => 600,
@@ -60,13 +60,13 @@ sub form_fields {
   push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
 
   $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
- 
+
   foreach ($self->field_order) {
     $fields->{$_} = $markup_options->{$_};
     $fields->{$_}{'value'} = $self->get($_);
   }
- 
-  return $fields; 
+
+  return $fields;
 }
 
 1;

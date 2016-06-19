@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
-  
+
   $self->set_defaults({
     exons       => 'on',
     exons_case  => 'off',
@@ -53,11 +53,11 @@ sub form_fields {
   $markup_options->{'display_width'}{'values'} = [
             map {{ value => $_, caption => "$_ aa" }} map 10*$_, 3..20
   ];
-  
+
   $markup_options->{'number'} = {
                                   'type'  => 'Checkbox',
                                   'name'  => 'number',
-                                  'label' => 'Number residues', 
+                                  'label' => 'Number residues',
                                   'value' => 'on',
   };
 

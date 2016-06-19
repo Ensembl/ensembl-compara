@@ -28,7 +28,7 @@ sub init {
   $self->set_defaults({
     show_bottom_panel => 'yes'
   });
-  
+
   $self->title('Cell types');
 }
 

@@ -37,9 +37,9 @@ sub init {
       $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME') || 'Ancestral sequences'), /ancestral/ ? 'off' : 'yes' ];
     }
   }
-  
+
   $self->SUPER::init;
-  
+
   $self->set_defaults({
     flank5_display        => 600,
     flank3_display        => 600,
@@ -53,7 +53,7 @@ sub init {
     codons_display        => 'off',
     %defaults
   });
-  
+
   $self->code($self->type . '::Compara_Alignments');
   $self->title('Alignments');
 }
@@ -62,12 +62,12 @@ sub init_form {
 ### Override base class, because alignments have multiple configuration screens
   my $self = shift;
   my $fields = $self->form_fields;
-  
+
   foreach ($self->field_order) {
     $self->add_form_element($fields->{$_});
   }
   ## Extra fieldsets for configuring species within an alignment (omitted from export)
-  $self->alignment_options; 
+  $self->alignment_options;
 }
 
 sub field_order {
@@ -91,15 +91,15 @@ sub form_fields {
   my $self = shift;
   my $dbs  = $self->species_defs->databases;
   my $fields = {};
-  
+
   if (!$self->{'species_only'}) {
     my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
 
     push @{$markup_options->{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
     push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
-    
+
     $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
-    
+
     $markup_options->{'conservation_display'} = {
                                                   name  => 'conservation_display',
                                                   label => 'Show conservation regions',
@@ -112,7 +112,7 @@ sub form_fields {
                                                   type  => 'Checkbox',
                                                   value => 'on',
                                                   };
-  
+
     foreach ($self->field_order) {
       $fields->{$_} = $markup_options->{$_};
       $fields->{$_}{'value'} = $self->get($_);
@@ -129,20 +129,20 @@ sub alignment_options {
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
 
   # Only show if the alignment has been selected in the dropdown and !align="" in url
-  # Order by number of species (name is in the form "6 primates EPO"  
-  if($self->hub->parse_referer->{params}->{align} && grep($_ != "", @{$self->hub->parse_referer->{params}->{align}})) {  
+  # Order by number of species (name is in the form "6 primates EPO"
+  if($self->hub->parse_referer->{params}->{align} && grep($_ != "", @{$self->hub->parse_referer->{params}->{align}})) {
     foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} && $_->{id} eq @{$self->hub->parse_referer->{params}->{align}}[0]} values %$alignments) {
       my $sp   = $row->{'species'};
       my @name = split '_', $row->{'name'};
       my $n    = shift @name;
-      
+
       $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
-      
+
       $self->add_fieldset(join ' ', $n, map lc, @name);
-      
+
       foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
         $self->add_form_element({
-          type  => 'CheckBox', 
+          type  => 'CheckBox',
           label => $sp->{$_},
           name  => sprintf('species_%s_%s', $row->{'id'}, lc),
           value => 'yes',

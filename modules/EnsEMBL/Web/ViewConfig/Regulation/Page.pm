@@ -29,7 +29,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub reg_extra_tabs {
   my ($self, $image_config) = @_;
   my $hub = $self->hub;
-  
+
   return ([
     'Select cell types',
     $hub->url('Component', {

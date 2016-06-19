@@ -26,7 +26,7 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
-  
+
   $self->set_defaults({
     flank5_display => 0,
     flank3_display => 0,
@@ -46,13 +46,13 @@ sub init_form {
   my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
-  
+
   push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega', caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
-  
+
   $_->{'caption'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$gene_markup_options{'exon_display'}{'values'}};
 
   push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
-  
+
   $self->add_form_element($gene_markup_options{'flank5_display'});
   $self->add_form_element($gene_markup_options{'flank3_display'});
   $self->add_form_element($other_markup_options{'display_width'});

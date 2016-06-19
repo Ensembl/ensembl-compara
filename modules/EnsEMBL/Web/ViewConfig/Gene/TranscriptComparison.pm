@@ -26,9 +26,9 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
-  
+
   $self->SUPER::init;
-  
+
   $self->set_defaults({
     display_width  => 120,
     exons_only     => 'off',
@@ -80,5 +80,5 @@ sub form_fields {
 
   return $fields;
 }
-  
+
 1;

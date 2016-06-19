@@ -29,10 +29,10 @@ sub init {
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
-    context            => 'FULL', 
+    context            => 'FULL',
     hgvs               => 'off',
   }; # Don't change context if you want the page to come back!!
-  
+
   $self->set_defaults($defaults);
 
   $self->title = 'Variations';
@@ -41,10 +41,10 @@ sub init {
 sub init_form {
   my $self       = shift;
   my $hub        = $self->hub;
-  
+
   # Add type selection
   $self->add_fieldset('Consequence options');
-  
+
   $self->add_form_element({
     type  => 'CheckBox',
     label => 'Show HGVS notations',
@@ -55,7 +55,7 @@ sub init_form {
 
   # Add context selection
   $self->add_fieldset('Intron Context');
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',

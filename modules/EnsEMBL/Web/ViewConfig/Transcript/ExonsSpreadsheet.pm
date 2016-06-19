@@ -48,7 +48,7 @@ sub field_order {
 
 sub form_fields {
   my $self = shift;
-   
+
   my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my $fields = {};
 
@@ -58,20 +58,20 @@ sub form_fields {
     label   => 'Flanking sequence at either end of transcript',
     name    => 'flanking'
   };
-  
+
   $markup_options->{'sscon'} = {
     type  => 'NonNegInt',
-    label => 'Intron base pairs to show at splice sites', 
+    label => 'Intron base pairs to show at splice sites',
     name  => 'sscon'
   };
-  
+
   $markup_options->{'fullseq'} = {
     type  => 'CheckBox',
     label => 'Show full intronic sequence',
     name  => 'fullseq',
     value => 'on',
   };
-  
+
   $markup_options->{'line_numbering'}{'values'} = [
       { value => 'gene',  caption => 'Relative to the gene'            },
       { value => 'cdna',  caption => 'Relative to the cDNA'            },
@@ -79,10 +79,10 @@ sub form_fields {
       { value => 'slice', caption => 'Relative to coordinate systems'  },
       { value => 'off',   caption => 'None'                            },
   ];
-  
+
   $self->add_variation_options($markup_options, { populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', caption => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
- 
-  ## THIS DOESN'T SEEM TO HAVE ANY EFFECT! 
+
+  ## THIS DOESN'T SEEM TO HAVE ANY EFFECT!
   #$_->set_flag($self->SELECT_ALL_FLAG) for @{$self->form->fieldsets};
 
   foreach ($self->field_order) {

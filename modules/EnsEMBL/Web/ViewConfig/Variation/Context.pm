@@ -28,7 +28,7 @@ sub init {
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults = { context => 5000 };
-  
+
   foreach (keys %options) {
     my %hash = %{$options{$_}};
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
@@ -41,7 +41,7 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',

@@ -28,10 +28,10 @@ sub init {
   $self->set_defaults({
     show_top_panel => 'yes'
   });
-  
+
   $self->image_config_type('MultiTop');
   $self->title('Comparison Overview');
-  
+
   $self->set_defaults({
     opt_join_genes_top => 'off',
   });
@@ -39,18 +39,18 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_fieldset('Comparative features');
-  
+
   $self->add_form_element({
-    type  => 'CheckBox', 
+    type  => 'CheckBox',
     label => 'Join genes',
     name  => 'opt_join_genes_top',
     value => 'on',
   });
-  
+
   $self->add_fieldset('Display options');
-  
+
   $self->add_form_element({ type => 'YesNo', name => 'show_top_panel', select => 'select', label => 'Show panel' });
 }
 

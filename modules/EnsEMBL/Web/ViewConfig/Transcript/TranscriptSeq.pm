@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
-  
+
   $self->set_defaults({
     exons          => 'on',
     exons_case     => 'off',
@@ -36,7 +36,7 @@ sub init {
     snp_display    => 'on',
     line_numbering => 'on',
   });
-  
+
   $self->title('cDNA sequence');
   $self->SUPER::init;
 }
@@ -65,10 +65,10 @@ sub form_fields {
   foreach (@extra) {
     my ($name, $label) = @$_;
     $markup_options->{$name} = {
-                                type  => 'Checkbox', 
+                                type  => 'Checkbox',
                                 name  => $name,
-                                value => 'on',       
-                                label => "Show $label",         
+                                value => 'on',
+                                label => "Show $label",
      };
   }
 

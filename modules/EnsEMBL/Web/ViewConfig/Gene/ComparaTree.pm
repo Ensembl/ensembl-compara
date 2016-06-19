@@ -26,7 +26,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  
+
   my $defaults = {
     collapsability => 'gene',
     clusterset_id  => 'default',
@@ -34,7 +34,7 @@ sub init {
     exons          => 'on',
     super_tree     => 'off',
   };
-  
+
   # This config is stored in DEFAULTS.INI
   my $species_defs = $self->hub->species_defs;
   my @bg_col = @{ $species_defs->TAXON_GENETREE_BGCOLOUR };
@@ -46,7 +46,7 @@ sub init {
     $defaults->{"group_${name}_fgcolour"} = $this_fg_col if $this_fg_col ne '0';
     $defaults->{"group_${name}_display"} = 'default';
   }
-  
+
   $self->set_defaults($defaults);
   $self->image_config_type('genetreeview');
   $self->code(join '::', grep $_, 'Gene::ComparaTree', $self->hub->referer->{'ENSEMBL_FUNCTION'});
@@ -58,21 +58,21 @@ sub field_order {
   my @order = qw(collapsability clusterset_id exons super_tree colouring);
   my @groups   = ('LOWCOVERAGE', @{ $self->hub->species_defs->TAXON_ORDER });
   push @order, 'group_'.$_.'_display' for @groups;
-  return @order; 
+  return @order;
 }
 
 sub form_fields {
   my $self = shift;
   my $fields = {};
-  
+
   my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
- 
+
   $fields->{'collapsability'} = {
                                   type   => 'DropDown',
                                   select => 'select',
                                   name   => 'collapsability',
                                   label  => "Display options for tree image",
-                                  values => [ 
+                                  values => [
                                               { value => 'gene',         caption => "Show current gene only" },
                                               { value => 'paralogs',     caption => "Show paralogs of current gene" },
                                               { value => 'duplications', caption => "Show all duplication nodes" },
@@ -120,31 +120,31 @@ sub form_fields {
   my @groups   = ('LOWCOVERAGE', @{ $self->hub->species_defs->TAXON_ORDER });
   if (@groups) {
     $fields->{'colouring'} = {
-                                  type   => 'DropDown', 
+                                  type   => 'DropDown',
                                   select => 'select',
                                   name   => 'colouring',
                                   label  => 'Colour tree according to taxonomy',
-                                  values => [ 
+                                  values => [
                                               { value => 'none',       caption => 'No colouring' },
                                               { value => 'background', caption => 'Background' },
-                                              { value => 'foreground', caption => 'Foreground' } 
+                                              { value => 'foreground', caption => 'Foreground' }
                                             ],
                               };
 
     foreach my $group (@groups) {
       $fields->{"group_${group}_display"} = {
-                                              type   => 'DropDown', 
+                                              type   => 'DropDown',
                                               select => 'select',
                                               name   => "group_${group}_display",
                                               label  => "Display options for ".($self->hub->species_defs->TAXON_LABEL ? $self->hub->species_defs->TAXON_LABEL->{$group} || $group : $group),
-                                              values => [ 
+                                              values => [
                                                           { value => 'default',  caption => 'Default behaviour' },
                                                           { value => 'hide',     caption => 'Hide genes' },
-                                                          { value => 'collapse', caption => 'Collapse genes' } 
+                                                          { value => 'collapse', caption => 'Collapse genes' }
                                                         ],
                                               };
     }
-  }  
+  }
 
   foreach (keys %$fields) {
     $fields->{$_}{'value'} = $self->get($_);

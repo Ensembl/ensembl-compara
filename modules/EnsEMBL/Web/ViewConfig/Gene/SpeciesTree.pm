@@ -26,11 +26,11 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  
+
   my $defaults = {
     collapsability => 'gene',
   };
-     
+
   $self->set_defaults($defaults);
   $self->image_config_type('speciestreeview');
   $self->code(join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'});
@@ -39,19 +39,19 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_fieldset('Display options');
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'collapsability',
     label  => 'Viewing options for tree image',
-    values => [ 
+    values => [
       { value => 'all',  caption => 'View full species tree' },
       { value => 'part', caption => 'View minimal species tree' }
     ]
-  });    
+  });
 }
 
 1;

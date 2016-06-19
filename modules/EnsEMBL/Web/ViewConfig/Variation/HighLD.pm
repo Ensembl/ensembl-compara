@@ -38,7 +38,7 @@ sub init {
 
 sub init_form {
   my $self = shift;
-  
+
   # max distance
   $self->add_form_element({
     type   => 'DropDown',
@@ -53,7 +53,7 @@ sub init_form {
       { value => '500000', caption => '500kb' }
     ]
   });
-  
+
   # min r2
   $self->add_form_element({
     type   => 'DropDown',
@@ -74,7 +74,7 @@ sub init_form {
       { value => 1,   caption => 1   },
     ]
   });
-  
+
   # min d_prime
   $self->add_form_element({
     type   => 'DropDown',
@@ -95,7 +95,7 @@ sub init_form {
       { value => 1,   caption => 1   },
     ]
   });
-  
+
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
@@ -116,7 +116,7 @@ sub init_form {
       { value => 20, caption => 20             },
     ]
   });
-  
+
   $self->add_form_element({
     type  => 'CheckBox',
     label => 'Only display variants associated with phenotypes',

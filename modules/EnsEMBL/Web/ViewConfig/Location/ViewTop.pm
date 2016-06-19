@@ -24,27 +24,27 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  
+
   $self->set_defaults({
     show_panel => 'yes',
     flanking   => 0,
   });
-  
+
   $self->image_config_type('contigviewtop');
   $self->title('Overview Image');
 }
 
 sub init_form {
   my $self = shift;
-  
+
   $self->add_form_element({
-    type     => 'NonNegInt', 
+    type     => 'NonNegInt',
     required => 'yes',
     label    => 'Flanking region',
     name     => 'flanking',
     notes    => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
    });
-   
+
   $self->add_form_element({ type => 'YesNo', name => 'show_panel', select => 'select', label => 'Show panel' });
 }
 
