@@ -120,7 +120,8 @@ sub colour_key {
 
   my $epigenome = $self->{'my_config'}->get('epigenome');
   if ($epigenome) {
-    my $activity = $f->regulatory_activity_for_epigenome($epigenome);
+    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+    my $activity  = $regact->activity;
     if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
       $type = $activity;
     }
@@ -263,7 +264,6 @@ sub pattern {
 
   my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
   my $act     = $regact->activity;
-  warn ">>> ACT $act";
   return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
   return ['hatch_really_thick','white',0] if $act eq 'NA';
   return undef;

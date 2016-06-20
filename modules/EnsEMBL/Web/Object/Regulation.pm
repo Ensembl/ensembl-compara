@@ -151,7 +151,7 @@ sub get_evidence_list {
 sub get_motif_features {
   my $self = shift;
   my $cell_line = shift;
-  my @motif_features = @{$self->Obj->regulatory_evidence('motif', $cell_line)};
+  my @motif_features = @{$self->Obj->regulatory_evidence('motif', $cell_line)||[]};
   my %motifs;
   foreach my $mf (@motif_features){
 
