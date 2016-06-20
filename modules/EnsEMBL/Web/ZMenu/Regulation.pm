@@ -31,22 +31,17 @@ sub content {
   
   return unless $rf; 
   
-  my $cell_line = $hub->param('cl');
-  my $reg_feature;
+  my $cell_line   = $hub->param('cl');
+  my $reg_feature = $hub->database('funcgen')->get_RegulatoryFeatureAdaptor->fetch_by_stable_id($rf);
+  my $epigenome   = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_name($cell_line);
+
+
+  $self->caption("Regulatory Feature - $cell_line");
   
-  foreach (@{$hub->database('funcgen')->get_RegulatoryFeatureAdaptor->fetch_all_by_stable_ID($rf)}) {
-    if ($cell_line) {
-      $reg_feature = $_ if $_->feature_set->cell_type->name =~ /\Q$cell_line\E/i;
-    } elsif ($_->feature_set->cell_type->name =~ /multi/i) {
-      $reg_feature = $_;
-    }
+  if ($cell_line) {
   }
   
   my $object         = $self->new_object('Regulation', $reg_feature, $self->object->__data);
-  my %motif_features = %{$object->get_motif_features};
- 
-  my $cell_type = $reg_feature->feature_set->cell_type->name;
-  $self->caption("Regulatory Feature - $cell_type");
   
   $self->add_entry({
     type  => 'Stable ID',
@@ -75,6 +70,7 @@ sub content {
     });
   }
 
+=pod
   if($cell_type ne 'MultiCell') {
     my $status = "Unknown";
     my $has_evidence = $object->has_evidence;
@@ -85,16 +81,19 @@ sub content {
       label => $status
     });
   }
-
-  $self->add_entry({
-    type  => 'Attributes',
-    label => $object->get_attribute_list
-  });
+=cut
+  if ($cell_line) {
+    $self->add_entry({
+      type  => 'Attributes',
+      label => $object->get_evidence_list($epigenome),
+    });
+  }
   
   $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
 
   $self->_add_nav_entries;
 
+  my %motif_features = %{$object->get_motif_features($epigenome)};
   if (scalar keys %motif_features > 0) {
     # get region clicked on
     my $click_start = $hub->param('click_start');
