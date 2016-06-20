@@ -19,47 +19,47 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::LRG::LRGSeq;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
+use parent qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
-use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
-
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable;
+
   $self->set_defaults({
-    flank5_display => 0,
-    flank3_display => 0,
-    exon_display   => 'core',
-    exon_ori       => 'all',
-    snp_display    => 'snp_link',
-    line_numbering => 'sequence'
+    'flank5_display' => 0,
+    'flank3_display' => 0,
+    'exon_display'   => 'core',
+    'exon_ori'       => 'all',
+    'snp_display'    => 'snp_link',
+    'line_numbering' => 'sequence'
   });
 
   $self->title('Sequence');
-  $self->SUPER::init;
 }
 
-sub init_form {
-  my $self                   = shift;
-  my $dbs                    = $self->species_defs->databases;
-  my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
-  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-  my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
+sub field_order {
+  ## Abstract method implementation
+  return qw(flank5_display flank3_display display_width exon_display exon_ori), $_[0]->variation_fields, qw(line_numbering);
+}
 
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega', caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
+sub form_fields {
+  ## Abstract method implementation
+  my $self    = shift;
+  my $markup  = $self->get_markup_options({'vega_exons' => 1, 'otherfeatures_exons' => 1});
+  my $fields  = {};
 
-  $_->{'caption'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$gene_markup_options{'exon_display'}{'values'}};
+  $_->{'caption'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$markup->{'exon_display'}{'values'}};
 
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+  for ($self->field_order) {
+    $fields->{$_} = $markup->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
 
-  $self->add_form_element($gene_markup_options{'flank5_display'});
-  $self->add_form_element($gene_markup_options{'flank3_display'});
-  $self->add_form_element($other_markup_options{'display_width'});
-  $self->add_form_element($gene_markup_options{'exon_display'});
-  $self->add_form_element($general_markup_options{'exon_ori'});
-  $self->variation_options if $dbs->{'DATABASE_VARIATION'};
-  $self->add_form_element($general_markup_options{'line_numbering'});
+  return $fields;
 }
 
 1;
