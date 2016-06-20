@@ -1228,9 +1228,10 @@ sub chunked_content {
   my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => 1 });
   my $html;
   my $display_width = $hub->param('display_width') || 0;
+  my $id = $self->id;
 
   if (!$hub->param('display_full_sequence')) {
-    $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
+    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
   }
   else {
     # The display is split into a managable number of sub slices, which will be processed in parallel by requests
@@ -1244,7 +1245,7 @@ sub chunked_content {
       $j  = $total_length if $j > $end;
     }    
   }
-
+  $html .= '<div id="full_alignment"></div></div>';
   return $html;
 }
 

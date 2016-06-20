@@ -157,8 +157,15 @@ sub content {
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
     $html .= $image_link . $table;
 
+    my $chunked_content = $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+
+    $html .= qq (
+          <div class="_text_alignment_display js_panel">
+          <input type="hidden" class="panel_type" value="AlignmentText" name="panel_type_AlignmentText" />
+        );
+
     # Show message saying you are only display a small block from the whole alignment
-    my $view_all_button = sprintf qq{<div class="view_full_text_seq"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
+    my $view_all_button = sprintf qq{<div class="display_full_message_div"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
                           $slice_length, 
                           $self->{'subslice_length'},
                           $hub->param('display_width');
@@ -166,15 +173,13 @@ sub content {
     my $info = [{
       severity => 'info',
       title => 'Alignment',
-      message => 'Currently showing alignment for first '. $hub->param('display_width') .' bp. To display full alignment, please click the button below.' . $view_all_button
+      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' bp only. To display the full alignment, please click the button below.' . $view_all_button
     }];
 
     ($alert_box, $error) = $self->show_warnings($info);
     return $alert_box if $error;
 
-    $html .= $alert_box;
-
-    $html .= $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length })
+    $html .= $alert_box . $chunked_content;
 
   } else {
     my ($table, $padding);

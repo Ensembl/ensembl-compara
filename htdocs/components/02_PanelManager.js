@@ -150,7 +150,6 @@ Ensembl.PanelManager.extend({
     if (this.panels[id]) {
       this.destroyPanel(id, 'cleanup');
     }
-    
     if (type) {
       this.panels[id] = new Ensembl.Panel[type](id, params);
     } else {
@@ -160,6 +159,7 @@ Ensembl.PanelManager.extend({
     this.panels[id].panelNumber = this.panelNumber++;
     this.panels[id].panelType   = type;
     this.panels[id].init();
+    return this.panels[id];
   },
   
   /**

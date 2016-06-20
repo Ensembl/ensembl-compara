@@ -25,7 +25,7 @@
 .adornment-key .ad-loading { background: url("/i/loading-tiny.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0); display: inline-block; height: 20px; line-height: 20px; padding-left: 24px; text-align: center; }
 .adornment-key ul.alignment-key { margin: 1em; padding: 0 0 0 1em; }
 
-.view_full_text_seq a{
+.display_full_message_div a{
 	background: #eaeeff;
 	border: 1px solid #8b9bc1;
 	padding: 4px;
@@ -33,7 +33,7 @@
 	cursor: pointer;
 }
 
-.view_full_text_seq a:hover {
+.display_full_message_div a:hover {
 	background: #667aa6;
 	color: white;
 	transition: background 0.3s, color 0.2s;
