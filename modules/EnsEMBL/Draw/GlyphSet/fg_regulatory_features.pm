@@ -62,8 +62,9 @@ sub fetch_features {
   if ($cell_line) {
     my $fsa = $db->get_FeatureSetAdaptor;
     $fsets  = $fsa->fetch_by_name($cell_line);
-    #warn ">>> FSETS $fsets";
-    $self->{'my_config'}->set('epigenome', $fsets);
+    my $ega = $db->get_EpigenomeAdaptor;
+    my $epi = $ega->fetch_by_name($cell_line);
+    $self->{'my_config'}->set('epigenome', $epi);
   }
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
 
@@ -117,17 +118,11 @@ sub colour_key {
     $type = 'Unclassified';
   }
 
-  if ($self->{'my_config'}->get('epigenome')) {
-    #warn ">>> EPIGENOME ".$self->{'my_config'}->get('epigenome');
-    my $activity = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
-    # case 0: handled by pattern code
-    # case 1: correct
-    if ($activity == 4) {
-      $type = 'na';
-    } elsif ($activity == 2) {
-      $type = 'poised';
-    } elsif ($activity == 3) {
-      $type = 'repressed';
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  if ($epigenome) {
+    my $activity = $f->regulatory_activity_for_epigenome($epigenome);
+    if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
+      $type = $activity;
     }
   }
 
@@ -142,10 +137,11 @@ sub tag {
   if ($colour_key eq 'promoter') {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
-  return unless $self->{'my_config'}->get('epigenome');
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  return unless $epigenome;
 
   my @result;
-  my @loci       = @{$f->get_underlying_structure(@{$self->{'my_config'}->get('epigenome')})};
+  my @loci       = @{$f->get_underlying_structure($epigenome)};
   my $bound_end  = pop @loci;
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
@@ -262,21 +258,26 @@ sub export_feature {
 
 sub pattern {
   my ($self,$f) = @_;
-  return undef unless $self->{'my_config'}->get('epigenome');
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  return undef unless $epigenome;
 
-  my $act = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
-  return ['hatch_really_thick','grey90',0] if $act==0;
-  return ['hatch_really_thick','white',0] if $act==4;
+  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
+  my $act     = $regact->activity;
+  warn ">>> ACT $act";
+  return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
+  return ['hatch_really_thick','white',0] if $act eq 'NA';
   return undef;
 }
 
 sub feature_label {
   my ($self,$f) = @_;
-  return undef unless $self->{'my_config'}->get('epigenome');
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  return undef unless $epigenome;
 
-  my $act = $f->regulatory_activity(@{$self->{'my_config'}->get('epigenome')});
-  return "{grey30}inactive in this cell line" if $act==0;
-  return "{grey30}N/A" if $act==4;
+  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
+  my $act     = $regact->activity;
+  return "{grey30}inactive in this cell line" if $act eq 'INACTIVE';
+  return "{grey30}N/A" if $act eq 'NA';
   return undef;
 }
 
