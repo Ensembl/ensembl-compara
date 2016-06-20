@@ -116,9 +116,10 @@ sub fetch_all_objs_by_slice {
   return \@all_objects;
 }
 
-sub get_attribute_list {
+sub get_evidence_list {
   my $self = shift;
-  my @attrib_feats = @{$self->Obj->regulatory_attributes('annotated')};
+  my $epigenome = shift;
+  my @attrib_feats = @{$self->Obj->regulatory_evidence('annotated', $epigenome)||[]};
   return '-' unless @attrib_feats;
 
   my @temp = map $_->feature_type->name, @attrib_feats;
@@ -149,7 +150,8 @@ sub get_attribute_list {
 
 sub get_motif_features {
   my $self = shift;
-  my @motif_features = @{$self->Obj->regulatory_attributes('motif')};
+  my $cell_line = shift;
+  my @motif_features = @{$self->Obj->regulatory_evidence('motif', $cell_line)};
   my %motifs;
   foreach my $mf (@motif_features){
 
