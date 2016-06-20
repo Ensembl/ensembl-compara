@@ -2829,7 +2829,6 @@ sub add_regulation_builds {
       description => '',
       renderers   => [qw(off Off normal On)],
       caption     => 'Regulatory Build',
-      height      => 4,
     }));
 
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
