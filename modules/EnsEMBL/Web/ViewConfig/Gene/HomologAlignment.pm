@@ -59,7 +59,7 @@ sub init_form {
     values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
   });
 
-  $self->SUPER::form if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';;
+  $self->SUPER::init_form if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';;
 }
 
 1;

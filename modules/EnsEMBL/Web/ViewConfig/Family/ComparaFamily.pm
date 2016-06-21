@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Gene::Family);
 sub init_form {
   my $self = shift;
 
-  $self->SUPER::form;
+  $self->SUPER::init_form;
 
   my $fieldset = $self->get_fieldset(0);
 
