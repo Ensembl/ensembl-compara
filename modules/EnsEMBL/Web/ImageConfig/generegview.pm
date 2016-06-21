@@ -88,7 +88,7 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'reg_feats_MultiCell' ],
+    [ 'regbuild' ],
     { display => 'normal' }
   );
   
