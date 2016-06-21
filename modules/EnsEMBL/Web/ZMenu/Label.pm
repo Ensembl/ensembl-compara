@@ -33,13 +33,21 @@ sub regulation_content {
   my $cell_line = $data->{'cell_line'};
   return unless $cell_line;
 
-  my $fg_dba = $hub->database('funcgen');
-  my $fg_cta = $fg_dba->get_CellTypeAdaptor;
-  my $fg_ct = $fg_cta->fetch_by_name($cell_line);
+  my $dba = $hub->database('funcgen');
+  my $ega = $dba->get_EpigenomeAdaptor;
+  my $epi = $ega->fetch_by_name($cell_line);
  
   $self->caption('Cell Type');
   $self->add_entry({ type => "Cell Type", label => $cell_line });
-  $self->add_entry({ type => "Description", label => $fg_ct->description });
+  $self->add_entry({ type => "Description", label => $epi->description });
+
+  ## Roadmap Epigenomics xref
+  my $xra     = $dba->get_DBEntryAdaptor;
+  my ($xref)  = grep { $_->dbname =~ /EpiRR/i} @{$epi->get_all_DBEntries||[]};
+  if ($xref) {
+    my $epi_rr = $hub->get_ExtURL_link($xref->primary_id, 'EPI_RR', $xref->primary_id);
+    $self->add_entry({'type' => 'EpiRR', 'label_html' => $epi_rr});
+  }
 
   if(grep { $_ eq $context->{'image_config'} } qw(regulation_view)) {
     my $cell_type_url = $self->hub->url('Component', {
