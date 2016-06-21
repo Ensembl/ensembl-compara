@@ -38,9 +38,3 @@
 	color: white;
 	transition: background 0.3s, color 0.2s;
 }
-
-.button_animation {
-	background: #667aa6 !important;
-	color: white	;
-	transition: background 0.5s, color 0.3s;
-}

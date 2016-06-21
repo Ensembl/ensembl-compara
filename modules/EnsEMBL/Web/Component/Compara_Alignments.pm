@@ -152,12 +152,15 @@ sub content {
   if ($hub->param('export')) {
     return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
   }
-  elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
+  elsif ($align && $slice_length && $slice_length >= $hub->param('display_width')) {
+    # Display show/hide full text alignment button if slice_length > display_width (currently 120bp)
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
     $html .= $image_link . $table;
 
-    my $chunked_content = $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    my $subslice_length = $slice_length < $self->{'subslice_length'} ? $slice_length : $self->{'subslice_length'};
+
+    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length });
 
     $html .= qq (
           <div class="_text_alignment_display js_panel">
@@ -167,13 +170,13 @@ sub content {
     # Show message saying you are only display a small block from the whole alignment
     my $view_all_button = sprintf qq{<div class="display_full_message_div"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
                           $slice_length, 
-                          $self->{'subslice_length'},
+                          $subslice_length,
                           $hub->param('display_width');
 
     my $info = [{
       severity => 'info',
       title => 'Alignment',
-      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' bp only. To display the full alignment, please click the button below.' . $view_all_button
+      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' columns only. To display the full alignment, please click the button below.' . $view_all_button
     }];
 
     ($alert_box, $error) = $self->show_warnings($info);
