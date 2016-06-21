@@ -45,6 +45,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.elLk.excluded = ul.filter('.excluded');
     
     this.setSelection(true);
+    this.updateTitleCount();
     
     this.elLk.included.sortable({
       containment: this.elLk.included.parent(),
@@ -93,6 +94,8 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         included_ul.append(li);
         panel.selection.push(li.attr('class'));
       }
+
+      panel.updateTitleCount();
       
       li = null;
       from_cat = null;
@@ -129,6 +132,14 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     ul = null;
   },
   
+  updateTitleCount: function() {
+    var panel = this;
+    var unselected_count = this.elLk.excluded.children().length;
+    var selected_count = this.elLk.included.children().length;
+    this.el.find('._unselected_species h2 span').html(unselected_count);
+    this.el.find('._selected_species h2 span').html(selected_count);
+  },
+
   style: function () {
     var width = 0;
     var initialWidth = this.elLk.list.removeClass('multi_selector_list_wide').width();
