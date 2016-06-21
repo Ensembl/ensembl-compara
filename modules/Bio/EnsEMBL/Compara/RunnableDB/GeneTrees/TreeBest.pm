@@ -110,7 +110,7 @@ sub run_treebest_best {
         my $args = sprintf('best -f %s', $species_tree_file);
         
         # Optional arguments
-        $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
+        $args .= sprintf(' -p %s.%d', $self->param('intermediate_prefix'), $self->param('gene_tree_id')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
         $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
