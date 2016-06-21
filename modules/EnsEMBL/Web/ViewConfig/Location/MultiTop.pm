@@ -25,14 +25,14 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     show_top_panel => 'yes'
   });
 
   $self->image_config_type('MultiTop');
   $self->title('Comparison Overview');
 
-  $self->set_defaults({
+  $self->set_default_options({
     opt_join_genes_top => 'off',
   });
 }

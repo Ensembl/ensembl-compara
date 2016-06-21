@@ -27,7 +27,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     chr_length => 300,
     h_padding  => 4,
     h_spacing  => 6,

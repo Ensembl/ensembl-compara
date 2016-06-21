@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
   $self->SUPER::init;
   $self->image_config_type('gene_variation');
-  $self->set_defaults({ context => 100 });
+  $self->set_default_options({ context => 100 });
 }
 
 1;

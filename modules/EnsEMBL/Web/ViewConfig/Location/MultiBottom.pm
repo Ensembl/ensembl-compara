@@ -25,14 +25,14 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     show_bottom_panel => 'yes'
   });
 
   $self->image_config_type('MultiBottom');
   $self->title('Comparison Image');
 
-  $self->set_defaults({
+  $self->set_default_options({
     opt_pairwise_blastz   => 'normal',
     opt_pairwise_tblat    => 'normal',
     opt_pairwise_lpatch   => 'normal',

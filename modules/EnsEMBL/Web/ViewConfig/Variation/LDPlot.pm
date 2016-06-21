@@ -39,7 +39,7 @@ sub init {
   $defaults->{'r2_mark'} = 0.8;
   $defaults->{'d_prime_mark'} = 0.8;
 
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
   $self->image_config_type('ldmanplot');
   $self->title('Manhattan Plot');
 }

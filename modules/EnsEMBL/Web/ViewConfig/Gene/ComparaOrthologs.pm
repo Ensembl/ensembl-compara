@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->set_defaults({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
+  $self->set_default_options({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
 
   $self->code('Gene::HomologAlignment');
   $self->title('Homologs');

@@ -29,7 +29,7 @@ sub init_cacheable {
 
   $self->SUPER::init_cacheable;
 
-  $self->set_defaults({
+  $self->set_default_options({
     'display_width'   => 120,
     'exon_ori'        => 'all',
     'match_display'   => 'dot',

@@ -29,7 +29,7 @@ sub init_cacheable {
 
   $self->SUPER::init_cacheable;
 
-  $self->set_defaults({
+  $self->set_default_options({
     'flank_size'      => 400,
     'snp_display'     => 'on',
     'select_sequence' => 'both',

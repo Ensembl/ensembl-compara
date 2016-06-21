@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->set_defaults({ context => 100 });
+  $self->set_default_options({ context => 100 });
   $self->image_config_type('supporting_evidence_transcript');
   $self->title('Supporting evidence');
 }

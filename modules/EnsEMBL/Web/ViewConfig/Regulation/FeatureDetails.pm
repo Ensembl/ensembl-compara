@@ -26,7 +26,7 @@ sub init {
   my $self     = shift;
   my $analyses = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'} || {};
 
-  $self->set_defaults({
+  $self->set_default_options({
     context     => 200,
     opt_focus   => 'yes',
     map {( "opt_ft_$_" => 'on' )} keys %$analyses

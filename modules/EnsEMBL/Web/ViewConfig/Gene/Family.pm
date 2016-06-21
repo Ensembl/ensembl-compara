@@ -28,7 +28,7 @@ sub init {
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
-  $self->set_defaults({
+  $self->set_default_options({
     map({ 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species),
     map({ 'opt_'     . lc($_) => 'yes' } keys %formats)
   });

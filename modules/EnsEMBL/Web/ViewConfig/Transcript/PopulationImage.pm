@@ -53,7 +53,7 @@ sub init {
     }
   }
 
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
   $self->code('Transcript::SNPView');
   $self->title('Population comparison');
 }

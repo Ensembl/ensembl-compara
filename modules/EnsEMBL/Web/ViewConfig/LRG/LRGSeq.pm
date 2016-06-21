@@ -29,7 +29,7 @@ sub init_cacheable {
 
   $self->SUPER::init_cacheable;
 
-  $self->set_defaults({
+  $self->set_default_options({
     'flank5_display' => 0,
     'flank3_display' => 0,
     'exon_display'   => 'core',

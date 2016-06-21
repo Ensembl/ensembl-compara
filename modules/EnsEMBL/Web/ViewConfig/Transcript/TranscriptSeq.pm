@@ -27,7 +27,7 @@ sub init_cacheable {
   ## @override
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     'exons'          => 'on',
     'exons_case'     => 'off',
     'codons'         => 'on',

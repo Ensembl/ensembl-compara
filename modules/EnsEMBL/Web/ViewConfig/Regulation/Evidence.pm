@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Regulation::Page);
 sub init {
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     show_bottom_panel => 'yes'
   });
 

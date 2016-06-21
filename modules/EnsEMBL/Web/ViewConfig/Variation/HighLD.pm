@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
 
-  $self->set_defaults({
+  $self->set_default_options({
     max_distance    => 50000,
     min_r2          => 0.8,
     min_d_prime     => 0.8,

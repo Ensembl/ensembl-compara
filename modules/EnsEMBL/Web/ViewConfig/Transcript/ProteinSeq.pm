@@ -29,7 +29,7 @@ sub init_cacheable {
 
   $self->SUPER::init_cacheable;
 
-  $self->set_defaults({
+  $self->set_default_options({
     'exons'       => 'on',
     'exons_case'  => 'off',
     'snp_display' => 'off',

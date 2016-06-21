@@ -56,7 +56,7 @@ sub init {
     $defaults->{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
   }
 
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
 }
 
 sub init_form {

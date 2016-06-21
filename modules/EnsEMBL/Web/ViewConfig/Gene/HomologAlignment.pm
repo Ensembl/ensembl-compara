@@ -29,7 +29,7 @@ sub init {
 
   $self->SUPER::init if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';
 
-  $self->set_defaults({
+  $self->set_default_options({
     seq         => 'Protein',
     text_format => 'clustalw',
   });

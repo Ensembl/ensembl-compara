@@ -34,7 +34,7 @@ sub init {
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
 	
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
   $self->image_config_type('structural_variation');
   $self->title('Genomic context');
 }

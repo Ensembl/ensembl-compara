@@ -33,7 +33,7 @@ sub init {
     hgvs               => 'off',
   }; # Don't change context if you want the page to come back!!
 
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
 
   $self->title = 'Variations';
 }

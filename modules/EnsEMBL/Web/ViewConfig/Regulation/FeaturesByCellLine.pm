@@ -26,7 +26,7 @@ sub init {
   my $self = shift;
   $self->title('Details by cell type');
   $self->image_config_type('regulation_view');
-  $self->set_defaults({ opt_highlight => 'yes', context => 200 });
+  $self->set_default_options({ opt_highlight => 'yes', context => 200 });
 }
 
 sub init_form {

@@ -31,7 +31,7 @@ sub init_cacheable {
 
   $self->title('Sequence');
 
-  $self->set_defaults({
+  $self->set_default_options({
     'flank5_display'  => 600,
     'flank3_display'  => 600,
     'exon_display'    => 'core',
