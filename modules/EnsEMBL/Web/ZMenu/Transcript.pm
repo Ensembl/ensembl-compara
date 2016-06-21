@@ -123,7 +123,7 @@ sub content {
   
   $self->add_entry({
     type  => 'Transcript',
-    label => $stable_id, 
+    label => $transcript->version ? $stable_id . "." . $transcript->version : $stable_id,
     link  => $hub->url({ type => 'Transcript', action => 'Summary' })
   });
 

@@ -351,12 +351,14 @@ sub caption {
   my $subhead;
 
   my( $disp_id ) = $self->display_xref;
+  my $version    = $self->version ? ".".$self->version : "";
+
   if( $disp_id && $disp_id ne $self->stable_id ) {
     $heading .= $disp_id;
-    $subhead = $self->stable_id;
+    $subhead = $self->stable_id.$version;
   }
   else {
-    $heading .= $self->stable_id;
+    $heading .= $self->stable_id.$version;
   }
 
   return [$heading, $subhead];
