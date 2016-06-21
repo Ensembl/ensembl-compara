@@ -37,6 +37,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     
     var ul    = $('ul', this.elLk.list);
     var spans = $('span', ul);
+    var lis = $('li', ul);
     
     this.elLk.spans    = spans.filter(':not(.switch)');
     this.elLk.form     = $('form', this.elLk.content);
@@ -49,13 +50,15 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       containment: this.elLk.included.parent(),
       stop: $.proxy(this.setSelection, this)
     });
-    
-    this.buttonWidth = spans.filter('.switch').on('click', function () {
-      var li = $(this).parent();
+
+    this.buttonWidth = lis.on('click', function () {
+
+      var li = $(this);
       var excluded, i;
      
-      var from_cat = li.parent().data('category'); 
+      var from_cat = li.parent().data('category');
       if (li.parent().hasClass('included')) {
+        // ul element
         var excluded_ul =
           panel.elLk.excluded.filter("[data-category='"+from_cat+"']");
         if(!excluded_ul.length) {
@@ -93,7 +96,8 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       
       li = null;
       from_cat = null;
-    }).width();
+    });
+    this.buttonWidth = spans.width();
     
     this.style();
     

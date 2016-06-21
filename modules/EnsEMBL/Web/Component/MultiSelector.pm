@@ -119,8 +119,22 @@ sub content_ajax {
     );
   }
 
+  my $hint = qq{
+    <div class="multi_selector_hint info">
+      <h3>Tip</h3>
+      <div class="error-pad">
+        <p>Click on the plus and minus buttons to select or deselect options.
+        Selected options can be reordered by dragging them to a different position in the list</p>
+      </div>
+    </div>
+  };
+ 
   my $content      = sprintf('
     <div class="content">
+      <div class="select_by_group_div">
+        %s
+        %s
+      </div>
       <form action="%s" method="get" class="hidden">%s</form>
       <div class="multi_selector_list">
         %s
@@ -130,22 +144,14 @@ sub content_ajax {
       </div>
       <p class="invisible">.</p>
     </div>',
+    $select_by,
+    $hint,
     $url->[0],
     $extra_inputs,
-    $include_html,
     $exclude_html,
+    $include_html
   );
   
-  my $hint = qq{
-    <div class="multi_selector_hint info">
-      <h3>Tip</h3>
-      <div class="error-pad">
-        <p>Click on the plus and minus buttons to select or deselect options.</p>
-        <p>Selected options can be reordered by dragging them to a different position in the list</p>
-      </div>
-    </div>
-  };
- 
   my $param_mode = $self->{'param_mode'};
   $param_mode ||= 'multi';
  
@@ -154,7 +160,7 @@ sub content_ajax {
     panelType => $self->{'panel_type'},
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
-    nav       => "$select_by$hint",
+    # nav       => "$select_by$hint",
     params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode },
   });
 }
