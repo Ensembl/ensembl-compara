@@ -1414,6 +1414,7 @@ sub dumpDomain {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
+  my $common_name = $conf->{'species_common_name'};
   my $file = $conf->{'directory'}."/${dbname}_Domain.xml";
   my $start_time = time;
   my $db = 'core';
@@ -1421,6 +1422,21 @@ sub dumpDomain {
   open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header($fh);
+
+  my $gene_counts = $conf->{'dbh'}->selectall_hashref(qq(
+     select x.dbprimary_acc, count(*) as c
+      from xref x,
+                 (select x.dbprimary_acc, g.stable_id
+                   from xref as x, interpro as i, protein_feature pf, translation tl, transcript t, gene g
+                  where x.dbprimary_acc = i.interpro_ac
+                    and i.id = pf.hit_name
+                    and pf.translation_id = tl.translation_id
+                    and tl.transcript_id = t.transcript_id
+                    and t.gene_id = g.gene_id
+               group by x.dbprimary_acc, g.stable_id
+               order by x.dbprimary_acc, g.stable_id) as y
+      where x.dbprimary_acc = y.dbprimary_acc
+   group by x.dbprimary_acc),'dbprimary_acc');
 
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
@@ -1442,7 +1458,9 @@ sub dumpDomain {
     }
     else {
       if ($old_acc) {
-        $description = "Interpro domain $old_acc [$old_desc] has";
+        my $gene_c = $gene_counts->{$old_acc}{'c'};
+        my $gene_text = $gene_c > 1 ? 'genes' : 'gene';
+        $description = "Interpro domain $old_acc [$old_desc] is found in $gene_c $gene_text in $common_name and has";
         &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $fh);
       }
       $IDS      = [ $id ];
@@ -1462,8 +1480,9 @@ sub DomainLine {
                     $species,
                     $acc);
   $species =~ s/_/ /;
-  my $ids = join ',', @$IDS;
-  my $description = &clean($desc)." $count associated external database identifiers: $ids";
+  my $ids = join ', ', @$IDS;
+  my $identifier_text = $count > 1 ? 'identifiers' : 'identifier';
+  my $description = &clean($desc)." $count associated external database $identifier_text: $ids";
   my $xml = qq(
 <doc>
   <field name="id">$acc</field>
