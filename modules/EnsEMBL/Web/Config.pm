@@ -24,19 +24,22 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Attributes;
+use EnsEMBL::Web::Tree;
 
-sub hub                 :Accessor;
-sub type                :Accessor;
-sub species             :Accessor;
-sub code                :Accessor;
-sub species_defs        :Accessor;
+sub hub                   :Accessor;
+sub type                  :Accessor;
+sub species               :Accessor;
+sub code                  :Accessor;
+sub species_defs          :Accessor;
 
-sub storable            :Abstract; ## Any changes in the config by the user are allowed to be saved in records?
-sub config_type         :Abstract; ## @return image_config/view_config accordingly
-sub cacheable_keys      :Abstract; ## @return Arrayref of keys of the object that should be cached in memcahced
-sub init_cacheable      :Abstract; ## Initalises the portion of the object that stays the same for all users/browsers/url params and thus can be safely cached against the cache_key
-sub init_non_cacheable  :Abstract; ## Initalises the portion of the object that should not be cached since it might contain settings that do not apply to all visitors
-sub apply_user_settings :Abstract; ## Applies changes to the config as made/saved by the user in a user/session record
+sub storable              :Abstract; ## Any changes in the config by the user are allowed to be saved in records?
+sub config_type           :Abstract; ## @return image_config/view_config accordingly
+sub cacheable_keys        :Abstract; ## @return Arrayref of keys of the object that should be cached in memcahced
+sub init_cacheable        :Abstract; ## Initalises the portion of the object that stays the same for all users/browsers/url params and thus can be safely cached against the cache_key
+sub init_non_cacheable    :Abstract; ## Initalises the portion of the object that should not be cached since it might contain settings that do not apply to all visitors
+sub apply_user_settings   :Abstract; ## Applies changes to the config object as saved in user/session record
+sub reset_user_settings   :Abstract; ## Removes changes from the config object and returns a list of changed configs (does not delete the saved record in the db)
+sub update_user_settings  :Abstract; ## Updates user settings according to the parameters provided and returns the list of updated configs (does not save changes to record in the db)
 
 sub new {
   ## @constructor
@@ -61,8 +64,7 @@ sub _new {
     'species'       => $species,
     'species_defs'  => $hub->species_defs,
     'type'          => $type,
-    '_altered'      => [], # list of the configs that have been altered
-    '_parameters'   => {}, # hash to contain all parameters
+    '_altered'      => {}, # list of the configs that have been altered
   }, $class;
 }
 
@@ -115,39 +117,7 @@ sub _save_to_cache {
 
   return unless $cache && $cache_key && @$keys;
 
-  $cache->set($cache_key, { map { $_ => $self->{$_} } @$keys }, undef, $self->config_type, $self->species);
-}
-
-sub set_parameters {
-  ## Sets multiple parameter values at once
-  ## @param Hashref containing keys and values of the params
-  my ($self, $params) = @_;
-  $self->{'_parameters'}{$_} = $params->{$_} for keys %$params;
-}
-
-sub set_parameter {
-  ## Sets a parameter value
-  ## @param Parameter name
-  ## @param Parameter value
-  my ($self, $key, $value) = @_;
-  $self->{'_parameters'}{$key} = $value;
-}
-
-sub get_parameter {
-  ## Gets a parameter value
-  ## @param Parameter name
-  my ($self, $key) = @_;
-  return $self->{'_parameters'}{$key};
-}
-
-sub _parameter {
-  ## @private
-  ## Gets (or sets non-zero value to) the given parameter
-  ## @param Parameter name
-  ## @param (Optional) Non-zero parameter value
-  my ($self, $key, $value) = @_;
-  $self->set_parameter($key, $value) if $value;
-  return $self->get_parameter($key);
+  $cache->set($cache_key, { map { exists $self->{$_} ? ($_ => $self->{$_}) : () } @$keys }, undef, $self->config_type, $self->species);
 }
 
 sub get_user_settings {
@@ -155,104 +125,78 @@ sub get_user_settings {
   ## @return User settings as a hashref
   my $self = shift;
 
-  return $self->{'_user_settings'} ||= $self->hub->get_record_data({'type' => $self->config_type, 'code' => $self->code, 'flag' => 'y'}) || {};
+  return $self->{'_user_settings'} ||= $self->hub->get_record_data({'type' => $self->config_type, 'code' => $self->code}) || {};
 }
 
 sub save_user_settings {
-  ## Saves the (possibly) modified user settings to the corresponding user/session record for this image/view config
+  ## Saves (or removes) user settings to the corresponding user/session record for this image/view config
   my $self      = shift;
   my $hub       = $self->hub;
   my $settings  = $self->get_user_settings;
 
-  if (keys %$settings) {
-    $settings->{'type'} = $self->config_type;
-    $settings->{'code'} = $self->code;
-    $settings->{'flag'} = 'y';
+  $settings->{'type'} = $self->config_type;
+  $settings->{'code'} = $self->code;
 
-    $hub->set_record_data($settings);
-  }
-  return 1;
-}
-
-sub delete_user_settings {
-  ## Deletes the currently saved user settings from the user/session record
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $settings  = $self->get_user_settings;
-
-  if ($settings->{'record_id'}) {
-    $self->hub->delete_records({'record_id' => $settings->{'record_id'}});
-  }
-
-  $self->{'_user_settings'} = {};
+  $hub->set_record_data($settings);
 
   return 1;
 }
 
 sub altered {
   ## Maintains a list of configs that have been altered
-  ## @param Config name that has been altered (optional)
-  ## @return Arrayref of altered configs
-  my ($self, $altered_config) = @_;
+  ## @params List of config (name) that has been altered (optional)
+  ## @return Arrayref of all altered configs (including any configs altered in previous calls)
+  my $self = shift;
 
-  push @{$self->{'_altered'}}, $altered_config if $altered_config;
+  $self->{'_altered'}{$_} = 1 for @_;
 
-  return $self->{'_altered'};
+  return [ sort keys %{$self->{'_altered'}} ];
 }
 
 sub is_altered {
   ## Tells if any change has been applied to the config
   ## @return 0 or 1 accordingly
-  return @{$_[0]->{'_altered'}} ? 1 : 0;
+  return scalar keys %{$_[0]->{'_altered'}} ? 1 : 0;
 }
 
-#TODO -------------- 
-
 sub update_from_input {
+  ## Updates the config (and related db records) according to the input parameters
+  ## @return 1 if configs have been updated, 0 otherwise
   my $self  = shift;
   my $input = $self->hub->input;
 
-  return $self->reset if $input->param('reset');
+  my @altered;
 
-  my $diff   = $input->param('image_config');
-  my $reload = 0;
+  # if user is resetting the configs
+  if (my $reset = $input->param('reset')) {
 
-  if ($diff) {
-    my $track_reorder = 0;
+    @altered = $self->reset_user_settings($reset);
 
-    $diff = from_json($diff);
-    $self->update_track_renderer($_, $diff->{$_}->{'renderer'}, undef, 1) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
-
-    $reload        = $self->is_altered;
-    $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
-    $reload      ||= $track_reorder;
-    $self->update_favourite_tracks($diff);
   } else {
-    my %favourites;
 
-    foreach my $p ($input->param) {
-      my $val = $input->param($p);
+    my $settings = $input->param($self->config_type);
 
-      if ($p eq 'track') {
-        my $node = $self->get_node($val);
-        $node->set_user_setting('userdepth', $input->param('depth')) if $node;
-        $self->altered($val);
-      }
-      elsif ($val =~ /favourite_(on|off)/) {
-        $favourites{$p} = { favourite => $1 eq 'on' ? 1 : 0 };
-      }
-      elsif ($p ne 'depth') {
-        $self->update_track_renderer($p, $val);
-      }
+    if ($settings) {
+      $settings = { $self->config_type => from_json($settings) };
+    } else {
+      $settings = { map {
+        my @val = $input->param($_);
+        { $_ => @val > 1 ? \@val : $val[0] };
+      }} $input->param;
     }
 
-    $reload = $self->is_altered;
-
-    $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
+    @altered = $self->update_user_settings($settings);
   }
 
-  return $reload;
+  $self->save_user_settings if @altered; # update the record table
+
+  $self->altered(@altered);
+
+  return $self->is_altered;
 }
+
+######## ---------------------
+
 
 sub update_from_url {
   ## Tracks added "manually" in the URL (e.g. via a link)
@@ -404,40 +348,6 @@ sub update_from_url {
   }
 }
 
-
-
-sub reset {
-  my $self  = shift;
-  my $reset = $self->hub->input->param('reset');
-  my ($tracks, $order) = $reset eq 'all' ? (1, 1) : $reset eq 'track_order' ? (0, 1) : (1, 0);
-
-  if ($tracks) {
-    my $tree = $self->tree;
-
-    foreach my $node ($tree, $tree->nodes) {
-      my $user_data = $node->{'user_data'};
-
-      foreach (keys %$user_data) {
-        my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
-        $self->altered($text) if $user_data->{$_}{'display'};
-        delete $user_data->{$_}{'display'};
-        delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
-      }
-    }
-  }
-
-  if ($order) {
-    my $node    = $self->get_node('track_order');
-    my $species = $self->species;
-
-    if ($node->{'user_data'}{'track_order'}{$species}) {
-      delete $node->{'user_data'}{'track_order'}{$species};
-      delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
-
-      $self->altered('Track order');
-    }
-  }
-}
 
 sub share {
   # Remove anything from user settings that is:
