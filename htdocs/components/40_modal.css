@@ -32,8 +32,8 @@
 #modal_panel .ui-resizable-se { width: 14px; height: 14px; right: 2px; bottom: 2px; background: url(/i/resize.png) no-repeat scroll right bottom; }
 #modal_panel div.modal_title  {
   position: absolute;
-  top: -20px;
-  height: 18px;
+  top: -24px;
+  height: 24px;
   width: 100%;
   margin: 0;
   padding: 2px 0 0;
@@ -41,7 +41,7 @@
   border-width: 0 1px;
   background-color: [[PANEL_TEXT]];
   color: [[PANEL_BG]];
-  font-weight: bold;
+  font-weight: normal;
   clear: both;
   font-size: 12px;
 }
@@ -54,7 +54,7 @@ body.ie6 #modal_panel div.modal_title { height: 20px; }
 .modal_caption { position: absolute; bottom: 3px; left: 4px; }
 
 #modal_panel .modal_title ul            { margin: 0; padding: 0 0 0 6px; position: absolute; bottom: 0; }
-#modal_panel .modal_title li            { list-style: none; padding: 1px 6px 2px; background-color: #999; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
+#modal_panel .modal_title li            { list-style: none; padding: 4px 2px; background-color: #999; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
 #modal_panel .modal_title li.active     { background-color: [[PANEL_BG]]; color: [[PAGE_TEXT]]; }
 #modal_panel .modal_title li a          { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
 #modal_panel .modal_title li.active a   { color: [[PAGE_TEXT]]; }
