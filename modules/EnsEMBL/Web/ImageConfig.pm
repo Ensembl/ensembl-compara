@@ -2930,7 +2930,7 @@ sub add_regulation_builds {
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
-    $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+    $reg_segs->append($self->create_track("seg_$key", $name, {
       db          => $key,
       glyphset    => 'fg_segmentation_features',
       sources     => 'undef',
@@ -2942,7 +2942,8 @@ sub add_regulation_builds {
       description => $segs->{$key}{'desc'},
       renderers   => [qw(off Off normal On)],
       celltype    => $segs->{$key}{'web'}{'celltype'},
-      caption     => "Reg. Segs. ($segs->{$key}{'web'}{'anntype'})",
+      seg_name    => $segs->{$key}{'web'}{'seg_name'},
+      caption     => "Reg. Segs.",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section     => $segs->{$key}{'web'}{'celltypename'},
       height      => 4,
