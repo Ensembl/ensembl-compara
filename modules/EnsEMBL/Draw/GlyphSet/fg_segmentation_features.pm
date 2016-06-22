@@ -53,12 +53,12 @@ sub _feature_set {
   return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
   my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
   my $fsa       = $fgh->get_FeatureSetAdaptor();
-  my $cta       = $fgh->get_CellTypeAdaptor;
-  return undef unless $fsa and $cta;
+  my $ega       = $fgh->get_EpigenomeAdaptor;
+  return undef unless $fsa and $ega;
   my $cell_line = $self->my_config('cell_line');
   return undef unless $cell_line;
-  my $ctype = $cta->fetch_by_name($cell_line);
-  my $fsets = $fsa->fetch_all_displayable_by_type('segmentation', $ctype);
+  my $epi   = $ega->fetch_by_name($cell_line);
+  my $fsets = $fsa->fetch_all_displayable_by_type('segmentation', $epi);
   return undef unless $fsets and @$fsets;
   return $fsets->[0];
 }
@@ -104,28 +104,25 @@ sub fetch_features_from_db {
 sub _result_set {
   my ($self) = @_;
 
-  my $slice   = $self->{'container'};
-  my $db_type = $self->my_config('db_type') || 'funcgen';
-  return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
-  my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
-  return undef unless $fgh;
-  my $cell_line = $self->my_config('celltype');
-  return undef unless $cell_line;
-  my $cta = $fgh->get_CellTypeAdaptor;
-  my $ct = $cta->fetch_by_dbID($cell_line);
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rsets = $rsa->fetch_all_by_CellType($ct);
-  my @segs = grep { $_->feature_class eq 'segmentation' } @$rsets;
-  return undef unless @segs;
-  return $segs[0];
 }
 
 sub fetch_features_from_file {
   my ($self,$fgh) = @_;
 
-  my $rs = $self->_result_set();
-  return undef unless $rs;
-  my $bigbed_file = $rs->dbfile_path;
+  my $slice   = $self->{'container'};
+  my $db_type = $self->my_config('db_type') || 'funcgen';
+  return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
+
+  my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
+  return undef unless $fgh;
+
+  my $seg_name = $self->my_config('seg_name');
+  return undef unless $seg_name;
+
+  my $sfa = $fgh->get_SegmentationFileAdaptor;
+  my $seg = $sfa->fetch_by_name($seg_name);
+
+  my $bigbed_file = $seg->file;
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
                            lc $self->species,
                            $self->species_defs->ASSEMBLY_VERSION);
