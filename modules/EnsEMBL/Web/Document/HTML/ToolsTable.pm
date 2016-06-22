@@ -74,6 +74,19 @@ sub render {
     });
   }
 
+  ## File chameleon
+  if ($sd->ENSEMBL_FC_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
+      'desc'  => "Convert Ensembl files for use with other analysis tools",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => '',
+      'docs'  => '',
+    });
+  }
+
   ## ASSEMBLY CONVERTER
   if ($sd->ENSEMBL_AC_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action AssemblyConverter)});
@@ -100,19 +113,6 @@ sub render {
     });
   }
 
-  ## File chameleon
-  if ($sd->ENSEMBL_FC_ENABLED) {
-    my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
-    $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
-      'desc'  => "Convert Ensembl files for use with other analysis tools",
-      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
-      'limit' => '',
-      'code'  => '',
-      'docs'  => '',
-    });
-  }
-
   ## Allele frequency
   if ($sd->ENSEMBL_AF_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action AlleleFrequency)});
@@ -125,6 +125,20 @@ sub render {
       'docs'  => sprintf('<a href="/info/docs/tools/allelefrequency/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
   }
+
+  ## VCF to PED
+  if ($sd->ENSEMBL_VP_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action VcftoPed)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">VCF to PED converter</a></b>', $link),
+      'desc'  => "Parse a vcf file to create a linkage pedigree file (ped) and a marker information file, which together may be loaded into ld visualization tools like Haploview.",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => sprintf('<a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/vcf_to_ped_converter/version_1.1/vcf_to_ped_convert.pl" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'docs'  => sprintf('<a href="/info/docs/tools/vcftoped/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
+    });
+  }
+
 
   $html .= $table->render;
 
