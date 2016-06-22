@@ -180,14 +180,23 @@ sub short_population_name {
 sub population_structure {
   my $self = shift;
   my $pop_objs = shift;
+  my $low_level_only = shift;
   
   if(!exists($self->{_population_structure})) {
     my %pop_struct;
     foreach my $pop(@$pop_objs) {
-      next if $pop->name =~ /:ALL$/;
+      my $pop_name = $pop->name;
+      next if $pop_name =~ /:ALL$/ || $pop_name =~ /^_/;
       my $subs = $pop->get_all_sub_Populations();
-      next unless $subs && scalar @$subs;
-      @{$pop_struct{$pop->name}} = map {$_->name} @$subs;
+
+      if($low_level_only) {
+        next if $subs && scalar @$subs;
+        $pop_struct{$pop_name} = [];
+      }
+      else {
+        next unless $subs && scalar @$subs;
+        @{$pop_struct{$pop_name}} = map {$_->name} @$subs;
+      }
     }
     
     $self->{_population_structure} = \%pop_struct;
