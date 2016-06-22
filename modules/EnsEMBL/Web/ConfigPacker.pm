@@ -691,54 +691,41 @@ sub _summarise_funcgen_db {
   }
 
   ## Segmentations are stored differently, now they are in flat-files
-  foreach my $current_analysis (values %$analysis) {
-    next unless $current_analysis->{'logic_name'} =~ /(Segway|ChromHMM)/;
-    my $type = $1;
-    next unless $current_analysis->{'name'};
-#     my $res_cell = $dbh->selectall_arrayref(qq(
-#       select result_set_id,cell_type_id,display_label,cell_type.name
-#         from result_set
-#         join cell_type using (cell_type_id)
-#         join analysis using (analysis_id)
-#        where logic_name = ?),undef,$current_analysis->{'logic_name'});
-
-    my $res_cell = $dbh->selectall_arrayref(
+  my $res_cell = $dbh->selectall_arrayref(
       qq(
-	select 
-	  result_set_id, 
-	  epigenome_id,
-	  display_label,
-	  epigenome.name
-	from result_set
-	  join epigenome using (epigenome_id)
-	  join analysis using (analysis_id)
-	where 
-	  logic_name  = ?
-      ),
-      undef,
-      $current_analysis->{'logic_name'}
-    );
+	        select 
+	          logic_name, 
+	          epigenome_id,
+	          epigenome.display_label,
+	          epigenome.name,
+            displayable,
+            segmentation_file.name
+	        from segmentation_file
+	          join epigenome using (epigenome_id)
+	          join analysis using (analysis_id)
+            join analysis_description using (analysis_id)
+      )
+  );
 
-    foreach my $C (@$res_cell) {
-      my $key = $current_analysis->{'logic_name'}.':'.$C->[3];
-      my $value = {
-        name => qq($C->[2] Regulatory Segmentation ($type)),
-        desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">$type</a> segmentation state analysis"),
-        disp => $current_analysis->{'displayable'},
-        'web' => {
-          celltype => $C->[1],
-          celltypename => $C->[2],
-          anntype => $type,
-          'colourset' => 'fg_segmentation_features',
-          'display' => 'off',
-          'key' => "seg_$key",
-          'type' => 'fg_segmentation_features'
-        },
-        count => 1,
-      };
-      $self->db_details($db_name)->{'tables'}{'segmentation'}{"$key$current_analysis->{'logic_name'}"} = $value;
-    }
-  }  
+  foreach my $C (@$res_cell) {
+    my $key = $C->[0].':'.$C->[3];
+    my $value = {
+      name => qq($C->[2] Regulatory Segmentation),
+      desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">segmentation state analysis</a>"),
+      disp => $C->[4],
+      'web' => {
+          celltype      => $C->[1],
+          celltypename  => $C->[2],
+          'colourset'   => 'fg_segmentation_features',
+          'display'     => 'off',
+          'key'         => "seg_$key",
+          'seg_name'    => $C->[5],
+          'type'        => 'fg_segmentation_features'
+      },
+      count => 1,
+    };
+    $self->db_details($db_name)->{'tables'}{'segmentation'}{$key} = $value;
+  }
 
 ###
 ### Store the external feature sets available for each species
@@ -797,31 +784,13 @@ sub _summarise_funcgen_db {
 # * functional genomics tracks
 #
 
-# mn1: The sql below comes up empty on the 83 and 84 databases, so I'm commenting this out.
-
-#   $f_aref = $dbh->selectall_arrayref(
-#     'select ft.name, ct.name 
-#        from supporting_set ss, data_set ds, feature_set fs, feature_type ft, cell_type ct  
-#        where ds.data_set_id=ss.data_set_id and ds.name="RegulatoryFeatures" 
-#        and fs.feature_set_id = ss.supporting_set_id and fs.feature_type_id=ft.feature_type_id 
-#        and fs.cell_type_id=ct.cell_type_id 
-#        order by ft.name;
-#     '
-#   );   
-#   foreach my $row (@$f_aref) {
-#     my $feature_type_key =  $row->[0] .':'. $row->[1];
-#     $self->db_details($db_name)->{'tables'}{'feature_type'}{'analyses'}{$feature_type_key} = 2;   
-#   }
-
   # Find details of epigenomes that are present in the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
-    'select 
+    'select
       distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
-     from 
-      epigenome 
-      join regulatory_activity using (epigenome_id) 
-      join regulatory_feature using (regulatory_feature_id) 
-      join regulatory_build using (regulatory_build_id) 
+        from regulatory_build 
+      join regulatory_build_epigenome using (regulatory_build_id) 
+      join epigenome using (epigenome_id)
      where regulatory_build.is_current=1
      '
   );
