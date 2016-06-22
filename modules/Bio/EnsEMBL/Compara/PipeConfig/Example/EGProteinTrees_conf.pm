@@ -323,11 +323,12 @@ sub tweak_analyses {
     $analyses_by_name->{'raxml_epa_longbranches_himem'}->{'-rc_name'} = '16Gb_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
+    $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
 
     # Some parameters can be division-specific
     if ($self->o('division') eq 'plants') {
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
     }
