@@ -91,7 +91,7 @@ sub fetch_features_from_db {
   }
 
   return [{
-    features => { '-1' => \@dff },
+    features => \@dff,
     metadata => {
       force_strand => '-1',
       default_strand => 1,
@@ -103,7 +103,7 @@ sub fetch_features_from_db {
 
 sub _result_set {
   my ($self) = @_;
-
+  return undef;
 }
 
 sub fetch_features_from_file {
@@ -138,7 +138,8 @@ sub bg_link {
 
   my $rs = $self->_result_set();
   my $fs = $self->_feature_set();
-  if($rs) {
+
+  if ($rs) {
     return $self->_url({
       action   => 'SegFeature',
       ftype    => 'Regulation',
@@ -149,7 +150,7 @@ sub bg_link {
       width    => $self->{'container'}->length,
       celldbid => $self->my_config('celltype'),
     });
-  } elsif($fs) {
+  } elsif ($fs) {
     return $self->_url({
       action   => 'SegFeature',
       ftype    => 'Regulation',
@@ -190,6 +191,32 @@ sub colour_key {
   }
   return lc $type;
 }
+
+=pod
+sub colour_key {
+  my ($self, $f) = @_;
+  my $type = $f->feature_type->name;
+
+  my $lookup = $self->colour_key_lookup;
+
+  my $match = grep { $type =~ /$_/ } keys %$lookup;
+  return $match ? lc $lookup->{$match} : 'default';
+}
+
+sub colour_key_lookup {
+  return {
+    'Repressed'       => 'repressed',
+    'low activity'    => 'repressed', 
+    'CTCF'            => 'ctcf',
+    'Enhancer'        => 'enhancer',
+    'Flank'           => 'promoter_flanking',
+    'TSS'             => 'promoter',
+    'Transcribed'     => 'region',
+    'Weak'            => 'weak',
+    'Heterochromatin' => 'heterochromatin',       
+  };
+} 
+=cut
 
 sub render {
   my ($self) = @_;
