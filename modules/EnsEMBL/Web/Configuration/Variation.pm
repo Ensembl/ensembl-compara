@@ -69,6 +69,14 @@ sub populate_tree {
     )],
     { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genetics', 'no_menu_entry' => $somatic }
   );
+
+  $self->create_node('Phenotype', 'Phenotype data',
+    [qw( 
+        phenotype EnsEMBL::Web::Component::Variation::Phenotype 
+        genes     EnsEMBL::Web::Component::Variation::LocalGenes
+    )],
+    { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
+  );
   
   $self->create_node('Populations', 'Sample information',
     [qw( population EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
@@ -91,15 +99,8 @@ sub populate_tree {
     { 'availability' => 'variation has_ldpops variation has_samples not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
-  $self->create_node('Phenotype', 'Phenotype Data',
-    [qw( 
-        phenotype EnsEMBL::Web::Component::Variation::Phenotype 
-        genes     EnsEMBL::Web::Component::Variation::LocalGenes
-    )],
-    { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
-  );
-  
-  $self->create_node('Compara_Alignments', 'Phylogenetic Context',
+
+  $self->create_node('Compara_Alignments', 'Phylogenetic context',
     [qw(
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignment EnsEMBL::Web::Component::Variation::Compara_Alignments
@@ -111,7 +112,7 @@ sub populate_tree {
     { 'availability' => 'variation has_citation','concise' => 'Citations'  } 
   );  
 
-  $self->create_node('LDPlot', 'Linkage disequilibrium Plot',
+  $self->create_node('LDPlot', 'Linkage disequilibrium plot',
     [qw(
       pop     EnsEMBL::Web::Component::Variation::SelectPopulation
       ld      EnsEMBL::Web::Component::Variation::LD
