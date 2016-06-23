@@ -811,7 +811,6 @@ sub _summarise_funcgen_db {
         join feature_type using (feature_type_id)
         join experiment using (epigenome_id)
         join experimental_group g using (experimental_group_id)
-      where g.name = "ENCODE"
     )
   );
  foreach (@$m_aref) {

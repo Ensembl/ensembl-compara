@@ -2726,7 +2726,6 @@ sub add_regulation_features {
   return unless $menu;
   
   my $reg_regions       = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
-  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -2775,6 +2774,7 @@ sub add_regulation_features {
   }
 
   # Add other bigBed-based tracks 
+  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   my %file_tracks = ( 'methylation' => $methylation_menu,
                       'crispr'      => $reg_regions,
@@ -2783,7 +2783,8 @@ sub add_regulation_features {
   while (my ($key, $submenu) = each (%file_tracks)) { 
     my $dataset = $db_tables->{$key};
     foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
-      $submenu->append($self->create_track($key.'_'.$k, $dataset->{$k}{'name'}, {
+      (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
+      $submenu->append($self->create_track($key.'_'.$k, $name, {
         data_id      => $k,
         description  => $dataset->{$k}{'description'},
         strand       => 'r',
@@ -2791,7 +2792,7 @@ sub add_regulation_features {
         addhiddenbgd => 1,
         display      => 'off',
         renderers    => [ qw(off Off compact On) ],
-        glyphset     => 'fg_methylation',
+        glyphset     => 'fg_'.$key,
         colourset    => 'seq',
       }));
     }
