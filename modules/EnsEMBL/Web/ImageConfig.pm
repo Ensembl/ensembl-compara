@@ -48,7 +48,7 @@ sub new {
   my $code    = shift;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
   my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
-  
+ 
   my $self = {
     hub              => $hub,
     _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
@@ -86,7 +86,11 @@ sub new {
       options     => 1,
       other       => 1,
     },
-    alignment_renderers => [
+    _legend => {'_settings' => {'max_length' => 0}},
+  };
+  
+  ## Better to duplicate arrays here than in various parts of the code
+  my @alignment_renderers = (
       'off',                  'Off',
       'as_alignment_nolabel', 'Normal',
       'as_alignment_label',   'Labels',
@@ -94,10 +98,13 @@ sub new {
       'stack',                'Stacked',
       'unlimited',            'Stacked unlimited',
       'ungrouped',            'Ungrouped',
-    ],
-    _legend => {'_settings' => {'max_length' => 0}},
-  };
-  
+                        ); 
+  my @transcript_renderers = @alignment_renderers;
+  splice @transcript_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+ 
+  $self->{'alignment_renderers'}  = \@alignment_renderers;
+  $self->{'transcript_renderers'} = \@transcript_renderers;
+
   return bless $self, $class;
 }
 
@@ -1458,8 +1465,7 @@ sub _user_track_settings {
     $strand = 'f';
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
-    @user_renderers = @{$self->{'alignment_renderers'}};
-    splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+    @user_renderers = @{$self->{'transcript_renderers'}};
     $default = 'as_transcript_label';
   }
   else {
@@ -2776,24 +2782,31 @@ sub add_regulation_features {
   # Add other bigBed-based tracks 
   my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my %file_tracks = ( 'methylation' => $methylation_menu,
-                      'crispr'      => $reg_regions,
+  my %file_tracks = ( 'methylation' => {'menu'      => $methylation_menu, 
+                                        'renderers' => [ qw(off Off compact On) ],
+                                        'default'   => 'compact',
+                                        'strand'    => 'r'},
+                      'crispr'      => {'menu'      => $reg_regions,
+                                        'renderers' => $self->{'transcript_renderers'},
+                                        'default'   => 'as_transcript_label',
+                                        'strand'    => 'b'},
                     );
  
-  while (my ($key, $submenu) = each (%file_tracks)) { 
+  while (my ($key, $settings) = each (%file_tracks)) { 
     my $dataset = $db_tables->{$key};
     foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
       (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
-      $submenu->append($self->create_track($key.'_'.$k, $name, {
-        data_id      => $k,
-        description  => $dataset->{$k}{'description'},
-        strand       => 'r',
-        nobump       => 1,
-        addhiddenbgd => 1,
-        display      => 'off',
-        renderers    => [ qw(off Off compact On) ],
-        glyphset     => 'fg_'.$key,
-        colourset    => 'seq',
+      $settings->{'menu'}->append($self->create_track($key.'_'.$k, $name, {
+        data_id         => $k,
+        description     => $dataset->{$k}{'description'},
+        strand          => $settings->{'strand'},
+        nobump          => 1,
+        addhiddenbgd    => 1,
+        display         => 'off',
+        default_display => $settings->{'default'},
+        renderers       => $settings->{'renderers'},
+        glyphset        => 'fg_'.$key,
+        colourset       => 'seq',
       }));
     }
   }
