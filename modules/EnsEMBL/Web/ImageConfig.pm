@@ -2773,26 +2773,33 @@ sub add_regulation_features {
       }));
     }
   }
-  
-  # Add internal methylation tracks
+
+  # Add other bigBed-based tracks 
   my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $methylation = $db_tables->{'methylation'};
-  
-  foreach my $k (sort { $methylation->{$a}{'description'} cmp $methylation->{$b}{'description'} } keys %$methylation) {
-    $methylation_menu->append($self->create_track("methylation_$k", $methylation->{$k}{'name'}, {
-      data_id      => $k,
-      description  => $methylation->{$k}{'description'},
-      strand       => 'r',
-      nobump       => 1,
-      addhiddenbgd => 1,
-      display      => 'off',
-      renderers    => [ qw(off Off compact On) ],
-      glyphset     => 'fg_methylation',
-      colourset    => 'seq',
-    }));
+  my %file_tracks = ( 'methylation' => $methylation_menu,
+                      'crispr'      => $reg_regions,
+                    );
+ 
+  while (my ($key, $submenu) = each (%file_tracks)) { 
+    my $dataset = $db_tables->{$key};
+    foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
+      $submenu->append($self->create_track($key.'_'.$k, $dataset->{$k}{'name'}, {
+        data_id      => $k,
+        description  => $dataset->{$k}{'description'},
+        strand       => 'r',
+        nobump       => 1,
+        addhiddenbgd => 1,
+        display      => 'off',
+        renderers    => [ qw(off Off compact On) ],
+        glyphset     => 'fg_methylation',
+        colourset    => 'seq',
+      }));
+    }
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
+
+
 }
 
 sub add_regulation_builds {

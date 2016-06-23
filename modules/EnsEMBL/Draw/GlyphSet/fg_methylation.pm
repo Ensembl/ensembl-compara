@@ -31,6 +31,8 @@ sub supports_subtitles { 0; }
 sub get_data {
   my $self    = shift;
   my $slice   = $self->{'container'}; 
+  return if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice'); # XXX Seems not to have adaptors?
+
   my $config  = $self->{'config'};
   my $type    = $self->type;
   my $data_id = $self->my_config('data_id');
@@ -52,17 +54,13 @@ sub get_data {
  
   my $fgh = $slice->adaptor->db->get_db_adaptor('funcgen');
   
-  return if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice'); # XXX Seems not to have adaptors?
+  my $dma   = $fgh->get_DNAMethylationFileAdaptor;
+  my $meth  = $dma->fetch_by_name($data_id);
   
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rs  = $rsa->fetch_by_dbID($data_id);
-  
-  return unless defined $rs;
+  return unless defined $meth;
 
-  my $bigbed_file = $rs->dbfile_path;
+  my $bigbed_file = $meth->file;
   
-  # Substitute path, if necessary. TODO: use DataFileAdaptor  
-
   my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   ## Clean up any whitespace
