@@ -34,12 +34,14 @@ use Bio::EnsEMBL::Registry;
 
 sub write_output {
 	my $self = shift;
-	my $mlss_id = $self->param('mlss');
+	my @mlss_ids = @{ $self->param('mlss') };
 
 	# write threshold to mlss_tag
 	my $mlss_adap = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	my $mlss = $mlss_adap->fetch_by_dbID( $mlss_id );
-	$mlss->store_tag( 'ortholog_quality_threshold', $self->_calculate_threshold );
+	for my $this_mlss ( @mlss_ids ) {
+		my $mlss = $mlss_adap->fetch_by_dbID( $this_mlss );
+		$mlss->store_tag( 'wga_quality_threshold', $self->_calculate_threshold );
+	}
 }
 
 sub _calculate_threshold {

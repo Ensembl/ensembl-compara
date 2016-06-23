@@ -96,10 +96,12 @@ sub default_options {
         'collection'      => undef,
         'species_set_id'  => undef,
         'ref_species'     => undef,
-        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         'alt_aln_db'      => undef,
         'alt_homology_db' => undef,
-        'user'            => 'ensadmin',        
+        'previous_rel_db' => undef,
+        'user'            => 'ensadmin',
+        'orth_batch_size' => 10, # set how many orthologs should be flowed at a time     
     };
 }
 
@@ -112,26 +114,26 @@ sub default_options {
 sub pipeline_create_commands {
 	my $self = shift;
 
-	#!!! NOTE: replace column names with desired col names for report.
-	#          must be a param name!
-
-	#PRIMARY KEY (genomic_align_block_id))'
-
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality (
 			homology_id              INT NOT NULL,
             genome_db_id             INT NOT NULL,
+            alignment_mlss           INT NOT NULL,
             combined_exon_coverage   FLOAT(5,2) NOT NULL,
             combined_intron_coverage FLOAT(5,2) NOT NULL,
 			quality_score            FLOAT(5,2) NOT NULL,
             exon_length              INT NOT NULL,
-            intron_length            INT NOT NULL
+            intron_length            INT NOT NULL,
+            INDEX (homology_id)
         )'),
-        $self->db_cmd( 'CREATE TABLE ortholog_quality_tags (
-            quality_score  INT NOT NULL,
-            description    varchar(255) NOT NULL
-        )'),
+        $self->db_cmd( 'CREATE TABLE exon_boundaries (
+            gene_member_id   INT NOT NULL,
+            dnafrag_start    INT NOT NULL,
+            dnafrag_end      INT NOT NULL,
+            seq_member_id    INT NOT NULL,
+            INDEX (gene_member_id)  
+        ) ENGINE=InnoDB' ),
 	];
 }
 
@@ -148,10 +150,14 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'               => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'default_with_reg_conf' => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', '--reg_conf '.$self->o('reg_conf')] },
-        '2Gb_job'               => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '20Gb_job'              => {'LSF' => '-C0 -M20000  -R"select[mem>20000]  rusage[mem=20000]"' },
+        'default'                => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
+        '200M_job'               => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
+        '500M_job'               => {'LSF' => '-C0 -M500  -R"select[mem>500]  rusage[mem=500]"' },
+        '500M_job_with_reg_conf' => {'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')] },
+        '2Gb_job'                => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+        '2Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')] },
+        '8Gb_job'                => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"'},
+        '20Gb_job'               => {'LSF' => '-C0 -M20000  -R"select[mem>20000]  rusage[mem=20000]"' },
     };
 }
 
@@ -161,7 +167,10 @@ sub pipeline_analyses {
         {   -logic_name => 'pair_species',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
-                2 => [ 'select_mlss' ],
+                '2->A' => [ 'prepare_exons' ],
+                'A->1' => [ 'funnel_exons' ],
+                
+                '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
                 'collection'      => $self->o('collection'),
@@ -173,60 +182,65 @@ sub pipeline_analyses {
                 'compara_db'      => $self->o('compara_db'),
                 'alt_aln_db'      => $self->o('alt_aln_db'),
                 'alt_homology_db' => $self->o('alt_homology_db'),
+                'previous_rel_db' => $self->o('previous_rel_db'),
             }],
+        },
+
+        {   -logic_name => 'funnel_exons',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ExonFunnel',
+            -flow_into  => {
+                1 => [ 'select_mlss' ],
+            }
+        },
+
+        {   -logic_name        => 'prepare_exons',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareExons',
+            -analysis_capacity => 50,
+            -batch_size        => 10,
+            -flow_into         => {
+                1 => [ '?table_name=exon_boundaries' ] 
+            },
+            -rc_name => '500M_job_with_reg_conf',
+            #-input_ids => {}
+        },
+
+        {   -logic_name => 'reset_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ResetMLSS',
         },
 
         {   -logic_name => 'select_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
             -flow_into  => {
                 1 => [ 'write_threshold' ],
-                2 => [ 'prepare_orthologs' ], 
+                2 => [ 'prepare_orthologs' ],
             },
+            -rc_name => '200M_job',
         },
 
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
-            -analysis_capacity  =>  10,  # use per-analysis limiter
+            -analysis_capacity  =>  100,  # use per-analysis limiter
             -flow_into => {
-                2 => [ 'prepare_exons' ],
-                #'A->1' => [ 'assign_quality'  ],
+                2 => [ 'calculate_wga_coverage' ],
             },
-            -rc_name => '2Gb_job',
-            #-input_ids => {},
+            -rc_name => '2Gb_job_with_reg_conf',
         },
 
-        {   -logic_name        => 'prepare_exons',
-            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareExons',
-            -analysis_capacity => 100,
-            -flow_into         => {
-                1 => [ 'prepare_pairwise_aln' ],
-            },
-            -rc_name => 'default_with_reg_conf',
-            #-input_ids => {}
-        },
 
-        {   -logic_name => 'prepare_pairwise_aln',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareAlignment',
-            -analysis_capacity => 100,
-            -flow_into  => {
-                1 => [ 'combine_coverage'  ],
-            },
-            -rc_name => '2Gb_job',
-            #-input_ids => {},
-        },
-
-        {   -logic_name => 'combine_coverage',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage',
+        {   -logic_name => 'calculate_wga_coverage',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
+            -analysis_capacity => 200,
+            -batch_size        => 20,
             -flow_into  => {
                 '1'  => [ '?table_name=ortholog_quality' ],
                 '2'  => [ 'assign_quality' ],
-                '-1' => [ 'combine_coverage_himem' ],
+                '-1' => [ 'calculate_wga_coverage_himem' ],
             },
-
+            -rc_name => '2Gb_job',
         },
 
-        {   -logic_name => 'combine_coverage_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage',
+        {   -logic_name => 'calculate_wga_coverage_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -flow_into  => {
                 1 => [ '?table_name=ortholog_quality' ],
                 2 => [ 'assign_quality' ],
@@ -236,6 +250,8 @@ sub pipeline_analyses {
 
         {   -logic_name => 'assign_quality',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
+            -analysis_capacity => 50,
+            -batch_size        => 10,
         },
 
         {   -logic_name => 'write_threshold',
