@@ -2961,7 +2961,7 @@ sub add_regulation_builds {
       colourset   => 'fg_segmentation_features',
       display     => 'off',
       description => $segs->{$key}{'desc'},
-      renderers   => [qw(off Off normal On)],
+      renderers   => [qw(off Off compact On)],
       celltype    => $segs->{$key}{'web'}{'celltype'},
       seg_name    => $segs->{$key}{'web'}{'seg_name'},
       caption     => "Reg. Segs.",
