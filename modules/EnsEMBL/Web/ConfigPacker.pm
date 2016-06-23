@@ -690,43 +690,6 @@ sub _summarise_funcgen_db {
     }
   }
 
-  ## Segmentations are stored differently, now they are in flat-files
-  my $res_cell = $dbh->selectall_arrayref(
-      qq(
-	        select 
-	          logic_name, 
-	          epigenome_id,
-	          epigenome.display_label,
-	          epigenome.name,
-            displayable,
-            segmentation_file.name
-	        from segmentation_file
-	          join epigenome using (epigenome_id)
-	          join analysis using (analysis_id)
-            join analysis_description using (analysis_id)
-      )
-  );
-
-  foreach my $C (@$res_cell) {
-    my $key = $C->[0].':'.$C->[3];
-    my $value = {
-      name => qq($C->[2] Regulatory Segmentation),
-      desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">segmentation state analysis</a>"),
-      disp => $C->[4],
-      'web' => {
-          celltype      => $C->[1],
-          celltypename  => $C->[2],
-          'colourset'   => 'fg_segmentation_features',
-          'display'     => 'off',
-          'key'         => "seg_$key",
-          'seg_name'    => $C->[5],
-          'type'        => 'fg_segmentation_features'
-      },
-      count => 1,
-    };
-    $self->db_details($db_name)->{'tables'}{'segmentation'}{$key} = $value;
-  }
-
 ###
 ### Store the external feature sets available for each species
 ###
@@ -738,6 +701,22 @@ sub _summarise_funcgen_db {
   );
   foreach my $F ( @$f_aref ){ push (@feature_sets, $F->[0]); }  
   $self->db_tree->{'databases'}{'DATABASE_FUNCGEN'}{'FEATURE_SETS'} = \@feature_sets;
+
+### Find details of epigenomes that are present in the current regulatory build
+  my $c_aref =  $dbh->selectall_arrayref(
+    'select
+      distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
+        from regulatory_build 
+      join regulatory_build_epigenome using (regulatory_build_id) 
+      join epigenome using (epigenome_id)
+     where regulatory_build.is_current=1
+     '
+  );
+  foreach my $row (@$c_aref) {
+    my $cell_type_key =  $row->[0] .':'. $row->[1];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+  }
 
 
 #---------- Additional queries - by type...
@@ -780,26 +759,75 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'oligo_feature'}{'arrays'}{$array_name} = $count ? 1 : 0;
   }
   $sth->finish;
-#
-# * functional genomics tracks
-#
 
-  # Find details of epigenomes that are present in the current regulatory build
-  my $c_aref =  $dbh->selectall_arrayref(
-    'select
-      distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
-        from regulatory_build 
-      join regulatory_build_epigenome using (regulatory_build_id) 
-      join epigenome using (epigenome_id)
-     where regulatory_build.is_current=1
-     '
+  ## Segmentations are stored differently, now they are in flat-files
+  my $res_cell = $dbh->selectall_arrayref(
+      qq(
+	        select 
+	          logic_name, 
+	          epigenome_id,
+	          epigenome.display_label,
+	          epigenome.name,
+            displayable,
+            segmentation_file.name
+	        from segmentation_file
+	          join epigenome using (epigenome_id)
+	          join analysis using (analysis_id)
+            join analysis_description using (analysis_id)
+      )
   );
-  foreach my $row (@$c_aref) {
-    my $cell_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+
+  foreach my $C (@$res_cell) {
+    my $key = $C->[0].':'.$C->[3];
+    my $value = {
+      name => qq($C->[2] Regulatory Segmentation),
+      desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">segmentation state analysis</a>"),
+      disp => $C->[4],
+      'web' => {
+          celltype      => $C->[1],
+          celltypename  => $C->[2],
+          'colourset'   => 'fg_segmentation_features',
+          'display'     => 'off',
+          'key'         => "seg_$key",
+          'seg_name'    => $C->[5],
+          'type'        => 'fg_segmentation_features'
+      },
+      count => 1,
+    };
+    $self->db_details($db_name)->{'tables'}{'segmentation'}{$key} = $value;
   }
 
+  ## Methylation tracks - now in files
+  my $m_aref = $dbh->selectall_arrayref(qq(
+      select 
+        eff.name,
+        a.display_label,
+        a.description,
+        epigenome.name,
+        g.name
+      from external_feature_file eff
+        join analysis_description a using (analysis_id)
+        join epigenome using (epigenome_id)
+        join feature_type using (feature_type_id)
+        join experiment using (epigenome_id)
+        join experimental_group g using (experimental_group_id)
+      where g.name = "ENCODE"
+    )
+  );
+ foreach (@$m_aref) {
+    my ($id, $a_name, $a_desc, $c_desc, $group) = @$_;
+
+    my $name = "$c_desc $a_name";
+    $name .= " $group" if $group;
+    my $desc = "$c_desc cell line: $a_desc";
+    $desc .= " ($group group)." if $group;    
+    $self->db_details($db_name)->{'tables'}{'methylation'}{$id} = {
+                                                                    name        => $name,
+                                                                    description => $desc,
+                                                                  };
+  }
+
+=pod
   foreach my $row (@{$dbh->selectall_arrayref(qq(
       select rs.result_set_id, a.display_label, a.description, c.name, 
              IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
@@ -822,7 +850,32 @@ sub _summarise_funcgen_db {
       description => $desc
     };
   }
+=cut
 
+  ## New CRISPR tracks
+  my $cr_aref = $dbh->selectall_arrayref(qq(
+      select 
+        eff.name,
+        ad.display_label,
+        ad.description
+      from external_feature_file eff
+        join analysis a using (analysis_id)
+        join analysis_description ad using (analysis_id)
+      where
+        a.logic_name = "Crispr"
+    )
+  );
+
+  foreach (@$cr_aref) {
+    my ($id, $name, $desc) = @$_;
+
+    $self->db_details($db_name)->{'tables'}{'crispr'}{$id} = {
+                                                                    name        => $name,
+                                                                    description => $desc,
+                                                                  };
+  }
+
+  ## Matrices
   my %sets = ('core' => '"Open Chromatin", "Transcription Factor"', 'non_core' => '"Histone", "Polymerase"');
 
   while (my ($set, $classes) = each(%sets)) {
