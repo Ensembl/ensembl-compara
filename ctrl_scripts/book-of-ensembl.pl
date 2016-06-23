@@ -57,7 +57,7 @@ sub run1 {
 
 my $forker = Parallel::Forker->new(
   use_sig_chld => 1,
-  max_proc => 6
+  max_proc => 12
 );
 $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
@@ -121,8 +121,8 @@ if($list) {
 @jobs = @ARGV if @ARGV;
 
 foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs) {
-  my $par = $precache{$k}->{'par'} || 4;
-  $par = 4 if $par<4;
+  my $par = $precache{$k}->{'par'} || 12;
+  $par = 12 if $par<12;
   foreach my $i (0..($par-1)) {
     $forker->schedule( run_on_start => sub {
       run1($precache{$k}->{'module'},$k,$i,$par);

@@ -6,7 +6,7 @@ use warnings;
 use bytes;
 
 use JSON;
-use Fcntl qw(SEEK_SET SEEK_END :flock);
+use Fcntl qw(SEEK_SET SEEK_END SEEK_CUR :flock);
 use Compress::Zlib;
 use DB_File;
 use File::Copy;
@@ -190,20 +190,26 @@ sub get {
   my $json = $self->{'idx'}{$key};
   return undef unless $json;
   my $d = JSON->new->decode($json);
-  seek $self->{'dat'},$d->[0],SEEK_SET;
+  sysseek($self->{'dat'},$d->[0],SEEK_SET);
   my $out;
-  read($self->{'dat'},$out,$d->[1]);
-  return JSON->new->decode(Compress::Zlib::memGunzip($out));
+  sysread($self->{'dat'},$out,$d->[1]);
+  eval {
+    $out = JSON->new->decode(Compress::Zlib::memGunzip($out));
+  };
+  return $out unless $@;
+  die "get failed";
 } 
 
+sub systell { sysseek($_[0], 0, SEEK_CUR) }
+
 sub set {
-  my ($self,$key,$value) = @_;
+  my ($self,$key,$valuei) = @_;
 
   return 0 if exists $self->{'idx'}{$key};
-  $value = Compress::Zlib::memGzip(JSON->new->encode($value));
-  my $start = tell $self->{'dat'};
-  $self->{'dat'}->print($value);
-  my $end = tell $self->{'dat'};
+  my $value = Compress::Zlib::memGzip(JSON->new->encode($valuei));
+  my $start = systell $self->{'dat'};
+  syswrite $self->{'dat'},$value,length($value);
+  my $end = systell $self->{'dat'};
   $self->{'idx'}{$key} = JSON->new->encode([$start,$end-$start]);
   return 1;
 }
