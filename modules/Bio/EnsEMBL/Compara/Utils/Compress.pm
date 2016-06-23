@@ -45,7 +45,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
 
-our $zopfli_path = `which zopfli`;
+our $zopfli_path = `which zopfli 2> /dev/null`;
 chomp $zopfli_path;
 
 
