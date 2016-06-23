@@ -87,13 +87,13 @@ sub content {
   my @buttons = (
     {'title' => 'Graphical neighbourhood region',                     'img' => '96/var_genomic_context.png',        'url' => $context_url                           },
     {'title' => 'Consequences (e.g. missense)',                       'img' => '96/var_gene_transcript.png',        'url' => $gt_url,       'count' => $gt_count    },
+    {'title' => 'Upstream and downstream sequence',                   'img' => '96/var_flanking_sequence.png',      'url' => $seq_url                               },
     {'title' => $p_title,                                             'img' => $p_img,                              'url' => $pop_url,      'count' => $pop_count   },
+    {'title' => 'Diseases and traits',                                'img' => '96/var_phenotype_data.png',         'url' => $pheno_url,    'count' => $pheno_count },
     {'title' => 'Sample genotypes',                                   'img' => '96/var_sample_genotypes.png',       'url' => $geno_url,     'count' => $geno_count  },
     {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
-    {'title' => 'Diseases and traits',                                'img' => '96/var_phenotype_data.png',         'url' => $pheno_url,    'count' => $pheno_count },
-    {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
     {'title' => 'Sequence conservation via cross-species alignments', 'img' => '96/var_phylogenetic_context.png',   'url' => $phylo_url                             },
-    {'title' => 'Upstream and downstream sequence',                   'img' => '96/var_flanking_sequence.png',      'url' => $seq_url                               },
+    {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
   );
 
   my $html = $self->button_portal(\@buttons);

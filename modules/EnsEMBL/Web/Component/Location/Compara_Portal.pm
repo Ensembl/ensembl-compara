@@ -38,10 +38,10 @@ sub content {
   my $gene          = $hub->param('g') ? $hub->url({ type => 'Gene',  action => 'Compara' }) : '';
 
   my $buttons       = [
+    { title => 'Synteny',            img => '80/compara_syn.gif',   url => $availability->{'chromosome'} && $availability->{'has_synteny'} ? $hub->url({ action => 'Synteny'                                 }) : '' },
     { title => 'Alignments (image)', img => '80/compara_image.gif', url => $slice && $alignments                                           ? $hub->url({ action => 'Compara_Alignments', function => 'Image' }) : '' },
     { title => 'Alignments (text)',  img => '80/compara_text.gif',  url => $slice && $alignments                                           ? $hub->url({ action => 'Compara_Alignments'                      }) : '' },
     { title => 'Region Comparison',  img => '80/compara_multi.gif', url => $slice && $availability->{'has_pairwise_alignments'}            ? $hub->url({ action => 'Multi'                                   }) : '' },
-    { title => 'Synteny',            img => '80/compara_syn.gif',   url => $availability->{'chromosome'} && $availability->{'has_synteny'} ? $hub->url({ action => 'Synteny'                                 }) : '' },
   ];
 
   my $html  = $self->button_portal($buttons, 'portal-small');
