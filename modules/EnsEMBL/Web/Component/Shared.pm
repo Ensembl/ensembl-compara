@@ -193,7 +193,8 @@ sub transcript_table {
   my $transc_table;
 
   if ($gene) {
-    my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
+    my $version     = $object->version ? ".".$object->version : "";
+    my $transcript  = $page_type eq 'transcript' ? $object->stable_id.$version : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
     my $plural      = 'transcripts';
@@ -276,6 +277,7 @@ sub transcript_table {
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
+      my $version           = $_->version ? ".".$_->version : "";
       my $tsi               = $_->stable_id;
       my $protein           = '';
       my $translation_id    = '';
@@ -345,7 +347,7 @@ sub transcript_table {
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
-        transcript  => sprintf('<a href="%s">%s</a>', $url, $tsi),
+        transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',

@@ -72,7 +72,7 @@ sub content {
                 'type'    => 'Radiolist',
                 'name'    => 'format',
                 'values'  => $formats,
-                'value'   => 'journal',
+                'value'   => 'pdf',
                 );
   $fieldset->add_field(\%params);
 
