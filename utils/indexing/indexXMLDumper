@@ -2256,6 +2256,7 @@ sub dumpGene {
                        $old->{'xrefs'},
                        $old->{'synonyms'},
                        '',
+                       '',
                        $gene_locations->{$old_gsi},
                        $has_patches,
                        $db,
@@ -2325,6 +2326,7 @@ sub dumpGene {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'synonyms'},
+                        '',
                         '',
                         $gene_locations->{$old_gsi},
                         $has_patches,
@@ -2439,6 +2441,23 @@ sub dumpTranscript {
     foreach (@$es) {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
+
+    #get protein_feature domains
+    my $protein_domains = {};
+    my $sql = qq(
+       SELECT t.transcript_id, x.dbprimary_acc, i.id
+         FROM xref x, interpro i, protein_feature pf, translation tl, transcript t
+        WHERE x.dbprimary_acc = i.interpro_ac
+          AND i.id = pf.hit_name
+          AND pf.translation_id = tl.translation_id
+          AND tl.transcript_id = t.transcript_id);
+    my $sth = $conf->{'dbh'}->prepare($sql);
+    $sth->execute();
+    while (my ($tsi,$hit,$syn) = $sth->fetchrow_array()) {
+        $protein_domains->{$tsi}{$hit}{$syn}++;
+      }
+#    warn Data::Dumper::Dumper($protein_domains); exit;
+
     my %xrefs = ();
     my @xrefs_to_skip = qw(GO goslim_goa);
     foreach my $type( qw(Transcript Translation) ) {
@@ -2494,7 +2513,7 @@ sub dumpTranscript {
           LEFT JOIN external_db edb ON f.external_db_id = edb.external_db_id
          WHERE t.transcript_id = tsf.transcript_id
            AND tsf.feature_id = f.${t}_id and tsf.feature_type = '$t');
-      my $sth = $conf->{'dbh'}->prepare($sql);
+      $sth = $conf->{'dbh'}->prepare($sql);
       $sth->execute();
       while (my ($tsi,$hit,$db) = $sth->fetchrow_array()) {
         $supporting_evidence->{$tsi}{$db}{$hit}++;
@@ -2555,7 +2574,7 @@ sub dumpTranscript {
        WHERE t.gene_id = g.gene_id),
      'transcript_id');
 
-    my $sql = qq(
+    $sql = qq(
       SELECT t.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version,
             (SELECT sra.value
                 FROM $dbname.seq_region_attrib sra, $dbname.attrib_type at
@@ -2611,6 +2630,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
+                        $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
                         $db,
@@ -2633,6 +2653,7 @@ sub dumpTranscript {
           'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
+          'domains'   => $protein_domains->{$tid},
         };
 
         $old->{'exons'}  = $exons{$tid};
@@ -2693,6 +2714,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
+                        $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
                         $db,
@@ -2711,7 +2733,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $has_patches, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $domains, $feat_loc, $has_patches, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2784,7 +2806,34 @@ sub GeneTransLine {
     }
   }
 
- foreach my $xref (@$xrefs) {
+  #protein domains
+  if ( ($type eq 'Transcript') && $domains) {
+    my %ids;
+    foreach my $interpro (keys %$domains) {
+      my $desc = "Interpro domain $interpro with external references (";
+      foreach my $syn (keys %{$domains->{$interpro}}) {
+        next if $ids{$syn};
+        $ids{$syn++};
+        $syn = &clean($syn);
+        $desc .= "$syn, ";
+        $xml .= qq(
+  <field name="prot_domain">$syn</field>);
+      }
+      $desc = substr $desc,0,-2;
+      my $translid = (keys %{$tlsids})[0];
+      $desc .= ") is associated with Translation $translid";
+      $xml .= qq(
+  <field name="_hr">$desc</field>);
+      unless ($ids{$interpro}) {
+        $ids{$interpro++};
+        $interpro = &clean($interpro);
+        $xml .= qq(
+  <field name="prot_domain">$interpro</field>);
+      }
+    }
+  }
+
+  foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
     my $xref_id     = $xref->{'id'};
     my $desc        = $xref->{'desc'};
