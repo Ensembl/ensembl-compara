@@ -90,6 +90,7 @@ sub default_options {
             'gene_member'       => 'projection_db',
             'seq_member'        => 'projection_db',
             'sequence'          => 'projection_db',
+            'hmm_annot'         => 'family_db',
             'peptide_align_feature_%' => 'protein_db',  # The purpose of this line is also to tell the Runnable not to complain that the tables don't exist yet in the target database
         },
 
