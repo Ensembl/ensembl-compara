@@ -98,12 +98,14 @@ sub create_hash {
 
   my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   my $href = $self->href({
-                        'id'          => $id,
-                        'url'         => $metadata->{'url'},
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        'strand'      => $drawn_strand,
+                        'action'        => $metadata->{'action'},
+                        'id'            => $id,
+                        'url'           => $metadata->{'url'},
+                        'seq_region'    => $seqname,
+                        'start'         => $feature_start,
+                        'end'           => $feature_end,
+                        'strand'        => $drawn_strand,
+                        'zmenu_extras'  => $metadata->{'zmenu_extras'},
                         }) unless $metadata->{'omit_feature_links'};
 
   ## Don't set start and end yet, as drawing code and zmenu want

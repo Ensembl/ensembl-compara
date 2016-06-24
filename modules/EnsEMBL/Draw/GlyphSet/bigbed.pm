@@ -68,6 +68,7 @@ sub get_data {
     ## Don't try and scale if we're just doing a zmenu!
     my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
+                    'action'          => $self->{'my_config'}->get('zmenu_action'), 
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
                     'drawn_strand'    => $self->strand,
@@ -76,6 +77,7 @@ sub get_data {
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                    'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
                     };
 
     ## Also set a default gradient in case we need it

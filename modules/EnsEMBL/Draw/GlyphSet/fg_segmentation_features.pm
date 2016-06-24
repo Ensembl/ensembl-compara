@@ -122,6 +122,13 @@ sub fetch_features_from_file {
   my $sfa = $fgh->get_SegmentationFileAdaptor;
   my $seg = $sfa->fetch_by_name($seg_name);
 
+  ## Set zmenu options before we parse the file
+  $self->{'my_config'}->set('zmenu_action', 'SegFeature');
+  $self->{'my_config'}->set('zmenu_extras', {
+                                              'celltype'  => $self->my_config('section'),
+                                              'seg_name'  => $self->my_config('seg_name'),
+                                            });
+
   my $bigbed_file = $seg->file;
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
                            lc $self->species,
