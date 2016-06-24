@@ -378,6 +378,9 @@ sub _assert_same_table_schema {
     my $dest_schema = $dest_sth->fetchall_arrayref;
     $dest_sth->finish();
 
+    if (! @$dest_schema){
+        return;
+    }
     die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
 }
 
