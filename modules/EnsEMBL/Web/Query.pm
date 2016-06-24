@@ -146,7 +146,7 @@ sub precache {
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
       next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
-      if(time()-$start > 60) {
+      if(time()-$start > 300) {
         $self->{'store'}->close();
         $self->{'store'}->open(-1);
         $start = time();
