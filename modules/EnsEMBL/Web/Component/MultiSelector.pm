@@ -66,7 +66,7 @@ sub content_ajax {
   my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
   my $extra_inputs = join '', map sprintf('<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_})), sort keys %{$url->[1]};
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
-     $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
+     $select_by    = qq{<div class="select_by"><h2>Select by biotype:</h2><select>$select_by</select></div>} if $select_by;
   my ($exclude_html,$include_html);
 
   foreach my $category ((@all_categories,undef)) {

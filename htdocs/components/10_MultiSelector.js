@@ -21,7 +21,6 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.paramMode = params.paramMode;
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);
-    Ensembl.EventManager.register('modalPanelResize',    this, this.style);
   },
   
   init: function () {
@@ -102,8 +101,6 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     });
     this.buttonWidth = spans.width();
     
-    this.style();
-    
     $('.select_by select', this.el).on('change', function () {
       var toAdd, toRemove;
       
@@ -124,7 +121,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       }
       
       panel.setSelection();
-      
+      panel.updateTitleCount();
       toAdd = toRemove = null;
     });
     
@@ -138,25 +135,6 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     var selected_count = this.elLk.included.children().length;
     this.el.find('._unselected_species h2 span').html(unselected_count);
     this.el.find('._selected_species h2 span').html(selected_count);
-  },
-
-  style: function () {
-    var width = 0;
-    var initialWidth = this.elLk.list.removeClass('multi_selector_list_wide').width();
-    
-    this.elLk.list.addClass('multi_selector_list_wide');
-    
-    this.elLk.spans.each(function () {
-      var w = $(this).width();
-      
-      if (w > width) {
-        width = w;
-      }
-    });
-    
-    if (initialWidth > width + this.buttonWidth) {
-      this.elLk.list.removeClass('multi_selector_list_wide');
-    }
   },
   
   setSelection: function (init) {
