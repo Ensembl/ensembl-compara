@@ -125,17 +125,16 @@ sub create_hash {
     my $column_map      = $self->parser->{'column_map'};
     if ($column_map) {
       $feature->{'extra'} = [];
-      ## Skip standard columns used in zmenus
+      ## Synonyms for standard columns used in zmenus
       my %skipped = (
                     'chrom'       => 1,
                     'chromStart'  => 1,
                     'chromEnd'    => 1,
-                    'score'       => 1,
                     );
       my %lookup = reverse %$column_map;
       for (sort {$a <=> $b} keys %lookup) {
         my $field   = $lookup{$_};
-        next if $skipped{$field};
+        next if ($feature->{$field} || $skipped{$field});
         my $method  = "get_$field";
         my $value   = $self->parser->$method;
         ## Prettify common array values
