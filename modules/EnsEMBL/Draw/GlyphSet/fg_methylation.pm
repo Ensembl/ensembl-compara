@@ -36,6 +36,9 @@ sub get_filename {
   my $data_id = $self->my_config('data_id');
   return unless defined $data_id;
 
+  ## Settings that affect parsing have to go in the data-fetching step 
+  $self->{'my_config'}->set('spectrum', 'on');
+
   my $fgh     = $slice->adaptor->db->get_db_adaptor('funcgen');
   my $dma     = $fgh->get_DNAMethylationFileAdaptor;
   my $meth    = $dma->fetch_by_name($data_id);
@@ -48,8 +51,6 @@ sub render_compact {
   my $self = shift;
   $self->{'legend'}{'fg_methylation_legend'} = 1; # instruct to draw legend
   $self->{'my_config'}->set('link_on_bgd', 1);
-  ## Use the score to create a colour gradient
-  $self->{'my_config'}->set('spectrum', 'on');
   $self->SUPER::render_compact;  
 }
 
