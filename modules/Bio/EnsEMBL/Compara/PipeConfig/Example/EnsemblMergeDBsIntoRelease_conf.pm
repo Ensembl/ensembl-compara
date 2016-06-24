@@ -72,7 +72,7 @@ sub default_options {
             'protein_db'    => 'compara_ptrees',
             'ncrna_db'      => 'compara_nctrees',
             'family_db'     => 'compara_families',
-            'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
+            'projection_db' => 'mysql://ensro@compara5/wa2_homology_projections_'.$self->o('ensembl_release'),
         },
         # The target database
         'curr_rel_db'   => 'compara_curr',
@@ -86,6 +86,7 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'   => 'master_db',
+            'hmm_annot'         => 'family_db',
             'gene_member'       => 'projection_db',
             'seq_member'        => 'projection_db',
             'sequence'          => 'projection_db',
@@ -95,7 +96,8 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
-            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
+            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs ortholog_goc_metric QC_split_genes short_orth_genes long_orth_genes)],
+            'ncrna_db'          => [qw(tmp_job)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         },
 
