@@ -1481,8 +1481,8 @@ sub DomainLine {
                     $acc);
   $species =~ s/_/ /;
   my $ids = join ', ', @$IDS;
-  my $identifier_text = $count > 1 ? 'identifiers' : 'identifier';
-  my $description = &clean($desc)." $count associated external database $identifier_text: $ids";
+  my $identifier_text = $count > 1 ? 'records' : 'record';
+  my $description = &clean($desc)." $count $identifier_text from signature databases: $ids";
   my $xml = qq(
 <doc>
   <field name="id">$acc</field>
@@ -2132,7 +2132,7 @@ sub dumpGene {
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
           $external_db_desc =~ s/ $//;
-          $desc .= " record with a description of $external_db_desc)";
+          $desc .= " record; description: $external_db_desc')";
           $search_term .= " $external_db_desc";
         }
         else {
@@ -2146,7 +2146,7 @@ sub dumpGene {
             $desc .= " $syn,";
           }
         }
-        $desc .= " is associated with $type $stable_id";
+        $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
@@ -2481,7 +2481,7 @@ sub dumpTranscript {
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
           $external_db_desc =~ s/ $//;
-          $desc .= " record with a description of $external_db_desc)";
+          $desc .= " record; description: $external_db_desc)";
           $search_term .= " $external_db_desc";
         }
         else {
@@ -2495,7 +2495,7 @@ sub dumpTranscript {
             $desc .= " $syn,";
           }
         }
-        $desc .= " is associated with $type $stable_id";
+        $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
@@ -2810,7 +2810,8 @@ sub GeneTransLine {
   if ( ($type eq 'Transcript') && $domains) {
     my %ids;
     foreach my $interpro (keys %$domains) {
-      my $desc = "Interpro domain $interpro with external references (";
+      my $c = keys(%{$domains->{$interpro}});
+      my $desc = "Interpro domain $interpro with $c records from signature databases (";
       foreach my $syn (keys %{$domains->{$interpro}}) {
         next if $ids{$syn};
         $ids{$syn++};
@@ -2821,7 +2822,7 @@ sub GeneTransLine {
       }
       $desc = substr $desc,0,-2;
       my $translid = (keys %{$tlsids})[0];
-      $desc .= ") is associated with Translation $translid";
+      $desc .= ") is found on Translation $translid";
       $xml .= qq(
   <field name="_hr">$desc</field>);
       unless ($ids{$interpro}) {
@@ -2842,8 +2843,9 @@ sub GeneTransLine {
     next if $seen_labels{$xref_id};
     $seen_labels{$xref_id}++;
 
-    #remove any records where the hit is an Ensembl stable ID
+    #remove any records where the xref label is an Ensembl stable ID or matches the display_xref
     next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
+    next if $xref_id eq $disp_xref;
 
     $search_term = &clean($search_term);
     $labels{$search_term}++;
