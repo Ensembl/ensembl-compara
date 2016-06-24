@@ -242,14 +242,14 @@ sub add_label {
   }
 
   my $x = $feature->{'start'};
-  $x = 0 if $x < 0;
+  $x = 1 if $x < 1;
 
   my $label = {
                 font      => $self->{'font_name'},
                 colour    => $colour,
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
-                x         => $x,
+                x         => $x-1,
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
