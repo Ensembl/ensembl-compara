@@ -31,22 +31,22 @@ use EnsEMBL::Web::File::Utils::TrackHub;
 sub load_user_tracks {
   my $self = shift;
   my $menu = $self->get_node('user_data');
-  
+
   return unless $menu;
-  
+
   my $hub      = $self->hub;
   my $session  = $hub->session;
   my $user     = $hub->user;
   my $trackhubs = $self->get_parameter('trackhubs') == 1;
   my (%url_sources, %upload_sources);
-  
+
   $self->_load_url_feature($menu);
-  
+
   ## Data attached via URL
   foreach my $entry ($session->get_data(type => 'url')) {
     next if $entry->{'no_attach'};
     next unless $entry->{'species'} eq $self->{'species'};
-    
+
     $url_sources{"url_$entry->{'code'}"} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
@@ -60,17 +60,17 @@ sub load_user_tracks {
       timestamp   => $entry->{'timestamp'} || time,
     };
   }
- 
+
   ## Data uploaded but not saved
   foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
-   
+
     my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
     $strand     = $entry->{'strand'} if $entry->{'strand'};
     $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
     my $description = 'Data that has been temporarily uploaded to the web server.';
     $description   .= add_links($entry->{'description'}) if $entry->{'description'};
-      
+
     $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
         glyphset        => 'flat_file',
@@ -88,7 +88,7 @@ sub load_user_tracks {
     }));
   }
 
-  ## Data saved by the user  
+  ## Data saved by the user
   if ($user) {
     my @groups = $user->get_groups;
 
@@ -96,7 +96,7 @@ sub load_user_tracks {
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('urls'), map $user->get_group_records($_, 'urls'), @groups) {
       $url_sources{'url_' . $entry->code} = {
         source_name => $entry->name || $entry->url,
-        source_type => 'user', 
+        source_type => 'user',
         source_url  => $entry->url,
         species     => $entry->species,
         format      => $entry->format,
@@ -107,11 +107,11 @@ sub load_user_tracks {
         timestamp   => $entry->timestamp,
       };
     }
-    
+
     ## Uploads that have been saved to the userdata database
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
-     
+
       if ($entry->analyses) {
         ## Data saved to userdata db
         ## TODO - remove in due course
@@ -122,7 +122,7 @@ sub load_user_tracks {
             assembly    => $assembly,
             style       => $entry->style,
           };
-        
+
           $self->_compare_assemblies($entry, $session);
         }
       }
@@ -145,18 +145,18 @@ sub load_user_tracks {
             caption         => $entry->name,
             strand          => $strand,
             renderers       => $renderers,
-            description     => $description, 
+            description     => $description,
             display         => $entry->display || 'off',
             default_display => $entry->display || $default,
         }));
       }
     }
   }
-  
+
   ## Now we can add all remote (URL) data sources
   foreach my $code (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
     my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
-    
+
     if ($self->can($add_method)) {
       $self->$add_method(
         key      => $code,
@@ -170,7 +170,7 @@ sub load_user_tracks {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
           Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href="%s">%s</a>',
-          encode_entities($url_sources{$code}{'source_type'}), 
+          encode_entities($url_sources{$code}{'source_type'}),
           encode_entities($url_sources{$code}{'source_url'}),
           encode_entities($url_sources{$code}{'source_url'})
         ),
@@ -182,7 +182,7 @@ sub load_user_tracks {
       );
     }
   }
-  
+
   ## And finally any saved uploads
   ## TODO - remove once we have removed the userdata databases
   if (keys %upload_sources) {
@@ -190,21 +190,21 @@ sub load_user_tracks {
     my $dba        = $dbs->get_DBAdaptor('userdata');
     my $an_adaptor = $dba->get_adaptor('Analysis');
     my @tracks;
-    
+
     foreach my $logic_name (keys %upload_sources) {
       my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
-      
+
       next unless $analysis;
-   
+
       $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
-     
+
       my ($strand, $renderers, $default) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       my $caption     = encode_entities($analysis->display_label);
          $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
          $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
-      
+
       push @tracks, [ $logic_name, $caption, {
         external        => 'user',
         glyphset        => '_user_data',
@@ -223,10 +223,10 @@ sub load_user_tracks {
         strand      => $strand,
       }];
     }
-   
+
     $menu->append($self->create_track(@$_)) for sort { lc $a->[2]{'source_name'} cmp lc $b->[2]{'source_name'} || lc $a->[1] cmp lc $b->[1] } @tracks;
   }
- 
+
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
@@ -235,13 +235,13 @@ sub _add_trackhub {
 
   ## Check if this trackhub is already attached - now that we can attach hubs via
   ## URL, they may not be saved in the imageconfig
-  my $already_attached = $self->get_node($menu_name); 
+  my $already_attached = $self->get_node($menu_name);
   return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
+  my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup,
                                       'parse_tracks' => 1}); ## Do we have data for this species?
- 
+
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
@@ -278,7 +278,7 @@ sub _add_trackhub {
 
 sub _add_trackhub_node {
   my ($self, $node, $menu, $name, $force_hide) = @_;
-  
+
   my (@next_level, @childless);
   if ($node->has_child_nodes) {
     foreach my $child (@{$node->child_nodes}) {
@@ -293,7 +293,7 @@ sub _add_trackhub_node {
 
   if (scalar(@next_level)) {
     $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
-  } 
+  }
 
   if (scalar(@childless)) {
     ## Get additional/overridden settings from parent nodes. Note that we will
@@ -352,23 +352,23 @@ sub _add_trackhub_tracks {
 
   if ($matrix) {
     $options{'matrix_url'} = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $options{'submenu_key'} });
-    
+
     foreach my $subgroup (keys %$config) {
       next unless $subgroup =~ /subGroup\d/;
-      
+
       foreach (qw(x y)) {
         if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
           $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
           s/_/ /g for values %{$options{'axis_labels'}{$_}};
         }
       }
-      
+
       last if scalar keys %{$options{'axis_labels'}} == 2;
     }
-    
+
     $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
   }
-  
+
   my $submenu = $self->create_submenu($options{'submenu_key'}, $options{'submenu_name'}, {
     external    => 1,
     description => $options{'submenu_desc'},
@@ -384,9 +384,9 @@ sub _add_trackhub_tracks {
       }
     ) : ())
   });
-  
+
   $self->alphabetise_tracks($submenu, $menu);
- 
+
   my $count_visible = 0;
 
   my $style_mappings = {
@@ -414,7 +414,7 @@ sub _add_trackhub_tracks {
                                       'default' => 'compact',
                                       },
                       };
- 
+
   foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
@@ -440,7 +440,7 @@ sub _add_trackhub_tracks {
                               || 'normal';
     $options{'default_display'} = $default_display;
 
-    ## Set track style if appropriate 
+    ## Set track style if appropriate
     if ($on_off && $on_off eq 'on') {
       $options{'display'} = $default_display;
       $count_visible++;
@@ -449,7 +449,7 @@ sub _add_trackhub_tracks {
       $options{'display'} = 'off';
     }
 
-    ## Note that we use a duplicate value in description and longLabel, because non-hub files 
+    ## Note that we use a duplicate value in description and longLabel, because non-hub files
     ## often have much longer descriptions so we need to distinguish the two
     my $source       = {
       name        => $track->{'track'},
@@ -480,13 +480,13 @@ sub _add_trackhub_tracks {
     } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
       $source->{'maxHeightPixels'} = '64:32:16';
     }
-    
+
     if ($matrix) {
       my $caption = $track->{'shortLabel'};
       $source->{'section'} = $parent->data->{'shortLabel'};
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
       $source->{'labelcaption'} = $caption;
-     
+
       $source->{'matrix'} = {
         menu   => $options{'submenu_key'},
         column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
@@ -494,21 +494,21 @@ sub _add_trackhub_tracks {
       };
       $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
     }
-    
+
     $tracks{$type}{$source->{'name'}} = $source;
   }
   #warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
-  
+
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
 
 sub _add_trackhub_extras_options {
   my ($self, %args) = @_;
-  
+
   if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
     $args{'options'}{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
   }
-  
+
   # Alternative rendering order for genome segmentation and similar
   if ($args{'source'}{'squish'}) {
     $args{'renderers'} = [
@@ -518,20 +518,20 @@ sub _add_trackhub_extras_options {
       'labels',  'Separate with labels',
     ];
   }
-  
+
   $args{'options'}{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
   $args{'options'}{'signal_range'} = $args{'source'}{'signal_range'} if exists $args{'source'}{'signal_range'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(trackhub matrix column_data colour description desc_url);
-  
+
   return %args;
 }
 
 sub _load_url_feature {
 ## Creates a temporary track based on a single line of a row-based data file,
-## such as VEP output, e.g. 21 9678256 9678256 T/G 1 
+## such as VEP output, e.g. 21 9678256 9678256 T/G 1
   my ($self, $menu) = @_;
   return unless $menu;
 
@@ -541,8 +541,8 @@ sub _load_url_feature {
   if ($self->hub->param('custom_feature')) {
     $format  = $self->hub->param('format');
     $data    = decode_entities($self->hub->param('custom_feature'));
-    $session_data = {'code' => 'custom_feature', 'type' => 'custom', 
-                      'format' => $format, 'data' => $data}; 
+    $session_data = {'code' => 'custom_feature', 'type' => 'custom',
+                      'format' => $format, 'data' => $data};
     $self->hub->session->set_data(%$session_data);
   }
   elsif ($session_data && ref($session_data) eq 'HASH' && $session_data->{'data'}) {
@@ -572,12 +572,12 @@ sub _load_url_feature {
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
-sub load_configured_bigbed { 
+sub load_configured_bigbed {
   my $self = shift;
-  $self->load_file_format('bigbed'); 
+  $self->load_file_format('bigbed');
   my $sources  = $self->sd_call('ENSEMBL_INTERNAL_BIGBED_SOURCES') || {};
   if ($sources->{'age_of_base'}) {
-    $self->add_track('information', 'age_of_base_legend', 'Age of Base Legend', 'age_of_base_legend', { strand => 'r' });        
+    $self->add_track('information', 'age_of_base_legend', 'Age of Base Legend', 'age_of_base_legend', { strand => 'r' });
   }
 }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
@@ -587,17 +587,17 @@ sub load_configured_trackhubs { shift->load_file_format('trackhub'); }
 sub load_file_format {
   my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
-  
+
   return unless ($format eq 'trackhub' || $self->can($function));
-  
+
   my $internal = !defined $sources;
   $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
-  
+
   foreach my $source_name (sort keys %$sources) {
-    # get the target menu 
+    # get the target menu
     my $menu = $self->get_node($sources->{$source_name});
     my ($source, $view);
-    
+
     if ($menu) {
       $source = $self->sd_call($source_name);
       $view   = $source->{'view'};
@@ -611,7 +611,7 @@ sub load_file_format {
       my $submenu_name = $source->{'submenu_name'};
       my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, { external => 1, trackhub_menu => !!$source->{'trackhub'} }));
          $menu         = $self->get_node($submenu_key);
-      
+
       if (!$menu) {
         $menu = $self->create_submenu($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
         $self->alphabetise_tracks($menu, $main_menu);
@@ -619,12 +619,12 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'trackhub') {
-        ## Force hiding of internally configured trackhubs, because they should be 
+        ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
-        my $force_hide = $internal ? 1 : 0;  
+        my $force_hide = $internal ? 1 : 0;
         $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
-      else { 
+      else {
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
         $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $is_internal, view => $view);
       }
@@ -649,12 +649,12 @@ sub _add_htslib_track {
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
   ';
- 
+
 
   ## Override default renderer (mainly used by trackhubs)
   my %options;
   $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
- 
+
   $self->_add_file_format_track(
     format      => 'BAM',
     description => $desc,
@@ -677,9 +677,9 @@ sub _add_htslib_track {
 sub _add_bigbed_track {
   my ($self, %args) = @_;
 
-  ## Get default settings for this format 
+  ## Get default settings for this format
   my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
- 
+
   my $options = {
     external        => 'external',
     sub_type        => 'url',
@@ -697,11 +697,11 @@ sub _add_bigbed_track {
   $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
-    $options->{'join'} = 'off';  
+    $options->{'join'} = 'off';
   } else {
     push @$renderers, ('signal', 'Wiggle plot');
   }
-  
+
   $self->_add_file_format_track(
     format      => 'BigBed',
     description => 'Bigbed file',
@@ -771,7 +771,7 @@ sub _add_pairwise_track {
   shift->_add_file_format_track(
     format    => 'PAIRWISE',
     renderers => [
-      'off',                'Off', 
+      'off',                'Off',
       'interaction',        'Pairwise interaction',
     ],
     options => {
@@ -780,7 +780,7 @@ sub _add_pairwise_track {
     },
     @_
   );
-  
+
 }
 
 sub _add_flat_file_track {
@@ -827,7 +827,7 @@ sub _add_file_format_track {
     $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
-    if ($args{'source'}{'source_type'} =~ /^session|user$/i) {       
+    if ($args{'source'}{'source_type'} =~ /^session|user$/i) {
       $desc = sprintf(
         'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
         $article,
@@ -841,7 +841,7 @@ sub _add_file_format_track {
       $desc = $args{'description'};
     }
   }
- 
+
   $self->generic_add($menu, undef, $args{'key'}, {}, {
     display     => 'off',
     strand      => 'f',
