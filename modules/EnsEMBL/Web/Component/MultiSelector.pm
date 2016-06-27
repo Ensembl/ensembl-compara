@@ -106,13 +106,17 @@ sub content_ajax {
     my $catdata = $category||'';
     next unless $exclude_list or $include_list or $category;
     $exclude_html .= qq(
-      <h2>$exclude_title (<span class="_count">0</span>)</h2>
+      <div class="panel_title">
+        <h2>$exclude_title <span class="count unselected" title="Total Unselected">0</span> </h2>
+      </div>
       <ul class="excluded" data-category="$catdata">
         $exclude_list
       </ul>
     );
     $include_html .= qq(
-      <h2>$include_title (<span class="_count">0</span>)</h2>
+      <div class="panel_title">
+        <h2>$include_title <span class="count selected" title="Total Selected">0</span> </h2>
+      </div>
       <ul class="included" data-category="$catdata">
         $include_list
       </ul>
