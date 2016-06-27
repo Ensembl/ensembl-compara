@@ -26,42 +26,41 @@ package EnsEMBL::Web::ImageConfig;
 use strict;
 use warnings;
 
-# load_tracks - loads in various database derived tracks; 
-# loop through core like dbs, compara like dbs, funcgen like dbs, variation like dbs
-sub load_tracks { 
-  my ($self,$params) = @_;
-  my $species      = $self->{'species'};
-  my $species_defs = $self->species_defs;
-  my $dbs_hash     = $self->databases;
+sub load_tracks {
+  ## Loop through core/compara/funcgen/variation like dbs and loads in various database derived tracks
+  ## @params List of arguments to be passed on the individual method to add a specific type of track
+  my $self          = shift;
+  my $species       = $self->species;
+  my $species_defs  = $self->species_defs;
+  my $dbs_hash      = $self->databases;
 
-  my %data_types = (
-    core => [
-      'add_dna_align_features',     # Add to cDNA/mRNA, est, RNA, other_alignment trees
-      'add_data_files',             # Add to gene/rnaseq tree
-#     'add_ditag_features',         # Add to ditag_feature tree
-      'add_genes',                  # Add to gene, transcript, align_slice_transcript, tsv_transcript trees
-      'add_trans_associated',       # Add to features associated with transcripts
-      'add_marker_features',        # Add to marker tree
-      'add_qtl_features',           # Add to marker tree
-      'add_genome_attribs',         # Add to genome_attribs tree
-      'add_misc_features',          # Add to misc_feature tree
-      'add_prediction_transcripts', # Add to prediction_transcript tree
-      'add_protein_align_features', # Add to protein_align_feature_tree
-      'add_protein_features',       # Add to protein_feature_tree
-      'add_repeat_features',        # Add to repeat_feature tree
-      'add_simple_features',        # Add to simple_feature tree
+  my %methods_for_dbtypes = (
+    'core' => [
+      'add_dna_align_features',           # Add to cDNA/mRNA, est, RNA, other_alignment trees
+      'add_data_files',                   # Add to gene/rnaseq tree
+      'add_genes',                        # Add to gene, transcript, align_slice_transcript, tsv_transcript trees
+      'add_trans_associated',             # Add to features associated with transcripts
+      'add_marker_features',              # Add to marker tree
+      'add_qtl_features',                 # Add to marker tree
+      'add_genome_attribs',               # Add to genome_attribs tree
+      'add_misc_features',                # Add to misc_feature tree
+      'add_prediction_transcripts',       # Add to prediction_transcript tree
+      'add_protein_align_features',       # Add to protein_align_feature_tree
+      'add_protein_features',             # Add to protein_feature_tree
+      'add_repeat_features',              # Add to repeat_feature tree
+      'add_simple_features',              # Add to simple_feature tree
       'add_decorations'
     ],
-    compara => [
-      'add_synteny',                # Add to synteny tree
-      'add_alignments'              # Add to compara_align tree
+    'compara' => [
+      'add_synteny',                      # Add to synteny tree
+      'add_alignments'                    # Add to compara_align tree
     ],
-    funcgen => [
-      'add_regulation_builds',      # Add to regulation_feature tree
-      'add_regulation_features',    # Add to regulation_feature tree
-      'add_oligo_probes'            # Add to oligo tree
+    'funcgen' => [
+      'add_regulation_builds',            # Add to regulation_feature tree
+      'add_regulation_features',          # Add to regulation_feature tree
+      'add_oligo_probes'                  # Add to oligo tree
     ],
-    variation => [
+    'variation' => [
       'add_sequence_variations',          # Add to variation_feature tree
       'add_phenotypes',                   # Add to variation_feature tree
       'add_structural_variations',        # Add to variation_feature tree
@@ -71,20 +70,26 @@ sub load_tracks {
       'add_somatic_structural_variations' # Add to somatic tree
     ],
   );
-  
-  foreach my $type (keys %data_types) {
-    my ($check, $databases) = $type eq 'compara' ? ($species_defs->multi_hash, $species_defs->compara_like_databases) : ($dbs_hash, $self->sd_call("${type}_like_databases"));
-    
-    foreach my $db (grep exists $check->{$_}, @{$databases || []}) {
-      my $key = lc substr $db, 9;
-      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species,$params) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
+
+  foreach my $db_type (keys %methods_for_dbtypes) {
+    my ($db_hash, $databases) = $db_type eq 'compara'
+      ? ($species_defs->multi_hash, $species_defs->compara_like_databases)
+      : ($dbs_hash, $species_defs->get_config($species, "${db_type}_like_databases"));
+
+    # For all the dbs belonging to a particular db type, call all the methods, one be one, to add tracks for that db type
+    foreach my $db_key (grep exists $db_hash->{$_}, @{$databases || []}) {
+      my $db_name = lc substr $db_key, 9;
+
+      foreach my $method (@{$methods_for_dbtypes{$db_type}}) {
+        $self->$method($db_name, $db_hash->{$db_key}{'tables'} || $db_hash->{$db_key}, $species, @_);
+      }
     }
   }
-  
-  $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]) unless $self->get_parameter('opt_empty_tracks') eq '0';
-  $self->add_options('information', [ 'opt_subtitles', 'Display in-track labels', undef, undef, 'normal' ]);
-  $self->add_options('information', [ 'opt_highlight_feature', 'Highlight current feature', undef, undef, 'normal' ]);
-  $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
+
+  $self->add_option('information', 'opt_empty_tracks',      'Display empty tracks',       'off'     ) unless $self->get_parameter('opt_empty_tracks') eq '0';
+  $self->add_option('information', 'opt_subtitles',         'Display in-track labels',    'normal'  );
+  $self->add_option('information', 'opt_highlight_feature', 'Highlight current feature',  'normal'  );
+  $self->tree->root->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks'); ## TODO - Why this?
 }
 
 sub _merge {
@@ -92,13 +97,13 @@ sub _merge {
   my $tree        = $_sub_tree->{'analyses'};
   my $config_name = $self->{'type'};
   my $data        = {};
-  
-  foreach my $analysis (keys %$tree){ 
-    my $sub_tree = $tree->{$analysis}; 
-    
+
+  foreach my $analysis (keys %$tree){
+    my $sub_tree = $tree->{$analysis};
+
     next unless $sub_tree->{'disp'}; # Don't include non-displayable tracks
     next if exists $sub_tree->{'web'}{$sub_type}{'do_not_display'};
-    
+
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
 
     foreach (grep $_ ne 'desc', keys %{$sub_tree->{'web'} || {}}) {
@@ -108,7 +113,7 @@ sub _merge {
         $data->{$key}{$_} ||= $sub_tree->{'web'}{$_}; # Longer form for help and configuration
       }
     }
-    
+
     if ($sub_tree->{'web'}{'key'}) {
       if ($sub_tree->{'desc'}) {
         $data->{$key}{'multiple'}      = "This track comprises multiple analyses;" if $data->{$key}{'description'};
@@ -118,12 +123,12 @@ sub _merge {
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
     }
-    
+
     $data->{$key}{'format'} = $sub_tree->{'format'};
-    
+
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
-  
+
   foreach my $key (keys %$data) {
     $data->{$key}{'name'}      ||= $tree->{$key}{'name'};
     $data->{$key}{'caption'}   ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
@@ -131,26 +136,26 @@ sub _merge {
     $data->{$key}{'strand'}    ||= 'r';
     $data->{$key}{'description'} = "$data->{$key}{'multiple'} $data->{$key}{'description'}" if $data->{$key}{'multiple'};
   }
-  
+
   return ([ sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ], $data);
 }
 
-sub generic_add {
+sub _add_track {
   my ($self, $menu, $key, $name, $data, $options) = @_;
-  
+
   $data = {
     %$data,
     db        => $key,
     renderers => [ 'off', 'Off', 'normal', 'On' ],
     %$options
   };
-  
-  $self->add_matrix($data, $menu, $name) if $data->{'matrix'};
-  
-  return $menu->append($self->create_track($name, $data->{'name'}, $data));
+
+  $self->_add_matrix($data, $menu, $name) if $data->{'matrix'};
+
+  return $menu->append_child($self->create_track_node($name, $data->{'name'}, $data));
 }
 
-sub add_matrix {
+sub _add_matrix {
   my ($self, $data, $menu, $name) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
@@ -160,9 +165,9 @@ sub add_matrix {
   my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
   my $column_key   = $self->tree->clean_id("${subset}_$column");
   my $column_track = $self->get_node($column_key);
-  
+
   if (!($column_track && $column_track->parent_node)) {
-    $column_track = $self->create_track($column_key, $data->{'track_name'} || $column, {
+    $column_track = $self->create_track_node($column_key, $data->{'track_name'} || $column, {
       renderers   => $data->{'renderers'},
       label_x     => $column,
       display     => 'off',
@@ -171,15 +176,15 @@ sub add_matrix {
       column_order => $matrix->{'column_order'} || 999999,
       %{$data->{'column_data'} || {}}
     });
-    
-    $self->alphabetise_tracks($column_track, $menu, 'label_x');
+
+    $menu->insert_alphabetically($column_track, 'label_x');
   }
-  
+
   if ($matrix->{'row'}) {
     push @{$column_track->data->{'subtrack_list'}}, [ $caption, $column_track->data->{'no_subtrack_description'} ? () : $data->{'description'} ];
     $data->{'option_key'} = $self->tree->clean_id("${subset}_${column}_$matrix->{'row'}");
   }
-  
+
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
@@ -187,10 +192,10 @@ sub add_matrix {
   if (!$data->{'display'} || $data->{'display'} eq 'off') {
     $data->{'display'} = 'default';
   }
-  
+
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
-    
+
     $menu_data->{'menu'}   = 'matrix';
     $menu_data->{'url'}    = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $menu->id });
     $menu_data->{'matrix'} = {
@@ -198,12 +203,12 @@ sub add_matrix {
       header  => $menu_data->{'caption'},
     }
   }
-  
+
   foreach (@rows) {
     my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
     my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
-    
-    my $node = $self->create_track($option_key, $_->{'row'}, {
+
+    my $node = $self->create_track_node($option_key, $_->{'row'}, {
       node_type => 'option',
       menu      => 'no',
       display   => $display,
@@ -217,39 +222,32 @@ sub add_matrix {
       $node->{'user_data'}{$option_key} ||= {'display' => 'on',       'hack' => 1}; # do not overwrite - user may have changed it himself if it's present already
       $node->{'user_data'}{$name}       ||= {'display' => $renderer,  'hack' => 1}; # change individual track renderer along with the cell display
     }
-    $column_track->append($node);
-    
+    $column_track->append_child($node);
+
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
   }
-  
+
   return $column_track;
 }
 
-#----------------------------------------------------------------------#
-# Functions to add tracks from core like databases                     #
-#----------------------------------------------------------------------#
-
-# add_dna_align_features
-# loop through all core databases - and attach the dna align
-# features from the dna_align_feature tables...
-# these are added to one of five menus: transcript, cdna/mrna, est, rna, other
-# depending whats in the web_data column in the database
 sub add_dna_align_features {
+  ## Loop through all core databases - and attach the dna align features from the dna_align_feature tables...
+  ## These are added to one of five menus: transcript, cdna/mrna, est, rna, other depending whats in the web_data column in the database
   my ($self, $key, $hashref) = @_;
-  
+
   return unless $self->get_node('dna_align_cdna') || $key eq 'rnaseq';
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'dna_align_feature'}, 'dna_align_feature');
-  
+
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = ($k =~ /rnaseq|simple|transcript/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
-    
+    my $menu = ($k =~ /rnaseq|simple|transcript/) ? $self->get_node($k) : $self->get_node("dna_align_$k");
+
     if ($menu) {
       my $alignment_renderers = ['off','Off'];
-      
-      $alignment_renderers = [ @{$self->{'alignment_renderers'}} ] unless($data->{$key_2}{'no_default_renderers'});
-            
+
+      $alignment_renderers = [ @{$self->_alignment_renderers} ] unless($data->{$key_2}{'no_default_renderers'});
+
       if (my @other_renderers = @{$data->{$key_2}{'additional_renderers'} || [] }) {
         my $i = 0;
         while ($i < scalar(@other_renderers)) {
@@ -258,23 +256,23 @@ sub add_dna_align_features {
           $i += 2;
         }
       }
-      
+
       # my $display = (grep { $data->{$key_2}{'display'} eq $_ } @$alignment_renderers )             ? $data->{$key_2}{'display'}
-      #             : (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}} ) ? $data->{$key_2}{'display'}
+      #             : (grep { $data->{$key_2}{'display'} eq $_ } @{$self->_alignment_renderers} )    ? $data->{$key_2}{'display'}
       #             : 'off'; # needed because the same logic_name can be a gene and an alignment
 
       my $display  = $data->{$key_2}{'display'} ? $data->{$key_2}{'display'} : 'off';
       my $glyphset = '_alignment';
       my $strand   = 'b';
-      
+
       if ($key_2 eq 'alt_seq_mapping') {
         $display             = 'simple';
-        $alignment_renderers = [ 'off', 'Off', 'normal', 'On' ];  
+        $alignment_renderers = [ 'off', 'Off', 'normal', 'On' ];
         $glyphset            = 'patch_ref_alignment';
         $strand              = 'f';
       }
-      
-      $self->generic_add($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
+
+      $self->_add_track($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
         glyphset  => $glyphset,
         sub_type  => lc $k,
         colourset => 'feature',
@@ -284,18 +282,18 @@ sub add_dna_align_features {
       });
     }
   }
-  
+
   $self->add_track('information', 'diff_legend', 'Alignment Difference Legend', 'diff_legend', { strand => 'r' });
 }
 
 sub add_data_files {
   my ($self, $key, $hashref) = @_;
-  my $menu = $self->tree->get_node('rnaseq');
+  my $menu = $self->get_node('rnaseq');
 
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
-  
+
   foreach (@$keys) {
     my $glyphset = $data->{$_}{'format'} || '_alignment';
 
@@ -317,24 +315,14 @@ sub add_data_files {
                     ];
     }
 
-    $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
-      glyphset  => $glyphset, 
+    $self->_add_track($menu, $key, "data_file_${key}_$_", $data->{$_}, {
+      glyphset  => $glyphset,
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
-      renderers => $renderers, 
+      renderers => $renderers,
       gang      => 'rnaseq',
     });
   }
-}
-
-sub add_ditag_features {
-  my ($self, $key, $hashref) = @_;
-  my $menu = $self->tree->get_node('ditag');
-  
-  return unless $menu;
-  
-  my ($keys, $data) = $self->_merge($hashref->{'ditag_feature'});
-  $self->generic_add($menu, $key, "ditag_${key}_$_", $data->{$_}, { glyphset => '_ditag', strand => 'b' }) for @$keys;
 }
 
 # add_genes
@@ -351,11 +339,11 @@ sub add_genes {
   my ($self, $key, $hashref, $species) = @_;
 
   # Gene features end up in each of these menus
-  return unless grep $self->get_node($_), @{$self->{'transcript_types'}};
+  return unless grep $self->get_node($_), $self->_transcript_types;
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
-  
+
   my $flag          = 0;
 
   my $renderers = [
@@ -366,10 +354,10 @@ sub add_genes {
           'transcript_label',        'Expanded with labels',
           'collapsed_nolabel',       'Collapsed without labels',
           'collapsed_label',         'Collapsed with labels',
-          'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
+          'transcript_label_coding', 'Coding transcripts only (in coding genes)',
         ];
-        
-  foreach my $type (@{$self->{'transcript_types'}}) {
+
+  foreach my $type ($self->_transcript_types) {
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -383,10 +371,10 @@ sub add_genes {
         }
       }
 
-      my $menu = $self->get_node($t);      
+      my $menu = $self->get_node($t);
       next unless $menu;
 
-      $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
+      $self->_add_track($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
@@ -397,14 +385,14 @@ sub add_genes {
          'transcript_label',   'Expanded with labels',
         ] : [
          'off',          'Off',
-         'gene_nolabel', 'No labels', 
+         'gene_nolabel', 'No labels',
          'gene_label',   'With labels'
         ]
       });
       $flag = 1;
     }
-  }   
-  
+  }
+
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 }
@@ -412,24 +400,24 @@ sub add_genes {
 sub add_trans_associated {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('trans_associated');
-  
+
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
-  $self->generic_add($menu, $key, "simple_${key}_$_", $data->{$_}, { glyphset => '_simple', colourset => 'simple' }) for grep $data->{$_}{'transcript_associated'}, @$keys;  
+  $self->_add_track($menu, $key, "simple_${key}_$_", $data->{$_}, { glyphset => '_simple', colourset => 'simple' }) for grep $data->{$_}{'transcript_associated'}, @$keys;
 }
 
 sub add_marker_features {
   my($self, $key, $hashref) = @_;
   my $menu = $self->get_node('marker');
-  
+
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'marker_feature'});
   my $colours = $self->species_defs->colour('marker');
-  
+
   foreach (@$keys) {
-    $self->generic_add($menu, $key, "marker_${key}_$_", $data->{$_}, {
+    $self->_add_track($menu, $key, "marker_${key}_$_", $data->{$_}, {
       glyphset => 'marker',
       labels   => 'on',
       colours  => $colours,
@@ -440,12 +428,12 @@ sub add_marker_features {
 
 sub add_qtl_features {
   my ($self, $key, $hashref) = @_;
-  
+
   my $menu = $self->get_node('marker');
-  
+
   return unless $menu && $hashref->{'qtl'} && $hashref->{'qtl'}{'rows'} > 0;
-  
-  $menu->append($self->create_track("qtl_$key", 'QTLs', {
+
+  $menu->append_child($self->create_track_node("qtl_$key", 'QTLs', {
     db          => $key,
     glyphset    => '_qtl',
     caption     => 'QTLs',
@@ -460,17 +448,17 @@ sub add_qtl_features {
 sub add_genome_attribs {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('genome_attribs');
-  
+
   return unless $menu;
- 
-  my $default_tracks = {}; 
+
+  my $default_tracks = {};
   my $config_name = $self->{'type'};
   my $data        = $hashref->{'genome_attribs'}{'sets'}; # Different loop - no analyses - just misc_sets
-  
+
   foreach (sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data) {
     next if $_ eq 'NoAnnotation' || $default_tracks->{$config_name}{$_}{'available'} eq 'no';
-    
-    $self->generic_add($menu, $key, "genome_attribs_${key}_$_", $data->{$_}, {
+
+    $self->_add_track($menu, $key, "genome_attribs_${key}_$_", $data->{$_}, {
       glyphset          => '_clone',
       set               => $_,
       colourset         => 'clone',
@@ -486,9 +474,9 @@ sub add_genome_attribs {
 sub add_misc_features {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('misc_feature');
-  
+
   return unless $menu;
-  
+
   # set some defaults and available tracks
   my $default_tracks = {
     cytoview   => {
@@ -500,14 +488,14 @@ sub add_misc_features {
       encode => { threshold => 'no' }
     }
   };
-  
+
   my $config_name = $self->{'type'};
   my $data        = $hashref->{'misc_feature'}{'sets'}; # Different loop - no analyses - just misc_sets
-  
+
   foreach (sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data) {
     next if $_ eq 'NoAnnotation' || $default_tracks->{$config_name}{$_}{'available'} eq 'no';
-    
-    $self->generic_add($menu, $key, "misc_feature_${key}_$_", $data->{$_}, {
+
+    $self->_add_track($menu, $key, "misc_feature_${key}_$_", $data->{$_}, {
       glyphset          => '_clone',
       set               => $_,
       colourset         => 'clone',
@@ -523,13 +511,13 @@ sub add_misc_features {
 sub add_prediction_transcripts {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('prediction');
-  
+
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'prediction_transcript'});
-  
+
   foreach (@$keys) {
-    $self->generic_add($menu, $key, "transcript_${key}_$_", $data->{$_}, {
+    $self->_add_track($menu, $key, "transcript_${key}_$_", $data->{$_}, {
       glyphset   => '_prediction_transcript',
       colourset  => 'prediction',
       label_key  => '[display_label]',
@@ -545,23 +533,23 @@ sub add_prediction_transcripts {
 # features from the protein_align_feature tables...
 sub add_protein_align_features {
   my ($self, $key, $hashref) = @_;
-  my $menu = $self->tree->get_node('protein_align');
-  
+  my $menu = $self->get_node('protein_align');
+
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'protein_align_feature'}, 'protein_align_feature');
-  
+
   foreach my $key_2 (@$keys) {
     # needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off';
-    
-    $self->generic_add($menu, $key, "protein_${key}_$key_2", $data->{$key_2}, {
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->_alignment_renderers}) ? $data->{$key_2}{'display'} : 'off';
+
+    $self->_add_track($menu, $key, "protein_${key}_$key_2", $data->{$key_2}, {
       glyphset    => '_alignment',
       sub_type    => 'protein',
       colourset   => 'feature',
       object_type => 'ProteinAlignFeature',
       display     => $display,
-      renderers   => $self->{'alignment_renderers'},
+      renderers   => $self->_alignment_renderers,
       strand      => 'b',
     });
   }
@@ -585,18 +573,18 @@ sub add_protein_features {
 
   foreach my $menu_code (keys %menus) {
     my $menu = $self->get_node($menu_code);
-    
+
     next unless $menu;
-    
+
     my $type     = $menus{$menu_code}[0];
     my $gset     = $menus{$menu_code}[1];
     my $renderer = $menus{$menu_code}[2];
-    
+
     foreach (@$keys) {
-      next if $self->tree->get_node("${type}_$_");
+      next if $self->get_node("${type}_$_");
       next if $type ne ($data->{$_}{'type'} || 'feature'); # Don't separate by db in this case
-      
-      $self->generic_add($menu, $key, "${type}_$_", $data->{$_}, {
+
+      $self->_add_track($menu, $key, "${type}_$_", $data->{$_}, {
         glyphset  => $gset,
         colourset => 'protein_feature',
         display   => $renderer,
@@ -610,9 +598,9 @@ sub add_protein_features {
 sub add_repeat_features {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('repeat');
-  
+
   return unless $menu && $hashref->{'repeat_feature'}{'rows'} > 0;
-  
+
   my $data    = $hashref->{'repeat_feature'}{'analyses'};
   my %options = (
     glyphset    => '_repeat',
@@ -621,8 +609,8 @@ sub add_repeat_features {
     bump_width  => 0,
     strand      => 'r',
   );
-  
-  $menu->append($self->create_track("repeat_$key", 'All repeats', {
+
+  $menu->append_child($self->create_track_node("repeat_$key", 'All repeats', {
     db          => $key,
     logic_names => [ undef ], # All logic names
     types       => [ undef ], # All repeat types
@@ -633,14 +621,14 @@ sub add_repeat_features {
     renderers   => [qw(off Off normal On)],
     %options
   }));
-  
+
   my $flag    = keys %$data > 1;
   my $colours = $self->species_defs->colour('repeat');
-  
+
   foreach my $key_2 (sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data) {
     if ($flag) {
       # Add track for each analysis
-      $self->generic_add($menu, $key, "repeat_${key}_$key_2", $data->{$key_2}, {
+      $self->_add_track($menu, $key, "repeat_${key}_$key_2", $data->{$key_2}, {
         logic_names => [ $key_2 ], # Restrict to a single supset of logic names
         types       => [ undef  ],
         colours     => $colours,
@@ -649,16 +637,16 @@ sub add_repeat_features {
         %options
       });
     }
-    
+
     my $d2 = $data->{$key_2}{'types'};
-    
+
     if (keys %$d2 > 1) {
       foreach my $key_3 (sort keys %$d2) {
         my $n  = $key_3;
            $n .= " ($data->{$key_2}{'name'})" unless $data->{$key_2}{'name'} eq 'Repeats';
-         
-        # Add track for each repeat_type;        
-        $menu->append($self->create_track('repeat_' . $key . '_' . $key_2 . '_' . $key_3, $n, {
+
+        # Add track for each repeat_type;
+        $menu->append_child($self->create_track_node('repeat_' . $key . '_' . $key_2 . '_' . $key_3, $n, {
           db          => $key,
           logic_names => [ $key_2 ],
           types       => [ $key_3 ],
@@ -677,17 +665,17 @@ sub add_repeat_features {
 sub add_simple_features {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('simple');
-  
+
   return unless $menu;
-  
+
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
-  
-  foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
+
+  foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {
     # Allow override of default glyphset, menu etc.
     $menu = $self->get_node($data->{$_}{'menu'}) if $data->{$_}{'menu'};
-    
+
     next unless $menu;
-    
+
     my $glyphset = $data->{$_}{'glyphset'} ? $data->{$_}{'glyphset'}: 'simple_features';
     my %options  = (
       glyphset  => $glyphset,
@@ -699,19 +687,19 @@ sub add_simple_features {
     foreach my $opt ('renderers', 'height') {
       $options{$opt} = $data->{$_}{$opt} if $data->{$_}{$opt};
     }
-    
-    $self->generic_add($menu, $key, "simple_${key}_$_", $data->{$_}, \%options);
+
+    $self->_add_track($menu, $key, "simple_${key}_$_", $data->{$_}, \%options);
   }
 }
 
 sub add_decorations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('decorations');
-  
+
   return unless $menu;
-  
+
   if ($key eq 'core' && $hashref->{'karyotype'}{'rows'} > 0 && !$self->get_node('ideogram')) {
-    $menu->append($self->create_track("chr_band_$key", 'Chromosome bands', {
+    $menu->append_child($self->create_track_node("chr_band_$key", 'Chromosome bands', {
       db          => $key,
       glyphset    => 'chr_band',
       display     => 'normal',
@@ -721,9 +709,9 @@ sub add_decorations {
       sortable    => 1,
     }));
   }
-  
+
   if ($key eq 'core' && $hashref->{'assembly_exception'}{'rows'} > 0) {
-    $menu->append($self->create_track("assembly_exception_$key", 'Assembly exceptions', {
+    $menu->append_child($self->create_track_node("assembly_exception_$key", 'Assembly exceptions', {
       db           => $key,
       glyphset     => 'assemblyexception',
       height       => 2,
@@ -736,9 +724,9 @@ sub add_decorations {
       colourset    => 'assembly_exception',
     }));
   }
-  
+
   if ($key eq 'core' && $hashref->{'misc_feature'}{'sets'}{'NoAnnotation'}) {
-    $menu->append($self->create_track('annotation_status', 'Annotation status', {
+    $menu->append_child($self->create_track_node('annotation_status', 'Annotation status', {
       db            => $key,
       glyphset      => 'annotation_status',
       height        => 2,
@@ -760,13 +748,13 @@ sub add_decorations {
 sub add_synteny {
   my ($self, $key, $hashref, $species) = @_;
   my $menu = $self->get_node('synteny');
-  
+
   return unless $menu;
-  
+
   my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species} || {}};
 
   return unless @synteny_species;
-  
+
   my $species_defs = $self->species_defs;
   my $colours      = $species_defs->colour('synteny');
   my $self_label   = $species_defs->species_label($species, 'no_formatting');
@@ -777,8 +765,8 @@ sub add_synteny {
     my $caption = substr($a, 0, 1) . ".$b synteny";
     my $label   = $species_defs->species_label($species_2, 'no_formatting');
     (my $name   = "Synteny with $label") =~ s/<.*?>//g;
-    
-    $menu->append($self->create_track("synteny_$species_2", $name, {
+
+    $menu->append_child($self->create_track_node("synteny_$species_2", $name, {
       db          => $key,
       glyphset    => '_synteny',
       species     => $species_2,
@@ -796,29 +784,29 @@ sub add_synteny {
 
 sub add_alignments {
   my ($self, $key, $hashref, $species) = @_;
-  
+
   return unless grep $self->get_node($_), qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other conservation);
-  
+
   my $species_defs = $self->species_defs;
-  
+
   return if $species_defs->ENSEMBL_SUBTYPE eq 'Pre';
-  
+
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
   my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/genome/compara/analyses.html';
- 
+
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
-    
+
     if ($row->{'class'} =~ /pairwise_alignment/) {
       my ($other_species) = grep { !/^$species$|ancestral_sequences$/ } keys %{$row->{'species'}};
          $other_species ||= $species if scalar keys %{$row->{'species'}} == 1;
       my $other_label     = $species_defs->species_label($other_species, 'no_formatting');
       my ($menu_key, $description, $type);
-      
+
       if ($row->{'type'} =~ /(B?)LASTZ_(\w+)/) {
         next if $2 eq 'PATCH';
-        
+
         $menu_key    = 'pairwise_blastz';
         $type        = sprintf '%sLASTz %s', $1, lc $2;
         $description = "$type pairwise alignments";
@@ -832,7 +820,7 @@ sub add_alignments {
         $menu_key    = 'pairwise_other';
         $description = 'Pairwise alignments';
       }
-      
+
       $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
 
@@ -853,7 +841,7 @@ sub add_alignments {
       };
     } else {
       my $n_species = grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}};
-      
+
       my %options = (
         db                         => $key,
         glyphset                   => '_alignment_multiple',
@@ -865,12 +853,12 @@ sub add_alignments {
         colourset                  => 'multiple',
         strand                     => 'f',
       );
-      
+
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
-        
+
         $options{'description'} = qq{<a href="/info/genome/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
-        
+
         $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
           conservation_score => $row->{'conservation_score'},
@@ -880,7 +868,7 @@ sub add_alignments {
           display            => 'off',
           renderers          => [ 'off', 'Off', 'tiling', 'Tiling array' ],
         };
-        
+
         $alignments->{'conservation'}{"$row->{'id'}_constrained"} = {
           %options,
           constrained_element => $row->{'constrained_element'},
@@ -891,7 +879,7 @@ sub add_alignments {
           renderers           => [ 'off', 'Off', 'compact', 'On' ],
         };
       }
-      
+
       $alignments->{'multiple_align'}{$row->{'id'}} = {
         %options,
         name        => $row->{'name'},
@@ -899,19 +887,19 @@ sub add_alignments {
         order       => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         display     => 'off',
         renderers   => [ 'off', 'Off', 'compact', 'On' ],
-        description => qq{<a href="/info/genome/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
+        description => qq{<a href="/info/genome/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } .
                        join('; ', sort map { $species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
       };
-    } 
+    }
   }
-  
+
   foreach my $menu_key (keys %$alignments) {
     my $menu = $self->get_node($menu_key);
     next unless $menu;
-    
+
     foreach my $key_2 (sort { $alignments->{$menu_key}{$a}{'order'} cmp  $alignments->{$menu_key}{$b}{'order'} } keys %{$alignments->{$menu_key}}) {
       my $row = $alignments->{$menu_key}{$key_2};
-      $menu->append($self->create_track("alignment_${key}_$key_2", $row->{'caption'}, $row));
+      $menu->append_child($self->create_track_node("alignment_${key}_$key_2", $row->{'caption'}, $row));
     }
   }
 }
@@ -922,31 +910,31 @@ sub add_alignments {
 
 # needs configuring so tracks only display if data in species fg_database
 sub add_regulation_features {
-  my ($self, $key, $hashref) = @_;  
+  my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('functional');
-  
+
   return unless $menu;
-  
-  my $reg_regions       = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
-  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
+
+  my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
+  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
-  
+
   foreach my $key_2 (sort grep { !/Regulatory_Build|seg_/ } @$keys_1, @$keys_2) {
     my $type = $fg_data{$key_2}{'type'};
-    
+
     next if !$type || $type eq 'ctcf';
-    
+
     my @renderers;
-    
+
     if ($fg_data{$key_2}{'renderers'}) {
-      push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
+      push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}};
     } else {
       @renderers = qw(off Off normal On);
     }
-    
-    $reg_regions->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, { 
+
+    $reg_regions->append_child($self->create_track_node("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -954,15 +942,15 @@ sub add_regulation_features {
       labels      => 'on',
       depth       => $fg_data{$key_2}{'depth'}     || 0.5,
       colourset   => $fg_data{$key_2}{'colourset'} || $type,
-      display     => $fg_data{$key_2}{'display'}   || 'off', 
+      display     => $fg_data{$key_2}{'display'}   || 'off',
       description => $fg_data{$key_2}{'description'},
       priority    => $fg_data{$key_2}{'priority'},
       logic_name  => $fg_data{$key_2}{'logic_names'}[0],
-      renderers   => \@renderers, 
+      renderers   => \@renderers,
     }));
-    
+
     if ($fg_data{$key_2}{'description'} =~ /cisRED/) {
-      $reg_regions->append($self->create_track("${type}_${key}_search", 'cisRED Search Regions', {
+      $reg_regions->append_child($self->create_track_node("${type}_${key}_search", 'cisRED Search Regions', {
         db          => $key,
         glyphset    => 'regulatory_search_regions',
         sources     => 'undef',
@@ -975,13 +963,13 @@ sub add_regulation_features {
       }));
     }
   }
-  
+
   # Add internal methylation tracks
   my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   my $methylation = $db_tables->{'methylation'};
-  
+
   foreach my $k (sort { $methylation->{$a}{'description'} cmp $methylation->{$b}{'description'} } keys %$methylation) {
-    $methylation_menu->append($self->create_track("methylation_$k", $methylation->{$k}{'name'}, {
+    $methylation_menu->append_child($self->create_track_node("methylation_$k", $methylation->{$k}{'name'}, {
       data_id      => $k,
       description  => $methylation->{$k}{'description'},
       strand       => 'r',
@@ -1016,11 +1004,11 @@ sub add_regulation_builds {
 
   return unless $db;
 
-  $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
+  $menu = $menu->append_child($self->create_menu_node('regulatory_features', 'Regulatory features'));
 
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
-  my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
+  my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Regulatory features'));
+  my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
 
@@ -1032,7 +1020,7 @@ sub add_regulation_builds {
     $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
   }
   @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
- 
+
   my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
 
   # FIXME: put this in db
@@ -1052,7 +1040,7 @@ sub add_regulation_builds {
   } else {
     @renderers = qw(off Off normal On);
   }
- 
+
   my %all_types;
   foreach my $set (qw(core non_core)) {
     $all_types{$set} = [];
@@ -1089,15 +1077,15 @@ sub add_regulation_builds {
       }
     }
   }
- 
-  $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
+
+  $matrix_menus{$_} = $menu->after($self->create_menu_node(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
   # New file-based segmentation tracks
   my $segs = $hashref->{'segmentation'};
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
-    $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+    $prev_track = $reg_segs->append_child($self->create_track_node("seg_$key", "Reg. Segs: $name", {
       db          => $key,
       glyphset    => 'fg_segmentation_features',
       sources     => 'undef',
@@ -1119,14 +1107,14 @@ sub add_regulation_builds {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
     my ($label, %evidence_tracks);
-    
-    if ($cell_line eq 'MultiCell') {  
+
+    if ($cell_line eq 'MultiCell') {
       $display = $fg_data{$key_2}{'display'} || 'off';
     } else {
       $label = ": $cell_line";
     }
-    
-    $prev_track = $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
+
+    $prev_track = $reg_feats->append_child($self->create_track_node($track_key, "Reg. Feats. $cell_names{$cell_line}", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -1144,7 +1132,7 @@ sub add_regulation_builds {
 
     # Old database-based segementation tracks
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
+      $prev_track = $reg_segs->append_child($self->create_track_node("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
         glyphset    => 'fg_segmentation_features',
         sources     => 'undef',
@@ -1173,16 +1161,16 @@ sub add_regulation_builds {
       section   => $cell_line,
       menu_key  => 'regulatory_features',
       renderers => [
-        'off',            'Off', 
-        'compact',        'Peaks', 
-        'signal',         'Signal', 
-        'signal_feature', 'Both', 
+        'off',            'Off',
+        'compact',        'Peaks',
+        'signal',         'Signal',
+        'signal_feature', 'Both',
       ],
     );
-    
+
     next if $params->{'reg_minimal'};
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $prev_track = $self->add_matrix({
+      $prev_track = $self->_add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section => $cell_line,
         matrix      => {
@@ -1196,31 +1184,31 @@ sub add_regulation_builds {
           label       => "$evidence_info->{$_}{'label'}",
           description => $fg_data{$key_2}{'description'}{$_},
           %column_data
-        }, 
+        },
       }, $matrix_menus{$_});
     }
   }
-  
+
   if ($db_tables->{'cell_type'}{'ids'}) {
-    $self->add_track('information', 'fg_regulatory_features_legend',   'Regulation Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });        
+    $self->add_track('information', 'fg_regulatory_features_legend',   'Regulation Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });
     $self->add_track('information', 'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
 
 sub add_oligo_probes {
-  my ($self, $key, $hashref) = @_; 
+  my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('oligo');
-  
+
   return unless $menu;
-  
+
   my $data        = $hashref->{'oligo_feature'}{'arrays'};
   my $description = $hashref->{'oligo_feature'}{'analyses'}{'AlignAffy'}{'desc'};  # Different loop - no analyses - base on probeset query results
-  
+
   foreach my $key_2 (sort keys %$data) {
-    my $key_3 = $key_2; 
-    $key_2    =~ s/:/__/;  
-    
-    $menu->append($self->create_track("oligo_${key}_" . uc $key_2, $key_3, {
+    my $key_3 = $key_2;
+    $key_2    =~ s/:/__/;
+
+    $menu->append_child($self->create_track_node("oligo_${key}_" . uc $key_2, $key_3, {
       glyphset    => '_oligo',
       db          => $key,
       sub_type    => 'oligo',
@@ -1231,7 +1219,7 @@ sub add_oligo_probes {
       caption     => $key_3,
       strand      => 'b',
       display     => 'off',
-      renderers   => $self->{'alignment_renderers'}
+      renderers   => $self->_alignment_renderers
     }));
   }
 }
@@ -1243,9 +1231,9 @@ sub add_oligo_probes {
 sub add_sequence_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
-  
+
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
-  
+
   my $options = {
     db         => $key,
     glyphset   => '_variation',
@@ -1256,7 +1244,7 @@ sub add_sequence_variations {
     display    => 'off',
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
-  
+
   if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
     $self->add_sequence_variations_meta($key, $hashref, $options);
   } else {
@@ -1309,7 +1297,7 @@ sub add_sequence_variations_meta {
     my $node;
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
-      $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
+      $node = $self->create_menu_node($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
 
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
@@ -1319,7 +1307,7 @@ sub add_sequence_variations_meta {
       (my $label_caption = $menu_item->{'short_name'}) =~ s/\svariants$/$short_suffix_caption/;
       $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
-      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+      $node = $self->create_track_node($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption      => $caption,
         labelcaption => $label_caption,
@@ -1340,8 +1328,8 @@ sub add_sequence_variations_meta {
       (my $label_caption   = $menu_item->{'short_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
       $label_caption .= $short_suffix_caption;
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
-      
-      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+
+      $node = $self->create_track_node($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption      => $caption,
         labelcaption => $label_caption,
@@ -1351,14 +1339,14 @@ sub add_sequence_variations_meta {
         description  => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
     }
-    
+
     # get the node onto which we're going to add this item, then append it
 #    if ($menu_item->{'long_name'} =~ /^all/i || $menu_item->{'long_name'} =~ /^sequence variants/i) {
     if ($menu_item->{'long_name'} =~ /^sequence variants/i) {
       ($self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
     }
     else {
-      ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
+      ($self->get_node($menu_item->{'parent'}) || $menu)->append_child($node) if $node;
     }
   }
 }
@@ -1367,12 +1355,12 @@ sub add_sequence_variations_meta {
 sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
-  my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
+  my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_menu_node('variants', 'Sequence variants');
   my $prefix_caption = 'Variant - ';
 
   my $title = 'Sequence variants (all sources)';
 
-  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
+  $sequence_variation->append_child($self->create_track_node("variation_feature_$key", $title, {
     %$options,
     caption     => $prefix_caption.'All sources',
     sources     => undef,
@@ -1382,35 +1370,35 @@ sub add_sequence_variations_default {
   foreach my $key_2 (sort{$a !~ /dbsnp/i cmp $b !~ /dbsnp/i} keys %{$hashref->{'source'}{'counts'} || {}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
     next if     $hashref->{'source'}{'somatic'}{$key_2} == 1;
-    
-    $sequence_variation->append($self->create_track("variation_feature_${key}_$key_2", "$key_2 variants", {
+
+    $sequence_variation->append_child($self->create_track_node("variation_feature_${key}_$key_2", "$key_2 variants", {
       %$options,
       caption     => $prefix_caption.$key_2,
       sources     => [ $key_2 ],
       description => $hashref->{'source'}{'descriptions'}{$key_2},
     }));
   }
-  
-  $menu->append($sequence_variation);
+
+  $menu->append_child($sequence_variation);
 
   # add in variation sets
   if ($hashref->{'variation_set'}{'rows'} > 0 ) {
-    my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
-    
-    $menu->append($variation_sets);
-    
+    my $variation_sets = $self->create_menu_node('variation_sets', 'Variation sets');
+
+    $menu->append_child($variation_sets);
+
     foreach my $toplevel_set (
-      sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } 
-      sort { $a->{'name'} =~ /^failed/i  <=> $b->{'name'} =~ /^failed/i  } 
-      sort { $a->{'name'} cmp $b->{'name'} } 
+      sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} }
+      sort { $a->{'name'} =~ /^failed/i  <=> $b->{'name'} =~ /^failed/i  }
+      sort { $a->{'name'} cmp $b->{'name'} }
       values %{$hashref->{'variation_set'}{'supersets'}}
     ) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       my $key           = $toplevel_set->{'short_name'};
-      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$key", $name) : $variation_sets;
-      
-      $set_variation->append($self->create_track("variation_set_$key", $caption, {
+      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_menu_node("set_variation_$key", $name) : $variation_sets;
+
+      $set_variation->append_child($self->create_track_node("variation_set_$key", $caption, {
         %$options,
         caption     => $prefix_caption.$caption,
         sources     => undef,
@@ -1418,16 +1406,16 @@ sub add_sequence_variations_default {
         set_name    => $name,
         description => $toplevel_set->{'description'},
       }));
-      
+
       # add in sub sets
       if (scalar @{$toplevel_set->{'subsets'}}) {
         foreach my $subset_id (sort @{$toplevel_set->{'subsets'}}) {
           my $sub_set             = $hashref->{'variation_set'}{'subsets'}{$subset_id};
-          my $sub_set_name        = $sub_set->{'name'}; 
+          my $sub_set_name        = $sub_set->{'name'};
           my $sub_set_description = $sub_set->{'description'};
           my $sub_set_key         = $sub_set->{'short_name'};
-          
-          $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
+
+          $set_variation->append_child($self->create_track_node("variation_set_$sub_set_key", $sub_set_name, {
             %$options,
             caption     => $prefix_caption.$sub_set_name,
             sources     => undef,
@@ -1437,7 +1425,7 @@ sub add_sequence_variations_default {
           }));
         }
 
-        $variation_sets->append($set_variation);
+        $variation_sets->append_child($set_variation);
       }
     }
   }
@@ -1445,22 +1433,22 @@ sub add_sequence_variations_default {
 
 sub add_phenotypes {
   my ($self, $key, $hashref) = @_;
-  
+
   return unless $hashref->{'phenotypes'}{'rows'} > 0;
-  
+
   my $p_menu = $self->get_node('phenotype');
 
   unless($p_menu) {
     my $menu = $self->get_node('variation');
     return unless $menu;
-    $p_menu = $self->create_submenu('phenotype', 'Phenotype annotations');
-    $menu->append($p_menu);
+    $p_menu = $self->create_menu_node('phenotype', 'Phenotype annotations');
+    $menu->append_child($p_menu);
   }
-  
+
   return unless $p_menu;
-  
-  my $pf_menu = $self->create_submenu('phenotype_features', 'Phenotype annotations');
-  
+
+  my $pf_menu = $self->create_menu_node('phenotype_features', 'Phenotype annotations');
+
   my %options = (
     db => $key,
     glyphset => 'phenotype_feature',
@@ -1473,11 +1461,11 @@ sub add_phenotypes {
   );
 
   my $track_desc = 'Disease, Trait and Phenotype annotations on ';
- 
-  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {  
+
+  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {
     next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
-    $pf_menu->prepend($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
+    $pf_menu->prepend($self->create_track_node('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
       %options,
       caption => 'Phenotypes ('.$type.'s)',
       type => $type,
@@ -1485,30 +1473,30 @@ sub add_phenotypes {
     }));
   }
 
-  $pf_menu->prepend($self->create_track('phenotype_all', 'Phenotype annotations (all types)', {
+  $pf_menu->prepend($self->create_track_node('phenotype_all', 'Phenotype annotations (all types)', {
     %options,
     caption => 'Phenotypes',
     type => undef,
     description => $track_desc.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
-  $p_menu->append($pf_menu);
+  $p_menu->append_child($pf_menu);
 }
 
 sub add_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
   my @A = keys $hashref;
-  
+
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
   my $prefix_caption      = 'SV - ';
   my $suffix              = '(structural variants)';
-  my $sv_menu             = $self->create_submenu('structural_variation', 'Structural variants');
-  my $structural_variants = $self->create_submenu('structural_variants',  'Structural variants');
+  my $sv_menu             = $self->create_menu_node('structural_variation', 'Structural variants');
+  my $structural_variants = $self->create_menu_node('structural_variants',  'Structural variants');
   my $desc                = 'The colours correspond to the structural variant classes.';
      $desc               .= '<br />For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>.';
   my %options             = (
     glyphset   => 'structural_variation',
-    strand     => 'r', 
+    strand     => 'r',
     bump_width => 0,
     height     => 6,
     depth      => 100,
@@ -1516,9 +1504,9 @@ sub add_structural_variations {
     display    => 'off',
     renderers  => [ 'off', 'Off', 'compact', 'Compact', 'gene_nolabel', 'Expanded' ],
   );
-  
+
   # Complete overlap (Larger structural variants)
-  $structural_variants->prepend($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', { 
+  $structural_variants->prepend($self->create_track_node('variation_feature_structural_larger', 'Larger structural variants (all sources)', {
     %options,
     db          => 'variation',
     caption     => $prefix_caption.'Larger variants',
@@ -1526,9 +1514,9 @@ sub add_structural_variations {
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
     min_size    => 1e6,
   }));
-  
+
   # Partial overlap (Smaller structural variants)
-  $structural_variants->prepend($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {
+  $structural_variants->prepend($self->create_track_node('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {
     %options,
     db         => 'variation',
     caption     => $prefix_caption.'Smaller variants',
@@ -1541,7 +1529,7 @@ sub add_structural_variations {
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {
     ## FIXME - Nasty hack to get variation tracks correctly configured
     next if ($key_2 =~ /(DECIPHER|LOVD)/);
-    $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 $suffix", {
+    $structural_variants->append_child($self->create_track_node("variation_feature_structural_$key_2", "$key_2 $suffix", {
       %options,
       db          => 'variation',
       caption     => $prefix_caption.$key_2,
@@ -1557,7 +1545,7 @@ sub add_structural_variations {
     my $caption   = "$prefix_caption$menu_item->{'long_name'}";
 
     my $name = $menu_item->{'key'};
-    $structural_variants->append($self->create_track("variation_feature_structural_$name", "$node_name", {
+    $structural_variants->append_child($self->create_track_node("variation_feature_structural_$name", "$node_name", {
       %options,
       db          => 'variation_private',
       caption     => $prefix_caption.$name,
@@ -1581,7 +1569,7 @@ sub add_structural_variations {
       my $temp_name = $menu_item->{'key'};
          $temp_name =~ s/^sv_set_//;
 
-      $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
+      $structural_variants->append_child($self->create_track_node($menu_item->{'key'}, $node_name, {
         %options,
         db          => $db,
         caption     => $caption,
@@ -1595,7 +1583,7 @@ sub add_structural_variations {
     elsif ($menu_item->{'type'} eq 'sv_study') {
       my $name = $menu_item->{'key'};
 
-      $structural_variants->append($self->create_track($name, $node_name, {
+      $structural_variants->append_child($self->create_track_node($name, $node_name, {
         %options,
         db          => $db,
         caption     => $caption,
@@ -1609,8 +1597,8 @@ sub add_structural_variations {
 
   $self->add_track('information', 'structural_variation_legend', 'Structural Variant Legend', 'structural_variation_legend', { strand => 'r' });
 
-  $sv_menu->append($structural_variants);
-  $menu->append($sv_menu);
+  $sv_menu->append_child($structural_variants);
+  $menu->append_child($sv_menu);
 }
 
 sub add_copy_number_variant_probes {
@@ -1619,8 +1607,8 @@ sub add_copy_number_variant_probes {
 
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'}})) > 0;
 
-  my $sv_menu        = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
-  my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
+  my $sv_menu        = $self->get_node('structural_variation') || $menu->append_child($self->create_menu_node('structural_variation', 'Structural variants'));
+  my $cnv_probe_menu = $self->create_menu_node('cnv_probe','Copy number variant probes');
 
   my %options = (
     db         => $key,
@@ -1632,7 +1620,7 @@ sub add_copy_number_variant_probes {
     display    => 'off'
   );
 
-  $cnv_probe_menu->append($self->create_track('variation_feature_cnv', 'Copy number variant probes (all sources)', {
+  $cnv_probe_menu->append_child($self->create_track_node('variation_feature_cnv', 'Copy number variant probes (all sources)', {
     %options,
     caption     => 'CNV probes',
     sources     => undef,
@@ -1640,8 +1628,8 @@ sub add_copy_number_variant_probes {
     description => 'Copy number variant probes from all sources'
   }));
 
-  foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {  
-    $cnv_probe_menu->append($self->create_track("variation_feature_cnv_$key_2", "$key_2", {
+  foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {
+    $cnv_probe_menu->append_child($self->create_track_node("variation_feature_cnv_$key_2", "$key_2", {
       %options,
       caption     => $key_2,
       source      => $key_2,
@@ -1650,7 +1638,7 @@ sub add_copy_number_variant_probes {
     }));
   }
 
-  $sv_menu->append($cnv_probe_menu);
+  $sv_menu->append_child($cnv_probe_menu);
 }
 
 # The recombination menu contains tracks with information pertaining to variation project, but these tracks actually simple_features stored in the core database
@@ -1660,21 +1648,21 @@ sub add_recombination {
   my ($self, @args) = @_;
   my $menu   = $self->get_node('recombination');
   my $parent = $self->get_node('variation');
-  
-  $parent->append($menu) if $menu && $parent;
+
+  $parent->append_child($menu) if $menu && $parent;
 }
 
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
-  
+
   # check we have any sources with somatic data
   return unless $hashref->{'source'}{'somatic'} && grep {$_} values %{$hashref->{'source'}{'somatic'}};
-  
+
   my $menu = $self->get_node('somatic');
   return unless $menu;
-  
+
   my $prefix_caption = 'Variant - ';
-  my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
+  my $somatic = $self->create_menu_node('somatic_mutation', 'Somatic variants');
   my %options = (
     db         => $key,
     glyphset   => '_variation',
@@ -1685,20 +1673,20 @@ sub add_somatic_mutations {
     display    => 'off',
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   );
-  
+
   # All sources
-  $somatic->append($self->create_track("somatic_mutation_all", "Somatic variants (all sources)", {
+  $somatic->append_child($self->create_track_node("somatic_mutation_all", "Somatic variants (all sources)", {
     %options,
     caption     => $prefix_caption.'All somatic',
     description => 'Somatic variants from all sources'
   }));
-  
-   
+
+
   # Mixed source(s)
   foreach my $key_1 (keys(%{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}})) {
     if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_1}{'none'}) {
       (my $k = $key_1) =~ s/\W/_/g;
-      $somatic->append($self->create_track("somatic_mutation_$k", "$key_1 somatic variants", {
+      $somatic->append_child($self->create_track_node("somatic_mutation_$k", "$key_1 somatic variants", {
         %options,
         caption     => $prefix_caption."$key_1 somatic",
         source      => $key_1,
@@ -1706,85 +1694,101 @@ sub add_somatic_mutations {
       }));
     }
   }
-  
+
   # Somatic source(s)
   foreach my $key_2 (sort grep { $hashref->{'source'}{'somatic'}{$_} == 1 } keys %{$hashref->{'source'}{'somatic'}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
-    
-    $somatic->append($self->create_track("somatic_mutation_$key_2", "$key_2 somatic mutations (all)", {
+
+    $somatic->append_child($self->create_track_node("somatic_mutation_$key_2", "$key_2 somatic mutations (all)", {
       %options,
       caption     => $prefix_caption."$key_2 somatic mutations",
       source      => $key_2,
       description => "All somatic variants from $key_2"
     }));
-    
-    my $tissue_menu = $self->create_submenu('somatic_mutation_by_tissue', 'Somatic variants by tissue');
-    
+
+    my $tissue_menu = $self->create_menu_node('somatic_mutation_by_tissue', 'Somatic variants by tissue');
+
     ## Add tracks for each tumour site
     my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
-    
+
     foreach my $description (sort  keys %tumour_sites) {
       next if $description eq 'none';
-      
+
       my $phenotype_id           = $tumour_sites{$description};
       my ($source, $type, $site) = split /\:/, $description;
       my $formatted_site         = $site;
       $site                      =~ s/\W/_/g;
       $formatted_site            =~ s/\_/ /g;
-      
-      $tissue_menu->append($self->create_track("somatic_mutation_${key_2}_$site", "$key_2 somatic mutations in $formatted_site", {
+
+      $tissue_menu->append_child($self->create_track_node("somatic_mutation_${key_2}_$site", "$key_2 somatic mutations in $formatted_site", {
         %options,
         caption     => "$key_2 $formatted_site tumours",
         filter      => $phenotype_id,
         description => $description
-      }));    
+      }));
     }
-    
-    $somatic->append($tissue_menu);
+
+    $somatic->append_child($tissue_menu);
   }
-  
-  $menu->append($somatic);
+
+  $menu->append_child($somatic);
 }
 
 sub add_somatic_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('somatic');
-  
+
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'somatic'}{'counts'}})) > 0;
-  
+
   my $prefix_caption = 'SV - ';
-  my $somatic = $self->create_submenu('somatic_structural_variation', 'Somatic structural variants');
-  
+  my $somatic = $self->create_menu_node('somatic_structural_variation', 'Somatic structural variants');
+
   my %options = (
     db         => $key,
     glyphset   => 'structural_variation',
-    strand     => 'r', 
+    strand     => 'r',
     bump_width => 0,
     height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
     renderers  => [ 'off', 'Off', 'compact', 'Compact', 'gene_nolabel', 'Expanded' ],
   );
-  
-  $somatic->append($self->create_track('somatic_sv_feature', 'Somatic structural variants (all sources)', {   
+
+  $somatic->append_child($self->create_track_node('somatic_sv_feature', 'Somatic structural variants (all sources)', {
     %options,
     caption     => $prefix_caption.'Somatic',
     sources     => undef,
     description => 'Somatic structural variants from all sources. For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>. In addition, we display the breakpoints in yellow.',
     depth       => 10
   }));
-  
+
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'somatic'}{'counts'} || {}}) {
-    $somatic->append($self->create_track("somatic_sv_feature_$key_2", "$key_2 somatic structural variants", {
+    $somatic->append_child($self->create_track_node("somatic_sv_feature_$key_2", "$key_2 somatic structural variants", {
       %options,
       caption     => $prefix_caption."$key_2 somatic",
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
       depth       => 100
-    }));  
+    }));
   }
-  
-  $menu->append($somatic);
+
+  $menu->append_child($somatic);
+}
+
+sub _transcript_types {
+  return qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript);
+}
+
+sub _alignment_renderers {
+  return $_[0]->{'_alignment_renderers'} ||= [
+    off                   => 'Off',
+    as_alignment_nolabel  => 'Normal',
+    as_alignment_label    => 'Labels',
+    half_height           => 'Half height',
+    stack                 => 'Stacked',
+    unlimited             => 'Stacked unlimited',
+    ungrouped             => 'Ungrouped',
+  ];
 }
 
 1;
