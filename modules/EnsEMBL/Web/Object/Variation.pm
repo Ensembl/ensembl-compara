@@ -1764,6 +1764,9 @@ sub get_snpedia_data {
   # Remove starting newline characters
   $rev->{'*'} =~s/^(\*{3})+//g;
 
+  # Remove 'Further reading (with comments)'
+  $rev->{'*'} =~s/Further reading \(with comments\)//g;
+
   # Convert '''text''' s to <b>text</b>
   $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;
 
