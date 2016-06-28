@@ -55,9 +55,11 @@ our @EXPORT_OK;
 
 @EXPORT_OK = qw(
     assert_ref_or_dbID
+    split_list
 );
 %EXPORT_TAGS = (
   assert  => [qw(assert_ref_or_dbID)],
+  argument => [qw(split_list)],
   all     => [@EXPORT_OK]
 );
 
@@ -115,6 +117,37 @@ sub assert_ref_or_dbID {
     return 1;
 }
 
+
+=head2 split_list
+
+  Arg[1]      : Arrayref $list
+  Arg[2]      : Integer $max_size (defaults to 500)
+  Example     : split_list($node_ids, 300);
+  Description : Split a list into lists that are not longer than $max_size elements
+  Returntype  : Arrayref of arrayrefs
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub split_list {
+    my ($id_list, $max_size) = @_;
+    $max_size ||= 500;
+    my @id_list = @$id_list;
+    my @list_of_lists;
+    while (@id_list) {
+        my @ids;
+        if (scalar(@id_list) > $max_size) {
+            @ids = splice( @id_list, 0, $max_size );
+        } else {
+            @ids     = @id_list;
+            @id_list = ();
+        }
+        push @list_of_lists, \@ids;
+    }
+    return \@list_of_lists;
+}
 
 
 1;

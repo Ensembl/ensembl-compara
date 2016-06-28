@@ -24,6 +24,7 @@ use warnings;
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -71,20 +72,12 @@ sub fetch_by_dbID {
 sub fetch_by_dbIDs {
   my ($self, $sequence_ids, $batch_size) = @_;
 
-  #Fetch in batches of batch_size
-  my $sequences = [];
-  $batch_size = 1000 unless (defined $batch_size);
-
-  #Get sequences from database in batches of $batch_size. Store in a hash based on sequence_id rather than an array
-  #to ensure that the returned sequences are in the same order as the list of sequence_ids.
+  #Get sequences from database in batches of $batch_size. Store in a hash based on sequence_id
   my $select_sql = "SELECT sequence_id, sequence FROM sequence WHERE sequence_id in ";
+  my $split_ids = split_list($sequence_ids, $batch_size);
   my %seq_hash;
-  for (my $i=0; $i < @$sequence_ids; $i+=$batch_size) {
-      my @these_ids;
-      for (my $j = $i; ($j < @$sequence_ids && $j < $i+$batch_size); $j++) {
-          push @these_ids, $sequence_ids->[$j];
-      }
-      my $sql = $select_sql . "(" . join(",", @these_ids) . ")";
+  foreach my $these_ids (@$split_ids) {
+      my $sql = $select_sql . "(" . join(",", @$these_ids) . ")";
       my $sth = $self->prepare($sql);
       $sth->execute;
       my ($sequence_id, $sequence);
