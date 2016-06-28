@@ -79,8 +79,16 @@ sub add_table_columns {
   
   $table->add_columns(
     { key => 'disease', title => 'Phenotype, disease and trait', align => 'left', sort => 'html' },
-    { key => 'source',  title => 'Source(s)',               align => 'left', sort => 'html' },
+    { key => 'source',  title => 'Source(s)',                    align => 'left', sort => 'html' },
   );
+
+  if ($column_flags->{'ontology'}) {
+    $table->add_columns(
+      { key => 'terms',      title => 'Mapped Terms',         align => 'left', sort => 'html' },
+      { key => 'accessions', title => 'Ontology Accessions',  align => 'left', sort => 'html' },
+    );
+  }
+
   if ($column_flags->{'s_evidence'}) {
     $table->add_columns({ key => 's_evidence', title => 'Supporting evidence', align => 'left', sort => 'html' });
   }
@@ -211,7 +219,7 @@ sub table_data {
     # Add the supporting evidence source(s)
     my $a_study_source;
     if (defined($associated_studies)) {
-      $a_study_source = $self->supporting_evidence_link($associated_studies, $pf->external_reference);
+      $a_study_source = $self->supporting_evidence_link($associated_studies, $pf->external_reference, $pf->dbID);
     }
 
     if ($is_somatic && $disorder =~ /COSMIC/) {
@@ -294,6 +302,41 @@ sub table_data {
     }
 
 
+    ## Ontology information
+    my ($terms,  $accessions, $accessions_no_url);
+    my $ontology_accessions = $pf->phenotype()->ontology_accessions();
+
+    my $adaptor = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+
+
+    foreach my $oa (@{$ontology_accessions}){
+
+      ## only these ontologies have links defined currently
+      next unless $oa =~ /^EFO|^Orph|^DO|^HP/;
+
+      push @{$accessions_no_url}, $oa;
+
+      ## build link out to Ontology source
+      my $iri_form = $oa;
+      $iri_form =~ s/\:/\_/;
+
+      my $ontology_link;
+      $ontology_link = $hub->get_ExtURL_link($oa, 'EFO',  $iri_form) if $oa =~ /^EFO/;
+      $ontology_link = $hub->get_ExtURL_link($oa, 'OLS',  $iri_form) if $oa =~ /^Orp/;
+      $ontology_link = $hub->get_ExtURL_link($oa, 'DOID', $iri_form) if $oa =~ /^DO/;
+      $ontology_link = $hub->get_ExtURL_link($oa, 'HPO',  $iri_form) if $oa =~ /^HP/;
+
+      push @{$accessions}, $ontology_link ;
+
+      ## get term name from ontology db
+      my $ontology_term = $adaptor->fetch_by_accession($oa);
+      if (defined $ontology_term){
+        my $name = $ontology_term->name();
+        push @{$terms}, $ontology_term->name();
+      }
+    }
+    $column_flags{'ontology'} = 1 if ($terms || $accessions);
+
     my $row = {
       disease   => $disease,
       source    => $source,
@@ -305,7 +348,16 @@ sub table_data {
       stats     => $stats_values,
       locations => $locations
     };
-  
+
+    $row->{terms} = ($terms) ? join(", ", @{$terms}) : '-';
+
+    my $accession_html = '-';
+    if ($accessions) {
+      my $div_id = $pf->dbID."_accession";
+      $accession_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', $accessions, $accessions_no_url);
+    }
+    $row->{accessions} = $accession_html;
+
     if ($a_study_source){
       $row->{s_evidence} = $a_study_source;
       $column_flags{s_evidence} = 1;
@@ -470,36 +522,67 @@ sub external_reference_link {
 
 # Supporting evidence links
 sub supporting_evidence_link {
-  my ($self, $associated, $ext_id) = @_;
+  my ($self, $associated, $ext_id, $pf_id) = @_;
   my $as_html = '';
   my $count = 0;
-  my $se_by_line = 2;
+  my %asso_with_url;
+
+  # Add the URL
   foreach my $st (@{$associated}) {
-    if ($as_html ne '') { $as_html .= ', '; }
-    if ($count==$se_by_line) {
-      $as_html .= '<br />';
-      $count = 0;
-    }
     my $a_url = $st->url;
     my $source_name = $st->source_name;
     if (!defined($a_url)) {
-      $as_html .= $self->source_link($source_name,$st->name,$ext_id);
+      $asso_with_url{$st->name} = $self->source_link($source_name,$st->name,$ext_id);
     }
     # Temporary link to fix the problem of the non stable IDs for the EGA studies coming from dbGAP
     elsif ($a_url =~ /ega/ && $self->hub->species eq 'Homo_sapiens') {
       my $source = $source_name.'_SEARCH';
-      $as_html .= $self->source_link($source,$st->name,$ext_id);
+      $asso_with_url{$st->name} = $self->source_link($source,$st->name,$ext_id);
     }
     else {
       my $a_source = $source_name;
       if ($st->name) { $a_source = $st->name; }
-      $as_html .= qq{<a rel="external" href="$a_url">[$a_source]</a>};
+      $asso_with_url{$st->name} = qq{<a rel="external" href="$a_url">$a_source</a>};
     }
     $count++;
   }
+
+  # Display the data
+  if (%asso_with_url) {
+    my $div_id = $pf_id."_evidence";
+    my @url_data = values(%asso_with_url);
+    my @export_data = keys(%asso_with_url);
+    $as_html = $self->display_items_list($div_id, 'evidence accessions', 'evidence', \@url_data, \@export_data);
+  }
+
   return $as_html;
 }
 
+sub display_items_list {
+  my ($self, $div_id, $title, $label, $url_data, $export_data) = @_;
+
+  my $html = "";
+  my $count = scalar(@{$url_data});
+  if ($count > 5) {
+    $html = sprintf(qq{
+        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%i %s</a>
+        <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
+      },
+      $title,
+      $div_id,
+      $count,
+      $label,
+      $div_id,
+      join(",", sort(@{$export_data})),
+      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
+    );
+  }
+  else {
+    $html = join(", ", sort(@{$url_data}));
+  }
+
+  return $html;
+}
 
 sub allele_link {
   my ($self, $study, $allele) = @_;
