@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use JSON qw(encode_json);
+use List::Util qw(max);
 
 use EnsEMBL::Web::TextSequence::Sequence;
 use EnsEMBL::Web::TextSequence::Adorn;
@@ -20,6 +21,8 @@ sub new {
     seq_num => -1,
     all_line => 0,
     width => $width,
+    sequences => [],
+    fieldsize => {},
     output => [],
     adorn => EnsEMBL::Web::TextSequence::Adorn->new(),
     legend => undef,
@@ -41,13 +44,22 @@ sub legend {
   return $self->{'legend'};
 }
 
+sub make_sequence { # For IoC: override me if you want to
+  my ($self,$id) = @_;
+
+  return EnsEMBL::Web::TextSequence::Sequence->new($self,$id);
+}
+
 sub new_sequence {
   my ($self) = @_;
 
   $self->{'seq_num'}++;
-  my $seq = EnsEMBL::Web::TextSequence::Sequence->new($self);
+  my $seq = $self->make_sequence($self->{'seq_num'});
+  push @{$self->{'sequences'}},$seq;
   return $seq;
 }
+
+sub sequences { return $_[0]->{'sequences'}; }
 
 # Only to be called by line
 sub _new_line_num { return $_[0]->{'all_line'}++; }
@@ -55,7 +67,6 @@ sub _hub { return $_[0]->{'hub'}; }
 sub _maintain_colour { return $_[0]->{'maintain_colour'}; }
 
 sub line_num { return $_[0]->{'all_line'}; }
-sub seq_num { return $_[0]->{'seq_num'}; }
 sub width { return $_[0]->{'width'}; }
 sub output { return $_[0]->{'output'}; }
 sub adorn { return $_[0]->{'adorn'}; }
@@ -92,6 +103,15 @@ sub continue_url {
   my @params = split(/;/,$params);
   for(@params) { $_ = 'adorn=only' if /^adorn=/; }
   return $path.'?'.join(';',@params,'adorn=only');
+}
+
+sub field_size {
+  my ($self,$key,$value) = @_;
+
+  if(@_>2) {
+    $self->{'fieldsize'}{$key} = max($self->{'fieldsize'}{$key}||0,$value);
+  }
+  return $self->{'fieldsize'}{$key};
 }
 
 1;

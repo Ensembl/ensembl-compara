@@ -158,8 +158,6 @@ sub initialize {
   }
   $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
   
-  $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
-  
   my $view = $self->view($config);
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
 

@@ -619,23 +619,15 @@ sub markup_variation {
 
 sub markup_comparisons {
   my ($self, $sequence, $markup, $config) = @_;
-  my $max_length = 0;
   my $i          = 0;
-  my ($name, $length, $pad, $seq, $comparison);
-  
+  my ($seq, $comparison);
+
+  my $view = $self->view($config);
   foreach (@{$config->{'slices'}}) {
-    $name = $_->{'display_name'} || $_->{'name'};
-    push @{$config->{'seq_order'}}, $name;
-    
-    $length     = length $self->strip_HTML($name);
-    $max_length = $length if $length > $max_length;
+    my $seq = $view->new_sequence;
+    $seq->name($_->{'display_name'} || $_->{'name'});
   }
-  
-  foreach (@{$config->{'seq_order'}}) {
-    $pad = ' ' x ($max_length - length $self->strip_HTML($_));
-    $config->{'padded_species'}{$_} = $_ . $pad;
-  }
-  
+
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
@@ -648,8 +640,6 @@ sub markup_comparisons {
     
     $i++;
   }
-  
-  $config->{'v_space'} = "\n";
 }
 
 sub markup_conservation {
@@ -677,8 +667,6 @@ sub markup_conservation {
 sub markup_line_numbers {
   my ($self, $sequence, $config) = @_;
   my $n = 0; # Keep track of which element of $sequence we are looking at
-  
-  $config->{'seq_order'} = [ $config->{'species'} ] unless $config->{'seq_order'}; # If we only have only one species, $config->{'seq_order'} won't exist yet (it's created in markup_comparisons)
   
   foreach my $sl (@{$config->{'slices'}}) {
     my $slice       = $sl->{'slice'};
@@ -858,8 +846,10 @@ sub format_lines {
       
       $y++;
     }
-    
-    $html .= $config->{'v_space'};
+
+    if(@{$self->view($config)->sequences}>1) {
+      $html .= "\n";
+    }
   }
   return $html;
 }
@@ -911,18 +901,10 @@ sub build_sequence {
   my $view = $self->view($config);
   $view->legend->final if $adorn ne 'none';
 
+  my @vseqs = @{$view->sequences};
   foreach my $lines (@$sequence) {
-    my $tseq = $view->new_sequence;
-
-    # Species names at start of line
-    if ($config->{'comparison'}) {
-      if (scalar keys %{$config->{'padded_species'}}) {
-        $tseq->pre($config->{'padded_species'}{$config->{'seq_order'}[$view->seq_num]} || $config->{'display_species'});
-      } else {
-        $tseq->pre($config->{'display_species'});
-      }
-      $tseq->pre('  '); 
-    }
+    my $tseq;
+    if(@vseqs) { $tseq = shift @vseqs } else { $tseq = $view->new_sequence; }
 
     my $line;
     foreach my $seq (@$lines) {

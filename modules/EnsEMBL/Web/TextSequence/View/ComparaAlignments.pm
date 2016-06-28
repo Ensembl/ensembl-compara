@@ -1,16 +1,11 @@
-package EnsEMBL::Web::TextSequence::View::TranscriptComparison;
+package EnsEMBL::Web::TextSequence::View::ComparaAlignments;
 
 use strict;
 use warnings;
 
 use parent qw(EnsEMBL::Web::TextSequence::View);
 
-use EnsEMBL::Web::TextSequence::Legend::TranscriptComparison;
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
-
-sub make_legend {
-  return EnsEMBL::Web::TextSequence::Legend::TranscriptComparison->new;
-}
 
 sub make_sequence {
   return

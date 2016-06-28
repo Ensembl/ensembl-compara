@@ -231,7 +231,6 @@ sub get {
   delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later
 
 #  $config->{'length'}    = $length;
-#  $config->{'seq_order'} = [ $config->{'species'} ];
 #  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
 
   for (0..$length - 1) {
@@ -369,13 +368,11 @@ sub get {
       if ($_->{'name'} eq 'snp_display') {
         unshift @sequence, $_->{'seq'};
         unshift @markup, {}; 
-        unshift @{$config->{'seq_order'}}, $_->{'name'};
         unshift @{$config->{'slices'}}, {}; 
         unshift @seq_names,$_->{'name'};
       } else {
         push @sequence, $_->{'seq'};
         push @markup, {}; 
-        push @{$config->{'seq_order'}}, $_->{'name'};
         push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
         push @seq_names,$_->{'name'};
       }
