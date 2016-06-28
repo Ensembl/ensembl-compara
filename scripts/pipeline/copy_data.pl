@@ -226,9 +226,8 @@ my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
 
-my $ancestral_dbID;
 my $ancestor_genome_db = $from_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
-$ancestral_dbID = $ancestor_genome_db->dbID if $ancestor_genome_db;
+my $ancestral_dbID = $ancestor_genome_db ? $ancestor_genome_db->dbID : -1;
 
 print "\n\n";   # to clear from possible warnings
 
