@@ -204,7 +204,7 @@ GetOptions(
            'method_link_type=s@'            => \@method_link_types,
            'mlss_id=i@'                     => \@mlss_id,
            're_enable=i'                    => \$re_enable,
-           'dry_run!'                       => \$dry_run,
+           'dry_run|dry-run!'               => \$dry_run,
 
            'trust_to!'                      => \$trust_to,
            'trust_ce!'                      => \$trust_ce,
