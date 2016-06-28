@@ -115,9 +115,7 @@ sub fetch_all_by_Homology {
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos', 'hm.homology_id'];
     my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
-    my $constraint = $self->generate_in_constraint([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER);
-
-    return $self->generic_fetch($constraint, $join);
+    return $self->generic_fetch_concatenate([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER, $join);
 }
 
 =head2 fetch_all_by_Family

@@ -144,9 +144,7 @@ sub fetch_all_by_dbID_list {
     return [] unless scalar(@$node_ids);
 
     my $table = ($self->_tables)[0]->[1];
-    my $constraint = $self->generate_in_constraint($node_ids, $table.'.node_id', SQL_INTEGER);
-
-    return $self->generic_fetch($constraint);
+    return $self->generic_fetch_concatenate($node_ids, $table.'.node_id', SQL_INTEGER);
 }
 
 

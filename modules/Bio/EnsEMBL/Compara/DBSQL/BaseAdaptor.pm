@@ -23,6 +23,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
@@ -331,6 +332,15 @@ sub generic_fetch_Iterator {
     return Bio::EnsEMBL::Utils::Iterator->new($closure);
 }
 
+
+sub generic_fetch_concatenate {
+    my ($self, $list_of_lists, $column_name, $column_sql_type, @generic_fetch_args) = @_;
+    my @results;
+    foreach my $id_list (@{ split_list($list_of_lists) }) {
+        push @results, @{ $self->generic_fetch( $self->generate_in_constraint($id_list, $column_name, $column_sql_type), @generic_fetch_args ) };
+    }
+    return \@results;
+}
 
 sub _synchronise {
     my ($self, $object) = @_;

@@ -21,6 +21,7 @@ package Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
@@ -57,10 +58,8 @@ sub fetch_by_dbID {
 =head2 fetch_by_dbIDs
 
   Arg [1]    : array reference $sequence_ids
-  Arg [2]    : integer $batch_size [optional]
   Example    : my $sequences = $sequence_adaptor->fetch_by_dbIDs($sequence_ids);
-  Description: Fetch sequences from the database in batches of $batch_size. Elements with $sequence_id of 0 (have no
-               sequence stored in the database) are skipped.
+  Description: Fetch sequences from the database in batches.
                Note: this is similar to fetch_all_by_dbID_list but the returned data is in a different format
   Returntype : Hashref of sequence_id to strings
   Exceptions : none
@@ -70,24 +69,37 @@ sub fetch_by_dbID {
 =cut
 
 sub fetch_by_dbIDs {
-  my ($self, $sequence_ids, $batch_size) = @_;
+  my ($self, $sequence_ids) = @_;
 
-  #Get sequences from database in batches of $batch_size. Store in a hash based on sequence_id
-  my $select_sql = "SELECT sequence_id, sequence FROM sequence WHERE sequence_id in ";
-  my $split_ids = split_list($sequence_ids, $batch_size);
+  my $select_sql = "SELECT sequence_id, sequence FROM sequence WHERE ";
+  return $self->_fetch_by_list($sequence_ids, $select_sql, 'sequence_id', SQL_INTEGER);
+}
+
+
+sub _fetch_by_list {
+  my ($self, $id_list, $select_sql, $column_name, $column_sql_type, @args) = @_;
+
+  return {} unless scalar(@$id_list);
+  my $split_ids = split_list($id_list);
   my %seq_hash;
   foreach my $these_ids (@$split_ids) {
-      my $sql = $select_sql . "(" . join(",", @$these_ids) . ")";
+      my $sql = $select_sql . $self->generate_in_constraint($these_ids, $column_name, $column_sql_type, 1);
+      $self->generic_fetch_hash($sql, \%seq_hash, @args);
+  }
+  return \%seq_hash;
+}
+
+
+sub generic_fetch_hash {
+      my ($self, $sql, $seq_hash, @args) = @_;
       my $sth = $self->prepare($sql);
-      $sth->execute;
+      $sth->execute(@args);
       my ($sequence_id, $sequence);
       $sth->bind_columns(\$sequence_id, \$sequence);
       while ($sth->fetch) {
-          $seq_hash{$sequence_id} = $sequence;
+          $seq_hash->{$sequence_id} = $sequence;
       }
       $sth->finish;
-  }
-  return \%seq_hash;
 }
 
 =head2 fetch_all_by_chunk_set_id
@@ -104,17 +116,10 @@ sub fetch_by_dbIDs {
 
 sub fetch_all_by_chunk_set_id {
   my ($self, $chunk_set_id) = @_;
-  my $sequences;
+  my $sequences = {};
 
   my $sql = "SELECT sequence_id, sequence FROM dnafrag_chunk join sequence using (sequence_id) where dnafrag_chunk_set_id=?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($chunk_set_id);
-  my ($sequence_id, $sequence);
-  $sth->bind_columns(\$sequence_id, \$sequence);
-  while ($sth->fetch) {
-      $sequences->{$sequence_id} = $sequence if ($sequence_id);
-  }
-  $sth->finish();
+  $self->generic_fetch_hash($sql, $sequences, $chunk_set_id);
   return $sequences;
 }
 
@@ -133,14 +138,9 @@ sub fetch_other_sequence_by_member_id_type {
 sub fetch_other_sequences_by_member_ids_type {
   my ($self, $seq_member_ids, $type) = @_;
 
-  return {} unless scalar(@$seq_member_ids);
-  my $ids_in_str = join(',', @$seq_member_ids);
-  my $sql = "SELECT seq_member_id, sequence FROM other_member_sequence WHERE seq_member_id IN ($ids_in_str) AND seq_type = ?";
-  my $res = $self->dbc->db_handle->selectall_arrayref($sql, undef, $type);
-  my %seqs = (map {$_->[0] => $_->[1]} @$res);
-  return \%seqs;
+  my $select_sql = "SELECT seq_member_id, sequence FROM other_member_sequence WHERE seq_type = ? AND ";
+  return $self->_fetch_by_list($seq_member_ids, $select_sql, 'seq_member_id', SQL_INTEGER, $type);
 }
-
 
 #
 # STORE METHODS
@@ -183,8 +183,8 @@ sub store_no_redundancy {
     my $seqID = shift @$matching_ids;
 
     if (scalar(@$matching_ids)) {
-        my $other_ids = join(",", @$matching_ids);
-        $self->dbc->do("DELETE FROM sequence WHERE sequence_id IN ($other_ids)");
+        my $ids_in = $self->generate_in_constraint($matching_ids, 'sequence_id', SQL_INTEGER, 1);
+        $self->dbc->do("DELETE FROM sequence WHERE $ids_in");
     }
 
     return $seqID;

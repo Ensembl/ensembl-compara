@@ -47,6 +47,10 @@ package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
+
 
 =head2 _tag_capabilities
 
@@ -159,10 +163,9 @@ sub _load_tagvalues_multiple {
         $perl_keys{$val->$perl_keyname} = $val;
     };
 
-    my $where_constraint = '';
-    if (not $all_objects) {
-        $where_constraint = "WHERE $db_keyname IN (".join(',', keys %perl_keys).")";
-    }
+    # This closure can process a set of objects
+my $load_some_tags = sub {
+    my $where_constraint = shift;
 
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT $db_keyname, $col_tag, $col_value FROM $db_tagtable $where_constraint");
@@ -201,6 +204,14 @@ sub _load_tagvalues_multiple {
             }
         }
         $sth->finish;
+    }
+};
+    if ($all_objects) {
+        $load_some_tags->('');
+    } else {
+        foreach my $id_list (@{ split_list([keys %perl_keys]) }) {
+            $load_some_tags->( "WHERE ".$self->generate_in_constraint($id_list, $db_keyname, SQL_INTEGER, 1) );
+        }
     }
 }
 

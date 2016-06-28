@@ -139,16 +139,14 @@ sub fetch_all_by_dbID_list {
 
     return [] unless scalar(@$taxon_ids);
 
-    my $constraint = $self->generate_in_constraint($taxon_ids, 't.taxon_id', SQL_INTEGER);
-    my $nodes = $self->generic_fetch($constraint);
+    my $nodes = $self->generic_fetch_concatenate($taxon_ids, 't.taxon_id', SQL_INTEGER);
     my %seen_taxon_ids = map {$_->taxon_id => $_} @$nodes;
 
     my @missing_taxon_ids = grep {!$seen_taxon_ids{$_}} @$taxon_ids;
 
     if (@missing_taxon_ids) {
         my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
-        $constraint = $self->generate_in_constraint(\@missing_taxon_ids, 'n.name', SQL_VARCHAR);
-        my $more_nodes = $self->generic_fetch($constraint, $join);
+        my $more_nodes = $self->generic_fetch_concatenate(\@missing_taxon_ids, 'n.name', SQL_VARCHAR, $join);
         push @$nodes, @$more_nodes;
     }
     return $nodes;
