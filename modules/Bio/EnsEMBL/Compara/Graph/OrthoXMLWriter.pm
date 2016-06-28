@@ -507,7 +507,13 @@ sub _taxonomy_info_properties {
     return unless $species_tree_node;
     $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $species_tree_node->node_name);
     my $tax_id    = $species_tree_node->taxon_id;
-    $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
+    if ($tax_id) {
+        $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id);
+        my $taxon = $species_tree_node->taxon;
+        my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+        $w->emptyTag('property', 'name' => 'common_name', 'value' => $common_name) if $common_name;
+        $w->emptyTag('property', 'name' => 'timetree_mya', 'value' => $taxon->get_value_for_tag('ensembl timetree mya')) if $taxon->has_tag('ensembl timetree mya');
+    }
 }
 
 
