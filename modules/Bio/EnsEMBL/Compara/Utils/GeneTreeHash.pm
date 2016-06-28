@@ -30,8 +30,8 @@ sub convert {
 
   my $self = bless {}, $caller;
 
-  my ($no_sequences, $aligned, $cdna, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
-    rearrange([qw(NO_SEQUENCES ALIGNED CDNA EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);
+  my ($no_sequences, $aligned, $cdna, $exon_boundaries, $gaps, $cigar_line) =
+    rearrange([qw(NO_SEQUENCES ALIGNED CDNA EXON_BOUNDARIES GAPS CIGAR_LINE)], @args);
 
   if (defined $no_sequences) {
       $self->no_sequences($no_sequences);
@@ -47,9 +47,6 @@ sub convert {
   }
   if (defined $gaps) {
       $self->gaps($gaps);
-  }
-  if (defined $full_tax_info) {
-    $self->full_tax_info($full_tax_info);
   }
   $self->cigar_line($cigar_line);
 
@@ -94,14 +91,6 @@ sub gaps {
         $self->{_gaps} = $gaps;
     }
     return $self->{_gaps};
-}
-
-sub full_tax_info {
-  my ($self, $fti) = @_;
-  if (defined ($fti)) {
-    $self->{_full_tax_info} = $fti;
-  }
-  return $self->{_full_tax_info};
 }
 
 sub cigar_line {
@@ -168,15 +157,13 @@ sub _convert_node {
 
   $hash->{branch_length} = $node->distance_to_parent() + 0;
   if($stn) {
+      my $taxon = $stn->taxon;
       $hash->{taxonomy} = {
           id => $stn->taxon_id + 0,
           scientific_name => $stn->node_name,
+          common_name => $taxon->ensembl_alias_name || $taxon->common_name,
       };
-      if ($self->full_tax_info()) {
-          my $taxon = $stn->taxon;
-          $hash->{taxonomy}{common_name}  = $taxon->ensembl_alias_name || $taxon->common_name;
-          $hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0;
-      }
+      $hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') + 0 if $taxon->has_tag('ensembl timetree mya');
   }
   $hash->{confidence} = {};
   if ($boot) {
