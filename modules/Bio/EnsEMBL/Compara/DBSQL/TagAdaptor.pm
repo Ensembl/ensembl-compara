@@ -154,7 +154,8 @@ sub _load_tagvalues_multiple {
 
     my %perl_keys = ();
     foreach my $val (@{$objs}) {
-        $val->{'_tags'} = {} unless exists $val->{'_tags'};
+        next if exists $val->{'_tags'};
+        $val->{'_tags'} = {};
         $perl_keys{$val->$perl_keyname} = $val;
     };
 
