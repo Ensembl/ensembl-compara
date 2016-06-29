@@ -105,6 +105,7 @@ sub _load_tagvalues {
     my ($tag, $value);
     $sth->bind_columns(\$tag, \$value);
     while ($sth->fetch()) {
+        $tag = lc $tag;
         # Optimized version of Taggable::add_tag()
         if ( ! exists($obj_tags->{$tag}) ) {
             $obj_tags->{$tag} = $value;
