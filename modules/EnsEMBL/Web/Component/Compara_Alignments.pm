@@ -24,6 +24,7 @@ use warnings;
 use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
@@ -260,9 +261,7 @@ sub _get_sequence {
 
   if ($padding) {
     my @pad = split ',', $padding;
-    
-    $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_)) for keys %{$config->{'padded_species'}};
-    
+
     if ($config->{'line_numbering'} and $config->{'line_numbering'} eq 'slice') {
       $config->{'padding'}->{'pre_number'} = $pad[1];
       $config->{'padding'}->{'number'}     = $pad[2];
@@ -705,6 +704,16 @@ sub initialize_export {
                         'image'   => $self->has_image
                 });
   return $self->_get_sequence($object->slice, $slices, undef, $cdb);
+}
+
+sub make_view {
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::ComparaAlignments->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
 }
 
 1;

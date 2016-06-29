@@ -34,7 +34,6 @@ sub initialize {
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
-    v_space         => "\n",
     comparison      => 1,
     exon_display    => 1,
     sub_slice_start => $start,

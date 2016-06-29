@@ -36,14 +36,15 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
 
+
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $score         = $self->parser->get_score;
-  my $start         = $feature_start - $slice->start;
-  my $end           = $feature_end - $slice->start;
+  my $start         = $feature_start - $slice->start + 1;
+  my $end           = $feature_end - $slice->start + 1;
   return if $end < 0 || $start > $slice->length;
 
   $metadata ||= {};

@@ -22,6 +22,7 @@ use strict;
 
 use Bio::EnsEMBL::MappedSliceContainer;
 use Bio::EnsEMBL::Variation::DBSQL::StrainSliceAdaptor;
+use EnsEMBL::Web::TextSequence::View::SequenceAlignment;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Location);
 
@@ -155,6 +156,16 @@ sub get_slices {
   $config->{'mapper'}          = $msc->mapper;
   
   return \@slices;
+}
+
+sub make_view {
+  my ($self,$config) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::SequenceAlignment->new(
+    $self->hub,
+    $config->{'display_width'},
+    $config->{'maintain_colour'}
+  );
 }
 
 1;

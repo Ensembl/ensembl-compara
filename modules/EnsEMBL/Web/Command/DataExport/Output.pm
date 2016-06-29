@@ -185,10 +185,13 @@ sub write_rtf {
   my ($sequence, $config, $block_mode) = $component->initialize_export; 
   return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
+  my $view = $component->view($config);
+  my @vseqs = @{$view->sequences};
+
   ## Configure RTF display
   my @colours        = (undef);  
   my $class_to_style = $self->_class_to_style;
-  my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
+  my $spacer         = (@vseqs>1) ? ' ' x $config->{'display_width'} : '';
   my $c              = 1;
   my $i              = 0;
   my $j              = 0;
@@ -215,6 +218,8 @@ sub write_rtf {
   }
 
   foreach my $lines (@$sequence) {
+    my $tseq;
+    if(@vseqs) { $tseq = shift @vseqs; } else { $tseq = $view->new_sequence; }
     next unless @$lines;
     my ($section, $class, $previous_class, $count, %stash);
 
@@ -247,14 +252,7 @@ sub write_rtf {
       ## (on pages, this is done by build_sequence, but that adds HTML)
       my $sp_string;
       if ($config->{'comparison'} && !scalar($output[$i][$j])) {
-    
-        if (scalar keys %{$config->{'padded_species'}}) {
-          $sp_string = $config->{'padded_species'}{$config->{'seq_order'}[$i]} || $config->{'display_species'};
-        } else {
-          $sp_string = $config->{'display_species'};
-        }
-
-        $sp_string .= '  ';
+        $sp_string = $tseq->padded_name.' ';
         push @{$output[$i][$j]}, [ undef, $sp_string ];
       }
 

@@ -58,8 +58,9 @@ sub adseq_eq {
   foreach my $k (keys %$a) {
     return 0 unless @{$a->{$k}} == @{$b->{$k}};
     foreach my $i (0..$#{$a->{$k}}) {
-      return 0 if defined $a->{$k}[$i] and !defined $b->{$k}[$i];
-      return 0 if defined $b->{$k}[$i] and !defined $a->{$k}[$i];
+      next if !defined $a->{$k}[$i] and !defined $b->{$k}[$i];
+      return 0 if !defined $b->{$k}[$i];
+      return 0 if !defined $a->{$k}[$i];
       return 0 unless $a->{$k}[$i] == $b->{$k}[$i];
     }
   }

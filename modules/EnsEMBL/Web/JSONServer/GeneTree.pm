@@ -107,8 +107,7 @@ sub create_json {
     -no_sequences => 0, 
     -aligned => 1, 
     -species_common_name => 0, 
-    -exon_boundaries => 0, 
-    -full_tax_info => 0
+    -exon_boundaries => 0
   );
 
   $file_handle->write_line(to_json($json));

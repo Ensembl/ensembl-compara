@@ -161,7 +161,6 @@ sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
   my ($data, $config) = $self->initialize(1);
-  $config->{'v_space'} = "\n";
   return ($data, $config, 1);
 }
 
