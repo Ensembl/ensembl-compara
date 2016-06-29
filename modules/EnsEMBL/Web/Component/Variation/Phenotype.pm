@@ -349,7 +349,12 @@ sub table_data {
       locations => $locations
     };
 
-    $row->{terms} = ($terms) ? join(", ", @{$terms}) : '-';
+    my $term_html = '-';
+    if ($terms) {
+      my $div_id = $pf->dbID."_term";
+      $term_html = $self->display_items_list($div_id, 'ontology terms', 'terms', $terms, $terms);
+    }
+    $row->{terms} = $term_html;
 
     my $accession_html = '-';
     if ($accessions) {
@@ -552,26 +557,25 @@ sub supporting_evidence_link {
     my $div_id = $pf_id."_evidence";
     my @url_data = values(%asso_with_url);
     my @export_data = keys(%asso_with_url);
-    $as_html = $self->display_items_list($div_id, 'evidence accessions', 'evidence', \@url_data, \@export_data);
+    $as_html = $self->display_items_list($div_id, 'evidence', 'Evidence', \@url_data, \@export_data, 1);
   }
 
   return $as_html;
 }
 
 sub display_items_list {
-  my ($self, $div_id, $title, $label, $url_data, $export_data) = @_;
+  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
 
   my $html = "";
   my $count = scalar(@{$url_data});
   if ($count > 5) {
     $html = sprintf(qq{
-        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%i %s</a>
+        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
         <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
       },
       $title,
       $div_id,
-      $count,
-      $label,
+      ($no_count_label) ? $label : "$count $label",
       $div_id,
       join(",", sort(@{$export_data})),
       '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
