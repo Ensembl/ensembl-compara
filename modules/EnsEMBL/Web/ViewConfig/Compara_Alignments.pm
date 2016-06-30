@@ -19,12 +19,12 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Compara_Alignments;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
+use parent qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
-use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
-
-sub init {
+sub init_cacheable {
+  ## @override
   my $self         = shift;
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
@@ -38,19 +38,19 @@ sub init {
     }
   }
 
-  $self->SUPER::init;
+  $self->SUPER::init_cacheable;
 
-  $self->set_defaults({
-    flank5_display        => 600,
-    flank3_display        => 600,
-    exon_display          => 'core',
-    exon_ori              => 'all',
-    snp_display           => 'off',
-    line_numbering        => 'off',
-    display_width         => 120,
-    conservation_display  => 'off',
-    region_change_display => 'off',
-    codons_display        => 'off',
+  $self->set_default_options({
+    'flank5_display'        => 600,
+    'flank3_display'        => 600,
+    'exon_display'          => 'core',
+    'exon_ori'              => 'all',
+    'snp_display'           => 'off',
+    'line_numbering'        => 'off',
+    'display_width'         => 120,
+    'conservation_display'  => 'off',
+    'region_change_display' => 'off',
+    'codons_display'        => 'off',
     %defaults
   });
 
@@ -59,69 +59,49 @@ sub init {
 }
 
 sub init_form {
-### Override base class, because alignments have multiple configuration screens
+  ## @override
+  ## Because alignments have multiple configuration screens
   my $self = shift;
-  my $fields = $self->form_fields;
 
-  foreach ($self->field_order) {
-    $self->add_form_element($fields->{$_});
-  }
-  ## Extra fieldsets for configuring species within an alignment (omitted from export)
-  $self->alignment_options;
+  $self->SUPER::init_form(@_);
+
+  # Extra fieldsets for configuring species within an alignment
+  $self->add_alignment_options;
 }
 
 sub field_order {
-  my $self = shift;
-  my @order;
-  if (!$self->{'species_only'}) {
-    if (!$self->{'no_flanking'}) {
-      push @order, qw(flank5_display flank3_display);
-    }
-    push @order, qw(display_width);
-    push @order, qw(strand) if $self->{'strand_option'};
-    push @order, qw(exon_display exon_ori);
-    push @order, $self->variation_fields;
-    push @order, qw(line_numbering codons_display conservation_display region_change_display title_options);
-  }
-  return @order;
+  ## Abstract method implementation
+  return
+    qw(flank5_display flank3_display display_width exon_display exon_ori),
+    $_[0]->variation_fields,
+    qw(line_numbering codons_display conservation_display region_change_display title_options);
 }
 
 sub form_fields {
-  my $self = shift;
-  my $dbs  = $self->species_defs->databases;
-  my $fields = {};
+  ## Abstract method implementation
+  my $self    = shift;
+  my $dbs     = $self->species_defs->databases;
+  my $markup  = $self->get_markup_options({'vega_exon' => 1, 'otherfeatures_exon' => 1});
 
-  if (!$self->{'species_only'}) {
-    my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  $markup->{'conservation_display'} = {
+    'name'  => 'conservation_display',
+    'label' => 'Show conservation regions',
+    'type'  => 'Checkbox',
+    'value' => 'on',
+  };
 
-    push @{$markup_options->{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
-    push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+  $markup->{'region_change_display'} = {
+    'name'  => 'region_change_display',
+    'label' => 'Mark alignment start/end',
+    'type'  => 'Checkbox',
+    'value' => 'on',
+  };
 
-    $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
-
-    $markup_options->{'conservation_display'} = {
-                                                  name  => 'conservation_display',
-                                                  label => 'Show conservation regions',
-                                                  type  => 'Checkbox',
-                                                  value => 'on',
-                                                  };
-    $markup_options->{'region_change_display'} = {
-                                                  name  => 'region_change_display',
-                                                  label => 'Mark alignment start/end',
-                                                  type  => 'Checkbox',
-                                                  value => 'on',
-                                                  };
-
-    foreach ($self->field_order) {
-      $fields->{$_} = $markup_options->{$_};
-      $fields->{$_}{'value'} = $self->get($_);
-    }
-  }
-
-  return $fields;
+  return { map { $_ => $markup->{$_} } $self->field_order };
 }
 
-sub alignment_options {
+sub add_alignment_options {
+  ## TODO - tidy
   my $self         = shift;
   my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
   my $species_defs = $self->species_defs;
