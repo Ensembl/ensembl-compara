@@ -34,12 +34,6 @@ package Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Registry;
-#use Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor;
-#use Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor;
-
-use Data::Dumper;
-
 die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a valid installation of Cactus.\n" unless $ENV{'PROGRESSIVE_CACTUS_DIR'};
 
 use Inline C => Config =>
@@ -59,6 +53,7 @@ use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMB
   Exceptions : none
 
 =cut
+
 sub new {
     my($class, $path, $use_hal_genomes) = @_;
     my $self = {};
@@ -85,21 +80,6 @@ sub hal_filehandle {
     my $self = shift;
     return $self->{'hal_fd'};
 }
-
-# FIXME: this is really bad and not at *all* what goes on in other
-# get_adaptor methods. But I'm planning on rewriting all of this
-# (there isn't much to it!) after getting the hang of perl anyway.
-#sub get_adaptor {
-#    my $self = shift;
-#    my $class_name = shift;
-#    if ($class_name eq 'GenomicAlignBlock') {
-#        return Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor->new($self->{'hal_fd'}, $self);
-#    } elsif ($class_name eq 'MethodLinkSpeciesSet') {
-#        return Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor->new($self);
-#    } else {
-#        die "can't get adaptor for class $class_name";
-#    }
-#}
 
 sub genome_name_from_species_and_assembly {
     my ($self, $species_name, $assembly_name) = @_;
@@ -129,44 +109,5 @@ sub genomes {
     return _get_genome_names($self->{'hal_fd'});
 }
 
-# FIXME: not really sure this quite belongs Convert an Ensembl
-# sequence name to a hal sequence name (adding "chr" if the
-# "ucscChrNames" metadata attribute is set to "true")
-sub hal_sequence_name {
-    my ($self, $genome_name, $seq_name) = @_;
-    if ($self->genome_metadata($genome_name)->{'ucscChrNames'} && $self->genome_metadata($genome_name)->{'ucscChrNames'} eq "true") {
-        # Try to see if there is a sequence named "chr___" first, if
-        # not, try just "____" as usual
-        my $chr_seq_name = "chr".$seq_name;
-        if (grep($chr_seq_name, _get_seqs_in_genome($self->{'hal_fd'}, $genome_name))) {
-            return $chr_seq_name;
-        }
-    }
-    return $seq_name;
-}
-
-sub _get_GenomeDB {
-    my ($self, $genome_name) = @_;
-
-    if ($self->{'use_hal_genomes'}) {
-
-    } else {
-        my $species_name = $self->genome_metadata($genome_name)->{'ensembl_species'};
-        if (!defined $species_name) {
-            die("Could not find ensembl species name for genome with hal ".
-                "genome $genome_name, and we are not using hal GenomeDBs.");
-        }
-        my $assembly_name = $self->genome_metadata($genome_name)->{'ensembl_assembly'};
-        if (!defined $assembly_name) {
-            warn("Could not find ensembl assembly name for genome with hal ".
-                 "name $genome_name, and we are not using hal GenomeDBs.");
-        }
-        #my $gdba = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB"); 
-        my $gdba = Bio::EnsEMBL::Registry->get_adaptor("mouse_master", "compara", "GenomeDB"); 
-        my $ass = $gdba->fetch_by_name_assembly($species_name, $assembly_name);
-        my $ass_name = defined $ass ? $ass->name : '';
-        return $ass;
-    }
-}
 
 1;
