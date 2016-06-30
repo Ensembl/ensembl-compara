@@ -78,13 +78,15 @@ sub feature_type      { my $self = shift; return $self->Obj->feature_type;      
 sub slice             { my $self = shift; return $self->Obj->slice;                     }
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
-sub has_evidence {
-  my ($self) = @_;
++sub activity {
+  my ($self, $epigenome) = @_;
+  return unless $epigenome;
 
-  # Can be simple accessor for 76, but avoid breaking master
-  return $self->Obj->activity if $self->Obj->can('activity');
+  my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
+  return $regact->activity if $regact;
   return undef;
 }
+
 sub cell_type_count {
   my ($self) = @_;
 

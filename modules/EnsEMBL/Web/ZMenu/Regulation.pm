@@ -33,13 +33,10 @@ sub content {
   
   my $cell_line   = $hub->param('cl');
   my $reg_feature = $hub->database('funcgen')->get_RegulatoryFeatureAdaptor->fetch_by_stable_id($rf);
-  my $epigenome   = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_name($cell_line);
 
-
-  $self->caption("Regulatory Feature - $cell_line");
-  
-  if ($cell_line) {
-  }
+  my $caption = 'Regulatory Feature';
+  $caption .= ' - '.$cell_line if $cell_line;
+  $self->caption($caption);
   
   my $object         = $self->new_object('Regulation', $reg_feature, $self->object->__data);
   
@@ -70,59 +67,59 @@ sub content {
     });
   }
 
-=pod
-  if($cell_type ne 'MultiCell') {
-    my $status = "Unknown";
-    my $has_evidence = $object->has_evidence;
-    $status = ['Inactive','Active','Poised','Repressed','N/A']->[$has_evidence];
-    warn "has_evidence=$has_evidence\n";
-    $self->add_entry({
-      type => 'Status',
-      label => $status
-    });
-  }
-=cut
+  my $epigenome;
   if ($cell_line) {
-    $self->add_entry({
-      type  => 'Attributes',
-      label => $object->get_evidence_list($epigenome),
-    });
+    $epigenome = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_name($cell_line);
+    
+    if ($epigenome) {
+      $self->add_entry({
+        type => 'Status',
+        label => $object->activity($epigenome),
+      });
+
+      $self->add_entry({
+        type  => 'Attributes',
+        label => $object->get_evidence_list($epigenome),
+      });
+    }
   }
   
   $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
 
   $self->_add_nav_entries;
-
-  my %motif_features = %{$object->get_motif_features($epigenome)};
-  if (scalar keys %motif_features > 0) {
-    # get region clicked on
-    my $click_start = $hub->param('click_start');
-    my $click_end   = $hub->param('click_end');
-    my ($start, $end, @feat);
+  
+  if ($epigenome) {
+    my %motif_features = %{$object->get_motif_features($epigenome)};
+    if (scalar keys %motif_features > 0) {
+      # get region clicked on
+      my $click_start = $hub->param('click_start');
+      my $click_end   = $hub->param('click_end');
+      my ($start, $end, @feat);
     
-    foreach my $motif (keys %motif_features) {
-      ($start, $end) = split /:/, $motif;
-      push @feat, $motif unless $start > $click_end || $end < $click_start;
-    }
+      foreach my $motif (keys %motif_features) {
+        ($start, $end) = split /:/, $motif;
+        push @feat, $motif unless $start > $click_end || $end < $click_start;
+      }
     
-    $self->add_subheader('Motif Information');
+      $self->add_subheader('Motif Information');
     
-    my $pwm_table = '
-      <table cellpadding="0" cellspacing="0">
-        <tr><th>Name</th><th>PWM ID</th><th>Score</th></tr>
-    ';
+      my $pwm_table = '
+        <table cellpadding="0" cellspacing="0">
+          <tr><th>Name</th><th>PWM ID</th><th>Score</th></tr>
+      ';
     
-    foreach my $motif (sort keys %motif_features) {
-      my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
-      my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
-      my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
+      foreach my $motif (sort keys %motif_features) {
+        my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
+        my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+        my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
       
-      $pwm_table .= "<tr$style><td>$name</td><td>$bm_link</td><td>$score</td></tr>";
+        $pwm_table .= "<tr$style><td>$name</td><td>$bm_link</td><td>$score</td></tr>";
+      }
+    
+      $pwm_table .= '</table>';
+    
+      $self->add_entry({ label_html => $pwm_table });
     }
-    
-    $pwm_table .= '</table>';
-    
-    $self->add_entry({ label_html => $pwm_table });
   }
 }
 
