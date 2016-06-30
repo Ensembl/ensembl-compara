@@ -34,12 +34,14 @@ sub species_defs          :Accessor;
 
 sub storable              :Abstract; ## Any changes in the config by the user are allowed to be saved in records?
 sub config_type           :Abstract; ## @return image_config/view_config accordingly
-sub cacheable_keys        :Abstract; ## @return Arrayref of keys of the object that should be cached in memcahced
 sub init_cacheable        :Abstract; ## Initalises the portion of the object that stays the same for all users/browsers/url params and thus can be safely cached against the cache_key
 sub init_non_cacheable    :Abstract; ## Initalises the portion of the object that should not be cached since it might contain settings that do not apply to all visitors
+sub get_cacheable_object  :Abstract; ## @return Ref to a hash object that can be saved to the cache for subsequent requests
 sub apply_user_settings   :Abstract; ## Applies changes to the config object as saved in user/session record
 sub reset_user_settings   :Abstract; ## Removes changes from the config object and returns a list of changed configs (does not delete the saved record in the db)
-sub update_user_settings  :Abstract; ## Updates user settings according to the parameters provided and returns the list of updated configs (does not save changes to record in the db)
+sub config_url_params     :Abstract; ## Gets a list of url params that get passed to the config object to update user config (As needed by update_from_url method)
+sub update_from_url       :Abstract; ## Updates user settings according to the parameters provided in the url and returns true value if config is modified
+sub update_from_input     :Abstract; ## Updates user settings according to the POST/GET params and returns true value if config is modified
 
 sub new {
   ## @constructor
@@ -113,11 +115,11 @@ sub _save_to_cache {
   my $self      = shift;
   my $cache     = $self->hub->cache;
   my $cache_key = $self->cache_key;
-  my $keys      = $self->cacheable_keys;
+  my $object    = $self->get_cacheable_object;
 
-  return unless $cache && $cache_key && @$keys;
+  return unless $cache && $cache_key && $object;
 
-  $cache->set($cache_key, { map { exists $self->{$_} ? ($_ => $self->{$_}) : () } @$keys }, undef, $self->config_type, $self->species);
+  $cache->set($cache_key, $object, undef, $self->config_type, $self->species);
 }
 
 sub get_user_settings {
@@ -148,7 +150,7 @@ sub altered {
   ## @return Arrayref of all altered configs (including any configs altered in previous calls)
   my $self = shift;
 
-  $self->{'_altered'}{$_} = 1 for @_;
+  $self->{'_altered'}{$_} = 1 for grep $_, @_;
 
   return [ sort keys %{$self->{'_altered'}} ];
 }
@@ -159,197 +161,11 @@ sub is_altered {
   return scalar keys %{$_[0]->{'_altered'}} ? 1 : 0;
 }
 
-sub update_from_input {
-  ## Updates the config (and related db records) according to the input parameters
-  ## @return 1 if configs have been updated, 0 otherwise
-  my $self  = shift;
-  my $input = $self->hub->input;
-
-  my @altered;
-
-  # if user is resetting the configs
-  if (my $reset = $input->param('reset')) {
-
-    @altered = $self->reset_user_settings($reset);
-
-  } else {
-
-    my $settings = $input->param($self->config_type);
-
-    if ($settings) {
-      $settings = { $self->config_type => from_json($settings) };
-    } else {
-      $settings = { map {
-        my @val = $input->param($_);
-        { $_ => @val > 1 ? \@val : $val[0] };
-      }} $input->param;
-    }
-
-    @altered = $self->update_user_settings($settings);
-  }
-
-  $self->save_user_settings if @altered; # update the record table
-
-  $self->altered(@altered);
-
-  return $self->is_altered;
-}
-
-######## ---------------------
-
-
-sub update_from_url {
-  ## Tracks added "manually" in the URL (e.g. via a link)
-
-  my ($self, @values) = @_;
-  my $hub     = $self->hub;
-  my $session = $hub->session;
-  my $species = $hub->species;
-
-  foreach my $v (@values) {
-    my $format = $hub->param('format');
-    my ($url, $renderer, $attach);
-
-    if ($v =~ /^url/) {
-      $v =~ s/^url://;
-      $attach = 1;
-      ($url, $renderer) = split /=/, $v;
-    }
-
-    if ($attach || $hub->param('attach')) {
-      ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
-      ## as well as new 'attach=http...' parameter
-      my $p = uri_unescape($url);
-
-      my $menu_name   = $hub->param('menu');
-      my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
-
-      if (!$format) {
-        my @path = split(/\./, $p);
-        my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-
-        while (my ($name, $info) = each %$all_formats) {
-          if ($ext =~ /^$name$/i) {
-            $format = $name;
-            last;
-          }
-        }
-        if (!$format) {
-          # Didn't match format name - now try checking format extensions
-          while (my ($name, $info) = each %$all_formats) {
-            if ($ext eq $info->{'ext'}) {
-              $format = $name;
-              last;
-            }
-          }
-        }
-      }
-
-      my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
-      my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
-      my $n;
-
-      if ($menu_name) {
-        $n = $menu_name;
-      } else {
-        $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-      }
-
-      # Don't add if the URL or menu are the same as an existing track
-      if ($session->get_record_data({type => 'url', code => $code})) {
-        $session->set_record_data({
-            type     => 'message',
-            function => '_warning',
-            code     => "duplicate_url_track_$code",
-            message  => "You have already attached the URL $p. No changes have been made for this data source.",
-        });
-
-        next;
-      } elsif ($session->get_record_data({name => $n, type => 'url'})) {
-        $session->set_record_data({
-          type     => 'message',
-          function => '_error',
-          code     => "duplicate_url_track_$n",
-          message  => qq{Sorry, the menu "$n" is already in use. Please change the value of "menu" in your URL and try again.},
-        });
-
-        next;
-      }
-
-      # We then have to create a node in the user_config
-      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
-
-      if (uc $format eq 'TRACKHUB') {
-        my $info;
-        ($n, $info) = $self->_add_trackhub($n, $p);
-        if ($info->{'error'}) {
-          my @errors = @{$info->{'error'}||[]};
-          $session->set_record_data({
-              type     => 'message',
-              function => '_warning',
-              code     => 'trackhub:' . md5_hex($p),
-              message  => "There was a problem attaching trackhub $n: @errors",
-          });
-        }
-        else {
-          my $assemblies = $info->{'genomes'}
-                        || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_VERSION')};
-
-          foreach (keys %$assemblies) {
-            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
-            if ($assembly) {
-              my $data = $session->set_record_data({
-                type        => 'url',
-                url         => $p,
-                species     => $data_species,
-                code        => join('_', md5_hex($n . $data_species . $assembly . $p), $session->session_id),
-                name        => $n,
-                format      => $format,
-                style       => $style,
-                assembly    => $assembly,
-              });
-            }
-          }
-        }
-      } else {
-        ## Either upload or attach the file, as appropriate
-        my $command = EnsEMBL::Web::Command::UserData::AddFile->new({'hub' => $hub});
-        ## Fake the params that are passed by the upload form
-        $hub->param('text', $p);
-        $hub->param('format', $format);
-        $command->upload_or_attach($renderer);
-        ## Discard URL param, as we don't need it once we've uploaded the file,
-        ## and it only messes up the page URL later
-        $hub->input->delete('url');
-      }
-      # We have to create a URL upload entry in the session
-      my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-      $session->set_record_data({
-        type     => 'message',
-        function => '_info',
-        code     => 'url_data:' . md5_hex($p),
-        message  => $message,
-      });
-    } else {
-      ($url, $renderer) = split /=/, $v;
-      $renderer ||= 'normal';
-      $self->update_track_renderer($url, $renderer, $hub->param('toggle_tracks'));
-    }
-  }
-
-  if ($self->is_altered) {
-    my $tracks = join(', ', @{$self->altered});
-    $session->set_record_data({
-      type     => 'message',
-      function => '_info',
-      code     => 'image_config',
-      message  => "The link you followed has made changes to these tracks: $tracks.",
-    });
-  }
-}
-
+######## TODO
 
 sub share {
+  ## TODO
+  return;
   # Remove anything from user settings that is:
   #   Custom data that the user isn't sharing
   #   A track from a trackhub that the user isn't sharing
