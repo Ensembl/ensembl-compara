@@ -25,15 +25,30 @@ use EnsEMBL::Web::TreeNode;
 
 sub new {
   ## @constructor
-  my $class = shift;
+  ## @param Object with allowed keys if initialising from a cached object
+  my ($class, $cached_object) = shift;
 
-  return bless {
+  my $self = bless {
     '_nodes'      => {},      # map of all the nodes belonging to this tree for easy lookup
     '_last_id'    => 'aaaa',  # incremental string id of the last node created that didn't have any id provided
     '_user_data'  => undef,   # reference to user data that's shared among all nodes of the tree
     '_root'       => undef,   # topmost node
     '_dom'        => undef,   # DOM object as needed by TreeNode's constructor
   }, $class;
+
+  if ($cached_object) {
+    for ($self->_cacheable_keys) {
+      $self->{$_} = $cached_object;
+    }
+  }
+}
+
+sub get_cacheable_object {
+  ## Gets the object that can be safely saved to a cache for this instance
+  ## @return Hashref
+  my $self = shift;
+
+  return { map { $_ => $self->{$_} } $self->_cacheable_keys };
 }
 
 sub user_data {
@@ -78,6 +93,8 @@ sub get_node {
 
 sub create_node {
   ## Create a new node, not yet inserted in the tree
+  ## @param id of the node
+  ## @param Hashref to be saved in 'data' key
   ## @return TreeNode object
   my ($self, $id, $data) = @_;
 
@@ -86,17 +103,28 @@ sub create_node {
   # if node exists, update data and return node object
   if (exists $self->{'_nodes'}{$id}) {
     my $node = $self->{'_nodes'}{$id};
-    $node->data->{$_} = $data->{$_} for keys %{$data || {}};
+    $node->set_data($_, $data->{$_}) for keys %{$data || {}};
 
     return $node;
   }
 
   my $node = EnsEMBL::Web::TreeNode->new($self, $self->{'_dom'}, $id, $data);
 
-  $self->{'_dom'}   ||= $node->dom; # save it once and use it for other nodes
-  $self->{'_root'}  ||= $node;      # if no node is created yet, this is the root node
+  $self->{'_dom'} ||= $node->dom; # save it once and use it for other nodes
 
   return $self->{'_nodes'}{$id} = $node;
+}
+
+sub clone_node {
+  ## Clones a node without it's child nodes
+  ## @param Node to be cloned
+  ## @param Id for the cloned node
+  ## @return Cloned node
+  my ($self, $node, $id) = @_;
+
+  throw WebException('Node with given id already exists') if $id && $self->get_node($id);
+
+  return $self->create_node($id, { map { $_ => $node->get_data($_) } $node->data_keys });
 }
 
 sub clean_id {
@@ -108,7 +136,7 @@ sub clear_references {
   ## Clean interlinked references to make sure all tree nodes gets destroyed properly after we are done with it
   my $self = shift;
 
-  if (my $root = $self->{'_root'}) {
+  if (my $root = delete $self->{'_root'}) {
     delete $self->{'_nodes'}{$_} for keys %{$self->{'_nodes'}};
 
     $root->clear_references;
@@ -121,6 +149,11 @@ sub _generate_unique_id {
   while ($self->{'_last_id'}++) {
     return $self->{'_last_id'} unless exists $self->{'_nodes'}{$self->{'_last_id'}};
   }
+}
+
+sub _cacheable_keys {
+  ## @private
+  return qw(_nodes _last_id _root _dom);
 }
 
 1;
