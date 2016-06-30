@@ -2897,18 +2897,12 @@ sub add_regulation_builds {
     }
   }
 
-  my $flag = 0;
-
   foreach my $cell_line (@cell_lines) {
-    #$flag = $cell_line eq 'K562' ? 1 : 0;
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
     my $set_info;
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
     $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
-    #if ($flag) {
-    #  warn "\n\n##################### CELL LINE $cell_line";
-    #  warn "... SETS ".Dumper($set_info);
-    #}
+    
     my @sets;
     my $core_count      = scalar keys %{$set_info->{'core'}};
     my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
@@ -2917,7 +2911,6 @@ sub add_regulation_builds {
     push @sets, 'non_core' if $non_core_count != $core_count;
 
     foreach my $set (@sets) {
-      #warn ">>> MATRIX FOR $set" if $flag;
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
         menu   => 'matrix',
         url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
@@ -2931,7 +2924,6 @@ sub add_regulation_builds {
 
       foreach (@{$all_types{$set}||[]}) {
         if ($set_info->{$set}{$_->dbID}) {
-         #warn sprintf('>>> %s (%s) = %s', $_->name, $_->class, $_->dbID) if $flag;
           $matrix_rows{$cell_line}{$set}{$_->name} ||= {  
                             row         => $_->name, 
                             group       => $_->class, 
@@ -2941,7 +2933,6 @@ sub add_regulation_builds {
         }
       }
     }
-    #warn Dumper($matrix_rows{$cell_line}) if $flag;
   }
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
