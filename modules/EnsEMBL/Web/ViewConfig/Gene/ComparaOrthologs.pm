@@ -33,7 +33,7 @@ sub _new {
 }
 
 sub init_cacheable {
-  ## @override
+  ## Abstract method implementation
   my $self = shift;
   $self->set_default_options({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
 

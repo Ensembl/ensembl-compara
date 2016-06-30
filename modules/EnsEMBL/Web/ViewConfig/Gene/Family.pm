@@ -26,7 +26,7 @@ use EnsEMBL::Web::Constants;
 use parent qw(EnsEMBL::Web::ViewConfig);
 
 sub init_cacheable {
-  ## @override
+  ## Abstract method implementation
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
