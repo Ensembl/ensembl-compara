@@ -82,6 +82,7 @@ sub form_fields {
   my $self    = shift;
   my $dbs     = $self->species_defs->databases;
   my $markup  = $self->get_markup_options({'vega_exon' => 1, 'otherfeatures_exon' => 1});
+  my $fields  = {};
 
   $markup->{'conservation_display'} = {
     'name'  => 'conservation_display',
@@ -97,7 +98,9 @@ sub form_fields {
     'value' => 'on',
   };
 
-  return { map { $_ => $markup->{$_} } $self->field_order };
+  $fields->{$_} = $markup->{$_} for $self->field_order;
+
+  return $fields;
 }
 
 sub add_alignment_options {

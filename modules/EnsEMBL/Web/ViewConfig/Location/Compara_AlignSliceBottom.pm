@@ -19,45 +19,51 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::Compara_AlignSliceBottom;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Location::Compara_Alignments);
+use parent qw(EnsEMBL::Web::ViewConfig::Location::Compara_Alignments);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
-  $self->SUPER::init;
+  $self->SUPER::init_cacheable;
 
   $self->image_config_type('alignsliceviewbottom');
+  $self->title('Alignments Image');
 
-  $self->title            = 'Alignments Image';
-  $self->{'species_only'} = 1;
-
-  $self->set_defaults({
-    opt_conservation_scores  => 'off',
-    opt_constrained_elements => 'off',
+  $self->set_default_options({
+    'opt_conservation_scores'   => 'off',
+    'opt_constrained_elements'  => 'off',
   });
 }
 
-sub init_form {
-  my $self = shift;
+sub field_order {
+  ## @override
+  return qw(image_width opt_conservation_scores opt_constrained_elements);
+}
 
-  $self->add_fieldset('Comparative features');
+sub form_fields {
+  ## @override
+  my $fields = shift->SUPER::form_fields(@_);
 
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Conservation scores for the selected alignment',
-    name  => 'opt_conservation_scores',
-    value => 'tiling',
-  });
+  $fields->{'opt_conservation_scores'} = {
+    'fieldset'  => 'Comparative features',
+    'type'      => 'CheckBox',
+    'label'     => 'Conservation scores for the selected alignment',
+    'name'      => 'opt_conservation_scores',
+    'value'     => 'tiling',
+  };
 
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Constrained elements for the selected alignment',
-    name  => 'opt_constrained_elements',
-    value => 'compact',
-  });
+  $fields->{'opt_constrained_elements'} = {
+    'fieldset'  => 'Comparative features',
+    'type'      => 'CheckBox',
+    'label'     => 'Constrained elements for the selected alignment',
+    'name'      => 'opt_constrained_elements',
+    'value'     => 'compact',
+  };
 
-  $self->SUPER::form;
+  return $fields;
 }
 
 1;

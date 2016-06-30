@@ -19,15 +19,22 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Variation::Compara_Alignments;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
+use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
 
-use base qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
-
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
-  $self->SUPER::init;
+  $self->SUPER::init_cacheable;
+
+  $self->set_default_options({ 'title_display' => 'yes' });
+}
+
+sub init_non_cacheable {
+  ## @override
+  my $self = shift;
 
   # Set a default align parameter (the smallest multiway alignment with available for this species)
   if (!$self->hub->param('align')) {
@@ -38,21 +45,11 @@ sub init {
 
     $self->hub->param('align', [ sort { $align{$a} <=> $align{$b} } keys %align ]->[0]);
   }
-
-  $self->set_defaults({
-    title_display => 'yes',
-  });
 }
 
-sub init_form {
-  my $self = shift;
-  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-  my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
-
-  $self->add_form_element($general_markup_options{'hide_long_snps'});
-  $self->add_form_element($general_markup_options{'line_numbering'});
-  $self->add_form_element($other_markup_options{'title_display'});
-  $self->alignment_options;
+sub field_order {
+  ## @override
+  return qw(hide_long_snps line_numbering title_display);
 }
 
 1;
