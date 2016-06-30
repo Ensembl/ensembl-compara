@@ -95,7 +95,6 @@ sub draw_aggregate {
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
-              'is_multi'  => $cell_line eq 'MultiCell' ? 1 : 0,
               };
 
   my $data    = $self->data_by_cell_line($cell_line);
@@ -275,6 +274,7 @@ sub get_features {
 
 sub get_colours {
   my $self      = shift;
+  return unless $self->data_by_cell_line;
   my $config    = $self->{'config'};
   my $colourmap = $config->colourmap;
   my %ratio     = ( 1 => 0.6, 2 => 0.4, 3 => 0.2, 4 => 0 );
