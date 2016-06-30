@@ -48,28 +48,18 @@ sub init_form {
   my $self          = shift;
   my $form          = $self->SUPER::init_form(@_);
   my %formats       = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
-  my $species_defs  = $self->species_defs;
-  my %species       = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
 
-  $form->add_fieldset('Selected species');
+  # Select species fieldset
+  $form->add_species_fieldset;
 
-  for (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $form->add_form_element({
-      'type'  => 'checkbox',
-      'label' => $_,
-      'name'  => 'species_' . lc $species{$_},
-      'value' => 'yes',
-    });
-  }
-
-  $form->add_fieldset('Selected databases');
-
+  # Selected databases  fieldset
   for (sort keys %formats) {
     $form->add_form_element({
-      'type'  => 'checkbox',
-      'label' => $formats{$_}{'name'},
-      'name'  => 'opt_' . lc $_,
-      'value' => 'yes',
+      'fieldset'  => 'Selected databases',
+      'type'      => 'checkbox',
+      'label'     => $formats{$_}{'name'},
+      'name'      => 'opt_' . lc $_,
+      'value'     => 'yes',
     });
   }
 
