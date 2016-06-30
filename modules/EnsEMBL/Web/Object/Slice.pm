@@ -401,7 +401,7 @@ sub get_data {
     $count++;
     my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
       
-    my $set = $ftype_name =~ /Chromatin|Transcription/ ? 'core' : 'non_core';
+    my $set = $ftype->evidence_type_label =~ /DNAse|TFBS/ ? 'core' : 'non_core';
     next unless $data->{$cell_line}{$set}{'on'}{$ftype_name};
 
     my $display_style = $data->{$cell_line}{$set}{'renderer'};
