@@ -45,7 +45,7 @@ sub init {
   if (!$cached) {
     $self->builder->create_objects;
     $self->configure;
-    $self->update_configuration_from_url;
+    $self->update_configuration_for_request;
   }
 
   $self->update_user_history if $hub->user;
@@ -63,29 +63,48 @@ sub render_page {
   $self->SUPER::render_page if $self->access_ok && !$self->process_command;
 }
 
-sub update_configuration_from_url {
-  ### Checks for shared data and updated config settings from the URL parameters
-  ### If either exist, returns 1 to force a redirect to the updated page
-  ### This function is only called during main page (EnsEMBL::Web::Magic::stuff) requests
-  
-  my $self       = shift;
-  my $r          = $self->r;
-  my $input      = $self->input;
-  my $hub        = $self->hub;
-  my $session    = $hub->session;
-  my @share_ref  = $input->param('share_ref');
-  my @components = @{$self->configuration->get_configurable_components};
-  my $change_url = 0;
+sub update_configuration_for_request {
+  ## Checks for shared data and updates config settings from the URL and POST parameters
+  ## TODO - handle share userdata via url - did not work in 84 either
+  my $self        = shift;
+  my $r           = $self->r;
+  my $input       = $self->input;
+  my $hub         = $self->hub;
+  my @components  = @{$self->configuration->get_configurable_components};
 
-  if (@share_ref) {
-    $session->receive_shared_data(@share_ref); # This should push a message onto the message queue
-    $input->delete('share_ref');
-    $change_url = 1;
+  my $do_redirect = 0;
+  my $url_params  = {};
+  my $post_params = {};
+
+  # Go through each view config and get a list of required params
+  my @view_config = map $hub->get_viewconfig(@{$components[$_]}), 0..$#components;
+  my %url_params  = map { $_ => 1 } map $_->config_url_params, @view_config;
+  my %inp_params;
+
+  # Get all the required params from the url and delete the one in the url
+  for (keys %url_params) {
+    my @vals = $input->param($_);
+    if (@vals) {
+      $input->delete($_);
+      $url_params{$_} = scalar @vals > 1 ? \@vals : $vals[0];
+    } else {
+      delete $url_params{$_}; # delete the params not present in the url
+    }
   }
-  $hub->get_viewconfig(@{$components[$_]})->update_from_input($r, $_ == $#components) for 0..$#components;
-  $change_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) || 0 for 0..$#components; # This should push a message onto the message queue
-  
-  if ($change_url) {
+
+  # Get all the GET/POST params to pass them to the update_for_input method
+  for ($input->param) {
+    my @vals = $input->param($_);
+    $inp_params{$_} = scalar @vals > 1 ? \@vals : $vals[0];
+  }
+
+  # now update all the view configs accordingly
+  for (@view_config) {
+    $view_config->update_from_input({ %inp_params }); # avoid passing reference to the original hash to prevent manipulation
+    $do_redirect++ if $view_config->update_from_url({ %url_params });
+  }
+
+  if (keys %$url_params && $do_redirect) {
     $input->param('time', time); # Add time to cache-bust the browser
     $hub->redirect(join('?', $r->uri, uri_unescape($input->query_string)));
   }
