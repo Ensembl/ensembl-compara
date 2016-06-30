@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts regfeats features populations population_freqs samples ega citation locations);
+      $availability->{"has_$_"} = $counts->{$_} for qw(uniq_transcripts transcripts regfeats features populations population_freqs samples ega citation locations);
       if($self->param('vf')){
         ## only show these if a mapping available
         $availability->{"has_$_"} = $counts->{$_} for qw(alignments ldpops);
@@ -89,6 +89,7 @@ sub counts {
 
   unless ($counts) {
     $counts = {};
+    $counts->{'uniq_transcripts'} = $self->count_uniq_transcripts;
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'regfeats'}    = $self->count_regfeats;
     $counts->{'features'}    = $counts->{'transcripts'} + $counts->{'regfeats'};
@@ -149,6 +150,24 @@ sub count_regfeats {
   # $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}, @{$_->get_all_MotifFeatureVariations}} @{$self->get_variation_features};
   $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}} @{$self->get_variation_features};
   return $counts;
+}
+
+sub count_uniq_transcripts {
+  my $self = shift;
+  my %mappings = %{ $self->variation_feature_mapping };
+  my $count = 0;
+
+  foreach my $varif_id (keys %mappings) {
+    next unless ($varif_id  eq $self->param('vf'));
+    my %transcriptnames;
+    for ( $mappings{$varif_id}{transcript_vari} ) {
+        $transcriptnames{$_{transcriptname}} += 1;
+    }
+    $count = scalar keys %transcriptnames;
+    last;
+  }
+
+  return $count;
 }
 
 sub count_populations {
