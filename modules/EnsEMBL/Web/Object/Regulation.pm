@@ -78,7 +78,7 @@ sub feature_type      { my $self = shift; return $self->Obj->feature_type;      
 sub slice             { my $self = shift; return $self->Obj->slice;                     }
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
-+sub activity {
+sub activity {
   my ($self, $epigenome) = @_;
   return unless $epigenome;
 
