@@ -26,13 +26,15 @@ use ORM::EnsEMBL::DB::Session::Manager::Record;
 
 use parent qw(EnsEMBL::Web::RecordManager);
 
+use overload qw("" to_string bool to_boolean);
+
 sub init {
   ## Abstract method implementation
   my $self  = shift;
   my $hub   = $self->hub;
 
   # retrieve existing session cookie or create a new one
-  $self->{'_session_cookie'}  = $hub->get_cookie({'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1});
+  $self->{'_session_cookie'}  = $hub->get_cookie($SiteDefs::ENSEMBL_SESSION_COOKIE, 1);
   $self->{'_session_id'}      = $self->{'_session_cookie'}->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
 }
 
@@ -49,12 +51,6 @@ sub record_type {
 sub record_type_id {
   ## Abstract method implementation
   return shift->session_id;
-}
-
-sub is_present {
-  ## Tells whether session is already present/created or not
-  ## @return Boolean
-  return !!$self->{'_session_id'};
 }
 
 sub session_id {
@@ -74,6 +70,18 @@ sub session_id {
   $self->_begin_transaction;
 
   return $self->{'_session_id'};
+}
+
+sub to_string {
+  ## Get the session id if session object is used as a string
+  ## @return (String) Session id
+  return $_[0]->{'_session_id'} || '';
+}
+
+sub to_boolean {
+  ## Tells whether session is already present/created or not
+  ## @return Boolean
+  return !!$_[0]->{'_session_id'};
 }
 
 1;
