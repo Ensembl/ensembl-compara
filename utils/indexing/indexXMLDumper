@@ -857,6 +857,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       if ($phenotype_ontologies->{$variation_name}) {
         while (my ($ontology_name, $values) = each %{$phenotype_ontologies->{$variation_name}}) {
           push @ontologies, $ontology_name;
+          $phen_ont{'names'}{$ontology_name}++;
           $phen_ont{'accession'} = $values->{'accession'};
           foreach my $syn (@{$values->{'syns'}}){
             $phen_ont{'synonyms'}{$syn}++;
@@ -923,6 +924,7 @@ sub VariationLine {
                     $loc);
   }
   $species =~ s/_/ /;
+  $desc = &clean($desc,'phenotype description');
   my $xml = qq(
 <doc>
   <field name="id">$name</field>
@@ -935,34 +937,46 @@ sub VariationLine {
     $xml .= qq(
   <field name="synonym">$_</field>);
   }
-  foreach (keys %$genes) {
-    $xml .= qq(
-  <field name="assoc_gene">$_</field>);
-  }
-  foreach (@$phenotypes) {
-    $xml .= qq(
-  <field name="phenotype">$_</field>);
-  }
   if (%$ontologies){
     my $acc = $ontologies->{'accession'};
     $xml .= qq(
-  <field name="ont_acc">$acc</field);
+  <field name="ont_acc">$acc</field>);
+    foreach my $name (keys %{$ontologies->{'names'}}) {
+      my $name = clean($name,'ontology_name');
+      $xml .= qq(
+  <field name="ont_name">$name</field>);
+    }
     foreach my $syn (keys %{$ontologies->{'synonyms'}}) {
       $syn = clean($syn,'ontology_synonym');
       $xml .= qq(
-  <field name="ont_syn">$syn</field);
+  <field name="ont_syn">$syn</field>);
     }
-  }
-
-  foreach my $hgvs_name (@$hgvs_names) {
-    $hgvs_name = &clean($hgvs_name,'hgvs_name');
-    $xml .= qq(
-  <field name="hgvs_name">$hgvs_name</field>);
   }
   foreach (@$studys ) {
     $xml .= qq(
   <field name="study">$_</field>);
   }
+  foreach my $hgvs_name (@$hgvs_names) {
+    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+    $xml .= qq(
+  <field name="hgvs_name">$hgvs_name</field>);
+  }
+
+## These records are in the description so no need to be in as seperate fields as well. Leaving commented out though
+## in case we do need to raise the priority of these records
+#  foreach (keys %$genes) {
+#    $xml .= qq(
+#  <field name="assoc_gene">$_</field>);
+#  }
+#  foreach (@$phenotypes) {
+#    $xml .= qq(
+#  <field name="phenotype">$_</field>);
+#  }
+#  foreach my $hgvs_name (@$hgvs_names) {
+#    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+#    $xml .= qq(
+#  <field name="hgvs_name">$hgvs_name</field>);
+#  }
   $xml .= qq(
   <field name="variation_source">$source</field>);
   $xml .= &common_fields($species,$type,'variation');
