@@ -35,10 +35,11 @@ sub convert {
 
     my $self = bless {}, $caller;
 
-    my ($format_preset, $seq_type, $aligned, $cigar_line) =
-        rearrange([qw(FORMAT_PRESET SEQ_TYPE ALIGNED CIGAR_LINE)], @args);
+    my ($format_preset, $no_seq, $seq_type, $aligned, $cigar_line) =
+        rearrange([qw(FORMAT_PRESET NO_SEQ SEQ_TYPE ALIGNED CIGAR_LINE)], @args);
 
     $self->format_preset($format_preset);
+    $self->no_seq($no_seq);
     $self->seq_type($seq_type);
     $self->aligned($aligned);
     $self->cigar_line($cigar_line);
@@ -49,7 +50,7 @@ sub convert {
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($compara_dba->get_AlignedMemberAdaptor, $homologies);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($compara_dba->get_GeneMemberAdaptor, $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($compara_dba->get_SpeciesTreeNodeAdaptor, $homologies);
-    if ($self->format_preset and ($self->format_preset eq 'full')) {
+    if ($self->format_preset and ($self->format_preset eq 'full') and !$no_seq) {
         Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $homologies);
     }
 
@@ -74,6 +75,14 @@ sub aligned {
         $self->{_aligned} = $aligned;
     }
     return $self->{_aligned};
+}
+
+sub no_seq {
+    my ($self, $no_seq) = @_;
+    if (defined ($no_seq)) {
+        $self->{_no_seq} = $no_seq;
+    }
+    return $self->{_no_seq};
 }
 
 sub seq_type {
@@ -122,7 +131,7 @@ sub _member_full_node {
 
     if ($self->aligned && $member->cigar_line()) {
         $result->{align_seq} = $member->alignment_string($self->seq_type);
-    } else {
+    } elsif (!$self->no_seq) {
         $result->{seq} = $member->other_sequence($self->seq_type);
     }
 
