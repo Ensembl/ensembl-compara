@@ -352,12 +352,12 @@ CREATE TABLE method_link_species_set_tag (
 @column n_goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
 @column n_goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
 @column n_goc_75                              the number of orthologs with 75% gene order conservation among their neighbours
-@column ngoc_100                             the number of orthologs with 100% gene order conservation among their neighbours
+@column n_goc_100                             the number of orthologs with 100% gene order conservation among their neighbours
 @column perc_orth_above_goc_thresh          the percentage of orthologs above the goc threshold 
 @column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation
 @column wga_quality_threshold               the chosen threshold for "high quality" orthologs based on the whole genome alignments coverage of homologous pairs
 @column perc_orth_above_wga_thresh          the percentage of orthologs above the wga threshold
-@column threshold_on_ds
+@column threshold_on_ds                     the threshold_on_ds
 
 @see method_link_species_set
 @see ortholog_goc_metric
@@ -910,6 +910,7 @@ CREATE TABLE constrained_element (
 @column sequence_id     Internal unique ID
 @column length          Length of the sequence
 @column sequence        The actual sequence
+@column md5sum          md5sum
 */
 
 CREATE TABLE sequence (
@@ -1212,7 +1213,7 @@ CREATE TABLE peptide_align_feature (
 @colour   #1E90FF
 
 @example   The following query retrieves families with "CATHELICIDIN" description and description_score of 100
-    @sql                                SELECT * FROM family WHERE description like '%CATHELICIDIN%' AND description_score = 100;
+    @sql                                SELECT * FROM family WHERE description like '%HISTONE%' AND description_score = 100;
 
 @column family_id                    Internal unique ID
 @column stable_id                    Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.
@@ -1246,8 +1247,8 @@ CREATE TABLE family (
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
 @colour   #1E90FF
 
-@example    The following query refers to the members of the protein family ENSFM00500000300962. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
-    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "ENSFM00500000300962";
+@example    The following query refers to the members of the protein family PTHR24240. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
+    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR24240";
 
 @column family_id      External reference to family_id in the @link family table
 @column seq_member_id  External reference to the seq_member_id in the @link seq_member table
@@ -1704,6 +1705,8 @@ CREATE TABLE hmm_curated_annot (
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
+@column goc_score                      The max goc score for the ortholog
+@column wga_coverage                   it's a simple distribution of the size of the alignment blocks
 
 @example    See species_names that participate in this particular homology entry
     @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
