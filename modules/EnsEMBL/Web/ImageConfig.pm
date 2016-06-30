@@ -2946,7 +2946,7 @@ sub add_regulation_builds {
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
-  # New file-based segmentation tracks
+  # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
@@ -2970,6 +2970,7 @@ sub add_regulation_builds {
       height      => 4,
     }));
   }
+
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
@@ -2991,27 +2992,6 @@ sub add_regulation_builds {
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       caption     => "Regulatory Features",
     }));
-
-    # Old database-based segmentation tracks
-    if ($data->{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
-        db          => $key,
-        glyphset    => 'fg_segmentation_features',
-        sources     => 'undef',
-        strand      => 'r',
-        labels      => 'on',
-        depth       => 0,
-        colourset   => 'fg_segmentation_features',
-        display     => 'off',
-        description => $data->{"seg_$cell_line"}{'description'},
-        renderers   => \@renderers,
-        cell_line   => $cell_line,
-        caption     => "Reg. Segments",
-        section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-        section     => $cell_line,
-        height      => 4,
-      }));
-    }
 
     my %column_data = (
       db        => $key,

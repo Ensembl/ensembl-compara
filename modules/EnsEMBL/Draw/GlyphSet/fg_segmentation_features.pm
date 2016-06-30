@@ -55,7 +55,7 @@ sub _feature_set {
   my $fsa       = $fgh->get_FeatureSetAdaptor();
   my $ega       = $fgh->get_EpigenomeAdaptor;
   return undef unless $fsa and $ega;
-  my $cell_line = $self->my_config('cell_line');
+  my $cell_line = $self->my_config('section');
   return undef unless $cell_line;
   my $epi   = $ega->fetch_by_name($cell_line);
   my $fsets = $fsa->fetch_all_displayable_by_type('segmentation', $epi);
@@ -121,6 +121,7 @@ sub fetch_features_from_file {
 
   my $sfa = $fgh->get_SegmentationFileAdaptor;
   my $seg = $sfa->fetch_by_name($seg_name);
+  return undef unless $seg;
 
   ## Set zmenu options before we parse the file
   $self->{'my_config'}->set('zmenu_action', 'SegFeature');
