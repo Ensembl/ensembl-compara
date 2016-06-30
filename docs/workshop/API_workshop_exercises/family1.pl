@@ -13,7 +13,7 @@ $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
 my $family_adaptor = $reg->get_adaptor("Multi", "compara", "Family");
 
 ## Get all the families
-my $this_family = $family_adaptor->fetch_by_stable_id('ENSFM00250000006121');
+my $this_family = $family_adaptor->fetch_by_stable_id('PTHR10740_SF4');
 
 ## Description of the family
 print $this_family->description(), " (description score = ", $this_family->description_score(), ")\n";

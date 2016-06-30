@@ -22,7 +22,7 @@ foreach my $mouse_stable_id (qw(ENSMUSG00000004843 ENSMUSG00000025746)) {
   my $gene_member = $gene_member_adaptor->fetch_by_stable_id($mouse_stable_id);
 
   ## Get all the orthologues in human
-  my $all_homologies = $homology_adaptor->fetch_all_by_Member_paired_species($gene_member, 'homo_sapiens', ['ENSEMBL_ORTHOLOGUES']);
+  my $all_homologies = $homology_adaptor->fetch_all_by_Member($gene_member, -TARGET_SPECIES => 'human', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES');
 
   ## For each homology
   foreach my $this_homology (@{$all_homologies}) {
@@ -33,7 +33,7 @@ foreach my $mouse_stable_id (qw(ENSMUSG00000004843 ENSMUSG00000025746)) {
 
     ## Print the summary of the homology
     print $this_homology->toString(), "\n";
-    printf("Alignments have %.2f%% identiity at the protein-level and %.2f%% at the nucleotide level.\n", $aa_align->average_percentage_identity(), $nt_align->average_percentage_identity());
+    printf("Alignments have %.2f%% identity at the protein-level and %.2f%% at the nucleotide level.\n", $aa_align->average_percentage_identity(), $nt_align->average_percentage_identity());
     print "The non-synonymous substitution rate is: ", $this_homology->dn(), "\n";
     print "The synonymous substitution rate is: ", $this_homology->ds(), "\n";
     print "The ratio is: ", $this_homology->dnds_ratio(), "\n";

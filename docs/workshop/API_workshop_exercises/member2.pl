@@ -27,15 +27,15 @@ foreach my $this_gene (@{$these_genes}) {
   ## Print some info for this member
   print $gene_member->toString(), "\n";
 
-  ## Get all the peptide member for this gene member
-  my $peptide_members = $gene_member->get_all_SeqMembers();
-  foreach my $this_peptide_member (@{$peptide_members}) {
+  ## Get all the protein member for this gene member
+  my $protein_members = $gene_member->get_all_SeqMembers();
+  foreach my $this_protein_member (@{$protein_members}) {
 
     ## Print some info for this protein member
-    print $this_peptide_member->toString(), "   ";
+    print $this_protein_member->toString(), "   ";
 
     ## Print its sequence
-    print $this_peptide_member->sequence(), "\n";
+    print $this_protein_member->sequence(), "\n";
 
   }
 }

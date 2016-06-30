@@ -4,6 +4,7 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::AlignIO;
 
+
 ## Load the registry automatically
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
@@ -39,7 +40,13 @@ my $alignIO = Bio::AlignIO->newFh(-interleaved => 0,
 
 # print the restricted alignments
 foreach my $genomic_align_block( @{ $all_genomic_align_blocks }) {
-	my $restricted_gab = $genomic_align_block->restrict_between_reference_positions($pig_start, $pig_end);
-	print $alignIO $restricted_gab->get_SimpleAlign;
+    my $restricted_gab = $genomic_align_block->restrict_between_reference_positions($pig_start, $pig_end);
+    print "Alignment block:\n";
+    foreach my $genomic_align ( @{ $restricted_gab->get_all_GenomicAligns() } ) {
+        printf("%s %s:%d-%d\n", $genomic_align->genome_db->name, $genomic_align->dnafrag->name, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end);
+    }
+    print "\n";
+    print $alignIO $restricted_gab->get_SimpleAlign;
+    print "\n";
 }
 
