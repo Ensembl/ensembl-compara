@@ -54,34 +54,34 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 # ------------------------- COMPARA DATABASES: -----------------------------------
 
 # Individual pipeline database for ProteinTrees:
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'compara1',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 3306,
-#     -species => 'compara_ptrees',
-#     -dbname => 'cc21_protein_trees_83',
-# );
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'compara2',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 3306,
+     -species => 'compara_ptrees',
+     -dbname => 'mp14_protein_trees_85',
+ );
 
-# # Individual pipeline database for ncRNAtrees:
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'compara4',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 3306,
-#     -species => 'compara_nctrees',
-#     -dbname => 'wa2_compara_nctrees_83',
-# );
+ # Individual pipeline database for ncRNAtrees:
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'compara4',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 3306,
+     -species => 'compara_nctrees',
+     -dbname => 'wa2_ensembl_families_85',
+ );
 
 # # Individual pipeline database for Families:
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'compara2',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 3306,
-#     -species => 'compara_families',
-#     -dbname => 'mp14_families_83',
-# );
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'compara3',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 3306,
+     -species => 'compara_families',
+     -dbname => 'cc21_compara_nctrees_85',
+ );
 
 
 # Compara Master database:
