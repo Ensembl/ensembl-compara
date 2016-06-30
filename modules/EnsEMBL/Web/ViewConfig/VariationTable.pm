@@ -19,60 +19,62 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::VariationTable;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
-  my $self       = shift;
-  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
-  my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
-  my $defaults   = {
-    context            => 'FULL',
-    hgvs               => 'off',
-  }; # Don't change context if you want the page to come back!!
+sub init_cacheable {
+  ## Abstract method implementation
+  my $self = shift;
 
-  $self->set_default_options($defaults);
+  $self->set_default_options({
+    'context' => 'FULL', # Don't change context if you want the page to come back!!
+    'hgvs'    => 'off',
+  });
 
-  $self->title = 'Variations';
+  $self->title('Variations');
 }
 
-sub init_form {
-  my $self       = shift;
-  my $hub        = $self->hub;
+sub field_order {
+  ## Abstract method implementation
+  return qw(hgvs context);
+}
 
-  # Add type selection
-  $self->add_fieldset('Consequence options');
+sub form_fields {
+  ## Abstract method implementation
+  my $self    = shift;
+  my $fields  = {};
 
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Show HGVS notations',
-    name  => 'hgvs',
-    value => 'on',
-    raw   => 1
-  });
+  $fields->{'hgvs'} = {
+    'fieldset'  => 'Consequence options',
+    'type'      => 'checkbox',
+    'label'     => 'Show HGVS notations',
+    'name'      => 'hgvs',
+    'value'     => 'on',
+  };
 
-  # Add context selection
-  $self->add_fieldset('Intron Context');
-
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'context',
-    label  => 'Intron Context',
-    values => [
-      { value => '20',   caption => '20bp' },
-      { value => '50',   caption => '50bp' },
-      { value => '100',  caption => '100bp' },
-      { value => '200',  caption => '200bp' },
-      { value => '500',  caption => '500bp' },
-      { value => '1000', caption => '1000bp' },
-      { value => '2000', caption => '2000bp' },
-      { value => '5000', caption => '5000bp' },
-      { value => 'FULL', caption => 'Full Introns' }
+  $fields->{'context'} = {
+    'fieldset'  => 'Intron Context',
+    'type'      => 'DropDown',
+    'select'    => 'select',
+    'name'      => 'context',
+    'label'     => 'Intron Context',
+    'values'    => [
+      { 'value' => '20',   'caption' => '20bp'          },
+      { 'value' => '50',   'caption' => '50bp'          },
+      { 'value' => '100',  'caption' => '100bp'         },
+      { 'value' => '200',  'caption' => '200bp'         },
+      { 'value' => '500',  'caption' => '500bp'         },
+      { 'value' => '1000', 'caption' => '1000bp'        },
+      { 'value' => '2000', 'caption' => '2000bp'        },
+      { 'value' => '5000', 'caption' => '5000bp'        },
+      { 'value' => 'FULL', 'caption' => 'Full Introns'  }
     ]
-  });
+  };
+
+  return $fields;
 }
 
 1;
