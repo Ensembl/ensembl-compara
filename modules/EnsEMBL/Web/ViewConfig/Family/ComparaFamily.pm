@@ -19,17 +19,20 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Family::ComparaFamily;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Gene::Family);
+use parent qw(EnsEMBL::Web::ViewConfig::Gene::Family);
 
 sub init_form {
-  my $self = shift;
+  ## @override
+  my $self      = shift;
+  my $form      = $self->SUPER::init_form(@_);
+  my $fieldset  = $form->fieldsets->[0];
 
-  $self->SUPER::init_form;
-
-  my $fieldset = $self->get_fieldset(0);
-
+  # remove form field that contains 'collapsability' element
   $_->remove for grep scalar @{$_->get_elements_by_name('collapsability')}, @{$fieldset->fields};
+
+  return $form;
 }
 
 1;

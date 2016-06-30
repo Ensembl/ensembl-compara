@@ -19,12 +19,14 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::Family;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
@@ -37,35 +39,41 @@ sub init {
   $self->title('Ensembl protein families');
 }
 
+sub field_order { } # no default fields
+sub form_fields { } # no default fields
+
 sub init_form {
-  my $self         = shift;
-  my %formats      = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
-  my $species_defs = $self->species_defs;
-  my %species      = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
+  ## @override
+  ## Fields are added according to species and formats
+  my $self          = shift;
+  my $form          = $self->SUPER::init_form(@_);
+  my %formats       = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
+  my $species_defs  = $self->species_defs;
+  my %species       = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
 
-  $self->add_fieldset('Selected species');
+  $form->add_fieldset('Selected species');
 
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => $_,
-      name  => 'species_' . lc $species{$_},
-      value => 'yes',
-      raw   => 1
+  for (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
+    $form->add_form_element({
+      'type'  => 'checkbox',
+      'label' => $_,
+      'name'  => 'species_' . lc $species{$_},
+      'value' => 'yes',
     });
   }
 
-  $self->add_fieldset('Selected databases');
+  $form->add_fieldset('Selected databases');
 
-  foreach(sort keys %formats) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => $formats{$_}{'name'},
-      name  => 'opt_' . lc $_,
-      value => 'yes',
-      raw   => 1
+  for (sort keys %formats) {
+    $form->add_form_element({
+      'type'  => 'checkbox',
+      'label' => $formats{$_}{'name'},
+      'name'  => 'opt_' . lc $_,
+      'value' => 'yes',
     });
   }
+
+  return $form;
 }
 
 1;
