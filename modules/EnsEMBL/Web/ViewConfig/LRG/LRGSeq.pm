@@ -54,10 +54,7 @@ sub form_fields {
 
   $_->{'caption'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$markup->{'exon_display'}{'values'}};
 
-  for ($self->field_order) {
-    $fields->{$_} = $markup->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

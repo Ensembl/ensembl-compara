@@ -57,10 +57,7 @@ sub form_fields {
   my $markup  = $self->get_markup_options({'vega_exon' => 1, 'otherfeatures_exon' => 1});
   my $fields  = {};
 
-  for ($self->field_order) {
-    $fields->{$_} = $markup->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

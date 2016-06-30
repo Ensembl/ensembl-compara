@@ -77,10 +77,7 @@ sub form_fields {
   $markup->{'line_numbering'}{'value'}  = 'sequence';
   delete $markup->{'line_numbering'}{'values'};
 
-  for ($self->field_order) {
-    $fields->{$_} = $markup->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

@@ -54,10 +54,7 @@ sub form_fields {
   $markup->{'display_width'}{'values'}  = [ map {{ 'value' => $_, 'caption' => "$_ aa" }} map 10*$_, 3..20 ];
   $markup->{'number'}                   = { 'type'  => 'Checkbox', 'name'  => 'number', 'label' => 'Number residues', 'value' => 'on' };
 
-  for ($self->field_order) {
-    $fields->{$_} = $markup->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

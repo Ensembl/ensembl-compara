@@ -98,7 +98,6 @@ sub form_fields {
   for ($self->field_order) {
     next unless $markup->{$_};
     $fields->{$_} = $markup->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
   }
 }
 
