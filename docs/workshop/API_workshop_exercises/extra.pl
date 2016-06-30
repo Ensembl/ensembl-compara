@@ -121,6 +121,7 @@ foreach my $node (@{$this_tree->get_all_nodes}) {
             }
         }
         if ($found_safb) {
+            # Method to speed-up the further calls
             Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($reg->get_adaptor("Multi", "compara", "DnaFrag"), $node->get_all_leaves);
             $sarco_subtree = $node;
             print "The subtree is: ";
@@ -151,8 +152,7 @@ foreach my $node (@{$sarco_subtree->get_all_nodes}) {
 
 my %species;
 foreach my $leaf (@{$sarco_subtree->get_all_leaves}) {
-    # NOTE: We could also do: $species{$leaf->taxonomy_level()} = 1;
-    # but the API would have to do more trips to the database
+    # NOTE: It seems that $species{$leaf->taxonomy_level()} generates a lot more trips to the database
     $species{$leaf->species_tree_node->genome_db->name} = 1;
 }
 
@@ -161,6 +161,7 @@ foreach my $species_name (keys %species) {
     my $all_orthologies = $homology_adaptor->fetch_all_by_Member($gene_member, -TARGET_SPECIES => $species_name, -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES');
     print $species_name, ": ", scalar(@{$all_orthologies}). " orthologues\n";
 
+    # Method to speed-up the further calls
     Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($reg->get_adaptor("Multi", "compara", "AlignedMember"), $all_orthologies);
 
     my $best_id = 0;
