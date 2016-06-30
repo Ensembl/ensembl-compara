@@ -27,6 +27,8 @@ sub init_cacheable {
   ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_default_options({'strand' => 1});
 }
 
