@@ -70,6 +70,17 @@ sub to_array {
   return $array;
 }
 
+sub get_all_nodes {
+  ## Gets all the child nodes recursively from a node
+  ## @return ArrayRef of Tree objects
+  my $self  = shift;
+  my $nodes = [];
+
+  push @$nodes, $self if @_ && shift;
+  push @$nodes, @{$_->get_all_nodes(1)} for @{$self->children};
+  return $nodes;
+}
+
 sub parent {
   return shift->{'__ds_parent'};
 }

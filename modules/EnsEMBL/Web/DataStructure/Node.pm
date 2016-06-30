@@ -27,20 +27,6 @@ sub new {
   return bless $obj, ref $class || $class;
 }
 
-sub set {
-  my ($self, $key, $val) = @_;
-
-  return if $key =~ /^__ds_/;
-  return $self->{$key} = $val;
-}
-
-sub get {
-  my ($self, $key) = @_;
-
-  return if $key =~ /^__ds_$/;
-  return $self->{$key};
-}
-
 sub node {
   my $self = shift;
 
