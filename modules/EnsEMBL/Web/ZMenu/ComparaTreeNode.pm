@@ -121,7 +121,7 @@ sub content {
     order => 13
   }); 
   
-  my $action = 'Web/ComparaTree' . ($cdb =~ /pan/ ? '/pan_compara' : '');
+  my $action = 'Web/ComparaTree';
 
   if (not $is_supertree) {
 
@@ -137,11 +137,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 8,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => $self->build_link('Component', $hub->type, $action, $collapse)
     });
   }
 
@@ -157,11 +153,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 10,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => $self->build_link('Component', $hub->type, $action, $collapse)
     });
   }
   
@@ -214,11 +206,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 11,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       }); 
     }
   } else {
@@ -301,11 +289,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 7,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       });
     } else {
       my $collapse = join ',', $node_id, keys %collapsed_ids;
@@ -317,11 +301,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 9,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       });
     }
     
@@ -446,6 +426,17 @@ sub content {
       link       => $link || ''
     });
   }
+}
+
+
+sub build_link{
+  my ($self, $component, $type, $action, $collapse) = @_;
+    
+  return $self->hub->url($component, {
+     type     => $type,
+     action   => $action,
+     collapse => $collapse 
+  });
 }
 
 1;
