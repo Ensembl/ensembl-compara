@@ -108,6 +108,7 @@ sub set_record_data {
   ## Adds (or replaces) a record to the current record set (does not permanently save it to the db - call store to finally to make it permanent)
   ## @param Hashref with key-value as columns or data keys as keys and their corresponding values as values
   ## @note An existing record is replaced if record_type_id is provided or there's a record that already exists with given non-null `type` and `code`
+  ## @note An existing record is deleted if 'data' key is null or is an empty hash
   my ($self, $data) = @_;
 
   my $row = {};
@@ -133,6 +134,11 @@ sub set_record_data {
     $record = $self->record({'type' => $row->{'type'}, 'code' => $row->{'code'}});
   }
 
+  # if an existing record needes to be removed
+  if (!$data || !keys %$data) {
+    return $record ? $self->delete_records($record) : 1;
+  }
+
   # if new record needs to be added
   if (!$record || !$record->count) {
     $record = $self->records->add($self->rose_manager->create_empty_object({}));
@@ -146,7 +152,7 @@ sub set_record_data {
 
 sub delete_records {
   ## Deletes records according to the filtering arguments
-  ## @params RecordSet object or filter params as excepted by the records method
+  ## @param RecordSet object or filter params as excepted by the records method
   my $self      = shift;
   my $to_delete = ref $_[0] && UNIVERSAL::isa($_[0], 'EnsEMBL::Web::RecordSet') ? $_[0] : $self->records(@_);
 
