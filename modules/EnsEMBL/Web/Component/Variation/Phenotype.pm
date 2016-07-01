@@ -563,31 +563,6 @@ sub supporting_evidence_link {
   return $as_html;
 }
 
-sub display_items_list {
-  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
-
-  my $html = "";
-  my $count = scalar(@{$url_data});
-  if ($count > 5) {
-    $html = sprintf(qq{
-        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
-        <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
-      },
-      $title,
-      $div_id,
-      ($no_count_label) ? $label : "$count $label",
-      $div_id,
-      join(",", sort(@{$export_data})),
-      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
-    );
-  }
-  else {
-    $html = join(", ", sort(@{$url_data}));
-  }
-
-  return $html;
-}
-
 sub allele_link {
   my ($self, $study, $allele) = @_;
 
