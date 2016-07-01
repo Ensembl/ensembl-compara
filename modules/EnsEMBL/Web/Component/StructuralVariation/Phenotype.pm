@@ -174,7 +174,7 @@ sub table_data {
         my $div_id = $accessions->{$phe}{'id'}."_accession";
         my @accessions_list = sort(keys(%{$accessions->{$phe}{'acc'}}));
         my @accessions_urls = sort(keys(%{$accessions->{$phe}{'url'}}));
-        $accessions_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', \@accessions_list, \@accessions_urls);
+        $accessions_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', \@accessions_urls, \@accessions_list);
       }
       $phenotypes{$phe}{accessions} = $accessions_html;
 
