@@ -1580,7 +1580,12 @@ sub get_extended_reg_region_slice {
     $new_end = $gr_end - $end;
   }
 
+  if($start-$new_start<1) { $new_start = $start-1; }
+  if($end+$new_end>$self->Obj->seq_region_length) {
+    $new_end = $self->Obj->seq_region_length-$end;
+  }
   my $extended_slice =  $object_slice->expand($new_start, $new_end);
+
   return $extended_slice;
 }
 
