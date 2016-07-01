@@ -198,7 +198,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotype, disease or trait is known to be directly associated with this gene $g_name.</p>";
+    $html = "<p>No phenotype, disease or trait has been associated with this gene $g_name.</p>";
   }
   return $html;
 }
