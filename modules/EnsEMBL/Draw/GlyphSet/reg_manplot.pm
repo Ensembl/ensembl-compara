@@ -65,10 +65,15 @@ sub _init {
 
   my $slice = $self->{'container'};
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
-  my $data = $rest->fetch_via_ini('Homo_sapiens','gtex',{
+  my ($data,$error) = $rest->fetch_via_ini('Homo_sapiens','gtex',{
     stableid => $self->{'config'}->hub->param('g'),
     tissue => $self->{'my_config'}->get('tissue'),
   });
+  if($error) {
+    my $msg = $data->[0];
+    warn "REST failed: $msg\n";
+    return $self->errorTrack(sprintf("Data source failed: %s",$msg));
+  }
   my $vdba = $slice->adaptor->db->get_db_adaptor('variation');
   my $va = $vdba->get_VariationAdaptor;
   foreach my $f (@$data) {
