@@ -27,6 +27,7 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 use EnsEMBL::Web::REST;
 use POSIX qw(floor ceil);
+use List::Util qw(min);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
@@ -42,6 +43,8 @@ sub _init {
   my $self = shift;
   my $key  = $self->_key;
 
+  my $y_scale = 20;
+
   # LD track type display option
   return if ($self->{'display'} eq 'off');
 
@@ -49,11 +52,14 @@ sub _init {
   my $height = $self->my_config('height') || 80;
 
   # Horinzontal line mark
-  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || 0.8;
+  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || (15/$y_scale);
 
   # Track configuration
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('h_mark', $h_mark);
+  $self->{'my_config'}->set('h_mark_label', "10^-".int($h_mark*$y_scale));
+  $self->{'my_config'}->set('min_score_label','1');
+  $self->{'my_config'}->set('max_score_label','<10^-20');
   $self->{'my_config'}->set('baseline_zero', 1);
 
   # Left-hand side labels
@@ -79,13 +85,14 @@ sub _init {
     my $end = $f->{'seq_region_end'} - $slice->start+1;
     warn "start=$start end=$end\n";
     next if $start < 1 or $end > $slice->length;
+    my $value = min(-log($f->{'value'})/log(10)/$y_scale,1);
     push @$features,{
       start => $start,
       end => $end,
       label => $f->{'snp'},
       colour => $self->my_colour($f->{'display_consequence'}),
       href => '#',
-      score => -log($f->{'value'})/log(10)
+      score => $value,
     };
   }
 
