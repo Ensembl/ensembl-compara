@@ -74,24 +74,19 @@ sub _init {
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
-  my $vdba = $slice->adaptor->db->get_db_adaptor('variation');
-  my $va = $vdba->get_VariationAdaptor;
   foreach my $f (@$data) {
-    my $v = $va->fetch_by_name($f->{'snp'});
-    next unless $v;
-    foreach my $vf (@{$v->get_all_VariationFeatures()||[]}) {
-      my $start = $vf->start - $slice->start+1;
-      my $end = $vf->end - $slice->start+1;
-      next if $start < 1 or $end > $slice->length;
-      push @$features,{
-        start => $start,
-        end => $end,
-        label => $vf->name,
-        colour => $self->my_colour($vf->display_consequence),
-        href => '#',
-        score => -log($f->{'value'})/log(10)
-      };
-    }
+    my $start = $f->{'seq_region_start'} - $slice->start+1;
+    my $end = $f->{'seq_region_end'} - $slice->start+1;
+    warn "start=$start end=$end\n";
+    next if $start < 1 or $end > $slice->length;
+    push @$features,{
+      start => $start,
+      end => $end,
+      label => $f->{'snp'},
+      colour => $self->my_colour($f->{'display_consequence'}),
+      href => '#',
+      score => -log($f->{'value'})/log(10)
+    };
   }
 
   if (!scalar(@$features)) {
