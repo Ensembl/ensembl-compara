@@ -25,7 +25,7 @@ use RTF::Writer;
 
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
-use HTML::Entities        qw(encode_entities);
+use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 use EnsEMBL::Web::TextSequence::View;
@@ -119,12 +119,6 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
-    
-    # uc() used to happen by default, but the resequencing view can now
-    # validly show lowercase sequence. If any other views retrieve lc sequence
-    # from the API but need it rendered in uc, the following line will need to
-    # be uncommented and edited so the uc() doesn't happen on resequencing view
-    #$seq = uc($seq) unless 
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
@@ -623,10 +617,6 @@ sub markup_comparisons {
   my ($seq, $comparison);
 
   my $view = $self->view($config);
-  foreach (@{$config->{'slices'}}) {
-    my $seq = $view->new_sequence;
-    $seq->name($_->{'display_name'} || $_->{'name'});
-  }
 
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
@@ -635,7 +625,6 @@ sub markup_comparisons {
       $comparison = $data->{'comparisons'}{$_};
       
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
-      $seq->[$_]{'class'} .= 'res ' if $comparison->{'resequencing'};
     }
     
     $i++;
@@ -804,160 +793,42 @@ sub markup_line_numbers {
  
   $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
-  
-sub format_lines {
-  my ($self,$config,$output,$line_numbers) = @_;
-
-  my $html = "";
-  my $length = $output->[0] ? scalar @{$output->[0]} - 1 : 0;
-  
-  for my $x (0..$length) {
-    my $y = 0;
-    
-    foreach (@$output) {
-      my $line = $_->[$x]{'line'};
-      my $adid = $_->[$x]{'adid'};
-      $line =~ s/".*?"//sg;
-      $line =~ s/<.*?>//sg;
-      $line = qq(<span class="adorn adorn-$adid _seq">$line</span>);
-      my $num  = shift @{$line_numbers->{$y}};
-      
-      if ($config->{'number'} ne 'off') {
-        my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
-        my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
-           $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
-      }
-      
-      $line .= ' ' x ($config->{'display_width'} - $_->[$x]{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]{'post'});
-      
-      if ($config->{'end_number'} ne 'off') {
-        my $n    = $num->{'post_label'} || $num->{'label'};
-        my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $n);
-        my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'end'});
-        
-        $line .= $config->{'h_space'} . sprintf ' %6s', "$pad1$n$pad2$num->{'end'}";
-      }
-     
-      $line = "$_->[$x]{'pre'}$line" if $_->[$x]{'pre'};
-      $line .= qq(<span class="ad-post-$adid">);
-      $line .= $_->[$x]{'post'} if $_->[$x]{'post'};
-      $line .= qq(</span>);
-      $html .= "$line\n";
-      
-      $y++;
-    }
-
-    if(@{$self->view($config)->sequences}>1) {
-      $html .= "\n";
-    }
-  }
-  return $html;
-}
 
 sub make_view { # For IoC: override me if you want to
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
   return EnsEMBL::Web::TextSequence::View->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
+    $self->hub
   );
 }
 
 sub view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
-  return ($self->{'view'} ||= $self->make_view($config));
-}
-
-sub panel {
-  my ($self,$key,$output,$adornment) = @_;
-
-  my $random_id = random_string(8);
-  my $id = $self->id;
-
-  return qq(
-    <div class="js_panel" id="$random_id">
-      $key
-      <div class="adornment">
-        <span class="adornment-data" style="display:none;">
-          $adornment
-        </span>
-        $output
-      </div>
-      <input type="hidden" class="panel_type" value="TextSequence"
-             name="panel_type_$id" />
-    </div>
-  );
+  return ($self->{'view'} ||= $self->make_view);
 }
 
 sub build_sequence {
   my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
-  my (@output);
 
   my $adorn = $self->hub->param('adorn') || 'none';
  
-  my $view = $self->view($config);
-  $view->legend->final if $adorn ne 'none';
+  my $view = $self->view;
+  if($adorn eq 'only') { $view->phase(2); }
+  elsif($adorn eq 'none') { $view->phase(1); }
 
-  my @vseqs = @{$view->sequences};
-  foreach my $lines (@$sequence) {
-    my $tseq;
-    if(@vseqs) { $tseq = shift @vseqs } else { $tseq = $view->new_sequence; }
+  $view->width($config->{'display_width'});
 
-    my $line;
-    foreach my $seq (@$lines) {
-      $line = $tseq->new_line if !$line;
-      $line->add_post($seq->{'post'});
-      $line->add_letter($seq->{'letter'}); 
-      $line->adorn_classes($seq->{'class'},!$seq->{'tag'},$config);
-      $line->adorn('title',$seq->{'title'}||'');
-      $line->adorn('href',$seq->{'href'}||'');
-      $line->adorn('tag',$seq->{'tag'});
-      $line->adorn('letter',$seq->{'new_letter'}||'');
+  $view->transfer_data($sequence,$config);
 
-      if ($line->full) {
-        $line->add;
-        $line = undef;
-      }
-    }
-    $line->add if $line;
-  }
-
+  $view->legend->final if $view->phase!=2;
   $view->legend->compute_legend($self->hub,$config);
 
-  $view->more($self->hub->apache_handle->unparsed_uri) if $adorn eq 'none';
-  my $adornment = $view->data;
-  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
-  my $html = $self->format_lines($config,$view->output,$line_numbers);
-  
-  $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
-  $config->{'html_template'} = sprintf $config->{'html_template'}, $html;
-  
-  if ($config->{'sub_slice_start'}) {
-    my $partial_key;
-    $partial_key->{$_} = $config->{$_} for grep $config->{$_},        @{$self->{'key_params'}};
-    $partial_key->{$_} = 1             for grep $config->{'key'}{$_}, @{$self->{'key_types'}};
-    
-    foreach my $type (grep $config->{'key'}{$_}, qw(exons variants)) {
-      $partial_key->{$type}{$_} = 1 for keys %{$config->{'key'}{$type}};
-    }
-    
-    $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
-  }
-
-
-  my $key_html = '';
-  unless($exclude_key) {
-    $key_html = qq(<div class="_adornment_key adornment-key"></div>);
-  }
-
-  if($adorn eq 'only') {
-    return qq(<div><span class="adornment-data">$adornment_json</span></div>);
-  } else {
-    return $self->panel($key_html,$config->{'html_template'},$adornment_json);
-  }
+  $view->output->more($self->hub->apache_handle->unparsed_uri) if $view->phase==1;
+  my $out = $self->view->output->build_output($config,$line_numbers,@{$self->view->sequences}>1,$self->id);
+  $view->reset;
+  return $out;
 }
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly

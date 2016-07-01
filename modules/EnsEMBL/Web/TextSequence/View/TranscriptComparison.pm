@@ -9,7 +9,7 @@ use EnsEMBL::Web::TextSequence::Legend::TranscriptComparison;
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
 sub make_legend {
-  return EnsEMBL::Web::TextSequence::Legend::TranscriptComparison->new;
+  return EnsEMBL::Web::TextSequence::Legend::TranscriptComparison->new(@_);
 }
 
 sub make_sequence {

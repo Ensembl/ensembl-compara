@@ -8,7 +8,7 @@ use parent qw(EnsEMBL::Web::TextSequence::View);
 use EnsEMBL::Web::TextSequence::Legend::GeneSeq;
 
 sub make_legend {
-  return EnsEMBL::Web::TextSequence::Legend::GeneSeq->new;
+  return EnsEMBL::Web::TextSequence::Legend::GeneSeq->new(@_);
 }
 
 1;

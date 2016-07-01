@@ -7,34 +7,59 @@ use JSON qw(encode_json);
 use List::Util qw(max);
 
 use EnsEMBL::Web::TextSequence::Sequence;
-use EnsEMBL::Web::TextSequence::Adorn;
+use EnsEMBL::Web::TextSequence::Output::Web;
 use EnsEMBL::Web::TextSequence::Legend;
+
+use EnsEMBL::Web::TextSequence::ClassToStyle::CSS;
 
 # A view is comprised of one or more interleaved sequences.
 
 sub new {
-  my ($proto,$hub,$width,$maintain) = @_;
+  my ($proto,$hub) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
     hub => $hub,
-    seq_num => -1,
-    all_line => 0,
-    width => $width,
-    sequences => [],
-    fieldsize => {},
-    output => [],
-    adorn => EnsEMBL::Web::TextSequence::Adorn->new(),
+    output => undef,
     legend => undef,
-    maintain_colour => $maintain,
-    more => undef,
   };
   bless $self,$class;
+  $self->output(EnsEMBL::Web::TextSequence::Output::Web->new);
+  $self->reset;
   return $self;
 }
 
+sub reset {
+  my ($self) = @_;
+
+  %$self = (
+    %$self,
+    seq_num => -1,
+    all_line => 0,
+    slices => [],
+    sequences => [],
+    fieldsize => {},
+    lines => [],
+    phase => 0,
+  );
+  $self->output->reset;
+}
+
+sub phase { $_[0]->{'phase'} = $_[1] if @_>1; return $_[0]->{'phase'}; }
+sub interleaved { return 1; }
+
+sub output {
+  my ($self,$output) = @_;
+
+  if(@_>1) {
+    $self->{'output'} = $output;
+    $output->view($self);
+  }
+  return $self->{'output'};
+}
+
 sub make_legend { # For IoC: override me if you want to
-  return EnsEMBL::Web::TextSequence::Legend->new();
+  return EnsEMBL::Web::TextSequence::Legend->new(@_);
 }
 
 sub legend {
@@ -61,48 +86,20 @@ sub new_sequence {
 
 sub sequences { return $_[0]->{'sequences'}; }
 
+sub slices { $_[0]->{'slices'} = $_[1] if @_>1; return $_[0]->{'slices'}; }
+
 # Only to be called by line
 sub _new_line_num { return $_[0]->{'all_line'}++; }
 sub _hub { return $_[0]->{'hub'}; }
-sub _maintain_colour { return $_[0]->{'maintain_colour'}; }
 
-sub line_num { return $_[0]->{'all_line'}; }
-sub width { return $_[0]->{'width'}; }
-sub output { return $_[0]->{'output'}; }
-sub adorn { return $_[0]->{'adorn'}; }
+sub width { $_[0]->{'width'} = $_[1] if @_>1; return $_[0]->{'width'}; }
+sub lines { return $_[0]->{'lines'}; }
 
 # Only to be called from sequence
 sub _add_line {
   my ($self,$seq,$data) = @_;
 
-  push @{$self->{'output'}[$seq]},$data;
-}
-
-sub data {
-  my ($self) = @_;
-
-  my $out = {
-    %{$self->adorn->data},
-    %{$self->legend->data}
-  };
-  if($self->{'more'}) {
-    $out = {
-      url => $self->continue_url($self->{'more'}),
-      provisional => $out
-    };
-  }
-  return $out;
-}
-
-sub more { $_[0]->{'more'} = $_[1]; }
-
-sub continue_url {
-  my ($self,$url) = @_;
-
-  my ($path,$params) = split(/\?/,$url,2);
-  my @params = split(/;/,$params);
-  for(@params) { $_ = 'adorn=only' if /^adorn=/; }
-  return $path.'?'.join(';',@params,'adorn=only');
+  push @{$self->{'lines'}[$seq]},$data;
 }
 
 sub field_size {
@@ -112,6 +109,18 @@ sub field_size {
     $self->{'fieldsize'}{$key} = max($self->{'fieldsize'}{$key}||0,$value);
   }
   return $self->{'fieldsize'}{$key};
+}
+
+sub transfer_data {
+  my ($self,$data,$config) = @_;
+
+  my @vseqs = @{$self->sequences};
+  foreach my $seq (@$data) {
+    my $tseq;
+    if(@vseqs) { $tseq = shift @vseqs; }
+    else { $tseq = $self->new_sequence; }
+    $tseq->add_data($seq,$config);
+  }
 }
 
 1;

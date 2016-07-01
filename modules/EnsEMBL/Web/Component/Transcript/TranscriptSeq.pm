@@ -22,6 +22,8 @@ use strict;
   
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use EnsEMBL::Web::TextSequence::View::Transcript;
+
 use List::Util qw(max);
 
 sub get_sequence_data {
@@ -127,7 +129,6 @@ sub initialize {
  
   my $config = { 
     species         => $hub->species,
-    maintain_colour => 1,
     transcript      => 1,
   };
  
@@ -178,6 +179,14 @@ sub initialize_export {
   my $hub = $self->hub;
   my ($sequence, $config) = $self->initialize;
   return ($sequence, $config);
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::Transcript->new(
+    $self->hub
+  );
 }
 
 1;

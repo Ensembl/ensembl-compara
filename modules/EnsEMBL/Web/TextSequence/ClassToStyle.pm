@@ -8,7 +8,8 @@ use Exporter qw(import);
 use File::Basename;
 use YAML qw(LoadFile);
 
-our @EXPORT_OK = qw(convert_class_to_style create_legend);
+use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 my $cache;
 
@@ -17,6 +18,15 @@ my %assigns = (
   'foreground' => { 'color' => 'default' },
   'both' => { 'background-color' => 'default', color => 'label' }
 );
+
+sub new {
+  my ($proto) = @_;
+
+  my $class = ref($proto) || $proto;
+  my $self = {};
+  bless $self,$class;
+  return $self;
+}
 
 sub load_styles {
   my ($name,$path) = fileparse(__FILE__);
@@ -40,8 +50,10 @@ sub _value {
   return $val;
 }
 
+sub style { return ($_[1],$_[2]); }
+
 sub make_class_to_style_map {
-  my ($hub,$config) = @_;
+  my ($self,$config) = @_;
 
   if(!$cache) {
     $cache = {};
@@ -49,8 +61,8 @@ sub make_class_to_style_map {
     # Load the config
     my $seq = load_styles;
     my %c2s;
-    my $species_defs = $hub->species_defs;
-    my $colourmap    = $hub->colourmap;
+    my $species_defs = EnsEMBL::Web::SpeciesDefs->new;
+    my $colourmap    = EnsEMBL::Draw::Utils::ColourMap->new($species_defs);
     my $j = 1;
     my %sources;
 
@@ -95,9 +107,14 @@ sub make_class_to_style_map {
 
         # Add extra css and store
         %style = (%style, %{$m->{'css'}||{}});
+        my %out_style;
+        foreach my $k_in (keys %style) {
+          my ($k,$v) = $self->style($k_in,$style{$k_in});
+          $out_style{$k} = $v;
+        }
         my $key = _value($m->{'class'}||$m->{'name'},$config);
         $cache->{$key} = [$j++,{}] unless $cache->{$key};
-        $cache->{$key}[1] = { %{$cache->{$key}[1]}, %style };
+        $cache->{$key}[1] = { %{$cache->{$key}[1]}, %out_style };
       }
     }
   }
@@ -105,24 +122,11 @@ sub make_class_to_style_map {
   return $cache;
 }
 
-sub convert_class_to_style {
-  my ($hub,$current_class,$config) = @_;
-
-  return undef unless @$current_class;
-  my %class_to_style = %{make_class_to_style_map($hub,$config)};
-  my %style_hash;
-  foreach (sort { $class_to_style{$a}[0] <=> $class_to_style{$b}[0] } @$current_class) {
-    my $st = $class_to_style{$_}[1];
-    map $style_hash{$_} = $st->{$_}, keys %$st;
-  }
-  return join ';', map "$_:$style_hash{$_}", keys %style_hash;
-}
-
 sub create_legend {
-  my ($hub,$config,$extra) = @_;
+  my ($self,$config,$extra) = @_;
 
-  my $class_to_style = make_class_to_style_map($hub,$config);
-  my $species_defs = $hub->species_defs;
+  my $class_to_style = $self->make_class_to_style_map($config);
+  my $species_defs = EnsEMBL::Web::SpeciesDefs->new;
   my $seq = load_styles;
   my (%legend,%sources);
 

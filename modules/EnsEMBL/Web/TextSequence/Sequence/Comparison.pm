@@ -9,6 +9,7 @@ sub ready {
   my ($self) = @_;
 
   $self->pre($self->padded_name.' ');
+  $self->SUPER::ready;
 }
 
 1;

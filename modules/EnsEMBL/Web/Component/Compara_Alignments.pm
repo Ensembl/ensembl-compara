@@ -25,6 +25,7 @@ use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
@@ -179,6 +180,8 @@ sub content {
 
 sub content_sub_slice {
   my $self = shift;
+
+  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
   my ($sequence, $config) = $self->_get_sequence(@_);  
   return $self->build_sequence($sequence, $config,1);
 }
@@ -237,7 +240,13 @@ sub _get_sequence {
   }
   
   $config->{'slices'} = $slices;
-  
+
+  my $view = $self->view;
+  foreach my $slice (@{$config->{'slices'}}) {
+    my $seq = $view->new_sequence;
+    $seq->name($slice->{'display_name'} || $slice->{'name'});
+  }
+
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
   
   # markup_comparisons must be called first to get the order of the comparison sequences
@@ -257,7 +266,7 @@ sub _get_sequence {
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $class = ($start && $end && $end == $slice_length) ? '' : ' class="no-bottom-margin"';
   
-  $config->{'html_template'} = qq{$template<pre$class>%s</pre>};
+  $self->view->output->template(qq{$template<pre$class>%s</pre>});
 
   if ($padding) {
     my @pad = split ',', $padding;
@@ -707,12 +716,10 @@ sub initialize_export {
 }
 
 sub make_view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
   return EnsEMBL::Web::TextSequence::View::ComparaAlignments->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
+    $self->hub
   );
 }
 

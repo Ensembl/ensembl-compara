@@ -23,6 +23,7 @@ use strict;
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
 use EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub initialize {
   my ($self, $export) = @_;
@@ -411,18 +412,18 @@ sub add_line_numbers {
 }
 
 sub make_view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
-  return EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
+  my $view = EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
     $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
   );
+  $view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  return $view;
 }
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
+  $self->view->output->template('<pre class="text_sequence exon_sequence">%s</pre>');
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }
 

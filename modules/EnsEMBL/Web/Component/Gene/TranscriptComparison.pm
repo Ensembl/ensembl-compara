@@ -23,6 +23,7 @@ use strict;
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
 use EnsEMBL::Web::TextSequence::View::TranscriptComparison;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub _init { $_[0]->SUPER::_init(100); }
 
@@ -57,6 +58,12 @@ sub initialize {
   }
   
   my ($sequence, $markup) = $self->get_sequence_data($config,$adorn);
+
+  my $view = $self->view;
+  foreach my $slice (@{$config->{'slices'}}) {
+    my $seq = $view->new_sequence;
+    $seq->name($slice->{'display_name'} || $slice->{'name'});
+  }
 
   $self->markup_exons($sequence, $markup, $config);
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
@@ -98,18 +105,24 @@ sub content_sub_slice {
   my $start  = $hub->param('subslice_start');
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
-  
+
+  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+
   my ($sequence, $config) = $self->initialize($start, $end);
-  
+
+  my $template;
   if ($end && $end == $length) {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = '<pre class="text_sequence" style="margin:0">%s</pre>';
+    $template = '<pre class="text_sequence" style="margin:0">%s</pre>';
   } else {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template = '<pre class="text_sequence">%s</pre>';
   }
   
-  $config->{'html_template'} .= '<p class="invisible">.</p>';
+  $template .= '<p class="invisible">.</p>';
+
+  $self->view->output->template($template);
+
   $self->id('');
   
   return $self->build_sequence($sequence, $config,1);
@@ -336,12 +349,10 @@ sub set_variations {
 }
 
 sub make_view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
   return EnsEMBL::Web::TextSequence::View::TranscriptComparison->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
+    $self->hub
   );
 }
 
