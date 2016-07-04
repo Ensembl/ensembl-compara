@@ -2897,6 +2897,8 @@ sub add_regulation_builds {
       }
     }
   }
+  
+  my @sets = qw(core non_core);
 
   foreach my $cell_line (@cell_lines) {
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
@@ -2904,12 +2906,8 @@ sub add_regulation_builds {
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
     $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
     
-    my @sets;
     my $core_count      = scalar keys %{$set_info->{'core'}};
     my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
-
-    push @sets, 'core'     if $core_count && $core_count <= $non_core_count;
-    push @sets, 'non_core' if $non_core_count != $core_count;
 
     foreach my $set (@sets) {
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
