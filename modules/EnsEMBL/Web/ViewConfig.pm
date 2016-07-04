@@ -263,12 +263,15 @@ sub update_from_url {
     }
   }
 
-  ## Now that DAS is gone, we only attach userdata to contigviewbottom
+  ## Now that DAS is gone, we only attach userdata to contigviewbottom - no, this isn't only for user data but for other tracks too
   my $attach_param = '';
   if ($image_config eq 'contigviewbottom') {
-     $attach_param = $input->param('attach') || $input->param('contigviewbottom'); 
+    $attach_param = $input->param('attach') || $input->param('contigviewbottom');
+  } else {
+    $attach_param = $input->param($image_config);
   }
-  my @values = split /,/, $attach_param;
+
+  my @values = $attach_param ? split(/,/, $attach_param) : ();
   
   ## Hack to use a more user-friendly URL for trackhub attachment
   if ($input->param('trackhub')) {
