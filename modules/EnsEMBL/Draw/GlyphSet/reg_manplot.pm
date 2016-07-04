@@ -32,6 +32,11 @@ use List::Util qw(min);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
+# Note that the value of y-scale and the calculation of value must match
+# or you will get the wrong ZMenus appearing.
+
+my $y_scale = 20;
+
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 
 sub colour_key { return lc $_[1]->display_consequence; }
@@ -43,8 +48,6 @@ sub supports_subtitles { return 1; }
 sub _init {
   my $self = shift;
   my $key  = $self->_key;
-
-  my $y_scale = 20;
 
   # LD track type display option
   return if ($self->{'display'} eq 'off');
@@ -62,7 +65,15 @@ sub _init {
   $self->{'my_config'}->set('min_score_label','1');
   $self->{'my_config'}->set('max_score_label','<10^-20');
   $self->{'my_config'}->set('baseline_zero', 1);
-
+  $self->push($self->Rect({
+    x => 0,
+    y => 0,
+    width => $self->{'config'}->container_width,
+    height => $height,
+    absolutey => 1,
+    href => $self->bg_link,
+    class => 'group'
+  }));
   # Left-hand side labels
   # Shift down the lhs label to between the axes unless the subtitle is within the track
   $self->{'label_y_offset'} = ($height)/2 + $self->subtitle_height;
@@ -126,21 +137,20 @@ sub title {
   return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ". $f->ambig_code;
 }
 
-sub href {
-  my ($self, $f, $value) = @_;
-  
-  my $key = $self->_key();
+sub href { return undef; }
+
+sub bg_link {
+  my ($self) = @_;
 
   return $self->_url({
-    species  => $self->species,
-    type     => 'Variation',
-    v        => $f->variation_name,
-    vf       => $f->dbID,
-    vdb      => $self->my_config('db'),
-    snp_fake => 1,
-    config   => $self->{'config'}{'type'},
-    track    => $self->type,
-    $key     => $value
+    action => 'GTEX',
+    ftype  => 'Regulation',
+    sp  => ucfirst $self->species,
+    scalex => $self->scalex,
+    width => $self->{'container'}->length,
+    g => $self->{'config'}->hub->param('g'),
+    tissue => $self->{'my_config'}->get('tissue'),
+    height => $self->{'my_config'}->get('height'),
   });
 }
 

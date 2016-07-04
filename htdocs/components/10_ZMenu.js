@@ -262,7 +262,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     if (url && url.match('/ZMenu/')) {
       $.extend($.ajax({
         url:      url,
-        data:     this.coords.clickStart ? { click_chr: this.coords.clickChr || Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd } : {},
+        data:     this.coords.clickStart ? { click_chr: this.coords.clickChr || Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd, click_y: this.coords.clickY } : {},
         dataType: this.crossOrigin ? 'jsonp' : 'json',
         context:  this,
         success:  $.proxy(this.buildMenuAjax,  this),

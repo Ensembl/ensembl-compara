@@ -1160,6 +1160,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         coords.clickChr   = range.chr;
         coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
         coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : Math.max(coords.clickStart,Math.floor(location));
+
+        coords.clickY     = area.a.coords[3] - coords.y;
         
         id += '_multi';
       }
