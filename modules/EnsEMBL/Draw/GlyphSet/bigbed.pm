@@ -69,13 +69,16 @@ sub get_data {
     ## Don't try and scale if we're just doing a zmenu!
     my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
+                    'action'          => $self->{'my_config'}->get('zmenu_action'), 
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
+                    'drawn_strand'    => $self->strand,
                     'strand_to_omit'  => $strand_to_omit,
                     'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                    'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
                     };
 
     ## Also set a default gradient in case we need it
@@ -104,6 +107,9 @@ sub get_data {
     my $style = $self->my_config('style') || $self->my_config('display') || '';
     ## Parse the file, filtering on the current slice
     $metadata->{'skip_overlap'} = ($style eq 'compact');
+
+    $self->extra_metadata($metadata);
+
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
 
@@ -120,7 +126,9 @@ sub get_data {
 
   return $data;
 }
-  
+ 
+sub extra_metadata {}
+ 
 sub render_as_alignment_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('depth', 20);

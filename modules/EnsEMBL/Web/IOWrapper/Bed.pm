@@ -97,13 +97,16 @@ sub create_hash {
   my $id = $self->parser->can('get_id') ? $self->parser->get_id
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
 
+  my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   my $href = $self->href({
-                        'id'          => $id,
-                        'url'         => $metadata->{'url'},
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        'strand'      => $strand,
+                        'action'        => $metadata->{'action'},
+                        'id'            => $id,
+                        'url'           => $metadata->{'url'},
+                        'seq_region'    => $seqname,
+                        'start'         => $feature_start,
+                        'end'           => $feature_end,
+                        'strand'        => $drawn_strand,
+                        'zmenu_extras'  => $metadata->{'zmenu_extras'},
                         }) unless $metadata->{'omit_feature_links'};
 
   ## Don't set start and end yet, as drawing code and zmenu want
@@ -125,17 +128,16 @@ sub create_hash {
     my $column_map      = $self->parser->{'column_map'};
     if ($column_map) {
       $feature->{'extra'} = [];
-      ## Skip standard columns used in zmenus
+      ## Synonyms for standard columns used in zmenus
       my %skipped = (
                     'chrom'       => 1,
                     'chromStart'  => 1,
                     'chromEnd'    => 1,
-                    'score'       => 1,
                     );
       my %lookup = reverse %$column_map;
       for (sort {$a <=> $b} keys %lookup) {
         my $field   = $lookup{$_};
-        next if $skipped{$field};
+        next if ($feature->{$field} || $skipped{$field});
         my $method  = "get_$field";
         my $value   = $self->parser->$method;
         ## Prettify common array values

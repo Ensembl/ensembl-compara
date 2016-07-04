@@ -96,7 +96,6 @@ sub draw_aggregate {
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
-              'is_multi'  => $cell_line eq 'MultiCell' ? 1 : 0,
               };
 
   my $data    = $self->data_by_cell_line($cell_line);
@@ -235,7 +234,7 @@ sub get_features {
 
     if ($args->{'feature_type'} eq 'block_features') {
       $subtrack->{'metadata'}{'feature_height'} = 8;
-      my $features      = $dataset->{$f_set};
+      my $features = $dataset->{$f_set};
       foreach my $f (@$features) {
         ## Create motif features
         my $structure = [];
@@ -262,7 +261,7 @@ sub get_features {
       my $bins                    = $self->bins;
       my $url                     = $dataset->{$f_set};
       my $wiggle                  = $self->get_data($bins, $url);
-      $subtrack->{'features'}     = $wiggle->[0]{'features'}{1};
+      $subtrack->{'features'}     = $wiggle->[0]{'features'};
 
       ## Don't override values that we've already set!
       while (my($k, $v) = each (%{$wiggle->[0]{'metadata'}||{}})) {
@@ -276,6 +275,7 @@ sub get_features {
 
 sub get_colours {
   my $self      = shift;
+  return unless $self->data_by_cell_line;
   my $config    = $self->{'config'};
   my $colourmap = $config->colourmap;
   my %ratio     = ( 1 => 0.6, 2 => 0.4, 3 => 0.2, 4 => 0 );

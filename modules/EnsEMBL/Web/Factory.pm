@@ -88,6 +88,7 @@ sub DataObjects {
   
   if (@_) {
     foreach (@_) {
+      next unless $_;
       push @{$self->__data->{'_dataObjects'}{$_->__objecttype}||=[]},$_;
     }
     $self->__data->{'_dataObjectFirst'} ||= $_[0];

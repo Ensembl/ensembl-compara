@@ -380,63 +380,53 @@ sub get_cell_line_data {
 
 sub get_data {
   my ($self, $data) = @_;
-  my $hub                  = $self->hub;
-  my $dataset_adaptor      = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-  my $associated_data_only = $hub->param('opt_associated_data_only') eq 'yes' ? 1 : undef; # If on regulation page do we show all data or just used to build reg feature?
-  my $reg_object           = $associated_data_only ? $hub->core_object('regulation') : undef;
-  my $count                = 0;
-  my @result_sets;
-  my %feature_sets_on;
-
   return $data unless scalar keys %$data;
 
-  foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_feature_class('regulatory')}) {
-    my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);
-    my $cell_line     = $regf_data_set->cell_type->name;
+  my $hub                 = $self->hub;
+  my $dataset_adaptor     = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
+  my $featureset_adaptor  = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
+  my $annotated_fsets     = $featureset_adaptor->fetch_all_by_feature_class('annotated');
 
+  my $count               = 0;
+  my %feature_sets_on;
+
+  foreach my $afs (@{$annotated_fsets||[]}) {
+
+    my $ftype       = $afs->feature_type;
+    my $ftype_name  = $ftype->name;
+
+    my $epigenome   = $afs->epigenome;
+    my $cell_line   = $epigenome->display_label;
     next unless exists $data->{$cell_line};
 
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $feature_type_name     = $reg_attr_fset->feature_type->name;
-      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
-      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-
-      $count++;
-      my $key = "$unique_feature_set_id:$count";
+    $count++;
+    my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
       
-      next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
-      
-      my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
+    my $set = $ftype->evidence_type_label =~ /DNAse|TFBS/ ? 'core' : 'non_core';
+    next unless $data->{$cell_line}{$set}{'on'}{$ftype_name};
 
-      $feature_sets_on{$feature_type_name} = 1;
-     
-      if(grep { $display_style eq $_ }
-          qw(compact tiling_feature signal_feature)) {
-        my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
-        
-        if ($reg_object && scalar @block_features) {
-          my $obj = $reg_object->Obj;
-          @block_features = grep $obj->has_attribute($_->dbID, 'annotated'), @block_features
-        }
-       
-        $data->{$cell_line}{$focus_flag}{'block_features'}{$key} = \@block_features if scalar @block_features;
-      }
-      if(grep { $display_style eq $_ }
-            qw(tiling tiling_feature signal signal_feature)) {
-        my $reg_attr_dset = $dataset_adaptor->fetch_by_product_FeatureSet($reg_attr_fset); 
-        my $sset          = $reg_attr_dset->get_displayable_supporting_sets('result');
-        
-        if (scalar @$sset) {
-          # There should only be one
-          throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-        
-          my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
-          my $path = $sset->[0]->dbfile_path;
-          $path = "$file_path/$path" unless $path =~ /^$file_path/;
-          push @result_sets, $sset->[0];
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = $path;
-        }
-      }
+    my $display_style = $data->{$cell_line}{$set}{'renderer'};
+
+    $feature_sets_on{$ftype_name} = 1;
+    
+    if (grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
+      my $key = $unique_id.':'.$count;
+      my $afa = $hub->get_adaptor('get_AnnotatedFeatureAdaptor', 'funcgen');
+      my $block_features = $afa->fetch_all_by_Slice_FeatureSets($self->Obj, [$afs]);
+
+      $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features;
+    }
+
+    ## Get path to bigWig file
+    if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
+      my $dataset = $dataset_adaptor->fetch_by_product_FeatureSet($afs);
+      my $ssets   = $dataset->get_supporting_sets('result');
+      next if scalar @$ssets != 1;
+      my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
+      $file_path .= $ssets->[0]->dbfile_path;
+      my $key = $unique_id.':'.$ssets->[0]->dbID;
+
+      $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
     }
   }
 

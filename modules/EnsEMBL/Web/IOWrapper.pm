@@ -437,7 +437,7 @@ sub munge_densities {
 sub href {
   my ($self, $params) = @_;
   return $self->hub->url('ZMenu', {
-                                    'action'            => 'UserData', 
+                                    'action'            => $params->{'action'} || 'UserData', 
                                     'config'            => $self->config_type,  
                                     'track'             => $self->track,
                                     'format'            => $self->format, 
@@ -446,6 +446,7 @@ sub href {
                                     'fake_click_end'    => $params->{'end'},
                                     'fake_click_strand' => $params->{'strand'},
                                     'feature_id'        => $params->{'id'},              
+                                    %{$params->{'zmenu_extras'}||{}}
                                   });
 }
 

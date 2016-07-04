@@ -22,15 +22,6 @@ package EnsEMBL::Web::Object::Regulation;
 ### NAME: EnsEMBL::Web::Object::Regulation
 ### Wrapper around a Bio::EnsEMBL::Funcgen::RegulatoryFeature object
 
-### PLUGGABLE: Yes, using Proxy::Object
-
-### STATUS: At Risk
-### Contains a lot of functionality not directly related to
-### manipulation of the underlying API object
-
-### DESCRIPTION
-
-
 use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -88,13 +79,15 @@ sub feature_type      { my $self = shift; return $self->Obj->feature_type;      
 sub slice             { my $self = shift; return $self->Obj->slice;                     }
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
-sub has_evidence {
-  my ($self) = @_;
+sub activity {
+  my ($self, $epigenome) = @_;
+  return unless $epigenome;
 
-  # Can be simple accessor for 76, but avoid breaking master
-  return $self->Obj->activity if $self->Obj->can('activity');
+  my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
+  return $regact->activity if $regact;
   return undef;
 }
+
 sub cell_type_count {
   my ($self) = @_;
 
@@ -126,9 +119,10 @@ sub fetch_all_objs_by_slice {
   return \@all_objects;
 }
 
-sub get_attribute_list {
+sub get_evidence_list {
   my $self = shift;
-  my @attrib_feats = @{$self->Obj->regulatory_attributes('annotated')};
+  my $epigenome = shift;
+  my @attrib_feats = @{$self->Obj->regulatory_evidence('annotated', $epigenome)||[]};
   return '-' unless @attrib_feats;
 
   my @temp = map $_->feature_type->name, @attrib_feats;
@@ -159,7 +153,8 @@ sub get_attribute_list {
 
 sub get_motif_features {
   my $self = shift;
-  my @motif_features = @{$self->Obj->regulatory_attributes('motif')};
+  my $cell_line = shift;
+  my @motif_features = @{$self->Obj->regulatory_evidence('motif', $cell_line)||[]};
   my %motifs;
   foreach my $mf (@motif_features){
 
@@ -276,11 +271,9 @@ sub get_bound_context_slice {
   my $bound_start = $self->bound_start;
   my $bound_end = $self->bound_end;
   my $reg_feature_adaptor = $self->get_fg_db->get_RegulatoryFeatureAdaptor;
-  my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($self->stable_id);
-  foreach my $rf (@$reg_objs) {
-    if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; }
-    if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
-  }
+  my $rf                  = $reg_feature_adaptor->fetch_by_stable_id($self->stable_id);
+  if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; }
+  if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
 
   my $offset_start   = $bound_start -$padding;
   my $offset_end     = $bound_end + $padding;
@@ -356,22 +349,9 @@ sub get_evidence_data {
   return { data => \%data, cells => [ keys %cells ] };
 }
 
-sub all_cell_types {
+sub all_epigenomes {
   my ($self) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
-
-  my %cells;
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_feature_class('regulatory')}) {
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $cell_name = $reg_attr_fset->cell_type->name;
-      next if $cell_name eq 'MultiCell';
-      $cells{$cell_name} = 1;
-    }
-  }
-  return [ sort keys %cells ];
+  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
 }
 
 ################ Calls for Feature in Detail view ###########################
