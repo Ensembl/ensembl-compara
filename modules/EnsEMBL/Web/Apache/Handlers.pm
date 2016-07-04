@@ -605,7 +605,7 @@ sub handler {
   # Give up
   $ENSEMBL_WEB_REGISTRY->timer_push('Handler "DECLINED"', undef, 'Apache');
   
-  return DECLINED;
+  return NOT_FOUND;
 }
 
 sub _check_species {
