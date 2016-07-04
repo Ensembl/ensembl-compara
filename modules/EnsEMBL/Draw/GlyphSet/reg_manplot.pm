@@ -83,7 +83,7 @@ sub _init {
 
   my $slice = $self->{'container'};
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
-  my ($data,$error) = $rest->fetch_via_ini('Homo_sapiens','gtex',{
+  my ($data,$error) = $rest->fetch_via_ini($self->species,'gtex',{
     stableid => $self->{'config'}->hub->param('g'),
     tissue => $self->{'my_config'}->get('tissue'),
   });
