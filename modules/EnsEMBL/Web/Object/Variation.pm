@@ -623,8 +623,8 @@ sub freqs {
     push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
     push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleCount} }, $allele_obj->count);
     push (@{ $data{$pop_id}{ssid}{$ssid}{Alleles} },   $allele_obj->allele);    
-    next if $data{$pop_id}{pop_info};
-    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
+
+    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj) unless exists $data{$pop_id}{pop_info};
     
     ## If frequency data is available, show frequency data submitter, else show observation submitter
     $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
