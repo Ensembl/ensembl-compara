@@ -1,5 +1,6 @@
 =head1 LICENSE
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -109,19 +110,19 @@ sub draw_plot {
 }
 
 sub _draw_score {
-  my ($self, $y, $score) = @_;
+  my ($self, $y, $score, $label) = @_;
 
   my $pix_per_bp = $self->image_config->transform->{'scalex'};
 
-  my $text = ($score == 0) ? $score : sprintf('%.2f', $score);
-  my $text_info   = $self->get_text_info($text);
+  $label //= ($score == 0) ? $score : sprintf('%.2f', $score);
+  my $text_info   = $self->get_text_info($label);
   my $text_width  = $text_info->{'width'};
   my $text_height = $text_info->{'height'};
   my $twidth      = $text_width / $pix_per_bp;
   my $colour      = 'blue'; #$parameters->{'axis_colour'} || $self->my_colour('axis')  || 'blue';
 
   push @{$self->glyphs}, $self->Text({
-    text          => $text,
+    text          => $label,
     height        => $text_height,
     width         => $text_width,
     textwidth     => $text_width,

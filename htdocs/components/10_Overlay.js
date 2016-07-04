@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,20 +49,17 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
           panel.setCookie();
         }
       }).resizable({
-        maxWidth:  this.maxWidth,
+        maxWidth : this.maxWidth,
         maxHeight: this.maxHeight,
-        minWidth:  this.minWidth,
+        minWidth : this.minWidth,
         minHeight: this.minHeight,
-        stop:      function (e, ui) {
+        start    : function (e, ui) {
+          $(this).css('position', 'fixed')
+        },
+        stop     : function (e, ui) {
           $.extend(panel.customized, ui.size);
           panel.setCookie();
-          
-          $(this).css('position', 'fixed').css('top', function (i, top) {
-            return parseInt(top, 10) - panel.window.scrollTop();
-          }).css('left', function (i, left) {
-            return parseInt(left, 10) - panel.window.scrollLeft();
-          });
-          
+          $(this).css('position', 'fixed')
           Ensembl.EventManager.trigger('modalPanelResize');
         }
       });

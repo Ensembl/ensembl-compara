@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1580,7 +1581,12 @@ sub get_extended_reg_region_slice {
     $new_end = $gr_end - $end;
   }
 
+  if($start-$new_start<1) { $new_start = $start-1; }
+  if($end+$new_end>$self->Obj->seq_region_length) {
+    $new_end = $self->Obj->seq_region_length-$end;
+  }
   my $extended_slice =  $object_slice->expand($new_start, $new_end);
+
   return $extended_slice;
 }
 

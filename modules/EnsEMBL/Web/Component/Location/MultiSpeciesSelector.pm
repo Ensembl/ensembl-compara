@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,8 +29,8 @@ sub _init {
   $self->SUPER::_init;
 
   $self->{'link_text'}       = 'Select species or regions';
-  $self->{'included_header'} = 'Selected species or regions';
-  $self->{'excluded_header'} = 'Unselected species or regions';
+  $self->{'included_header'} = 'Selected species';
+  $self->{'excluded_header'} = 'Unselected species';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
   $self->{'url_param'}       = 's';
   $self->{'rel'}             = 'modal_select_species_or_regions';
@@ -51,7 +52,7 @@ sub content_ajax {
   my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species};
   my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
   my (%species, %included_regions);
-  
+
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
     my $type = lc $alignment->{'type'};
     my ($s)  = grep /--$alignment->{'target_name'}$/, keys %{$alignment->{'species'}};
@@ -59,6 +60,10 @@ sub content_ajax {
     s/_/ /g for $type, $target;
     
     $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
+
+    # If intra species alignment found then change panel headers
+    $self->{'included_header'} = 'Selected species or haplotypes';
+    $self->{'excluded_header'} = 'Unselected species or haplotypes';
   }
   
   foreach (grep !$species{$_}, keys %shown) {
@@ -83,7 +88,6 @@ sub content_ajax {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
-        
         if ($species{$_}) {
           $species{$_} .= "/$type";
         } else {

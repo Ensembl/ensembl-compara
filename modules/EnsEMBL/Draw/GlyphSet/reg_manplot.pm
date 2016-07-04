@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +28,7 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 use EnsEMBL::Web::REST;
 use POSIX qw(floor ceil);
+use List::Util qw(min);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
@@ -42,6 +44,8 @@ sub _init {
   my $self = shift;
   my $key  = $self->_key;
 
+  my $y_scale = 20;
+
   # LD track type display option
   return if ($self->{'display'} eq 'off');
 
@@ -49,11 +53,14 @@ sub _init {
   my $height = $self->my_config('height') || 80;
 
   # Horinzontal line mark
-  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || 0.8;
+  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || (15/$y_scale);
 
   # Track configuration
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('h_mark', $h_mark);
+  $self->{'my_config'}->set('h_mark_label', "10^-".int($h_mark*$y_scale));
+  $self->{'my_config'}->set('min_score_label','1');
+  $self->{'my_config'}->set('max_score_label','<10^-20');
   $self->{'my_config'}->set('baseline_zero', 1);
 
   # Left-hand side labels
@@ -65,28 +72,29 @@ sub _init {
 
   my $slice = $self->{'container'};
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
-  my $data = $rest->fetch_via_ini('Homo_sapiens','gtex',{
+  my ($data,$error) = $rest->fetch_via_ini('Homo_sapiens','gtex',{
     stableid => $self->{'config'}->hub->param('g'),
     tissue => $self->{'my_config'}->get('tissue'),
   });
-  my $vdba = $slice->adaptor->db->get_db_adaptor('variation');
-  my $va = $vdba->get_VariationAdaptor;
+  if($error) {
+    my $msg = $data->[0];
+    warn "REST failed: $msg\n";
+    return $self->errorTrack(sprintf("Data source failed: %s",$msg));
+  }
   foreach my $f (@$data) {
-    my $v = $va->fetch_by_name($f->{'snp'});
-    next unless $v;
-    foreach my $vf (@{$v->get_all_VariationFeatures()||[]}) {
-      my $start = $vf->start - $slice->start+1;
-      my $end = $vf->end - $slice->start+1;
-      next if $start < 1 or $end > $slice->length;
-      push @$features,{
-        start => $start,
-        end => $end,
-        label => $vf->name,
-        colour => $self->my_colour($vf->display_consequence),
-        href => '#',
-        score => -log($f->{'value'})/log(10)
-      };
-    }
+    my $start = $f->{'seq_region_start'} - $slice->start+1;
+    my $end = $f->{'seq_region_end'} - $slice->start+1;
+    warn "start=$start end=$end\n";
+    next if $start < 1 or $end > $slice->length;
+    my $value = min(-log($f->{'value'})/log(10)/$y_scale,1);
+    push @$features,{
+      start => $start,
+      end => $end,
+      label => $f->{'snp'},
+      colour => $self->my_colour($f->{'display_consequence'}),
+      href => '#',
+      score => $value,
+    };
   }
 
   if (!scalar(@$features)) {

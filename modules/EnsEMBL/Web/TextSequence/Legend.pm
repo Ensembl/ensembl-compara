@@ -9,13 +9,12 @@ use warnings;
 # There is also a fair chance that individual components may wish to
 # override some aspect of it.
 
-use EnsEMBL::Web::TextSequence::ClassToStyle qw(create_legend);
-
 sub new {
-  my ($proto) = @_;
+  my ($proto,$view) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
+    view => $view,
     key => undef,
     expect => [],
     final => 0,
@@ -45,7 +44,7 @@ sub compute_legend {
 
   my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
 
-  my $key = create_legend($hub,{ %$config, exon_type => $exon_type, example => $example },$self->extra_keys($config));
+  my $key = $self->{'view'}->output->c2s->create_legend({ %$config, exon_type => $exon_type, example => $example },$self->extra_keys($config));
 
   my @messages;
   foreach my $type (keys %$key) {
@@ -61,6 +60,10 @@ sub compute_legend {
     }
   }
   $self->{'key'}{'_messages'} = \@messages;
+  $self->{'view'}->output->legend({
+    legend => $self->{'key'},
+    expect => $self->{'expect'}
+  });
 }
 
 sub expect {
@@ -69,15 +72,6 @@ sub expect {
   return [] if $self->{'final'};
   push @{$self->{'expect'}},$val if @_>1;
   return $self->{'expect'};
-}
-
-sub data {
-  my ($self) = @_;
-
-  return {
-    legend => $self->{'key'},
-    expect => $self->{'expect'},
-  };
 }
 
 sub legend { return $_[0]->{'key'}; }

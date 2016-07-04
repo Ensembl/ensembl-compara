@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,11 +85,11 @@ sub feature_summary {
   
   push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
-                      $avail->{has_transcripts}, 
-                      $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
-                  ) if($avail->{has_transcripts});
+                      $avail->{has_uniq_transcripts}, 
+                      $avail->{has_uniq_transcripts} eq "1" ? "transcript" : "transcripts"
+                  ) if($avail->{has_uniq_transcripts});
   push @str_array, sprintf('%s<a class="dynamic-link" href="%s">%s %s</a>',
-                      $avail->{has_transcripts} ? '' : 'overlaps ',
+                      $avail->{has_uniq_transcripts} ? '' : 'overlaps ',
                       $transcript_url,
                       $avail->{has_regfeats},
                       $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@ use strict;
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
 use EnsEMBL::Web::TextSequence::View::GeneSeq;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub _init { $_[0]->SUPER::_init(500); }
 
@@ -113,21 +115,25 @@ sub content_sub_slice {
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
   
+  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
   $slice ||= $self->object->slice;
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
  
   my $adorn = $hub->param('adorn') || 'none'; 
   my ($sequence, $config) = $self->initialize($slice, $start, $end,$adorn);
-  
+
+  my $template;
   if ($end && $end == $length) {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
+    $template = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
-    $config->{'html_template'} = '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
+    $template = '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
   }
   
-  $config->{'html_template'} .= '<p class="invisible">.</p>';
+  $template .= '<p class="invisible">.</p>';
+  $self->view->output->template($template);
+
   return $self->build_sequence($sequence, $config,1);
 }
 
@@ -150,12 +156,10 @@ sub initialize_export {
 }
 
 sub make_view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
   return EnsEMBL::Web::TextSequence::View::GeneSeq->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
+    $self->hub
   );
 }
 

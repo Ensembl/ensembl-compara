@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::Component::Transcript::ProteinSeq;
 
 use strict;
+
+use EnsEMBL::Web::TextSequence::View::Transcript;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
@@ -87,7 +90,6 @@ sub initialize {
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
-    maintain_colour => 1,
     transcript      => 1,
   };
   
@@ -128,6 +130,14 @@ sub initialize_export {
   $hub->param('exons', $vc->get('exons'));
   my $transcript = $self->object || $hub->core_object('transcript');
   return $self->initialize($transcript->translation_object);
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::Transcript->new(
+    $self->hub,
+  );
 }
 
 1;

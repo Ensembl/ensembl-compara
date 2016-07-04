@@ -1,6 +1,7 @@
 #! /usr/bin/env perl
 
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -857,6 +858,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       if ($phenotype_ontologies->{$variation_name}) {
         while (my ($ontology_name, $values) = each %{$phenotype_ontologies->{$variation_name}}) {
           push @ontologies, $ontology_name;
+          $phen_ont{'names'}{$ontology_name}++;
           $phen_ont{'accession'} = $values->{'accession'};
           foreach my $syn (@{$values->{'syns'}}){
             $phen_ont{'synonyms'}{$syn}++;
@@ -923,6 +925,7 @@ sub VariationLine {
                     $loc);
   }
   $species =~ s/_/ /;
+  $desc = &clean($desc,'phenotype description');
   my $xml = qq(
 <doc>
   <field name="id">$name</field>
@@ -935,34 +938,46 @@ sub VariationLine {
     $xml .= qq(
   <field name="synonym">$_</field>);
   }
-  foreach (keys %$genes) {
-    $xml .= qq(
-  <field name="assoc_gene">$_</field>);
-  }
-  foreach (@$phenotypes) {
-    $xml .= qq(
-  <field name="phenotype">$_</field>);
-  }
   if (%$ontologies){
     my $acc = $ontologies->{'accession'};
     $xml .= qq(
-  <field name="ont_acc">$acc</field);
+  <field name="ont_acc">$acc</field>);
+    foreach my $name (keys %{$ontologies->{'names'}}) {
+      my $name = clean($name,'ontology_name');
+      $xml .= qq(
+  <field name="ont_name">$name</field>);
+    }
     foreach my $syn (keys %{$ontologies->{'synonyms'}}) {
       $syn = clean($syn,'ontology_synonym');
       $xml .= qq(
-  <field name="ont_syn">$syn</field);
+  <field name="ont_syn">$syn</field>);
     }
-  }
-
-  foreach my $hgvs_name (@$hgvs_names) {
-    $hgvs_name = &clean($hgvs_name,'hgvs_name');
-    $xml .= qq(
-  <field name="hgvs_name">$hgvs_name</field>);
   }
   foreach (@$studys ) {
     $xml .= qq(
   <field name="study">$_</field>);
   }
+  foreach my $hgvs_name (@$hgvs_names) {
+    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+    $xml .= qq(
+  <field name="hgvs_name">$hgvs_name</field>);
+  }
+
+## These records are in the description so no need to be in as seperate fields as well. Leaving commented out though
+## in case we do need to raise the priority of these records
+#  foreach (keys %$genes) {
+#    $xml .= qq(
+#  <field name="assoc_gene">$_</field>);
+#  }
+#  foreach (@$phenotypes) {
+#    $xml .= qq(
+#  <field name="phenotype">$_</field>);
+#  }
+#  foreach my $hgvs_name (@$hgvs_names) {
+#    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+#    $xml .= qq(
+#  <field name="hgvs_name">$hgvs_name</field>);
+#  }
   $xml .= qq(
   <field name="variation_source">$source</field>);
   $xml .= &common_fields($species,$type,'variation');
@@ -3107,15 +3122,22 @@ sub dumpRegulatoryFeature {
   my $ftype = 'RegulatoryFeature';
   my $params;
 
-  my $d = $conf->{'dbh'}->selectall_arrayref(
-    "select rf.stable_id, sr.name, (rf.seq_region_start - rf.bound_start_length), (rf.seq_region_end + rf.bound_end_length), ft.name
-       from $dbname.regulatory_feature rf, $dbname.seq_region sr, $dbname.coord_system cs,
-            $dbname.feature_type ft, $dbname.feature_set fs
-      where fs.name='RegulatoryFeatures:MultiCell' and fs.feature_set_id=rf.feature_set_id and
-            rf.feature_type_id=ft.feature_type_id and rf.seq_region_id=sr.seq_region_id and
-            sr.coord_system_id=cs.coord_system_id and cs.is_current=1
-   group by rf.regulatory_feature_id"
-  );
+  my $d = $conf->{'dbh'}->selectall_arrayref("
+    select 
+      rf.stable_id, 
+      sr.name, 
+      (rf.seq_region_start - rf.bound_start_length), 
+      (rf.seq_region_end + rf.bound_end_length), 
+      ft.name
+    from 
+      $dbname.regulatory_feature rf
+      join $dbname.seq_region sr using (seq_region_id)
+      join $dbname.coord_system cs using (coord_system_id)
+      join $dbname.feature_type ft using (feature_type_id)
+    where
+      cs.is_current=1
+      and sr.schema_build=cs.schema_build
+   ");
 
   foreach my $row ( @$d ) {
     my $desc = qq($row->[4] regulatory feature);
@@ -3127,22 +3149,25 @@ sub dumpRegulatoryFeature {
   }
 
 ## External Features...
-  my $e = $conf->{'dbh'}->selectall_arrayref(
- "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id), ft.description, ft.class, fs.name
-    from  $dbname.feature_type ft, $dbname.external_feature ef, $dbname.feature_set fs, $dbname.seq_region sr,
-          $dbname.coord_system cs,$dbname.status s, $dbname.status_name sn
-    where ft.feature_type_id=ef.feature_type_id
-      and fs.feature_set_id=ef.feature_set_id
-      and fs.type='external'
-      and ef.seq_region_id=sr.seq_region_id
-      and sr.coord_system_id=cs.coord_system_id
-      and cs.is_current=1
-      and s.table_name='feature_set'
-      and s.table_id=fs.feature_set_id
-      and s.status_name_id=sn.status_name_id
-      and sn.name='MART_DISPLAYABLE'
- group by ef.display_label"
-  );
+  my $e = $conf->{'dbh'}->selectall_arrayref("
+    select 
+      ef.display_label, 
+      group_concat(distinct ft.name), 
+      count(distinct ef.external_feature_id), 
+      ft.description, 
+      ft.class, 
+      fs.name
+    from  
+      $dbname.external_feature ef
+      join $dbname.feature_type ft using (feature_type_id)
+      join $dbname.feature_set fs using (feature_set_id)
+      join $dbname.seq_region sr using (seq_region_id)
+      join $dbname.coord_system cs using (coord_system_id)
+    where
+      cs.is_current = 1
+    group by 
+      ef.display_label
+ ");
 
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name ) = @$f;
@@ -3158,15 +3183,26 @@ sub dumpRegulatoryFeature {
 
 ## Tarbase features
   my $e = $conf->{'dbh'}->selectall_arrayref(
-  "select mrf.display_label, group_concat(distinct ft.name), group_concat(distinct mrf.accession), count(distinct mrf.mirna_target_feature_id),
-          ft.description, ft.class, fs.name
-     from $dbname.feature_type ft, $dbname.mirna_target_feature mrf, $dbname.feature_set fs, $dbname.seq_region sr, $dbname.coord_system cs
-    where ft.feature_type_id = mrf.feature_type_id
-      and fs.feature_set_id = mrf.feature_set_id
-      and mrf.seq_region_id = sr.seq_region_id
-      and sr.coord_system_id = cs.coord_system_id
-          and cs.is_current = 1
- group by mrf.display_label"
+  "
+  select 
+    mrf.display_label, 
+    group_concat(distinct ft.name), 
+    group_concat(distinct mrf.accession), 
+    count(distinct mrf.mirna_target_feature_id),
+    ft.description, 
+    ft.class, 
+    fs.name
+  from 
+    $dbname.mirna_target_feature mrf
+    join $dbname.feature_type ft using (feature_type_id)
+    join $dbname.feature_set fs using (feature_set_id)
+    join $dbname.seq_region sr using (seq_region_id)
+    join $dbname.coord_system cs using (coord_system_id)
+  where
+    cs.is_current = 1
+  group by 
+    mrf.display_label
+ "
 );
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $accs, $count, $f_desc, $f_class, $fs_name) = @$f;

@@ -1,13 +1,9 @@
-package EnsEMBL::Web::TextSequence::Adorn;
+package EnsEMBL::Web::TextSequence::Output::Web::Adorn;
 
 use strict;
 use warnings;
 
-# This module is responsible for collecting adornment information for a
-# view. There is exactly one per view. It is separate as this
-# functionality is complex and independent of the other tasks of a view.
-#
-# It is not expected that this class will need to be overridden.
+use JSON qw(encode_json);
 
 sub new {
   my ($proto) = @_;
@@ -17,20 +13,18 @@ sub new {
     addata => {},
     adlookup => {},
     adlookid => {},
-    flourishes => {}
+    flourishes => {},
   };
   bless $self,$class;
   return $self;
 }
 
-# Methods to call to contribute adornment
-
 sub adorn {
-  my ($self,$line,$char,$k,$v) = @_;
+  my ($self,$line,$char,$k,$v) = @_; 
 
   $self->{'addata'}{$line}[$char]||={};
-  return unless $v;
-  $self->{'adlookup'}{$k} ||= {};
+  return unless $v; 
+  $self->{'adlookup'}{$k} ||= {}; 
   $self->{'adlookid'}{$k} ||= 1;
   my $id = $self->{'adlookup'}{$k}{$v};
   unless(defined $id) {
@@ -41,10 +35,10 @@ sub adorn {
 }
 
 sub flourish {
-  my ($self,$type,$line,$value) = @_;
+  my ($self,$type,$line,$value) = @_; 
 
   ($self->{'flourishes'}{$type}||={})->{$line} =
-    encode_json({ v => $value });
+    encode_json({ v => $value }); 
 }
 
 # Internal compression methods
@@ -193,7 +187,7 @@ sub adorn_compress {
   return \@adseq;
 }
 
-sub data {
+sub adorn_data {
   my ($self) = @_;
 
   my ($adseq,$adref) = $self->adorn_convert;
@@ -205,9 +199,5 @@ sub data {
     flourishes => $self->{'flourishes'}
   };
 }
-
-sub addata { return $_[0]->{'addata'}; }
-sub adlookup { return $_[0]->{'adlookup'}; }
-sub flourishes { return $_[0]->{'flourishes'}; }
 
 1;

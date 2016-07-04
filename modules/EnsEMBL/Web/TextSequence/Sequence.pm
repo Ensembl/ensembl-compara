@@ -23,6 +23,9 @@ sub new {
     pre => "",
     configured => 0,
     name => undef,
+    # the sequence itself
+    seq => [],
+    idx => 0,
   };
   bless $self,$class;
   weaken($self->{'view'});
@@ -32,6 +35,7 @@ sub new {
 
 sub init {} # For subclasses
 sub ready {} # For subclasses
+sub fixup_markup {} # For subclasses
 
 sub configure {
   my ($self) = @_;
@@ -53,18 +57,20 @@ sub new_line {
 sub view { return $_[0]->{'view'}; }
 sub line_num { return $_[0]->{'line'}; }
 
+sub move { $_[0]->{'idx'}[$_[1]] = $_[2]; }
+
+sub _here { return ($_[0]->{'seq'}[$_[0]->{'idx'}]||={}); }
+
+sub set { $_[0]->_here->{$_[1]} = $_[2]; }
+sub add { push @{$_[0]->_here->{$_[1]}},$_[2]; }
+sub append { $_[0]->_here->{$_[1]} .= $_[2]; }
+
 # only for use in Line
 sub _exon {
   my ($self,$val) = @_;
 
   $self->{'exon'} = $val if @_>1;
   return $self->{'exon'};
-}
-
-sub _add {
-  my ($self,$data) = @_;
-
-  $self->{'view'}->_add_line($self->{'id'},$data);
 }
 
 sub name {
@@ -95,5 +101,24 @@ sub pre {
 }
 
 sub id { return $_[0]->{'id'}; }
+
+sub add_data {
+  my ($self,$lines,$config) = @_;
+
+  my $line;
+  foreach my $seq (@$lines) {
+    $line = $self->new_line if !$line;
+    $line->add_post($seq->{'post'});
+    $line->markup('letter',$seq->{'letter'});
+    $line->markup('class',$seq->{'class'});
+    $line->markup('title',$seq->{'title'});
+    $line->markup('href',$seq->{'href'});
+    $line->markup('tag',$seq->{'tag'});
+    $line->markup('new_letter',$seq->{'new_letter'});
+    $line->advance;
+    if($line->full) { $line->add($config); $line = undef; }
+  }
+  $line->add($config) if $line;
+}
 
 1;

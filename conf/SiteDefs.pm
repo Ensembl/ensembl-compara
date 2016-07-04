@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 84;
-our $ARCHIVE_VERSION           = 'Mar2016';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'March 2016';
+our $ENSEMBL_VERSION           = 85;
+our $ARCHIVE_VERSION           = 'Jul2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'July 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -164,6 +164,7 @@ our $ENSEMBL_DEBUG_JS            = 0; # change these to 1 to prevent js minifica
 our $ENSEMBL_DEBUG_CSS           = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_IMAGES        = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_NOCACHE       = 0; # disable even in-run caches
+our $ENSEMBL_BOOK_DEBUG          = 0; # change this to 1,2 or 3 to get required level of EnsEMBL::Web::Query debug info
 our $ENSEMBL_SKIP_RSS            = 0; # set to 1 in sandboxes to avoid overloading blog
 
 our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
@@ -623,7 +624,8 @@ Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 LICENSE
                                                                                 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

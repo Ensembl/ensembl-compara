@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,7 +67,7 @@ sub content_ajax {
   my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
   my $extra_inputs = join '', map sprintf('<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_})), sort keys %{$url->[1]};
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
-     $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
+     $select_by    = qq{<div class="select_by"><h2>Select by biotype:</h2><select>$select_by</select></div>} if $select_by;
   my ($exclude_html,$include_html);
 
   foreach my $category ((@all_categories,undef)) {
@@ -106,46 +107,56 @@ sub content_ajax {
     my $catdata = $category||'';
     next unless $exclude_list or $include_list or $category;
     $exclude_html .= qq(
-      <h2>$exclude_title</h2>
+      <div class="panel_title">
+        <h2>$exclude_title <span class="count unselected" title="Total Unselected">0</span> </h2>
+      </div>
       <ul class="excluded" data-category="$catdata">
         $exclude_list
       </ul>
     );
     $include_html .= qq(
-      <h2>$include_title</h2>
+      <div class="panel_title">
+        <h2>$include_title <span class="count selected" title="Total Selected">0</span> </h2>
+      </div>
       <ul class="included" data-category="$catdata">
         $include_list
       </ul>
     );
   }
 
-  my $content      = sprintf('
-    <div class="content">
-      <form action="%s" method="get" class="hidden">%s</form>
-      <div class="multi_selector_list">
-        %s
-      </div>
-      <div class="multi_selector_list">
-        %s
-      </div>
-      <p class="invisible">.</p>
-    </div>',
-    $url->[0],
-    $extra_inputs,
-    $include_html,
-    $exclude_html,
-  );
-  
   my $hint = qq{
     <div class="multi_selector_hint info">
       <h3>Tip</h3>
       <div class="error-pad">
-        <p>Click on the plus and minus buttons to select or deselect options.</p>
-        <p>Selected options can be reordered by dragging them to a different position in the list</p>
+        <p>Click on the plus and minus buttons to select or deselect options.
+        Selected options can be reordered by dragging them to a different position in the list</p>
       </div>
     </div>
   };
  
+  my $content      = sprintf('
+    <div class="content">
+      <div class="select_by_group_div">
+        %s
+        %s
+      </div>
+      <form action="%s" method="get" class="hidden">%s</form>
+      <div class="multi_selector_list _unselected_species">
+        %s
+      </div>
+      <div class="multi_selector_list _selected_species">
+        %s
+      </div>
+      <p class="invisible">.</p>
+    </div>',
+    $select_by,
+    $hint,
+    $url->[0],
+    $extra_inputs,
+    $exclude_html,
+    $include_html
+  );
+  
   my $param_mode = $self->{'param_mode'};
   $param_mode ||= 'multi';
  
@@ -154,7 +165,7 @@ sub content_ajax {
     panelType => $self->{'panel_type'},
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
-    nav       => "$select_by$hint",
+    # nav       => "$select_by$hint",
     params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode },
   });
 }

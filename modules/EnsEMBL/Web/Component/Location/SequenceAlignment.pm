@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,6 +77,12 @@ sub content {
     
     my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config, $adorn);
     
+    my $view = $self->view($config);
+    foreach my $slice (@{$config->{'slices'}}) {
+      my $seq = $view->new_sequence;
+      $seq->name($slice->{'display_name'} || $slice->{'name'});
+    }
+
     # Order is important for the key to be displayed correctly
     $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
     $self->markup_codons($sequence, $markup, $config)    if $config->{'codons_display'};
@@ -88,7 +95,7 @@ sub content {
     my (undef, undef, $region, $start, $end) = split ':', $slice_name;
     my $url = $hub->url({ action => 'View', r => "$region:$start-$end" });
 
-    $config->{'html_template'} = qq(<p><b>$config->{'species'}</b>&nbsp;&gt;&nbsp;<a href="$url">$slice_name</a></p><pre>%s</pre>);
+    $self->view->output->template(qq(<p><b>$config->{'species'}</b>&nbsp;&gt;&nbsp;<a href="$url">$slice_name</a></p><pre>%s</pre>));
     
     $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(
@@ -159,12 +166,10 @@ sub get_slices {
 }
 
 sub make_view {
-  my ($self,$config) = @_;
+  my ($self) = @_;
 
   return EnsEMBL::Web::TextSequence::View::SequenceAlignment->new(
-    $self->hub,
-    $config->{'display_width'},
-    $config->{'maintain_colour'}
+    $self->hub
   );
 }
 
