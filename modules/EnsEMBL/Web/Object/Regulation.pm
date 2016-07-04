@@ -26,6 +26,8 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
+use EnsEMBL::Web::Object::Slice;
+
 use base qw(EnsEMBL::Web::Object);
 
 sub short_caption {
@@ -314,39 +316,15 @@ sub bound_location_string {
 }
 
 sub get_evidence_data {
-  my ($self, $slice,$filter) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
-  my %data;
-
-  my %cells;
+  my ($self, $slice, $filter) = @_;
   $filter ||= {};
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
-    my $multicell     = $regf_fset->cell_type->name eq 'MultiCell' ? 'MultiCell' : '';
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
+  $filter->{'block_features'} = 1;
 
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $cell_type             = $reg_attr_fset->cell_type->name;
-      $cells{$cell_type} = 1 unless $cell_type eq 'MultiCell';
-      next if $filter->{'cell'} and !grep { $_ eq $cell_type } @{$filter->{'cell'}};
-      next if $filter->{'cells_only'};
-      my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
-      my @sset          = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+  my $slice_object = EnsEMBL::Web::Object::Slice->new({'_hub' => $self->hub, '_object' => $slice});
 
-      throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @sset > 1; # There should only be one
+  my $data = $slice_object->get_cell_line_data(undef, $filter);
 
-      my $feature_type          = $reg_attr_fset->feature_type->name;
-      my $block_features        = $reg_attr_fset->get_Features_by_Slice($slice);
-      my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-      my $key                   = $multicell || $cell_type;
-      my $unique_feature_set_id = join ':', $key, $feature_type, $multicell ? $cell_type : ();
-
-      $data{$key}{$set}{'block_features'}{$unique_feature_set_id} = $block_features if scalar @$block_features;
-    }
-  }
-
-  return { data => \%data, cells => [ keys %cells ] };
+  return { data => $data, cells => [ keys %$data ] };
 }
 
 sub all_epigenomes {

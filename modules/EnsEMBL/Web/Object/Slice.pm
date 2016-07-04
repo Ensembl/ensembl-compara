@@ -345,7 +345,7 @@ sub get_cell_line_data_closure {
 }
 
 sub get_cell_line_data {
-  my ($self, $image_config) = @_;
+  my ($self, $image_config, $filter) = @_;
   
   # First work out which tracks have been turned on in image_config
   my %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
@@ -358,29 +358,36 @@ sub get_cell_line_data {
     EnsEMBL::Web::Tree->clean_id($ic_cell_line);
 
     foreach my $set (@sets) {
-      my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+      if ($image_config) {
+        my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
 
-      next unless $node;
+        next unless $node;
       
-      my $display = $node->get('display');
+        my $display = $node->get('display');
       
-      $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
+        $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
       
-      foreach ($node->nodes) {
-        my $feature_name = $_->data->{'name'};
+        foreach ($node->nodes) {
+          my $feature_name = $_->data->{'name'};
         
-        $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
-        $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
+          $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
+          $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
+        }
+      }
+      else {
+        $data->{$cell_line}{$set} = {};
       }
     }
   }
-  
-  return $self->get_data($data);
+ 
+  return $self->get_data($data, $filter);
 }
 
 sub get_data {
-  my ($self, $data) = @_;
+  my ($self, $data, $filter) = @_;
   return $data unless scalar keys %$data;
+  $filter ||= {};
+  my $is_image = keys %$filter ? 0 : 1;
 
   my $hub                 = $self->hub;
   my $dataset_adaptor     = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
@@ -397,24 +404,27 @@ sub get_data {
 
     my $epigenome   = $afs->epigenome;
     my $cell_line   = $epigenome->display_label;
+    next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
+    next if $filter->{'cells_only'};
     next unless exists $data->{$cell_line};
 
     $count++;
     my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
       
     my $set = $ftype->evidence_type_label =~ /DNAse|TFBS/ ? 'core' : 'non_core';
-    next unless $data->{$cell_line}{$set}{'on'}{$ftype_name};
+    next if ($is_image && !$data->{$cell_line}{$set}{'on'}{$ftype_name});
 
-    my $display_style = $data->{$cell_line}{$set}{'renderer'};
+    my $display_style = $is_image ? $data->{$cell_line}{$set}{'renderer'} : '';
 
     $feature_sets_on{$ftype_name} = 1;
     
-    if (grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
+    if ($filter->{'block_features'}
+        || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
       my $key = $unique_id.':'.$count;
       my $afa = $hub->get_adaptor('get_AnnotatedFeatureAdaptor', 'funcgen');
       my $block_features = $afa->fetch_all_by_Slice_FeatureSets($self->Obj, [$afs]);
 
-      $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features;
+      $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features if scalar @$block_features;
     }
 
     ## Get path to bigWig file
