@@ -25,6 +25,10 @@ no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
+use JSON qw(from_json to_json);
+
+use EnsEMBL::Web::File::Utils::URL qw(read_file);
+
 sub munge {
   my ($self, $func) = @_;
   
@@ -36,6 +40,39 @@ sub munge {
   $self->$munge();
   $self->$modify();
 }
+
+sub munge_rest {
+  my ($self) = @_;
+
+  # Yuk! This hub will be very grotty.
+  my $sources = $self->tree->{'REST_SOURCES'};
+  foreach my $key (keys %{$sources||{}}) {
+    my $source_conf = $self->tree->{$sources->{$key}};
+    my @config_keys =
+      map { s/^config_//; $_ } grep { /config_/ } keys %$source_conf;
+    foreach my $c (@config_keys) {
+      my $url = $self->tree->{$sources->{$key}}{"config_$c"};
+      $url =~ s/<<species>>/$self->species/ge;
+      my $response = read_file($url,{
+        proxy => $self->full_tree->{'ENSEMBL_WWW_PROXY'},
+        nice => 1,
+        no_exception => 1,
+      });
+      if($response->{'error'}) {
+        warn "ERROR FROM REST SERVER: $url\n";
+        next;
+      }
+      my $in;
+      eval { $in = from_json($response->{'content'}); };
+      if($@) { warn "BAD JSON from $url\n"; next; }
+      $self->db_tree->{"REST_${key}_$c"} = $in;
+    }
+  }
+}
+
+sub modify_rest {}
+sub munge_rest_multi {}
+sub modify_rest_multi {}
 
 sub munge_databases {
   my $self   = shift;

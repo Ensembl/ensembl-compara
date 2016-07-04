@@ -712,6 +712,7 @@ sub process_ini_files {
     $config_packer->{$tree_type}->{$species} = lock_retrieve($file);
     $self->_info_line('Retrieve', $species eq 'MULTI' ? 'MULTI ini file' : $msg);
   } else {
+    $config_packer->munge('rest');
     $config_packer->munge('databases');
     $self->_info_line(sprintf('** %s **', uc $type), $msg);
     

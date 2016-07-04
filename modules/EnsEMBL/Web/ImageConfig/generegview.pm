@@ -23,6 +23,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+use List::MoreUtils qw(any);
+
 sub init {
   my $self = shift; 
 
@@ -63,13 +65,12 @@ sub init {
     ],
   }) if($gencode_version);
 
-  my @gtex_tissues = qw(
-    Adipose_Subcutaneous          Artery_Aorta      Artery_Tibial
-    Cells_Transformed_fibroblasts Esophagus_Mucosa  Esophagus_Muscularis
-    Heart_Left_Ventricle          Lung              Muscle_Skeletal
-    Nerve_Tibial                  Skin_Sun_Exposed_Lower_leg
-    Stomach                       Thyroid           Whole_Blood);
+  my @gtex_tissues = keys %{$self->hub->species_defs->REST_gtex_tissues};
+
   my $gtex_tissue_example = "Whole_Blood";
+  unless(any { $_ eq $gtex_tissue_example } @gtex_tissues) {
+    $gtex_tissue_example = $gtex_tissues[0];
+  }
 
   foreach my $tissue (@gtex_tissues) {
     my $tissue_readable = $tissue;

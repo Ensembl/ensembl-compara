@@ -32,9 +32,11 @@ sub new {
 ### c
 ### @param hub - EnsEMBL::Web::Hub object
 ### @param server String - base URL of the REST service
-  my ($class, $hub, $server) = @_;
-  $server ||= $hub->species_defs->ENSEMBL_REST_URL;
-  my $self = { 'hub' => $hub, 'server' => $server };
+  my ($class, $hub, $server, $species_defs) = @_;
+
+  $species_defs ||= $hub->species_defs;
+  $server ||= $species_defs->ENSEMBL_REST_URL;
+  my $self = { 'hub' => $hub, 'server' => $server, 'species_defs' => $species_defs };
   bless $self, $class;
   return $self;
 }
@@ -44,6 +46,8 @@ sub hub {
   my $self = shift;
   return $self->{'hub'};
 }
+
+sub species_defs { return $_[0]->{'species_defs'}; }
 
 sub server {
 ### a
@@ -117,14 +121,14 @@ sub fetch_url {
 }
 
 sub fetch_via_ini {
-  my ($self,$species,$name,$params,$args) = @_;
+  my ($self,$species,$name,$params,$args,$part) = @_;
 
-  my $sources = $self->hub->species_defs->get_config($species,'REST_SOURCES') || {};
+  my $sources = $self->species_defs->get_config($species,'REST_SOURCES') || {};
   return undef unless $sources->{$name};
   my $type = $sources->{$name};
-  my $ini = $self->hub->species_defs->get_config($species,$type);
+  my $ini = $self->species_defs->get_config($species,$type);
   return undef unless $ini;
-  my $url = $ini->{'url'};
+  my $url = $ini->{$part||'url'};
   return undef unless $url;
   $url =~ s/<<(.*?)>>/$params->{$1}/eg;
   return $self->fetch_url($url,$args);
