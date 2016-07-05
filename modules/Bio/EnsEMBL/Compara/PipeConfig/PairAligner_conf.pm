@@ -707,6 +707,9 @@ sub pipeline_analyses {
 	    },
             {   -logic_name         => 'register_mlss',
                 -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+                -parameters         => {
+                    'master_db' => $self->o('master_db'),
+                },
                 -flow_into          => [ 'pairaligner_stats' ],
             },
 	    { -logic_name => 'pairaligner_stats',
