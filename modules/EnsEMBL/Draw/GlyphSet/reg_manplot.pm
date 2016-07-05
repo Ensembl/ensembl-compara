@@ -67,9 +67,9 @@ sub _init {
   $self->{'my_config'}->set('baseline_zero', 1);
   $self->push($self->Rect({
     x => 0,
-    y => 0,
+    y => -4,
     width => $self->{'config'}->container_width,
-    height => $height,
+    height => $height+8,
     absolutey => 1,
     href => $self->bg_link,
     class => 'group'
