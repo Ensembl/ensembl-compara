@@ -46,7 +46,8 @@ sub content {
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
   my $image_width     = $self->image_width;
-  my $primary_slice   = $object->slice;
+  my $padding         = $hub->create_padded_region();
+  my $primary_slice   = $object->slice->expand($padding->{flank5}, $padding->{flank3});
   my $primary_species = $hub->species;
   my $primary_strand  = $primary_slice->strand;
   my $slices          = $object->multi_locations;

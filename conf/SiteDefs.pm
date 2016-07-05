@@ -132,6 +132,11 @@ foreach my $k (sort { $APRIO{$a} <=> $APRIO{$b} } keys %ALIST) {
   }
 }
 
+# % 5' and 3' flanking region for images
+# Currently used for region comparison and location view
+our $FLANK5_PERC = 0.02;
+our $FLANK3_PERC = 0.02;
+
 # Needed for parsing BAM files
 our ($UDC_CACHEDIR, $HTTP_PROXY);
 
