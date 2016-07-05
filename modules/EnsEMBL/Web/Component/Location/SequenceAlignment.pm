@@ -64,7 +64,7 @@ sub content {
   # (there are currently variations returned when the resequenced samples match the reference)
   $config->{'match_display'} ||= 0;  
   $config->{'exon_display'}    = 'selected' if $config->{'exon_ori'};
-  $config->{'end_number'}      = $config->{'number'} = 1 if $config->{'line_numbering'};
+  $config->{'number'} = 1 if $config->{'line_numbering'};
   
   foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
     foreach my $sample (@{$var_db->{$_}}) {

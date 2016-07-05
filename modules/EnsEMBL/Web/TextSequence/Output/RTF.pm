@@ -67,7 +67,7 @@ sub make_layout {
     { control => '{\pard\fs18\f0' },
     { key => 'pre' },
     {   
-      if => 'number_left', 
+      if => 'number',
       then => [
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
@@ -79,7 +79,7 @@ sub make_layout {
       key => 'letters', width => $config->{'display_width'},
     },  
     {   
-      if => 'number_right',
+      if => 'number',
       then => [
         { post => ' ' },
         { key => 'h_space' },

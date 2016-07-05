@@ -54,7 +54,6 @@ sub initialize {
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && scalar(@consequence) && join('', @consequence) ne 'off';
   
   if ($config->{'line_numbering'}) {
-    $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
   

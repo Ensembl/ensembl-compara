@@ -58,8 +58,7 @@ sub format_line {
     adid => $data->{'adid'},
     post => $data->{'post'},
     # flags
-    number_left => ($config->{'number'}||'off') ne 'off',
-    number_right => ($config->{'end_number'}||'off') ne 'off',
+    number => ($config->{'number'}||'off') ne 'off',
     vskip => $vskip
   });
 }

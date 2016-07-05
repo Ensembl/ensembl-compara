@@ -59,7 +59,7 @@ sub initialize {
   
   $config->{'exon_features'} = $object->Obj->get_all_Exons;
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
-  $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
+  $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
 

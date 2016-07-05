@@ -23,7 +23,7 @@ sub make_layout {
   return EnsEMBL::Web::TextSequence::Layout::String->new([
     { key => 'pre' },
     {
-      if => 'number_left', 
+      if => 'number',
       then => [
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
@@ -38,7 +38,7 @@ sub make_layout {
       fmt => '<span class="adorn adorn-%s _seq">%s</span>',
     },
     {
-      if => 'number_right',
+      if => 'number',
       then => [
         { post => ' ' },
         { key => 'h_space' },
