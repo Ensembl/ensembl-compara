@@ -161,8 +161,8 @@ sub count_uniq_transcripts {
   foreach my $varif_id (keys %mappings) {
     next unless ($varif_id  eq $self->param('vf'));
     my %transcriptnames;
-    for ( $mappings{$varif_id}{transcript_vari} ) {
-        $transcriptnames{$_{transcriptname}} += 1;
+    for ( @{ $mappings{$varif_id}{transcript_vari} } ) {
+        $transcriptnames{$_->{transcriptname}} += 1;
     }
     $count = scalar keys %transcriptnames;
     last;
