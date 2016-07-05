@@ -236,9 +236,9 @@ sub get_parsed_features {
       }
     }
     else {
-      $data->{$name} = {'features' => $track->{'features'}{1} || [], 
+      $data->{$name} = {'features' => $track->{'features'} || [], 
                         'metadata' => $track->{'metadata'} || {}};
-      push @{$data->{$name}{'features'}}, @{$track->{'features'}{-1} || []}; 
+      push @{$data->{$name}{'features'}}, @{$track->{'features'} || []}; 
     }
     
     $count++ unless ($track->{'metadata'}{'color'} || $track->{'metadata'}{'colour'});
