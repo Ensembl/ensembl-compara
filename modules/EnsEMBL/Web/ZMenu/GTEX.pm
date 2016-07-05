@@ -74,7 +74,14 @@ sub summary_zmenu {
     next unless abs($v-$y) < 8/$args->{'height'};
     push @hits,$f;
   }
-    
+
+  if(!@hits) {
+    $self->caption("No hits nearby");
+    $self->add_entry({ type => "Summary",
+                       label => "No hits nearby" });
+    return;
+  }
+
   # Summarize
   $self->caption("Found ".(scalar @hits)." hits nearby");
   foreach my $f (@hits) {
