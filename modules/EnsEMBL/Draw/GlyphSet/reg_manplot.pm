@@ -55,13 +55,8 @@ sub _init {
   # Track height
   my $height = $self->my_config('height') || 80;
 
-  # Horinzontal line mark
-  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || (15/$y_scale);
-
   # Track configuration
   $self->{'my_config'}->set('height', $height);
-  $self->{'my_config'}->set('h_mark', $h_mark);
-  $self->{'my_config'}->set('h_mark_label', "10^-".int($h_mark*$y_scale));
   $self->{'my_config'}->set('min_score_label','1');
   $self->{'my_config'}->set('max_score_label','<10^-20');
   $self->{'my_config'}->set('baseline_zero', 1);
