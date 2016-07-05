@@ -614,8 +614,10 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-			       'A->1' => [ 'remove_inconsistencies_after_net' ],
-			       '2->A' => [ 'alignment_nets' ],
+			       #'A->1' => [ 'remove_inconsistencies_after_net' ],
+			       #'2->A' => [ 'alignment_nets' ],
+			       1 => [ 'remove_inconsistencies_after_net' ],
+			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
 	       -rc_name => '1Gb',
@@ -643,6 +645,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],  # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
 	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
