@@ -18,7 +18,7 @@ package EnsEMBL::Web::Component::Phenotype::OntologyTerm;
 
 
 use strict;
-use Data::Dumper;
+
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Controller::SSI;
@@ -52,7 +52,7 @@ sub ontology_mappings{
   my $ontol_data =  $self->get_all_ontology_data();
 
   return undef unless $ontol_data;
-warn Dumper  $ontol_data;
+
   my $html;
 
   my @rows;
