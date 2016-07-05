@@ -7,6 +7,8 @@ use parent qw(EnsEMBL::Web::Query::Generic::Sequence);
 
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
 
+use List::Util qw(max);
+
 our $VERSION = 1;
 
 sub precache {
