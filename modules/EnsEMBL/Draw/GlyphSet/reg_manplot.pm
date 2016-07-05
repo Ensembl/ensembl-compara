@@ -90,9 +90,8 @@ sub _init {
   foreach my $f (@$data) {
     my $start = $f->{'seq_region_start'} - $slice->start+1;
     my $end = $f->{'seq_region_end'} - $slice->start+1;
-    warn "start=$start end=$end\n";
     next if $start < 1 or $end > $slice->length;
-    my $value = min(-log($f->{'value'})/log(10)/$y_scale,1);
+    my $value = min($f->{'minus_log10'}/$y_scale,1);
     push @$features,{
       start => $start,
       end => $end,
