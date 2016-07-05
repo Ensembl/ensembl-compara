@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SqlHealthChecks;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 
 
