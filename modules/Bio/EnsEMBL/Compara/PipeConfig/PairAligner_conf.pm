@@ -184,7 +184,7 @@ sub default_options {
 	'filter_duplicates_rc_name' => '1Gb',
 	'filter_duplicates_himem_rc_name' => 'crowd_himem',
     'filter_duplicates_hive_capacity' => 200,
-    'filter_duplicates_batch_size' => 5,
+    'filter_duplicates_batch_size' => 10,
 
 	#
 	#Default pair_aligner
