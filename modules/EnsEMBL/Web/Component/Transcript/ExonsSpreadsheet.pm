@@ -55,7 +55,6 @@ sub initialize {
     export        => $export
   };
   
-  $config->{'end_number'}  = $config->{'number'};
   $config->{'last_number'} = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
   $config->{'snp_display'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   

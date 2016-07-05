@@ -248,7 +248,6 @@ sub _get_sequence {
   }
   
   if ($config->{'line_numbering'} ne 'off') {
-    $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
   
