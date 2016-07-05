@@ -81,4 +81,42 @@ sub get_gene_display_label {
   return $xref && $xref->display_id || '';
 }
 
+# return underlying Variation API Phenotype object
+sub pheno{
+  my $self = shift;
+  return $self->{_pheno} if $self->{_pheno};
+  return unless $self->hub->param('ph');
+  my $vardb       = $self->hub->database('variation');
+  my $pa          = $vardb->get_adaptor('Phenotype');
+  $self->{_pheno} = $pa->fetch_by_dbID($self->hub->param('ph'));
+  return $self->{_pheno} ;
+}
+ 
+
+sub get_OntologyTerms{
+  my $self = shift;
+
+  return unless $self->hub->param('ph');
+  my $vardb   = $self->hub->database('variation');
+  my $pa      = $vardb->get_adaptor('Phenotype');
+  my $p       = $pa->fetch_by_dbID($self->hub->param('ph'));
+  return undef unless defined $p;
+
+  my $ontology_accessions = $p->ontology_accessions();
+  my $adaptor = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+
+  my @ot;
+  foreach my $oa (@{$ontology_accessions}){
+
+    ## only these ontologies have links defined currently
+    next unless $oa =~ /^EFO|^Orphanet|^HP|^GO/;
+ 
+    my $ontologyterm = $adaptor->fetch_by_accession($oa);
+
+    push @ot, $ontologyterm if defined $ontologyterm;
+  }
+
+  return (@ot ? \@ot : undef);
+
+}
 1;
