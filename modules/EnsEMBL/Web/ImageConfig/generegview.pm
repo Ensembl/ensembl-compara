@@ -104,7 +104,7 @@ sub init {
   
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
-    { display => 'transcript_label' }
+    { display => 'collapsed_label' }
   );
   
   $self->modify_configs(
