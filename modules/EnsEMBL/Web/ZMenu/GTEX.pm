@@ -32,8 +32,6 @@ use List::Util qw(min);
 # Note that the value of y-scale and the calculation of value must match
 # or you will get the wrong ZMenus appearing.
 
-my $y_scale = 20;
-
 sub summary_zmenu {
   my ($self, $args) = @_;
 
@@ -44,6 +42,7 @@ sub summary_zmenu {
   my $s   = $args->{'start'};
   my $e   = $args->{'end'};
   my $y   = $args->{'click_y'}/$args->{'height'};
+  my $y_scale = $args->{'y_scale'};
 
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -139,7 +138,7 @@ sub content {
     $e = $s + 1;
   }
 
-  my @params = qw(r strand scalex width tissue g click_y height);
+  my @params = qw(r strand scalex width tissue g click_y height y_scale);
   my %args;
 
   foreach (@params) {

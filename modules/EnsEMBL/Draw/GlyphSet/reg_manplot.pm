@@ -35,8 +35,6 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 # Note that the value of y-scale and the calculation of value must match
 # or you will get the wrong ZMenus appearing.
 
-my $y_scale = 20;
-
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 
 sub colour_key { return lc $_[1]->display_consequence; }
@@ -55,28 +53,7 @@ sub _init {
   # Track height
   my $height = $self->my_config('height') || 80;
 
-  # Track configuration
-  $self->{'my_config'}->set('height', $height);
-  $self->{'my_config'}->set('min_score_label','1');
-  $self->{'my_config'}->set('max_score_label','<10^-20');
-  $self->{'my_config'}->set('baseline_zero', 1);
-  $self->push($self->Rect({
-    x => 0,
-    y => -4,
-    width => $self->{'config'}->container_width,
-    height => $height+8,
-    absolutey => 1,
-    href => $self->bg_link,
-    class => 'group'
-  }));
-  # Left-hand side labels
-  # Shift down the lhs label to between the axes unless the subtitle is within the track
-  $self->{'label_y_offset'} = ($height)/2 + $self->subtitle_height;
-
-  my $config   = $self->track_style_config;
-  my $features = [];
-
-  my $slice = $self->{'container'};
+  # Get data
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
   my ($data,$error) = $rest->fetch_via_ini($self->species,'gtex',{
     stableid => $self->{'config'}->hub->param('g'),
@@ -87,6 +64,30 @@ sub _init {
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
+  my $y_scale = int(min(map { $_->{'minus_log10'} } @$data))+1;
+
+  # Track configuration
+  $self->{'my_config'}->set('height', $height);
+  $self->{'my_config'}->set('min_score_label','1');
+  $self->{'my_config'}->set('max_score_label',"<10^-$y_scale");
+  $self->{'my_config'}->set('baseline_zero', 1);
+  $self->push($self->Rect({
+    x => 0,
+    y => -4,
+    width => $self->{'config'}->container_width,
+    height => $height+8,
+    absolutey => 1,
+    href => $self->bg_link($y_scale),
+    class => 'group'
+  }));
+  # Left-hand side labels
+  # Shift down the lhs label to between the axes unless the subtitle is within the track
+  $self->{'label_y_offset'} = ($height)/2 + $self->subtitle_height;
+
+  my $config   = $self->track_style_config;
+  my $features = [];
+
+  my $slice = $self->{'container'};
   foreach my $f (@$data) {
     my $start = $f->{'seq_region_start'} - $slice->start+1;
     my $end = $f->{'seq_region_end'} - $slice->start+1;
@@ -97,7 +98,6 @@ sub _init {
       end => $end,
       label => $f->{'snp'},
       colour => $self->my_colour($f->{'display_consequence'}),
-      href => '#',
       score => $value,
     };
   }
@@ -134,7 +134,7 @@ sub title {
 sub href { return undef; }
 
 sub bg_link {
-  my ($self) = @_;
+  my ($self,$y_scale) = @_;
 
   return $self->_url({
     action => 'GTEX',
@@ -145,6 +145,7 @@ sub bg_link {
     g => $self->{'config'}->hub->param('g'),
     tissue => $self->{'my_config'}->get('tissue'),
     height => $self->{'my_config'}->get('height'),
+    y_scale => $y_scale,
   });
 }
 
