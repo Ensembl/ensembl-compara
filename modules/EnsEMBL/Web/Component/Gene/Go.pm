@@ -130,11 +130,11 @@ sub process_data {
       my $url        = $hub->url({
         species     => $species,
         type        => 'Gene',
-        action      => $type eq 'translation' ? 'Ontologies/biological_process' : 'Summary',
+        action      => $type eq 'translation' ? 'Ontologies/'.$hub->function : 'Summary',
         $param_type => $gene,
         __clear     => 1,
       });
-      
+
       $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     
