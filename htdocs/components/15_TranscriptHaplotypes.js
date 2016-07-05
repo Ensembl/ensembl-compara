@@ -37,6 +37,12 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
       panel.renderHaplotypePanel(this.rel);
     });
 
+    // init zmenus
+    this.el.find('a.zmenu').on('click', function(e) {
+      e.preventDefault();
+      Ensembl.EventManager.trigger('makeZMenu', $(this).text().replace(/\W/g, '_'), { event: e, area: { link: $(this) }});
+    });
+
     // if we've landed on a page with a hash in the URL
     // load that haplotype's panel and jump to it
     if(window.location.hash) {

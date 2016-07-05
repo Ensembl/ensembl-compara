@@ -1552,6 +1552,7 @@ sub transcript_variation_to_variation_feature {
 
 sub get_haplotypes {
   my $self = shift;
+  my $filter = shift;
 
   my $vdb = $self->Obj->adaptor->db->get_db_adaptor('variation');
 
@@ -1567,7 +1568,7 @@ sub get_haplotypes {
   }
 
   my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
-  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj); };
+  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj, $filter); };
   return $haplotypes;
 }
 

@@ -56,10 +56,26 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  my $c = $object->get_haplotypes;
-  return unless $c;
-  
   my $html = '';
+
+  # filter?
+  my $filter;
+  if($self->hub->param('filter_enabled') eq 'on') {
+    
+    # warn user filtering is enabled
+    $html .= $self->_info(
+      'Variant frequency filtering enabled',
+      'Haplotypes may not be representative of true observed sequences '.
+      'as variants with frequency less than '.
+      $self->hub->param('filter_frequency').
+      ' have been filtered out'
+    );
+    
+    $filter = {frequency => {frequency => $self->hub->param('filter_frequency')}};
+  }
+  
+  my $c = $object->get_haplotypes($filter);
+  return unless $c;
   
   # tell JS what panel type this is
   $html .= '<input type="hidden" class="panel_type" value="TranscriptHaplotypes" />';
@@ -96,7 +112,7 @@ sub content {
   );
   my $other_type = $type eq 'protein' ? 'cds' : 'protein';
 
-  $table->add_columns(
+  my @cols = (
     {
       key   => 'haplotype',
       title => $titles{$type}.' haplotype',
@@ -117,6 +133,15 @@ sub content {
     },
     @pop_cols,
   );
+
+  push @cols, {
+    key   => 'variants',
+    title => 'Variants',
+    sort  => 'html_numeric',
+    help  => 'Variants that contribute to this haplotype\'s difference(s) to the reference',
+  } if $self->hub->param('show_variants') eq 'on';
+
+  $table->add_columns(@cols);
   
   my @rows;
   my $count = 0;
@@ -237,6 +262,8 @@ sub render_haplotype_row {
     flags     => $flags_html,
     freq      => sprintf("%.3g (%i)", $ht->frequency, $ht->count),
   };
+
+  $row->{variants} = join(", ", map {$self->render_var_link($_)} @{$ht->get_all_VariationFeatures}) if $self->hub->param('show_variants') eq 'on';
   
   # add per-population frequencies
   my $pop_freqs = $ht->get_all_population_frequencies;
@@ -249,6 +276,24 @@ sub render_haplotype_row {
   }
   
   return $row;
+}
+
+sub render_var_link {
+  my $self = shift;
+  my $vf = shift;
+
+  my $hub = $self->hub;
+
+  my ($var, $vf_id) = ($vf->variation_name, $vf->dbID);
+
+  my $zmenu_url = $hub->url({
+    type    => 'ZMenu',
+    action  => 'Variation',
+    v       => $var,
+    vf      => $vf_id,
+  });
+
+  return sprintf('<a class="zmenu" href="%s">%s</a>', $zmenu_url, $var);
 }
 
 sub render_haplotype_name {
