@@ -1561,7 +1561,7 @@ sub get_extended_reg_region_slice {
 
   ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
   ## extends more than this use the values returned from this
-  my $extension = 250*1000;
+  my $extension = 1000*1000;
   my $start = $self->Obj->start;
   my $end   = $self->Obj->end;
 
