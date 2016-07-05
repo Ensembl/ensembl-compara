@@ -64,7 +64,7 @@ sub _init {
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
-  my $y_scale = int(min(map { $_->{'minus_log10'} } @$data))+1;
+  my $y_scale = int(min(0,map { $_->{'minus_log10'} } @$data))+1;
 
   # Track configuration
   $self->{'my_config'}->set('height', $height);
