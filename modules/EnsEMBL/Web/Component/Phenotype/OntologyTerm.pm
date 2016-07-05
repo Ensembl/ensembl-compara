@@ -71,14 +71,14 @@ sub ontology_mappings{
 
 
 
+  my $title = 'This phenotype description has been mapped to the following ontology terms:';
   if(scalar(@rows) < 6){
-    $html = "<h3> Ontology mappings: </h3><p>";
+    $html = "<h3> $title </h3><p>";
     $html .=  $table->render;
     $html .= "<p>";
 
   }
   else{
-    my $title = 'Ontology mappings:';
     my $id = 'ontology_mappings';
     $html .= $self->toggleable_table($title, $id, $table, 0);
   }
