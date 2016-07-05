@@ -47,9 +47,11 @@ sub populate_tree {
   my $avail = ($self->object && $self->object->phenotype_id) ? 1 : 0;
   my $title = $self->object ? $self->object->long_caption : '';
   $self->create_node('Locations', "Locations on genome",
-    [qw(locations EnsEMBL::Web::Component::Phenotype::Locations )],
+    [qw(ontolterm EnsEMBL::Web::Component::Phenotype::OntologyTerm 
+        locations EnsEMBL::Web::Component::Phenotype::Locations )],
     { 'availability' => $avail, 'concise' => $title },
   );
+
 
 }
 
