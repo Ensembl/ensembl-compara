@@ -40,7 +40,7 @@ sub content {
   
   # Check if a variation database exists for the species.
   if ($hub->database('variation')) {
-    my $no_data = '<p>No phenotype, disease or trait is associated with variants in this gene.</p>';
+    my $no_data = '<p>No phenotype, disease or trait has been associated with variants in this gene.</p>';
     # Variation phenotypes
     if ($phenotype) {
       my $table_rows = $self->variation_table($phenotype, $display_name);
