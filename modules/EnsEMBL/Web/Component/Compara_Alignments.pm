@@ -61,6 +61,7 @@ sub content {
                   });
   return $alert_box if $error;
   my ($warnings, $image_link);
+  $image_link = '';
   
   my $html = $alert_box;
   
@@ -150,14 +151,41 @@ sub content {
   }
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
-  #Note that slice_length is not set if need to display a target_slice_eable
+  #Note that slice_length is not set if need to display a target_slice_table
   if ($hub->param('export')) {
     return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
   }
-  elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
+  elsif ($align && $slice_length && $slice_length >= $hub->param('display_width')) {
+    # Display show/hide full text alignment button if slice_length > display_width (currently 120bp)
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
-    $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
+    $html .= $image_link . $table;
+
+    my $subslice_length = $slice_length < $self->{'subslice_length'} ? $slice_length : $self->{'subslice_length'};
+
+    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length });
+
+    $html .= qq (
+          <div class="_text_alignment_display js_panel">
+          <input type="hidden" class="panel_type" value="AlignmentText" name="panel_type_AlignmentText" />
+        );
+
+    # Show message saying you are only display a small block from the whole alignment
+    my $view_all_button = sprintf qq{<div class="display_full_message_div"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
+                          $slice_length, 
+                          $subslice_length,
+                          $hub->param('display_width');
+
+    my $info = [{
+      severity => 'info',
+      title => 'Alignment',
+      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' columns only. To display the full alignment, please click the button below.' . $view_all_button
+    }];
+
+    ($alert_box, $error) = $self->show_warnings($info);
+    return $alert_box if $error;
+
+    $html .= $alert_box . $chunked_content;
 
   } else {
     my ($table, $padding);
@@ -172,9 +200,7 @@ sub content {
       $html .= $image_link . $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
-  
-  $html .= $self->show_warnings($warnings);
- 
+
   return $html;
 
 }
@@ -413,7 +439,8 @@ sub get_slice_table {
   my $hub             = $self->hub;
   my $primary_species = $hub->species;
   
-  my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
+  my $table_rows = '';
+  $_ = 0 for my ($species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
   foreach (@$slices) {
     my $species = $_->{'display_name'} || $_->{'name'};
@@ -425,7 +452,7 @@ sub get_slice_table {
       type    => 'Location',
       action  => 'View'
     );
-    
+
     $url_params{'__clear'} = 1 unless $_->{'name'} eq $primary_species;
 
     $species_padding = length $species if $return_padding && length $species > $species_padding;

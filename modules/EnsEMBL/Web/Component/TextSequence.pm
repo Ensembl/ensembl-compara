@@ -841,18 +841,25 @@ sub chunked_content {
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
   my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => 1 });
   my $html;
-  
-  # The display is split into a managable number of sub slices, which will be processed in parallel by requests
-  while ($j <= $total_length) {
-    $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$j" /></div>};
+  my $display_width = $hub->param('display_width') || 0;
+  my $id = $self->id;
 
-    last if $j == $total_length;
-
-    $i  = $j + 1;
-    $j += $chunk_length;
-    $j  = $total_length if $j > $end;
+  if (!$hub->param('display_full_sequence')) {
+    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
   }
+  else {
+    # The display is split into a managable number of sub slices, which will be processed in parallel by requests
+    while ($j <= $total_length) {
+      $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$j" /></div>};
 
+      last if $j == $total_length;
+
+      $i  = $j + 1;
+      $j += $chunk_length;
+      $j  = $total_length if $j > $end;
+    }    
+  }
+  $html .= '<div id="full_alignment"></div></div>';
   return $html;
 }
 

@@ -80,13 +80,6 @@ li.usertrack_highlight:after {
   padding: 2px;
 }
 
-@keyframes animatedBackground {
-  0% { background-color: #999; }
-  10% { background-color: [[TRACK_HIGHLIGHT_BG]] }
-  80% { background-color: [[TRACK_HIGHLIGHT_BG]] }
-  100% { background-color: #999; }
-}
-
 .usertrack_highlight_border_top::after {
   border-top: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
 }

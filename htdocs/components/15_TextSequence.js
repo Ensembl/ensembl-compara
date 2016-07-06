@@ -24,7 +24,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   init: function () {
     var panel = this;
-
     this.base();
     
     if (!Ensembl.browser.ie) {
@@ -46,7 +45,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
   },
-  
+
   updateKey: function(el) {
     var $mydata = $('.sequence_key_json',el);
     var mydata = JSON.parse($mydata.html()||false);
@@ -91,5 +90,29 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     }
 
     this.base(url, el, params, newContent, attrs);
+  },
+
+  // This is the client side replica of EnsEMBL::Web::Component::TextSequence::chunked_content()
+  showFullTextSequence: function() {
+    var panel = this;
+    var i   = 1;
+    var j   = panel.params.chunkLength;
+    var end = (parseInt (panel.params.totalLength / j)) * j; // Find the final position covered by regular chunking - we will add the remainer once we get past this point.
+    var url = '';
+    var html = '';
+      // The display is split into a managable number of sub slices, which will be processed in parallel by requests
+      while (j <= panel.params.totalLength) {
+        // Replace slice start and end w.r.t different chunks 
+        url = panel.params.updateURL;
+        url = url.replace(/subslice_start=(\d+);/, 'subslice_start=' + i + ';');
+        url = url.replace(/subslice_end=(\d+);/, 'subslice_end=' + j + ';');
+        html += '<div class="ajax"><input type="hidden" class="ajax_load" value="'+ url +'" /></div>';
+
+        if (j == panel.params.totalLength) break;
+        i  = j + 1;
+        j += panel.params.chunkLength;
+        if (j > end) j  = panel.params.totalLength;
+      }
+    return html;
   }
 });

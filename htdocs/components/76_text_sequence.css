@@ -25,3 +25,17 @@
 .adornment-key dd { width: 100%; margin: 0 0 0 110px; padding: 0; }
 .adornment-key .ad-loading { background: url("/i/loading-tiny.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0); display: inline-block; height: 20px; line-height: 20px; padding-left: 24px; text-align: center; }
 .adornment-key ul.alignment-key { margin: 1em; padding: 0 0 0 1em; }
+
+.display_full_message_div a{
+	background: #eaeeff;
+	border: 1px solid #8b9bc1;
+	padding: 4px;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.display_full_message_div a:hover {
+	background: #667aa6;
+	color: white;
+	transition: background 0.3s, color 0.2s;
+}
