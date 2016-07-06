@@ -87,12 +87,12 @@ sub init {
   );
  
   $self->modify_configs(
-    [ 'gene_legend', 'regulatory_features_core', 'regulatory_features_non_core', 'functional_dna_methylation' ],
+    [qw(gene_legend seg_features reg_feats_core reg_feats_non_core functional_dna_methylation)],
     { display => 'off', menu => 'no' }
   );
 
   $self->modify_configs(
-    [ 'variation_feature_variation', 'variation_set_Phenotype-associated variations', 'regulatory_features', 'functional_other_regulatory_regions' ],
+    [ 'variation_feature_variation', 'variation_set_Phenotype-associated variations', 'regbuild', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
   );
   
