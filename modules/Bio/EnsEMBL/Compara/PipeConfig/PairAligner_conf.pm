@@ -637,6 +637,7 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('net_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
+               -can_be_empty => 1,
 	       -rc_name => 'crowd',
  	    },
  	    {
