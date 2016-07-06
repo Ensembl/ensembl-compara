@@ -946,4 +946,19 @@ sub wasabi_status {
   return $out;
 }
 
+sub create_padded_region {
+  my $self = shift;
+  my ($seq_region_name, $s, $e, $strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
+  my $padded = {};
+  # Adding flanking region to 5' and 3' ends
+  $padded->{flank5} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK5_PERC) : 0;
+  $padded->{flank3} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK3_PERC) : 0;
+
+  $padded->{r} = sprintf '%s:%s-%s', 
+          $seq_region_name, 
+          $s - $padded->{flank5},
+          $e + $padded->{flank3};
+  return $padded;
+}
+
 1;

@@ -31,11 +31,11 @@ sub _init {
 }
 
 sub content {
-  my $self             = shift;
-
-  my $hub              = $self->hub;
-  my $image_width      = $self->image_width . 'px';
-  my $url              = $hub->url({'type' => 'Location', 'action' => 'View'});
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $image_width = $self->image_width . 'px';
+  my $r           = $hub->create_padded_region()->{'r'} || $hub->param('r');
+  my $url         = $hub->url({'type' => 'Location', 'action' => 'View', 'r' => $r});
 
   return qq{
       <div class="navbar print_hide" style="width:$image_width">

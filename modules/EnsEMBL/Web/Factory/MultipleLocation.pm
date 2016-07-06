@@ -122,9 +122,11 @@ sub createObjects {
     
     eval { $slice = $self->slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
     next if $@;
-    
+
+    # Get image left and right padding
+    my $padding = $hub->create_padded_region();
     push @slices, {
-      slice         => $slice,
+      slice         => $slice->expand($padding->{flank5}, $padding->{flank3}),
       species       => $species,
       target        => $inputs{$_}->{'chr'},
       species_check => $species eq $hub->species ? join('--', grep $_, $species, $inputs{$_}->{'chr'}) : $species,

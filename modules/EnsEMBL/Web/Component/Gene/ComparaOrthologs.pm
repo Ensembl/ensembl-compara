@@ -173,7 +173,7 @@ sub content {
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => undef,
+          r      => $hub->create_padded_region()->{'r'} || $hub->param('r'),
           config => 'opt_join_genes_bottom=on',
         })
       ) : '';
