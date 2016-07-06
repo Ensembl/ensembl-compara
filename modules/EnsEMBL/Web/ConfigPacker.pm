@@ -742,8 +742,13 @@ sub _summarise_funcgen_db {
 
 ### Find details of epigenomes that are present in the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
-    'select epigenome.name, epigenome.epigenome_id, epigenome.display_label 
-      from epigenome'
+    'select
+      distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
+        from regulatory_build 
+      join regulatory_build_epigenome using (regulatory_build_id) 
+      join epigenome using (epigenome_id)
+     where regulatory_build.is_current=1
+     '
   );
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
