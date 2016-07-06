@@ -60,8 +60,8 @@ sub content {
 
   foreach (sort {$radio_info->{$a}{'order'} <=> $radio_info->{$b}{'order'}} keys %$radio_info) {
     my $info_icon = $radio_info->{$_}{'info'} 
-                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="<p>%s</p>%s" />', 
-                                    $radio_info->{$_}{'label'}, $radio_info->{$_}{'info'} 
+                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="%s" />',
+                                    encode_entities(qq(<p>$radio_info->{$_}{'label'}</p>$radio_info->{$_}{'info'}))
                       : '';
     my $caption = sprintf('<b>%s</b> - %s%s', 
                             $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'}, $info_icon);
