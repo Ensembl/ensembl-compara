@@ -119,7 +119,7 @@ sub content {
   # create a regfeat table as well
   my @reg_columns = (
     { key => 'rf',       title => 'Regulatory feature',     sort => 'html'                             },
-    { key => 'cell_type',title => 'Cell type',              sort => 'string'                           },
+    { key => 'cell_type',title => 'Active in cell lines',   sort => 'string'                           },
     { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
@@ -328,20 +328,23 @@ sub content {
 
         my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
 
-        foreach my $epigenome (@{$rf->get_epigenomes_by_activity('ACTIVE')||[]}) {
-
-          my $row = {
+        my $row = {
             rf        => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-            cell_type => $epigenome->name,
             ftype     => $rf->feature_type->so_name,
             allele    => $r_allele,
             type      => $type || '-',
             coverage  => $reg_length_label.$regulation_overlap
-          };
-            
-          $reg_table->add_row($row);
-          $flag = 1;
-        } # end epi loop
+        };
+
+        my @epigenomes = @{$rf->get_epigenomes_by_activity('ACTIVE')||[]};
+        my $epi_string = scalar @epigenomes 
+                          ? join ', ', map { $_->name} @epigenomes 
+                          : 'Not active in any cell lines';
+
+        $row->{'cell_type'} = $epi_string;
+
+        $reg_table->add_row($row);
+        $flag = 1;
       } # end rfva loop
     } # end rfv loop
     
