@@ -72,7 +72,7 @@ sub init {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
-  foreach my $tissue (@gtex_tissues) {
+  foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
     $tissue_readable =~ s/_/ /g;
     $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","GTEX Manhattan plot ($tissue_readable)",'reg_manplot',{
