@@ -69,7 +69,7 @@ sub summary_zmenu {
   foreach my $f (@$data) {
     next if $f->{'seq_region_end'} < $s;
     next if $f->{'seq_region_start'} > $e;
-    my $v = min($f->{'minus_log10'}/$y_scale,1);
+    my $v = min($f->{'minus_log10_p_value'}/$y_scale,1);
     next unless abs($v-$y) < 8/$args->{'height'};
     push @hits,$f;
   }

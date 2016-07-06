@@ -28,7 +28,7 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 use EnsEMBL::Web::REST;
 use POSIX qw(floor ceil);
-use List::Util qw(min);
+use List::Util qw(min max);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
@@ -64,7 +64,7 @@ sub _init {
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
-  my $y_scale = int(min(0,map { $_->{'minus_log10'} } @$data))+1;
+  my $y_scale = int(max(0,map { $_->{'minus_log10_p_value'} } @$data))+1;
 
   # Track configuration
   $self->{'my_config'}->set('height', $height);
@@ -92,7 +92,7 @@ sub _init {
     my $start = $f->{'seq_region_start'} - $slice->start+1;
     my $end = $f->{'seq_region_end'} - $slice->start+1;
     next if $start < 1 or $end > $slice->length;
-    my $value = min($f->{'minus_log10'}/$y_scale,1);
+    my $value = max($f->{'minus_log10_p_value'}/$y_scale,0);
     push @$features,{
       start => $start,
       end => $end,
