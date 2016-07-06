@@ -72,11 +72,15 @@ sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label a
 
 sub href {
   my ($self,$f,$args) = @_;
- 
+
+  # Fix URL encoding issue with the "<>" characters
+  my $var = $f->variation_name;
+  $var =~ s/(<|>)/_/g;
+
   return {
     species  => $args->{'species'},
     type     => 'Variation',
-    v        => $f->variation_name,
+    v        => $var,
     vf       => $f->dbID,
     vdb      => $args->{'var_db'} || 'variation',
     snp_fake => 1,
@@ -148,7 +152,7 @@ sub _plainify {
     tag => [$self->tag($f,$args)],
     feature_label => $self->feature_label($f),
     variation_name => $f->variation_name,
-    href => $self->href($f),
+    href => $self->href($f,$args),
     title => $self->title($f,$args),
     dbID => $f->dbID, # used in ZMenu, yuk!
   };    
@@ -186,7 +190,7 @@ sub fetch_features {
   my $sources = $args->{'config'}{'sources'};
   my $sets = $args->{'config'}{'sets'};
   my $set_name = $args->{'config'}{'set_name'};
-  my $var_db = $args->{'var_db'};
+  my $var_db = $args->{'var_db'} || 'variation';
   my $slice = $args->{'slice'}; 
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);

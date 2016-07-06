@@ -108,7 +108,7 @@ sub feature_content {
   @allele_types = sort @allele_types;
   
   $self->caption($class eq 'CNV_PROBE' ? 'CNV probe: ' : 'Structural variation: ' . $sv_id);
-  
+
   # Display link to SV page only for the non private data
   if ($hub->param('vdb') eq 'variation') {
     $self->add_entry({
@@ -123,12 +123,12 @@ sub feature_content {
   else {
     my $source = $feature->source_name;
     if ($source eq 'LOVD') {
-      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
-      # my $tmp_end = ($start>$end) ? $start+1 : $end;
-      # my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
-      # $self->add_entry({
-      #   label_html => $external_url
-      # });
+      # http://varcache.lovd.nl/redirect/hg38.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+       my $tmp_end = ($start>$end) ? $start+1 : $end;
+       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
+       $self->add_entry({
+         label_html => $external_url
+       });
     }
     elsif ($source =~ /DECIPHER/i) {
       my $sv_samples = $variation->get_all_StructuralVariationSamples; 
