@@ -65,13 +65,6 @@ sub get_phenotype_desc {
   return $p ? $p->description : undef;
 };
 
-sub get_all_phenotypes {
-  my $self = shift;
-  my $vardb = $self->hub->database('variation');
-  my $pa    = $vardb->get_adaptor('Phenotype');
-  return $pa->fetch_all();
-};
-
 sub get_gene_display_label {
   my ($self, $gene_id) = @_;
 
