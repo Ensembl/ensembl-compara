@@ -740,36 +740,45 @@ sub _summarise_funcgen_db {
   foreach my $F ( @$f_aref ){ push (@feature_sets, $F->[0]); }  
   $self->db_tree->{'databases'}{'DATABASE_FUNCGEN'}{'FEATURE_SETS'} = \@feature_sets;
 
-### Find details of epigenomes that are present in the current regulatory build
+### Find details of epigenomes, distinguishing those that are present in 
+### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.name, epigenome.epigenome_id, epigenome.display_label 
+      distinct epigenome.name, epigenome.epigenome_id, 
+                epigenome.display_label
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
-     where regulatory_build.is_current=1
+      where regulatory_build.is_current=1
      '
   );
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
   }
 
-
+  ## Now look for cell lines that _aren't_ in the build
+  $c_aref = $dbh->selectall_arrayref(
+    'select
+        epigenome.name, epigenome.epigenome_id, epigenome.display_label
+      from epigenome 
+      left join regulatory_build_epigenome as rbe 
+        on rbe.epigenome_id = epigenome.epigenome_id
+      where rbe.regulatory_build_id is null
+     '
+  );
+  foreach my $row (@$c_aref) {
+    my $cell_type_key =  $row->[0] .':'. $row->[1];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
+  }
+  
 #---------- Additional queries - by type...
 
 #
 # * Oligos
 #
-#  $t_aref = $dbh->selectall_arrayref(
-#    'select a.vendor, a.name,count(*)
-#       from array as a, array_chip as c straight_join probe as p on
-#            c.array_chip_id=p.array_chip_id straight_join probe_feature f on
-#            p.probe_id=f.probe_id where a.name = c.name
-#      group by a.name'
-#  );
-
   $t_aref = $dbh->selectall_arrayref(
     'select a.vendor, a.name, a.array_id  
        from array a, array_chip c, status s, status_name sn where  sn.name="DISPLAYABLE" 
@@ -863,31 +872,6 @@ sub _summarise_funcgen_db {
                                                                     description => $desc,
                                                                   };
   }
-
-=pod
-  foreach my $row (@{$dbh->selectall_arrayref(qq(
-      select rs.result_set_id, a.display_label, a.description, c.name, 
-             IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
-        from result_set rs
-        join analysis_description a using (analysis_id)
-        join epigenome c using (epigenome_id)
-        join experiment using (epigenome_id)
-        join experimental_group g using (experimental_group_id)
-       where feature_class = 'dna_methylation'
-    group by rs.result_set_id;
-  ))}) {
-    my ($id,$a_name,$a_desc,$c_desc,$group) = @$row;
-    
-    my $name = "$c_desc $a_name";
-    $name .= " $group" if $group;
-    my $desc = "$c_desc cell line: $a_desc";
-    $desc .= " ($group group)." if $group;    
-    $self->db_details($db_name)->{'tables'}{'methylation'}{$id} = {
-      name => $name,
-      description => $desc
-    };
-  }
-=cut
 
   ## New CRISPR tracks
   my $cr_aref = $dbh->selectall_arrayref(qq(

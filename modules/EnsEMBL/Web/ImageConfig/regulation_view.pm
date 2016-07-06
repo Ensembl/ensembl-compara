@@ -29,9 +29,10 @@ sub cache_key        { return $_[0]->code eq 'cell_line' ? '' : $_[0]->SUPER::ca
 sub load_user_tracks { return $_[0]->SUPER::load_user_tracks($_[1]) unless $_[0]->code eq 'set_evidence_types'; } # Stops unwanted cache tags being added for the main page (not the component)
 
 sub init {
-  my $self         = shift;
-  my @feature_sets = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
-  my @cell_lines   = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
+  my $self          = shift;
+  my @feature_sets  = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
+  my $cell_info     = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'};
+  my @cell_lines    = map { $cell_info->{$_} > 0 } sort keys %$cell_info;
   
   s/\:\d*$// for @cell_lines;
   
