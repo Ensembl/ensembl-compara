@@ -122,9 +122,11 @@ sub colour_key {
   my $epigenome = $self->{'my_config'}->get('epigenome');
   if ($epigenome) {
     my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
-    my $activity  = $regact->activity;
-    if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
-      $type = $activity;
+    if ($regact) {
+      my $activity  = $regact->activity;
+      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
+        $type = $activity;
+      }
     }
   }
 
@@ -264,9 +266,11 @@ sub pattern {
   return undef unless $epigenome;
 
   my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
-  my $act     = $regact->activity;
-  return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
-  return ['hatch_really_thick','white',0] if $act eq 'NA';
+  if ($regact) {
+    my $act     = $regact->activity;
+    return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
+    return ['hatch_really_thick','white',0] if $act eq 'NA';
+  }
   return undef;
 }
 
@@ -276,9 +280,11 @@ sub feature_label {
   return undef unless $epigenome;
 
   my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
-  my $act     = $regact->activity;
-  return "{grey30}inactive in this cell line" if $act eq 'INACTIVE';
-  return "{grey30}N/A" if $act eq 'NA';
+  if ($regact) {
+    my $act     = $regact->activity;
+    return "{grey30}inactive in this cell line" if $act eq 'INACTIVE';
+    return "{grey30}N/A" if $act eq 'NA';
+  }
   return undef;
 }
 
