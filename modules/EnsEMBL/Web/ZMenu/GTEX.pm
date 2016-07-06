@@ -83,11 +83,13 @@ sub summary_zmenu {
 
   # Summarize
   $self->caption("Found ".(scalar @hits)." hits nearby");
-  foreach my $f (@hits) {
+  my $i = 0;
+  my $last_val;
+  foreach my $f (sort { $b->{'value'} <=> $a->{'value'} } @hits) {
     my $exp = int(log($f->{'value'})/log(10))-1;
     my $mant = $f->{'value'}/10**$exp;
     my $value = sprintf("%2.2f",$mant);
-    $value .= " x 10^-$exp" if $exp;
+    $value .= " x 10^$exp" if $exp;
 
     my $url = $self->hub->url({
       type => 'Variation',
@@ -99,6 +101,16 @@ sub summary_zmenu {
       label => $f->{'snp'},
       link => $url,
       type => "p < $value",
+    });
+    $last_val = $value;
+    last if $i++ > 18;
+  }
+
+  my $more = scalar(@hits)-$i;
+  if($more) {
+    $self->add_entry({
+      label => "$more more hits",
+      type => "p >= $last_val",
     });
   }
 }
