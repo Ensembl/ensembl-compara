@@ -76,9 +76,11 @@ sub fetch_features_from_db {
   my $slice     = $self->{'container'};
   my $features = $fset->get_Features_by_Slice($slice);
   my @dff;
+  my $legend_entries = [];
   foreach my $f (@$features) {
     my $colour_key = $self->colour_key($f);
     my $colour = $self->my_colour($colour_key) || '#e1e1e1';
+    push @$legend_entries, [$colour_key, $colour];
     my $text = $self->my_colour($colour_key,'text');
     push @dff,{
       colour => $colour,
@@ -90,6 +92,7 @@ sub fetch_features_from_db {
       label => $text,
     };
   }
+  $self->{'legend'}{'fg_segmentation_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
 
   return [{
     features => \@dff,
@@ -138,6 +141,18 @@ sub fetch_features_from_file {
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   $bigbed_file =~ s/\s//g;
   my $out = $self->SUPER::get_data($bigbed_file);
+
+  ## Create legend
+  my $legend_entries = [];
+  foreach (@$out) {
+    foreach my $f (@{$_->{'features'}||[]}) {
+      $f->{'label'} =~ /_(\w+)_/;
+      my $colour_key = $1;
+      push @$legend_entries, [$colour_key, $f->{'colour'}];
+    }
+  }
+  $self->{'legend'}{'fg_segmentation_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
+
   return $out;
 }
 
