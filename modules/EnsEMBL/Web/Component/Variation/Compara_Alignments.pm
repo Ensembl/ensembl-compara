@@ -182,8 +182,8 @@ sub content {
     );
   } 
 
-  $html .= $self->content_sub_slice($slice, \@aligned_slices, $defaults);
-
+  my ($seq,$config) = $self->_get_sequence($slice,\@aligned_slices,$defaults);
+  $html .= $self->build_sequence($seq,$config,1);
   $html .= $self->_info('Notes', $info) if $info;
 
   return $html;
