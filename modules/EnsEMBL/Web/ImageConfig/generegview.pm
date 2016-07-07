@@ -72,14 +72,20 @@ sub init {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
+  # Should really come from REST server.
   foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
     $tissue_readable =~ s/_/ /g;
-    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","GTEX Manhattan plot ($tissue_readable)",'reg_manplot',{
+    my $manplot_desc = qq(
+      Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
+      The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660. DOI: 10.1126/science. PMID: 1262110.
+    );
+    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',
       colours     => $self->species_defs->colour('variation'),
+      description => $manplot_desc,
     });
   }
   
