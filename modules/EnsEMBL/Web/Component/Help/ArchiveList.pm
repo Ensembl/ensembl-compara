@@ -37,6 +37,10 @@ sub _init {
   $self->configurable(0);
 }
 
+sub top_message {
+  return q(The following archives are available for this page:);
+}
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -141,7 +145,7 @@ sub content {
     my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
     push @links, map { $_ == $current ? () : $self->output_link($archives, $_, $url) } sort {$b <=> $a} keys %$archives;
   }
-  $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s</ul>', join '', @links if scalar @links;
+  $html .= sprintf '<p>%s</p><ul>%s</ul>', $self->top_message, join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
 
   return $html;
