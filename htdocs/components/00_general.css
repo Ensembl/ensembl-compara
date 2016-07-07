@@ -166,10 +166,10 @@ div.info h3,
 div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 1em; }
 div.error h4,
 div.error h3,
-div.warning h3      { color: [[PAGE_BG]] !important; }
-div.warning h3      { background-color: [[WARNING_BG]]; }
-div.info h3         { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
-div.hint h3         { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
+div.warning > h3    { color: [[PAGE_BG]] !important; }
+div.warning > h3    { background-color: [[WARNING_BG]]; }
+div.info > h3       { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
+div.hint > h3       { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
 
 div.error > div,
 div.warning > div,
