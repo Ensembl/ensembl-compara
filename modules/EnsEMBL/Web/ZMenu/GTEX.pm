@@ -85,7 +85,7 @@ sub summary_zmenu {
   $self->caption("Found ".(scalar @hits)." hits nearby");
   my $i = 0;
   my $last_val;
-  foreach my $f (sort { $b->{'value'} <=> $a->{'value'} } @hits) {
+  foreach my $f (sort { $a->{'value'} <=> $b->{'value'} } @hits) {
     my $exp = int(log($f->{'value'})/log(10))-1;
     my $mant = $f->{'value'}/10**$exp;
     my $value = sprintf("%2.2f",$mant);
