@@ -85,6 +85,8 @@ sub summary_zmenu {
   $self->caption("Found ".(scalar @hits)." hits nearby");
   my $i = 0;
   my $last_val;
+  my $colourmap = $self->hub->colourmap;
+  my $var_styles = $self->hub->species_defs->colour('variation');
   foreach my $f (sort { $a->{'value'} <=> $b->{'value'} } @hits) {
     my $exp = int(log($f->{'value'})/log(10))-1;
     my $mant = $f->{'value'}/10**$exp;
@@ -97,9 +99,17 @@ sub summary_zmenu {
       v => $f->{'snp'},
     });
 
+    my $conseq = $f->{'display_consequence'};
+    my $conseq_colour = $colourmap->hex_by_name(
+      $var_styles->{$conseq}{'default'}
+    );
+    my $html = qq(
+      <span class="colour ht _ht" title="$conseq"
+            style="background-color:$conseq_colour; min-width: 0.5em; display: inline-block;">&nbsp;</span>
+      <a href="$url">$f->{'snp'}</a>
+    );
     $self->add_entry({
-      label => $f->{'snp'},
-      link => $url,
+      label_html => $html,
       type => "p < $value",
     });
     $last_val = $value;
