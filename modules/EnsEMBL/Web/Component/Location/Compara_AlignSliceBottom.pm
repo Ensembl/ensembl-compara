@@ -60,7 +60,6 @@ sub content {
   }
   
   my $image_width     = $self->image_width;
-  my $object          = $self->object || $self->hub->core_object('location');
   my $slice           = $object->slice;
   my ($slices)        = $object->get_slices({
                                               'slice' => $slice, 
