@@ -87,6 +87,7 @@ sub init {
     [ 'ruler',     '',  'ruler',     { display => 'normal', strand => 'r', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '',  'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'scalebar',  '',  'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }],
+    [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variant Legend'                                                              }],
   );
 
   $self->modify_configs(

@@ -66,6 +66,13 @@ sub _init {
   }
   my $y_scale = int(max(0,map { $_->{'minus_log10_p_value'} } @$data))+1;
 
+  # Legends
+  foreach my $f (@$data) {
+    my $conseq = $f->{'display_consequence'};
+    my $colour = $self->my_colour($conseq);
+    $self->{'legend'}{'variation_legend'}{lc $conseq} ||= $colour if $conseq;
+  }
+
   # Track configuration
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('min_score_label','1');
