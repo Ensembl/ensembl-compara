@@ -3128,6 +3128,8 @@ sub add_sequence_variations_meta {
                                $a->{order} <=> $b->{order} || $a->{'long_name'} cmp $b->{'long_name'}
                               } @menus) {
     my $node;
+    my $track_options = $options;
+    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD)/i);
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
@@ -3141,7 +3143,7 @@ sub add_sequence_variations_meta {
       $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => $other_sources ? undef : [ $source_name ],
@@ -3156,7 +3158,7 @@ sub add_sequence_variations_meta {
       my $description   = $hashref->{'study'}{'descriptions'}{$study_name};
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         study_name   => $study_name,
@@ -3178,7 +3180,7 @@ sub add_sequence_variations_meta {
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => undef,
