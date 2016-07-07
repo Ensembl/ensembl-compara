@@ -13,7 +13,7 @@ sub fixup_markup {
   my ($new_exon) = grep { /^e\w$/ } @classes;
   if($new_exon) {
     $self->{'cur_exon'} = $new_exon;   # ... set
-  } elsif(!$markup->{'tag'}) {
+  } elsif(!$markup->{'tag'} && $self->{'cur_exon'}) {
     push @classes,$self->{'cur_exon'}; # ... use
   }
   $markup->{'class'} = join(' ',@classes);
