@@ -823,7 +823,7 @@ sub build_sequence {
 
   $view->transfer_data($sequence,$config);
 
-  $view->legend->final if $view->phase!=2;
+  $view->legend->final if $view->phase == 2;
   $view->legend->compute_legend($self->hub,$config);
 
   $view->output->more($self->hub->apache_handle->unparsed_uri) if $view->phase==1;

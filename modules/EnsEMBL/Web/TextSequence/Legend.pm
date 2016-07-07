@@ -62,7 +62,7 @@ sub compute_legend {
   $self->{'key'}{'_messages'} = \@messages;
   $self->{'view'}->output->legend({
     legend => $self->{'key'},
-    expect => $self->{'expect'}
+    expect => $self->expect
   });
 }
 
