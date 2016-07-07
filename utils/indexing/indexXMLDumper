@@ -2906,7 +2906,7 @@ sub GeneTransLine {
       my $desc = "Interpro domain $interpro with $c records from signature databases (";
       foreach my $syn (keys %{$domains->{$interpro}}) {
         next if $ids{$syn};
-        $ids{$syn++};
+        $ids{$syn}++;
         $syn = &clean($syn);
         $desc .= "$syn, ";
         $xml .= qq(
@@ -2918,7 +2918,7 @@ sub GeneTransLine {
       $xml .= qq(
   <field name="_hr">$desc</field>);
       unless ($ids{$interpro}) {
-        $ids{$interpro++};
+        $ids{$interpro}++;
         $interpro = &clean($interpro);
         $xml .= qq(
   <field name="prot_domain">$interpro</field>);
