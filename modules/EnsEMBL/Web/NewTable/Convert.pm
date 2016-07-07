@@ -58,6 +58,7 @@ sub add_response {
   foreach my $block (0..$#{$response->{'len'}}) {
     my $data = uncompress_block($response->{'data'}[$block]);
     my $null = uncompress_block($response->{'nulls'}[$block]);
+    my @drow = (0) x @{$response->{'series'}};
     foreach my $row (0..$response->{'len'}[$block]-1) {
       my $rownum = $response->{'start'}+$row;
       my $out = $self->{'out'}->row($rownum);
@@ -65,13 +66,13 @@ sub add_response {
         $out ||= [];
         foreach my $i (0..$#{$response->{'series'}}) {
           next if $null->[$i][$row];
-          $out->[$self->{'rseries'}{$response->{'series'}[$i]}] = $data->[$i][$row];
+          $out->[$self->{'rseries'}{$response->{'series'}[$i]}] = $data->[$i][$drow[$i]++];
         }
       } else {
         $out ||= {};
         foreach my $i (0..$#{$response->{'series'}}) {
           next if $null->[$i][$row];
-          $out->{$response->{'series'}[$i]} = $data->[$i][$row];
+          $out->{$response->{'series'}[$i]} = $data->[$i][$drow[$i]++];
         }
       }
       $self->{'out'}->row($rownum,$out);
