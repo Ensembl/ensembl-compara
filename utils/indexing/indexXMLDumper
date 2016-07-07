@@ -1614,7 +1614,7 @@ sub dumpGeneTree {
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
     header($fh);
-    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT NULL));
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE clusterset_id = "default" AND tree_type = "tree" AND stable_id IS NOT NULL));
     $sth->execute();
     while( my( $gt_id) = $sth->fetchrow_array()) {
       &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species), $fh);
