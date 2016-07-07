@@ -187,6 +187,11 @@ sub populate_tree {
     { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
+  $self->create_node('ExpressionAtlas', 'Gene expression',
+    [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
+    { 'availability'  => 'gene has_gxa' }
+  );
+
   $self->create_node('Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
@@ -212,14 +217,8 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
-  my $ext_menu = $self->create_submenu('ExternalData', 'External data');
-  $ext_menu->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
-    [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
-    { 'availability'  => 'gene has_gxa' }
-  ));
-  
   my $history_menu = $self->create_submenu('History', 'ID History');
-  
+
   $history_menu->append($self->create_node('Idhistory', 'Gene history',
     [qw(
       display    EnsEMBL::Web::Component::Gene::HistoryReport
