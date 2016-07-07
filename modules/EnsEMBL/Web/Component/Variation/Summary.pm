@@ -318,7 +318,7 @@ sub synonyms {
     my @ids = @{$synonyms->{$db}};
     my @urls;
 
-    next if ($db =~ /Affy|Illumina|HGVbase|TSC/);
+    next if ($db =~ /(Affy|Illumina|HGVbase|TSC|dbSNP\sHGVS)/i);
 
     if ($db =~ /dbsnp rs/i) { # Glovar stuff
       @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
@@ -620,12 +620,59 @@ sub hgvs {
   my $count     = 0;
   my $total     = scalar keys %$hgvs_urls;
   my $html;
- 
+
+  my $syn_source = 'dbSNP HGVS';
+
+  my $refseq_hgvs = $object->Obj->get_all_synonyms($syn_source);
+  my $has_list = 0;
+
   # Loop over and format the URLs
   foreach my $allele (keys %$hgvs_urls) {
-    $html  .= sprintf '<p>%s</p>', join('<br />', $total > 1 ? "<b>Variant allele $allele</b>" : (), @{$hgvs_urls->{$allele}});
+    if ($total > 1) {
+      $html .= qq{<p style="font-weight:bold">Variant allele $allele</p>};
+    }
+
+    if (scalar @{$hgvs_urls->{$allele}} > 1 | scalar @{$refseq_hgvs} > 1) {
+      $html .= "<ul><li>";
+      $html .= join('</li><li>', @{$hgvs_urls->{$allele}});
+      $html .= "</li></ul>";
+      $has_list = 1;
+    }
+    else {
+      $html  .= join(', ', @{$hgvs_urls->{$allele}});
+    }
     $count += scalar @{$hgvs_urls->{$allele}};
   }
+
+  $count += scalar @{$refseq_hgvs};
+
+  if (scalar(@$refseq_hgvs)) {
+    if ($has_list) {
+      # Create div + floated lists to html
+      $html = sprintf(qq{
+          <div>
+            <div style="float:left;margin-right:15px"><h4>%s:</h4>%s</div>
+            <div style="float:left"><h4>%s:</h4><ul><li>%s</li></ul></div>
+            <div style="clear:both"></div>
+          </div>
+        },
+        'Ensembl HGVS',
+        $html,
+        $syn_source,
+        join('</li><li>', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs)
+      );
+    }
+    else {
+      # Display refseq HGVS
+      $html .= ', ' if ($html);
+      $html .= join(', ', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs);
+    }
+  }
+
+  if (!$has_list and $html) {
+    $html = "<p>$html</p>";
+  }
+
 
   # Wrap the html
   if ($count > 1) {
