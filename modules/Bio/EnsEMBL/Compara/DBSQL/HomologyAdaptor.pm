@@ -183,10 +183,10 @@ sub _find_target_mlsss {
             my $mlss;
             if ($query_genome_db->dbID == $target_genome_db->dbID) {
                 next unless $single_species_ml{$ml};
-                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db], "no_warning");
+                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db]);
             } else {
                 next if $single_species_ml{$ml};
-                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db, $target_genome_db], "no_warning");
+                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db, $target_genome_db]);
             }
             push @all_mlss_ids, $mlss->dbID if (defined $mlss);
         }
