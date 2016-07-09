@@ -59,6 +59,8 @@ sub fetch_input {
   $self->param('dummy_mlss_value'), "compara_species_tree");
  my $full_tree_root =  $full_species_tree_obj->root;
 
+ my $all_phylofit_trees = $self->param_required('phylofit_trees');
+
  # start to process the small trees
  my @tree_mlss_ids = split ",", $self->param('msa_mlssid_csv_string');
 
@@ -69,14 +71,14 @@ sub fetch_input {
   $orig_tree=~s/:0;/;/;
 
   my $orig_species = lc join ":", $orig_tree=~m/([[:alpha:]_]+)/g;
-  my $pfit_species_trees = $species_tree_adapt->fetch_all_by_method_link_species_set_id_label_pattern($mlss_id, ".pf");
+  my $pfit_species_trees = $all_phylofit_trees->{$mlss_id};
 
   my(@tree_branch_lengths, @species_branch_lengths, @median_bls, $median_newick);
   # get the branch lengths from the phylofit trees
   foreach my $pfit_tree(@$pfit_species_trees){ 
-   my $pfit_species = lc join ":", $pfit_tree->species_tree=~m/([[:alpha:]_]+)/g;
+   my $pfit_species = lc join ":", $pfit_tree=~m/([[:alpha:]_]+)/g;
    if($pfit_species eq $orig_species){
-    push @tree_branch_lengths, [ $pfit_tree->species_tree=~m/([\d\.]+)/g ];
+    push @tree_branch_lengths, [ $pfit_tree=~m/([\d\.]+)/g ];
    }  
   }
 

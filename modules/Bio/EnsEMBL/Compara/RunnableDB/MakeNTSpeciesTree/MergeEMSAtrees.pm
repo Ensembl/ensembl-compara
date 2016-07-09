@@ -36,36 +36,21 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeEMSAtrees;
 use strict;
 use warnings;
 use Data::Dumper;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
  my $self = shift @_; 
- my $species_tree_adapt = $self->compara_dba->get_SpeciesTreeAdaptor;
+ my $all_phylofit_trees = $self->param_required('phylofit_trees');
 
-# # get the full compara tree and store it in the db
-# my $tree_path = $self->param('species_tree_bl');
-# my $full_species_tree = `cat $tree_path`;
-# chomp $full_species_tree;
-# my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree");
-#
-# eval {
-#  $species_tree_adapt->store($full_tree, $self->param('dummy_mlss_value'));
-# };
-# throw $@ if $@;
-# 
-#  # get the big tree from the db
-# my $full_species_tree_obj = $species_tree_adapt->fetch_by_method_link_species_set_id_label(
-#  $self->param('dummy_mlss_value'), "compara_species_tree");
-# my $full_tree_root =  $full_species_tree_obj->root;
-
-my %branch_lengths;
+ my %branch_lengths;
 
  my @mlssid_list = split ",", $self->param('msa_mlssid_csv_string');
  foreach my $mlss_id( @mlssid_list ){
-  my $pfit_species_trees = $species_tree_adapt->fetch_all_by_method_link_species_set_id_label_pattern($mlss_id, "phylo_exe:"); 
+  my $pfit_species_trees = $all_phylofit_trees->{$mlss_id};
   my %Phylo_tree_branch_lengths;
   foreach my $phylo_tree(@{ $pfit_species_trees }){
-   my $root = $phylo_tree->root;
+   my $root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($phylo_tree);
    my $all_leaves = $root->get_all_leaves;
    for(my$i=0;$i<@$all_leaves - 1;$i++){
     my $leaf_i = $all_leaves->[$i];

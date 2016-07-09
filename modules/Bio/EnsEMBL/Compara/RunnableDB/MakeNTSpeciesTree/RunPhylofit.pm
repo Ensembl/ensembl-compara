@@ -128,15 +128,7 @@ sub write_output {
  open(TREE, $output_file_name) or throw("cant open $output_file_name");
  my ($newick_tree_string) = grep {/^TREE: /} <TREE>;
  $newick_tree_string =~s/TREE: //;
-# store the tree
- my $species_tree_ad = $self->compara_dba->get_SpeciesTreeAdaptor;
- my $tree = $species_tree_ad->new_from_newick($newick_tree_string, "$block_id.pf", 'name'); 
- $species_tree_ad->store($tree, $self->param('tree_mlss_id'));
-
-# my $sql = "INSERT INTO method_link_species_set_tag VALUES (?,?,?)";
-# my $sth = $self->compara_dba->dbc->prepare($sql);
-# $sth->execute($self->param('tree_mlss_id'), "alignment_tree", $newick_tree_string);
-
+ $self->dataflow_output_id( { 'phylofit_tree_string' => $newick_tree_string }, 2);
 
 # remove the files
  unlink $species_tree_file, $gab_file, $msa_fasta_file, $output_file_name;
