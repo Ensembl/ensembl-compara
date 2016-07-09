@@ -138,7 +138,7 @@ sub write_output {
     }
    }
    my $species_tree_ad = $self->compara_dba->get_SpeciesTreeAdaptor;
-   my $pyhlo_tree = $species_tree_ad->new_from_newick($phylo_newick, "phylo_exe:$exon_id:$training_lnl", 'name'); 
+   my $pyhlo_tree = $species_tree_ad->new_from_newick($phylo_newick, "phylo_exe:$exon_id:$training_lnl");
    $species_tree_ad->store($pyhlo_tree, $self->param('msa_mlssid'));
    unlink "$phylo_out_file.mod";
   }

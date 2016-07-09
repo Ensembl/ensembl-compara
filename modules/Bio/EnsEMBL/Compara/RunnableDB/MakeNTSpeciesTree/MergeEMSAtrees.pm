@@ -46,7 +46,7 @@ sub fetch_input {
 # my $tree_path = $self->param('species_tree_bl');
 # my $full_species_tree = `cat $tree_path`;
 # chomp $full_species_tree;
-# my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree", 'name');
+# my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree");
 #
 # eval {
 #  $species_tree_adapt->store($full_tree, $self->param('dummy_mlss_value'));

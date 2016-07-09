@@ -56,11 +56,11 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 sub new_from_newick {
-    my ($self, $newick, $label, $name_method, $taxon_id_method) = @_;
+    my ($self, $newick, $label) = @_;
 
     my $st = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
-    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st, $name_method, $taxon_id_method);
+    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st);
 
     my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $speciesTree->label($label);
