@@ -101,9 +101,9 @@ sub fetch_input {
 sub write_output {
  my $self = shift @_;
  my $block_id = $self->param('block_id');
- my $gab_file = "/tmp/".$block_id;
+ my $gab_file = $self->worker_temp_directory.$block_id;
 
- my $msa_fasta_file = "/tmp/msa_fasta.$block_id"; 
+ my $msa_fasta_file = $self->worker_temp_directory."msa_fasta.$block_id";
  open(IN, ">$msa_fasta_file") or throw("cant open $msa_fasta_file");
  my $fasta_set = $self->param('fasta_set');
  foreach my $assemb_type(keys %{ $fasta_set }){
@@ -117,14 +117,15 @@ sub write_output {
    }
   }
  }
- my $species_tree_file = "/tmp/species_tree.$block_id";
+ my $species_tree_file = $self->worker_temp_directory."species_tree.$block_id";
  open(TR, ">$species_tree_file") or throw("cant open $species_tree_file file\n");
  print TR $self->param('newick_tree');
  close(TR);
 # run phylofit 
  my $command = $self->param('phylofit_exe'). " --tree \"$species_tree_file\" --subst-mod HKY85 --out-root $gab_file " . $msa_fasta_file;
  system($command); 
- open(TREE, "/tmp/$block_id.mod") or throw("cant open /tmp/$block_id.mod");
+ my $output_file_name = "$gab_file.mod";
+ open(TREE, $output_file_name) or throw("cant open $output_file_name");
  my ($newick_tree_string) = grep {/^TREE: /} <TREE>;
  $newick_tree_string =~s/TREE: //;
 # store the tree
@@ -138,7 +139,7 @@ sub write_output {
 
 
 # remove the files
- unlink "$species_tree_file", "$gab_file", "$msa_fasta_file", "/tmp/$block_id.mod";
+ unlink $species_tree_file, $gab_file, $msa_fasta_file, $output_file_name;
 }
 
 

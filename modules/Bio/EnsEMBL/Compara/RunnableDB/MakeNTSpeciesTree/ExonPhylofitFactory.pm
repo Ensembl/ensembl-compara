@@ -111,7 +111,7 @@ sub write_output {
  my $self = shift @_;
  my $exon_set = $self->param('exon_set');
  foreach my$exon_id(keys %{ $exon_set }){
-  my $exon_dir = "/tmp/".$ENV{'USER'}."_$$"."_$exon_id";
+  my $exon_dir = $self->worker_temp_directory."exon_$exon_id";
   mkdir $exon_dir or throw "could not make $exon_dir";
   my $msa_fasta_file = "$exon_dir/msa_fasta.$exon_id";
   open(IN, ">$msa_fasta_file") or throw("cant open $msa_fasta_file");
