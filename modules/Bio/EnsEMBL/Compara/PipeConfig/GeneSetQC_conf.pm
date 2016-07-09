@@ -47,6 +47,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub hive_meta_table {
@@ -174,7 +176,7 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes',
             -flow_into      =>  {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
-                2   =>  [':////QC_split_genes'],
+                2   =>  ['?table_name=QC_split_genes'],
             },
             -hive_capacity  => 50,
             -batch_size     => 1,
@@ -185,7 +187,7 @@ sub pipeline_analyses {
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
             -parameters =>  {'longer' => 0, 'compara_db'   => $self->o('compara_db')},
             -flow_into  => {
-                2   => [':////short_orth_genes'],
+                2   => ['?table_name=short_orth_genes'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
@@ -196,7 +198,7 @@ sub pipeline_analyses {
             -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
             -parameters     =>  { 'longer' => 1 , 'compara_db'   => $self->o('compara_db')},
             -flow_into      =>  {
-                2   => [':////long_orth_genes'],
+                2   => ['?table_name=long_orth_genes'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,

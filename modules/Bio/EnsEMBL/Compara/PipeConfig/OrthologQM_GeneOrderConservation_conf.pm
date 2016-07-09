@@ -47,8 +47,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -123,7 +125,7 @@ sub pipeline_analyses {
             -analysis_capacity  =>  50,
         	-flow_into	=> {
                 2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
-#        		2 => [ ':////ortholog_goc_metric' ],
+#        		2 => [ '?table_name=ortholog_goc_metric' ],
         	},
 
  #           -rc_name => '2Gb_job',

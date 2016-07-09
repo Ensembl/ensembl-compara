@@ -74,7 +74,7 @@ sub pipeline_analyses_goc {
             -module =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 
             -flow_into  => {
-               2 => [ ':////ortholog_goc_metric' ],
+               2 => [ '?table_name=ortholog_goc_metric' ],
             },
             -hive_capacity  => 50,
             -batch_size     => 50,

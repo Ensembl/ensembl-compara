@@ -404,7 +404,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('blast_capacity'),
             -max_retry_count => 6,
             -flow_into => {
-                3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
+                3 => [ '?table_name=mcl_sparse_matrix&insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
                 -2 => 'break_batch',
             },
@@ -418,7 +418,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('blast_capacity'),
             -flow_into => {
-                3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
+                3 => [ '?table_name=mcl_sparse_matrix&insertion_method=REPLACE' ],
             },
             -rc_name => 'LongBlastHM',
         },

@@ -64,7 +64,7 @@ sub pipeline_analyses_GeneSetQC {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes',
             -flow_into      =>  {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
-                2   =>  [':////QC_split_genes'],
+                2   =>  ['?table_name=QC_split_genes'],
             },
             -hive_capacity  => 50,
             -batch_size     => 1,
@@ -79,7 +79,7 @@ sub pipeline_analyses_GeneSetQC {
                 'species_threshold' => $self->o('species_threshold'), 
                 },
             -flow_into  => {
-                2   => [':////short_orth_genes'],
+                2   => ['?table_name=short_orth_genes'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
@@ -94,7 +94,7 @@ sub pipeline_analyses_GeneSetQC {
                 'species_threshold' => $self->o('species_threshold'), 
                 },
             -flow_into      =>  {
-                2   => [':////long_orth_genes'],
+                2   => ['?table_name=long_orth_genes'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,

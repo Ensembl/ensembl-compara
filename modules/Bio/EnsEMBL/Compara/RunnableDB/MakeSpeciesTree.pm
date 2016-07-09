@@ -34,7 +34,8 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
                 { 'species_tree_input_file' => $self->o('species_tree_input_file') },   # if this parameter is set, the tree will be taken from the file, otherwise it will be generated
             ],
             -flow_into  => {
-                3 => { 'mysql:////meta' => { 'meta_key' => 'test_species_tree', 'meta_value' => '#species_tree_string#' } },    # store the tree in 'meta' table (as an example)
+                # store the tree in 'method_link_species_set_tag' table (as an example)
+                3 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
 

@@ -23,6 +23,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
@@ -298,7 +301,7 @@ sub pipeline_analyses {
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
-			       2 => [ 'mysql:////pipeline_wide_parameters' ],
+			       2 => [ '?table_name=pipeline_wide_parameters' ],
 			      },
 		-rc_name => '100Mb',
 	    },
