@@ -81,7 +81,7 @@ sub fetch_by_method_link_species_set_id_label {
 
 sub fetch_all_by_method_link_species_set_id_label_pattern {
  my ($self, $mlss_id, $label) = @_; 
- $label = 'default' unless (defined $label);
+ $label //= '';
  my $constraint = "method_link_species_set_id = $mlss_id AND label LIKE '%$label%'";
  return  $self->generic_fetch($constraint);
 }
