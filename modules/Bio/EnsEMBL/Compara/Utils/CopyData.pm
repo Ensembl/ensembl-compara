@@ -420,7 +420,6 @@ sub copy_data_in_binary_mode {
 
     my $use_limit = 0;
     my $start = $min_id;
-    my $direct_copy = 0;
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
