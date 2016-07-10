@@ -296,6 +296,21 @@ sub copy_data {
 }
 
 
+=head2 _escape
+
+  Description : Helper function that escapes some special characters.
+
+=cut
+
+sub _escape {
+    my $s = shift;
+    return '\N' unless defined $s;
+    $s =~ s/\n/\\\n/g;
+    $s =~ s/\t/\\\t/g;
+    return $s;
+}
+
+
 =head2 copy_data_in_text_mode
 
   Description : A specialized version of copy_data() for tables that don't have
@@ -359,10 +374,10 @@ sub copy_data_in_text_mode {
         my $time = time(); 
         my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
         open(my $fh, '>', $filename) or die "could not open the file '$filename' for writing";
-        print $fh join("\t", map {defined($_)?$_:'\N'} @$first_row), "\n";
+        print $fh join("\t", map {_escape($_)} @$first_row), "\n";
         my $nrows = 1;
         while(my $this_row = $sth->fetchrow_arrayref) {
-            print $fh join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
+            print $fh join("\t", map {_escape($_)} @$this_row), "\n";
             $nrows++;
         }
         close($fh);
