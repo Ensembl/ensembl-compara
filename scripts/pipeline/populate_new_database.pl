@@ -365,7 +365,7 @@ exit(0);
 =cut
 
 sub copy_table {
-  my ($from_dba, $to_dba, $table_name, $constraint, $id, $name) = @_;
+  my ($from_dba, $to_dba, $table_name, $constraint, $name) = @_;
 
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
@@ -661,7 +661,7 @@ sub copy_all_mlss_tags {
 
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
-    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
   }
 }
 
@@ -684,10 +684,10 @@ sub copy_all_species_tres {
 
   foreach my $this_mlss (@$mlsss) {
     next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
-    copy_table($from_dba, $to_dba, 'species_tree_root', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node', "JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node_tag', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node_attr', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'species_tree_root', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'species_tree_node', "JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'species_tree_node_tag', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'species_tree_node_attr', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
   }
 }
 
@@ -833,8 +833,8 @@ sub copy_synteny_data {
 
   foreach my $this_mlss (@$method_link_species_sets) {
     next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
-    copy_table($old_dba, $new_dba, 'synteny_region', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
-    copy_table($old_dba, $new_dba, 'dnafrag_region', "JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($old_dba, $new_dba, 'synteny_region', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    copy_table($old_dba, $new_dba, 'dnafrag_region', "JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
   }
 }
 
