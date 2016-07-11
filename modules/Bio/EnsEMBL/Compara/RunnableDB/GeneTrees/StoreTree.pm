@@ -34,6 +34,24 @@ use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+=head2 _write_temp_tree_file
+
+    Creates a temporary file in the worker temp directory, with the given content
+
+=cut
+
+sub _write_temp_tree_file {
+    my ($self, $tree_name, $tree_content) = @_;
+
+    my $filename = $self->worker_temp_directory . $tree_name;
+    open my $fh, ">", $filename or die "Could not open '$filename' for writing : $!";
+    print $fh $tree_content;
+    close $fh;
+
+    return $filename;
+}
+
+
 # Should we define hidden_genes here ?
 
 ########################################

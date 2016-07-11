@@ -63,7 +63,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 use File::Glob;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {

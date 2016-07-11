@@ -59,7 +59,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 sub param_defaults {
@@ -316,24 +316,6 @@ sub _run_and_return_output {
     return $cmd_out->out unless $cmd_out->exit_code;
 
     $self->throw(sprintf("error running treebest [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
-}
-
-
-=head2 _write_temp_tree_file
-
-    Creates a temporary file in the worker temp directory, with the given content
-
-=cut
-
-sub _write_temp_tree_file {
-    my ($self, $tree_name, $tree_content) = @_;
-
-    my $filename = $self->worker_temp_directory . $tree_name;
-    open my $fh, ">", $filename or die $!;
-    print $fh $tree_content;
-    close $fh;
-
-    return $filename;
 }
 
 

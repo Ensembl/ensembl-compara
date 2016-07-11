@@ -93,7 +93,7 @@ use warnings;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {

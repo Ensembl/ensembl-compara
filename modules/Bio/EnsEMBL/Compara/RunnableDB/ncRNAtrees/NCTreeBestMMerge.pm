@@ -78,7 +78,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
