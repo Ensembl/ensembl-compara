@@ -373,7 +373,7 @@ sub copy_table {
   $name ||= 'all';
   print "Copying table $table_name ($name) ...\n";
 
-  copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, $table_name, "SELECT $table_name.* FROM $table_name ".($constraint || ''));
+  copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, $table_name, "SELECT $table_name.* FROM $table_name ".($constraint || ''), undef, undef, undef, 10000000);
 }
 
 

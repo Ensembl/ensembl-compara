@@ -331,7 +331,7 @@ sub copy_data_in_text_mode {
     my $dbname = $to_dbc->dbname;
 
     #Default step size.
-    $step ||= 10000;
+    $step ||= 100000;
 
     my ($use_limit, $start);
     if (defined $index_name && defined $min_id && defined $max_id) {
