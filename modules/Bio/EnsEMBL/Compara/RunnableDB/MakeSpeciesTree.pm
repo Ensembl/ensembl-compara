@@ -77,8 +77,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    return if($self->param('species_tree_string'));     # skip the functionality if the tree has been provided
-
     my $species_tree_root;
     my $species_tree_string;
 
