@@ -322,9 +322,16 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
+    my $error_message;
+    if ($@ eq "alarm\n") {
+      $error_message = " could not be rendered within the specified time limit (${timeout} sec)";
+    }
+    else {
+      $error_message = ' could not be retrieved.';
+      warn "######## BAM ERROR: $@"; # propagate unexpected errors
+    }
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
+    return $self->errorTrack($self->error_track_name . $error_message);
   }
 }
 
