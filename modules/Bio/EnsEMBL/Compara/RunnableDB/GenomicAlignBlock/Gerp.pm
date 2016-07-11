@@ -126,7 +126,6 @@ sub fetch_input {
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
       my $method_class = $mlss->method->class;
-      $self->param('mlss_id', $mlss->dbID); #Need to set for use with get_species_tree_string
 
       my $tree_string;
       if ($method_class =~ /GenomicAlignTree/) {
@@ -422,7 +421,8 @@ sub run_gerp_v2 {
 
     #Calculate the neutral_rate of the species tree for use for those alignments where the default 
     #depth_threshold is too high to call any constrained elements (eg 3way birds)
-    my $species_tree_string = $self->get_species_tree_string;
+    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
+    my $species_tree_string = $species_tree->root->newick_format('simple');
     my $neutral_rate = _calculateNeutralRate($species_tree_string);
 
     if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {
@@ -777,54 +777,19 @@ sub _parse_rates_file {
 sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
 
-    my $newick;
-    if ($self->param('tree_string')) {
-	$newick = $self->param('tree_string');
-    } elsif ($self->param('tree_file'))  {
-	my $tree_file = $self->param('tree_file');
-
-	$newick = "";
-	if (-e $tree_file) {
-	    open NEWICK_FILE, $tree_file || throw("Can not open $tree_file");
-	    $newick = join("", <NEWICK_FILE>);
-	    close NEWICK_FILE;
-	} else {
-	    ## Look in the meta table
-	    my $meta_adaptor = $self->compara_dba->get_MetaContainer;
-	    $tree_file =~ s/.*\/([^\/]+)$/$1/;
-	    $newick = $meta_adaptor->list_value_by_key("$tree_file")->[0];
-	}
-    } else {
-	#Read from method_link_species_set_tag table (default option)
-	$newick = $self->get_species_tree_string;
-    }
-    return undef if (!defined $newick);
-    
-    $newick =~ s/^\s*//;
-    $newick =~ s/\s*$//;
-    $newick =~ s/[\r\n]//g;
-  
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+    my $tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
 
     #if the tree leaves are species names, need to convert these into genome_db_ids
     my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
     
-    my %leaf_name;
     my %leaf_check;
     foreach my $genome_db (@$genome_dbs) {
-	my $name = $genome_db->name;
-	$name =~ tr/ /_/;
-	$leaf_name{$name} = $genome_db->dbID;
-	if ($name ne "Ancestral_sequences" and $name ne "ancestral_sequences") {
+        if ($genome_db->name ne "ancestral_sequences") {
 	    $leaf_check{$genome_db->dbID} = 2;
 	} 
     }  
     foreach my $leaf (@{$tree->get_all_leaves}) {
-	#check have names rather than genome_db_ids
-	if ($leaf->name =~ /\D+/) {
-	    $leaf->name($leaf_name{lc($leaf->name)});
-	} 
-	$leaf_check{lc($leaf->name)}++;
+        $leaf_check{$leaf->genome_db_id}++;
     }
 
     #Check have one instance in the tree of each genome_db in the database
@@ -873,7 +838,7 @@ sub _update_tree {
 	my $these_genomic_aligns = [];
 	## Look for GenomicAligns belonging to this genome_db_id
 	foreach my $this_genomic_align (@$all_genomic_aligns) {
-	    if ($this_genomic_align->dnafrag->genome_db_id == $this_leaf->name) {
+	    if ($this_genomic_align->dnafrag->genome_db_id == $this_leaf->genome_db_id) {
 		push (@$these_genomic_aligns, $this_genomic_align);
 	    }
 	}

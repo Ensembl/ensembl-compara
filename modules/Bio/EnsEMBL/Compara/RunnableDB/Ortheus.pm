@@ -174,12 +174,11 @@ sub run {
   my $self = shift;
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
-  my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       -tree_string => $self->param('tree_string'),
-      -species_tree => $self->get_species_tree->newick_format('simple'),
+      -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
       -species_order => $self->param('species_order'),
       -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
@@ -972,52 +971,24 @@ sub _extract_sequence {
 sub get_species_tree {
   my $self = shift;
 
-  my $newick_species_tree ;
-  my $mlss_a = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor();
-  my $mlss = $mlss_a->fetch_by_dbID($self->param('ortheus_mlssid'));
-  my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
-
-  if ( defined( $mlss ) ){
-     my $newick_species_tree = $mlss->species_tree->species_tree;
-     $newick_species_tree =~ s/:0;/;/;
-  } elsif ($self->param($species_tree_meta_key)) {
-    $newick_species_tree = $self->param($species_tree_meta_key);
-  } elsif ($self->param('species_tree_file')) {
-    open(TREE_FILE, $self->param('species_tree_file')) or throw("Cannot open file ".$self->param('species_tree_file'));
-    $newick_species_tree = join("", <TREE_FILE>);
-    close(TREE_FILE);
+  if (defined($self->param('species_tree'))) {
+      return $self->param('species_tree');
   }
-
-  if (!defined($newick_species_tree)) {
-    return undef;
-  }
-
-  $newick_species_tree =~ s/^\s*//;
-  $newick_species_tree =~ s/\s*$//;
-  $newick_species_tree =~ s/[\r\n]//g;
 
   my $species_tree =
-      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+      $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('ortheus_mlssid'), 'default')->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
   my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 
-  my %leaf_name;
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {
-      my $name = $genome_db->name;
-      $name =~ tr/ /_/;
-      $leaf_name{lc $name} = $genome_db->dbID;
-      if ($name ne "ancestral_sequences") {
+      if ($genome_db->name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }
   }
   foreach my $leaf (@{$species_tree->get_all_leaves}) {
-      #check have names rather than genome_db_ids
-      if ($leaf->name =~ /\D+/) {
-	  $leaf->name($leaf_name{lc($leaf->name)});
-      }
-      $leaf_check{lc($leaf->name)}++;
+      $leaf_check{$leaf->genome_db_id}++;
   }
 
   #Check have one instance in the tree of each genome_db in the database
@@ -1205,7 +1176,7 @@ sub _update_tree {
     my $these_2x_genomes = [];
     ## Look for DnaFragRegions belonging to this genome_db_id
     foreach my $this_dnafrag_region (@$all_dnafrag_regions) {
-      if ($this_dnafrag_region->dnafrag->genome_db_id == $this_leaf->name) {
+      if ($this_dnafrag_region->dnafrag->genome_db_id == $this_leaf->genome_db_id) {
         push (@$these_dnafrag_regions, $this_dnafrag_region);
       }
     }
@@ -1213,7 +1184,7 @@ sub _update_tree {
     my $index = 0;
     foreach my $ga_frags (@{$self->param('ga_frag')}) {
 	my $first_frag = $ga_frags->[0];
-	if ($first_frag->{genome_db_id} == $this_leaf->name) {
+	if ($first_frag->{genome_db_id} == $this_leaf->genome_db_id) {
 	    push(@$these_2x_genomes, $index);
 	}
 	$index++;

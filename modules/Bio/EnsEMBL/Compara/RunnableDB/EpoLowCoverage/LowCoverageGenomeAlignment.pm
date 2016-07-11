@@ -957,49 +957,24 @@ sub species_order {
 sub get_species_tree {
   my $self = shift;
 
-  my $newick_species_tree;
   if (defined($self->param('_species_tree'))) {
     return $self->param('_species_tree');
-  } elsif ($self->param('tree_file')) {
-      print "Taking tree from tree_file\n";
-    open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
-    $newick_species_tree = join("", <TREE_FILE>);
-    close(TREE_FILE);
-  } else {
-      #get from mlss_tag table
-      $newick_species_tree = $self->get_species_tree_string;
   }
-
-  if (!defined($newick_species_tree)) {
-    return undef;
-  }
-
-  $newick_species_tree =~ s/^\s*//;
-  $newick_species_tree =~ s/\s*$//;
-  $newick_species_tree =~ s/[\r\n]//g;
 
   my $species_tree =
-      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+      $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
   my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 
-  my %leaf_name;
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {
-      my $name = $genome_db->name;
-      $name =~ tr/ /_/;
-      $leaf_name{$name} = $genome_db->dbID;
-      if ($name ne "ancestral_sequences") {
+      if ($genome_db->name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }
   }
   foreach my $leaf (@{$species_tree->get_all_leaves}) {
-      #check have names rather than genome_db_ids
-      if ($leaf->name =~ /\D+/) {
-	  $leaf->name(($leaf_name{lc($leaf->name)}));
-      }
-      $leaf_check{$leaf->name}++;
+      $leaf_check{$leaf->genome_db_id}++;
   }
 
   #Check have one instance in the tree of each genome_db in the database
@@ -1543,7 +1518,7 @@ sub _update_tree_2x {
     my $these_2x_genomes = [];
     ## Look for genomic_aligns belonging to this genome_db_id
     foreach my $this_genomic_align (@$all_genomic_aligns) {
-      if ($this_genomic_align->dnafrag->genome_db_id == $this_leaf->name) {
+      if ($this_genomic_align->dnafrag->genome_db_id == $this_leaf->genome_db_id) {
         push (@$these_genomic_aligns, $this_genomic_align);
       }
     }
@@ -1553,8 +1528,8 @@ sub _update_tree_2x {
 	foreach my $ga_frags (@{$self->param('ga_frag')}) {
 	    my $first_frag = $ga_frags->[0];
 	    
-	    #print "update_tree first_frag " . $first_frag->{genomic_align}->genome_db->dbID . " this leaf " . $this_leaf->name . "\n";
-	    if ($first_frag->{genomic_align}->dnafrag->genome_db->dbID == $this_leaf->name) {
+	    #print "update_tree first_frag " . $first_frag->{genomic_align}->genome_db->dbID . " this leaf " . $this_leaf->genome_db_id . "\n";
+	    if ($first_frag->{genomic_align}->dnafrag->genome_db->dbID == $this_leaf->genome_db_id) {
 		push(@$these_2x_genomes, $index);
 	    }
 	    $index++;

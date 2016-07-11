@@ -55,9 +55,6 @@ Supported keys:
    'mlss_id' => <number>
        The MethodLinkSpeciesSet for the resulting Pecan alignment. Obligatory
 
-   'tree_file' => <newick_tree>
-      The path to the file containing the species tree in NEWICK format. Leaves names should be the genome_db_ids
-
    'java_options' => <options>
       Options used to run Java, ie: '-server -Xmx1000M'
 
@@ -103,9 +100,6 @@ sub param_defaults {
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local
-            'tree_file' => undef, #local
-            'species_tree_string' => undef, #local
-            'species_tree_file' => undef, #local
             'fasta_files' => undef, #local
            };
 }
@@ -564,49 +558,24 @@ sub add_species_order {
 sub get_species_tree {
   my $self = shift;
 
-  my $newick_species_tree;
   if (defined($self->param('species_tree'))) {
       return $self->param('species_tree');
-  } elsif ($self->param('tree_file')) {
-      #open via a file (not currently used in the pipeline)
-      open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
-      $newick_species_tree = join("", <TREE_FILE>);
-      close(TREE_FILE);
-  } else {
-      #get from mlss_tag table
-      $newick_species_tree = $self->get_species_tree_string;
   }
-
-  if (!defined($newick_species_tree)) {
-    return undef;
-  }
-
-  $newick_species_tree =~ s/^\s*//;
-  $newick_species_tree =~ s/\s*$//;
-  $newick_species_tree =~ s/[\r\n]//g;
 
   my $species_tree =
-      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+      $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
   my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 
-  my %leaf_name;
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {
-      my $name = $genome_db->name;
-      $name =~ tr/ /_/;
-      $leaf_name{$name} = $genome_db->dbID;
-      if ($name ne "Ancestral_sequences" and $name ne "ancestral_sequences") {
+      if ($genome_db->name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }
   }
   foreach my $leaf (@{$species_tree->get_all_leaves}) {
-      #check have names rather than genome_db_ids
-      if ($leaf->name =~ /\D+/) {
-	  $leaf->name($leaf_name{lc($leaf->name)});
-      }
-      $leaf_check{lc($leaf->name)}++;
+      $leaf_check{$leaf->genome_db_id}++;
   }
 
   #Check have one instance in the tree of each genome_db in the database
@@ -784,7 +753,7 @@ sub _update_tree {
     my $these_dnafrag_regions = [];
     ## Look for DnaFragRegions belonging to this genome_db_id
     foreach my $this_dnafrag_region (@$all_dnafrag_regions) {
-      if ($this_dnafrag_region->dnafrag->genome_db_id == $this_leaf->name) {
+      if ($this_dnafrag_region->dnafrag->genome_db_id == $this_leaf->genome_db_id) {
         push (@$these_dnafrag_regions, $this_dnafrag_region);
       }
     }
@@ -843,7 +812,7 @@ sub _run_ortheus {
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       #-tree_string => $self->tree_string,
-      -species_tree => $self->get_species_tree->newick_format('simple'),
+      -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
       -species_order => $self->param('species_order'),
       -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
