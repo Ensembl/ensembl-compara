@@ -72,10 +72,11 @@ our @EXPORT_OK;
     copy_data
     copy_data_in_binary_mode
     copy_data_in_text_mode
+    copy_table_in_binary_mode
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode)],
+  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode)],
   'all'         => [@EXPORT_OK]
 );
 
@@ -489,6 +490,34 @@ sub copy_data_in_binary_mode {
     }
 }
 
+sub copy_table_in_binary_mode {
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    my $from_user = $from_dbc->username;
+    my $from_pass = $from_dbc->password;
+    my $from_host = $from_dbc->host;
+    my $from_port = $from_dbc->port;
+    my $from_dbname = $from_dbc->dbname;
+
+    my $to_user = $to_dbc->username;
+    my $to_pass = $to_dbc->password;
+    my $to_host = $to_dbc->host;
+    my $to_port = $to_dbc->port;
+    my $to_dbname = $to_dbc->dbname;
+
+    #my $start_time  = time();
+    my $insert_mode = $replace ? '--replace' : '--insert-ignore';
+
+    system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
+        ($where_filter ? "-w '$where_filter'" : "")." ".
+        ($skip_disable_keys ? "--skip-disable-keys" : "")." ".
+        "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
+
+    #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+}
 
 1;
  

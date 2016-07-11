@@ -709,25 +709,11 @@ sub copy_all_species_tres {
 sub copy_dna_dna_alignements {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $old_user = $old_dba->dbc->username;
-  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
-  my $old_host = $old_dba->dbc->host;
-  my $old_port = $old_dba->dbc->port;
-  my $old_dbname = $old_dba->dbc->dbname;
-
-  my $new_user = $new_dba->dbc->username;
-  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
-  my $new_host = $new_dba->dbc->host;
-  my $new_port = $new_dba->dbc->port;
-  my $new_dbname = $new_dba->dbc->dbname;
-
-  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
-      " --skip-disable-keys --insert-ignore -t $old_dbname";
-  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
-
+  # Keys are disabled / enabled only once for the whole loop
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS");
+
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
     next if ($this_method_link_species_set->method->dbID >= 100);
@@ -739,26 +725,18 @@ sub copy_dna_dna_alignements {
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    my $pipe = "$mysqldump -w \"$where\" genomic_align_block | $mysql";
-    system($pipe);
+    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where, undef, "skip-disable-keys");
     print ".";
     $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    $pipe = "$mysqldump -w \"$where\" genomic_align | $mysql";
-    system($pipe);
+    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where, undef, "skip-disable-keys");
     print ".";
-    #$where = "node_id >= ".
-    #    ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
-    #    (($this_method_link_species_set->dbID + 1) * 10**10);
-    #$pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
-    #system($pipe);
     $where = "node_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    $pipe = "$mysqldump -w \"$where\" genomic_align_tree | $mysql";
-    system($pipe);
+    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where, undef, "skip-disable-keys");
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
@@ -781,22 +759,6 @@ sub copy_dna_dna_alignements {
 sub copy_ancestor_dnafrag {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $old_user = $old_dba->dbc->username;
-  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
-  my $old_host = $old_dba->dbc->host;
-  my $old_port = $old_dba->dbc->port;
-  my $old_dbname = $old_dba->dbc->dbname;
-
-  my $new_user = $new_dba->dbc->username;
-  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
-  my $new_host = $new_dba->dbc->host;
-  my $new_port = $new_dba->dbc->port;
-  my $new_dbname = $new_dba->dbc->dbname;
-
-  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
-      " --skip-disable-keys --insert-ignore -t $old_dbname";
-  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
-
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
       ## For ancestral dnafrags, the method_link_id is < 100.
       next if ($this_method_link_species_set->method->dbID >= 100);
@@ -808,8 +770,7 @@ sub copy_ancestor_dnafrag {
 	    ($this_method_link_species_set->dbID * 10**10)." AND dnafrag_id < ".
 	      (($this_method_link_species_set->dbID + 1) * 10**10);
 
-	  my $pipe = "$mysqldump -w \"$where\" dnafrag | $mysql";
-	  system($pipe);
+          copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'dnafrag', $where, undef, "skip-disable-keys");
 	  print "ok!\n";
       }
   }
@@ -855,22 +816,7 @@ sub copy_synteny_data {
 sub copy_constrained_elements {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $old_user = $old_dba->dbc->username;
-  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
-  my $old_host = $old_dba->dbc->host;
-  my $old_port = $old_dba->dbc->port;
-  my $old_dbname = $old_dba->dbc->dbname;
-
-  my $new_user = $new_dba->dbc->username;
-  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
-  my $new_host = $new_dba->dbc->host;
-  my $new_port = $new_dba->dbc->port;
-  my $new_dbname = $new_dba->dbc->dbname;
-
-  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
-	" --skip-disable-keys --insert-ignore -t $old_dbname";
-  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
-
+  # Keys are disabled / enabled only once for the whole loop
   $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS");
 
   my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
@@ -888,8 +834,7 @@ sub copy_constrained_elements {
     my $where = "constrained_element_id >= ".
     ($this_method_link_species_set->dbID * 10**10)." AND constrained_element_id < ".
     (($this_method_link_species_set->dbID + 1) * 10**10);
-    my $pipe = "$mysqldump -w \"$where\" constrained_element | $mysql";
-    system($pipe);
+    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where, undef, "skip-disable-keys");
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS");
@@ -911,25 +856,10 @@ sub copy_constrained_elements {
 sub copy_conservation_scores {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $old_user = $old_dba->dbc->username;
-  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
-  my $old_host = $old_dba->dbc->host;
-  my $old_port = $old_dba->dbc->port;
-  my $old_dbname = $old_dba->dbc->dbname;
-
-  my $new_user = $new_dba->dbc->username;
-  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
-  my $new_host = $new_dba->dbc->host;
-  my $new_port = $new_dba->dbc->port;
-  my $new_dbname = $new_dba->dbc->dbname;
-
+  # Keys are disabled / enabled only once for the whole loop
   $new_dba->dbc->do("ALTER TABLE `conservation_score` DISABLE KEYS");
   my $conservation_score_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM conservation_score".
       " WHERE genomic_align_block_id >= ? AND genomic_align_block_id < ? LIMIT 1");
-
-  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
-	" --skip-disable-keys --insert-ignore -t $old_dbname";
-  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     my $lower_gab_id = $this_method_link_species_set->dbID * 10**10;
@@ -943,10 +873,10 @@ sub copy_conservation_scores {
     my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
     print "Copying conservation scores for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
-    my $pipe = "$mysqldump -w \"$where\" conservation_score | $mysql";
-    system($pipe);
+    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip-disable-keys");
     print "ok!\n";
   }
+
   $new_dba->dbc->do("ALTER TABLE `conservation_score` ENABLE KEYS");
 }
 
