@@ -12,12 +12,49 @@ use warnings;
 use EnsEMBL::Root;
 use EnsEMBL::Web::Utils::DynamicLoader;
 
+our $REALSTDERR;
+sub preload_capture_stderr {
+  open($REALSTDERR,'>&STDERR');
+  close STDERR;
+  open(STDERR,">>$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log");
+}
+
+sub preload_release_stderr {
+  open(STDERR,'>&',$REALSTDERR);
+  close $REALSTDERR;
+}
+
 sub load {
-  EnsEMBL::Web::Utils::DynamicLoader::dynamic_use($_[0],1);
-  EnsEMBL::Root->dynamic_use($_[0]);
+  preload_capture_stderr;
+  eval {
+    EnsEMBL::Web::Utils::DynamicLoader::dynamic_use($_[0],1);
+  };
+  preload_release_stderr;
+}
+
+our $MOANED = 0;
+sub moan {
+  return if $MOANED;
+  if(-s "$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log") {
+    $MOANED = 1;
+    warn <<"EOF";
+
+===
+Some modules failed to preload. They will probably fail when they are
+used "for real" by this website. For details see
+$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log
+This is a probably not a problem with preload: it just identified a
+problem with other modules, earlier than otherwise would have happened.
+This does not in itself stop the site starting but you might want to
+take a look, as advance notice about what pages may be broken here.
+===
+
+EOF
+  }
 }
 
 sub import {
+  unlink("$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log");
   load("Bio::AlignIO",1);
   load("Bio::EnsEMBL::AltAlleleGroup",1);
   load("Bio::EnsEMBL::CDS",1);
@@ -1781,6 +1818,7 @@ sub import {
   load("Tabix",1);
   load("TabixIterator",1);
   load("Tie::StdHash",1);
+  moan;
 }
 
 1;
