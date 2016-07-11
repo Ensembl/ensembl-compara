@@ -252,7 +252,7 @@ sub pipeline_analyses {
 			       },
 		-flow_into => {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
+			       'A->1' => [ 'make_species_tree' ],    # backbone
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -266,27 +266,16 @@ sub pipeline_analyses {
 		-rc_name => '100Mb',
 	    },
 
-	    {   -logic_name => 'load_genomedb_funnel',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -meadow_type=> 'LOCAL',
-		-flow_into => {
-                    '1->A' => {
-                               'make_species_tree' => [
-                                                       {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                                                       ],
-                               },
-
-		    'A->1' => [ 'create_default_pairwise_mlss'],
-		},
-		-rc_name => '100Mb',
-        },
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
 	    {   -logic_name    => 'make_species_tree',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
+                                   'blength_tree_file' => $self->o('species_tree_file'),
+                                   'newick_format' => 'simple',
 				  },
 		-rc_name => '100Mb',
+		-flow_into => [ 'create_default_pairwise_mlss'],
 	    },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
