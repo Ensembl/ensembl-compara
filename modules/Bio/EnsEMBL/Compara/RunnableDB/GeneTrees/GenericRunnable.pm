@@ -423,7 +423,6 @@ sub get_gene_tree_file {
     }
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
-    open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
 
     my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
 
@@ -439,11 +438,8 @@ sub get_gene_tree_file {
             $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
         }
     }
-    print $genetree $newick;
 
-    close $genetree;
-
-    return $gene_tree_file;
+    return $self->_write_temp_tree_file($gene_tree_file, $newick);
 }
 
 sub _load_species_tree_string_from_db {
