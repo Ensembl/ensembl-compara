@@ -337,12 +337,6 @@ sub fetch_all_by_dbID_list {
 	return \@constrained_elements;
 }
 
-sub fetch_all_by_dbID {     ## DEPRECATED
-    my $self = shift;
-    deprecate('ConstrainedElementAdaptor::fetch_all_by_dbID() is deprecated and will be removed in e86. Use fetch_all_by_dbID_list() instead.');
-    return $self->fetch_all_by_dbID_list(@_);
-}
-
 =head2 fetch_by_dbID
 
   Arg  1     : int constrained_element_id
