@@ -633,13 +633,12 @@ sub copy_all_dnafrags {
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
-  my $dnafrag_fetch_MT_sql = 'SELECT * FROM dnafrag WHERE genome_db_id = ? AND name = "MT"'; 
-  my $dnafrag_fetch_sql = 'SELECT * FROM dnafrag WHERE genome_db_id = ?';
-
   foreach my $this_genome_db (@$genome_dbs) {
-    my $has_copied_something = copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, 'dnafrag', ($MT_only ? $dnafrag_fetch_MT_sql : $dnafrag_fetch_sql));
-    unless ($has_copied_something) {
-      copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, 'dnafrag', $dnafrag_fetch_sql);
+    my $constraint = "WHERE genome_db_id = ".($this_genome_db->dbID);
+    my $nrows = copy_table($from_dba, $to_dba, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''), $this_genome_db->name);
+    if ($MT_only && !$nrows) {
+        #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
+        copy_table($from_dba, $to_dba, 'dnafrag', $constraint, $this_genome_db->name);
     }
   }
 }
