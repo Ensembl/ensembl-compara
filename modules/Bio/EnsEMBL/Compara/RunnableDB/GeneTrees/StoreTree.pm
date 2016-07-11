@@ -52,6 +52,20 @@ sub _write_temp_tree_file {
 }
 
 
+=head2 get_species_tree_file
+
+Creates a file in the worker temp directory with the species tree.
+The species-tree string is loaded by the virtual method _load_species_tree_string_from_db()
+
+=cut
+
+sub get_species_tree_file {
+    my ($self, $filename) = @_;
+
+    return $self->_write_temp_tree_file($filename // 'spec_tax.nh', $self->_load_species_tree_string_from_db());
+}
+
+
 # Should we define hidden_genes here ?
 
 ########################################
