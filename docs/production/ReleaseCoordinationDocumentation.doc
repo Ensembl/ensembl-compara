@@ -1,10 +1,10 @@
-Message-ID: <1767015227.6302.1456855203360.JavaMail.crs_adm@ves-ebi-f3.ebi.ac.uk>
+Message-ID: <1748077506.16920.1468237655599.JavaMail.crs_adm@ves-ebi-f3.ebi.ac.uk>
 Subject: Exported From Confluence
 MIME-Version: 1.0
 Content-Type: multipart/related; 
-	boundary="----=_Part_6301_770449570.1456855203359"
+	boundary="----=_Part_16919_612776353.1468237655598"
 
-------=_Part_6301_770449570.1456855203359
+------=_Part_16919_612776353.1468237655598
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Content-Location: file:///C:/exported.html
@@ -209,12 +209,12 @@ h1.pagetitle img {
     <h1>Release coordination documentation</h1>
     <div class=3D"Section1">
         <p><style type=3D"text/css">/*<![CDATA[*/
-div.rbtoc1456855203133 {padding: 0px;}
-div.rbtoc1456855203133 ul {list-style: disc;margin-left: 0px;}
-div.rbtoc1456855203133 li {margin-left: 0px;padding-left: 0px;}
+div.rbtoc1468237653620 {padding: 0px;}
+div.rbtoc1468237653620 ul {list-style: disc;margin-left: 0px;}
+div.rbtoc1468237653620 li {margin-left: 0px;padding-left: 0px;}
 
 /*]]>*/</style></p>
-<div class=3D"toc-macro rbtoc1456855203133">=20
+<div class=3D"toc-macro rbtoc1468237653620">=20
 <ul class=3D"toc-indentation">=20
 <li><a href=3D"#Releasecoordinationdocumentation-Preparation">Preparation</=
 a>=20
@@ -281,13 +281,15 @@ rojectionsAsHomologies</a></li>=20
 e healthchecks</a></li>=20
 <li><a href=3D"#Releasecoordinationdocumentation-Testwebserver">Test web se=
 rver</a></li>=20
-<li><a href=3D"#Releasecoordinationdocumentation-Finalhandoverofdatabases">=
-Final handover of databases</a>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Finalhandoverofdatabases[e=
+dit]">Final handover of databases [edit]</a>=20
 <ul class=3D"toc-indentation">=20
 <li><a href=3D"#Releasecoordinationdocumentation-Analyze/Optimizeonelasttim=
 e">Analyze / Optimize one last time</a></li>=20
 <li><a href=3D"#Releasecoordinationdocumentation-Copydatabasestostagingserv=
 ers">Copy databases to staging servers</a></li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Filehandover">File handove=
+r</a></li>=20
 <li><a href=3D"#Releasecoordinationdocumentation-Finalbits">Final bits</a><=
 /li>=20
 </ul> </li>=20
@@ -296,11 +298,23 @@ ers">Copy databases to staging servers</a></li>=20
 er</a>=20
 <ul class=3D"toc-indentation">=20
 <li><a href=3D"#Releasecoordinationdocumentation-Updatedocumentationanddiag=
-rams">Update documentation and diagrams</a></li>=20
+rams[edit]">Update documentation and diagrams [edit]</a></li>=20
 <li><a href=3D"#Releasecoordinationdocumentation-Branchthecode">Branch the =
 code</a></li>=20
 <li><a href=3D"#Releasecoordinationdocumentation-Datadumps">Data dumps</a><=
 /li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-PatchGRCh37Databases">Patc=
+h GRCh37 Databases</a></li>=20
+</ul> </li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Connectiondetails">Connect=
+ion details</a></li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Case1:nodataupdates">Case =
+1: no data updates</a></li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Case2:dataupdates">Case 2:=
+ data updates</a></li>=20
+<li><a href=3D"#Releasecoordinationdocumentation-Comparaupdates:">Compara u=
+pdates:</a>=20
+<ul class=3D"toc-indentation">=20
 <li><a href=3D"#Releasecoordinationdocumentation-Finalthings">Final things<=
 /a></li>=20
 </ul> </li>=20
@@ -333,14 +347,14 @@ g wormbase, ensembl genomes) will declare</li>=20
  of intentions on the <a href=3D"http://admin.ensembl.org/index.html" class=
 =3D"external-link" rel=3D"nofollow">http://admin.ensembl.org/index.html</a>=
  website</p>=20
-<div id=3D"expander-1804574290" class=3D"expand-container">=20
-<div id=3D"expander-control-1804574290" class=3D"expand-control">=20
+<div id=3D"expander-1855575416" class=3D"expand-container">=20
+<div id=3D"expander-control-1855575416" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-1804574290" class=3D"expand-content">
+<div id=3D"expander-content-1855575416" class=3D"expand-content">
 <ul>
 <li>Give a short and meaningful title</li>
 <li>Leave &quot;<em>Species affected</em>&quot; to &quot;<em>All species</e=
@@ -355,11 +369,11 @@ anded over</em>&quot;</li>
 </ul>
 </div>=20
 </div> </li>=20
-<li data-inline-task-id=3D"451">Discuss with the team which declarations ar=
-e worth being put on the front page (3 at most). For those, leave &quot;<em=
->Headline position on the homepage</em>&quot; to &quot;Not a headline&quot;=
- but fill in a correct <em>category</em> (&quot;API/Schema changes&quot;, &=
-quot;New alignments&quot;, etc)</li>=20
+<li class=3D"checked" data-inline-task-id=3D"451">Discuss with the team whi=
+ch declarations are worth being put on the front page (3 at most). For thos=
+e, leave &quot;<em>Headline position on the homepage</em>&quot; to &quot;No=
+t a headline&quot; but fill in a correct <em>category</em> (&quot;API/Schem=
+a changes&quot;, &quot;New alignments&quot;, etc)</li>=20
 </ul>=20
 <h2 id=3D"Releasecoordinationdocumentation-Environmentvariables">Environmen=
 t variables</h2>
@@ -463,14 +477,14 @@ ration file<br /> </span></h2>
 =20
 <li class=3D"checked" data-inline-task-id=3D"528"><p>Update production_reg_=
 conf.pl and check back into git:</p>=20
-<div id=3D"expander-1135907915" class=3D"expand-container">=20
-<div id=3D"expander-control-1135907915" class=3D"expand-control">=20
+<div id=3D"expander-475398234" class=3D"expand-container">=20
+<div id=3D"expander-control-475398234" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click for details</span>=20
 </div>=20
-<div id=3D"expander-content-1135907915" class=3D"expand-content">
+<div id=3D"expander-content-475398234" class=3D"expand-content">
 <p>Update the registry configuration file $ENSEMBL_CVS_ROOT_DIR/ensembl-com=
 para/scripts/pipeline/production_reg_conf.pl that will be used throughout t=
 he release process.</p>
@@ -503,14 +517,14 @@ fluence/pages/viewpage.action?pageId=3D29749858">API / Schema changes</a>.<=
 <p>The other Compara members may have already created patches, so check wit=
 h them what's there. At the minimum, there should be the schema version inc=
 rease.</p>=20
-<div id=3D"expander-454248753" class=3D"expand-container">=20
-<div id=3D"expander-control-454248753" class=3D"expand-control">=20
+<div id=3D"expander-503577975" class=3D"expand-container">=20
+<div id=3D"expander-control-503577975" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-454248753" class=3D"expand-content">
+<div id=3D"expander-content-503577975" class=3D"expand-content">
 <p>Update the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/table.sql file and crea=
 te any patch files.</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
@@ -542,14 +556,14 @@ tch files</h2>
 <p>The schema defined in the current table.sql must be obtainable by patchi=
 ng the previous database. There is a shell script to do the comparison</p>=
 =20
-<div id=3D"expander-1310990065" class=3D"expand-container">=20
-<div id=3D"expander-control-1310990065" class=3D"expand-control">=20
+<div id=3D"expander-1139013175" class=3D"expand-container">=20
+<div id=3D"expander-control-1139013175" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1310990065" class=3D"expand-content">
+<div id=3D"expander-content-1139013175" class=3D"expand-content">
 <p>Run the script $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/=
 schema_diff.sh (you may have to press &quot;y&quot; to validate the patches=
  to apply to the old schema) and check the output. The script relies on sev=
@@ -576,14 +590,14 @@ re>=20
 </div>=20
 <h3 id=3D"Releasecoordinationdocumentation-Howtopatchadatabasetothelatestsc=
 hema">How to patch a database to the latest schema</h3>=20
-<div id=3D"expander-1856013215" class=3D"expand-container">=20
-<div id=3D"expander-control-1856013215" class=3D"expand-control">=20
+<div id=3D"expander-574728423" class=3D"expand-container">=20
+<div id=3D"expander-control-574728423" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-1856013215" class=3D"expand-content">
+<div id=3D"expander-content-574728423" class=3D"expand-content">
 <ul style=3D"list-style-type: square;">
 <li><p>Use the following script to detect the what schema the database is o=
 n and to apply all the required patches to bring it to the latest schema</p=
@@ -626,14 +640,14 @@ tabase is mm14_ensembl_compara_master on compara1</p>
 =20
 <li class=3D"checked" data-inline-task-id=3D"470"><p>Update the ncbi_taxa_n=
 ode and ncbi_taxa_name in the master database</p>=20
-<div id=3D"expander-976032056" class=3D"expand-container">=20
-<div id=3D"expander-control-976032056" class=3D"expand-control">=20
+<div id=3D"expander-807541663" class=3D"expand-container">=20
+<div id=3D"expander-control-807541663" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-976032056" class=3D"expand-content">
+<div id=3D"expander-content-807541663" class=3D"expand-content">
 <p>The ncbi_taxonomy database is located in <a rel=3D"nofollow">mysql://ens=
 -livemirror:3306/ncbi_taxonomy</a></p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -644,9 +658,8 @@ h=3D"16" height=3D"16" /></span>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">time db_cmd.pl $COMPARA_REG ncbi_taxonomy -executable mysqldump=
- --prepend --extended-insert --prepend --compress --prepend --delayed-inser=
-t ncbi_taxa_node ncbi_taxa_name | db_cmd.pl $COMPARA_REG compara_master</pr=
-e>=20
+ --prepend --extended-insert --prepend --compress ncbi_taxa_node ncbi_taxa_=
+name | db_cmd.pl $COMPARA_REG compara_master</pre>=20
 </div>
 </div>
 <p>It usually takes between 30 and 60 seconds.</p>
@@ -654,14 +667,14 @@ e>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"487"><p>Load ensembl_aliases.s=
 ql onto the master database</p>=20
-<div id=3D"expander-1188859563" class=3D"expand-container">=20
-<div id=3D"expander-control-1188859563" class=3D"expand-control">=20
+<div id=3D"expander-858005182" class=3D"expand-container">=20
+<div id=3D"expander-control-858005182" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1188859563" class=3D"expand-content">
+<div id=3D"expander-content-858005182" class=3D"expand-content">
 The script will report any discrepancies that need to be resolved ie any no=
 des which have been deleted from the ncbi_taxonomy database but still have =
 entries in the ensembl_aliases.sql file. Check if these have an entry in th=
@@ -683,14 +696,14 @@ R/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"515"><p>Run the CheckTaxon hea=
 lthcheck</p>=20
-<div id=3D"expander-39485268" class=3D"expand-container">=20
-<div id=3D"expander-control-39485268" class=3D"expand-control">=20
+<div id=3D"expander-1489207554" class=3D"expand-container">=20
+<div id=3D"expander-control-1489207554" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-39485268" class=3D"expand-content">
+<div id=3D"expander-content-1489207554" class=3D"expand-content">
 <p>Run the CheckTaxon healthcheck early to find any discrepancies between t=
 he ncbi_taxon_name table and the core databases (information about how to s=
 et up the healthchecks can be found <a href=3D"http://www.ebi.ac.uk/seqdb/c=
@@ -733,16 +746,16 @@ ssembly or a new species. Any new genome_dbs, dnafrags and method_link_spec=
 ies_set_ids need to be added before production starts.</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
-<li class=3D"checked" data-inline-task-id=3D"484"><p>Add a new species / as=
+<li class=3D"checked" data-inline-task-id=3D"536"><p>Add a new species / as=
 sembly (i.e. a genome_db)</p>=20
-<div id=3D"expander-1623993533" class=3D"expand-container">=20
-<div id=3D"expander-control-1623993533" class=3D"expand-control">=20
+<div id=3D"expander-889188328" class=3D"expand-container">=20
+<div id=3D"expander-control-889188328" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1623993533" class=3D"expand-content">
+<div id=3D"expander-content-889188328" class=3D"expand-content">
 <p>You will have to run this script once per new / updated species</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
@@ -754,9 +767,12 @@ h=3D"16" height=3D"16" /></span>
 size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/upd=
 ate_genome.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipe=
 line/production_reg_conf.pl --compara compara_master --species &quot;gadus_=
-morhua&quot;</pre>=20
+morhua&quot; --release --collection ensembl</pre>=20
 </div>
 </div>
+<p>If you know that the species won't be ready for this release but the nex=
+t one, you need to remove &quot;--release --collection ensembl&quot;. Next =
+release, you'll have to rerun update_genome.pl with the --force option</p>
 <p>Add the new genome_db_id to the confluence page <a href=3D"/seqdb/conflu=
 ence/display/EnsCom/Release+plans">Release plans</a>. This script may take =
 a while if the species you are adding is new and has a lot of scaffolds. Yo=
@@ -818,14 +834,14 @@ file into the master database</p>
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"496"><p>Add in extra non-refer=
 ence patches.</p>=20
-<div id=3D"expander-1364030361" class=3D"expand-container">=20
-<div id=3D"expander-control-1364030361" class=3D"expand-control">=20
+<div id=3D"expander-1241000903" class=3D"expand-container">=20
+<div id=3D"expander-control-1241000903" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1364030361" class=3D"expand-content">
+<div id=3D"expander-content-1241000903" class=3D"expand-content">
 <p>This is currently done when a new patch for either human or mouse is rel=
 eased. This may have already been done, please ask.&gt;</p>
 <p>Details about the patches can be found here <a href=3D"ftp://ftp.ncbi.nl=
@@ -849,10 +865,11 @@ revious release of the core database</p>
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/find_ass=
 embly_patches.pl -compara &quot;mysql://ensro@compara1/mm14_ensembl_compara=
-_master&quot; -new_core &quot;mysql://ensro@ens-staging1:3306/homo_sapiens_=
-core_81_38?group=3Dcore&amp;species=3Dhomo_sapiens&quot; -prev_core &quot;m=
-ysql://ensro@ens-livemirror:3306/homo_sapiens_core_80_38?group=3Dcore&amp;s=
-pecies=3Dhomo_sapiens&quot;</pre>=20
+_master&quot; \
+-new_core &quot;mysql://ensro@ens-staging1:3306/homo_sapiens_core_81_38?gro=
+up=3Dcore&amp;species=3Dhomo_sapiens&quot; -prev_core &quot;mysql://ensro@e=
+ns-livemirror:3306/homo_sapiens_core_80_38?group=3Dcore&amp;species=3Dhomo_=
+sapiens&quot;</pre>=20
 </div>
 </div>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -888,10 +905,7 @@ DnaFrags to delete:
 Input for create_patch_pairaligner_conf.pl:
 --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosom=
 e:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,=
-chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG36=
-09_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:=
-CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chr=
-omosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH</pre>=20
+(...)</pre>=20
 </div>
 </div>
 <p>Copy the output to the Intentions for Release page as it will be needed =
@@ -920,14 +934,14 @@ Es/pair_aligner_patches.txt</p>
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"471"><p>Add in the new LRGs</p=
 >=20
-<div id=3D"expander-2035232769" class=3D"expand-container">=20
-<div id=3D"expander-control-2035232769" class=3D"expand-control">=20
+<div id=3D"expander-320078203" class=3D"expand-container">=20
+<div id=3D"expander-control-320078203" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-2035232769" class=3D"expand-content">
+<div id=3D"expander-content-320078203" class=3D"expand-content">
 <p>LRGs are needed by the Family pipeline, and have to be updated every rel=
 ease. This is done by running the update_genome.pl script on human with the=
  --force option</p>
@@ -974,13 +988,9 @@ d before starting to build the new database although new method_link_specie=
 s_sets can be added later on.</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
-<li class=3D"checked" data-inline-task-id=3D"91"><p>Add dna method_link_spe=
-cies_set entries</p>
+<li class=3D"checked" data-inline-task-id=3D"534"><p>Add dna method_link_sp=
+ecies_set entries</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Pairwise method_link_species_set</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
@@ -988,14 +998,12 @@ ate_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,142 --reg_conf $=
 ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.p=
 l --compara compara_master</pre>=20
 </div>
-</div></li>=20
+</div><p>If you are sure that the mlss will be ready for the next release, =
+you can add --release to the command-line. Otherwise you will have to mark =
+the entry manually as OK before merging</p></li>=20
 <li class=3D"checked" data-inline-task-id=3D"102"><p>Add synteny method_lin=
 k_species_set entries</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Synteny method_link_species_set</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
@@ -1003,119 +1011,98 @@ ate_mlss.pl --method_link_type SYNTENY --genome_db_id 90,142 --reg_conf $EN=
 SEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl =
 -compara compara_master</pre>=20
 </div>
-</div><p><span> <br /> </span></p></li>=20
+</div><p>If you are sure that the mlss will be ready for the next release, =
+you can add --release to the command-line. Otherwise you will have to mark =
+the entry manually as OK before merging</p><p>&nbsp;</p></li>=20
 <li class=3D"checked" data-inline-task-id=3D"447"><p>Add species tree metho=
 d_link_species_set entry</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Synteny method_link_species_set</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
-ate_mlss.pl --method_link_type SPECIES_TREE --f --collection &quot;ensembl&=
-quot; --name &quot;species tree&quot; --source &quot;ensembl&quot; --reg_co=
-nf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_co=
-nf.pl -compara compara_master</pre>=20
+ate_mlss.pl --method_link_type SPECIES_TREE --force --collection &quot;ense=
+mbl&quot; --name &quot;species tree&quot; --source &quot;ensembl&quot; --re=
+g_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_re=
+g_conf.pl -compara compara_master --release</pre>=20
 </div>
 </div></li>=20
-<li class=3D"checked" data-inline-task-id=3D"489"><p>Add homology method_li=
-nk_species_set_entries</p>=20
-<div id=3D"expander-616329057" class=3D"expand-container">=20
-<div id=3D"expander-control-616329057" class=3D"expand-control">=20
-<span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
-lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
-h=3D"16" height=3D"16" /></span>
-<span class=3D"expand-control-text">Click here for details</span>=20
-</div>=20
-<div id=3D"expander-content-616329057" class=3D"expand-content">=20
-<div class=3D"aui-message problem shadowed information-macro">=20
-<span class=3D"aui-icon icon-problem">Icon</span>=20
-<div class=3D"message-content">=20
-<p>These commands need the collection species-set named &quot;ensembl&quot;=
- to be up-to-date. Only run t</p>=20
-</div>=20
-</div>=20
-<p>&nbsp;</p>
-<p>Choose a temp. directory where the output will be generated:</p>
+<li class=3D"checked" data-inline-task-id=3D"1447"><p>Add protein-trees met=
+hod_link_species_set entry</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Choose temp directory</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
-size:12px;">export MLSS_DIR=3D&quot;/tmp/mlss_creation&quot;
-mkdir $MLSS_DIR</pre>=20
+size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
+ate_mlss.pl --method_link_type PROTEIN_TREES --force --collection &quot;ens=
+embl&quot; --name &quot;protein trees&quot; --source &quot;ensembl&quot; --=
+reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_=
+reg_conf.pl -compara compara_master --release</pre>=20
 </div>
-</div>
-<p>Run the loading script several times:</p>
-<p>--pw stands for all pairwised genome_db_ids in the list provided</p>
-<p>--sg stands for keep genome_db_id in the list alone (singleton)</p>
+</div></li>=20
+<li class=3D"checked" data-inline-task-id=3D"2447"><p>Add ncRNA-trees metho=
+d_link_species_set entry</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Protein method_link_species_set</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
-size:12px;"># orthologues
-echo -e &quot;201\n&quot; | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scri=
-pts/pipeline/create_mlss.pl --f \
---reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/productio=
-n_reg_conf.pl \
---pw --collection ensembl 1&gt;$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.20=
-1.out 2&gt;$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
-
-# paralogues wth
-echo -e &quot;202\n&quot; | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scri=
-pts/pipeline/create_mlss.pl --f \
---reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/productio=
-n_reg_conf.pl \
---sg --collection ensembl 1&gt;$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth=
-.202.out 2&gt;$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
-
-# proteintrees
-echo -e &quot;401\n&quot; | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scri=
-pts/pipeline/create_mlss.pl --f \
---reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/productio=
-n_reg_conf.pl \
---name &quot;protein trees&quot; --collection ensembl 1&gt;$MLSS_DIR/create=
-_mlss.PROTEIN_TREES.401.out 2&gt;$MLSS_DIR/create_mlss.PROTEIN_TREES.401.er=
-r
-
-# nctrees
-echo -e &quot;402\n&quot; | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scri=
-pts/pipeline/create_mlss.pl --f \
---reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/productio=
-n_reg_conf.pl \
---name &quot;nc trees&quot; --collection ensembl 1&gt;$MLSS_DIR/create_mlss=
-.NC_TREES.402.out 2&gt;$MLSS_DIR/create_mlss.NC_TREES.402.err
-
-# families
-echo -e &quot;301\n&quot; | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scri=
-pts/pipeline/create_mlss.pl --f \
---reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/productio=
-n_reg_conf.pl \
---name &quot;families&quot; --collection ensembl 1&gt;$MLSS_DIR/create_mlss=
-.FAMILY.301.out 2&gt;$MLSS_DIR/create_mlss.FAMILY.301.err</pre>=20
+size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
+ate_mlss.pl --method_link_type NC_TREES --force --collection &quot;ensembl&=
+quot; --name &quot;nc trees&quot; --source &quot;ensembl&quot; --reg_conf $=
+ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.p=
+l -compara compara_master --release</pre>=20
 </div>
-</div>
-<p>If output/error files are ok, remove them all:</p>
+</div></li>=20
+<li class=3D"checked" data-inline-task-id=3D"3447"><p>Add family method_lin=
+k_species_set entry</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
-;">
-<b>Remove files</b>
-</div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
-size:12px;">rm -rf $MLSS_DIR</pre>=20
+size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
+ate_mlss.pl --method_link_type FAMILY --force --collection &quot;ensembl&qu=
+ot; --name &quot;families&quot; --source &quot;ensembl&quot; --reg_conf $EN=
+SEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl =
+-compara compara_master --release</pre>=20
 </div>
+</div></li>=20
+<li class=3D"checked" data-inline-task-id=3D"4447"><p>Add pairwise ortholog=
+ method_link_species_set entry</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">=20
+<pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
+size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
+ate_mlss.pl --method_link_type ENSEMBL_ORTHOLOGUES --force --pw --collectio=
+n &quot;ensembl&quot; --source &quot;ensembl&quot; --reg_conf $ENSEMBL_CVS_=
+ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl -compara c=
+ompara_master --release 2&gt; create_mlss.${CURR_ENSEMBL_RELEASE}.ENSEMBL_O=
+RTHOLOGUES.err &gt; create_mlss.${CURR_ENSEMBL_RELEASE}.ENSEMBL_ORTHOLOGUES=
+.out</pre>=20
 </div>
-<p>Otherwise make yourself a nice cup of tea and then *PANIC*</p>
-</div>=20
-</div> </li>=20
+</div><p>Inspect the out and err files for errors</p></li>=20
+<li class=3D"checked" data-inline-task-id=3D"5447"><p>Add singleton paralog=
+ method_link_species_set entry</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">=20
+<pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
+size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cre=
+ate_mlss.pl --method_link_type ENSEMBL_PARALOGUES --force --sg --collection=
+ &quot;ensembl&quot; --source &quot;ensembl&quot; --reg_conf $ENSEMBL_CVS_R=
+OOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl -compara co=
+mpara_master --release 2&gt; create_mlss.${CURR_ENSEMBL_RELEASE}.ENSEMBL_PA=
+RALOGUES.err &gt; create_mlss.${CURR_ENSEMBL_RELEASE}.ENSEMBL_PARALOGUES.ou=
+t</pre>=20
+</div>
+</div><p>Inspect the out and err files for errors</p></li>=20
+<li class=3D"checked" data-inline-task-id=3D"537"><p>Reset the URL of reuse=
+d mlss_ids<br />In case the same mlss_id can be reused, the pipeline will p=
+robably complain that there is already a URL attached to it. You need to re=
+set these URLs</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">=20
+<pre class=3D"theme: Confluence; brush: sql; gutter: false" style=3D"font-s=
+ize:12px;">UPDATE method_link_species_set SET url =3D &quot;&quot; WHERE me=
+thod_link_species_set_id IN (&lt;LIST_OF_mlss_ids&gt;);</pre>=20
+</div>
+</div><p>Usually, this happens when there are no new assemblies, in which c=
+ase you need to give the mlss_id of the Family, ncRNA-tree and protein-tree=
+ pipelines</p></li>=20
 </ul>=20
 <h2 id=3D"Releasecoordinationdocumentation-Addnewspeciestophylogenetictree"=
 >Add new species to phylogenetic tree</h2>
@@ -1123,14 +1110,14 @@ size:12px;">rm -rf $MLSS_DIR</pre>=20
 =20
 <li class=3D"checked" data-inline-task-id=3D"116"><p>Add new species to phy=
 logenetic tree</p>=20
-<div id=3D"expander-448272677" class=3D"expand-container">=20
-<div id=3D"expander-control-448272677" class=3D"expand-control">=20
+<div id=3D"expander-516481346" class=3D"expand-container">=20
+<div id=3D"expander-control-516481346" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-448272677" class=3D"expand-content">
+<div id=3D"expander-content-516481346" class=3D"expand-content">
 <p>The easiest way to use this is to use the <a href=3D"http://www.phylowid=
 get.org/" class=3D"external-link" rel=3D"nofollow">phylowidget</a>.<br /> P=
 aste in the content of $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeli=
@@ -1151,14 +1138,14 @@ e">Final edits to compara master database</h2>
 =20
 <li class=3D"checked" data-inline-task-id=3D"517"><p>Compare the staging se=
 rvers to the master database</p>=20
-<div id=3D"expander-714184090" class=3D"expand-container">=20
-<div id=3D"expander-control-714184090" class=3D"expand-control">=20
+<div id=3D"expander-1256716395" class=3D"expand-container">=20
+<div id=3D"expander-control-1256716395" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-714184090" class=3D"expand-content">
+<div id=3D"expander-content-1256716395" class=3D"expand-content">
 <p>This script will list the genomes of the staging servers, and compare th=
 em to the master database.</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -1176,55 +1163,20 @@ p>
 <p>Some things (like the genebuild date is different) can be directly chang=
 ed by the script (use the --nodry-run option instead). If there is a new as=
 sembly / species on the staging servers that is not yet in the master datab=
-ase, run update_genome.pl (see above) to add it. If it complains that a spe=
-cies is not yet current, ignore as this will be fixed by edit_collection.pl=
-</p>
+ase, run update_genome.pl (see above) to add it, and re-run update_master_d=
+b.pl to make sure things are solved.</p>
 </div>=20
 </div> </li>=20
-<li class=3D"checked" data-inline-task-id=3D"491"><p>Run edit_collection.pl=
- to update the collection</p>=20
-<div id=3D"expander-797777629" class=3D"expand-container">=20
-<div id=3D"expander-control-797777629" class=3D"expand-control">=20
-<span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
-lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
-h=3D"16" height=3D"16" /></span>
-<span class=3D"expand-control-text">Click here to expand...</span>=20
-</div>=20
-<div id=3D"expander-content-797777629" class=3D"expand-content">
-<p>The goal of the script is to update the first_release and last_release f=
-ields. We can create the homology MLSSs only after this script has run.</p>
-<p>The script will prompt you for species to be added to the collection spe=
-cies-set. This step is voluntarily made manual and you are required to ente=
-r some genome_db_ids. This is the moment when we control which species real=
-ly make it to Compara or not, so check with the rest of the team and the ge=
-nebuilders if any new species have been postponed. You may want to run the =
-script once (dry-run mode is on by default), check that the number of speci=
-es is correct (the script prints this information) and then run it again wt=
-h --nodry-run</p>
-<div class=3D"code panel pdl" style=3D"border-width: 1px;">
-<div class=3D"codeContent panelContent pdl">=20
-<pre class=3D"theme: Confluence; brush: bash; gutter: false" style=3D"font-=
-size:12px;">perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/edi=
-t_collection.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pi=
-peline/production_reg_conf.pl --compara compara_master --collection ensembl=
-</pre>=20
-</div>
-</div>
-</div>=20
-</div> </li>=20
-<li class=3D"checked" data-inline-task-id=3D"492">Run update_master_db.pl a=
-gain (see above) to check that everything is now fine (there shouldn't be a=
-ny warnings about species not being current)</li>=20
 <li class=3D"checked" data-inline-task-id=3D"518"><p>Healthcheck the master=
  database</p>=20
-<div id=3D"expander-908420645" class=3D"expand-container">=20
-<div id=3D"expander-control-908420645" class=3D"expand-control">=20
+<div id=3D"expander-1993963923" class=3D"expand-container">=20
+<div id=3D"expander-control-1993963923" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-908420645" class=3D"expand-content">
+<div id=3D"expander-content-1993963923" class=3D"expand-content">
 <p>See <a href=3D"/seqdb/confluence/display/EnsCom/JAVA+Healthchecks">JAVA =
 Healthchecks</a> and use the ComparaMaster group</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -1259,14 +1211,14 @@ r and the old database into the new one.</p>
 =20
 <li class=3D"checked" data-inline-task-id=3D"348"><p>&gt;Create new databas=
 e</p>=20
-<div id=3D"expander-314284329" class=3D"expand-container">=20
-<div id=3D"expander-control-314284329" class=3D"expand-control">=20
+<div id=3D"expander-837793539" class=3D"expand-container">=20
+<div id=3D"expander-control-837793539" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-314284329" class=3D"expand-content">
+<div id=3D"expander-content-837793539" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -1285,16 +1237,16 @@ ara/sql/table.sql=20
 </div> <p>&nbsp;</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
-<li class=3D"checked" data-inline-task-id=3D"519"><p>Populate the new datab=
+<li class=3D"checked" data-inline-task-id=3D"538"><p>Populate the new datab=
 ase</p>=20
-<div id=3D"expander-1725721334" class=3D"expand-container">=20
-<div id=3D"expander-control-1725721334" class=3D"expand-control">=20
+<div id=3D"expander-498217371" class=3D"expand-container">=20
+<div id=3D"expander-control-498217371" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1725721334" class=3D"expand-content">
+<div id=3D"expander-content-498217371" class=3D"expand-content">
 <p>Before you start copying, make a dry run of the populate_new_database.pl=
  with -intentions flag to review the list of mlss_ids to be copied:</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -1337,21 +1289,23 @@ cies_set table will not be copied and will need to be added manually.</em> =
 </div>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
-size:12px;">time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/pop=
-ulate_new_database.pl \
+size:12px;">bsub -q yesterday -R &quot;select[mem&gt;20000] rusage[mem=3D20=
+000]&quot; -M20000 -Is bash
+time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_da=
+tabase.pl \
     --reg-conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/produ=
 ction_reg_conf.pl --master compara_master --old compara_prev --new compara_=
 curr &gt; populate_new_database.out</pre>=20
 </div>
 </div>=20
-<div id=3D"expander-2101909464" class=3D"expand-container">=20
-<div id=3D"expander-control-2101909464" class=3D"expand-control">=20
+<div id=3D"expander-17854401" class=3D"expand-container">=20
+<div id=3D"expander-control-17854401" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for run times</span>=20
 </div>=20
-<div id=3D"expander-content-2101909464" class=3D"expand-content">
+<div id=3D"expander-content-17854401" class=3D"expand-content">
 <p>took 3 hours for rel.pre57 (copied from rel.56)<br /> took 3 hours for r=
 el.57 (copied from rel.pre57)<br /> took 2:15 hours for rel.58 (copied from=
  rel.57)<br /> took 2:09 hours for rel.59 (copied from rel.58)<br /> took 3=
@@ -1365,6 +1319,7 @@ ompara5)<br /> rel.78: 6.0h (compara4)<br /> rel.79:<br /> rel.80:<br /> re=
 l.81: 6h (compara5)&nbsp;</p>
 <p>rel.82: 5.5h (compara5)</p>
 <p><span>rel.83: 4.8h (compara5)</span></p>
+<p><span>rel.85: 7.5h (compara5)</span></p>
 </div>=20
 </div>=20
 <p>If new method_link_species_sets are added in the master after this, you =
@@ -1391,14 +1346,14 @@ ction_reg_conf.pl --master compara_master --new compara_curr</pre>=20
 </ul> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"473"><p>Delete any pairwise al=
 ignments on non-reference patches that have been DELETED or UPDATED.</p>=20
-<div id=3D"expander-1093547830" class=3D"expand-container">=20
-<div id=3D"expander-control-1093547830" class=3D"expand-control">=20
+<div id=3D"expander-1267993999" class=3D"expand-container">=20
+<div id=3D"expander-control-1267993999" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1093547830" class=3D"expand-content">
+<div id=3D"expander-content-1267993999" class=3D"expand-content">
 <p>Find the output of <span style=3D"line-height: 1.4285715;">find_assembly=
 _patches.pl script that you ran previously (usually for Human and Mouse) an=
 d combine their &quot;Dnafrags to delete&quot; into one common list:</span>=
@@ -1429,14 +1384,14 @@ ign_block_id AND ga1.dnafrag_id in $DNAFRAGS_2_DELETE&quot;</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"520"><p>Run healthchecks on th=
 e release database</p>=20
-<div id=3D"expander-1592776651" class=3D"expand-container">=20
-<div id=3D"expander-control-1592776651" class=3D"expand-control">=20
+<div id=3D"expander-972630293" class=3D"expand-container">=20
+<div id=3D"expander-control-972630293" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1592776651" class=3D"expand-content">
+<div id=3D"expander-content-972630293" class=3D"expand-content">
 <p>Run the healthchecks to make sure the the release database is consistent=
  after the initial population of data.</p>
 <p>Click <a href=3D"http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Re=
@@ -1466,20 +1421,20 @@ time bsub -q yesterday -M8000  -R&quot;select[mem&gt;8000]  rusage[mem=3D80=
 mpara_81 --host2 ens-staging2 -g ComparaShared</pre>=20
 </div>
 </div>=20
-<div id=3D"expander-1798808186" class=3D"expand-container">=20
-<div id=3D"expander-control-1798808186" class=3D"expand-control">=20
+<div id=3D"expander-1879868696" class=3D"expand-container">=20
+<div id=3D"expander-control-1879868696" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for run times</span>=20
 </div>=20
-<div id=3D"expander-content-1798808186" class=3D"expand-content">
+<div id=3D"expander-content-1879868696" class=3D"expand-content">
 <p>rel.83: 13 minutes, 2 expected complaints (<span style=3D"line-height: 1=
 .4285715;">CheckSpeciesSetSizeByMethod may complain about Human-on-Human la=
 stz-new and </span> <span style=3D"line-height: 1.4285715;">ForeignKeyMaste=
 rTables will complain about empty MethodLink entries (this will be deleted =
 later in the merging process) )</span></p>
-<p>&nbsp;</p>
+<p>rel.85: 20mins</p>
 </div>=20
 </div>=20
 <p>and correct any newly detected problems</p>
@@ -1497,24 +1452,27 @@ me (but it is necessary in the final product) so make sure you only do it o=
 nce.</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
-<li class=3D"checked" data-inline-task-id=3D"366"><p><span>Pairwise alignme=
+<li class=3D"checked" data-inline-task-id=3D"535"><p><span>Pairwise alignme=
 nts: LASTZ_NET (and, formerly, BLASTZ_NET or&nbsp;</span> <span style=3D"li=
 ne-height: 1.4285715;">TRANSLATED_BLAT_NET</span> <span style=3D"line-heigh=
 t: 1.4285715;">)</span></p><p>*NOTE* : For merging pw alignments involving =
 haplotypes, go to the next point</p>=20
-<div id=3D"expander-262089612" class=3D"expand-container">=20
-<div id=3D"expander-control-262089612" class=3D"expand-control">=20
+<div id=3D"expander-428792804" class=3D"expand-container">=20
+<div id=3D"expander-control-428792804" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-262089612" class=3D"expand-content">
+<div id=3D"expander-content-428792804" class=3D"expand-content">
 <p>These data are usually in separate production databases. You can copy th=
 em using the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_da=
 ta.pl script. This script requires write access to the production database =
 if the dnafrag_ids need fixing. Use the flag -re_enable 0 on all calls apar=
 t from the last one to avoid recomputing the indices.</p>
+<p>Also, check first_release of these databases. In case it hasn't been set=
+, you need to do it <strong>now</strong> on <strong>both</strong> the produ=
+ction database and the master database,</p>
 <p>Example:</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
@@ -1545,27 +1503,27 @@ _falb_lastz_73
 </div>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"532"><p><span style=3D"color: =
-rgb(0,51,102);"> <span style=3D"color: rgb(0,51,102);">The special case of =
-LASTZ_PATCH alignments. There is <span style=3D"color: rgb(255,0,0);"><stro=
-ng>always</strong></span> something to copy, even if there are no new patch=
-es&nbsp;</span> </span></p><p><span style=3D"color: rgb(0,51,102);"> <span =
-style=3D"color: rgb(0,51,102);">&nbsp;</span> </span></p>=20
-<div id=3D"expander-687357452" class=3D"expand-container">=20
-<div id=3D"expander-control-687357452" class=3D"expand-control">=20
+rgb(0,51,102);"> <span style=3D"color: rgb(0,51,102);">The curious case of =
+LASTZ_PATCH alignments. There is <span style=3D"color: rgb(255,0,0);"> <str=
+ong>always</strong> </span> something to copy, even if there are no new pat=
+ches&nbsp;</span> </span></p><p><span style=3D"color: rgb(0,51,102);"> <spa=
+n style=3D"color: rgb(0,51,102);">&nbsp;</span> </span></p>=20
+<div id=3D"expander-704975202" class=3D"expand-container">=20
+<div id=3D"expander-control-704975202" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-687357452" class=3D"expand-content">
+<div id=3D"expander-content-704975202" class=3D"expand-content">
 <p><span style=3D"color: rgb(0,51,102);"> <span style=3D"color: rgb(0,128,0=
-);"><span style=3D"color: rgb(0,51,102);"><span style=3D"color: rgb(0,51,10=
-2);">You will also have to copy Human_ref_vs_Human_patches and Mouse_ref_vs=
-_Mouse_patches LASTZ_PATCH alignments, but mind the source:</span></span></=
-span></span></p>
-<p><span style=3D"color: rgb(0,51,102);"><span style=3D"color: rgb(0,128,0)=
-;">If there were new patches</span>, you'll import them in a way similar to=
- other LASTZ:<br /> </span></p>
+);"> <span style=3D"color: rgb(0,51,102);"> <span style=3D"color: rgb(0,51,=
+102);">You will also have to copy Human_ref_vs_Human_patches and Mouse_ref_=
+vs_Mouse_patches LASTZ_PATCH alignments, but mind the source:</span> </span=
+> </span> </span></p>
+<p><span style=3D"color: rgb(0,51,102);"> <span style=3D"color: rgb(0,128,0=
+);">If there were new patches</span>, you'll import them in a way similar t=
+o other LASTZ:<br /> </span></p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -1619,14 +1577,14 @@ CH --re_enable 1 --from_reg_name compara_prev
 <li class=3D"checked" data-inline-task-id=3D"302"><p>Pairwise alignments: n=
 on-reference patches for the high coverage LASTZ_NET alignments. This is it=
 o be used when merging pw alignments involving haplotypes.</p>=20
-<div id=3D"expander-1805389303" class=3D"expand-container">=20
-<div id=3D"expander-control-1805389303" class=3D"expand-control">=20
+<div id=3D"expander-301942883" class=3D"expand-container">=20
+<div id=3D"expander-control-301942883" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1805389303" class=3D"expand-content">
+<div id=3D"expander-content-301942883" class=3D"expand-content">
 <p>This step is now very similar to the previous.</p>
 <p>Do not forget --merge and --patch_merge options.</p>
 <p>Also, if it's the last one you might want to switch keys back on</p>
@@ -1663,14 +1621,14 @@ z_human</pre>=20
 <li class=3D"checked" data-inline-task-id=3D"304"><p><span>Multiple alignme=
 nts: PECAN, EPO, EPO_LOW_COVERAGE, GERP_CONSTRAINED_ELEMENT, GERP_CONSERVAT=
 ION_SCORE</span></p>=20
-<div id=3D"expander-1332170864" class=3D"expand-container">=20
-<div id=3D"expander-control-1332170864" class=3D"expand-control">=20
+<div id=3D"expander-57106478" class=3D"expand-container">=20
+<div id=3D"expander-control-57106478" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1332170864" class=3D"expand-content">
+<div id=3D"expander-content-57106478" class=3D"expand-content">
 <p>These data are usually in separate production databases. You can copy th=
 em using the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_da=
 ta.pl script. This script requires write access to the production database =
@@ -1705,14 +1663,14 @@ ish_71 -re_enable 0
 </div>
 <p>EPO alignments produce ancestral sequences and a separate core database =
 which must also be copied. See below.</p>=20
-<div id=3D"expander-314413001" class=3D"expand-container">=20
-<div id=3D"expander-control-314413001" class=3D"expand-control">=20
+<div id=3D"expander-94626358" class=3D"expand-container">=20
+<div id=3D"expander-control-94626358" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for run times</span>=20
 </div>=20
-<div id=3D"expander-content-314413001" class=3D"expand-content">
+<div id=3D"expander-content-94626358" class=3D"expand-content">
 <p>rel 71.<br /> 2m: kb3_hsap_ggal_lastz_71&nbsp; mlss_id=3D632<br /> 1m&nb=
 sp; kb3_mmus_ggal_lastz_71&nbsp; mlss_id=3D633<br /> 1m&nbsp; kb3_ggal_mgap=
 _lastz_71&nbsp; mlss_id=3D634<br /> 1m&nbsp; kb3_ggal_xtro_tblat_71&nbsp; m=
@@ -1739,14 +1697,14 @@ p>
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"463"><p>Check the keys have be=
 en re-enabled</p>=20
-<div id=3D"expander-24818074" class=3D"expand-container">=20
-<div id=3D"expander-control-24818074" class=3D"expand-control">=20
+<div id=3D"expander-927865125" class=3D"expand-container">=20
+<div id=3D"expander-control-927865125" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-24818074" class=3D"expand-content">
+<div id=3D"expander-content-927865125" class=3D"expand-content">
 <p>Use mysqlshow to highlight if the table still has disabled keys. The tex=
 t &quot;disabled&quot; will be shown in the Comment column if the key is di=
 sabled. An empty Comment column indicates the keys are enabled.</p>
@@ -1784,14 +1742,14 @@ able_name&gt; ENABLE KEYS&quot;;</pre>=20
 </div> <p><span>&nbsp;</span> <span> <br /> </span></p></li>=20
 <li class=3D"checked" data-inline-task-id=3D"522"><p><span>Syntenies</span>=
 </p>=20
-<div id=3D"expander-1969175700" class=3D"expand-container">=20
-<div id=3D"expander-control-1969175700" class=3D"expand-control">=20
+<div id=3D"expander-1230242186" class=3D"expand-container">=20
+<div id=3D"expander-control-1230242186" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1969175700" class=3D"expand-content">
+<div id=3D"expander-content-1230242186" class=3D"expand-content">
 <p>First make sure the entries in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scr=
 ipts/pipeline/production_reg_conf.pl file point at the latest (staging) ver=
 sions of the core databases.</p>
@@ -1819,16 +1777,16 @@ ql://ensro@compara1/cc21_synteny_83 </pre>=20
 </div>
 </div>=20
 </div> </li>=20
-<li data-inline-task-id=3D"530"><p><span>Build a new ancestral sequence cor=
-e database</span></p>=20
-<div id=3D"expander-1388010275" class=3D"expand-container">=20
-<div id=3D"expander-control-1388010275" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"530"><p><span>Build a new ance=
+stral sequence core database</span></p>=20
+<div id=3D"expander-1488670408" class=3D"expand-container">=20
+<div id=3D"expander-control-1488670408" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1388010275" class=3D"expand-content">
+<div id=3D"expander-content-1488670408" class=3D"expand-content">
 <p>Putting together the database of ancestral sequence is now done using a =
 dedicated Hive-Core mini-pipeline.</p>
 <p>Check you have the most recent core checkout ie the correct schema and p=
@@ -1908,14 +1866,14 @@ Y na;</pre>=20
 size:12px;">call time_analysis('%')&nbsp;</pre>=20
 </div>
 </div>=20
-<div id=3D"expander-665329130" class=3D"expand-container">=20
-<div id=3D"expander-control-665329130" class=3D"expand-control">=20
+<div id=3D"expander-413918862" class=3D"expand-container">=20
+<div id=3D"expander-control-413918862" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for run times</span>=20
 </div>=20
-<div id=3D"expander-content-665329130" class=3D"expand-content">
+<div id=3D"expander-content-413918862" class=3D"expand-content">
 <p>rel.67: 20min<br />rel.71: 20min<br />rel.75: 21min</p>
 </div>=20
 </div>=20
@@ -1940,14 +1898,14 @@ ize:12px;">&nbsp;SHOW TABLE STATUS where engine !=3D 'MyISAM';</pre>=20
 </div>=20
 </div> <p>or, if no new multiple alignments were run, copy it over from the=
  previous release</p>=20
-<div id=3D"expander-1081024164" class=3D"expand-container">=20
-<div id=3D"expander-control-1081024164" class=3D"expand-control">=20
+<div id=3D"expander-124933221" class=3D"expand-container">=20
+<div id=3D"expander-control-124933221" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1081024164" class=3D"expand-content">
+<div id=3D"expander-content-124933221" class=3D"expand-content">
 <p>Create a new database for ancestral sequences:</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeContent panelContent pdl">=20
@@ -1967,7 +1925,7 @@ e
 # took 42 minutes in rel.82
 # took 38 minutes in rel.83
 # took 38 minutes in rel.84
-&nbsp;</pre>=20
+# rel.85: 40mins</pre>=20
 </div>
 </div>
 <p>Patch the database to the current release by applying the relevant patch=
@@ -2010,23 +1968,24 @@ ve been run</li>=20
 been run</li>=20
 <li class=3D"checked" data-inline-task-id=3D"425"><p>Check that LRGs were i=
 ncluded in the Families</p></li>=20
-<li data-inline-task-id=3D"531"><p>Once Production has updated all the xref=
-s (incl. gene names and descriptions), the pipeline that merges the gene si=
-de (&nbsp;<em> <span style=3D"line-height: 1.4285715;">ImportAltAlleGroupsA=
-sHomologies_conf</span> </em>&nbsp;<span style=3D"line-height: 1.4285715;">=
- <span style=3D"line-height: 1.4285715;">) can be run.<br />NB: make sure t=
-hat all the source databases' URLs are correctly registered in the master_d=
-b's MLSS table (if the pipelines have moved in between, make sure to edit t=
-he relevant MLSS.url columns).<br /> </span> </span></p>=20
-<div id=3D"expander-164439303" class=3D"expand-container">=20
-<div id=3D"expander-control-164439303" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"531"><p>Once Production has up=
+dated all the xrefs (incl. gene names and descriptions), the pipeline that =
+merges the gene side (&nbsp;<em> <span style=3D"line-height: 1.4285715;">Im=
+portAltAlleGroupsAsHomologies_conf</span> </em>&nbsp;<span style=3D"line-he=
+ight: 1.4285715;"> <span style=3D"line-height: 1.4285715;">) can be run.<br=
+ />NB: make sure that all the source databases' URLs are correctly register=
+ed in the master_db's MLSS table (if the pipelines have moved in between, m=
+ake sure to edit the relevant MLSS.url columns).<br /> </span> </span></p>=
+=20
+<div id=3D"expander-871597746" class=3D"expand-container">=20
+<div id=3D"expander-control-871597746" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details and times</span>=
 =20
 </div>=20
-<div id=3D"expander-content-164439303" class=3D"expand-content">
+<div id=3D"expander-content-871597746" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2051,14 +2010,14 @@ nf</span> </em> <span> pipeline.</span></p>
 <li class=3D"checked" data-inline-task-id=3D"499"><p><span>Run the Hive pip=
 eline ( <em>EnsemblMergeDBsIntoRelease_conf</em> )&nbsp;to merge tables fro=
 m all the four products into the release database<br /> </span></p>=20
-<div id=3D"expander-213975222" class=3D"expand-container">=20
-<div id=3D"expander-control-213975222" class=3D"expand-control">=20
+<div id=3D"expander-300287688" class=3D"expand-container">=20
+<div id=3D"expander-control-300287688" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-213975222" class=3D"expand-content">
+<div id=3D"expander-content-300287688" class=3D"expand-content">
 <p>Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/=
 PipeConfig/Example and open the PipeConfig file EnsemblMergeDBsIntoRelease_=
 conf.pm</p>
@@ -2103,14 +2062,14 @@ beekeeper.pl ... -loop</pre>=20
 <p>&nbsp;&nbsp;&nbsp; This pipeline will merge all the protein-side product=
 s into the release database.</p>
 <p>&nbsp;</p>=20
-<div id=3D"expander-1758917349" class=3D"expand-container">=20
-<div id=3D"expander-control-1758917349" class=3D"expand-control">=20
+<div id=3D"expander-299760721" class=3D"expand-container">=20
+<div id=3D"expander-control-299760721" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for times</span>=20
 </div>=20
-<div id=3D"expander-content-1758917349" class=3D"expand-content">
+<div id=3D"expander-content-299760721" class=3D"expand-content">
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
 &nbsp;&nbsp;&nbsp;&nbsp;rel.73 was the first experimental run, code had to =
 be fixed, servers had to be reconfigured, so merging took one whole working=
@@ -2138,18 +2097,18 @@ esTrees_conf -compara_alias_name compara_curr -host compara5
 </div>
 </div><p># Note: the last analysis of this pipeline failed in rel.82 (all 4=
  jobs of this analysis) trying to insert duplicated entries into MLSS_tag t=
-able, but all the data was there, so I just carried on.</p><p>&nbsp;</p></l=
-i>=20
-<li data-inline-task-id=3D"510"><p><span style=3D"color: rgb(112,112,112);"=
->Drop the three databases used for merging.</span></p>=20
-<div id=3D"expander-2090470452" class=3D"expand-container">=20
-<div id=3D"expander-control-2090470452" class=3D"expand-control">=20
+able, but all the data was there, so I just carried on. same in rel.85</p><=
+p>&nbsp;</p></li>=20
+<li class=3D"checked" data-inline-task-id=3D"510"><p><span style=3D"color: =
+rgb(112,112,112);">Drop the three databases used for merging.</span></p>=20
+<div id=3D"expander-1014015914" class=3D"expand-container">=20
+<div id=3D"expander-control-1014015914" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-2090470452" class=3D"expand-content">
+<div id=3D"expander-content-1014015914" class=3D"expand-content">
 <p>&nbsp;</p>
 <div>
 <p>&nbsp;</p>
@@ -2184,14 +2143,14 @@ p></li>=20
 =20
 <li class=3D"checked" data-inline-task-id=3D"524"><p><span>Remove redundant=
  method_link entries</span></p>=20
-<div id=3D"expander-1295173765" class=3D"expand-container">=20
-<div id=3D"expander-control-1295173765" class=3D"expand-control">=20
+<div id=3D"expander-450125669" class=3D"expand-container">=20
+<div id=3D"expander-control-450125669" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1295173765" class=3D"expand-content">
+<div id=3D"expander-content-450125669" class=3D"expand-content">
 <p>In most cases they can be removed, but check with other members of Compa=
 ra. Remove redundant method_link entries</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -2217,14 +2176,14 @@ note**** we deleted 18 mlss_ids in rel.83</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"198"><p>Check that all the sch=
 ema patches have been declared and applied.</p>=20
-<div id=3D"expander-1426729570" class=3D"expand-container">=20
-<div id=3D"expander-control-1426729570" class=3D"expand-control">=20
+<div id=3D"expander-1364382358" class=3D"expand-container">=20
+<div id=3D"expander-control-1364382358" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1426729570" class=3D"expand-content">
+<div id=3D"expander-content-1364382358" class=3D"expand-content">
 <p>If unsure, recheck the current schema against the previous schema. See<s=
 pan> <span class=3D"confluence-link">Check the patch files</span> for detai=
 ls </span></p>
@@ -2237,14 +2196,14 @@ e healthchecks</span></h2>
 =20
 <li class=3D"checked" data-inline-task-id=3D"478"><p><span>Update the code<=
 /span></p>=20
-<div id=3D"expander-1956819425" class=3D"expand-container">=20
-<div id=3D"expander-control-1956819425" class=3D"expand-control">=20
+<div id=3D"expander-1547306272" class=3D"expand-container">=20
+<div id=3D"expander-control-1547306272" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1956819425" class=3D"expand-content">
+<div id=3D"expander-content-1547306272" class=3D"expand-content">
 <p>The healthchecks are written in java and need to be recompiled after a g=
 it pull.</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
@@ -2266,14 +2225,14 @@ bsub -I ant clean jar</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"396"><p>&nbsp;Run the healthch=
 ecks for ancestral database</p>=20
-<div id=3D"expander-197969313" class=3D"expand-container">=20
-<div id=3D"expander-control-197969313" class=3D"expand-control">=20
+<div id=3D"expander-613395849" class=3D"expand-container">=20
+<div id=3D"expander-control-613395849" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-197969313" class=3D"expand-content">
+<div id=3D"expander-content-613395849" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
@@ -2303,14 +2262,14 @@ tions here: <a href=3D"/seqdb/confluence/pages/viewpage.action?pageId=3D309=
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"435"><p><span>Update the max_a=
 lignment_length IF NECESSARY.</span></p>=20
-<div id=3D"expander-529207388" class=3D"expand-container">=20
-<div id=3D"expander-control-529207388" class=3D"expand-control">=20
+<div id=3D"expander-1328793643" class=3D"expand-container">=20
+<div id=3D"expander-control-1328793643" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-529207388" class=3D"expand-content">
+<div id=3D"expander-content-1328793643" class=3D"expand-content">
 <p>Check that the max_alignment_lengths have been computed.</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
@@ -2342,14 +2301,14 @@ Align --repair 1 --user ensadmin --password $ENSADMIN_PSW</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"386"><p>Update the alignment m=
 lss_id of the conservation score IF NECESSARY</p>=20
-<div id=3D"expander-1982187816" class=3D"expand-container">=20
-<div id=3D"expander-control-1982187816" class=3D"expand-control">=20
+<div id=3D"expander-653383132" class=3D"expand-container">=20
+<div id=3D"expander-control-653383132" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1982187816" class=3D"expand-content">
+<div id=3D"expander-content-653383132" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2380,14 +2339,14 @@ PMSA --repair 1 --user ensadmin --password $ENSADMIN_PSW</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"436"><p>Run the ComparaAll gro=
 up of healthchecks on the release database</p>=20
-<div id=3D"expander-371527096" class=3D"expand-container">=20
-<div id=3D"expander-control-371527096" class=3D"expand-control">=20
+<div id=3D"expander-1107221638" class=3D"expand-container">=20
+<div id=3D"expander-control-1107221638" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-371527096" class=3D"expand-content">
+<div id=3D"expander-content-1107221638" class=3D"expand-content">
 <p>The 'stdbuf -o0' is a trick to prevent the pipe from buffering the outpu=
 t, since in addition to storing it we also want to examine the output visua=
 lly.</p>
@@ -2408,14 +2367,14 @@ althchecks_after_merge.txt</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"526"><p>Run the ControlledComp=
 araTables group of healthchecks on the release database</p>=20
-<div id=3D"expander-513625928" class=3D"expand-container">=20
-<div id=3D"expander-control-513625928" class=3D"expand-control">=20
+<div id=3D"expander-1160814569" class=3D"expand-container">=20
+<div id=3D"expander-control-1160814569" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-513625928" class=3D"expand-content">
+<div id=3D"expander-content-1160814569" class=3D"expand-content">
 <p>The 'stdbuf -o0' is a trick to prevent the pipe from buffering the outpu=
 t, since in addition to storing it we also want to examine the output visua=
 lly.</p>
@@ -2435,7 +2394,7 @@ ontrolled_tables_after_merge.txt</pre>=20
 </div>
 </div>=20
 </div> </li>=20
-<li data-inline-task-id=3D"527"><p>&nbsp;</p></li>=20
+<li class=3D"checked" data-inline-task-id=3D"527"><p>&nbsp;</p></li>=20
 </ul>=20
 <h2 id=3D"Releasecoordinationdocumentation-Testwebserver">Test web server</=
 h2>
@@ -2449,9 +2408,10 @@ of Compara to check their data on:<br />&nbsp;&nbsp;&nbsp; <a href=3D"http:=
 ging.ensembl.org/</a> <br /> </span></li>=20
 </ul>=20
 <p>&nbsp;</p>
-<h2 id=3D"Releasecoordinationdocumentation-Finalhandoverofdatabases"><a hre=
-f=3D"/seqdb/confluence/display/EnsCom/Final+handover+of+databases">Final ha=
-ndover of databases</a></h2>
+<h2 id=3D"Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]">=
+Final handover of databases <a href=3D"https://www.ebi.ac.uk/seqdb/confluen=
+ce/pages/editpage.action?pageId=3D30948157" rel=3D"nofollow">[edit]</a></h2=
+>
 <p></p>
 <h3 id=3D"Releasecoordinationdocumentation-Analyze/Optimizeonelasttime">Ana=
 lyze / Optimize one last time</h3>
@@ -2459,25 +2419,25 @@ lyze / Optimize one last time</h3>
 =20
 <li class=3D"checked" data-inline-task-id=3D"11"><p>This is required for th=
 e CopyDbOverServer script to work properly.</p>=20
-<div id=3D"expander-612448578" class=3D"expand-container">=20
-<div id=3D"expander-control-612448578" class=3D"expand-control">=20
+<div id=3D"expander-184472480" class=3D"expand-container">=20
+<div id=3D"expander-control-184472480" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-612448578" class=3D"expand-content">
+<div id=3D"expander-content-184472480" class=3D"expand-content">
 <p></p>
 <ol>
 <li><p>Run ANALYZE_TABLE on compara and ancestral databases</p>=20
-<div id=3D"expander-1651643092" class=3D"expand-container">=20
-<div id=3D"expander-control-1651643092" class=3D"expand-control">=20
+<div id=3D"expander-1345576243" class=3D"expand-container">=20
+<div id=3D"expander-control-1345576243" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-1651643092" class=3D"expand-content">
+<div id=3D"expander-content-1345576243" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2494,14 +2454,14 @@ analyze --verbose</pre>=20
 </div>=20
 </div> </li>
 <li><p>Run OPTIMIZE_TABLE on compara and ancestral databases</p>=20
-<div id=3D"expander-179152072" class=3D"expand-container">=20
-<div id=3D"expander-control-179152072" class=3D"expand-control">=20
+<div id=3D"expander-637627785" class=3D"expand-container">=20
+<div id=3D"expander-control-637627785" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-179152072" class=3D"expand-content">
+<div id=3D"expander-content-637627785" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2530,14 +2490,14 @@ opy databases to staging servers</h3>
 =20
 <li class=3D"checked" data-inline-task-id=3D"3"><p>Logon to ens-staging1 an=
 d import the databases</p>=20
-<div id=3D"expander-2071035931" class=3D"expand-container">=20
-<div id=3D"expander-control-2071035931" class=3D"expand-control">=20
+<div id=3D"expander-891169109" class=3D"expand-container">=20
+<div id=3D"expander-control-891169109" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-2071035931" class=3D"expand-content">
+<div id=3D"expander-content-891169109" class=3D"expand-content">
 <p>The import script MUST be run on the DESTINATION machine with the <em>my=
 sqlens</em> user. NB: ask for the password for <em>mysqlens</em> well in ad=
 vance - there may be no-one around you at the right moment!<br />You should=
@@ -2560,6 +2520,16 @@ mpara_release_databases.pl mysqlens</pre>=20
 <li class=3D"checked" data-inline-task-id=3D"4"><p>Logon to ens-staging2 an=
 d import the databases (same procedure)</p></li>=20
 </ul>=20
+<h3 id=3D"Releasecoordinationdocumentation-Filehandover">File handover</h3>
+<ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"30948157">=
+=20
+<li class=3D"checked" data-inline-task-id=3D"12"><span>If we have generated=
+ a new &quot;Age of Base&quot; file, it has to be copied to /nfs/ensnfs-dev=
+/staging/homo_sapiens/GRCh38/compara/ (usually it's named Hsap_ages_${mlss_=
+id}_${release_number}.bb ).<br />Llet the web-team know if you have copied =
+a new file or if they should consider the <span>file from the previous rele=
+ase </span>.<br /></span></li>=20
+</ul>=20
 <h3 id=3D"Releasecoordinationdocumentation-Finalbits">Final bits</h3>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"30948157">=
 =20
@@ -2573,14 +2543,14 @@ f Intentions on the <a href=3D"http://admin.ensembl.org/index.html" class=
 been handed over and what didn't make it and has been postponed</p></li>=20
 <li class=3D"checked" data-inline-task-id=3D"419"><p>Dump the master databa=
 se and place the copy in a safe place</p>=20
-<div id=3D"expander-1472446718" class=3D"expand-container">=20
-<div id=3D"expander-control-1472446718" class=3D"expand-control">=20
+<div id=3D"expander-1633414673" class=3D"expand-container">=20
+<div id=3D"expander-control-1633414673" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-1472446718" class=3D"expand-content">
+<div id=3D"expander-content-1633414673" class=3D"expand-content">
 <p>It should take a couple of minutes at most to run:</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
@@ -2601,9 +2571,10 @@ r_${RELEASE_VERSION}.mysql.gz</pre>=20
 <p></p>
 <h1 id=3D"Releasecoordinationdocumentation-Post-handover">Post-handover</h1=
 >
-<h2 id=3D"Releasecoordinationdocumentation-Updatedocumentationanddiagrams">=
-<a href=3D"/seqdb/confluence/display/EnsCom/Update+documentation+and+diagra=
-ms">Update documentation and diagrams</a></h2>
+<h2 id=3D"Releasecoordinationdocumentation-Updatedocumentationanddiagrams[e=
+dit]">Update documentation and diagrams <a href=3D"https://www.ebi.ac.uk/se=
+qdb/confluence/pages/editpage.action?pageId=3D32180001" rel=3D"nofollow">[e=
+dit]</a></h2>
 <p> </p>
 <div class=3D"aui-message hint shadowed information-macro">=20
 <span class=3D"aui-icon icon-hint">Icon</span>=20
@@ -2612,20 +2583,18 @@ ms">Update documentation and diagrams</a></h2>
 ranch the code=20
 </div>=20
 </div>=20
-<p>&nbsp;</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"32180001">=
 =20
-<li class=3D"checked" data-inline-task-id=3D"463"><p><span>Update the pipel=
-ine diagrams for all the pipelines that have been run this release<br /></s=
-pan></p>=20
-<div id=3D"expander-2141123345" class=3D"expand-container">=20
-<div id=3D"expander-control-2141123345" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"463"><p>Update the pipeline di=
+agrams for all the pipelines that have been run this release</p>=20
+<div id=3D"expander-453616060" class=3D"expand-container">=20
+<div id=3D"expander-control-453616060" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-2141123345" class=3D"expand-content">
+<div id=3D"expander-content-453616060" class=3D"expand-content">
 <p>Go to the docs directory</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
@@ -2650,16 +2619,16 @@ put epo_pt3.png</pre>=20
 <p>Commit any changed diagrams to git and push.</p>
 </div>=20
 </div> </li>=20
-<li class=3D"checked" data-inline-task-id=3D"414"><p><span>Update the schem=
-a documentation and diagrams</span></p>=20
-<div id=3D"expander-741941892" class=3D"expand-container">=20
-<div id=3D"expander-control-741941892" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"414"><p>Update the schema docu=
+mentation and diagrams</p>=20
+<div id=3D"expander-1760636291" class=3D"expand-container">=20
+<div id=3D"expander-control-1760636291" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-741941892" class=3D"expand-content">
+<div id=3D"expander-content-1760636291" class=3D"expand-content">
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2692,12 +2661,12 @@ hema.html $ENSEMBL_CVS_ROOT_DIR/public-plugins/docs/htdocs/info/docs/api/co=
 mpara/</pre>=20
 </div>
 </div>
-<p><span>If necessary, update schema diagrams by loading the </span>$ENSEMB=
-L_CVS_ROOT_DIR/ensembl-compara/sql/table.sql schema file into MySQL Workben=
-ch, rearrange/colour the nodes and export into PNG.</p>
-<p><span>The schema diagrams will have to be copied both to $ENSEMBL_CVS_RO=
-OT_DIR/ensembl-compara/docs/schema/diagrams and to public-plugins and commi=
-tted&amp;pushed in both repositories:</span></p>
+<p>If necessary, update schema diagrams by loading the $ENSEMBL_CVS_ROOT_DI=
+R/ensembl-compara/sql/table.sql schema file into MySQL Workbench, rearrange=
+/colour the nodes and export into PNG.</p>
+<p>The schema diagrams will have to be copied both to $ENSEMBL_CVS_ROOT_DIR=
+/ensembl-compara/docs/schema/diagrams and to public-plugins and committed&a=
+mp;pushed in both repositories:</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2710,19 +2679,18 @@ s/*.png $ENSEMBL_CVS_ROOT_DIR/public-plugins/docs/htdocs/info/docs/api/comp=
 ara/diagrams/</pre>=20
 </div>
 </div>
-<p><span> <br /> </span></p>
 </div>=20
 </div> </li>=20
-<li data-inline-task-id=3D"462"><p><span>Update the API tutorial documentat=
-ion</span></p>=20
-<div id=3D"expander-823805413" class=3D"expand-container">=20
-<div id=3D"expander-control-823805413" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"462"><p>Update the API tutoria=
+l documentation</p>=20
+<div id=3D"expander-854335016" class=3D"expand-container">=20
+<div id=3D"expander-control-854335016" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-823805413" class=3D"expand-content">
+<div id=3D"expander-content-854335016" class=3D"expand-content">
 <p>Update the tutorial documentation compara_tutorial.html in this director=
 y:</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $ENSEMBL_CVS_ROOT_DIR/ensembl-webco=
@@ -2742,20 +2710,19 @@ ting+PDF+version+of+VEP+docs">Creating PDF version of VEP docs</a> for more=
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"464"><p>Update the tutorial ab=
 out Compara resources</p>=20
-<div id=3D"expander-736820044" class=3D"expand-container">=20
-<div id=3D"expander-control-736820044" class=3D"expand-control">=20
+<div id=3D"expander-1830287462" class=3D"expand-container">=20
+<div id=3D"expander-control-1830287462" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-736820044" class=3D"expand-content">
-<p><span class=3D"nolink">Do the same with $ENSEMBL_CVS_ROOT_DIR/ensembl-we=
-bcode/htdocs/info/<span class=3D"nolink">website/tutorials/compara.html&nbs=
-p; This pages can be viewed online at </span></span><a href=3D"http://stagi=
-ng.ensembl.org/info/website/tutorials/compara.html" class=3D"external-link"=
- rel=3D"nofollow"><span class=3D"nolink">http://staging.ensembl.org/info/we=
-bsite/tutorials/compara.html</span></a></p>
+<div id=3D"expander-content-1830287462" class=3D"expand-content">
+<p>Do the same with $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/websi=
+te/tutorials/compara.html&nbsp;. This pages can be viewed online at <a href=
+=3D"http://staging.ensembl.org/info/website/tutorials/compara.html" class=
+=3D"external-link" rel=3D"nofollow"> http://staging.ensembl.org/info/websit=
+e/tutorials/compara.html </a></p>
 </div>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"465"><p>Update main ensembl sp=
@@ -2767,25 +2734,22 @@ ere (check how it should be moved) :&nbsp;<a href=3D"http://www.ensembl.org=
 </ul>=20
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"32180001">=
 =20
-<li data-inline-task-id=3D"210">Check examples work in ensembl-compara/scri=
-pts/examples/<br /> <span style=3D"color: rgb(116,116,116);"> <br /> </span=
-></li>=20
-<li class=3D"checked" data-inline-task-id=3D"286"><span>git commit and push=
- any modified files or added tutorial examples</span></li>=20
-<li class=3D"checked" data-inline-task-id=3D"426"><p><span>Update the decla=
-red intention with removed / deprecated methods</span></p>=20
-<div id=3D"expander-968130774" class=3D"expand-container">=20
-<div id=3D"expander-control-968130774" class=3D"expand-control">=20
+<li class=3D"checked" data-inline-task-id=3D"210">Check examples work in en=
+sembl-compara/scripts/examples/</li>=20
+<li class=3D"checked" data-inline-task-id=3D"286">git commit and push any m=
+odified files or added tutorial examples</li>=20
+<li class=3D"checked" data-inline-task-id=3D"426"><p>Update the declared in=
+tention with removed / deprecated methods</p>=20
+<div id=3D"expander-619587484" class=3D"expand-container">=20
+<div id=3D"expander-control-619587484" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click for details</span>=20
 </div>=20
-<div id=3D"expander-content-968130774" class=3D"expand-content">
-<br />
+<div id=3D"expander-content-619587484" class=3D"expand-content">
 <p>We need to generate the list of methods exported by the objects / adapto=
 rs on the master and release/{$n-1} branches, and compare (diff) them.</p>
-<p>&nbsp;</p>
 <div class=3D"code panel pdl" style=3D"border-width: 1px;">
 <div class=3D"codeHeader panelHeader pdl" style=3D"border-bottom-width: 1px=
 ;">
@@ -2814,7 +2778,6 @@ o a base / sub class, etc</p>
 </div>=20
 </div> </li>=20
 </ul>=20
-<p>&nbsp;</p>
 <p></p>
 <h2 id=3D"Releasecoordinationdocumentation-Branchthecode">Branch the code</=
 h2>
@@ -2870,14 +2833,14 @@ a/docs/pipelines/READMEs/multi_align.dumps.txt</span>&nbsp;<br /><span>&nbs=
 p;</span></li>=20
 <li class=3D"checked" data-inline-task-id=3D"466"><p><span>Gene tree dumps<=
 /span> <br /><span>&nbsp;</span></p>=20
-<div id=3D"expander-37398681" class=3D"expand-container">=20
-<div id=3D"expander-control-37398681" class=3D"expand-control">=20
+<div id=3D"expander-1068373949" class=3D"expand-container">=20
+<div id=3D"expander-control-1068373949" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-37398681" class=3D"expand-content">
+<div id=3D"expander-content-1068373949" class=3D"expand-content">
 <p>Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/=
 PipeConfig and open the PipeConfig file DumpTrees_conf.pm</p>
 <p>Check that you are happy about all parameters. In usual cases, they can =
@@ -2939,14 +2902,14 @@ nges.</p>
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"467"><p>Copy the tree content =
 dump for Uniprot</p>=20
-<div id=3D"expander-64753886" class=3D"expand-container">=20
-<div id=3D"expander-control-64753886" class=3D"expand-control">=20
+<div id=3D"expander-27074029" class=3D"expand-container">=20
+<div id=3D"expander-control-27074029" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-64753886" class=3D"expand-content">
+<div id=3D"expander-content-27074029" class=3D"expand-content">
 <p>The file 'target_dir'/ensembl.GeneTree_content.{release}.txt.gz needs to=
  be copied to the EBI ftp server, and then MD5 checksum computed and stored=
  next to it:</p>
@@ -2972,14 +2935,14 @@ sembl.GeneTree_content.e&lt;CURR_RELEASE_NUMBER&gt;.txt.gz.MD5SUM</pre>=20
 </div> </li>=20
 <li class=3D"checked" data-inline-task-id=3D"431"><p>Ancestral alleles (for=
  the Variation team)</p>=20
-<div id=3D"expander-981864404" class=3D"expand-container">=20
-<div id=3D"expander-control-981864404" class=3D"expand-control">=20
+<div id=3D"expander-1962167292" class=3D"expand-container">=20
+<div id=3D"expander-control-1962167292" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here to expand...</span>=20
 </div>=20
-<div id=3D"expander-content-981864404" class=3D"expand-content">=20
+<div id=3D"expander-content-1962167292" class=3D"expand-content">=20
 <div class=3D"aui-message hint shadowed information-macro">=20
 <span class=3D"aui-icon icon-hint">Icon</span>=20
 <div class=3D"message-content">=20
@@ -3014,30 +2977,99 @@ now that the dumps are ready in their common&nbsp;/nfs/ensembl/ensembl/ftp_=
 ensembl/release-XX/ location.</li>=20
 </ul>=20
 <p></p>
+<p>&nbsp;</p>
+<h2 id=3D"Releasecoordinationdocumentation-PatchGRCh37Databases"><a href=3D=
+"/seqdb/confluence/display/EnsCom/GRCh37+website">Patch GRCh37 Databases</a=
+></h2>
+<p> </p>
+<div class=3D"aui-message hint shadowed information-macro">=20
+<span class=3D"aui-icon icon-hint">Icon</span>=20
+<div class=3D"message-content">=20
+<p>For the next 10 years or so, we'll maintain a special archive site for t=
+he GRCh37 assembly: <a href=3D"http://grch37.ensembl.org" class=3D"external=
+-link" rel=3D"nofollow">http://grch37.ensembl.org</a></p>
+<p>This page explains the procedure to update the Compara databases on it. =
+This has to be done every release and is coordinated <a href=3D"/seqdb/conf=
+luence/display/ENS/GRCh37+Archive+Site">with the other teams</a>.</p>=20
+</div>=20
+</div>=20
+<h1 id=3D"Releasecoordinationdocumentation-Connectiondetails">Connection de=
+tails</h1>
+<p>The web-team has a Confluence page with all <a href=3D"/seqdb/confluence=
+/display/ENSWEB/GRCh37+setup+and+release+process">the gory details</a>. To =
+summarize:</p>
+<ul>
+<li>Public MySQL server: ensembldb.ensembl.org:3337</li>
+<li>Internal MySQL server (where we need to update the databases):&nbsp;<sp=
+an style=3D"line-height: 1.42857;">ens-staging-grch37&nbsp;</span>in e!84, =
+but it may be different in future releases</li>
+</ul>
+<h1 id=3D"Releasecoordinationdocumentation-Case1:nodataupdates">Case 1: no =
+data updates</h1>
+<ul>
+<li><p>Patch the ensembl_compara_<span style=3D"line-height: 1.4285715;">${=
+CURR_ENSEMBL_RELEASE}&nbsp;</span><span style=3D"line-height: 1.4285715;">d=
+atabase to the newest Compara schema</span></p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">=20
+<pre class=3D"theme: Confluence; brush: bash; gutter: false" style=3D"font-=
+size:12px;">$ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/schema_patcher.pl --=
+host=3Dens-staging-grch37 --user=3Densadmin --pass=3D${ENSADMIN_PSW} --data=
+base=3Densembl_compara_${CURR_ENSEMBL_RELEASE}</pre>=20
+</div>
+</div></li>
+<li><p>Patch the ensembl_ancestral_${CURR_ENSEMBL_RELEASE} database to the =
+newest Core schema</p>
+<div class=3D"code panel pdl" style=3D"border-width: 1px;">
+<div class=3D"codeContent panelContent pdl">=20
+<pre class=3D"theme: Confluence; brush: bash; gutter: false" style=3D"font-=
+size:12px;">$ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/schema_patcher.pl --=
+host=3Dens-staging-grch37 --user=3Densadmin --pass=3D${ENSADMIN_PSW} --data=
+base=3Densembl_ancestral_${CURR_ENSEMBL_RELEASE}</pre>=20
+</div>
+</div></li>
+<li>That's it, you're ready to hand-over</li>
+</ul>
+<h1 id=3D"Releasecoordinationdocumentation-Case2:dataupdates">Case 2: data =
+updates</h1>
+<p>Data-updates have to be coordinated with the other teams as they can imp=
+act them (BioMart, dumps, etc). The next data-update is scheduled to be for=
+ e79, but Compara did not participate in it.</p>
+<h1 id=3D"Releasecoordinationdocumentation-Comparaupdates:">Compara updates=
+:</h1>
+<ul>
+<li>Upgrade of the protein trees / homologies, to merge with TreeFam. This =
+will impact BioMart, etc.&nbsp;</li>
+<li>Fix the CAFE data ? =E2=86=92 Actually done at a data update, but I can=
+'t remember which one</li>
+</ul>
+<p>&nbsp;</p>
+<p></p>
 <h2 id=3D"Releasecoordinationdocumentation-Finalthings">Final things</h2>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
-<li data-inline-task-id=3D"420"><span>Create a word document and a pdf dump=
- of this document</span></li>=20
+<li class=3D"checked" data-inline-task-id=3D"420"><span>Create a word docum=
+ent and a pdf dump of this document</span></li>=20
 </ul>=20
-<div id=3D"expander-566399369" class=3D"expand-container">=20
-<div id=3D"expander-control-566399369" class=3D"expand-control">=20
+<div id=3D"expander-1237636868" class=3D"expand-container">=20
+<div id=3D"expander-control-1237636868" class=3D"expand-control">=20
 <span class=3D"expand-control-icon"><img style=3D"vertical-align:middle;" c=
 lass=3D"expand-control-image" src=3D"81c4be8bbc84ad58a16c9a5b9cee7752" widt=
 h=3D"16" height=3D"16" /></span>
 <span class=3D"expand-control-text">Click here for details</span>=20
 </div>=20
-<div id=3D"expander-content-566399369" class=3D"expand-content">
+<div id=3D"expander-content-1237636868" class=3D"expand-content">
 <p>In the top-right menu of this Confluence page, choose &quot;Tools -&gt; =
 Export to PDF&quot; and &quot;Tools -&gt; Export to Word&quot;.</p>
-<p>Put these files into $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/</p>
+<p>Put these files into $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/producti=
+on</p>
 <p>git commit and push</p>
 </div>=20
 </div>
     </div>
 </body>
 </html>
-------=_Part_6301_770449570.1456855203359
+------=_Part_16919_612776353.1468237655598
 Content-Type: image/png
 Content-Transfer-Encoding: base64
 Content-Location: file:///C:/81c4be8bbc84ad58a16c9a5b9cee7752
@@ -3047,4 +3079,4 @@ iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAA3NCSVQICAjb4U/gAAAAFVBMVEX/
 CxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAUdEVYdENy
 ZWF0aW9uIFRpbWUANi8xLzEzOKlF0AAAACFJREFUCJljYCATsCgwqIAZTMnMyRAhsTABCIMxkVxT
 GQCLcwHyUKXpLgAAAABJRU5ErkJggg==
-------=_Part_6301_770449570.1456855203359--
+------=_Part_16919_612776353.1468237655598--
