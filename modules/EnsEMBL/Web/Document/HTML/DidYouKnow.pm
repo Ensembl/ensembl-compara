@@ -37,7 +37,7 @@ sub render {
   my $sitename       = $sd->ENSEMBL_SITETYPE;
   my $html           = ''; 
 
-  return if $SiteDefs::ENSEMBL_SKIP_RSS || $sd->ENSEMBL_SUBTYPE eq 'Archive';
+  return if $SiteDefs::ENSEMBL_SKIP_RSS || ($sd->ENSEMBL_SUBTYPE && $sd->ENSEMBL_SUBTYPE eq 'Archive');
 
   my $rss_path = $hub->species_defs->DATAFILE_BASE_PATH.'/web/blog/minifeed';
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
