@@ -390,18 +390,10 @@ sub name {
     return $self->scientific_name(@_);
 }
 
-=head2 binomial
 
-  Example    : $ncbi->binomial;
-  Description: The binomial name (AKA the scientific name) of this genome
-  Returntype : string
-  Exceptions : warns when node is not a species or has no scientific name
-  Caller     : general
-
-=cut
-
-sub binomial {
+sub binomial {  ## DEPRECATED
   my $self = shift;
+  deprecate('NCBITaxon::binomial() is deprecated will be removed in e88. Use scientific_name) instead (and filter by rank="species" or "subspecies" if needed)');
   if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
       return $self->scientific_name;
   } else {
