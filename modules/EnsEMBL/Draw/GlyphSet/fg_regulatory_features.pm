@@ -142,7 +142,6 @@ sub tag {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
   my $epigenome = $self->{'my_config'}->get('epigenome');
-  return unless $epigenome;
 
   my @result;
   my @loci       = @{$f->get_underlying_structure($epigenome)};
