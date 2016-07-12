@@ -466,7 +466,8 @@ sub pipeline_create_commands {
         $self->db_cmd( 'CREATE TABLE homology_id_mapping (
             curr_release_homology_id  INT NOT NULL,
             prev_release_homology_id  INT,
-            mlss_id                   INT NOT NULL
+            mlss_id                   INT NOT NULL,
+            INDEX (mlss_id)
         )' ),
     ];
 }
@@ -3100,15 +3101,26 @@ sub core_pipeline_analyses {
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
-                '3'    => [  ],
+                '3'    => [ 'homology_id_mapping' ],
             },
         },
 
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -flow_into  => {
+                 1 => [ '?table_name=homology_id_mapping' ],
+                -1 => [ 'homology_id_mapping_himem' ],
+            },
+            -analysis_capacity => 100,
+        },
+
+        {   -logic_name => 'homology_id_mapping_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
                 1 => [ '?table_name=homology_id_mapping' ],
-            }
+            },
+            -analysis_capacity => 20,
+            -rc_name => '1Gb_job',
         },
 
         {   -logic_name => 'homology_dNdS',
@@ -3200,10 +3212,10 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
 
-#        $self->o('initialise_goc_pipeline') ? (
+            # initialise_goc_pipeline
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
-  #          ): (),
+
     ];
 }
 

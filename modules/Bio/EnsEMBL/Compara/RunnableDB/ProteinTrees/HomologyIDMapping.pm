@@ -80,12 +80,21 @@ sub fetch_input {
 	my @homology_ids = @{ $self->param_required('homology_ids') };
 	my $mlss_id      =    $self->param_required('mlss_id');
 
+	# # check orth mlss does not contain non-reuse species
+	# my $non_reuse_species = $self->param('reuse_species_csv');
+	# my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	# my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+	# my $species = $mlss->species_set_obj->genome_dbs;
+
+
+
 	my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
 
 	my $previous_db = $self->param('prev_rel_db');
 	die("No prev_rel_db provided") unless ( defined $previous_db );
 	my $previous_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
 	my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
+	my $prev_gene_member_adaptor = $previous_compara_dba->get_GeneMemberAdaptor;
 
 	my @homology_mapping;
 	foreach my $hid ( @homology_ids ) {
@@ -93,9 +102,19 @@ sub fetch_input {
 		next unless $curr_homology;
 		my @gene_members = @{ $curr_homology->get_all_GeneMembers() };
 
-		my $prev_homology = $previous_homo_adaptor->fetch_by_Member_Member( @gene_members );
-		my $prev_homology_id = defined $prev_homology ? $prev_homology->dbID : undef;
+		my @prev_gene_members;
+		foreach my $gm ( @gene_members ) {
+			my $prev_gm = $prev_gene_member_adaptor->fetch_by_stable_id( $gm->stable_id ); # must use stable_id as gene_member_id can change between releases
+			push ( @prev_gene_members, $prev_gm ) if defined $prev_gm;
+		}
+
+		my $prev_homology_id; # should be left undef if 2 gene members are not found
+		if ( scalar @prev_gene_members == 2 ) {
+			my $prev_homology = $previous_homo_adaptor->fetch_by_Member_Member( @prev_gene_members );
+			$prev_homology_id = defined $prev_homology ? $prev_homology->dbID : undef;
+		}
 		push( @homology_mapping, { mlss_id => $mlss_id, prev_release_homology_id => $prev_homology_id, curr_release_homology_id => $curr_homology->dbID } );
+		
 	}
 
 	$self->param( 'homology_mapping', \@homology_mapping );
@@ -108,6 +127,7 @@ sub write_output {
 	print Dumper $self->param('homology_mapping');
 
 	$self->dataflow_output_id( $self->param( 'homology_mapping' ), 1 );
+	$self->compara_dba->dbc->disconnect_if_idle();
 }
 
 1;

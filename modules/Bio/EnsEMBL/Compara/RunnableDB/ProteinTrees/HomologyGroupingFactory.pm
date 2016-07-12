@@ -109,7 +109,7 @@ sub write_output {
     while (@$inputlist) {
         my @job_array = splice(@$inputlist, 0, $group_size);
         $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'min_homology_id' => $job_array[0], 'max_homology_id' => $job_array[-1] }, 2);
-        $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'homology_ids' => $self->param('inputlist') }, 3 ); # to homology_id_mapping
+        $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'homology_ids' => \@job_array }, 3 ); # to homology_id_mapping
     }
 }
 
