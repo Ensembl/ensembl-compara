@@ -834,7 +834,7 @@ sub build_sequence {
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
 sub chunked_content {
-  my ($self, $total_length, $chunk_length, $url_params) = @_;
+  my ($self, $total_length, $chunk_length, $url_params, $teaser) = @_;
   my $hub = $self->hub;
   my $i   = 1;
   my $j   = $chunk_length;
@@ -844,7 +844,7 @@ sub chunked_content {
   my $display_width = $hub->param('display_width') || 0;
   my $id = $self->id;
 
-  if (!$hub->param('display_full_sequence')) {
+  if ($teaser and !$hub->param('display_full_sequence')) {
     $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
   }
   else {

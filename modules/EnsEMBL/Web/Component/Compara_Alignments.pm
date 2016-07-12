@@ -163,7 +163,7 @@ sub content {
 
     my $subslice_length = $slice_length < $self->{'subslice_length'} ? $slice_length : $self->{'subslice_length'};
 
-    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length });
+    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length },1);
 
     $html .= qq (
           <div class="_text_alignment_display js_panel">
