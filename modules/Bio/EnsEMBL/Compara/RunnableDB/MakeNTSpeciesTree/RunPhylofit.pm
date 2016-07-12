@@ -46,12 +46,9 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
  my $self = shift @_;
  # print the species tree
- my $species_tree_a = $self->compara_dba->get_SpeciesTreeAdaptor;
- my $species_tree = $species_tree_a->fetch_by_method_link_species_set_id_label(
-                     $self->param('tree_mlss_id') );
- throw("no species tree found for mlssid ".$self->param('tree_mlss_id')) unless $species_tree;
- my $newick_tree = $species_tree->species_tree;
- $newick_tree=~s/[\d\.:]+//g;
+ my $mlss_a = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+ my $mlss = $mlss_a->fetch_by_dbID( $self->param_required('tree_mlss_id') );
+ my $newick_tree = $mlss->species_tree->root->newick_format('ryo', '%{-n}');
  $self->param("newick_tree", lc($newick_tree));
  
  Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@{ $self->param('core_dbs') });

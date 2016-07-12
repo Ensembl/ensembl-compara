@@ -65,9 +65,7 @@ sub fetch_input {
  my $mlss = $mlss_a->fetch_by_dbID($self->param('msa_mlssid'));
 
  my $msa_species_tree = $mlss->species_tree;
- my $orig_tree = $msa_species_tree->species_tree;
- $orig_tree=~s/:0;/;/;
- my $orig_species = lc join ":", sort {$a cmp $b} $orig_tree=~m/([[:alpha:]_]+)/g;
+ my $orig_species = lc join ":", sort {$a cmp $b} map {$_->name} @{$msa_species_tree->root->get_all_leaves};
  $self->param('msa_species_tree', $msa_species_tree);
 
  my(%exon_aligns,%species_names);

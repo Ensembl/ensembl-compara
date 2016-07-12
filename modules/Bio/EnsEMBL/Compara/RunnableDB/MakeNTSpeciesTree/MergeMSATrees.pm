@@ -65,12 +65,13 @@ sub fetch_input {
  my @tree_mlss_ids = split ",", $self->param('msa_mlssid_csv_string');
 
  foreach my $mlss_id(@tree_mlss_ids){
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
   my @orig_species_trees = $species_tree_adapt->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
   my $orig_species_tree = $orig_species_trees[0];
   my $orig_tree = $orig_species_tree->species_tree;
   $orig_tree=~s/:0;/;/;
 
-  my $orig_species = lc join ":", $orig_tree=~m/([[:alpha:]_]+)/g;
+  my $orig_species = lc join ":", map {$_->name} @{$mlss->species_tree->root->get_all_leaves};
   my $pfit_species_trees = $all_phylofit_trees->{$mlss_id};
 
   my(@tree_branch_lengths, @species_branch_lengths, @median_bls, $median_newick);
