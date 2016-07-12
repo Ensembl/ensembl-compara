@@ -68,6 +68,13 @@ sub fetch_input {
   #with $self->db (Hive DBAdaptor)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
+    #if the database name is defined in the url, then open that
+    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
+	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
+    } else {
+	#open the most recent compara database
+	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
+    }
 }
 
 =head2 run
@@ -112,14 +119,6 @@ sub write_output {
 sub importAlignment {
     my $self = shift;
 
-    #if the database name is defined in the url, then open that
-    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
-	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
-    } else {
-	#open the most recent compara database
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
-    }
-    
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
     my $mlss_id = $self->param('method_link_species_set_id');
 
@@ -358,14 +357,6 @@ sub copy_data_in_text_mode {
 sub importAlignment_quick {
     my $self = shift;
 
-    #if the database name is defined in the url, then open that
-    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
-	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
-    } else {
-	#open the most recent compara database
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
-    }
-    
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
     my $mlss_id = $self->param('method_link_species_set_id');
 
