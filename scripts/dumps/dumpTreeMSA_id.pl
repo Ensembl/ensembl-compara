@@ -170,7 +170,7 @@ foreach my $tree_id (@tree_ids) {
       Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($dba->get_DnaFragAdaptor, $tree->get_all_Members);
   }
 
-  dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
+  dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $tree, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
