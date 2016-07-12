@@ -83,7 +83,7 @@ sub render {
       'desc'  => "Convert Ensembl files for use with other analysis tools",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
-      'code'  => '',
+      'code'  => sprintf('<a href="https://github.com/FAANG/faang-format-transcriber" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
       'docs'  => '',
     });
   }
