@@ -155,22 +155,13 @@ sub root {
 }
 
 
-=head2 species_tree
-
-    Arg[1]      : (opt.) <string> The species tree in newick format
-    Example     : my $newick_tree = $tree->species_tree
-    Description : Getter/Setter for the species tree in newick format
-    ReturnType  : string
-    Exceptions  : none
-    Caller      : general
-
-=cut
-
 sub species_tree {
     my ($self, $species_tree) = @_;
+    deprecate('$species_tree->species_tree() is deprecated and will be removed in e88. Use $species_tree->newick_format() instead.');
     if (defined $species_tree) {
         $self->{'_species_tree'} = $species_tree;
     }
+    $self->{'_species_tree'} ||= $self->root->newick_format('simple');
     return $self->{'_species_tree'};
 }
 

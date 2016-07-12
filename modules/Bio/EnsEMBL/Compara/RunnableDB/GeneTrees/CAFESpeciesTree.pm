@@ -154,8 +154,6 @@ sub run {
     my $cafe_tree_str = $cafe_tree_root->newick_format('ryo', $fmt);
     print STDERR "Tree to store:\n$cafe_tree_str\n" if ($self->debug);
 
-
-    $species_tree->species_tree($cafe_tree_str);
     $species_tree->label($self->param_required('new_label'));
     $speciesTree_Adaptor->store($species_tree);
 

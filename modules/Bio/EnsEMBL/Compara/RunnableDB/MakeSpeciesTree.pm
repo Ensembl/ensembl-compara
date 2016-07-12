@@ -165,7 +165,6 @@ sub write_output {
     my $species_tree_string = $species_tree_root->newick_format( $newick_format );
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
-    $species_tree->species_tree($species_tree_string);
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
