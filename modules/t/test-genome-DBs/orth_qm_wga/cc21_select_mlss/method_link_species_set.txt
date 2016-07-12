@@ -1,2 +1,3 @@
 647	13	35399	4 sauropsids EPO	ensembl		74	\N
 719	16	35714	H.sap-G.gal lastz-net (on H.sap)	ensembl		76	\N
+634	16	30003	G.gal-M.gal lastz-net (on G.gal)	ensembl		76	\N

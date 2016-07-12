@@ -1,2 +1,3 @@
 35399	sauropsids	4	74	\N
 35714	H.sap-G.gal	2	76	\N
+30003	G.gal-M.gal	2	76	\N
