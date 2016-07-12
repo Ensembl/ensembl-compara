@@ -38,6 +38,7 @@ my $apache_define = $SiteDefs::APACHE_DEFINE;
 my $apache_dir    = $SiteDefs::APACHE_DIR;
 my $apache_bin    = $SiteDefs::APACHE_BIN;
 my $apache_conf   = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
+my $log_dir       = $SiteDefs::ENSEMBL_LOGDIR;
 
 my ($help, $rmconfig, $flush, $verbose, @defines);
 
@@ -68,6 +69,9 @@ if ($help) {
 
 warn_line();
 warn_string('start_server: Starting server');
+
+# Remove preload log
+unlink("$log_dir/preload-errors.log");
 
 # Create directory for packed files if it doesn't exist
 if (! -e "$conf_dir/packed") {

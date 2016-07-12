@@ -54,7 +54,7 @@ EOF
 }
 
 sub import {
-  unlink("$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log");
+  $MOANED = 1 if -e "$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log";
   load("Bio::AlignIO",1);
   load("Bio::EnsEMBL::AltAlleleGroup",1);
   load("Bio::EnsEMBL::CDS",1);
