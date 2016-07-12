@@ -66,9 +66,7 @@ sub fetch_input {
 
  foreach my $mlss_id(@tree_mlss_ids){
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-  my @orig_species_trees = $species_tree_adapt->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
-  my $orig_species_tree = $orig_species_trees[0];
-  my $orig_tree = $orig_species_tree->species_tree;
+  my $orig_tree = $mlss->species_tree->root->newick_format('ryo', '%{n}:%{d}');
   $orig_tree=~s/:0;/;/;
 
   my $orig_species = lc join ":", map {$_->name} @{$mlss->species_tree->root->get_all_leaves};

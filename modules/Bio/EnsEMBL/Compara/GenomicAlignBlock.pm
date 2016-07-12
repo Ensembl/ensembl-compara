@@ -1420,7 +1420,7 @@ sub get_GenomicAlignTree {
                                                                                               -species_set => $species_set)->newick_format('ncbi_name');
     } else {
         #Multiple alignment 
-        $species_tree_string = $self->method_link_species_set->species_tree->species_tree;
+        $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format("ncbi_name");
     }
     #print "string $species_tree_string\n";
 

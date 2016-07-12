@@ -66,7 +66,7 @@ sub fetch_input {
 
  my $msa_species_tree = $mlss->species_tree;
  my $orig_species = lc join ":", sort {$a cmp $b} map {$_->name} @{$msa_species_tree->root->get_all_leaves};
- $self->param('msa_species_tree', $msa_species_tree);
+ $self->param('msa_species_tree_string', $msa_species_tree->root->newick_format('ryo', '%{n}:%{d}'));
 
  my(%exon_aligns,%species_names);
 
@@ -118,7 +118,7 @@ sub write_output {
   }
   my $tree_file = "$exon_dir/msa_species_tree";
   open(TR, ">$tree_file") or throw("cant open $tree_file");
-  print TR $self->param('msa_species_tree')->species_tree;
+  print TR $self->param('msa_species_tree_string');
   my $phylo_out_file = "$exon_dir/phylo$exon_id";
   my @command = ($self->param('phylofit_exe'), '--tree', $tree_file, '--subst-mod', 'HKY85', '--out-root', $phylo_out_file, $msa_fasta_file);
   system(@command);
