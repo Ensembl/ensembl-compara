@@ -53,10 +53,25 @@ limitations under the License.
     http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
 
     Additional options:
-    -compara_db         database containing relevant data. NOTE: this is where final scores will be written
+    -compara_db         database containing relevant data (this is where final scores will be written)
     -alt_aln_db         take alignment objects from a different source
     -alt_homology_db    take homology objects from a different source
 
+    Note: If you wish to use homologies from one database, but the alignments live in a different database,
+    remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd 
+    like the final scores written to the homology database, assign this as compara_db and use the alt_aln_db option 
+    to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
+    database, assign it as compara_db and use the alt_homology_db option.
+
+    Examples:
+    ---------
+    # scores go to homology db, alignments come from afar
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/homologies
+        -alt_aln_db mysql://ro_user@hosty_mchostface/alignments
+
+    # scores go to alignment db
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
+        -alt_homology_db mysql://ro_user@hostess_with_the_mostest/homologies
 
 =head1 CONTACT
 
@@ -153,7 +168,7 @@ sub resource_classes {
         'default'                => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         '200M_job'               => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
         '500M_job'               => {'LSF' => '-C0 -M500  -R"select[mem>500]  rusage[mem=500]"' },
-        '500M_job_with_reg_conf' => {'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')] },
+        '1Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M1000   -R"select[mem>1000]   rusage[mem=1000]"', '--reg_conf '.$self->o('reg_conf')] },
         '2Gb_job'                => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
         '2Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')] },
         '8Gb_job'                => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"'},
@@ -168,8 +183,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
                 '2->A' => [ 'prepare_exons' ],
-                'A->1' => [ 'funnel_exons' ],
-                
+                'A->1' => [ 'exon_funnel' ],
                 '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
@@ -186,7 +200,7 @@ sub pipeline_analyses {
             }],
         },
 
-        {   -logic_name => 'funnel_exons',
+        {   -logic_name => 'exon_funnel',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ExonFunnel',
             -flow_into  => {
                 1 => [ 'select_mlss' ],
@@ -200,7 +214,8 @@ sub pipeline_analyses {
             -flow_into         => {
                 1 => [ '?table_name=exon_boundaries' ] 
             },
-            -rc_name => '500M_job_with_reg_conf',
+            -rc_name => '1Gb_job_with_reg_conf',
+            -analysis_capacity => 50,
             #-input_ids => {}
         },
 
@@ -221,11 +236,15 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
             -analysis_capacity  =>  100,  # use per-analysis limiter
             -flow_into => {
+                # 1 => [ 'copy_reusable_scores'   ],
                 2 => [ 'calculate_wga_coverage' ],
             },
             -rc_name => '2Gb_job_with_reg_conf',
         },
 
+        # {   -logic_name => 'copy_reusable_scores',
+        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyReusableScores',
+        # },
 
         {   -logic_name => 'calculate_wga_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',

@@ -7,17 +7,17 @@
 =head1 SYNOPSIS
 
     Given two genome_db IDs, fetch and fan out all orthologs that they share.
-    If a previous release database is supplied, only the new/updated orthologs will be dataflown
+    If a previous release database is supplied, only the new/updated orthologs will be dataflowed
 
 =head1 DESCRIPTION
 
     standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs -input_ids "{ species1_id => 150, species2_id => 125 }"
 
     Inputs:
-        species1_id     genome_db_id
-        species2_id     another genome_db_id
-        alt_homology_db for use as part of a pipeline - specify an alternate location to read homologies from
-        previous_rel_db     database URL for previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
+        species1_id       genome_db_id
+        species2_id       another genome_db_id
+        alt_homology_db   for use as part of a pipeline - specify an alternate location to read homologies from
+        previous_rel_db   database URL for previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
 
     Outputs:
         dataflows homology dbID and start/end positions in a fan
@@ -35,7 +35,9 @@ use Bio::EnsEMBL::Registry;
 
 =head2 fetch_input
 
-    Description: pull orthologs for species 1 and 2 from EnsEMBL and save as param
+    Description: Pull orthologs for species 1 and 2 from given database. compara_db will be used unless 
+    alt_homology_db is defined. Homologies may be reused from previous releases by providing the URL in
+    the previous_rel_db param
 
 =cut
 
@@ -45,37 +47,28 @@ sub fetch_input {
     my $species1_id = $self->param_required('species1_id');
     my $species2_id = $self->param_required('species2_id');
 
-    my $dba;
+    my ($dba, $db_url);
     if ( $self->param('alt_homology_db') ) { 
-        $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_homology_db')); 
+        $db_url = $self->param('alt_homology_db');
+        $dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $db_url );
     }
-    else { $dba = $self->compara_dba }
+    else {
+        $db_url = $self->param('compara_db');
+        $dba = $self->compara_dba;
+    }
+    $self->param('current_db_url', $db_url);
+    $self->param('current_dba', $dba);
 
     my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
+    $self->param('mlss_id', $mlss->dbID);
 
     my $current_homo_adaptor = $dba->get_HomologyAdaptor;
-    my $current_homologs     = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-
-    my $previous_db = $self->param('previous_rel_db');
-    if ( defined $previous_db ){
-        my $previous_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
-        my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
-        my $previous_homologs     = $previous_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-
-        # print "Found " . scalar(@{$current_homologs}) . " in current db\n";
-        # print "Found " . scalar(@{$previous_homologs}) . " in prev db\n";
-
-        my ($updated_orthologs, $reuse_orthologs) = $self->_updated_orthologs( $current_homologs, $previous_homologs );
-
-        # print "Found " . scalar(@{$updated_orthologs}) . " changes\n";
-        # foreach my $uo ( @{$updated_orthologs} ) {
-        #   print $uo->dbID . "\n";
-        # }
-
-        #my $exons = $self->_find_exons( $updated_orthologs );
-        $self->_copy_reused_orthologs( $reuse_orthologs, $current_homo_adaptor, $previous_homo_adaptor );
-        $self->param( 'orth_objects', $updated_orthologs );
+    my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    
+    if ( defined $self->param('previous_rel_db') ){ # reuse is on
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $current_homologs, $mlss->dbID );
+        $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
         $self->param( 'orth_objects', $current_homologs );
@@ -100,7 +93,9 @@ sub run {
 
     # prepare SQL statement to fetch the exon boundaries for each gene_members
     my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE gene_member_id = ?';
-    my $sth = $self->db->dbc->prepare($sql);
+    
+    my $db = defined $self->db ? $self->db : $self->compara_dba; # mostly for unit test purposes
+    my $sth = $db->dbc->prepare($sql);
 
     my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
@@ -127,7 +122,6 @@ sub run {
         # $c++;
         # last if $c >= 100;
     }
-    # print Dumper \@orth_info;
     $self->param( 'orth_info', \@orth_info );
 }
 
@@ -140,96 +134,78 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my (@batched_orths, @current_batch);
-    foreach my $o ( @{ $self->param('orth_info') } ) {
-        if ( scalar @current_batch > $self->param('orth_batch_size') ) {
-            my @batch_copy = @current_batch; # need to copy as arrayref will be updated again later
-            push( @batched_orths, {'orth_batch' => \@batch_copy} );
-            @current_batch = ();
+    # split list of orths in to chunks/batches
+    my $batch_size = $self->param_required('orth_batch_size');
+    my @orth_list = @{ $self->param('orth_info') };
+
+    my (@batched_orths, @spliced);
+    push @spliced, [ splice @orth_list, 0, $batch_size ] while @orth_list;
+    foreach my $batch ( @spliced ){
+        push( @batched_orths, { orth_batch => $batch } );
+    }
+
+    $self->dataflow_output_id( \@batched_orths, 2 ); # to calculate_coverage
+
+    # flow reusable homologies to have their score copied
+    # if ( defined $self->param('reusable_homologies') ){
+    #     my $current_dba = $self->param('current_dba');
+    #     my $dataflow = {
+    #         previous_rel_db => $self->param('previous_rel_db'),
+    #         current_db      => $self->param('current_db_url'),
+    #         homology_ids    => $self->param('reusable_homologies'),
+    #     };
+    #     $self->dataflow_output_id( $dataflow, 1 ); # to copy_reusable_scores
+    # }
+}
+
+=head2 _reuse_homologies
+
+    Check through list of homologs and check if they can be reused.
+    wga_coverage scores are copied from the previous_rel_db to the current $dba if they meet 2 requirements:
+        1. an ID mapping exists for the homology
+        2. a score exists in the previous_rel_db
+    Homologs not meeting these criteria are returned as an arrayref
+
+=cut
+
+sub _reusable_homologies {
+    my ( $self, $dba, $current_homologs, $mlss_id ) = @_;
+
+    my $previous_db = $self->param('previous_rel_db');
+    my $current_homo_adaptor = $dba->get_HomologyAdaptor;
+
+    # first, find reusable homologies based on id mapping table
+    my $sql = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ? AND prev_release_homology_id IS NOT NULL";
+
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute( $mlss_id );
+    my $reuse_homologs = $sth->fetchall_hashref('curr_release_homology_id');
+
+    # next, split the homologies into reusable and non-reusable (new)
+    # copy score of reusable homs to new db
+    my ( @reuse, @dont_reuse );
+    foreach my $h ( @{ $current_homologs } ) {
+        my $h_id = $h->dbID;
+        my $homolog_map = $reuse_homologs->{ $h_id };
+        if ( defined $homolog_map ){
+            # check if wga_coverage has already been calculated for this homology
+            my $previous_compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
+            my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
+            my $previous_homolog      = $previous_homo_adaptor->fetch_by_dbID( $homolog_map->{prev_release_homology_id} );
+            if ( defined $previous_homolog && defined $previous_homolog->wga_coverage ) { # score already exists
+                $current_homo_adaptor->update_wga_coverage( $h_id, $previous_homolog->wga_coverage ); # copy score
+            }
+            else {
+                push( @dont_reuse, $h );
+            }
         }
         else {
-            push( @current_batch, $o );
-        }
-    }
-    $self->dataflow_output_id( \@batched_orths, 2 ); # to calculate_coverage aka prepare_alignment + combine_coverage..
-}
-
-=head2 _updated_orthologs
-
-    Checks whether the Homology object has been updated since the last release
-    Do not recalculate if it is unchanged
-
-=cut
-
-sub _updated_orthologs {
-    my ( $self, $current_homologs, $previous_homologs, $homology_adaptor ) = @_;
-
-    # reformat data to hashes
-    my %current_hh  = %{ $self->_hash_homologs( $current_homologs ) };
-    my %previous_hh = %{ $self->_hash_homologs( $previous_homologs ) };
-
-    my (@new_homologs, @old_homologs);
-    foreach my $h ( @{ $current_homologs } ){
-        my $curr_id = $h->dbID;
-
-        if ( !defined $previous_hh{$curr_id}->{'score'} || (!defined $previous_hh{$curr_id}->{'members'}) || ($current_hh{$curr_id}->{'members'}->[0] != $previous_hh{$curr_id}->{'members'}->[0] || $current_hh{$curr_id}->{'members'}->[1] != $previous_hh{$curr_id}->{'members'}->[1])  ) {
-            push( @new_homologs, $h );
-        }
-        else {
-            push( @old_homologs, $h );
+            push( @dont_reuse, $h );
         }
     }
 
-    return (\@new_homologs, \@old_homologs);
-}
-
-=head2 _hash_homologs
-
-    Reformat homology data
-
-=cut
-
-sub _hash_homologs {
-    my ( $self, $hlist ) = @_;
-
-    my %hhash;
-    foreach my $h ( @{ $hlist } ) {
-        my @members;
-        foreach my $gene ( @{ $h->get_all_GeneMembers() } ) {
-            push( @members, $gene->dbID );
-        }
-        my @sorted_members = sort {$a <=> $b} @members;
-
-        $hhash{ $h->dbID }->{'members'} = \@sorted_members;
-        $hhash{ $h->dbID }->{'score'} = $h->wga_coverage;
-    }
-    return \%hhash;
-}
-
-=head2 _copy_reused_orthologs
-
-    Takes list of orthologs and homology adaptors for current and prev releases
-    Copies wga_coverage score from prev release to current
-
-=cut
-
-sub _copy_reused_orthologs {
-    my ( $self, $orths, $current_homo_adaptor, $previous_homo_adaptor ) = @_;
-
-    foreach my $o ( @{ $orths } ) {
-        my $orth_id = $o->dbID;
-        my $prev_o  = $previous_homo_adaptor->fetch_by_dbID($orth_id);
-        my $prev_score = $prev_o->wga_coverage;
-        $current_homo_adaptor->update_wga_coverage( $orth_id, $prev_score ); 
-    }  
-}
-
-sub _fetch_exons_by_gene_member {
-    my ( $self, $gm ) = @_;
-
-    my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_ranges WHERE gene_member_id = ?';
-    my $sth = $self->db->dbc->prepare($sql);
-
+    # return nonreuable homologies to the pipeline
+    return \@dont_reuse;
 }
 
 1;

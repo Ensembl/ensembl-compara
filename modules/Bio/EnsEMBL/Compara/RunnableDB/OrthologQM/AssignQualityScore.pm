@@ -30,20 +30,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Registry;
 
-sub fetch_input_single {
-	my $self = shift;
-
-	my $orth_id = $self->param_required('orth_id');
-	my $max_quality = 0;
-
-	my $sql = 'select MAX(wga_cov) from ( select alignment_mlss, AVG(quality_score) wga_cov from ortholog_quality where homology_id = ? group by alignment_mlss ) wga';
-	my $sth = $self->db->dbc->prepare($sql);
-	$sth->execute($orth_id);
-	$max_quality = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $orth_id");
-
-	$self->param('max_quality', $max_quality);
-}
-
 sub fetch_input {
 	my $self = shift;
 
@@ -65,16 +51,6 @@ sub fetch_input {
 	Description: write avg score to homology table & threshold to mlss_tag
 
 =cut
-
-sub write_output_single {
-	my $self = shift;
-
-	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
-	$homology_adaptor->update_wga_coverage($self->param_required('orth_id'),  $self->param('max_quality') );	
-
-	# disconnect from compara_db
-    $self->compara_dba->dbc->disconnect_if_idle();
-}
 
 sub write_output {
 	my $self = shift;
