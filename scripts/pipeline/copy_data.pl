@@ -160,6 +160,7 @@ If true, add new data to an existing data set in the release database. Default F
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Getopt::Long;
 
 $| = 1;
@@ -420,11 +421,8 @@ sub check_table {
 
   print "Checking ".($columns ? "columns [$columns] of the" : '')." table $table_name ".($where ? "where [$where]" : '')."...";
 
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
-
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
 
   my $from_entries;
   ## Write SQL query
