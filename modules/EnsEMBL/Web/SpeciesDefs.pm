@@ -474,11 +474,7 @@ sub _read_in_ini_file {
           if (defined $defaults->{$current_section}) {
             my %hash = %{$defaults->{$current_section}};
             
-            foreach my $k (keys %hash) {
-              next if exists $tree->{$current_section}{$k};
-              $tree->{$current_section}{$k} =
-                $defaults->{$current_section}{$k};
-            }
+            $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
           }
         } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
           my ($key, $value) = ($1, $2); # Add a config entry under the current 'top level'
@@ -491,7 +487,6 @@ sub _read_in_ini_file {
           }
           
           $tree->{$current_section}{$key} = $value;
-
         } elsif (/([.\w]+)\s*=\s*(.*)/) { # precedes a [ ] section
           print STDERR "\t  [WARN] NO SECTION $filename.ini($line_number) -> $1 = $2;\n";
         }
