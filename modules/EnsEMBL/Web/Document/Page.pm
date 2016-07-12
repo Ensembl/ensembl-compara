@@ -503,6 +503,6 @@ sub html_template {
   return $HTML;
 }
 
-sub modify_page_settings { #stub }
+sub modify_page_settings {}
 
 1;
