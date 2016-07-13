@@ -118,9 +118,6 @@ foreach my $s (@subparts) {
   $subparts{$k} = $v;
 }
 
-use Data::Dumper;
-warn Dumper('subparts',\%subparts);
-
 # Setup jobs
 my @jobs = keys %precache;
 if($list) {
