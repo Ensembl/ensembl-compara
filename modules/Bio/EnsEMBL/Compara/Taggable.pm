@@ -415,7 +415,9 @@ sub _getter_setter_for_tag {
     my $self = shift;
     my $tag = shift;
     if (@_) {
-        $self->add_tag($tag, shift);
+        my $value = shift;
+        $self->add_tag($tag, $value);
+        return $value;
     }
     return $self->get_value_for_tag($tag);
 }
