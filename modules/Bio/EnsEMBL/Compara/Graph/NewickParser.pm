@@ -91,7 +91,7 @@ sub parse_newick_into_tree
         $node = new Bio::EnsEMBL::Compara::NestedSet;
 	  if (defined $class) {
           # Make sure that the class is loaded
-          eval "require $class";
+          eval "require $class";    ## no critic
 		  bless $node, $class;
 	  }
         $node->node_id($count++);
