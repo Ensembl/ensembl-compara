@@ -47,8 +47,8 @@ copying homology_member too when asked to copy homology_member.
   # The ", 1" at the end tells the function to "expand" the data, i.e. copy
   # extra rows to make the objects complete. Without it, it wouldn't copy
   # family_member
-  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'family', 'stable_id', 'ENSFM00730001521062', 1);
-  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'gene_tree_root', 'stable_id', 'ENSGT00390000003602', 1);
+  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'family', 'stable_id', 'ENSFM00730001521062', undef, 1);
+  copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'gene_tree_root', 'stable_id', 'ENSGT00390000003602', undef, 1);
 
 =head1 AUTHORSHIP
 
@@ -72,26 +72,29 @@ our @EXPORT_OK;
     copy_data
     copy_data_in_binary_mode
     copy_data_in_text_mode
+    copy_table_in_binary_mode
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode)],
+  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode)],
   'all'         => [@EXPORT_OK]
 );
 
 
 use Data::Dumper;
 
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 
 my %foreign_key_cache = ();
 
 my %data_expansions = (
     'ncbi_taxa_node' => [['taxon_id', 'ncbi_taxa_name', 'taxon_id'], ['parent_id', 'ncbi_taxa_node', 'taxon_id']],
-    'gene_tree_root' => [['root_id', 'gene_tree_root_tag', 'root_id'], ['root_id', 'gene_tree_root', 'ref_root_id'], ['root_id', 'gene_tree_node', 'root_id'], ['root_id', 'homology', 'gene_tree_root_id'], ['root_id', 'CAFE_gene_family', 'gene_tree_root_id']],
+    'gene_tree_root' => [['root_id', 'gene_tree_root_tag', 'root_id'], ['root_id', 'gene_tree_root_attr', 'root_id'], ['root_id', 'gene_tree_root', 'ref_root_id'], ['root_id', 'gene_tree_node', 'root_id'], ['root_id', 'homology', 'gene_tree_root_id'], ['root_id', 'CAFE_gene_family', 'gene_tree_root_id']],
     'CAFE_gene_family' => [['cafe_gene_family_id', 'CAFE_species_gene', 'cafe_gene_family_id']],
-    'gene_tree_node' => [['node_id', 'gene_tree_node_tag', 'node_id'], ['node_id', 'gene_tree_node_attr', 'node_id'], ['root_id', 'gene_tree_root', 'root_id'], ['root_id', 'gene_tree_root_attr', 'root_id']],
+    'gene_tree_node' => [['node_id', 'gene_tree_node_tag', 'node_id'], ['node_id', 'gene_tree_node_attr', 'node_id']],
     'species_tree_node' => [['node_id', 'species_tree_node_tag', 'node_id'],['node_id', 'species_tree_node_attr', 'node_id'], ['root_id', 'species_tree_root', 'root_id'], ['parent_id', 'species_tree_node', 'node_id']],
-    'method_link_species_set' => [['method_link_species_set_id', 'method_link_species_set_tag', 'method_link_species_set_id'], ['method_link_species_set_id', 'method_link_species_set_attr', 'method_link_species_set_id'], ['species_set_id', 'species_set', 'species_set_id'], ['species_set_id', 'species_set_tag', 'species_set_id']],
+    'method_link_species_set' => [['method_link_species_set_id', 'method_link_species_set_tag', 'method_link_species_set_id'], ['method_link_species_set_id', 'method_link_species_set_attr', 'method_link_species_set_id']],
+    'species_set_header' => [['species_set_id', 'species_set', 'species_set_id'], ['species_set_id', 'species_set_tag', 'species_set_id']],
     'family' => [['family_id', 'family_member', 'family_id']],
     'homology' => [['homology_id', 'homology_member', 'homology_id']],
     'gene_align' => [['gene_align_id', 'gene_align_member', 'gene_align_id']],
@@ -109,8 +112,8 @@ my %data_expansions = (
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
   Arg[3]      : string $table_name
-  Arg[4]      : string $where_field: the name of the column to use for the filtering
-  Arg[5]      : string $where_value: the value of the column used for the filtering
+  Arg[4]      : (opt) string $where_field: the name of the column to use for the filtering
+  Arg[5]      : (opt) string $where_value: the value of the column used for the filtering
   Arg[6]      : (opt) Bio::EnsEMBL::DBSQL::DBConnection $foreign_keys_dbc
   Arg[7]      : (bool) $expand_tables (default 0)
 
@@ -125,53 +128,72 @@ my %data_expansions = (
 =cut
 
 sub copy_data_with_foreign_keys_by_constraint {
-    load_foreign_keys($_[1]);
-    memoized_insert(@_);
+    my ($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+    die "A table name must be given" unless $table_name;
+    my $fk_rules = _load_foreign_keys($from_dbc, $to_dbc, $foreign_keys_dbc);
+    _memoized_insert($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $fk_rules, $expand_tables);
 }
 
 # Load all the foreign keys and cache the result
-sub load_foreign_keys {
-    my $dbc = shift;
+sub _load_foreign_keys {
 
-    return $foreign_key_cache{$dbc->locator} if $foreign_key_cache{$dbc->locator};
+    foreach my $dbc (@_) {
+        next unless check_ref($dbc, 'Bio::EnsEMBL::DBSQL::DBConnection');
+        return $foreign_key_cache{$dbc->locator} if $foreign_key_cache{$dbc->locator};
 
-    my $sth = $dbc->db_handle->foreign_key_info(undef, $dbc->dbname, undef, undef, undef, undef);
-    my %fk = ();
-    foreach my $x (@{ $sth->fetchall_arrayref() }) {
-        # A.x REFERENCES B.y : push @{$fk{'A'}}, ['x', 'B', 'y'];
-        push @{$fk{$x->[6]}}, [$x->[7], $x->[2], $x->[3]];
+        my $sth = $dbc->db_handle->foreign_key_info(undef, $dbc->dbname, undef, undef, undef, undef);
+        my %fk = ();
+        foreach my $x (@{ $sth->fetchall_arrayref() }) {
+            # A.x REFERENCES B.y : push @{$fk{'A'}}, ['x', 'B', 'y'];
+            push @{$fk{$x->[6]}}, [$x->[7], $x->[2], $x->[3]];
+        }
+        if (%fk) {
+            $foreign_key_cache{$dbc->locator} = \%fk;
+            return $foreign_key_cache{$dbc->locator};
+        }
     }
-    $foreign_key_cache{$dbc->locator} = \%fk;
-    return \%fk;
+    die "None of the DBConnections point to a database with foreign keys. Foreign keys are needed to populate linked tables\n";
 }
 
 
 my %cached_inserts = ();
-sub memoized_insert {
-    my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+sub _memoized_insert {
+    my ($from_dbc, $to_dbc, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
 
-    my $key = join("||||", $from_dbc->locator, $to_dbc->locator, $table, $where_field, $where_value);
-    return if $cached_inserts{$key};
-    $cached_inserts{$key} = 1;
+    my $key = $table;
+    $key .= "||$where_field=" . ($where_value // '__NA__') if $where_field;
+    return if $cached_inserts{$from_dbc->locator}{$to_dbc->locator}{$key};
+    $cached_inserts{$from_dbc->locator}{$to_dbc->locator}{$key} = 1;
 
-    $foreign_keys_dbc ||= $to_dbc;
-
-    my $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
-    #warn "<< $sql_select  using '$where_value'\n";
+    my $sql_select;
+    my @execute_args;
+    if ($where_field) {
+        if (defined $where_value) {
+            $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
+            push @execute_args, $where_value;
+        } else {
+            $sql_select = sprintf('SELECT * FROM %s WHERE %s IS NULL', $table, $where_field);
+        }
+    } else {
+        $sql_select = 'SELECT * FROM '.$table;
+    }
+    #warn "<< $sql_select  using '@execute_args'\n";
     my $sth = $from_dbc->prepare($sql_select);
-    $sth->execute($where_value);
+    $sth->execute(@execute_args);
     while (my $h = $sth->fetchrow_hashref()) {
         my %this_row = %$h;
 
         # First insert the requirements (to satisfy the foreign keys)
-        insert_related_rows($from_dbc, $to_dbc, \%this_row, load_foreign_keys($foreign_keys_dbc)->{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables);
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $fk_rules->{$table}, $table, $where_field, $where_value, $fk_rules, $expand_tables);
 
         # Then the data
         my @cols = keys %this_row;
         my @qms  = map {'?'} @cols;
         my @vals = @this_row{@cols};
         my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', @cols), join(',', @qms));
-        #warn ">> $insert_sql using '", join("','", @vals), "'\n";
+        #warn ">> $insert_sql using '", join("','", map {$_//'<NULL>'} @vals), "'\n";
         my $rows = $to_dbc->do($insert_sql, undef, @vals);
         #warn "".($rows ? "true" : "false")." ".($rows == 0 ? "zero" : "non-zero")."\n";
         # no rows affected is translated into '0E0' which is true and ==0 at the same time
@@ -184,22 +206,22 @@ sub memoized_insert {
         }
 
         # And the expanded stuff
-        insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) if $expand_tables;
+        _insert_related_rows($from_dbc, $to_dbc, \%this_row, $data_expansions{$table}, $table, $where_field, $where_value, $fk_rules, $expand_tables) if $expand_tables;
     }
 }
 
-sub insert_related_rows {
-    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
+sub _insert_related_rows {
+    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $fk_rules, $expand_tables) = @_;
     foreach my $x (@$rules) {
         #warn sprintf("%s(%s) needs %s(%s)\n", $table, @$x);
         if (not defined $this_row->{$x->[0]}) {
             next;
-        } elsif (($table eq $x->[1]) and ($where_field eq $x->[2]) and ($where_value eq $this_row->{$x->[0]})) {
+        } elsif (($table eq $x->[1]) and $where_field and ($where_field eq $x->[2]) and (defined $where_value) and ($where_value eq $this_row->{$x->[0]})) {
             # self-loop catcher: the code is about to store the same row again and again
             # we fall here when trying to insert a root gene_tree_node because its root_id links to itself
             next;
         }
-        memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc, $expand_tables);
+        _memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $fk_rules, $expand_tables);
     }
 }
 
@@ -221,14 +243,15 @@ sub clear_copy_data_cache {
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
   Arg[3]      : string $table_name
-  Arg[4]      : (opt) string $index_name
-  Arg[5]      : (opt) integer $min_id
-  Arg[6]      : (opt) integer $max_id
-  Arg[7]      : (opt) string $query
+  Arg[4]      : (opt) string $query
+  Arg[5]      : (opt) string $index_name
+  Arg[6]      : (opt) integer $min_id
+  Arg[7]      : (opt) integer $max_id
   Arg[8]      : (opt) integer $step
   Arg[9]      : (opt) boolean $disable_keys (default: true)
   Arg[10]     : (opt) boolean $reenable_keys (default: true)
   Arg[11]     : (opt) boolean $holes_possible (default: false)
+  Arg[12]     : (opt) boolean $replace (default: false) [only used when the underlying data is text-only]
 
   Description : Copy data in this table. The main optional arguments are:
                  - ($index_name,$min_id,$max_id) to restrict to a range
@@ -237,7 +260,10 @@ sub clear_copy_data_cache {
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $disable_keys, $reenable_keys, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     print "Copying data in table $table_name\n";
 
@@ -261,13 +287,28 @@ sub copy_data {
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
     if ($binary_mode) {
-        copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step);
+        copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
     } else {
-        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $holes_possible);
+        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
     }
     if ($reenable_keys // 1) {
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
     }
+}
+
+
+=head2 _escape
+
+  Description : Helper function that escapes some special characters.
+
+=cut
+
+sub _escape {
+    my $s = shift;
+    return '\N' unless defined $s;
+    $s =~ s/\n/\\\n/g;
+    $s =~ s/\t/\\\t/g;
+    return $s;
 }
 
 
@@ -279,7 +320,10 @@ sub copy_data {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $user = $to_dbc->username;
     my $pass = $to_dbc->password;
@@ -288,7 +332,7 @@ sub copy_data_in_text_mode {
     my $dbname = $to_dbc->dbname;
 
     #Default step size.
-    $step ||= 10000;
+    $step ||= 100000;
 
     my ($use_limit, $start);
     if (defined $index_name && defined $min_id && defined $max_id) {
@@ -302,12 +346,15 @@ sub copy_data_in_text_mode {
     }
     # $use_limit also tells whether $start and $end are counters or values comparable to $index_name
 
+    my $total_rows = 0;
     while (1) {
+        #my $start_time = time();
         my $end = $start + $step - 1;
         my $sth;
         my $sth_attribs = { 'mysql_use_result' => 1 };
 
         #print "start $start end $end\n";
+        #print "query $query\n";
         if ($use_limit) {
             $sth = $from_dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
         } else {
@@ -322,16 +369,16 @@ sub copy_data_in_text_mode {
             # We're told there could be holes in the data, and $end hasn't yet reached $max_id
             next if ($holes_possible and !$use_limit and ($end < $max_id));
             # Otherwise it is the end
-            return;
+            return $total_rows;
         }
 
         my $time = time(); 
         my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
         open(my $fh, '>', $filename) or die "could not open the file '$filename' for writing";
-        print $fh join("\t", map {defined($_)?$_:'\N'} @$first_row), "\n";
+        print $fh join("\t", map {_escape($_)} @$first_row), "\n";
         my $nrows = 1;
         while(my $this_row = $sth->fetchrow_arrayref) {
-            print $fh join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
+            print $fh join("\t", map {_escape($_)} @$this_row), "\n";
             $nrows++;
         }
         close($fh);
@@ -339,10 +386,12 @@ sub copy_data_in_text_mode {
         #print "start $start end $end $max_id rows $nrows\n";
         #print "FILE $filename\n";
         #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-        system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', '--ignore', $dbname, $filename);
+        system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
 
         unlink($filename);
+        $total_rows += $nrows;
     }
+    return $total_rows;
 }
 
 =head2 copy_data_in_binary_mode
@@ -353,7 +402,10 @@ sub copy_data_in_text_mode {
 =cut
 
 sub copy_data_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $from_user = $from_dbc->username;
     my $from_pass = $from_dbc->password;
@@ -369,7 +421,6 @@ sub copy_data_in_binary_mode {
 
     my $use_limit = 0;
     my $start = $min_id;
-    my $direct_copy = 0;
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
@@ -439,6 +490,34 @@ sub copy_data_in_binary_mode {
     }
 }
 
+sub copy_table_in_binary_mode {
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    my $from_user = $from_dbc->username;
+    my $from_pass = $from_dbc->password;
+    my $from_host = $from_dbc->host;
+    my $from_port = $from_dbc->port;
+    my $from_dbname = $from_dbc->dbname;
+
+    my $to_user = $to_dbc->username;
+    my $to_pass = $to_dbc->password;
+    my $to_host = $to_dbc->host;
+    my $to_port = $to_dbc->port;
+    my $to_dbname = $to_dbc->dbname;
+
+    #my $start_time  = time();
+    my $insert_mode = $replace ? '--replace' : '--insert-ignore';
+
+    system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
+        ($where_filter ? "-w '$where_filter'" : "")." ".
+        ($skip_disable_keys ? "--skip-disable-keys" : "")." ".
+        "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
+
+    #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+}
 
 1;
  
