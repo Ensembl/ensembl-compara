@@ -24,6 +24,7 @@ sub precache {
           utr => 1,
           codons => 1,
           hide_rare_snps => "off",
+          coding_seq => 1,
           translation => 1,
           exons => 1,
           rna => 0,
@@ -42,6 +43,7 @@ sub precache {
           utr => 1,
           codons => 1,
           hide_rare_snps => "off",
+          coding_seq => 1,
           translation => 1,
           exons => 1,
           rna => 0,
@@ -187,6 +189,7 @@ sub get {
   my $cd_start     = $trans->cdna_coding_start;
   my $cd_end       = $trans->cdna_coding_end;
   my $config = {%{$args->{'config'}}};
+  $config->{'species'} = $args->{'species'};
   my $adorn = $args->{'adorn'};
 
   my $seq;
