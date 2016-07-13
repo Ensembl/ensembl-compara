@@ -56,7 +56,30 @@ use warnings;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
-my %whitespace = map {$_ => 1} split(//, qq{ \f\n\r\t});
+
+=head2 _make_hash_table
+
+  Description: Build a lookup table for the characters in $delim and keep it in %delim_hash_tables
+
+=cut
+
+my %delim_hash_tables;
+sub _make_hash_table {
+    my $delim = shift;
+    my %delims = map {$_ => 1} split(//, $delim);
+    $delim_hash_tables{$delim} = \%delims;
+    return \%delims;
+}
+
+# Prepare all the hash tables to speed up the parser
+_make_hash_table(',);');
+_make_hash_table('(');
+_make_hash_table('(;');
+_make_hash_table('[,);');
+_make_hash_table('[:,);');
+_make_hash_table('[(:,)');
+
+my $whitespace = _make_hash_table(qq{ \f\n\r\t});
 
 
 
@@ -210,7 +233,7 @@ sub next_token {
   my $delim = shift;
 
   # Remove the leading whitespace
-  while (scalar(@$char_array) and $whitespace{$char_array->[0]}) {
+  while (scalar(@$char_array) and $whitespace->{$char_array->[0]}) {
       shift @$char_array;
   }
 
@@ -220,9 +243,9 @@ sub next_token {
   #print("delim =>$delim\n");
 
   my @token_array;
-  my %hash_delims = map {$_ => 1} split(//, $delim);
+  my $hash_delims = $delim_hash_tables{$delim};
   # Consume characters from @$char_array until we find a delimiter character
-  while (scalar(@$char_array) and !$hash_delims{$char_array->[0]}) {
+  while (scalar(@$char_array) and !$hash_delims->{$char_array->[0]}) {
       push @token_array, (shift @$char_array);
   }
   unless(scalar(@$char_array)) {
