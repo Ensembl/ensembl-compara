@@ -45,11 +45,13 @@ sub upload_or_attach {
   my ($self, $renderer) = @_;
   my $hub  = $self->hub;
 
-  my ($method)    = first { $hub->param($_) } qw(file text);
-  my $format_name = $hub->param('format');
-  my $url_params  = {};
-  my $new_action  = '';
-  my $attach      = 0;
+  my ($method)      = first { $hub->param($_) } qw(file text);
+  my $format_name   = $hub->param('format');
+  my $species_defs  = $hub->species_defs;
+  my $url_params    = {};
+  my $new_action    = '';
+  my $attach        = 0;
+  my $index_err     = 0; # is on if index is required, but is missiing
   my $url;
 
   if ($method eq 'text' && $hub->param('text') =~ /^\s*(http|ftp)/) {
@@ -63,15 +65,16 @@ sub upload_or_attach {
     $method = 'url';
 
     ## Set 'attach' flag if we can't upload it
-    my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+    my $format_info = $species_defs->multi_val('DATA_FORMAT_INFO');
     if ($format_info->{lc($format_name)}{'remote'}) {
       $attach = 1;
     } 
     elsif (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
       ## Is this an indexed file? Check formats that could be either
       my $tabix_url   = $url.'.tbi';
-      $attach = $self->check_for_index($tabix_url);
-    } 
+      $index_err = !$self->check_for_index($tabix_url);
+      $attach = !$index_err;
+    }
   }
 
   if ($attach) {
@@ -82,7 +85,7 @@ sub upload_or_attach {
       $url_params->{'action'} = $new_action;
     }
     else {
-      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $hub->param('trackline') || '', 'registry' => $hub->param('registry') || 0);
+      my %args = ('hub' => $hub, 'format' => $format_name, 'url' => $url, 'track_line' => $hub->param('trackline') || '', 'registry' => $hub->param('registry') || 0);
       my $attachable;
 
       if ($attach eq 'error') {
@@ -107,7 +110,7 @@ sub upload_or_attach {
   }
   else {
     ## Upload the data
-    $url_params = $self->upload($method, $format_name, $renderer);
+    $url_params = $self->upload($method, $format_name, $renderer, $index_err ? $species_defs->UPLOAD_SIZELIMIT_WITHOUT_INDEX : 0);
     $url_params->{ __clear}       = 1;
     $url_params->{'action'}       = 'UploadFeedback';
     $url_params->{'record_type'}  = 'upload';
@@ -145,7 +148,7 @@ sub check_for_index {
       type     => 'message',
       code     => 'userdata_upload',
       message  => "Your file has no tabix index, so we have attempted to upload it. If the upload fails (e.g. your file is too large), please provide a tabix index and try again.",
-      function => '_info'
+      function => '_warning'
     );
   }
   return $index_exists;

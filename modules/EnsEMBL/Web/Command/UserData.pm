@@ -38,12 +38,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $format, $renderer) = @_;
+  my ($self, $method, $format, $renderer, $size_limit) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer);
+  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer, 'size_limit' => $size_limit || 0);
 
   ## Validate format
   my $iow;
