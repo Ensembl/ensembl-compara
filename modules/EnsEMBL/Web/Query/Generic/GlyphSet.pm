@@ -289,7 +289,6 @@ sub loop_genome {
   foreach my $c (@$top) {
     my %out = %$args;
     $out{'slice'} = $c->name;
-    #next unless $out{'slice'} =~ /:11:/; # XXX
     $out{'__name'} = $c->name;
     push @out,\%out;
   }

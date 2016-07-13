@@ -81,7 +81,7 @@ void pfree(struct pool *p) {
 
 /* Checks for membership of list of strings. If present returns 0, else
  * returns new length with string added. Compact representation is \0
- * terminated strings, * followed by extra \0. NULL is acceptable as
+ * terminated strings, followed by extra \0. NULL is acceptable as
  * zero-length list. Cannot store empty string.
  */
 int strl_member(char **str,char *data,int max) {

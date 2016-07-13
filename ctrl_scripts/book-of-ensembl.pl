@@ -19,7 +19,7 @@ BEGIN {
 }
 
 use File::Find;
-use List::Util qw(min);
+use List::Util qw(min shuffle);
 use Getopt::Long;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
@@ -130,6 +130,7 @@ if($list) {
 
 @jobs = @ARGV if @ARGV;
 
+my @procs;
 foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs) {
   my $par = $precache{$k}->{'par'} || 12;
   $par = 12 if $par<12;
@@ -138,6 +139,9 @@ foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs)
       run1($precache{$k}->{'module'},$k,$i,$par,\%subparts);
     })->ready();
   }
+}
+foreach my $p (@procs) {
+  $forker->schedule( run_on_start => $p)->ready();
 }
 $forker->wait_all();
 
