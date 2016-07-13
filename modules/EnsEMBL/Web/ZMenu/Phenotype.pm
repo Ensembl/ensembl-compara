@@ -17,26 +17,30 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller::ZMenu;
-
-### Prints the popup zmenus on the images.
+package EnsEMBL::Web::ZMenu::Phenotype;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Controller);
+use EnsEMBL::Web::ZMenu::Gene;
+use EnsEMBL::Web::ZMenu::Variation;
+use EnsEMBL::Web::ZMenu::StructuralVariation;
 
-sub init {
-  my $self = shift;
+use parent qw(EnsEMBL::Web::ZMenu);
 
-  $self->builder->create_objects unless $self->hub->type eq 'Phenotype';
-  
-  my $hub    = $self->hub;
-  my $object = $self->object;
-  my $module = $self->get_module_names('ZMenu', $self->type, $self->action);
-  my $menu   = $module->new($hub, $object);
-  
-  $self->r->content_type('text/plain');
-  $menu->render if $menu;
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my @ftypes = split(',', $hub->param('ftype'));
+
+  foreach (sort @ftypes) {
+    my $class = 'EnsEMBL::Web::ZMenu::'.$_;
+
+    my $submenu = $class->new($self->hub, $self->object);
+
+    push @{$self->{'features'}}, @{$submenu->{'features'}};
+  }
+
 }
 
 1;
