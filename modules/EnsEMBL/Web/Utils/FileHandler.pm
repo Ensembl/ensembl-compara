@@ -19,6 +19,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Utils::FileHandler;
 
+####### DEPRECATED - use ensembl-io for filehandling #################
+
 use strict;
 use warnings;
 
