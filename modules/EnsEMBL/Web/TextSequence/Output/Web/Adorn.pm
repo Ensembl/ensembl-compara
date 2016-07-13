@@ -17,11 +17,33 @@ limitations under the License.
 
 =cut
 
+# Data appears as a 4-tuple (line,char,key,value) in the adorn method.
+# The data is stored as (line,key,char,id) in the adseq structure where
+# id is an integer representing the value. adlookup maps (key,value) to
+# id, and addlookid maintains the next available id. ids start at 1.
+# adref is the reverse mapping from id to string.
+#
+# adseq and adref are then passed on to the next stage, which is to compress
+# these values.
+# Next RLE is applied to adseq: negative numbers denote a repeat of the
+# previous value. The first value is implicitly undef. If the last value is
+# a repeat, it is deleted as such repeats are implicit on decoding. If
+# all values are undef, then the key is removed altogether.
+# Next prefix coding is applied to adref. First the values are sorted, and
+# pmap created which maps an id from earlier into its new position. Now
+# prefixes are created by mapping adref to a list of pairs. The first
+# member represents how many more or fewer characters to preserve, and
+# the second value the remainder.
+# The references in adseq are then updated to equal the new sorted ids.
+# Finally each of the new adseq keys is compared to the last to see if it
+# is identical and, if so, is RLEd.
+
 package EnsEMBL::Web::TextSequence::Output::Web::Adorn;
 
 use strict;
 use warnings;
 
+use List::Util qw(max);
 use JSON qw(encode_json);
 
 sub new {
@@ -29,10 +51,13 @@ sub new {
 
   my $class = ref($proto) || $proto;
   my $self = {
-    addata => {},
     adlookup => {},
     adlookid => {},
     flourishes => {},
+    adseq => {},
+    adseqc => {},
+    adref => {},
+    maxchar => {}
   };
   bless $self,$class;
   return $self;
@@ -41,7 +66,7 @@ sub new {
 sub adorn {
   my ($self,$line,$char,$k,$v) = @_; 
 
-  $self->{'addata'}{$line}[$char]||={};
+  $self->{'maxchar'}{$line} = max($self->{'maxchar'}{$line}||0,$char);
   return unless $v; 
   $self->{'adlookup'}{$k} ||= {}; 
   $self->{'adlookid'}{$k} ||= 1;
@@ -49,8 +74,9 @@ sub adorn {
   unless(defined $id) {
     $id = $self->{'adlookid'}{$k}++;
     $self->{'adlookup'}{$k}{$v} = $id;
+    ($self->{'adref'}{$k}||=[""])->[$id] = $v;
   }
-  $self->{'addata'}{$line}[$char]{$k} = $id;
+  $self->{'adseq'}{$line}{$k}[$char] = $id;
 }
 
 sub flourish {
@@ -80,41 +106,18 @@ sub adseq_eq {
   return 1;
 }
 
-sub adorn_convert {
-  my ($self) = @_;
-
-  my $adlookup = $self->{'adlookup'};
-  my $addata = $self->{'addata'};
-  my %adref;
-  foreach my $k (keys %$adlookup) {
-    $adref{$k} = [""];
-    $adref{$k}->[$adlookup->{$k}{$_}] = $_ for keys $adlookup->{$k};
-  }
-
-  my %adseq;
-  foreach my $ad (keys %$addata) {
-    $adseq{$ad} = {};
-    foreach my $k (keys %adref) {
-      $adseq{$ad}{$k} = [];
-      foreach (0..@{$addata->{$ad}}-1) {
-        $adseq{$ad}{$k}[$_] = $addata->{$ad}[$_]{$k}//undef;
-      }
-    }
-  }
-  return (\%adseq,\%adref);
-}
-
 sub adorn_compress {
-  my ($self,$adseq,$adref) = @_;
-
+  my ($self) = @_;
+  
   # RLE
-  foreach my $a (keys %$adseq) {
-    foreach my $k (keys %{$adseq->{$a}}) {
+  foreach my $a (keys %{$self->{'adseq'}}) {
+    foreach my $k (keys %{$self->{'adseq'}{$a}}) {
       my @rle;
       my $lastval;
-      foreach my $v (@{$adseq->{$a}{$k}}) {
+      foreach my $i (0..@{$self->{'adseq'}{$a}{$k}}) {
+        my $v = $self->{'adseq'}{$a}{$k}[$i];
         $v = -1 if !defined $v;
-        if(@rle and $v == $lastval) {
+        if(@rle > 1 and $v == $lastval) {
           if((defined $rle[-1]) and $rle[-1] < 0) { $rle[-1]--; }
           else { push @rle,-1; }
         } elsif($v == -1) {
@@ -130,20 +133,20 @@ sub adorn_compress {
         $rle[0]--;
       }
       if(@rle == 1 and !defined $rle[0]) {
-        delete $adseq->{$a}{$k};
+        delete $self->{'adseq'}{$a}{$k};
       } else {
-        $adseq->{$a}{$k} = \@rle;
+        $self->{'adseq'}{$a}{$k} = \@rle;
       }
     }
-    delete $adseq->{$a} unless keys %{$adseq->{$a}};
+    delete $self->{'adseq'}{$a} unless keys %{$self->{'adseq'}{$a}};
   }
 
   # PREFIX
-  foreach my $k (keys %$adref) {
+  foreach my $k (keys %{$self->{'adref'}}) {
     # ... sort
     my @sorted;
-    foreach my $i (0..$#{$adref->{$k}}) {
-      push @sorted,[$i,$adref->{$k}[$i]];
+    foreach my $i (0..$#{$self->{'adref'}{$k}}) {
+      push @sorted,[$i,$self->{'adref'}{$k}[$i]];
     }
     @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
     my %pmap;
@@ -172,10 +175,10 @@ sub adorn_compress {
       $prev = $s;
     }
     # ... fix references
-    foreach my $a (keys %$adseq) {
-      next unless $adseq->{$a}{$k};
+    foreach my $a (keys %{$self->{'adseq'}}) {
+      next unless $self->{'adseq'}{$a}{$k};
       my @seq;
-      foreach my $v (@{$adseq->{$a}{$k}}) {
+      foreach my $v (@{$self->{'adseq'}{$a}{$k}}) {
         if(defined $v) {
           if($v>0) {
             push @seq,$pmap{$v};
@@ -186,14 +189,16 @@ sub adorn_compress {
           push @seq,undef;
         }
       }
-      $adseq->{$a}{$k} = \@seq;
-      $adref->{$k} = \@prefixes;
+      $self->{'adseq'}{$a}{$k} = \@seq;
+      $self->{'adref'}{$k} = \@prefixes;
     }
   }
 
   # Compress sequence
   my (@adseq_raw,@adseq);
-  foreach my $k (keys %$adseq) { $adseq_raw[$k] = $adseq->{$k}; }
+  foreach my $k (keys %{$self->{'adseq'}}) {
+    $adseq_raw[$k] = $self->{'adseq'}{$k};
+  }
   my $prev;
   foreach my $i (0..$#adseq_raw) {
     if($i and adseq_eq($prev,$adseq_raw[$i])) {
@@ -209,12 +214,11 @@ sub adorn_compress {
 sub adorn_data {
   my ($self) = @_;
 
-  my ($adseq,$adref) = $self->adorn_convert;
-  $adseq = $self->adorn_compress($adseq,$adref);
+  my $adseq = $self->adorn_compress;
 
   return {
     seq => $adseq,
-    ref => $adref,
+    ref => $self->{'adref'},
     flourishes => $self->{'flourishes'}
   };
 }
