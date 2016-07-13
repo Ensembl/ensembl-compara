@@ -23,13 +23,14 @@ sub fixup_transcript {
 }
 
 sub loop_transcripts {
-  my ($self,$args) = @_;
+  my ($self,$args,$subpart) = @_;
 
   my $all = $self->source('Adaptors')->
               transcript_adaptor($args->{'species'},$args->{'type'})->fetch_all;
   my @out;
   foreach my $t (@$all) {
 #    next unless $t->stable_id eq 'ENST00000380152';
+    next if ($subpart->{'transcript'}||$t->stable_id) ne $t->stable_id;
     my %out = %$args;
     $out{'species'} = $args->{'species'};
     $out{'type'} = $args->{'type'};

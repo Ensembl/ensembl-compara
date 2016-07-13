@@ -281,7 +281,7 @@ sub fixup_config {
 }
 
 sub loop_genome {
-  my ($self,$args) = @_;
+  my ($self,$args,$subpart) = @_;
 
   my $top = $self->source('Adaptors')->
               slice_adaptor($args->{'species'})->fetch_all('toplevel');
@@ -289,7 +289,7 @@ sub loop_genome {
   foreach my $c (@$top) {
     my %out = %$args;
     $out{'slice'} = $c->name;
-    next unless $out{'slice'} =~ /:11:/; # XXX
+    #next unless $out{'slice'} =~ /:11:/; # XXX
     $out{'__name'} = $c->name;
     push @out,\%out;
   }

@@ -69,10 +69,11 @@ sub args { return $_[0]->{'_args'}; }
 sub fixup {}
 
 sub loop_species {
-  my ($self,$args) = @_;
+  my ($self,$args,$subpart) = @_;
 
   my @out;
   foreach my $sp (qw(Homo_sapiens Mus_musculus Danio_rerio)) {
+    next if ($subpart->{'species'}||$sp) ne $sp;
     my %out = %$args;
     $out{'species'} = $sp;
     $out{'__name'} = $sp;

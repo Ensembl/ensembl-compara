@@ -30,11 +30,11 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::QueryStore;
 
-my ($rebuild,$list);
-GetOptions('r' => \$rebuild,'l' => \$list);
+my ($rebuild,$list,@subparts);
+GetOptions('r' => \$rebuild,'l' => \$list,'s=s' => \@subparts);
 
 sub run1 {
-  my ($query,$kind,$i,$n) = @_;
+  my ($query,$kind,$i,$n,$subparts) = @_;
 
   $i ||= 0;
   $n ||= 1;
@@ -52,7 +52,7 @@ sub run1 {
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 
   my $q = $qs->get($query);
-  my $pc = $q->precache($kind,$i,$n,$rebuild);
+  my $pc = $q->precache($kind,$i,$n,$rebuild,$subparts);
 }
 
 my $forker = Parallel::Forker->new(
@@ -111,6 +111,16 @@ foreach my $p (@precache) {
   }
 }
 
+# Apply filters
+my %subparts;
+foreach my $s (@subparts) {
+  my ($k,$v) = split('=',$s,2);
+  $subparts{$k} = $v;
+}
+
+use Data::Dumper;
+warn Dumper('subparts',\%subparts);
+
 # Setup jobs
 my @jobs = keys %precache;
 if($list) {
@@ -125,7 +135,7 @@ foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs)
   $par = 12 if $par<12;
   foreach my $i (0..($par-1)) {
     $forker->schedule( run_on_start => sub {
-      run1($precache{$k}->{'module'},$k,$i,$par);
+      run1($precache{$k}->{'module'},$k,$i,$par,\%subparts);
     })->ready();
   }
 }

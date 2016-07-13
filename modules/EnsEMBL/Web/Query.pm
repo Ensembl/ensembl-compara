@@ -108,7 +108,7 @@ sub source {
 }
 
 sub precache {
-  my ($self,$kind,$i,$n,$r) = @_;
+  my ($self,$kind,$i,$n,$r,$subpart) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fns = $conf->{'loop'};
@@ -118,7 +118,7 @@ sub precache {
     my $fn = "loop_$lfn";
     my @next;
     foreach my $p (@all) {
-      push @next,@{$self->{'impl'}->$fn($p)};
+      push @next,@{$self->{'impl'}->$fn($p,$subpart)};
     }
     foreach my $n (@next) {
       $n->{'__full_name'} = [@{$n->{'__full_name'}||=[]}];
