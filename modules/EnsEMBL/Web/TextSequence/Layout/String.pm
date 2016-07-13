@@ -29,5 +29,6 @@ sub value_pad { return ' ' x $_[1]; }
 sub value_fmt { return sprintf($_[1],@{$_[2]}); }
 sub value_cat { return join('',@{$_[1]}); }
 sub value_length { return length $_[1]; }
+sub value_append { ${$_[1]} .= join('',@{$_[2]}); }
 
 1;

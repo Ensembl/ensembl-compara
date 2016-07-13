@@ -78,12 +78,17 @@ sub final_wrapper {
 sub add_line {
   my ($self,$line,$markup,$config) = @_;
 
+  my %c2s_cache; # Multi-second speed improvement from this cache
   my $letters = "";
   my $idx = 0;
   foreach my $m (@$markup) {
     $letters .= ($m->{'letter'}||' ');
-    my @classes = split(' ',$m->{'class'}||'');
-    my $style = $self->c2s->convert_class_to_style(\@classes,$config);
+    my $style = $c2s_cache{$m->{'class'}};
+    unless(defined $style) {
+      my @classes = split(' ',$m->{'class'}||'');
+      $style = $self->c2s->convert_class_to_style(\@classes,$config);
+      $c2s_cache{$m->{'class'}} = $style;
+    }
     $self->{'adorn'}->adorn($line->line_num,$idx,'style',$style||'');
     $self->{'adorn'}->adorn($line->line_num,$idx,'title',$m->{'title'}||'');
     $self->{'adorn'}->adorn($line->line_num,$idx,'href',$m->{'href'}||'');
