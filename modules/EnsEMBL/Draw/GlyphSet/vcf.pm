@@ -79,7 +79,7 @@ sub render_density_bar {
 
   ## Convert raw features into correct data format 
   my $density_features = $self->density_features;
-  $self->{'data'}[0]{'features'}{'1'} = $density_features;
+  $self->{'data'}[0]{'features'} = $density_features;
   $self->{'my_config'}->set('max_score', max(@$density_features));
   $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
   $self->_render_aggregate;
@@ -264,7 +264,7 @@ sub density_features {
   $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
   $self->{'data'}[0]{'metadata'}{'unit'} = $divlen;
   my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}{1}};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}};
 
   my $density_features = [];
   foreach (sort {$a <=> $b} keys %$density) {
