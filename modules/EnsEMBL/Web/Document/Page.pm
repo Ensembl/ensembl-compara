@@ -238,11 +238,11 @@ sub initialize {
     my $template_name   = $self->hub->template;
     if (!$template_name) {
       my @namespace   = split('::', ref $self);
-      $template_name  = 'Legacy::'.$namespace[-1];
+      my $type        = $namespace[-1];
+      $template_name  = $type eq 'Dynamic' ? 'Legacy' : "Legacy::$type";
     }
 
     my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
-    #warn "... USING TEMPLATE $template_class";
 
     if ($self->dynamic_use($template_class)) {
       my $template = $template_class->new({'page' => $self});
