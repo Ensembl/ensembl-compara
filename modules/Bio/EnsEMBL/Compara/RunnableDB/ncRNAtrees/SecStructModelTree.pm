@@ -150,17 +150,12 @@ sub run {
 }
 
 
-sub cleanup {
+sub cleanup {   # NOT CALLED ?
     my ($self) = @_;
     my $raxml_tag = $self->param('raxml_tag');
     my $model = $self->param('model');
     my $tmp_regexp = $self->worker_temp_directory."*$raxml_tag.$model.RUN.*";
-    my $cmd = $self->run_command("rm -f $tmp_regexp");
-    $cmd->run();
-    if ($cmd->exit_code) {
-        $self->throw($cmd->cmd . " gave exit status ". $cmd->exit_code);
-    }
-    return 1;
+    $self->run_command("rm -f $tmp_regexp", { die_on_failure => 1 });
 }
 
 

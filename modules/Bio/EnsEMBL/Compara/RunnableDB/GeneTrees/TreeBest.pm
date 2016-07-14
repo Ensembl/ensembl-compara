@@ -312,10 +312,7 @@ sub _get_treebest_cmd {
 sub _run_and_return_output {
     my ($self, $cmd) = @_;
 
-    my $cmd_out = $self->run_command($cmd);
-    return $cmd_out->out unless $cmd_out->exit_code;
-
-    $self->throw(sprintf("error running treebest [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
+    return $self->run_command($cmd, {die_on_failure => 1})->out;
 }
 
 

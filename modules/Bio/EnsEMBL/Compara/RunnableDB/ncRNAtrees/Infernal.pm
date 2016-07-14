@@ -263,10 +263,7 @@ sub run_infernal {
   $cmd .= " " . $self->param('input_fasta');
 
 #  $DB::single=1;1;
-  my $command = $self->run_command($cmd);
-  if ($command->exit_code) {
-      $self->throw("error running infernal, $!\n");
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   # cmbuild --refine the alignment
   ######################
@@ -295,10 +292,7 @@ sub run_infernal {
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  $command = $self->run_command($cmd);
-  if ($command->exit_code) {
-      $self->throw("error running cmbuild refine, $!\n");
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   $self->param('stk_output', $refined_stk_output);
   $self->param('refined_profile', $refined_profile);

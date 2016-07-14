@@ -200,10 +200,7 @@ sub run_ncrecoversearch {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $input_fasta;
 
-  my $run_cmd = $self->run_command($cmd);
-  if ($run_cmd->exit_code) {
-    $self->throw("error running cmsearch:\n".$run_cmd->err);
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   open TABFILE,"$tabfilename" or die "$!\n";
   while (<TABFILE>) {

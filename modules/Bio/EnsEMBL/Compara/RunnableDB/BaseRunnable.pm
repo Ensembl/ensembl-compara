@@ -224,6 +224,7 @@ sub run_command {
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
+    die sprintf("Could not run '%s', got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
     return $runCmd;
 }
 

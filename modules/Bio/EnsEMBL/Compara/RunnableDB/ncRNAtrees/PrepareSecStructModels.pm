@@ -207,10 +207,8 @@ sub _run_bootstrap_raxml {
   print "$cmd\n" if($self->debug);
   my $bootstrap_starttime = time()*1000;
 
-  my $run_cmd = $self->run_command("cd $worker_temp_directory; $cmd");
-  if ($run_cmd->exit_code) {
-    $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n".$run_cmd->err);
-  }
+  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 } );
+
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
 
   my $ideal_msec = 30000; # 5 minutes

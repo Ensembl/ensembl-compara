@@ -196,10 +196,7 @@ sub run_mafft {
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
 
-    my $command = $self->run_command($cmd);
-    if ($command->exit_code) {
-        $self->throw("problem running command $cmd: ". $command->err . "\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 } );
 }
 
 sub run_RAxML {
@@ -287,10 +284,7 @@ sub run_prank {
     $cmd .= " -t=$tree_file" if (defined $tree_file);
     $cmd .= " -o=$prank_output";
     $cmd .= " -d=$input_fasta";
-    my $command = $self->run_command($cmd);
-    if ($command->exit_code) {
-        $self->throw("problem running prank $cmd: " . $command->err . "\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 } );
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
     print STDERR "Prank output : ${prank_output}.1.fas\n" if ($self->debug);

@@ -148,8 +148,7 @@ sub run {
     my $mafft_exe = $self->param('mafft_exe');
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless(-x $mafft_home.'/'.$mafft_exe);
     my $cmdline = sprintf('%s/%s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $fastafile, $msa_output);
-    my $cmd_out = $self->run_command($cmdline);
-    die "Error running mafft: ".$cmd_out->err if $cmd_out->exit_code;
+    $self->run_command($cmdline, { die_on_failure => 1 });
 
     $set->load_cigars_from_file($msa_output);
 
