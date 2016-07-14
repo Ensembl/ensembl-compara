@@ -212,8 +212,10 @@ sub call_within_transaction {
 
 
 sub run_command {
-    my ($self, $cmd, $timeout) = @_;
+    my ($self, $cmd, $options) = @_;
 
+    $options //= {};
+    my $timeout = $options->{timeout};
     print STDERR "COMMAND: $cmd\n" if ($self->debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
     my $runCmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new($cmd, $timeout);

@@ -293,7 +293,7 @@ sub run_generic_command {
     }
 
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
-    my $run_cmd = $self->run_command($cmd, $self->param('cmd_max_runtime'));
+    my $run_cmd = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
     if ($run_cmd->exit_code) {
         if ($run_cmd->exit_code == -2) {
             $self->dataflow_output_id( $self->input_id, -2 );
