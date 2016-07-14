@@ -67,6 +67,9 @@ sub process {
   my ($component, $error) = $self->object->create_component;
   my $controller;
 
+  # another terrible hack to deal with the stupid caching mechanism of view config object in hub->viewcofig and use it for hub->param calls!
+  $hub->get_viewconfig($component->id, $hub->param('data_type'), 'cache') if $hub->param('data_type');
+
   if ($error) {
     warn ">>> ERROR CREATING COMPONENT: $error";
   }
