@@ -46,44 +46,59 @@ use warnings;
 use List::Util qw(max);
 use JSON qw(encode_json);
 
+use EnsEMBL::Web::TextSequence::Output::Web::AdornLine;
+use EnsEMBL::Web::TextSequence::Output::Web::AdornKey;
+
 sub new {
   my ($proto) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
-    adlookup => {},
-    adlookid => {},
+    curline => undef,
+    keys => {},
     flourishes => {},
-    adseq => {},
     adseqc => {},
-    adref => {},
-    maxchar => {}
+    refo => {},
+    domain => [],
   };
   bless $self,$class;
   return $self;
 }
 
-sub adorn {
-  my ($self,$line,$char,$k,$v) = @_; 
+sub domain { $_[0]->{'domain'} = $_[1] if @_>1; return $_[0]->{'domain'}; }
 
-  $self->{'maxchar'}{$line} = max($self->{'maxchar'}{$line}||0,$char);
-  return unless $v; 
-  $self->{'adlookup'}{$k} ||= {}; 
-  $self->{'adlookid'}{$k} ||= 1;
-  my $id = $self->{'adlookup'}{$k}{$v};
-  unless(defined $id) {
-    $id = $self->{'adlookid'}{$k}++;
-    $self->{'adlookup'}{$k}{$v} = $id;
-    ($self->{'adref'}{$k}||=[""])->[$id] = $v;
+sub line {
+  my ($self) = @_;
+
+  $self->{'curline'} ||=
+    EnsEMBL::Web::TextSequence::Output::Web::AdornLine->new($self);
+  return $self->{'curline'};
+}
+
+sub akeys {
+  my ($self,$k) = @_;
+
+  $self->{'keys'}{$k} ||=
+    EnsEMBL::Web::TextSequence::Output::Web::AdornKey->new($self,$k);
+  return $self->{'keys'}{$k};
+}
+
+sub line_done {
+  my ($self,$line) = @_;
+
+  $self->{'adseqc'}{$line} = {};
+  $self->line->done;
+  foreach my $k (@{$self->line->linekeys}) {
+    $self->{'adseqc'}{$line}{$k} = $self->line->key($k)->data;
   }
-  $self->{'adseq'}{$line}{$k}[$char] = $id;
+  $self->{'curline'} = undef;
 }
 
 sub flourish {
-  my ($self,$type,$line,$value) = @_; 
+  my ($self,$type,$line,$value) = @_;
 
   ($self->{'flourishes'}{$type}||={})->{$line} =
-    encode_json({ v => $value }); 
+    encode_json({ v => $value });
 }
 
 # Internal compression methods
@@ -108,45 +123,32 @@ sub adseq_eq {
 
 sub adorn_compress {
   my ($self) = @_;
-  
+
   # RLE
-  foreach my $a (keys %{$self->{'adseq'}}) {
-    foreach my $k (keys %{$self->{'adseq'}{$a}}) {
-      my @rle;
-      my $lastval;
-      foreach my $i (0..@{$self->{'adseq'}{$a}{$k}}) {
-        my $v = $self->{'adseq'}{$a}{$k}[$i];
-        $v = -1 if !defined $v;
-        if(@rle > 1 and $v == $lastval) {
-          if((defined $rle[-1]) and $rle[-1] < 0) { $rle[-1]--; }
-          else { push @rle,-1; }
-        } elsif($v == -1) {
-          push @rle,undef;
-        } else {
-          push @rle,$v;
-        }
-        $lastval = $v;
+  foreach my $a (keys %{$self->{'adseqc'}}) {
+    foreach my $k (keys %{$self->{'adseqc'}{$a}}) {
+      pop @{$self->{'adseqc'}{$a}{$k}} if @{$self->{'adseqc'}{$a}{$k}} and $self->{'adseqc'}{$a}{$k}[-1] and $self->{'adseqc'}{$a}{$k}[-1] < 0;
+      my $rle = $self->{'adseqc'}{$a}{$k};
+      if(@$rle > 1 and !$rle->[0] and $rle->[1]<0) {
+        shift @$rle;
+        $rle->[0]--;
       }
-      pop @rle if @rle and $rle[-1] and $rle[-1] < 0;
-      if(@rle > 1 and !defined $rle[0] and defined $rle[1] and $rle[1]<0) {
-        shift @rle;
-        $rle[0]--;
-      }
-      if(@rle == 1 and !defined $rle[0]) {
-        delete $self->{'adseq'}{$a}{$k};
+      if(@$rle == 1 and !$rle->[0]) {
+        delete $self->{'adseqc'}{$a}{$k};
       } else {
-        $self->{'adseq'}{$a}{$k} = \@rle;
+        $self->{'adseq'}{$a}{$k} = $rle;
       }
     }
     delete $self->{'adseq'}{$a} unless keys %{$self->{'adseq'}{$a}};
   }
 
   # PREFIX
-  foreach my $k (keys %{$self->{'adref'}}) {
+  foreach my $k (keys %{$self->{'keys'}}) {
+    my $kv = $self->akeys($k)->adref;
     # ... sort
     my @sorted;
-    foreach my $i (0..$#{$self->{'adref'}{$k}}) {
-      push @sorted,[$i,$self->{'adref'}{$k}[$i]];
+    foreach my $i (0..$#$kv) {
+      push @sorted,[$i,$kv->[$i]];
     }
     @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
     my %pmap;
@@ -190,7 +192,7 @@ sub adorn_compress {
         }
       }
       $self->{'adseq'}{$a}{$k} = \@seq;
-      $self->{'adref'}{$k} = \@prefixes;
+      $self->{'refo'}{$k} = \@prefixes;
     }
   }
 
@@ -218,7 +220,7 @@ sub adorn_data {
 
   return {
     seq => $adseq,
-    ref => $self->{'adref'},
+    ref => $self->{'refo'},
     flourishes => $self->{'flourishes'}
   };
 }

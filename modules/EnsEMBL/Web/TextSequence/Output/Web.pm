@@ -80,7 +80,7 @@ sub add_line {
 
   my %c2s_cache; # Multi-second speed improvement from this cache
   my $letters = "";
-  my $idx = 0;
+  $self->{'adorn'}->domain([qw(style title href tag letter)]);
   foreach my $m (@$markup) {
     $letters .= ($m->{'letter'}||' ');
     my $style = $c2s_cache{$m->{'class'}};
@@ -89,13 +89,15 @@ sub add_line {
       $style = $self->c2s->convert_class_to_style(\@classes,$config);
       $c2s_cache{$m->{'class'}} = $style;
     }
-    $self->{'adorn'}->adorn($line->line_num,$idx,'style',$style||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'title',$m->{'title'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'href',$m->{'href'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'tag',$m->{'tag'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'letter',$m->{'new_letter'}||'');
-    $idx++;
+    $self->{'adorn'}->line->adorn($line->line_num,{
+      'style' => ($style||''),
+      'title' => ($m->{'title'}||''),
+      'href' => ($m->{'href'}||''),
+      'tag' => ($m->{'tag'}||''),
+      'letter' => ($m->{'new_letter'}||'')
+    });
   }
+  $self->{'adorn'}->line_done($line->line_num);
 
   push @{$self->{'data'}[$line->seq->id]},{
     line => $letters,
