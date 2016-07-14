@@ -106,8 +106,7 @@ sub name {
 sub padded_name {
   my ($self) = @_;
 
-  my $name = $self->name;
-  return undef unless $name;
+  my $name = $self->name || '';
   $name .= ' ' x ($self->{'view'}->field_size('name') - length $name);
   return $name;
 }
