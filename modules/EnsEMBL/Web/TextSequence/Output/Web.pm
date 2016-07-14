@@ -83,11 +83,11 @@ sub add_line {
   $self->{'adorn'}->domain([qw(style title href tag letter)]);
   foreach my $m (@$markup) {
     $letters .= ($m->{'letter'}||' ');
-    my $style = $c2s_cache{$m->{'class'}};
+    my $style = $c2s_cache{$m->{'class'}||''};
     unless(defined $style) {
       my @classes = split(' ',$m->{'class'}||'');
       $style = $self->c2s->convert_class_to_style(\@classes,$config);
-      $c2s_cache{$m->{'class'}} = $style;
+      $c2s_cache{$m->{'class'}||''} = $style;
     }
     $self->{'adorn'}->line->adorn($line->line_num,{
       'style' => ($style||''),
