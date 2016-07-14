@@ -52,10 +52,10 @@ sub add_line {
 
   foreach my $m (@$markup) {
     my @classes = split(' ',$m->{'class'}||'');
-    my $style = $self->c2s->convert_class_to_style(\@classes,$config);
+    my $style = $self->c2s->convert_class_to_style(\@classes,$config) || '';
     my $letter = $self->_unhtml($m->{'letter'})||' ';
     if($style =~ s/\0//g) { $letter = lc($letter); }
-    push @letters,[$style||'',$letter];
+    push @letters,[$style,$letter];
   }
 
   push @{$self->{'data'}[$line->seq->id]},{
