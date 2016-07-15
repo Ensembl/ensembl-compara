@@ -472,6 +472,7 @@ sub _get_suitable_species_tree_node_ids {
     my ($self, $in, $lca, $member_type) = @_;
 
     my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES')->[0];
+    return [] unless $mlss;
     my $species_tree = $mlss->species_tree;
 
     my $sql;
