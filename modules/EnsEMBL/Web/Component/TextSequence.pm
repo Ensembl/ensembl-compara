@@ -537,7 +537,7 @@ sub markup_exons {
     
     foreach (sort { $a <=> $b } keys %{$data->{'exons'}}) {
       $exon = $data->{'exons'}{$_};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $exon->{'id'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $exon->{'id'} if ($config->{'title_display'}||'off') ne 'off';
       
       foreach $type (@{$exon->{'type'}}) {
         $seq->[$_]{'class'} .= "$class->{$type} " unless $seq->[$_]{'class'} =~ /\b$class->{$type}\b/;
@@ -563,7 +563,7 @@ sub markup_codons {
       $class = $data->{'codons'}{$_}{'class'} || 'co';
       
       $seq->[$_]{'class'} .= "$class ";
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if ($config->{'title_display'}||'off') ne 'off';
       
       if ($class eq 'cu') {
         $config->{'key'}{'other'}{'utr'} = 1;
@@ -596,7 +596,7 @@ sub markup_variation {
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if ($config->{'title_display'}||'off') ne 'off';
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
@@ -625,7 +625,7 @@ sub markup_comparisons {
     foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
       $comparison = $data->{'comparisons'}{$_};
       
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
+      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $comparison->{'insert'} if $comparison->{'insert'} && ($config->{'title_display'}||'off') ne 'off';
     }
     
     $i++;
