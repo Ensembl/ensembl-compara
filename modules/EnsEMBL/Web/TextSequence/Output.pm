@@ -72,6 +72,8 @@ sub format_line {
     pre => $data->{'pre'},
     label => $num->{'label'},
     start => $num->{'start'},
+    end => $num->{'end'},
+    post_label => $num->{'post_label'},
     h_space => $config->{'h_space'},
     letters => $self->format_letters($data->{'line'},$config),
     adid => $data->{'adid'},

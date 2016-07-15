@@ -103,7 +103,7 @@ sub make_layout {
         { post => ' ' },
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'start', width => $config->{'padding'}{'number'} },
+        { key => 'end', width => $config->{'padding'}{'number'} },
       ]   
     },  
     { control => '\par}' },
