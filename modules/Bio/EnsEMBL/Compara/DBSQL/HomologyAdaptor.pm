@@ -509,7 +509,8 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
 sub _get_suitable_species_tree_node_ids {
     my ($self, $in, $lca, $member_type) = @_;
 
-    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES')->[0];
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES', 'no_warning')->[0];
+    return [] unless $mlss;
     my $species_tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
 
     my $sql;
