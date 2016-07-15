@@ -73,14 +73,10 @@ sub new_from_NestedSet {
 
     my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
     for my $node (@{$tree->get_all_nodes}) {
-        my $name = $node->name;
         my $taxon_id = $node->taxon_id;
         if ($node->is_leaf) {
             if (defined $taxon_id) {
                 $node->taxon_id($taxon_id);
-            }
-            if (defined $name) {
-                $node->node_name($name);
             }
 
             my $genomeDB;
@@ -100,8 +96,8 @@ sub new_from_NestedSet {
             my $taxon_node;
             if (defined $taxon_id) {
                 $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_taxon_id($taxon_id)
-            } elsif (defined $name) {
-                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_name($name);
+            } elsif (defined $node->name) {
+                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_name($node->name);
             }
             if (defined $taxon_node) {
                 $node->taxon_id($taxon_node->taxon_id);
