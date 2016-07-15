@@ -93,6 +93,7 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
         'goc_threshold'                 => undef,
+        'reuse_goc'                     => 1,
         
     # mapping parameters:
 
