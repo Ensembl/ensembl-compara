@@ -119,7 +119,7 @@ sub run {
 			$c++;
 		}
 		
-#		last if $c >= 20;
+#		last if $c >= 100;
 	}
 
 	print " \n remove chromosome or scaffolds with only 1 gene--------------------------START\n\n" if ( $self->debug );
@@ -146,7 +146,6 @@ sub run {
 	print Dumper($ref_ortholog_info_hashref) if ( $self->debug );
 
 	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n", $self->param('goc_threshold'), " <<<<-------- goc goc_threshold \n" if ( $self->debug );
-	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug );
 	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug >3 );
 
 	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
