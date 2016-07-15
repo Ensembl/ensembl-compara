@@ -127,7 +127,7 @@ li.usertrack_highlight:after {
 /* Hover menus */
 
 .hover_layer                              { position: absolute; opacity: 0.1; cursor: pointer; }
-.hover_layer                              { background-color: #333; }
+.hover_layer:hover                        { background-color: #333; }
 .hover_label span.close               { position: absolute; right: 0; top: -10px; right: -10px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
 
 .label_layer,
