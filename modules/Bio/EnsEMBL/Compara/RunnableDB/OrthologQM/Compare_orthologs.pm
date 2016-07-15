@@ -56,6 +56,16 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Registry;
 
+=head2 new
+
+    A CONSTRUCTOR CLASS SO THAT IRT CAN BE USE AS A BASE CLASS
+
+=cut
+
+sub new {
+    my $class = shift;
+    return bless {}, $class;
+}
 
 =head2 fetch_input
 
@@ -69,10 +79,10 @@ sub fetch_input{
     $self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
     $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
     $self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-    $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
+#    $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
     print $self->param('gmember_adaptor') if ( $self->debug >3 ); 
     print $self->param('homolog_adaptor') if ( $self->debug >3 );
-    $self->param('orthology_mlss_id', $self->param('orthology_mlss')->dbID);
+#   $self->param('orthology_mlss_id', $self->param('orthology_mlss')->dbID);
 
 }
 
@@ -80,7 +90,7 @@ sub run {
     my $self = shift;
     my $chr_orth_hashref = $self->param('chr_job');
     $self->dbc and $self->dbc->disconnect_if_idle();
-    print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n" if ( $self->debug );
+    print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n" if ( $self->debug );
     print Dumper($chr_orth_hashref)if ( $self->debug >3 );
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
@@ -117,7 +127,7 @@ sub run {
 sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID ) = @_;
-    print " --------------------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
+    print " ------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
     print " \n\n\n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug >3);
     my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2, 'ref_chr_dnafragID' => $ref_chr_dnafragID);
 
@@ -228,8 +238,10 @@ sub _compute_ortholog_score {
     $self->param('result')->{'homology_id'} = $query;
     $self->param('result')->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
 
-    print "RESULTS hash-----------------------------------------\n mlss_id  -----\n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
-    $self->dataflow_output_id( $self->param('result'), 2 );
+    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
+    print Dumper($self->param('result')) if ( $self->debug );
+    print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
+    $self->dataflow_output_id( $self->param('result'), 3 );
     
 }
 
@@ -237,7 +249,7 @@ sub _compute_ortholog_score {
 #get all the gene members of in a chromosome coordinate range, filter only the ones that are from a 'ENSEMBLPEP' source and order them based on their dnafrag start positions
 sub _get_non_ref_gmembers {
     my $self = shift;
-    print "This is the _get_non_ref_members subroutine -----------------------------------------------START\n\n\n" if ( $self->debug );
+    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
     my ($dnafragID, $st, $ed)= @_;
 	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
 
@@ -252,14 +264,12 @@ sub _get_non_ref_gmembers {
                 method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND s.source_name = "ENSEMBLPEP"};
 
         # Returns the rows hashed by 'gene_member_id', i.e. it is a Perl DBI way of doing GROUP BY / getting 1 entry per gene_member_id
-    my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('orthology_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+    my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
     print Dumper(@$unsorted_mem) if ( $self->debug );
 
         #collapse tandem duplications
-    print " collapse tandem duplications-----------------------------------------------START\n" if ( $self->debug );        
     my @new_unsorted_mem=grep {$self->_collapse_tandem_repeats($_)} @$unsorted_mem;
     print Dumper(@new_unsorted_mem) if ( $self->debug ); 
-    print " collapse tandem duplications-----------------------------------------------END\n" if ( $self->debug );
 
     # And now we simply sort the genes by their coordinates and return the sorted list
     my @sorted_mem= sort {$a->{dnafrag_start} <=> $b->{dnafrag_start}} @new_unsorted_mem;
@@ -267,7 +277,7 @@ sub _get_non_ref_gmembers {
     foreach my $mem (@sorted_mem) {
         push (@nr_gmem_sorted, $mem->{gene_member_id});
     }
-    print "This is the _get_non_ref_members subroutine ----------------------------------------END\n\n\n" if ( $self->debug );
+    print "This is the _get_non_ref_members subroutine ------------------------------END\n\n" if ( $self->debug );
     return \@nr_gmem_sorted;
 }
 
@@ -275,7 +285,7 @@ sub _get_non_ref_gmembers {
 #this will loop through the list of raw non ref gene members and flag tandem repeats. which will then be remove from the rest of the analyses
 sub _collapse_tandem_repeats {
     my $self = shift;
-    print " THis is the _collapse_tandem_repeats-----------------------------------------------START\n\n" if ( $self->debug > 3);
+    print " THis is the _collapse_tandem_repeats------------------------------START\n\n" if ( $self->debug > 3);
     my ($local_unsorted_mem) = @_;
 
     #check if the gene member is a tandem duplication by looking for it comparing gene tree node its of it homology_id
@@ -290,7 +300,7 @@ sub _collapse_tandem_repeats {
 #check that the order of the non ref gmembers that we get from the orthologs match the order of the gene member that we get from the the method '_get_non_ref_members'
 sub _compare {
     my $self = shift;
-    print " THis is the _compare subroutine -----------------------------------------------START\n\n" if ( $self->debug );
+    print " THis is the _compare subroutine -----------------------------------------START\n\n" if ( $self->debug );
     my ($orth_non_ref_gmembers_hashref, $ordered_non_ref_gmembers_arrayref,$strand1)= @_;
     print Dumper($orth_non_ref_gmembers_hashref) if ( $self->debug );
     print Dumper($ordered_non_ref_gmembers_arrayref) if ( $self->debug );
@@ -369,7 +379,7 @@ sub _compare {
                      ) ? 1 : 0;
         }
     }
-    print " THis is the _compare subroutine -----------------------------------------END\n\n" if ( $self->debug );
+    print " THis is the _compare subroutine -------------------------------END\n\n" if ( $self->debug );
     return {'left1' => $left1_result, 'right1' => $right1_result, 'left2' => $left2_result, 'right2' => $right2_result};
 }
 
