@@ -74,7 +74,7 @@ sub populate_tree {
   
   ## FeatureView 
   if ($self->hub->action eq 'FeatureView') {
-    $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype', [qw(featureview EnsEMBL::Web::Component::UserData::FeatureView)], { availability => @{$sd->ENSEMBL_CHROMOSOMES}}));
+    $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype', [qw(featureview EnsEMBL::Web::Component::UserData::FeatureView)], { availability => scalar @{$sd->ENSEMBL_CHROMOSOMES}}));
   }
 
   $data_menu->append($self->create_node('FviewRedirect', '', [], { command => 'EnsEMBL::Web::Command::UserData::FviewRedirect'})); 
