@@ -50,6 +50,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -106,8 +107,9 @@ sub default_options {
     my $self = shift;
     return {
             %{ $self->SUPER::default_options() },
-        'mlss_id'     => '40101',
-        'compara_db' => 'mysql://ensro@compara2/wa2_protein_trees_snapshot_84'
+        'mlss_id'     => '' , #40101',
+        'compara_db' => '', # 'mysql://ensro@compara2/wa2_protein_trees_snapshot_84'
+        'genesetQC_capacity' => 200,
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
@@ -120,6 +122,7 @@ sub pipeline_wide_parameters {
     #    'compara_db' => $self->o('compara_db'),
         'species_threshold' => $self->o('species_threshold'),
         'coverage_threshold' => $self->o('coverage_threshold'),
+        'genesetQC_capacity' => $self->o('genesetQC_capacity'),
     };
 }
 
@@ -160,55 +163,9 @@ sub pipeline_analyses {
                 'mode'          => 'overwrite',
             },
         },
-# ---------------------------------------------[start the geneSetQC analyses]-----------------------------------------------------------------
-        {   -logic_name => 'get_species_set',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters =>  {'compara_db'   => $self->o('compara_db')},
-            -flow_into  =>  {
-                '2->A'       => ['get_split_genes'],
-                'A->2'   =>  ['store_tags'],
-            },
-            -rc_name => '2Gb_job',
-        },
 
-        {
-            -logic_name     => 'get_split_genes',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes',
-            -flow_into      =>  {
-                1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
-                2   =>  ['?table_name=QC_split_genes'],
-            },
-            -hive_capacity  => 50,
-            -batch_size     => 1,
-        },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
 
-        {
-            -logic_name =>  'get_short_orth_genes',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters =>  {'longer' => 0, 'compara_db'   => $self->o('compara_db')},
-            -flow_into  => {
-                2   => ['?table_name=short_orth_genes'],
-            },
-            -analysis_capacity  => 2,
-            -hive_capacity      => 10,
-        },
-
-        {
-            -logic_name     =>  'get_long_orth_genes',
-            -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters     =>  { 'longer' => 1 , 'compara_db'   => $self->o('compara_db')},
-            -flow_into      =>  {
-                2   => ['?table_name=long_orth_genes'],
-            },
-            -analysis_capacity  => 2,
-            -hive_capacity      => 10,
-        },
-
-        {
-            -logic_name => 'store_tags',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags',
-            -analysis_capacity  => 10,
-        },
     ];
 }
 
