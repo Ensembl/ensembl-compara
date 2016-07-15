@@ -37,7 +37,7 @@ limitations under the License.
 
 
     Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -previous_rel_db <> -compara_db <>
 
 =cut
 
@@ -49,8 +49,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
-
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -71,6 +70,9 @@ sub default_options {
         'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
         'goc_threshold' => undef,
+        'previous_rel_db'  => undef,
+        'reuse_goc'     => undef,
+        'goc_capacity'   => 300,
     };
 }
 
@@ -81,6 +83,9 @@ sub pipeline_wide_parameters {
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
+        'previous_rel_db'  => $self->o('previous_rel_db'),
+        'reuse_goc'     => $self->o('reuse_goc'),
+        'goc_capacity'   => $self->o('goc_capacity'),
     };
 }
 
@@ -97,81 +102,17 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'get_orthologs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-            -input_ids => [ { } ],
-#            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -flow_into => {
-                '2->A' => { 'create_ordered_chr_based_job_arrays' => INPUT_PLUS },
-                'A->1' => { 'get_max_orth_percent' => INPUT_PLUS },       
+        {   -logic_name => 'goc_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => {
+                    'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') }, 
+                    },
             },
-            -hive_capacity  =>  200,  # use per-analysis limiter
-            -rc_name => '2Gb_job',
-        },
-
-        {	-logic_name	=>	'create_ordered_chr_based_job_arrays',
-        	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
-        	-analysis_capacity  =>  50,
-			-flow_into	=>	{
-				2	=>	['check_ortholog_neighbors'],
-			},
-			-rc_name => '2Gb_job',
-        },
-
-        {
-        	-logic_name	=>	'check_ortholog_neighbors',
-        	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-#            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -analysis_capacity  =>  50,
-        	-flow_into	=> {
-                2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
-#        		2 => [ '?table_name=ortholog_goc_metric' ],
-        	},
-
- #           -rc_name => '2Gb_job',
-        },
-
-        {
-            -logic_name => 'get_max_orth_percent',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
-            -flow_into => {
-                1 => WHEN( 'defined #goc_threshold#' => [ 'get_perc_above_threshold'  ] ,
-                    ELSE [ 'get_genetic_distance' ] ),
-            },
-            -rc_name => '16Gb_job',
-        },
-
-        {
-            -logic_name => 'get_genetic_distance',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
-            -flow_into => {
-                1 =>    ['threshold_calculator'],
-                },
-        },
-
-        {
-            -logic_name => 'threshold_calculator',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
-            -flow_into => {
-                1 =>    ['get_perc_above_threshold'],
-                },
-        },
-
-        {
-            -logic_name => 'get_perc_above_threshold',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
-            -flow_into => {
-                1 =>    ['store_goc_dist_asTags'],
-                },
-        },
-
-        {
-            -logic_name => 'store_goc_dist_asTags',
-            -module 	=> 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
-#            -parameters =>	{'compara_db' => $self->o('compara_db') },
         },
 
         
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
     ];
 }
 
