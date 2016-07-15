@@ -181,7 +181,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populate: function (link, extra) {
-    var menu    = this.title.split('; ');
+    var menu    = this.title.toString().split('; ');
     var caption = menu.shift();
     
     this.buildMenu(menu, caption, link, extra, true);
