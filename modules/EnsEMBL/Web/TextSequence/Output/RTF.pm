@@ -29,12 +29,8 @@ use HTML::Entities qw(decode_entities);
 use EnsEMBL::Web::TextSequence::ClassToStyle::RTF;
 use EnsEMBL::Web::TextSequence::Layout::RTF;
 
-sub new {
-  my $proto = shift;
-
-  my $self = $proto->SUPER::new(@_);
-  $self->c2s(EnsEMBL::Web::TextSequence::ClassToStyle::RTF->new);
-  return $self;
+sub make_c2s {
+  return EnsEMBL::Web::TextSequence::ClassToStyle::RTF->new($_[0]->view);
 }
 
 sub _unhtml {

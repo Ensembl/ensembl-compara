@@ -39,18 +39,22 @@ my %assigns = (
 );
 
 sub new {
-  my ($proto) = @_;
+  my ($proto,$view) = @_;
 
   my $class = ref($proto) || $proto;
-  my $self = {};
+  my $self = { view => $view };
   bless $self,$class;
   return $self;
 }
 
 sub load_styles {
-  my ($name,$path) = fileparse(__FILE__);
-  $path .= "/seq-styles.yaml";
-  return LoadFile($path);
+  my ($self) = @_;
+
+  my @seq;
+  foreach my $path (@{$self->{'view'}->style_files}) {
+    push @seq,@{LoadFile($path)};
+  }
+  return \@seq;
 }
 
 sub _value {
@@ -78,7 +82,7 @@ sub make_class_to_style_map {
     $cache = {};
 
     # Load the config
-    my $seq = load_styles;
+    my $seq = $self->load_styles;
     my %c2s;
     my $species_defs = EnsEMBL::Web::SpeciesDefs->new;
     my $colourmap    = EnsEMBL::Draw::Utils::ColourMap->new($species_defs);
@@ -146,7 +150,7 @@ sub create_legend {
 
   my $class_to_style = $self->make_class_to_style_map($config);
   my $species_defs = EnsEMBL::Web::SpeciesDefs->new;
-  my $seq = load_styles;
+  my $seq = $self->load_styles;
   my (%legend,%sources);
 
   # Iterate through config file entries

@@ -37,7 +37,7 @@ sub new {
   my $self = {
     template =>
       qq(<pre class="text_sequence">%s</pre><p class="invisible">.</p>),
-    c2s => EnsEMBL::Web::TextSequence::ClassToStyle::CSS->new,
+    c2s => undef,
     view => undef,
   };
   bless $self,$class;
@@ -56,9 +56,14 @@ sub reset {
   );
 }
 
+sub make_c2s {
+  return EnsEMBL::Web::TextSequence::ClassToStyle::CSS->new($_[0]->view);
+}
+
+sub c2s { return ($_[0]->{'c2s'} ||= $_[0]->make_c2s); }
+
 sub template { $_[0]->{'template'} = $_[1] if @_>1; return $_[0]->{'template'}; }
 sub view { $_[0]->{'view'} = $_[1] if @_>1; return $_[0]->{'view'}; }
-sub c2s { $_[0]->{'c2s'} = $_[1] if @_>1; return $_[0]->{'c2s'}; }
 sub legend { $_[0]->{'legend'} = $_[1] if @_>1; return $_[0]->{'legend'}; }
 sub more { $_[0]->{'more'} = $_[1] if @_>1; return $_[0]->{'more'}; }
 sub final_wrapper { return $_[1]; }

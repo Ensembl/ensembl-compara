@@ -22,6 +22,7 @@ package EnsEMBL::Web::TextSequence::View;
 use strict;
 use warnings;
 
+use File::Basename;
 use JSON qw(encode_json);
 use List::Util qw(max);
 
@@ -140,6 +141,12 @@ sub transfer_data {
     else { $tseq = $self->new_sequence; }
     $tseq->add_data($seq,$config);
   }
+}
+
+sub style_files {
+  my ($name,$path) = fileparse(__FILE__);
+  $path .= "/seq-styles.yaml";
+  return [$path];
 }
 
 1;
