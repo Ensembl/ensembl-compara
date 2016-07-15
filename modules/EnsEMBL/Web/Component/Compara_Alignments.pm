@@ -644,7 +644,7 @@ sub markup_region_change {
     
     foreach (sort {$a <=> $b} keys %{$data->{'region_change'}}) {      
       $seq->[$_]->{'class'} .= 'end ';
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? "\n" : '') . $data->{'region_change'}->{$_} if $config->{'title_display'};
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? "\n" : '') . $data->{'region_change'}->{$_} if ($config->{'title_display'}||'off') ne 'off';
     }
     
     $i++;
