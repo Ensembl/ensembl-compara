@@ -261,10 +261,11 @@ sub get_timetree_estimate {
     while (my $child1 = shift @children) {
         foreach my $child2 (@children) {
             my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->node_name), uri_escape($child2->get_all_leaves()->[0]->node_name));
+            $last_page = $url;
             my $timetree_page = get($url);
+            next unless $timetree_page;
             $timetree_page =~ /<h1 style="margin-bottom: 0px;">(.*)<\/h1> Million Years Ago/;
             return $1 if $1;
-            $last_page = $url;
         }
     }
     warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
