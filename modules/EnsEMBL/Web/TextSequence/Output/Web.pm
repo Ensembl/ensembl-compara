@@ -80,6 +80,7 @@ sub add_line {
 
   my %c2s_cache; # Multi-second speed improvement from this cache
   my $letters = "";
+  $self->{'adorn'}->linelen($self->view->width);
   $self->{'adorn'}->domain([qw(style title href tag letter)]);
   foreach my $m (@$markup) {
     $letters .= ($m->{'letter'}||' ');

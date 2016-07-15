@@ -37,7 +37,9 @@ sub akey { return $_[0]->{'adorn'}->akeys($_[1]); }
 sub done {
   my ($self) = @_;
 
+  my $linelen = $self->{'adorn'}->linelen;
   foreach my $k (keys %{$self->{'line'}}) {
+    push @{$self->{'line'}{$k}},undef if @{$self->{'line'}{$k}} < $linelen;
     my $ko = $self->key($k);
     $ko->addall($self->{'line'}{$k});
   }

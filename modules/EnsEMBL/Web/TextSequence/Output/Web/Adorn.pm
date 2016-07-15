@@ -66,6 +66,7 @@ sub new {
 }
 
 sub domain { $_[0]->{'domain'} = $_[1] if @_>1; return $_[0]->{'domain'}; }
+sub linelen {$_[0]->{'linelen'} = $_[1] if @_>1; return $_[0]->{'linelen'};}
 
 sub line {
   my ($self) = @_;
