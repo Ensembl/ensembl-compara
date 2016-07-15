@@ -36,6 +36,7 @@ sub make_c2s {
 sub _unhtml {
   my ($self,$data) = @_;
 
+  $data ||= '';
   $data =~ s/<.*?>//g;
   $data = decode_entities($data);
   return $data;
