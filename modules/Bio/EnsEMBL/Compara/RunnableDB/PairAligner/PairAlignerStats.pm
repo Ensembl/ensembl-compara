@@ -296,7 +296,6 @@ sub store_mlss_tag_block_size {
 sub calc_stats {
     my ($self, $dbc_url, $genome_db, $genome_bed) = @_;
     my $species = $genome_db->_get_unique_name;
-    my $assembly_name = $genome_db->assembly;
 
     my $compara_url = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc)->url;
 
