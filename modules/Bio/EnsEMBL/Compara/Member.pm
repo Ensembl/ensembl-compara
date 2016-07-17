@@ -111,7 +111,7 @@ use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 sub new {
   my ($class, @args) = @_;
 
-  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
+  my $self = $class->SUPER::new(@args);       # deal with Locus stuff
   
   if (scalar @args) {
     #do this explicitly.

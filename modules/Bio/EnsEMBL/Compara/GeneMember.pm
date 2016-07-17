@@ -109,22 +109,22 @@ sub new_from_Gene {
       throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
     }
 
-    my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
-        -STABLE_ID => $gene->stable_id,
-        -VERSION => $gene->version,
-        -DISPLAY_LABEL => ($gene->display_xref ? $gene->display_xref->display_id : undef),
-        -DNAFRAG_START => $gene->seq_region_start,
-        -DNAFRAG_END => $gene->seq_region_end,
-        -DNAFRAG_STRAND => $gene->seq_region_strand,
+    my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_fast({
+        _stable_id => $gene->stable_id,
+        _version => $gene->version,
+        _display_label => ($gene->display_xref ? $gene->display_xref->display_id : undef),
+        dnafrag_start => $gene->seq_region_start,
+        dnafrag_end => $gene->seq_region_end,
+        dnafrag_strand => $gene->seq_region_strand,
+        dnafrag => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
+        _genome_db => $genome_db,
+        _genome_db_id => $genome_db->dbID,
+        _taxon_id => $genome_db->taxon_id,
 
-        -DNAFRAG => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
-        -GENOME_DB_ID => $genome_db->dbID,
-        -TAXON_ID => $genome_db->taxon_id,
-
-        -SOURCE_NAME => 'ENSEMBLGENE',
-        -DESCRIPTION => $gene->description,
-    );
-    $gene_member->{core_gene} = $gene;
+        _source_name => 'ENSEMBLGENE',
+        _description => $gene->description,
+        core_gene => $gene,
+    });
     return $gene_member;
 }
 
