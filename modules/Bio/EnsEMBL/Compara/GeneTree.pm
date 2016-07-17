@@ -364,6 +364,7 @@ sub preload {
         $gtn_adaptor->{'_ref_tree'} = $self;
         if ($prune_subtree and ($prune_subtree != $self->{'_root_id'})) {
             $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree) || die "Could not fetch a subtree from node_id '$prune_subtree'\n";
+            $self->{'_pruned'} = 1;
         } else {
             $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'}) || die "Could not fetch a tree with the root_id '".$self->{'_root_id'}."\n";
         }
@@ -399,6 +400,7 @@ sub preload {
                     $internal_node->parent->add_child($sibling, $sibling->distance_to_parent+$internal_node->distance_to_parent);
                     $internal_node->disavow_parent;
                 }
+                $self->{'_pruned'} = 1;
             }
         }
         $self->{'_root'} = $root;

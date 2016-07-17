@@ -51,6 +51,16 @@ sub convert {
   }
   $self->cigar_line($cigar_line);
 
+  $self->{_cached_seq_aligns} = {};
+  if ($tree->{'_pruned'} && $aligned) {
+      my $aln = $tree->root->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef), -REMOVE_GAPS => 1);
+      foreach my $seq ($aln->each_seq) {
+          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
+      }
+  } else {
+      delete $self->{_cached_seq_aligns};
+  }
+
   return $self->_head_node($tree);
 }
 
@@ -258,7 +268,8 @@ sub _convert_node {
         my $aligned = $self->aligned();
         my $mol_seq;
         if($aligned) {
-            $mol_seq = ($self->cdna()) ? $node->alignment_string('cds') : $node->alignment_string();
+            $mol_seq = $self->{_cached_seq_aligns}->{$node->stable_id} ||
+                        ($self->cdna() ? $node->alignment_string('cds') : $node->alignment_string());
         }
         else {
             $mol_seq = ($self->cdna()) ? $node->other_sequence('cds') : $node->sequence();
