@@ -52,10 +52,4 @@ sub param_defaults {
     };
 }
 
-sub run {
-    my $self = shift;
-    $self->cleanup_worker_temp_directory;
-    $self->run_generic_command;
-}
-
 1;
