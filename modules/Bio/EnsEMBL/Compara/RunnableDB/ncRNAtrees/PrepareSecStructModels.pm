@@ -95,8 +95,8 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
-    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
+    $self->_load_species_tree_string_from_db();
 
     my $alignment_id = $self->param_required('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
