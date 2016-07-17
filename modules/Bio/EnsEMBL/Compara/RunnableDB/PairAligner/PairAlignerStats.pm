@@ -267,9 +267,9 @@ sub write_pairaligner_statistics {
 
 
     #Calculate the statistics
-    my ($ref_coverage) = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed);
+    my $ref_coverage = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed);
 
-    my ($non_ref_coverage) = $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
+    my $non_ref_coverage = $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
    
     #write information to method_link_species_set_tag table
 
@@ -333,7 +333,7 @@ sub calc_stats {
     $self->warning($str);
 
     print "$str\n";
-    return ($coverage);
+    return $coverage;
 }
 
 #
