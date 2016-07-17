@@ -160,8 +160,8 @@ sub write_output {
   return if ($self->param('skip'));
 
   #Dump bed files if necessary
-  my ($ref_genome_bed) = $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
-  my ($non_ref_genome_bed) = $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
+  my ($ref_genome_bed) = $self->dump_bed_file($self->param('ref_genome_db'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
+  my ($non_ref_genome_bed) = $self->dump_bed_file($self->param('non_ref_genome_db'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
 
   
   #Create statistics
@@ -202,12 +202,12 @@ sub write_output {
 #regions. If a file of that convention already exists, it will not be overwritten.
 #
 sub dump_bed_file {
-    my ($self, $species, $dbc_url, $reg_conf) = @_;
+    my ($self, $genome_db, $dbc_url, $reg_conf) = @_;
 
-    #Need assembly
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($species);
     my $assembly = $genome_db->assembly;
     my $name = $genome_db->_get_unique_name; #get production_name
+    my $species_arg   = "--species ".$genome_db->name;
+       $species_arg  .= " --component ".$genome_db->genome_component if $genome_db->genome_component;
     
     #Check if file already exists
     my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "genome.bed";
@@ -216,7 +216,7 @@ sub dump_bed_file {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
     } else {
         #Need to dump toplevel features
-        my $cmd = $self->param('dump_features') . " --url \"$dbc_url\" --species $name --feature toplevel > $genome_bed_file";
+        my $cmd = $self->param('dump_features') . " --url \"$dbc_url\" $species_arg --feature toplevel > $genome_bed_file";
 
         unless (system($cmd) == 0) {
             die("$cmd execution failed\n");
@@ -303,7 +303,9 @@ sub calc_stats {
     my $feature = "mlss_" . $self->param('mlss_id');
     my $alignment_bed = $self->param('output_dir') . "/" . $feature . "." . $species . ".bed";
     my $dump_features = $self->param('dump_features');
-    my $cmd = "$dump_features --url \"$dbc_url\" --compara_url '$compara_url' --species $species --feature $feature > $alignment_bed";
+    my $species_arg   = "--species ".$genome_db->name;
+       $species_arg  .= " --component ".$genome_db->genome_component if $genome_db->genome_component;
+    my $cmd = "$dump_features --url \"$dbc_url\" --compara_url '$compara_url' $species_arg --feature $feature > $alignment_bed";
 
     unless (system($cmd) == 0) {
         die("$cmd execution failed\n");
