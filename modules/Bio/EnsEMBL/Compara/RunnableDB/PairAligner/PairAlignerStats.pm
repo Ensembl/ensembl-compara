@@ -232,11 +232,7 @@ sub dump_bed_file {
 sub write_pairaligner_statistics {
     my ($self, $ref_genome_bed, $non_ref_genome_bed) = @_;
     my $verbose = 0;
-    my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
-    
-    if (!$method_link_species_set) {
-	$self->throw(" ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID (" . $self->param('mlss_id') . ")\n");
-    }
+    my $method_link_species_set = $self->param_required('mlss');
 
     #Fetch the number of genomic_align_blocks
     my $sql = "SELECT count(*) FROM genomic_align_block WHERE method_link_species_set_id = " . $method_link_species_set->dbID;
