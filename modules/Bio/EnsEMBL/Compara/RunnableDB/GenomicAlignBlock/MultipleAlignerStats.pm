@@ -107,24 +107,8 @@ sub fetch_input {
   #Need to protect with quotes
   $self->param('dbc_url', "\"$url\"");
 
-  my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-
-  #Set up paths to various perl scripts
-  unless ($self->param('dump_features')) {
-      $self->param('dump_features', $perl_path . "/ensembl-compara/scripts/dumps/dump_features.pl");
-  }
-  
-  unless (-e $self->param('dump_features')) {
-      die($self->param('dump_features') . " does not exist");
-  }
-
-  unless ($self->param('compare_beds')) {
-      $self->param('compare_beds', $perl_path . "/ensembl-compara/scripts/pipeline/compare_beds.pl");
-  }
-  
-  unless (-e $self->param('compare_beds')) {
-      die($self->param('compare_beds') . " does not exist");
-  }
+  $self->require_executable('dump_features');
+  $self->require_executable('compare_beds');
   
   #Get ensembl schema version from meta table if not defined
   if (!defined $self->param('ensembl_release')) {

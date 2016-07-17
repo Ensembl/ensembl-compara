@@ -113,20 +113,8 @@ sub fetch_input {
   $self->param('ref_dbc_url', $ref_url);
   $self->param('non_ref_dbc_url', $non_ref_url);
 
-  my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-
-  #Set up paths to various perl scripts
-  unless ($self->param('dump_features')) {
-      $self->param('dump_features', $perl_path . "/ensembl-compara/scripts/dumps/dump_features.pl");
-  }
-  
-  unless (-e $self->param('dump_features')) {
-      die(self->param('dump_features') . " does not exist");
-  }
-  
-  unless ($self->param('create_pair_aligner_page')) {
-      $self->param('create_pair_aligner_page', $perl_path . "/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl");
-  }
+  $self->require_executable('dump_features');
+  $self->require_executable('create_pair_aligner_page');
 
   #Get ensembl schema version from meta table if not defined
   if (!defined $self->param('ensembl_release')) {
