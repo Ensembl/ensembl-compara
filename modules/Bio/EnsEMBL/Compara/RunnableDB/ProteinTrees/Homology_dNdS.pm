@@ -155,7 +155,8 @@ sub calc_genetic_distance {
   # Select the correct codon table for codeml
   # default is 0: universal code
   foreach my $member (@{$homology->get_all_Members}) {
-      if ($member->dnafrag_id and $member->dnafrag->name =~ /MT/i) {
+      next unless $member->dnafrag_id;
+      if ($member->dnafrag->dna_type eq 'MT') {
           ## 7742 is the taxon_id of vertebrates (Vertebrata)
           if (grep {$_->taxon_id == 7742} @{$member->taxon->get_all_ancestors}) {
               # 1:mamalian mt
@@ -166,6 +167,7 @@ sub calc_genetic_distance {
               $codeml->set_parameter("icode", 4);
               last;
           }
+      } elsif ($member->dnafrag->dna_type eq 'PT') {
       }
   }
 
