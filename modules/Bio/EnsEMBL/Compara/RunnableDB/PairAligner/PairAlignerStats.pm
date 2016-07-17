@@ -111,9 +111,8 @@ sub fetch_input {
   my $ref_url = generate_url($ref_db->dbc, $self->param('ref_species'));
   my $non_ref_url = generate_url($non_ref_db->dbc, $self->param('non_ref_species'));
 
-  #Need to protect with quotes
-  $self->param('ref_dbc_url', "\"$ref_url\"");
-  $self->param('non_ref_dbc_url', "\"$non_ref_url\"");
+  $self->param('ref_dbc_url', $ref_url);
+  $self->param('non_ref_dbc_url', $non_ref_url);
 
   my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
 
@@ -217,7 +216,7 @@ sub dump_bed_file {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
     } else {
         #Need to dump toplevel features
-        my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature toplevel > $genome_bed_file";
+        my $cmd = $self->param('dump_features') . " --url \"$dbc_url\" --species $name --feature toplevel > $genome_bed_file";
 
         unless (system($cmd) == 0) {
             die("$cmd execution failed\n");
@@ -316,7 +315,7 @@ sub calc_stats {
     my $feature = "mlss_" . $self->param('mlss_id');
     my $alignment_bed = $self->param('output_dir') . "/" . $feature . "." . $species . ".bed";
     my $dump_features = $self->param('dump_features');
-    my $cmd = "$dump_features --url $dbc_url --compara_url '$compara_url' --species $species --feature $feature > $alignment_bed";
+    my $cmd = "$dump_features --url \"$dbc_url\" --compara_url '$compara_url' --species $species --feature $feature > $alignment_bed";
 
     unless (system($cmd) == 0) {
         die("$cmd execution failed\n");
