@@ -252,17 +252,13 @@ sub write_pairaligner_statistics {
     #Find the reference and non-reference genome_db
     my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
 
-    my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-    my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
-    my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
-
     my $ref_dbc_url = $self->param('ref_dbc_url');
     my $non_ref_dbc_url = $self->param('non_ref_dbc_url');
 
     #Calculate the statistics
-    my $ref_coverage = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed);
+    my $ref_coverage = $self->calc_stats($ref_dbc_url, $self->param('ref_genome_db'), $ref_genome_bed);
 
-    my $non_ref_coverage = (@$species_set == 1) ? $ref_coverage : $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
+    my $non_ref_coverage = (@$species_set == 1) ? $ref_coverage : $self->calc_stats($non_ref_dbc_url, $self->param('non_ref_genome_db'), $non_ref_genome_bed);
    
     #write information to method_link_species_set_tag table
 
