@@ -25,14 +25,14 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('gene_tree', $nc_tree);
-    $nc_tree->species_tree->attach_to_genome_dbs();
+    $self->_load_species_tree_string_from_db();
     my $alignment_id = $self->param('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
