@@ -259,17 +259,10 @@ sub write_pairaligner_statistics {
     my $ref_dbc_url = $self->param('ref_dbc_url');
     my $non_ref_dbc_url = $self->param('non_ref_dbc_url');
 
-    #self alignments
-    if (@$species_set == 1) {
-	$non_ref_genome_db = $ref_genome_db;
-	$non_ref_dbc_url = $ref_dbc_url;
-    }
-
-
     #Calculate the statistics
     my $ref_coverage = $self->calc_stats($ref_dbc_url, $ref_genome_db, $ref_genome_bed);
 
-    my $non_ref_coverage = $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
+    my $non_ref_coverage = (@$species_set == 1) ? $ref_coverage : $self->calc_stats($non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed);
    
     #write information to method_link_species_set_tag table
 
