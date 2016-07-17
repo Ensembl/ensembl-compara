@@ -206,6 +206,7 @@ sub new_from_Transcript {
 
     my $seq_member = Bio::EnsEMBL::Compara::SeqMember->new(
         -STABLE_ID => $stable_id,
+        -VERSION => $transcript->version,
         -DISPLAY_LABEL => ($transcript->display_xref ? $transcript->display_xref->display_id : undef),
         -DNAFRAG_START => $start,
         -DNAFRAG_END => $end,

@@ -111,6 +111,7 @@ sub new_from_Gene {
 
     my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
         -STABLE_ID => $gene->stable_id,
+        -VERSION => $gene->version,
         -DISPLAY_LABEL => ($gene->display_xref ? $gene->display_xref->display_id : undef),
         -DNAFRAG_START => $gene->seq_region_start,
         -DNAFRAG_END => $gene->seq_region_end,
