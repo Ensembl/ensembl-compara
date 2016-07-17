@@ -29,6 +29,7 @@ my $reg_conf;
 my $url = 'mysql://anonymous@ensembldb.ensembl.org/';
 my $compara_url;
 my $species = "Homo sapiens";
+my $component;
 my $regions;
 my $feature = "";
 my $default_promoter_length = 10000;
@@ -72,6 +73,8 @@ Options:
       a release one (or it lives in a diff. server)
 * --species [default = $species]
       The name of the species
+* --component [optional]
+      For polyploid genomes only, the name of the component
 * --extra
       Allows to restrict the type of repeats
 * --from
@@ -86,6 +89,7 @@ GetOptions(
   'urls=s' => \@$urls,
   'compara_url=s' => \$compara_url,
   'species=s' => \$species,
+  'component=s' => \$component,
   'regions=s' => \$regions,
   'feature=s' => \$feature,
   'extra=s' => \$extra,
@@ -142,8 +146,9 @@ if ($compara_url) {
 }
 
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
+$species_name .= ".$component" if $component;
 
-my $slice_adaptor = $reg->get_adaptor($species_name, "core", "Slice");
+my $slice_adaptor = $reg->get_adaptor($species, "core", "Slice");
 
 $feature = shift(@ARGV) if (@ARGV and !$feature);
 $extra = shift(@ARGV) if (@ARGV and !$extra);
@@ -152,7 +157,7 @@ my $mlss;
 my $dnafrag_adaptor = $compara_dba ? $compara_dba->get_DnaFragAdaptor : undef;
 my $track_name;
 my $description;
-my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_schema_version();
+my $version = $reg->get_adaptor($species, "core", "MetaContainer")->get_schema_version();
 
 if ($feature =~ /^top/) {
   $track_name = "top-level.e$version";
@@ -232,6 +237,8 @@ if (!defined($from)) {
 my $all_slices;
 if ($regions) {
   $all_slices = get_Slices_from_BED_file($regions, $slice_adaptor);
+} elsif ($component) {
+  $all_slices = $slice_adaptor->fetch_all_by_genome_component($component);
 } else {
   $all_slices = $slice_adaptor->fetch_all("toplevel");
 }
