@@ -91,16 +91,15 @@ sub fetch_input {
 	  die("must define either mlss_id or method_link_type and genome_db_ids");
       }
   }
-
-  $self->param('ref_species', $mlss->get_value_for_tag("reference_species"));
-  $self->param('non_ref_species', $mlss->get_value_for_tag("non_reference_species"));
   $self->param('mlss_id', $mlss->dbID);
+  $self->param('mlss', $mlss);
 
-  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-
-  my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
-  my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
-
+  my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+  my ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
+  unless (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species'))
+      && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
+        ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
+  }
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
@@ -108,8 +107,8 @@ sub fetch_input {
   my $non_ref_db = $non_ref_genome_db->db_adaptor;
 
   #Create url from dbc
-  my $ref_url = generate_url($ref_db->dbc, $self->param('ref_species'));
-  my $non_ref_url = generate_url($non_ref_db->dbc, $self->param('non_ref_species'));
+  my $ref_url = generate_url($ref_db->dbc, $ref_genome_db->name);
+  my $non_ref_url = generate_url($non_ref_db->dbc, $non_ref_genome_db->name);
 
   $self->param('ref_dbc_url', $ref_url);
   $self->param('non_ref_dbc_url', $non_ref_url);
