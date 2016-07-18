@@ -24,7 +24,7 @@
 #   the string there, and they can certainly reconstruct it using the API.
 
 
-ALTER TABLE species_tree_root DROP species_tree;
+ALTER TABLE species_tree_root DROP COLUMN species_tree;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
