@@ -91,20 +91,22 @@ sub content {
     $html .= '<div class="_adornment_key adornment-key"></div>';
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
-  
-  $html .= $self->_info('Sequence markup', qq{
-    <p>
-      $site_type has a number of sequence markup pages on the site. You can view the exon/intron structure
-      of individual transcripts by selecting the transcript name in the table above, then clicking
-      Exons in the left hand menu. Alternatively you can see the sequence of the transcript along with its
-      protein translation and variation features by selecting the transcript followed by Sequence &gt; cDNA.
-    </p>
-    <p>
-      This view and the transcript based sequence views are configurable by clicking on the "Configure this page"
-      link in the left hand menu
-    </p>
-  });
-  
+
+  # Stop info message appearing twice on panel update
+  if (!$hub->param('update_panel')) {
+    $html .= $self->_info('Sequence markup', qq{
+      <p>
+        $site_type has a number of sequence markup pages on the site. You can view the exon/intron structure
+        of individual transcripts by selecting the transcript name in the table above, then clicking
+        Exons in the left hand menu. Alternatively you can see the sequence of the transcript along with its
+        protein translation and variation features by selecting the transcript followed by Sequence &gt; cDNA.
+      </p>
+      <p>
+        This view and the transcript based sequence views are configurable by clicking on the "Configure this page"
+        link in the left hand menu
+      </p>
+    });
+  }
   return $html;
 }
 
