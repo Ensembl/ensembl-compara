@@ -163,8 +163,8 @@ sub content {
         'identifier'          => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq(<span class="small">$links</span>) : '',
         'Location'            => qq(<a href="$location_link">$paralogue->{'location'}</a>),
-        'Target %id'          => $target,
-        'Query %id'           => $query,
+        'Target %id'          => sprintf('%.2f&nbsp;%%', $target),
+        'Query %id'           => sprintf('%.2f&nbsp;%%', $query),
       };
     }
   }
