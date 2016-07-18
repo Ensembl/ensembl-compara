@@ -85,6 +85,7 @@ sub object_class {
 
   Arg [1]    : string $name
   Arg [2]    : string $assembly (optional)
+  Arg [3]    : string $component (optional)
   Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
   Description: Retrieves a genome db using the name of the species and
                the assembly version.
@@ -96,11 +97,17 @@ sub object_class {
 =cut
 
 sub fetch_by_name_assembly {
-    my ($self, $name, $assembly) = @_;
+    my ($self, $name, $assembly, $component) = @_;
 
     throw("name argument is required") unless($name);
 
-    if ($assembly) {
+    if ($component) {
+        die 'The component filter requires an assembly name' unless $assembly;
+        my $gdbs = $self->_id_cache->get_all_by_additional_lookup('genome_component', sprintf('%s_____%s', lc $name, lc $assembly));
+        my @these_gdbs = grep {$_->genome_component eq $component} @$gdbs;
+        return $these_gdbs[0];
+
+    } elsif ($assembly) {
         return $self->_id_cache->get_by_additional_lookup('name_assembly', sprintf('%s_____%s', lc $name, lc $assembly));
     }
 
@@ -170,6 +177,7 @@ sub fetch_by_taxon_id {
 =head2 fetch_by_registry_name
 
   Arg [1]    : string $name
+  Arg [2]    : string $component (optional)
   Example    : $gdb = $gdba->fetch_by_registry_name("human");
   Description: Retrieves a genome db using the name of the species as
                used in the registry configuration file. Any alias is
@@ -182,7 +190,7 @@ sub fetch_by_taxon_id {
 =cut
 
 sub fetch_by_registry_name {
-  my ($self, $name) = @_;
+  my ($self, $name, $component) = @_;
 
   unless($name) {
     throw('name arguments are required');
@@ -193,7 +201,7 @@ sub fetch_by_registry_name {
     throw("Cannot connect to core database for $name!");
   }
 
-  return $self->fetch_by_core_DBAdaptor($species_db_adaptor);
+  return $self->fetch_by_core_DBAdaptor($species_db_adaptor, $component);
 }
 
 
@@ -221,10 +229,17 @@ sub fetch_by_Slice {
   my $core_dba = $slice->adaptor()->db();
   my $gdb = $self->fetch_by_core_DBAdaptor($core_dba);
 
-  # 2015-03-18: the code below is greedy: it tries to find the component
-  # genome_db that matches the slice instead of returning the principal
-  # genome_db. It seems that we currently don't need to return component
-  # genome_dbs here, so let's just skip this part for now.
+  if (!$gdb) {
+      # It may be that the slice belongs to a component
+      my $all_comp_attr = $slice->get_all_Attributes('genome_component');
+      if (@$all_comp_attr) {
+          my $comp_name = $all_comp_attr->[0]->value;
+          $gdb = $self->fetch_by_core_DBAdaptor($core_dba, $comp_name);
+      }
+  }
+  # NOTE: this method could be "greedy" and return the component GenomeDB
+  # instead of the principal one. See below
+
   return $gdb;
 
   # We need to return the right genome_db if the slice is from a polyploid
@@ -295,6 +310,7 @@ sub fetch_all_by_low_coverage {  ## UNUSED
 =head2 fetch_by_core_DBAdaptor
 
 	Arg [1]     : Bio::EnsEMBL::DBSQL::DBAdaptor
+        Arg [2]     : string $component (optional)
 	Example     : my $gdb = $gdba->fetch_by_core_DBAdaptor($core_dba);
 	Description : For a given core database adaptor object; this method will
 	              return the GenomeDB instance
@@ -306,12 +322,12 @@ sub fetch_all_by_low_coverage {  ## UNUSED
 =cut
 
 sub fetch_by_core_DBAdaptor {
-    my ($self, $core_dba) = @_;
+    my ($self, $core_dba, $component) = @_;
     my $species_name = $core_dba->get_MetaContainer->get_production_name();
     return undef unless $species_name;
     my $species_assembly = $core_dba->assembly_name();
     $core_dba->dbc->disconnect_if_idle();
-    return $self->fetch_by_name_assembly($species_name, $species_assembly);
+    return $self->fetch_by_name_assembly($species_name, $species_assembly, $component);
 }
 
 
