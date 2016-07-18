@@ -107,7 +107,6 @@ sub render {
   $html .= "</select>";
 
   my $html_after .= qq{
-        </select>
       </p>
     </form>
     <p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
