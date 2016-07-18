@@ -45,7 +45,6 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 

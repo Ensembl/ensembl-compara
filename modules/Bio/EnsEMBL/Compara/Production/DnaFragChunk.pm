@@ -45,7 +45,6 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::Seq;
 use Bio::SeqIO;
 
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods

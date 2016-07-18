@@ -51,7 +51,6 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
@@ -135,7 +134,7 @@ sub fetch_by_set_description {
   my ($self,$set_description) = @_;
 
   unless(defined $set_description) {
-    throw("fetch_by_set_description must have a description");
+    $self->throw("fetch_by_set_description must have a description");
   }
 
   $self->bind_param_generic_fetch($set_description, SQL_VARCHAR);

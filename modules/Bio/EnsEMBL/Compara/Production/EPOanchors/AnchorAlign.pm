@@ -36,7 +36,6 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
