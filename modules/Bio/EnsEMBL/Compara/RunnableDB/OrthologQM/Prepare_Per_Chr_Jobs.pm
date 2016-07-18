@@ -70,11 +70,11 @@ sub param_defaults {
 
 #    },
 #    'ref_species_dbid'    => 31,
-#    'non_ref_species_dbid'    => 4,
-#    'reuse_goc'   => 1,
+#    'non_ref_species_dbid'    => 155, # 4,
+#    'reuse_goc'   => 0,
 #    'previous_rel_db'  =>  'mysql://ensadmin:ensembl@compara4/wa2_protein_trees_84',
-#    'compara_db'  => 'mysql://ensadmin:ensembl@compara3/cc21_prottree_85_snapshot',
-#    'goc_mlss_id'  =>  '20515',
+#    'compara_db'  => 'mysql://ensadmin:ensembl@compara4/', #mysql://ensadmin:ensembl@compara3/cc21_prottree_85_snapshot',
+#    'goc_mlss_id'  => '100021',# '20515',
     };
 }
 
@@ -117,7 +117,7 @@ sub run {
     $self->_reusable_species();
   }
   else {
-    $self->_nonreusable_species();
+    $self->_non_reusable_species();
   }
   
   print "the runnable Prepare_Per_Chr_Jobs ----------END \n mlss_id \n", $self->param('goc_mlss_id') , if ( $self->debug >3);
@@ -278,7 +278,6 @@ sub _non_reusable_species {
     my $chr_job = {};
     $chr_job->{$ref_dnafragID} = $orth_sorted;
     print Dumper($chr_job) if ( $self->debug > 3);
-    die;
     $self->dataflow_output_id( {'chr_job' => $chr_job, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid') }, 2 );  
   }
 }
