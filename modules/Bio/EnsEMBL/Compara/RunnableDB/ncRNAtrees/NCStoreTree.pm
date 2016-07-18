@@ -10,7 +10,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree();
+    my $species_tree = $self->param('gene_tree')->method_link_species_set->species_tree('default');
+    $self->param('species_tree', $species_tree);
     $species_tree->attach_to_genome_dbs();
     return $species_tree->root->newick_format('ryo', '%{o}');
 }

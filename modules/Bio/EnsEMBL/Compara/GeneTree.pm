@@ -287,6 +287,23 @@ sub gene_align_id {
 }
 
 
+=head2 species_tree_root_id
+
+  Description : Getter/Setter for the species_tree_root_id field. This field would map
+                to the gene_align / gene_align_member tables
+  Returntype  : String
+  Example     : my $aln_id = $tree->species_tree_root_id();
+  Caller      : General
+
+=cut
+
+sub species_tree_root_id {
+    my $self = shift;
+    $self->{'_species_tree_root_id'} = shift if(@_);
+    return $self->{'_species_tree_root_id'};
+}
+
+
 =head2 species_tree
 
   Description : Getter for the species-tree this gene tree is reconciled with
@@ -298,9 +315,18 @@ sub gene_align_id {
 
 sub species_tree {
     my $self = shift;
-    return $self->method_link_species_set->species_tree(shift || 'default');
-}
 
+    unless ($self->{'_species_tree'}) {
+        if (@_) {
+            $self->{'_species_tree'} = shift;
+        } elsif ($self->{'_species_tree_root_id'}) {
+            $self->{'_species_tree'} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_root_id( $self->{'_species_tree_root_id'} );
+        } else {
+            $self->{'_species_tree'} = $self->method_link_species_set->species_tree(shift || 'default');
+        }
+    }
+    return $self->{'_species_tree'};
+}
 
 ################
 # Tree loading #
@@ -650,7 +676,7 @@ sub member_class {
 sub _attr_to_copy_list {
     my $self = shift;
     my @sup_attr = $self->SUPER::_attr_to_copy_list();
-    push @sup_attr, qw(_tree_type _member_type _clusterset_id _gene_align_id);
+    push @sup_attr, qw(_tree_type _member_type _clusterset_id _gene_align_id _species_tree_root_id);
     return @sup_attr;
 }
 

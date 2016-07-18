@@ -387,11 +387,11 @@ sub store {
     my $sth;
     # Make sure that the variables are in the same order
     if ($has_root_id) {
-        $sth = $self->prepare('UPDATE gene_tree_root SET tree_type=?, member_type=?, clusterset_id=?, gene_align_id=?, method_link_species_set_id=?, stable_id=?, version=?, ref_root_id=? WHERE root_id=?'),
+        $sth = $self->prepare('UPDATE gene_tree_root SET tree_type=?, member_type=?, clusterset_id=?, gene_align_id=?, method_link_species_set_id=?, species_tree_root_id=?, stable_id=?, version=?, ref_root_id=? WHERE root_id=?'),
     } else {
-        $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, gene_align_id, method_link_species_set_id, stable_id, version, ref_root_id, root_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, gene_align_id, method_link_species_set_id, species_tree_root_id, stable_id, version, ref_root_id, root_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     }
-    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->gene_align_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $tree->ref_root_id, $root_id);
+    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->gene_align_id, $tree->method_link_species_set_id, $tree->species_tree_root_id, $tree->stable_id, $tree->version, $tree->ref_root_id, $root_id);
     
     $tree->adaptor($self);
 
@@ -471,6 +471,7 @@ sub _columns {
         gtr.clusterset_id
         gtr.gene_align_id
         gtr.method_link_species_set_id
+        gtr.species_tree_root_id
         gtr.stable_id
         gtr.version
         gtr.ref_root_id
@@ -493,6 +494,7 @@ sub _objs_from_sth {
         _clusterset_id              => $rowhash->{clusterset_id},
         _gene_align_id              => $rowhash->{gene_align_id},
         _method_link_species_set_id => $rowhash->{method_link_species_set_id},
+        _species_tree_root_id       => $rowhash->{species_tree_root_id},
         _stable_id                  => $rowhash->{stable_id},
         _version                    => $rowhash->{version},
         _ref_root_id                => $rowhash->{ref_root_id},

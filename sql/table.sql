@@ -1381,6 +1381,7 @@ CREATE TABLE gene_tree_node (
 @column tree_type                     The type of the tree
 @column clusterset_id                 Name for the set of clusters/trees
 @column method_link_species_set_id    External reference to method_link_species_set_id in the method_link_species_set table
+@column species_tree_root_id          External reference to root_id in the species_tree_root table
 @column gene_align_id                 External reference to gene_align_id in the @link gene_align table
 @column ref_root_id                   External reference to default (merged) root_id for this tree
 @column stable_id                     Unique, stable ID for the tree (follows the pattern: label(5).release_introduced(4).unique_id(10))
@@ -1399,6 +1400,7 @@ CREATE TABLE gene_tree_root (
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
     clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    species_tree_root_id            INT(10) UNSIGNED,
     gene_align_id                   INT(10) UNSIGNED,
     ref_root_id                     INT(10) UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
@@ -1408,6 +1410,7 @@ CREATE TABLE gene_tree_root (
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
     FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
     FOREIGN KEY (ref_root_id) REFERENCES gene_tree_root(root_id),
+    FOREIGN KEY (species_tree_root_id) REFERENCES species_tree_root(root_id),
 
     PRIMARY KEY (root_id ),
     UNIQUE KEY ( stable_id ),
@@ -2035,4 +2038,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_b.sql|species_tree_root.species_tree');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_85_86_c.sql|gene_tree_root.species_tree_root_id');
 

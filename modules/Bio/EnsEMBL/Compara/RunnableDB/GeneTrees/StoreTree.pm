@@ -208,6 +208,8 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
     my $treenode_adaptor = $tree->adaptor->db->get_GeneTreeNodeAdaptor;
 
+    $tree->species_tree( $self->param('species_tree') );
+    $tree->species_tree_root_id( $self->param('species_tree')->root_id );
     $tree->root->build_leftright_indexing(1);
     $self->call_within_transaction(sub {
         $tree->adaptor->store($tree);
