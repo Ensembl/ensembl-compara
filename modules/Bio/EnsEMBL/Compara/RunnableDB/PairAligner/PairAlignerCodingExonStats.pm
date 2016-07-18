@@ -104,15 +104,19 @@ sub run {
   my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($self->param_required('dnafrag_id'));
   $self->param('genome_db', $dnafrag->genome_db);
 
+  my $coding_exons = [];
+  $dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
   my $slice_adaptor = $dnafrag->genome_db->db_adaptor->get_SliceAdaptor();
 
   #Necessary to get unique bits of Y
   my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $dnafrag->name);
 
-  my $coding_exons = [];
   foreach my $slice (@$slices) {
-      $coding_exons = get_coding_exon_regions($slice, $coding_exons);
+      get_coding_exon_regions($slice, $coding_exons);
   }
+
+  });
 
   print "coding_exons " . @$coding_exons . "\n" if($self->debug);
   
@@ -227,7 +231,6 @@ sub write_output {
 
 sub get_coding_exon_regions {
   my ($this_slice, $regions) = @_;
-  #my $regions = [];
 
   return undef if (!$this_slice);
 
@@ -257,7 +260,6 @@ sub get_coding_exon_regions {
 
   #Add final region
   push (@$regions, [$last_start, $last_end]);
-  return $regions;
 }
 
 
