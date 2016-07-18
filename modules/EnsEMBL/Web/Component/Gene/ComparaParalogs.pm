@@ -55,8 +55,8 @@ sub content {
     { key => 'identifier',          align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => 'Compare',             align => 'left', width => '10%', sort => 'none'          },
     { key => 'Location',            align => 'left', width => '20%', sort => 'position_html' },
-    { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric'       },
-    { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric', help => "Percentage of the paralogous sequence matching the query sequence" },
+    { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric', help => "Percentage of the query sequence matching the sequence of the paralogue" },
   ];
   
   my @rows;
