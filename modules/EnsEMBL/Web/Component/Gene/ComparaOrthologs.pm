@@ -247,8 +247,8 @@ sub content {
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
-        'Target %id' => $target,
-        'Query %id'  => $query,
+        'Target %id' => sprintf('%.2f&nbsp;%%', $target),
+        'Query %id'  => sprintf('%.2f&nbsp;%%', $query),
         'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);
