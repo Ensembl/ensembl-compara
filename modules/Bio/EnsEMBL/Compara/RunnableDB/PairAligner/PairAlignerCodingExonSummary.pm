@@ -66,9 +66,15 @@ sub fetch_input {
 	  die("must define either mlss_id or method_link_type and genome_db_ids");
       }
   }
-  $self->param('ref_species', $mlss->get_value_for_tag("reference_species"));
-  $self->param('non_ref_species', $mlss->get_value_for_tag("non_reference_species"));
 
+  my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+  my ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
+  unless (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species'))
+      && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
+        ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
+  }
+  $self->param('ref_genome_db', $ref_genome_db);
+  $self->param('non_ref_genome_db', $non_ref_genome_db);
 
   return 1;
 }
@@ -86,15 +92,13 @@ sub write_output {
 
   my $compara_dba = $self->compara_dba;
   my $mlss_id = $self->param('mlss_id');
-  my $ref_species = $self->param('ref_species');
-  my $non_ref_species = $self->param('non_ref_species');
   my ($coding_exon_length, $matches, $mis_matches, $ref_insertions, $uncovered);
 
-  my $sql = "SELECT SUM(coding_exon_length), SUM(matches), SUM(mis_matches), SUM(ref_insertions), SUM(uncovered) FROM statistics WHERE species_name = ? AND method_link_species_set_id = ?";
+  my $sql = "SELECT SUM(coding_exon_length), SUM(matches), SUM(mis_matches), SUM(ref_insertions), SUM(uncovered) FROM statistics WHERE genome_db_id = ? AND method_link_species_set_id = ?";
   my $sth = $compara_dba->dbc->prepare($sql);
 
   #Ref species
-  $sth->execute($ref_species, $mlss_id);
+  $sth->execute($self->param('ref_genome_db')->dbID, $mlss_id);
 
   $sth->bind_columns(\$coding_exon_length, \$matches, \$mis_matches, \$ref_insertions, \$uncovered);
   $sth->fetch();
@@ -108,7 +112,7 @@ sub write_output {
   $method_link_species_set->store_tag("ref_uncovered", $uncovered);
 
   #Non-ref species
-  $sth->execute($non_ref_species, $mlss_id);
+  $sth->execute($self->param('non_ref_genome_db')->dbID, $mlss_id);
   $sth->fetch();
   #print "coding_exon_length $coding_exon_length $matches $mis_matches $ref_insertions $uncovered\n";
 
