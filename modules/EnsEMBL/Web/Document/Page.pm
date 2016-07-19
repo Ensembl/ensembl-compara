@@ -234,7 +234,8 @@ sub initialize {
   my $self   = shift;
 
   ## Set up HTML template if needed by "real" pages, i.e. not JSON
-  if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
+  # if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) { FIXME - ENSWEB-2781
+  if (($self->{'format'} eq 'HTML' || $self->{'format'} eq 'search_bot') && !$self->renderer->{'_modal_dialog_'}) {
     my $template_name   = $self->hub->template;
     if (!$template_name) {
       my @namespace   = split('::', ref $self);
@@ -490,6 +491,11 @@ sub html_template {
 </head>
 <body $body_attrs>
 );
+
+  # FIXME - ENSWEB-2781
+  if ($self->{'format'} eq 'search_bot') {
+    $elements->{$_} = '' for grep { !m/content|title/ } keys %$elements;
+  }
 
   ## CONTENTS OF BODY TAG DETERMINED BY TEMPLATE MODULE
   my $template = $self->template;
