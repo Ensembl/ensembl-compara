@@ -352,7 +352,7 @@ sub load_cigars_from_file {
         : whether the genome_db_id should be added to the sequence names
     Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) boolean (default: false)
         : whether the reference species_tree_node_id should be added to the sequence names
-    Arg [-REMOVE_GAP_COLUMNS] (opt) boolean (default: false)
+    Arg [-REMOVE_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be removed from the alignment
     Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.

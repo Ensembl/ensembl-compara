@@ -268,10 +268,25 @@ sub _load_all {
     }
 }
 
+sub _prune_alignment {
+  my ($self, $tree) = @_;
+  # When the tree is not the entire tree, some columns of the alignment may
+  # be full of gaps. Need to remove them
+  if (!$self->no_sequences && $self->aligned) {
+      my $aln = $tree->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef), -REMOVE_GAPS => 1);
+      $self->{_cached_seq_aligns} = {};
+      foreach my $seq ($aln->each_seq) {
+          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
+      }
+  }
+}
+
 sub _write_tree {
     my ($self, $tree) = @_;
     $self->_load_all($tree->adaptor->db, $tree->get_all_nodes, $tree->get_all_Members);
+    $self->_prune_alignment($tree) if $tree->{'_pruned'};
     $self->SUPER::_write_tree($tree);
+    delete $self->{_cached_seq_aligns};
 }
 
 #tags return [ 'tag', {attributes} ]

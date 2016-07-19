@@ -241,7 +241,7 @@ sub _process {
   $self->_writer()->startTag($tag, %{$attributes});
   $self->dispatch_body($node);
 
-    foreach my $child (@{$node->children()}) {
+    foreach my $child (@{$node->sorted_children()}) {
       $self->_process($child);
     }
 
