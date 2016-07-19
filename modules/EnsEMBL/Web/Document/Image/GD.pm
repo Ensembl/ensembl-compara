@@ -395,7 +395,7 @@ sub hover_label_tabs {
 
   if ($highlight) {
     push @buttons, qq(<div class="_hl_icon hl-icon"><a class="hl-icon-highlight" data-highlight-track="$label->{'highlight'}"></a></div>);
-    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to turn on/off track highlighting</p></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to highlight/unhighlight this track</p></div>);
   }
 
   return (\@buttons, \@contents);

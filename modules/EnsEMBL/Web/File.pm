@@ -110,6 +110,9 @@ sub init {
   my $read_path = $args{'file'};
   my $bare_name;
 
+  ## size limit
+  $self->{'size_limit'} = $args{'size_limit'} || 0;
+
   ## Override default input drivers if reading from URL
   if ($read_path =~ /^(http|ftp)/) {
     $self->{'input_drivers'} = ['URL'];
@@ -594,6 +597,7 @@ sub read {
     my $args = {
                 'hub'         => $self->hub,
                 'nice'        => 1,
+                'size_limit'  => $self->{'size_limit'} || 0,
                 };
 
     eval {

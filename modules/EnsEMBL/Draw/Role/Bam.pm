@@ -322,9 +322,16 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
+    my $error_message;
+    if ($@ eq "alarm\n") {
+      $error_message = " could not be rendered within the specified time limit (${timeout} sec)";
+    }
+    else {
+      $error_message = ' could not be retrieved.';
+      warn "######## BAM ERROR: $@"; # propagate unexpected errors
+    }
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
+    return $self->errorTrack($self->error_track_name . $error_message);
   }
 }
 
@@ -359,7 +366,11 @@ sub get_data {
     } 
 
     $self->{_cache}->{data} = $data;
+
+    ## Explicitly close file, otherwise it can cause errors
+    $self->bam_adaptor->htsfile_close;
   }
+
   ## Return data in standard format expected by other modules
   return [{'features' => $self->{_cache}->{data},
             'metadata' => {'zmenu_caption' => 'Aligned reads'},
@@ -518,6 +529,7 @@ sub _feature_title {
 sub bam_adaptor {
 ## get a bam adaptor
   my $self = shift;
+  return $self->{_cache}->{_bam_adaptor} if $self->{_cache}->{_bam_adaptor};
 
   my $url = $self->my_config('url');
   if ($url) { ## remote bam file
@@ -538,7 +550,6 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
-      #$self->{_cache}->{_bam_adaptor} ||= $df->get_ExternalAdaptor(undef, 'BAM');
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);

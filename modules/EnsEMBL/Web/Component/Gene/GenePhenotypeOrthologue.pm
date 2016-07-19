@@ -116,6 +116,9 @@ sub content {
           if ($source =~ /^goa$/i) {
             my $attribs = $pf->get_all_attributes;
             $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          } elsif($source_uc =~ /MGI/) {
+            my $marker_accession_id = $pf->marker_accession_id;
+            $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $marker_accession_id, TAX => $tax});
           }
           else {
             $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});

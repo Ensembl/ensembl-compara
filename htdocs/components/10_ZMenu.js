@@ -627,7 +627,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.el.scrollTop(0).draggable($.extend({
         handle:       '.header:not(.subheader)',
         containment:  'document'
-      }, navigator.userAgent.match(/webkit/i) ? {} : {
+      }, Ensembl.browser.webkit ? {} : {
         start:        function() { $(this).css({'margin-top': -1 * $(window).scrollTop() }); },
         stop:         function() { $(this).css({'top': parseInt($(this).css('top')) + parseInt($(this).css('margin-top')), 'margin-top': 0 }); }
       }));

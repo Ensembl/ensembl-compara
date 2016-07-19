@@ -33,10 +33,10 @@ sub get_sequence_data {
   my %qconfig;
   $qconfig{$_} = $config->{$_}
       for(qw(hide_long_snps utr codons hide_rare_snps translation
-             exons rna species snp_display coding_seq));
+             exons rna snp_display coding_seq));
   my $hub = $self->hub;
   my $data = $hub->get_query('Sequence::Transcript')->go($self,{
-    species => $hub->species,
+    species => $config->{'species'},
     type => $object->get_db,
     transcript => $object->Obj,
     config => $config,

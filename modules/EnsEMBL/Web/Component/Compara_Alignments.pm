@@ -163,7 +163,7 @@ sub content {
 
     my $subslice_length = $slice_length < $self->{'subslice_length'} ? $slice_length : $self->{'subslice_length'};
 
-    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length });
+    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length },1);
 
     $html .= qq (
           <div class="_text_alignment_display js_panel">
@@ -268,12 +268,13 @@ sub _get_sequence {
   $config->{'slices'} = $slices;
 
   my $view = $self->view;
+
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+
   foreach my $slice (@{$config->{'slices'}}) {
     my $seq = $view->new_sequence;
     $seq->name($slice->{'display_name'} || $slice->{'name'});
   }
-
-  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
   
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}

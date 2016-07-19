@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::Query::Sequence::Transcript;
 
 use strict;
@@ -24,6 +43,7 @@ sub precache {
           utr => 1,
           codons => 1,
           hide_rare_snps => "off",
+          coding_seq => 1,
           translation => 1,
           exons => 1,
           rna => 0,
@@ -42,6 +62,7 @@ sub precache {
           utr => 1,
           codons => 1,
           hide_rare_snps => "off",
+          coding_seq => 1,
           translation => 1,
           exons => 1,
           rna => 0,
@@ -187,6 +208,7 @@ sub get {
   my $cd_start     = $trans->cdna_coding_start;
   my $cd_end       = $trans->cdna_coding_end;
   my $config = {%{$args->{'config'}}};
+  $config->{'species'} = $args->{'species'};
   my $adorn = $args->{'adorn'};
 
   my $seq;

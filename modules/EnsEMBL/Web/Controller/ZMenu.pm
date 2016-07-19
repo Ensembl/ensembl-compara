@@ -27,8 +27,8 @@ use base qw(EnsEMBL::Web::Controller);
 
 sub init {
   my $self = shift;
-  
-  $self->builder->create_objects;
+
+  $self->builder->create_objects unless $self->hub->type eq 'Phenotype';
   
   my $hub    = $self->hub;
   my $object = $self->object;

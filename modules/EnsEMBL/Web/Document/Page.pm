@@ -238,11 +238,11 @@ sub initialize {
     my $template_name   = $self->hub->template;
     if (!$template_name) {
       my @namespace   = split('::', ref $self);
-      $template_name  = 'Legacy::'.$namespace[-1];
+      my $type        = $namespace[-1];
+      $template_name  = $type eq 'Dynamic' ? 'Legacy' : "Legacy::$type";
     }
 
     my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
-    #warn "... USING TEMPLATE $template_class";
 
     if ($self->dynamic_use($template_class)) {
       my $template = $template_class->new({'page' => $self});
@@ -475,6 +475,9 @@ sub html_template {
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   $self->add_body_attr('data-pace',$SiteDefs::PACED_MULTI||8);
+
+  $self->modify_page_settings;
+
   my $body_attrs = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
 
   my $html_tag = join '',   $self->doc_type, $self->html_tag;
@@ -499,5 +502,7 @@ sub html_template {
 );
   return $HTML;
 }
+
+sub modify_page_settings {}
 
 1;

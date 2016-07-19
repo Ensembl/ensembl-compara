@@ -23,7 +23,6 @@ Ensembl.extend({
   initialize: function () {
     var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
-    var bodyClass   = $('body')[0].className.split(' ');
     var modalOpen   = window.location.hash.match(/(modal_.+)/);    
     
     if (!window.name) {
@@ -32,7 +31,6 @@ Ensembl.extend({
 
     this.setSpecies();
 
-    this.browser            = {};
     this.locationURL        = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex     = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch      = new RegExp(/[#?;&]r=([^;&]+)/);
@@ -48,12 +46,23 @@ Ensembl.extend({
     this.markedLocation     = this.getMarkedLocation();
     this.lastMarkedLocation = false;
 
-    for (var i in bodyClass) {
-      if (bodyClass[i]) {
-        this.browser[bodyClass[i]] = true;
+    this.browser = (function(ua) {
+      var b = {};
+      if (ua.match(/webkit/i)) {
+        b.webkit = true;
+        if (ua.match(/chrome/i)) {
+          b.chrome = true;
+        } else if (ua.match(/safari/i)) {
+          b.safari = true;
+        }
+      } else if (ua.match(/firefox/)) {
+        b.firefox = true;
+      } else if (ua.match(/msie/i)) {
+        b.ie = true;
       }
-    }
-    
+      return b;
+    })(navigator.userAgent || '');
+
     if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
       

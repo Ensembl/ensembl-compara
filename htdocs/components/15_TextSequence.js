@@ -73,7 +73,23 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     if (!this.elLk.keyBox) {
       this.elLk.keyBox = this.el.find('._adornment_key').first();
     }
-    this.elLk.keyBox.keepOnPage({marginTop: 10}).keepOnPage('trigger');
+    if (!this.elLk.keyBoxToggler) {
+      this.elLk.keyBoxToggler = $('<div class="toggler"><span class="open">&#9660;</span><span>&#9650;</span></div>');
+    }
+    if (!this.elLk.keyBoxToggler.parent().length) {
+      this.elLk.keyBoxToggler.appendTo(this.elLk.keyBox).off('.textsequence').on('click.textsequence', function() {
+        $(this).parent().removeClass('was_collapsed').toggleClass('collapsed', 100);
+      });
+    }
+    this.elLk.keyBox.keepOnPage({
+      marginTop: 10,
+      onreset: function() {
+        $(this).removeClass('fixed').filter('.collapsed').removeClass('collapsed').addClass('was_collapsed');
+      },
+      onfix: function() {
+        $(this).addClass('fixed').filter('.was_collapsed').removeClass('was_collapsed').addClass('collapsed');
+      }
+    }).keepOnPage('trigger');
   },
 
   initPopups: function (el) {

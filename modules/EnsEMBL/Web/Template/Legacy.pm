@@ -84,8 +84,6 @@ sub render {
 
 sub render_masthead {
   my ($self, $elements) = @_;
-  my $hub = $self->hub;
-  my $page = $self->page;
 
   ## MASTHEAD & GLOBAL NAVIGATION
   return qq(

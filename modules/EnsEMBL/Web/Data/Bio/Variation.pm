@@ -143,8 +143,8 @@ sub convert_to_drawing_parameters {
     if ($object_type =~ /^(Gene|Variation|StructuralVariation)$/) {
       %url_params = (
         type      => 'ZMenu',
-        ftype     => 'Xref',
-        action    => $object_type,
+        ftype     => $object_type,
+        action    => 'Phenotype',
         $id_param => $name,
         vdb       => 'variation'
       );

@@ -640,7 +640,7 @@ sub build_imageconfig_menus {
        $display     = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
     my $controls    = $data->{'controls'};
     my $subset      = $data->{'subset'};
-    my $name        = encode_entities($data->{'name'});
+    my $name        = $data->{'name'};
     my @classes     = ('track', $external ? 'external' : '', lc $external);
     my $menu_header = scalar @states > 4 ? qq(<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>) : '';
     my ($selected, $menu, $help);

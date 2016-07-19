@@ -239,8 +239,8 @@ sub set_variations {
         $snps = $vf_adaptor->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
       }
       else {
-        my @snps_list = (@{$vf_adaptor->fetch_all_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)},
-                         @{$vf_adaptor->fetch_all_somatic_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)});
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},
+                         @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
         $snps = \@snps_list;
       }
     };
@@ -834,7 +834,7 @@ sub build_sequence {
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
 sub chunked_content {
-  my ($self, $total_length, $chunk_length, $url_params) = @_;
+  my ($self, $total_length, $chunk_length, $url_params, $teaser) = @_;
   my $hub = $self->hub;
   my $i   = 1;
   my $j   = $chunk_length;
@@ -844,7 +844,7 @@ sub chunked_content {
   my $display_width = $hub->param('display_width') || 0;
   my $id = $self->id;
 
-  if (!$hub->param('display_full_sequence')) {
+  if ($teaser and !$hub->param('display_full_sequence')) {
     $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
   }
   else {

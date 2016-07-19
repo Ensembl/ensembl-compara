@@ -17,23 +17,30 @@ limitations under the License.
 
 =cut
 
+package EnsEMBL::Web::ZMenu::Phenotype;
+
 use strict;
-use warnings;
 
-package EnsEMBL::Web::NewTable::Plugins::Paging;
-use parent qw(EnsEMBL::Web::NewTable::Plugin);
+use EnsEMBL::Web::ZMenu::Gene;
+use EnsEMBL::Web::ZMenu::Variation;
+use EnsEMBL::Web::ZMenu::StructuralVariation;
 
-sub children { return [qw(PagingPager)]; }
-sub requires { return children(); }
+use parent qw(EnsEMBL::Web::ZMenu);
 
-package EnsEMBL::Web::NewTable::Plugins::PagingPager;
-use parent qw(EnsEMBL::Web::NewTable::Plugins::Filter);
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-sub js_plugin { return "newtable_pager"; }
-sub requires { return [qw(Paging)]; }
-sub position { return [qw(top-left)]; }
+  my @ftypes = split(',', $hub->param('ftype'));
 
-sub initial { return { pagerows => [0,10] }; }
-sub init { $_[0]->config->size_needed(1); }
+  foreach (sort @ftypes) {
+    my $class = 'EnsEMBL::Web::ZMenu::'.$_;
+
+    my $submenu = $class->new($self->hub, $self->object);
+
+    push @{$self->{'features'}}, @{$submenu->{'features'}};
+  }
+
+}
 
 1;

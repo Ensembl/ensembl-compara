@@ -37,6 +37,14 @@ sub content {
     @features = @{EnsEMBL::Draw::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
+  elsif (!$svf) {
+    my $adaptor   = $hub->database($db)->get_StructuralVariationAdaptor;
+    my @sv_names  = split ',', $hub->param('sv');
+
+    for (0..$#sv_names) {
+      push @features, @{$adaptor->fetch_by_name($sv_names[$_])->get_all_StructuralVariationFeatures};
+    }
+  }
   
   @features = $hub->database($db)->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
   

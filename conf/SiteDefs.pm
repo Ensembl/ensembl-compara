@@ -178,6 +178,8 @@ our $ENSEMBL_MART_ENABLED      = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
 
+our $UPLOAD_SIZELIMIT_WITHOUT_INDEX = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
+
 # ENSEMBL_API_VERBOSITY: 
 #    0 OFF NOTHING NONE
 # 1000 EXCEPTION THROW

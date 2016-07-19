@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::TextSequence::Output;
 
 use strict;
@@ -18,7 +37,7 @@ sub new {
   my $self = {
     template =>
       qq(<pre class="text_sequence">%s</pre><p class="invisible">.</p>),
-    c2s => EnsEMBL::Web::TextSequence::ClassToStyle::CSS->new,
+    c2s => undef,
     view => undef,
   };
   bless $self,$class;
@@ -37,9 +56,14 @@ sub reset {
   );
 }
 
+sub make_c2s {
+  return EnsEMBL::Web::TextSequence::ClassToStyle::CSS->new($_[0]->view);
+}
+
+sub c2s { return ($_[0]->{'c2s'} ||= $_[0]->make_c2s); }
+
 sub template { $_[0]->{'template'} = $_[1] if @_>1; return $_[0]->{'template'}; }
 sub view { $_[0]->{'view'} = $_[1] if @_>1; return $_[0]->{'view'}; }
-sub c2s { $_[0]->{'c2s'} = $_[1] if @_>1; return $_[0]->{'c2s'}; }
 sub legend { $_[0]->{'legend'} = $_[1] if @_>1; return $_[0]->{'legend'}; }
 sub more { $_[0]->{'more'} = $_[1] if @_>1; return $_[0]->{'more'}; }
 sub final_wrapper { return $_[1]; }
@@ -53,6 +77,8 @@ sub format_line {
     pre => $data->{'pre'},
     label => $num->{'label'},
     start => $num->{'start'},
+    end => $num->{'end'},
+    post_label => $num->{'post_label'},
     h_space => $config->{'h_space'},
     letters => $self->format_letters($data->{'line'},$config),
     adid => $data->{'adid'},

@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::TextSequence::Output::Web;
 
 use strict;
@@ -43,7 +62,7 @@ sub make_layout {
         { post => ' ' },
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'start', width => $config->{'padding'}{'number'} },
+        { key => 'end', width => $config->{'padding'}{'number'} },
       ]
     },
     { key => ['adid','post'], fmt => '<span class="ad-post-%s">%s</span>' },
@@ -59,19 +78,27 @@ sub final_wrapper {
 sub add_line {
   my ($self,$line,$markup,$config) = @_;
 
+  my %c2s_cache; # Multi-second speed improvement from this cache
   my $letters = "";
-  my $idx = 0;
+  $self->{'adorn'}->linelen($self->view->width);
+  $self->{'adorn'}->domain([qw(style title href tag letter)]);
   foreach my $m (@$markup) {
     $letters .= ($m->{'letter'}||' ');
-    my @classes = split(' ',$m->{'class'}||'');
-    my $style = $self->c2s->convert_class_to_style(\@classes,$config);
-    $self->{'adorn'}->adorn($line->line_num,$idx,'style',$style||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'title',$m->{'title'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'href',$m->{'href'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'tag',$m->{'tag'}||'');
-    $self->{'adorn'}->adorn($line->line_num,$idx,'letter',$m->{'new_letter'}||'');
-    $idx++;
+    my $style = $c2s_cache{$m->{'class'}||''};
+    unless(defined $style) {
+      my @classes = split(' ',$m->{'class'}||'');
+      $style = $self->c2s->convert_class_to_style(\@classes,$config);
+      $c2s_cache{$m->{'class'}||''} = $style;
+    }
+    $self->{'adorn'}->line->adorn($line->line_num,{
+      'style' => ($style||''),
+      'title' => ($m->{'title'}||''),
+      'href' => ($m->{'href'}||''),
+      'tag' => ($m->{'tag'}||''),
+      'letter' => ($m->{'new_letter'}||'')
+    });
   }
+  $self->{'adorn'}->line_done($line->line_num);
 
   push @{$self->{'data'}[$line->seq->id]},{
     line => $letters,

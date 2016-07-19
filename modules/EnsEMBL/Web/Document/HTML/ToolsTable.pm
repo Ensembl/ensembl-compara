@@ -51,16 +51,17 @@ sub render {
   my $tools_limit = '50MB';
 
   ## VEP
-  my $new_vep  = $sd->ENSEMBL_VEP_ENABLED;
-  my $vep_link = $hub->url({'species' => $sp, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  $table->add_row({
-    'name'  => sprintf('<a href="%s" class="%snodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link,  $new_vep ? '' : 'modal_link ', $img_url),
-    'desc'  => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
-    'limit' => $tools_limit.'*',
-    'tool'  => sprintf('<a href="%s" class="%snodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vep_link, $new_vep ? '' : 'modal_link ', $img_url),
-    'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/archive/release/%s.zip" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
-    'docs'  => sprintf('<a href="/info/docs/tools/vep/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
-  });
+  if ($sd->ENSEMBL_VEP_ENABLED) {
+    my $vep_link = $hub->url({'species' => $sp, 'type' => 'Tools', 'action' =>  'VEP'});
+    $table->add_row({
+      'name'  => sprintf('<a href="%s" class="%snodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link, 'modal_link ', $img_url),
+      'desc'  => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
+      'limit' => $tools_limit.'*',
+      'tool'  => sprintf('<a href="%s" class="%snodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vep_link, 'modal_link ', $img_url),
+      'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/archive/release/%s.zip" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
+      'docs'  => sprintf('<a href="/info/docs/tools/vep/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+    });
+  }
 
   ## BLAST
   if ($sd->ENSEMBL_BLAST_ENABLED) {
@@ -140,10 +141,14 @@ sub render {
     });
   }
 
+  if ($table->has_rows) {
+    $html .= $table->render;
+    $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to install our Perl API, below, to run the script).';
 
-  $html .= $table->render;
-
-  $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to install our Perl API, below, to run the script).';
+  }
+  else {
+    $html .= '<p><b>No tools are available on this site. Please visit <a href="http://www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
+  }
 
   ## Table of other tools
 

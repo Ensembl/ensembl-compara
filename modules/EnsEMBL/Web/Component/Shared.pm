@@ -1474,14 +1474,13 @@ sub button_portal {
 
 sub vep_icon {
   my ($self, $inner_html) = @_;
+  my $hub         = $self->hub;
+  return '' unless $hub->species_defs->ENSEMBL_VEP_ENABLED;
 
   $inner_html   ||= 'Test your own variants with the <span>Variant Effect Predictor</span>';
-  my $hub         = $self->hub;
-  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
-  my $vep_link    = $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  my $link_class  = $new_vep ? '' : ' modal_link';
+  my $vep_link    = $hub->url({'__clear' => 1, qw(type Tools action VEP)});
 
-  return qq(<a class="vep-icon$link_class" href="$vep_link">$inner_html</a>);
+  return qq(<a class="vep-icon" href="$vep_link">$inner_html</a>);
 }
 
 sub display_items_list {

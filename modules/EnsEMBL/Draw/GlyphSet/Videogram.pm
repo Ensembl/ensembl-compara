@@ -510,7 +510,7 @@ sub _init {
               if (scalar(grep $_, @{$queries{$param}}) == 1) {
                 $href .= "$param=$queries{$param}[0];";
               } else {
-                $href .= sprintf '%s=%s;', $param, join ',', @{$queries{$param}};
+                $href .= sprintf '%s=%s;', $param, join ',', grep { $_ ne '' } @{$queries{$param}};
               }
             }
             
