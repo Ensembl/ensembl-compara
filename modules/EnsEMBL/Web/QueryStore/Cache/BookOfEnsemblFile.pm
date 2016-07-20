@@ -116,6 +116,8 @@ sub merge {
     my $d = JSON->new->decode($v);
     $self->{'idx'}{$k} = JSON->new->encode([$d->[0]+$offset,$d->[1]]); 
   }
+  $out_ver = { %$out_ver, %$in_ver };
+  $self->set_versions($out_ver);
   $self->close();
   $part->close();
 }
@@ -197,10 +199,15 @@ sub get_version {
 sub set_version {
   my ($self,$class,$ver) = @_;
 
-  #warn "set_version $class => $ver\n";
-  my $vers = JSON->new->decode($self->{'idx'}{'.versions'}||"{}");
+  my $vers = $self->get_versions;
   $vers->{$class} = $ver;
-  $self->{'idx'}{'.versions'} = JSON->new->encode($vers);
+  $self->set_versions($vers);
+}
+
+sub set_versions {
+  my ($self,$val) = @_;
+
+  $self->{'idx'}{'.versions'} = JSON->new->encode($val);
 }
 
 sub get {
