@@ -162,7 +162,6 @@ sub filter_duplicates {
     } else {
 	#get correct start and end if non_reference eg haplotype. 
 	#NB cannot overwrite by defining seq_region_start and seq_region_end
-	if (!$dnafrag->is_reference) {
 	    my $slice_adaptor = $dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
 	    my $slices = $slice_adaptor->fetch_by_region_unique($dnafrag->coord_system_name, $dnafrag->name);
 	    foreach my $slice (@$slices) {
@@ -177,7 +176,6 @@ sub filter_duplicates {
 		    $self->find_edge_artefacts($seq_region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
 		}
 	    }
-	}
     }
   }
 
