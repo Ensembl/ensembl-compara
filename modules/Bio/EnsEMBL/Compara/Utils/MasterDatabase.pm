@@ -85,9 +85,9 @@ sub update_dnafrags {
         my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
 
         if ($old_dnafrags_by_id->{$dnafrag_id}) {
-            $new_dnafrags_ids++;
-        } else {
             delete($old_dnafrags_by_id->{$dnafrag_id});
+        } else {
+            $new_dnafrags_ids++;
         }
     }
     print "Inserted $new_dnafrags_ids new DnaFrags.\n";
