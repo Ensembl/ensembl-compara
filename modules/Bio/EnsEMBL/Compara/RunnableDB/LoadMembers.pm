@@ -132,7 +132,7 @@ sub run {
 
     my $unfiltered_slices = $self->param('genome_db')->genome_component
         ? $core_dba->get_SliceAdaptor->fetch_all_by_genome_component($self->param('genome_db')->genome_component)
-        : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
+        : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 'include_non_reference', undef, 'include_lrg') : ());   #include_duplicates is not set
     die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
     # Let's make sure disconnect_when_inactive is set to 0 on both connections
