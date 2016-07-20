@@ -52,6 +52,7 @@ sub content {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
+  my $species_name = $species_defs->DISPLAY_NAME;
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
@@ -129,8 +130,8 @@ sub content {
     { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
     { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
-    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', title => $self->get_glossary_entry('Target % id')    },
-    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  title => $self->get_glossary_entry('Query %id')      },
+    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', help => "Percentage of the orthologous sequence matching the $species_name sequence" },
+    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -247,8 +248,8 @@ sub content {
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
-        'Target %id' => $target,
-        'Query %id'  => $query,
+        'Target %id' => sprintf('%.2f&nbsp;%%', $target),
+        'Query %id'  => sprintf('%.2f&nbsp;%%', $query),
         'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);

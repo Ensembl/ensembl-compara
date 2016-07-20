@@ -55,8 +55,8 @@ sub content {
     { key => 'identifier',          align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => 'Compare',             align => 'left', width => '10%', sort => 'none'          },
     { key => 'Location',            align => 'left', width => '20%', sort => 'position_html' },
-    { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric'       },
-    { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric', help => "Percentage of the paralogous sequence matching the query sequence" },
+    { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric', help => "Percentage of the query sequence matching the sequence of the paralogue" },
   ];
   
   my @rows;
@@ -163,8 +163,8 @@ sub content {
         'identifier'          => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq(<span class="small">$links</span>) : '',
         'Location'            => qq(<a href="$location_link">$paralogue->{'location'}</a>),
-        'Target %id'          => $target,
-        'Query %id'           => $query,
+        'Target %id'          => sprintf('%.2f&nbsp;%%', $target),
+        'Query %id'           => sprintf('%.2f&nbsp;%%', $query),
       };
     }
   }
