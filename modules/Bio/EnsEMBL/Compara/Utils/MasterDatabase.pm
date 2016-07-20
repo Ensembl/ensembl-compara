@@ -72,6 +72,7 @@ sub update_dnafrags {
     die 'Could not fetch any toplevel slices from '.$genome_db->name() unless(scalar(@$gdb_slices));
 
     my $new_dnafrags_ids = 0;
+    my $existing_dnafrags_ids = 0;
     foreach my $slice (@$gdb_slices) {
 
         my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
@@ -86,11 +87,12 @@ sub update_dnafrags {
 
         if ($old_dnafrags_by_id->{$dnafrag_id}) {
             delete($old_dnafrags_by_id->{$dnafrag_id});
+            $existing_dnafrags_ids++;
         } else {
             $new_dnafrags_ids++;
         }
     }
-    print "Inserted $new_dnafrags_ids new DnaFrags.\n";
+    print "$existing_dnafrags_ids DnaFrags already in the database. Inserted $new_dnafrags_ids new DnaFrags.\n";
 
     if (keys %$old_dnafrags_by_id) {
         print 'Now deleting ', scalar(keys %$old_dnafrags_by_id), ' former DnaFrags...';
