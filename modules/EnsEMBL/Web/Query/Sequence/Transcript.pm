@@ -28,7 +28,7 @@ use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
 
 use List::Util qw(max);
 
-our $VERSION = 1;
+our $VERSION = 2;
 
 sub precache {
   return {
@@ -386,7 +386,7 @@ sub get {
   push @sequence, \@reference_seq;
   push @markup, $mk;
 
-  my @seq_names;
+  my @seq_names = ( $config->{'species'} );
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'snp_display') {
