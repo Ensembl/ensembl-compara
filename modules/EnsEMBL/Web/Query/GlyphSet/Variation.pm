@@ -56,8 +56,9 @@ sub fixup {
 sub precache {
   return {
     '1kgindels' => {
-      loop => ['species','genome'],
+      loop => ['genome'],
       args => {
+        species => 'Homo_sapiens',
         id => 'variation_set_1kg_3',
         config => {
           no_label => 1,
@@ -67,6 +68,19 @@ sub precache {
         var_db => 'variation',
         config_type => 'contigviewbottom',
         type => 'variation_set_1kg_3',
+      }
+    },
+    'variation-mouse' => {
+      loop => ['genome'],
+      args => {
+        species => 'Mus_musculus',
+        id => 'variation_feature_variation',
+        config => {
+          no_label => 1,
+        },
+        var_db => 'variation',
+        config_type => 'contigviewbottom',
+        type => 'variation_feature_variation',
       }
     },
     'ph-short' => {
