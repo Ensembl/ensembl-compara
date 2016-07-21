@@ -38,6 +38,9 @@ You'll need the ensembl-hive scripts to be set up in your $PATH, and the environ
   done | db_cmd.pl -url $_TEST_DB_URL
   db_cmd.pl -url $_TEST_DB_URL -sql 'DELETE FROM gene_tree_root_tag WHERE tag NOT LIKE "model\_%"'
   db_cmd.pl -url $_TEST_DB_URL -sql 'DELETE FROM other_member_sequence WHERE seq_type != "cds"'
+  db_cmd.pl -url $_TEST_DB_URL -sql 'DELETE gene_align_member FROM gene_align JOIN gene_align_member USING (gene_align_id) WHERE seq_type != "cds"'
+  db_cmd.pl -url $_TEST_DB_URL -sql 'DELETE FROM gene_align WHERE seq_type != "cds"'
+  db_cmd.pl -url $_TEST_DB_URL -sql 'DELETE FROM other_member_sequence WHERE seq_type != "cds"'
   ```
 
 5. Dump
@@ -46,4 +49,10 @@ You'll need the ensembl-hive scripts to be set up in your $PATH, and the environ
   db_cmd.pl -url $_TEST_DB_URL -executable $ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/db/dump_mysql.pl -- --database mm14_homology_test_db_85 --verbose --testcompatible --directory dump_directory
   ```
   Then edit the sql file and add `CHARSET=latin1` to the meta and external\_db tables.
+
+6. Manual edits
+
+* To match the genes found in the human core database, I renamed a gene stable ID in the compara database
+* To make some aligned strings different, I manually edited some cigar lines
+
 
