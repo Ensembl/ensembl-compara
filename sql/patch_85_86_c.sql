@@ -23,7 +23,7 @@
 #   clusterset_ids) can be linked to different species-trees
 
 
-ALTER TABLE gene_tree_root ADD COLUMN species_tree_root_id INT(10) UNSIGNED;
+ALTER TABLE gene_tree_root ADD COLUMN species_tree_root_id INT(10) UNSIGNED AFTER method_link_species_set_id;
 
 UPDATE gene_tree_root JOIN gene_tree_node USING (root_id) JOIN gene_tree_node_attr USING (node_id) JOIN species_tree_node ON species_tree_node_id = species_tree_node.node_id
 SET species_tree_root_id = species_tree_node.root_id
