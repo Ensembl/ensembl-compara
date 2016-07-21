@@ -33,6 +33,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       speciesDropdown:  $('._sdd', this.el),
       toggleButtons:    $('.tool_buttons a.togglebutton', this.el),
       dataTable:        $('table.data_table', this.el),
+      redirectForm:     $('form._redirect', this.el),
       newTable:         $('.new_table', this.el)
     };
     
@@ -358,6 +359,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   toggleButtons: function() {
     this.elLk.toggleButtons.toggleButtons();
+  },
+
+  redirectForm: function() {
+    this.elLk.redirectForm.on('submit', function() {
+      this.action = $(this).find('select[name=url]').val();
+    });
   },
 
   newTable: function() {

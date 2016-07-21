@@ -65,7 +65,7 @@ sub assembly_dropdown {
 
   if (scalar @assemblies) {
     if (scalar @assemblies > 1) {
-      $html .= qq(<form action="/$species/redirect" method="get"><select name="url">);
+      $html .= qq(<form action="#" method="get" class="_redirect"><select name="url">);
       $html .= qq(<option value="$_->{'url'}">$_->{'assembly'} $_->{'release'}</option>) for @assemblies;
       $html .= '</select> <input type="submit" name="submit" class="fbutton" value="Go" /></form>';
     } else {
