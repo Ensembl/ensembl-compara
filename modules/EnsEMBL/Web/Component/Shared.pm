@@ -195,7 +195,7 @@ sub transcript_table {
 
   if ($gene) {
     my $version     = $object->version ? ".".$object->version : "";
-    my $transcript  = $page_type eq 'transcript' ? $object->stable_id.$version : $hub->param('t');
+    my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
     my $plural      = 'transcripts';
