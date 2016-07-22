@@ -35,19 +35,19 @@ sub is_same {
   return 0 if ref $a ne ref $b;           # object type is not matching
 
   # both are hash based objects
-  if (UNIVERSAL::isa($a, 'HASH')) {
+  if (UNIVERSAL::isa($a, 'HASH')) {
     return 0 unless is_same([ sort keys %$a ], [ sort keys %$b ]);
     return grep !is_same($a->{$_}, $b->{$_}), keys %$a ? 0 : 1;
   }
 
   # both are array based objects
-  if (UNIVERSAL::isa($a, 'ARRAY')) {
+  if (UNIVERSAL::isa($a, 'ARRAY')) {
     return 0 unless scalar @$a eq scalar @$b;
     return grep !is_same($a->[$_], $b->[$_]), 0..$#a ? 0 : 1;
   }
 
   # both are scalar references
-  if (UNIVERSAL::isa($a, 'SCALAR')) {
+  if (UNIVERSAL::isa($a, 'SCALAR')) {
     return $$a eq $$b ? 1 : 0;
   }
 
