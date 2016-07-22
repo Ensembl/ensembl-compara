@@ -280,16 +280,7 @@ sub create_chunks
       # create dnafrag for this chromosome
       #
       #print "loading dnafrag for ".$chr->name."...\n";
-      $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag;
-      $dnafrag->name($chr->seq_region_name); #ie just 22
-      $dnafrag->genome_db($genome_db);
-      $dnafrag->coord_system_name($chr->coord_system->name());
-      $dnafrag->is_reference($chr->is_reference);
-
-      #Need total length of dnafrag, not just end-start+1, otherwise the dnafrag_chunks are created
-      #incorrectly because the chr->end becomes (end-start+1) but this could be less than chr->start
-      #$dnafrag->length($chr->length);
-      $dnafrag->length($chr->seq_region_length);
+      $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($chr, $genome_db);
       $dnafragDBA->store_if_needed($dnafrag);
     }
     $dnafrag->{'_slice'} = $chr;

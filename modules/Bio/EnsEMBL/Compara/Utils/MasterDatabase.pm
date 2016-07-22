@@ -75,13 +75,7 @@ sub update_dnafrags {
     my $existing_dnafrags_ids = 0;
     foreach my $slice (@$gdb_slices) {
 
-        my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-            -name               => $slice->seq_region_name,
-            -length             => $slice->seq_region_length,
-            -genome_db          => $genome_db,
-            -is_reference       => $slice->is_reference
-            -coord_system_name  => $slice->coord_system_name,
-        );
+        my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
         my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
 
