@@ -346,7 +346,6 @@ Ensembl.extend({
       }
     } else if (window.location.search !== url) {
       window.history.pushState({}, '', url);
-      window.location.reload();
       return true;
     }
   },
