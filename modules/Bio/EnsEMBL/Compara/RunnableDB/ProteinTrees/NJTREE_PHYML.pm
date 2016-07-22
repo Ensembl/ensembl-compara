@@ -149,6 +149,16 @@ sub write_output {
     }
 
     if ($self->param('store_intermediate_trees')) {
+        my %relevant_clustersets = map {$_ => 1} qw(phyml-nt nj-ds phyml-aa nj-dn nj-mm);
+        # First need to delete all the leftover nodes and roots
+        foreach my $other_tree (@{$self->param('tree_adaptor')->fetch_all_linked_trees($self->param('gene_tree'))}) {
+            warn "what about ", $other_tree->clusterset_id;
+            next unless $relevant_clustersets{$other_tree->clusterset_id};
+            warn "going to delete ", $other_tree->clusterset_id;
+            $other_tree->preload();
+            $self->param('tree_adaptor')->delete_tree($other_tree);
+            $other_tree->release_tree();
+        }
         delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use the freshest data
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
