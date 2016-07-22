@@ -23,4 +23,6 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 
+sub has_image {1}
+
 1;
