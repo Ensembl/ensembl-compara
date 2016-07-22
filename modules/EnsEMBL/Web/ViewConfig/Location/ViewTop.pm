@@ -19,33 +19,46 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::ViewTop;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
 
   $self->set_default_options({
-    show_panel => 'yes',
-    flanking   => 0,
+    'show_panel'  => 'yes',
+    'flanking'    => 0,
   });
 
   $self->image_config_type('contigviewtop');
   $self->title('Overview Image');
 }
 
-sub init_form {
+sub field_order {
+  ## Abstract method implementation
+  return qw(flanking show_panel);
+}
+
+sub form_fields {
+  ## Abstract method implementation
   my $self = shift;
 
-  $self->add_form_element({
-    type     => 'NonNegInt',
-    required => 'yes',
-    label    => 'Flanking region',
-    name     => 'flanking',
-    notes    => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
-   });
-
-  $self->add_form_element({ type => 'YesNo', name => 'show_panel', select => 'select', label => 'Show panel' });
+  return {
+    'flanking'    => {
+      'type'        => 'NonNegInt',
+      'required'    => 'yes',
+      'label'       => 'Flanking region',
+      'name'        => 'flanking',
+      'notes'       => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
+    },
+    'show_panel'  => {
+      'type'        => 'YesNo',
+      'name'        => 'show_panel',
+      'label'       => 'Show panel'
+    }
+  };
 }
 
 1;

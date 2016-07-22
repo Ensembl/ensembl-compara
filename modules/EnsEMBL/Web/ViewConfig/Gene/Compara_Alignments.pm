@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments;
 
+use strict;
+use warnings;
+
 use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
 
 1;

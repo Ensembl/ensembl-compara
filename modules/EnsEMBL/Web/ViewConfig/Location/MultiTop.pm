@@ -19,39 +19,47 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::MultiTop;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
 
   $self->set_default_options({
-    show_top_panel => 'yes'
+    'show_top_panel'      => 'yes',
+    'opt_join_genes_top'  => 'off',
   });
 
   $self->image_config_type('MultiTop');
   $self->title('Comparison Overview');
-
-  $self->set_default_options({
-    opt_join_genes_top => 'off',
-  });
 }
 
-sub init_form {
+sub field_order {
+  ## Abstract method implementation
   my $self = shift;
 
-  $self->add_fieldset('Comparative features');
+  return qw(opt_join_genes_top show_top_panel);
+}
 
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Join genes',
-    name  => 'opt_join_genes_top',
-    value => 'on',
-  });
-
-  $self->add_fieldset('Display options');
-
-  $self->add_form_element({ type => 'YesNo', name => 'show_top_panel', select => 'select', label => 'Show panel' });
+sub form_fields {
+  ## Abstract method implementation
+  return {
+    'opt_join_genes_top' => {
+      'fieldset'  => 'Comparative features',
+      'type'      => 'CheckBox',
+      'label'     => 'Join genes',
+      'name'      => 'opt_join_genes_top',
+      'value'     => 'on',
+    },
+    'show_top_panel' => {
+      'fieldset'  => 'Display options',
+      'type'      => 'YesNo',
+      'name'      => 'show_top_panel',
+      'label'     => 'Show panel',
+    }
+  };
 }
 
 1;

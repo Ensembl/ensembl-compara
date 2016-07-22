@@ -19,13 +19,19 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Transcript::TranslationImage;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
+
   $self->image_config_type('protview');
   $self->title('Protein summary');
 }
+
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
 
 1;

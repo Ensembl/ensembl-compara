@@ -26,6 +26,7 @@ use parent qw(EnsEMBL::Web::ViewConfig::Gene::VariationTable);
 sub init_cacheable {
   ## @override
   my $self = shift;
+
   $self->SUPER::init_cacheable(@_);
   $self->image_config_type('gene_variation');
   $self->set_default_options({ 'context' => 100 });

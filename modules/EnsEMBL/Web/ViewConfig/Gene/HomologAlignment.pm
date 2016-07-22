@@ -30,8 +30,8 @@ sub _new {
   ## TODO - get rid of the use of referer
   my $self = shift->SUPER::_new(@_);
 
-  $self->{'action'} = $self->hub->referer->{'ENSEMBL_ACTION'}; 
-  $self->{'code'}   = $self->type.'::'.$self->component unless $self->{'action'} eq 'Compara_Ortholog';
+  $self->{'is_compara_ortholog'}  = ($self->hub->referer->{'ENSEMBL_ACTION'} || '') eq 'Compara_Ortholog';
+  $self->{'code'}                 = $self->type.'::'.$self->component unless $self->{'is_compara_ortholog'}; # TODO - really needed
 
   return $self;
 }
@@ -54,7 +54,7 @@ sub init_form {
   my $form    = $self->SUPER::init_form(@_);
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 
-  $form->get_fieldset('Select species')->remove unless $self->{'action'} eq 'Compara_Ortholog';
+  $form->get_fieldset('Select species')->remove unless $self->{'is_compara_ortholog'};
 
   $form->add_form_element({
     'fieldset'  => 'Aligment output',

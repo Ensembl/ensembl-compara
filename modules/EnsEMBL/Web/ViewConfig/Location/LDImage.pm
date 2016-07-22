@@ -19,12 +19,14 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::LDImage;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults = {};
@@ -39,7 +41,11 @@ sub init {
   $self->title('Linkage Disequilibrium');
 }
 
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
+
 sub extra_tabs {
+  ## @override
   my $self = shift;
   my $hub  = $self->hub;
 

@@ -40,7 +40,7 @@ sub init_cacheable {
   });
 
   $self->title('cDNA sequence');
-  $self->SUPER::init_cacheable;
+  $self->SUPER::init_cacheable(@_);
 }
 
 sub field_order {

@@ -25,6 +25,15 @@ use EnsEMBL::Web::Constants;
 
 use parent qw(EnsEMBL::Web::ViewConfig);
 
+sub _new {
+  ## @override
+  my $self = shift->_new(@_);
+
+  $self->{'code'} = 'Gene::Family';
+
+  return $self;
+}
+
 sub init_cacheable {
   ## Abstract method implementation
   my $self    = shift;
@@ -35,7 +44,6 @@ sub init_cacheable {
     map({ 'opt_'     . lc($_) => 'yes' } keys %formats)
   });
 
-  $self->code('Gene::Family');
   $self->title('Ensembl protein families');
 }
 
@@ -52,7 +60,7 @@ sub init_form {
   # Select species fieldset
   $form->add_species_fieldset;
 
-  # Selected databases  fieldset
+  # Selected databases fieldset
   for (sort keys %formats) {
     $form->add_form_element({
       'fieldset'  => 'Selected databases',

@@ -19,25 +19,22 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Regulation::Evidence;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Regulation::Page);
+use parent qw(EnsEMBL::Web::ViewConfig::RegulationPage);
 
-sub init {
-  my $self = shift;
-
-  $self->set_default_options({
-    show_bottom_panel => 'yes'
-  });
-
-  $self->title('Cell types');
-}
-
-sub init_form {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
 
   $self->image_config_type('reg_summary');
+  $self->set_default_options({'show_bottom_panel' => 'yes'});
+  $self->title('Cell types');
 }
 
-sub extra_tabs { return $_[0]->reg_extra_tabs('reg_summary'); }
+sub field_order {
+  ## Abstract method implementation
+  ## No fields
+}
 
 1;

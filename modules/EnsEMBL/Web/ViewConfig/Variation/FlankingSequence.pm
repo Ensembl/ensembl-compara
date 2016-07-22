@@ -27,7 +27,7 @@ sub init_cacheable {
   ## @override
   my $self = shift;
 
-  $self->SUPER::init_cacheable;
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_default_options({
     'flank_size'      => 400,
