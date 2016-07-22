@@ -54,19 +54,41 @@ sub init_cacheable {
     %defaults
   });
 
-  $self->code($self->type . '::Compara_Alignments');
   $self->title('Alignments');
 }
 
-sub init_form {
+sub init_form_non_cacheable {
   ## @override
-  ## Because alignments have multiple configuration screens
-  my $self = shift;
+  ## Adding species specific fieldsets for configuring species within an alignment (TODO - get rid of referer)
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $form          = $self->form;
+  my $referer       = $hub->referer;
+  my $species       = $referer->{'ENSEMBL_SPECIES'};
+  my $species_defs  = $self->species_defs;
+  my $alignments    = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
 
-  $self->SUPER::init_form(@_);
+  # Only show if the alignment has been selected in the dropdown and !align="" in url
+  # Order by number of species (name is in the form "6 primates EPO"
+  if(grep $_ ne '', @{$referer->{'params'}{'align'} || []}) {
+    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}{$species} && $_->{'id'} eq @{$referer->{'params'}{'align'}}[0]} values %$alignments) {
+      my $sp            = $row->{'species'};
+      my @name          = split '_', $row->{'name'};
+      my $n             = shift @name;
+      $sp->{$_}         = $species_defs->species_label($_) for keys %$sp;
+      my $fieldset_name = join ' ', $n, map lc, @name;
 
-  # Extra fieldsets for configuring species within an alignment
-  $self->add_alignment_options;
+      foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
+        $self->add_form_element({
+          'fieldset'  => $fieldset_name,
+          'type'      => 'CheckBox',
+          'label'     => $sp->{$_},
+          'name'      => sprintf('species_%s_%s', $row->{'id'}, lc $_),
+          'value'     => 'yes',
+        });
+      }
+    }
+  }
 }
 
 sub field_order {
@@ -101,38 +123,6 @@ sub form_fields {
   $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
-}
-
-sub add_alignment_options {
-  ## TODO - tidy
-  my $self         = shift;
-  my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
-  my $species_defs = $self->species_defs;
-  my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
-
-  # Only show if the alignment has been selected in the dropdown and !align="" in url
-  # Order by number of species (name is in the form "6 primates EPO"
-  if($self->hub->parse_referer->{params}->{align} && grep($_ != "", @{$self->hub->parse_referer->{params}->{align}})) {
-    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} && $_->{id} eq @{$self->hub->parse_referer->{params}->{align}}[0]} values %$alignments) {
-      my $sp   = $row->{'species'};
-      my @name = split '_', $row->{'name'};
-      my $n    = shift @name;
-
-      $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
-
-      $self->add_fieldset(join ' ', $n, map lc, @name);
-
-      foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
-        $self->add_form_element({
-          type  => 'CheckBox',
-          label => $sp->{$_},
-          name  => sprintf('species_%s_%s', $row->{'id'}, lc),
-          value => 'yes',
-          raw   => 1
-        });
-      }
-    }
-  }
 }
 
 1;
