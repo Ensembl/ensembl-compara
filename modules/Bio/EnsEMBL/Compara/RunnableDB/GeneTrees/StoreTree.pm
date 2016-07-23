@@ -469,6 +469,7 @@ sub store_tree_into_clusterset {
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
     $newtree->clusterset_id($clusterset->clusterset_id);
+    $newtree->root->{'_different_tree_object'} = 1;
 
     $self->call_within_transaction(sub {
         $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);

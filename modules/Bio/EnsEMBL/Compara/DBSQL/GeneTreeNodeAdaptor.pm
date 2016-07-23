@@ -181,10 +181,10 @@ sub store_nodes_rec {
     # Secondly, recursively do all the children
     foreach my $child_node (@$children) {
         # Store the GeneTreeNode or the new GeneTree if different
-        if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
-            $self->store_nodes_rec($child_node);
-        } else {
+        if ($child_node->{'_different_tree_object'}) {
             $self->db->get_GeneTreeAdaptor->store($child_node->tree);
+        } else {
+            $self->store_nodes_rec($child_node);
         }
     }
 

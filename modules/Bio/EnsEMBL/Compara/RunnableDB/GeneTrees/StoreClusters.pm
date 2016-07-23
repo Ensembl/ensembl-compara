@@ -200,6 +200,7 @@ sub add_cluster {
     # The cluster root node
     my $cluster_root = $cluster->root;
     $clusterset_leaf->add_child($cluster_root);
+    $cluster_root->{'_different_tree_object'} = 1;
 
     # The cluster leaves
     foreach my $seq_member_id (@$gene_list) {
