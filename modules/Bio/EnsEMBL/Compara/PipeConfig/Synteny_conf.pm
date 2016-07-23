@@ -220,7 +220,7 @@ sub pipeline_analyses {
                                  'src_db_conn'   => '#master_db#',
                                  'mode'          => 'insertignore',
                                  'table'         => 'dnafrag',
-                                 'where'         => 'is_reference = 1 AND genome_db_id IN (#genome_db_ids#)'
+                                 'where'         => 'assembly_part = "primary" AND genome_db_id IN (#genome_db_ids#)'
                                 },
               -flow_into => WHEN('defined (#ptree_db#)' => ['dump_gff_homologs'] ,
                     ELSE ['chr_name_factory']),

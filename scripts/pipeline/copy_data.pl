@@ -816,7 +816,7 @@ sub copy_ancestral_dnafrags {
   #copy dnafrag table
    copy_data($from_dbc, $to_dbc,
        "dnafrag",
-       "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference".
+       "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, assembly_part".
          " FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id)" .
          " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=$ancestral_dbID",
        "dnafrag_id",

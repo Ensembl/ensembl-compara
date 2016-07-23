@@ -1094,8 +1094,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'duplicate_component_dnafrags',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
+                'copied_params' => 'length, name, coord_system_name, assembly_part',
                 'sql' => [
-                    'INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference) SELECT length, name, #principal_genome_db_id#, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
+                    'INSERT INTO dnafrag (genome_db_id, #copied_params#) SELECT #principal_genome_db_id#, #copied_params# FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
                 ],
             },
             -flow_into  => [ 'hc_component_dnafrags' ],

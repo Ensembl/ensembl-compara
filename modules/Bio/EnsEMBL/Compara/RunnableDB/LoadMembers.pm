@@ -188,11 +188,6 @@ sub loadMembersFromCoreSlices {
 
   foreach my $slice (@$slices) {
 
-    # Reference slices are excluded if $self->param('include_reference') is off
-    next if !$self->param('include_reference') and $slice->is_reference();
-    # Patches are excluded if $self->param('include_patches') is off
-    next if !$self->param('include_patches') and ($slice->assembly_exception_type() =~ /PATCH/);
-
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
     my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
@@ -204,6 +199,11 @@ sub loadMembersFromCoreSlices {
             $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
         }
     }
+
+    # Reference (primary) slices are excluded if $self->param('include_reference') is off
+    next if !$self->param('include_reference') and ($dnafrag->assembly_part eq 'primary');
+    # Patches are excluded if $self->param('include_patches') is off
+    next if !$self->param('include_patches') and ($dnafrag->assembly_part =~ /patch/);
 
     # Heuristic: it usually takes several seconds to load more than 500 genes,
     # so let's disconnect from compara

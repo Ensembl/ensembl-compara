@@ -27,6 +27,7 @@
 * `MethodLinkSpeciesSet::get_common_classification()`
 * `DnaFrag::isMT()`
 * `DnaFrag::dna_type()`
+* `DnaFrag::is_reference()`
 
 ## \*MemberAdaptor methods, to be removed in Ensembl 91
 

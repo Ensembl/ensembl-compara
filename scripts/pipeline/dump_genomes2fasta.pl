@@ -42,7 +42,7 @@ foreach my $genome_db_id( @$genome_db_id_list ){
 	my $dump_dir = $ARGV[2] . "/" . $genome_db->name;
 	mkdir($dump_dir) or die;
 	open(IN, ">$dump_dir/genome_seq") or die "cant open $dump_dir\n";
-	foreach my $ref_dnafrag( @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1) } ){
+	foreach my $ref_dnafrag( @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 'primary') } ){
                 if ($ARGV[3]) {
                     if ($ARGV[3] =~ /^-(.*)$/) {
                         next if $ref_dnafrag->cellular_component eq $1;

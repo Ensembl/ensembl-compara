@@ -280,10 +280,10 @@ sub pipeline_analyses {
                                 'db_conn'    => $self->o('compara_url'),
                                 'ref_species' => $self->o('ref_species'),
                                 'coord_system_name' => $self->o('coord_system_name'),
-                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND is_reference = 1 ORDER BY seq_region",
+                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND assembly_part = \"primary\" ORDER BY seq_region",
 
                                 #Development testing only. Create jobs for chr 22 only
-#                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND is_reference = 1 AND dnafrag.name = \"22\" ORDER BY seq_region",
+#                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND assembly_part = \"primary\" AND dnafrag.name = \"22\" ORDER BY seq_region",
                                },
                 -flow_into => {
                                '2' => [ 'create_chunked_jobs' ],

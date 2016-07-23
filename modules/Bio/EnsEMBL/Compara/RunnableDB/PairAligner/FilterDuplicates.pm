@@ -142,7 +142,7 @@ sub filter_duplicates {
     my $seq_region_end = $self->param('seq_region_end');
     $seq_region_end = $dnafrag->length unless (defined $seq_region_end);
 
-    if ($dnafrag->is_reference) {
+    if ($dnafrag->assembly_part eq 'primary') {
 	#find identical matches over all the dnafrag
 	$self->find_identical_matches($seq_region_start, $seq_region_end, $window_size, $mlss, $dnafrag);
 	

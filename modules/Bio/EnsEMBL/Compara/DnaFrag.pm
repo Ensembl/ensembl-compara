@@ -161,9 +161,9 @@ sub new {
 
   my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
-  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference, $cellular_component, $codon_table_id,
+  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $assembly_part, $cellular_component, $codon_table_id,
       ) =
-    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE CELLULAR_COMPONENT CODON_TABLE_ID
+    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME ASSEMBLY_PART CELLULAR_COMPONENT CODON_TABLE_ID
         )],@args);
 
   $self->length($length) if (defined($length));
@@ -171,7 +171,7 @@ sub new {
   $self->genome_db($genome_db) if (defined($genome_db));
   $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
-  $self->is_reference($is_reference) if (defined($is_reference));
+  $self->assembly_part($assembly_part) if (defined($assembly_part));
   $self->cellular_component($cellular_component) if (defined($cellular_component));
   $self->codon_table_id($codon_table_id) if (defined($codon_table_id));
 
@@ -212,11 +212,19 @@ sub new_from_Slice {
         }
     }
 
+    my %assembly_exception_type_2_part_name = (
+        'REF'         => 'primary',
+        'HAP'         => 'alt_locus',
+        'PATCH_FIX'   => 'fix_patch',
+        'PATCH_NOVEL' => 'novel_patch',
+    );
+    my $assembly_part = ($assembly_exception_type_2_part_name{$slice->assembly_exception_type()} || 'alt_locus');
+
     return $class->new_fast( {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
         'coord_system_name' => $slice->coord_system_name(),
-        'is_reference' => $slice->is_reference(),
+        '_assembly_part' => $assembly_part,
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
@@ -400,31 +408,29 @@ sub get_assembly_part {
 }
 
 
-=head2 is_reference
+=head2 assembly_part
 
- Arg [1]   : bool $is_reference
- Example   : $is_reference = $dnafrag->is_reference()
- Example   : $dnafrag->is_reference(1)
- Function  : get/set is_reference attribute. The default value
-             is 1 (TRUE).
- Returns   : bool
+ Arg [1]   : string $assembly_part
+ Example   : $assembly_part = $dnafrag->assembly_part()
+ Example   : $dnafrag->assembly_part("patch")
+ Function  : get/set assembly_part attribute.
+ Returns   : string
  Exeption  : none
- Caller    : $object->is_reference
- Status    : Stable
+ Caller    : $object->assembly_part
 
 =cut
 
-sub is_reference {
-  my ($self, $is_reference) = @_;
+sub assembly_part {
+    my $self = shift;
+    $self->{'_assembly_part'} = shift if @_;
+    return $self->{'_assembly_part'};
+}
 
-  if (defined($is_reference)) {
-    $self->{'is_reference'} = $is_reference;
-  }
-  if (!defined($self->{'is_reference'})) {
-    $self->{'is_reference'} = 1;
-  }
 
-  return $self->{'is_reference'};
+sub is_reference {  ## DEPRECATED
+    my ($self) = @_;
+    deprecate('DnaFrag::is_reference() is deprecated and will be removed in e89. Check DnaFrag::assembly_part() for an alternative. is_reference() is not a setter any more');
+    return ($self->assembly_part eq 'primary');
 }
 
 

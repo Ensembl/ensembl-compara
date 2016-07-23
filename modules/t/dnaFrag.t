@@ -51,9 +51,9 @@ foreach my $this_species (@$species) {
 ##
 #####################################################################
 
-my $sth = $compara_dba->dbc->prepare("SELECT dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference FROM dnafrag LIMIT 1");
+my $sth = $compara_dba->dbc->prepare("SELECT dnafrag_id, length, name, genome_db_id, coord_system_name, assembly_part FROM dnafrag LIMIT 1");
 $sth->execute();
-my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference) = $sth->fetchrow_array();
+my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $assembly_part) = $sth->fetchrow_array();
 $sth->finish();
 
 my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
@@ -94,7 +94,7 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFrag::getter/setters", sub {
     ok(test_getter_setter($dnafrag, "genome_db", $genome_db));
     ok(test_getter_setter($dnafrag, "genome_db_id", $genome_db_id));
     ok(test_getter_setter($dnafrag, "coord_system_name", $coord_system_name));
-    ok(test_getter_setter($dnafrag, "is_reference", $is_reference));
+    ok(test_getter_setter($dnafrag, "assembly_part", $assembly_part));
 
     isa_ok($dnafrag->slice, "Bio::EnsEMBL::Slice");
 

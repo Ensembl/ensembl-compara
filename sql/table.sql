@@ -595,7 +595,7 @@ CREATE TABLE synteny_region (
 @column name               Name of the DNA sequence (e.g., the name of the chromosome)
 @column genome_db_id       External reference to genome_db_id in the @link genome_db table
 @column coord_system_name  Refers to the coord system in which this dnafrag has been defined
-@column is_reference       Boolean, whether dnafrag is reference (1) or non-reference (0) eg haplotype
+@column assembly_part      Indicates whether the dnafrag is part of the primary assembly, or is an haplotype or a patch
 @column cellular_component Either "NUC", "MT" or "PT". Represents which genome the dnafrag is part of
 @column codon_table_id     Integer. The numeric identifier of the codon-table that applies to this dnafrag (https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi)
 
@@ -609,7 +609,7 @@ CREATE TABLE dnafrag (
   name                        varchar(255) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
-  is_reference                tinyint(1) DEFAULT 1 NOT NULL,
+  assembly_part               ENUM('primary', 'alt_locus', 'fix_patch', 'novel_patch') DEFAULT 'primary' NOT NULL,
   cellular_component          ENUM('NUC', 'MT', 'PT') DEFAULT 'NUC' NOT NULL,
   codon_table_id              tinyint(2) unsigned DEFAULT 1 NOT NULL,
 
@@ -2097,4 +2097,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_d.sql|cellular_component');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_e.sql|biotype_group');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_f.sql|dnafrag.assembly_part');
 

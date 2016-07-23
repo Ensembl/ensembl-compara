@@ -39,7 +39,7 @@ sub fetch_input {
 
 	my $reference_genome_db = $genome_db_adaptor->fetch_by_dbID($reference_species_id);
 	my @dnafrag_region_jobs = ();
-	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db, undef, undef, 1);
+	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db, undef, undef, 'primary');
 	foreach my $dnafrag( @{ $reference_dnafrags } ){
 		my $dnafrag_len = $dnafrag->length;
 		if($dnafrag_len > $dnafrag_chunk_size){

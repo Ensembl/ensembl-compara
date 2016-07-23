@@ -179,7 +179,7 @@ sub fetch_by_GenomeDB_and_name {
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB
   Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
-  Arg [4]    : (optional) boolean $is_reference
+  Arg [4]    : (optional) string $assembly_part
   Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
                    fetch_all_by_GenomeDB_region(
                      $human_genome_db, 'chromosome')
@@ -193,7 +193,7 @@ sub fetch_by_GenomeDB_and_name {
 =cut
 
 sub fetch_all_by_GenomeDB_region {
-  my ($self, $genome_db, $coord_system_name, $name, $is_reference) = @_;
+  my ($self, $genome_db, $coord_system_name, $name, $assembly_part) = @_;
 
   assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
@@ -222,9 +222,9 @@ sub fetch_all_by_GenomeDB_region {
     $self->bind_param_generic_fetch($name, SQL_VARCHAR);
   }
 
-  if(defined $is_reference) {
-    $sql .= ' AND df.is_reference = ?';
-    $self->bind_param_generic_fetch($is_reference, SQL_INTEGER);
+  if(defined $assembly_part) {
+    $sql .= ' AND df.assembly_part = ?';
+    $self->bind_param_generic_fetch($assembly_part, SQL_VARCHAR);
   }
 
   return $self->generic_fetch($sql);
@@ -324,7 +324,7 @@ sub _columns {
           'df.name',
           'df.genome_db_id',
           'df.coord_system_name',
-          'df.is_reference',
+          'df.assembly_part',
           'df.cellular_component',
           'df.codon_table_id',
           );
@@ -350,14 +350,14 @@ sub _objs_from_sth {
 
   my $these_dnafrags = [];
 
-  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference, $cellular_component, $codon_table_id);
+  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $assembly_part, $cellular_component, $codon_table_id);
   $sth->bind_columns(
           \$dbID,
           \$length,
           \$name,
           \$genome_db_id,
           \$coord_system_name,
-          \$is_reference,
+          \$assembly_part,
           \$cellular_component,
           \$codon_table_id,
       );
@@ -375,7 +375,7 @@ sub _objs_from_sth {
             'name' => $name,
             'genome_db_id' => $genome_db_id,
             'coord_system_name' => $coord_system_name,
-            'is_reference' => $is_reference,
+            '_assembly_part' => $assembly_part,
             '_cellular_component' => $cellular_component,
             '_codon_table_id' => $codon_table_id,
         } );
@@ -446,10 +446,10 @@ sub store {
 
    my $sth = $self->prepare("
      INSERT IGNORE INTO dnafrag ( genome_db_id, coord_system_name,
-                                  name, length, is_reference, cellular_component, codon_table_id )
+                                  name, length, assembly_part, cellular_component, codon_table_id )
      VALUES (?,?,?,?,?,?,?)");
 
-   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference, $dnafrag->cellular_component, $dnafrag->codon_table_id);
+   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->assembly_part, $dnafrag->cellular_component, $dnafrag->codon_table_id);
    
    if ($rows_inserted > 0) {
      $stored_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id');
@@ -579,6 +579,7 @@ sub update {
             'coord_system_name'     => $dnafrag->coord_system_name,
             'codon_table_id'        => $dnafrag->codon_table_id,
             'cellular_component'    => $dnafrag->cellular_component,
+            'assembly_part'         => $dnafrag->assembly_part,
         }, {
             'dnafrag_id'            => $dnafrag->dbID()
         } );

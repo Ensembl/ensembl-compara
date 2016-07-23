@@ -50,7 +50,7 @@ my $dnafrag_length = 51304566;
 my $dnafrag_name = "22";
 my $dnafrag_genome_db_id = 90;
 my $dnafrag_coord_system_name = "chromosome";
-my $dnafrag_is_reference = 1;
+my $dnafrag_assembly_part = 'somewhere';
 
 my $small_sequence = "ATTTGCCCTTGCACTTATTTATCTGGATTACTGTCTGCCTGTCCCAAAGAATAAAAGCTTTATCACAGTGGGGACTTTGTTTAAAAAAAAATAATAACGG";
 
@@ -70,7 +70,7 @@ my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(-dbid => $dnafrag_id,
                                                 -name => $dnafrag_name,
                                                 -genome_db_id => $dnafrag_genome_db_id,
                                                 -coord_system_name => $dnafrag_coord_system_name,
-                                                -is_reference => $dnafrag_is_reference);
+                                                -assembly_part => $dnafrag_assembly_part);
 
 #
 # Compiles
