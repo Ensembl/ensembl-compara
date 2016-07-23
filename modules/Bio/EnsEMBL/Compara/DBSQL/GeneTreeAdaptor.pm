@@ -422,7 +422,7 @@ sub delete_tree {
     }
 
     # Finally remove the root node
-    $gene_tree_node_Adaptor->delete_node($tree->root);
+    $gene_tree_node_Adaptor->delete_node($tree->root) if $tree->root;
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
