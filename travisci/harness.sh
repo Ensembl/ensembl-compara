@@ -2,6 +2,8 @@
 
 export PERL5LIB=$PWD/bioperl-live:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/modules:$PWD/ensembl-hive/modules:$PWD/Bio-HTS/lib:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS/Faidx:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS
 
+echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$COVERALLS'"
+
 export ENSEMBL_CVS_ROOT_DIR=$PWD
 export TEST_AUTHOR=$USER
 echo "Running ensembl-compara test suite using $PERL5LIB"
@@ -13,7 +15,6 @@ fi
 
 rt1=$?
 
-echo "We are running Perl '$TRAVIS_PERL_VERSION'"
 if [[ "$TRAVIS_PERL_VERSION" < "5.14" ]]; then
   echo "Skipping ensembl-rest test suite"
 else
