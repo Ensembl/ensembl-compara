@@ -24,7 +24,7 @@ use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
-use EnsEMBL::Web::ViewConfig::Regulation::Page;
+use EnsEMBL::Web::ViewConfig::RegulationPage;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::File::Utils::URL;
 
@@ -233,7 +233,7 @@ sub ajax_reg_renderer {
 
   my $renderer = $hub->input->url_param('renderer');
   my $state = $hub->param('state');
-  EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
+  EnsEMBL::Web::ViewConfig::RegulationPage->reg_renderer(
     $hub,'regulation_view',$renderer,$state);
 
   $hub->session->store;

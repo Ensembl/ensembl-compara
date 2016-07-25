@@ -25,7 +25,6 @@ use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
-use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::NewTable::Callback;
