@@ -34,7 +34,7 @@ sub _init {
   my $colour            = 'lightcoral';
   my $x                 = 0;
   my $x_end             = 0;
-  my $pix_per_bp        = $config->transform->{'scalex'};
+  my $pix_per_bp        = $config->transform_object->scalex;
 
   return unless $config->get_parameter('opt_highlight') eq 'yes';
 

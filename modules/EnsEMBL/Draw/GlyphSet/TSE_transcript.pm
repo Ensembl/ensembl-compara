@@ -33,7 +33,7 @@ sub render_normal {
   my $self              = shift;
   my $config            = $self->{'config'};
   my $h                 = 8; # Increasing this increases glyph height
-  my $pix_per_bp        = $config->transform->{'scalex'};
+  my $pix_per_bp        = $config->transform_object->scalex;
   my $length            = $config->container_width;
   my $trans_obj         = $self->cache('trans_object');
   my $coding_start      = $trans_obj->{'coding_start'};

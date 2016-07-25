@@ -93,7 +93,7 @@ warn "DEPRECATED MODULE - will be removed in release 81.";
     $self->{'colours'}{$id}=1;
   }
 
-  my $bgcolour = $config->bgcolor();
+  my $bgcolour = $config->get_parameter('bgcolor');
   $canvas .= qq(_$bgcolour 0 0 $im_width $im_height r fi\n);
   $self->{'colours'}{$bgcolour}=1;
 

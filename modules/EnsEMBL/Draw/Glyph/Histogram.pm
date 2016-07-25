@@ -43,19 +43,19 @@ sub width { return @{$_[0]->{'values'}} * $_[0]->{'unit'}; }
 sub height { return $_[0]->{'height'}; }
 
 sub transform {
-  my ($self, $transform_ref) = @_;
+  my ($self, $transform_obj) = @_;
 
   $self->{'width'} = $self->width();
 
-  my $scalex     = $$transform_ref{'scalex'};
-  my $scaley     = $$transform_ref{'scaley'};
-  my $translatex = $$transform_ref{'translatex'};
-  my $translatey = $$transform_ref{'translatey'};
+  my $scalex     = $transform_obj->scalex;
+  my $scaley     = $transform_obj->scaley;
+  my $translatex = $transform_obj->translatex;
+  my $translatey = $transform_obj->translatey;
 
   $self->{'pixelpoints'} ||= [ @{$self->{'values'}} ];
   
-  $scalex = $$transform_ref{'absolutescalex'} if $self->absolutex();
-  $scaley = $$transform_ref{'absolutescaley'} if $self->absolutey();
+  $scalex = $transform_obj->absolutescalex if $self->absolutex();
+  $scaley = $transform_obj->absolutescaley if $self->absolutey();
 
   $self->{'pixelx'}      ||= ($self->{'x'}      || 0);
   $self->{'pixely'}      ||= ($self->{'y'}      || 0);

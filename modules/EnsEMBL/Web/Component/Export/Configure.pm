@@ -30,7 +30,7 @@ sub content {
   
   $view_config->build_form($self->object);
   
-  my $form = $view_config->get_form;
+  my $form = $view_config->form;
   
   $form->set_attribute('method', 'post');
  

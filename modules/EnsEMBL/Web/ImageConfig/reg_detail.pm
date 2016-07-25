@@ -27,7 +27,8 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    opt_lines => 1,
+    image_resizeable  => 1,
+    opt_lines         => 1,
   });  
   
   $self->create_menus(qw(
@@ -80,7 +81,6 @@ sub init {
   );
   
   $self->load_tracks({ reg_minimal => 1 });
-  $self->image_resize = 1;
 
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],

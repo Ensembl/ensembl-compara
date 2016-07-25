@@ -19,65 +19,43 @@ limitations under the License.
 
 package EnsEMBL::Web::Builder;
 
-### DESCRIPTION:
-### Builder is a container for domain objects such as Location, Gene, 
-### and User plus a single helper module, Hub (see separate documentation).
-### Domain objects are stored as a hash of key-arrayref pairs, since 
-### theoretically a page can have more than one domain object of a 
-### given type.
-### E.g.
-### $self->{'_objects'} = {
-###   'Location'  => [$x],
-###   'Gene'      => [$a, $b, $c],
-###   'UserData'  => [$bed, $gff],
-### };
-
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Root);
+use parent qw(EnsEMBL::Web::Root);
 
 use EnsEMBL::Web::Lazy::Object;
+use EnsEMBL::Web::Attributes;
+
+sub hub :Accessor;
 
 sub new {
-  my ($class, $args) = @_;
-  
-  my $self = { 
-    objects       => {},
-    object_params => [],
-    %$args
-  };
-  
-  bless $self, $class;
-  
-  $self->{'object_types'}    = $self->hub->object_types || { map { $_->[0] => $_->[1] } @{$self->object_params} };
-  $self->{'ordered_objects'} = [ map $_->[0], @{$self->object_params} ];
-  
-  return $self; 
+  my ($class, $hub, $object_params) = @_;
+
+  return bless {
+    'hub'           => $hub,
+    'object_params' => $object_params,
+    'object_types'  => { map { $_->[0] => $_->[1] } @$object_params },
+    'objects'       => {},
+  }, $class;
 }
 
-sub hub             { return $_[0]{'hub'};             }
-sub all_objects     { return $_[0]{'objects'};         }
-sub object_params   { return $_[0]{'object_params'};   }
-sub object_types    { return $_[0]{'object_types'};    }
-sub ordered_objects { return $_[0]{'ordered_objects'}; }
-
 sub object {
-  ### Getter/setter for data objects - acts on the default data type
-  ### for this page if none is specified
-  ### Returns the first object in the array of the appropriate type
-  
+  ## Getter/setter for data objects - acts on the default data type for this page if none is specified
+  ## @return EnsEMBL::Web::Object instance for the appropriate type
   my ($self, $type, $object) = @_;
-  my $hub = $self->hub;
-  $type ||= $hub->type;
-  #warn "@@@ GETTING OBJECT OF TYPE $type";
-  
-  $self->{'objects'}{$type} = $object if $object;
-  
-  my $object_type = $self->{'objects'}{$type};
-  #warn ".... FOUND OBJECT $object_type";
-  $object_type  ||= $self->{'objects'}{$hub->factorytype} unless $_[1];
-  
-  return $object_type;
+  my $hub       = $self->hub;
+  my $hub_type  = $hub->type;
+
+  if ($object) {
+    $self->{'objects'}{$type || $hub_type} = $object;
+
+  } else {
+    $object   = $self->{'objects'}{$type || $hub_type};
+    $object ||= $self->{'objects'}{$hub->factorytype} unless $type; # in case hub->factorytype is not same as hub->type
+  }
+
+  return $object;
 }
 
 sub api_object {
@@ -88,24 +66,34 @@ sub api_object {
   return $object->__objecttype eq 'Location' ? $object->slice : $object->Obj if $object;
 }
 
+sub create_object {
+  ## Creates an object for the given type without any linked objects
+  ## @param Object type
+  my ($self, $type) = @_;
+
+  my $object = $self->object($type);
+
+  if (!$object) {
+    $self->create_factory($type);
+    $object = $self->object($type);
+  }
+
+  return $object;
+}
+
 sub create_objects {
   ### Used to generate the objects needed for the top tabs and the rest of the page
   ### The object of type $type is the primary object, used for the page.
-  
-  my ($self, $type, $request) = @_;
+  my ($self, $type) = @_;
   my $hub     = $self->hub;
   my $url     = $hub->url($hub->multi_params);
   my $species = $hub->species;
+  my $request = $hub->controller->isa('EnsEMBL::Web::Controller::Page') ? 'page' : ''; # TODO - any better idea to do this?
   $type     ||= $hub->factorytype;
-  
+
   my ($factory, $new_factory, $data);
-  
-  if ($request eq 'lazy') {
-    $factory = $self->create_factory($type) unless $self->object($type);
-    return $self->object($type);
-  }
-  
-  if ($self->object_types->{$type} && $hub->param('r')) {
+
+  if ($self->{'object_types'}{$type} && $hub->param('r')) {
     $factory = $self->create_factory('Location', undef, 'r');
     $data    = $factory->__data if $factory;
   }
@@ -113,7 +101,7 @@ sub create_objects {
   $new_factory = $self->create_factory($type, $data) unless $type eq 'Location' && $factory; # If it's a Location page with an r parameter, don't duplicate the Location factory
   $factory     = $new_factory if $new_factory;
   
-  foreach (@{$self->object_params}) {
+  foreach (@{$self->{'object_params'}}) {
     last if $hub->get_problem_type('redirect');                  # Don't continue if a redirect has been requested
     next if $_->[0] eq $type;                                    # This factory already exists, so skip it
     next unless $hub->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
@@ -146,7 +134,6 @@ sub create_objects {
     
     if ($new_url && $new_url ne $url) {
       $hub->redirect($redirect_url);
-      return 'redirect';
     }
   }
   

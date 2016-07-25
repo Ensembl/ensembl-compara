@@ -29,7 +29,7 @@ sub _init {
   my $self = shift;
 
   ## Hide if corresponding tracks are all off
-  my $node = $self->{'config'}{'_tree'}->get_node('regulatory_features');
+  my $node = $self->{'config'}->get_node('regulatory_features');
   return unless $node;
   my $show = 0;
   foreach ($node->descendants) {

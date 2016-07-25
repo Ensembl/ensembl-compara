@@ -20,47 +20,60 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::HomologAlignment;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig::Gene::ComparaOrthologs);
+use parent qw(EnsEMBL::Web::ViewConfig::Gene::ComparaOrthologs);
 
-sub init {
-  my $self = shift;
-  
-  $self->SUPER::init if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';
-  
-  $self->set_defaults({
-    seq         => 'Protein',
-    text_format => 'clustalw',
-  });
+sub _new {
+  ## @override
+  ## TODO - get rid of the use of referer
+  my $self = shift->SUPER::_new(@_);
 
-  $self->title = 'Homologs';
+  $self->{'is_compara_ortholog'}  = ($self->hub->referer->{'ENSEMBL_ACTION'} || '') eq 'Compara_Ortholog';
+  $self->{'code'}                 = $self->type.'::'.$self->component unless $self->{'is_compara_ortholog'}; # TODO - really needed
+
+  return $self;
 }
 
-sub form {
+sub init_cacheable {
+  ## @override
+  my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
+
+  $self->set_default_options({
+    'seq'         => 'Protein',
+    'text_format' => 'clustalw',
+  });
+}
+
+sub init_form {
+  ## @override
   my $self    = shift;
+  my $form    = $self->SUPER::init_form(@_);
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 
-  $self->add_fieldset('Aligment output');
-  
-  $self->add_form_element({
-    type   => 'DropDown', 
-    select => 'select',     
-    name   => 'seq',
-    label  => 'View as cDNA or Protein',
-    values => [ map {{ value => $_, caption => $_ }} qw(cDNA Protein) ]
+  $form->get_fieldset('Select species')->remove unless $self->{'is_compara_ortholog'};
+
+  $form->add_form_element({
+    'fieldset'  => 'Aligment output',
+    'type'      => 'dropdown',
+    'name'      => 'seq',
+    'label'     => 'View as cDNA or Protein',
+    'values'    => [ qw(cDNA Protein) ]
   });
-  
-  $self->add_form_element({
-    type   => 'DropDown', 
-    select => 'select',      
-    name   => 'text_format',
-    label  => 'Output format for sequence alignment',
-    values => [ map {{ value => $_, caption => $formats{$_} }} sort keys %formats ]
+
+  $form->add_form_element({
+    'fieldset'  => 'Aligment output',
+    'type'      => 'dropdown',
+    'name'      => 'text_format',
+    'label'     => 'Output format for sequence alignment',
+    'values'    => [ map {{ 'value' => $_, 'caption' => $formats{$_} }} sort keys %formats ]
   });
-  
-  $self->SUPER::form if $self->hub->referer->{'ENSEMBL_ACTION'} eq 'Compara_Ortholog';;
+
+  return $form;
 }
 
 1;

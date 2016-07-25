@@ -24,6 +24,8 @@ package EnsEMBL::Draw::GlyphSet::P_variation;
 
 use strict;
 
+use EnsEMBL::Draw::Utils::Transform;
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub colour_key { return lc $_[1]->display_consequence; }
@@ -86,7 +88,7 @@ sub _init {
       my $bump_end   = $bump_start + $glyph->width + 3;
       my $row        = $self->bump_row($bump_start, $bump_end);
       
-      $_->transform({ translatey => 1.5 * $row * ($h + 2) }) for $glyph, $zmenu;
+      $_->transform(EnsEMBL::Draw::Utils::Transform->new({ translatey => 1.5 * $row * ($h + 2) })) for $glyph, $zmenu;
       
       $self->push($glyph, $zmenu);
       

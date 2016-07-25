@@ -401,7 +401,7 @@ sub render_normal {
 
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $pix_per_bp = $self->{'config'}->transform_object->scalex;
   my $strand = ">";
 
   foreach my $r (@releases){

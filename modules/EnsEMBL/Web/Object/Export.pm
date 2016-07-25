@@ -234,7 +234,7 @@ sub modify_gene_options {
 sub params :lvalue {$_[0]->{'params'};  }
 sub string { return shift->output('string', @_); }
 sub html   { return shift->output('html',   @_); }
-sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 
 sub html_format { return $_[0]->hub->param('_format') ne "TextGz"; }

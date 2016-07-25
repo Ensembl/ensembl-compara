@@ -27,7 +27,8 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    show_labels => 'no',
+    storable  => 0,
+    no_labels => 1,
   });
 
   $self->create_menus('idhistory');
@@ -37,8 +38,7 @@ sub init {
   $self->add_tracks('idhistory',
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
-  
-  $self->storable = 0;
+
 }
 
 1;

@@ -102,7 +102,7 @@ sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'contain
 sub species_defs       { return $_[0]->{'config'}->species_defs;                                                                                                 }
 sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                                                                         }
 sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
-sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
+sub scalex             { return $_[0]->{'config'}->transform_object->scalex;                                                                                     }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub get_features       { return $_[0]->{'features'}; }
 
@@ -135,7 +135,6 @@ sub _quick_url         {
 }
 
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
-sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
 sub x {
   my ($self) = @_;
@@ -302,9 +301,9 @@ sub length {
 
 sub transform {
   my ($self) = @_;
-  my $T = $self->{'config'}->{'transform'};
+  my $transform_obj = $self->{'config'}->transform_object;
   foreach( @{$self->{'glyphs'}} ) {
-    $_->transform($T);
+    $_->transform($transform_obj);
   }
 }
 
@@ -1216,7 +1215,7 @@ sub errorTrack {
     absolutey     => 1,
     absolutex     => 1,
     absolutewidth => 1,
-    pixperbp      => $self->{'config'}->{'transform'}->{'scalex'},
+    pixperbp      => $self->{'config'}->transform_object->scalex,
     %font
   }));
 

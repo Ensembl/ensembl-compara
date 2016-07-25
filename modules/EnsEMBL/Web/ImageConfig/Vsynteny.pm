@@ -27,7 +27,8 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    toolbars        => {'top' => 1, 'bottom' => 1},
+    storable        => 0,
+    bottom_toolbar  => 1,
     label           => 'above',
     band_labels     => 'off',
     image_height    => 500,
@@ -44,7 +45,6 @@ sub init {
 
   $self->create_menus('synteny');
   $self->add_tracks('synteny', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
-  $self->storable = 0;
 }
 
 1;

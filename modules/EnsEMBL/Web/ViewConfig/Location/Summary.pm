@@ -20,14 +20,19 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::Summary;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->add_image_config('chromosome');
-  $self->title = 'Chromosome Image';
+
+  $self->image_config_type('chromosome');
+  $self->title('Chromosome Image');
 }
+
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
 
 1;

@@ -27,8 +27,9 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    sortable_tracks => 'drag',  # allow the user to reorder tracks
-    opt_lines => 1, # draw registry lines
+    storable          => 0,
+    image_resizeable  => 1,
+    opt_lines         => 1, # draw registry lines
   });
 
   $self->create_menus(qw(
@@ -103,9 +104,6 @@ sub init {
     [ 'somatic_sv_feature' ],
     { display => 'gene_nolabel', depth => 50 }
   );
-  
-  $self->storable     = 0;
-  $self->image_resize = 1;
 }
 
 1;

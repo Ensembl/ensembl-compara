@@ -48,7 +48,7 @@ sub update_configuration {
   my $session      = $hub->session;
   my $view_config  = $hub->get_viewconfig($hub->action);
   my $code         = $view_config->code;
-  my $image_config = $view_config->image_config;  
+  my $image_config = $view_config->image_config_type;
   my $updated      = $view_config->update_from_input;
   my $existing_config;
   
@@ -56,7 +56,7 @@ sub update_configuration {
   
   if ($hub->param('save_as')) {
     my %params = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
-    $params{'record_type_ids'} = $params{'record_type'} eq 'group' ? [ $hub->param('group') ] : $params{'record_type'} eq 'session' ? $session->create_session_id : $hub->user ? $hub->user->id : undef;
+    $params{'record_type_ids'} = $params{'record_type'} eq 'group' ? [ $hub->param('group') ] : $params{'record_type'} eq 'session' ? $session->session_id : $hub->user ? $hub->user->id : undef;
     $existing_config = $self->save_config($code, $image_config, %params);
   }
   

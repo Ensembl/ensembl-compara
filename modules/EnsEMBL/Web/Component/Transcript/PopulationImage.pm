@@ -262,7 +262,6 @@ sub sample_configs {
 
     $sample_config->{'_add_labels'} = 1;
     $sample_config->set_parameters({ container_width => $fake_length });
-    $sample_config->tree->dump('Transcript configuration', '([[caption]])') if $hub->species_defs->ENSEMBL_DEBUG_FLAGS & $hub->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
     
     push @containers_and_configs, $sample_slice, $sample_config;
   }

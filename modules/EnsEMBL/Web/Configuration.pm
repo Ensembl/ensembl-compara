@@ -74,13 +74,10 @@ sub init {
   my $self       = shift;
   my $hub        = $self->hub;
   my $cache      = $hub->cache;
-  my $user       = $hub->user;
-  my $session    = $hub->session;
-  my $session_id = $session->session_id;
-  my $user_tree  = $self->user_tree && ($user || $session_id);
+  my $user_tree  = $self->user_tree && ($hub->user || $hub->session);
   my $cache_key  = $self->tree_cache_key;
   my $tree       = $cache->get($cache_key) if $cache && $cache_key; # Try to get default tree from cache
-  
+
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
@@ -94,7 +91,7 @@ sub init {
     $self->populate_tree; # If no user + session tree found, build one
     $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
   }
-  
+
   $self->user_populate_tree if $user_tree;
 }
 

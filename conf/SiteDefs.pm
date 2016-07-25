@@ -319,18 +319,10 @@ our $ENSEMBL_CONFIG_BUILD        = 0; # Build config on server startup? Setting 
 our $ENSEMBL_LONGPROCESS_MINTIME = 10;
 our $APACHE_DEFINE               = undef; # command line arguments for httpd command
 
-## ALLOWABLE DATA OBJECTS
-our $OBJECT_TO_SCRIPT = {
-  Config              => 'Config',
-  Component           => 'Component',
-  ZMenu               => 'ZMenu',
-  psychic             => 'Psychic',
-  Ajax                => 'Ajax',
-  Share               => 'Share',
-  Export              => 'Export',
-  DataExport          => 'DataExport',
-  ImageExport         => 'ImageExport',
-
+###############################################################################
+## Configurations to map URLs to appropriate Controllers and data Objects
+###############################################################################
+our $OBJECT_TO_CONTROLLER_MAP = {
   Gene                => 'Page',
   Transcript          => 'Page',
   Location            => 'Page',
@@ -343,16 +335,27 @@ our $OBJECT_TO_SCRIPT = {
   LRG                 => 'Page',
   Phenotype           => 'Page',
   Experiment          => 'Page',
-
   Info                => 'Page',
   Search              => 'Page',
-  
   UserConfig          => 'Modal',
   UserData            => 'Modal',
-  Help                => 'Modal',  
-
-  CSS                 => 'CSS',
+  Help                => 'Modal',
 };
+our $ALLOWED_URL_CONTROLLERS = [qw(Ajax Component ComponentAjax Config CSS DataExport Download Export ImageExport Json Psychic Share ZMenu)];
+our $OBJECT_PARAMS = [
+  [ 'Phenotype'           => 'ph'  ],
+  [ 'Location'            => 'r'   ],
+  [ 'Gene'                => 'g'   ],
+  [ 'Transcript'          => 't'   ],
+  [ 'Variation'           => 'v'   ],
+  [ 'StructuralVariation' => 'sv'  ],
+  [ 'Regulation'          => 'rf'  ],
+  [ 'Experiment'          => 'ex'  ],
+  [ 'Marker'              => 'm'   ],
+  [ 'LRG'                 => 'lrg' ],
+  [ 'GeneTree'            => 'gt'  ],
+  [ 'Family'              => 'fm'  ],
+];
 
 ## Set log directory and files
 our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };

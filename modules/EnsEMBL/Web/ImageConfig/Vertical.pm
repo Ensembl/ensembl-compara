@@ -29,6 +29,11 @@ use EnsEMBL::Web::IOWrapper::Indexed;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub orientation {
+  ## @override
+  return 'vertical';
+}
+
 # We load less data on vertical drawing code, as it shows regions 
 # at a much smaller scale. We also need to distinguish between
 # density features, rendered as separate tracks, and pointers,
@@ -97,7 +102,6 @@ sub load_user_track_data {
   my $species_defs = $hub->species_defs;
   my $bins         = 150;
   my $bin_size     = int($self->container_width / $bins);
-  my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
   

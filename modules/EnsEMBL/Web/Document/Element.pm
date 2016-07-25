@@ -22,7 +22,6 @@ package EnsEMBL::Web::Document::Element;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 

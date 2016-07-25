@@ -20,12 +20,14 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::LDImage;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults = {};
@@ -34,16 +36,20 @@ sub init {
     my %hash = %{$options{$_}};
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
-  
-  $self->set_defaults($defaults);
-  $self->add_image_config('ldview');
-  $self->title = 'Linkage Disequilibrium'; 
+
+  $self->set_default_options($defaults);
+  $self->image_config_type('ldview');
+  $self->title('Linkage Disequilibrium');
 }
 
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
+
 sub extra_tabs {
+  ## @override
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return [
     'Select populations',
     $hub->url('Component', {

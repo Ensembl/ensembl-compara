@@ -25,10 +25,12 @@ use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my $self = shift;
-  $self->set_parameter('show_labels', 'no');
+  $self->set_parameters({
+    storable  => 0,
+    no_labels => 1,
+  });
   $self->create_menus('other');
   $self->add_tracks('other', [ 'text_seq_legend', '', 'text_seq_legend', { display => 'normal', strand => 'f' }]);
-  $self->storable = 0;
 }
 
 1;

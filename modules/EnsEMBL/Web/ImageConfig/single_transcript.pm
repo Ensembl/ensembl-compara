@@ -27,7 +27,8 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    show_labels => 'no'
+    no_labels => 1,
+    storable  => 0,
   });
   
   $self->create_menus('transcript', 'prediction', 'other');
@@ -43,8 +44,6 @@ sub init {
     [ 'transcript', 'prediction' ],
     { display => 'off', height => 32, non_coding_scale => 0.5 }
   );
-  
-  $self->storable = 0;
 }
 
 1;

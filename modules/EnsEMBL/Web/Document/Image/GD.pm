@@ -58,7 +58,7 @@ sub new {
   };
 
   if ($image_configs) {
-    $self->{'toolbars'}{$_} = $image_configs->[0]->toolbars->{$_} for qw(top bottom);
+    $self->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
   }
 
   bless $self, $class;
@@ -407,7 +407,7 @@ sub track_boundaries {
   my $config          = $container->{'config'};
   my $spacing         = $config->get_parameter('spacing');
   my $top             = $config->get_parameter('margin') * 2 - $spacing;
-  my @sortable_tracks = grep { $_->get('display') ne 'off' } $config->get_sortable_tracks;
+  my @sortable_tracks = $config->get_sortable_tracks(1);
   my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
   my %strand_map      = ( f => 1, r => -1 );
   my @boundaries;
@@ -624,7 +624,6 @@ sub render {
   }
   
   $self->{'width'} = $image->width;
-  $self->hub->species_defs->timer_push('Image->render ending', undef, 'draw');
   
   return $html;
 }

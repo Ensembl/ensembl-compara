@@ -28,7 +28,6 @@ sub init {
 
   $self->set_parameters({
     title            => 'MyGenes',
-    show_labels      => 'yes', # show track names on left-hand side
     label_width      => 100,   # width of labels on left-hand side
     opt_halfheight   => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_empty_tracks => 0,     # include empty tracks

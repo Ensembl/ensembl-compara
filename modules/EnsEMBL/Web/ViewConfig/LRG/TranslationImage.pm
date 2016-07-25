@@ -20,8 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::LRG::TranslationImage;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Transcript::TranslationImage);
-
+use parent qw(EnsEMBL::Web::ViewConfig::Transcript::TranslationImage);
 
 1;

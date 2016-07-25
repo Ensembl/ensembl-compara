@@ -50,17 +50,14 @@ use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
-use EnsEMBL::Web::RegObj;
 
 sub new {
-  my $class = shift;
-  my $hub   = shift;
-  my $id    = [split /::/, $class]->[-1];
-  
+  my ($class, $hub, $builder, $renderer, $id) = @_;
+
   my $self = {
     hub           => $hub,
-    builder       => shift,
-    renderer      => shift,
+    builder       => $builder,
+    renderer      => $renderer,
     id            => $id,
     object        => undef,
     cacheable     => 0,
@@ -73,7 +70,6 @@ sub new {
   };
   
   if ($hub) { 
-    $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache');
     $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   }
   
@@ -124,12 +120,19 @@ sub renderer {
   return $self->{'renderer'};
 }
 
-sub view_config { 
+sub view_config {
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
   my ($self, $type) = @_;
+
+  $type ||= $hub->type;
+
   unless ($self->{'view_config'}) {
-    $self->{'view_config'} = $self->hub->get_viewconfig($self->id, $type);
+    $self->{'view_config'} = $self->hub->get_viewconfig({
+      'component' => $self->id,
+      'type'      => $type,
+      'cache'     => $type eq $hub->type
+    });
   }
   return $self->{'view_config'};
 }
@@ -342,7 +345,7 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= "::$width";
   }
   
-  $hub->get_imageconfig($view_config->image_config) if $view_config && $view_config->image_config; # sets user_data cache tag
+  $hub->get_imageconfig($view_config->image_config_type) if $view_config && $view_config->image_config_type; # sets user_data cache tag
   
   $key = $self->set_cache_key;
   
@@ -477,7 +480,7 @@ sub hint_panel {
 }
 
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
-sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub caption     { return undef; }
 sub header      { return undef; }
 sub _init       { return; }
@@ -540,15 +543,14 @@ sub config_msg {
 }
 
 sub ajax_url {
-  my $self     = shift;
-  my $function = shift;
-  my $params   = shift || {};
-  my $extra    = shift || 'Component';
-  my (undef, $plugin, undef, $type, @module) = split '::', ref $self;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $function    = shift;
+     $function    = join "/", grep $_, $hub->function, $function && $self->can("content_$function") ? $function : '', $self->id;
+  my $params      = shift || {};
+  my $controller  = shift || 'Component';
 
-  my $module   = sprintf '%s%s', join('__', @module), $function && $self->can("content_$function") ? "/$function" : '';
-
-  return $self->hub->url($extra, { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
+  return $self->hub->url($controller, { function => $function, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {

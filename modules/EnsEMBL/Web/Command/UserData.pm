@@ -216,7 +216,7 @@ sub attach {
         }
 
         my $t_code = join('_', md5_hex($name . $current_species . $assembly . $url), 
-                                  $hub->session->create_session_id); 
+                                  $hub->session->session_id); 
         unless ($is_old) {
           my $data = $hub->session->add_data(
                                         type        => 'url',

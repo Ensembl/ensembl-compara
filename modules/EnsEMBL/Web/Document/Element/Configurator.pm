@@ -79,13 +79,13 @@ sub init_config {
   return unless $view_config;
   
   my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
-  my $image_config = $view_config->image_config ? $hub->get_imageconfig($view_config->image_config, 'configurator', $hub->species) : undef;
+  my $image_config = $view_config->image_config_type ? $hub->get_imageconfig($view_config->image_config_type, 'configurator', $hub->species) : undef;
   my ($search_box, $species_select);
   
   $view_config->build_form($controller->object, $image_config);
   
   if ($image_config) {
-    if ($image_config->multi_species) {
+    if ($image_config->get_parameter('multi_species')) {
 
       my @sp = @{$image_config->species_list};
 
@@ -122,14 +122,14 @@ sub init_config {
     }
   }
   
-  my $form = $view_config->get_form;
+  my $form = $view_config->form;
   
   if ($hub->param('partial')) {
     $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
     $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
   } else {
     $form->add_hidden({ name => 'component', value => $action, class => 'component' });
-    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config));
+    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config_type));
   }
   
   $self->add_panel($panel);

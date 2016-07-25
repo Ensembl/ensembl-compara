@@ -46,7 +46,7 @@ sub content {
 
   ## Get features from URL to draw (if any)
   if ($id) {
-    my $object = $self->builder->create_objects('Feature', 'lazy');
+    my $object = $self->builder->create_object('Feature');
     if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }

@@ -27,9 +27,10 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    sortable_tracks => 1,  # allow the user to reorder tracks
-    opt_lines       => 1,  # register lines
-    spritelib       => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
+    image_resizeable  => 1,
+    sortable_tracks   => 1,  # allow the user to reorder tracks
+    opt_lines         => 1,  # register lines
+    spritelib         => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
   my $sp_img_48 = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species/48'; # XXX make configurable
   if(-e $sp_img_48) {
@@ -86,7 +87,6 @@ sub init {
   
   # Add in additional tracks
   $self->load_tracks;
-  $self->image_resize = 1;
 
   $self->add_tracks('sequence', 
     [ 'contig', 'Contigs',  'contig',   { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],

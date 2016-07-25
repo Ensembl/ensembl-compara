@@ -37,7 +37,8 @@ sub init {
   s/\:\d*$// for @cell_lines;
   
   $self->set_parameters({
-    opt_lines => 1
+    image_resizeable  => 1,
+    opt_lines         => 1
   });
   
   $self->create_menus(qw(
@@ -58,8 +59,7 @@ sub init {
   ));
   
   $self->load_tracks;
-  $self->image_resize = 1;
-  
+
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
   $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
     labelcaption => "Genes (Basic set from GENCODE $gencode_version)",

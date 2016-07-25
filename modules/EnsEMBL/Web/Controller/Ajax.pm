@@ -21,43 +21,27 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
-use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
-use EnsEMBL::Web::ViewConfig::Regulation::Page;
+use EnsEMBL::Web::ViewConfig::RegulationPage;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $self  = bless {
-    'hub' => EnsEMBL::Web::Hub->new({
-      apache_handle  => $r,
-      session_cookie => $args->{'session_cookie'},
-      user_cookie    => $args->{'user_cookie'},
-    })
-  }, $class;
+sub parse_path_segments {
+  my $self = shift;
 
-  $self->{'hub'}->qstore_open;
-  $self->process;
-  $self->{'hub'}->qstore_close;
-
-  return $self;
+  $self->{'function'} = sprintf 'ajax_%s', $self->path_segments->[0];
 }
 
 sub process {
   my $self  = shift;
-  my $hub   = $self->hub;
-  my $func  = 'ajax_'.$hub->action;
+  my $func  = $self->function;
 
-  $self->$func($hub) if $self->can($func);
+  $self->$func($self->hub) if $self->can($func);
 }
 
 sub ajax_autocomplete {
@@ -250,7 +234,7 @@ sub ajax_reg_renderer {
 
   my $renderer = $hub->input->url_param('renderer');
   my $state = $hub->param('state');
-  EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
+  EnsEMBL::Web::ViewConfig::RegulationPage->reg_renderer(
     $hub,'regulation_view',$renderer,$state);
 
   $hub->session->store;

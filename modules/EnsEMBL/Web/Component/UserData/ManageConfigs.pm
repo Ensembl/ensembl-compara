@@ -156,7 +156,7 @@ sub content_config {
     my $image_config = $hub->get_imageconfig($ic->{'code'});
     my $settings     = ref $ic->{'data'} eq 'HASH' ? $ic->{'data'} : eval $ic->{'data'} || {};
     
-    if ($image_config->multi_species) {
+    if ($image_config->get_parameter('multi_species')) {
       my $species_defs = $hub->species_defs;
       
       foreach my $species (keys %$settings) {

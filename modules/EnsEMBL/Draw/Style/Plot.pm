@@ -79,7 +79,7 @@ sub draw_plots {
 sub draw_plot {
   my ($self, $height, $feature, $diam) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->image_config->transform_object->scalex;
   my $radius = $diam/2;
 
   my $score  = $feature->{'score'};
@@ -112,7 +112,7 @@ sub draw_plot {
 sub _draw_score {
   my ($self, $y, $score, $label) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->image_config->transform_object->scalex;
 
   $label //= ($score == 0) ? $score : sprintf('%.2f', $score);
   my $text_info   = $self->get_text_info($label);

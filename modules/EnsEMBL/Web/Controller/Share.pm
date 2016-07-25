@@ -269,7 +269,7 @@ sub accept {
     ## Save current config for this component (if any)
     my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
                             $hub->config_adaptor->get_config('image_config', $ic_type));
-    my $record_type_id  = $hub->user ? $hub->user->id : $session->create_session_id;
+    my $record_type_id  = $hub->user ? $hub->user->id : $session->session_id;
 
     if (scalar(@current_configs)) {
       $saveds{$view_config->component} =

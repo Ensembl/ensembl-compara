@@ -51,7 +51,6 @@ sub status            { return $_[0]->{'status'}; }
 sub code              { return $_[0]->{'code'};   }
 sub print             { shift->renderer->print(@_);  }
 sub printf            { shift->renderer->printf(@_); }
-sub timer_push        { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 3 + $_[2]); }
 sub _is_ajax_request  { return $_[0]->renderer->can('r') && $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 sub ajax_is_available { return 1; }
 
@@ -377,14 +376,16 @@ sub component_content {
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
   my $table_count  = 0;
   
-  foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
-    my ($module_name, $content_function) = split /\//, $entry;
+  for (map [$_, $self->{'components'}{$_} || []], $self->components) {
+    my ($code, $entry) = @$_;
+    next unless @$entry;
+    my ($module_name, $content_function) = split /\//, $entry->[0];
     my $component;
     
     ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($hub, $builder, $self->renderer);
+        $component = $module_name->new($hub, $builder, $self->renderer, $code);
       };
       
       if ($@) {

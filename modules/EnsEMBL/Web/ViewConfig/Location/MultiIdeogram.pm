@@ -20,7 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::MultiIdeogram;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Location::Summary);
+use parent qw(EnsEMBL::Web::ViewConfig::Location::Summary);
 
 1;

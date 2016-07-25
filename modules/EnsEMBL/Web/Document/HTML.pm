@@ -34,7 +34,7 @@ sub new {
   my ($class, $hub) = @_;
 
   return bless {
-    _hub      => $hub || EnsEMBL::Web::Hub->new,
+    _hub      => $hub,
     _renderer => undef,
   }, $class;
 }

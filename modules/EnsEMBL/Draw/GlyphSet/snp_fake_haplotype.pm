@@ -85,7 +85,7 @@ sub _init {
   my @res = $self->get_text_width( 0, 'X|X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $w  = $res[2];
   my $th = $res[3];
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $pix_per_bp   = $Config->transform_object->scalex;
 
   my $track_height = $th + 4;
 

@@ -73,6 +73,10 @@ sub handler {
     $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri");
     $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri");
   }
+
+  # don't pollute logs with static file requests
+  $r->subprocess_env('LOG_REQUEST_IGNORE', 1);
+
   if ($content) {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');

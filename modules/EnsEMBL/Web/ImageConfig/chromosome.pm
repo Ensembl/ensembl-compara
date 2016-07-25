@@ -23,15 +23,17 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub init_extra_menus {
+  shift->add_extra_menu('display_option');
+}
+
 sub init {
   my $self = shift;
   
   $self->set_parameters({
     label_width => 130, # width of labels on left-hand side
   });
-  
-  $self->{'extra_menus'} = { display_options => 1 };
-  
+
   $self->create_menus('decorations');
   
   $self->add_tracks('decorations', 

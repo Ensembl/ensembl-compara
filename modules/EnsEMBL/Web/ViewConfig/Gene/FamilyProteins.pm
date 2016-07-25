@@ -20,9 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::FamilyProteins;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
-
-use base qw(EnsEMBL::Web::ViewConfig::Gene::Family);
+use parent qw(EnsEMBL::Web::ViewConfig::Gene::Family);
 
 1;

@@ -28,7 +28,7 @@ sub init {
 
   $self->set_parameters({
     title       => 'SNPs',
-    show_labels => 'no',   # show track names on left-hand side
+    no_labels   => 1,
     label_width => 100,     # width of labels on left-hand side
     bgcolor     => 'background1',
     bgcolour1   => 'background3',

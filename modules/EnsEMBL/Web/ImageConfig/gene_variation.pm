@@ -30,10 +30,11 @@ sub init {
   $colours{$_} = $self->species_defs->colour($_) for qw(variation haplotype);
   
   $self->set_parameters({
-    label_width      => 100,        # width of labels on left-hand side
-    opt_halfheight   => 0,          # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,          # include empty tracks
-    colours          => \%colours,  # colour maps
+    image_resizeable  => 1,
+    label_width       => 100,        # width of labels on left-hand side
+    opt_halfheight    => 0,          # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,          # include empty tracks
+    colours           => \%colours,  # colour maps
   });
   
   $self->create_menus(qw(
@@ -46,8 +47,7 @@ sub init {
   ));
   
   $self->load_tracks;
-  $self->image_resize = 1;
-  
+
   $self->get_node('transcript')->set('caption', 'Other genes');
   
   $self->modify_configs(

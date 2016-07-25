@@ -20,15 +20,17 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Phenotype::Locations;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Karyotype);
+use parent qw(EnsEMBL::Web::ViewConfig::Karyotype);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
-  $self->SUPER::init(@_);
-  $self->add_image_config('VPhenotype');
-  $self->title = 'Location on Genome';
+
+  $self->SUPER::init_cacheable(@_);
+  $self->image_config_type('VPhenotype');
+  $self->title('Location on Genome');
 }
 
 1;

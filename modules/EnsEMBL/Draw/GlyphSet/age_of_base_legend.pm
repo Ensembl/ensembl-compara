@@ -29,7 +29,7 @@ sub _init {
   my $self     = shift;
 
   ## Hide if accompanying track is off
-  my $node = $self->{'config'}{'_tree'}->get_node('age_of_base');
+  my $node = $self->{'config'}->get_node('age_of_base');
   return if (!$node || $node->get('display') eq 'off');
 
   $self->init_legend(2);

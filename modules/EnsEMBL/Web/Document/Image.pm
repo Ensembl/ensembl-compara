@@ -23,9 +23,6 @@ package EnsEMBL::Web::Document::Image;
 
 ### Examples
 
-### To use the blue toolbar in an image, pass a hashref e.g. 
-### $args->{'toolbars'} = {'top' => 1, 'bottom' => 0}
-
 use strict;
 
 use POSIX qw(ceil);
@@ -59,6 +56,8 @@ sub image_type         :lvalue { $_[0]->{'image_type'};         }
 sub introduction       :lvalue { $_[0]->{'introduction'};       }
 sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
 sub caption            :lvalue { $_[0]->{'caption'};            }
+
+sub has_moveable_tracks { 0 }
 
 sub image_width { 
   my $self = shift;
@@ -106,7 +105,7 @@ sub render_toolbar {
   }
 
   ## Increase/decrease image size icon  
-  if (grep $_->image_resize, @{$self->{'image_configs'}}) {
+  if (grep $_->get_parameter('image_resizeable'), @{$self->{'image_configs'}}) {
     push @$icons, $self->add_resize_icon;
     $extra_html .= $self->add_resize_menu;
   }

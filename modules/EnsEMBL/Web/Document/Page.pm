@@ -83,7 +83,6 @@ sub hub                { return $_[0]->{'hub'};        }
 sub species_defs       { return $_[0]{'species_defs'}; }
 sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print              { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
-sub timer_push         { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
 
 sub set_doc_type {
   my ($self, $type, $version) = @_;
@@ -281,7 +280,6 @@ sub _init {
     
     eval { 
       $module = $classname->new({
-        timer    => $self->{'timer'},
         input    => $self->{'input'},
         format   => $self->{'format'},
         hub      => $self->hub,

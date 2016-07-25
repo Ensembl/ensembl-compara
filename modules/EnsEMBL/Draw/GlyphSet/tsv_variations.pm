@@ -42,13 +42,12 @@ sub _init {
 
   # Drawing params
   my( $fontname, $fontsize )  = $self->get_font_details( 'innertext' );
-  my $pix_per_bp              = $Config->transform->{'scalex'};
+  my $pix_per_bp              = $Config->transform_object->scalex;
   my @res                     = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my( $font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
   my $height                  = $res[3] + 4;
 
   # Bumping params
-  my $pix_per_bp    = $Config->transform->{'scalex'};
   my $bitmap_length = int($Config->container_width() * $pix_per_bp);
   my $voffset = 0;
   my @bitmap;
