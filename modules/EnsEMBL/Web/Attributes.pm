@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Attributes;
 
 ### Attributes for modifying default behaviour of subroutines
-### For any attribute is added to a subroutine, the corresponding method from this package gets called with following arguments:
+### For any attribute added to a subroutine, the corresponding method from this package gets called with following arguments:
 ###  - The package that contains the actual method
 ###  - Coderef to the actual method
 ###  - GLOB for the actual method
@@ -69,9 +69,8 @@ sub Deprecated {
   ## @param Message that needs to be printed as deprecated warning (optional - defaults to a simple message)
   my ($package, $code, $glob, $method, $message) = @_;
   *{$glob} = sub {
-    my @caller  = caller(1);
-    $message  ||= sprintf 'Call to deprecated method %s::%s.', $package, $method;
-    warn sprintf "%s (Called at: %s:%s)\n", $message, $caller[1], $caller[2];
+    my @caller = caller(0);
+    warn sprintf "Call to deprecated method %s::%s: %s at %s:%s\n", $package, $method, $message || '', $caller[1], $caller[2];
     goto &$code;
   };
 }
