@@ -8,9 +8,9 @@ export ENSEMBL_CVS_ROOT_DIR=$PWD
 export TEST_AUTHOR=$USER
 echo "Running ensembl-compara test suite using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t
+  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t $PWD/ensembl/modules/t/compara.t
 else
-  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t
+  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t $PWD/ensembl/modules/t/compara.t
 fi
 
 rt1=$?
