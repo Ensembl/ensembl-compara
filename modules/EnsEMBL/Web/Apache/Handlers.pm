@@ -410,7 +410,7 @@ sub cleanupHandler {
   my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
   my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
 
-  warn sprintf "REQUEST: [served at %s by %s in %ss] %s\n", time_str($start_time), $$, $time_taken, $uri;
+  warn sprintf "REQUEST: [served at %s by %s in %ss] %s\n", time_str($start_time), $$, $time_taken || '0', $uri;
 
   if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
 
