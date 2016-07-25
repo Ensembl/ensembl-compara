@@ -42,8 +42,8 @@ sub content {
   my $session   = $self->hub->session or return; # no session created yet
   my @priority  = $self->priority;
   my $records   = $session->records({'type' => 'message', 'function' => [ scalar @priority ? @priority : EnsEMBL::Web::Constants::MESSAGE_PRIORITY ]});
-
-  my (%messages, $html);
+  my $html      = '';
+  my %messages;
 
   # Group messages by type
   # Set a default order of 100 - we probably aren't going to have 100 messages on the page at once, and this allows us to force certain messages to the bottom by giving order > 100

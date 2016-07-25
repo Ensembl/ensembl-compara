@@ -57,7 +57,7 @@ sub add_menus {
 
     my ($caption, $parent_key) = ref $menus->{$menu_key} ? @{$menus->{$menu_key}} : ($menus->{$menu_key});
 
-    throw WebException("No menu entry found for $parent_key") unless $menus->{$parent_key};
+    throw WebException("No menu entry found for $parent_key") if $parent_key && !$menus->{$parent_key};
 
     my $parent_node = $parent_key ? $tree->get_node($parent_key) || $root->append_child($self->create_menu_node($parent_key, $menus->{$parent_key})) : $root;
 
@@ -98,7 +98,7 @@ sub create_track_node {
   $data->{'strand'}     ||= 'b';                                  # Make sure we have a strand setting
   $data->{'display'}    ||= $data->{'default_style'} || 'normal'; # Show unless we explicitly say no
   $data->{'renderers'}  ||= [qw(off Off normal On)];
-  $data->{'colours'}    ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
+  $data->{'colours'}    ||= $self->species_defs->colour($data->{'colourset'}) if exists $data->{'colourset'};
   $data->{'glyphset'}   ||= $track_key;
   $data->{'caption'}    ||= $name;
 
@@ -135,7 +135,7 @@ sub add_tracks {
       next if $node && $node->get_data('node_type') eq 'track';
 
       $data->{'glyphset'} = $glyphset;
-      $menu->append_child($self->create_track_node($key, $caption, $data));
+      $menu->append_child($self->create_track_node($track_key, $caption, $data));
       $count++;
     }
   }
@@ -155,7 +155,7 @@ sub create_option_node {
 
   $values     ||= { 'off' => 0,     'normal'  => 1    };
   $renderers  ||= [ 'off' => 'Off', 'normal'  => 'On' ];
-  $display    ||= $renderer->[2];
+  $display    ||= $renderers->[2];
 
   return $self->tree->create_node($option_key, {
     'node_type' => 'option',

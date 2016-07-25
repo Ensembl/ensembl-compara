@@ -102,7 +102,7 @@ sub _merge {
     my $sub_tree = $tree->{$analysis};
 
     next unless $sub_tree->{'disp'}; # Don't include non-displayable tracks
-    next if exists $sub_tree->{'web'}{$sub_type}{'do_not_display'};
+    next if $sub_type && exists $sub_tree->{'web'}{$sub_type}{'do_not_display'};
 
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
 
@@ -1106,7 +1106,8 @@ sub add_regulation_builds {
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my ($label, %evidence_tracks);
+    my $label     = '';
+    my %evidence_tracks;
 
     if ($cell_line eq 'MultiCell') {
       $display = $fg_data{$key_2}{'display'} || 'off';
@@ -1131,7 +1132,7 @@ sub add_regulation_builds {
     }));
 
     # Old database-based segementation tracks
-    if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
+    if (($fg_data{"seg_$cell_line"}{'key'} || '') eq "seg_$cell_line") {
       $prev_track = $reg_segs->append_child($self->create_track_node("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
         glyphset    => 'fg_segmentation_features',

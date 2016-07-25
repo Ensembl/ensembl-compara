@@ -43,7 +43,7 @@ sub is_same {
   # both are array based objects
   if (UNIVERSAL::isa($a, 'ARRAY')) {
     return 0 unless scalar @$a eq scalar @$b;
-    return grep !is_same($a->[$_], $b->[$_]), 0..$#a ? 0 : 1;
+    return grep !is_same($a->[$_], $b->[$_]), 0..$#$a ? 0 : 1;
   }
 
   # both are scalar references

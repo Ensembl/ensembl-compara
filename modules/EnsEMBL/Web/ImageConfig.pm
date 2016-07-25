@@ -43,6 +43,10 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 
 use EnsEMBL::Web::DataStructure::DoubleLinkedList;
 
+use EnsEMBL::Web::ImageConfigExtension::Nodes;
+use EnsEMBL::Web::ImageConfigExtension::Tracks;
+use EnsEMBL::Web::ImageConfigExtension::UserTracks;
+
 use parent qw(EnsEMBL::Web::Config);
 
 # quick methods to get/set some of the parameters
@@ -376,7 +380,7 @@ sub get_parameter {
   ## Gets a parameter value
   ## @param Parameter name
   my ($self, $key) = @_;
-  return $self->{'_parameters'}{$key};
+  return $self->{'_parameters'}{$key} // '';
 }
 
 sub _parameter {
@@ -514,7 +518,7 @@ sub unsortable_menus {
 
 sub get_tracks {
   ## Gets a list of all the track nodes
-  my @tracks = grep { $_->get_data('node_type') eq 'track' } $_[0]->tree->nodes;
+  my @tracks = grep { ($_->get_data('node_type') || '') eq 'track' } $_[0]->tree->nodes;
   return \@tracks;
 }
 
@@ -608,10 +612,10 @@ sub glyphset_tracks {
     if ($self->get_parameter('sortable_tracks')) {
 
       # Add sortable flag to each track
-      my $unsortable_menus = map { $_ => 1 } @{$self->unsortable_menus};
+      my %unsortable_menus = map { $_ => 1 } @{$self->unsortable_menus};
       for (@$tracks) {
         next if $_->get_data('sortable'); # if it's already configured as sortable in the configs, don't change it
-        $_->set_data('sortable', $unsortable_menus->{$_->parent_node->id} ? 0 : 1);
+        $_->set_data('sortable', $unsortable_menus{$_->parent_node->id} ? 0 : 1);
       }
 
       # sort the tracks according to user preferences

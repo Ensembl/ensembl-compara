@@ -42,7 +42,7 @@ sub new {
     'translatey'      => 0,
     'absolutescalex'  => 1,
     'absolutescaley'  => 1,
-    %$params
+    %{$params || {}}
   }, $class;
 }
 

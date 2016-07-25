@@ -52,7 +52,7 @@ sub descendants {
   ## @return List of TreeNode objects
   my $self = shift;
 
-  return map { $_, $->descendants } @{$self->child_nodes};
+  return map { $_, $_->descendants } @{$self->child_nodes};
 }
 
 sub leaves {
@@ -85,7 +85,7 @@ sub data_keys {
 sub get {
   ## Returns shared user data value for the given key if present, otherwise returns value from node specific data
   my ($self, $key)  = @_;
-  my $user_data     = $self->user_data;
+  my $user_data     = $self->tree->user_data;
   my $node_id       = $self->id;
 
   return $user_data && exists $user_data->{$node_id} && exists $user_data->{$node_id}{$key} ? $user_data->{$node_id}{$key} : $self->get_data($key);
@@ -165,6 +165,6 @@ sub next        :Deprecated('Use next_sibling')                 { return $_[0]->
 sub append      :Deprecated('Use append_child')                 { return $_[0]->append_child($_[1]);  }
 sub prepend     :Deprecated('Use prepend_child')                { return $_[0]->prepend_child($_[1]); }
 sub set_user    :Deprecated('Use set_user_setting')             { return shift->set_user_setting(@_); }
-sub set         :Depreceted('Use set_data')                     { return shift->set_data(@_);         }
+sub set         :Deprecated('Use set_data')                     { return shift->set_data(@_);         }
 
 1;

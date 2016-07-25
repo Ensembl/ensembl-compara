@@ -41,6 +41,8 @@ sub new {
       $self->{$_} = $cached_object;
     }
   }
+
+  return $self;
 }
 
 sub get_cacheable_object {
@@ -75,7 +77,7 @@ sub root {
   ## @return TreeNode object
   my $self = shift;
 
-  return $self->{'_root'} || $self->create_node;
+  return $self->{'_root'} //= $self->create_node;
 }
 
 sub leaves {

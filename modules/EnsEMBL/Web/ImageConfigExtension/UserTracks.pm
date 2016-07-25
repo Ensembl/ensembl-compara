@@ -813,3 +813,5 @@ sub _user_track_settings {
 
   return ($strand, \@user_renderers, $default);
 }
+
+1;
