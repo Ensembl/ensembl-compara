@@ -389,16 +389,26 @@ sub preload {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
         if ($prune_subtree and ($prune_subtree != $self->{'_root_id'})) {
-            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree) || die "Could not fetch a subtree from node_id '$prune_subtree'\n";
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree);
+            warn "Could not fetch a subtree from node_id '$prune_subtree'\n" unless $self->{'_root'};
             $self->{'_pruned'} = 1;
         } else {
-            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'}) || die "Could not fetch a tree with the root_id '".$self->{'_root_id'}."\n";
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            unless ($self->{'_root'}) {
+                warn "Could not fetch a tree with the root_id '".$self->{'_root_id'}."'\n";
+                $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
+                warn "No node with node_id '".$self->{'_root_id'}."'\n" unless $self->{'_root'};
+            }
         }
         delete $gtn_adaptor->{'_ref_tree'};
     } elsif (not defined $self->{'_root'}) {
         die "This tree has no root node, and no root_id. This is not valid.\n";
     }
     $self->clear;
+    return unless $self->{'_root'};
+
+    $self->{_preloaded} = 1;
+    return if $self->tree_type eq 'clusterset';
 
     # And prune it immediately
     if ($prune_species || $prune_taxa) {
@@ -453,8 +463,6 @@ sub preload {
 
     # Loads all the gene members in one go
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
-
-    $self->{_preloaded} = 1;
 }
 
 
