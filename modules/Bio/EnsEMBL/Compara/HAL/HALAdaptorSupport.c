@@ -2,7 +2,14 @@
 // NB: all of the following functions must be compiled into the *same*
 // .so--otherwise the functions that use HAL "file descriptors" will
 // fail to work properly!
+// #include <stdlib.h>
+// #include <iostream.h>
+// #include <fstream.h>
+#include <stdio.h>
+// #include "hal.h"
 #include "halBlockViz.h"
+// #include "halMafExport.h"
+// #include "halDefs.h"
 
 int _open_hal(char *halFilePath) {
     return halOpen(halFilePath, NULL);
@@ -192,5 +199,45 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
         Inline_Stack_Push(blockInfoRef);
     } while ((curBlock = curBlock->next) != NULL);
     halFreeBlockResults(results);
+    Inline_Stack_Done;
+}
+
+void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies[], char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
+    Inline_Stack_Vars;
+    Inline_Stack_Reset;
+
+    // prepare reference handles
+    // const Genome* refGenome = NULL;
+    // if (targetSpecies != "\"\"")
+    // {
+    //   refGenome = alignment->openGenome(targetSpecies);
+    //   if (refGenome == NULL)
+    //   {
+    //     throw hal_exception(string("Reference genome, ") + targetSpecies + 
+    //                         ", not found in alignment");
+    //   }
+    // }
+    // else
+    // {
+    //   refGenome = alignment->openGenome(alignment->getRootName());
+    // }
+    // const SegmentedSequence* ref = refGenome;
+
+    // // prepare target genome handles
+    // set<const Genome*> targetSet;
+    // for (size_t i = 0; i < querySpecies.size(); ++i)
+    // {
+    //     const Genome* tgtGenome = alignment->openGenome(querySpecies[i]);
+    //     if (tgtGenome == NULL)
+    //     {
+    //       throw hal_exception(string("Target genome, ") + querySpecies[i] + 
+    //                           ", not found in alignment");
+    //     }
+    //     targetSet.insert(tgtGenome);
+    // }
+
+    // SV *msa_blocks = halGetMSABlocksInTargetRange(halfileHandle, ref, targetStart, targetEnd, targetSet, maxRefGap, true, printTree, maxBlockLen);
+    // Inline_Stack_Push(msa_blocks);
+
     Inline_Stack_Done;
 }
