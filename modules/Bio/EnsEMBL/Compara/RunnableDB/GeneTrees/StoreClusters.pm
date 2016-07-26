@@ -100,7 +100,7 @@ sub store_clusterset {
         my $cluster = $self->add_cluster($clusterset, $allclusters->{$cluster_name});
         push @allcluster_ids, $cluster->root_id unless $self->param('immediate_dataflow');
     }
-    $self->finish_store_clusterset($clusterset);
+    $self->build_clusterset_indexes($clusterset);
     return ($clusterset, [@allcluster_ids]);
 }
 
@@ -223,7 +223,7 @@ sub add_cluster {
 }
 
 
-=head2 finish_store_clusterset
+=head2 build_clusterset_indexes
 
   Description: Updates the left/right_index of the clusterset.
   Arg [1]    : clusterset to attach the new cluster to
@@ -233,13 +233,16 @@ sub add_cluster {
 
 =cut
 
-sub finish_store_clusterset {
+sub build_clusterset_indexes {
     my $self = shift;
     my $clusterset = shift;;
 
     # left/right_index for quicker clusterset retrieval
     $clusterset->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    my $sth = $self->compara_dba->dbc->prepare('UPDATE gene_tree_node SET left_index=?, right_index=? WHERE node_id = ?');
+    foreach my $node ($clusterset->root, @{$clusterset->root->children}) {
+        $sth->execute($node->left_index, $node->right_index, $node->node_id);
+    }
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " / ", $clusterset->clusterset_id, " with $leafcount leaves\n" if $self->debug;
     $clusterset->root->print_tree if $self->debug;
