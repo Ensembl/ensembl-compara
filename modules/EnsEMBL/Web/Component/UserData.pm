@@ -91,5 +91,84 @@ sub add_auto_format_dropdown {
     });
 }
 
+sub trackhub_search {
+  my $self            = shift;
+  my $hub             = $self->hub;
+  return sprintf '<a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/globe.png" style="margin-right:8px; vertical-align:middle" />Search for public track hubs</a></p>', $hub->url({'action' => 'TrackHubSearch'});
+}
+
+sub userdata_form {
+  my $self            = shift;
+  my $hub             = $self->hub;
+
+  my $sd              = $hub->species_defs;
+  my $sitename        = $sd->ENSEMBL_SITETYPE;
+  my $current_species = $hub->data_species;
+  my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
+
+  my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {
+    'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
+    'class'             => 'check',
+    'no_button'         => 1
+  });
+
+  my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
+
+  $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
+
+  # Create a data structure for species, with display labels and their current assemblies
+  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
+
+  # Create HTML for showing/hiding assembly names to work with JS
+  my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
+
+  $fieldset->add_field({
+    'type'          => 'dropdown',
+    'name'          => 'species',
+    'label'         => 'Species',
+    'values'        => \@species,
+    'value'         => $current_species,
+    'class'         => '_stt'
+  });
+
+  $fieldset->add_field({
+    'type'          => 'noedit',
+    'label'         => 'Assembly',
+    'name'          => 'assembly_name',
+    'value'         => $assembly_names,
+    'no_input'      => 1,
+    'is_html'       => 1,
+  });
+
+  $fieldset->add_field({
+    'label'         => 'Data',
+    'field_class'   => '_userdata_add',
+    'elements'      => [{
+      'type'          => 'Text',
+      'value'         => 'Paste in data or provide a file URL',
+      'name'          => 'text',
+      'class'         => 'inactive'
+    }, {
+      'type'          => 'noedit',
+      'value'         => "Or upload file (max $max_upload_size)",
+      'no_input'      => 1,
+      'element_class' => 'inline-label'
+    }, {
+      'type'          => 'File',
+      'name'          => 'file',
+    }]
+  });
+
+  $self->add_auto_format_dropdown($form);
+
+  $fieldset->add_button({
+    'type'          => 'Submit',
+    'name'          => 'submit_button',
+    'value'         => 'Add data'
+  });
+
+  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
+}
+
 1;
 
