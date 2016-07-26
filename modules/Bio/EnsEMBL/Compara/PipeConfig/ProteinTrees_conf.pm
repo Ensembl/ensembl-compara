@@ -1170,15 +1170,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
-            -flow_into => WHEN(
-                '#master_db#' => 'register_mlss',
-            ),
             %hc_analysis_params,
-        },
-
-        {   -logic_name         => 'register_mlss',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -rc_name            => '2Gb_job',
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
