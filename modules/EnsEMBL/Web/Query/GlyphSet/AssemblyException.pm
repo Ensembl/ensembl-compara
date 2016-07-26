@@ -29,6 +29,7 @@ our $VERSION = 4;
 sub precache {
   return {
     assemblyexceptions => {
+      parts => 10,
       loop => ['species','genome'],
       args => {
       }

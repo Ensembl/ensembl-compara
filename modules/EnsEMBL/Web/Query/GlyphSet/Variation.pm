@@ -24,7 +24,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-our $VERSION = 9;
+our $VERSION = 10;
 
 sub fixup {
   my ($self) = @_;

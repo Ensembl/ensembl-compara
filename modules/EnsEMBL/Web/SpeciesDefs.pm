@@ -89,6 +89,8 @@ use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
+our $CONFIG_QUIET = 0; # Set to 1 by scripts to remove natter
+
 use base qw(EnsEMBL::Web::Root);
 
 our $AUTOLOAD;
@@ -348,7 +350,7 @@ sub parse {
   $self->{'_last_time'}  = $self->{'_start_time'};
   
   if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}) {
-    warn " Retrieving conf from $self->{'_filename'}\n";
+    warn " Retrieving conf from $self->{'_filename'}\n" unless $CONFIG_QUIET;
     if($self->retrieve) {
       $reg_conf->configure;
       return 1;

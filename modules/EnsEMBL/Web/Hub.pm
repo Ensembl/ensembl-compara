@@ -55,6 +55,7 @@ use EnsEMBL::Web::Tools::FailOver::SNPedia;
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
+use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
@@ -925,7 +926,7 @@ sub query_store_setup {
   } else {
     $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
   }
-  $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
+  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
