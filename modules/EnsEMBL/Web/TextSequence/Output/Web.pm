@@ -39,7 +39,7 @@ sub reset {
 sub make_layout {
   my ($self,$config) = @_;
 
-  return EnsEMBL::Web::TextSequence::Layout::String->new([
+  my $layout = EnsEMBL::Web::TextSequence::Layout::String->new([
     { key => 'pre' },
     {
       if => 'number',
@@ -51,10 +51,10 @@ sub make_layout {
       ]
     },
     { 
-      key => ['adid','letters'], width => {
+      key => ['adid','seqclass','letters'], width => {
         letters => -$config->{'display_width'}
       },
-      fmt => '<span class="adorn adorn-%s _seq">%s</span>',
+      fmt => '<span class="adorn adorn-%s %s">%s</span>',
     },
     {
       if => 'number',
@@ -69,6 +69,8 @@ sub make_layout {
     { post => "\n" },
     { if => 'vskip', then => [ { post => "\n" }] },
   ]);
+  $layout->filter(sub { $_[1]->{'seqclass'} = "_seq" if $_[1]->{'principal'}; return $_[1]; });
+  return $layout;
 }
 
 sub final_wrapper {
@@ -103,6 +105,7 @@ sub add_line {
   push @{$self->{'data'}[$line->seq->id]},{
     line => $letters,
     length => length $letters,
+    principal => $line->principal,
     pre => $line->pre,
     post => $line->post,
     adid => $line->line_num

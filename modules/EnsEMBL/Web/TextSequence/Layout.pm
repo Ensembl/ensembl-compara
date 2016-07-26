@@ -28,6 +28,7 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = {
     spec => $spec||[],
+    filters => [],
   };
   bless $self,$class;
   $self->{'value'} = $old?$old->value:$self->value_empty;
@@ -104,9 +105,12 @@ sub _render_one {
   return $value;
 }
 
+sub filter { push @{$_[0]->{'filters'}},$_[1]; }
+
 sub render {
   my ($self,$data) = @_;
 
+  $data = $_->($self,$data) for(@{$self->{'filters'}});
   foreach my $s (@{$self->{'spec'}}) {
     my $fields = [$s];
     if($s->{'if'}) {

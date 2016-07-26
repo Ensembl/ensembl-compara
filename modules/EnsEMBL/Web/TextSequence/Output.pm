@@ -85,7 +85,8 @@ sub format_line {
     post => $data->{'post'},
     # flags
     number => ($config->{'number'}||'off') ne 'off',
-    vskip => $vskip
+    vskip => $vskip,
+    principal => $data->{'principal'},
   });
 }
 
