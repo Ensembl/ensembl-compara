@@ -1676,7 +1676,7 @@ sub import {
   load("EnsEMBL::Web::ViewConfig::PopulationGraphs::Variation",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::FeatureDetails",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Other",1);
-  load("EnsEMBL::Web::ViewConfig::Regulation::Page",1);
+  load("EnsEMBL::Web::ViewConfig::RegulationPage",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Summary",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::SummaryButtons",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Urgent",1);
