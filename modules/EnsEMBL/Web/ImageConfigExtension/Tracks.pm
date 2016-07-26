@@ -916,7 +916,6 @@ sub add_regulation_features {
   return unless $menu;
 
   my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
-  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -964,22 +963,36 @@ sub add_regulation_features {
     }
   }
 
-  # Add internal methylation tracks
-  my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $methylation = $db_tables->{'methylation'};
+  # Add other bigBed-based tracks
+  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
+  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my %file_tracks = ( 'methylation' => {'menu'      => $methylation_menu,
+                                        'renderers' => [ qw(off Off compact On) ],
+                                        'default'   => 'compact',
+                                        'strand'    => 'r'},
+                      'crispr'      => {'menu'      => $reg_regions,
+                                        'renderers' => $self->_transcript_renderers,
+                                        'default'   => 'as_transcript_label',
+                                        'strand'    => 'b'},
+                    );
 
-  foreach my $k (sort { $methylation->{$a}{'description'} cmp $methylation->{$b}{'description'} } keys %$methylation) {
-    $methylation_menu->append_child($self->create_track_node("methylation_$k", $methylation->{$k}{'name'}, {
-      data_id      => $k,
-      description  => $methylation->{$k}{'description'},
-      strand       => 'r',
-      nobump       => 1,
-      addhiddenbgd => 1,
-      display      => 'off',
-      renderers    => [ qw(off Off compact On) ],
-      glyphset     => 'fg_methylation',
-      colourset    => 'seq',
-    }));
+  while (my ($key, $settings) = each (%file_tracks)) {
+    my $dataset = $db_tables->{$key};
+    foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
+      (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
+      $settings->{'menu'}->append_child($self->create_track_node($key.'_'.$k, $name, {
+        data_id      => $k,
+        description  => $dataset->{$k}{'description'},
+        strand       => $settings->{'strand'},
+        nobump       => 1,
+        addhiddenbgd => 1,
+        display      => 'off',
+        default_display => $settings->{'default'},
+        renderers       => $settings->{'renderers'},
+        glyphset        => 'fg_'.$key,
+        colourset    => 'seq',
+      }));
+    }
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
@@ -991,11 +1004,10 @@ sub add_regulation_builds {
 
   return unless $menu;
 
-  my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
-  my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
-  my %fg_data           = (%$data_1, %$data_2);
-  my $key_2             = 'Regulatory_Build';
-  my $type              = $fg_data{$key_2}{'type'};
+  my ($keys, $data) = $self->_merge($hashref->{'regulatory_build'});
+  my $key_2         = 'Regulatory_Build';
+  my $build         = $data->{$key_2};
+  my $type          = $data->{$key_2}{'type'};
 
   return unless $type;
 
@@ -1006,8 +1018,22 @@ sub add_regulation_builds {
 
   $menu = $menu->append_child($self->create_menu_node('regulatory_features', 'Regulatory features'));
 
+  ## Main regulation track - replaces 'MultiCell'
+  $menu->append_child($self->create_track_node("regbuild", "Regulatory Build", {
+    glyphset    => 'fg_regulatory_features',
+    sources     => 'undef',
+    strand      => 'r',
+    labels      => 'on',
+    depth       => 0,
+    colourset   => 'fg_regulatory_features',
+    display     => 'off',
+    description => '',
+    renderers   => [qw(off Off normal On)],
+    caption     => 'Regulatory Build',
+  }));
+
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Regulatory features'));
+  my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
@@ -1019,9 +1045,9 @@ sub add_regulation_builds {
     push @cell_lines, $name;
     $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
   }
-  @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
+  @cell_lines = sort { $a cmp $b } @cell_lines;
 
-  my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
+  my (@renderers, %matrix_menus, %matrix_rows);
 
   # FIXME: put this in db
   my %default_evidence_types = (
@@ -1035,8 +1061,8 @@ sub add_regulation_builds {
     PolIII   => 1,
   );
 
-  if ($fg_data{$key_2}{'renderers'}) {
-    push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}};
+  if ($data->{$key_2}{'renderers'}) {
+    push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
   } else {
     @renderers = qw(off Off normal On);
   }
@@ -1051,14 +1077,16 @@ sub add_regulation_builds {
     }
   }
 
+  my @sets = qw(core non_core);
+
   foreach my $cell_line (@cell_lines) {
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
-    my $focus_sets = $db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {};
-    my @sets;
+    my $set_info;
+    $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
+    $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
 
-    push @sets, 'core'     if scalar keys %$focus_sets && scalar keys %$focus_sets <= scalar keys %$ftypes;
-    push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
+    my $core_count      = scalar keys %{$set_info->{'core'}};
+    my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
 
     foreach my $set (@sets) {
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
@@ -1067,96 +1095,77 @@ sub add_regulation_builds {
         matrix => {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
           axes        => { x => 'Cell type', y => 'Evidence type' },
         }
       }];
 
       foreach (@{$all_types{$set}||[]}) {
-        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
+        if ($set_info->{$set}{$_->dbID}) {
+          $matrix_rows{$cell_line}{$set}{$_->name} ||= {
+                            row         => $_->name,
+                            group       => $_->class,
+                            group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
+                            on          => $default_evidence_types{$_->name}
+                          };
+        }
       }
     }
   }
 
   $matrix_menus{$_} = $menu->after($self->create_menu_node(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
-  # New file-based segmentation tracks
+  # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
-    $prev_track = $reg_segs->append_child($self->create_track_node("seg_$key", "Reg. Segs: $name", {
-      db          => $key,
-      glyphset    => 'fg_segmentation_features',
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 0,
-      colourset   => 'fg_segmentation_features',
-      display     => 'off',
-      description => $segs->{$key}{'desc'},
-      renderers   => [qw(off Off normal On)],
-      celltype    => $segs->{$key}{'web'}{'celltype'},
-      caption     => "Reg. Segs. ($segs->{$key}{'web'}{'anntype'})",
+    $reg_segs->append_child($self->create_track_node("seg_$key", $name, {
+      db            => $key,
+      glyphset      => 'fg_segmentation_features',
+      sources       => 'undef',
+      strand        => 'r',
+      labels        => 'on',
+      depth         => 0,
+      colourset     => 'fg_segmentation_features',
+      display       => 'off',
+      description   => $segs->{$key}{'desc'},
+      renderers     => [qw(off Off compact On)],
+      celltype      => $segs->{$key}{'web'}{'celltype'},
+      seg_name      => $segs->{$key}{'web'}{'seg_name'},
+      caption       => "Reg. Segs.",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-      section     => $segs->{$key}{'web'}{'celltypename'},
-      height      => 4,
+      section       => $segs->{$key}{'web'}{'celltypename'},
+      height        => 4,
     }));
   }
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my $label     = '';
+    my $label     = ": $cell_line";
     my %evidence_tracks;
 
-    if ($cell_line eq 'MultiCell') {
-      $display = $fg_data{$key_2}{'display'} || 'off';
-    } else {
-      $label = ": $cell_line";
-    }
-
-    $prev_track = $reg_feats->append_child($self->create_track_node($track_key, "Reg. Feats. $cell_names{$cell_line}", {
-      db          => $key,
-      glyphset    => $type,
-      sources     => 'undef',
-      strand      => 'r',
-      depth       => $fg_data{$key_2}{'depth'}     || 0.5,
-      colourset   => $fg_data{$key_2}{'colourset'} || $type,
-      description => "Reg. Feats. $cell_names{$cell_line}",
-      display     => $display,
-      renderers   => \@renderers,
-      cell_line   => $cell_line,
-      section     => $cell_names{$cell_line},
+    $reg_feats->append_child($self->create_track_node($track_key, "Activity in $cell_names{$cell_line}", {
+      db            => $key,
+      glyphset      => $type,
+      sources       => 'undef',
+      strand        => 'r',
+      depth         => $data->{$key_2}{'depth'}     || 0.5,
+      colourset     => $data->{$key_2}{'colourset'} || $type,
+      description   => "Activity in epigenome $cell_names{$cell_line}",
+      display       => $display,
+      renderers     => \@renderers,
+      cell_line     => $cell_line,
+      section       => $cell_names{$cell_line},
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-      caption     => "Regulatory Features",
+      caption       => "Regulatory Features",
     }));
-
-    # Old database-based segementation tracks
-    if (($fg_data{"seg_$cell_line"}{'key'} || '') eq "seg_$cell_line") {
-      $prev_track = $reg_segs->append_child($self->create_track_node("seg_$cell_line", "Reg. Segs: $cell_line", {
-        db          => $key,
-        glyphset    => 'fg_segmentation_features',
-        sources     => 'undef',
-        strand      => 'r',
-        labels      => 'on',
-        depth       => 0,
-        colourset   => 'fg_segmentation_features',
-        display     => 'off',
-        description => $fg_data{"seg_$cell_line"}{'description'},
-        renderers   => \@renderers,
-        cell_line   => $cell_line,
-        caption     => "Reg. Segments",
-        section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-        section     => $cell_line,
-        height      => 4,
-      }));
-    }
 
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
       strand    => 'r',
-      depth     => $fg_data{$key_2}{'depth'} || 0.5,
+      depth     => $data->{$key_2}{'depth'} || 0.5,
       colourset => 'feature_set',
       cell_line => $cell_line,
       section   => $cell_line,
@@ -1171,7 +1180,7 @@ sub add_regulation_builds {
 
     next if $params->{'reg_minimal'};
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $prev_track = $self->_add_matrix({
+      $self->_add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section => $cell_line,
         matrix      => {
@@ -1183,7 +1192,7 @@ sub add_regulation_builds {
         column_data => {
           set         => $_,
           label       => "$evidence_info->{$_}{'label'}",
-          description => $fg_data{$key_2}{'description'}{$_},
+          description => $data->{$key_2}{'description'}{$_},
           %column_data
         },
       }, $matrix_menus{$_});
@@ -1191,8 +1200,9 @@ sub add_regulation_builds {
   }
 
   if ($db_tables->{'cell_type'}{'ids'}) {
-    $self->add_track('information', 'fg_regulatory_features_legend',   'Regulation Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });
-    $self->add_track('information', 'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
+    $self->add_track('information', 'fg_regulatory_features_legend',      'Regulation Legend',              'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });
+    $self->add_track('information', 'fg_segmentation_features_legend',    'Segmentation Legend',            'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features' });
+    $self->add_track('information', 'fg_multi_wiggle_legend',             'Cell/Tissue Regulation Legend',  'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
 
@@ -1296,6 +1306,8 @@ sub add_sequence_variations_meta {
                                $a->{order} <=> $b->{order} || $a->{'long_name'} cmp $b->{'long_name'}
                               } @menus) {
     my $node;
+    my $track_options = $options;
+    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD)/i);
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_menu_node($menu_item->{'key'}, $menu_item->{'long_name'});
@@ -1309,11 +1321,26 @@ sub add_sequence_variations_meta {
       $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track_node($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => $other_sources ? undef : [ $source_name ],
         description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
+      });
+
+      # Study tracks
+    } elsif ($menu_item->{'type'} eq 'study') {
+      my $study_name    = $menu_item->{'long_name'};
+      my $caption       = $menu_item->{'long_name'};
+      my $label_caption = $menu_item->{'short_name'};
+      my $description   = $hashref->{'study'}{'descriptions'}{$study_name};
+
+      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+        %$track_options,
+        caption      => $caption,
+        labelcaption => $label_caption,
+        study_name   => $study_name,
+        description  => ($description) ? $description : $study_name,
       });
 
     } elsif ($menu_item->{'type'} eq 'set') { # set type
@@ -1331,7 +1358,7 @@ sub add_sequence_variations_meta {
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
 
       $node = $self->create_track_node($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => undef,
@@ -1785,6 +1812,20 @@ sub _alignment_renderers {
     off                   => 'Off',
     as_alignment_nolabel  => 'Normal',
     as_alignment_label    => 'Labels',
+    half_height           => 'Half height',
+    stack                 => 'Stacked',
+    unlimited             => 'Stacked unlimited',
+    ungrouped             => 'Ungrouped',
+  ];
+}
+
+sub _transcript_renderers {
+  return $_[0]->{'_transcript_renderers'} ||= [
+    off                   => 'Off',
+    as_alignment_nolabel  => 'Normal',
+    as_alignment_label    => 'Labels',
+    as_transcript_nolabel => 'Structure',
+    as_transcript_label   => 'Structure with labels',
     half_height           => 'Half height',
     stack                 => 'Stacked',
     unlimited             => 'Stacked unlimited',

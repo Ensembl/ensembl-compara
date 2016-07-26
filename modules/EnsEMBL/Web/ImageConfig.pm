@@ -81,8 +81,10 @@ sub _new {
 
   my $self = $class->SUPER::_new($hub, $species, $type);
 
-  $self->{'code'}         = $code;
-  $self->{'_parameters'}  = {}, # hash to contain all parameters
+  $self->{'code'}             = $code;
+  $self->{'_parameters'}      = {}, # hash to contain all parameters
+  $self->{'user_track_count'} = 0;
+  $self->{'load_threshold'}   = $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 20;
 
   return $self;
 }
@@ -136,6 +138,7 @@ sub init_non_cacheable {
 
   # Add user defined data sources
   $self->load_user_tracks;
+  $self->display_threshold_message;
 
   # Combine info and decorations into a single menu
   my $decorations = $self->get_node('decorations') || $self->get_node('other');

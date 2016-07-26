@@ -44,6 +44,42 @@ sub load_user_tracks {
   $self->_load_uploaded_tracks($menu);
 }
 
+sub display_threshold_message {
+  ## Displays a session message if number of loaded tracks is more than that can be accommodated
+  my $self          = shift;
+  my $threshold     = $self->{'load_threshold'};
+  my $hidden_tracks = $self->{'user_track_count'} - $threshold;
+
+  if ($hidden_tracks > 0) {
+    $self->hub->session->set_record_data({
+      'type'      => 'message',
+      'function'  => '_warning',
+      'code'      => 'threshold_warning',
+      'message'   => "You have turned on too many tracks for the browser to load, so $hidden_tracks have been hidden. Please use Configure This Page to select a subset of $threshold tracks to display.",
+    });
+  }
+}
+
+sub check_threshold {
+  ## Check if we've already loaded as many user tracks as we can cope with
+  ## @param display String
+  ## @return 1 if still OK, 0 if check fails i.e. threshold exceeded
+  my ($self, $display) = @_;
+
+  $display ||= 'off';
+
+  return $display if $display eq 'off';
+
+  ## Track is supposed to be on, so compare with threshold
+  if ($self->{'user_track_count'} >= $self->{'load_threshold'}) {
+    $display = 'off';
+  } else {
+    $self->{'user_track_count'}++;
+  }
+
+  return $display;
+}
+
 sub _load_url_feature_track {
   ## @private
   ## Creates and adds to the config, a temporary track based on a single line of a row-based data file, such as VEP output, e.g. 21 9678256 9678256 T/G 1
@@ -405,9 +441,10 @@ sub _add_trackhub_tracks {
     ## Turn track on if there's no higher setting turning it off
     if ($track->{'visibility'}  eq 'hide') {
       $on_off = 'off';
-    }
-    elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
+    } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
       $on_off = 'on';
+    } elsif ($self->check_threshold($on_off) eq 'off') {
+      $on_off = 'off';
     }
 
     my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
@@ -425,7 +462,6 @@ sub _add_trackhub_tracks {
     ## Set track style if appropriate
     if ($on_off && $on_off eq 'on') {
       $options{'display'} = $default_display;
-      $count_visible++;
     }
     else {
       $options{'display'} = 'off';
@@ -434,18 +470,18 @@ sub _add_trackhub_tracks {
     ## Note that we use a duplicate value in description and longLabel, because non-hub files
     ## often have much longer descriptions so we need to distinguish the two
     my $source       = {
-      name        => $track->{'track'},
-      source_name => $source_name,
-      desc_url    => $track->{'description_url'},
-      description => $track->{'longLabel'},
-      longLabel   => $track->{'longLabel'},
-      source_url  => $track->{'bigDataUrl'},
-      colour      => exists $track->{'color'} ? $track->{'color'} : undef,
-      colorByStrand => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
-      spectrum    => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
-      no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
-      squish      => $squish,
-      signal_range => $track->{'signal_range'},
+      name            => $track->{'track'},
+      source_name     => $source_name,
+      desc_url        => $track->{'description_url'},
+      description     => $name.': '.$track->{'longLabel'},,
+      longLabel       => $track->{'longLabel'},
+      source_url      => $track->{'bigDataUrl'},
+      colour          => exists $track->{'color'} ? $track->{'color'} : undef,
+      colorByStrand   => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
+      spectrum        => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
+      no_titles       => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
+      squish          => $squish,
+      signal_range    => $track->{'signal_range'},
       %options
     };
 
@@ -479,7 +515,6 @@ sub _add_trackhub_tracks {
 
     $tracks{$type}{$source->{'name'}} = $source;
   }
-  #warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
 
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
@@ -586,6 +621,7 @@ sub _add_htslib_track {
   ## Override default renderer (mainly used by trackhubs)
   my %options;
   $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+  $options{'strand'}  = 'b';
 
   $self->_add_file_format_track(
     format      => 'BAM',
@@ -772,8 +808,9 @@ sub _add_file_format_track {
     }
   }
 
+  $args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
+
   $self->_add_track($menu, undef, $args{'key'}, {}, {
-    display     => 'off',
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
@@ -803,8 +840,7 @@ sub _user_track_settings {
     $strand = 'f';
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
-    @user_renderers = @{$self->_alignment_renderers};
-    splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+    @user_renderers = @{$self->_transcript_renderers};
     $default = 'as_transcript_label';
   }
   else {
