@@ -67,9 +67,6 @@ sub content {
   my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
   if (scalar @data) {
 
-    #$html .= $self->_add_buttons;
-    $html = sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
-
     my @columns = (
       #{ key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
@@ -152,13 +149,18 @@ sub content {
       push @rows, $row;
     }
 
-    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
-    if ($old_assemblies) {
-      my $plural = $old_assemblies > 1 ? '' : 's';
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
-    }
+    if (scalar @rows) {
+      $html = sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+
+      $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+
+      if ($old_assemblies) {
+        my $plural = $old_assemblies > 1 ? '' : 's';
+        $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
+      }
   
-    $html .= '</form></div>';
+      $html .= '</form></div>';
+    }
 
     if ($data_elsewhere) {
       my $message;
@@ -182,14 +184,13 @@ sub content {
 
   my $trackhub_search = $self->trackhub_search; 
 
-  if (scalar @data) {
+  if (scalar @rows) {
     my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search; 
     ## Show 'add more' link at top as well, if table is long
     if (scalar(@rows) > 10) {
       $html = $more.$html;
     }
-
-    $html .= $more if scalar(@rows);
+    $html .= $more;
   }
   else {
     $html .= $trackhub_search;
