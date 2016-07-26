@@ -54,7 +54,6 @@ sub check_data {
     if ($hc_error) {
       ## Parse and ignore issues we don't care about
       my @lines = split /\n/, $hc_error;
-      shift @lines;
       my $problematic = 0;
       for my $line (@lines) {
         next if $line =~ /deprecated|cram/;
