@@ -25,6 +25,7 @@ use warnings;
 use File::Basename;
 use JSON qw(encode_json);
 use List::Util qw(max);
+use List::MoreUtils qw(any);
 
 use EnsEMBL::Web::TextSequence::Sequence;
 use EnsEMBL::Web::TextSequence::Output::Web;
@@ -135,10 +136,12 @@ sub transfer_data {
   my ($self,$data,$config) = @_;
 
   my @vseqs = @{$self->sequences};
+  my $missing = @$data - @vseqs;
+  $self->new_sequence for(1..$missing);
+  @vseqs = @{$self->sequences};
+  $vseqs[0]->principal(1) unless(any { $_->principal } @vseqs);
   foreach my $seq (@$data) {
-    my $tseq;
-    if(@vseqs) { $tseq = shift @vseqs; }
-    else { $tseq = $self->new_sequence; }
+    my $tseq = shift @vseqs;
     $tseq->add_data($seq,$config);
   }
 }

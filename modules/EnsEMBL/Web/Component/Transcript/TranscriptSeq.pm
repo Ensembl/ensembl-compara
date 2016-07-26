@@ -144,8 +144,16 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
+  my $view = $self->view($config);
+  # This next line is a hack. If variations are on, it's the second line
+  # which is principal. This will go when sequence creation in views is
+  # refactored.
+  $view->new_sequence() if $config->{'snp_display'};
+  my $seq = $view->new_sequence();
+  $seq->principal(1);
   
+  my ($sequence, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
+
   $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
   if ($adorn ne 'none') {
@@ -160,7 +168,6 @@ sub initialize {
   }
   $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
   
-  my $view = $self->view($config);
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
 
   return ($sequence, $config);
