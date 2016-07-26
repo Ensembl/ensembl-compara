@@ -121,9 +121,8 @@ sub cache_close {
 
   return unless $self->{'open'};
   $self->{'open'} = 0;
-  my %x = %{$self->{'idx'}};
-  delete $self->{'idx'};
-  untie %x if tied %x;
+  untie $self->{'idx'};
+  $self->{'idx'} = {};
   close $self->{'dat'};
 }
 
