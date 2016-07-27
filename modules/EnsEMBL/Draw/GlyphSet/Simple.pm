@@ -69,6 +69,24 @@ sub init {
   return $features; 
 }
 
+sub render_labels {
+  my $self = shift;
+  $self->{'my_config'}->set('show_labels', 1);
+  $self->render_normal;
+}
+
+sub render_normal {
+  my $self = shift;
+
+  my $data = $self->get_data;
+  return unless scalar @{$data->[0]{'features'}};
+
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+  $self->push($style->create_glyphs);
+}
+
+
 sub ok_feature {
 ### Check if this feature is OK to display
 ### @param feature - some kind of feature object
