@@ -208,8 +208,7 @@ sub _add_matrix {
     my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
     my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
 
-    my $node = $self->create_track_node($option_key, $_->{'row'}, {
-      node_type => 'option',
+    my $node = $self->create_option_node($option_key, $_->{'row'}, {
       menu      => 'no',
       display   => $display,
       renderers => [qw(on on off off)],
@@ -1371,10 +1370,10 @@ sub add_sequence_variations_meta {
     # get the node onto which we're going to add this item, then append it
 #    if ($menu_item->{'long_name'} =~ /^all/i || $menu_item->{'long_name'} =~ /^sequence variants/i) {
     if ($menu_item->{'long_name'} =~ /^sequence variants/i) {
-      ($self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
+      ($menu_item->{'parent'} && $self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
     }
     else {
-      ($self->get_node($menu_item->{'parent'}) || $menu)->append_child($node) if $node;
+      ($menu_item->{'parent'} && $self->get_node($menu_item->{'parent'}) || $menu)->append_child($node) if $node;
     }
   }
 }

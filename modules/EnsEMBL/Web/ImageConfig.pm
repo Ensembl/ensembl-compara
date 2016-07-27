@@ -146,7 +146,8 @@ sub init_non_cacheable {
 
   if ($decorations && $information) {
     $decorations->set_data('caption', 'Information and decorations');
-    $decorations->append_children($information->nodes);
+    $decorations->append_children($information->child_nodes);
+    $information->remove;
   }
 }
 
@@ -580,7 +581,7 @@ sub _order_tracks_by_strands {
 
     # create an extra clone track and add one to the start and other to the end
     } else {
-      my $clone = $self->tree->clone_node($track);
+      my $clone = $track->parent_node->prepend_child($self->tree->clone_node($track));
 
       $clone->set_data('drawing_strand', 'f');
       $track->set_data('drawing_strand', 'r');
@@ -598,7 +599,7 @@ sub _user_track_order {
   ## Gets the tracks order array
   my $self = shift;
 
-  return {$self->get_user_settings->{'track_order'} || {}}->{$self->species} || [];
+  return ($self->get_user_settings->{'track_order'} || {})->{$self->species} || [];
 }
 
 sub glyphset_tracks {
@@ -770,6 +771,7 @@ sub add_to_legend :Deprecated('ImageConfig::add_to_legend - where is it called?'
   }
 }
 
-sub get_config :Deprecated('Use species_defs->get_config') { return $_[0]->species_defs->get_config($_[0]->species, $_[1]); }
+sub get_config        :Deprecated('Use species_defs->get_config') { return $_[0]->species_defs->get_config($_[0]->species, $_[1]); }
+sub glyphset_configs  :Deprecated('Use glyphset_tracks')          { return shift->glyphset_tracks(@_); }
 
 1;
