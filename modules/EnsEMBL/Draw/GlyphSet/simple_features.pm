@@ -23,8 +23,6 @@ package EnsEMBL::Draw::GlyphSet::simple_features;
 
 use strict;
 
-use EnsEMBL::Draw::Style::Feature;
-
 use parent qw(EnsEMBL::Draw::GlyphSet::Simple);
 
 sub init {
