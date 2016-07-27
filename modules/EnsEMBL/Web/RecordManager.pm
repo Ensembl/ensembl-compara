@@ -65,7 +65,7 @@ sub records {
   my ($self, $filter) = splice @_, 0, 2;
 
   # load records on demand
-  $self->{'_record_set'} ||= EnsEMBL::Web::RecordSet->new(@{$self->rose_manager->get_objects({'query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type]})});
+  $self->{'_record_set'} //= EnsEMBL::Web::RecordSet->new(@{$self->rose_manager->get_objects('query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type])});
 
   # return all records if no filter applied
   return $self->{'_record_set'} unless $filter;
