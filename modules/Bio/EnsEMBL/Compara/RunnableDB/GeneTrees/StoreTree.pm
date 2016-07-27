@@ -468,6 +468,7 @@ sub store_tree_into_clusterset {
     $clusterset_leaf->no_autoload_children();
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
+    $clusterset_leaf->tree($clusterset);
     $newtree->clusterset_id($clusterset->clusterset_id);
     $newtree->root->{'_different_tree_object'} = 1;
 
