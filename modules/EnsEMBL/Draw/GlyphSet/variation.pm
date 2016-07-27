@@ -28,6 +28,8 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
+use EnsEMBL::Draw::Style::Feature::Tagged;
+
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
 sub depth {
@@ -42,6 +44,17 @@ sub depth {
 }
 
 sub label_overlay { return 1; }
+
+sub render_normal {
+  my $self = shift;
+
+  my $data = $self->get_data;
+  return unless scalar @{$data->[0]{'features'}||[]};
+
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Feature::Tagged->new($config, $data);
+  $self->push($style->create_glyphs);
+}
 
 sub render_labels {
   my ($self, $labels) = @_;
@@ -87,9 +100,15 @@ sub get_data {
       return [];
     }
     else {
+      ## This is a bit clunky, but we have to pass colour data 
+      ## to the drawing module on a per-feature basis
+      my $colour_lookup = {};
       foreach (@$features_list) {
-        my $colour = $self->{'legend'}{'variation_legend'}{$_->{'colour_key'}} ||= $self->get_colours($_)->{'feature'};
+        my $key = $_->{'colour_key'};
+        $colour_lookup->{$key} ||= $self->get_colours($_);
+        my $colour = $self->{'legend'}{'variation_legend'}{$key} ||= $colour_lookup->{$key}{'feature'};
         $_->{'colour'} = $colour;
+        $_->{'colour_lookup'} = $colour_lookup->{$key};
       }
       return [{'features' => $features_list}];
     }
