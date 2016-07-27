@@ -138,7 +138,6 @@ sub fetch_or_create_clusterset {
         die sprintf('Found %d "%s" clustersets in the database: which one to use ?', scalar(@$all_matching_clustersets), $clusterset_id);
     } elsif (scalar(@$all_matching_clustersets) == 1) {
         my $clusterset = $all_matching_clustersets->[0];
-        $clusterset->preload();
         print STDERR "Found clusterset '$clusterset_id' with root_id=", $clusterset->root_id, "\n" if $self->debug;
         return $clusterset;
     }
