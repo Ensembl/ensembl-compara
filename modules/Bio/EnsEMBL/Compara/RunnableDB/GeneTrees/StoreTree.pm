@@ -516,6 +516,7 @@ sub store_alternative_tree {
         $self->throw("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
+    $clusterset->root('no_preload');    # We're not returning $clusterset, and we know that the method calls below don't need a preloaded tree
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree, $remove_previous_tree);
     return undef unless $self->parse_newick_into_tree($newick, $newtree, $ref_support);
     $self->store_genetree($newtree);
