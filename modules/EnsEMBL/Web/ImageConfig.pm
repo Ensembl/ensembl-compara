@@ -3069,7 +3069,7 @@ sub add_sequence_variations {
   
   my $options = {
     db         => $key,
-    glyphset   => '_variation',
+    glyphset   => 'variation',
     strand     => 'r',
     depth      => 0.5,
     bump_width => 0,
