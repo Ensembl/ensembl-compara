@@ -456,7 +456,7 @@ sub moveable_tracks {
 
   if ($self->hub->session->get_data(type => 'userdata_upload_code')) {
     foreach my $hash ($self->hub->session->get_data(type => 'userdata_upload_code')) {
-      $last_uploaded_user_data_code->{'upload_'.$hash->{upload_code}} = 1;
+      $last_uploaded_user_data_code->{$hash->{upload_code}} = 1;
     }
   }
 
@@ -465,7 +465,12 @@ sub moveable_tracks {
   
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
-    my $highlight = $last_uploaded_user_data_code->{$type} || 0;
+
+    # For highlight, upload_ and url_ prefixes are not there in the session data.
+    # So split remove and then compare
+    my ($record_type, $code) = split(/_/,$type, 2);
+    my $highlight = $last_uploaded_user_data_code->{$code} || 0;
+
     $html .= sprintf(
       '<li class="%s %s %s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>
