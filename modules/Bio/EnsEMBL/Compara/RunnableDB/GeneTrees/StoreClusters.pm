@@ -98,7 +98,7 @@ sub store_clusterset {
     foreach my $cluster_name (@cluster_list) {
         print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
         my $cluster = $self->add_cluster($clusterset, $allclusters->{$cluster_name});
-        push @allcluster_ids, $cluster->root_id unless $self->param('immediate_dataflow');
+        push @allcluster_ids, $cluster->root_id if ($cluster && !$self->param('immediate_dataflow'));
     }
     $self->build_clusterset_indexes($clusterset);
     return ($clusterset, [@allcluster_ids]);
