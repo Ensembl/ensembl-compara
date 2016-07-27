@@ -233,15 +233,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
             -analysis_capacity  =>  100,  # use per-analysis limiter
             -flow_into => {
-                # 1 => [ 'copy_reusable_scores'   ],
                 2 => [ 'calculate_wga_coverage' ],
             },
             -rc_name => '2Gb_job',
         },
-
-        # {   -logic_name => 'copy_reusable_scores',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyReusableScores',
-        # },
 
         {   -logic_name => 'calculate_wga_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
