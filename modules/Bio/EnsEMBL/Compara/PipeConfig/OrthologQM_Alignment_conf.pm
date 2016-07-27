@@ -157,7 +157,8 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'take_time'     => 1,
+        'take_time'       => 1,
+        'orth_batch_size' => 100,
     };
 }
 
@@ -167,12 +168,8 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'default'                => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         '200M_job'               => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
-        '500M_job'               => {'LSF' => '-C0 -M500  -R"select[mem>500]  rusage[mem=500]"' },
-        '1Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M1000   -R"select[mem>1000]   rusage[mem=1000]"', '--reg_conf '.$self->o('reg_conf')] },
         '2Gb_job'                => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '2Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')] },
-        '8Gb_job'                => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"'},
-        '20Gb_job'               => {'LSF' => '-C0 -M20000  -R"select[mem>20000]  rusage[mem=20000]"' },
+        '4Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', '--reg_conf '.$self->o('reg_conf')] },
     };
 }
 
@@ -214,7 +211,7 @@ sub pipeline_analyses {
             -flow_into         => {
                 1 => [ '?table_name=exon_boundaries' ] 
             },
-            -rc_name => '1Gb_job_with_reg_conf',
+            -rc_name => '4Gb_job_with_reg_conf',
             -analysis_capacity => 50,
             #-input_ids => {}
         },
@@ -239,7 +236,7 @@ sub pipeline_analyses {
                 # 1 => [ 'copy_reusable_scores'   ],
                 2 => [ 'calculate_wga_coverage' ],
             },
-            -rc_name => '2Gb_job_with_reg_conf',
+            -rc_name => '2Gb_job',
         },
 
         # {   -logic_name => 'copy_reusable_scores',

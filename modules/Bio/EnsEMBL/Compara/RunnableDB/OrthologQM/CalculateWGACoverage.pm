@@ -81,9 +81,11 @@ sub fetch_input {
 		}
 
 		if ( scalar( @gblocks ) < 1 ) {
-			$self->input_job->autoflow(0);
-			my $exit_msg = "No alignment found for this homology";
-			$self->complete_early($exit_msg);
+			$self->warning("No alignment found for homology_id " . $orth->{id});
+			next;
+			# my $exit_msg = "No alignment found for homology_id " . $orth->{id};
+			# $self->input_job->autoflow(0);
+			# $self->complete_early($exit_msg);
 		}
 
 	    foreach my $gblock ( @gblocks ) {
@@ -128,11 +130,12 @@ sub run {
 
 		push( @orth_ids, $homo_id );
 
-		unless ( defined $this_aln_range ) {
-			$self->input_job->autoflow(0);
-			my $exit_msg = "No alignment found for this homology";
-			$self->complete_early($exit_msg);
-		}
+		next unless ( defined $this_aln_range ); 
+		# {
+		# 	$self->input_job->autoflow(0);
+		# 	my $exit_msg = "No alignment found for this homology";
+		# 	$self->complete_early($exit_msg);
+		# }
 
 		if ( defined $exon_ranges ){
 			foreach my $aln_mlss ( keys %{ $this_aln_range } ){
