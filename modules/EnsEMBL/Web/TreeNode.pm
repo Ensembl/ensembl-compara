@@ -66,7 +66,7 @@ sub leaves {
 sub get_data {
   ## Returns value from node specific data
   my ($self, $key)  = @_;
-  return $self->{'data'}{$key};
+  return $self->{'data'}{$key} || '';
 }
 
 sub set_data {

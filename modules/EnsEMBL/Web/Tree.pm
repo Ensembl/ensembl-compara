@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::TreeNode;
+use EnsEMBL::Web::Exceptions qw(WebException);
 
 sub new {
   ## @constructor
@@ -31,7 +32,7 @@ sub new {
 
   my $self = bless {
     '_nodes'      => {},      # map of all the nodes belonging to this tree for easy lookup
-    '_last_id'    => 'aaaa',  # incremental string id of the last node created that didn't have any id provided
+    '_new_id'     => 'aaaa',  # incremental string id of the last node created that didn't have any id provided
     '_user_data'  => undef,   # reference to user data that's shared among all nodes of the tree
     '_root'       => undef,   # topmost node
     '_dom'        => undef,   # DOM object as needed by TreeNode's constructor
@@ -89,8 +90,12 @@ sub leaves {
 
 sub get_node {
   ## Gets a node with the given id from anywhere in the tree
+  ## @param Node id
   ## @return Requested node (EnsEMBL::Web::TreeNode object) or possibly undef if node with the given id doesn't exist
   my ($self, $id) = @_;
+
+  throw WebException('Node id is needed to get a node') unless $id;
+
   return $self->{'_nodes'}{$self->clean_id($id)};
 }
 
@@ -149,14 +154,15 @@ sub clear_references {
 sub _generate_unique_id {
   ## @private
   my $self = shift;
-  while ($self->{'_last_id'}++) {
-    return $self->{'_last_id'} unless exists $self->{'_nodes'}{$self->{'_last_id'}};
+  while (exists $self->{'_nodes'}{$self->{'_new_id'}}) {
+    $self->{'_new_id'}++;
   }
+  return $self->{'_new_id'};
 }
 
 sub _cacheable_keys {
   ## @private
-  return qw(_nodes _last_id _root _dom);
+  return qw(_nodes _new_id _root _dom);
 }
 
 1;
