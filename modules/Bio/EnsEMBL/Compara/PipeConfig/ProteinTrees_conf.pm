@@ -3072,7 +3072,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_stat_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                1 => ['group_genomes_under_taxa', 'goc_group_genomes_under_taxa','get_species_set'],
+                '1->A' => ['id_map_group_genomes'],
+                'A->1' => ['goc_group_genomes_under_taxa'],
+                '1'    => ['group_genomes_under_taxa', 'get_species_set'],
             },
         },
 
@@ -3085,6 +3087,32 @@ sub core_pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'mlss_factory' ],
                 'A->1' => [ 'homology_stats_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_group_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => ['all'],
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                2 => [ 'id_map_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -flow_into => {
+                2 => [ 'id_map_homology_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_homology_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into => {
+                '3'    => [ 'homology_id_mapping' ],
             },
         },
 
@@ -3121,6 +3149,14 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => 20,
             -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name => 'homology_id_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
+                 1 => [ '?table_name=homology_id_mapping' ],
+                -1 => [ 'homology_id_mapping_himem' ],
+            },
         },
 
         {   -logic_name => 'homology_dNdS',
