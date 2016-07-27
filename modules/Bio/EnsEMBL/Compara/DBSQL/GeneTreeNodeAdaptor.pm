@@ -204,9 +204,17 @@ sub store_node {
     }
 
     my $parent_id = undef;
-    $parent_id = $node->parent->node_id if($node->parent);
+    if ($node->parent) {
+        throw("$node has a parent that has no usable dbID ! Cannot store it") if ref($node->parent->node_id);
+        $parent_id = $node->parent->node_id;
+    }
 
-    my $root_id = $node->root->node_id;
+    my $root_id = undef;
+    if ($node->root) {
+        throw("$node has a root that has no usable dbID ! Cannot store it") if ref($node->root->node_id);
+        $root_id = $node->root->node_id;
+    }
+
     #print "inserting parent_id=$parent_id, root_id=$root_id\n";
     my $seq_member_id = undef;
     $seq_member_id = $node->seq_member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
