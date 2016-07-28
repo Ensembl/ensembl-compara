@@ -68,12 +68,6 @@ sub param_defaults {
             3 => [ 50,  100 ],
             4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
         },
-        'blast_params_by_length' => { # params, evalues to use for each level of length granularity
-            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    2e-7 ],
-            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    1e-7 ],
-            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", 1e-8  ],
-            4 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", 1e-10 ],
-        },
         chunk_by_size => 1
         
     };
@@ -112,20 +106,17 @@ sub write_output {
     my $step = $self->param('step');
 
     my @member_id_list = (map {$_->dbID} @{$self->param('query_members')});
-    #my @member_id_list = sort {$a <=> $b} (map {$_->dbID} @{$self->param('query_members')});
     my @target_genome_db_ids = sort {$a <=> $b} (map {$_->dbID} @{$self->param('target_genome_dbs')});
 
     my $member_length = {map {$_->dbID => $_->seq_length} @{$self->param('query_members')}};
     $self->param('seq_length', $member_length);
 
-    #my $c = 0;
     while (@member_id_list) {
         my @job_array = splice(@member_id_list, 0, $step);
         
         my ( $param_index, $new_job_array, $leftover_members );
         if ( $self->param('chunk_by_size') ){
             # sort job_array by seq_length from high to low
-            #( $blast_params, $evalue, $new_job_array, $leftover_members ) = $self->_check_job_array_lengths( \@job_array );
             ( $param_index, $new_job_array, $leftover_members ) = $self->_check_job_array_lengths( \@job_array );
             @job_array = @{ $new_job_array };
             unshift @member_id_list, @{ $leftover_members };
@@ -149,7 +140,6 @@ sub write_output {
 
             $self->dataflow_output_id($output_id, 2);
         }
-        #$c++;
     }
 }
 
@@ -198,10 +188,6 @@ sub _check_job_array_lengths {
 
     # split out in-range and out-of-range seq_member ids
     my @new_job_array = splice(@job_array, 0, $j);
-
-    # fetch appropriate blast params for seq len
-    # my %blast_params_by_length = %{ $self->param('blast_params_by_length') };
-    # my ( $blast_params, $evalue ) = @{ $blast_params_by_length{$level} };
 
     return ( $level, \@new_job_array, \@job_array );
 }
