@@ -67,6 +67,7 @@ sub create_glyphs {
   my $slice_width     = $image_config->container_width;
   my $bumped          = $track_config->get('bumped');
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
+  my $label_padding   = 10; ## Prevent labels from running into one another
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
@@ -88,6 +89,7 @@ sub create_glyphs {
     my @features = @{$subtrack->{'features'}||[]}; 
     my $label_height;
 
+    ## FIRST LOOP - process features
     foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
@@ -95,6 +97,7 @@ sub create_glyphs {
 
       my $text_info   = $self->get_text_info($feature->{'label'});
       my $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $overlay     = $track_config->get('label_overlay');
 
       ## Default colours, if none set in feature
       ## Note that a feature must have either a border colour or a fill colour,
@@ -107,14 +110,15 @@ sub create_glyphs {
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
-      if($show_label) {
-        my $lwidth_bp = $text_info->{'width'}/$self->{'pix_per_bp'};
-        $feature->{'_bend'} =
-          max($feature->{'_bend'},$feature->{'_bstart'}+$lwidth_bp);
+      if ($show_label && !$overlay) {
+        my $lwidth_bp = ($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'};
+        $feature->{'_bend'} = max($feature->{'_bend'},$feature->{'_bstart'}+$lwidth_bp);
         $label_height = max($label_height,$text_info->{'height'});
       }
     }
     EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
+
+    ## SECOND LOOP - draw features
     foreach my $feature (@features) {
       my $new_y;
       my $feature_row = 0;
@@ -190,12 +194,12 @@ sub create_glyphs {
       if ($show_label) {
         if ($overlay) {
           $new_y = $position->{'y'} + $approx_height - $text_height;
-          ## Remove padding so we can centre it properly
-          $text_width -= 10;
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
           $new_y += $labels_height if ($bumped eq 'labels_only');
+          ## Pad width to match bumped position
+          $text_width += 10;
         }
 
         $position = {
