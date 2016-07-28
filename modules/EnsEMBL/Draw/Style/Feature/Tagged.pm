@@ -29,6 +29,7 @@ use parent qw(EnsEMBL::Draw::Style::Feature);
 sub draw_feature {
 ### Draw a block with optional tags
   my ($self, $feature, $position) = @_;
+  #use Data::Dumper; warn Dumper($feature);
 
   if ($feature->{'tag'}) {
     my ($pattern, $patterncolour, $notags);
@@ -37,58 +38,40 @@ sub draw_feature {
 
     my $colours = $feature->{'colour_lookup'};
     my $part    = $colours->{'part'};
-    my $x       = $feature->{'start'} - 1;
-    my $h       = $position->{'height'};
+
+    my %params = (
+                  x         => $feature->{'start'} - 1,
+                  y         => $position->{'y'},
+                  h         => $position->{'height'},
+                  width     => $position->{'width'},
+                  colour    => $feature->{'colour'},
+                  absolutey => 1,
+                  );
 
     if ($part eq 'line') {
-      push @{$self->glyphs}, $self->Space({
-                                            x         => $x,
-                                            y         => 0,
-                                            height    => $h,
-                                            width     => $position->{'width'},
-                                            absolutey => 1,
-                                          }),
-                              $self->Rect({
-                                            x         => $x,
-                                            y         => $h/2 + 1,
+      push @{$self->glyphs}, $self->Space(\%params),
+                              $self->Rect({ %params,
+                                            y         => $position->{'height'}/2 + 1,
                                             height    => 0,
-                                            width     => $position->{'width'},
-                                            colour    => $feature->{'colour'},
-                                            absolutey => 1,
                                           });
     }
     elsif ($part eq 'invisible') { 
-      push @{$self->glyphs}, $self->Space({
-                                            x         => $x,
-                                            y         => 0,
-                                            height    => $h,
-                                            width     => $position->{'width'},
-                                            absolutey => 1,
-                                          }),
+      push @{$self->glyphs}, $self->Space(\%params),
     } 
     elsif ($part eq 'align') {
-      push @{$self->glyphs}, $self->Rect({
-                                            x         => $x,
-                                            y         => 0, 
+      push @{$self->glyphs}, $self->Rect({  %params,
                                             z         => 20,
                                             height    => $h + 2,
-                                            width     => $position->{'width'},
-                                            colour    => $feature->{'colour'},
-                                            absolutey => 1,
                                             absolutez => 1,
                                           });
     }
     elsif ($part ne 'none') {
       my $colour_key = "$colours->{'part'}colour";
-      push @{$self->glyphs}, $self->Rect({
-                                            x             => $x,
-                                            y             => 0, 
-                                            height        => $h + 2,
-                                            width         => $position->{'width'},
+      push @{$self->glyphs}, $self->Rect({  %params,
+                                            height        => $position->{'height'} + 2,
                                             $colour_key   => $colours->{'feature'},
                                             pattern       => $pattern,
                                             patterncolour => $patterncolour,
-                                            absolutey     => 1,
                                           });
 
     }
