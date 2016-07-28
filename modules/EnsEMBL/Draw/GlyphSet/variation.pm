@@ -32,18 +32,28 @@ use EnsEMBL::Draw::Style::Feature::Tagged;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
+sub init {
+  my $self = shift;
+  if ($self->{'container'}->length <= 1e4) {
+    $self->{'my_config'}->set('bumped', 1);
+    $self->{'my_config'}->set('show_labels', 1);
+    $self->{'my_config'}->set('label_overlay', 1);
+    #$self->{'my_config'}->set('centre_labels', 1);
+  }
+  $self->SUPER::init;
+}
+
 sub depth {
   my $self   = shift;
   my $length = $self->{'container'}->length;
 
-  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5) || $length <= 101) {
+  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5) 
+      || $length <= 101) {
     return $length > 1e4 ? 20 : undef;
   }
   
   return $self->SUPER::depth;
 }
-
-sub label_overlay { return 1; }
 
 sub render_normal {
   my $self = shift;
@@ -56,17 +66,17 @@ sub render_normal {
   $self->push($style->create_glyphs);
 }
 
-sub render_labels {
-  my ($self, $labels) = @_;
-  $self->{'show_labels'} = 1 if $self->{'container'}->length <= 1e4;
-  return $self->render_normal;
-}
+#sub render_labels {
+#  my ($self, $labels) = @_;
+#  $self->{'show_labels'} = 1 if $self->{'container'}->length <= 1e4;
+#  return $self->render_normal;
+#}
 
-sub _init {
-  my $self = shift;
-  $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
-  return $self->SUPER::_init(@_);
-}
+#sub _init {
+#  my $self = shift;
+#  $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
+#  return $self->SUPER::_init(@_);
+#}
 
 sub my_label { 
   my $self  = shift;  
@@ -107,7 +117,8 @@ sub get_data {
         my $key = $_->{'colour_key'};
         $colour_lookup->{$key} ||= $self->get_colours($_);
         my $colour = $self->{'legend'}{'variation_legend'}{$key} ||= $colour_lookup->{$key}{'feature'};
-        $_->{'colour'} = $colour;
+        $_->{'colour'}        = $colour;
+        $_->{'label_colour'}  = 'white';
         $_->{'colour_lookup'} = $colour_lookup->{$key};
       }
       return [{'features' => $features_list}];
