@@ -3129,7 +3129,32 @@ sub core_pipeline_analyses {
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
-                '3'    => [ 'homology_id_mapping' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_group_genomes_under_taxa',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => 'all',
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                2 => [ 'id_map_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -flow_into => {
+                2 => [ 'id_map_homology_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_homology_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into => {
+                3 => [ 'homology_id_mapping' ],
             },
         },
 
