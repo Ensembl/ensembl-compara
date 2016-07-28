@@ -146,7 +146,7 @@ sub init_non_cacheable {
 
   if ($decorations && $information) {
     $decorations->set_data('caption', 'Information and decorations');
-    $decorations->append_children($information->child_nodes);
+    $decorations->append_children(@{$information->child_nodes});
     $information->remove;
   }
 }
@@ -569,7 +569,7 @@ sub _order_tracks_by_strands {
 
   foreach my $track (@$tracks) {
 
-    my $strand = $track->get_data('strand') || '';
+    my $strand = $track->get_data('strand');
 
     # append to the start of the list
     if ($strand eq 'f') {
