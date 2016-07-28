@@ -241,10 +241,10 @@ sub pipeline_analyses {
         {   -logic_name => 'calculate_wga_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -analysis_capacity => 200,
-            -batch_size        => 20,
+            -batch_size => 5,
             -flow_into  => {
                 '1'  => [ '?table_name=ortholog_quality' ],
-                '2'  => [ 'assign_quality' ],
+                '2'  => [ 'assign_wga_coverage_score' ],
                 '-1' => [ 'calculate_wga_coverage_himem' ],
             },
             -rc_name => '2Gb_job',
@@ -254,12 +254,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -flow_into  => {
                 1 => [ '?table_name=ortholog_quality' ],
-                2 => [ 'assign_quality' ],
+                2 => [ 'assign_wga_coverage_score' ],
             },
             -rc_name    => '2Gb_job',
         },
 
-        {   -logic_name => 'assign_quality',
+        {   -logic_name => 'assign_wga_coverage_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
             -analysis_capacity => 50,
             -batch_size        => 10,
