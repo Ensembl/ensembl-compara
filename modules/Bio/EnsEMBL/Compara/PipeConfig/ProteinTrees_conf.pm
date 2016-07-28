@@ -1523,10 +1523,10 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '1->A' => WHEN(
-                    '#are_all_species_reused#' => 'copy_clusters',
-                    '!#are_all_species_reused# and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
-                    '!#are_all_species_reused# and (#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
-                    '!#are_all_species_reused# and (#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
+                    '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
