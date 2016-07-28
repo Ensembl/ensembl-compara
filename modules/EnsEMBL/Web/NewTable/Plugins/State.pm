@@ -48,7 +48,7 @@ sub activity_save_orient {
 
   $config->filter_saved($orient);
 
-  my %args    = ( type => 'newtable', code => $config->class );
+  my %args    = ( type => 'Newtable', code => $config->class );
 
   # Sequence check
   my %data_in = %{$session->get_data(%args) || {}};
@@ -64,6 +64,7 @@ sub activity_save_orient {
   };
   warn "$@\n" if $@;
 
+  warn Dumper(67,\%data);
   $session->purge_data(%args);
   $session->set_data(%args, %data) if scalar keys %data;
 }
@@ -73,8 +74,11 @@ sub extend_config {
 
   my $session = $hub->session;
   
-  my %args    = ( type => 'newtable', code => $self->class );
+  my %args    = ( type => 'Newtable', code => $self->class );
   my %data    = %{$session->get_data(%args) || {}};
+
+  use Data::Dumper;
+  warn Dumper(80,\%data);
 
   $config->{'saved_orient'} = {};
   eval {
