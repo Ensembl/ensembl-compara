@@ -35,54 +35,51 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 # The majority of core databases live on two staging servers:
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/85');
-
-Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/85');
+  'mysql://ensro@ens-staging1/86');
 
 # Extra core databases that live on genebuilders' servers:
 
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    #-host => 'compara1',
-    #-user => 'ensro',
-    #-port => 3306,
-    #-species => 'rattus_norvegicus',
-    #-group => 'core',
-    #-dbname => 'db8_rat6_ref',
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'genebuild12',
+    -user => 'ensro',
+    -port => 3306,
+    -species => 'gallus_gallus',
+    -group => 'core',
+    -dbname => 'th3_chicken_core_mt',
+);
 
 
 # ------------------------- COMPARA DATABASES: -----------------------------------
 
-# Individual pipeline database for ProteinTrees:
- Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara2',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 3306,
-     -species => 'compara_ptrees',
-     -dbname => 'mp14_protein_trees_85',
- );
+# # Individual pipeline database for ProteinTrees:
+#  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#      -host => 'compara2',
+#      -user => 'ensadmin',
+#      -pass => $ENV{'ENSADMIN_PSW'},
+#      -port => 3306,
+#      -species => 'compara_ptrees',
+#      -dbname => 'mp14_protein_trees_85',
+#  );
 
- # Individual pipeline database for ncRNAtrees:
- Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara4',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 3306,
-     -species => 'compara_nctrees',
-     -dbname => 'wa2_ensembl_families_85',
- );
+#  # Individual pipeline database for ncRNAtrees:
+#  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#      -host => 'compara4',
+#      -user => 'ensadmin',
+#      -pass => $ENV{'ENSADMIN_PSW'},
+#      -port => 3306,
+#      -species => 'compara_nctrees',
+#      -dbname => 'wa2_ensembl_families_85',
+#  );
 
-# # Individual pipeline database for Families:
- Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara3',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 3306,
-     -species => 'compara_families',
-     -dbname => 'cc21_compara_nctrees_85',
- );
+# # # Individual pipeline database for Families:
+#  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#      -host => 'compara3',
+#      -user => 'ensadmin',
+#      -pass => $ENV{'ENSADMIN_PSW'},
+#      -port => 3306,
+#      -species => 'compara_families',
+#      -dbname => 'cc21_compara_nctrees_85',
+#  );
 
 
 # Compara Master database:
@@ -103,7 +100,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'cc21_ensembl_compara_84',
+    -dbname => 'wa2_ensembl_compara_85',
 );
 
 # current release database on one of Compara servers:
@@ -113,7 +110,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
-    -dbname => 'wa2_ensembl_compara_85',
+    -dbname => 'cc21_ensembl_compara_86',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -123,7 +120,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_prev',
-    -dbname => 'cc21_ensembl_ancestral_84',
+    -dbname => 'wa2_ensembl_ancestral_85',
 );
 
 # current ancestral database on one of Compara servers:
@@ -133,7 +130,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_curr',
-    -dbname => 'wa2_ensembl_ancestral_85',
+    -dbname => 'cc21_ensembl_ancestral_86',
 );
 
 # ensembl production (maintained by production team):
@@ -156,15 +153,15 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -dbname => 'ncbi_taxonomy',
 );
 
-# final compara on staging:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
-    -host => 'ens-staging',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 3306,
-    -species => 'compara_staging',
-    -dbname => 'ensembl_compara_85',
-);
+# # final compara on staging:
+# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
+#     -host => 'ens-staging',
+#     -user => 'ensadmin',
+#     -pass => $ENV{'ENSADMIN_PSW'},
+#     -port => 3306,
+#     -species => 'compara_staging',
+#     -dbname => 'ensembl_compara_86',
+# );
 
 
 1;
