@@ -190,6 +190,8 @@ sub create_glyphs {
       if ($show_label) {
         if ($overlay) {
           $new_y = $position->{'y'} + $approx_height - $text_height;
+          ## Remove padding so we can centre it properly
+          $text_width -= 10;
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
@@ -198,9 +200,9 @@ sub create_glyphs {
 
         $position = {
                       'y'           => $new_y,
-                      'width'       => $position->{'width'},
-                      'textwidth'   => $text_width, 
                       'height'      => $text_info->{'height'},
+                      'width'       => $position->{'width'},
+                      'text_width'  => $text_width, 
                       'image_width' => $slice_width,
                     };
         $self->add_label($feature, $position);
