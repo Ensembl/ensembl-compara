@@ -71,6 +71,9 @@
         $box.on("propertychange change keyup paste input",function() {
           change_event($table);
         });
+        /* Default value? */
+        var value = $table.data('view').search;
+        if(value) { $box.val(value); }
       },
       position: data.position,
       pipe: function() {
