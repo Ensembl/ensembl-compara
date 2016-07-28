@@ -70,7 +70,6 @@ sub create_glyphs {
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
-  my $show_label      = 0;
   my $label_height    = 0;
   my $total_height    = 0;
 
@@ -95,7 +94,7 @@ sub create_glyphs {
       next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
       my $text_info   = $self->get_text_info($feature->{'label'});
-      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
 
       ## Default colours, if none set in feature
       ## Note that a feature must have either a border colour or a fill colour,
@@ -165,6 +164,7 @@ sub create_glyphs {
       push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
     
       ## Optional label
+      my $show_label = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       if ($show_label) {
         if ($track_config->get('label_overlay')) {
           $new_y = $position->{'y'};
@@ -244,6 +244,7 @@ sub add_label {
 
   my $x = $feature->{'start'};
   $x = 1 if $x < 1;
+  my $align = $self->track_config->get('centre_labels') ? 'center' : 'left';
 
   my $label = {
                 font      => $self->{'font_name'},
@@ -254,7 +255,7 @@ sub add_label {
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
-                halign    => 'left',
+                halign    => $align,
                 valign    => 'center',
                 href      => $feature->{'href'},
                 title     => $feature->{'title'},
