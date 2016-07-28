@@ -34,62 +34,131 @@ use Bio::EnsEMBL::Registry;
 sub fetch_input {
     my $self = shift;
 
-    my $orth_id    = $self->param_required( 'orth_id' );
-    unless ( $self->param( 'orth_exons' ) ) { $self->param( 'orth_exons', $self->_fetch_exons( $orth_id ) ) };
+    # my $orth_id    = $self->param_required( 'orth_id' );
+    # $self->param( 'orth_exons', $self->_fetch_exons( $orth_id ) ) unless ( $self->param( 'orth_exons' ) );
+
+    my $gdb_id = $self->param_required( 'genome_db_id' );
+    my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+    my $gdb = $gdb_adaptor->fetch_by_dbID( $gdb_id );
+
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+    my $gene_members = $gene_member_adaptor->fetch_all_by_GenomeDB($gdb);
+
+    my @exons;
+    my $c = 0;
+    foreach my $gm ( @{ $gene_members } ) {
+        push( @exons, $self->get_exons_for_gene_member($gm) );
+        # $c++;
+        # last if ( $c >= 100 );
+    }
+    $self->param('exons', \@exons);
 }
 
 sub write_output {
     my $self = shift;
 
-    my $dataflow = {
-    	orth_id       => $self->param('orth_id'), 
-		orth_ranges   => $self->param('orth_ranges'), 
-		orth_dnafrags => $self->param('orth_dnafrags'),
-		orth_exons    => $self->param('orth_exons'),
-    };
-
-    $self->dataflow_output_id( $dataflow, 1 );
+    $self->dataflow_output_id( $self->param('exons'), 1 );
 }
 
-=head2 _fetch_exons
+sub get_exons_for_gene_member {
+    my ( $self, $gm ) = @_;
 
-    Description: fetch exon coordinates for each gene member in the homology
+    my $seqmems = $gm->get_all_SeqMembers;
+    my ($transcript, @exons);
+    foreach my $sm ( @{ $seqmems } ) {
+        $transcript = $sm->get_Transcript;
 
-    Returns: hash of exon coordinates; key = genome_db_id; value = array of exon coordinates
+        next unless ( defined $transcript );
 
-=cut
+        my $exon_list;
+        if    ( $sm->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
+        elsif ( $sm->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
 
-sub _fetch_exons {
-    my ( $self, $orth_id ) = @_;
+        my (%make_unique, $key);
+        foreach my $exon ( @{ $exon_list } ) {
+            my @ex_coords = ( $exon->start, $exon->end );
+            $key = join(',', $gm->dbID, @ex_coords, $sm->dbID);
+            
+            push( @exons, { 
+                gene_member_id => $gm->dbID, 
+                dnafrag_start => $ex_coords[0], 
+                dnafrag_end => $ex_coords[1], 
+                seq_member_id => $sm->dbID 
+            } ) unless ( $make_unique{ $key } );
 
-    my %orth_exons;
-
-    my $hom_adapt = $self->compara_dba->get_HomologyAdaptor;
-    my $homology  = $hom_adapt->fetch_by_dbID( $orth_id );
-
-    my $gene_members = $homology->get_all_GeneMembers();
-    foreach my $gm ( @{ $gene_members } ) {
-        $orth_exons{ $gm->genome_db_id } = [];
-        my $seqmems = $gm->get_all_SeqMembers;
-        foreach my $sm ( @{ $seqmems } ) {
-            my $transcript = $sm->get_Transcript;
-
-            my $exon_list;
-            print "\nsource_name: " . $sm->source_name . "\n";
-            if    ( $sm->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
-            elsif ( $sm->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
-
-            foreach my $exon ( @{ $exon_list } ) {
-                my @ex_coords = ( $exon->start, $exon->end );
-                push( @{ $orth_exons{ $gm->genome_db_id } }, \@ex_coords );
-            }
+            $make_unique{ $key } = 1;
         }
+        $transcript->adaptor->db->dbc->disconnect_if_idle();
     }
-
-    my $uniq_exons = $self->_unique_exons(\%orth_exons);
-
-    return $uniq_exons;
+    return @exons;
 }
+
+# =head2 _fetch_exons
+
+#     Description: fetch exon coordinates for each gene member in the homology
+
+#     Returns: hash of exon coordinates; key = genome_db_id; value = array of exon coordinates
+
+# =cut
+
+# sub _fetch_exons {
+#     my ( $self, $orth_id ) = @_;
+
+#     my ( %orth_exons, @new_exons );
+
+#     my $hom_adapt = $self->compara_dba->get_HomologyAdaptor;
+#     my $homology  = $hom_adapt->fetch_by_dbID( $orth_id );
+
+#     my $gene_members = $homology->get_all_GeneMembers();    
+
+#     my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_ranges WHERE gene_member_id = ?';
+#     my $sth = $self->db->dbc->prepare($sql);
+
+#     foreach my $gm ( @{ $gene_members } ) {
+#         $orth_exons{ $gm->genome_db_id } = [];
+#         # first, check if ranges are available in the exon_ranges table
+#         $sth->execute( $gm->dbID );
+#         my @all_coords = @{ $sth->fetchall_arrayref([]) };
+
+#         if ( defined $all_coords[0] ) {
+#             push( @{ $orth_exons{ $gm->genome_db_id } }, \@all_coords );
+#         }
+#         else { # exon boundaries not found in local DB - grab using core API and store locally
+#             my $seqmems = $gm->get_all_SeqMembers;
+#             my $transcript;
+#             foreach my $sm ( @{ $seqmems } ) {
+#                 $transcript = $sm->get_Transcript;
+
+#                 my $exon_list;
+#                 if    ( $sm->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
+#                 elsif ( $sm->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
+
+#                 my (%make_unique, $key);
+#                 foreach my $exon ( @{ $exon_list } ) {
+#                     my @ex_coords = ( $exon->start, $exon->end );
+#                     $key = $exon->start . "-" . $exon->end;
+#                     unless ( $make_unique{ $key } ) {
+#                         push( @{ $orth_exons{ $gm->genome_db_id } }, \@ex_coords );
+#                         # add to list, flow to table later
+#                         push( @new_exons, { gene_member_id => $gm->dbID, dnafrag_start => $ex_coords[0], dnafrag_end => $ex_coords[1] } );
+#                     }
+#                     $make_unique{ $key } = 1;
+#                 }
+#             }
+#             $transcript->adaptor->db->dbc->disconnect_if_idle();
+            
+#         }
+#     }
+
+#     $self->param( 'new_exons', \@new_exons );
+#     return \%orth_exons;
+# }
+
+# sub _stringify {
+#     my ( $self, $exon ) = @_;
+
+#     return '[' . $exon->[0] . ',' . $exon->[1] . ']';
+# }
 
 =head2 _unique_exons
 
@@ -97,26 +166,26 @@ sub _fetch_exons {
 
 =cut
 
-sub _unique_exons {
-	my ($self, $exons) = @_;
+# sub _unique_exons {
+# 	my ($self, $exons) = @_;
 
-	my %uniq;
-	foreach my $gdb ( keys %{ $exons } ) {
-		foreach my $range ( @{ $exons->{$gdb} } ) {
-			my $str_range = join('-', @{ $range });
-			$uniq{$str_range} = $gdb;
-		}
-	}
+# 	my %uniq;
+# 	foreach my $gdb ( keys %{ $exons } ) {
+# 		foreach my $range ( @{ $exons->{$gdb} } ) {
+# 			my $str_range = join('-', @{ $range });
+# 			$uniq{$str_range} = $gdb;
+# 		}
+# 	}
 
-	my %u_exons;
-	foreach my $str_range ( keys %uniq ) {
-		my $gdb = $uniq{$str_range};
-		my @unstr_range = split('-', $str_range);
-		push( @{ $u_exons{$gdb} }, \@unstr_range );
-	}
+# 	my %u_exons;
+# 	foreach my $str_range ( keys %uniq ) {
+# 		my $gdb = $uniq{$str_range};
+# 		my @unstr_range = split('-', $str_range);
+# 		push( @{ $u_exons{$gdb} }, \@unstr_range );
+# 	}
 
-	return \%u_exons;
-}
+# 	return \%u_exons;
+# }
 
 
 

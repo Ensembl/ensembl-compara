@@ -58,7 +58,7 @@ use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 =head2 store_clusterset
@@ -97,12 +97,10 @@ sub store_clusterset {
     my @allcluster_ids;
     foreach my $cluster_name (@cluster_list) {
         print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
-        my $cluster = $self->call_within_transaction(sub {
-            $self->add_cluster($clusterset, $allclusters->{$cluster_name});
-        });
-        push @allcluster_ids, $cluster->root_id unless $self->param('immediate_dataflow');
+        my $cluster = $self->add_cluster($clusterset, $allclusters->{$cluster_name});
+        push @allcluster_ids, $cluster->root_id if ($cluster && !$self->param('immediate_dataflow'));
     }
-    $self->finish_store_clusterset($clusterset);
+    $self->build_clusterset_indexes($clusterset);
     return ($clusterset, [@allcluster_ids]);
 }
 
@@ -140,7 +138,6 @@ sub fetch_or_create_clusterset {
         die sprintf('Found %d "%s" clustersets in the database: which one to use ?', scalar(@$all_matching_clustersets), $clusterset_id);
     } elsif (scalar(@$all_matching_clustersets) == 1) {
         my $clusterset = $all_matching_clustersets->[0];
-        $clusterset->preload();
         print STDERR "Found clusterset '$clusterset_id' with root_id=", $clusterset->root_id, "\n" if $self->debug;
         return $clusterset;
     }
@@ -183,11 +180,6 @@ sub add_cluster {
         return $existing_tree->[0];
     }
 
-    # Every cluster maps to a leaf of the clusterset
-    my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $clusterset_leaf->no_autoload_children();
-    $clusterset->root->add_child($clusterset_leaf);
-
     # The new cluster object
     my $cluster = new Bio::EnsEMBL::Compara::GeneTree(
         -member_type => $self->param('member_type'),
@@ -197,21 +189,17 @@ sub add_cluster {
         -stable_id => $cluster_def->{'model_id'},
     );
 
-    # The cluster root node
-    my $cluster_root = $cluster->root;
-    $clusterset_leaf->add_child($cluster_root);
-
     # The cluster leaves
     foreach my $seq_member_id (@$gene_list) {
         my $leaf = new Bio::EnsEMBL::Compara::GeneTreeMember;
         $leaf->seq_member_id($seq_member_id);
-        $cluster_root->add_child($leaf);
+        $cluster->add_Member($leaf);
     }
 
     # Stores the cluster
-    $self->compara_dba->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
-    $cluster->store_tag('gene_count', $cluster_root->get_child_count);
-    print STDERR "cluster root_id=", $cluster->root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
+    $self->store_tree_into_clusterset($cluster, $clusterset);
+    $cluster->store_tag('gene_count', scalar(@$gene_list));
+    print STDERR "cluster root_id=", $cluster->root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", scalar(@$gene_list), " leaves\n" if $self->debug;
     
     # Stores the tags
     for my $tag (keys %$cluster_def) {
@@ -226,6 +214,7 @@ sub add_cluster {
     }
 
     # Frees memory
+    my $cluster_root = $cluster->root;
     $cluster_root->disavow_parent();
     $cluster_root->release_tree();
 
@@ -233,7 +222,7 @@ sub add_cluster {
 }
 
 
-=head2 finish_store_clusterset
+=head2 build_clusterset_indexes
 
   Description: Updates the left/right_index of the clusterset.
   Arg [1]    : clusterset to attach the new cluster to
@@ -243,13 +232,16 @@ sub add_cluster {
 
 =cut
 
-sub finish_store_clusterset {
+sub build_clusterset_indexes {
     my $self = shift;
     my $clusterset = shift;;
 
     # left/right_index for quicker clusterset retrieval
     $clusterset->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    my $sth = $self->compara_dba->dbc->prepare('UPDATE gene_tree_node SET left_index=?, right_index=? WHERE node_id = ?');
+    foreach my $node ($clusterset->root, @{$clusterset->root->children}) {
+        $sth->execute($node->left_index, $node->right_index, $node->node_id);
+    }
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " / ", $clusterset->clusterset_id, " with $leafcount leaves\n" if $self->debug;
     $clusterset->root->print_tree if $self->debug;

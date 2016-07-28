@@ -462,6 +462,13 @@ sub pipeline_create_commands {
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
+
+        $self->db_cmd( 'CREATE TABLE homology_id_mapping (
+            curr_release_homology_id  INT NOT NULL,
+            prev_release_homology_id  INT,
+            mlss_id                   INT NOT NULL,
+            INDEX (mlss_id)
+        )' ),
     ];
 }
 
@@ -1170,15 +1177,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
-            -flow_into => WHEN(
-                '#master_db#' => 'register_mlss',
-            ),
             %hc_analysis_params,
-        },
-
-        {   -logic_name         => 'register_mlss',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -rc_name            => '2Gb_job',
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
@@ -3073,7 +3072,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_stat_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                1 => ['group_genomes_under_taxa', 'goc_group_genomes_under_taxa','get_species_set'],
+                '1->A' => ['id_map_group_genomes'],
+                'A->1' => ['goc_group_genomes_under_taxa'],
+                '1'    => ['group_genomes_under_taxa', 'get_species_set'],
             },
         },
 
@@ -3086,6 +3087,32 @@ sub core_pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'mlss_factory' ],
                 'A->1' => [ 'homology_stats_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_group_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => ['all'],
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                2 => [ 'id_map_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -flow_into => {
+                2 => [ 'id_map_homology_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_homology_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into => {
+                '3'    => [ 'homology_id_mapping' ],
             },
         },
 
@@ -3102,6 +3129,58 @@ sub core_pipeline_analyses {
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_group_genomes_under_taxa',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => 'all',
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                2 => [ 'id_map_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -flow_into => {
+                2 => [ 'id_map_homology_factory' ],
+            },
+        },
+
+        {   -logic_name => 'id_map_homology_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into => {
+                3 => [ 'homology_id_mapping' ],
+            },
+        },
+
+        {   -logic_name => 'homology_id_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
+                 1 => [ '?table_name=homology_id_mapping' ],
+                -1 => [ 'homology_id_mapping_himem' ],
+            },
+            -analysis_capacity => 100,
+        },
+
+        {   -logic_name => 'homology_id_mapping_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
+                1 => [ '?table_name=homology_id_mapping' ],
+            },
+            -analysis_capacity => 20,
+            -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name => 'homology_id_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
+                 1 => [ '?table_name=homology_id_mapping' ],
+                -1 => [ 'homology_id_mapping_himem' ],
             },
         },
 
@@ -3194,10 +3273,10 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
 
-#        $self->o('initialise_goc_pipeline') ? (
+            # initialise_goc_pipeline
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
-  #          ): (),
+
     ];
 }
 

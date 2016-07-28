@@ -298,12 +298,6 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
-            -flow_into  => [ 'register_mlss' ],
-        },
-
-
-        {   -logic_name         => 'register_mlss',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
         },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------

@@ -248,10 +248,7 @@ sub fetch_tree_at_node_id {
 sub fetch_tree_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $table = ($self->_tables)[0]->[1];
-  my $constraint = "$table.root_id = ?";
-  $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
-  return $self->_build_tree_from_nodes($self->generic_fetch($constraint));
+  return $self->_build_tree_from_nodes($self->fetch_all_by_root_id($root_id));
 }
 
 

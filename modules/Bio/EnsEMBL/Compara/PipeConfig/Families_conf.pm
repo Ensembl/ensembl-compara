@@ -317,7 +317,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'download_and_chunk_uniprot' ],
-                'A->1' => [ 'register_mlss' ],
+                'A->1' => [ 'snapshot_after_load_uniprot' ],
             },
             -rc_name => 'urgent',
         },
@@ -341,11 +341,6 @@ sub pipeline_analyses {
             -analysis_capacity => 5,
             -batch_size    => 100,
             -rc_name => '2GigMem',
-        },
-
-        {   -logic_name => 'register_mlss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -flow_into  => [ 'snapshot_after_load_uniprot' ],
         },
 
         {   -logic_name => 'snapshot_after_load_uniprot',

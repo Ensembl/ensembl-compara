@@ -22,7 +22,7 @@ my $compara_db = $dbc->url;
 
 # Test pair of species sharing an EPO aln #
 my $exp_dataflow = {
-	'aln_mlss_id' => '647',
+	'aln_mlss_ids' => [647, 634],
 	'species1_id' => '112',
 	'species2_id' => '142'
 };
@@ -37,11 +37,15 @@ standaloneJob(
 	[ # list of events to test for (just 1 event in this case)
 		[
 			'WARNING',
-			"Using EPO alignment. mlss_id = 647"
+			"Found EPO alignment. mlss_id = 647"
+		],
+		[
+			'WARNING',
+			"Found LASTZ alignment. mlss_id = 634"
 		],
 		[
 			'DATAFLOW',
-			{ mlss => 647 },
+			{ mlss => [647, 634] },
 			1
 		],
 		[ # start event
@@ -54,7 +58,7 @@ standaloneJob(
 
 # Test pair of species sharing an LASTZ aln #
 $exp_dataflow = {
-	'aln_mlss_id' => '719',
+	'aln_mlss_ids' => [719],
 	'species1_id' => '150',
 	'species2_id' => '142'
 };
@@ -69,11 +73,11 @@ standaloneJob(
 	[ # list of events to test for (just 1 event in this case)
 		[
 			'WARNING',
-			"Using LASTZ alignment. mlss_id = 719"
+			"Found LASTZ alignment. mlss_id = 719"
 		],
 		[
 			'DATAFLOW',
-			{ mlss => 719 },
+			{ mlss => [719] },
 			1
 		],
 		[ # start event
@@ -86,7 +90,7 @@ standaloneJob(
 
 # Test species set with EPO aln #
 $exp_dataflow = {
-	'aln_mlss_id' => '647',
+	'aln_mlss_ids' => [647, 634],
 	'species1_id' => '112',
 	'species2_id' => '142'
 };
@@ -102,7 +106,7 @@ standaloneJob(
 	[ # list of events to test for (just 1 event in this case)
 		[
 			'DATAFLOW',
-			{ mlss => 647 },
+			{ mlss => [647, 634] },
 			1
 		],
 		[ # start event

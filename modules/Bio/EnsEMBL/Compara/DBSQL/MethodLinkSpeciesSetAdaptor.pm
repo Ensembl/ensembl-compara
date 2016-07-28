@@ -256,6 +256,13 @@ sub _objs_from_sth {
             my $method          = $method_hash->get($method_link_id);
             my $species_set_obj = $species_set_hash->get($species_set_id);
 
+            if (!$method) {
+                warning("MethodLinkSpeciesSet with dbID=$dbID is missing method_link entry with dbID=$method_link_id, so it will not be fetched");
+            }
+            if (!$species_set_obj) {
+                warning("MethodLinkSpeciesSet with dbID=$dbID is missing species_set(_header) entry with dbID=$species_set_id, so it will not be fetched");
+            }
+
             if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
                     adaptor            => $self,

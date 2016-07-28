@@ -345,11 +345,18 @@ sub species_tree {
 
 sub root {
     my $self = shift;
+    my $no_preload = shift;
 
     if (not defined $self->{'_root'}) {
         if (defined $self->{'_root_id'} and defined $self->adaptor) {
-            # Loads all the nodes in one go
-            $self->preload;
+            if ($no_preload) {
+                # Only load 1 node
+                my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
+                $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
+            } else {
+                # Loads all the nodes in one go
+                $self->preload;
+            }
 
         } else {
             # Creates a new GeneTreeNode object

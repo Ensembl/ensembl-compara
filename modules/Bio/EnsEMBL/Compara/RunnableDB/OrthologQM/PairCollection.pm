@@ -42,6 +42,8 @@ sub fetch_input {
 	my $species1 = $self->param( 'species1' );
 	my $species2 = $self->param( 'species2' );
 
+	$self->warning("No compara_db provided - defaulting to hive DB") unless ( defined $compara_db );
+
 	# fetch required adaptors
 	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 	my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
@@ -68,7 +70,7 @@ sub fetch_input {
 		die "Cannot find $species1 in the database\n" unless ( defined $species1_gdb );
 		die "Cannot find $species2 in the database\n" unless ( defined $species2_gdb );
 
-		$self->param( 'genome_db_list', [ $species1_gdb->dbID, $species2_gdb->dbID ] );
+		$self->param( 'genome_db_ids', [ $species1_gdb->dbID, $species2_gdb->dbID ] );
 
 		return 1;
 	}
@@ -95,13 +97,13 @@ sub fetch_input {
 	foreach my $gdb ( @{ $gdb_list } ) {
 		push( @species_list, $gdb->dbID );
 	}
-	$self->param( 'genome_db_list', \@species_list );
+	$self->param( 'genome_db_ids', \@species_list );
 }
 
 sub run {
 	my $self = shift;
 
-	my @species_list = @{ $self->param( 'genome_db_list' ) };
+	my @species_list = @{ $self->param( 'genome_db_ids' ) };
 	my $ref_gdb_id   = $self->param('ref_gdb_id');
 	my $ss_id        = $self->param('species_set_id');
 
@@ -131,7 +133,15 @@ sub run {
 sub write_output {
 	my $self = shift;
 
-	$self->dataflow_output_id( $self->param('genome_db_pairs'), 2 );
+	my @exon_dataflow;
+	foreach my $gdb_id ( @{ $self->param('genome_db_ids') } ) {
+		push( @exon_dataflow, { genome_db_id => $gdb_id } );
+	}
+
+	$self->dataflow_output_id( \@exon_dataflow, 2 ); # to prepare_exons
+	$self->dataflow_output_id( { genome_db_pairs => $self->param('genome_db_pairs') }, 1 ); # to exon_funnel
+	
+	$self->dataflow_output_id( { aln_mlss_ids => $self->param('aln_mlss_ids') }, 3 ); # to reset_mlss
 }
 
 1;
