@@ -34,11 +34,11 @@ sub create_menu_node {
   ## @param Hashref of any other details to be saved as track 'data'
   my ($self, $menu_key, $caption, $options) = @_;
 
-  return $self->tree->create_node($menu_key, {
-    'caption'   => $caption,
-    'node_type' => 'menu',
-    %{$options || {}}
-  });
+  $options ||= {};
+  $options->{'caption'}   = $caption;
+  $options->{'node_type'} = 'menu';
+
+  return $self->tree->create_node($menu_key, $options);
 }
 
 sub add_menus {
