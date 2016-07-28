@@ -38,6 +38,12 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 sub js_plugin { return "new_table_search"; }
 sub position { return [qw(top-right)]; }
 
+sub filter_saved {
+  my ($config,$data) = @_;
+
+#  delete $data->{'sort'};
+}
+
 package EnsEMBL::Web::NewTable::Plugins::Columns;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 

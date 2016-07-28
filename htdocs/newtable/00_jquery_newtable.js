@@ -641,10 +641,7 @@
       widgets[name].go($table,$widget);
     });
     if($table.data('abandon-ship')) { return; }
-    flux(widgets,$table,'think',1).then(function() {
-      maybe_get_new_data(widgets,$table,config);
-      flux(widgets,$table,'think',-1);
-    });
+    $table.trigger('view-updated');
   }
 
   // TODO make this configurable ENSWEB-2113
