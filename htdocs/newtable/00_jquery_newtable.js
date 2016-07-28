@@ -642,10 +642,6 @@
     });
     if($table.data('abandon-ship')) { return; }
     $table.trigger('view-updated');
-//    flux(widgets,$table,'think',1).then(function() {
-//      maybe_get_new_data(widgets,$table,config);
-//      flux(widgets,$table,'think',-1);
-//    });
   }
 
   // TODO make this configurable ENSWEB-2113
