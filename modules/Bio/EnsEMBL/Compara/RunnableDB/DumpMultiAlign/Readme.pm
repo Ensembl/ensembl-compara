@@ -142,17 +142,10 @@ sub _get_species_tree {
     my $species_tree = $mlss->species_tree;
     my $genome_dbs = $mlss->species_set_obj->genome_dbs;
     return (undef, $genome_dbs) unless $species_tree;
-    my $newick_species_tree = $species_tree->species_tree;
-
-    my %genome_dbs_by_name;
-    foreach my $genome_db (@$genome_dbs) {
-	my $name = lc $genome_db->name;
-	next if ($name eq "ancestral_sequences");
-	$genome_dbs_by_name{$name} = $genome_db;
-    }
+    my $newick_species_tree = $species_tree->root->newick_format('ryo', '%{-n}:%{d}');
 
     foreach my $leaf (@{$species_tree->root->get_all_sorted_leaves}) {
-        push @$ordered_species, $genome_dbs_by_name{lc $leaf->node_name} if $leaf->node_name;
+        push @$ordered_species, $leaf->genome_db;
     }
 
     return ($newick_species_tree, $ordered_species);

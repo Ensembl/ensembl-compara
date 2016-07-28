@@ -48,7 +48,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');      # we want to treat it as a 'pure' Hive pipeline
 
@@ -185,7 +185,7 @@ sub pipeline_analyses {
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'zero_parent_id' ],
-                2 => { ':////ncbi_taxa_node' => { 'taxon_id' => '#_0#', 'parent_id' => '#_1#', 'rank' => '#_2#', 'genbank_hidden_flag' => '#_10#'} },
+                2 => { '?table_name=ncbi_taxa_node' => { 'taxon_id' => '#_0#', 'parent_id' => '#_1#', 'rank' => '#_2#', 'genbank_hidden_flag' => '#_10#'} },
             },
             -rc_name => 'highmem',
         },
@@ -221,7 +221,7 @@ sub pipeline_analyses {
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'load_merged_names' ],
-                2 => { ':////ncbi_taxa_name' => { 'taxon_id' => '#_0#', 'name' => '#_1#', 'name_class' => '#_3#'} },
+                2 => { '?table_name=ncbi_taxa_name' => { 'taxon_id' => '#_0#', 'name' => '#_1#', 'name_class' => '#_3#'} },
             },
             -rc_name => 'highmem',
         },
@@ -235,7 +235,7 @@ sub pipeline_analyses {
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'web_name_patches' ],
-                2 => { ':////ncbi_taxa_name' => { 'name' => '#_0#', 'taxon_id' => '#_1#', 'name_class' => 'merged_taxon_id'} },
+                2 => { '?table_name=ncbi_taxa_name' => { 'name' => '#_0#', 'taxon_id' => '#_1#', 'name_class' => 'merged_taxon_id'} },
             },
         },
 

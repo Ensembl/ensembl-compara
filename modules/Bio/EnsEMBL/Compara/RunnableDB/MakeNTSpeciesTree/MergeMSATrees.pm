@@ -47,7 +47,7 @@ sub fetch_input {
  my $tree_path = $self->param('species_tree_bl');
  my $full_species_tree = $self->_slurp($tree_path);
  chomp $full_species_tree;
- my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree", 'name');
+ my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree");
 
  eval {
   $species_tree_adapt->store($full_tree, $self->param('dummy_mlss_value'));
@@ -59,24 +59,25 @@ sub fetch_input {
   $self->param('dummy_mlss_value'), "compara_species_tree");
  my $full_tree_root =  $full_species_tree_obj->root;
 
+ my $all_phylofit_trees = $self->param_required('phylofit_trees');
+
  # start to process the small trees
  my @tree_mlss_ids = split ",", $self->param('msa_mlssid_csv_string');
 
  foreach my $mlss_id(@tree_mlss_ids){
-  my @orig_species_trees = $species_tree_adapt->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
-  my $orig_species_tree = $orig_species_trees[0];
-  my $orig_tree = $orig_species_tree->species_tree;
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+  my $orig_tree = $mlss->species_tree->root->newick_format('ryo', '%{n}:%{d}');
   $orig_tree=~s/:0;/;/;
 
-  my $orig_species = lc join ":", $orig_tree=~m/([[:alpha:]_]+)/g;
-  my $pfit_species_trees = $species_tree_adapt->fetch_all_by_method_link_species_set_id_label_pattern($mlss_id, ".pf");
+  my $orig_species = lc join ":", map {$_->name} @{$mlss->species_tree->root->get_all_leaves};
+  my $pfit_species_trees = $all_phylofit_trees->{$mlss_id};
 
   my(@tree_branch_lengths, @species_branch_lengths, @median_bls, $median_newick);
   # get the branch lengths from the phylofit trees
   foreach my $pfit_tree(@$pfit_species_trees){ 
-   my $pfit_species = lc join ":", $pfit_tree->species_tree=~m/([[:alpha:]_]+)/g;
+   my $pfit_species = lc join ":", $pfit_tree=~m/([[:alpha:]_]+)/g;
    if($pfit_species eq $orig_species){
-    push @tree_branch_lengths, [ $pfit_tree->species_tree=~m/([\d\.]+)/g ];
+    push @tree_branch_lengths, [ $pfit_tree=~m/([\d\.]+)/g ];
    }  
   }
 
@@ -103,7 +104,7 @@ sub fetch_input {
    }
   }
   # store the median branch length trees
-  my $median_tree = $species_tree_adapt->new_from_newick($median_newick, "median_species_tree", 'name');
+  my $median_tree = $species_tree_adapt->new_from_newick($median_newick, "median_species_tree");
   $median_tree=~s/:0;/;/;
 
   eval {
@@ -134,7 +135,7 @@ sub fetch_input {
  }
  my $merged_newick = $full_tree_root->newick_format("simple");
  $merged_newick=~s/:0;/;/;
- my $merged_tree = $species_tree_adapt->new_from_newick($merged_newick, "merged_branch_lengths", 'name');
+ my $merged_tree = $species_tree_adapt->new_from_newick($merged_newick, "merged_branch_lengths");
  $species_tree_adapt->store($merged_tree, $self->param('dummy_mlss_value')); 
 }
 

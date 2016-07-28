@@ -60,8 +60,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
-use Data::Dumper;
 
 sub default_options {
     my ($self) = @_;
@@ -209,8 +211,8 @@ sub pipeline_analyses {
                     check_gene_content  => 0,
                 },
                 -flow_into => {
-                    2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
-                    3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
+                    2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
+                    3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 },
             },
 
@@ -251,7 +253,7 @@ sub pipeline_analyses {
                     'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
                 },
                 -flow_into => {
-                    2 => [ ':////anchor_align' ],
+                    2 => [ '?table_name=anchor_align' ],
                 },
             },
 

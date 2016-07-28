@@ -56,6 +56,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -355,10 +358,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {
-                2 => {'check_reuse_db'                  => undef, 
-                      ':////accu?reused_gdb_ids=[]'     => { 'reused_gdb_ids' => '#genome_db_id#'} 
-                     },
-                3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
+                2 => [ 'check_reuse_db', '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id' ],
+                3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
             },
 	    -rc_name => '1Gb',
         },
@@ -418,7 +419,7 @@ sub pipeline_analyses {
             -hive_capacity => 4,
             -flow_into => {
 		 1 => [ 'seq_member_table_reuse' ],    # n_reused_species
-		 2 => [ 'mysql:////sequence' ],
+		 2 => [ '?table_name=sequence' ],
             },
 	    -rc_name => '1Gb',
         },

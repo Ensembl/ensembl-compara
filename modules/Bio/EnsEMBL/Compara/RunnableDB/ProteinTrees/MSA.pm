@@ -223,7 +223,7 @@ sub run_msa {
 
     my $cmd = $self->get_msa_command_line;
 
-    my $cmd_out = $self->run_command("cd $tempdir; $cmd", $self->param('cmd_max_runtime'));
+    my $cmd_out = $self->run_command("cd $tempdir; $cmd", { timeout => $self->param('cmd_max_runtime') });
 
     if ($cmd_out->exit_code == -2) {
         $self->dataflow_output_id( $self->input_id, -2 );

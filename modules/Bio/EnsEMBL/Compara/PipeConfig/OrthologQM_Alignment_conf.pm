@@ -73,6 +73,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ( 'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf' );
 
 sub hive_meta_table {
@@ -216,7 +218,7 @@ sub pipeline_analyses {
         {   -logic_name => 'combine_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage',
             -flow_into  => {
-                '1'  => [ ':////ortholog_quality' ],
+                '1'  => [ '?table_name=ortholog_quality' ],
                 '2'  => [ 'assign_quality' ],
                 '-1' => [ 'combine_coverage_himem' ],
             },
@@ -226,7 +228,7 @@ sub pipeline_analyses {
         {   -logic_name => 'combine_coverage_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage',
             -flow_into  => {
-                1 => [ ':////ortholog_quality' ],
+                1 => [ '?table_name=ortholog_quality' ],
                 2 => [ 'assign_quality' ],
             },
             -rc_name    => '2Gb_job',

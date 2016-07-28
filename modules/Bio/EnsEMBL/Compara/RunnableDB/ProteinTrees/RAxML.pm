@@ -53,12 +53,10 @@ sub param_defaults {
 
 sub run {
     my $self = shift;
-    $self->cleanup_worker_temp_directory;
     my $best_fit_model = $self->set_raxml_model();
     $self->param( 'best_fit_model', $best_fit_model );
     print "best-fit model: " . $self->param('best_fit_model') . "\n" if ( $self->debug );
-    $self->run_generic_command;
-
+    $self->SUPER::run(@_)
     #sleep(600);
 }
 

@@ -89,8 +89,8 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
-    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
+    $self->_load_species_tree_string_from_db();
 
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
@@ -148,10 +148,7 @@ sub _run_fasttree {
     $cmd .= " $aln_file";
     $cmd .= " > $fasttree_output";
 
-    my $runCmd = $self->run_command($cmd);
-    if ($runCmd->exit_code) {
-        $self->throw("error running parsimonator\n$cmd\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 } );
 
     $self->store_newick_into_nc_tree($tag, $fasttree_output);
 
@@ -175,10 +172,7 @@ sub _run_parsimonator {
     $cmd .= " -n $parsimonator_tag";
     $cmd .= " -p 12345";
 
-    my $runCmd = $self->run_command("cd $worker_temp_directory; $cmd");
-    if ($runCmd->exit_code) {
-        $self->throw("error running parsimonator\ncd $worker_temp_directory; $cmd\n");
-    }
+    $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 } );
 
     my $parsimonator_output = $worker_temp_directory . "/RAxML_parsimonyTree.${parsimonator_tag}.0";
     $self->param('parsimony_tree_file', $parsimonator_output);
@@ -207,10 +201,7 @@ sub _run_raxml_light {
     $cmd .= " -t $parsimony_tree";
     $cmd .= " -n $raxmlight_tag";
 
-    my $runCmd = $self->run_command("cd $worker_temp_directory; $cmd");
-    if ($runCmd->exit_code) {
-        $self->throw("error running raxmlLight\ncd $worker_temp_directory; $cmd\n");
-    }
+    $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 });
 
     my $raxmlight_output = $worker_temp_directory . "/RAxML_result.${raxmlight_tag}";
     $self->store_newick_into_nc_tree($tag, $raxmlight_output);

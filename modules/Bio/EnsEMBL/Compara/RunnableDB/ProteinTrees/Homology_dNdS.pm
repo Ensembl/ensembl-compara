@@ -161,12 +161,11 @@ sub calc_genetic_distance {
           if (grep {$_->taxon_id == 7742} @{$member->taxon->get_all_ancestors}) {
               # 1:mamalian mt
               $codeml->set_parameter("icode", 1);
-              last;
           } else {
               # 4:invertebrate mt
               $codeml->set_parameter("icode", 4);
-              last;
           }
+          last;
       } elsif ($member->dnafrag->dna_type eq 'PT') {
       }
   }

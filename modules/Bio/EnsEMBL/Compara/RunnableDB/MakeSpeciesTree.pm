@@ -34,7 +34,8 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
                 { 'species_tree_input_file' => $self->o('species_tree_input_file') },   # if this parameter is set, the tree will be taken from the file, otherwise it will be generated
             ],
             -flow_into  => {
-                3 => { 'mysql:////meta' => { 'meta_key' => 'test_species_tree', 'meta_value' => '#species_tree_string#' } },    # store the tree in 'meta' table (as an example)
+                # store the tree in 'method_link_species_set_tag' table (as an example)
+                3 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
 
@@ -74,8 +75,6 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift @_;
-
-    return if($self->param('species_tree_string'));     # skip the functionality if the tree has been provided
 
     my $species_tree_root;
     my $species_tree_string;
@@ -165,7 +164,6 @@ sub write_output {
     my $species_tree_string = $species_tree_root->newick_format( $newick_format );
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
-    $species_tree->species_tree($species_tree_string);
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 

@@ -98,7 +98,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-    $self->param('model_id', $nc_tree->get_value_for_tag('clustering_id'));
+    $self->param('model_id', $nc_tree->get_value_for_tag('model_id'));
 
     $self->fetch_recovered_member_entries($nc_tree_id);
 
@@ -200,10 +200,7 @@ sub run_ncrecoversearch {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $input_fasta;
 
-  my $run_cmd = $self->run_command($cmd);
-  if ($run_cmd->exit_code) {
-    $self->throw("error running cmsearch:\n".$run_cmd->err);
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   open TABFILE,"$tabfilename" or die "$!\n";
   while (<TABFILE>) {

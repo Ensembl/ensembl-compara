@@ -56,6 +56,33 @@ use warnings;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
+
+=head2 _make_hash_table
+
+  Description: Build a lookup table for the characters in $delim and keep it in %delim_hash_tables
+
+=cut
+
+my %delim_hash_tables;
+sub _make_hash_table {
+    my $delim = shift;
+    my %delims = map {$_ => 1} split(//, $delim);
+    $delim_hash_tables{$delim} = \%delims;
+    return \%delims;
+}
+
+# Prepare all the hash tables to speed up the parser
+_make_hash_table(',);');
+_make_hash_table('(');
+_make_hash_table('(;');
+_make_hash_table('[,);');
+_make_hash_table('[:,);');
+_make_hash_table('[(:,)');
+
+my $whitespace = _make_hash_table(qq{ \f\n\r\t});
+
+
+
 =head2 parse_newick_into_tree
 
   Arg 1      : string $newick_tree
@@ -74,10 +101,11 @@ sub parse_newick_into_tree
   my $newick = shift;
   my $class = shift;
 
+  my @char_array = split(//, $newick);
   my $count=1;
   my $debug = 0;
   print STDERR "NEWICK:$newick\n" if($debug);
-  my $token = next_token(\$newick, "(;");
+  my $token = next_token(\@char_array, "(;");
   my $lastset = undef;
   my $node = undef;
   my $root = undef;
@@ -91,7 +119,7 @@ sub parse_newick_into_tree
         $node = new Bio::EnsEMBL::Compara::NestedSet;
 	  if (defined $class) {
           # Make sure that the class is loaded
-          eval "require $class";
+          eval "require $class";    ## no critic
 		  bless $node, $class;
 	  }
         $node->node_id($count++);
@@ -99,7 +127,7 @@ sub parse_newick_into_tree
         $root=$node unless($root);
         if($token eq '(') { #create new set
           printf("    create set\n")  if($debug);
-          $token = next_token(\$newick, "[(:,)");
+          $token = next_token(\@char_array, "[(:,)");
           $state = 1;
           $bracket_level++;
           $lastset = $node;
@@ -111,18 +139,18 @@ sub parse_newick_into_tree
         if(!($token =~ /[\[\:\,\)\;]/)) { 
           $node->name($token);
           if($debug) { print("    naming leaf"); $node->print_node; }
-          $token = next_token(\$newick, "[:,);");
+          $token = next_token(\@char_array, "[:,);");
         }
         $state = 3;
       }
       elsif ($state == 3) { # optional : and distance
         if($token eq ':') {
-          $token = next_token(\$newick, "[,);");
+          $token = next_token(\@char_array, "[,);");
           $node->distance_to_parent($token);
           if($debug) { print("set distance: $token"); $node->print_node; }
-          $token = next_token(\$newick, ",);"); #move to , or )
+          $token = next_token(\@char_array, ",);"); #move to , or )
         } elsif ($token eq '[') { # NHX tag without previous blength
-          $token .= next_token(\$newick, ",);");
+          $token .= next_token(\@char_array, ",);");
         }
         $state = 4;
       }
@@ -154,7 +182,7 @@ sub parse_newick_into_tree
                     $node->add_tag("$key","$value");
                 }
             }
-            # $token = next_token(\$newick, ",);");
+            # $token = next_token(\@char_array, ",);");
             #$node->distance_to_parent($token);
             # Force a duplication = 0 for some strange treefam internal nodes
             unless ($node->is_leaf) {
@@ -163,7 +191,7 @@ sub parse_newick_into_tree
               }
             }
             if($debug) { print("NHX tags: $token"); $node->print_node; }
-            $token = next_token(\$newick, ",);"); #move to , or )
+            $token = next_token(\@char_array, ",);"); #move to , or )
         }
         $state = 5;
       }
@@ -172,21 +200,21 @@ sub parse_newick_into_tree
           if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
           $lastset = $lastset->parent;
-          $token = next_token(\$newick, "[:,);"); 
+          $token = next_token(\@char_array, "[:,);");
           # it is possible to have anonymous internal nodes no name
           # no blength but with NHX tags
           $state=2;
           $bracket_level--;
         } elsif($token eq ',') {
-          $token = next_token(\$newick, "[(:,)"); #can be un_blengthed nhx nodes
+          $token = next_token(\@char_array, "[(:,)"); #can be un_blengthed nhx nodes
           $state=1;
         } elsif($token eq ';') {
           #done with tree
           throw("parse error: unbalanced ()\n") if($bracket_level ne 0);
           $state=13;
-          $token = next_token(\$newick, "(");
+          $token = next_token(\@char_array, "(");
         } else {
-          throw("parse error: expected ; or ) or ,\n");
+          throw("parse error: expected ; or ) or , but got '$token'\n");
         }
       }
 
@@ -201,41 +229,34 @@ sub parse_newick_into_tree
 
 
 sub next_token {
-  my $string = shift;
+  my $char_array = shift;
   my $delim = shift;
-  
-  $$string =~ s/^(\s)+//;
 
-  return undef unless(length($$string));
-  
-  #print("input =>$$string\n");
-  #print("delim =>$delim\n");
-  my $index=undef;
-
-  my @delims = split(/ */, $delim);
-  foreach my $dl (@delims) {
-    my $pos = index($$string, $dl);
-    if($pos>=0) {
-      $index = $pos unless(defined($index));
-      $index = $pos if($pos<$index);
-    }
+  # Remove the leading whitespace
+  while (scalar(@$char_array) and $whitespace->{$char_array->[0]}) {
+      shift @$char_array;
   }
-  unless(defined($index)) {
+
+  return undef unless scalar(@$char_array);
+  
+  #print("input =>".join('',@$char_array)."\n");
+  #print("delim =>$delim\n");
+
+  my @token_array;
+  my $hash_delims = $delim_hash_tables{$delim};
+  # Consume characters from @$char_array until we find a delimiter character
+  while (scalar(@$char_array) and !$hash_delims->{$char_array->[0]}) {
+      push @token_array, (shift @$char_array);
+  }
+  unless(scalar(@$char_array)) {
     throw("couldn't find delimiter $delim\n");
   }
 
-  my $token ='';
-
-  if($index==0) {
-    $token = substr($$string,0,1);
-    $$string = substr($$string, 1);
-  } else {
-    $token = substr($$string, 0, $index);
-    $$string = substr($$string, $index);
-  }
+  # We want to consume at least 1 character
+  my $token = scalar(@token_array) ? join('', @token_array) : (shift @$char_array);
 
   #print("  token     =>$token\n");
-  #print("  outstring =>$$string\n\n");
+  #print("  outstring =>".join('',@$char_array)."\n\n");
   
   return $token;
 }

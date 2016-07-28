@@ -32,8 +32,6 @@ GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
 	   'dbuser=s' => \$dbuser);
 
-my $species_pair = shift @ARGV;
-
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => $host,
                                                      -user   => $dbuser,
                                                      -port   => 5306,

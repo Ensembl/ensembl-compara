@@ -46,12 +46,9 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
  my $self = shift @_;
  # print the species tree
- my $species_tree_a = $self->compara_dba->get_SpeciesTreeAdaptor;
- my $species_tree = $species_tree_a->fetch_by_method_link_species_set_id_label(
-                     $self->param('tree_mlss_id') );
- throw("no species tree found for mlssid ".$self->param('tree_mlss_id')) unless $species_tree;
- my $newick_tree = $species_tree->species_tree;
- $newick_tree=~s/[\d\.:]+//g;
+ my $mlss_a = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+ my $mlss = $mlss_a->fetch_by_dbID( $self->param_required('tree_mlss_id') );
+ my $newick_tree = $mlss->species_tree->root->newick_format('ryo', '%{-n}');
  $self->param("newick_tree", lc($newick_tree));
  
  Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@{ $self->param('core_dbs') });
@@ -101,9 +98,9 @@ sub fetch_input {
 sub write_output {
  my $self = shift @_;
  my $block_id = $self->param('block_id');
- my $gab_file = "/tmp/".$block_id;
+ my $gab_file = $self->worker_temp_directory.$block_id;
 
- my $msa_fasta_file = "/tmp/msa_fasta.$block_id"; 
+ my $msa_fasta_file = $self->worker_temp_directory."msa_fasta.$block_id";
  open(IN, ">$msa_fasta_file") or throw("cant open $msa_fasta_file");
  my $fasta_set = $self->param('fasta_set');
  foreach my $assemb_type(keys %{ $fasta_set }){
@@ -117,28 +114,21 @@ sub write_output {
    }
   }
  }
- my $species_tree_file = "/tmp/species_tree.$block_id";
+ my $species_tree_file = $self->worker_temp_directory."species_tree.$block_id";
  open(TR, ">$species_tree_file") or throw("cant open $species_tree_file file\n");
  print TR $self->param('newick_tree');
  close(TR);
 # run phylofit 
- my $command = $self->param('phylofit_exe'). " --tree \"$species_tree_file\" --subst-mod HKY85 --out-root $gab_file " . $msa_fasta_file;
- system($command); 
- open(TREE, "/tmp/$block_id.mod") or throw("cant open /tmp/$block_id.mod");
+ my @command = ($self->param('phylofit_exe'), '--tree', $species_tree_file, '--subst-mod', 'HKY85', '--out-root', $gab_file, $msa_fasta_file);
+ system(@command);
+ my $output_file_name = "$gab_file.mod";
+ open(TREE, $output_file_name) or throw("cant open $output_file_name");
  my ($newick_tree_string) = grep {/^TREE: /} <TREE>;
  $newick_tree_string =~s/TREE: //;
-# store the tree
- my $species_tree_ad = $self->compara_dba->get_SpeciesTreeAdaptor;
- my $tree = $species_tree_ad->new_from_newick($newick_tree_string, "$block_id.pf", 'name'); 
- $species_tree_ad->store($tree, $self->param('tree_mlss_id'));
-
-# my $sql = "INSERT INTO method_link_species_set_tag VALUES (?,?,?)";
-# my $sth = $self->compara_dba->dbc->prepare($sql);
-# $sth->execute($self->param('tree_mlss_id'), "alignment_tree", $newick_tree_string);
-
+ $self->dataflow_output_id( { 'phylofit_tree_string' => $newick_tree_string }, 2);
 
 # remove the files
- unlink "$species_tree_file", "$gab_file", "$msa_fasta_file", "/tmp/$block_id.mod";
+ unlink $species_tree_file, $gab_file, $msa_fasta_file, $output_file_name;
 }
 
 

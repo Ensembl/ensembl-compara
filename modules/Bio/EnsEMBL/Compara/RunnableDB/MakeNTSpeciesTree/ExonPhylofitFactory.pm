@@ -65,10 +65,8 @@ sub fetch_input {
  my $mlss = $mlss_a->fetch_by_dbID($self->param('msa_mlssid'));
 
  my $msa_species_tree = $mlss->species_tree;
- my $orig_tree = $msa_species_tree->species_tree;
- $orig_tree=~s/:0;/;/;
- my $orig_species = lc join ":", sort {$a cmp $b} $orig_tree=~m/([[:alpha:]_]+)/g;
- $self->param('msa_species_tree', $msa_species_tree);
+ my $orig_species = lc join ":", sort {$a cmp $b} map {$_->name} @{$msa_species_tree->root->get_all_leaves};
+ $self->param('msa_species_tree_string', $msa_species_tree->root->newick_format('ryo', '%{n}:%{d}'));
 
  my(%exon_aligns,%species_names);
 
@@ -111,7 +109,7 @@ sub write_output {
  my $self = shift @_;
  my $exon_set = $self->param('exon_set');
  foreach my$exon_id(keys %{ $exon_set }){
-  my $exon_dir = "/tmp/".$ENV{'USER'}."_$$"."_$exon_id";
+  my $exon_dir = $self->worker_temp_directory."exon_$exon_id";
   mkdir $exon_dir or throw "could not make $exon_dir";
   my $msa_fasta_file = "$exon_dir/msa_fasta.$exon_id";
   open(IN, ">$msa_fasta_file") or throw("cant open $msa_fasta_file");
@@ -120,10 +118,10 @@ sub write_output {
   }
   my $tree_file = "$exon_dir/msa_species_tree";
   open(TR, ">$tree_file") or throw("cant open $tree_file");
-  print TR $self->param('msa_species_tree')->species_tree;
+  print TR $self->param('msa_species_tree_string');
   my $phylo_out_file = "$exon_dir/phylo$exon_id";
-  my $command = $self->param('phylofit_exe'). " --tree \"$tree_file\" --subst-mod HKY85 --out-root $phylo_out_file " . $msa_fasta_file;
-  system($command);
+  my @command = ($self->param('phylofit_exe'), '--tree', $tree_file, '--subst-mod', 'HKY85', '--out-root', $phylo_out_file, $msa_fasta_file);
+  system(@command);
   if( -e "$phylo_out_file.mod" ){
    open(TREE, "$phylo_out_file.mod") or warn ("cant open $phylo_out_file.mod");
    my($training_lnl, $phylo_newick);
@@ -137,9 +135,7 @@ sub write_output {
      $phylo_newick = $_;
     }
    }
-   my $species_tree_ad = $self->compara_dba->get_SpeciesTreeAdaptor;
-   my $pyhlo_tree = $species_tree_ad->new_from_newick($phylo_newick, "phylo_exe:$exon_id:$training_lnl", 'name'); 
-   $species_tree_ad->store($pyhlo_tree, $self->param('msa_mlssid'));
+   $self->dataflow_output_id( { 'exon_id' => $exon_id, 'training_lnl' => $training_lnl, 'phylofit_tree_string' => $phylo_newick }, 2);
    unlink "$phylo_out_file.mod";
   }
   unlink "$tree_file", "$msa_fasta_file";

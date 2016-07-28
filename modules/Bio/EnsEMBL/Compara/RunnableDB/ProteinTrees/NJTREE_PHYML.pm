@@ -63,7 +63,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 use File::Glob;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
@@ -113,7 +113,7 @@ sub write_output {
 
     my @dataflow = ();
 
-    my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
+    my @ref_support = qw(phyml-nt nj-ds phyml-aa nj-dn nj-mm);
 
     my $treebest_stored_tree = $self->param('gene_tree');
     if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
@@ -149,7 +149,7 @@ sub write_output {
     }
 
     if ($self->param('store_intermediate_trees')) {
-        my %relevant_clustersets = map {$_ => 1} qw(phyml-nt nj-ds phyml-aa nj-dn nj-mm);
+        my %relevant_clustersets = map {$_ => 1} @ref_support;
         # First need to delete all the leftover nodes and roots
         foreach my $other_tree (@{$self->param('tree_adaptor')->fetch_all_linked_trees($self->param('gene_tree'))}) {
             warn "what about ", $other_tree->clusterset_id;
@@ -160,11 +160,10 @@ sub write_output {
             $other_tree->release_tree();
         }
         delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use the freshest data
-        foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
+        foreach my $filename (glob(sprintf('%s/%s.%d.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix'), $self->param('gene_tree_id')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
             my $clusterset_id = $1;
-            next if $clusterset_id eq 'mmerge';
-            next if $clusterset_id eq 'phyml';
+            next unless $relevant_clustersets{$clusterset_id};
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
             my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('gene_tree'), [], 1);
             push @dataflow, $newtree->root_id;

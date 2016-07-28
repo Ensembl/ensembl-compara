@@ -210,7 +210,7 @@ CREATE TABLE cmsearch_hit (
 
 DROP TABLE IF EXISTS CAFE_data;
 CREATE TABLE CAFE_data (
-       fam_id                 VARCHAR(20) NOT NULL,
+       fam_id                 int unsigned NOT NULL AUTO_INCREMENT,
        tree                   mediumtext NOT NULL,
        tabledata              mediumtext NOT NULL,
 

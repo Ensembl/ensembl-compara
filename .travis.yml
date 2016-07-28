@@ -51,6 +51,7 @@ install:
     - cpanm -n Devel::Cover::Report::Coveralls
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
+    - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
 
 script: "./travisci/harness.sh"
 

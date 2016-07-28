@@ -28,6 +28,7 @@ use warnings;
 use Getopt::Long;
 use DBI;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 
 my ($help, $srcDB, $destDB, $host, $user, $pass, $port, $seq_region_file, $dest_host, $dest_user, $dest_pass, $dest_port, $source_url, $dest_url);
 
@@ -90,14 +91,17 @@ my $to_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
 						-group => 'core',
 						-dbname => $destDB);
 
+my $from_dbc = $from_dba->dbc;
+my $to_dbc = $to_dba->dbc;
+
 print "\nWARNING: If the $destDB database on $dest_host already exists the existing copy \n"
   . "will be destroyed. Proceed (y/n)? ";
 
 my $key = lc(getc());
 
 unless( $key =~ /y/ ) {
-  $from_dba->dbc->disconnect();
-  $to_dba->dbc->disconnect();
+  $from_dbc->disconnect();
+  $to_dbc->disconnect();
   print "Test Genome Creation Aborted\n";
   exit;
 }
@@ -107,7 +111,7 @@ print "Proceeding with test genome database $destDB on $dest_host creation\n";
 # dropping any destDB database if there
 my $array_ref = $to_dbh->selectall_arrayref("SHOW DATABASES LIKE '$destDB'");
 if (scalar @{$array_ref}) {
-  $to_dba->dbc->do("DROP DATABASE $destDB");
+  $to_dbc->do("DROP DATABASE $destDB");
 }
 # creating destination database
 $to_dbh->do( "CREATE DATABASE " . $destDB )
@@ -126,17 +130,17 @@ if($rc != 0) {
   $rc >>= 8;
   die "mysqldump and insert failed with return code: $rc";
 }
-$to_dba->dbc->do("use $destDB");
+$to_dbc->do("use $destDB");
 
 # populate coord_system table
 my $query = "SELECT * FROM $srcDB.coord_system";
 my $table_name = "coord_system";
-copy_data_in_text_mode($from_dba, $to_dba, $table_name, $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query);
 
 #Store available coord_systems
 my %coord_systems;
 my $sql = "select coord_system_id, name, rank from coord_system";
-my $sth = $to_dba->dbc->prepare($sql);
+my $sth = $to_dbc->prepare($sql);
 $sth->execute();
 while (my $row = $sth->fetchrow_hashref) {
     $coord_systems{$row->{name}} = $row->{rank};
@@ -183,11 +187,11 @@ foreach my $seq_region (@seq_regions) {
 
   $query = "SELECT a.* FROM $srcDB.seq_region s JOIN $srcDB.assembly a ON (s.seq_region_id = a.cmp_seq_region_id) WHERE seq_region_id IN ($seq_region_list)";
 
-  copy_data_in_text_mode($from_dba, $to_dba, "assembly", $query);
+  copy_data_in_text_mode($from_dbc, $to_dbc, "assembly", $query);
 
   #convert seq_region_name to seq_region_id
   my $sql = "SELECT seq_region_id FROM seq_region WHERE name = \"$seq_region_name\"";
-  my $sth = $from_dba->dbc->prepare($sql);
+  my $sth = $from_dbc->prepare($sql);
   $sth->execute();
   my ($seq_region_id) = $sth->fetchrow_arrayref->[0];
   $sth->finish;
@@ -195,17 +199,17 @@ foreach my $seq_region (@seq_regions) {
   $all_seq_region_names->{$seq_region_name} = $seq_region_id;
 }
 
-my ($asm_seq_region_ids,$asm_seq_region_ids_str)  = get_ids($to_dba,"asm_seq_region_id", "assembly") ;
+my ($asm_seq_region_ids,$asm_seq_region_ids_str)  = get_ids($to_dbc,"asm_seq_region_id", "assembly") ;
 
 my $all_seq_region_ids;
-my ($cmp_seq_region_ids,$cmp_seq_region_ids_str)  = get_ids($to_dba,"cmp_seq_region_id", "assembly") ;
+my ($cmp_seq_region_ids,$cmp_seq_region_ids_str)  = get_ids($to_dbc,"cmp_seq_region_id", "assembly") ;
 
 $query = "SELECT ax.* FROM assembly_exception ax WHERE ax.seq_region_id in ($asm_seq_region_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "assembly_exception", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "assembly_exception", $query);
 
 # populate attrib_type table
 $query = "SELECT * FROM attrib_type";
-copy_data_in_text_mode($from_dba, $to_dba, "attrib_type", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "attrib_type", $query);
 
 # populate seq_region and seq_region_attrib tables
 foreach my $id (@$asm_seq_region_ids) {
@@ -217,31 +221,31 @@ foreach my $id (@$cmp_seq_region_ids) {
 my $all_seq_region_ids_str = join ",", @$all_seq_region_ids;
 
 $query = "SELECT s.* from seq_region s where s.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "seq_region", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query);
 
 $query = "SELECT sa.* FROM seq_region_attrib sa WHERE sa.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "seq_region_attrib", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region_attrib", $query);
 
 # populate dna table
 $query = "SELECT d.* FROM dna d WHERE d.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "dna", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "dna", $query);
 
 # populate repeat_feature and repeat_consensus tables
 # repeat_features are stored at sequence_level
 $query = "SELECT rf.* FROM repeat_feature rf WHERE rf.seq_region_id in ($cmp_seq_region_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "repeat_feature", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_feature", $query);
 
 foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
   my $seq_region_id = $all_seq_region_names->{$seq_region_name};
 
   $query = "SELECT rf.* FROM repeat_feature rf WHERE rf.seq_region_id=$seq_region_id AND rf.seq_region_start<$seq_region_end AND rf.seq_region_end>$seq_region_start";
-  copy_data_in_text_mode($from_dba, $to_dba, "repeat_feature", $query);
+  copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_feature", $query);
 }
 
-my ($repeat_consensus_ids, $repeat_consensus_ids_str) = get_ids($to_dba, "repeat_consensus_id", "repeat_feature");
+my ($repeat_consensus_ids, $repeat_consensus_ids_str) = get_ids($to_dbc, "repeat_consensus_id", "repeat_feature");
 $query = "SELECT rc.* FROM repeat_consensus rc WHERE rc.repeat_consensus_id in ($repeat_consensus_ids_str)";
-copy_data_in_text_mode($from_dba, $to_dba, "repeat_consensus", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_consensus", $query);
 
 
 # populate transcript, transcript_attrib and transcript_stable_id tables
@@ -251,113 +255,69 @@ foreach my $seq_region (@seq_regions) {
   my $seq_region_id = $all_seq_region_names->{$seq_region_name};
 
   $query = "SELECT t.* FROM transcript t WHERE t.seq_region_id=$seq_region_id AND t.seq_region_end<$seq_region_end AND t.seq_region_end>$seq_region_start";
-  copy_data_in_text_mode($from_dba, $to_dba, "transcript", $query);
+  copy_data_in_text_mode($from_dbc, $to_dbc, "transcript", $query);
 }
 
-my ($transcript_ids, $transcript_ids_str) = get_ids($to_dba, "transcript_id", "transcript");
-my ($gene_ids, $gene_ids_str) = get_ids($to_dba, "gene_id", "transcript");
+my ($transcript_ids, $transcript_ids_str) = get_ids($to_dbc, "transcript_id", "transcript");
+my ($gene_ids, $gene_ids_str) = get_ids($to_dbc, "gene_id", "transcript");
 
 if ($transcript_ids_str) {
     $query = "SELECT ta.* FROM transcript_attrib ta WHERE ta.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "transcript_attrib", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "transcript_attrib", $query);
 }
 
 # populate translation, translation_attrib and translation_stable_id tables
 if ($transcript_ids_str) {
     $query = "SELECT tl.* FROM translation tl WHERE tl.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "translation", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "translation", $query);
 }
 
-my ($translation_ids, $translation_ids_str) = get_ids($to_dba, "translation_id", "translation");
+my ($translation_ids, $translation_ids_str) = get_ids($to_dbc, "translation_id", "translation");
 
 if ($translation_ids_str) {
     $query = "SELECT tla.* FROM translation_attrib tla WHERE tla.translation_id in ($translation_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "translation_attrib", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "translation_attrib", $query);
 }
 
 # populate exon_transcript, exon and exon_stable_id tables
 if ($transcript_ids_str) {
     $query = "SELECT et.* FROM exon_transcript et WHERE et.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "exon_transcript", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "exon_transcript", $query);
 }
 
-my ($exon_ids, $exon_ids_str) = get_ids($to_dba, "exon_id", "exon_transcript");
+my ($exon_ids, $exon_ids_str) = get_ids($to_dbc, "exon_id", "exon_transcript");
 
 if ($exon_ids_str) {
     $query = "SELECT e.* FROM exon e WHERE e.exon_id in ($exon_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "exon", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "exon", $query);
 }
 
 # populate gene, gene_stable_id and alt_allele tables
 if ($gene_ids_str) {
     $query = "SELECT g.* FROM gene g WHERE g.gene_id in ($gene_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "gene", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "gene", $query);
 }
 
 if ($gene_ids_str) {
     $query = "SELECT alt.* FROM alt_allele alt WHERE alt.gene_id in ($gene_ids_str)";
-    copy_data_in_text_mode($from_dba, $to_dba, "alt_allele", $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "alt_allele", $query);
 }
 
 # populate meta and meta_coord table
 $query = "SELECT * FROM meta";
-copy_data_in_text_mode($from_dba, $to_dba, "meta", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "meta", $query);
 
 $query = "SELECT * FROM meta_coord";
-copy_data_in_text_mode($from_dba, $to_dba, "meta_coord", $query);
+copy_data_in_text_mode($from_dbc, $to_dbc, "meta_coord", $query);
 
 print "Test genome database $destDB created\n";
 
-sub copy_data_in_text_mode {
-  my ($from_dba, $to_dba, $table_name, $query, $step) = @_;
-   print "start copy_data_in_text_mode $table_name\n";
-
-  my $user = $to_dba->dbc->username;
-  my $pass = $to_dba->dbc->password;
-  my $host = $to_dba->dbc->host;
-  my $port = $to_dba->dbc->port;
-  my $dbname = $to_dba->dbc->dbname;
-  my $use_limit = 1;
-  my $start = 0;
-
-  if (!defined $step) {
-      $step = 100000;
-  }
-
-  while (1) {
-    my $start_time = time();
-    my $end = $start + $step - 1;
-    my $sth;
-    print "$query start $start end $end\n";
-    $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
-
-    $start += $step;
-    $sth->execute();
-    my $all_rows = $sth->fetchall_arrayref;
-    $sth->finish;
-    ## EXIT CONDITION
-    return if (!@$all_rows);
-    my $time=time(); 
-    my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
-    open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
-    }
-    close(TEMP);
-    #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-
-    system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
-
-    unlink("$filename");
-    #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-  }
-}
 
 sub get_ids {
-    my ($dba, $id, $table) = @_;
+    my ($dbc, $id, $table) = @_;
     my $ids;
     my $sql = "SELECT distinct($id) FROM $table";
-    my $sth = $dba->dbc->prepare($sql);
+    my $sth = $dbc->prepare($sql);
     $sth->execute();
 
     while (my $row = $sth->fetchrow_arrayref) {

@@ -104,6 +104,7 @@ standaloneJob(
 	'goc_mlss_id'=>'100021',
     'ref_species_dbid' => 31,
     'non_ref_species_dbid' => 155,
+    'reuse_goc'           => 0,
     'ortholog_info_hashref'	=>	{ '1045569' => {
         '46043' => '83505425',
         '14469' => '83531457',
@@ -166,7 +167,7 @@ standaloneJob(
 				'right1' => 1,
 				"right2" => 0
 			},
-			2
+			3
 		],
 
 		[
@@ -182,7 +183,7 @@ standaloneJob(
           'right2' => undef,
           'goc_score' => 50
 			},
-			2
+			3
 		],
 
 		[
@@ -198,7 +199,7 @@ standaloneJob(
           'right2' => undef,
           'goc_score' => 50
 			},
-			2
+			3
 		],
 	],
 );

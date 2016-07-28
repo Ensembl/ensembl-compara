@@ -232,6 +232,7 @@ sub default_options {
 	'previous_db' => $self->o('livemirror_loc'),
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
+    'max_percent_diff_patches' => 99.99,
 	'do_pairwise_gabs' => 1,
 	'do_compare_to_previous_db' => 1,
 
@@ -705,7 +706,7 @@ sub pipeline_analyses {
 			      'previous_db' => $self->o('previous_db'),
 			      'ensembl_release' => $self->o('ensembl_release'),
 			      'prev_release' => $self->o('prev_release'),
-			      'max_percent_diff' => $self->o('max_percent_diff'),
+			      'max_percent_diff' => $self->o('patch_alignments') ? $self->o('max_percent_diff_patches') : $self->o('max_percent_diff'),
 			     },
 	      -wait_for => [ 'set_internal_ids_collection' ],
 	      -rc_name => '1Gb',

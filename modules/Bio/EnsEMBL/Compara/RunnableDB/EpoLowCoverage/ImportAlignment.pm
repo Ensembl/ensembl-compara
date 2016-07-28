@@ -45,7 +45,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -68,6 +70,15 @@ sub fetch_input {
   #with $self->db (Hive DBAdaptor)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
+    #if the database name is defined in the url, then open that
+    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
+	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
+    } else {
+	#open the most recent compara database
+	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
+    }
+
+    $self->param('from_dbc', $self->param('from_dbc'));
 }
 
 =head2 run
@@ -108,19 +119,11 @@ sub write_output {
     return 1;
 }
 
-#Uses copy_data method from copy_data.pl script
+#Uses copy_data method from Utils::CopyData module
 sub importAlignment {
     my $self = shift;
 
-    #if the database name is defined in the url, then open that
-    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
-	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
-    } else {
-	#open the most recent compara database
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
-    }
-    
-    my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
+    my $dbname = $self->param('from_dbc')->dbname;
     my $mlss_id = $self->param('method_link_species_set_id');
 
     my $ancestor_genome_db = $self->param('from_comparaDBA')->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
@@ -129,7 +132,7 @@ sub importAlignment {
     my $step = $self->param('step');
 
     ##Find min and max of the relevant internal IDs in the FROM database
-    my $sth = $self->param('from_comparaDBA')->dbc->prepare("SELECT
+    my $sth = $self->param('from_dbc')->prepare("SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
         MIN(gat.node_id), MAX(gat.node_id),
@@ -157,216 +160,81 @@ sub importAlignment {
     }
 
     #Copy the species_set_header
-    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set_header",
-	      undef, undef, undef,
 	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
 
     #Copy the method_link_species_set
-    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "method_link_species_set",
-	      undef, undef, undef,
 	      "SELECT * FROM method_link_species_set WHERE method_link_species_set_id = $mlss_id");
 
     #Copy the species_set
-    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set",
-	      undef, undef, undef,
 	      "SELECT species_set.* FROM species_set JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
 
     #copy genomic_align_block table
+    my $gab_sql;
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_block",
-		  "genomic_align_block_id",
-		  $min_gab, $max_gab,
-		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
+        $gab_sql = "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id";
     } else {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_block",
-		  "genomic_align_block_id",
-		  $min_gab, $max_gab,
-		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id", $step);
+        $gab_sql = "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id";
     }
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+              "genomic_align_block",
+              $gab_sql,
+              "genomic_align_block_id",
+              $min_gab, $max_gab,
+              $step);
 
     #copy genomic_align_tree table
+    my $gat_sql;
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_tree",
-		  "root_id",
-		  $min_root_id, $max_root_id,
-		  "SELECT gat.*".
-		  " FROM genomic_align_tree gat  LEFT JOIN genomic_align USING (node_id)".
-		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
-
+        $gat_sql = "SELECT gat.*".
+                    " FROM genomic_align_tree gat  LEFT JOIN genomic_align USING (node_id)".
+                    " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id";
     } else {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_tree",
-		  "root_id",
-		  $min_root_id, $max_root_id,
-		  "SELECT gat.*".
-		  " FROM genomic_align ga".
-		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint", $step);
+        $gat_sql = "SELECT gat.*".
+                    " FROM genomic_align ga".
+                    " JOIN dnafrag USING (dnafrag_id)".
+                    " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
     }
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+              "genomic_align_tree",
+              $gat_sql,
+              "root_id",
+              $min_root_id, $max_root_id,
+              $step);
+
     #copy genomic_align table
+    my $ga_sql;
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align",
-		  "genomic_align_id",
-		  $min_ga, $max_ga,
-		  "SELECT ga.*".
-		  " FROM genomic_align ga ".
-		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id", $step);
-
+        $ga_sql = "SELECT ga.*".
+                    " FROM genomic_align ga ".
+                    " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id";
     } else {
-#	copy_data($self->{'from_comparaDBA'}, $self->compara_dba,
-#		  "genomic_align",
-#		  "genomic_align_id",
-#		  $min_ga, $max_ga,
-#		  "SELECT *".
-#		  " FROM genomic_align".
-#		  " WHERE method_link_species_set_id = $mlss_id");
-
 	#Don't copy over ancestral genomic_aligns 
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align",
-		  "genomic_align_id",
-		  $min_ga, $max_ga,
-		  "SELECT genomic_align.*".
-		  " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
-		  " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint", $step);
+        #NOTE: what don't we apply the same filter when $dnafrag_id is set ??
+        $ga_sql = "SELECT genomic_align.*".
+                    " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
+                    " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
     }
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+              "genomic_align",
+              $ga_sql,
+              "genomic_align_id",
+              $min_ga, $max_ga,
+              $step);
 }
 
-
-=head2 copy_data
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
-  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
-  Arg[4]      : string $table
-  Arg[5]      : string $sql_query
-
-  Description : copy data in this table using this SQL query.
-  Returns     :
-  Exceptions  : throw if argument test fails
-
-=cut
-
-sub copy_data {
-  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
-
-  print "Copying data in table $table_name\n";
-
-  my $sth = $from_dba->dbc->db_handle->column_info($from_dba->dbc->dbname, undef, $table_name, '%');
-  $sth->execute;
-  my $all_rows = $sth->fetchall_arrayref;
-  my $binary_mode = 0;
-  foreach my $this_col (@$all_rows) {
-    if (($this_col->[5] eq "BINARY") or ($this_col->[5] eq "VARBINARY") or
-        ($this_col->[5] eq "BLOB") or ($this_col->[5] eq "BIT")) {
-      $binary_mode = 1;
-      last;
-    }
-  }
-  #speed up writing of data by disabling keys, write the data, then enable 
-  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
-  if ($binary_mode) {
-    #copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $query);
-  } else {
-    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step);
-  }
-  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
-}
-
-
-=head2 copy_data_in_text_mode
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
-  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
-  Arg[4]      : string $table
-  Arg[5]      : string $sql_query
-
-  Description : copy data in this table using this SQL query.
-  Returns     :
-  Exceptions  : throw if argument test fails
-
-=cut
-
-sub copy_data_in_text_mode {
-  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step) = @_;
-
-  my $user = $to_dba->dbc->username;
-  my $pass = $to_dba->dbc->password;
-  my $host = $to_dba->dbc->host;
-  my $port = $to_dba->dbc->port;
-  my $dbname = $to_dba->dbc->dbname;
-  my $use_limit = 0;
-  my $start = $min_id;
-  #my $step = 100000;
-  #my $step = 10000;
-
-  #Default step size.
-  if (!defined $step) {
-      $step = 10000;
-  }
-
-  #If not using BETWEEN, revert back to LIMIT
-  if (!defined $index_name && !defined $min_id && !defined $max_id) {
-      $use_limit = 1;
-      $start = 0;
-  }
-
-  while (1) {
-    my $end = $start + $step - 1;
-    my $sth;
-    
-    if (!$use_limit) {
-	$sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
-    } else {
-	$sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
-    }
-    $start += $step;
-    $sth->execute();
-    my $all_rows = $sth->fetchall_arrayref;
-    ## EXIT CONDITION
-    return if (!@$all_rows);
-  
-    my $filename = "/tmp/$table_name.copy_data.$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
-    }
-    close(TEMP);
-    if ($pass) {
-	unless (system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename) == 0) {
-	    throw("Failed mysqlimport -u$user -p$pass -h$host -P$port -L -l -i $dbname $filename");
-	}
-    } else {
-	unless (system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename) ==0) {
-	    throw("Failed mysqlimport -u$user -h$host -P$port -L -l -i $dbname $filename");
-	}
-    }
-    unlink("$filename");
-  }
-}
 
 #Assumes the from and to databases are on the same server and downloads all entries from genomic_align_block, genomic_align
 #and genomic_align_tree
 sub importAlignment_quick {
     my $self = shift;
 
-    #if the database name is defined in the url, then open that
-    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
-	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
-    } else {
-	#open the most recent compara database
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
-    }
-    
-    my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
+    my $dbname = $self->param('from_dbc')->dbname;
     my $mlss_id = $self->param('method_link_species_set_id');
 
     #my $sql = "INSERT INTO genomic_align_block SELECT * FROM ?.genomic_align_block WHERE method_link_species_set_id = ?\n";

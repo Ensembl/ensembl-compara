@@ -56,15 +56,14 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 sub new_from_newick {
-    my ($self, $newick, $label, $name_method, $taxon_id_method) = @_;
+    my ($self, $newick, $label) = @_;
 
     my $st = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
-    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st, $name_method, $taxon_id_method);
+    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st);
 
     my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $speciesTree->label($label);
-    $speciesTree->species_tree($newick);
     $speciesTree->root($st_root);
 
     return $speciesTree;
@@ -81,7 +80,7 @@ sub fetch_by_method_link_species_set_id_label {
 
 sub fetch_all_by_method_link_species_set_id_label_pattern {
  my ($self, $mlss_id, $label) = @_; 
- $label = 'default' unless (defined $label);
+ $label //= '';
  my $constraint = "method_link_species_set_id = $mlss_id AND label LIKE '%$label%'";
  return  $self->generic_fetch($constraint);
 }
@@ -117,8 +116,8 @@ sub store {
 
     # Store the tree in the header table
     # method_link_species_set_id must be set to its real value to honour the foreign key
-    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, label, species_tree) VALUES (?,?,?,?)');
-    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default', $tree->species_tree);
+    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, label) VALUES (?,?,?)');
+    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default');
 
     $tree->adaptor($self);
     return $root_id;
@@ -128,7 +127,6 @@ sub store {
 sub _columns {
     return qw ( str.root_id
                 str.method_link_species_set_id
-                str.species_tree
                 str.label
              );
 }
@@ -160,7 +158,6 @@ sub init_instance_from_rowhash {
     my ($self, $tree, $rowhash) = @_;
 
     $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
-    $tree->species_tree($rowhash->{species_tree});
     $tree->label($rowhash->{label});
     $tree->root_id($rowhash->{root_id});
 

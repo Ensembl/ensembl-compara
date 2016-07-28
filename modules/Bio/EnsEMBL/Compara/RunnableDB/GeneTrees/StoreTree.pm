@@ -34,6 +34,38 @@ use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+=head2 _write_temp_tree_file
+
+    Creates a temporary file in the worker temp directory, with the given content
+
+=cut
+
+sub _write_temp_tree_file {
+    my ($self, $tree_name, $tree_content) = @_;
+
+    my $filename = $self->worker_temp_directory . $tree_name;
+    open my $fh, ">", $filename or die "Could not open '$filename' for writing : $!";
+    print $fh $tree_content;
+    close $fh;
+
+    return $filename;
+}
+
+
+=head2 get_species_tree_file
+
+Creates a file in the worker temp directory with the species tree.
+The species-tree string is loaded by the virtual method _load_species_tree_string_from_db()
+
+=cut
+
+sub get_species_tree_file {
+    my ($self, $filename) = @_;
+
+    return $self->_write_temp_tree_file($filename // 'spec_tax.nh', $self->_load_species_tree_string_from_db());
+}
+
+
 # Should we define hidden_genes here ?
 
 ########################################
@@ -176,6 +208,8 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
     my $treenode_adaptor = $tree->adaptor->db->get_GeneTreeNodeAdaptor;
 
+    $tree->species_tree( $self->param('species_tree') );
+    $tree->species_tree_root_id( $self->param('species_tree')->root_id );
     $tree->root->build_leftright_indexing(1);
     $self->call_within_transaction(sub {
         $tree->adaptor->store($tree);
@@ -434,7 +468,9 @@ sub store_tree_into_clusterset {
     $clusterset_leaf->no_autoload_children();
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
+    $clusterset_leaf->tree($clusterset);
     $newtree->clusterset_id($clusterset->clusterset_id);
+    $newtree->root->{'_different_tree_object'} = 1;
 
     $self->call_within_transaction(sub {
         $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
@@ -481,6 +517,7 @@ sub store_alternative_tree {
         $self->throw("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
+    $clusterset->root('no_preload');    # We're not returning $clusterset, and we know that the method calls below don't need a preloaded tree
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree, $remove_previous_tree);
     return undef unless $self->parse_newick_into_tree($newick, $newtree, $ref_support);
     $self->store_genetree($newtree);

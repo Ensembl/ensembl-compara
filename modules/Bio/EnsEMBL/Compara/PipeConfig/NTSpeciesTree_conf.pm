@@ -24,6 +24,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::NTSpeciesTree_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -185,6 +188,9 @@ sub pipeline_analyses {
    -batch_size => 10,
    -rc_name => 'mem6600max',
    -max_retry_count => 1,
+   -flow_into => {
+    '2' => { '?accu_name=phylofit_trees&accu_address={tree_mlss_id}{block_id}&accu_input_variable=phylofit_tree_string' => INPUT_PLUS(), },
+   },
   },
  
 #  {

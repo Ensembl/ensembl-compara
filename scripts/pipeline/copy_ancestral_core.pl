@@ -37,7 +37,7 @@ my $description = q{
 
 =head1 NAME
 
-copy_data.pl
+copy_ancestral_core.pl
 
 =head1 AUTHORS
 
@@ -63,24 +63,24 @@ regions are copied from the old database.
 
 =head1 SYNOPSIS
 
-perl copy_data.pl --help
+perl copy_ancestral_core.pl --help
 
-perl copy_data.pl
+perl copy_ancestral_core.pl
     [--reg-conf registry_configuration_file]
     --from production_database_name
     --to release_database_name
     --mlss method_link_species_set_id
 
-perl copy_data.pl
+perl copy_ancestral_core.pl
     --from_url production_database_url
     --to_url release_database_url
     --mlss method_link_species_set_id
 
 example:
 
-bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 
-copy_data.pl --from_url mysql://username@server_name/sf5_production 
---to_url mysql://username:password@server_name/sf5_release --mlss 340
+bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
+  copy_ancestral_core.pl --from_url mysql://username@server_name/sf5_production \
+  --to_url mysql://username:password@server_name/sf5_release --mlss 340
 
 
 
@@ -155,6 +155,7 @@ the copy to several species.
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
 
@@ -190,7 +191,7 @@ my $to_dba = get_DBAdaptor($to_url, $to_name);
 #Check have coord_system set
 check_coord_system_table($to_dba);
 
-copy_data($from_dba, $to_dba, $mlss_id);
+copy_ancestral_data($from_dba->dbc, $to_dba->dbc, $mlss_id);
 
 
 =head2 get_DBAdaptor
@@ -260,17 +261,17 @@ sub check_coord_system_table {
     }
 }
 
-sub copy_data {
-    my ($from_dba, $to_dba, $mlss_id) = @_;
+sub copy_ancestral_data {
+    my ($from_dbc, $to_dbc, $mlss_id) = @_;
     my $coord_system_name = "ancestralsegment";
 
     #
-    #Check from_dba has correct structure. 
+    #Check from_dbc has correct structure.
     #
     my $name = "Ancestor_" . $mlss_id;
 
     my $name_sql = "SELECT count(*) FROM seq_region WHERE name LIKE '$name" . "_%'";
-    my $sth = $from_dba->dbc->prepare($name_sql);
+    my $sth = $from_dbc->prepare($name_sql);
     $sth->execute();
     my ($num_sr) = $sth->fetchrow_array();
     $sth->finish;
@@ -283,14 +284,14 @@ sub copy_data {
     #Check coord_system_id the same in from_db and to_db
     #
     my $cs_sql = "SELECT coord_system_id FROM coord_system WHERE name = '$coord_system_name'";
-    $sth = $to_dba->dbc->prepare($cs_sql);
+    $sth = $to_dbc->prepare($cs_sql);
     $sth->execute();
     my ($coord_system_id) = $sth->fetchrow_array();
     $sth->finish;
     #print "cs $coord_system_id\n";
 
     $cs_sql = "SELECT count(*) FROM seq_region WHERE coord_system_id = $coord_system_id";
-    $sth = $from_dba->dbc->prepare($cs_sql);
+    $sth = $from_dbc->prepare($cs_sql);
     $sth->execute();
     my ($num_cs) = $sth->fetchrow_array();
     $sth->finish;
@@ -300,7 +301,7 @@ sub copy_data {
     }
     
     #Check no clashes in to_db
-    $sth = $to_dba->dbc->prepare($name_sql);
+    $sth = $to_dbc->prepare($name_sql);
     $sth->execute();
     my ($num_to_sr) = $sth->fetchrow_array();
     $sth->finish;
@@ -315,7 +316,7 @@ sub copy_data {
     #
     my $range_sql = "SELECT min(seq_region_id), max(seq_region_id) FROM seq_region WHERE name LIKE '$name" . "_%'";
 
-    $sth = $from_dba->dbc->prepare($range_sql);
+    $sth = $from_dbc->prepare($range_sql);
     $sth->execute();
     my ($min_sr, $max_sr) = $sth->fetchrow_array();
     $sth->finish;
@@ -324,12 +325,12 @@ sub copy_data {
     #Create correct number of spaceholder rows in seq_region table in to_db 
     #
     my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '$name" . "_%'";
-    copy_data_in_text_mode($from_dba, $to_dba, "seq_region", "seq_region_id", $min_sr, $max_sr, $query);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
 
     #
     #Find min and max of new seq_region_ids
     #
-    $sth = $to_dba->dbc->prepare($range_sql);
+    $sth = $to_dbc->prepare($range_sql);
     $sth->execute();
     my ($new_min_sr, $new_max_sr) = $sth->fetchrow_array();
     $sth->finish;
@@ -337,7 +338,7 @@ sub copy_data {
     #
     #Create temporary table in from_db to store mappings
     #
-    $sth = $from_dba->dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
+    $sth = $from_dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
 
     $sth->execute();
     $sth->finish;
@@ -355,7 +356,7 @@ sub copy_data {
     #remove final comma
     chop $values;
     #print "values $values\n";
-    $sth = $from_dba->dbc->prepare("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
+    $sth = $from_dbc->prepare("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
     $sth->execute();
     $sth->finish;
 
@@ -365,7 +366,7 @@ sub copy_data {
     $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '$name" . "_%'";
 
     print "copying seq_region in replace mode\n";
-    copy_data_in_text_mode($from_dba, $to_dba, "seq_region", "seq_region_id", $min_sr, $max_sr, $query, undef, 1);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, 1);
 
     #
     #Copy over the dna with new seq_region_ids
@@ -373,74 +374,14 @@ sub copy_data {
     $query = "SELECT new_seq_region_id, sequence FROM tmp_seq_region_mapping JOIN dna USING (seq_region_id) WHERE seq_region_id > 0";
 
     print "copying dna\n";
-    copy_data_in_text_mode($from_dba, $to_dba, "dna", "seq_region_id", $min_sr, $max_sr, $query, 1000);
+    copy_data_in_text_mode($from_dbc, $to_dbc, "dna", $query, "seq_region_id", $min_sr, $max_sr, 1000);
 
     #
     #Drop temporary table
     #
-    $sth = $from_dba->dbc->prepare("DROP TABLE tmp_seq_region_mapping");
+    $sth = $from_dbc->prepare("DROP TABLE tmp_seq_region_mapping");
     $sth->execute();
     $sth->finish;
 
 }
 
-sub copy_data_in_text_mode {
-  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id,$query, $step,$replace) = @_;
-   print "start copy_data_in_text_mode\n";
-
-  my $user = $to_dba->dbc->username;
-  my $pass = $to_dba->dbc->password;
-  my $host = $to_dba->dbc->host;
-  my $port = $to_dba->dbc->port;
-  my $dbname = $to_dba->dbc->dbname;
-  my $use_limit = 0;
-  my $start = $min_id;
-
-  #If not using BETWEEN, revert back to LIMIT
-  if (!defined $index_name && !defined $min_id && !defined $max_id) {
-      $use_limit = 1;
-      $start = 0;
-  }
-
-  #constrained elements need smaller step than default
-  if (!defined $step) {
-      $step = 100000;
-  }
-  while (1) {
-    my $start_time = time();
-    my $end = $start + $step - 1;
-    my $sth;
-    #print "start $start end $end\n";
-    #print "query $query\n";
-    if (!$use_limit) {
-	$sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
-    } else {
-	$sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
-    }
-    $start += $step;
-    $sth->execute();
-    my $all_rows = $sth->fetchall_arrayref;
-    $sth->finish;
-    ## EXIT CONDITION
-    return if (!@$all_rows);
-    my $time=time(); 
-    my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
-    #print "filename $filename\n";
-    open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
-    }
-    close(TEMP);
-    #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-
-    if (defined $replace && $replace) {
-	#print "replace mode\n";
-	system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -r $dbname $filename");
-    } else {
-	#print "ignore mode\n";
-	system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
-    }
-    unlink("$filename");
-    #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-  }
-}

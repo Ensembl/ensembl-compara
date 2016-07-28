@@ -59,7 +59,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 sub param_defaults {
@@ -77,7 +77,8 @@ sub param_defaults {
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree();
+    my $species_tree = $self->param('gene_tree')->method_link_species_set->species_tree('default');
+    $self->param('species_tree', $species_tree);
     $species_tree->attach_to_genome_dbs();
     return $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}');
 }
@@ -110,7 +111,7 @@ sub run_treebest_best {
         my $args = sprintf('best -f %s', $species_tree_file);
         
         # Optional arguments
-        $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
+        $args .= sprintf(' -p %s.%d', $self->param('intermediate_prefix'), $self->param('gene_tree_id')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
         $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
@@ -312,28 +313,7 @@ sub _get_treebest_cmd {
 sub _run_and_return_output {
     my ($self, $cmd) = @_;
 
-    my $cmd_out = $self->run_command($cmd);
-    return $cmd_out->out unless $cmd_out->exit_code;
-
-    $self->throw(sprintf("error running treebest [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
-}
-
-
-=head2 _write_temp_tree_file
-
-    Creates a temporary file in the worker temp directory, with the given content
-
-=cut
-
-sub _write_temp_tree_file {
-    my ($self, $tree_name, $tree_content) = @_;
-
-    my $filename = $self->worker_temp_directory . $tree_name;
-    open my $fh, ">", $filename or die $!;
-    print $fh $tree_content;
-    close $fh;
-
-    return $filename;
+    return $self->run_command($cmd, {die_on_failure => 1})->out;
 }
 
 

@@ -240,7 +240,7 @@ sub run_infernal {
 
   my $cmalign_exe = $self->require_executable('cmalign_exe');
 
-  my $model_id = $self->param('gene_tree')->get_value_for_tag('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  my $model_id = $self->param('gene_tree')->get_value_for_tag('model_id') or $self->throw("'model_id' tag for this tree is not defined");
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);
@@ -263,10 +263,7 @@ sub run_infernal {
   $cmd .= " " . $self->param('input_fasta');
 
 #  $DB::single=1;1;
-  my $command = $self->run_command($cmd);
-  if ($command->exit_code) {
-      $self->throw("error running infernal, $!\n");
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   # cmbuild --refine the alignment
   ######################
@@ -295,10 +292,7 @@ sub run_infernal {
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  $command = $self->run_command($cmd);
-  if ($command->exit_code) {
-      $self->throw("error running cmbuild refine, $!\n");
-  }
+  $self->run_command($cmd, { die_on_failure => 1 });
 
   $self->param('stk_output', $refined_stk_output);
   $self->param('refined_profile', $refined_profile);
@@ -522,8 +516,6 @@ sub _store_aln_tags {
     print STDERR "Storing Alignment tags...\n" if ($self->debug());
     my $sa = $tree->get_SimpleAlign;
     $DB::single=1;1;
-    # Model id
-    $tree->store_tag("model_id",$self->param('model_id') );
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;

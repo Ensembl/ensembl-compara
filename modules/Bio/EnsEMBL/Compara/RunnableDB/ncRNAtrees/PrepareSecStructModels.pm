@@ -95,8 +95,8 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
-    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
+    $self->_load_species_tree_string_from_db();
 
     my $alignment_id = $self->param_required('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
@@ -207,10 +207,8 @@ sub _run_bootstrap_raxml {
   print "$cmd\n" if($self->debug);
   my $bootstrap_starttime = time()*1000;
 
-  my $run_cmd = $self->run_command("cd $worker_temp_directory; $cmd");
-  if ($run_cmd->exit_code) {
-    $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n".$run_cmd->err);
-  }
+  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 } );
+
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
 
   my $ideal_msec = 30000; # 5 minutes

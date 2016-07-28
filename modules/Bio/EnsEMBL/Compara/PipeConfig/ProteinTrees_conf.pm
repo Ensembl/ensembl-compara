@@ -357,6 +357,7 @@ sub default_options {
         # Data needed for goc
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
+        'reuse_goc'                     => undef,
         # affects 'group_genomes_under_taxa'
 
     };
@@ -481,6 +482,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'goc_threshold'                 => $self->o('goc_threshold'),
+        'reuse_goc'                     => $self->o('reuse_goc'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
@@ -1164,15 +1166,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
-            -flow_into => WHEN(
-                '#master_db#' => 'register_mlss',
-            ),
             %hc_analysis_params,
-        },
-
-        {   -logic_name         => 'register_mlss',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -rc_name            => '2Gb_job',
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------

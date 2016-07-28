@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::BaseAge_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.2;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -250,7 +250,7 @@ sub pipeline_analyses {
               -hive_capacity => $self->o('base_age_capacity'),
               -rc_name => '3.6Gb',
               -flow_into => {
-                             2 => ':////accu?bed_files={seq_region}',
+                             2 => '?accu_name=bed_files&accu_address={seq_region}',
                             },
 
             },

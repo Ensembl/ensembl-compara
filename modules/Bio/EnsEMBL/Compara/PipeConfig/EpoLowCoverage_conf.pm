@@ -23,6 +23,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
@@ -249,7 +252,7 @@ sub pipeline_analyses {
 			       },
 		-flow_into => {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
+			       'A->1' => [ 'make_species_tree' ],    # backbone
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -263,27 +266,16 @@ sub pipeline_analyses {
 		-rc_name => '100Mb',
 	    },
 
-	    {   -logic_name => 'load_genomedb_funnel',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -meadow_type=> 'LOCAL',
-		-flow_into => {
-                    '1->A' => {
-                               'make_species_tree' => [
-                                                       {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                                                       ],
-                               },
-
-		    'A->1' => [ 'create_default_pairwise_mlss'],
-		},
-		-rc_name => '100Mb',
-        },
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
 	    {   -logic_name    => 'make_species_tree',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
+                                   'blength_tree_file' => $self->o('species_tree_file'),
+                                   'newick_format' => 'simple',
 				  },
 		-rc_name => '100Mb',
+		-flow_into => [ 'create_default_pairwise_mlss'],
 	    },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
@@ -298,7 +290,7 @@ sub pipeline_analyses {
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
-			       2 => [ 'mysql:////pipeline_wide_parameters' ],
+			       2 => [ '?table_name=pipeline_wide_parameters' ],
 			      },
 		-rc_name => '100Mb',
 	    },

@@ -93,7 +93,7 @@ use warnings;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
@@ -292,7 +292,7 @@ sub run_generic_command {
     }
 
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
-    my $run_cmd = $self->run_command($cmd, $self->param('cmd_max_runtime'));
+    my $run_cmd = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
     if ($run_cmd->exit_code) {
         if ($run_cmd->exit_code == -2) {
             $self->dataflow_output_id( $self->input_id, -2 );
@@ -335,7 +335,7 @@ sub run_generic_command {
         if (scalar(@{$multifurcations}) > 0) {
 
             #fetch species tree
-            my $species_tree = $gene_tree->species_tree;
+            my $species_tree = $self->param('species_tree');
 
             #------------------
             # MRCA binarization
@@ -422,7 +422,6 @@ sub get_gene_tree_file {
     }
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
-    open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
 
     my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
 
@@ -438,16 +437,14 @@ sub get_gene_tree_file {
             $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
         }
     }
-    print $genetree $newick;
 
-    close $genetree;
-
-    return $gene_tree_file;
+    return $self->_write_temp_tree_file($gene_tree_file, $newick);
 }
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree($self->param('species_tree_label') || 'default');
+    my $species_tree = $self->param('gene_tree')->method_link_species_set->species_tree($self->param('species_tree_label') || 'default');
+    $self->param('species_tree', $species_tree);
     $species_tree->attach_to_genome_dbs();
     return $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree'));
 }

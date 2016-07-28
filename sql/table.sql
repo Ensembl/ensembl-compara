@@ -434,7 +434,6 @@ CREATE TABLE `species_tree_node` (
 @column root_id                       Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
 @column label                         Label to differentiate different trees with the same mlss_id
-@column species_tree                  Newick formatted version of the whole species_tree
 
 @example   Retrieve all the species trees stored in the database
     @sql SELECT * FROM species_tree_root
@@ -446,7 +445,6 @@ CREATE TABLE `species_tree_root` (
   `root_id` int(10) unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
   `label` VARCHAR(256) NOT NULL DEFAULT 'default',
-  `species_tree` mediumtext,
 
   FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -1383,6 +1381,7 @@ CREATE TABLE gene_tree_node (
 @column tree_type                     The type of the tree
 @column clusterset_id                 Name for the set of clusters/trees
 @column method_link_species_set_id    External reference to method_link_species_set_id in the method_link_species_set table
+@column species_tree_root_id          External reference to root_id in the species_tree_root table
 @column gene_align_id                 External reference to gene_align_id in the @link gene_align table
 @column ref_root_id                   External reference to default (merged) root_id for this tree
 @column stable_id                     Unique, stable ID for the tree (follows the pattern: label(5).release_introduced(4).unique_id(10))
@@ -1401,6 +1400,7 @@ CREATE TABLE gene_tree_root (
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
     clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    species_tree_root_id            INT(10) UNSIGNED,
     gene_align_id                   INT(10) UNSIGNED,
     ref_root_id                     INT(10) UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
@@ -1410,6 +1410,7 @@ CREATE TABLE gene_tree_root (
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
     FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
     FOREIGN KEY (ref_root_id) REFERENCES gene_tree_root(root_id),
+    FOREIGN KEY (species_tree_root_id) REFERENCES species_tree_root(root_id),
 
     PRIMARY KEY (root_id ),
     UNIQUE KEY ( stable_id ),
@@ -2027,30 +2028,16 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '85');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '86');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_85_86_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_b.sql|gene_tree_root_attr');
+  VALUES (NULL, 'patch', 'patch_85_86_b.sql|species_tree_root.species_tree');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_c.sql|not_null');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_d.sql|wga_size_distribution');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_e.sql|md5sum_sequence');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_f.sql|keys');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_g.sql|smaller_datatypes');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_h.sql|homology_member_float');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_i.sql|species_tree_node_attr');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_84_85_j.sql|method_link_species_set_attr');
+  VALUES (NULL, 'patch', 'patch_85_86_c.sql|gene_tree_root.species_tree_root_id');
 

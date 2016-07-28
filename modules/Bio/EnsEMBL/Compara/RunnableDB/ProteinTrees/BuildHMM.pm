@@ -185,8 +185,7 @@ sub run_buildhmm {
             $hmm_file,
             $aln_file
     );
-    my $cmd_out = $self->run_command($cmd);
-    die sprintf("Could not run hmmbuild:\nSTDOUT %s\nSTDERR %s\n", $cmd_out->out, $cmd_out->err) if ($cmd_out->exit_code);
+    my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
     unless ((-e $hmm_file) and (-s $hmm_file)) {
         # The file is not there / empty ... MEMLIMIT going on ? Let's have
         # a break and give LSF the chance to kill us

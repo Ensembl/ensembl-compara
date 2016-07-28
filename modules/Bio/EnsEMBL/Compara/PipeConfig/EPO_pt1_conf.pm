@@ -64,8 +64,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
-use Data::Dumper;
 
 sub default_options {
     my ($self) = @_;
@@ -229,7 +231,7 @@ return [
   'inputquery' => 'SELECT genome_db_id FROM genome_db',
   'species_set_id' => $self->o('species_set_id'), 
  },
- -flow_into => { 2 => { 'mysql:////species_set' => { 'species_set_id' => '#species_set_id#', 'genome_db_id' => '#genome_db_id#' } } }, 
+ -flow_into => { 2 => '?table_name=species_set' },
 },
 
 {
@@ -256,7 +258,7 @@ return [
    'blength_tree_file' => $self->o('species_tree_file'),    
  },
  # -flow_into => {
- #   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
+ #   4 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
  # },
 },
 
@@ -279,7 +281,7 @@ return [
  -module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
  -flow_into	=> {
 		2 => [ 'pecan' ],
-		3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
+		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
 	},
  -failed_job_tolerance => 5, # allowing 5% of job failures
  -hive_capacity => 50,
