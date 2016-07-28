@@ -71,7 +71,7 @@ sub user_data {
 sub nodes {
   ## Gets all the nodes in the tree
   ## @return List of TreeNode objects
-  return values %{$_[0]->{'_nodes'}};
+  return @{shift->root->get_all_nodes};
 }
 
 sub root {
