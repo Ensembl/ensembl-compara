@@ -31,11 +31,11 @@ sub new {
   my ($class, $cached_object) = shift;
 
   my $self = bless {
-    '_nodes'      => {},      # map of all the nodes belonging to this tree for easy lookup
-    '_new_id'     => 'aaaa',  # incremental string id of the last node created that didn't have any id provided
-    '_user_data'  => undef,   # reference to user data that's shared among all nodes of the tree
-    '_root'       => undef,   # topmost node
-    '_dom'        => undef,   # DOM object as needed by TreeNode's constructor
+    '_node_lookup'  => {},      # map of all the nodes belonging to this tree for easy lookup
+    '_new_id'       => 'aaaa',  # incremental string id of the last node created that didn't have any id provided
+    '_user_data'    => undef,   # reference to user data that's shared among all nodes of the tree
+    '_root'         => undef,   # topmost node
+    '_dom'          => undef,   # DOM object as needed by TreeNode's constructor
   }, $class;
 
   if ($cached_object) {
@@ -96,7 +96,7 @@ sub get_node {
 
   throw WebException('Node id is needed to get a node') unless $id;
 
-  return $self->{'_nodes'}{$self->clean_id($id)};
+  return $self->{'_node_lookup'}{$self->clean_id($id)};
 }
 
 sub create_node {
@@ -109,8 +109,8 @@ sub create_node {
   $id = $id ? $self->clean_id($id) : $self->_generate_unique_id;
 
   # if node exists, update data and return node object
-  if (exists $self->{'_nodes'}{$id}) {
-    my $node = $self->{'_nodes'}{$id};
+  if (exists $self->{'_node_lookup'}{$id}) {
+    my $node = $self->{'_node_lookup'}{$id};
     $node->set_data($_, $data->{$_}) for keys %{$data || {}};
 
     return $node;
@@ -120,7 +120,7 @@ sub create_node {
 
   $self->{'_dom'} ||= $node->dom; # save it once and use it for other nodes
 
-  return $self->{'_nodes'}{$id} = $node;
+  return $self->{'_node_lookup'}{$id} = $node;
 }
 
 sub clone_node {
@@ -145,7 +145,7 @@ sub clear_references {
   my $self = shift;
 
   if (my $root = delete $self->{'_root'}) {
-    delete $self->{'_nodes'}{$_} for keys %{$self->{'_nodes'}};
+    delete $self->{'_node_lookup'}{$_} for keys %{$self->{'_node_lookup'}};
 
     $root->clear_references;
   }
@@ -154,7 +154,7 @@ sub clear_references {
 sub _generate_unique_id {
   ## @private
   my $self = shift;
-  while (exists $self->{'_nodes'}{$self->{'_new_id'}}) {
+  while (exists $self->{'_node_lookup'}{$self->{'_new_id'}}) {
     $self->{'_new_id'}++;
   }
   return $self->{'_new_id'};
@@ -162,7 +162,7 @@ sub _generate_unique_id {
 
 sub _cacheable_keys {
   ## @private
-  return qw(_nodes _new_id _root _dom);
+  return qw(_node_lookup _new_id _root _dom);
 }
 
 1;
