@@ -38,7 +38,7 @@ sub init {
     $self->{'my_config'}->set('bumped', 1);
     $self->{'my_config'}->set('show_labels', 1);
     $self->{'my_config'}->set('label_overlay', 1);
-    #$self->{'my_config'}->set('centre_labels', 1);
+    $self->{'my_config'}->set('centre_labels', 1);
   }
   $self->SUPER::init;
 }
