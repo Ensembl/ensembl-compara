@@ -62,14 +62,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'step'               => 10,
         'species_set_id'     => undef,
-        'all_blast_params' => [ # only the first two columns matter
-            [ 0,   35  ],
-            [ 35,  50  ],
-            [ 50,  100 ],
-            [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
-        ],
-        chunk_by_size => 1
-        
+        'all_blast_params'   => [],   # a list of arrayrefs with the size ranges
     };
 }
 
@@ -91,6 +84,7 @@ sub fetch_input {
     print scalar @{ $all_canonical };
     print "\n";
 
+    $self->param('chunk_by_size', scalar(@{$self->param_required('all_blast_params')}) ? 1 : 0);
     if ( $self->param('chunk_by_size') ){
         # sort members by decending sequence length
         my @sorted_members = sort { $a->seq_length <=> $b->seq_length } @{ $all_canonical };

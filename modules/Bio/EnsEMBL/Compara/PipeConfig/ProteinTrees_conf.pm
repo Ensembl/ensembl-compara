@@ -1447,7 +1447,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'members_against_allspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
-                'chunk_by_size'      => 1,
                 'step'               => 15,
             },
             -rc_name       => '500Mb_job',
@@ -1462,7 +1461,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
-                'chunk_by_size'      => 1,
                 'step'               => 15,
             },
             -rc_name       => '500Mb_job',
