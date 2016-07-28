@@ -131,11 +131,6 @@ sub run {
 		push( @orth_ids, $homo_id );
 
 		next unless ( defined $this_aln_range ); 
-		# {
-		# 	$self->input_job->autoflow(0);
-		# 	my $exit_msg = "No alignment found for this homology";
-		# 	$self->complete_early($exit_msg);
-		# }
 
 		if ( defined $exon_ranges ){
 			foreach my $aln_mlss ( keys %{ $this_aln_range } ){
