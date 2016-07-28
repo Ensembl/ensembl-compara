@@ -164,19 +164,43 @@ sub create_glyphs {
       push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
     
       ## Optional label
-      my $show_label = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $overlay     = $track_config->get('label_overlay');
+      my $text_width  = $text_info->{'width'};
+      my $text_height = $text_info->{'height'};
+
+      ## Only overlay labels above a certain feature size
+      if ($show_label && $overlay) {
+        ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
+        my $bp_textwidth = $position->{'width'} / $self->{'pix_per_bp'};
+        my $tmp_textwidth = $bp_textwidth;
+
+        if ($bp_textwidth >= $position->{'width'} && length $feature->{'label'} == 1) {
+          $self->{'font_size'} *= 0.9;
+          my $tmp_text_info = $self->get_text_info($feature->{'label'});
+          $text_width       = $tmp_text_info->{'width'};
+          $text_height      = $tmp_text_info->{'height'};
+          $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
+        }
+
+        $show_label = 0 unless ($tmp_textwidth < $position->{'width'});
+      }
+
+      ## OK, we definitely want a label!
       if ($show_label) {
-        if ($track_config->get('label_overlay')) {
-          $new_y = $position->{'y'};
+        if ($overlay) {
+          $new_y = $position->{'y'} + $approx_height - $text_height;
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
           $new_y += $labels_height if ($bumped eq 'labels_only');
         }
+
         $position = {
-                      'y'       => $new_y,
-                      'width'   => $text_info->{'width'}, 
-                      'height'  => $text_info->{'height'},
+                      'y'           => $new_y,
+                      'width'       => $position->{'width'},
+                      'textwidth'   => $text_width, 
+                      'height'      => $text_info->{'height'},
                       'image_width' => $slice_width,
                     };
         $self->add_label($feature, $position);
@@ -244,18 +268,19 @@ sub add_label {
 
   my $x = $feature->{'start'};
   $x = 1 if $x < 1;
-  my $align = $self->track_config->get('centre_labels') ? 'center' : 'left';
+  my $halign = $self->track_config->get('centre_labels') ? 'center' : 'left';
 
   my $label = {
+                x         => $x - 1,
+                y         => $position->{'y'},
+                height    => $position->{'height'},
+                width     => $position->{'width'},
+                textwidth => $position->{'text_width'},
+                text      => $feature->{'label'},
                 font      => $self->{'font_name'},
                 colour    => $colour,
                 ptsize    => $self->{'font_size'},
-                text      => $feature->{'label'},
-                x         => $x-1,
-                y         => $position->{'y'},
-                width     => $position->{'width'},
-                height    => $position->{'height'},
-                halign    => $align,
+                halign    => $halign,
                 valign    => 'center',
                 href      => $feature->{'href'},
                 title     => $feature->{'title'},
