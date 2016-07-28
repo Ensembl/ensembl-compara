@@ -478,7 +478,11 @@ sub create_mlss {
   $helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
     $mlssa->make_object_current($new_mlss) if $release;
-    $new_mlss->store_tag('taxon_id', $taxon_id) if $taxon_id;
+    if (!$singleton && !$pairwise) {
+        $new_mlss->store_tag('taxon_id', $taxon_id) if $taxon_id;
+        $new_mlss->store_tag('only_with_karyotype', $only_with_karyotype) if $only_with_karyotype;
+        $new_mlss->store_tag('only_high_coverage', $only_high_coverage) if $only_high_coverage;
+    }
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
