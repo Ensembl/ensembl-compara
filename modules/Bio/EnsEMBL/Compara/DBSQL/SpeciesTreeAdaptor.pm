@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +47,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Compara::SpeciesTree;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
@@ -67,21 +70,13 @@ sub new_from_newick {
     return $speciesTree;
 }
 
-sub fetch_all {
-    my ($self) = @_;
-
-    my $constraint = "stn.node_id = str.root_id";
-    return $self->generic_fetch($constraint);
-}
-
 sub fetch_by_method_link_species_set_id_label {
     my ($self, $mlss_id, $label) = @_;
 
-    $label = 'default' unless (defined $label);
-
-    my $constraint = "method_link_species_set_id = $mlss_id AND label = '$label'";
-    my $sp_trees = $self->generic_fetch($constraint);
-    return $sp_trees->[0];
+    my $constraint = 'method_link_species_set_id = ? AND label = ?';
+    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch(($label || 'default'), SQL_VARCHAR);
+    return $self->generic_fetch_one($constraint);
 }
 
 sub fetch_all_by_method_link_species_set_id_label_pattern {
@@ -94,9 +89,9 @@ sub fetch_all_by_method_link_species_set_id_label_pattern {
 sub fetch_by_root_id {
     my ($self, $root_id) = @_;
 
-    my $constraint = "root_id = $root_id";
-    my $sp_trees = $self->generic_fetch($constraint);
-    return $sp_trees->[0];
+    my $constraint = 'root_id = ?';
+    $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
+    return $self->generic_fetch_one($constraint);
 }
 
 sub store {

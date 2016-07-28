@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,6 +58,8 @@ use warnings;
 
 use JSON;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -72,7 +75,7 @@ sub fetch_input {
     my $alignment       = $gene_tree->alignment();
 
     # This is faster because it loads all the sequences in 1 query
-    $alignment->_load_all_missing_sequences('exon_bounded');
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, 'exon_bounded', $alignment);
 
     $self->param('alignment', $alignment);
     $self->param('gene_tree', $gene_tree);

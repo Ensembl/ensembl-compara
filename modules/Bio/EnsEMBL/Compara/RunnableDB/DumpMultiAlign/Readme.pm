@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -138,7 +139,7 @@ sub _get_species_tree {
 
     my $ordered_species;
 
-    my $species_tree = $mlss->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
+    my $species_tree = $mlss->species_tree;
     my $genome_dbs = $mlss->species_set_obj->genome_dbs;
     return (undef, $genome_dbs) unless $species_tree;
     my $newick_species_tree = $species_tree->species_tree;

@@ -1,7 +1,8 @@
 =pod
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,30 +55,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters. Lowest level parameters
-
-=cut
-
-sub param_defaults {
-    my $self = shift @_;
-	return {
-        %{ $self->SUPER::param_defaults() },
-#	'mlss_ID'=>'100021',
-#        'ref_species_dbid' => 155,
-#        'non_ref_species_dbid' => 31,
-#		'ortholog_info_hashref'	=>	{     '1045569' => {
-#                         '46043' => '83505425',
-#                         '14469' => '83531457',
-#                         '14803' => '83531457',
-#                         '14646' => '83531457',
-#                         '46120' => '83505425'
-#                       }
-#                       },
-
-	};
-}
 
 
 =head2 fetch_input
@@ -88,24 +65,21 @@ sub param_defaults {
 =cut
 
 sub fetch_input {
-#	my $self = shift @_;
+	my $self = shift @_;
 #	my $ortholog_hashref = $self->param('ortholog_info_hashref');
+  print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs ---------------------------------START \n\n " if ( $self->debug );
 }
 
 sub run {
 	my $self = shift;
-
 	my $ortholog_hashref = $self->param('ortholog_info_hashref');
-	print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs ---------------------------------------------START \n\n" if ( $self->debug );
-#	print  $self->param('mlss_ID'), "\n";
-#	print Dumper($ortholog_hashref);
-	while (my ($ref_dnafragID, $chr_orth_hashref) = each(%$ortholog_hashref)){
 
+	while (my ($ref_dnafragID, $chr_orth_hashref) = each(%$ortholog_hashref)){
 		my @orth_sorted; # will contain the orthologs ordered by the dnafrag start position
     		#sorting the orthologs by dnafrag start position
-        foreach my $name (sort { int($chr_orth_hashref->{$a}) <=> int($chr_orth_hashref->{$b}) or $a cmp $b } keys %$chr_orth_hashref ) {
+        foreach my $name (sort { $chr_orth_hashref->{$a} <=> $chr_orth_hashref->{$b} } keys %$chr_orth_hashref ) {
     
-#            	printf "%-8s %s \n", $name, $orth_hashref->{$name};
+            printf "%-8s %s \n", $name, $chr_orth_hashref->{$name} if ( $self->debug >3);
             push @orth_sorted, $name;
 
         }
@@ -113,11 +87,11 @@ sub run {
         my $chr_job = {};
         $chr_job->{$ref_dnafragID} = \@orth_sorted;
         print Dumper($chr_job) if ( $self->debug );
-#        $self->param( 'chr_job', {'chr_job' => $chr_job} );
-        $self->dataflow_output_id( {'chr_job' => $chr_job, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid'), 'mlss_ID' => $self->param('mlss_ID')}, 2 );
+        $self->dataflow_output_id( {'chr_job' => $chr_job, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid') }, 2 );
 
 		
 	}
+  print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs ---------------------------------------------END \n mlss_id \n", $self->param('goc_mlss_id') ,"  \n" if ( $self->debug >3);
 }
 
 1;

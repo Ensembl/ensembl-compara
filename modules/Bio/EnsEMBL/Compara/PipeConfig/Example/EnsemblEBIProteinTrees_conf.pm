@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,6 +90,10 @@ sub default_options {
 
     # homology_dnds parameters:
 
+    # GOC parameters
+        'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+        'goc_threshold'                 => undef,
+        
     # mapping parameters:
 
     # executable locations:
@@ -110,7 +115,7 @@ sub default_options {
         'hmmer3_home'               => 'UNDEF',
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.3.0+/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'cafe_shell'                => 'UNDEF',
         'fasttree_mp_exe'           => 'UNDEF',
@@ -158,7 +163,8 @@ sub default_options {
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
-
+        'goc_capacity'              => 200,
+	    'genesetQC_capacity'        => 100,
     # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:

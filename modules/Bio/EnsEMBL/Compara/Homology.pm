@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -253,8 +254,7 @@ sub lnl {
 
 sub threshold_on_ds {
   my $self = shift;
-  $self->method_link_species_set->add_tag('threshold_on_ds', shift) if (@_);
-  return $self->method_link_species_set->get_value_for_tag('threshold_on_ds');
+  return $self->method_link_species_set->_getter_setter_for_tag('threshold_on_ds', @_);
 }
 
 =head2 dn

@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -162,6 +163,9 @@ $dbh->do("insert into method_link_species_set select * from $srcDB.method_link_s
 
 #Populate method_link_species_set_tag (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO method_link_species_set_tag SELECT * FROM $srcDB.method_link_species_set_tag");
+
+#Populate method_link_species_set_attr (take all so more data can be added at a later date)
+$dbh->do("INSERT INTO method_link_species_set_attr SELECT * FROM $srcDB.method_link_species_set_attr");
 
 #Populate species_set_header (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO species_set_header SELECT * FROM $srcDB.species_set_header");

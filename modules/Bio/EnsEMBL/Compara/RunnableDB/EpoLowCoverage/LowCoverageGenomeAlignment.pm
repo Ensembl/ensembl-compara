@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1016,11 +1017,7 @@ sub get_taxon_tree {
       #read from mlss_tag table
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
       die "Could not fetch MethodLinkSpeciesSet with the dbID '" . $self->param('mlss_id') . "'" unless defined $mlss;
-      
-      my $species_tree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor;
-      my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'));
-      $newick_taxon_tree = $species_tree->root->newick_format("ncbi_taxon");
-      #$newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
+      $newick_taxon_tree = $mlss->species_tree->root->newick_format("ncbi_taxon");
   }
 
   if (!defined($newick_taxon_tree)) {

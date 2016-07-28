@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -248,7 +249,6 @@ sub pipeline_analyses {
                 -parameters => {
                     'db_conn'    => '#reuse_db#',
                     'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
-                    'fan_branch_code' => 2,
                 },
                 -flow_into => {
                     2 => [ ':////anchor_align' ],
@@ -281,7 +281,6 @@ sub pipeline_analyses {
 			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'dont_dump_MT' => $self->o('dont_dump_MT'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
-			'fan_branch_code' => 2,
 		},
 		-flow_into => {
 			2 => [ 'map_anchors' ],
@@ -311,7 +310,6 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                                 'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE anchor_status IS NULL",
-                                'fan_branch_code' => 2,
                                },  
                 -flow_into => {
                                2 => [ 'trim_anchor_align' ],

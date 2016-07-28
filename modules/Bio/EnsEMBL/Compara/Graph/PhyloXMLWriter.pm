@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -240,7 +241,7 @@ sub _process {
   $self->_writer()->startTag($tag, %{$attributes});
   $self->dispatch_body($node);
 
-    foreach my $child (@{$node->children()}) {
+    foreach my $child (@{$node->sorted_children()}) {
       $self->_process($child);
     }
 
@@ -302,10 +303,12 @@ sub _write_seq_member {
   if(!$self->no_sequences()) {
     my $mol_seq;
     if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
+      # alignment_string() is not able to remove gaps found in all the other sequences, so these may need to be cached
+      $mol_seq = $self->{_cached_seq_aligns}->{$protein->stable_id}
+                 || ($self->cdna() ? $protein->alignment_string('cds') : $protein->alignment_string());
     }
     else {
-      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
+      $mol_seq = ($self->cdna() ? $protein->other_sequence('cds') : $protein->sequence());
     }
 
     $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));

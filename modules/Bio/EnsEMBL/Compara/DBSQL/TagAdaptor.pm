@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,6 +48,10 @@ package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
+
 
 =head2 _tag_capabilities
 
@@ -56,9 +61,11 @@ use warnings;
                 - the name of the table to store attribute
                 - the name of the key column in the tables
                 - the name of the perl method to have the key value
+                - the name of the "tag" column in the tag table
+                - the name of the "value" column in the tag table
   Arg [1]    : <scalar> reference object
-  Example    : return ("species_set_tag", undef, "species_set_id", "dbID");
-  Returntype : Array of 4 entries
+  Example    : return ('species_set_tag', undef, 'species_set_id', 'dbID', 'tag', 'value');
+  Returntype : Array of 6 entries
   Exceptions : none
   Caller     : internal
 
@@ -68,7 +75,6 @@ sub _tag_capabilities {
     my ($self, $object) = @_;
 
     die "_tag_capabilities for $object must be redefined in $self (or a subclass)\n";
-    #return ("protein_tree_tag", "protein_tree_attr", "node_id", "node_id");
 }
 
 
@@ -89,17 +95,18 @@ sub _load_tagvalues {
     my $object = shift;
 
     #print STDERR "CALL _load_tagvalues $self/$object\n";
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($object);
     #print STDERR "_load_tagvalues = $db_tagtable/$db_attrtable\n";
 
     my $obj_tags = $object->{'_tags'};
 
     # Tags (multiple values are allowed)
-    my $sth = $self->prepare("SELECT tag, value FROM $db_tagtable WHERE $db_keyname=?");
+    my $sth = $self->prepare("SELECT $col_tag, $col_value FROM $db_tagtable WHERE $db_keyname=?");
     $sth->execute($object->$perl_keyname);
     my ($tag, $value);
     $sth->bind_columns(\$tag, \$value);
     while ($sth->fetch()) {
+        $tag = lc $tag;
         # Optimized version of Taggable::add_tag()
         if ( ! exists($obj_tags->{$tag}) ) {
             $obj_tags->{$tag} = $value;
@@ -149,21 +156,21 @@ sub _load_tagvalues_multiple {
     return unless scalar(@{$objs});
 
     # Assumes that all the objects have the same type
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objs->[0]);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($objs->[0]);
 
     my %perl_keys = ();
     foreach my $val (@{$objs}) {
-        $val->{'_tags'} = {} unless exists $val->{'_tags'};
+        next if exists $val->{'_tags'};
+        $val->{'_tags'} = {};
         $perl_keys{$val->$perl_keyname} = $val;
     };
 
-    my $where_constraint = '';
-    if (not $all_objects) {
-        $where_constraint = "WHERE $db_keyname IN (".join(',', keys %perl_keys).")";
-    }
+    # This closure can process a set of objects
+my $load_some_tags = sub {
+    my $where_constraint = shift;
 
     # Tags (multiple values are allowed)
-    my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
+    my $sth = $self->prepare("SELECT $db_keyname, $col_tag, $col_value FROM $db_tagtable $where_constraint");
     $sth->execute();
     my ($obj_id, $tag, $value);
     $sth->bind_columns(\$obj_id, \$tag, \$value);
@@ -199,6 +206,14 @@ sub _load_tagvalues_multiple {
             }
         }
         $sth->finish;
+    }
+};
+    if ($all_objects) {
+        $load_some_tags->('');
+    } else {
+        foreach my $id_list (@{ split_list([keys %perl_keys]) }) {
+            $load_some_tags->( "WHERE ".$self->generate_in_constraint($id_list, $db_keyname, SQL_INTEGER, 1) );
+        }
     }
 }
 
@@ -247,8 +262,6 @@ sub _read_attr_list {
   Arg [1]    : <scalar> object
   Arg [2]    : <string> tag
   Arg [3]    : <string> value
-  Arg [4]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $speciesset_adaptor->_store_tagvalue($species_set, "colour", "red");
   Returntype : none
   Exceptions : none
@@ -261,16 +274,17 @@ sub _store_tagvalue {
     my $object = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
     
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($object);
     $self->_read_attr_list($db_attrtable, $db_keyname);
-    #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+    #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         #print STDERR "attr\n";
-        warn "Trying to overload the value of an attribute ($tag) ! This is not allowed for $self. The new value will replace the old one.\n" if $allow_overloading;
         # It is an attribute
+        if (ref($value)) {
+            die "TagAdaptor cannot store structures (".ref($value).") in the attribute table.\n";
+        }
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
         my $nrows = $sth->execute($value, $object->$perl_keyname);
         $sth->finish;
@@ -281,35 +295,49 @@ sub _store_tagvalue {
             $sth->finish;
         }
 
-    } elsif ($allow_overloading) {
-        #print STDERR "tag+\n";
-        # It is a tag with multiple values allowed
-        my $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        # Tests whether there is a UNIQUE key in the schema
-        if ($sth->execute($object->$perl_keyname, $tag, $value) == 0) {
-            die "The value '$value' has not been added to the tag '$tag' because it has another value and the SQL schema enforces '1 value per tag'.\n";
-        }
+    } elsif (ref($value) and (ref($value) eq 'ARRAY')) {
+        #print STDERR "tag+array\n";
+        # Each value will be stored independently
+        # We first clear the table and then insert the values one by one
+        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND $col_tag=?");
+        $sth->execute($object->$perl_keyname, $tag);
         $sth->finish;
-    } else {
-        #print STDERR "tag\n";
+
+        $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
+        foreach my $v (@$value) {
+            die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $v;
+            # Tests whether there is a UNIQUE key in the schema
+            if ($sth->execute($object->$perl_keyname, $tag, $v) == 0) {
+                die "The value '$v' has not been added to the tag '$tag' (probably) because of a unique key constraint.\n";
+            }
+        }
+
+    } elsif (ref($value)) {
+        #print STDERR "tag+ref\n";
+        die "TagAdaptor cannot store complex structures such as ".ref($value)."\n";
+
+    } elsif (defined $value) {
+        #print STDERR "tag+scalar\n";
         # It is a tag with only one value allowed
-        my $sth = $self->prepare("UPDATE $db_tagtable SET value = ? WHERE $db_keyname=? AND tag=?");
+        my $sth = $self->prepare("UPDATE $db_tagtable SET $col_value = ? WHERE $db_keyname=? AND $col_tag=?");
         my $nrows = $sth->execute($value, $object->$perl_keyname, $tag);
         $sth->finish;
 
         if ($nrows == 0) {
             # INSERT
-            $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+            $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
             $sth->execute($object->$perl_keyname, $tag, $value);
             $sth->finish;
 
         } elsif ($nrows > 1) {
             $nrows = $nrows-1;
-            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? LIMIT $nrows");
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND $col_tag=? LIMIT $nrows");
             $sth->execute($object->$perl_keyname, $tag);
             $sth->finish;
         }
 
+    } else {
+        die "Cannot store NULL in $db_tagtable for '$tag'\n";
     }
 }
 
@@ -333,7 +361,7 @@ sub _delete_tagvalue {
     my $tag = shift;
     my $value = shift;
     
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($object);
     $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
@@ -346,11 +374,11 @@ sub _delete_tagvalue {
     } else {
         # It is a tag
         if (defined $value) {
-            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? AND value=?");
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND $col_tag=? AND $col_value=?");
             $sth->execute($object->$perl_keyname, $tag, $value);
             $sth->finish;
         } else {
-            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND $col_tag=?");
             $sth->execute($object->$perl_keyname, $tag);
             $sth->finish;
         }
@@ -391,6 +419,8 @@ sub sync_tags_to_database {
             #print STDERR "Tag both in db and in memory: $tag=", $dbtags->{$tag}, "|", $memtags->{$tag}, "\n";
             if ((ref($dbtags->{$tag}) eq 'ARRAY') and (ref($memtags->{$tag}) eq 'ARRAY')) {
                 #print STDERR "Comparing arrays: DB=", join("/", @{$dbtags->{$tag}}), " MEM=", join("/", @{$memtags->{$tag}}),"\n";
+                # Note: the order is not guaranteed in the database, so
+                # we're just comparing the content as multisets
                 my %seen;
                 $seen{$_}++ for @{$dbtags->{$tag}};
                 $seen{$_}-- for @{$memtags->{$tag}};
@@ -416,13 +446,7 @@ sub sync_tags_to_database {
         my $val = $dbtags->{$tag} = $memtags->{$tag};
 
         # Store the value in the database
-        if (ref($val) eq 'ARRAY') {
-            foreach my $value (@$val) {
-                $self->_store_tagvalue($object, $tag, $value, 1);
-            }
-        } else {
-            $self->_store_tagvalue($object, $tag, $val, 0);
-        }
+        $self->_store_tagvalue($object, $tag, $val);
     }
 }
 
@@ -485,9 +509,9 @@ sub _store_all_tags {
 
     $objects = [$objects] if ref($objects) ne 'ARRAY';
 
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objects->[0]);
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname, $col_tag, $col_value) = $self->_tag_capabilities($objects->[0]);
     $self->_read_attr_list($db_attrtable, $db_keyname);
-    #print STDERR "CALL _store_all $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+    #print STDERR "CALL _store_all $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
 
     # First the attributes
     if (defined $db_attrtable) {
@@ -498,6 +522,9 @@ sub _store_all_tags {
             my $tag_hash = $object->get_tagvalue_hash;
             my @defined_attrs = grep {$tag_hash->{$_}} @attr_names;
             if (scalar(@defined_attrs)) {
+                if (grep {ref($tag_hash->{$_})} @attr_names) {
+                    die "TagAdaptor cannot store structures in the attribute table.\n";
+                }
                 $sth->execute($object->$perl_keyname, map {$tag_hash->{$_}} @attr_names);
             }
         }
@@ -505,7 +532,7 @@ sub _store_all_tags {
     }
 
     # And then the tags
-    my $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+    my $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, $col_tag, $col_value) VALUES (?, ?, ?)");
     foreach my $object (@$objects) {
         my $tag_hash = $object->get_tagvalue_hash;
         my $object_key = $object->$perl_keyname;
@@ -513,9 +540,13 @@ sub _store_all_tags {
             next if defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag};
             if (ref($tag_hash->{$tag}) eq 'ARRAY') {
                 foreach my $value (@{$tag_hash->{$tag}}) {
+                    die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $value;
                     $sth->execute($object_key, $tag, $value);
                 }
+            } elsif (ref($tag_hash->{$tag})) {
+                die "TagAdaptor cannot store complex structures such as ".ref($tag_hash->{$tag})."\n";
             } else {
+                die "Cannot store NULL in $db_tagtable for '$tag'\n" if not defined $tag_hash->{$tag};
                 $sth->execute($object_key, $tag, $tag_hash->{$tag});
             }
         }

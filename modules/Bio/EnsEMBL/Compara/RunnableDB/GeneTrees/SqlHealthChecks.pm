@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -205,16 +206,6 @@ our $config = {
                                        {
                                         description => 'All the removed members should not be in the clusters anymore',
                                         query       => 'SELECT gtn.node_id, gtn.root_id, gtn.seq_member_id, gtb.root_id FROM gene_tree_backup gtb JOIN gene_tree_node gtn USING (seq_member_id) WHERE gtn.root_id = #gene_tree_id# AND is_removed = 1;',
-                                       },
-                                      ],
-                            },
-
-
-     epo_removed_members_globally => {
-                             tests => [
-                                       {
-                                        description => 'We should have removed members on all the low-coverage-assembly species',
-                                        query       => 'SELECT genome_db.name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_header USING (species_set_id) WHERE species_set_header.name="low-coverage-assembly" AND genome_db_id NOT IN(SELECT DISTINCT(genome_db_id) FROM gene_tree_backup JOIN seq_member USING (seq_member_id) WHERE is_removed = 1);',
                                        },
                                       ],
                             },

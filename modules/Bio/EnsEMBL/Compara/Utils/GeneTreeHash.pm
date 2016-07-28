@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,8 +31,8 @@ sub convert {
 
   my $self = bless {}, $caller;
 
-  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
-    rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);
+  my ($no_sequences, $aligned, $cdna, $exon_boundaries, $gaps, $cigar_line) =
+    rearrange([qw(NO_SEQUENCES ALIGNED CDNA EXON_BOUNDARIES GAPS CIGAR_LINE)], @args);
 
   if (defined $no_sequences) {
       $self->no_sequences($no_sequences);
@@ -42,19 +43,23 @@ sub convert {
   if (defined $cdna) {
       $self->cdna($cdna);
   }
-  if (defined $species_common_name) {
-      $self->species_common_name($species_common_name);
-  }
   if (defined $exon_boundaries) {
       $self->exon_boundaries($exon_boundaries);
   }
   if (defined $gaps) {
       $self->gaps($gaps);
   }
-  if (defined $full_tax_info) {
-    $self->full_tax_info($full_tax_info);
-  }
   $self->cigar_line($cigar_line);
+
+  $self->{_cached_seq_aligns} = {};
+  if ($tree->{'_pruned'} && $aligned) {
+      my $aln = $tree->root->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef), -REMOVE_GAPS => 1);
+      foreach my $seq ($aln->each_seq) {
+          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
+      }
+  } else {
+      delete $self->{_cached_seq_aligns};
+  }
 
   return $self->_head_node($tree);
 }
@@ -83,14 +88,6 @@ sub cdna {
     return $self->{_cdna};
 }
 
-sub species_common_name {
-    my ($self, $sp_flag) = @_;
-    if (defined ($sp_flag)) {
-        $self->{_species_common_name} = $sp_flag;
-    }
-    return $self->{_species_common_name};
-}
-
 sub exon_boundaries {
     my ($self, $exon_boundaries) = @_;
     if (defined ($exon_boundaries)) {
@@ -105,14 +102,6 @@ sub gaps {
         $self->{_gaps} = $gaps;
     }
     return $self->{_gaps};
-}
-
-sub full_tax_info {
-  my ($self, $fti) = @_;
-  if (defined ($fti)) {
-    $self->{_full_tax_info} = $fti;
-  }
-  return $self->{_fti};
 }
 
 sub cigar_line {
@@ -132,6 +121,20 @@ sub _head_node {
 
   if($tree->can('stable_id')) {
     $hash->{id} = $tree->stable_id();
+  }
+
+  # Bulk-load of all we need
+  my $compara_dba = $tree->adaptor->db;
+  my $members = $tree->get_all_Members;
+  my $gms = [map {$_->gene_member} @$members];
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $members, $gms);
+
+  my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @{$tree->get_all_nodes}], [map {$_->genome_db} @$members]);
+  $compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
+
+  unless($self->no_sequences()) {
+    my $seq_type = ($self->cdna ? 'cds' : undef);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $members);
   }
 
   $hash->{tree} = 
@@ -158,21 +161,20 @@ sub _convert_node {
   my ($self, $node) = @_;
   my $hash;
 
-  my $type  = $node->get_tagvalue('node_type');
-  my $boot  = $node->get_tagvalue('bootstrap');
+  my $type  = $node->get_value_for_tag('node_type');
+  my $boot  = $node->get_value_for_tag('bootstrap');
   my $dcs   = $node->duplication_confidence_score();
-  my $tax   = $node->species_tree_node();
+  my $stn   = $node->species_tree_node();
 
   $hash->{branch_length} = $node->distance_to_parent() + 0;
-  if($tax) {
-      my $taxon = $tax->taxon;
-      $hash->{taxonomy} = { id => $tax->taxon_id + 0,
-                            scientific_name => $tax->node_name,
-                          };
-      if ($self->full_tax_info()) {
-	$hash->{taxonomy}{alias_name} = $taxon->ensembl_alias_name;
-	$hash->{taxonomy}{timetree_mya} = $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0;
-      }
+  if($stn) {
+      my $taxon = $stn->taxon;
+      $hash->{taxonomy} = {
+          id => $stn->taxon_id + 0,
+          scientific_name => $stn->node_name,
+          common_name => $taxon->ensembl_alias_name || $taxon->common_name,
+      };
+      $hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') + 0 if $taxon->has_tag('ensembl timetree mya');
   }
   $hash->{confidence} = {};
   if ($boot) {
@@ -254,20 +256,6 @@ sub _convert_node {
 
     $hash->{id} = { source => "EnsEMBL", accession => $gene->stable_id() };
 
-    my $genome_db = $node->genome_db();
-    my $taxid = $genome_db->taxon_id();
-
-    my $taxon = $genome_db->taxon;
-    $hash->{taxonomy} = 
-      { id => $taxid + 0,
-        scientific_name => $taxon->scientific_name(),
-      }
-	if $taxid;
-
-    if ($self->species_common_name) {
-        $hash->{taxonomy}->{common_name} = $genome_db->taxon->ensembl_alias_name;
-    }
-
     $hash->{sequence} = 
       { 
        # type     => 'protein', # are we sure we always have proteins?
@@ -280,7 +268,8 @@ sub _convert_node {
         my $aligned = $self->aligned();
         my $mol_seq;
         if($aligned) {
-            $mol_seq = ($self->cdna()) ? $node->alignment_string('cds') : $node->alignment_string();
+            $mol_seq = $self->{_cached_seq_aligns}->{$node->stable_id} ||
+                        ($self->cdna() ? $node->alignment_string('cds') : $node->alignment_string());
         }
         else {
             $mol_seq = ($self->cdna()) ? $node->other_sequence('cds') : $node->sequence();

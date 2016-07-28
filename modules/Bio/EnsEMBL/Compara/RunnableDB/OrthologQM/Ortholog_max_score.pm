@@ -1,7 +1,8 @@
 =pod
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +41,7 @@ limitations under the License.
 
     Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score  -mlss_ID <100021> -compara_db <DB_url>
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score  -goc_mlss_id <100021> -compara_db <DB_url>
 
 =cut
 
@@ -56,14 +57,17 @@ use Bio::EnsEMBL::Registry;
 
 sub fetch_input {
 	my $self = shift;
-	my $mlss_ID = $self->param_required('mlss_ID');
-	my $query = "SELECT homology_id, goc_score, method_link_species_set_id FROM ortholog_goc_metric where method_link_species_set_id = $mlss_ID";
+	my $mlss_id = $self->param_required('goc_mlss_id');
+
+	print "Start of  Ortholog_max_score   1111111111111 mlss id --------------------  :  $mlss_id  111111111111111111111111111111\n\n" if ( $self->debug );
+
+	my $query = "SELECT homology_id, goc_score, method_link_species_set_id FROM ortholog_goc_metric where method_link_species_set_id = $mlss_id";
 	my $quality_data = $self->compara_dba->dbc->db_handle->selectall_arrayref($query, {});
 	$self->param('quality_data', $quality_data);
 
-	print "11111111111111111111111111111111111111111111111111111111111\n\n" if ( $self->debug );
-	print Dumper($quality_data) if ( $self->debug >1);
-
+	
+	print Dumper($quality_data) if ( $self->debug >3);
+	
 }
 
 sub run {
@@ -77,21 +81,17 @@ sub run {
 
 			#this if is for the scaffolds that only contain one gene, hence the result is null
 			#this is no longer neeeded since we are throwing out scaffolds that contain only a single gene from the very start.
-#			print $orth_results->{$result->[0]} , "   ", $result->[1], "\n\n"; 
-#			if (!defined($orth_results->{$result->[0]}) &&  !defined($result->[1])) {
-#				$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'goc_score' => undef }, 2);
-#				$homology_adaptor->update_goc_score($result->[0], undef);
-#			} 
-#			else {
+			print $orth_results->{$result->[0]} , "   ", $result->[1], "\n\n" if ( $self->debug >3 );
+
 			$orth_results->{$result->[0]} = $orth_results->{$result->[0]} >= $result->[1] ? $orth_results->{$result->[0]} : $result->[1] ; 
 
 			# ***** ONLY DATAFLOWING FOR THE TESTING PURPOSES!!!
-			print "method_link_species_set_id ", $self->param_required('mlss_ID'), ' homology_id ' , $result->[0], ' percent_conserved_score ' , $orth_results->{$result->[0]}, " \n\n";
-#			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'goc_score' => $orth_results->{$result->[0]} }, 2 );
+			print "method_link_species_set_id ", $self->param_required('goc_mlss_id'), ' homology_id ' , $result->[0], ' percent_conserved_score ' , $orth_results->{$result->[0]}, " \n\n";
+#			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('goc_mlss_id'), 'homology_id' => $result->[0], 'goc_score' => $orth_results->{$result->[0]} }, 2 );
 
 			print "Updating homology table goc score\n" if ( $self->debug );
 
-			print $orth_results->{$result->[0]}, "  GOC score \n Homology id   ", $result->[0], "\n\n" if ( $self->debug );
+			print $orth_results->{$result->[0]}, "  GOC score \n Homology id   ", $result->[0], "\nmlss id ----------- \n", $self->param_required('goc_mlss_id'), "\n\n" if ( $self->debug );
 			$homology_adaptor->update_goc_score($result->[0], $orth_results->{$result->[0]});
 #			}
 		} 
@@ -100,13 +100,10 @@ sub run {
 		}
 	} 
 
-#	print Dumper($orth_results);
+	print Dumper($orth_results) if ( $self->debug > 3);
+
+	print "111111111111111111 mlss id -----------------------------  :  ",$self->param_required('goc_mlss_id')," 11111111111111 \n goc threshold  \n", $self->param('goc_threshold'), "\n\n" if ( $self->debug );
 }
 
-sub write_output {
-  my $self = shift @_;
-
-  $self->dataflow_output_id( {'mlss_id' => $self->param_required('mlss_ID') }, 1) ;
-}
 
 1;

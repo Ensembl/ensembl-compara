@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -212,6 +213,8 @@ if ($species) {
     $species = undef;
     my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
+        #left and right trim for unwanted spaces
+        $species =~ s/^\s+|\s+$//g;
         push @$new_genome_dbs, @{ process_species($species) };
     }
 }

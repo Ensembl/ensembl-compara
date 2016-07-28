@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,7 +85,6 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'           => $self->o('master_db'),
                 'all_current'       => 1,
-                'fan_branch_code'   => 2,
             },
             -input_ids  => [
                 { },    # the input_id template is now fully defined by the query's column_names (hence the need to rename them).

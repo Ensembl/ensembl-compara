@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +18,11 @@
 use strict;
 use warnings;
 
+use Getopt::Long;
+
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Getopt::Long;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 #
 # Script to print the species-tree used by a given method
@@ -29,32 +32,46 @@ my $url = 'mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_'.software_ve
 my $mlss_id;
 my $method = 'PROTEIN_TREES';
 my $ss_name;
+my $label = 'default';
+my $with_distances;
+my $get_timetree_divergence_times;
 
 GetOptions(
        'url=s'          => \$url,
        'mlss_id=s'      => \$mlss_id,
        'method=s'       => \$method,
        'ss_name=s'      => \$ss_name,
+       'label=s'        => \$label,
+       'with_distances' => \$with_distances,
+       'timetree'       => \$get_timetree_divergence_times,
 );
 
 
 my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $url) or die "Must define a url";
 
-unless ($mlss_id) {
+my $mlss;
+if ($mlss_id) {
+    $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+} elsif ($method) {
     if ($ss_name) {
-        my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method, $ss_name);
-        die "No MLSSs found for the method '$method' and the species-set '$ss_name'\n" unless $mlss;
-        $mlss_id = $mlss->dbID;
+        $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method, $ss_name);
     } else {
-        my $all_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method);
-        die "No MLSSs found for the method '$method'\n" unless scalar($all_mlss);
-        $mlss_id = $all_mlss->[0]->dbID;
+        $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method)->[0];
+    }
+}
+die "Could not fetch a MLSS with these parameters. Check your mlss_id, method and/or ss_name arguments\n" unless $mlss;
+
+my $species_tree = $mlss->species_tree($label);
+
+if ($get_timetree_divergence_times) {
+    foreach my $node (@{$species_tree->root->get_all_nodes}) {
+        next if $node->is_leaf;
+        my $d = $node->get_value_for_tag('ensembl timetree mya');
+           $d = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($node) unless defined $d;
+        $node->node_name( sprintf("%s [%s]", $node->node_name, $d) ) if $d;
     }
 }
 
-my $species_tree = $compara_dba->get_SpeciesTreeAdaptor()->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
-
-print $species_tree->root->newick_format( 'ryo', '%{n}' ), "\n";
-
+print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
 
 

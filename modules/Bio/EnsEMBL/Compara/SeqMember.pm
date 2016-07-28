@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -132,7 +133,7 @@ sub copy {
   
   my $mycopy = $self->SUPER::copy(@_);
   
-  $self->sequence;  # To make sure the sequence is loaded
+  $self->sequence;  # To make sure the sequence is loaded because the new copy doesn't have an adaptor
   # And now we can copy all the sequence keys
   foreach my $key (keys %$self) {
       if (($key =~ /^_seq_/) or ($key =~ /^_sequence/)) {
@@ -359,7 +360,8 @@ sub _prepare_exon_sequences {
         my $i = 0;
         $self->{_sequence_exon_cased} = join('', map {$i++%2 ? lc($_) : $_} split( /[boj]/, $exon_bounded_seq));
 
-    } else {
+    # If the SeqMember comes from a fasta file there is no Transcript
+    } elsif ($self->source_name =~ /^ENSEMBL/) {
 
         my $sequence = $self->sequence;
         my $transcript = $self->get_Transcript;

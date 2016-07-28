@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +19,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 ## Load the registry automatically
 my $reg = "Bio::EnsEMBL::Registry";
@@ -44,15 +47,17 @@ my $this_mlss = $mlss_adaptor->fetch_by_method_link_type_registry_aliases('ENSEM
 ## The two GenomeDB objects (one is human, the other one is mouse)
 my ($gdb1, $gdb2) = @{$this_mlss->species_set_obj->genome_dbs};
 
-my %protein_to_gene = ();
+my %gene_member_id_2_stable_id = ();
 foreach my $gdb ($gdb1, $gdb2) {
     my $genes = $gene_member_adaptor->fetch_all_by_GenomeDB($gdb);
-    $protein_to_gene{$_->get_canonical_SeqMember->stable_id} = $_->stable_id for @$genes;
+    $gene_member_id_2_stable_id{$_->dbID} = $_->stable_id for @$genes;
     warn "Loaded ", scalar(@$genes), " ", $gdb->name, " gene names\n";
 }
 
 ## Get all the homologues
 my $all_homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($this_mlss);
+
+Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($reg->get_adaptor("Multi", "compara", "AlignedMember"), $all_homologies);
 
 my %orthologues = ();
 ## For each homology
@@ -74,7 +79,7 @@ sub print_pairs {
     foreach my $g1 (@$all_g1) {
         foreach my $g2 (@$all_g2) {
             if (not $orthologues{$g1->stable_id."/".$g2->stable_id}) {
-                print join("\t", $protein_to_gene{$g1->stable_id}, $g1->stable_id, $protein_to_gene{$g2->stable_id}, $g2->stable_id, @$extra), "\n";
+                print join("\t", $gene_member_id_2_stable_id{$g1->gene_member_id}, $g1->stable_id, $gene_member_id_2_stable_id{$g2->gene_member_id}, $g2->stable_id, @$extra), "\n";
             }
         }
     }
@@ -100,7 +105,6 @@ sub process {
 
 my $n = 0;
 foreach my $tree (@$all_protein_trees) {
-    $tree->preload();
     process($tree->root);
     # Another approach that lacks the information about the duplication node
     #my $all_g1 = $tree->get_Member_by_GenomeDB($gdb1);

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,30 +53,7 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
-sub find_nodes_by_taxon_id_or_species_name {
-    my ($self, $val, $is_leaf) = @_;
-    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
-    if ($is_leaf) {
-        my $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
-        return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
-    }
-    return $self->find_nodes_by_field_value('taxon_id', $val);
-}
 
-sub find_nodes_by_name {
-    my ($self, $val, $is_leaf) = @_;
-    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
-    my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor();
-    my $taxon_id;
-    if ($is_leaf) {
-        $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
-    } else {
-        # We make sure we don't have a dup node
-        $val =~ s/_dup\d+//;
-        $taxon_id = $NCBITaxonAdaptor->fetch_node_by_name($val)->taxon_id();
-    }
-    return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
-}
 
 # For now, lambdas are fetched from the root table.
 # In the future we would need to have links from the nodes to the header object
@@ -87,12 +65,6 @@ sub lambdas {
     $sth->execute($cafe_gene_family_id);
     my ($lambdas) = $sth->fetchrow_array();
     return $lambdas;
-}
-
-sub new_from_SpeciesTree {
-    my ($self, $tree) = @_;
-#    my $speciesTree = SUPER::new_from_NestedSet($tree);
-    return $tree->cast('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
 }
 
 

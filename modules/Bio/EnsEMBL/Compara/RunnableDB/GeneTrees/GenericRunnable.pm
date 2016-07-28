@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -157,7 +158,6 @@ sub fetch_input {
 
     $self->param('mlss_id',   $gene_tree->method_link_species_set_id);
 
-    $gene_tree->preload();
     $gene_tree->print_tree(10) if($self->debug);
 
     # default parameters
@@ -335,7 +335,7 @@ sub run_generic_command {
         if (scalar(@{$multifurcations}) > 0) {
 
             #fetch species tree
-            my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label( $self->param('mlss_id'), 'default' ) || die "Could not fetch species tree";
+            my $species_tree = $gene_tree->species_tree;
 
             #------------------
             # MRCA binarization
@@ -449,7 +449,7 @@ sub _load_species_tree_string_from_db {
     my ($self) = @_;
     my $species_tree = $self->param('gene_tree')->species_tree($self->param('species_tree_label') || 'default');
     $species_tree->attach_to_genome_dbs();
-    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree')));
+    return $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree'));
 }
 
 

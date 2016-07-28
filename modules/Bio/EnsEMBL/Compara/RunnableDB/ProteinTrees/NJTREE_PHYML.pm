@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,6 +57,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
@@ -91,8 +93,7 @@ sub fetch_input {
     my $gene_tree_id     = $self->param_required('gene_tree_id');
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id )
                                         or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-    $gene_tree->preload();
-    $gene_tree->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
     $gene_tree->print_tree(10) if($self->debug);
 
     $self->param('gene_tree', $gene_tree);
@@ -148,6 +149,16 @@ sub write_output {
     }
 
     if ($self->param('store_intermediate_trees')) {
+        my %relevant_clustersets = map {$_ => 1} qw(phyml-nt nj-ds phyml-aa nj-dn nj-mm);
+        # First need to delete all the leftover nodes and roots
+        foreach my $other_tree (@{$self->param('tree_adaptor')->fetch_all_linked_trees($self->param('gene_tree'))}) {
+            warn "what about ", $other_tree->clusterset_id;
+            next unless $relevant_clustersets{$other_tree->clusterset_id};
+            warn "going to delete ", $other_tree->clusterset_id;
+            $other_tree->preload();
+            $self->param('tree_adaptor')->delete_tree($other_tree);
+            $other_tree->release_tree();
+        }
         delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use the freshest data
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;

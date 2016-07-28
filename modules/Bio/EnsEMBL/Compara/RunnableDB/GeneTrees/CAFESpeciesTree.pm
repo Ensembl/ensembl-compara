@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,7 +94,6 @@ sub fetch_input {
     my $CAFETree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor();
     $self->param('cafeTree_Adaptor', $CAFETree_Adaptor);
 
-#    my $full_species_tree = $self->get_species_tree_string($label); ## Now in Runnable::BaseRunnable
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
@@ -108,7 +108,8 @@ sub fetch_input {
         $self->param('cafe_species', undef);
         $self->param('n_missing_species_in_tree', 0);
     } else {
-        $self->param('cafe_species', $cafe_species);
+        my %gdb_ids = map {$_->dbID => 1} map {$genomeDB_Adaptor->fetch_by_name_assembly($_) || die "Could not find a GenomeDB named '$_'"} @$cafe_species;
+        $self->param('cafe_species', \%gdb_ids);
         $self->param('n_missing_species_in_tree', scalar(@{$genomeDB_Adaptor->fetch_all()})-scalar(@{$cafe_species}));
     }
 
@@ -130,7 +131,6 @@ sub run {
     $self->include_distance_to_parent($species_tree_root);
     $self->fix_ensembl_timetree_mya($species_tree_root);
     $self->ensembl_timetree_mya_to_distance_to_parent($species_tree_root);
-    $self->include_names($species_tree_root);
     $self->ultrametrize($species_tree_root);
     my $binTree = $self->binarize($species_tree_root);
     $self->fix_zeros($binTree);
@@ -141,9 +141,7 @@ sub run {
     } else {
         $cafe_tree_root = $binTree;
     }
-    if ($self->debug) {
-        $self->check_tree($cafe_tree_root);
-    }
+    $self->check_tree($cafe_tree_root);
     $cafe_tree_root->build_leftright_indexing();
 
     ## The modified tree is put back in the species tree object
@@ -175,23 +173,7 @@ sub write_output {
 ## Internal methods #########
 #############################
 
-sub get_taxon_id_from_dbID {
-    my ($self, $dbID) = @_;
-    my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
-    my $genomeDB = $genomeDB_Adaptor->fetch_by_dbID($dbID);
-    return $genomeDB->taxon_id();
-}
 
-
-sub is_in {
-    my ($item, $arref) = @_;
-    for my $elem (@$arref) {
-        if ($item eq $elem) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 sub include_distance_to_parent {
     my ($self, $tree) = @_;
@@ -201,7 +183,7 @@ sub include_distance_to_parent {
         unless ($node->is_leaf) {
             my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
-            my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
+            my $mya = $ncbiTaxon->get_value_for_tag('ensembl timetree mya');
             if (!$mya && $self->param('use_timetree_times')) {
                 die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n";
             }
@@ -254,7 +236,7 @@ sub mya_to_dtp_1path {
     my $d = 0;
     for (;;) {
         my $dtp = 0;
-        if ($node->get_tagvalue('revised') eq 1) {
+        if ($node->has_tag('revised')) {
             if ($node->has_parent()) {
                 $node = $node->parent();
                 next;
@@ -276,19 +258,6 @@ sub mya_to_dtp_1path {
     }
 }
 
-sub include_names {
-    my ($self, $tree) = @_;
-    my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
-    my $leaves = $tree->get_all_leaves();
-    for my $leaf ( @$leaves ) {
-        my $taxon_id = $leaf->taxon_id();
-#        $taxon_id =~ s/\*//g;
-        my $genomeDB = $genomeDB_Adaptor->fetch_by_taxon_id($taxon_id);
-        my $name = $genomeDB->name();
-        $name =~ s/_/\./g;
-        $leaf->name($name);
-    }
-}
 
 sub ultrametrize {
     my ($self, $tree) = @_;
@@ -333,10 +302,6 @@ sub _binarize {
         $newNode->taxon_id($child->taxon_id);
         $taxon_ids->{$child->parent->taxon_id}++;
         $newNode->genome_db_id($child->genome_db_id);
-        # We make sure that we don't have spaces in the names of internal nodes (for example Testudines + Archosauria group)
-        my $name = $child->name() || $child->taxon_id;
-        $name =~ s/\ /./g;
-        $newNode->name($name);
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
         $newNode->node_name($child->name);
@@ -348,7 +313,6 @@ sub _binarize {
                 $newBranch->add_child($c);
             }
             $binTree->add_child($newBranch);
-            $newBranch->name($newBranch->parent->name);
             $newBranch->taxon_id($newBranch->parent->taxon_id);
             $newBranch->genome_db_id($newBranch->parent->genome_db_id);
             my $suffix = $taxon_ids->{$newBranch->parent->taxon_id} ? ".dup" . $taxon_ids->{$newBranch->parent->taxon_id} : "";
@@ -386,51 +350,11 @@ sub fix_zeros_1 {
 
 sub prune_tree {
     my ($self, $tree, $species_to_keep) = @_;
-    my $leaves = $tree->get_all_leaves();
-    my %species_to_remove;
-    for my $leaf (@$leaves) {
-        my $name = $leaf->name();
-        $species_to_remove{$name} = 1;
-    }
-    for my $sp (@$species_to_keep) {
-        die "$sp is not in the full species-tree, cannot remove it." unless exists $species_to_remove{$sp};
-        delete $species_to_remove{$sp};
-    }
-    my $newTree = remove_nodes($tree, [keys %species_to_remove]);
-    return $newTree;
+
+    my @nodes_to_remove = grep {!$species_to_keep->{$_->genome_db_id}} @{$tree->get_all_leaves};
+    return $tree->remove_nodes(\@nodes_to_remove);
 }
 
-sub remove_nodes {
-    my ($tree, $nodes) = @_;
-    my $leaves = $tree->get_all_leaves();
-    for my $node (@$leaves) {
-        if (is_in($node->name, $nodes)) {
-            if ($node->has_parent()) {
-                my $parent = $node->parent();
-                my $siblings = $node->siblings;
-                if (scalar @$siblings > 1) {
-                    die "The tree is not binary";
-                }
-                $node->disavow_parent();
-                if ($parent->has_parent) {
-                    ## We avoid having "_dup" nodes without no "_dup" versions
-                    if ($siblings->[0]->node_name =~ /_dup$/) {
-                        $siblings->[0]->node_name($parent->node_name);
-                    }
-                    my $grandpa = $parent->parent();
-                    my $dtg = $parent->distance_to_parent();
-                    $parent->disavow_parent();
-                    my $newsdtp = $siblings->[0]->distance_to_parent() + $dtg;
-                    $grandpa->add_child($siblings->[0], $newsdtp);
-                } else {
-                    $siblings->[0]->disavow_parent();
-                    $tree=$siblings->[0];
-                }
-            }
-        }
-    }
-    return $tree;
-}
 
 sub check_tree {
   my ($self, $tree) = @_;

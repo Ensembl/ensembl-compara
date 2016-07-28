@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,10 +55,11 @@ package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf ;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -78,7 +80,7 @@ sub default_options {
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
             'skip_epo'                 => 0,   # Never tried this one. It may fail
-            'create_ss_pics'           => 0,
+            'create_ss_picts'          => 0,
 
             # ambiguity codes
             'allow_ambiguity_codes'    => 0,
@@ -114,6 +116,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
+
+        'skip_epo'      => $self->o('skip_epo'),
+        'create_ss_picts'   => $self->o('create_ss_picts'),
+        'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
     }
 }
 
@@ -124,7 +130,7 @@ sub pipeline_analyses {
     my %hc_params = (
                      -analysis_capacity => $self->o('hc_capacity'),
                      -priority          => $self->o('hc_priority'),
-                     -bacth_size        => $self->o('hc_batch_size'),
+                     -batch_size        => $self->o('hc_batch_size'),
                     );
 
     my %backbone_params = (
@@ -196,7 +202,6 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
             },
             -flow_into => {
                 '2->A' => [ 'copy_table'  ],
@@ -320,11 +325,11 @@ sub pipeline_analyses {
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
             },
-            -flow_into          => [ $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database') ],
+            -flow_into          => [ WHEN('#initialise_cafe_pipeline#', 'make_full_species_tree'), WHEN( '!#skip_epo#', 'find_epo_database') ],
             %hc_params,
         },
 
-# ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
+# ---------------------------------[find the EPO database that helps defining high/low-coverage species]------------------------------
 
         {   -logic_name => 'find_epo_database',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
@@ -335,11 +340,6 @@ sub pipeline_analyses {
                 },
                 species_set_name => $self->o('epo_species_set_name'),
             },
-            -flow_into => [ 'store_lowcov_species_set' ],
-        },
-
-        {   -logic_name => 'store_lowcov_species_set',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::StoreLowCovSpeciesSet',
         },
 
 # ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
@@ -420,19 +420,9 @@ sub pipeline_analyses {
                                 'inputquery'      => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
                                },
                 -flow_into     => {
-                                   '2->A' => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
-                                   'A->1' => [ 'hc_tree_final_checks' ],
+                                   '2->A' => WHEN( '#skip_epo#' => 'msa_chooser', ELSE 'recover_epo' ),
+                                   'A->1' => [ 'hc_global_tree_set' ],
                                   },
-            },
-
-
-            { -logic_name       => 'hc_tree_final_checks',
-              -module           => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-              -flow_into        => {
-                                    '1->A' => ['hc_global_tree_set', 'hc_global_epo_removed_members'],
-                                    'A->1' => [ 'write_stn_tags' ],
-                                   },
-              %hc_params,
             },
 
             { -logic_name         => 'hc_global_tree_set',
@@ -440,14 +430,7 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              %hc_params,
-            },
-
-            { -logic_name      => 'hc_global_epo_removed_members',
-              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-              -parameters      => {
-                                   mode => 'epo_removed_members_globally',
-                                  },
+              -flow_into          => [ 'write_stn_tags', 'write_member_counts', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
               %hc_params,
             },
 
@@ -456,7 +439,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
             },
-            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts', $self->o('initialise_cafe_pipeline') ? ('CAFE_table') : () ],
+            -flow_into      => [ 'email_tree_stats_report' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -503,19 +486,18 @@ sub pipeline_analyses {
             },
 
             {   -logic_name    => 'msa_chooser',
-                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::MSAChooser',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
                 -parameters    => {
                                    'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+                                   'tags'  => {
+                                       'gene_count'          => 0,
+                                   },
                                   },
                 -batch_size    => 10,
                 -rc_name       => '1Gb_job',
                 -priority      => 30,
                 -analysis_capacity => $self->o('msa_chooser_capacity'),
-                -flow_into     => {
-                                   '1->A' => [ 'genomic_alignment', 'infernal' ],
-                                   'A->1' => [ 'treebest_mmerge' ],
-                                   3 => [ 'aligner_for_tree_break' ],
-                                  },
+                -flow_into     => WHEN( '#tree_gene_count# > #treebreak_gene_count#' => 'aligner_for_tree_break', ELSE 'tree_entry_point' ),
             },
 
             {   -logic_name    => 'aligner_for_tree_break',
@@ -587,8 +569,7 @@ sub pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
-                                   1 => ['pre_sec_struct_tree'],
-                                   3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
+                                   1 => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
                 -rc_name       => '1Gb_job',
             },
@@ -600,10 +581,7 @@ sub pipeline_analyses {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
-                -flow_into     => {
-                                   1 => ['pre_sec_struct_tree'],
-                                   3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
-                                  },
+                -flow_into     => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '2Gb_job',
             },
 
@@ -612,14 +590,18 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'sql' => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
+                -flow_into => [ 'tree_entry_point' ],
+                -analysis_capacity => 1,
+            },
+
+            {   -logic_name    => 'tree_entry_point',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into => {
                                '1->A' => [ 'genomic_alignment', 'infernal' ],
                                'A->1' => [ 'treebest_mmerge' ],
                               },
-                -analysis_capacity => 1,
             },
 
-            $self->o('create_ss_pics') ? (
             {   -logic_name    => 'create_ss_picts',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict',
                 -analysis_capacity => $self->o('ss_picts_capacity'),
@@ -630,7 +612,6 @@ sub pipeline_analyses {
                 -failed_job_tolerance =>  30,
                 -rc_name       => '2Gb_job',
             },
-                                         ) : (), # do not include the ss_pics analysis if the opt is off
 
             {
              -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
@@ -778,6 +759,40 @@ sub pipeline_analyses {
                 mode            => 'tree_homologies',
             },
             %hc_params,
+        },
+
+        {   -logic_name => 'homology_stats_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_PARALOGUES'    => 3,
+                },
+            },
+            -flow_into => {
+                2 => {
+                    'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
+                3 => {
+                    'paralogy_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
+            },
+        },
+
+        {   -logic_name => 'orthology_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
+            -parameters => {
+                'member_type'           => 'ncrna',
+            },
+            -hive_capacity => $self->o('ortho_stats_capacity'),
+        },
+
+        {   -logic_name => 'paralogy_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
+            -parameters => {
+                'member_type'           => 'ncrna',
+            },
+            -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
         @$analyses_full_species_tree,

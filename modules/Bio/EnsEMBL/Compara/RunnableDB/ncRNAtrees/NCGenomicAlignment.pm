@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,7 +78,7 @@ sub run {
         $self->input_job->autoflow(0);
         $self->complete_early(sprintf("Family too big for normal branch (%s bps) -- Only FastTrees will be generated\n", $self->param('tag_residue_count')));
     }
-    if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem') != 1) { ## Big family -- queue in hugemem
+    if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem')) { ## Big family -- queue in hugemem
         $self->dataflow_output_id (
                                    {
                                     'gene_tree_id' => $self->param('gene_tree_id'),
@@ -134,6 +135,7 @@ sub dump_sequences_to_workdir {
     my $residues = 0;
     my $count = 0;
     foreach my $member (@{$member_list}) {
+      $member->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
         my $gene = $gene_member -> get_Gene;
@@ -152,6 +154,7 @@ sub dump_sequences_to_workdir {
         print STDERR $member->stable_id. "\n" if ($self->debug);
         print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
+      } );
     }
     close OUTSEQ;
 

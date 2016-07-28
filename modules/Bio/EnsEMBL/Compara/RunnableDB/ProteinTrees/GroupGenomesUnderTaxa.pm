@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,13 +49,12 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-
+use Data::Dumper;
 sub fetch_input {
     my $self = shift @_;
 
     my $mlss_id     = $self->param_required('mlss_id');
-
+    
     my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $genome_dbs  = $mlss->species_set_obj->genome_dbs();
 
@@ -81,6 +81,7 @@ sub fetch_input {
 
     my $gdb_a = $self->compara_dba()->get_GenomeDBAdaptor;
     my $ncbi_a = $self->compara_dba()->get_NCBITaxonAdaptor;
+
     foreach my $taxlevel (@$taxlevels) {
         my $taxon = $ncbi_a->fetch_node_by_name($taxlevel);
         die "Cannot find the taxon '$taxlevel' in the database" unless $taxon;

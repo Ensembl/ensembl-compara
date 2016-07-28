@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -163,10 +164,7 @@ sub node_id {
 
 sub name {
   my $self = shift;
-  my $value = shift;
-  if(defined($value)) { $self->add_tag('name', $value); }
-  else { $value = $self->get_tagvalue('name'); }
-  return $value;
+  return $self->_getter_setter_for_tag('name', @_);
 }
 
 

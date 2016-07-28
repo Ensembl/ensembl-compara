@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@ Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter
 
 Variant of GeneTreePhyloXMLWriter that accepts Bio::EnsEMBL::Compara::GeneTreeNode
 in write_trees()
+
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
@@ -55,9 +57,17 @@ sub _write_tree {
   my %attr = (rooted => 'true');
   $attr{type} = $self->tree_type();
 
+  # When the tree is not the entire tree, some columns of the alignment may
+  # be full of gaps. Need to remove them
+  $self->_prune_alignment($tree) if ($tree->{_root_id} != $tree->{_node_id});
+
+  $self->_load_all($tree->adaptor->db, $tree->get_all_nodes, $tree->get_all_leaves);
+
   $w->startTag('phylogeny', %attr);
   $self->_process($tree);
   $w->endTag('phylogeny');
+
+  delete $self->{_cached_seq_aligns};
 
   return;
 }

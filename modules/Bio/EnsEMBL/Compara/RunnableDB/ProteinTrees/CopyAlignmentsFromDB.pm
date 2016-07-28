@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,34 +79,42 @@ sub fetch_input {
         #Get gene_tree
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) );
-        $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #Get copy tree
         #----------------------------------------------------------------------------------------------------------------------------
-		#Need to get tree with ref_root_id and clusterset_id="copy"
-		my $sth = $self->param('current_gene_tree')->adaptor->db->dbc->prepare('SELECT root_id FROM gene_tree_root where clusterset_id="copy" and ref_root_id=?;');
-		$sth->execute($self->param('gene_tree_id'));
-		$self->param('copy_root_id', $sth->fetchrow_array());
-		$sth->finish;
+        #Need to get tree with ref_root_id and clusterset_id="copy"
+        my $sth = $self->param('current_gene_tree')->adaptor->db->dbc->prepare('SELECT root_id FROM gene_tree_root where clusterset_id="copy" and ref_root_id=?;');
+        $sth->execute( $self->param('gene_tree_id') );
+        $self->param( 'copy_root_id', $sth->fetchrow_array() );
+        $sth->finish;
         $self->param( 'copy_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('copy_root_id') ) );
-        $self->param( 'copy_gene_tree' )->preload();
+
         #----------------------------------------------------------------------------------------------------------------------------
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
 
-        my %members_2_b_updated;
-        if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
-            my $updated_genes_list;
-            if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
-                $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') || die "Could not get value_for_tag: updated_genes_list";
-                %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
-            }
+        #Get list of genes to update
+        my $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'updated_genes_list', '' );
+        my %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
+
+        #Get list of genes to add
+        my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'added_genes_list', '' );
+        my %members_2_b_added = map { $_ => 1 } split( /,/, $added_genes_list );
+
+        #List of members that were added or updated
+        my %members_2_b_added_updated;
+        $self->param( 'members_2_b_added_updated', \%members_2_b_added_updated );
+
+        foreach my $added_member ( keys(%members_2_b_added) ) {
+            $members_2_b_added_updated{$added_member} = 1;
+        }
+        foreach my $updated_member ( keys(%members_2_b_updated) ) {
+            $members_2_b_added_updated{$updated_member} = 1;
         }
 
         #Get previous tree
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
-        $self->param('reuse_gene_tree')->preload();
         $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
         #Newly added genes will not be added here, only genes that were removed or altered will be excluded.
@@ -114,15 +123,18 @@ sub fetch_input {
         #$self->param('sa')->remove_seq( $self->param('sa')->each_seq_with_id( $member->seq_member_id ) );
         #}
 
+        #Get all the cigar lines for all members in the reused tree.
         my %cigar_lines_reuse_tree;
         foreach my $member ( @{ $self->param('reuse_gene_tree')->get_all_Members } ) {
             $cigar_lines_reuse_tree{ $member->stable_id } = $member->cigar_line;
+            print "reusing_cigar:" . $member->stable_id . "\n" if ( $self->debug );
         }
 
+        #Copying the cigar lines to the new tree excluding the members that need update:
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
-            #copying the cigar lines to the new tree excluding the members that need update:
-            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_updated{ $current_member->stable_id } ) ) ) {
+            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_added_updated{ $current_member->stable_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
+                print "copying_cigar:" . $current_member->stable_id . "\n" if ( $self->debug );
             }
         }
 
@@ -141,24 +153,36 @@ sub write_output {
         $self->_store_aln_tags();
     }
 
-	my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
-    $self->param('copy_gene_tree')->aln_length($reuse_aln->aln_length);
-    $self->param('copy_gene_tree')->aln_method($reuse_aln->aln_method);
+    #In case the tree is an identical copy or only_needs_deleting, we would like to store the alignment for the default tree as well.
+    # Since it is used by build_HMM_cds_v3 and build_HMM_aa_v3
+    if ( ( $self->param('current_gene_tree')->has_tag('identical_copy') && ( $self->param('current_gene_tree')->get_value_for_tag('identical_copy') == 1 ) ) ||
+         ( $self->param('current_gene_tree')->has_tag('only_needs_deleting') && ( $self->param('current_gene_tree')->get_value_for_tag('only_needs_deleting') == 1 ) ) ) {
+        my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
+        $self->param('current_gene_tree')->aln_length( $reuse_aln->aln_length );
+        $self->param('current_gene_tree')->aln_method( $reuse_aln->aln_method );
+
+        $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('current_gene_tree') ) || die "Could not store alignment for: current_gene_tree";
+    }
+
+    #We always store the alignment for the copy trees.
+    my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
+    $self->param('copy_gene_tree')->aln_length( $reuse_aln->aln_length );
+    $self->param('copy_gene_tree')->aln_method( $reuse_aln->aln_method );
 
     $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('copy_gene_tree') ) || die "Could not store alignment for: copy_gene_tree";
 
-	#If the current tree is not an update tree, we should not flow to mafft_update.
-	#But it must be done after copying the alignment!
-    if ( !$self->param('current_gene_tree')->has_tag('needs_update') ){
+    #If the current tree is not an update tree, we should not flow to mafft_update.
+    #But it must be done after copying the alignment!
+    if ( !$self->param('current_gene_tree')->has_tag('needs_update') ) {
         $self->warning("Current tree is not an update tree, we should not flow to mafft_update");
         $self->input_job->autoflow(0);
-	}
-}
+    }
+} ## end sub write_output
 
 sub _store_aln_tags {
     my $self = shift;
 
-	print "storing_tags ...\n";
+    print "storing_tags ...\n";
     if ( $self->param('reuse_gene_tree')->has_tag('aln_runtime') ) {
         $self->param('copy_gene_tree')->store_tag( "aln_runtime", $self->param('reuse_gene_tree')->get_value_for_tag('aln_runtime') );
     }

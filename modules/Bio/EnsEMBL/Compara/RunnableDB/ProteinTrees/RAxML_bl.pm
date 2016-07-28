@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +40,7 @@ sub param_defaults {
     return {
              %{$self->SUPER::param_defaults},
              # Most of the parameters are identical to the super-class: RAxML
-             'cmd'                        => '#raxml_exe# -m #best_fit_model# -p 99123746531 -t #gene_tree_file# -s #alignment_file# -n #gene_tree_id# -f e',
+             'cmd'                        => '#raxml_exe# #extra_raxml_args# -m #best_fit_model# -p 99123746531 -t #gene_tree_file# -s #alignment_file# -n #gene_tree_id# -f e',
              'runtime_tree_tag'           => 'raxml_bl_runtime',
     };
 }

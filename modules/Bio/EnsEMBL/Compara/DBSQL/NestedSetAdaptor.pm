@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -64,12 +65,12 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 # FETCH methods
 ###########################
 
+
 =head2 fetch_all
 
-  Arg[1]     : -none-
   Example    : $all_trees = $proteintree_adaptor->fetch_all();
-
   Description: Fetches from the database all the nested sets.
+               Note: this does not return all the nodes but all the roots
   Returntype : arrayref of Bio::EnsEMBL::Compara::NestedSet
   Exceptions :
   Caller     :
@@ -84,6 +85,18 @@ sub fetch_all {
   return $self->generic_fetch($constraint);
 }
 
+
+=head2 fetch_node_by_node_id
+
+  Arg [1]    : int $node_id
+  Example    : $taxon = $nbcitaxonDBA->fetch_node_by_node_id($node_id);
+  Description: Fetches the node (NestedSet) for the given node ID.
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if $node_id is not defined
+  Caller     : general
+
+=cut
+
 sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
@@ -96,6 +109,45 @@ sub fetch_node_by_node_id {
   $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
   return $self->generic_fetch_one($constraint);
 }
+
+
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $node_id
+  Example    : $taxon = $nbcitaxonDBA->fetch_by_dbID($node_id);
+  Description: Fetches the node (NestedSet) for the given node ID.
+               This is the same as fetch_node_by_node_id
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if $node_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_dbID {
+    my $self = shift;
+    return $self->fetch_node_by_node_id(@_);
+}
+
+
+=head2 fetch_all_by_dbID_list
+
+  Arg [1]    : Arrayref of node_ids
+  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_dbID_list([$taxon_id1, $taxon_id2]);
+  Description: Returns all the NestedSet objects for the given node ids.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_dbID_list {
+    my ($self, $node_ids) = @_;
+
+    return [] unless scalar(@$node_ids);
+
+    my $table = ($self->_tables)[0]->[1];
+    return $self->generic_fetch_concatenate($node_ids, $table.'.node_id', SQL_INTEGER);
+}
+
 
 =head2 fetch_parent_for_node
 
@@ -202,6 +254,25 @@ sub fetch_tree_by_root_id {
   return $self->_build_tree_from_nodes($self->generic_fetch($constraint));
 }
 
+
+=head2 fetch_all_by_root_id
+
+  Arg[1]     : root_id: integer
+  Example    : $all_nodes = $proteintree_adaptor->fetch_all_by_root_id(3);
+  Description: Fetches from the database all the nodes linked to this root_id
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_root_id {
+  my ($self, $root_id) = @_;
+
+  my $table = ($self->_tables)[0]->[1];
+  my $constraint = "$table.root_id = ?";
+  $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
+  return $self->generic_fetch($constraint);
+}
 
 
 =head2 fetch_root_by_node

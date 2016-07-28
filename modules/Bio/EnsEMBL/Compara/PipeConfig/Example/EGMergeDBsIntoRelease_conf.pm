@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,8 +47,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGMergeDBsIntoRelease_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf');
 
 sub default_options {
@@ -64,7 +63,6 @@ sub default_options {
   # Don't shout about unknown tables
   'die_if_unknown_table'    => 0,
 
-  # Registry file only works with Hive version 2.4, which is currently not a stable release
   'reg_conf' => undef,
 
   # All the source databases

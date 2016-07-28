@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -107,7 +108,6 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-    $nc_tree->preload();
     $self->param('gene_tree', $nc_tree);
 
     my %model_id_hash = ();
@@ -176,10 +176,6 @@ sub write_output {
 
     $self->dataflow_output_id ( {
                                  'gene_tree_id' => $gene_tree_id,
-                                },3
-                              );
-    $self->dataflow_output_id ( {
-                                 'gene_tree_id' => $gene_tree_id,
                                  'alignment_id' => $self->param('alignment_id'),
                                 },1
                               );
@@ -244,7 +240,7 @@ sub run_infernal {
 
   my $cmalign_exe = $self->require_executable('cmalign_exe');
 
-  my $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  my $model_id = $self->param('gene_tree')->get_value_for_tag('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);

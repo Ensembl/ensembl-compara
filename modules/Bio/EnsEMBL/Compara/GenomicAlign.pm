@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1024,7 +1025,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align->_print() is deprecated and will be removed in e87. Use $genomic_align->toString() instead.');
+  deprecate('$genomic_align->_print() is deprecated and will be removed in e86. Use $genomic_align->toString() instead.');
 
   my $verbose = verbose;
   verbose(0);

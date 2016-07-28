@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,12 +82,11 @@ unless(defined($self->{'comparaDBA'})) {
 if($self->{'tree_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeAdaptor;
   my $tree = $treeDBA->fetch_by_dbID($self->{'tree_id'});
-  $tree->preload();
   $self->{'root'} = $tree->root;
 }
 
 if ($self->{'tree_id'}) {
-    fetch_protein_tree($self, $self->{'tree_id'});
+    print_protein_tree($self);
 } elsif ($self->{'gene_stable_id'}) {
     fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
 } elsif ($self->{'newick_file'}) {
@@ -252,14 +252,13 @@ unless($self->{'no_print_tree'}) {
 }
 
 
-sub fetch_protein_tree {
+sub print_protein_tree {
   my $self = shift;
-  my $node_id = shift;
 
   my $tree = $self->{'root'};
 
-  $tree->print_tree($self->{'scale'});
-  warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
+  $tree->tree->print_tree($self->{'scale'});
+  warn sprintf("%d proteins\n", scalar(@{$tree->get_all_leaves}));
   
   my $newick = $tree->newick_format('simple');
   warn("$newick\n");
@@ -276,7 +275,6 @@ sub fetch_protein_tree_with_gene {
 
   my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeAdaptor;
   my $tree = $treeDBA->fetch_default_for_Member($member);
-  $tree->preload();
   $tree->print_tree($self->{'scale'});
 }
 

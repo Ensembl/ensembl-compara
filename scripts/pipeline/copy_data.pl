@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -204,7 +205,7 @@ GetOptions(
            'method_link_type=s@'            => \@method_link_types,
            'mlss_id=i@'                     => \@mlss_id,
            're_enable=i'                    => \$re_enable,
-           'dry_run!'                       => \$dry_run,
+           'dry_run|dry-run!'               => \$dry_run,
 
            'trust_to!'                      => \$trust_to,
            'trust_ce!'                      => \$trust_ce,
@@ -226,9 +227,8 @@ my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
 
-my $ancestral_dbID;
 my $ancestor_genome_db = $from_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
-$ancestral_dbID = $ancestor_genome_db->dbID if $ancestor_genome_db;
+my $ancestral_dbID = $ancestor_genome_db ? $ancestor_genome_db->dbID : -1;
 
 print "\n\n";   # to clear from possible warnings
 
@@ -318,6 +318,14 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             "SELECT * " .
             " FROM species_tree_root" .
             " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+
+  #Copy all entries in method_link_species_set_attr table for a method_link_speceies_set_id
+  copy_data($from_dba, $to_dba,
+          "method_link_species_set_attr",
+          undef, undef, undef,
+          "SELECT mlssa.* " .
+	  "FROM method_link_species_set_attr mlssa" .
+	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,

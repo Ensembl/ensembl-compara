@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,20 +46,19 @@ package Bio::EnsEMBL::Compara::Taggable;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 =head2 add_tag
 
   Description: adds metadata tags to a node.  Both tag and value are added
-               as metdata with the added ability to retreive the value given
+               as metadata with the added ability to retrieve the value given
                the tag (like a perl hash). In case of one to many relation i.e.
                one tag and different values associated with it, the values are
-               returned in a array reference.
+               expected in a array reference.
   Arg [1]    : <string> tag
   Arg [2]    : <string> value
-  Arg [3]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
-               $ns_node->add_tag('lost_taxon_id', 9593, 1);
+               $ns_node->add_tag('lost_taxon_id', [9593,9606]);
   Returntype : Boolean indicating if the tag has been added
   Exceptions : none
   Caller     : general
@@ -69,30 +69,18 @@ sub add_tag {
     my $self = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
-    #print STDERR "CALL add_tag $self/$tag/$value/$allow_overloading\n";
+    #print STDERR "CALL add_tag $self/$tag/$value\n";
 
     # Argument check
     unless (defined $tag)   {warn "add_tag called on $self with an undef \$tag\n"; return 0};
     unless (defined $value) {warn "add_tag called on $self with an undef value for tag '$tag'\n"; return 0};
-    $allow_overloading = 0 unless (defined $allow_overloading);
     
     $self->_load_tags;
     $tag = lc($tag);
 
     # Stores the value in the PERL object
-    if ( ! exists($self->{'_tags'}->{$tag}) || ! $allow_overloading ) {
-        # No overloading or new tag: store the value
-        $self->{'_tags'}->{$tag} = $value;
+    $self->{'_tags'}->{$tag} = $value;
 
-    } elsif ( ref($self->{'_tags'}->{$tag}) eq 'ARRAY' ) {
-        # Several values were there: we add a new one
-        push @{$self->{'_tags'}->{$tag}}, $value;
-
-    } else {
-        # One value was there, we make an array
-        $self->{'_tags'}->{$tag} = [ $self->{'_tags'}->{$tag}, $value ];
-    }
     return 1;
 }
 
@@ -103,10 +91,8 @@ sub add_tag {
                exact same arguments as add_tag
   Arg [1]    : <string> tag
   Arg [2]    : <string> value
-  Arg [3]    : (optional) <int> allows overloading the tag with different values
-               default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->store_tag('scientific name', 'Mammalia');
-               $ns_node->store_tag('lost_taxon_id', 9593, 1);
+               $ns_node->store_tag('lost_taxon_id', [9593, 9606]);
   Returntype : Boolean indicating if the tag has been stored
   Exceptions : none
   Caller     : general
@@ -117,12 +103,11 @@ sub store_tag {
     my $self = shift;
     my $tag = shift;
     my $value = shift;
-    my $allow_overloading = shift;
-    #print STDERR "CALL store_tag $self/$tag/$value/$allow_overloading\n";
+    #print STDERR "CALL store_tag $self/$tag/$value\n";
 
-    if ($self->add_tag($tag, $value, $allow_overloading)) {
+    if ($self->add_tag($tag, $value)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
-            $self->adaptor->_store_tagvalue($self, lc($tag), $value, $allow_overloading);
+            $self->adaptor->_store_tagvalue($self, lc($tag), $value);
             return 1;
         } else {
             warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";
@@ -285,7 +270,7 @@ sub get_tagvalue {
                of multiple values, the first one is returned.
   Arg [1]    : <string> tag
   Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
+  Example    : $ns_node->get_value_for_tag('scientific name');
   Returntype : Scalar
   Exceptions : none
   Caller     : general
@@ -299,7 +284,7 @@ sub get_value_for_tag {
 
     my $ret = $self->get_tagvalue($tag, $default);
     if ((defined $ret) and (ref($ret) eq 'ARRAY')) {
-        return $ret->[0];
+        throw("There are ".scalar(@$ret)." associated to the tag '$tag'. Don't know which one to return");
     } else {
         return $ret;
     }
@@ -313,7 +298,7 @@ sub get_value_for_tag {
                a single value, it is wrapped with an array
   Arg [1]    : <string> tag
   Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
+  Example    : $ns_node->get_all_values_for_tag('common name');
   Returntype : ArrayRef
   Exceptions : none
   Caller     : general
@@ -370,6 +355,79 @@ sub get_tagvalue_hash {
     return $self->{'_tags'};
 }
 
+
+=head2 set_tagvalue_hash
+
+  Description: sets the underlying hash that contains all
+               the tags
+  Example    : $ns_node->set_tagvalue_hash( { 'colour' => 'black' } );
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub set_tagvalue_hash {
+    my $self = shift;
+    my $tags = shift;
+
+    throw("Must give a reference hash in set_tagvalue_hash()") unless ref($tags) and (ref($tags) eq 'HASH');
+    $self->{'_tags'} = $tags;
+}
+
+
+=head2 copy_tags_from
+
+  Arg[1]      : Bio::EnsEMBL::Compara::Taggable $source_object. Where to get the tags/values from
+  Arg[2]      : (optional) Arrayref of strings $tag_names. The names of the tags to copy (copy all otherwise)
+  Example     : $object_name->copy_tags_from($source_object);
+  Description : Copy some tags from one object to the current one.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub copy_tags_from {
+    my $self = shift;
+    my $source_object = shift;
+    my $tags_to_copy = @_ ? shift : [$source_object->get_all_tags()];
+
+    $self->_load_tags;
+    $source_object->_load_tags;
+    foreach my $tag (@$tags_to_copy) {
+        $tag = lc $tag;
+        next unless exists($source_object->{'_tags'}->{$tag});
+        my $value = $source_object->{'_tags'}->{$tag};
+        $self->{'_tags'}->{$tag} = ref($value) eq 'ARRAY' ? [@$value] : $value;
+    }
+}
+
+
+=head2 _getter_setter_for_tag
+
+  Arg[1]      : String $tag. The tag name
+  Arg[2]      : (optional) Scalar $value. Used for the "setter mode"
+  Example     : $object_name->_getter_setter_for_tag('name', @_);
+  Description : Generic method that acts like a getter/setter for a given tag
+  Returntype  : Scalar: the (new) value of this tag
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _getter_setter_for_tag {
+    my $self = shift;
+    my $tag = shift;
+    if (@_) {
+        $self->add_tag($tag, shift);
+    }
+    return $self->get_value_for_tag($tag);
+}
+
+
 =head2 _load_tags
 
   Description: loads all the tags (from the database) if possible.
@@ -406,14 +464,22 @@ our $AUTOLOAD;
 
 sub AUTOLOAD {
     my $self = shift;
+    # $AUTOLOAD is a string like 'Bio::EnsEMBL::Compara::GeneTreeNode::get_value_for_bootstrap'
     #print "AUTOLOAD $AUTOLOAD\n";
+
+        # Example: $node->get_value_for_bootstrap()
     if ( $AUTOLOAD =~ m/::get_value_for_(\w+)$/ ) {
         #print "MATCHED $1\n";
         return $self->get_value_for_tag($1);
+
+        # Example: $node->get_all_values_for_lost_species_tree_node_id()
     } elsif ( $AUTOLOAD =~ m/::get_all_values_for_(\w+)$/ ) {
         return $self->get_all_values_for_tag($1);
+
+        # Example: $node->get_bootstrap_value()
     } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
         return $self->get_tagvalue($1);
+
     } elsif( $AUTOLOAD !~ /::DESTROY$/) {
         use Carp;
         croak "$self does not understand method $AUTOLOAD\n";

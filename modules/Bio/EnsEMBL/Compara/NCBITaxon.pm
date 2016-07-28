@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -277,12 +278,7 @@ sub _to_text_classification {
 sub subspecies {
   my $self = shift;
 
-  unless (defined $self->{'_species'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_subspecies'});
 
   return $self->{'_species'};
 }
@@ -302,12 +298,7 @@ sub subspecies {
 sub species {
   my $self = shift;
 
-  unless (defined $self->{'_species'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_species'});
 
   return $self->{'_species'};
 }
@@ -327,20 +318,31 @@ sub species {
 sub genus {
   my $self = shift;
 
-  unless (defined $self->{'_genus'}) {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    $self->{'_species'} = $species;
-    $self->{'_genus'} = $genus;
-    $self->{'_subspecies'} = $subspecies;
-  }
+  $self->_split_name_into_parts unless (defined $self->{'_genus'});
 
   return $self->{'_genus'};
 }
 
+
+sub _split_name_into_parts {
+    my $self = shift;
+    if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
+        my ($genus, $species, @subspecies) = split(' ', $self->scientific_name);
+        $self->{'_species'} = $species;
+        $self->{'_genus'} = $genus;
+        $self->{'_subspecies'} = join(' ', @subspecies);
+    } else {
+        $self->{'_species'} = '';
+        $self->{'_genus'} = '';
+        $self->{'_subspecies'} = '';
+    }
+}
+
+
 =head2 common_name
 
   Example    : $ncbi->common_name;
-  Description: The comon name as defined by Genbank
+  Description: Getter/setter for the comon name as defined by Genbank
   Returntype : string
   Exceptions : returns undef if no genbank common name exists.
   Caller     : general
@@ -348,18 +350,14 @@ sub genus {
 =cut
 
 sub common_name {
-  my $self = shift;
-  if ($self->has_tag('genbank common name') && $self->rank eq 'species') {
-    return $self->get_tagvalue('genbank common name');
-  } else {
-    return undef;
-  }
+    my $self = shift;
+    return $self->_getter_setter_for_tag('genbank common name', @_);
 }
 
 =head2 ensembl_alias_name
 
   Example    : $ncbi->ensembl_alias_name;
-  Description: The comon name as defined by ensembl alias
+  Description: Getter/setter for the comon name as defined by ensembl alias
   Returntype : string
   Exceptions : returns undef if no ensembl alias name exists.
   Caller     : general
@@ -367,22 +365,15 @@ sub common_name {
 =cut
 
 sub ensembl_alias_name {
-  my $self = shift;
-
-  #Not checking for rank as we do above, because we do not get dog since the
-  #rank for dog is subspecies (ensembl-51).
-  if ($self->has_tag('ensembl alias name')) {
-    return $self->get_tagvalue('ensembl alias name');
-  } else {
-    return undef;
-  }
+    my $self = shift;
+    return $self->_getter_setter_for_tag('ensembl alias name', @_);
 }
 
 
 =head2 scientific_name
 
   Example    : $ncbi->scientific_name;
-  Description: The scientific name of this taxon
+  Description: Getter/setter for the scientific name of this taxon
   Returntype : string
   Exceptions :
   Caller     : general
@@ -390,8 +381,13 @@ sub ensembl_alias_name {
 =cut
 
 sub scientific_name {
-    my ($self) = @_;
-    return $self->get_tagvalue('scientific name');
+    my $self = shift;
+    return $self->_getter_setter_for_tag('scientific name', @_);
+}
+
+sub name {
+    my $self = shift;
+    return $self->scientific_name(@_);
 }
 
 =head2 binomial
@@ -406,7 +402,7 @@ sub scientific_name {
 
 sub binomial {
   my $self = shift;
-  if ($self->has_tag('scientific name') && ($self->rank eq 'species' || $self->rank eq 'subspecies')) {
+  if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
       return $self->scientific_name;
   } else {
     warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef (try the scientific_name method)\n");

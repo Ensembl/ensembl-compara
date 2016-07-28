@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,6 +96,7 @@ sub default_options {
             'raxml_capacity'                  => 300,
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
+            'ortho_stats_capacity'            => 10,
 
             # Params for healthchecks;
             'hc_priority'                     => 10,
@@ -125,7 +127,8 @@ sub default_options {
 
             # CAFE parameters
             'initialise_cafe_pipeline'  => 1,
-            'cafe_species'          => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+            # Use production names here
+            'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
 
             # Other parameters
             'raxml_number_of_cores' => 4,
@@ -152,20 +155,6 @@ sub default_options {
                         -pass   => '',
                        },
 
-
-#            'reg1' => {
-#                      -host   => 'ens-staging',
-#                       -port   => 3306,
- #                      -user   => 'ensro',
-  #                     -pass   => '',
-   #                   },
-
-#             'reg2' => {
-#                        -host   => 'ens-staging2',
-#                        -port   => 3306,
-#                        -user   => 'ensro',
-#                        -pass   => '',
- #                      },
 
             'master_db' => {
                             -host   => 'compara1',

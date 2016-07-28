@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -136,6 +137,7 @@ sub dump_sequences_to_workdir {
     my $fastafile = $self->worker_temp_directory . "unannotated.fasta"; ## Include pipeline name to avoid clashing??
     print STDERR "Dumping unannotated members in $fastafile\n" if ($self->debug);
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
     $self->param('query_set')->print_sequences_to_file($fastafile);
     $self->param('fastafile', $fastafile);
 

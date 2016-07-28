@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -86,6 +87,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
@@ -350,7 +352,7 @@ sub load_cigars_from_file {
         : whether the genome_db_id should be added to the sequence names
     Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) boolean (default: false)
         : whether the reference species_tree_node_id should be added to the sequence names
-    Arg [-REMOVE_GAP_COLUMNS] (opt) boolean (default: false)
+    Arg [-REMOVE_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be removed from the alignment
     Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.
@@ -402,7 +404,7 @@ sub get_SimpleAlign {
         $sa->id("$self");
     }
 
-    $self->_load_all_missing_sequences($seq_type);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if $self->adaptor;
 
     my $seq_hash = {};
 
@@ -434,28 +436,28 @@ sub get_SimpleAlign {
         $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
+        my $prefix;
+        $prefix = $member->stable_id;
+        $prefix = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+        $prefix = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
+        $prefix = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
+
+        my $suffix = '';
+        $suffix = $member->taxon_id if($append_taxon_id);
+        $suffix = $member->genome_db_id if ($append_genomedb_id);
+        $suffix = $member->genome_db->_species_tree_node_id if ($append_stn_id);
+
         my $seqID;
 
         # Many phylogenetic methods take as input the sequence format phylip, which has a limit of 10 characters for the sequence names.
         # For those cases we need to create a mapping of the original names to be re-mapped whenever needed.
         # If map_long_seq_names is defined we need to store the mapping 
         if ($map_long_seq_names){
-            $seqID = $member->stable_id;
-            $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
-            $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
-            $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
-
-            my $suffix;
-            $suffix = $member->taxon_id if($append_taxon_id);
-            $suffix = $member->genome_db_id if ($append_genomedb_id);
-            $suffix = $member->genome_db->_species_tree_node_id if ($append_stn_id);
-
             #Instead, the sequence counter needs to be incremented for each sequence.
             $countSeq++;
 
             #Define the new sequence naming
             #Flanking with chars to assure that the \b regex will work just fine.
-            my $prefix = $seqID;
             $seqID = "x".$countSeq."x";
 
             #Store the mapping
@@ -466,13 +468,8 @@ sub get_SimpleAlign {
             $map_long_seq_names->{$seqID}->{'suf'} = $suffix;
 
         }else{
-            $seqID = $member->stable_id;
-            $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
-            $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
-            $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
-            $seqID .= "_" . $member->taxon_id if($append_taxon_id);
-            $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
-            $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
+            $seqID = $prefix;
+            $seqID .= '_' . $suffix if $suffix;
         }
 
         ## Append $seqID with species short name, if required
@@ -503,7 +500,7 @@ sub get_SimpleAlign {
 
         $sa->add_seq($seq);
     }
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and ($remove_gaps or scalar(@{$self->get_all_Members}) != $sa->num_sequences());
+    $sa = $sa->remove_gaps(undef, 1) if $remove_gaps;
     $sa = $sa->remove_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
     return $sa;
 }
@@ -665,6 +662,8 @@ sub get_4D_SimpleAlign {
     my $keep_gaps = shift;
     my $aa_must_be_identical = shift;
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, 'cds', $self);
+
     my $sa = Bio::SimpleAlign->new();
 
     my %member_seqstr;
@@ -738,7 +737,7 @@ sub get_4D_SimpleAlign {
         $sa->add_seq($seq);
     }
 
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
+    $sa = $sa->remove_gaps(undef, 1);
 
     return $sa;
 }
@@ -828,6 +827,8 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 sub update_alignment_stats {
     my $self = shift;
     my $seq_type = shift;
+
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if $self->adaptor;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
@@ -926,9 +927,9 @@ sub update_alignment_stats {
             $genes->[$j]->num_matches( $nmatch_id[$j] );
             $genes->[$j]->num_pos_matches( $nmatch_pos[$j] );
             $genes->[$j]->num_mismatches( $nmismatch[$j] );
-            $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_cov( int((100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_id( 100.0 * $nmatch_id[$j] / $seq_length[$j] );
+            $genes->[$j]->perc_pos( 100.0 * $nmatch_pos[$j] / $seq_length[$j] );
+            $genes->[$j]->perc_cov( 100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] );
         }
     }
 }

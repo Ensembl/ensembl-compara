@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,7 +86,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB new_fast method", sub {
                         '_db_adaptor' => $hs_dba,
                         'name'       => $name,
                         'assembly'   => $assembly,
-                        'taxon_id'   => $taxon_id,
+                        '_taxon_id'  => $taxon_id,
                         'dbID'       => $dbID,
                         'genebuild'  => $genebuild);
     

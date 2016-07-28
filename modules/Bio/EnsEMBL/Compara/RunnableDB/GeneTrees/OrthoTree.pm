@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,6 +82,7 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -124,8 +126,7 @@ sub fetch_input {
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;
     }
 
-    $gene_tree->preload();
-    $gene_tree->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
     $self->param('gene_tree', $gene_tree->root);
 
     if($self->debug) {
@@ -288,7 +289,7 @@ sub display_link_analysis
 
   #display raw feature analysis
   my ($gene1, $gene2) = $genepairlink->get_nodes;
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $ancestor = $genepairlink->get_value_for_tag('ancestor');
   printf("%21s(%7d) - %21s(%7d) : %10.3f dist : ",
     $gene1->gene_member->stable_id, $gene1->gene_member_id,
     $gene2->gene_member->stable_id, $gene2->gene_member_id,
@@ -298,7 +299,7 @@ sub display_link_analysis
   printf("%5s ", "");
 
   print("ancestor:(");
-  my $node_type = $ancestor->get_tagvalue('node_type', '');
+  my $node_type = $ancestor->get_value_for_tag('node_type', '');
   if ($node_type eq 'duplication') {
     print "DUP ";
   } elsif ($node_type eq 'dubious') {
@@ -310,14 +311,14 @@ sub display_link_analysis
   }
   printf("%9s)", $ancestor->node_id);
   if ($ancestor->has_tag('duplication_confidence_score')) {
-    printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+    printf(" %.4f ", $ancestor->get_value_for_tag('duplication_confidence_score'));
   } else {
     print " N/A    ";
   }
 
   printf(" %s %d %s\n",
-         $genepairlink->get_tagvalue('orthotree_type'), 
-         $genepairlink->get_tagvalue('is_tree_compliant'),
+         $genepairlink->get_value_for_tag('orthotree_type'),
+         $genepairlink->get_value_for_tag('is_tree_compliant'),
          $ancestor->taxonomy_level(),
         );
 }
@@ -328,7 +329,7 @@ sub get_ancestor_species_hash
     my $self = shift;
     my $node = shift;
 
-    my $species_hash = $node->get_tagvalue('species_hash');
+    my $species_hash = $node->get_value_for_tag('species_hash');
     return $species_hash if($species_hash);
 
     $species_hash = {};
@@ -420,7 +421,7 @@ sub tag_orthologues
     my $genepairlink = shift;
 
     my ($pep1, $pep2) = $genepairlink->get_nodes;
-    my $ancestor = $genepairlink->get_tagvalue('ancestor');
+    my $ancestor = $genepairlink->get_value_for_tag('ancestor');
     my $species_hash = $self->get_ancestor_species_hash($ancestor);
     my $count1 = $species_hash->{$pep1->genome_db_id};
     my $count2 = $species_hash->{$pep2->genome_db_id};
@@ -465,10 +466,10 @@ sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
 
-  my $type = $genepairlink->get_tagvalue('orthotree_type');
+  my $type = $genepairlink->get_value_for_tag('orthotree_type');
   return unless($type);
-  my $is_tree_compliant = $genepairlink->get_tagvalue('is_tree_compliant');
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  my $is_tree_compliant = $genepairlink->get_value_for_tag('is_tree_compliant');
+  my $ancestor = $genepairlink->get_value_for_tag('ancestor');
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
@@ -485,6 +486,13 @@ sub store_gene_link_as_homology {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
           $type      =~ s/ortholog/homoeolog/;
           $gdbs      = [$gdb1];
+          #### temp fix triticum_aestivum
+          if ( (($gdb1->name eq 'triticum_aestivum') and ($gene1->genome_db->genome_component eq 'U')) or
+               (($gdb2->name eq 'triticum_aestivum') and ($gene2->genome_db->genome_component eq 'U')) ) {
+              $mlss_type = 'ENSEMBL_PARALOGUES';
+              $type      = 'within_species_paralog';
+          }
+          ####
       } else {
           $mlss_type = 'ENSEMBL_ORTHOLOGUES';
           $gdbs      = [$gdb1, $gdb2];

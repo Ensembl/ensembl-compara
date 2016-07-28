@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -205,7 +206,6 @@ sub load_input_trees {
   my $tree = $self->param('gene_tree');
 
   for my $other_tree (values %{$tree->alternative_trees}) {
-    $other_tree->preload();
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);

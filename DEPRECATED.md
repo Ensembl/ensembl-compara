@@ -16,6 +16,13 @@
 * `GenomicAlignBlock::get_old_consensus_genomic_align()`
 * `GenomicAlignBlock::get_old_query_genomic_align()`
 
+## Miscellaneous, to be removed in Ensembl 88
+
+* `GenomeDBAdaptor::fetch_all_by_low_coverage()`
+* `GenomeDBAdaptor::fetch_all_by_taxon_id_assembly()`
+* `GenomeDBAdaptor::fetch_by_taxon_id()`
+* `GeneMemberAdaptor::load_all_from_seq_members()`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `GenomicAlignTree::genomic_align_array()`

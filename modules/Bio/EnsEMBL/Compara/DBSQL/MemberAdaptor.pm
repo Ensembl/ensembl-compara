@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,8 +114,7 @@ sub fetch_all_by_stable_id_list {
     throw('MemberAdaptor::fetch_all_by_stable_id_list() must have a list of stable_ids') if (not ref $stable_ids) or (ref $stable_ids ne 'ARRAY');
 
     return [] if (!$stable_ids or !@$stable_ids);
-    my $constraint = sprintf('m.stable_id IN ("%s")', join(q{","}, @$stable_ids));
-    return $self->generic_fetch($constraint);
+    return $self->generic_fetch_concatenate($stable_ids, 'm.stable_id', SQL_VARCHAR);
 }
 
 

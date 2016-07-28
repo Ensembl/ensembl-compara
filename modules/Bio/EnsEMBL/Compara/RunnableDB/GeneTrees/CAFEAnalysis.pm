@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,6 +52,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis;
 use strict;
 use warnings;
 use Data::Dumper;
+
+use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -107,19 +110,6 @@ sub write_output {
 ## Internal methods #######################
 ###########################################
 
-# sub get_tree_string_from_meta {
-#     my ($self) = @_;
-#     my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
-
-#     my $sql = "SELECT meta_value FROM meta WHERE meta_key = ?";
-#     my $sth = $self->compara_dba->dbc->prepare($sql);
-#     $sth->execute($cafe_tree_string_meta_key);
-
-#     my ($cafe_tree_string) = $sth->fetchrow_array();
-#     $sth->finish;
-#     print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
-#     return $cafe_tree_string;
-# }
 
 sub run_cafe_script {
     my ($self) = @_;
@@ -200,7 +190,6 @@ sub parse_cafe_output {
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
     $tree_str .= ";";
-#    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFEGeneFamily");
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str);
     print STDERR "CAFE TREE: $tree_str\n" if ($self->debug);
 
@@ -210,18 +199,11 @@ sub parse_cafe_output {
 
     my $ids_line = <$fh>;
     my $ids_tree_str = substr($ids_line, 15, length($ids_line) - 16);
-    $ids_tree_str =~ s/<(\d+)>/:$1/g;
-    $ids_tree_str .= ";";
-    print STDERR "CAFE IDs TREE: $ids_tree_str\n" if ($self->debug);
-
-    my $idsTree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($ids_tree_str);
-
-    print STDERR "IDS TREE: " , $idsTree->newick_format('ryo', '%{-n}%{":"d}'), "\n" if ($self->debug);
-
     my %cafeIDs2nodeIDs = ();
-    for my $node (@{$idsTree->get_all_nodes()}) {
-        $cafeIDs2nodeIDs{$node->distance_to_parent()} = $node->node_id;
+    while ($ids_tree_str =~ /(\d+)<(\d+)>/g) {
+        $cafeIDs2nodeIDs{$2} = $1;
     }
+    print STDERR "CAFE IDs: ", stringify(\%cafeIDs2nodeIDs), "\n" if ($self->debug);
 
 
     my $format_ids_line = <$fh>;
@@ -230,10 +212,10 @@ sub parse_cafe_output {
     $formats_ids =~ s/\s+$//;
     my @format_pairs_cafeIDs = split /\s+/, $formats_ids;
     my @format_pairs_nodeIDs = map {my ($fst,$snd) = $_ =~ /\((\d+),(\d+)\)/; [($cafeIDs2nodeIDs{$fst}, $cafeIDs2nodeIDs{$snd})]} @format_pairs_cafeIDs;
+    print STDERR "PAIR IDs: ", stringify(\@format_pairs_nodeIDs), "\n" if ($self->debug);
 
     while (<$fh>) {
-        last if $. == 10; # We skip several lines and go directly to the family information.
-# Is it always 10?? Even if lambda is set??
+        last if $_ =~ /^'ID'/;
     }
 
     while (my $fam_line = <$fh>) {
@@ -244,36 +226,21 @@ sub parse_cafe_output {
         my $pvalue_avg = $flds[2];
         my $pvalue_pairs = $flds[3];
 
+        # Tree with member counts
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
-        my %info_by_nodes;
-        for my $node (@{$fam_tree->get_all_nodes()}) {
-            my $name = $node->name();
-            my ($n_members) = $name =~ /_(\d+)/;
-            $n_members = 0 if (! defined $n_members); ## It may be absent from the orig data (but in the tree)
-            $name =~ s/_\d+//;
-            $name =~ s/\./_/g;
-            $info_by_nodes{$name}{'n_members'} = $n_members;
-
+        print STDERR "pvalue_pairs $pvalue_pairs\n" if ($self->debug);
+        my @pvalue_pairs;
+        while ($pvalue_pairs =~ /\(([^,(]+),([^,)]+)\)/g) {
+            push @pvalue_pairs, [$1+0,$2+0];
         }
 
-        $pvalue_pairs =~ tr/(/[/;
-        $pvalue_pairs =~ tr/)/]/;
-        $pvalue_pairs =~ tr/-/1/;
-        $pvalue_pairs = eval $pvalue_pairs;
-
-        die "Problem processing the $pvalue_pairs\n" if (ref $pvalue_pairs ne "ARRAY");
-
-        for (my $i=0; $i<scalar(@$pvalue_pairs); $i++) {
-            my ($val_fst, $val_snd) = @{$pvalue_pairs->[$i]};
-            my ($id_fst, $id_snd) = @{$format_pairs_nodeIDs[$i]};
-            my $name1 = $idsTree->find_node_by_node_id($id_fst)->name();
-            my $name2 = $idsTree->find_node_by_node_id($id_snd)->name();
-            $name1 =~ s/\./_/g;
-            $name2 =~ s/\./_/g;
-
-            $info_by_nodes{$name1}{'pvalue'} = $val_fst if (! defined $info_by_nodes{$name1}{'pvalue'} || $info_by_nodes{$name1}{'pvalue'} > $val_fst);
-            $info_by_nodes{$name2}{'pvalue'} = $val_snd if (! defined $info_by_nodes{$name2}{'pvalue'} || $info_by_nodes{$name2}{'pvalue'} > $val_snd);
+        my %pvalue_by_node;
+        for (my $i=0; $i<scalar(@pvalue_pairs); $i++) {
+            my ($val_fst, $val_snd) = @{$pvalue_pairs[$i]};
+            my ($node_id1, $node_id2) = @{$format_pairs_nodeIDs[$i]};
+            $pvalue_by_node{$node_id1} = $val_fst if (! defined $pvalue_by_node{$node_id1} || $pvalue_by_node{$node_id1} > $val_fst);
+            $pvalue_by_node{$node_id2} = $val_snd if (! defined $pvalue_by_node{$node_id2} || $pvalue_by_node{$node_id2} > $val_snd);
         }
 
         $tree->print_tree(0.2) if ($self->debug());
@@ -282,52 +249,33 @@ sub parse_cafe_output {
 
         my $cafeGeneFamily = Bio::EnsEMBL::Compara::CAFEGeneFamily->new_from_SpeciesTree($speciesTree);
 
-        my $root_id = $cafeGeneFamily->root->node_id();
+        my $lca_node_id = $tree->root->name;
 
-        my $lca_taxon_id = $tree->root->name;
-        if ($lca_taxon_id eq 'Testudines+Archosauriagroup') {
-            $lca_taxon_id = 'Testudines + Archosauria group';
-        }
+        print STDERR "LCA NODE ID IS $lca_node_id\n" if ($self->debug);
 
-        print STDERR "LCA TAXON ID IS $lca_taxon_id\n" if ($self->debug);
-
-        my $lca_node = $speciesTree->root->find_nodes_by_field_value('node_name', $lca_taxon_id)->[0]; # Allows _dup
-        my $lca_node_id = $lca_node->node_id();
         $cafeGeneFamily->lca_id($lca_node_id);
         $cafeGeneFamily->gene_tree_root_id($gene_tree_root_id);
         $cafeGeneFamily->pvalue_avg($pvalue_avg);
         $cafeGeneFamily->lambdas($lambda);
 
+        my %cafe_nodes_lookup = map {$_->node_id => $_} @{ $cafeGeneFamily->root->get_all_nodes };
+
         my $n_nonzero_internal_nodes = 0;
 
         # We store the attributes
         for my $node (@{$fam_tree->get_all_nodes()}) {
-            my $n = $node->name();
-            $n =~ s/\./_/g;
-            $n =~ s/_\d+$//;
-#            $n =~ s/_dup\d+//;
-            print STDERR "Storing node name $n\n" if ($self->debug);
+            my ($node_id, $n_members) = split /_/, $node->name();
+            print STDERR "Storing node name $node_id\n" if ($self->debug);
 
-            my $n_members = $info_by_nodes{$n}{n_members};
-            my $pvalue = $info_by_nodes{$n}{pvalue};
-
-            if ($n eq 'Testudines+Archosauriagroup') {
-                $n = 'Testudines + Archosauria group';
-            }
-
-            if ($pvalue eq '') {
-                $pvalue = 0.5;
-            }
+            $n_members //= 0; ## It may be absent from the orig data (but in the tree)
+            my $pvalue = $pvalue_by_node{$node_id} // 0.5;
+            my $cafe_node = $cafe_nodes_lookup{$node_id} || die "Could not find the node '$node_id'";
 
             print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
-#            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
-            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_name($n, $node->is_leaf);
 
-            for my $cafe_node (@$cafe_nodes) {
                 $cafe_node->n_members($n_members);
                 $cafe_node->pvalue($pvalue);
                 $n_nonzero_internal_nodes++ if $n_members;
-            }
 
         }
         if ($n_nonzero_internal_nodes > 1) {

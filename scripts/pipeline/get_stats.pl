@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -227,36 +228,28 @@ sub get_all_mlss_from_species_and_type {
   throw "Cannot get Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor" if (!$method_link_species_set_adaptor);
   
   if (!$species) {
-    $method_link_species_sets = $method_link_species_set_adaptor->fetch_all();
+    if ($method_link_type) {
+        $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type($method_link_type);
+    } else {
+        $method_link_species_sets = $method_link_species_set_adaptor->fetch_all();
+    }
   
   } else {
     my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($compara, "compara", "GenomeDB");
     throw "Cannot get Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor" if (!$genome_db_adaptor);
     
     my $mlss_by_dbID;
-  
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[0]) or
-        $genome_db_adaptor->fetch_by_registry_name($species->[0]);
-    throw("Cannot find species <$species->[0]>") if (!$genome_db);
-    $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
-    $mlss_by_dbID = {map {$_->dbID, $_} @{$method_link_species_sets}};
+    my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+    throw("No species found from '$species'") unless scalar(@$genome_dbs);
 
-    for (my $i=1; $i<@$species; $i++) {
-      my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[$i]) or
-          $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
-      $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
-      throw("Cannot find species <$species->[$i]>") if (!$genome_db);
-      $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
-      my $these_mlss_by_dbID = {map {$_->dbID, $_} @{$method_link_species_sets}};
-      foreach my $dbID (keys %$mlss_by_dbID) {
-        delete($mlss_by_dbID->{$dbID}) if (!defined($these_mlss_by_dbID->{$dbID}));
-      }
+    if ($method_link_type) {
+        my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, $genome_dbs);
+        $method_link_species_sets = [$mlss] if $mlss;
+    } else {
+        my $ssa = Bio::EnsEMBL::Registry->get_adaptor($compara, "compara", "SpeciesSet");
+        my $ss = $ssa->fetch_by_GenomeDBs($genome_dbs);
+        $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_species_set_id($ss->dbID) if $ss;
     }
-    $method_link_species_sets = [values %$mlss_by_dbID];
-  }
-
-  if ($method_link_type and $method_link_species_sets) {
-    @$method_link_species_sets = grep {lc $_->method->type eq lc $method_link_type} @$method_link_species_sets;
   }
 
   return ($method_link_species_sets or []);

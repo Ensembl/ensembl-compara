@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
@@ -331,6 +333,15 @@ sub generic_fetch_Iterator {
     return Bio::EnsEMBL::Utils::Iterator->new($closure);
 }
 
+
+sub generic_fetch_concatenate {
+    my ($self, $list_of_lists, $column_name, $column_sql_type, @generic_fetch_args) = @_;
+    my @results;
+    foreach my $id_list (@{ split_list($list_of_lists) }) {
+        push @results, @{ $self->generic_fetch( $self->generate_in_constraint($id_list, $column_name, $column_sql_type), @generic_fetch_args ) };
+    }
+    return \@results;
+}
 
 sub _synchronise {
     my ($self, $object) = @_;

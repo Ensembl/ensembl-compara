@@ -2,6 +2,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +38,7 @@ Bio::EnsEMBL::Compara:Pipeconfig::GeneSetQC_conf;
     -coverage_threshold : minimum avg percentage coverage.
 
 Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <15> -coverage_threshold <50>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <15> -coverage_threshold <50> -compara_db <>
 
 =cut
 
@@ -63,41 +64,41 @@ sub hive_meta_table {
 
 =cut
 
-sub pipeline_create_commands {
-	my $self = shift;
+#sub pipeline_create_commands {
+#	my $self = shift;
 
 	#!!! NOTE: replace column names with desired col names for report.
 	#          must be a param name!
 
 	#PRIMARY KEY (genomic_align_block_id))'
 
-	return [
-		@{ $self->SUPER::pipeline_create_commands },
-		$self->db_cmd( 'CREATE TABLE long_orth_genes ( 
-			genome_db_id int(10) NOT NULL,
-            gene_member_stable_id varchar(128),
-			n_species INT,
-            n_orth INT,
-		    avg_cov INT 		
+#	return [
+#		@{ $self->SUPER::pipeline_create_commands },
+#		$self->db_cmd( 'CREATE TABLE long_orth_genes ( 
+#			genome_db_id int(10) NOT NULL,
+ #           gene_member_stable_id varchar(128),
+#			n_species INT,
+ #           n_orth INT,
+#		    avg_cov INT 		
             
-        )'),
+ #       )'),
 
-        $self->db_cmd( 'CREATE TABLE short_orth_genes ( 
-        	genome_db_id int(10) NOT NULL,
-            gene_member_stable_id varchar(128),
-			n_species INT,
-            n_orth INT,
-		    avg_cov INT		
-            
-        )'),
+  #      $self->db_cmd( 'CREATE TABLE short_orth_genes ( 
+   #     	genome_db_id int(10) NOT NULL,
+    #        gene_member_stable_id varchar(128),
+#			n_species INT,
+#            n_orth INT,
+#		    avg_cov INT		
+ #           
+  #      )'),
 
-        $self->db_cmd( 'CREATE TABLE QC_split_genes ( 
-        	genome_db_id int(10) NOT NULL,
-            gene_member_stable_id varchar(128),
-            seq_member_id int(10) NOT NULL
-        )'),
-    ];
-}
+   #     $self->db_cmd( 'CREATE TABLE QC_split_genes ( 
+    #    	genome_db_id int(10) NOT NULL,
+     #       gene_member_stable_id varchar(128),
+      #      seq_member_id int(10) NOT NULL
+       # )'),
+#    ];
+#}
 
 sub default_options {
     my $self = shift;
@@ -141,7 +142,6 @@ sub pipeline_analyses {
                 'inputlist'    => [ 'genome_db', 'species_tree_node', 'species_tree_root', 'species_tree_node_tag', 'split_genes',
                                     'method_link_species_set', 'method_link_species_set_tag', 'species_set', 'ncbi_taxa_node', 'ncbi_taxa_name', 'seq_member', 'gene_member' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
             },
             -input_ids  => [ { } ],
             -flow_into => {
@@ -175,7 +175,9 @@ sub pipeline_analyses {
             -flow_into      =>  {
                 1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
                 2   =>  [':////QC_split_genes'],
-            }
+            },
+            -hive_capacity  => 50,
+            -batch_size     => 1,
         },
 
         {
@@ -184,7 +186,9 @@ sub pipeline_analyses {
             -parameters =>  {'longer' => 0, 'compara_db'   => $self->o('compara_db')},
             -flow_into  => {
                 2   => [':////short_orth_genes'],
-            }
+            },
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
@@ -193,13 +197,15 @@ sub pipeline_analyses {
             -parameters     =>  { 'longer' => 1 , 'compara_db'   => $self->o('compara_db')},
             -flow_into      =>  {
                 2   => [':////long_orth_genes'],
-            }
+            },
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
         },
 
         {
             -logic_name => 'store_tags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags',
-
+            -analysis_capacity  => 10,
         },
     ];
 }

@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -75,11 +76,10 @@ sub fetch_input {
     #get current tree adaptor
     $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor );
     $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "Could not fetch current_gene_tree";
-    $self->param('current_gene_tree')->preload();
 
     $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) or die "Could not fetch gene_tree with gene_tree_id='$self->param('gene_tree_id')'";
-    my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{'copy'};
+    my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{ $self->param('input_clusterset_id') };
 	$self->param( 'copy_gene_tree', $copy_tree);
 
     die sprintf( 'Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id') ) unless $copy_tree;
@@ -142,7 +142,7 @@ sub get_msa_command_line {
 
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless ( -x $mafft_home . '/' . $mafft_exe );
 
-    return sprintf( '%s/%s --add %s --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
+    return sprintf( '%s/%s --add %s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
 } ## end sub get_msa_command_line
 
 1;

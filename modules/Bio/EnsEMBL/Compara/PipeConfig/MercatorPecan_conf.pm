@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -350,7 +351,6 @@ sub pipeline_analyses {
             -parameters => {
 		'reuse_db'      => $self->o('reuse_db'),
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
-                'release'       => $self->o('ensembl_release'),
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution
@@ -414,7 +414,6 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'    => $self->o('reuse_db'),
                 'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
-			    'fan_branch_code' => 2,
             },
             -hive_capacity => 4,
             -flow_into => {
@@ -471,7 +470,6 @@ sub pipeline_analyses {
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'extra_parameters'  => [ 'name' ],
-                'fan_branch_code'   => 2,
             },
             -flow_into => {
                 '2->A' => [ 'paf_create_empty_table' ],

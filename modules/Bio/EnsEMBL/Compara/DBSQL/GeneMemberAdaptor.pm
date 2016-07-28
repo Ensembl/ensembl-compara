@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +61,7 @@ use Bio::EnsEMBL::Compara::GeneMember;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use DBI qw(:sql_types);
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor);
@@ -94,28 +95,9 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 }
 
 
-=head2 load_all_from_seq_members
-
- Arg [1]    : arrayref of Bio::EnsEMBL::Compara::SeqMember
- Example    : $genemember_adaptor->load_all_from_seq_members($gene_tree->get_all_Members);
- Description: fetch the gene members for all the SeqMembers, and attach the former to the latter
- Returntype : none
- Caller     : general
-
-=cut
-
-sub load_all_from_seq_members {
-    my $self = shift;
-    my $seq_members = shift;
-
-    my %by_gene_member_id = ();
-    foreach my $seq_member (@$seq_members) {
-        push @{$by_gene_member_id{$seq_member->gene_member_id}}, $seq_member;
-    }
-    my $all_gm = $self->fetch_all_by_dbID_list([keys %by_gene_member_id]);
-    foreach my $gm (@$all_gm) {
-        $_->gene_member($gm) for @{$by_gene_member_id{$gm->dbID}};
-    }
+sub load_all_from_seq_members {     ## DEPRECATED
+    deprecate('GeneMemberAdaptor::load_all_from_seq_members() is deprecated and will be removed in e88. Use Utils::Preloader::load_all_GeneMembers instead');
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers(@_);
 }
 
 

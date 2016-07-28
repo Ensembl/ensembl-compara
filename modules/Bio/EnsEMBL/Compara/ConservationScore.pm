@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -620,7 +621,7 @@ sub _reverse_score {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$conservation_score->_print() is deprecated and will be removed in e87. Use $conservation_score->toString() instead.');
+  deprecate('$conservation_score->_print() is deprecated and will be removed in e86. Use $conservation_score->toString() instead.');
 
 #  my $verbose = verbose;
 #  verbose(0);

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -103,6 +104,8 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
+
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base qw/Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter/;
 
@@ -249,6 +252,42 @@ sub dispatch_body {
 
 
 ###### PROCESSORS
+
+sub _load_all {
+    my ($self, $compara_dba, $nodes, $leaves) = @_;
+
+    my $gms = [map {$_->gene_member} @$leaves];
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $leaves, $gms);
+
+    my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($compara_dba->get_NCBITaxonAdaptor, [map {$_->species_tree_node} @$nodes], $leaves, $gms);
+    $compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
+
+    unless ($self->no_sequences) {
+        my $seq_type = ($self->cdna ? 'cds' : undef);
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($compara_dba->get_SequenceAdaptor, $seq_type, $leaves);
+    }
+}
+
+sub _prune_alignment {
+  my ($self, $tree) = @_;
+  # When the tree is not the entire tree, some columns of the alignment may
+  # be full of gaps. Need to remove them
+  if (!$self->no_sequences && $self->aligned) {
+      my $aln = $tree->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef), -REMOVE_GAPS => 1);
+      $self->{_cached_seq_aligns} = {};
+      foreach my $seq ($aln->each_seq) {
+          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
+      }
+  }
+}
+
+sub _write_tree {
+    my ($self, $tree) = @_;
+    $self->_load_all($tree->adaptor->db, $tree->get_all_nodes, $tree->get_all_Members);
+    $self->_prune_alignment($tree) if $tree->{'_pruned'};
+    $self->SUPER::_write_tree($tree);
+    delete $self->{_cached_seq_aligns};
+}
 
 #tags return [ 'tag', {attributes} ]
 

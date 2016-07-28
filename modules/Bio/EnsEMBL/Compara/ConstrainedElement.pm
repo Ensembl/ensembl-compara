@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -506,7 +507,7 @@ sub get_SimpleAlign {
 		throw("unable to get a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object from this constrained element");
 	}
 
-	my $msa_mlss_id = $cons_eles_mlss->get_tagvalue("msa_mlss_id"); # The mlss_id of the alignments from which the constrained elements were generated
+	my $msa_mlss_id = $cons_eles_mlss->get_value_for_tag("msa_mlss_id"); # The mlss_id of the alignments from which the constrained elements were generated
 
 	my $msa_mlss = $mlss_adaptor->fetch_by_dbID( $msa_mlss_id );
 	

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -138,7 +139,7 @@ sub create_default_mlss {
 
     #Store in meta table
     $self->dataflow_output_id({'param_name' => 'pairwise_default_mlss',
-			       'param_value' => $default_mlss}, 3);
+			       'param_value' => $default_mlss}, 2);
 }
 
 1;

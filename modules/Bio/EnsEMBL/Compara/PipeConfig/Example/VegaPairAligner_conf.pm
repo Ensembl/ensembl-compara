@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -148,7 +149,7 @@ sub pipeline_analyses {
                                               create_alignment_nets_jobs
                                               filter_duplicates_net
                                               create_filter_duplicates_net_jobs
-                                              filter_duplicates_new_himem
+                                              filter_duplicates_net_himem
                                               set_internal_ids
                                               alignment_nets
                                               alignment_nets_himem
@@ -158,6 +159,8 @@ sub pipeline_analyses {
                                               healthcheck
                                               pairaligner_stats
                                               master_db
+                                              coding_exon_stats
+                                              coding_exon_stats_summary
                                             );
 
   #get all analyses that we know about
@@ -261,6 +264,8 @@ sub e_analyses {
                      set_internal_ids_collection
                      store_sequence_again
                      create_filter_duplicates_jobs
+                     check_not_too_many_blocks
+                     delete_trivial_alignments
                      subst pair_aligner_logic_name:
                      update_max_alignment_length_after_chain
                      create_alignment_chains_jobs

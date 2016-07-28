@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,7 +92,7 @@ sub default_options {
 
         'proteintrees_db' => 'mysql://ensro@compara3/mp12_compara_homology_72',
         'proteintrees_copy_tables'  => [  ],
-        'proteintrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'proteintrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'method_link_species_set_attr','other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_7204',
         'families_copy_tables'  => [ 'family', 'family_member' ],
@@ -99,7 +100,7 @@ sub default_options {
 
         'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_72',
         'nctrees_copy_tables'  => [ ],
-        'nctrees_merge_tables' => [ 'seq_member', 'gene_member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'nctrees_merge_tables' => [ 'seq_member', 'gene_member', 'sequence', 'method_link_species_set_tag', 'method_link_species_set_attr','other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting

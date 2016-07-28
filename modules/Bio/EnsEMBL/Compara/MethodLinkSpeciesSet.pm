@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -329,13 +330,7 @@ sub get_common_classification {
 
 sub max_alignment_length {
     my $self = shift @_;
-    my $max_align = shift;
-
-    if($max_align) {
-        $self->add_tag('max_align', $max_align);
-    }
-
-    return $self->get_value_for_tag('max_align') || $DEFAULT_MAX_ALIGNMENT;
+    return $self->_getter_setter_for_tag('max_align', @_) || $DEFAULT_MAX_ALIGNMENT;
 }
 
 
@@ -357,6 +352,32 @@ sub toString {
     $txt .= ', found in '.$self->url if $self->url;
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;
+}
+
+
+=head2 species_tree
+
+  Arg[1]      : (optional) String $label (default: "default"). The label of the species-tree to retrieve
+  Example     : $mlss->species_tree();
+  Description : Returns the species-tree associated to this MLSS
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesTree
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub species_tree {
+    my ($self, $label) = @_;
+
+    $label ||= 'default';
+    my $key = '_species_tree_'.$label;
+    return $self->{$key} if $self->{$key};
+
+    my $species_tree = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->dbID, $label);
+
+    $self->{$key} = $species_tree;
+    return $species_tree;
 }
 
 

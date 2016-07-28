@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,7 +94,7 @@ sub default_options {
             -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
         },
 
-        'merged_tables'     => [ 'method_link_species_set_tag',
+        'merged_tables'     => [ 'method_link_species_set_tag','method_link_species_set_attr',
                                  'species_tree_node', 'species_tree_root' ],
         'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta', 'ktreedist_score',
                                  'method_link', 'method_link_species_set',
@@ -133,7 +134,6 @@ sub pipeline_analyses {
                 'db_conn'         => $self->o('merged_homology_db'),
                 'skipped_tables'  => $self->o('skipped_tables'),
                 'merged_tables'   => $self->o('merged_tables'),
-                'fan_branch_code' => 2,
                 'inputquery'      => 'SHOW TABLE STATUS WHERE Name NOT IN (#csvq:skipped_tables#) AND Name NOT IN (#csvq:merged_tables#) AND Rows',
             },
             -input_ids => [ {} ],
@@ -156,7 +156,6 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list_topup',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'fan_branch_code' => 2,
                 'merged_tables' => $self->o('merged_tables'),
             },
             -input_ids => [

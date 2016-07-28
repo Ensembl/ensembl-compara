@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,11 +61,10 @@ sub fetch_input {
   %{ $self->param('previous_compara_db') } );
 
  my $gab_a = $prev_compara_dba->get_GenomicAlignBlockAdaptor;
- my $sp_tree_a = $prev_compara_dba->get_SpeciesTreeAdaptor;
  my $mlss_a = $prev_compara_dba->get_MethodLinkSpeciesSetAdaptor;
  my $mlss = $mlss_a->fetch_by_dbID($self->param('msa_mlssid'));
 
- my $msa_species_tree = $sp_tree_a->fetch_by_method_link_species_set_id_label($self->param('msa_mlssid'), "default"); 
+ my $msa_species_tree = $mlss->species_tree;
  my $orig_tree = $msa_species_tree->species_tree;
  $orig_tree=~s/:0;/;/;
  my $orig_species = lc join ":", sort {$a cmp $b} $orig_tree=~m/([[:alpha:]_]+)/g;

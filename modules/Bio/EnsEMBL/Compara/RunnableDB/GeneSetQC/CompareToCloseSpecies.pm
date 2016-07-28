@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,7 +77,7 @@ sub fetch_input {
     my $cmp_genome_db_ids = $self->param_required('cmp_genome_db_ids');
 
     my $tree_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0];
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($tree_mlss->dbID, 'default');
+    my $species_tree = $tree_mlss->species_tree;
     
     my %gdbid_2_stn = map {$_->genome_db_id => $_} @{$species_tree->root->get_all_leaves};
     my $lca_node = $species_tree->root->find_first_shared_ancestor_from_leaves([map {$gdbid_2_stn{$_}} ($genome_db_id, @$cmp_genome_db_ids)]);
@@ -104,7 +105,6 @@ sub run {
     warn scalar(@$alltrees), " trees to process\n" if $self->debug;
     my $n = 1;
     foreach my $tree (@$alltrees) {
-        $tree->preload();
         warn $n++, " root_id=", $tree->root_id, "\n" if $self->debug;
         my $s = $self->_process($tree);
         $tree->release_tree();

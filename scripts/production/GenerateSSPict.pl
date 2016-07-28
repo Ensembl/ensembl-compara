@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -119,9 +120,9 @@ my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($gene_member-
 check($transc, "transcript", $stable_id);
 my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($gene_member);
 check($geneTree, "GeneTree", $stable_id);
-my $model_name = $geneTree->get_tagvalue('model_name');
+my $model_name = $geneTree->get_value_for_tag('model_name');
 check($model_name, "model_name", $stable_id);
-my $ss_cons = $geneTree->get_tagvalue('ss_cons');
+my $ss_cons = $geneTree->get_value_for_tag('ss_cons');
 check($ss_cons, "ss_cons", $stable_id);
 my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
 my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);

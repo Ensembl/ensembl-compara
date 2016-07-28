@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -352,8 +353,8 @@ sub genebuild {
 
 sub taxon_id {
   my $self = shift;
-  $self->{'taxon_id'} = shift if (@_);
-  return $self->{'taxon_id'};
+  $self->{'_taxon_id'} = shift if (@_);
+  return $self->{'_taxon_id'};
 }
 
 =head2 taxon
@@ -375,7 +376,7 @@ sub taxon {
     throw("can't fetch Taxon without a taxon_id and an adaptor");
   }
   my $ncbi_taxon_adaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
-  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'taxon_id'});
+  $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'_taxon_id'});
   return $self->{'_taxon'};
 }
 
@@ -584,7 +585,7 @@ sub component_genome_dbs {
 
 sub toString {
     my $self = shift;
-    my $txt = sprintf('GenomeDB dbID=%d %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
+    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
     $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
     $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';

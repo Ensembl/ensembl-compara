@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,6 +80,7 @@ sub param_defaults {
         'include_nonreference'          => 0,
         'include_patches'               => 0,
         'store_missing_dnafrags'        => 0,
+        'exclude_gene_analysis'         => undef,
 
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
 
@@ -169,6 +171,13 @@ sub loadMembersFromCoreSlices {
     $self->param('realGeneCount',   0);
     $self->param('transcriptCount', 0);
 
+    my %excluded_logic_names = ();
+    if ($self->param('exclude_gene_analysis')) {
+        foreach my $key (('', $self->param('genome_db_id'), $self->param('genome_db')->name)) {
+            $excluded_logic_names{$_} = 1 for @{ $self->param('exclude_gene_analysis')->{$key} || [] };
+        }
+    }
+
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
 
@@ -205,6 +214,9 @@ sub loadMembersFromCoreSlices {
 
     foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
       $self->param('geneCount', $self->param('geneCount')+1 );
+
+      next if $excluded_logic_names{$gene->analysis->logic_name};
+
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all

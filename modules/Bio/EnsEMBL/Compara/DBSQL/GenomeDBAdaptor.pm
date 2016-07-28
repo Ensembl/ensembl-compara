@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,10 +60,13 @@ use strict;
 use warnings;
 
 use List::Util qw(max);
+use Scalar::Util qw(blessed looks_like_number);
 
 use Bio::EnsEMBL::Compara::GenomeDB;
+
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert :array);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor');
 
@@ -124,53 +128,48 @@ sub fetch_by_name_assembly {
 }
 
 
-=head2 fetch_all_by_taxon_id_assembly
-
-  Arg[1]      : number (taxon_id)
-  Arg[2]      : (Optional) string (assembly)
-  Example     : $gdbs = $gdba->fetch_all_by_taxon_id_assembly(9606);
-  Description : Retrieves GenomeDBs from the database based on taxon_id and (optionally) the assembly name
-                If the assembly name is missing returns the GenomeDBs with the default assemblies.
-  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB's
-  Exceptions  : none
-  Caller      : general
-  Status      : Experimental
-
-=cut
-
-sub fetch_all_by_taxon_id_assembly {  ## UNUSED
-    my ($self, $taxon_id, $assembly) = @_;
-
-    throw("taxon_id argument is required") unless ($taxon_id);
-
-    my $found_gdbs = $assembly ?
-        $self->_id_cache->get_all_by_additional_lookup('taxon_id_assembly', sprintf('%s____%s_', $taxon_id, lc $assembly))
-            : $self->_id_cache->get_all_by_additional_lookup('taxon_id_default_assembly', $taxon_id);
-
-    return $found_gdbs;
-}
-
-=head2 fetch_by_taxon_id
+=head2 fetch_all_by_taxon_id
 
   Arg [1]    : number (taxon_id)
-  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
-  Description: Retrieves a genome db using the NCBI taxon_id of the species.
-               If more than one GenomeDB is found in the database with the same
-               taxon_id, gives the first one found.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if $taxon_id is not given, or if there are more than 1
-               GenomeDB with this taxon_id.
+  Example    : $gdbs = $gdba->fetch_all_by_taxon_id(1234);
+  Description: Retrieves the genome db(s) using the NCBI taxon_id of the species.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $taxon_id is not given
   Caller     : general
   Status     : Stable
 
 =cut
 
-sub fetch_by_taxon_id {
+sub fetch_all_by_taxon_id {
     my ($self, $taxon_id) = @_;
 
     throw("taxon_id argument is required") unless($taxon_id);
 
-    return $self->_id_cache->get_by_additional_lookup('taxon_id', $taxon_id);   # Will throw if there are more than 1 GenomeDB
+    return $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
+}
+
+
+sub fetch_all_by_taxon_id_assembly {  ## DEPRECATED
+    my ($self, $taxon_id, $assembly) = @_;
+
+    deprecate('GenomeDBAdaptor::fetch_all_by_taxon_id_assembly() will be removed in e88');
+    throw("taxon_id argument is required") unless ($taxon_id);
+
+    if ($assembly) {
+        return [grep {$_->assembly eq $assembly} @{ $self->fetch_all_by_taxon_id($taxon_id) }];
+    } else {
+        return $self->fetch_all_by_taxon_id($taxon_id);
+    }
+}
+
+sub fetch_by_taxon_id { ## DEPRECATED
+    my ($self, $taxon_id) = @_;
+
+    deprecate('GenomeDBAdaptor::fetch_by_taxon_id() will be removed in e88');
+
+    throw("taxon_id argument is required") unless($taxon_id);
+
+    return $self->fetch_all_by_taxon_id($taxon_id)->[0];
 }
 
 
@@ -291,19 +290,10 @@ sub fetch_all_by_ancestral_taxon_id {
 }
 
 
-=head2 fetch_all_by_low_coverage
-
-  Example    : $low_cov_gdbs = $gdba->fetch_all_by_low_coverage();
-  Description: Retrieves all the genome dbs that have low coverage
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_all_by_low_coverage {  ## UNUSED
+sub fetch_all_by_low_coverage {  ## DEPRECATED
     my ($self) = @_;
-    return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
+    deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e88');
+    return [grep {$_->is_high_coverage} @{$self->fetch_all}];
 }
 
 
@@ -345,7 +335,68 @@ sub fetch_by_core_DBAdaptor {
 
 sub fetch_all_polyploid {   ## UNUSED
     my $self = shift;
-    return $self->_id_cache->get_all_by_additional_lookup('is_polyploid', 0);
+    return [grep {$_->is_polyploid} $self->_id_cache->cached_values()];
+}
+
+
+=head2 fetch_all_by_mixed_ref_lists
+
+  Arg [-SPECIES_LIST] (opt)
+              : Arrayref. List of species defined as GenomeDBs, genome_db_id, production or Registry name
+  Arg [-TAXON_LIST] (opt)
+              : Arrayref. List of taxa defined as NCBITaxons, taxon_id (internal and terminal) or name
+  Example     : $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => ['human'], -TAXON_LIST => ['Carnivora',10090]);
+  Description : Fetch all the GenomeDBs that match any ref in the lists.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_mixed_ref_lists {
+    my $self = shift;
+
+    my ($species_list, $taxon_list) = rearrange([qw(SPECIES_LIST TAXON_LIST)], @_);
+
+    my %unique_gdbs = ();
+
+    # Find all the species. Accepted values are: GenomeDBs, genome_db_ids, and species names (incl. aliases)
+    foreach my $s (@{wrap_array($species_list)}) {
+        if (ref($s)) {
+            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
+            $unique_gdbs{$s->dbID} = $s;
+        } elsif (looks_like_number($s)) {
+            $unique_gdbs{$s} = $self->fetch_by_dbID($s) || throw("Could not find a GenomeDB with dbID=$s");
+        } else {
+            my $g = $self->fetch_by_name_assembly($s);
+               $g = $self->fetch_by_registry_name($s) unless $g;
+            throw("Could not find a GenomeDB named '$s'") unless $g;
+            $unique_gdbs{$g->dbID} = $g;
+        }
+    }
+
+    # Find all the taxa. Accepted values are: NCBITaxons, taxon_ids, and taxon names
+    my $ncbi_a = $self->db->get_NCBITaxonAdaptor();
+    foreach my $t (@{wrap_array($taxon_list)}) {
+        my $tax;
+        if (ref($t)) {
+            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon');
+            $tax = $t->dbID;
+        } elsif (looks_like_number($t)) {
+            $ncbi_a->fetch_node_by_taxon_id($t) || throw("Could not find a NCBITaxon with dbID=$t");
+            $tax = $t;
+        } else {
+            my $ntax = $ncbi_a->fetch_node_by_name($t);
+            throw("Could not find a NCBITaxon named '$t'") unless $ntax;
+            $tax = $ntax->dbID;
+        }
+        foreach my $gdb (@{$self->fetch_all_by_ancestral_taxon_id($tax)}) {
+            $unique_gdbs{$gdb->dbID} = $gdb;
+        }
+    }
+
+    return [values %unique_gdbs];
 }
 
 
@@ -561,7 +612,7 @@ sub _objs_from_sth {
             'genebuild' => $genebuild,
             'has_karyotype' => $has_karyotype,
             'is_high_coverage' => $is_high_coverage,
-            'taxon_id'  => $taxon_id,
+            '_taxon_id' => $taxon_id,
             '_genome_component'  => $genome_component,
             'locator'   => $locator,
             '_first_release' => $first_release,
@@ -597,7 +648,7 @@ sub _build_id_cache {
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::GenomeDB;
 
-use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
 use strict;
 use warnings;
 
@@ -606,25 +657,12 @@ sub compute_keys {
     return {
             ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => $genome_db->_get_unique_key,
 
-            # The extant species
-            $genome_db->taxon_id ? (
-                taxon_id => $genome_db->taxon_id,
-                taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly),   ## UNUSED
-            ) : (),
+            # taxon_id -> GenoneDB
+            $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
 
-            # The species that are current and have a taxon_id (i.e. all but "ancestral_sequences")
-            ($genome_db->taxon_id and $genome_db->is_current) ? (
-                taxon_id_default_assembly => $genome_db->taxon_id,  ## UNUSED
-                is_high_coverage => $genome_db->is_high_coverage,   ## UNUSED
-                is_polyploid => $genome_db->is_polyploid,           ## UNUSED
-            ) : (),
+            # name -> GenomeDB (excluding components)
+            $genome_db->genome_component ? () : (name => lc $genome_db->name),
 
-            # All the species (excluding their components
-            $genome_db->genome_component ? () : (
-                name => lc $genome_db->name,
-            ),
-
-            %{$self->SUPER::compute_keys($genome_db)},
            }
 }
 

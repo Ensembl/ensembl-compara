@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,7 +107,6 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-#    $self->tag_assembly_coverage_depth;
     $self->load_mirbase_families;
     $self->run_rfamclassify;
 }
@@ -193,7 +193,7 @@ sub build_hash_models {
       my $family_id = $family_ids[0];
       if (defined $family_id) {
         $transcript_model_id = $family_id;
-      } else {
+      } elsif (defined $gene_description) {
         if ($gene_description =~ /\w+\-(mir-\S+)\ / || $gene_description =~ /\w+\-(let-\S+)\ /) {
           # We take the mir and let ids from the gene description
           $transcript_model_id = $1;
@@ -204,6 +204,8 @@ sub build_hash_models {
         } else {
             print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n" if ($self->debug);
         }
+      } else {
+        print STDERR "$transcript_model_id has no description. Cannot guess its family\n" if ($self->debug);
       }
     }
     # A simple hash classified by the Acc model ids
@@ -274,7 +276,7 @@ sub load_mirbase_families {
     $self->throw("error deleting previously downloaded file $!\n");
   }
 
-  my $cmd = "gunzip $tmp_file";
+  $cmd = "gunzip $tmp_file";
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
     $self->throw("error expanding mirbase families $!\n");
@@ -302,26 +304,5 @@ sub load_mirbase_families {
   printf("time for mirbase families fetch : %1.3f secs\n" , time()-$starttime);
 }
 
-sub tag_assembly_coverage_depth {
-  my $self = shift;
-
-  my @low_coverage  = ();
-  my @high_coverage = ();
-
-  foreach my $gdb (@{$self->param('cluster_mlss')->species_set_obj->genome_dbs()}) {
-    if ($gdb->is_high_coverage) {
-      push @high_coverage, $gdb;
-    } else {
-      push @low_coverage, $gdb;
-    }
-  }
-  return undef unless(scalar(@low_coverage));
-
-  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
-
-  my $ss = new Bio::EnsEMBL::Compara::SpeciesSet(-name => 'low-coverage', -genome_dbs => \@low_coverage, -adaptor => $species_set_adaptor);
-  # Stores if necessary. Updates $ss->dbID anyway
-  $species_set_adaptor->store($ss);
-}
 
 1;

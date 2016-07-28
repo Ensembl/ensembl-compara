@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -180,8 +181,7 @@ sub _load_species_tree_string_from_db {
 
     my $mlss_id = $self->param_required('mlss_id');
     my $label = $self->param('label') || 'default';
-    my $species_tree_string = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, $label)->species_tree();
-    $self->param('species_tree_string', $species_tree_string);
+    return $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, $label)->species_tree();  # FIXME
 }
 
 =head2 get_species_tree_string
@@ -200,7 +200,7 @@ sub get_species_tree_string {
         if( my $species_tree_file = $self->param('species_tree_file') ) {
             $self->param('species_tree_string', $self->_slurp( $species_tree_file ));
         } else {
-            $self->_load_species_tree_string_from_db;
+            $self->param('species_tree_string', $self->_load_species_tree_string_from_db);
         }
     }
     return  $self->param('species_tree_string');

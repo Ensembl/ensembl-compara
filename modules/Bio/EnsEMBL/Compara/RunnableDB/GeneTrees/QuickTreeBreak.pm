@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,6 +81,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
@@ -110,6 +112,7 @@ sub fetch_input {
     my $gene_tree_id = $self->param_required('gene_tree_id');
     my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     $self->param('gene_tree', $gene_tree);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
 
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
@@ -200,8 +203,12 @@ sub print_supertree {
 
 =cut
 
-
 sub write_output {
+    my $self = shift @_;
+    $self->call_within_transaction( sub { $self->_write_output } );
+}
+
+sub _write_output {
     my $self = shift @_;
 
     $self->compara_dba->get_GeneTreeAdaptor->store($self->param('gene_tree'));
@@ -314,19 +321,15 @@ sub rec_update_tags {
         my $node_id = $cluster->root_id;
 
         my $leafcount = scalar(@{$cluster->root->get_all_leaves});
-        $cluster->store_tag('gene_count', $leafcount);
+        $cluster->add_tag('gene_count', $leafcount);
         print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
         #We replicate needed tags into the children
         if (defined $self->param('tags_to_copy')) {
-            my @tags = @{$self->param('tags_to_copy')};
-            for my $tag (@tags) {
-                print STDERR "Stored tag $tag in $node_id\n" if ($self->debug);
-                my $value = $self->param('gene_tree')->get_tagvalue($tag);
-                $self->throw("$tag tag not found in " . $self->param('gene_tree')->root_id) unless (defined $value);
-                $cluster->store_tag($tag, $value);
-            }
+            $cluster->copy_tags_from($self->param('gene_tree'), $self->param('tags_to_copy'));
         }
+
+        $cluster->adaptor->_store_all_tags($cluster);
 
     } else {
         $node->store_tag('tree_support', 'quicktree');

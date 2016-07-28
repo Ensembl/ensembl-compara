@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,7 +63,9 @@ sub fetch_input {
     my $unannotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 
     # write fasta file:
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $unannotated_members)->print_sequences_to_file($self->param('fasta_file'));
+    my $member_set = Bio::EnsEMBL::Compara::MemberSet->new(-members => $unannotated_members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $member_set);
+    $member_set->print_sequences_to_file($self->param('fasta_file'));
 }
 
 sub write_output {

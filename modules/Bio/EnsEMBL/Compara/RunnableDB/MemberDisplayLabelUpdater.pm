@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -148,16 +149,8 @@ sub fetch_input {
 
   my $genome_db_adaptor = $self->compara_dba()->get_GenomeDBAdaptor();  
 
-  my @genome_dbs = ();
-  foreach my $species (@$species_list) {
-    my $genome_db = ( looks_like_number( $species )
-        ? $genome_db_adaptor->fetch_by_dbID( $species )
-        : $genome_db_adaptor->fetch_by_registry_name( $species ) )
-    or die "Could not fetch genome_db object given '$species'";
-
-    push @genome_dbs, $genome_db;
-  }
-  $self->param('genome_dbs', \@genome_dbs);
+  my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species_list);
+  $self->param('genome_dbs', $genome_dbs);
 }
 
 

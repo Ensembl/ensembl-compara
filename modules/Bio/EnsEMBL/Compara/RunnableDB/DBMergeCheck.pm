@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -99,12 +100,11 @@ sub param_defaults {
 
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
         'primary_keys'      => {
-            'gene_tree_root_tag'    => 'root_id',
-            'gene_tree_node_tag'    => 'node_id',
-            'species_tree_node_tag' => 'node_id',
-            'CAFE_species_gene'     => 'node_id',
-            'dnafrag_region'        => 'synteny_region_id',
-            'constrained_element'   => 'constrained_element_id',
+            'gene_tree_root_tag'    => [ 'root_id', 'tag' ],
+            'gene_tree_node_tag'    => [ 'node_id', 'tag' ],
+            'species_tree_node_tag' => [ 'node_id', 'tag' ],
+            'dnafrag_region'        => [ 'synteny_region_id', ],
+            'constrained_element'   => [ 'constrained_element_id', ],
         },
 
         # Maximum number of elements that we are allowed to fetch to check for a primary key conflict
@@ -180,16 +180,13 @@ sub _find_primary_key {
     my $key = $primary_keys->{$table};
     unless (defined $key) {
         my $sth = $dbconnection->db_handle->primary_key_info(undef, undef, $table);
-        # We only want the first column of the primary key
-        while (my $row = $sth->fetch) {
-            $key = $row->[3] if $row->[4] == 1;
-        }
-        die " -ERROR- No primary key for table '$table'" unless defined $key;
-        $primary_keys->{$table} = $key;
+        my @pk = map {$_->[3]} sort {$a->[4] <=> $b->[4]} @{ $sth->fetchall_arrayref() };
+        die " -ERROR- No primary key for table '$table'" unless @pk;
+        $primary_keys->{$table} = $key = \@pk;
     }
 
     # Key type
-    my $key_type = $dbconnection->db_handle->column_info(undef, undef, $table, $key)->fetch->[5];
+    my $key_type = $dbconnection->db_handle->column_info(undef, undef, $table, $key->[0])->fetch->[5];
     my $is_string_type = ($key_type =~ /char/i ? 1 : 0);
     # We only accept char and int
     die "'$key_type' type is not handled" unless $is_string_type or $key_type =~ /int/i;
@@ -267,7 +264,8 @@ sub run {
 
         } else {
 
-            my ($key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
+            my ($full_key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
+            my $key = $full_key->[0];
 
             # Multiple source -> merge (possibly with the target db)
             my @dbs = @{$all_tables->{$table}};
@@ -313,16 +311,16 @@ sub run {
                 unless (grep { $table_size->{$_}->{$table} > $self->param('max_nb_elements_to_fetch') } @dbs) {
 
                     print " -INFO- comparing the actual values of the primary key\n" if $self->debug;
+                    my $keys = join(",", @$full_key);
                     # We really make sure that no value is shared between the tables
-                    $sql = "SELECT DISTINCT $key FROM $table";
+                    $sql = "SELECT $keys FROM $table";
                     my %all_values = ();
                     foreach my $db (@dbs) {
                         my $sth = $dbconnections->{$db}->prepare($sql, { 'mysql_use_result' => 1 });
                         $sth->execute;
-                        my $value;
-                        $sth->bind_columns(\$value);
-                        while ($sth->fetch) {
-                            die sprintf(" -ERROR- for the key '%s.%s', the value '%s' is present in '%s' and '%s'\n", $table, $key, $value, $db, $all_values{$value}) if exists $all_values{$value};
+                        while (my $cols = $sth->fetchrow_arrayref()) {
+                            my $value = join(",", map {$_ // '<NULL>'} @$cols);
+                            die sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value}) if exists $all_values{$value};
                             $all_values{$value} = $db;
                         }
                     }
@@ -362,7 +360,7 @@ sub write_output {
             $n_total_rows += $table_size->{$db}->{$table};
         }
         warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
-        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
+        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}->[0]}, 3);
     }
 
 }
@@ -378,6 +376,9 @@ sub _assert_same_table_schema {
     my $dest_schema = $dest_sth->fetchall_arrayref;
     $dest_sth->finish();
 
+    if (! @$dest_schema){
+        return;
+    }
     die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
 }
 

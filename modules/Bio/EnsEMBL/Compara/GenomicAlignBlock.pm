@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1419,11 +1420,7 @@ sub get_GenomicAlignTree {
                                                                                               -species_set => $species_set)->newick_format('ncbi_name');
     } else {
         #Multiple alignment 
-        #Get SpeciesTree from database.
-        my $species_tree_adaptor = $self->adaptor->db->get_SpeciesTreeAdaptor;
-        my $label = "default";
-        #Read tree from SpeciesTreeNode table
-        $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
+        $species_tree_string = $self->method_link_species_set->species_tree->species_tree;
     }
     #print "string $species_tree_string\n";
 
@@ -1473,7 +1470,7 @@ sub get_GenomicAlignTree {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e87. Use $genomic_align_block->toString() instead.');
+  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e86. Use $genomic_align_block->toString() instead.');
 
   $FILEH ||= \*STDOUT;
   print $FILEH
@@ -1547,7 +1544,7 @@ alignments will throw an exception.
 sub get_old_consensus_genomic_align {   ## DEPRECATED
   my ($self) = @_;
 
-  deprecate('$genomic_align_block->get_old_consensus_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
+  deprecate('$genomic_align_block->get_old_consensus_genomic_align() will be removed in e86. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {
@@ -1604,7 +1601,7 @@ sub get_old_consensus_genomic_align {   ## DEPRECATED
 sub get_old_query_genomic_align {   ## DEPRECATED
   my ($self) = @_;
 
-  deprecate('$genomic_align_block->get_old_query_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
+  deprecate('$genomic_align_block->get_old_query_genomic_align() will be removed in e86. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {

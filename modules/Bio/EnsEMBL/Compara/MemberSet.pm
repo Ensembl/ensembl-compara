@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,6 +90,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -427,6 +429,8 @@ sub clear {
 sub get_all_GeneMembers {
     my ($self,$genome_db_id) = @_;
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
+
     my %seen_gene_members = ();
     foreach my $aligned_member (@{$self->get_all_Members}) {
         next unless $aligned_member->gene_member_id;
@@ -484,7 +488,7 @@ sub print_sequences_to_file {
 
     my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
-    $self->_load_all_missing_sequences($seq_type);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if ( $self->adaptor );
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
@@ -497,62 +501,6 @@ sub print_sequences_to_file {
         $seqio->write_seq($bioseq);
     }
     return scalar(keys %seq_hash);
-}
-
-sub _load_all_missing_sequences {
-    my ($self, $seq_type, @other_sets) = @_;
-
-    my $sets = ref($self) ? [$self, @other_sets] : \@other_sets;
-    return unless scalar(@$sets);
-
-    my $one_set = $sets->[0];
-    my $random_adaptor = $one_set->adaptor;
-    unless ($random_adaptor) {
-        my $m = $one_set->get_all_Members->[0];
-        $random_adaptor = $m->adaptor if $m;
-        return unless $random_adaptor;
-    }
-
-    my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
-
-    if ($seq_type) {
-
-        my $key = "_sequence_$seq_type";
-
-        my %member_id2member = ();
-        foreach my $set (@$sets) {
-            foreach my $member (@{$set->get_all_Members}) {
-                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-                next if $member->{$key};
-                push @{$member_id2member{$member->seq_member_id}}, $member if $member->seq_member_id;
-            }
-        }
-        my @member_ids = keys %member_id2member;
-        my $seqs = $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@member_ids, $seq_type);
-        while (my ($id, $seq) = each %$seqs) {
-            $_->{$key} = $seq for @{$member_id2member{$id}};
-        }
-
-    } else {
-
-        my %seq_id2member = ();
-        foreach my $set (@$sets) {
-            foreach my $member (@{$set->get_all_Members}) {
-                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-                next if $member->{'_sequence'};
-                my $seq_id = $member->{'_sequence_id'};
-                push @{$seq_id2member{$seq_id}}, $member if $seq_id;
-            }
-        }
-
-        my @seq_ids = keys %seq_id2member;
-        my $seqs = $sequence_adaptor->fetch_by_dbIDs(\@seq_ids);
-        while (@$seqs) {
-            my $seq_id = shift @seq_ids;
-            my $seq = shift @$seqs;
-            $_->{'_sequence'} = $seq for @{$seq_id2member{$seq_id}};
-        }
-    }
 }
 
 

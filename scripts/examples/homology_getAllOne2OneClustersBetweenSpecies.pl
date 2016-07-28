@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,13 +45,8 @@ my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
 #my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
 
-my $hash_of_species;
-my @gdbs;
-foreach my $species_name (@list_of_species) {
-  my $gdb = $genomedb_adaptor->fetch_by_registry_name($species_name);
-  push @gdbs, $gdb;
-  $hash_of_species->{$gdb->name} = 1;
-}
+my @gdbs = @{ $genomedb_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => \@list_of_species) };
+my @all_species_names = map {$_->name} @gdbs;
 
 my $present_in_all = undef;
 my $sp1_gdb = shift @gdbs;
@@ -76,7 +72,6 @@ my %gene_member_id_2_stable_id = map {$_->dbID => $_->stable_id} @{$gene_member_
 
 # This code below is optional and is only to sort out cases where all
 # genomes are in the list and print the list of ids if it is the case
-my @all_species_names = keys %$hash_of_species;
 print STDERR "Printing the orthology groups\n";
 foreach my $gene_member_id (keys %$present_in_all) {
     next if scalar(keys %{$present_in_all->{$gene_member_id}}) != scalar(@all_species_names);

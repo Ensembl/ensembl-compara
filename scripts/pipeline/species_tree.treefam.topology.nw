@@ -37,7 +37,7 @@
 		((macropus_eugenii,sarcophilus_harrisii),monodelphis_domestica)),ornithorhynchus_anatinus),
 	      (((((gallus_gallus,meleagris_gallopavo),anas_platyrhynchos),
 		 (ficedula_albicollis,taeniopygia_guttata)),pelodiscus_sinensis),anolis_carolinensis)),xenopus_tropicalis),latimeria_chalumnae),
-	   (((((((xiphophorus_maculatus,oryzias_latipes),gasterosteus_aculeatus),oreochromis_niloticus),
+	   ((((((((xiphophorus_maculatus,poecilia_formosa),oryzias_latipes),gasterosteus_aculeatus),oreochromis_niloticus),
 	       (takifugu_rubripes,tetraodon_nigroviridis)),gadus_morhua),
 	     (astyanax_mexicanus,danio_rerio)),lepisosteus_oculatus)),petromyzon_marinus),
 	 (ciona_savignyi,ciona_intestinalis)),strongylocentrotus_purpuratus),

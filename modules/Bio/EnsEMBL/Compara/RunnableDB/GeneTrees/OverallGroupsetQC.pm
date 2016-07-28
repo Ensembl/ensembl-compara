@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -445,8 +446,8 @@ sub quantify_mapping {
     next unless (defined($reuse_node_id));
     my $reuse_node = $reuse_gene_tree_adaptor->fetch_by_dbID($reuse_node_id);
     next unless (defined($reuse_node));
-    my $reuse_aln_runtime_value = $reuse_node->get_tagvalue('aln_runtime');
-    next if ($reuse_aln_runtime_value eq '');
+    next unless $reuse_node->has_tag('aln_runtime');
+    my $reuse_aln_runtime_value = $reuse_node->get_value_for_tag('aln_runtime');
     my $this_node = $current_gene_tree_adaptor->fetch_by_dbID($mapped_cluster_id);
     next unless (defined($this_node));
     $this_node->store_tag('reuse_node_id',$reuse_node_id);

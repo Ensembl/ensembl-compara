@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,7 +79,7 @@ sub _load_species_tree_string_from_db {
     my ($self) = @_;
     my $species_tree = $self->param('gene_tree')->species_tree();
     $species_tree->attach_to_genome_dbs();
-    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
+    return $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}');
 }
 
 

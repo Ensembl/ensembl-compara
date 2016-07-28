@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,18 +49,20 @@ my $n_goodspecies = 0;
 # Contains the mlss objects for each pair of species
 my %mlss_cache;
 
+my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [keys %{$species_list}]);
 # Finds all pairs of species, and initializes the above variables
-foreach my $gdb1 (keys %{$species_list}) {
-	my $gdb_id1 = $genome_db_adaptor->fetch_by_registry_name($gdb1)->dbID;
-	$gdbid2name{$gdb_id1} = $gdb1;
-	$genomedbid_list{$gdb_id1} = ${$species_list}{$gdb1};
-	$tmp1 = $gdb_id1 if ${$species_list}{$gdb1} == 1;
-	$n_goodspecies += 1 if ${$species_list}{$gdb1} == 1;
+foreach my $gdb1 (@$genome_dbs) {
+	my $gdb_id1 = $gdb1->dbID;
+	my $gdb_name1 = $gdb1->name;
+	$gdbid2name{$gdb_id1} = $gdb_name1;
+	$genomedbid_list{$gdb_id1} = ${$species_list}{$gdb_name1};
+	$tmp1 = $gdb_id1 if ${$species_list}{$gdb_name1} == 1;
+	$n_goodspecies += 1 if ${$species_list}{$gdb_name1} == 1;
 	$mlss_cache{$gdb_id1} = {};
-	foreach my $gdb2 (keys %{$species_list}) {
-		my $gdb_id2 = $genome_db_adaptor->fetch_by_registry_name($gdb2)->dbID;
+	foreach my $gdb2 (@$genome_dbs) {
+		my $gdb_id2 = $gdb2->dbID;
 		$mlss_cache{$gdb_id1}{$gdb_id2} = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$gdb_id1, $gdb_id2]) if ($gdb_id1 != $gdb_id2);
-		$tmp2 = $gdb_id2 if (${$species_list}{$gdb2} == 1) and ($tmp1 ne $gdb_id2);
+		$tmp2 = $gdb_id2 if (${$species_list}{$gdb2->name} == 1) and ($tmp1 ne $gdb_id2);
 	}
 }
 

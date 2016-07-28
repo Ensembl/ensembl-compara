@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,14 +71,13 @@ Description:
 
 sub fetch_input {
     my $self = shift;
-#    print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% get split genes RunnableDB\n\n";
+    print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% get split genes RunnableDB\n\n" if ($self->debug);
     my $genome_db_id = $self->param_required('genome_db_id');
   
     # Fetch the split genes
     my $split_genes = $self->compara_dba->dbc->db_handle->selectall_arrayref('SELECT seq_member_id, gm.stable_id FROM split_genes sg JOIN seq_member sm USING (seq_member_id) JOIN gene_member gm USING (gene_member_id) WHERE sm.genome_db_id = ?', undef, $genome_db_id);
     $self->param('split_genes_hash', $split_genes);
-#    print Dumper($split_genes);
-#    print "   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
+    print Dumper($split_genes) if ($self->debug >3);
 #    die;
 }
 
@@ -87,8 +87,8 @@ sub run {
   my @sg_keys = @{$self->param('split_genes_hash')};
   
   for my $smid (@sg_keys) {
-#    print " $smid->[0]    %%%%%%%%%% $smid->[1]   %%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_id' => $smid->[1] }, 2 );
+    print " $smid->[0]    %%%%%%%%%% $smid->[1]   %%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" if ($self->debug >3);
+    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_stable_id' => $smid->[1] }, 2 );
     $count +=1;
 #    if ($count == 10){
  #     last;

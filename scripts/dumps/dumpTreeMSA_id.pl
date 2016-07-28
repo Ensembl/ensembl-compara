@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 my $tree_id_file;
 my $one_tree_id;
@@ -157,14 +159,18 @@ foreach my $tree_id (@tree_ids) {
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
   my $tree = $adaptor->fetch_by_root_id($tree_id);
-  $tree->preload();
   my $root = $tree->root;
   my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
   $tree_id = "tree.".$tree_id;
   my %fasta_names = ('protein' => 'aa.fasta', 'ncrna' => 'nt.fasta');
 
-  dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
+
+  if ($aln_out or $nh_out or $nhx_out) {
+      Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($dba->get_DnaFragAdaptor, $tree->get_all_Members);
+  }
+
+  dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $tree, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
@@ -180,9 +186,10 @@ sub dumpTreeMultipleAlignment {
   my $tree = shift;
   my $fh = shift;
 
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($dba->get_SequenceAdaptor, $aa ? undef : 'cds', $tree->get_all_Members);
+
   my @aligned_seqs;
   foreach my $leaf (@{$tree->get_all_leaves}) {
-    my $ret = $leaf->alignment_string; # we just put this in front to make sure it doesnt leave traces in the emf file
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;

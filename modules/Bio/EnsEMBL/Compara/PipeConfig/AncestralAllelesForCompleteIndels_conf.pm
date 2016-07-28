@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -283,7 +284,6 @@ sub pipeline_analyses {
 
                                 #Development testing only. Create jobs for chr 22 only
 #                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND is_reference = 1 AND dnafrag.name = \"22\" ORDER BY seq_region",
-                                'fan_branch_code'   => 2,
                                },
                 -flow_into => {
                                '2' => [ 'create_chunked_jobs' ],

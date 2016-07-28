@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,7 +84,6 @@ sub fetch_input {
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) ||
           die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
-        $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #----------------------------------------------------------------------------------------------------------------------------
@@ -103,7 +103,6 @@ sub fetch_input {
             #If can't fetch previous tree:
             #Escape branch to deal with the trees that brand new (New HMMs).
             if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
-                print ">>>" . $self->param('stable_id') . "<<<\n";
                 $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
                 $self->input_job->autoflow(0);
                 $self->complete_early("HMM model is brand new so tree is brand new, it didnt exist before. It needs to go to the cluster_factory.");
@@ -112,7 +111,6 @@ sub fetch_input {
             #Get previous tree
             $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) ||
               die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-            $self->param('reuse_gene_tree')->preload();
             $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
 
             print "Fetching reuse tree: " . $self->param('stable_id') . "/" . $self->param('reuse_gene_tree')->root_id . "\n" if ( $self->debug );
@@ -238,8 +236,7 @@ sub write_output {
                   scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
                 $self->dataflow_output_id( $self->input_id, $self->param('branch_for_update_threshold_trees') );
                 $self->input_job->autoflow(0);
-                $self->complete_early(
-"The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
+                $self->complete_early( "The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
             }
             else {
                 my $percentage =
@@ -248,10 +245,10 @@ sub write_output {
                   scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
                 print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
 
+                #Remapping leaves.
+                $self->_remap_leaves( $self->param( 'all_leaves' ) );
+
                 #Copy tree to the DB
-                print ">>>" . $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ) . "<<<\n";
-                print ">>>" . $self->param('output_clusterset_id') . "<<<\n";
-                print ">>>" . $self->param('gene_tree_id') . "<<<\n";
                 my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
                                                                  $self->param('output_clusterset_id'),
                                                                  $self->param('current_gene_tree'),
@@ -264,7 +261,6 @@ sub write_output {
     #all trees from this point on, there is no need for alignment/tree inference
     else{
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-        $self->param('reuse_gene_tree')->preload();
         $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
 
         if ( $self->param('current_gene_tree')->get_value_for_tag( 'only_needs_deleting' ) ) {
@@ -276,14 +272,10 @@ sub write_output {
             print "Tree has not changed at all. Just copy over.\n" if ( $self->debug );
         }
 
-        #Copy tree to the DB as default, since tree will not be re-infered
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                         'default',
-                                                         $self->param('current_gene_tree'),
-                                                         undef, 1 );
-
+        #Remapping leaves.
+        $self->_remap_leaves( $self->param( 'all_leaves' ) );
         #Also copy the tree under the copy clusterset_id, in order to keep track of things, and to make sure CopyAlignmentsFromDB.pm works OK.
-        $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
                                                       $self->param('output_clusterset_id'),
                                                       $self->param('current_gene_tree'),
                                                       undef, 1 );
@@ -295,6 +287,28 @@ sub write_output {
 # internal methods
 #
 ##########################################
+
+# This function is used to remap the old seq_member_ids in the re_used tree with the new ones used in the current_tree.
+# This is necessary for the cases where a species have been updated (gene-set || assembly), this means that the seq_members will be
+#   re-inserted therefore not sharing the same ids with the reusede database.
+# For more details check Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters::_seq_member_map
+sub _remap_leaves {
+    my ( $self, $all_leaves ) = @_;
+
+    foreach my $leaf ( @{$all_leaves} ) {
+        my $stable_id = $leaf->stable_id;
+        my $sql = "SELECT seq_member_id_current FROM seq_member_id_current_reused_map WHERE stable_id = '$stable_id'";
+        my $sth = $self->param('compara_dba')->dbc->prepare($sql);
+        $sth->execute() || die "Could not execute ($sql)";
+        my $seq_member_id_current = $sth->fetchrow();
+        $sth->finish();
+
+        if ($seq_member_id_current) {
+            $leaf->seq_member_id($seq_member_id_current);
+        }
+    }
+}
+
 sub _disavow_unused_members {
 
     my ( $self, $members_2_b_changed ) = @_;

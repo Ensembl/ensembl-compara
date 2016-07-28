@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,14 +96,61 @@ sub fetch_node_by_taxon_id {
   my $node = $self->generic_fetch_one($constraint);
 
   unless ($node) {
-    my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = "merged_taxon_id" AND t.taxon_id = n2.taxon_id']];
-    $constraint = 'n2.name = ?';
+    my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
+    $constraint = 'n.name = ?';
     $node = $self->generic_fetch_one($constraint, $join);
     if ($node) {
       warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id."\n");
     }
   }
   return $node;
+}
+
+
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $taxon->dbID
+               the database id for a ncbi taxon
+  Example    : $taxon = $nbcitaxonDBA->fetch_by_dbID($taxon_id);
+  Description: Returns an NCBITaxon object for the given NCBI Taxon id.
+  Returntype : Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : thrown if $taxon_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_dbID {
+    my $self = shift;
+    return $self->fetch_node_by_taxon_id(@_);
+}
+
+
+=head2 fetch_all_by_dbID_list
+
+  Arg [1]    : Arrayref of taxon_ids (database IDs for NCBI taxa)
+  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_dbID_list([$taxon_id1, $taxon_id2]);
+  Description: Returns all the NCBITaxon objects for the given NCBI Taxon ids.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::NCBITaxon
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_dbID_list {
+    my ($self, $taxon_ids) = @_;
+
+    return [] unless scalar(@$taxon_ids);
+
+    my $nodes = $self->generic_fetch_concatenate($taxon_ids, 't.taxon_id', SQL_INTEGER);
+    my %seen_taxon_ids = map {$_->taxon_id => $_} @$nodes;
+
+    my @missing_taxon_ids = grep {!$seen_taxon_ids{$_}} @$taxon_ids;
+
+    if (@missing_taxon_ids) {
+        my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
+        my $more_nodes = $self->generic_fetch_concatenate(\@missing_taxon_ids, 'n.name', SQL_VARCHAR, $join);
+        push @$nodes, @$more_nodes;
+    }
+    return $nodes;
 }
 
 
@@ -126,9 +174,10 @@ sub fetch_node_by_name {
     throw ("name is undefined");
   }
 
+  my $join = [[['ncbi_taxa_name', 'n'], 't.taxon_id = n.taxon_id']];
   my $constraint = 'n.name = ?';
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-  return $self->generic_fetch_one($constraint);
+  return $self->generic_fetch_one($constraint, $join);
 }
 
 
@@ -176,14 +225,14 @@ sub fetch_all_nodes_by_name {
     my ($self, $name, $name_class) = @_;
 
     if ($name_class) {
-        my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = ? AND t.taxon_id = n2.taxon_id']];
+        my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = ? AND t.taxon_id = n.taxon_id']];
         $self->bind_param_generic_fetch($name, SQL_VARCHAR);
         $self->bind_param_generic_fetch($name_class, SQL_VARCHAR);
-        return $self->generic_fetch('n2.name LIKE ?', $join);
+        return $self->generic_fetch('n.name LIKE ?', $join);
     } else{
-        my $join = [[['ncbi_taxa_name', 'n2'], 't.taxon_id = n2.taxon_id']];
+        my $join = [[['ncbi_taxa_name', 'n'], 't.taxon_id = n.taxon_id']];
         $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-        return $self->generic_fetch('n2.name LIKE ?', $join);
+        return $self->generic_fetch('n.name LIKE ?', $join);
     }
 }
 
@@ -229,9 +278,14 @@ sub fetch_node_by_node_id {
 #
 ##################################
 
+
+sub _tag_capabilities {
+    return ('ncbi_taxa_name', undef, 'taxon_id', 'taxon_id', 'name_class', 'name');
+}
+
+
 sub _tables {
   return (['ncbi_taxa_node', 't'],
-          ['ncbi_taxa_name', 'n']
          );
 }
 
@@ -244,13 +298,7 @@ sub _columns {
           't.root_id',
           't.rank',
           't.genbank_hidden_flag',
-          'n.name'
           );
-}
-
-
-sub _default_where_clause {
-    return "t.taxon_id = n.taxon_id AND n.name_class='scientific name'";
 }
 
 
@@ -279,7 +327,6 @@ sub init_instance_from_rowhash {
 
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
-  $node->name($rowhash->{'name'});
   $node->rank($rowhash->{'rank'});
   $node->genbank_hidden_flag($rowhash->{'genbank_hidden_flag'});
   $node->distance_to_parent(0.1);  
@@ -288,19 +335,6 @@ sub init_instance_from_rowhash {
   return $node;
 }
 
-sub _load_tagvalues {
-  my $self = shift;
-  my $node = shift;
-
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
-  $sth->execute($node->node_id);  
-  while (my ($tag, $value) = $sth->fetchrow_array()) {
-    $node->add_tag($tag,$value,1);
-  }
-  $sth->finish;
-}
 
 sub update {
   my ($self, $node) = @_;

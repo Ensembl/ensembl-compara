@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -262,7 +263,7 @@ sub delete_node {
   $self->dbc->do("DELETE from homology WHERE gene_tree_node_id = $node_id");
 
   # The node is actually a root. We have to clear the entry in gene_tree_root
-  if ($node_id == $node->tree->root->node_id) {
+  if ($node_id && (!$node->{_root_id} || ($node_id == $node->{_root_id}))) {
     $self->dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
@@ -276,16 +277,19 @@ sub delete_nodes_not_in_tree
   my $self = shift;
   my $tree = shift;
 
+  # NOTE: $tree is assumed to be a root node
   assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  my %node_hash;
+  foreach my $node (@{$tree->get_all_nodes}) {
+    $node_hash{$node->node_id} = $node;
+  }
   #print("delete_nodes_not_present under ", $tree->node_id, "\n");
-  my $dbtree = $self->fetch_node_by_node_id($tree->node_id);
-  my @all_db_nodes = $dbtree->get_all_subnodes;
-  foreach my $dbnode (@all_db_nodes) {
-    next if($tree->find_node_by_node_id($dbnode->node_id));
+  my $all_db_nodes = $self->fetch_all_by_root_id($tree->node_id);
+  foreach my $dbnode (@$all_db_nodes) {
+    next if $node_hash{$dbnode->node_id};
     #print "Deleting unused node ", $dbnode->node_id, "\n";
     $self->delete_node($dbnode);
   }
-  $dbtree->release_tree;
 }
 
 
@@ -307,7 +311,7 @@ sub remove_seq_member {
 ###################################
 
 sub _tag_capabilities {
-    return ('gene_tree_node_tag', 'gene_tree_node_attr', 'node_id', 'node_id');
+    return ('gene_tree_node_tag', 'gene_tree_node_attr', 'node_id', 'node_id', 'tag', 'value');
 }
 
 
@@ -335,12 +339,9 @@ sub _tables {
   return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['seq_member', 'm']);
 }
 
-sub _default_where_clause {
-    return 't.root_id = tr.root_id';
-}
-
 sub _left_join {
     return (
+        ['gene_tree_root', 't.root_id = tr.root_id'],
         ['gene_align_member', 'gam.seq_member_id = t.seq_member_id AND gam.gene_align_id = tr.gene_align_id'],
         ['seq_member', 't.seq_member_id = m.seq_member_id'],
     );
@@ -360,7 +361,7 @@ sub create_instance_from_rowhash {
 
   $self->init_instance_from_rowhash($node, $rowhash);
 
-    if ((defined $self->{'_ref_tree'}) and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
+    if ((defined $self->{'_ref_tree'}) and $rowhash->{root_id} and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
         # GeneTree was passed via _ref_tree
         #print STDERR "REUSING GeneTree for $node :", $self->{'_ref_tree'};
         $node->tree($self->{'_ref_tree'});

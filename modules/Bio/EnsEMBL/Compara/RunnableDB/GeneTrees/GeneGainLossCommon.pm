@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,28 +55,6 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub get_tree_string_from_mlss_tag {
-    my ($self) = @_;
-    my $mlss_id = $self->param('mlss_id');
-
-    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = 'cafe_tree_string' AND method_link_species_set_id = ?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($mlss_id);
-
-    my ($cafe_tree_string) = $sth->fetchrow_array();
-    $sth->finish;
-    print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
-    return $cafe_tree_string;
-}
-
-sub get_cafe_tree_from_string {
-    my ($self) = @_;
-    my $cafe_tree_string = $self->param('species_tree_string');
-    print STDERR "$cafe_tree_string\n" if ($self->debug());
-    my $cafe_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafe_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
-    $self->param('cafe_tree', $cafe_tree);
-    return;
-}
 
 sub load_split_genes {
     my ($self) = @_;
@@ -136,34 +115,24 @@ sub get_all_trees {
     my ($self, $species) = @_;
     my $adaptor = $self->param('adaptor');
     my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
+    my %stn_id_lookup = map {$_->genome_db_id => $_->node_id} @{ $self->param('cafe_tree')->get_all_leaves };
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     return sub {
         # $self is the outer var 
         my $tree = shift @$all_trees;
         return undef unless ($tree);
-        $tree->preload();
         my $root_id = $tree->root_id;
         my $name = $root_id;
         my $full_tree_members = $tree->get_all_leaves();
         my $tree_members = $self->param('no_split_genes') ? $full_tree_members : $self->filter_split_genes($full_tree_members);
 
-        my %species;
+        my %species = map {$_ => 0} @$species;
         for my $member (@$tree_members) {
-            my $sp;
-            eval {$sp = $member->genome_db->name};
-            next if ($@);
-            $sp =~ s/_/\./g;
-            $species{$sp}++;
+            $species{$stn_id_lookup{$member->genome_db_id}}++ if exists $stn_id_lookup{$member->genome_db_id};
         }
 
-        my @flds = map {
-            { "species" => $_,
-              "members" => $species{$_} || 0
-            }
-        } @$species;
-
         $tree->release_tree();
-        return ($name, $root_id, [@flds]);
+        return ($name, $root_id, \%species);
     };
 }
 
@@ -173,7 +142,7 @@ sub get_normalized_table {
     my ($header, @table) = split /\n/, $table;
     my @species = split /\t/, $header;
 
-    ## n_headers method has to be defined in the parent class,
+    ## n_headers method has to be defined in the sub class,
     ## allowing for differentiation between 2-column names (ids, and names)
     ## as is needed by CAFE and 1-column names needed by badiRate
     my @headers = @species[0..$self->n_headers-1];
@@ -217,8 +186,7 @@ sub get_normalized_table {
         }
     }
     print STDERR "$nfams families written in tbl file\n" if ($self->debug());
-    $self->param('table', $newTable);
-    return;
+    return $newTable;
 }
 
 sub mean {

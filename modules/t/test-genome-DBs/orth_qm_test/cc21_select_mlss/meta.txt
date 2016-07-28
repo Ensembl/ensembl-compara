@@ -1,3 +1,0 @@
-1	\N	schema_version	83
-2	\N	schema_type	compara
-3	\N	patch	patch_82_83_a.sql|schema_version

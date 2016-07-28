@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,9 +82,8 @@ sub fetch_input {
     if ($self->param('species_set_id')) {
         my $species_set_id = $self->param_required('species_set_id');
         die unless looks_like_number($species_set_id);
-        # Currently, empty species sets cannot be represented
-        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id); # or die "Could not fetch ss with dbID=$species_set_id";
-        $genome_dbs        = $species_set ? $species_set->genome_dbs() : [];
+        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or die "Could not fetch ss with dbID=$species_set_id";
+        $genome_dbs        = $species_set->genome_dbs();
 
     } elsif ($self->param('mlss_id')) {
         my $mlss_id = $self->param('mlss_id');
@@ -102,7 +102,7 @@ sub fetch_input {
     $genome_dbs = [grep {$_->name ne 'ancestral_sequences'} @$genome_dbs] if not $self->param('ancestral_genomes');
     $genome_dbs = [grep {not $_->is_polyploid} @$genome_dbs] if not $self->param('polyploid_genomes');
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
-    $genome_dbs = [grep {$_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
+    $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
 
     $self->param('genome_dbs', $genome_dbs);
 }

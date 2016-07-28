@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -403,7 +404,7 @@ sub delete_tree {
     assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
 
     # Remove all the nodes but the root
-    my $gene_tree_node_Adaptor = $tree->root->adaptor;
+    my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
         next if ($node->node_id() == $tree->root->node_id());
         $gene_tree_node_Adaptor->delete_node($node);
@@ -421,7 +422,7 @@ sub delete_tree {
     }
 
     # Finally remove the root node
-    $gene_tree_node_Adaptor->delete_node($tree->root);
+    $gene_tree_node_Adaptor->delete_node($tree->root) if $tree->root;
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
@@ -441,7 +442,7 @@ sub delete_tree {
 ###################################
 
 sub _tag_capabilities {
-    return ('gene_tree_root_tag', 'gene_tree_root_attr', 'root_id', 'root_id');
+    return ('gene_tree_root_tag', 'gene_tree_root_attr', 'root_id', 'root_id', 'tag', 'value');
 }
 
 
@@ -484,7 +485,6 @@ sub _objs_from_sth {
   my @tree_list = ();
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-    #my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
     my $tree = Bio::EnsEMBL::Compara::GeneTree->new_fast({
         adaptor                     => $self,
         _root_id                    => $rowhash->{root_id},

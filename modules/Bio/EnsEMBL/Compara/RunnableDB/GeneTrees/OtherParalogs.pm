@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,6 +68,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
@@ -77,7 +79,7 @@ sub fetch_input {
 
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-    $aln->_load_all_missing_sequences();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $aln);
 
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {
@@ -142,9 +144,9 @@ sub rec_add_paralogs {
 
     # The node_type of the root
     unless ($self->param('_readonly')) {
-        my $original_node_type = $ancestor->get_tagvalue('node_type');
+        my $original_node_type = $ancestor->get_value_for_tag('node_type');
         print "original_node_type: $original_node_type\n" if ($self->debug);
-        if ($ancestor->get_tagvalue('is_dup', 0)) {
+        if ($ancestor->get_value_for_tag('is_dup', 0)) {
             $ancestor->store_tag('node_type', 'duplication');
             $self->duplication_confidence_score($ancestor);
         } elsif (($child1->get_value_for_tag('species_tree_node_id') == $this_taxon) or ($child2->get_value_for_tag('species_tree_node_id') == $this_taxon)) {
@@ -154,16 +156,16 @@ sub rec_add_paralogs {
             $ancestor->store_tag('node_type', 'speciation');
             $ancestor->delete_tag('duplication_confidence_score');
         }
-        print "setting node_type to ", $ancestor->get_tagvalue('node_type'), "\n" if ($self->debug);
+        print "setting node_type to ", $ancestor->get_value_for_tag('node_type'), "\n" if ($self->debug);
     }
 
     # Each species
     my $ngenepairlinks = 0;
-    foreach my $genome_db_id (keys %{$ancestor->get_tagvalue('gene_hash')}) {
+    foreach my $genome_db_id (keys %{$ancestor->get_value_for_tag('gene_hash')}) {
         # Each gene from the sub-tree 1
-        foreach my $gene1 (@{$child1->get_tagvalue('gene_hash')->{$genome_db_id}}) {
+        foreach my $gene1 (@{$child1->get_value_for_tag('gene_hash')->{$genome_db_id}}) {
             # Each gene from the sub-tree 2
-            foreach my $gene2 (@{$child2->get_tagvalue('gene_hash')->{$genome_db_id}}) {
+            foreach my $gene2 (@{$child2->get_value_for_tag('gene_hash')->{$genome_db_id}}) {
                 my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2, 0);
                 $genepairlink->add_tag("ancestor", $ancestor);
                 $genepairlink->add_tag("orthotree_type", 'other_paralog');
@@ -227,7 +229,7 @@ sub get_ancestor_species_hash
     my $self = shift;
     my $node = shift;
 
-    my $species_hash = $node->get_tagvalue('species_hash');
+    my $species_hash = $node->get_value_for_tag('species_hash');
     return $species_hash if($species_hash);
 
     print $node->node_id, " is a ", $node->tree->tree_type, "\n" if ($self->debug);
@@ -265,7 +267,7 @@ sub get_ancestor_species_hash
             foreach my $genome_db_id (keys(%$t_species_hash)) {
                 $is_dup ||= (exists $species_hash->{$genome_db_id});
                 $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id} + ($species_hash->{$genome_db_id} || 0);
-                push @{$gene_hash->{$genome_db_id}}, @{$child->get_tagvalue('gene_hash')->{$genome_db_id}};
+                push @{$gene_hash->{$genome_db_id}}, @{$child->get_value_for_tag('gene_hash')->{$genome_db_id}};
             }
         }
 

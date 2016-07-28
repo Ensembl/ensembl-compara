@@ -1,4 +1,5 @@
--- Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016] EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -112,27 +113,48 @@ GROUP BY species_tree_node_id
 ;
 
 
-DELETE FROM species_tree_node_tag WHERE tag IN ('nb_seq', 'nb_genes_in_tree_single_species', 'nb_genes_in_tree_multi_species', 'root_nb_trees', 'root_nb_genes', 'root_avg_gene', 'root_min_gene', 'root_max_gene', 'root_avg_spec', 'root_min_spec', 'root_max_spec', 'root_avg_gene_per_spec', 'nb_nodes', 'nb_dup_nodes', 'nb_gene_splits', 'nb_spec_nodes', 'nb_dubious_nodes', 'avg_dupscore', 'avg_dupscore_nondub');
+#set all columns to NULL
+UPDATE species_tree_node_attr SET nb_seq = NULL, nb_genes_in_tree_single_species = NULL, nb_genes_in_tree_multi_species = NULL, 
+	root_nb_trees = NULL, root_nb_genes = NULL, root_avg_gene = NULL, root_min_gene = NULL, root_max_gene = NULL, root_avg_spec = NULL, 
+	root_min_spec = NULL, root_max_spec = NULL, root_avg_gene_per_spec = NULL, nb_nodes = NULL, nb_dup_nodes = NULL, nb_gene_splits = NULL, 
+	nb_spec_nodes = NULL, nb_dubious_nodes = NULL, avg_dupscore = NULL, avg_dupscore_nondub = NULL;
 
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_seq", nb_seq FROM tmp_stats_per_genome;
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree_single_species", nb_genes_in_tree_single_species FROM tmp_stats_per_genome;
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree_multi_species", nb_genes_in_tree_multi_species FROM tmp_stats_per_genome;
+#populate the attr table with the node_id from species_tree_root table because the update syntax we are going to use to update the attr table requires that there be data already present in the table
+INSERT IGNORE INTO species_tree_node_attr (node_id) SELECT node_id FROM species_tree_node stn JOIN species_tree_root str USING (root_id)
+	WHERE label = "default";
 
-INSERT INTO species_tree_node_tag SELECT node_id, "root_nb_trees", nb_trees FROM tmp_stats_per_root_with_zero;
-INSERT INTO species_tree_node_tag SELECT node_id, "root_nb_genes", tot_nb_genes FROM tmp_stats_per_root_with_zero;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_avg_gene", avg_nb_genes FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_min_gene", min_nb_genes FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_max_gene", max_nb_genes FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_avg_spec", avg_nb_spec FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_min_spec", min_nb_spec FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_max_spec", max_nb_spec FROM tmp_stats_per_root;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "root_avg_gene_per_spec", avg_nb_genes_per_spec FROM tmp_stats_per_root;
+#update species_tree_node_attr with tmp_stats_per_genome
+UPDATE species_tree_node_attr sta JOIN tmp_stats_per_genome t
+SET sta.nb_seq= t.nb_seq, 
+	sta.nb_genes_in_tree_single_species=t.nb_genes_in_tree_single_species,
+	sta.nb_genes_in_tree_multi_species= t.nb_genes_in_tree_multi_species 
+	WHERE sta.node_id = t.node_id;
 
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_nodes", nb_nodes FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_dup_nodes", nb_dup_nodes FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_gene_splits", nb_gene_splits FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_spec_nodes", nb_spec_nodes FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_dubious_nodes", nb_dubious_nodes FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore", avg_dupscore FROM tmp_stats_per_node WHERE avg_dupscore IS NOT NULL;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore_nondub", avg_dupscore_nondub FROM tmp_stats_per_node WHERE avg_dupscore_nondub IS NOT NULL;
+#update species_tree_node_attr with tmp_stats_per_root_with_zero
+UPDATE species_tree_node_attr sta JOIN tmp_stats_per_root_with_zero t
+	SET sta.root_nb_trees= t.nb_trees,
+	sta.root_nb_genes= t.tot_nb_genes 
+	WHERE sta.node_id = t.node_id;
+
+#update species_tree_node_attr with tmp_stats_per_root
+UPDATE species_tree_node_attr sta JOIN tmp_stats_per_root t 
+	SET sta.root_avg_gene= t.avg_nb_genes, 
+    sta.root_min_gene=t.min_nb_genes,
+    sta.root_max_gene=t.max_nb_genes,
+    sta.root_avg_spec=t.avg_nb_spec,
+    sta.root_min_spec=t.min_nb_spec,
+    sta.root_max_spec=t.max_nb_spec,
+    sta.root_avg_gene_per_spec=t.avg_nb_genes_per_spec
+	WHERE sta.node_id = t.species_tree_node_id;
+
+#update species_tree_node_attr with tmp_stats_per_node
+UPDATE species_tree_node_attr sta JOIN tmp_stats_per_node t 
+	SET sta.nb_nodes= t.nb_nodes,
+	sta.nb_dup_nodes= t.nb_dup_nodes,
+	sta.nb_gene_splits= t.nb_gene_splits,
+	sta.nb_spec_nodes= t.nb_spec_nodes,
+	sta.nb_dubious_nodes= t.nb_dubious_nodes,
+	sta.avg_dupscore= t.nb_gene_splits,
+	sta.avg_dupscore_nondub= t.avg_dupscore_nondub
+	WHERE sta.node_id = t.species_tree_node_id;
 

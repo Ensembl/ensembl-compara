@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,12 +57,6 @@ use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
 
-sub fetch_all {
-    my ($self) = @_;
-
-    return $self->generic_fetch();
-}
-
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 
@@ -81,7 +76,8 @@ sub fetch_all_by_method_link_species_set_id {
     my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'cafe');
     my $root_id = $species_tree->root->node_id();
 
-    my $constraint = "str.root_id=$root_id";
+    my $constraint = 'str.root_id = ?';
+    $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
     return $self->generic_fetch($constraint);
 }
 

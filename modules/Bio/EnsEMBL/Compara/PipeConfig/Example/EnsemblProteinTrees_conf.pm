@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,6 +62,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion ();
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
@@ -113,6 +115,10 @@ sub default_options {
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
         # affects 'group_genomes_under_taxa'
         'filter_high_coverage'      => 1,
+        
+    # GOC parameters
+        'goc_taxlevels'                 => ['Carnivora','Ciona'], #['Euteleostomi','Ciona'],
+        'goc_threshold'                 => undef,
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -178,6 +184,10 @@ sub default_options {
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
+        'copy_tree_capacity'        => 100,
+        'cluster_tagging_capacity'  => 200,
+        'goc_capacity'              => 200,
+        'genesetQC_capacity'        => 200,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -185,7 +195,7 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host' => 'compara1',
+        'host' => 'compara2',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
@@ -210,13 +220,15 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
+            # This value works in production. Change it if you want to run the pipeline in another context, but don't commit the change !
+            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
         'eg_live' => {
             -host => 'mysql-eg-publicsql.ebi.ac.uk',
             -port => 4157,
             -user => 'anonymous',
-            -db_version => 78,
+            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
@@ -230,7 +242,8 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara5:3306/lg4_ensembl_compara_81',
+        # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
+        'prev_rel_db' => 'mysql://ensro@compara5:3306/cc21_ensembl_compara_84',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -282,6 +295,7 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+         '512Gb_job'    => {'LSF' => '-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
 
          '16Gb_8c_job' => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_8c_job' => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
@@ -295,6 +309,7 @@ sub resource_classes {
 
          '16Gb_64c_job' => {'LSF' => '-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_64c_job' => {'LSF' => '-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '256Gb_64c_job' => {'LSF' => '-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"' },
 
          '8Gb_8c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8] span[hosts=1]"' },
          '8Gb_16c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16] span[hosts=1]"' },

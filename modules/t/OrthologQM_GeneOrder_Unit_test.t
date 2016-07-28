@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,8 +43,8 @@ BEGIN {
     use Test::Most;
 }
 #load the pre dumped test database
-my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
-my $dba = $multi_db->get_DBAdaptor('OrthologQM_GeneOrder');
+my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('orth_qm_goc');
+my $dba = $multi_db->get_DBAdaptor('compara');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 
 # check module can be seen and compiled
@@ -53,7 +54,7 @@ standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory', #module
 	{ # input param hash
 		'compara_db' => $dbc->url,   # Parameters in the test still have to be stringified to mimic the job.input_id table
-		'mlss_id'	=>	'100021'
+		'goc_mlss_id'	=>	'100021'
 	},
 
 	[
@@ -70,7 +71,6 @@ standaloneJob(
                    },
                    'ref_species_dbid' => 31,
                    'non_ref_species_dbid' => 155,
-                   'mlss_ID' => 100021
         	},
         	2
 			
@@ -91,18 +91,9 @@ standaloneJob(
         		},
         		'ref_species_dbid' => 155,
             	'non_ref_species_dbid' => 31,
-            	'mlss_ID' => 100021
              	},
         	2
-        ],
-
-        [
-        	'DATAFLOW',
-        	{
-        		'mlss_ID' => 100021
-        		},
-        		1
-        ],
+		],
 	],
 );
 
@@ -110,7 +101,7 @@ use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs');
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
 	{ # input param hash
-	'mlss_ID'=>'100021',
+	'goc_mlss_id'=>'100021',
     'ref_species_dbid' => 31,
     'non_ref_species_dbid' => 155,
     'ortholog_info_hashref'	=>	{ '1045569' => {
@@ -138,7 +129,6 @@ standaloneJob(
         		},
         		'ref_species_dbid' => 31,
                 'non_ref_species_dbid' => 155,
-                'mlss_ID' => 100021
         	}, 
         	2
         ],
@@ -151,7 +141,7 @@ standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 	{
     'compara_db' => $dbc->url,
-		'mlss_ID'=>'100021',
+		'goc_mlss_id'=>'100021',
 		'ref_species_dbid' =>155,
         'non_ref_species_dbid' => 31,
 		'chr_job'	=>	{ '14026395' => [
@@ -219,7 +209,7 @@ standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
   {
     'compara_db' => $dbc->url,
-    'mlss_ID' => '100021',
+    'goc_mlss_id' => '100021',
   },  
 );
 
@@ -231,13 +221,13 @@ foreach my $result (@{$results}) {
   is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
 }
 
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags');
-standaloneJob(
-  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
-  {
-    'compara_db' => $dbc->url,
-    'mlss_id'=>'100021',
-  },
-);
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags');
+#standaloneJob(
+#  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
+#  {
+#    'compara_db' => $dbc->url,
+#    'mlss_id'=>'100021',
+#  },
+#);
 
 done_testing();

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,7 +74,7 @@ sub param_defaults {
     return {
     %{ $self->SUPER::param_defaults() },
 #  'genome_db_id' => 126,
-#  'coverage_threshold'    => 50,  # Genes with a coverage below this are reported
+  'coverage_threshold'    => 50,  # Genes with a coverage below this are reported
 #  'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
   
     };
@@ -100,7 +101,7 @@ sub fetch_input {
 sub run {
   my $self = shift;
   my $genome_db_id        = $self->param_required('genome_db_id');
-  my $coverage_threshold  = $self->param('coverage_threshold');
+  my $coverage_threshold  = $self->param_required('coverage_threshold');
   my $species_threshold   = $self->param_required('species_threshold');
   my $split_genes         = $self->param_required('split_genes_hash');
   my $longer  = $self->param('longer');

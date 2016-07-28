@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -124,7 +125,8 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->db->get_PipelineWideParametersAdaptor->store( $self->param('pwp') );
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters', %$_)for @{ $self->param('pwp') };
+    $self->db->hive_pipeline->save_collections();
 }
 
 1;

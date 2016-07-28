@@ -1,4 +1,5 @@
--- Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016] EMBL-European Bioinformatics Institute
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -80,10 +81,10 @@ CREATE TABLE `gene_tree_root_attr` (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+ALTER TABLE gene_tree_root_tag ADD KEY (tag);
+
 # Populate the new table with NULLs
 INSERT IGNORE INTO gene_tree_root_attr (root_id) SELECT root_id FROM gene_tree_root_tag WHERE tag IN ("after_filter_length","aln_length","aln_num_residues","aln_percent_identity","best_fit_model_family","best_fit_model_parameter","gene_count","k_score","k_score_rank","mcoffee_scores","n_removed_columns","num_of_patterns","shrinking_factor","spec_count","tree_max_branch","tree_max_length","tree_num_dup_nodes","tree_num_leaves","tree_num_spec_nodes");
-
-ALTER TABLE gene_tree_root_tag ADD KEY (tag);
 
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_after_filter_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'after_filter_length' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_length' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;

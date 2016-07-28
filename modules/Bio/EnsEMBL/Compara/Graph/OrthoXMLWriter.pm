@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,6 +89,8 @@ use base qw(Bio::EnsEMBL::Compara::Graph::BaseXMLWriter);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array check_array_contents);
+
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 my $ortho_uri = 'http://orthoXML.org';
 
@@ -223,6 +226,10 @@ sub source_version {
 sub write_homologies {
     my ($self, $homologies) = @_;
 
+    return unless scalar(@$homologies);
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologies->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologies->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($homologies->[0]->adaptor->db->get_SpeciesTreeNodeAdaptor, $homologies);
     return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
 
@@ -358,7 +365,7 @@ sub _write_data {
   foreach my $object (@{$list_data_objects}) {
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
       $self->_find_valid_genetree_roots($object->root);
-      $object->root->release_tree() if ! $self->no_release_trees;
+      $object->release_tree() if ! $self->no_release_trees;
     } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
       $self->_find_valid_genetree_roots($object);
     } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
@@ -449,7 +456,7 @@ sub _genetreenode_body {
   _taxonomy_info_properties($w, $node->species_tree_node);
 
   # dubious_duplication is in another field
-  if ($node->get_tagvalue('node_type', '') eq 'dubious') {
+  if ($node->get_value_for_tag('node_type', '') eq 'dubious') {
      $w->emptyTag('property', 'name' => 'dubious_duplication', 'value' => 1);
   }
   
@@ -501,7 +508,13 @@ sub _taxonomy_info_properties {
     return unless $species_tree_node;
     $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $species_tree_node->node_name);
     my $tax_id    = $species_tree_node->taxon_id;
-    $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
+    if ($tax_id) {
+        $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id);
+        my $taxon = $species_tree_node->taxon;
+        my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+        $w->emptyTag('property', 'name' => 'common_name', 'value' => $common_name) if $common_name;
+        $w->emptyTag('property', 'name' => 'timetree_mya', 'value' => $taxon->get_value_for_tag('ensembl timetree mya')) if $taxon->has_tag('ensembl timetree mya');
+    }
 }
 
 

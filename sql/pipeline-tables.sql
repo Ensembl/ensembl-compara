@@ -1,4 +1,5 @@
--- Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016] EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -276,6 +277,89 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   left1 INT,
   left2 INT,
   right1 INT,
-  right2 INT
+  right2 INT,
+
+  KEY method_link_species_set_id (method_link_species_set_id)
             
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'seq_member_id_current_reused_map'
+--
+-- overview: Add new table to be used by copy_trees_from_previous_release in order to
+--           rename old seq_member_ids with the current ones.
+-- semantics:
+--   stable_id              - EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
+--   seq_member_id_reused   - seq_member_id for the reused database containing the previous stable_id
+--   seq_member_id_current  - seq_member_id for the current database containing the previous stable_id
+
+CREATE TABLE `seq_member_id_current_reused_map` (
+  stable_id                 varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  seq_member_id_reused      int(10) unsigned NOT NULL,
+  seq_member_id_current     int(10) unsigned NOT NULL,
+
+  FOREIGN KEY (seq_member_id_current) REFERENCES seq_member(seq_member_id),
+
+  PRIMARY KEY (stable_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'long_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store genes that are longer than the avg length of their orthologs
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  n_species                         -n_species
+--  n_orth                            -n_orth
+--  avg_cov                           -avg_cov
+
+CREATE TABLE long_orth_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128) NOT NULL,
+  n_species INT NOT NULL,
+  n_orth INT NOT NULL,
+  avg_cov FLOAT NOT NULL
+ 
+        
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'short_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store genes that are shorter than the avg length of their orthologs
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  n_species                         -n_species
+--  n_orth                            -n_orth
+--  avg_cov                           -avg_cov
+
+CREATE TABLE short_orth_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128) NOT NULL,
+  n_species INT NOT NULL,
+  n_orth INT NOT NULL,
+  avg_cov FLOAT NOT NULL
+            
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'long_orth_genes'
+-- overview: Add new table to be used by the genesetQC pipeline to store the split genes
+-- semantics:
+--  genome_db_id                      -the genome db id of the species
+--  gene_member_stable_id             -gene_member_stable_id
+--  seq_member_id                     -seq_member_id
+
+CREATE TABLE QC_split_genes ( 
+  genome_db_id int(10) NOT NULL,
+  gene_member_stable_id varchar(128) NOT NULL,
+  seq_member_id int(10) NOT NULL
+
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+

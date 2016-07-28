@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -144,7 +145,7 @@ sub store {
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
-  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
+  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID) ) {
     $dbID = $already_stored_method_link_species_set->dbID;
   }
 
@@ -255,6 +256,13 @@ sub _objs_from_sth {
             my $method          = $method_hash->get($method_link_id);
             my $species_set_obj = $species_set_hash->get($species_set_id);
 
+            if (!$method) {
+                warning("MethodLinkSpeciesSet with dbID=$dbID is missing method_link entry with dbID=$method_link_id, so it will not be fetched");
+            }
+            if (!$species_set_obj) {
+                warning("MethodLinkSpeciesSet with dbID=$dbID is missing species_set(_header) entry with dbID=$species_set_id, so it will not be fetched");
+            }
+
             if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
                     adaptor            => $self,
@@ -274,7 +282,6 @@ sub _objs_from_sth {
             }
     }
     $sth->finish();
-    $self->_load_tagvalues_multiple(\@mlss_list, 1);
     return \@mlss_list;
 }
 
@@ -324,8 +331,7 @@ sub _unique_attributes {
 sub fetch_all_by_species_set_id {
     my ($self, $species_set_id) = @_;
 
-    my $mlss = $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
-    return $mlss;
+    return $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
 }
 
 
@@ -347,8 +353,7 @@ sub fetch_all_by_species_set_id {
 sub fetch_by_method_link_id_species_set_id {
     my ($self, $method_link_id, $species_set_id) = @_;
 
-    my $mlss = $self->_id_cache->get_by_additional_lookup('method_species_set', sprintf('%d_%d', $method_link_id, $species_set_id));
-    return $mlss;
+    return $self->_id_cache->get_by_additional_lookup('method_species_set', sprintf('%d_%d', $method_link_id, $species_set_id));
 }
 
 
@@ -463,9 +468,7 @@ sub fetch_by_method_link_type_GenomeDBs {
         return undef;
     }
 
-    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
-    
-    return $method_link_species_set;
+    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
 }
 
 
@@ -571,7 +574,7 @@ sub fetch_by_method_link_type_species_set_name {
 
     if ($method) {
         foreach my $this_species_set (@$all_species_sets) {
-            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID, 1);  # final 1, before we don't want a warning here if any is missing
+            my $mlss = $self->fetch_by_method_link_id_species_set_id($method->dbID, $this_species_set->dbID);
             return $mlss if $mlss;
         }
     }
@@ -612,7 +615,7 @@ sub make_object_current {
 ###################################
 
 sub _tag_capabilities {
-    return ("method_link_species_set_tag", undef, "method_link_species_set_id", "dbID");
+    return ('method_link_species_set_tag', 'method_link_species_set_attr', 'method_link_species_set_id', 'dbID', 'tag', 'value');
 }
 
 
@@ -630,7 +633,7 @@ sub _build_id_cache {
 package Bio::EnsEMBL::DBSQL::Cache::MethodLinkSpeciesSet;
 
 
-use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
 use strict;
 use warnings;
 
@@ -647,7 +650,6 @@ sub compute_keys {
         method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set_obj->dbID),
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set_obj->genome_dbs()}),
         (map {sprintf('genome_db_%d_method_%s', $_->dbID, uc $mlss->method->type) => 1} @{$mlss->species_set_obj->genome_dbs()}),
-        %{$self->SUPER::compute_keys($mlss)},
     }
 }
 

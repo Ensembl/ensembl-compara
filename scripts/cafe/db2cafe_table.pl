@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -124,7 +125,7 @@ my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN s
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();
-  my $model_name = $tree->stable_id() || $tree->get_tagvalue('model_name') || $root_id;
+  my $model_name = $tree->stable_id() || $tree->get_value_for_tag('model_name') || $root_id;
   $sth->execute($root_id);
 
   my %species;

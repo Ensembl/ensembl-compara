@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,6 +79,7 @@ FROM (
 sub fetch_input {
     my $self = shift @_;
 
+    my $member_type  = $self->param_required('member_type');
     my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $genome_dbs   = $mlss->species_set_obj->genome_dbs;
@@ -88,7 +90,7 @@ sub fetch_input {
     my $data = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_orthologies, undef,
         $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $mlss_id);
     foreach my $line (@$data) {
-        my $homology_type = sprintf('%s-to-%s', $line->[1], $line->[2]);
+        my $homology_type = sprintf('%s_%s-to-%s', $member_type, $line->[1], $line->[2]);
         $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), int($line->[6]));
         $mlss->store_tag(sprintf('n_%s_groups', $homology_type), $line->[3]);
         $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_1), $line->[4]);

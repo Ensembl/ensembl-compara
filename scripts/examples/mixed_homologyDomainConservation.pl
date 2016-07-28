@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,7 +104,7 @@ foreach my $gene (@$genes) {
   my $aln_domains_hash;
 
   my $aln = $tree->get_SimpleAlign(-id_type => 'MEMBER');
-  my $prev_aln_length = $tree->get_tagvalue("aln_length");
+  my $prev_aln_length = $tree->get_value_for_tag("aln_length");
   if ($prev_aln_length eq '') {
     my $aln_length = $aln->length; $tree->add_tag('aln_length',$aln_length);
   }

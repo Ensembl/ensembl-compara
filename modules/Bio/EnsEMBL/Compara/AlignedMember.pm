@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -230,7 +231,7 @@ sub cigar_end {
                 perc_cov is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -254,7 +255,7 @@ sub perc_cov {
                 perc_id is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -280,7 +281,7 @@ sub perc_id {
                 perc_pos is by default only populated for homologies, but can be
                 computed on gene-tree leaves and family members by calling
                 update_alignment_stats() on the GeneTree / Family object.
-  Returntype  : integer
+  Returntype  : float
   Exceptions  : none
   Caller      : general
   Status      : Stable

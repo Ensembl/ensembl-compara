@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -149,7 +150,7 @@ sub taxonomy_level {
 
 =head2 node_type
 
-  Description: Getter for the node_type attribute. It shows the event that took place
+  Description: Getter/setter for the node_type attribute. It shows the event that took place
                at that node. Currently, one of "duplication", "speciation", "dubious",
                and "gene_split"
 
@@ -157,7 +158,7 @@ sub taxonomy_level {
 
 sub node_type {
     my $self = shift;
-    return $self->get_value_for_tag('node_type');
+    return $self->_getter_setter_for_tag('node_type', @_);
 }
 
 sub _newick_dup_code {
@@ -179,11 +180,7 @@ sub _newick_dup_code {
 sub lost_taxa {
     my $self = shift;
     unless ($self->{_lost_species_tree_nodes}) {
-        my @nodes;
-        foreach my $dbID (@{$self->get_all_values_for_tag('lost_species_tree_node_id')}) {
-            push @nodes, $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($dbID);
-        }
-        $self->{_lost_species_tree_nodes} = \@nodes;
+        $self->{_lost_species_tree_nodes} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_all_by_dbID_list( $self->get_all_values_for_tag('lost_species_tree_node_id') );
     }
     return $self->{_lost_species_tree_nodes};
 }
@@ -191,26 +188,26 @@ sub lost_taxa {
 
 =head2 duplication_confidence_score
 
-  Description: Returns the confidence score of the duplication node (between 0 and 1)
+  Description: Getter/setter the confidence score of the duplication node (between 0 and 1)
                "dubious" nodes always return 0, "speciation" nodes always return undef
 
 =cut
 
 sub duplication_confidence_score {
     my $self = shift;
-    return $self->get_value_for_tag('duplication_confidence_score');
+    return $self->_getter_setter_for_tag('duplication_confidence_score', @_);
 }
 
 
 =head2 bootstrap
 
-  Description: Returns the bootstrap value of that node (between 0 and 100)
+  Description: Getter/setter the bootstrap value of that node (between 0 and 100)
 
 =cut
 
 sub bootstrap {
     my $self = shift;
-    return $self->get_value_for_tag('bootstrap');
+    return $self->_getter_setter_for_tag('bootstrap', @_);
 }
 
 

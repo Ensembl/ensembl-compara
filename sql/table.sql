@@ -1,4 +1,5 @@
--- Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016] EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -244,7 +245,8 @@ CREATE TABLE species_set_tag (
 
   FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
-  UNIQUE KEY tag_species_set_id (species_set_id,tag)
+  PRIMARY KEY (species_set_id,tag),
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -335,7 +337,51 @@ CREATE TABLE method_link_species_set_tag (
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  PRIMARY KEY tag_mlss_id (method_link_species_set_id,tag)
+  PRIMARY KEY (method_link_species_set_id,tag),
+  KEY tag (tag)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table method_link_species_set_attr
+@desc This table contains the distribution of the gene order conservation scores 
+@colour   #1E90FF
+@column method_link_species_set_id          internal unique ID for the orthologs
+@column n_goc_null                            the number of orthologs for with no neighbors
+@column n_goc_0                               the number of orthologs with no gene order conservation among their neighbours
+@column n_goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
+@column n_goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
+@column n_goc_75                              the number of orthologs with 75% gene order conservation among their neighbours
+@column n_goc_100                             the number of orthologs with 100% gene order conservation among their neighbours
+@column perc_orth_above_goc_thresh          the percentage of orthologs above the goc threshold 
+@column goc_quality_threshold               the chosen threshold for "high quality" orthologs based on gene order conservation
+@column wga_quality_threshold               the chosen threshold for "high quality" orthologs based on the whole genome alignments coverage of homologous pairs
+@column perc_orth_above_wga_thresh          the percentage of orthologs above the wga threshold
+@column threshold_on_ds                     the threshold_on_ds
+
+@see method_link_species_set
+@see ortholog_goc_metric
+@see homology
+*/
+
+CREATE TABLE method_link_species_set_attr (
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  n_goc_null                    int,
+  n_goc_0                       int,
+  n_goc_25                      int,
+  n_goc_50                      int,
+  n_goc_75                      int,
+  n_goc_100                     int,
+  perc_orth_above_goc_thresh  float,
+  goc_quality_threshold       int,
+  wga_quality_threshold       int,
+  perc_orth_above_wga_thresh  float,
+  threshold_on_ds             int,
+
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+  PRIMARY KEY (method_link_species_set_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -356,6 +402,7 @@ CREATE TABLE method_link_species_set_tag (
 @column node_name               A name that can be set to the taxon name or any other arbitrary name
 
 @see species_tree_node_tag
+@see species_tree_node_attr
 @see species_tree_root
 @see CAFE_gene_family
 @see CAFE_species_gene
@@ -430,10 +477,79 @@ CREATE TABLE `species_tree_node_tag` (
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
 
   KEY `node_id_tag` (`node_id`,`tag`),
-  KEY `tag_node_id` (`tag`,`node_id`),
-  KEY `node_id` (`node_id`),
   KEY `tag` (`tag`)
   
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+/**
+@table species_tree_node_attr               this table contains the attribute calculated for each species tree node
+@column node_id                             Internal unique ID
+@column nb_long_genes                       the number of genes longer than the avg length of their orthologs
+@column nb_short_genes                      the number of genes shorter than the avg length of their orthologs
+@column avg_dupscore                        the average duplication score
+@column avg_dupscore_nondub                 avg_dupscore_nondub
+@column nb_dubious_nodes                    nb_dubious_nodes
+@column nb_dup_nodes                        nb_dup_nodes
+@column nb_genes                            the number of genes
+@column nb_genes_in_tree                    the number of genes in the tree 
+@column nb_genes_in_tree_multi_species      nb_genes_in_tree_multi_species
+@column nb_genes_in_tree_single_species     nb_genes_in_tree_single_species
+@column nb_nodes                            the number of nodes
+@column nb_orphan_genes                     nb_orphan_genes
+@column nb_seq                              the number of sequences
+@column nb_spec_nodes                       nb_spec_nodes
+@column nb_gene_splits                      the number of split gene events
+@column nb_split_genes                      the number of split genes
+@column root_avg_gene                       root_avg_gene
+@column root_avg_gene_per_spec              root_avg_gene_per_spec
+@column root_avg_spec                       root_avg_spec
+@column root_max_gene                       root_max_gene
+@column root_max_spec                       root_max_spec
+@column root_min_gene                       root_min_gene
+@column root_min_spec                       root_min_spec
+@column root_nb_genes                       root_nb_genes
+@column root_nb_trees                       root_nb_trees
+
+
+@see species_tree_node
+@see species_tree_root
+@see QC_split_genes
+@see short_orth_genes
+@see long_orth_genes
+*/
+
+
+
+CREATE TABLE `species_tree_node_attr` (
+  `node_id` int(10)                         unsigned NOT NULL,
+  `nb_long_genes`                           int,
+  `nb_short_genes`                          int,
+  `avg_dupscore`                            float,
+  `avg_dupscore_nondub`                     float,
+  `nb_dubious_nodes`                        int,
+  `nb_dup_nodes`                            int,
+  `nb_genes`                               int,
+  `nb_genes_in_tree`                       int,
+  `nb_genes_in_tree_multi_species`         int,
+  `nb_genes_in_tree_single_species`        int,
+  `nb_nodes`                               int,
+  `nb_orphan_genes`                        int,
+  `nb_seq`                                 int,
+  `nb_spec_nodes`                          int,
+  `nb_gene_splits`                         int,
+  `nb_split_genes`                         int,
+  `root_avg_gene`                          float,
+  `root_avg_gene_per_spec`                 float,
+  `root_avg_spec`                          float,
+  `root_max_gene`                          int,
+  `root_max_spec`                          int,
+  `root_min_gene`                          int,
+  `root_min_spec`                          int,
+  `root_nb_genes`                          int,
+  `root_nb_trees`                          int,
+
+  FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
+  PRIMARY KEY (node_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
@@ -534,6 +650,8 @@ CREATE TABLE dnafrag_region (
 
   FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+	-- NO PK: would need to do (synteny_region_id,dnafrag_id,dnafrag_start)
 
   KEY synteny (synteny_region_id,dnafrag_id),
   KEY synteny_reversed (dnafrag_id,synteny_region_id)
@@ -767,6 +885,8 @@ CREATE TABLE constrained_element (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
+	-- NO PK. this table is voluntarily denormalized.
+
   KEY constrained_element_id_idx (constrained_element_id),
   KEY mlssid_idx (method_link_species_set_id),
   KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end),
@@ -791,15 +911,17 @@ CREATE TABLE constrained_element (
 @column sequence_id     Internal unique ID
 @column length          Length of the sequence
 @column sequence        The actual sequence
+@column md5sum          md5sum
 */
 
 CREATE TABLE sequence (
   sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(10) NOT NULL,
+  md5sum                      CHAR(32) NOT NULL,
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),
-  KEY sequence (sequence(18))
+  KEY md5sum (md5sum)
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
@@ -927,7 +1049,6 @@ CREATE TABLE seq_member (
   KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
   KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
 
 
 /**
@@ -1093,7 +1214,7 @@ CREATE TABLE peptide_align_feature (
 @colour   #1E90FF
 
 @example   The following query retrieves families with "CATHELICIDIN" description and description_score of 100
-    @sql                                SELECT * FROM family WHERE description like '%CATHELICIDIN%' AND description_score = 100;
+    @sql                                SELECT * FROM family WHERE description like '%HISTONE%' AND description_score = 100;
 
 @column family_id                    Internal unique ID
 @column stable_id                    Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.
@@ -1127,8 +1248,8 @@ CREATE TABLE family (
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
 @colour   #1E90FF
 
-@example    The following query refers to the members of the protein family ENSFM00500000300962. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
-    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "ENSFM00500000300962";
+@example    The following query refers to the members of the protein family PTHR24240. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
+    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR24240";
 
 @column family_id      External reference to family_id in the @link family table
 @column seq_member_id  External reference to the seq_member_id in the @link seq_member table
@@ -1317,8 +1438,10 @@ CREATE TABLE gene_tree_node_tag (
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
+	-- NO PK because unicity is not enforced
+
   KEY node_id_tag (node_id, tag),
-  KEY (node_id)
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1341,6 +1464,8 @@ CREATE TABLE gene_tree_root_tag (
   value                  mediumtext NOT NULL,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+	-- NO PK because unicity is not enforced
 
   KEY root_id_tag (root_id, tag),
   KEY (root_id),
@@ -1399,7 +1524,7 @@ CREATE TABLE `gene_tree_root_attr` (
   aln_num_of_patterns               INT(10) UNSIGNED, 
   aln_shrinking_factor              FLOAT(2),
   spec_count                        INT(10) UNSIGNED,
-  tree_max_branch                   DEC(8,2),
+  tree_max_branch                   FLOAT,
   tree_max_length                   FLOAT(5),
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
@@ -1413,7 +1538,8 @@ CREATE TABLE `gene_tree_root_attr` (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
   FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),
 
-  PRIMARY KEY (root_id)
+  PRIMARY KEY (root_id),
+  KEY (lca_node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1580,6 +1706,8 @@ CREATE TABLE hmm_curated_annot (
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
+@column goc_score                      The max goc score for the ortholog
+@column wga_coverage                   it's a simple distribution of the size of the alignment blocks
 
 @example    See species_names that participate in this particular homology entry
     @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
@@ -1601,7 +1729,7 @@ CREATE TABLE homology (
   species_tree_node_id        int(10) unsigned,
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
-  goc_score                   int(10) unsigned,
+  goc_score                   tinyint unsigned,
   wga_coverage                DEC(5,2),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -1769,9 +1897,9 @@ CREATE TABLE homology_member (
   gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
   seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
-  perc_cov                    tinyint unsigned default 0,
-  perc_id                     tinyint unsigned default 0,
-  perc_pos                    tinyint unsigned default 0,
+  perc_cov                    float unsigned default 0,
+  perc_id                     float unsigned default 0,
+  perc_pos                    float unsigned default 0,
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
@@ -1890,7 +2018,8 @@ CREATE TABLE `CAFE_species_gene` (
   FOREIGN KEY (cafe_gene_family_id) REFERENCES CAFE_gene_family(cafe_gene_family_id),
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
 
-  KEY `cafe_gene_family_id` (`cafe_gene_family_id`)
+  PRIMARY KEY (cafe_gene_family_id, node_id)
+
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
@@ -1898,20 +2027,30 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '84');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '85');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_84_85_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_b.sql|gene_tree_attributes_table');
+  VALUES (NULL, 'patch', 'patch_84_85_b.sql|gene_tree_root_attr');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
+  VALUES (NULL, 'patch', 'patch_84_85_c.sql|not_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
+  VALUES (NULL, 'patch', 'patch_84_85_d.sql|wga_size_distribution');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_e.sql|gene_tree_object_store');
+  VALUES (NULL, 'patch', 'patch_84_85_e.sql|md5sum_sequence');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_f.sql|keys');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_g.sql|smaller_datatypes');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_h.sql|homology_member_float');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_i.sql|species_tree_node_attr');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_84_85_j.sql|method_link_species_set_attr');
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +75,7 @@ sub _convert_node {
 		    'id' => $taxon_id + 0,
 		    'scientific_name' => $taxon->scientific_name,
 		    'alias_name' => $taxon->ensembl_alias_name,
-		    'timetree_mya' => $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0
+		    'timetree_mya' => $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0
 		   };
     $hash->{tax}->{'production_name'} = $node->genome_db->name if $node->genome_db_id;
   }

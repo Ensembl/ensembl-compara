@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -135,6 +136,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use strict;
 use warnings;
@@ -296,10 +298,7 @@ sub gene_align_id {
 
 sub species_tree {
     my $self = shift;
-    if (not defined $self->{_species_tree} and defined $self->adaptor) {
-        $self->{_species_tree} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set_id, shift || 'default');
-    }
-    return $self->{_species_tree};
+    return $self->method_link_species_set->species_tree(shift || 'default');
 }
 
 
@@ -324,10 +323,7 @@ sub root {
     if (not defined $self->{'_root'}) {
         if (defined $self->{'_root_id'} and defined $self->adaptor) {
             # Loads all the nodes in one go
-            my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
-            $gtn_adaptor->{'_ref_tree'} = $self;
-            $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
-            delete $gtn_adaptor->{'_ref_tree'};
+            $self->preload;
 
         } else {
             # Creates a new GeneTreeNode object
@@ -348,39 +344,50 @@ sub root {
                 gene Members associated with the leaves.
   Returntype  : node
   Example     : $tree->preload();
-                $tree->preload(['human', 'mouse', 'chicken']);
+                $tree->preload(-PRUNE_SPECIES => ['human', 'mouse', 'chicken']);
   Caller      : General
 
 =cut
 
 sub preload {
-    my ($self, $species) = @_;
+    my $self = shift;
+
     return unless defined $self->adaptor;
     return if $self->{_preloaded};
 
+    my ($prune_subtree, $prune_species, $prune_taxa) =
+        rearrange([qw(PRUNE_SUBTREE PRUNE_SPECIES PRUNE_TAXA)], @_);
+
+    # Preload the tree structure
     if (not defined $self->{'_root'} and defined $self->{'_root_id'}) {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
-        $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
-        delete $gtn_adaptor->{'_ref_tree'};
-    }
-    $self->clear;
-
-    if ($species) {
-        my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-        my %genome_db_ids = ();
-        foreach my $s (@$species) {
-            if (looks_like_number($s)) {
-                $genome_db_ids{$s} = 1;
-                next;
-            }
-            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
-            if ($gdb) {
-                $genome_db_ids{$gdb->dbID} = 1;
-            } else {
-                warn "$s could not be found in the GenomeDB entries\n";
+        if ($prune_subtree and ($prune_subtree != $self->{'_root_id'})) {
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($prune_subtree);
+            warn "Could not fetch a subtree from node_id '$prune_subtree'\n" unless $self->{'_root'};
+            $self->{'_pruned'} = 1;
+        } else {
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            unless ($self->{'_root'}) {
+                warn "Could not fetch a tree with the root_id '".$self->{'_root_id'}."'\n";
+                $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
+                warn "No node with node_id '".$self->{'_root_id'}."'\n" unless $self->{'_root'};
             }
         }
+        delete $gtn_adaptor->{'_ref_tree'};
+    } elsif (not defined $self->{'_root'}) {
+        die "This tree has no root node, and no root_id. This is not valid.\n";
+    }
+    $self->clear;
+    return unless $self->{'_root'};
+
+    $self->{_preloaded} = 1;
+    return if $self->tree_type eq 'clusterset';
+
+    # And prune it immediately
+    if ($prune_species || $prune_taxa) {
+        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $prune_species, -TAXON_LIST => $prune_taxa);
+        my %genome_db_ids = map {$_->dbID => 1} @$genome_dbs;
         my @to_delete;
         my $root = $self->root;
         foreach my $leaf (@{$root->get_all_leaves}) {
@@ -403,6 +410,7 @@ sub preload {
                     $internal_node->parent->add_child($sibling, $sibling->distance_to_parent+$internal_node->distance_to_parent);
                     $internal_node->disavow_parent;
                 }
+                $self->{'_pruned'} = 1;
             }
         }
         $self->{'_root'} = $root;
@@ -413,24 +421,22 @@ sub preload {
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
-    # For retro-compatibility, we need to fill in taxon_id and taxon_name
-    my %cache_stns = ();
+    # We can't use _load_and_attach_all because _species_tree_node_id
+    # is not stored as a key in the hash (it's a tag)
+    my $species_tree_nodes = $self->species_tree->root->get_all_nodes;
+    my %stn_id_lookup = map {$_->node_id => $_} @$species_tree_nodes;
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
-        next unless $node->has_tag('species_tree_node_id');
-        my $stn_id = $node->get_value_for_tag('species_tree_node_id');
-        if (exists $cache_stns{$stn_id}) {
-            $node->{_species_tree_node} = $cache_stns{$stn_id};
-        } else {
-            $cache_stns{$stn_id} = $node->species_tree_node;
-        }
+        # This is like GeneTreeNode::species_tree_node() but using the lookup
+        $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id} if $node->_species_tree_node_id;
+        # This is like GeneTreeNode::lost_taxa() but using the lookup
+        $node->{_lost_species_tree_nodes} = [map {$stn_id_lookup{$_}} @{ $node->get_all_values_for_tag('lost_species_tree_node_id') }];
     }
 
     # Loads all the gene members in one go
-    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
-    $self->{_preloaded} = 1;
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
 }
 
 
@@ -456,7 +462,6 @@ sub alignment {
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
-    $self->preload;
     $self->seq_type($other_gene_align->seq_type);
     $self->gene_align_id($other_gene_align->dbID);
     $self->{_alignment} = $other_gene_align;
@@ -535,13 +540,9 @@ sub expand_subtrees {
     # The tree is not loaded yet, we can do a fast-loading procedure
     if (not defined $self->{'_root'}) {
 
-        # The current tree
-        $self->preload;
-
         # Gets the subtrees
         my %subtrees;
         foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
-            $subtree->preload;
             $subtrees{$subtree->root->_parent_id} = $subtree->root;
         }
 
@@ -606,15 +607,8 @@ sub get_alignment_of_homologues {
 
     if ($species) {
         my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-        my %genome_db_ids = ();
-        foreach my $s (@$species) {
-            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
-            if ($gdb) {
-                $genome_db_ids{$gdb->dbID} = 1;
-            } else {
-                warn "$s could not be found in the GenomeDB entries\n";
-            }
-        }
+        my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
+        my %genome_db_ids = map {$_ => 1} @$genome_dbs;
         @homologous_genes = grep {$genome_db_ids{$_->genome_db_id}} @homologous_genes;
     }
 
@@ -683,9 +677,13 @@ sub get_all_Members {
     my ($self) = @_;
 
     unless (defined $self->{'_member_array'}) {
-        $self->clear;
-        foreach my $leaf (@{$self->root->get_all_leaves}) {
-            $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+        if ($self->{_preloaded}) {
+            $self->clear;
+            foreach my $leaf (@{$self->root->get_all_leaves}) {
+                $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+            }
+        } else {
+            $self->preload;
         }
     }
     return $self->{'_member_array'};
@@ -727,7 +725,9 @@ sub add_Member {
 sub release_tree {
     my $self = shift;
 
-    $self->root->release_tree;
+    if ($self->{'_root'}) {
+        $self->{'_root'}->release_tree;
+    }
     foreach my $member (@{$self->{'_member_array'}}) {
         delete $member->{'_tree'};
     }
@@ -919,6 +919,7 @@ sub string_tree {
 
 sub print_tree {
     my $self = shift;
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
     return $self->root->print_tree(@_);
 }
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -148,9 +149,8 @@ sub fetch_input {
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
   ## DnaFragRegions are in random order
-  $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param('synteny_region_id')) );
+  $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param_required('synteny_region_id')) );
 
-  if($self->param('dnafrag_regions')) {     # does it ever return a FALSE by design?
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     if ($self->get_species_tree) {
@@ -161,10 +161,6 @@ sub fetch_input {
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
 
     $self->_dump_fasta;
-
-  } else {
-    throw("Cannot start Ortheus job because some information is missing");
-  }
 
   return 1;
 }
@@ -961,13 +957,6 @@ sub _extract_sequence {
 ##########################################
 
 
-sub synteny_region_id {
-  my ($self, $value) = shift;
-  $self->param('synteny_region_id') = shift if(@_);
-  return $self->param('synteny_region_id');
-}
-
-
 sub get_species_tree {
   my $self = shift;
 
@@ -977,15 +966,8 @@ sub get_species_tree {
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
 
   if ( defined( $mlss ) ){
-     my $species_tree_adaptor = $self->compara_dba()->get_SpeciesTreeAdaptor();
-     my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID);
-     if($species_tree){
-	$newick_species_tree = $species_tree->species_tree;
-        $newick_species_tree=~s/:0;/;/;
-     } else {
-          $newick_species_tree = $mlss->get_tagvalue("species_tree");
-       
-     }
+     my $newick_species_tree = $mlss->species_tree->species_tree;
+     $newick_species_tree =~ s/:0;/;/;
   } elsif ($self->param($species_tree_meta_key)) {
     $newick_species_tree = $self->param($species_tree_meta_key);
   } elsif ($self->param('species_tree_file')) {
@@ -1061,20 +1043,12 @@ sub get_species_tree {
 sub get_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
 
-  my @dnafrag_regions = ();
-
-  # Fail if dbID has not been provided
-  return \@dnafrag_regions if (!$synteny_region_id);
-
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
+  die "No SyntenyRegion for this dbID '$synteny_region_id'\n" unless $sr;
 
   my $regions = $sr->get_all_DnaFragRegions();
-  foreach my $dfr (@$regions) { 
-    push @dnafrag_regions, $dfr;
-  }
-
-  return \@dnafrag_regions;
+  return [@$regions];
 }
 
 
