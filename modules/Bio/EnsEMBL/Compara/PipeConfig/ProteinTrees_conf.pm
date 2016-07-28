@@ -132,18 +132,12 @@ sub default_options {
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
 
-        'blast_params'       => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
-        'blast_level_ranges' => [ # define sequence lengths that define different granularity of parameters
-            [ 0,   35  ],
-            [ 35,  50  ],
-            [ 50,  100 ],
-            [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
-        ],
-        'all_blast_params' => [ # params, evalues to use for each level of length granularity
-            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-4' ],
-            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-6' ],
-            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-8' ],
-            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10' ],
+        # define blast parameters and evalues for ranges of sequence-length
+        'all_blast_params'          => [
+            [ 0,   35,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2',    '1e-4'  ],
+            [ 35,  50,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2',    '1e-6'  ],
+            [ 50,  100,      '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2', '1e-8'  ],
+            [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '1e-10' ],  # should really be infinity, but ten million should be big enough
         ],
 
     # clustering parameters:
@@ -495,6 +489,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'goc_threshold'                 => $self->o('goc_threshold'),
         'reuse_goc'                     => $self->o('reuse_goc'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
+        'all_blast_params'          => $self->o('all_blast_params'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
         'use_notung'   => $self->o('use_notung'),
@@ -1454,7 +1449,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'chunk_by_size'      => 1,
                 'step'               => 15,
-                'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -1470,7 +1464,6 @@ sub core_pipeline_analyses {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'chunk_by_size'      => 1,
                 'step'               => 15,
-                'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -1483,10 +1476,9 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'all_blast_params'          => $self->o('all_blast_params'),
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[0])expr#",
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[1])expr#",
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
                 'allow_same_species_hits'   => 1,
             },
             -batch_size    => 25,

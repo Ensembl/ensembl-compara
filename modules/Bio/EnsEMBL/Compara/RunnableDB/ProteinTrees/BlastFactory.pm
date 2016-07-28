@@ -62,7 +62,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'step'               => 10,
         'species_set_id'     => undef,
-        'blast_level_ranges' => [ # define sequence lengths that define different granularity of parameters
+        'all_blast_params' => [ # only the first two columns matter
             [ 0,   35  ],
             [ 35,  50  ],
             [ 50,  100 ],
@@ -162,7 +162,7 @@ sub _check_job_array_lengths {
     my @job_array = @{ $job_array };
 
     # find level based on first element
-    my @level_ranges = @{ $self->param_required('blast_level_ranges') };
+    my @level_ranges = @{ $self->param_required('all_blast_params') };
     my $base_length  = $self->_get_length_by_member_id( $job_array[0] );
     # print "BASE LEN: $base_length\t";
     my ( $level, @range );
