@@ -133,18 +133,18 @@ sub default_options {
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
 
         'blast_params'       => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
-        'blast_level_ranges' => { # define sequence lengths that define different granularity of parameters
-            1 => [ 0,   35  ],
-            2 => [ 35,  50  ],
-            3 => [ 50,  100 ],
-            4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
-        },
-        'all_blast_params' => { # params, evalues to use for each level of length granularity
-            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-4' ],
-            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-6' ],
-            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-8'  ],
-            4 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10'    ],
-        },
+        'blast_level_ranges' => [ # define sequence lengths that define different granularity of parameters
+            [ 0,   35  ],
+            [ 35,  50  ],
+            [ 50,  100 ],
+            [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
+        ],
+        'all_blast_params' => [ # params, evalues to use for each level of length granularity
+            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-4' ],
+            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-6' ],
+            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-8' ],
+            [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10' ],
+        ],
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -1484,9 +1484,9 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
                 'all_blast_params'          => $self->o('all_blast_params'),
-                'blast_params'              => "#expr( #all_blast_params#->{#param_index#}->[0])expr#",
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[0])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->{#param_index#}->[1])expr#",
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[1])expr#",
                 'allow_same_species_hits'   => 1,
             },
             -batch_size    => 25,

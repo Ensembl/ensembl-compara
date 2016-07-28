@@ -62,12 +62,12 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'step'               => 10,
         'species_set_id'     => undef,
-        'blast_level_ranges' => { # define sequence lengths that define different granularity of parameters
-            1 => [ 0,   35  ],
-            2 => [ 35,  50  ],
-            3 => [ 50,  100 ],
-            4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
-        },
+        'blast_level_ranges' => [ # define sequence lengths that define different granularity of parameters
+            [ 0,   35  ],
+            [ 35,  50  ],
+            [ 50,  100 ],
+            [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
+        ],
         chunk_by_size => 1
         
     };
@@ -162,12 +162,12 @@ sub _check_job_array_lengths {
     my @job_array = @{ $job_array };
 
     # find level based on first element
-    my %level_ranges = %{ $self->param_required('blast_level_ranges') };
+    my @level_ranges = @{ $self->param_required('blast_level_ranges') };
     my $base_length  = $self->_get_length_by_member_id( $job_array[0] );
     # print "BASE LEN: $base_length\t";
     my ( $level, @range );
-    foreach my $k ( keys %level_ranges ) {
-        @range = @{ $level_ranges{$k} };
+    foreach my $k (0..(scalar(@level_ranges)-1)) {
+        @range = @{ $level_ranges[$k] };
         if ( $base_length >= $range[0] && $base_length < $range[1] ){
             $level = $k;
             # print "!!! LEVEL $k !!!\n";
