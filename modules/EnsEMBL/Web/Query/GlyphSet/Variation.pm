@@ -183,7 +183,7 @@ sub _plainify {
     end => $f->end,
     colour_key => $self->colour_key($f),
     tag => [$self->tag($f,$args)],
-    feature_label => $self->feature_label($f),
+    label => $self->feature_label($f),
     variation_name => $f->variation_name,
     href => $self->href($f,$args),
     title => $self->title($f,$args),
