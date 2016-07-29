@@ -313,8 +313,6 @@ sub create_dnafrag_chunks {
 
  #return if($dnafrag->display_id =~ /random/);
 
-  my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
-
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
   my $chunk_size = $self->param('chunk_size');
