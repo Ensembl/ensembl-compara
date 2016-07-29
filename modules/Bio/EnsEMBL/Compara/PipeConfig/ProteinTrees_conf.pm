@@ -1341,9 +1341,7 @@ sub core_pipeline_analyses {
              -flow_into => {
                     1 => WHEN(
                         '#clustering_mode# eq "hybrid"' => 'dump_unannotated_members',
-                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
                     ),
-                    2 => [ 'cluster_tagging' ],
                 }
             },
 
@@ -1577,9 +1575,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -flow_into => {
-                2 => [ 'cluster_tagging' ],
-            },
             -rc_name => '250Mb_job',
         },
 
@@ -1613,7 +1608,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into          => [ 'create_additional_clustersets' ],
+            -flow_into          => [ 'run_qc_tests' ],
             %hc_analysis_params,
         },
 
@@ -1623,7 +1618,6 @@ sub core_pipeline_analyses {
                 member_type     => 'protein',
                 'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update )],
             },
-            -flow_into          => [ 'run_qc_tests' ],
         },
 
 
@@ -1663,6 +1657,25 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
                 'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
+            },
+            -flow_into     => {
+                1 => [
+                    'create_additional_clustersets',
+                    'cluster_tagging_factory',
+                    WHEN(
+                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
+                    ),
+                ],
+            },
+        },
+
+        {   -logic_name => 'cluster_tagging_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                2 => 'cluster_tagging',
             },
         },
 
