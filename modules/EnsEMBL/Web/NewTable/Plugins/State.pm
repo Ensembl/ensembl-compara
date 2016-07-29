@@ -64,9 +64,8 @@ sub activity_save_orient {
   };
   warn "$@\n" if $@;
 
-  warn Dumper(67,\%data);
-  $session->purge_data(%args);
-  $session->set_data(%args, %data) if scalar keys %data;
+  #$session->purge_data(%args);
+  #$session->set_data(%args, %data) if scalar keys %data;
 }
 
 sub extend_config {
@@ -76,9 +75,6 @@ sub extend_config {
   
   my %args    = ( type => 'Newtable', code => $self->class );
   my %data    = %{$session->get_data(%args) || {}};
-
-  use Data::Dumper;
-  warn Dumper(80,\%data);
 
   $config->{'saved_orient'} = {};
   eval {
