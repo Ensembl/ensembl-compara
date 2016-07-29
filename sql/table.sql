@@ -1211,8 +1211,8 @@ CREATE TABLE peptide_align_feature (
 @desc  This table contains all the group homologies found. There are several family_member entries for each family entry.
 @colour   #1E90FF
 
-@example   The following query retrieves families with "CATHELICIDIN" description and description_score of 100
-    @sql                                SELECT * FROM family WHERE description like '%HISTONE%' AND description_score = 100;
+@example   The following query retrieves families with "DEGRADATION" in the description and a description_score of 100
+    @sql                                SELECT * FROM family WHERE description like '%DEGRADATION%' AND description_score = 100;
 
 @column family_id                    Internal unique ID
 @column stable_id                    Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.
@@ -1246,8 +1246,8 @@ CREATE TABLE family (
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
 @colour   #1E90FF
 
-@example    The following query refers to the members of the protein family PTHR24240. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
-    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR24240";
+@example    The following query refers to the members of the protein family PTHR12675. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
+    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR12675";
 
 @column family_id      External reference to family_id in the @link family table
 @column seq_member_id  External reference to the seq_member_id in the @link seq_member table
@@ -1707,8 +1707,8 @@ CREATE TABLE hmm_curated_annot (
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
-@column goc_score                      The max goc score for the ortholog
-@column wga_coverage                   it's a simple distribution of the size of the alignment blocks
+@column goc_score                      Gene order conservation score
+@column wga_coverage                   Whole genome alignment coverage of the homology
 
 @example    See species_names that participate in this particular homology entry
     @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
