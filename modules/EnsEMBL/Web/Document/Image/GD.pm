@@ -39,9 +39,7 @@ use parent qw(EnsEMBL::Web::Document::Image);
 sub new {
   my ($class, $hub, $component, $image_configs) = @_;
 
-  my $self = {
-    hub                => $hub,
-    component          => $component,
+  my $args = {
     image_configs      => $image_configs || [],
     drawable_container => undef,
     centred            => 0,
@@ -58,12 +56,10 @@ sub new {
   };
 
   if ($image_configs) {
-    $self->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
+    $args->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
   }
 
-  bless $self, $class;
-
-  return $self;
+  return $class->SUPER::new($hub, $component, $args);
 }
 
 sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }

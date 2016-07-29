@@ -33,16 +33,13 @@ sub new {
 ### Generic constructor
   my ($class, $hub, $component, $args) = @_;
 
-  my $self = {
+  return bless {
     hub                => $hub,
     component          => $component,
     toolbars           => {},
     static             => $hub->species_defs->ENSEMBL_STATIC_SERVER || '',
     %$args,
-  };
-
-  bless $self, $class;
-  return $self;
+  }, $class;
 }
 
 sub hub                { my $self = shift; return $self->{'hub'};  }
