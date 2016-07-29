@@ -291,6 +291,7 @@ sub create_chunks
       $dnafrag->length($chr->seq_region_length);
       $dnafragDBA->store_if_needed($dnafrag);
     }
+    $dnafrag->{'_slice'} = $chr;
     $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);
     #Temporary fix to problem in core when masking haplotypes because the
     #assembly mapper is cached but shouldn't be  

@@ -221,7 +221,9 @@ sub fetch_by_Slice {
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_Slice($slice);
 
-  return $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
+  my $d = $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
+  $d->{'_slice'} = $slice if $d;
+  return $d;
 }
 
 
