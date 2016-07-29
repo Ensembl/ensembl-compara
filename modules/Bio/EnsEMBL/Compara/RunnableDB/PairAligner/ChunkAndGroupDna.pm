@@ -240,6 +240,7 @@ sub create_chunks
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
   }
+  $_->get_all_synonyms() for @$chromosomes; # load all the synonyms within the same connection
  } );
 
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
