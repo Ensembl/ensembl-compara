@@ -31,6 +31,9 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Draw::Utils::ColourMap;
 use EnsEMBL::Web::TextSequence::View;
 
+use EnsEMBL::Web::TextSequence::Annotation::Exons;
+use EnsEMBL::Web::TextSequence::Annotation::Codons;
+
 use base qw(EnsEMBL::Web::Component::Shared);
 
 sub new {
@@ -116,7 +119,11 @@ sub get_sequence_data {
   $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
   
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
-  
+
+  my $view = $self->view;
+  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
+  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
+ 
   foreach my $sl (@$slices) {
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
@@ -126,8 +133,7 @@ sub get_sequence_data {
     if($adorn ne 'none') {
       $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
     }
-    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'} ne 'off';
-    $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
+    $view->annotate($self,$sl,$mk);
     
     push @markup, $mk;
   }
@@ -390,125 +396,6 @@ sub set_variations {
     }
     
     $config->{'focus_position'} = [ $s..$e ] if $dbID eq $config->{'focus_variant'};
-  }
-}
-
-sub set_exons {
-  my ($self, $config, $slice_data, $markup) = @_;
-  my $slice    = $slice_data->{'slice'};
-  my $exontype = $config->{'exon_display'};
-  my ($slice_start, $slice_end, $slice_length, $slice_strand) = map $slice->$_, qw(start end length strand);
-  my @exons;
-  
-  if ($exontype eq 'Ab-initio') {
-    @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map @{$_->get_all_Exons}, @{$slice->get_all_PredictionTranscripts};
-  } elsif ($exontype eq 'vega' || $exontype eq 'est') {
-    @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes('', $exontype)};
-  } else {
-    @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes};
-  }
-  
-  # Values of parameter should not be fwd and rev - this is confusing.
-  if ($config->{'exon_ori'} eq 'fwd') {
-    @exons = grep { $_->strand > 0 } @exons; # Only exons in same orientation 
-  } elsif ($config->{'exon_ori'} eq 'rev') {
-    @exons = grep { $_->strand < 0 } @exons; # Only exons in opposite orientation
-  }
-  
-  my @all_exons = map [ $config->{'comparison'} ? 'compara' : 'other', $_ ], @exons;
-  
-  if ($config->{'exon_features'}) {
-    push @all_exons, [ 'gene', $_ ] for @{$config->{'exon_features'}};
-    
-    if ($config->{'exon_features'} && $config->{'exon_features'}->[0] && $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon')) {
-      $config->{'gene_exon_type'} = 'exons';
-    } else {
-      $config->{'gene_exon_type'} = 'features';
-    }
-  }
-  
-  if ($config->{'mapper'}) {
-    my $slice_name = $slice->seq_region_name;
-    push @$_, $config->{'mapper'}->map_coordinates($slice_name, $_->[1]->seq_region_start, $_->[1]->seq_region_end, $slice_strand, 'ref_slice') for @all_exons;
-  }
-  
-  foreach (@all_exons) {
-    my ($type, $exon, @mappings) = @$_;
-    
-    next unless $exon->seq_region_start && $exon->seq_region_end;
-    
-    foreach (scalar @mappings ? @mappings : $exon) {
-      my $start = $_->start - ($type eq 'gene' ? $slice_start : 1);
-      my $end   = $_->end   - ($type eq 'gene' ? $slice_start : 1);
-      my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
-      
-      ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
-      
-      next if $end < 0 || $start >= $slice_length;
-      
-      $start = 0                 if $start < 0;
-      $end   = $slice_length - 1 if $end >= $slice_length;
-      
-      for ($start..$end) {          
-        push @{$markup->{'exons'}{$_}{'type'}}, $type;          
-        $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
-      }
-    }
-  }
-}
-
-sub set_codons {
-  my ($self, $config, $slice_data, $markup) = @_;
-  my $slice       = $slice_data->{'slice'};
-  my @transcripts = map @{$_->get_all_Transcripts}, @{$slice->get_all_Genes};
-  my ($slice_start, $slice_length) = map $slice->$_, qw(start length);
-  
-  if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-      next unless defined $t->translation;
-      
-      my @codons;
-      
-      # FIXME: all_end_codon_mappings sometimes returns $_ as undefined for small subslices. This eval stops the error, but the codon will still be missing.
-      # Awaiting a fix from the compara team.
-      eval {
-        push @codons, map {{ start => $_->start, end => $_->end, label => 'START' }} @{$t->translation->all_start_codon_mappings || []}; # START codons
-        push @codons, map {{ start => $_->start, end => $_->end, label => 'STOP'  }} @{$t->translation->all_end_codon_mappings   || []}; # STOP codons
-      };
-      
-      my $id = $t->stable_id;
-     
-      foreach my $c (@codons) {
-        my ($start, $end) = ($c->{'start'}, $c->{'end'});
-        
-        # FIXME: Temporary hack until compara team can sort this out
-        $start = $start - 2 * ($slice_start - 1);
-        $end   = $end   - 2 * ($slice_start - 1);
-        
-        next if $end < 1 || $start > $slice_length;
-        
-        $start = 1 unless $start > 0;
-        $end   = $slice_length unless $end < $slice_length;
-        
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . "$c->{'label'}($id)" for $start-1..$end-1;
-      }
-    }
-  } else { # Normal Slice
-    foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-      my ($start, $stop, $id, $strand) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id, $t->strand);
-      
-      # START codons
-      if ($start >= 1) {
-        my $label = ($strand == 1 ? 'START' : 'STOP') . "($id)";
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . $label for $start-1..$start+1;
-      }
-      
-      # STOP codons
-      if ($stop <= $slice_length) {
-        my $label = ($strand == 1 ? 'STOP' : 'START') . "($id)";
-        $markup->{'codons'}{$_}{'label'} .= ($markup->{'codons'}{$_}{'label'} ? "\n" : '') . $label for $stop-3..$stop-1;
-      }
-    }
   }
 }
 

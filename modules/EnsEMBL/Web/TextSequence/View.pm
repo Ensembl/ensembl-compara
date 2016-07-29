@@ -57,6 +57,7 @@ sub reset {
     %$self,
     seq_num => -1,
     all_line => 0,
+    annotation => [],
     slices => [],
     sequences => [],
     fieldsize => {},
@@ -130,6 +131,20 @@ sub field_size {
     $self->{'fieldsize'}{$key} = max($self->{'fieldsize'}{$key}||0,$value);
   }
   return $self->{'fieldsize'}{$key};
+}
+
+sub add_annotation {
+  my ($self,$annotation) = @_;
+
+  push @{$self->{'annotation'}},$annotation;
+}
+
+sub annotate {
+  my ($self,$config,$slice_data,$markup) = @_;
+
+  foreach my $a (@{$self->{'annotation'}}) {
+    $a->annotate($config,$slice_data,$markup);
+  }
 }
 
 sub transfer_data {
