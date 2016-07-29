@@ -42,6 +42,7 @@ use List::MoreUtils qw(uniq);
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::TwoCol;
@@ -52,13 +53,14 @@ use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
 
 sub new {
-  my ($class, $hub, $builder, $renderer, $id) = @_;
+  my ($class, $hub, $builder, $renderer, $key) = @_;
 
   my $self = {
     hub           => $hub,
     builder       => $builder,
     renderer      => $renderer,
-    id            => $id,
+    id            => [split /::/, $class]->[-1],
+    component_key => $key,
     object        => undef,
     cacheable     => 0,
     mcacheable    => 1,
@@ -91,44 +93,28 @@ sub button_style {
 
 #################### ACCESSORS ###############################
 
-sub id {
-  ## @accessor
-  ## @return String (last element of package namespace)
-  my ($self, $id) = @_;
-  $self->{'id'} = $id if @_>1;
-  return $self->{'id'};
-}
-
-sub builder {
-  ## @getter
-  ## @return EnsEMBL::Web::Builder
-  my $self = shift;
-  return $self->{'builder'};
-}
-
-sub hub {
-  ## @getter
-  ## @return EnsEMBL::Web::Hub
-  my $self = shift;
-  return $self->{'hub'};
-}
-
-sub renderer {
-  ## @getter
-  ## @return EnsEMBL::Web::Renderer
-  my $self = shift;
-  return $self->{'renderer'};
-}
+sub component_key :AccessorMutator;
+sub id            :AccessorMutator;
+sub cacheable     :AccessorMutator;
+sub mcacheable    :AccessorMutator; ## temporary method only (hr5)
+sub ajaxable      :AccessorMutator;
+sub configurable  :AccessorMutator;
+sub has_image     :AccessorMutator;
+sub builder       :Accessor;
+sub hub           :Accessor;
+sub renderer      :Accessor;
 
 sub view_config {
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
   my ($self, $type) = @_;
 
+  my $hub = $self->hub;
+
   $type ||= $hub->type;
 
   unless ($self->{'view_config'}) {
-    $self->{'view_config'} = $self->hub->get_viewconfig({
+    $self->{'view_config'} = $hub->get_viewconfig({
       'component' => $self->id,
       'type'      => $type,
       'cache'     => $type eq $hub->type
@@ -137,7 +123,7 @@ sub view_config {
   return $self->{'view_config'};
 }
 
-sub dom { 
+sub dom {
   ## @getter
   ## @return EnsEMBL::Web::DOM
   my $self = shift;
@@ -154,47 +140,6 @@ sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
   return $self->builder ? $self->builder->object : $self->{'object'};
-}
-
-sub cacheable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'cacheable'} = shift if @_;
-  return $self->{'cacheable'};
-}
-
-sub mcacheable {
-  ## temporary method only - will be replaced in 77 (hr5) - use cacheable method instead
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'mcacheable'} = shift if @_;
-  return $self->{'mcacheable'};
-}
-
-sub ajaxable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'ajaxable'} = shift if @_;
-  return $self->{'ajaxable'};
-}
-
-sub configurable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'configurable'} = shift if @_;
-  return $self->{'configurable'};
-}
-
-sub has_image {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'has_image'} = shift if @_;
-  return $self->{'has_image'};
 }
 
 sub format {
@@ -546,7 +491,7 @@ sub ajax_url {
   my $self        = shift;
   my $hub         = $self->hub;
   my $function    = shift;
-     $function    = join "/", grep $_, $hub->function, $function && $self->can("content_$function") ? $function : '', $self->id;
+     $function    = join "/", grep $_, $hub->function, $function && $self->can("content_$function") ? $function : '', $self->component_key;
   my $params      = shift || {};
   my $controller  = shift || 'Component';
 
