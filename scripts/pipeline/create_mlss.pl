@@ -54,6 +54,7 @@ perl create_mlss.pl
     [--reg_conf file]
     [--f] force
     [--pw] pairwise
+    [--ref_species] when using --pw, only produce pairs with ref present
     [--sg] singleton
     [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
     [--species_set_name species_set_name] 
@@ -190,6 +191,7 @@ my $release;
 my $taxon_id;
 my $only_with_karyotype;
 my $only_high_coverage;
+my $ref_name;
 
 GetOptions(
     "help" => \$help,
@@ -204,6 +206,7 @@ GetOptions(
     "force|f" => \$force,
     "pw" => \$pairwise,
     "sg" => \$singleton,
+    "ref_species=s" => \$ref_name,
     "use_genomedb_ids" => \$use_genomedb_ids,
     "species_set_name|species_set_tag=s" => \$species_set_name,
     "collection=s" => \$collection,
@@ -329,9 +332,26 @@ if ($pairwise) {
   my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
   die "The --pw option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
 
-  while (my $gdb1 = shift @input_genome_dbs) {
-    foreach my $gdb2 (@input_genome_dbs) {
-      create_mlss( [$gdb1, $gdb2] );
+  if ( $ref_name ){
+    # find gdb object
+    my $ref_gdb;
+    foreach my $gdb ( @input_genome_dbs ){
+      if ( $gdb->name eq $ref_name ){
+        $ref_gdb = $gdb;
+        last;
+      }
+    }
+    die "Cannot find reference genome $ref_name in input genomes" unless ( $ref_gdb );
+    foreach my $gdb ( @input_genome_dbs ) {
+      create_mlss( [$ref_gdb, $gdb] ) unless ( $gdb->dbID == $ref_gdb->dbID );
+    }
+
+  }
+  else {
+    while (my $gdb1 = shift @input_genome_dbs) {
+      foreach my $gdb2 (@input_genome_dbs) {
+        create_mlss( [$gdb1, $gdb2] );
+      }
     }
   }
 
