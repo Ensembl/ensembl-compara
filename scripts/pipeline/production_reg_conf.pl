@@ -40,7 +40,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   'mysql://ensro@ens-staging3/86');
 
 # Extra core databases that live on genebuilders' servers:
-
+Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'genebuild12',
     -user => 'ensro',
