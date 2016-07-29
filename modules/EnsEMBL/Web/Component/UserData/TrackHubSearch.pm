@@ -73,40 +73,81 @@ sub content {
       }
     }
 
+    my ($form, $fieldset, $message);
+
+    ## Do we have usable data?
     if (keys %$ok_species) {
-      my $current_species = $hub->data_species;
+      ## Are we on a species page? If not, show all available species
+      my $current_species = $hub->species;
 
-      my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
-          'class'             => 'check',
-          'no_button'         => 1
+      ## Start creating form, as in most cases we need it
+      $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
+            'class'             => 'check',
+            'no_button'         => 1
       });
+      $fieldset = $form->add_fieldset({'no_required_notes' => 1});
 
-      my $fieldset = $form->add_fieldset({'no_required_notes' => 1});
+      if ($current_species =~ /multi|common/i) {
+        # Create a data structure for species, with display labels and their current assemblies
+        my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
 
-      # Create a data structure for species, with display labels and their current assemblies
-      my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
-
-      # Create HTML for showing/hiding assembly names to work with JS
-      my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
-
-      $fieldset->add_field({
+        ## Show dropdown of all available species
+        $fieldset->add_field({
                             'type'          => 'dropdown',
                             'name'          => 'species',
                             'label'         => 'Species',
                             'values'        => \@species,
                             'value'         => $current_species,
                             'class'         => '_stt'
-      });
+        });
 
-      $fieldset->add_field({
+        # Create HTML for showing/hiding assembly names to work with JS
+        my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
+        $fieldset->add_field({
                             'type'          => 'noedit',
                             'label'         => 'Assembly',
                             'name'          => 'assembly_name',
                             'value'         => $assembly_names,
                             'no_input'      => 1,
                             'is_html'       => 1,
-      });
+        });
+      }
+      else {
+        ## Is this species available in the registry?
+        if ($ok_species->{$current_species}) {
 
+          ## Only display current species and assembly
+          $fieldset->add_field({
+                              'type'    => 'noedit',
+                              'label'   => 'Species',
+                              'name'    => 'species_display',
+                              'value'   => $sd->species_label($current_species, 1),
+          });
+          $form->add_hidden({'name' => 'species', 'value' => $current_species});
+
+          $fieldset->add_field({
+                              'type'    => 'noedit',
+                              'label'   => 'Assembly',
+                              'name'    => 'assembly_display',
+                              'value'   => $sd->ASSEMBLY_VERSION,
+          });
+          $form->add_hidden({'name' => 'assembly_name', 'value' => $sd->ASSEMBLY_VERSION});
+        }
+        else {
+          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species.</p>';
+        }
+      }
+    }
+    else {
+      $message = '<p>Sorry, the Track Hub Registry currently has no species compatible with this website.</p>';
+    }
+
+    if ($message) {
+      $html .= $message;
+      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+    }
+    else {
+      ## Add remaining fields
       my @data_types = qw(genomics transcriptomics proteomics);
       my $values     = [{'value' => '', 'caption' => '-- all --'}];
       push @$values, {'value' => $_, 'caption' => $_} for @data_types;
@@ -133,10 +174,6 @@ sub content {
       });
 
       $html .= $form->render;
-    }
-    else {
-      $html .= '<p>Sorry, the Track Hub Registry currently has no species compatible with this website.</p>';
-      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
     }
   }
 
