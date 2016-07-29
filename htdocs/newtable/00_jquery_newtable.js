@@ -556,6 +556,21 @@
     $.post($table.data('src'),params,function(res) {},'json');
   }
 
+  function load_orient($table,config) {
+    var src = $table.data('src');
+    var params = $.extend({},extract_params(src),{
+      activity: 'load_orient',
+      source: 'enstab',
+      keymeta: JSON.stringify($table.data('keymeta')||{}),
+      config: JSON.stringify(config),
+      ssplugins: JSON.stringify(config.ssplugins)
+    });
+    $.post(src,params,function(res) {
+      $table.data('view',res.orient);
+      $table.trigger('view-updated');
+    },'json');
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -567,9 +582,8 @@
     var stored_config = {
       columns: config.columns
     };
-    var view = merge_orient($.extend(true,{},config.orient),config.saved_orient||{});
-    var old_view = $.extend(true,{},config.orient);
-    $table.data('view',view).data('old-view',$.extend(true,{},old_view))
+    var view = $.extend(true,{},config.orient);
+    $table.data('view',view).data('old-view',{})
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
     delete config.payload_one;
@@ -641,7 +655,7 @@
       widgets[name].go($table,$widget);
     });
     if($table.data('abandon-ship')) { return; }
-    $table.trigger('view-updated');
+    load_orient($table,config);
   }
 
   // TODO make this configurable ENSWEB-2113
