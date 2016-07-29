@@ -64,23 +64,17 @@ sub activity_save_orient {
   };
   warn "$@\n" if $@;
 
-  #$session->purge_data(%args);
-  #$session->set_data(%args, %data) if scalar keys %data;
+  $session->purge_data(%args);
+  $session->set_data(%args, %data) if scalar keys %data;
 }
 
-sub extend_config {
-  my ($self,$hub,$config) = @_;
+sub activity_load_orient {
+  my ($self,$config) = @_;
 
-  my $session = $hub->session;
-  
-  my %args    = ( type => 'Newtable', code => $self->class );
-  my %data    = %{$session->get_data(%args) || {}};
-
-  $config->{'saved_orient'} = {};
-  eval {
-    $config->{'saved_orient'} = JSON->new->decode(((\%data||{})->{'orient'})||"{}");
-  };
-  warn "$@\n" if $@;
+  my $hub = $self->hub;
+  my %args    = ( type => 'Newtable', code => $config->class );
+  my $out = $hub->session->get_data(%args) || {};
+  return { orient => JSON->new->decode($out->{'orient'})||{} };
 }
 
 1;

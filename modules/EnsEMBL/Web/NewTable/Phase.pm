@@ -160,7 +160,6 @@ sub add_row_data {
 sub consolidate {
   my ($self) = @_;
 
-  warn Dumper(162,$self->{'indata'}[7],$self->{'innulls'}[7]);
   push @{$self->{'data'}},compress_block($self->{'indata'});
   push @{$self->{'nulls'}},compress_block($self->{'innulls'});
   push @{$self->{'len'}},$self->{'inlen'};
@@ -182,7 +181,6 @@ sub add_row {
   return 0 unless $self->passes_muster($row);
   $self->{'request_num'}++;
   my $nulls = $self->server_nulls($row);
-  use Data::Dumper;
   $self->add_row_data($row,$nulls);
   $self->{'inlen'}++;
 }
