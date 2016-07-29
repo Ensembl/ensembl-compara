@@ -268,10 +268,7 @@ sub create_chunks
       }
     }
 
-    my ($dnafrag) = @{$dnafragDBA->fetch_all_by_GenomeDB_region(
-                      $genome_db,
-                      $chr->coord_system->name(), #$self->{'coordinate_system'},
-                      $chr->seq_region_name)};
+    my $dnafrag = $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr->seq_region_name);
 
     #Uncomment following line to prevent import of missing dnafrags
     #next unless ($dnafrag);
