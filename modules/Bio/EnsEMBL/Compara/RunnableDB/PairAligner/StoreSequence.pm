@@ -92,9 +92,18 @@ sub write_output {
   } );
 
   if (my $dump_loc = $dna_collection->dump_loc) {
-      my $starttime = time();
-      $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
-      if($self->debug){printf("%1.3f secs to dump ChunkSet %d for \"%s\" collection\n", (time()-$starttime), $chunkSet->dbID, $dna_collection->description);}
+      if ($chunkSet->total_basepairs >= $self->param_required('dump_min_chunkset_size')) {
+          my $starttime = time();
+          $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
+          if($self->debug){printf("%1.3f secs to dump ChunkSet %d for \"%s\" collection\n", (time()-$starttime), $chunkSet->dbID, $dna_collection->description);}
+      }
+      foreach my $chunk (@$chunk_array) {
+          if ($chunk->length >= $self->param_required('dump_min_chunk_size')) {
+              my $starttime = time();
+              $chunk->dump_to_fasta_file($chunk->dump_loc_file);
+              if($self->debug){printf("%1.3f secs to dump Chunk %d for \"%s\" collection\n", (time()-$starttime), $chunk->dbID, $dna_collection->description);}
+          }
+      }
   }
 
   return 1;
