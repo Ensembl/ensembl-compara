@@ -265,6 +265,10 @@ sub dumpChunkToWorkdir
   my $self = shift;
   my $chunk = shift;
 
+  if ($chunk->dna_collection->dump_loc) {
+      return $chunk->dump_loc_file;
+  }
+
   my $starttime = time();
 
   my $fastafile = $self->worker_temp_directory .

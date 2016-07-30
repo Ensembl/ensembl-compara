@@ -397,4 +397,23 @@ sub dump_chunks_to_fasta_file
 }
 
 
+=head2 dump_loc_file
+
+  Example     : $chunk->dump_loc_file();
+  Description : Returns the path to this Chunk in the dump location of its DnaCollection
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub dump_loc_file {
+    my $self = shift;
+    my $dump_loc = $self->dna_collection->dump_loc;
+    my $sub_dir  = dir_revhash($self->dbID);
+    return sprintf('%s/%s/chunk_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+}
+
+
 1;
