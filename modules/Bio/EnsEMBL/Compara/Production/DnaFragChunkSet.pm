@@ -46,6 +46,9 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use strict;
 use warnings;
 
+use File::Path;
+use File::Basename;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
@@ -280,6 +283,8 @@ sub load_all_sequences {
 
 sub dump_to_fasta_file {
     my ($self, $fastafile) = @_;
+
+    mkpath(dirname($fastafile));
 
     open(my $fh, '>', $fastafile)
         or $self->throw("Error opening $fastafile for write");

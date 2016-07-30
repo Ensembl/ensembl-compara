@@ -52,12 +52,15 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection;
 
 use strict;
 use warnings;
+
+use File::Path;
+use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
+
 use Bio::EnsEMBL::Analysis::Runnable::Blat;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use File::Path;
 
 
 =head2 fetch_input
@@ -117,6 +120,7 @@ sub dumpNibFiles {
 
   my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
   my $dump_loc = $dna_collection->dump_loc;
+  mkpath(dirname($dump_loc));
 
   unless (defined $dump_loc) {
     die("dump_loc directory is not defined, can not dump nib files\n");

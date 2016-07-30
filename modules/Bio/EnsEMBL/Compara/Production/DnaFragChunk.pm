@@ -41,12 +41,16 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use strict;
 use warnings;
 
+use File::Path;
+use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::Seq;
 use Bio::SeqIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
+use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -330,6 +334,8 @@ sub dump_to_fasta_file
 {
   my $self = shift;
   my $fastafile = shift;
+
+  mkpath(dirname($fastafile));
   
   my $bioseq = $self->bioseq;
 
