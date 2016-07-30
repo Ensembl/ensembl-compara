@@ -264,9 +264,10 @@ sub dumpChunkToWorkdir
 {
   my $self = shift;
   my $chunk = shift;
+  my $dna_collection = shift;
 
-  if ($chunk->dna_collection->dump_loc) {
-      return $chunk->dump_loc_file;
+  if ($dna_collection->dump_loc) {
+      return $chunk->dump_loc_file($dna_collection);
   }
 
   my $starttime = time();

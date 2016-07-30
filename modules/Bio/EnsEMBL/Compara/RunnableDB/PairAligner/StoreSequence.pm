@@ -100,7 +100,7 @@ sub write_output {
       foreach my $chunk (@$chunk_array) {
           if ($chunk->length >= $self->param_required('dump_min_chunk_size')) {
               my $starttime = time();
-              $chunk->dump_to_fasta_file($chunk->dump_loc_file);
+              $chunk->dump_to_fasta_file($chunk->dump_loc_file($dna_collection));
               if($self->debug){printf("%1.3f secs to dump Chunk %d for \"%s\" collection\n", (time()-$starttime), $chunk->dbID, $dna_collection->description);}
           }
       }

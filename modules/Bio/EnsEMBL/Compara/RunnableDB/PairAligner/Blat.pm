@@ -112,7 +112,7 @@ sub configure_runnable {
   my $qyChunkFile;
   if($self->param('query_DnaFragChunkSet')->count == 1) {
       my ($qy_chunk) = @{$self->param('query_DnaFragChunkSet')->get_all_DnaFragChunks};
-      $qyChunkFile = $self->dumpChunkToWorkdir($qy_chunk);
+      $qyChunkFile = $self->dumpChunkToWorkdir($qy_chunk, $self->param('query_DnaFragChunkSet')->dna_collection);
   } else {
       $qyChunkFile = $self->dumpChunkSetToWorkdir($self->param('query_DnaFragChunkSet'));
   }

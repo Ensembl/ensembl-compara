@@ -90,7 +90,7 @@ sub configure_runnable {
   my $db_dna_collection = $self->param('db_DnaFragChunkSet')->dna_collection;
   foreach my $db_chunk (@{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks}) {
       $db_chunk->masking_options($db_dna_collection->masking_options);
-    push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk);
+    push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk, $db_dna_collection);
   }
 
   if (@db_chunk_files > 1) {

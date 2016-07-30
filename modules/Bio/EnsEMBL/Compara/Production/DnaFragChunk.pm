@@ -416,7 +416,9 @@ sub dump_chunks_to_fasta_file
 
 sub dump_loc_file {
     my $self = shift;
-    my $dump_loc = $self->dna_collection->dump_loc;
+    my $dna_collection = shift;
+
+    my $dump_loc = $dna_collection->dump_loc;
     my $sub_dir  = dir_revhash($self->dbID);
     return sprintf('%s/%s/chunk_%s.fa', $dump_loc, $sub_dir, $self->dbID);
 }
