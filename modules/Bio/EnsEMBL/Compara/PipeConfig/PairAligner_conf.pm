@@ -273,7 +273,7 @@ sub pipeline_create_commands {
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
-       'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
     ];
 }

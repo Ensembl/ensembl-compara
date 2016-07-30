@@ -160,7 +160,7 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
 	   ];
 }
