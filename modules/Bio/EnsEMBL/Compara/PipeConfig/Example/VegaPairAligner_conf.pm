@@ -100,7 +100,7 @@ sub default_options {
     'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#min length to dump dna as nib file
-#	'dump_min_size' => 11500000, 
+#	'dump_min_nib_size' => 11500000,
 
         #
 	#Default filter_duplicates

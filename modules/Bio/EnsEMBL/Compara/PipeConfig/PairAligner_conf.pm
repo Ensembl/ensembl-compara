@@ -146,7 +146,7 @@ sub default_options {
 	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
 
 	#min length to dump dna as nib file
-	'dump_min_size' => 11500000, 
+	'dump_min_nib_size'         => 11500000,
 
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
@@ -529,7 +529,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
-			       'dump_min_size' => $self->o('dump_min_size'),
+			       'dump_min_size' => $self->o('dump_min_nib_size'),
                                'MT_only' => $self->o('MT_only'),
 			      },
 	       -hive_capacity => 1,

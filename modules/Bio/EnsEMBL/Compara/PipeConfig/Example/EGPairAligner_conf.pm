@@ -162,7 +162,7 @@ sub default_options {
 	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
 
 	#min length to dump dna as nib file
-	'dump_min_size' => 11500000, 
+	'dump_min_nib_size' => 11500000,
 
 	#
 	#Default chunking parameters
