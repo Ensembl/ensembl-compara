@@ -51,6 +51,17 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
+        my ( $mlss_adap, $gblock_adap, $dnafrag_adaptor, $dba );
+
+        if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+        else { $dba = $self->compara_dba }
+
+        $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
+        $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
+        $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
+
+        $self->db->dbc->disconnect_if_idle;
+
 	my %aln_ranges;
 	my @orth_batch = @{ $self->param_required('orth_batch') };
 
@@ -58,17 +69,6 @@ sub fetch_input {
 		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
 		my @aln_mlss_ids  = @{ $orth->{ 'aln_mlss_ids' } };
 
-		my ( $mlss_adap, $gblock_adap, $dnafrag_adaptor, $dba );
-
-		if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
-		else { $dba = $self->compara_dba }
-		
-		$mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
-		$gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
-		$dnafrag_adaptor = $dba->get_DnaFragAdaptor;
-
-		$self->db->dbc->disconnect_if_idle;
-		
 		my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[0]->{id} );
 		my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[1]->{id} );
 
