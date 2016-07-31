@@ -1380,7 +1380,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'unannotated_all_vs_all_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers',
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -1393,9 +1393,9 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => $self->o('blast_params'),
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => 1e-10,
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastpu_capacity'),
@@ -1444,9 +1444,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'members_against_allspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
-            -parameters => {
-                'step'               => 15,
-            },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -1459,7 +1456,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
-                'step'               => 15,
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
