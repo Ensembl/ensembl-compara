@@ -133,7 +133,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
         'include_MT' => 1,
@@ -271,6 +271,7 @@ sub pipeline_create_commands {
         coding_exon_length          INT(10) DEFAULT 0
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
+       'rm -rf '.$self->o('dump_dir'), #Cleanup dump_dir directory
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory

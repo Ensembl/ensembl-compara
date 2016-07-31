@@ -705,9 +705,10 @@ sub parse_defaults {
             throw ("Net reference species " . $self->param('net_ref_species') . " must be either " . $pair->{ref_genome_db}->_get_unique_name . " or " . $pair->{non_ref_genome_db}->_get_unique_name );
         }
 
+	my $dna_dump_loc = $self->param('dump_dir') . "/dna/";
 	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->_get_unique_name . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
+	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
 									      'dump_loc' => $dump_loc);
 
@@ -725,7 +726,7 @@ sub parse_defaults {
 	    
 	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->_get_unique_name . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
+	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},
 										   'dump_loc' => $dump_loc);
 

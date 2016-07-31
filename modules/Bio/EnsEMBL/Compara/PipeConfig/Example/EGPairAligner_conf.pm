@@ -152,7 +152,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
         'include_MT' => 1,
