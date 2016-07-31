@@ -242,7 +242,11 @@ sub dumpChunkSetToWorkdir
   my $chunkSet   = shift;
 
   if ($chunkSet->dna_collection->dump_loc) {
-      return $chunkSet->dump_loc_file;
+      my $fastafile = $chunkSet->dump_loc_file;
+      if (-s $fastafile) {
+          if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
+          return $fastafile
+      }
   }
 
   my $starttime = time();
@@ -267,7 +271,11 @@ sub dumpChunkToWorkdir
   my $dna_collection = shift;
 
   if ($dna_collection->dump_loc) {
-      return $chunk->dump_loc_file($dna_collection);
+      my $fastafile = $chunk->dump_loc_file($dna_collection);
+      if (-s $fastafile) {
+          if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
+          return $fastafile
+      }
   }
 
   my $starttime = time();
