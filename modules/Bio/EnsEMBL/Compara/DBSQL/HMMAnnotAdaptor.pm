@@ -21,21 +21,24 @@ limitations under the License.
 
 HMMAnnotAdaptor
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
-
 =head1 AUTHOR
 
 ChuangKee Ong
 
 =head1 CONTACT
 
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded by a _.
 
 =cut
+
 package Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor;
 
 use strict;
