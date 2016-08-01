@@ -93,8 +93,8 @@ sub create_track_node {
 
   $data ||= {};
 
-  $data->{'name'}         = $name;
   $data->{'node_type'}    = 'track';
+  $data->{'name'}       ||= $name;
   $data->{'strand'}     ||= 'b';                                  # Make sure we have a strand setting
   $data->{'display'}    ||= $data->{'default_style'} || 'normal'; # Show unless we explicitly say no
   $data->{'renderers'}  ||= [qw(off Off normal On)];
@@ -127,15 +127,13 @@ sub add_tracks {
   my $count     = 0;
 
   if ($menu) {
-
     foreach my $track_details (@_) {
-      my ($track_key, $caption, $glyphset, $data) = @$track_details;
+      my ($track_key, $name, $glyphset, $data) = @$track_details;
       my $node = $self->get_node($track_key);
 
       next if $node && $node->get_data('node_type') eq 'track';
-
       $data->{'glyphset'} = $glyphset;
-      $menu->append_child($self->create_track_node($track_key, $caption, $data));
+      $menu->append_child($self->create_track_node($track_key, $name, $data));
       $count++;
     }
   }
