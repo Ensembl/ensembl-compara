@@ -60,7 +60,7 @@ return $sth;
 }
 
 
-my $sql_all = 'SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL';
+my $sql_all = 'SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) LEFT JOIN seq_member_projection ON seq_member_id = target_seq_member_id WHERE hmm_annot.seq_member_id IS NULL AND target_seq_member_id IS NULL';
 
 sub fetch_all_seqs_missing_annot {
     my ($self) = @_;
