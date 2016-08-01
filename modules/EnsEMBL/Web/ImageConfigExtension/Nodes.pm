@@ -69,21 +69,6 @@ sub add_menus {
   return $count;
 }
 
-sub remove_disabled_menus {
-  ## Removes all tracks from the tree where menu = no, and their parent nodes if they are now empty
-  ## @param No argument required (it's only required for the recursive call from within the subroutine itself)
-  my $self  = shift;
-  my $node  = @_ ? shift : $self->tree->root;
-
-  if ($node->has_child_nodes) {
-    $self->remove_disabled_menus($_) for @{$node->child_nodes};
-    $node->remove unless $node->has_child_nodes; # remove current node if all it's child nodes were removed by remove_disabled_menus
-
-  } else { # if it's a leaf, remove it only if it's menu=no
-    $node->remove if $node->get_data('menu') eq 'no';
-  }
-}
-
 sub create_track_node {
   ## Creates a track node (not yet attached to the main tree)
   ## @param Track node key/id

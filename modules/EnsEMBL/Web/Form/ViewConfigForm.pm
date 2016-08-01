@@ -219,9 +219,8 @@ sub build_imageconfig_form {
 
   $tree->append_node('search_results', { caption => 'Search results', class => 'search_results disabled', %node_options }) if $extra_menus->{'search_results'};
 
-  # Delete all tracks where menu = no, and parent nodes if they are now empty
-  # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
-  $image_config->remove_disabled_menus;
+  # Delete empty menus nodes
+  _remove_disabled_menus($image_config->tree->root);
 
   # In the scenario where the tree structure is menu -> sub menu -> sub menu, and the 3rd level contains only one non-external menu,
   # move all the tracks in that 3rd level menu up to the 2nd level, and delete the 3rd level.
@@ -540,6 +539,18 @@ sub add_select_all {
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
   }
+}
+
+sub _remove_disabled_menus {
+  ## @private
+  ## Removes all the menus from the image config tree that have no nodes in them
+  my $node = shift;
+
+  if ($node->has_child_nodes) {
+    _remove_disabled_menus($_) for @{$node->child_nodes};
+  }
+
+  $node->remove if !$node->has_child_nodes && $node->get_data('node_type') eq 'menu';
 }
 
 1;
