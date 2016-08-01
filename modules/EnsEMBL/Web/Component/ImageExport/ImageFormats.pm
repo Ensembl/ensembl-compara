@@ -39,23 +39,23 @@ sub content {
   ### Options for gene sequence output
   my $self  = shift;
   my $hub   = $self->hub;
-
+  my $default_selected = 'pdf'; # pdf/journal/poster/...
   my $html = '<h1>Image download</h1>';
 
   my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'ImageOutput',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
-  my $intro_fieldset = $form->add_fieldset();
+  my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
 
+  my $intro_fieldset = $form->add_fieldset();
   $intro_fieldset->add_field({
                         'type'  => 'String',
                         'name'  => 'filename',
                         'label' => 'File name',
-                        'value' => $self->default_file_name,
+                        'value' => $self->default_file_name($radio_info->{$default_selected}->{format}),
                         });
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
-  my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
   my $formats     = [];
 
   foreach (sort {$radio_info->{$a}{'order'} <=> $radio_info->{$b}{'order'}} keys %$radio_info) {
@@ -73,7 +73,7 @@ sub content {
                 'type'    => 'Radiolist',
                 'name'    => 'format',
                 'values'  => $formats,
-                'value'   => 'pdf',
+                'value'   => $default_selected,
                 );
   $fieldset->add_field(\%params);
 
@@ -135,6 +135,7 @@ sub content {
 
 sub default_file_name {
   my $self  = shift;
+  my $ext = shift || '';
   my $hub   = $self->hub;
   my $name  = $hub->species_defs->SPECIES_COMMON_NAME;
 
@@ -154,7 +155,7 @@ sub default_file_name {
       $name .= $disp_id || $stable_id;
     }
   }
-  return $name.'.png';
+  return $name . ($ext ? ".$ext" : '');
 }
 
 1;
