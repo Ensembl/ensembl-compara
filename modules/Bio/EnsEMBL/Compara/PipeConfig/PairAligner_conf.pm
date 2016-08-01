@@ -455,6 +455,7 @@ sub pipeline_analyses {
 	       -parameters => { 
 			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
 			      },
+           -wait_for  => [ 'create_pair_aligner_jobs'  ],
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
@@ -466,6 +467,7 @@ sub pipeline_analyses {
 	       -parameters => { 
 			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
 			      },
+           -wait_for   => [ 'create_pair_aligner_jobs'  ],
  	       -batch_size => $self->o('pair_aligner_batch_size'),
 	       -can_be_empty  => 1,
 	       -rc_name => 'crowd_himem',
