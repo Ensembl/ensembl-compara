@@ -244,7 +244,7 @@ sub _process_gabs_per_chunk {
 
         # first sort the list for processing
         my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
-        $self->param('gab_count', $self->param('gap_count')+scalar(@sorted_GABs));
+        $self->param('gab_count', $self->param('gab_count')+scalar(@sorted_GABs));
         # and call the method
         $self->$method(\@sorted_GABs, $region_start, $region_end);
         $region_start += $step_size;
