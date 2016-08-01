@@ -34,10 +34,12 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 # ------------------------- CORE DATABASES: --------------------------------------
 
 # The majority of core databases live on two staging servers:
-Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-livemirror/85');
 # Bio::EnsEMBL::Registry->load_registry_from_url(
-#   'mysql://ensro@ens-staging3/86');
+#   'mysql://ensro@ens-livemirror/85');
+Bio::EnsEMBL::Registry->load_registry_from_url(
+  'mysql://ensro@ens-staging1/86');
+Bio::EnsEMBL::Registry->load_registry_from_url(
+  'mysql://ensro@ens-staging2/86');
 
 # Extra core databases that live on genebuilders' servers:
 Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
