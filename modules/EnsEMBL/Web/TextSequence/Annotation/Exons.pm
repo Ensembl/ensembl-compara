@@ -15,7 +15,7 @@ sub new {
 sub annotate {
   my ($self, $config, $slice_data, $markup) = @_; 
   my $slice    = $slice_data->{'slice'};
-  my $exontype = $config->{'exon_display'};
+  my $exontype = $config->{'exon_display'} || '';
   my ($slice_start, $slice_end, $slice_length, $slice_strand) = map $slice->$_, qw(start end length strand);
   my @exons;
   
@@ -28,9 +28,9 @@ sub annotate {
   }
   
   # Values of parameter should not be fwd and rev - this is confusing.
-  if ($config->{'exon_ori'} eq 'fwd') {
+  if (($config->{'exon_ori'}||'') eq 'fwd') {
     @exons = grep { $_->strand > 0 } @exons; # Only exons in same orientation 
-  } elsif ($config->{'exon_ori'} eq 'rev') {
+  } elsif (($config->{'exon_ori'}||'') eq 'rev') {
     @exons = grep { $_->strand < 0 } @exons; # Only exons in opposite orientation
   }
   
@@ -70,7 +70,7 @@ sub annotate {
 
       for ($start..$end) {
         push @{$markup->{'exons'}{$_}{'type'}}, $type;
-        $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless $markup->{'exons'}{$_}{'id'} =~ /$id/;
+        $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $id unless ($markup->{'exons'}{$_}{'id'}||'') =~ /$id/;
       }
     }
   }
