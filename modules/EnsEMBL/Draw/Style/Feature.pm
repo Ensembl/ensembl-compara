@@ -91,8 +91,8 @@ sub create_glyphs {
 
     foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
-      next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
-      next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
+      #next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
+      #next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
       my $text_info   = $self->get_text_info($feature->{'label'});
       $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
