@@ -13,7 +13,7 @@ sub annotate {
   my ($slice_start, $slice_length) = map $slice->$_, qw(start length);
   
   if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
+    foreach my $t (grep { ($_->coding_region_start||0) < ($slice_length||0) && ($_->coding_region_end||0) > 0 } @transcripts) {
       next unless defined $t->translation;
           
       my @codons;

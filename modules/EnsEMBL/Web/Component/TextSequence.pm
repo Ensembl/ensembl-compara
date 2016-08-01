@@ -34,6 +34,7 @@ use EnsEMBL::Web::TextSequence::View;
 use EnsEMBL::Web::TextSequence::Annotation::Exons;
 use EnsEMBL::Web::TextSequence::Annotation::Codons;
 use EnsEMBL::Web::TextSequence::Annotation::Variations;
+use EnsEMBL::Web::TextSequence::Annotation::Alignments;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -127,6 +128,7 @@ sub get_sequence_data {
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
 
   my $view = $self->view;
+  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
@@ -136,7 +138,6 @@ sub get_sequence_data {
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
-    $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
     $view->annotate($config,$sl,$mk);
     
     push @markup, $mk;
