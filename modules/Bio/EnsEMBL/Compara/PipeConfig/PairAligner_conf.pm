@@ -286,6 +286,7 @@ sub resource_classes {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'long'   => { 'LSF' => '-q long -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
                 # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
             'crowd' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
             'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
@@ -421,7 +422,7 @@ sub pipeline_analyses {
 			       1 => [ 'check_no_partial_gabs' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
-	       -rc_name => '1Gb',
+	       -rc_name => 'long',
  	    },
  	    {  -logic_name => $self->o('pair_aligner_logic_name'),
  	       -module     => $self->o('pair_aligner_module'),
