@@ -321,7 +321,7 @@ sub add_variations {
       !$self->too_rare_snp($_->variation_feature,$config)
     } @transcript_variations;
   }
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   

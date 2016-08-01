@@ -33,6 +33,7 @@ use EnsEMBL::Web::TextSequence::View;
 
 use EnsEMBL::Web::TextSequence::Annotation::Exons;
 use EnsEMBL::Web::TextSequence::Annotation::Codons;
+use EnsEMBL::Web::TextSequence::Annotation::Variations;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -42,8 +43,13 @@ sub new {
   
   $self->{'key_types'}         = [qw(codons conservation population resequencing align_change)];
   $self->{'key_params'}        = [qw(gene_name gene_exon_type alignment_numbering match_display)];
-  $self->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
   
+  my $view = $self->view;
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+  if($adorn eq 'only') { $view->phase(2); }
+  elsif($adorn eq 'none') { $view->phase(1); }
+
   return $self;
 }
 
@@ -121,6 +127,7 @@ sub get_sequence_data {
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
 
   my $view = $self->view;
+  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
  
@@ -130,10 +137,7 @@ sub get_sequence_data {
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
-    if($adorn ne 'none') {
-      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
-    }
-    $view->annotate($self,$sl,$mk);
+    $view->annotate($config,$sl,$mk);
     
     push @markup, $mk;
   }
@@ -214,6 +218,7 @@ sub set_variation_filter {
     $config->{'population_filter'} = $pop_filter;
   }
   
+  $config->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
   $config->{'hide_long_snps'} = $hub->param('hide_long_snps') eq 'yes';
   $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
 }
@@ -266,7 +271,7 @@ sub set_variations {
     };
   }
 
-  $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+  $snps = [ grep $_->length <= $config->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
 
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
@@ -504,7 +509,7 @@ sub markup_comparisons {
   my $i          = 0;
   my ($seq, $comparison);
 
-  my $view = $self->view($config);
+  my $view = $self->view;
 
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
@@ -700,12 +705,7 @@ sub build_sequence {
   my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
 
-  my $adorn = $self->hub->param('adorn') || 'none';
- 
   my $view = $self->view;
-  if($adorn eq 'only') { $view->phase(2); }
-  elsif($adorn eq 'none') { $view->phase(1); }
-
   $view->width($config->{'display_width'});
 
   $view->transfer_data($sequence,$config);

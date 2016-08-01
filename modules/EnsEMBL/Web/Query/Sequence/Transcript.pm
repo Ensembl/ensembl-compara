@@ -326,7 +326,7 @@ sub get {
     $self->species_defs->config($args->{'species'},'databases')->{'DATABASE_VARIATION'};
   if ($config->{'snp_display'} and $adorn ne 'none' and $has_var) {
     foreach my $snp (reverse @{$self->_get_variation_data($args,$slice, $config->{'utr'}, $trans_strand,$args->{'conseq_filter'})}) {
-      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
       next if $self->too_rare_snp($snp->{'vf'},$config);
       $snp->{'position'}||=0;
 

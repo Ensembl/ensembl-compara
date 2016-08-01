@@ -3,14 +3,7 @@ package EnsEMBL::Web::TextSequence::Annotation::Codons;
 use strict;
 use warnings;
 
-sub new {
-  my ($proto) = @_;
-
-  my $class = ref($proto) || $proto;
-  my $self = {};
-  bless $self,$class;
-  return $self;
-}
+use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 
 sub annotate {
   my ($self,$config,$slice_data,$markup) = @_;
