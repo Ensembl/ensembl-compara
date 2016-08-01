@@ -140,14 +140,14 @@ sub add_annotation {
 }
 
 sub annotate {
-  my ($self,$config,$slice_data,$markup,$sequence) = @_;
+  my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
 
   my $cur_phase = $self->phase;
   foreach my $a (@{$self->{'annotation'}}) {
     my $p = $a->phases;
     next if $p and not any { $cur_phase == $_ } @$p;
     # XXX no hub should be passed
-    $a->annotate($config,$slice_data,$markup,$sequence,$self->_hub);
+    $a->annotate($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
   }
 }
 

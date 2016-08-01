@@ -6,7 +6,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $sequence, $hub) = @_;
+  my ($self, $config, $slice_data, $markup, $seq, $hub,$sequence) = @_;
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
 
@@ -53,7 +53,7 @@ sub annotate {
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others
-  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ $_->dbID == $focus, $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
+  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ (($_->dbID == $focus)||0), $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
 
   foreach (@ordered_snps) {
     my $dbID = $_->dbID;

@@ -31,6 +31,7 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Draw::Utils::ColourMap;
 use EnsEMBL::Web::TextSequence::View;
 
+use EnsEMBL::Web::TextSequence::Annotation::Sequence;
 use EnsEMBL::Web::TextSequence::Annotation::Exons;
 use EnsEMBL::Web::TextSequence::Annotation::Codons;
 use EnsEMBL::Web::TextSequence::Annotation::Variations;
@@ -128,6 +129,7 @@ sub get_sequence_data {
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
 
   my $view = $self->view;
+  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
   $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
@@ -136,10 +138,7 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
-    
-    $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
-    $view->annotate($config,$sl,$mk);
-    
+    $view->annotate($config,$sl,$mk,$seq,$sequence);
     push @markup, $mk;
   }
   
