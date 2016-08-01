@@ -59,34 +59,34 @@ sub fetch_all_hmm_annot {
 return $sth;
 }
 
+my $sql_canonical = 'SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL';
+my $sql_all = 'SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL';
 
 sub fetch_all_genes_missing_annot {
     my ($self) = @_;
 
-    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL";
-    return $self->dbc->db_handle->selectcol_arrayref($sql);
+    return $self->dbc->db_handle->selectcol_arrayref($sql_canonical);
 }
 
 
 sub fetch_all_genes_missing_annot_by_range {
     my ($self, $start_member_id, $end_member_id) = @_;
 
-    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL AND canonical_member_id BETWEEN ? AND ?";
+    my $sql = $sql_canonical.' AND canonical_member_id BETWEEN ? AND ?';
     return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $start_member_id, $end_member_id);
 }
 
 sub fetch_all_seqs_missing_annot {
     my ($self) = @_;
 
-    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL";
-    return $self->dbc->db_handle->selectcol_arrayref($sql);
+    return $self->dbc->db_handle->selectcol_arrayref($sql_all);
 }
 
 
 sub fetch_all_seqs_missing_annot_by_range {
     my ($self, $start_member_id, $end_member_id) = @_;
 
-    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL AND seq_member.seq_member_id BETWEEN ? AND ?";
+    my $sql = $sql_all.' AND seq_member.seq_member_id BETWEEN ? AND ?';
     return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $start_member_id, $end_member_id);
 }
 
