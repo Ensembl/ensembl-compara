@@ -57,7 +57,7 @@ sub fetch_features {
     return [];
   }
   
-  my $config        = $self->{'config'};
+  my $config      = $self->{'config'};
 
   my $fsets;
   if ($cell_line) {
@@ -119,13 +119,16 @@ sub colour_key {
     $type = 'Unclassified';
   }
 
-  my $epigenome = $self->{'my_config'}->get('epigenome');
-  if ($epigenome) {
-    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
-    if ($regact) {
-      my $activity  = $regact->activity;
-      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
-        $type = $activity;
+  my $config      = $self->{'config'};
+  if ($config->hub->type eq 'Regulation') {
+    my $epigenome = $self->{'my_config'}->get('epigenome');
+    if ($epigenome) {
+      my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+      if ($regact) {
+        my $activity  = $regact->activity;
+        if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
+          $type = $activity;
+        }
       }
     }
   }
