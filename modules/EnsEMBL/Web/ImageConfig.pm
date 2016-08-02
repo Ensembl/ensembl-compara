@@ -313,7 +313,7 @@ sub update_favourite_tracks {
   ## @return 1 if settings changed, 0 otherwise
   my ($self, $updated_fav) = @_;
 
-  my $fav_tracks  = $self->get_favourite_tracks;
+  my $fav_tracks  = $self->_favourite_tracks;
   my $altered     = 0;
 
   foreach my $track_key (keys %$updated_fav) {
@@ -343,7 +343,8 @@ sub update_track_order {
   return 1;
 }
 
-sub get_favourite_tracks {
+sub _favourite_tracks {
+  ## @private
   ## Gets a list of tracks favourited by the user (as saved in session/user record)
   ## List of favourite tracks is not specific to one image config - if a track exists in multiple images and is favourited in one, it gets favourited in all
   my $self = shift;
@@ -353,12 +354,21 @@ sub get_favourite_tracks {
   return $self->{'favourite_tracks'}{'tracks'} || {};
 }
 
+sub is_track_favourite {
+  ## Tells if a given track is marked favourite by the user
+  ## @param Track name
+  ## @return 0 or 1 accordingly
+  my ($self, $track) = @_;
+
+  return $self->_favourite_tracks->{$track} ? 1 : 0;
+}
+
 sub save_user_settings {
   ## @override
   ## Along with config record, save favourite tracks record too
   my $self      = shift;
   my $hub       = $self->hub;
-  my $fav_data  = $self->get_favourite_tracks;
+  my $fav_data  = $self->_favourite_tracks;
 
   $hub->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
 
@@ -411,7 +421,15 @@ sub remove_extra_menu {
   ## @params List of menu names
   my $self = shift;
 
-  $self->{'_extra_menus'}{$_} = 0 for @_;
+  delete $self->{'_extra_menus'}{$_} for @_;
+}
+
+sub has_extra_menu {
+  ## Check whether the given extra menu is present
+  ## @param Menu name
+  ## @return 0 or 1 accordingly
+  my ($self, $menu_name) = @_;
+  return $self->{'_extra_menus'}{$menu_name} || 0;
 }
 
 sub get_sortable_tracks {
