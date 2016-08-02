@@ -75,7 +75,7 @@ sub fetch_input {
     # Polyploids have no genes, and hence no blastp database
     $self->param('target_genome_dbs', [grep {not $_->is_polyploid} @$target_genome_dbs]);
 
-    my $all_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id);
+    my $all_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
 
     print "GDB ID: $genome_db_id\n";
     print "all_members: ";

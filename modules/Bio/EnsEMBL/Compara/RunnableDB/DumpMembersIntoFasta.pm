@@ -66,7 +66,7 @@ sub fetch_input {
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
 
-    my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id);
+    my $members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
     $self->param('members', $members);
 }
 

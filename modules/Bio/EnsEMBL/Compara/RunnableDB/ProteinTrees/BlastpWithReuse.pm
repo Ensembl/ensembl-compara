@@ -55,7 +55,7 @@ sub get_queries {
     my $genome_db_id    = $self->param_required('genome_db_id');
 
     #Get list of members and sequences
-    return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("m.genome_db_id=$genome_db_id AND m.seq_member_id BETWEEN $start_member_id AND $end_member_id");
+    return $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id, $start_member_id, $end_member_id);
 }
 
 
