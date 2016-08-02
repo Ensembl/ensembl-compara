@@ -509,7 +509,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
  	       -parameters => { },
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
+ 	       -wait_for =>  [ 'update_max_alignment_length_before_FD', 'check_not_too_many_blocks', 'delete_trivial_alignments', 'remove_inconsistencies_after_pairaligner' ],
 	        -flow_into => {
 			       2 => [ 'filter_duplicates' ], 
 			     },
