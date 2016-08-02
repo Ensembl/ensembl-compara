@@ -107,10 +107,9 @@ sub _render_one {
 
 sub filter { push @{$_[0]->{'filters'}},$_[1]; }
 
-sub render {
-  my ($self,$data) = @_;
+sub apply {
+  my ($self,$data,$sub) = @_;
 
-  $data = $_->($self,$data) for(@{$self->{'filters'}});
   foreach my $s (@{$self->{'spec'}}) {
     my $fields = [$s];
     if($s->{'if'}) {
@@ -118,9 +117,28 @@ sub render {
       $fields = $s->{'then'};
     }
     foreach my $f (@$fields) {
-      $self->value_append(\$self->{'value'},[$self->_render_one($f,$data)]);
+      $sub->($self,$data,$f);
     }
   }
+}
+
+sub render {
+  my ($self,$data) = @_;
+
+  $data = $_->($self,$data) for(@{$self->{'filters'}});
+  # make room
+  $self->apply($data,sub {
+    my ($self,$data,$f) = @_;
+    return unless $f->{'room'};
+    my $len = $self->value_length($self->_render_one($f,$data));
+    return unless defined($f->{'width'}) and $len > $f->{'width'};
+    $f->{'width'} = ($f->{'width'}>0?1:-1)*$len; 
+  });
+  # render
+  $self->apply($data,sub {
+    my ($self,$data,$f) = @_;
+    $self->value_append(\$self->{'value'},[$self->_render_one($f,$data)]);
+  });
 }
 
 sub add { $_[0]->value_append(\$_[0]->{'value'},[$_[1]]); }

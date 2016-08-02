@@ -17,28 +17,27 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::TextSequence::View::GeneSeq;
+package EnsEMBL::Web::TextSequence::View::VariationComparaAlignments;
 
 use strict;
 use warnings;
 
-use parent qw(EnsEMBL::Web::TextSequence::View);
+use parent qw(EnsEMBL::Web::TextSequence::View::ComparaAlignments);
 
-use EnsEMBL::Web::TextSequence::Legend::GeneSeq;
-use EnsEMBL::Web::TextSequence::Markup::Exons;
-use EnsEMBL::Web::TextSequence::Markup::Variations;
-use EnsEMBL::Web::TextSequence::Markup::LineNumbers;
+use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
-sub make_legend {
-  return EnsEMBL::Web::TextSequence::Legend::GeneSeq->new(@_);
+use EnsEMBL::Web::TextSequence::Markup::VariationConservation;
+
+sub make_sequence {
+  return
+    EnsEMBL::Web::TextSequence::Sequence::Comparison->new(@_);
 }
 
 sub set_markup {
   my ($self,$config) = @_;
 
-  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Exons->new) if $config->{'exon_display'};
-  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Variations->new([0,2])) if $config->{'snp_display'};
-  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::LineNumbers->new) if $config->{'line_numbering'} ne 'off';
+  $self->SUPER::set_markup($config);
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::VariationConservation->new);
 }
 
 1;

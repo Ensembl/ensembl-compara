@@ -55,6 +55,15 @@ sub new {
   return $self;
 }
 
+# XXX hack!
+sub initialize {
+  my ($self, $slice, $start, $end, $adorn) = @_;
+  
+  my ($sequence,$config) = $self->initialize_new($slice,$start,$end,$adorn);
+  my @out = map { $_->legacy } @$sequence;
+  return (\@out, $config);
+}
+
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
@@ -119,7 +128,7 @@ sub too_rare_snp {
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my ($self, $slices, $config, $adorn) = @_;
+  my ($self, $slices, $config) = @_;
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
@@ -129,12 +138,8 @@ sub get_sequence_data {
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
 
   my $view = $self->view;
-  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
-  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
-  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
-  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
-  $view->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
- 
+  $view->set_annotations($config);
+  
   foreach my $sl (@$slices) {
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
@@ -143,6 +148,32 @@ sub get_sequence_data {
   }
   
   return ($sequence, \@markup);
+}
+
+sub get_sequence_data_new {
+  my ($self, $slices, $config) = @_;
+  my $hub      = $self->hub;
+  my @markup;
+ 
+  $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
+  
+  $config->{'length'} ||= $slices->[0]{'slice'}->length;
+
+  my $view = $self->view;
+  $view->set_annotations($config);
+ 
+  $view->prepare_ropes($config,$slices); 
+  die "No ropes!" unless @{$view->sequences};
+  my @sequences = @{$view->sequences};
+  foreach my $sl (@$slices) {
+    my $sequence = shift @sequences;
+    my $mk  = {};    
+    my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
+    $view->annotate_new($config,$sl,$mk,$seq,$sequence);
+    push @markup, $mk;
+  }
+ 
+  return ([@{$view->sequences}], \@markup);
 }
 
 sub set_sequence {
@@ -271,12 +302,12 @@ sub set_variations {
     };
   }
 
-  $snps = [ grep $_->length <= $config->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+  $snps = [ grep $_->length <= $config->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if ($config->{'hide_long_snps'}||'off') ne 'off';
 
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others 
-  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ $_->dbID == $focus, $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
+  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ ($_->dbID||0) == ($focus||-1), $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
 
   foreach (@ordered_snps) {
     my $dbID = $_->dbID;
@@ -404,301 +435,16 @@ sub set_variations {
   }
 }
 
-sub markup_exons {
-  my ($self, $sequence, $markup, $config) = @_;
-  my $i = 0;
-  my (%exon_types, $exon, $type, $s, $seq);
-  
-  my $class = {
-    exon0   => 'e0',
-    exon1   => 'e1',
-    exon2   => 'e2',
-    eu      => 'eu',
-    intron  => 'ei',
-    other   => 'eo',
-    gene    => 'eg',
-    compara => 'e2',
-  };
-
-  if ($config->{'exons_case'}) {
-    $class->{'exon1'} = 'el';
-  }
- 
-  foreach my $data (@$markup) {
-    $seq = $sequence->[$i];
-    
-    foreach (sort { $a <=> $b } keys %{$data->{'exons'}}) {
-      $exon = $data->{'exons'}{$_};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $exon->{'id'} if ($config->{'title_display'}||'off') ne 'off';
-      
-      foreach $type (@{$exon->{'type'}}) {
-        $seq->[$_]{'class'} .= "$class->{$type} " unless $seq->[$_]{'class'} =~ /\b$class->{$type}\b/;
-        $exon_types{$type} = 1;
-      }
-    }
-    
-    $i++;
-  }
-  
-  $config->{'key'}{'exons'}{$_} = 1 for keys %exon_types;
-}
-
-sub markup_codons {
-  my ($self, $sequence, $markup, $config) = @_;
-  my $i = 0;
-  my ($class, $seq);
-
-  foreach my $data (@$markup) {
-    $seq = $sequence->[$i];
-    
-    foreach (sort { $a <=> $b } keys %{$data->{'codons'}}) {
-      $class = $data->{'codons'}{$_}{'class'} || 'co';
-      
-      $seq->[$_]{'class'} .= "$class ";
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $data->{'codons'}{$_}{'label'} if ($config->{'title_display'}||'off') ne 'off';
-      
-      if ($class eq 'cu') {
-        $config->{'key'}{'other'}{'utr'} = 1;
-      } else {
-        $config->{'key'}{'codons'}{$class} = 1;
-      }
-    }
-    
-    $i++;
-  }
-}
-
-sub markup_variation {
-  my ($self, $sequence, $markup, $config) = @_;
-  my $hub = $self->hub;
-  my $i   = 0;
-  my ($seq, $variation);
-  
-  my $class = {
-    snp    => 'sn',
-    insert => 'si',
-    delete => 'sd'
-  };
-  
-  foreach my $data (@$markup) {
-    $seq = $sequence->[$i];
-    
-    foreach (sort { $a <=> $b } keys %{$data->{'variants'}}) {
-      $variation = $data->{'variants'}{$_};
-      
-      $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-      $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if ($config->{'title_display'}||'off') ne 'off';
-      $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
-      $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
-      $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
-      $seq->[$_]{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
-      my $new_post  = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
-      $seq->[$_]{'new_post'} = $new_post if $new_post ne $seq->[$_]{'post'};
-      $seq->[$_]{'post'} = $new_post;
-      
-      $config->{'key'}{'variants'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
-    }
-    
-    $i++;
-  }
-}
-
-sub markup_comparisons {
-  my ($self, $sequence, $markup, $config) = @_;
-  my $i          = 0;
-  my ($seq, $comparison);
-
-  my $view = $self->view;
-
-  foreach my $data (@$markup) {
-    $seq = $sequence->[$i];
-    
-    foreach (sort {$a <=> $b} keys %{$data->{'comparisons'}}) {
-      $comparison = $data->{'comparisons'}{$_};
-      
-      $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $comparison->{'insert'} if $comparison->{'insert'} && ($config->{'title_display'}||'off') ne 'off';
-    }
-    
-    $i++;
-  }
-}
-
-sub markup_conservation {
-  my ($self, $sequence, $config) = @_;
-  my $cons_threshold = int((scalar(@$sequence) + 1) / 2); # Regions where more than 50% of bps match considered "conserved"
-  my $conserved      = 0;
-  
-  for my $i (0..$config->{'length'} - 1) {
-    my %cons;
-    map $cons{$_->[$i]{'letter'}}++, @$sequence;
-    
-    my $c = join '', grep { $_ !~ /~|[-.N]/ && $cons{$_} > $cons_threshold } keys %cons;
-    
-    foreach (@$sequence) {
-      next unless $_->[$i]{'letter'} eq $c;
-      
-      $_->[$i]{'class'} .= 'con ';
-      $conserved = 1;
-    }
-  }
-  
-  $config->{'key'}{'other'}{'conservation'} = 1 if $conserved;
-}
-
-sub markup_line_numbers {
-  my ($self, $sequence, $config) = @_;
-  my $n = 0; # Keep track of which element of $sequence we are looking at
-  
-  foreach my $sl (@{$config->{'slices'}}) {
-    my $slice       = $sl->{'slice'};
-    my $seq         = $sequence->[$n];
-    my $align_slice = 0;
-    my @numbering;
-    
-    if (!$slice) {
-      @numbering = ({});
-    } elsif ($config->{'line_numbering'} eq 'slice') {
-      my $start_pos = 0;
-      
-      if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-       $align_slice = 1;
-      
-        # Get the data for all underlying slices
-        foreach (@{$sl->{'underlying_slices'}}) {
-          my $ostrand            = $_->strand;
-          my $sl_start           = $_->start;
-          my $sl_end             = $_->end;
-          my $sl_seq_region_name = $_->seq_region_name;
-          my $sl_seq             = $_->seq;
-          my $end_pos            = $start_pos + length ($sl_seq) - 1;
-          
-          if ($sl_seq_region_name ne 'GAP') {
-            push @numbering, {
-              dir       => $ostrand,
-              start_pos => $start_pos,
-              end_pos   => $end_pos,
-              start     => $ostrand > 0 ? $sl_start : $sl_end,
-              end       => $ostrand > 0 ? $sl_end   : $sl_start,
-              label     => $sl_seq_region_name . ':'
-            };
-            
-            # Padding to go before the label
-            $config->{'padding'}{'pre_number'} = length $sl_seq_region_name if length $sl_seq_region_name > $config->{'padding'}{'pre_number'};
-          }
-          
-          $start_pos += length $sl_seq;
-        }
-      } else {
-        # Get the data for the slice
-        my $ostrand     = $slice->strand;
-        my $slice_start = $slice->start;
-        my $slice_end   = $slice->end;
-        
-        @numbering = ({ 
-          dir   => $ostrand,
-          start => $ostrand > 0 ? $slice_start : $slice_end,
-          end   => $ostrand > 0 ? $slice_end   : $slice_start,
-          label => $slice->seq_region_name . ':'
-        });
-      }
-    } else {
-      # Line numbers are relative to the sequence (start at 1)
-      @numbering = ({ 
-        dir   => 1,  
-        start => $config->{'sub_slice_start'} || 1,
-        end   => $config->{'sub_slice_end'}   || $config->{'length'},
-        label => ''
-      });
-    }
-    
-    my $data      = shift @numbering;
-    my $s         = 0;
-    my $e         = $config->{'display_width'} - 1;
-    my $row_start = $data->{'start'};
-    my $loop_end  = $config->{'length'} + $config->{'display_width'}; # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my ($start, $end);
-    
-    while ($e < $loop_end) {
-      my $shift = 0; # To check if we've got a new element from @numbering
-         $start = '';
-         $end   = '';
-      
-      # Comparison species
-      if ($align_slice) {
-        # Build a segment containing the current line of sequence
-        my $segment        = substr $slice->{'seq'}, $s, $config->{'display_width'};
-        my $seq_length_seg = $segment =~ s/\.//rg;
-        my $seq_length     = length $seq_length_seg; # The length of the sequence which does not consist of a .
-        my $first_bp_pos   = 0; # Position of first letter character
-        my $last_bp_pos    = 0; # Position of last letter character
-        my $old_label      = '';
-        
-        if ($segment =~ /\w/) {
-          $segment      =~ /(^\W*).*\b(\W*$)/;
-          $first_bp_pos = 1 + length $1 unless length($1) == length $segment;
-          $last_bp_pos  = $2 ? length($segment) - length($2) : length $segment;
-        }
-        
-        # Get the data from the next slice if we have passed the end of the current one
-        while (scalar @numbering && $e >= $numbering[0]{'start_pos'}) {          
-          $old_label ||= $data->{'label'} if ($data->{'end_pos'} > $s); # Only get the old label for the first new slice - the one at the start of the line
-          $shift       = 1;
-          $data        = shift @numbering;
-          
-          $data->{'old_label'} = $old_label;
-          
-          # Only set $row_start if the line begins with a .
-          # If it does not, the previous slice ends mid-line, so we just carry on with it's start number
-          $row_start = $data->{'start'} if $segment =~ /^\./;
-        }
-        
-        if ($seq_length && $last_bp_pos) {
-          (undef, $row_start) = $slice->get_original_seq_region_position($s + $first_bp_pos); # This is NOT necessarily the same as $end + $data->{'dir'}, as bits of sequence could be hidden
-          (undef, $end)       = $slice->get_original_seq_region_position($e + 1 + $last_bp_pos - $config->{'display_width'}); # For AlignSlice display the position of the last meaningful bp
-          
-          $start = $row_start;
-        }
-
-        $s = $e + 1;
-      } else { # Single species
-        $end       = $e < $config->{'length'} ? $row_start + ($data->{'dir'} * $config->{'display_width'}) - $data->{'dir'} : $data->{'end'};
-        $start     = $row_start;
-        $row_start = $end + $data->{'dir'} if $end; # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-      }
-      
-      my $label      = $start && $config->{'comparison'} ? $data->{'label'} : '';
-      my $post_label = $shift && $label && $data->{'old_label'} ? $label : '';
-         $label      = $data->{'old_label'} if $post_label;
-      
-      push @{$config->{'line_numbers'}{$n}}, { start => $start, end => $end || undef, label => $label, post_label => $post_label };
-      
-      # Increase padding amount if required
-      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
-      
-      $e += $config->{'display_width'};
-    }
-    
-    $n++;
-  }
-  
-  $config->{'padding'}{'pre_number'}++ if $config->{'padding'}{'pre_number'}; # Compensate for the : after the label
- 
-  $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
-}
-
 sub make_view { # For IoC: override me if you want to
-  my ($self) = @_;
+  my ($self,$hub) = @_;
 
-  return EnsEMBL::Web::TextSequence::View->new(
-    $self->hub
-  );
+  return EnsEMBL::Web::TextSequence::View->new($hub);
 }
 
 sub view {
   my ($self) = @_;
 
-  return ($self->{'view'} ||= $self->make_view);
+  return ($self->{'view'} ||= $self->make_view($self->hub));
 }
 
 sub build_sequence {
@@ -709,6 +455,24 @@ sub build_sequence {
   $view->width($config->{'display_width'});
 
   $view->transfer_data($sequence,$config);
+
+  $view->legend->final if $view->phase == 2;
+  $view->legend->compute_legend($self->hub,$config);
+
+  $view->output->more($self->hub->apache_handle->unparsed_uri) if $view->phase==1;
+  my $out = $self->view->output->build_output($config,$line_numbers,@{$self->view->sequences}>1,$self->id);
+  $view->reset;
+  return $out;
+}
+
+sub build_sequence_new {
+  my ($self, $sequences, $config, $exclude_key) = @_;
+  my $line_numbers   = $config->{'line_numbers'};
+
+  my $view = $self->view;
+  $view->width($config->{'display_width'});
+
+  $view->transfer_data_new($config);
 
   $view->legend->final if $view->phase == 2;
   $view->legend->compute_legend($self->hub,$config);

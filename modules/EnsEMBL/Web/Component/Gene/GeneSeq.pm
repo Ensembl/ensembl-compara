@@ -34,7 +34,7 @@ sub get_object {
   return $hub->param('lrg') ? $hub->core_object('LRG') : $hub->core_object('gene');
 }
 
-sub initialize {
+sub initialize_new {
   my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
@@ -61,16 +61,9 @@ sub initialize {
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
   $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
 
-  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
+  my ($sequence, $markup) = $self->get_sequence_data_new($config->{'slices'}, $config,$adorn);
+  $self->view->markup_new($sequence,$markup,$config);
 
-  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-  if($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'} ne 'off';
-  }
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'} ne 'off';
-  
-  my $view = $self->view($config);
-  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   return ($sequence, $config);
 }
 
@@ -122,7 +115,7 @@ sub content_sub_slice {
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
  
   my $adorn = $hub->param('adorn') || 'none'; 
-  my ($sequence, $config) = $self->initialize($slice, $start, $end,$adorn);
+  my ($sequence, $config) = $self->initialize_new($slice, $start, $end,$adorn);
 
   my $template;
   if ($end && $end == $length) {
@@ -136,7 +129,7 @@ sub content_sub_slice {
   $template .= '<p class="invisible">.</p>';
   $self->view->output->template($template);
 
-  return $self->build_sequence($sequence, $config,1);
+  return $self->build_sequence_new($sequence,$config,1);
 }
 
 sub export_options { return {'action' => 'GeneSeq'}; }

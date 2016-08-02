@@ -1,4 +1,4 @@
-package EnsEMBL::Web::TextSequence::Annotation;
+package EnsEMBL::Web::TextSequence::Markup;
 
 use strict;
 use warnings;
@@ -21,10 +21,12 @@ sub phases { $_[0]->{'phases'} = $_[1] if @_>1; return $_[0]->{'phases'}; }
 sub name { return ref $_[0]; }
 sub replaces { return undef; }
 
-sub prepare_ropes {}
+sub expect {
+  my ($self,$what) = @_;
 
-sub add_rope { return $_[0]->{'view'}->new_sequence; }
+  $self->view->legend->expect($what) if $self->view;
+}
 
-sub annotate_new { my $self = shift; return $self->annotate(@_); }
+sub prepare {}
 
 1;

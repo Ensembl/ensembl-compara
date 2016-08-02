@@ -42,6 +42,8 @@ sub new {
     pre => "",
     configured => 0,
     name => undef,
+    # legacy input
+    legacy => undef,
     # the sequence itself
     seq => [],
     idx => 0,
@@ -57,6 +59,7 @@ sub ready {} # For subclasses
 sub fixup_markup {} # For subclasses
 
 sub principal { $_[0]->{'principal'} = $_[1] if @_>1; return $_[0]->{'principal'}; }
+sub legacy { $_[0]->{'legacy'} = $_[1] if @_>1; return $_[0]->{'legacy'}; }
 
 sub configure {
   my ($self) = @_;

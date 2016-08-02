@@ -86,7 +86,8 @@ sub make_layout {
       if => 'number',
       then => [
         { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'} },
+        { key => 'label', width => $config->{'padding'}{'pre_number'},
+          room => 1 },
         { key => 'start', width => $config->{'padding'}{'number'} },
         { post => ' ' },
       ]   

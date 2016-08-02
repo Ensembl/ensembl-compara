@@ -23,12 +23,15 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 
-sub get_sequence_data {
+use EnsEMBL::Web::TextSequence::View::VariationComparaAlignments;
+
+sub get_sequence_data_new {
   my ($self, $slices, $config) = @_;
   my (@sequence, @markup, @temp_slices);
   
   $self->set_variation_filter($config);
-  
+ 
+  my @out; 
   foreach my $sl (@$slices) {
     my $mk            = {};
     my $slice         = $sl->{'slice'};
@@ -49,43 +52,25 @@ sub get_sequence_data {
     if (!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
       push @temp_slices, {};
       push @markup,      {};
-      push @sequence,    [ map {{ letter => $_ }} @variation_seq ];
+      my $seq2 = $self->view->new_sequence;
+      $seq2->legacy([ map {{ letter => $_ }} @variation_seq ]);
+      push @out,$seq2;
     }
     
     push @temp_slices, $sl;
     push @markup,      $mk;
-    push @sequence,    [ map {{ letter => $_ }} split '', $seq ];
-    
-    $config->{'ref_slice_seq'} ||= $sequence[-1];
+  
+    my $seq2 = $self->view->new_sequence;
+    $seq2->legacy([ map {{ letter => $_ }} split '', $seq ]);
+    push @out,$seq2;
+ 
+    $config->{'ref_slice_seq'} ||= $out[-1];
   }
   
   $config->{'display_width'} = $config->{'length'};
   $config->{'slices'}        = \@temp_slices;
   
-  return (\@sequence, \@markup);
-}
-
-sub markup_conservation {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-  
-  my $difference = 0;
-  
-  for my $i (0..scalar(@$sequence)-1) {
-    next unless keys %{$config->{'slices'}->[$i]};
-    next if $config->{'slices'}->[$i]->{'no_alignment'};
-    
-    my $seq = $sequence->[$i];
-    
-    for (0..$config->{'length'}-1) {
-      next if $seq->[$_]->{'letter'} eq $config->{'ref_slice_seq'}->[$_]->{'letter'};
-      
-      $seq->[$_]->{'class'} .= 'dif ';
-      $difference = 1;
-    }
-  }
-  
-  $config->{'key'}->{'other'}{'difference'} = 1 if $difference;
+  return (\@out, \@markup);
 }
 
 sub content {  
@@ -183,7 +168,7 @@ sub content {
   } 
 
   my ($seq,$config) = $self->_get_sequence($slice,\@aligned_slices,$defaults);
-  $html .= $self->build_sequence($seq,$config,1);
+  $html .= $self->build_sequence_new($seq,$config,1);
   $html .= $self->_info('Notes', $info) if $info;
 
   return $html;
@@ -194,6 +179,14 @@ sub get_export_data {
   my $self = shift;
   ## Fetch explicitly, as we're probably coming from a DataExport URL
   return $self->hub->core_object('Location');
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::VariationComparaAlignments->new(
+    $self->hub
+  );
 }
 
 1;

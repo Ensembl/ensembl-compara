@@ -191,28 +191,47 @@ sub write_rtf {
   my ($self, $component) = @_;
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
-  my ($sequence, $config, $block_mode) = $component->initialize_export; 
-  return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
-  my $view = $component->view;
-  $view->output(EnsEMBL::Web::TextSequence::Output::RTF->new);
-  my @vseqs = @{$view->sequences};
-
-  $view->width($config->{'display_width'});
-  $view->transfer_data($sequence,$config);
-  my $rtflist = $view->output->build_output($config,$config->{'line_numbers'},@{$view->sequences}>1,0);
-
+  # XXX hack
+  my ($sequence, $config, $block_mode);
   my $string;
-  my $rtf = RTF::Writer->new_to_string(\$string);
-  $rtf->prolog(
-    fonts  => [ 'Courier New' ],
-    colors => $view->output->c2s->colours,
-  );
-  $rtflist->emit($rtf);
-  #warn "RTF: $string\n";
+  if($component->can('initialize_export_new')) {
+    ($sequence, $config, $block_mode) = $component->initialize_export_new;
+    return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
-  $rtf->close;
+    my $view = $component->view;
+    $view->output(EnsEMBL::Web::TextSequence::Output::RTF->new);
 
+    $view->width($config->{'display_width'});
+    $view->transfer_data_new($config);
+    my $rtflist = $view->output->build_output($config,$config->{'line_numbers'},@{$view->sequences}>1,0);
+
+    my $rtf = RTF::Writer->new_to_string(\$string);
+    $rtf->prolog(
+      fonts  => [ 'Courier New' ],
+      colors => $view->output->c2s->colours,
+    );
+    $rtflist->emit($rtf);
+    $rtf->close;
+  } else {
+    ($sequence, $config, $block_mode) = $component->initialize_export;
+    return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
+
+    my $view = $component->view;
+    $view->output(EnsEMBL::Web::TextSequence::Output::RTF->new);
+
+    $view->width($config->{'display_width'});
+    $view->transfer_data($sequence,$config);
+    my $rtflist = $view->output->build_output($config,$config->{'line_numbers'},@{$view->sequences}>1,0);
+
+    my $rtf = RTF::Writer->new_to_string(\$string);
+    $rtf->prolog(
+      fonts  => [ 'Courier New' ],
+      colors => $view->output->c2s->colours,
+    );
+    $rtflist->emit($rtf);
+    $rtf->close;
+  }
   my $result = $self->write_line($string);
   return $result->{'error'} || undef;
 }
