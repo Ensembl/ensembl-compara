@@ -421,7 +421,7 @@ sub content {
     # Wasabi Tree Link
     $self->add_entry({
       type       => 'View sub-tree',
-      label      => $link ? 'View in Wasabi' : 'Not available' ,
+      label      => $link ? 'Wasabi viewer' : 'Not available' ,
       link_class => 'popup',
       order      => 16,
       link       => $link || ''
