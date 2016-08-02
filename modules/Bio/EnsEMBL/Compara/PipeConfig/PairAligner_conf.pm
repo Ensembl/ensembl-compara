@@ -617,6 +617,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
+               -wait_for   => [ 'create_alignment_chains_jobs' ],
 	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
@@ -650,12 +651,10 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-#			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
-#			       1 => [ 'set_internal_ids', 'remove_inconsistencies_after_net' ], # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
-			       1 => [ 'remove_inconsistencies_after_net' ],                     # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
+			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
- 	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
+ 	       -wait_for => [ 'update_max_alignment_length_after_chain', 'remove_inconsistencies_after_chain' ],
 	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'set_internal_ids',
@@ -691,7 +690,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'create_alignment_nets_jobs' ],
 	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
