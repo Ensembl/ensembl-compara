@@ -65,6 +65,7 @@ sub param_defaults {
     return {
         'region'            => undef,
         'group_set_size'    => 0,
+        'flow_chunksets'    => 1,
     }
 }
 
@@ -80,11 +81,6 @@ sub param_defaults {
 
 sub fetch_input {
   my( $self) = @_;
-
-  #whether to dataflow_output to store_sequence (true) or dump_large_nib_for_chains (false)
-  unless (defined $self->param('flow_to_store_sequence')) {
-      $self->param('flow_to_store_sequence', 1); 
-  }
 
   throw("No genome_db specified") unless defined($self->param('genome_db_id'));
   
@@ -120,23 +116,14 @@ sub write_output
 
   #Create a StoreSequence job for each DnaFragChunkSet object 
   #to parallelise the storing of sequences in the Sequence table.
-  if ($self->param('flow_to_store_sequence')) {
+  if ($self->param('flow_chunksets')) {
       my $dna_objects = $self->param('dna_collection')->get_all_DnaFragChunkSets;
       foreach my $dna_object (@$dna_objects) {
-          my $object_id_name = 'chunkSetID';
-          my $hash_output;
-            %$hash_output = ($object_id_name => $dna_object->dbID);
-            
+          my $hash_output = { 'chunkSetID' => $dna_object->dbID };
 	    # Use branch2 to send data to StoreSequence:
             $self->dataflow_output_id($hash_output, 2 );
       }
-
-      #Stop flow into dump_large_nib_for_chains on branch 1?
-      $self->input_job->autoflow(0);
   }
-  #Else flow on branch 1 to dump_large_nib_for_chains
-
-  return 1;
 }
 
 

@@ -381,7 +381,6 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
 			       'MT_only' => $self->o('MT_only'),
-			       'flow_to_store_sequence' => 1,
 			      },
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
@@ -525,7 +524,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
 			       'MT_only' => $self->o('MT_only'),
-			       'flow_to_store_sequence' => 0,
+			       'flow_chunksets' => 0,
 			      },
 	       -flow_into => {
 			      1 => [ 'dump_large_nib_for_chains_factory' ],
