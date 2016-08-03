@@ -61,6 +61,7 @@ perl create_mlss.pl
     [--taxon_id taxon_id]
     [--only_with_karyotype 0/1]
     [--only_high_coverage 0/1]
+    [--ref_for_taxon mus_musculus]
 
 =head1 OPTIONS
 
@@ -150,6 +151,12 @@ The list of genomes will be restricted to those with a karyotype
 
 The list of genomes will be restricted to those that are marked as high-coverage
 
+=item B<[--ref_for_taxon mus_musculus]>
+
+(this option can be repeated)
+Only this genome will be used to represent its taxon (incl. sub-species and strains)
+It can also be something like 9347=homo_sapiens to use a genome for a bigger taxon
+
 =back
 
 =head2 EXAMPLES
@@ -192,6 +199,7 @@ my $taxon_id;
 my $only_with_karyotype;
 my $only_high_coverage;
 my $ref_name;
+my @ref_for_taxon;
 
 GetOptions(
     "help" => \$help,
@@ -214,6 +222,7 @@ GetOptions(
     'taxon_id=i' => \$taxon_id,
     'only_with_karyotype' => \$only_with_karyotype,
     'only_high_coverage' => \$only_high_coverage,
+    'ref_for_taxon=s@' => \@ref_for_taxon,
   );
 
 if ($pairwise && $singleton) {
@@ -322,6 +331,19 @@ if ($only_with_karyotype) {
 
 if ($only_high_coverage) {
     @input_genome_dbs = grep {$_->is_high_coverage} @input_genome_dbs;
+}
+
+if (@ref_for_taxon) {
+    foreach my $species_name (@ref_for_taxon) {
+        my %input_species = map {$_->name => $_} @input_genome_dbs;
+        my $taxon_id;
+        if ($species_name =~ /=/) {
+            ($taxon_id, $species_name) = split(/=/, $species_name);
+        }
+        my $gdb = $input_species{$species_name} || die "Cannot find $species_name in the available list of GenomeDBs";
+        my $ref_taxon = $taxon_id ? $compara_dba->get_NCBITaxonAdaptor->fetch_by_dbID($taxon_id) : $gdb->taxon;
+        @input_genome_dbs = grep {!$ref_taxon->has_ancestor($_->taxon) || ($_->name eq $species_name)} @input_genome_dbs;
+    }
 }
 
 if ($pairwise) {
