@@ -99,21 +99,21 @@ sub run{
 sub write_output {
   my($self) = @_;
 
-  #
-  #Start transaction
-  #
-  $self->call_within_transaction( sub {
-      $self->_write_output;
-  } );
+  foreach my $chain (@{ $self->param('chains') }) {
+      $self->_write_output($chain);
+    }
 
   return 1;
 
 }
 
 sub _write_output {
-    my ($self) = @_;
+    my ($self, $chain) = @_;
+  #
+  #Start transaction
+  #
+  $self->call_within_transaction( sub {
     
-    foreach my $chain (@{ $self->param('chains') }) {
         my $group_id;
         
         #store first block
@@ -135,7 +135,7 @@ sub _write_output {
             }
             $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
         }
-    }
+  } );
 }
 
 ###########################################
