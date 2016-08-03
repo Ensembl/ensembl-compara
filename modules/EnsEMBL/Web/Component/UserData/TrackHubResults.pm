@@ -55,10 +55,14 @@ sub content {
   return unless $rest;
 
   my $post_content = {};
-  my @query_params = qw(assembly type query);
+  my @query_params = qw(assembly query);
   foreach (@query_params) {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
   }
+  ## We have to rename this param within the webcode as it
+  ## conflicts with one of ours
+  $post_content->{'type'} = $hub->param('data_type');
+
   ## Registry uses species names without spaces
   my $search_species = $hub->param('species') || $hub->param('search_species');
   if ($search_species) {
@@ -96,7 +100,7 @@ sub content {
     my $search_url = $hub->url({
                                 'type'      => 'UserData', 
                                 'action'    => 'TrackHubSearch',
-                                'datatype'  => $hub->param('datatype') || '',
+                                'data_type' => $hub->param('data_type') || '',
                                 'query'     => $hub->param('query') || '',
                                 });
     $html .= sprintf('<p>Found %s track hub%s for this assembly - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
@@ -205,6 +209,9 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
+      ## Change type parameter back to something safe before using
+      $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
+      delete $args->{'url_params'}{'type'};
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }

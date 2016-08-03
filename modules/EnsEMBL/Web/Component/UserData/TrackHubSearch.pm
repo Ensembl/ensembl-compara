@@ -153,10 +153,10 @@ sub content {
       push @$values, {'value' => $_, 'caption' => $_} for @data_types;
       $fieldset->add_field({
                             'type'          => 'dropdown',
-                            'name'          => 'type',
+                            'name'          => 'data_type',
                             'label'         => 'Data type',
                             'values'        => $values,
-                            'value'         => $hub->param('type') || '',
+                            'value'         => $hub->param('data_type') || '',
       });
    
       $fieldset->add_field({
