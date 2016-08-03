@@ -132,19 +132,13 @@ sub default_options {
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
 
-        'blast_params'       => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
-        'blast_level_ranges' => { # define sequence lengths that define different granularity of parameters
-            1 => [ 0,   35  ],
-            2 => [ 35,  50  ],
-            3 => [ 50,  100 ],
-            4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
-        },
-        'all_blast_params' => { # params, evalues to use for each level of length granularity
-            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-4' ],
-            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-6' ],
-            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-8'  ],
-            4 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10'    ],
-        },
+        # define blast parameters and evalues for ranges of sequence-length
+        'all_blast_params'          => [
+            [ 0,   35,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2',    '1e-4'  ],
+            [ 35,  50,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2',    '1e-6'  ],
+            [ 50,  100,      '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2', '1e-8'  ],
+            [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '1e-10' ],  # should really be infinity, but ten million should be big enough
+        ],
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -491,6 +485,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'goc_threshold'                 => $self->o('goc_threshold'),
         'reuse_goc'                     => $self->o('reuse_goc'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
+        'all_blast_params'          => $self->o('all_blast_params'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
         'use_notung'   => $self->o('use_notung'),
@@ -1342,9 +1337,7 @@ sub core_pipeline_analyses {
              -flow_into => {
                     1 => WHEN(
                         '#clustering_mode# eq "hybrid"' => 'dump_unannotated_members',
-                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
                     ),
-                    2 => [ 'cluster_tagging' ],
                 }
             },
 
@@ -1383,7 +1376,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'unannotated_all_vs_all_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers',
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -1396,9 +1389,9 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => $self->o('blast_params'),
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => 1e-10,
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastpu_capacity'),
@@ -1447,11 +1440,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'members_against_allspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
-            -parameters => {
-                'chunk_by_size'      => 1,
-                'step'               => 15,
-                'blast_level_ranges' => $self->o('blast_level_ranges'),
-            },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -1464,9 +1452,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
-                'chunk_by_size'      => 1,
-                'step'               => 15,
-                'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -1479,10 +1464,9 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'all_blast_params'          => $self->o('all_blast_params'),
-                'blast_params'              => "#expr( #all_blast_params#->{#param_index#}->[0])expr#",
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->{#param_index#}->[1])expr#",
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
                 'allow_same_species_hits'   => 1,
             },
             -batch_size    => 25,
@@ -1583,9 +1567,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -flow_into => {
-                2 => [ 'cluster_tagging' ],
-            },
             -rc_name => '250Mb_job',
         },
 
@@ -1619,7 +1600,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into          => [ 'create_additional_clustersets' ],
+            -flow_into          => [ 'run_qc_tests' ],
             %hc_analysis_params,
         },
 
@@ -1629,7 +1610,6 @@ sub core_pipeline_analyses {
                 member_type     => 'protein',
                 'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update )],
             },
-            -flow_into          => [ 'run_qc_tests' ],
         },
 
 
@@ -1669,6 +1649,25 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
                 'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
+            },
+            -flow_into     => {
+                1 => [
+                    'create_additional_clustersets',
+                    'cluster_tagging_factory',
+                    WHEN(
+                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
+                    ),
+                ],
+            },
+        },
+
+        {   -logic_name => 'cluster_tagging_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                2 => 'cluster_tagging',
             },
         },
 
@@ -3070,7 +3069,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A' => ['id_map_group_genomes'],
                 'A->1' => ['goc_group_genomes_under_taxa'],
-                '1'    => ['group_genomes_under_taxa', 'get_species_set'],
+                '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],
             },
         },
 
@@ -3081,8 +3080,7 @@ sub core_pipeline_analyses {
                 'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },
             -flow_into => {
-                '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'homology_stats_factory' ],
+                2 => [ 'mlss_factory' ],
             },
         },
 
@@ -3128,32 +3126,6 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'id_map_group_genomes_under_taxa',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
-            -parameters => {
-                'taxlevels'             => 'all',
-                'filter_high_coverage'  => 0,
-            },
-            -flow_into => {
-                2 => [ 'id_map_mlss_factory' ],
-            },
-        },
-
-        {   -logic_name => 'id_map_mlss_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
-            -flow_into => {
-                2 => [ 'id_map_homology_factory' ],
-            },
-        },
-
-        {   -logic_name => 'id_map_homology_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
-            -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -flow_into => {
-                3 => [ 'homology_id_mapping' ],
-            },
-        },
-
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -flow_into  => {
@@ -3170,14 +3142,6 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => 20,
             -rc_name => '1Gb_job',
-        },
-
-        {   -logic_name => 'homology_id_mapping',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
-            -flow_into  => {
-                 1 => [ '?table_name=homology_id_mapping' ],
-                -1 => [ 'homology_id_mapping_himem' ],
-            },
         },
 
         {   -logic_name => 'homology_dNdS',

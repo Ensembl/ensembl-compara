@@ -641,7 +641,7 @@ sub get_alignment_of_homologues {
     if ($species) {
         my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
         my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species);
-        my %genome_db_ids = map {$_ => 1} @$genome_dbs;
+        my %genome_db_ids = map {$_->dbID => 1} @$genome_dbs;
         @homologous_genes = grep {$genome_db_ids{$_->genome_db_id}} @homologous_genes;
     }
 

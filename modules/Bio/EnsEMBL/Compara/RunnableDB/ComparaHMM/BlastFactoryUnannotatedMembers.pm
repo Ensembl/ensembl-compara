@@ -28,35 +28,30 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse
-
-=head1 DESCRIPTION
-
-Create fasta file containing batch_size number of sequences. Run ncbi_blastp and parse the output into
-PeptideAlignFeature objects. Store PeptideAlignFeature objects in the compara database
-Supported keys:
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers
 
 =cut
 
-
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastFactory');
 
 
-sub get_queries {
-    my $self = shift @_;
+sub fetch_input {
+    my ($self) = @_;
 
-    my $start_member_id = $self->param_required('start_member_id');
-    my $end_member_id   = $self->param_required('end_member_id');
-    my $genome_db_id    = $self->param_required('genome_db_id');
+    my $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
+    my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($unannotated_member_ids);
+    $self->param('query_members', $members);
 
-    #Get list of members and sequences
-    return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("mg.genome_db_id=$genome_db_id AND m.seq_member_id BETWEEN $start_member_id AND $end_member_id", [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']]);
 }
 
+sub flow_blast_jobs {
+    my ($self, $output_id) = @_;
+    $self->dataflow_output_id($output_id, 2);
+}
 
 1;

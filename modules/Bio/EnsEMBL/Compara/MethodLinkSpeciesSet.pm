@@ -172,27 +172,40 @@ sub method {
 }
 
 
-=head2 species_set_obj
+=head2 species_set_obj (DEPRECATED)
+
+  Description: DEPRECATED. It will be removed in e89. Use species_set() instead
+
+=cut
+
+sub species_set_obj {   ## DEPRECATED
+    my $self = shift;
+    deprecate('MethodLinkSpeciesSet::species_set_obj is deprecated and will be removed in e89. Use species_set() instead');
+    return $self->species_set(@_);
+}
+
+
+=head2 species_set
 
   Arg [1]    : (opt.) Bio::EnsEMBL::Compara::SpeciesSet species_set object
-  Example    : my $species_set_obj = $mlss->species_set_obj();
-  Example    : $mlss->species_set_obj( $species_set_obj );
-  Description: getter/setter for species_set_obj attribute
+  Example    : my $species_set = $mlss->species_set();
+  Example    : $mlss->species_set( $species_set );
+  Description: getter/setter for species_set attribute
   Returntype : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub species_set_obj {
-    my ($self, $species_set_obj) = @_;
+sub species_set {
+    my ($self, $species_set) = @_;
 
-    if($species_set_obj) {
-        if(ref($species_set_obj) eq 'HASH') {
-            $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set_obj ) or die "Could not automagically create a SpeciesSet\n";
+    if($species_set) {
+        if(ref($species_set) eq 'HASH') {
+            $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( %$species_set ) or die "Could not automagically create a SpeciesSet\n";
         }
 
-        $self->{'species_set'} = $species_set_obj;
+        $self->{'species_set'} = $species_set;
     }
 
     return $self->{'species_set'};

@@ -22,6 +22,10 @@
 * `GenomeDBAdaptor::fetch_by_taxon_id()`
 * `GeneMemberAdaptor::load_all_from_seq_members()`
 
+## Miscellaneous, to be removed in Ensembl 89
+
+* `MethodLinkSpeciesSet::species_set_obj()`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `GenomicAlignTree::genomic_align_array()`

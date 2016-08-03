@@ -21,21 +21,24 @@ limitations under the License.
 
 HMMAnnotAdaptor
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
-
 =head1 AUTHOR
 
 ChuangKee Ong
 
 =head1 CONTACT
 
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded by a _.
 
 =cut
+
 package Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor;
 
 use strict;
@@ -56,34 +59,34 @@ sub fetch_all_hmm_annot {
 return $sth;
 }
 
+my $sql_canonical = 'SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL';
+my $sql_all = 'SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL';
 
 sub fetch_all_genes_missing_annot {
     my ($self) = @_;
 
-    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL";
-    return $self->dbc->db_handle->selectcol_arrayref($sql);
+    return $self->dbc->db_handle->selectcol_arrayref($sql_canonical);
 }
 
 
 sub fetch_all_genes_missing_annot_by_range {
     my ($self, $start_member_id, $end_member_id) = @_;
 
-    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL AND canonical_member_id BETWEEN ? AND ?";
+    my $sql = $sql_canonical.' AND canonical_member_id BETWEEN ? AND ?';
     return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $start_member_id, $end_member_id);
 }
 
 sub fetch_all_seqs_missing_annot {
     my ($self) = @_;
 
-    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL";
-    return $self->dbc->db_handle->selectcol_arrayref($sql);
+    return $self->dbc->db_handle->selectcol_arrayref($sql_all);
 }
 
 
 sub fetch_all_seqs_missing_annot_by_range {
     my ($self, $start_member_id, $end_member_id) = @_;
 
-    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL AND seq_member.seq_member_id BETWEEN ? AND ?";
+    my $sql = $sql_all.' AND seq_member.seq_member_id BETWEEN ? AND ?';
     return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $start_member_id, $end_member_id);
 }
 

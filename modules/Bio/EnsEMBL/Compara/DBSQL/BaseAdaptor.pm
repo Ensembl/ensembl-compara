@@ -335,9 +335,9 @@ sub generic_fetch_Iterator {
 
 
 sub generic_fetch_concatenate {
-    my ($self, $list_of_lists, $column_name, $column_sql_type, @generic_fetch_args) = @_;
+    my ($self, $list_of_values, $column_name, $column_sql_type, @generic_fetch_args) = @_;
     my @results;
-    foreach my $id_list (@{ split_list($list_of_lists) }) {
+    foreach my $id_list (@{ split_list($list_of_values) }) {
         push @results, @{ $self->generic_fetch( $self->generate_in_constraint($id_list, $column_name, $column_sql_type), @generic_fetch_args ) };
     }
     return \@results;

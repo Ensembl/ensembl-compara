@@ -480,7 +480,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
  	       -parameters => { },
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
+ 	       -wait_for =>  [ 'update_max_alignment_length_before_FD', 'check_not_too_many_blocks', 'delete_trivial_alignments', 'remove_inconsistencies_after_pairaligner' ],
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },
@@ -592,6 +592,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
+               -wait_for   => [ 'create_alignment_chains_jobs' ],
 	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
@@ -625,12 +626,10 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-			       #'A->1' => [ 'remove_inconsistencies_after_net' ],
-			       #'2->A' => [ 'alignment_nets' ],
 			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
- 	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
+ 	       -wait_for => [ 'update_max_alignment_length_after_chain', 'remove_inconsistencies_after_chain' ],
 	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_nets',
@@ -657,7 +656,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],  # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'create_alignment_nets_jobs' ],    # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
 	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
