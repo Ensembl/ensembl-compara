@@ -244,6 +244,7 @@ sub delete_alignments {
 sub run {
   my ($self) = @_;
 
+  $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
   my $runnable = $self->param('runnable');
   $runnable->run;
   $self->cleanse_output($runnable->output);
