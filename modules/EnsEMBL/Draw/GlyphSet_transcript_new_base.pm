@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -218,7 +219,7 @@ sub draw_collapsed_genes {
   my $strand_flag = $self->my_config('strand');
   return unless @$genes;
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  $self->mr_bump($genes,$labels,$length,$bstrand);
+  $self->mr_bump($genes,$labels,$length,$bstrand,2);
   my %used_colours;
   my $bump_height = 10 + max(map { $self->_label_height($_) } @$genes);
   foreach my $g (@$genes) {
@@ -385,7 +386,7 @@ sub draw_expanded_transcripts {
   return unless @$tdraw;
   my $strand_flag = $self->my_config('strand');
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  $self->mr_bump($tdraw,$draw_labels,$length,$bstrand);
+  $self->mr_bump($tdraw,$draw_labels,$length,$bstrand,2);
   my $target = $self->get_parameter('single_Transcript');
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   my $bump_height = 10 + max(map { $self->_label_height($_) } @$tdraw);
@@ -489,7 +490,7 @@ sub draw_rect_genes {
   my $strand_flag = $self->my_config('strand');
   my $pix_per_bp = $self->scalex;
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  my $rects_rows = $self->mr_bump($ggdraw,0,$length,$bstrand);
+  my $rects_rows = $self->mr_bump($ggdraw,0,$length,$bstrand,2);
   foreach my $g (@$ggdraw) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     my $rects = $self->_draw_rect_gene($g,$length);
@@ -497,7 +498,7 @@ sub draw_rect_genes {
   } 
   if($draw_labels) {
     $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
-    $self->mr_bump($ggdraw,2,$length,$bstrand); # Try again
+    $self->mr_bump($ggdraw,2,$length,$bstrand,2); # Try again
 
     foreach my $g (@$ggdraw) {
       next if $strand != $g->{'strand'} and $strand_flag eq 'b';

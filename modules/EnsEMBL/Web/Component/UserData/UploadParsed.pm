@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -114,10 +115,19 @@ sub content_ajax {
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
           }
 
+          my $contigviewbottom = join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'});
+          my $location_view = ($hub->referer->{ENSEMBL_TYPE} eq 'Location' && $hub->referer->{ENSEMBL_ACTION} eq 'View') ? 1 : 0;
+
           $html .= sprintf('
-                <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
+                <br>
+                <p><strong>Go to%s:</strong></p>
+                <ul>
+                  <li>%s region with data: <a href="%s;contigviewbottom=%s">%s</a></li>
+                  <li>Current region: <a href="%s;contigviewbottom=%s">%s</a></li>
+                </ul>
                 <p class="space-below">or</p>',
-                $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
+                !$location_view ? ' Location view' : '',
+                $hub->referer->{'params'}{'r'} ? 'Nearest' : 'First',
                 $hub->url({
                   species  => $data->{'species'},
                   type     => 'Location',
@@ -126,8 +136,18 @@ sub content_ajax {
                   r        => $nearest,
                   __clear => 1
                 }),
-                join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
-                $nearest
+                $contigviewbottom,
+                $nearest,
+                $hub->url({
+                  species  => $data->{'species'},
+                  type     => 'Location',
+                  action   => 'View',
+                  function => undef,
+                  r        => $hub->param('r'),
+                  __clear => 1
+                }),
+                $contigviewbottom,
+                $hub->param('r')
               );
         }
         elsif ($count) {

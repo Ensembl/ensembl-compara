@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,14 +37,15 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
 
+
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $score         = $self->parser->get_score;
-  my $start         = $feature_start - $slice->start;
-  my $end           = $feature_end - $slice->start;
+  my $start         = $feature_start - $slice->start + 1;
+  my $end           = $feature_end - $slice->start + 1;
   return if $end < 0 || $start > $slice->length;
 
   $metadata ||= {};

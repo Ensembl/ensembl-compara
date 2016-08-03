@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -182,13 +183,12 @@ sub add_userdata_icon {
   my $hub       = $self->hub;
   my $session = $hub->session;
 
-  my $has_data = !!grep $session->get_data(type => $_), qw(upload url);
-  my $icon_key = $has_data ? 'userdata_manage' : 'userdata_add';
+  my $icon_key = 'userdata';
   my $data_url  = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
   return {
           'href'      => $data_url,
           'class'     => 'data modal_link',
-          'icon_key'  => $icon_key,
+          'icon_key'  => 'userdata',
           'rel'       => 'modal_user_data',
           };
 }

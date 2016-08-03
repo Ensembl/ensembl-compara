@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -126,7 +127,7 @@ sub phyloxml_settings {
   my $settings = {};
 
   my $gene = $self->hub->core_object('gene');
-  my $has_cdna = $gene->Obj->canonical_transcript->cdna_coding_start ? 1 : 0;
+  my $has_cdna = ($gene && $gene->Obj->canonical_transcript->cdna_coding_start) ? 1 : 0;
   
   if ($has_cdna) {
     $settings->{'cdna'} = {

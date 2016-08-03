@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +33,6 @@ sub new {
   
   $self->{'trackhub'} = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->{'hub'},
                                                                  'url' => $self->{'url'});
-  
   return $self;
 }
 
@@ -44,7 +44,26 @@ sub check_data {
 ###               hub_info HashRef
   my ($self, $assembly_lookup) = @_;
   my $error;
-  
+ 
+  ## Validate using hubCheck, if available - but don't bother if it's from the registry
+  ## as it will have already been checked
+  my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
+  if ($hubCheck && !$self->{'registry'}) {
+    my $url = $self->{'url'};
+    my $hc_error = system("$hubCheck $url -checkSettings -noTracks");
+    if ($hc_error) {
+      ## Parse and ignore issues we don't care about
+      my @lines = split /\n/, $hc_error;
+      my $problematic = 0;
+      for my $line (@lines) {
+        next if $line =~ /deprecated|cram/;
+        $problematic = 1;
+      }
+      $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>. Please contact the creator of this hub if you wish to use it with Ensembl.</p>) if $problematic;
+    }
+  }
+ 
+  ## Check that we can use it with this website's species
   my $hub_info = $self->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup,
                                                'parse_tracks' => 0});
   

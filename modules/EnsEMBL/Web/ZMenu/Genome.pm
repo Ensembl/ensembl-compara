@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,7 +56,8 @@ sub content {
 
   $self->add_entry({ label => $desc }) if $desc && $desc =~ s/^>//;
 
-  #Uniprot can't deal with versions in accessions
+  #Uniprot can't deal with versions in accessions, but the Location/Genome link needs them
+  my $orig_id = $id;
   if ($hit_db_name =~ /^Uniprot/){
     $id =~ s/(\w*)\.\d+/$1/;
   }
@@ -80,7 +82,7 @@ sub content {
       'type'    => 'Location',
       'action'  => 'Genome',
       'ftype'   => $object_type,
-      'id'      => $id,
+      'id'      => $orig_id,
       'db'      => $db,
       '__clear' => 1
     })

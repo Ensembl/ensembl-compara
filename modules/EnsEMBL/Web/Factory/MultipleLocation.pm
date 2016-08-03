@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,9 +122,11 @@ sub createObjects {
     
     eval { $slice = $self->slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
     next if $@;
-    
+
+    # Get image left and right padding
+    my $padding = $hub->create_padded_region();
     push @slices, {
-      slice         => $slice,
+      slice         => $slice->expand($padding->{flank5}, $padding->{flank3}),
       species       => $species,
       target        => $inputs{$_}->{'chr'},
       species_check => $species eq $hub->species ? join('--', grep $_, $species, $inputs{$_}->{'chr'}) : $species,
@@ -156,7 +159,8 @@ sub add_species {
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
   my @no_species;
-  my $paralogues;
+  my $paralogues = 0;
+  my @haplotypes;
   my @remove;
   
   my ($i) = sort { $b <=> $a } grep { s/^s(\d+)$/$1/ && $self->param("s$_") } $self->param;
@@ -182,6 +186,9 @@ sub add_species {
       if ($valid_species{$species}) {
         if ($species eq $self->species) {
           $paralogues++ unless $seq_region_name;
+          if ($seq_region_name) {
+            push @haplotypes, $self->species_defs->species_label($species) . $seq_region_name;
+          }
         } else {
           push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
         }
@@ -217,6 +224,17 @@ sub add_species {
     );
   }
   
+  if (scalar @haplotypes) {
+    $session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'missing_species',
+      message  => scalar @haplotypes > 1 ? 
+        'There are no alignments in this region for the following haplotypes / patches: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
+        'There is no alignment in this region for ' . $haplotypes[0]
+    );
+  }
+
   if ($paralogues) {
     $session->add_data(
       type     => 'message',

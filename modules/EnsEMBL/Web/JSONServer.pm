@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,13 +30,19 @@ use EnsEMBL::Web::Exceptions;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $hub) = @_;
-  return bless {'_hub' => $hub}, $class;
+  my ($class, $hub, $controller) = @_;
+  return bless {'_hub' => $hub, '_controller' => $controller}, $class;
 }
 
 sub object {
-  my $self = shift;
-  return $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
+  my $self    = shift;
+  my $builder = $self->controller->builder;
+  my $type    = $self->object_type;
+
+  if (!$builder->all_objects->{$type}) {
+    $builder->create_objects($type);
+  }
+  return $builder->all_objects->{$type} ||  $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
 }
 
 sub object_type :Abstract {
@@ -44,6 +51,10 @@ sub object_type :Abstract {
 
 sub hub {
   return shift->{'_hub'};
+}
+
+sub controller {
+  return shift->{'_controller'};
 }
 
 sub redirect {

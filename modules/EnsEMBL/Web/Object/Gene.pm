@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,7 +81,10 @@ sub counts {
   my ($self, $member, $pan_member) = @_;
 
   return {} unless $self->Obj->isa('Bio::EnsEMBL::Gene');
-  return $self->availability->{'counts'};
+  if(!$self->{'_availability'}) { # Check before calling subroutine to avoid recursive calls in overriding sub in EG.
+    return $self->availability->{'counts'};
+  }
+  return $self->{'_availability'}->{'counts'};
 }
 
 =head2 get_go_list
@@ -1555,8 +1559,9 @@ sub get_extended_reg_region_slice {
   $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
 
 
-  ## Now we need to extend the slice!! Default is to add 2kb to either end of slice, if gene_reg slice is
+  ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
   ## extends more than this use the values returned from this
+  my $extension = 1000*1000;
   my $start = $self->Obj->start;
   my $end   = $self->Obj->end;
 
@@ -1564,19 +1569,24 @@ sub get_extended_reg_region_slice {
   my $gr_end = $gr_slice->end;
   my ($new_start, $new_end);
 
-  if ( ($start  - 2000) < $gr_start) {
-     $new_start = 2000;
+  if ( ($start  - $extension) < $gr_start) {
+     $new_start = $extension;
   } else {
      $new_start = $start - $gr_start;
   }
 
-  if ( ($end +2000) > $gr_end) {
-    $new_end = 2000;
+  if ( ($end +$extension) > $gr_end) {
+    $new_end = $extension;
   }else {
     $new_end = $gr_end - $end;
   }
 
+  if($start-$new_start<1) { $new_start = $start-1; }
+  if($end+$new_end>$self->Obj->seq_region_length) {
+    $new_end = $self->Obj->seq_region_length-$end;
+  }
   my $extended_slice =  $object_slice->expand($new_start, $new_end);
+
   return $extended_slice;
 }
 

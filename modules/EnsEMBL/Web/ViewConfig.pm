@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -263,12 +264,15 @@ sub update_from_url {
     }
   }
 
-  ## Now that DAS is gone, we only attach userdata to contigviewbottom
+  ## Now that DAS is gone, we only attach userdata to contigviewbottom - no, this isn't only for user data but for other tracks too
   my $attach_param = '';
   if ($image_config eq 'contigviewbottom') {
-     $attach_param = $input->param('attach') || $input->param('contigviewbottom'); 
+    $attach_param = $input->param('attach') || $input->param('contigviewbottom');
+  } else {
+    $attach_param = $input->param($image_config);
   }
-  my @values = split /,/, $attach_param;
+
+  my @values = $attach_param ? split(/,/, $attach_param) : ();
   
   ## Hack to use a more user-friendly URL for trackhub attachment
   if ($input->param('trackhub')) {
@@ -636,7 +640,7 @@ sub build_imageconfig_menus {
        $display     = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
     my $controls    = $data->{'controls'};
     my $subset      = $data->{'subset'};
-    my $name        = encode_entities($data->{'name'});
+    my $name        = $data->{'name'};
     my @classes     = ('track', $external ? 'external' : '', lc $external);
     my $menu_header = scalar @states > 4 ? qq(<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>) : '';
     my ($selected, $menu, $help);

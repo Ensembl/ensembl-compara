@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,13 +29,14 @@ sub init {
 
   $self->SUPER::init(@_);
  
-  foreach my $type (qw(seg_features reg_feats_core reg_feats_non_core)) { 
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) { 
     my $submenu = $self->get_node($type);
     next unless $submenu;
     foreach my $node (@{$submenu->child_nodes}) {
       $self->modify_configs([$node->id],{ display => 'off' });  
     }
   }
+
 }
 
 1;

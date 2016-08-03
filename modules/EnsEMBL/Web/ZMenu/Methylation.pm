@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +22,7 @@ package EnsEMBL::Web::ZMenu::Methylation;
 use strict;
 
 use List::Util qw(min max);
+use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::IO::Parser;
 
@@ -31,7 +33,6 @@ sub summary_zmenu {
 
   my ($fudge, $slice, $rs, $ch3fa, $bba) = $self->_menu_setup($args); 
 
-  my $id  = $args->{'dbid'};
   my $r   = $args->{'r'};
   my $s   = $args->{'start'};
   my $e   = $args->{'end'};
@@ -112,7 +113,6 @@ sub single_base_zmenu {
 
   my ($fudge, $slice, $rs, $ch3fa, $bba) = $self->_menu_setup($args); 
     
-  my $id  = $args->{'dbid'};
   my $r   = $args->{'r'};
   my $s   = $args->{'start'};
   my $e   = $args->{'end'};
@@ -166,36 +166,37 @@ sub single_base_zmenu {
 
 sub _menu_setup {
   my ($self, $args) = @_;
+  my $hub = $self->hub;
 
-  my $id  = $args->{'dbid'};
-  my $r   = $args->{'r'};
-  my $s   = $args->{'start'};
-  my $e   = $args->{'end'};
- 
-  # Widen to incldue a few pixels around
+  # Widen to include a few pixels around
   my $fudge = 8/$args->{'scalex'};
   $fudge = 0 if $fudge < 1;
   
-  my $sa = $self->hub->database('core')->get_SliceAdaptor;
+  my $r     = $args->{'r'};
+  my $id    = uri_unescape($args->{'dbid'});
+
+  my $sa    = $hub->database('core')->get_SliceAdaptor;
   my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
-  
-  my $fgh = $self->hub->database('funcgen');
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rs = $rsa->fetch_by_dbID($id);
+
+  my $fgh   = $hub->database('funcgen');
+  my $rsa   = $fgh->get_ResultSetAdaptor;
+  my $rs    = undef; 
   my $ch3fa = $fgh->get_DNAMethylationFeatureAdaptor;
+  
+  my $dma   = $fgh->get_DNAMethylationFileAdaptor;
+  my $meth  = $dma->fetch_by_name($id);
 
-  my $bigbed_file = $rs->dbfile_path;
+  my $bigbed_file = $meth->file;
 
-  # Substitute path, if necessary. TODO: use DataFileAdaptor  
-  my @parts = split(m!/!, $bigbed_file);
-  my $path  = join("/", $self->hub->species_defs->DATAFILE_BASE_PATH,
-                          @parts[-5..-1]);
+  # Substitute path, if necessary. 
+  my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
+  $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
 
   ## Clean up any whitespace
-  $path =~ s/\s//g;
+  $bigbed_file =~ s/\s//g;
 
-  my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$path} 
-              ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $path);
+  my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$bigbed_file} 
+              ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $bigbed_file);
 
   return ($fudge, $slice, $rs, $ch3fa, $bba);
 }

@@ -19,7 +19,7 @@ BEGIN {
 }
 
 use File::Find;
-use List::Util qw(min);
+use List::Util qw(min shuffle);
 use Getopt::Long;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
@@ -30,11 +30,11 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::QueryStore;
 
-my $rebuild;
-GetOptions('r' => \$rebuild);
+my ($rebuild,$list,@subparts);
+GetOptions('r' => \$rebuild,'l' => \$list,'s=s' => \@subparts);
 
 sub run1 {
-  my ($query,$kind,$i,$n) = @_;
+  my ($query,$kind,$i,$n,$subparts) = @_;
 
   $i ||= 0;
   $n ||= 1;
@@ -52,12 +52,12 @@ sub run1 {
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 
   my $q = $qs->get($query);
-  my $pc = $q->precache($kind,$i,$n,$rebuild);
+  my $pc = $q->precache($kind,$i,$n,$rebuild,$subparts);
 }
 
 my $forker = Parallel::Forker->new(
   use_sig_chld => 1,
-  max_proc => 6
+  max_proc => 12
 );
 $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
@@ -111,18 +111,34 @@ foreach my $p (@precache) {
   }
 }
 
+# Apply filters
+my %subparts;
+foreach my $s (@subparts) {
+  my ($k,$v) = split('=',$s,2);
+  $subparts{$k} = $v;
+}
+
 # Setup jobs
 my @jobs = keys %precache;
+if($list) {
+  print join("\n",@jobs,'');
+  exit 0;
+}
+
 @jobs = @ARGV if @ARGV;
 
+my @procs;
 foreach my $k (sort { $precache{$a}->{'par'} <=> $precache{$b}->{'par'} } @jobs) {
-  my $par = $precache{$k}->{'par'} || 4;
-  $par = 4 if $par<4;
+  my $par = $precache{$k}->{'par'} || 12;
+  $par = 12 if $par<12;
   foreach my $i (0..($par-1)) {
     $forker->schedule( run_on_start => sub {
-      run1($precache{$k}->{'module'},$k,$i,$par);
+      run1($precache{$k}->{'module'},$k,$i,$par,\%subparts);
     })->ready();
   }
+}
+foreach my $p (@procs) {
+  $forker->schedule( run_on_start => $p)->ready();
 }
 $forker->wait_all();
 

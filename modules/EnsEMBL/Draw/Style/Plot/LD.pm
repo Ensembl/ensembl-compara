@@ -1,5 +1,6 @@
 =head1 LICENSE
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -54,7 +55,8 @@ sub create_glyphs {
 
   # Horizontal mark line
   if ($track_config->get('h_mark')) {
-    $self->draw_mark_line($track_config->get('h_mark'), $height);
+    $self->draw_mark_line($track_config->get('h_mark'), $height,
+                          $track_config->get('h_mark_label'));
   }
 
   # Horizontal baseline
@@ -66,8 +68,8 @@ sub create_glyphs {
   # Left-hand side menu
   my $max_score = 1;
   my $min_score = 0;
-  $self->_draw_score(0, $max_score); # Max
-  $self->_draw_score($adjusted_height, $min_score); # Min
+  $self->_draw_score(0, $max_score,$track_config->get('max_score_label')); # Max
+  $self->_draw_score($adjusted_height, $min_score,$track_config->get('min_score_label')); # Min
 
   # Draw plots
   $self->draw_plots($height, $adjusted_height, $data, $focus_variant, $plot_diameter);
@@ -76,8 +78,9 @@ sub create_glyphs {
 
 
 sub draw_mark_line {
-  my ($self, $v_value, $height) = @_;
+  my ($self, $v_value, $height, $label) = @_;
 
+  $label ||= $v_value;
   my $vclen      = $self->image_config->container_width;
   my $pix_per_bp = $self->image_config->transform->{'scalex'};
 
@@ -114,7 +117,7 @@ sub draw_mark_line {
     height    => $text_height,
     halign    => 'center',
     colour    => $line_colour,
-    text      => $v_value,
+    text      => $label,
     absolutey => 1,
     font      => $self->{'font_name'}, 
     ptsize    => $self->{'font_size'}

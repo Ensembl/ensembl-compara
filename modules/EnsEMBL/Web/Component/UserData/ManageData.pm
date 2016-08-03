@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
+use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::File::User;
@@ -34,7 +36,18 @@ sub _init {
   $self->ajaxable(0);
 }
 
-our $has_db_content = 0;
+sub header {
+  my $self = shift;
+  my $info_icon = '<img class="_ht" src="/i/16/info.png" />';
+  my $tip = encode_entities(qq{
+          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+            });
+
+  return qq{
+    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
+  };
+}
 
 sub content {
   my $self         = shift;
@@ -45,24 +58,32 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $not_found    = 0;
   my (@data, @rows, $html);  
- 
-  my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
+
+  my @temp_data = map $session->get_data('type' => $_), qw(upload url);
   
   push @data, map $user->get_records($_), qw(uploads urls) if $user;
   push @data, @temp_data;
   
+  my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
   if (scalar @data) {
+
     my @columns = (
+      #{ key => 'check',   title => '',             width => '5%', align => 'center'                                  },
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
-      { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
+      #{ key => 'status',  title => 'Status',       width => '10%', align => 'left'                                  },
+      { key => 'name',    title => 'Source',       width => '30%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
-      { key => 'assembly', title => 'Assembly',      width => '20%', align => 'left', sort => 'html'                  },
+      { key => 'assembly', title => 'Assembly',    width => '15%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
     
     push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
    
-    my $old_assemblies = 0; 
+    my $old_assemblies  = 0; 
+    my $here            = $hub->species_defs->ENSEMBL_SERVERNAME;
+    my $data_elsewhere  = 0;
+    my %other_servers;
+
     foreach my $file (@data) {
       my @assemblies = split(', ', $file->{'assembly'});
       ## check if we have current assemblies
@@ -71,6 +92,24 @@ sub content {
         $old_assemblies++ if ($_ ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION'));
       }
       my $user_record = ref($file) =~ /Record/;
+
+      ## Hide saved records that were not uploaded on the current server
+      if ($user_record) {
+        if ($file->data->{'site'} && $file->data->{'site'} ne $here) {
+          $data_elsewhere = 1;
+          $other_servers{$file->data->{'site'}} = 1;
+          next;
+        }
+        elsif (!$file->data->{'site'}) {
+          ## Data was uploaded on release 84, before we added the site to records
+          my $path_to_file = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$file->{'file'};
+          unless (-e $path_to_file) {
+            $data_elsewhere = 1;
+            next;
+          }
+        }
+      }
+
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
      
@@ -94,9 +133,8 @@ sub content {
       }
 
       my $row = $self->table_row($file, $sharers);
-      
-      my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
-         ($id, $type) = (($file->{'code'} =~ /_(\d+)$/), 'session') unless $type;
+     
+      my ($id, $type) = ($file->{'code'} =~ /^(\w+)_(\d+)$/);
       
       if (                                                              # This is a shared record (belonging to another user) if:
         !($user_record && $user && $file->created_by == $user->id) && ( # it's not a user record which was created by this user             AND  (stops $shared being true for the same user id with multiple session ids)
@@ -111,18 +149,32 @@ sub content {
       push @rows, $row;
     }
 
-    ## TEMPORARY NOTICE
-    ## TODO - Remove in release 86 
-    if ($has_db_content) {
-      $html .= $self->warning_panel('Notice',
-       "In Release 84 we have a new, improved system for saving your uploaded data, and the old system will be retired in Release 85. If you wish to continue to use uploads saved before Release 84, please delete them and re-upload your data."
-      );
+    if (scalar @rows) {
+      $html = sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+
+      $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+
+      if ($old_assemblies) {
+        my $plural = $old_assemblies > 1 ? '' : 's';
+        $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
+      }
+  
+      $html .= '</form></div>';
     }
 
-    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
-    if ($old_assemblies) {
-      my $plural = $old_assemblies > 1 ? '' : 's';
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
+    if ($data_elsewhere) {
+      my $message;
+      if (scalar keys %other_servers) {
+        $message = 'You also have uploaded data saved on the following sites:<br /><ul>';
+        foreach (keys %other_servers) {
+          $message .= sprintf('<li><a href="http://%s">%s</a></li>', $_, $_);
+        }
+        $message .= '</ul>';
+      }
+      else {
+        $message = sprintf 'You also have uploaded data saved on other %s sites (e.g. a mirror or archive) that we cannot show here.', $hub->species_defs->ENSEMBL_SITETYPE;
+      }
+      $html .= $self->info_panel('Saved data on other servers', $message); 
     }
   }
   
@@ -130,41 +182,22 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my ($tip, $more);
-  if ($html) {
-    $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
+  my $trackhub_search = $self->trackhub_search; 
+
+  if (scalar @rows) {
+    my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search; 
     ## Show 'add more' link at top as well, if table is long
     if (scalar(@rows) > 10) {
       $html = $more.$html;
     }
-
-    $html .= $more if scalar(@rows);
-
-    ## Hints
-    my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
- 
-    $tip = qq{
-      <div class="info">
-        <h3>Tip</h3>
-        <div class="message-pad">
-          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
-          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-          $group_sharing_info
-        </div>
-      </div>
-    };
-
-    $html .= $tip;
+    $html .= $more;
   }
   else {
-    $html = '<p class="space-below">You have no custom data.</p>';
+    $html .= $trackhub_search;
+    $html .= $self->userdata_form;
   }
 
-  return qq{
-    <h2 class="legend">Your data</h2>
-    $html
-  };
-
+  return $html;
 }
 
 sub _icon_inner {
@@ -192,6 +225,25 @@ sub _no_icon {
   return '';
 }
 
+sub _add_buttons {
+### Buttons for applying methods to all selected files
+### Note they are disabled until some files are selected
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  my $html = '<div class="ff-inline tool_buttons"><b>Update selected</b>: ';
+
+  my @buttons = qw(enable disable delete);
+
+  foreach (@buttons) {
+    $html .= sprintf '<input type="submit" name="%s_button" value="%s" class="%s fbutton disabled modal_link">', 
+                        $_, ucfirst($_), $_;
+  }
+  $html .= '</div>';
+
+  return $html;
+}
+
 sub table_row {
   my ($self, $file, $sharers) = @_;
   my $hub          = $self->hub;
@@ -199,6 +251,8 @@ sub table_row {
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
+  my $group_sharing_info = $hub->user && $hub->user->find_admin_groups ? 'You cannot share temporary data with a group until you save it to your account.' : '';
+
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
   my $reload       = $self->_no_icon;
@@ -214,7 +268,6 @@ sub table_row {
   }
   
   if ($user_record) {
-    $has_db_content = 1 if $file->data->{'analyses'};
     $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
@@ -251,7 +304,7 @@ sub table_row {
         r        => $file->{'nearest'},
         __clear  => 1
       }),
-      join ',', map $_ ? "$_=on" : (), $file->{'analyses'} ? split ', ', $file->{'analyses'} : join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
+      join ',', map $_ ? "$_=on" : (), join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
     );
   }
  
@@ -299,9 +352,13 @@ sub table_row {
     my $reload_url = $hub->url({'action' => $reload_action, %url_params});
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
- 
+
+  my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $file->{'type'}, $file->{'code'};
+
   return {
-    type    => ucfirst($file->{'type'}),
+    check   => $checkbox,
+    type    => $file->{'type'} =~ /url/i ? 'URL' : ucfirst($file->{'type'}),
+    status  => ucfirst($file->{'status'}) || 'Enabled', 
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,

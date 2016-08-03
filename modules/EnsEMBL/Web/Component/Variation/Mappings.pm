@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -118,7 +119,7 @@ sub content {
   # create a regfeat table as well
   my @reg_columns = (
     { key => 'rf',       title => 'Regulatory feature',     sort => 'html'                             },
-    { key => 'cell_type',title => 'Cell type',              sort => 'string'                           },
+    { key => 'cell_type',title => 'Active in cell lines',   sort => 'string'                           },
     { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
@@ -301,7 +302,7 @@ sub content {
       next unless $rfv->regulatory_feature;
 
       my $rf_stable_id = $rfv->regulatory_feature->stable_id;
-      my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
+      my $rf = $rfa->fetch_by_stable_id($rf_stable_id);
        
       # create a URL
       my $url = $hub->url({
@@ -315,32 +316,36 @@ sub content {
       my $rfv_cons   = $rfv->most_severe_OverlapConsequence;
       my $rfv_colour = ($rfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $rfv_cons->SO_term}->{'default'}) : undef;
 
-      for my $rf (@$rfs) {
-        my $regulation_overlap = $self->_overlap_glyph($rf->seq_region_start, $rf->seq_region_end, $vf_obj->seq_region_start, $vf_obj->seq_region_end , $rf, 'Regulatory feature', 1, $rfv_colour);
-        my $var_pos_start = $var_start - $rf->seq_region_start + 1;
-        my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
-        my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
+      my $regulation_overlap = $self->_overlap_glyph($rf->seq_region_start, $rf->seq_region_end, $vf_obj->seq_region_start, $vf_obj->seq_region_end , $rf, 'Regulatory feature', 1, $rfv_colour);
+      my $var_pos_start = $var_start - $rf->seq_region_start + 1;
+      my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
+      my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
  
-        my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
+      my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
 
-        for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-          my $type = $self->render_consequence_type($rfva);
+      for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+        my $type = $self->render_consequence_type($rfva);
 
-          my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
+        my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
 
-          my $row = {
+        my $row = {
             rf        => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-            cell_type => $rf->cell_type->name,
             ftype     => $rf->feature_type->so_name,
             allele    => $r_allele,
             type      => $type || '-',
             coverage  => $reg_length_label.$regulation_overlap
-          };
-            
-          $reg_table->add_row($row);
-          $flag = 1;
-        } # end rfva loop
-      } # end rf loop
+        };
+
+        my @epigenomes = @{$rf->get_epigenomes_by_activity('ACTIVE')||[]};
+        my $epi_string = scalar @epigenomes 
+                          ? join ', ', map { $_->name} @epigenomes 
+                          : 'Not active in any cell lines';
+
+        $row->{'cell_type'} = $epi_string;
+
+        $reg_table->add_row($row);
+        $flag = 1;
+      } # end rfva loop
     } # end rfv loop
     
     ## Motif feats ##

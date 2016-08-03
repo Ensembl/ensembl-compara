@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,7 +78,7 @@ sub print_wga_stats {
       if ($species_order && scalar(@{$species_order||[]})) {
         my $rel = $mlss->get_value_for_tag('ensembl_release');
         my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
-        my $max_align = $self->thousandify($mlss->max_alignment_length);
+        my $max_align = $self->thousandify($mlss->max_alignment_length - 1);
         my $count = scalar(@$species_order);
         $html .= sprintf('<h1>%s</h1>', $mlss->name);
         $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};

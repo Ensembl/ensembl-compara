@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -322,7 +323,7 @@ sub hover_labels {
 
     $html .= sprintf(qq(
       <div class="hover_label floating_popup %s">
-        <p class="header _hl_pin"><span class="hl-pin"></span>%s<span class="_hl_extend hl-extend"></span></p>
+        <p class="header _hl_pin"><span class="hl-pin"></span><span class="_track_menu_header">%s</span><span class="_hl_extend hl-extend"></span></p>
         <div class="hl-buttons">%s</div>
         <div class="hl-content">%s</div>
         <div class="spinner"></div>
@@ -347,7 +348,7 @@ sub hover_label_tabs {
      $desc   .= $label->{'extra_desc'};
   my $subset  = $label->{'subset'};
   my $renderers;
-  my $highlight = "true";
+  my $highlight = ($self->hub->type =~m/Location|Gene/ && $self->hub->action =~/Multi|Variation_Gene/) ? 0 : 1;
 
   foreach (@{$label->{'renderers'}}) {
 
@@ -394,7 +395,7 @@ sub hover_label_tabs {
 
   if ($highlight) {
     push @buttons, qq(<div class="_hl_icon hl-icon"><a class="hl-icon-highlight" data-highlight-track="$label->{'highlight'}"></a></div>);
-    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to turn on/off track highlighting</p></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to highlight/unhighlight this track</p></div>);
   }
 
   return (\@buttons, \@contents);
@@ -455,7 +456,7 @@ sub moveable_tracks {
 
   if ($self->hub->session->get_data(type => 'userdata_upload_code')) {
     foreach my $hash ($self->hub->session->get_data(type => 'userdata_upload_code')) {
-      $last_uploaded_user_data_code->{'upload_'.$hash->{upload_code}} = 1;
+      $last_uploaded_user_data_code->{$hash->{upload_code}} = 1;
     }
   }
 
@@ -464,7 +465,12 @@ sub moveable_tracks {
   
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
-    my $highlight = $last_uploaded_user_data_code->{$type} || 0;
+
+    # For highlight, upload_ and url_ prefixes are not there in the session data.
+    # So split remove and then compare
+    my ($record_type, $code) = split(/_/,$type, 2);
+    my $highlight = $last_uploaded_user_data_code->{$code} || 0;
+
     $html .= sprintf(
       '<li class="%s %s %s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>

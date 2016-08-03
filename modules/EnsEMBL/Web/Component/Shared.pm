@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,7 +109,7 @@ sub transcript_table {
   my $seq_region_end   = $object->seq_region_end;
 
   my $location_html = sprintf(
-    '<a href="%s" class="constant mobile-nolink">%s: %s-%s</a> %s.',
+    '<a href="%s" class="constant mobile-nolink dynamic-link">%s: %s-%s</a> %s.',
     $hub->url({
       type   => 'Location',
       action => 'View',
@@ -193,6 +194,7 @@ sub transcript_table {
   my $transc_table;
 
   if ($gene) {
+    my $version     = $object->version ? ".".$object->version : "";
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
@@ -276,6 +278,7 @@ sub transcript_table {
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
+      my $version           = $_->version ? ".".$_->version : "";
       my $tsi               = $_->stable_id;
       my $protein           = '';
       my $translation_id    = '';
@@ -345,7 +348,7 @@ sub transcript_table {
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
-        transcript  => sprintf('<a href="%s">%s</a>', $url, $tsi),
+        transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
@@ -1471,14 +1474,38 @@ sub button_portal {
 
 sub vep_icon {
   my ($self, $inner_html) = @_;
+  my $hub         = $self->hub;
+  return '' unless $hub->species_defs->ENSEMBL_VEP_ENABLED;
 
   $inner_html   ||= 'Test your own variants with the <span>Variant Effect Predictor</span>';
-  my $hub         = $self->hub;
-  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
-  my $vep_link    = $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  my $link_class  = $new_vep ? '' : ' modal_link';
+  my $vep_link    = $hub->url({'__clear' => 1, qw(type Tools action VEP)});
 
-  return qq(<a class="vep-icon$link_class" href="$vep_link">$inner_html</a>);
+  return qq(<a class="vep-icon" href="$vep_link">$inner_html</a>);
+}
+
+sub display_items_list {
+  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
+
+  my $html = "";
+  my $count = scalar(@{$url_data});
+  if ($count > 5) {
+    $html = sprintf(qq{
+        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
+        <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
+      },
+      $title,
+      $div_id,
+      ($no_count_label) ? $label : "$count $label",
+      $div_id,
+      join(",", sort(@{$export_data})),
+      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
+    );
+  }
+  else {
+    $html = join(", ", sort(@{$url_data}));
+  }
+
+  return $html;
 }
 
 1;

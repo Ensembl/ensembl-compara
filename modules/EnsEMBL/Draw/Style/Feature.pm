@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,8 +91,8 @@ sub create_glyphs {
 
     foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
-      next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
-      next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
+      #next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
+      #next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
       my $text_info   = $self->get_text_info($feature->{'label'});
       $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
@@ -211,9 +212,9 @@ sub draw_feature {
 
   ## Set parameters
   my $x = $feature->{'start'};
-  $x    = 0 if $x < 0;
+  $x    = 1 if $x < 1;
   my $params = {
-                  x            => $x,
+                  x            => $x-1,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
@@ -242,14 +243,14 @@ sub add_label {
   }
 
   my $x = $feature->{'start'};
-  $x = 0 if $x < 0;
+  $x = 1 if $x < 1;
 
   my $label = {
                 font      => $self->{'font_name'},
                 colour    => $colour,
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
-                x         => $x,
+                x         => $x-1,
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},

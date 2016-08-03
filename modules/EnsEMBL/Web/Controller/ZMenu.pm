@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +27,8 @@ use base qw(EnsEMBL::Web::Controller);
 
 sub init {
   my $self = shift;
-  
-  $self->builder->create_objects;
+
+  $self->builder->create_objects unless $self->hub->type eq 'Phenotype';
   
   my $hub    = $self->hub;
   my $object = $self->object;

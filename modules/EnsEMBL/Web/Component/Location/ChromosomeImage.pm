@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -155,6 +156,26 @@ sub stats_table {
 sub legend {
   my $self = shift;
   return;
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  my $params = {
+                'type'    => 'UserData',
+                'action'  => 'FeatureView',
+                };
+
+  push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Add features',
+                    'class'   => 'add',
+                    'modal'   => 1
+                    };
+
+  return @buttons;
 }
 
 1;

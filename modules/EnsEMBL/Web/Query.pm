@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::Query;
 
 use strict;
@@ -9,7 +28,7 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 use Time::HiRes qw(time);
 use List::Util qw(shuffle);
 
-my $DEBUG = 0;
+my $DEBUG = defined($SiteDefs::ENSEMBL_BOOK_DEBUG) ? $SiteDefs::ENSEMBL_BOOK_DEBUG : 3;
 
 sub _new {
   my ($proto,$store,$impl) = @_;
@@ -108,41 +127,50 @@ sub source {
 }
 
 sub precache {
-  my ($self,$kind,$i,$n,$r) = @_;
+  my ($self,$kind,$i,$n,$subpart) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
-  my $fn = "loop_$conf->{'loop'}";
-  my $all_parts = $self->{'impl'}->$fn($conf->{'args'});
-  my @parts;
-  for(my $k=0;$k<@$all_parts;$k++) {
-    next unless ($k % $n) == $i;
-    push @parts,$all_parts->[$k];
+  my $fns = $conf->{'loop'};
+  $fns = [$fns] unless ref $fns eq 'ARRAY';
+  my @all = ($conf->{'args'});
+  foreach my $lfn (@$fns) {
+    my $fn = "loop_$lfn";
+    my @next;
+    foreach my $p (@all) {
+      push @next,@{$self->{'impl'}->$fn($p,$subpart)};
+    }
+    foreach my $n (@next) {
+      $n->{'__full_name'} = [@{$n->{'__full_name'}||=[]}];
+      push @{$n->{'__full_name'}},$n->{'__name'};
+    }
+    @all = @next;
   }
-  my $TIME_TOT = 0;
-  my $TIME_NUM  = 0;
-  $self->{'store'}->open($r||0);
+  my @parts;
+  for(my $k=0;$k<@all;$k++) {
+    next unless ($k % $n) == $i;
+    push @parts,$all[$k];
+  }
+  foreach my $p (@parts) {
+    foreach my $k (keys %$p) {
+      next unless ref($p->{$k}) eq 'CODE';
+      $p->{$k} = $p->{$k}->($self->{'impl'},$p);
+    }
+  }
+  $self->{'store'}->open;
   my $start = time();
   foreach my $args (@parts) {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
-      next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
-      if(time()-$start > 60) {
+      if(time()-$start > 300) {
         $self->{'store'}->close();
         $self->{'store'}->open(-1);
         $start = time();
       }
-      my $TIME_A = time;
-      $self->run_miss($a,1);
-      my $TIME_B = time;
-      $TIME_TOT += $TIME_B - $TIME_A;
-      $TIME_NUM++;
-      warn sprintf("  -> %s %s [%d] %6dms avg %6dms\n",
-                    $kind,$a->{'__name'},$i,($TIME_B-$TIME_A)*1000,
-                    $TIME_TOT*1000/$TIME_NUM);
+      $self->run_miss($a,$kind);
     }
   }
-  $self->{'store'}->close();      
+  $self->{'store'}->close();
 }
 
 1;

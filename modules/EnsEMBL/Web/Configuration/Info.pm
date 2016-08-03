@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,26 +30,7 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Index';
 }
 
-sub caption { 
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species_defs = $hub->species_defs;
-  my $species      = $hub->species;
-  my $path         = $hub->species_path;
-  my $sound        = $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'};
-  my ($heading, $subhead);
-
-  $heading .= qq(<a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" title="$sound" /></a>);
-  my $common_name = $species_defs->SPECIES_COMMON_NAME;
-  if ($common_name =~ /\./) {
-    $heading .= $species_defs->SPECIES_BIO_NAME;
-  }
-  else {
-    $heading .= $common_name;
-    $subhead = '('.$species_defs->SPECIES_BIO_NAME.')';
-  }
-  return [$heading, $subhead];
-}
+sub default_template { return 'Legacy::Wide'; }
 
 sub short_caption { return 'About this species'; }
 
@@ -57,6 +39,12 @@ sub availability {
   my $hash = $self->get_availability;
   $hash->{'database.variation'} = exists $self->hub->species_defs->databases->{'DATABASE_VARIATION'} ? 1 : 0;
   return $hash;
+}
+
+sub modify_page_elements {
+  my $self = shift;
+  my $page = $self->page;
+  $page->remove_body_element('summary');
 }
 
 sub populate_tree {
@@ -101,65 +89,6 @@ sub populate_tree {
   $self->create_node('WhatsNew', '',
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );
-
-  ## SAMPLE DATA
-  my $sample_data  = $species_defs->SAMPLE_DATA;
-  my $species_path = $species_defs->species_path($self->species);
-  
-  if ($sample_data && keys %$sample_data) {
-    my $data_menu       = $self->create_submenu('Data', 'Sample entry points');
-    my $karyotype_url   = $sample_data->{'KARYOTYPE_PARAM'} ? "$species_path/Location/Genome?r=$sample_data->{'KARYOTYPE_PARAM'}" : "$species_path/Location/Genome?r=$sample_data->{'LOCATION_PARAM'}";
-    my $location_url    = "$species_path/Location/View?r=$sample_data->{'LOCATION_PARAM'}";
-    my $gene_url        = "$species_path/Gene/Summary?g=$sample_data->{'GENE_PARAM'}";
-    my $transcript_url  = "$species_path/Transcript/Summary?t=$sample_data->{'TRANSCRIPT_PARAM'}";
-    my $karyotype_text  = scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? 'Karyotype' : 'Karyotype (not available)';
-    my $location_text   = $sample_data->{'LOCATION_TEXT'}   || 'not available';
-    my $gene_text       = $sample_data->{'GENE_TEXT'}       || 'not available';
-    my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'} || 'not available';
-    
-    $data_menu->append($self->create_node('Karyotype', $karyotype_text, [],
-      { availability => scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []}, url => $karyotype_url }
-    ));
-
-    $data_menu->append($self->create_node('Location', "Location ($location_text)", [],
-      { url => $location_url, raw => 1 }
-    ));
-    
-    $data_menu->append($self->create_node('Gene', "Gene ($gene_text)", [],
-      { url => $gene_url, raw => 1 }
-    ));
-    
-    $data_menu->append( $self->create_node('Transcript', "Transcript ($transcript_text)", [],
-      { url => $transcript_url, raw => 1 }
-    ));
-    
-    if ($sample_data->{'VARIATION_PARAM'}) {
-      my $variation_url  = "$species_path/Variation/Explore?v=$sample_data->{'VARIATION_PARAM'}";
-      my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
-      
-      $data_menu->append($self->create_node('Variation', "Variation ($variation_text)", [],
-        { url => $variation_url, raw => 1 }
-      ));
-    }
-
-    if ($sample_data->{'PHENOTYPE_PARAM'}) {
-      my $phenotype_url  = "$species_path/Phenotype/Locations?ph=$sample_data->{'PHENOTYPE_PARAM'}";
-      my $phenotype_text = $sample_data->{'PHENOTYPE_TEXT'} || 'not available';
-      
-      $data_menu->append($self->create_node('Phenotype', "Phenotype ($phenotype_text)", [],
-        { url => $phenotype_url, raw => 1 }
-      ));
-    }
-
-    if ($sample_data->{'REGULATION_PARAM'}){
-      my $regulation_url  = "$species_path/Regulation/Summary?fdb=funcgen;rf=$sample_data->{'REGULATION_PARAM'}";
-      my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
-
-      $data_menu->append($self->create_node('Regulation', "Regulation ($regulation_text)", [],
-        { url => $regulation_url, raw => 1 }
-      ));
-    }  
-  }
 
   ## Generic node for including arbitrary HTML files about a species
   $self->create_node('Content', '',

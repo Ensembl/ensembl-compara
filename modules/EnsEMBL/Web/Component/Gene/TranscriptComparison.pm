@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +23,9 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::TextSequence::View::TranscriptComparison;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
+
 sub _init { $_[0]->SUPER::_init(100); }
 
 sub initialize {
@@ -32,7 +36,6 @@ sub initialize {
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
-    v_space         => "\n",
     comparison      => 1,
     exon_display    => 1,
     sub_slice_start => $start,
@@ -51,16 +54,24 @@ sub initialize {
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && scalar(@consequence) && join('', @consequence) ne 'off';
   
   if ($config->{'line_numbering'}) {
-    $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
   
   my ($sequence, $markup) = $self->get_sequence_data($config,$adorn);
 
+  my $view = $self->view;
+  foreach my $slice (@{$config->{'slices'}}) {
+    my $seq = $view->new_sequence;
+    $seq->name($slice->{'display_name'} || $slice->{'name'});
+  }
+
   $self->markup_exons($sequence, $markup, $config);
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_comparisons($sequence, $markup, $config);
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+
+  my $view = $self->view($config);
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   
   return ($sequence, $config);
 }
@@ -94,18 +105,24 @@ sub content_sub_slice {
   my $start  = $hub->param('subslice_start');
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
-  
+
+  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+
   my ($sequence, $config) = $self->initialize($start, $end);
-  
+
+  my $template;
   if ($end && $end == $length) {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = '<pre class="text_sequence" style="margin:0">%s</pre>';
+    $template = '<pre class="text_sequence" style="margin:0">%s</pre>';
   } else {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template = '<pre class="text_sequence">%s</pre>';
   }
   
-  $config->{'html_template'} .= '<p class="invisible">.</p>';
+  $template .= '<p class="invisible">.</p>';
+
+  $self->view->output->template($template);
+
   $self->id('');
   
   return $self->build_sequence($sequence, $config,1);
@@ -285,7 +302,7 @@ sub set_variations {
   my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
   my $variation_features = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   @transcript_variations = grep { !$self->too_rare_snp($_->variation_feature,$config) } @transcript_variations;
   my $length                = scalar @$sequence - 1;
   my $transcript_id         = $transcript->stable_id;
@@ -331,20 +348,12 @@ sub set_variations {
   }
 }
 
-sub get_key {
-  $_[1]->{'key'}{'exons/Introns'} = 1;
-  $_[1]->{'key'}{'exons'} = 0;
-  
-  return shift->SUPER::get_key($_[0], {
-    exons           => {},
-    'exons/Introns' => {
-      exon1           => { class => 'e1',     text => 'Translated sequence'  },
-      eu              => { class => 'eu',     text => 'UTR'                  },
-      intron          => { class => 'ei',     text => 'Intron'               },
-      exon0           => { class => 'e0',     text => 'Non-coding exon'      },
-      gene            => { class => 'eg',     text => 'Gene sequence'        },
-    }
-  }, $_[2]);
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::TranscriptComparison->new(
+    $self->hub
+  );
 }
 
 1;

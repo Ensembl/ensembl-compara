@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +33,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       speciesDropdown:  $('._sdd', this.el),
       toggleButtons:    $('.tool_buttons a.togglebutton', this.el),
       dataTable:        $('table.data_table', this.el),
+      redirectForm:     $('form._redirect', this.el),
       newTable:         $('.new_table', this.el)
     };
     
@@ -357,6 +359,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   toggleButtons: function() {
     this.elLk.toggleButtons.toggleButtons();
+  },
+
+  redirectForm: function() {
+    this.elLk.redirectForm.on('submit', function() {
+      this.action = $(this).find('select[name=url]').val();
+    });
   },
 
   newTable: function() {

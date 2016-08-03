@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -220,19 +221,9 @@ sub init {
       { depth => 25, height => 6 }
     );
   }
-  
-  # Enable cell line displays 
-  my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  
-  foreach my $cell_line (@cell_lines) {
-    $cell_line =~ s/:\w*//;
-    
-    # Turn off segmentation track
-    $self->modify_configs(
-      [ "seg_$cell_line"],
-      { display => 'off' }
-    );
-  }
+
+  ## Regulatory build track now needs to be turned on explicitly
+  $self->modify_configs(['regbuild'], {display => 'compact'});
 }
 
 1;

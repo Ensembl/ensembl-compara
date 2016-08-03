@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,7 +47,7 @@ use parent qw(EnsEMBL::Root);
 sub filters :lvalue { $_[0]->{'filters'}; }
 
 # NOTE: The static_server and img_url functions assume $self->hub exists. If it doesn't, don't use these functions.
-sub static_server { return $_[0]->hub->species_defs->ENSEMBL_STATIC_SERVER; }
+sub static_server { return $_[0]->hub->species_defs->ENSEMBL_STATIC_SERVER || ''; }
 sub img_url       { return $_[0]->hub->species_defs->img_url; }
 
 sub url {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,11 +40,13 @@ sub content {
   return unless $hub->param('pop1');
   
   my $slice = $object->slice;
-  
-  if ($slice->length >= 100000) {
+ 
+  my $limit = 75; #100
+ 
+  if ($slice->length >= ($limit * 1000)) {
     return $self->_error(
       'Region too large', 
-      '<p>The region you have selected is too large to display linkage data, a maximum region of 100kb is allowed. Please change the region using the navigation controls above.<p>'
+      "<p>The region you have selected is too large to display linkage data; a maximum region of ${limit}kb is allowed. Please change the region using the navigation controls above.<p>"
     );
   }
   

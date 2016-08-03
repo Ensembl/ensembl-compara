@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,26 +47,6 @@ sub init_canvas {
 
   $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
   $self->canvas($canvas);
-}
-
-sub add_canvas_frame {
-  my ($self, $config, $im_width, $im_height) = @_;
-	
-  return;
-  return if (defined $config->{'no_image_frame'});
-	
-  # custom || default image frame colour
-  my $imageframecol = $config->{'image_frame_colour'} || 'black';
-  my $framecolour   = $self->colour($imageframecol);
-
-  # for contigview bottom box we need an extra thick border...
-  if ($config->script() eq 'contigviewbottom'){		
-    $self->{'canvas'}->rectangle(1, 1, $im_width * $self->{sf} -2, $im_height * $self->{sf}-2, $framecolour);		
-  }
-	
-  $self->{'canvas'}->rectangle(
-	  0, 0, $im_width * $self->{sf} -1, $im_height * $self->{sf} -1, $framecolour
-  );
 }
 
 sub canvas {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,260 +23,42 @@ use strict;
   
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use EnsEMBL::Web::TextSequence::View::Transcript;
+
 use List::Util qw(max);
 
 sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
-  my $hub          = $self->hub;
-  my $trans        = $object->Obj;
-  my $slice        = $trans->feature_Slice;
-  my @exons        = @{$trans->get_all_Exons};
-  my $trans_strand = $exons[0]->strand;
-  my $start_phase  = $exons[0]->phase;
-  my $start_pad    = $start_phase > 0 ? $start_phase : 0; # Determines if the transcript starts mid-codon
-  my $cd_start     = $trans->cdna_coding_start;
-  my $cd_end       = $trans->cdna_coding_end;
-  my $mk           = {};
-  my $seq;
-  
-  if ($trans->translation) {
-    my $five_prime  = $trans->five_prime_utr;
-    my $three_prime = $trans->three_prime_utr;
-    
-    $_ = $_ ? $_->seq : $_ for $five_prime, $three_prime;
-    
-    $seq = join '', $five_prime, $trans->translateable_seq, $three_prime;
-  } else {
-    $seq = $trans->seq->seq;
-  }
-      
-  my $length = length $seq;
-  
-  my @sequence;
-  my @markup;
 
-  my @reference_seq = map {{ letter => $_ }} split '', $seq;
-  my $variation_seq = { name => 'snp_display', seq => [] };
-  my $coding_seq    = { name => 'coding_seq',  seq => [] };
-  my $protein_seq   = { name => 'translation', seq => [] };
-  my @rna_seq; 
-
-  if ($config->{'rna'}) {
-    my @rna_notation = $object->rna_notation;
-    
-    if (@rna_notation) {
-      @rna_seq = map {{ name => 'rna', seq => [ map {{ letter => $_ }} split '', $_ ] }} @rna_notation;
-    } else {
-      $config->{'rna'} = 0;
-    }
-  }
-  
-  if ($config->{'exons'}) {
-    my $flip = 0;
-    my $pos = $start_pad;
-    
-    foreach (@exons) {
-      $pos += length $_->seq->seq;
-      $flip = 1 - $flip;
-      push @{$mk->{'exons'}{$pos}{'type'}}, $mk->{'exons'}{$pos}{'overlap'} ? 'exon2' : "exon$flip";
-    }
-  }  
-  
-  delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later 
-    
-  $config->{'length'}    = $length;
-  $config->{'seq_order'} = [ $config->{'species'} ];
-  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
-  
-  for (0..$length - 1) {
-    # Set default vaules
-    $variation_seq->{'seq'}[$_]{'letter'} = ' ';
-    $coding_seq->{'seq'}[$_]{'letter'}    = $protein_seq->{'seq'}[$_]{'letter'} = '.';
-    
-    if ($_ + 1 >= $cd_start && $_ + 1 <= $cd_end) {         
-      $coding_seq->{'seq'}[$_]{'letter'} = $reference_seq[$_]{'letter'} if $config->{'coding_seq'};
-    } elsif ($config->{'codons'}) {
-      $mk->{'codons'}{$_}{'class'} = 'cu';
-    }
-  }
-  
-  $_ += $start_pad for $cd_start, $cd_end; # Shift values so that codons and variations appear in the right place
-  
-  my $can_translate = 0;
-  
-  eval {
-    my $pep_obj    = $trans->translate;
-    my $peptide    = $pep_obj->seq;
-    my $flip       = 0;
-    my $startphase = $trans->translation->start_Exon->phase;
-    my $s          = 0;
-    
-    $can_translate = 1;
-    
-    if ($startphase > 0) {
-      $s = 3 - $startphase;
-      $peptide = substr $peptide, 1;
-    }
-    
-    for (my $i = $cd_start + $s - 1; $i + 2 <= $cd_end; $i += 3) {
-      if ($config->{'codons'}) {
-        $mk->{'codons'}{$i}{'class'} = $mk->{'codons'}{$i + 1}{'class'} = $mk->{'codons'}{$i + 2}{'class'} = "c$flip";
-        
-        $flip = 1 - $flip;
-      }
-      
-      if ($config->{'translation'}) {
-        $protein_seq->{'seq'}[$i]{'letter'}     = $protein_seq->{'seq'}[$i + 2]{'letter'} = '-';
-        $protein_seq->{'seq'}[$i + 1]{'letter'} = substr($peptide, int(($i + 1 - $cd_start) / 3), 1) || ($i + 1 < $cd_end ? '*' : '.');
-      }
-    }
-  };
-  
-  # If the transcript starts or ends mid-codon, make the protein sequence show -X- at the start or the end respectively
-  if ($config->{'translation'}) {
-    my ($pos_start, $pos_end, $strip_end);
-    my @partial = qw(- X -);
-
-    if ($start_pad) {
-      ($pos_start) = grep $protein_seq->{'seq'}[$_ - 1]{'letter'} eq '.', 1..3; # Find the positions of . characters at the start
-    }
-
-    # If length is multiple of 3, ignore it. If length is 1 or 2 more than a multiple of 3 we use 2 or 1 (respectively) characters from @partial to complete 3 bases.
-    if ($strip_end = (3 - ($cd_end - $cd_start + 1) % 3) % 3) {
-      ($pos_end) = grep $protein_seq->{'seq'}[$_ + 1]{'letter'} =~ /\*|\-/, -3..-1; # Find the positions of - or * characters at the end
-    }
-
-    # Replace with as much of -X- as fits in the space and remove the extra chars from the end if required
-    $protein_seq->{'seq'}[$pos_start]{'letter'} = $partial[ $pos_start ]  while $pos_start--;
-    $protein_seq->{'seq'}[$pos_end]{'letter'}   = $partial[ $pos_end ]    while $pos_end++;
-
-    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end;
-  }
-  
-  if ($config->{'snp_display'} and $adorn ne 'none') {
-    foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
-      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
-      next if $self->too_rare_snp($snp->{'vf'},$config);
-      
-      my $dbID              = $snp->{'vdbid'};
-      my $tv                = $snp->{'tv'};
-      my $var               = $snp->{'vf'}->transfer($slice);
-      my $variation_name    = $snp->{'snp_id'};
-      my $alleles           = $snp->{'allele'};
-      my $ambigcode         = $snp->{'ambigcode'} || '*';
-      my $amino_acid_pos    = $snp->{'position'} * 3 + $cd_start - 4 - $start_pad;
-      my $type              = lc($config->{'consequence_types'} ? [ grep $config->{'consequence_types'}{$_}, @{$tv->consequence_type} ]->[0] : $snp->{'type'});
-      my $start             = $tv->cdna_start;
-      my $end               = $tv->cdna_end;
-      my $pep_allele_string = $tv->pep_allele_string;
-      my $aa_change         = $pep_allele_string =~ /\// && $tv->affects_peptide;
-      
-      # Variation is an insert if start > end
-      ($start, $end) = ($end, $start) if $start > $end;
-      
-      ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
-      
-      foreach ($start..$end) {
-        $mk->{'variants'}{$_}{'alleles'}   .= ($mk->{'variants'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
-        $mk->{'variants'}{$_}{'transcript'} = 1;
-        
-        my $url = $mk->{'variants'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variants'}{$_}{'url_params'}} }) : '';
-        
-        $mk->{'variants'}{$_}{'type'} = $type;
-        
-        if ($config->{'translation'} && $aa_change) {
-          foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
-            $protein_seq->{'seq'}[$aa]{'class'}  = 'aa';
-            $protein_seq->{'seq'}[$aa]{'title'} .= "\n" if $protein_seq->{'seq'}[$aa]{'title'};
-            $protein_seq->{'seq'}[$aa]{'title'} .= "$variation_name: $pep_allele_string";
-          }
-        }
-        
-        $mk->{'variants'}{$_}{'href'} ||= {
-          type        => 'ZMenu',
-          action      => 'TextSequence',
-          factorytype => 'Location'
-        };
-        
-        push @{$mk->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
-        
-        $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
-        $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;
-        $variation_seq->{'seq'}[$_]{'href'} = $url;
-        $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
-        $variation_seq->{'seq'}[$_]{'tag'} = 'a';
-        $variation_seq->{'seq'}[$_]{'class'} = '';
-      }
-    }
-  }
-  
-  push @sequence, \@reference_seq;
-  push @markup, $mk;
-  
-  for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
-    if ($config->{$_->{'name'}}) {
-      if ($_->{'name'} eq 'snp_display') {
-        unshift @sequence, $_->{'seq'};
-        unshift @markup, {};
-        unshift @{$config->{'seq_order'}}, $_->{'name'};
-        unshift @{$config->{'slices'}}, {};
-      } else {
-        push @sequence, $_->{'seq'};
-        push @markup, {};
-        push @{$config->{'seq_order'}}, $_->{'name'};
-        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
-      }
-    }
-  }
-  
-  # It's much easier to calculate the sequence with UTR, then lop off both ends than to do it without
-  # If you don't include UTR from the begining, you run into problems with $cd_start and $cd_end being "wrong"
-  # as well as transcript variation starts and ends. This way involves much less hassle.
-  if (!$config->{'utr'}) {
-    foreach (@sequence) {
-      splice @$_, $cd_end;
-      splice @$_, 0, $cd_start - 1;
-    }
-    
-    $length = scalar @{$sequence[0]};
-    
-    foreach my $mk (grep scalar keys %$_, @markup) {
-      my $shifted;
-      
-      foreach my $type (keys %$mk) {
-        my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $length ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
-        my $decap = max(-1,grep {  $_-$cd_start+1 < 0 } keys %{$mk->{$type}});
-        $shifted->{$type} = \%tmp;
-        if($decap > 0 and $type eq 'exons') {
-          $shifted->{$type}{0}{'type'} = $mk->{$type}{$decap}{'type'};
-        }
-      }
-      
-      $mk = $shifted;
-    }
-  }
-  
-  # Used to set the initial sequence colour
-  if ($config->{'exons'}) {
-    $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
-  }
-  
-  return (\@sequence, \@markup);
+  my %qconfig;
+  $qconfig{$_} = $config->{$_}
+      for(qw(hide_long_snps utr codons hide_rare_snps translation
+             exons rna snp_display coding_seq));
+  my $hub = $self->hub;
+  my $data = $hub->get_query('Sequence::Transcript')->go($self,{
+    species => $config->{'species'},
+    type => $object->get_db,
+    transcript => $object->Obj,
+    config => $config,
+    adorn => $adorn,
+    conseq_filter => [$hub->param('consequence_filter')],
+    config => \%qconfig,
+  });
+  return map { $data->[0]{$_} } qw(sequence markup names length);
 }
 
 sub markup_line_numbers {
-  my ($self, $sequence, $config) = @_;
+  my ($self, $sequence, $config,$names,$length) = @_;
  
   # Keep track of which element of $sequence we are looking at
   my $n = 0;
-  
-  foreach my $sl (@{$config->{'slices'}}) {
+
+  foreach my $name (@$names) {
     my $seq  = $sequence->[$n];
-    my $data = $sl->{'slice'} ? { 
+    my $data = $name ne 'snp_display' ? {
       dir   => 1,  
       start => 1,
-      end   => $config->{'length'},
+      end   => $length,
       label => ''
     } : {};
     
@@ -286,7 +69,7 @@ sub markup_line_numbers {
     my ($start, $end);
     
     # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my $loop_end = $config->{'length'} + $config->{'display_width'};
+    my $loop_end = $length + $config->{'display_width'};
     
     while ($e < $loop_end) {
       $start = '';
@@ -307,7 +90,7 @@ sub markup_line_numbers {
       # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
       $seq_length -= length $1 if $segment =~ /^(N+)\w/;
       
-      $end   = $e < $config->{'length'} ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
+      $end   = $e < $length ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
       $start = $row_start if $seq_length;
       
       # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
@@ -347,7 +130,6 @@ sub initialize {
  
   my $config = { 
     species         => $hub->species,
-    maintain_colour => 1,
     transcript      => 1,
   };
  
@@ -362,20 +144,32 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config, $adorn);
+  my $view = $self->view($config);
+  # This next line is a hack. If variations are on, it's the second line
+  # which is principal. This will go when sequence creation in views is
+  # refactored.
+  $view->new_sequence() if $config->{'snp_display'};
+  my $seq = $view->new_sequence();
+  $seq->principal(1);
   
+  my ($sequence, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
+
   $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
   if ($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
-    push @{$config->{'loaded'}||=[]},'variants';
-  } else {
-    push @{$config->{'loading'}||=[]},'variants';
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   }
-  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+  if($config->{'snp_display'} and $config->{'snp_display'} ne 'off') {
+    if($adorn ne 'none') {
+      push @{$config->{'loaded'}||=[]},'variants';
+    } else {
+      push @{$config->{'loading'}||=[]},'variants';
+    }
+  }
+  $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
   
-  $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
-  
+  $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
+
   return ($sequence, $config);
 }
 
@@ -393,6 +187,14 @@ sub initialize_export {
   my $hub = $self->hub;
   my ($sequence, $config) = $self->initialize;
   return ($sequence, $config);
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::Transcript->new(
+    $self->hub
+  );
 }
 
 1;

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,9 +55,11 @@ use EnsEMBL::Web::Tools::FailOver::SNPedia;
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
+use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
+use EnsEMBL::Web::Tools::FailOver::Wasabi;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -129,6 +132,7 @@ sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub timer       :lvalue { $_[0]{'_timer'};       }
+sub template    :lvalue { $_[0]{'_template'};    }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
@@ -278,6 +282,13 @@ sub set_core_params {
   }
 
   $self->{'_core_params'} = $core_params;
+}
+
+sub delete_core_param {
+## Sometimes we really don't want to pass a core parameter
+  my ($self, $name) = @_;
+  return unless $name;
+  delete $self->{'_core_params'}{$name};
 }
 
 # Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
@@ -788,34 +799,12 @@ sub get_imageconfig {
 }
 
 sub fetch_userdata_by_id {
+## Just a wrapper around get_data_from_session now that userdata dbs have been retired
   my ($self, $record_id) = @_;
-  
   return unless $record_id;
  
   my ($type, $code, $user_id) = split '_', $record_id;
-  my $data = {};
-  
-  if ($type eq 'user') {
-    my $user    = $self->user;
-    return unless $user && $user->id == $user_id;
-  
-    my $fa       = $self->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
-    my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
-    my $features = $fa->fetch_all_by_logic_name($record_id);
-    my $analysis = $aa->fetch_by_logic_name($record_id);
-    if ($analysis) {
-      my $config   = $analysis->web_data;
-    
-      $config->{'track_name'}  = $analysis->description   || $record_id;
-      $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
-    
-      $data->{$record_id} = { features => $features, config => $config };
-    }
-  
-  } else {
-    $data = $self->get_data_from_session($type, $code);
-  }
-  return $data;
+  return $self->get_data_from_session($type, $code);
 }
 
 sub get_data_from_session {
@@ -913,9 +902,14 @@ sub snpedia_status {
   my $self = shift;
 
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
-  my $out      = $failover->get_cached;
-
-  return $out;
+  my $out;
+  eval {$out = $failover->get_cached};
+  if ($@) {
+    warn "SNPEDIA failure";
+  }
+  else {
+    return $out;
+  }
 }
 
 # Query Store stuff
@@ -932,7 +926,7 @@ sub query_store_setup {
   } else {
     $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
   }
-  $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
+  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
@@ -945,5 +939,32 @@ sub get_query {return $_[0]->{'_query_store'}->get($_[1]); }
 
 sub qstore_open { return $_[0]->{'_query_store'}->open; }
 sub qstore_close { return $_[0]->{'_query_store'}->close; }
+
+# check to see if Wasabi site is up or down
+# if $out then site is up
+sub wasabi_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::Wasabi->new($self);
+  my $out      = $failover->get_cached;
+
+  return $out;
+}
+
+sub create_padded_region {
+  my $self = shift;
+  my ($seq_region_name, $s, $e, $strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
+  my $padded = {};
+  # Adding flanking region to 5' and 3' ends
+  $padded->{flank5} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK5_PERC) : 0;
+  $padded->{flank3} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK3_PERC) : 0;
+
+  $padded->{r} = sprintf '%s:%s-%s', 
+          $seq_region_name, 
+          $s - $padded->{flank5},
+          $e + $padded->{flank3};
+  return $padded;
+}
 
 1;

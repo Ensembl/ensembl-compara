@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,25 +27,6 @@ sub initialize_HTML {
   my $self = shift;
 
   return $self->initialize_JSON if $self->renderer->{'_modal_dialog_'};
-  
-  $self->include_navigation(1);
-  
-  # General layout for popup pages
-  $self->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
-  ));
-
-  $self->add_body_elements(qw(
-    logo            EnsEMBL::Web::Document::Element::Logo
-    tabs            EnsEMBL::Web::Document::Element::ModalTabs
-    navigation      EnsEMBL::Web::Document::Element::Navigation
-    tool_buttons    EnsEMBL::Web::Document::Element::ModalButtons
-    content         EnsEMBL::Web::Document::Element::Configurator
-    body_javascript EnsEMBL::Web::Document::Element::BodyJavascript
-  ));
 }
 
 sub initialize_JSON {
@@ -57,4 +39,5 @@ sub initialize_JSON {
     content      EnsEMBL::Web::Document::Element::Configurator
   ));
 }
+
 1;

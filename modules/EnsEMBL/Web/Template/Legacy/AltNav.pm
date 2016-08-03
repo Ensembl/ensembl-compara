@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,21 +17,18 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Filter::UserData;
+package EnsEMBL::Web::Template::Legacy::AltNav;
 
-### Error messages for userdata database actions
+### Legacy page template, used by pages with custom LH menu e.g. Solr search 
 
-use strict;
-
-use base qw(EnsEMBL::Web::Filter);
+use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
-  
-  $self->messages = {
-    no_file => 'Unable to save uploaded file contents to your account',
-    no_url  => 'Unable to save remote URL to your account',
-  };
+  $self->{'main_class'}     = 'main';
+  $self->{'lefthand_menu'}  = 0;
+  $self->add_head;
+  $self->add_body;
 }
 
 1;

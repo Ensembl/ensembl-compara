@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile;
 
 use strict;
@@ -6,7 +25,7 @@ use warnings;
 use bytes;
 
 use JSON;
-use Fcntl qw(SEEK_SET SEEK_END :flock);
+use Fcntl qw(SEEK_SET SEEK_END SEEK_CUR :flock);
 use Compress::Zlib;
 use DB_File;
 use File::Copy;
@@ -97,6 +116,8 @@ sub merge {
     my $d = JSON->new->decode($v);
     $self->{'idx'}{$k} = JSON->new->encode([$d->[0]+$offset,$d->[1]]); 
   }
+  $out_ver = { %$out_ver, %$in_ver };
+  $self->set_versions($out_ver);
   $self->close();
   $part->close();
 }
@@ -178,10 +199,15 @@ sub get_version {
 sub set_version {
   my ($self,$class,$ver) = @_;
 
-  #warn "set_version $class => $ver\n";
-  my $vers = JSON->new->decode($self->{'idx'}{'.versions'}||"{}");
+  my $vers = $self->get_versions;
   $vers->{$class} = $ver;
-  $self->{'idx'}{'.versions'} = JSON->new->encode($vers);
+  $self->set_versions($vers);
+}
+
+sub set_versions {
+  my ($self,$val) = @_;
+
+  $self->{'idx'}{'.versions'} = JSON->new->encode($val);
 }
 
 sub get {
@@ -190,20 +216,26 @@ sub get {
   my $json = $self->{'idx'}{$key};
   return undef unless $json;
   my $d = JSON->new->decode($json);
-  seek $self->{'dat'},$d->[0],SEEK_SET;
+  sysseek($self->{'dat'},$d->[0],SEEK_SET);
   my $out;
-  read($self->{'dat'},$out,$d->[1]);
-  return JSON->new->decode(Compress::Zlib::memGunzip($out));
+  sysread($self->{'dat'},$out,$d->[1]);
+  eval {
+    $out = JSON->new->decode(Compress::Zlib::memGunzip($out));
+  };
+  return $out unless $@;
+  die "get failed";
 } 
 
+sub systell { sysseek($_[0], 0, SEEK_CUR) }
+
 sub set {
-  my ($self,$key,$value) = @_;
+  my ($self,$key,$valuei) = @_;
 
   return 0 if exists $self->{'idx'}{$key};
-  $value = Compress::Zlib::memGzip(JSON->new->encode($value));
-  my $start = tell $self->{'dat'};
-  $self->{'dat'}->print($value);
-  my $end = tell $self->{'dat'};
+  my $value = Compress::Zlib::memGzip(JSON->new->encode($valuei));
+  my $start = systell $self->{'dat'};
+  syswrite $self->{'dat'},$value,length($value);
+  my $end = systell $self->{'dat'};
   $self->{'idx'}{$key} = JSON->new->encode([$start,$end-$start]);
   return 1;
 }

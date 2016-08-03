@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -322,14 +323,14 @@ sub variation_text {
     ';
   }
 
-  my $new_vep = $species_defs->ENSEMBL_VEP_ENABLED;
-  $html .= sprintf(
-    qq(<p><a href="%s" class="%snodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>),
-    $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)}),
-    $new_vep ? '' : 'modal_link ',
-    'tool',
-    $self->img_url
-  );
+  if ($species_defs->ENSEMBL_VEP_ENABLED) {
+    $html .= sprintf(
+      qq(<p><a href="%s" class="nodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>),
+      $hub->url({'__clear' => 1, qw(type Tools action VEP)}),
+      'tool',
+      $self->img_url
+    );
+  }
 
   return $html;
 }

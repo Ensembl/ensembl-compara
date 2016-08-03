@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@ sub content {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $species_defs = $hub->species_defs;
   my $db_hash      = $species_defs->multi_hash;
-  my $align        = $hub->param('align');
+  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash

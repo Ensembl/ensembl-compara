@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -204,31 +205,31 @@ sub _render_reads {
 
   ## Now set some positioning
   my $y_start = $self->{'my_config'}->get('height');
-  $y_start += $text_fits ? -10 : 2;
+  $y_start += $text_fits ? 10 : 2;
   $self->{'my_config'}->set('y_start', $y_start);
   $self->{'my_config'}->set('height', 1);
   $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('vspacing', 0);
-  $self->{'my_config'}->set('y_start', 35);
 
   my $total_count = scalar @$fs;
   my $drawn_count = scalar @$features;
   my $data = {'features' => [], 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
   foreach my $f (@$features) {
-    my $fstart = $f->start;
-    my $fend = $f->end;
+    my $fstart  = $f->start;
+    my $fend    = $f->end;
+    my $strand  = $f->reversed ? -1 : 1;
 
-    next unless $fstart and $fend;
-
+    next unless $fstart and $fend and $strand == $self->strand;
     ## Munge coordinates
-    my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
-    my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
+    my $start  = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
+    my $end    = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
 
     ## Build the feature hash  
     my $fhash = {
                 'start'     => $start,
                 'end'       => $end + 1,
+                'strand'    => $strand,
                 'colour'    => $read_colour,
                 'title'     => $self->_feature_title($f),
                 'arrow'     => {},
@@ -237,7 +238,7 @@ sub _render_reads {
     };
 
     ## Work out details of arrow, if any
-    if (($f->reversed and $fstart >= $slicestart) or (!$f->reversed and $fend <= $sliceend)) {
+    if (($strand == -1 and $fstart >= $slicestart) or ($strand == 1 and $fend <= $sliceend)) {
       $fhash->{'arrow'}{'colour'}     = $self->my_colour('type_' . $self->_read_type($f));
       $fhash->{'arrow'}{'position'}   = $f->reversed ^ ($slicestrand == -1) ? 'start' : 'end';
     }
@@ -321,9 +322,16 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
+    my $error_message;
+    if ($@ eq "alarm\n") {
+      $error_message = " could not be rendered within the specified time limit (${timeout} sec)";
+    }
+    else {
+      $error_message = ' could not be retrieved.';
+      warn "######## BAM ERROR: $@"; # propagate unexpected errors
+    }
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
+    return $self->errorTrack($self->error_track_name . $error_message);
   }
 }
 
@@ -358,7 +366,11 @@ sub get_data {
     } 
 
     $self->{_cache}->{data} = $data;
+
+    ## Explicitly close file, otherwise it can cause errors
+    $self->bam_adaptor->htsfile_close;
   }
+
   ## Return data in standard format expected by other modules
   return [{'features' => $self->{_cache}->{data},
             'metadata' => {'zmenu_caption' => 'Aligned reads'},
@@ -517,6 +529,7 @@ sub _feature_title {
 sub bam_adaptor {
 ## get a bam adaptor
   my $self = shift;
+  return $self->{_cache}->{_bam_adaptor} if $self->{_cache}->{_bam_adaptor};
 
   my $url = $self->my_config('url');
   if ($url) { ## remote bam file
@@ -537,7 +550,6 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
-      #$self->{_cache}->{_bam_adaptor} ||= $df->get_ExternalAdaptor(undef, 'BAM');
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
@@ -685,7 +697,7 @@ sub calc_coverage {
 
   #warn "sample_size = $sample_size";
 
-  my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
+  my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START, $self->strand);
      $coverage = [reverse @$coverage] if $slice->strand == -1;
 
   return $coverage;
@@ -694,7 +706,7 @@ sub calc_coverage {
 use Inline C => <<'END_OF_CALC_COV_C_CODE';
 
 #include "sam.h"
-AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START) {
+AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START, int STRAND) {
   AV *ret_cov = newAV();
   int *coverage = calloc(lbin+1,sizeof(int));
   int i;
@@ -724,6 +736,10 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
     }
 
     f = (bam1_t *)SvIV(SvRV(*elem));
+
+    if ((bam_is_rev(f) && STRAND == 1) || (!bam_is_rev(f) && STRAND == -1)) {
+      continue;
+    }
 
     fstart = f->core.pos+1;
     fend = bam_endpos(f);

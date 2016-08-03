@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,14 +17,33 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller::AltPage;
+package EnsEMBL::Web::Template;
 
-### Alternative dynamic page with fluid layout
+### Base class for new HTML templates, which can be used independently
+### of the Controller-defined Page types 
 
 use strict;
 
-use base qw(EnsEMBL::Web::Controller::Page);
- 
-sub page_type   { return 'Fluid'; }
+sub new {
+  my ($class, $self) = @_;
+
+  bless $self, $class;
+
+  return $self;
+}
+
+sub init {}
+
+sub hub { 
+  my $self = shift;
+  return $self->{'page'}->hub; 
+}
+
+sub page { 
+  my $self = shift;
+  return $self->{'page'}; 
+}
+
+sub render {}
 
 1;

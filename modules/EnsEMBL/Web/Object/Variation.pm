@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,7 +59,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts regfeats features populations population_freqs samples ega citation locations);
+      $availability->{"has_$_"} = $counts->{$_} for qw(uniq_transcripts transcripts regfeats features populations population_freqs samples ega citation locations);
       if($self->param('vf')){
         ## only show these if a mapping available
         $availability->{"has_$_"} = $counts->{$_} for qw(alignments ldpops);
@@ -89,6 +90,7 @@ sub counts {
 
   unless ($counts) {
     $counts = {};
+    $counts->{'uniq_transcripts'} = $self->count_uniq_transcripts;
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'regfeats'}    = $self->count_regfeats;
     $counts->{'features'}    = $counts->{'transcripts'} + $counts->{'regfeats'};
@@ -149,6 +151,24 @@ sub count_regfeats {
   # $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}, @{$_->get_all_MotifFeatureVariations}} @{$self->get_variation_features};
   $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}} @{$self->get_variation_features};
   return $counts;
+}
+
+sub count_uniq_transcripts {
+  my $self = shift;
+  my %mappings = %{ $self->variation_feature_mapping };
+  my $count = 0;
+
+  foreach my $varif_id (keys %mappings) {
+    next unless ($varif_id  eq $self->param('vf'));
+    my %transcriptnames;
+    for ( @{ $mappings{$varif_id}{transcript_vari} } ) {
+        $transcriptnames{$_->{transcriptname}} += 1;
+    }
+    $count = scalar keys %transcriptnames;
+    last;
+  }
+
+  return $count;
 }
 
 sub count_populations {
@@ -603,8 +623,8 @@ sub freqs {
     push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
     push (@{ $data{$pop_id}{ssid}{$ssid}{AlleleCount} }, $allele_obj->count);
     push (@{ $data{$pop_id}{ssid}{$ssid}{Alleles} },   $allele_obj->allele);    
-    next if $data{$pop_id}{pop_info};
-    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
+
+    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj) unless exists $data{$pop_id}{pop_info};
     
     ## If frequency data is available, show frequency data submitter, else show observation submitter
     $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
@@ -1674,6 +1694,21 @@ sub hgvs_url {
   return [ $hub->url($p), encode_entities($refseq), encode_entities($hgvs_string) ];
 }
 
+
+## extract the names of any variants whch would be in the same location
+## if both were described at the most 3' location possible
+## insertions/ deletions only
+sub get_three_prime_co_located{
+
+    my $self = shift;
+
+    my $attribs = $self->Obj->get_all_attributes();
+
+    @{$self->{'shifted_co_located'}}  = ( exists $attribs->{"co-located allele"} ? split/\,/, $attribs->{"co-located allele"} : '');
+    return $self->{'shifted_co_located'};
+}
+
+
 ## extract data for table of publications citing this variant
 sub get_citation_data{
 
@@ -1714,7 +1749,11 @@ sub get_snpedia_data {
     }
   };
 
-  my $ref = $rest->fetch('api.php', $args);
+  my ($ref, $error) = $rest->fetch('api.php', $args);
+
+  if($error || ref $ref ne 'hash') {
+    return {};
+  }
 
   # get the page id and the page hashref with title and revisions
   my ($pageid, $pageref) = each %{ $ref->{query}->{pages} };
@@ -1748,6 +1787,9 @@ sub get_snpedia_data {
 
   # Remove starting newline characters
   $rev->{'*'} =~s/^(\*{3})+//g;
+
+  # Remove 'Further reading (with comments)'
+  $rev->{'*'} =~s/Further reading \(with comments\)//g;
 
   # Convert '''text''' s to <b>text</b>
   $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;

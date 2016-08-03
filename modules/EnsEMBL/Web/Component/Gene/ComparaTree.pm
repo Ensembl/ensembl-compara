@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -335,9 +336,9 @@ sub content {
   $image->{'remove_reset'}  = 1;
 
   $image->set_button('drag', 'title' => 'Drag to select region');
-  
+  my $default_view_url = $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene });
   if ($gene) {
-    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene }), $highlight_gene ? 'View current genes only'        : 'View current gene only';
+    push @view_links, sprintf '<li><a href="%s">%s</a> (Default) </li>', $default_view_url, $highlight_gene ? 'View current genes only' : 'View current gene only';
     push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_para, g1 => $highlight_gene }), $highlight_gene ? 'View paralogs of current genes' : 'View paralogs of current gene';
   }
   
@@ -346,7 +347,7 @@ sub content {
   push @view_links, sprintf $li_tmpl, $unhighlight, 'Switch off highlighting' if $highlight_gene;
 
   {
-    my @rank_options = ( q{<option value="/">-- Select a rank--</option>} );
+    my @rank_options = ( q{<option value="#">-- Select a rank--</option>} );
     my $selected_rank = $hub->param('gtr') || '';
     foreach my $rank (qw(species genus family order class phylum kingdom)) {
       my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);
@@ -576,10 +577,15 @@ sub get_export_data {
 ## Get data for export
   my ($self, $type) = @_;
   my $hub   = $self->hub;
-  my $cdb   = $hub->param('cdb') || 'compara';
+  my $cdb   = $hub->param('cdb');
   my $gene  = $hub->core_object('gene');
   my ($tree, $node, $member);
 
+  unless ( $cdb ) {
+    my $function = $hub->referer->{'ENSEMBL_FUNCTION'};
+    $cdb = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';  
+  }
+  
   ## First, get tree
   if ($type && $type eq 'genetree') { 
     $tree = $gene->get_GeneTree($cdb, 1);

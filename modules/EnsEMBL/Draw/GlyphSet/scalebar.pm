@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -199,7 +200,7 @@ sub render {
 
       if ($res[0] && !(($box_start*$contig_strand) % $labmaj)) {
         $self->push($self->Text({
-          x         => $box_start - $global_start,
+          x         => ($box_start - $global_start + 0.5) - ($res[2]/2) / $self->scalex,
           y         => defined $y ? $y - $res[3] - 1 : 5,
           height    => $res[3],
           font      => $fontname,

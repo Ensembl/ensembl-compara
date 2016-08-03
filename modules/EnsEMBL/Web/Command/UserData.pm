@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,12 +38,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $format, $renderer) = @_;
+  my ($self, $method, $format, $renderer, $size_limit) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer);
+  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer, 'size_limit' => $size_limit || 0);
 
   ## Validate format
   my $iow;

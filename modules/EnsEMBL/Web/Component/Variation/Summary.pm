@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +36,7 @@ sub content {
   my $object             = $self->object;
   my $variation          = $object->Obj;
   my $vf                 = $hub->param('vf');
-  my $rs_id              = $hub->param('v');
+  my $var_id             = $hub->param('v');
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $avail              = $object->availability;  
@@ -56,11 +57,12 @@ sub content {
     $self->most_severe_consequence($variation_features),
     $self->evidence_status,
     $self->clinical_significance,
-    $self->synonyms,
     $self->hgvs,
+    $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
+    $self->synonyms,
     $self->sets,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $rs_id && $self->snpedia($rs_id) : ()
+    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -83,11 +85,11 @@ sub feature_summary {
   
   push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
-                      $avail->{has_transcripts}, 
-                      $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
-                  ) if($avail->{has_transcripts});
+                      $avail->{has_uniq_transcripts}, 
+                      $avail->{has_uniq_transcripts} eq "1" ? "transcript" : "transcripts"
+                  ) if($avail->{has_uniq_transcripts});
   push @str_array, sprintf('%s<a class="dynamic-link" href="%s">%s %s</a>',
-                      $avail->{has_transcripts} ? '' : 'overlaps ',
+                      $avail->{has_uniq_transcripts} ? '' : 'overlaps ',
                       $transcript_url,
                       $avail->{has_regfeats},
                       $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"
@@ -209,6 +211,9 @@ sub variation_source {
   if ($source =~ /dbSNP/) {
     $sname       = 'DBSNP';
     $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+  } elsif ($source =~ /ClinVar/i) {
+    $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
+    $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
@@ -313,17 +318,23 @@ sub synonyms {
     my @ids = @{$synonyms->{$db}};
     my @urls;
 
-    next if ($db =~ /Affy|Illumina|HGVbase|TSC/);
+    next if ($db =~ /(Affy|Illumina|HGVbase|TSC|dbSNP\sHGVS)/i);
 
     if ($db =~ /dbsnp rs/i) { # Glovar stuff
       @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
     }
+    elsif ($db =~ /dbsnp hgvs/i) {
+      @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
+    }    
     elsif ($db =~ /dbsnp/i) {
       foreach (@ids) {
         next if /^ss/; # don't display SSIDs - these are useless
         push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
       }
       next unless @urls;
+    }
+    elsif ($db =~ /clinvar/i) {
+      @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
     }
     elsif ($db =~ /Uniprot/) {
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
@@ -609,12 +620,59 @@ sub hgvs {
   my $count     = 0;
   my $total     = scalar keys %$hgvs_urls;
   my $html;
- 
+
+  my $syn_source = 'dbSNP HGVS';
+
+  my $refseq_hgvs = $object->Obj->get_all_synonyms($syn_source);
+  my $has_list = 0;
+
   # Loop over and format the URLs
   foreach my $allele (keys %$hgvs_urls) {
-    $html  .= sprintf '<p>%s</p>', join('<br />', $total > 1 ? "<b>Variant allele $allele</b>" : (), @{$hgvs_urls->{$allele}});
+    if ($total > 1) {
+      $html .= qq{<p style="font-weight:bold">Variant allele $allele</p>};
+    }
+
+    if (scalar @{$hgvs_urls->{$allele}} > 1 | scalar @{$refseq_hgvs} > 1) {
+      $html .= "<ul><li>";
+      $html .= join('</li><li>', @{$hgvs_urls->{$allele}});
+      $html .= "</li></ul>";
+      $has_list = 1;
+    }
+    else {
+      $html  .= join(', ', @{$hgvs_urls->{$allele}});
+    }
     $count += scalar @{$hgvs_urls->{$allele}};
   }
+
+  $count += scalar @{$refseq_hgvs};
+
+  if (scalar(@$refseq_hgvs)) {
+    if ($has_list) {
+      # Create div + floated lists to html
+      $html = sprintf(qq{
+          <div>
+            <div style="float:left;margin-right:15px"><h4>%s:</h4>%s</div>
+            <div style="float:left"><h4>%s:</h4><ul><li>%s</li></ul></div>
+            <div style="clear:both"></div>
+          </div>
+        },
+        'Ensembl HGVS',
+        $html,
+        $syn_source,
+        join('</li><li>', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs)
+      );
+    }
+    else {
+      # Display refseq HGVS
+      $html .= ', ' if ($html);
+      $html .= join(', ', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs);
+    }
+  }
+
+  if (!$has_list and $html) {
+    $html = "<p>$html</p>";
+  }
+
 
   # Wrap the html
   if ($count > 1) {
@@ -719,6 +777,48 @@ sub most_severe_consequence {
   return ();
 }
 
+## if an insertion/ deletion is described at its most 3' location 
+## possible, is it co-located with other variants?
+sub three_prime_co_located{
+  my $self  = shift;
+
+ my $shifted_co_located = $self->object->get_three_prime_co_located();
+
+  return undef unless defined $shifted_co_located;
+
+  my $count;
+  my @scl;
+
+  foreach my $scl (@{$shifted_co_located}){
+    my $link      = $self->hub->url({ action => 'Explore', v => $scl });
+
+    my $variation = qq{<a href="$link">$scl</a>};
+    $count++;
+    push @scl, $variation;
+  }
+
+  if ($count > 3) {
+    my $show = $self->hub->get_cookie_value('toggle_shifted_co_located') eq 'open';
+  
+    return [
+      'Variants with equivalent alleles',
+      sprintf('<p>This variant has <strong>%s</strong> variants with equivalent alleles - <a title="Click to show variants" rel="shifted_co_located" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="shifted_co_located twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+        $count,
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
+        $show ? '' : 'display:none',
+        join('', map "<li>$_</li>", @scl)
+      )
+    ];
+  }
+  else {
+
+    my $html = join ', ', @scl;
+    my $s = ($count > 1) ? 's' : '';
+    return ["Variant$s with equivalent alleles", $html];
+  }
+}
+
 sub text_separator {
   my $self            = shift;
   my $no_left_padding = shift;
@@ -730,11 +830,11 @@ sub text_separator {
 
 # Fetch SNPedia information from snpedia.com
 sub snpedia {
-  my ($self, $rs_id) = @_;
+  my ($self, $var_id) = @_;
   my $hub = $self->hub;
   my $cache = $hub->cache;
   my $desc;
-  my $key = $rs_id . "_SNPEDIA_DESC";
+  my $key = $var_id . "_SNPEDIA_DESC";
 
   if($cache) {
     # Get from memcached
@@ -755,13 +855,13 @@ sub snpedia {
   else {
     # Fetch from snpedia
     my $object = $self->object;
-    my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
+    my $snpedia_wiki_results = $object->get_snpedia_data($var_id);
     if (!$snpedia_wiki_results->{'pageid'}) {
-      $cache->set($key, 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, 'no_entry', 60*60*24*7);
       return ();
     }
     
-    my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
+    my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $var_id });
     if ($#{$snpedia_wiki_results->{desc}} < 0) {
       $snpedia_wiki_results->{desc}[0] = 'Description not available ' . $snpedia_search_link;
     }
@@ -785,7 +885,7 @@ sub snpedia {
         $snpedia_search_link
       );
 
-      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
 
       return [
         'Description from SNPedia',
@@ -794,7 +894,7 @@ sub snpedia {
     }
     else {
       $desc = $snpedia_wiki_results->{'desc'}[0];
-      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
       return $count ? 
         [ 'Description from SNPedia',  $desc]
         : ();

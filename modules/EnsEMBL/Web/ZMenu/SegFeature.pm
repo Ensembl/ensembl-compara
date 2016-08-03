@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +34,8 @@ sub content {
   my $pos = int(($s+$e)/2);
   my $chr = $r;
   $chr =~ s/:.*$//;
-  my $hub     = $self->hub;
-  if($hub->param('celldbid')) {
+
+  if ($hub->param('seg_name')) {
     $self->content_from_file($hub,$chr,$pos);
   } else {
     $self->content_from_db($hub,$chr,$pos);
@@ -74,51 +75,66 @@ sub content_from_db {
 }
 
 sub content_from_file {
-  my ($self,$hub,$chr,$pos) = @_;
+  my ($self, $hub) = @_;
 
-  my $fgh = $hub->database('funcgen');
-  my $cta = $fgh->get_CellTypeAdaptor;
-  my $ct = $cta->fetch_by_dbID($hub->param('celldbid'));
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rs = $rsa->fetch_by_dbID($hub->param('dbid'));
-  return unless $rs;
-  my $bigbed_file = $rs->dbfile_path;
-  my @parts = split(m!/!, $bigbed_file);
-  my $path  = join("/", $self->hub->species_defs->DATAFILE_BASE_PATH,
-                          @parts[-6..-1]);
-  # Yuk! There has to be a better way than use colours
-  my $rgb;
-  my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$path}
-              ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $path);
-  $bba->fetch_rows($chr,$pos,$pos+1,sub {
-    my @row = @_;
-    my @col = split(',',$row[8]);
-    $rgb = sprintf("#%02x%02x%02x",@col);
-  });
-  return undef unless $rgb;
+  my $click_data = $self->click_data;
+
+  return unless $click_data;
+  $click_data->{'display'}  = 'text';
+  $click_data->{'strand'}   = $hub->param('fake_click_strand');
+
+  my $strand = $hub->param('fake_click_strand') || 1;
+  my $glyphset = 'EnsEMBL::Draw::GlyphSet::fg_segmentation_features';
+  my $slice    = $click_data->{'container'};
+
+  if ($self->dynamic_use($glyphset)) {
+    $glyphset = $glyphset->new($click_data);
+
+    my $colour_lookup = $self->_types_by_colour;
+
+    my $data = $glyphset->get_data;
+    foreach my $track (@$data) {
+      next unless $track->{'features'};
+
+      my $caption = 'Regulatory Segment';
+      $caption .= ' - '.$hub->param('celltype');
+      $self->caption($caption);
+
+      foreach (@{$track->{'features'}}) {
+        my $chr   = $_->{'seq_region'};
+        my $pos   = int(($_->{'start'} + $_->{'end'})/2);
+        $_->{'label'} =~ /_(\w+)_/;
+        my $name = ucfirst($1);
+        my $type  = $colour_lookup->{'#'.$_->{'colour'}} || $name;
+
+        $self->add_entry ({ type => 'Type', label => $type });
+        $self->add_entry({
+                          type       => 'Location',
+                          label_html => sprintf("%s:%d",$chr,$pos),
+                          link       => $hub->url({
+                                                    type   => 'Location',
+                                                    action => 'View',
+                                                    r      => sprintf("%s:%d-%d",$chr,$pos-1000,$pos+1000)
+                                                  })
+                            });
+      }
+    }
+  }
+
+}
+
+sub _types_by_colour {
+  my $self = shift;
   my $colours = $self->hub->species_defs->all_colours('fg_regulatory_features');
   my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
-  my $type = "Unclassified";
+  my $lookup  = {};
   foreach my $col (keys %$colours) {
     my $raw_col = $colours->{$col}{'default'};
     my $hexcol = lc $colourmap->hex_by_name($raw_col);
-    next unless $hexcol eq $rgb;
-    $type = $colours->{$col}{'text'};
+    $lookup->{$hexcol} = $colours->{$col}{'text'};
   }
-  my $cta = $fgh->get_CellTypeAdaptor;
-  my $cell_line = '';
-  $cell_line = $ct->name if $ct;
-  $self->caption('Regulatory Segment - ' . $cell_line);
-  $self->add_entry ({ type   => 'Type', label  => $type });
-  $self->add_entry({
-    type       => 'Location',
-    label_html => sprintf("%s:%d",$chr,$pos),
-    link       => $hub->url({
-      type   => 'Location',
-      action => 'View',
-      r      => sprintf("%s:%d-%d",$chr,$pos-1000,$pos+1000)
-    })
-  });
+  use Data::Dumper; warn Dumper($lookup);
+  return $lookup;
 }
 
 1;

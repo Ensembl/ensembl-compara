@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +44,7 @@ sub content {
   my $add_track_link  = $hub->url({qw(type UserData action SelectFile __clear 1)});
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
-    <p>Using this form, you can select Ensembl features to display on a karyotype.</p>
+    <p>Using this form, you can select Ensembl features to display on a karyotype or single chromosome.</p>
     <p>If you want to use your own data file, please go to the <a href="$add_track_link" class="modal_link" rel="modal_user_data">Add custom track</a> page instead.</p>
   }});
 

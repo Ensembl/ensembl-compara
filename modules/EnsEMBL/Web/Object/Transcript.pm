@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -351,12 +352,14 @@ sub caption {
   my $subhead;
 
   my( $disp_id ) = $self->display_xref;
+  my $version    = $self->version ? ".".$self->version : "";
+
   if( $disp_id && $disp_id ne $self->stable_id ) {
     $heading .= $disp_id;
-    $subhead = $self->stable_id;
+    $subhead = $self->stable_id.$version;
   }
   else {
-    $heading .= $self->stable_id;
+    $heading .= $self->stable_id.$version;
   }
 
   return [$heading, $subhead];
@@ -1549,6 +1552,7 @@ sub transcript_variation_to_variation_feature {
 
 sub get_haplotypes {
   my $self = shift;
+  my $filter = shift;
 
   my $vdb = $self->Obj->adaptor->db->get_db_adaptor('variation');
 
@@ -1564,7 +1568,7 @@ sub get_haplotypes {
   }
 
   my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
-  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj); };
+  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj, $filter); };
   return $haplotypes;
 }
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -289,7 +290,7 @@ sub create_tracks {
 
       my ($seqname, $start, $end) = $self->coords;
       my $strand = $strandable ? $self->parser->get_strand : 0;
-      if ($slice && $extra_config->{'pix_per_bp'}) {
+      if ($slice && $extra_config->{'pix_per_bp'} && $extra_config->{'skip_overlap'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
         next if $max_seen >= $here;
@@ -436,7 +437,7 @@ sub munge_densities {
 sub href {
   my ($self, $params) = @_;
   return $self->hub->url('ZMenu', {
-                                    'action'            => 'UserData', 
+                                    'action'            => $params->{'action'} || 'UserData', 
                                     'config'            => $self->config_type,  
                                     'track'             => $self->track,
                                     'format'            => $self->format, 
@@ -445,6 +446,7 @@ sub href {
                                     'fake_click_end'    => $params->{'end'},
                                     'fake_click_strand' => $params->{'strand'},
                                     'feature_id'        => $params->{'id'},              
+                                    %{$params->{'zmenu_extras'}||{}}
                                   });
 }
 

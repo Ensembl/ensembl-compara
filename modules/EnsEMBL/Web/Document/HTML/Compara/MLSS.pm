@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +22,7 @@ package EnsEMBL::Web::Document::HTML::Compara::MLSS;
 use strict;
 
 use Math::Round;
+use List::Util qw(max);
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Table;
@@ -86,6 +88,19 @@ our $references = {
   }
 };
 
+our @window_desc = (
+    [1 => '1&nbsp;bp - 10&nbsp;bp'],
+    [10 => '10&nbsp;bp - 100&nbsp;bp'],
+    [100 => '100&nbsp;bp - 1&nbsp;kb'],
+    [1000 => '1&nbsp;kb - 10&nbsp;kb'],
+    [10000 => '10&nbsp;kb - 100&nbsp;kb'],
+    [100000 => '100&nbsp;kb - 1&nbsp;Mb'],
+    [1000000 => '1&nbsp;Mb - 10&nbsp;Mb'],
+    [10000000 => '10&nbsp;Mb - 100&nbsp;Mb'],
+    [100000000 => '100&nbsp;Mb - 1&nbsp;Gb'],
+);
+
+
 ## HTML OUTPUT ######################################
 
 sub error_message {
@@ -126,7 +141,7 @@ sub render {
   } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
     return $self->render_pairwise($mlss);
   } elsif ($mlss->method->class =~ /^GenomicAlign/) {
-    return $self->print_wga_stats($mlss);
+    return $self->render_multiple($mlss);
   } else {
     return $self->error_message('No statistics', sprintf('There are no statistics available for the analysis "%s".', $mlss->name), 'warning');
   }
@@ -344,12 +359,14 @@ some being recent and almost identical, others being much older and indicators o
             <b>Uncovered</b>: %s out of %s<br />
             <b>Matches</b>: %s out of %s<br />
             <b>Mismatches</b>: %s out of %s<br />
-            <b>Insertions</b>: %s out of %s
+            <b>Insertions</b>: %s out of %s<br />
+            <em>Identity over aligned base-pairs: %.1f%%</em>
           </p>',
           $self->thousandify($uncovered), $self->thousandify($total),
           $self->thousandify($matches), $self->thousandify($total),
           $self->thousandify($mismatches), $self->thousandify($total),
           $self->thousandify($insertions), $self->thousandify($total),
+          100 * $matches/($matches+$mismatches+$insertions),
         );
 
         my $match_pc  = round($matches/$total * 100);
@@ -432,12 +449,138 @@ some being recent and almost identical, others being much older and indicators o
     $graph_style, $key->{'non_ref'}{'exon'}, 
   );
 
+  if (grep {$_} @{$alignment_results->{num_chains}}) {
+    $html .= $self->html_size_distribution_2($alignment_results);
+  };
+
   $html .= '</div>';
 
   return $html;
 }
 
+sub html_size_distribution_2 {
+    my ($self, $alignment_results) = @_;
+    my $max_num_chains = max(@{$alignment_results->{num_chains}});
+    my $max_num_nets = max(@{$alignment_results->{num_nets}});
+    my $max_size_chains = max(@{$alignment_results->{size_chains}});
+    my $max_size_nets = max(@{$alignment_results->{size_nets}});
+    my $html_table_chains = '';
+    foreach my $i (0..(scalar(@window_desc)-1)) {
+        next unless $alignment_results->{num_chains}->[$i] or $alignment_results->{num_nets}->[$i];
+        $html_table_chains .= sprintf(
+            '<tr>
+              <td>%s</td>
+              <td><div style="background-color: #FFCC00; height: 25px; width: %s;" >%s</div></td>
+              <td><div style="background-color: #6699FF; height: 25px; width: %s;" >%s</div></td>
+              <td></td>
+              <td><div style="background-color: #FFCC00; height: 25px; width: %s;" >%s</div></td>
+              <td><div style="background-color: #6699FF; height: 25px; width: %s;" >%s</div></td>
+            </tr>',
+            $window_desc[$i]->[1],
+            barchart_width($alignment_results->{num_chains}->[$i], $max_num_chains),
+            $self->thousandify($alignment_results->{num_chains}->[$i]) || '',
+            barchart_width($alignment_results->{size_chains}->[$i], $max_size_chains),
+            add_unit($alignment_results->{size_chains}->[$i]),
+            barchart_width($alignment_results->{num_nets}->[$i], $max_num_nets),
+            $self->thousandify($alignment_results->{num_nets}->[$i]) || '',
+            barchart_width($alignment_results->{size_nets}->[$i], $max_size_nets),
+            add_unit($alignment_results->{size_nets}->[$i]),
+        );
+    }
+    return sprintf(
+      '<h3>Block size distribution</h3>
+      <table style="width:100%%">
+        <tr>
+          <th rowspan="2" style="vertical-align:middle; width: 150px">Size range</th>
+          <th colspan="2" style="text-align:center; border-bottom: dotted">All %s alignment blocks</th>
+          <th rowspan="2" style="width: 50px"></th>
+          <th colspan="2" style="text-align:center; border-bottom: dotted">Blocks grouped in <em>nets</em></th>
+        </tr>
+        <tr>
+          <th style="width: 20%"># blocks</th>
+          <th style="width: 20%">Total size (incl. gaps)</th>
+          <th style="width: 20%"># nets</th>
+          <th style="width: 20%">Total size (incl. gaps)</th>
+        </tr>
+        %s
+      </table>',
+      $self->thousandify($alignment_results->{'num_blocks'}),
+      $html_table_chains,
+      );
+};
+
+
+sub render_multiple {
+  my $self    = shift;
+  my $mlss    = shift;
+
+  my ($alignment_results) = $self->fetch_multiple_input($mlss);
+  my $html = '';
+  $html .= $self->print_wga_stats($mlss);
+  $html .= '<br/>';
+  $html .= $self->html_size_distribution_1($alignment_results);
+  return $html;
+}
+
+sub html_size_distribution_1 {
+    my ($self, $alignment_results) = @_;
+    my $max_num_blocks = max(@{$alignment_results->{num_blocks}});
+    my $max_size_blocks = max(@{$alignment_results->{size_blocks}});
+    my $html_table_blocks = '';
+    foreach my $i (0..(scalar(@window_desc)-1)) {
+      next unless $alignment_results->{num_blocks}->[$i];
+      $html_table_blocks .= sprintf(
+        '<tr>
+          <td>%s</td>
+          <td><div style="background-color: #FFCC00; height: 25px; width: %s;" >%s</div></td>
+          <td><div style="background-color: #6699FF; height: 25px; width: %s;" >%s</div></td>
+        </tr>',
+        $window_desc[$i]->[1],
+        barchart_width($alignment_results->{num_blocks}->[$i], $max_num_blocks),
+        $self->thousandify($alignment_results->{num_blocks}->[$i]) || '',
+        barchart_width($alignment_results->{size_blocks}->[$i], $max_size_blocks),
+        add_unit($alignment_results->{size_blocks}->[$i]),
+      );
+    }
+    return sprintf(
+      '<h3>Block size distribution</h3>
+      <table style="width:50%%; margin: auto">
+        <tr>
+          <th rowspan="2" style="vertical-align:middle; width: 150px">Size range</th>
+          <th colspan="2" style="text-align:center; border-bottom: dotted">All %s alignment blocks</th>
+        </tr>
+        <tr>
+          <th style="width: 40%"># blocks</th>
+          <th style="width: 40%">Total size (incl. gaps)</th>
+        </tr>
+        %s
+      </table>',
+      $self->thousandify($alignment_results->{'tot_num_blocks'}),
+      $html_table_blocks,
+    );
+}
+
 ## HELPER METHODS ##################################
+
+sub barchart_width {
+    my ($value, $max_value) = @_;
+    if ($value == 0) {
+        return '0px';
+    } else {
+        return sprintf('%.0f%%; min-width: 1px', 100.*$value/$max_value);
+    }
+}
+
+sub add_unit {
+    my $value = shift;
+    return '' unless $value;
+    my @units = qw(bp kb Mb Gb Tb);
+    while ($value >= 1000) {
+        $value /= 1000;
+        shift @units;
+    }
+    return sprintf('%.1f&nbsp;%s', $value, $units[0]);
+}
 
 sub fetch_pairwise_input {
   my ($self, $mlss) = @_;
@@ -467,7 +610,11 @@ sub fetch_pairwise_input {
        $non_ref_dna_collection_config = eval $string_non_ref_dna_collection_config;
     }
  
-    $results->{'num_blocks'} = $num_blocks;
+    $results->{'num_blocks'}    = $num_blocks;
+    $results->{'num_chains'}    = [map {$mlss->get_value_for_tag('num_chains_blocks_'.($_->[0]), 0)} @window_desc];
+    $results->{'size_chains'}   = [map {$mlss->get_value_for_tag('totlength_chains_blocks_'.($_->[0]), 0)} @window_desc];
+    $results->{'num_nets'}      = [map {$mlss->get_value_for_tag('num_nets_blocks_'.($_->[0]), 0)} @window_desc];
+    $results->{'size_nets'}     = [map {$mlss->get_value_for_tag('totlength_nets_blocks_'.($_->[0]), 0)} @window_desc];
     
     $ref_results->{'name'}                    = $ref_genome_db->name;
     $ref_results->{'assembly'}                = $ref_genome_db->assembly;
@@ -545,6 +692,17 @@ sub fetch_pairwise_input {
     }
   
   return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
+}
+
+sub fetch_multiple_input {
+    my ($self, $mlss) = @_;
+
+    my $results;
+    $results->{'tot_num_blocks'}= $mlss->get_value_for_tag('num_blocks');
+    $results->{'num_blocks'}    = [map {$mlss->get_value_for_tag('num_blocks_'.($_->[0]), 0)} @window_desc];
+    $results->{'size_blocks'}   = [map {$mlss->get_value_for_tag('totlength_blocks_'.($_->[0]), 0)} @window_desc];
+
+    return ($results);
 }
 
 1;

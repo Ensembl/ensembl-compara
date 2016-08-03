@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,7 +85,7 @@ sub markup_conservation {
     }
   }
   
-  $config->{'key'}->{'difference'} = 1 if $difference;
+  $config->{'key'}->{'other'}{'difference'} = 1 if $difference;
 }
 
 sub content {  
@@ -181,8 +182,8 @@ sub content {
     );
   } 
 
-  $html .= $self->content_sub_slice($slice, \@aligned_slices, $defaults);
-
+  my ($seq,$config) = $self->_get_sequence($slice,\@aligned_slices,$defaults);
+  $html .= $self->build_sequence($seq,$config,1);
   $html .= $self->_info('Notes', $info) if $info;
 
   return $html;

@@ -164,10 +164,13 @@ sub hashify_checksum_file {
 sub get_checksum_file {
   my ($dir) = @_;
 
+  my $inst = "cat";
+  my $mime = qx(file -b --mime-type $BASE$dir/CHECKSUMS);
+  $inst = "zcat" if $mime =~ m!application/x-gzip!;
   my $in = "";
   {
     local $/ = undef;
-    open(CHECKSUMS,"ssh ensweb-1-19 zcat $BASE$dir/CHECKSUMS |") or
+    open(CHECKSUMS,"ssh ensweb-1-19 $inst $BASE$dir/CHECKSUMS |") or
       die "Cannot read checksums: $!";
     $in = <CHECKSUMS>;
     close CHECKSUMS;

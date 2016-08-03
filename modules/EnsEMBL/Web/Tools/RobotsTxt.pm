@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +49,6 @@ sub create {
     push @lines, _lines("Disallow", qw(*/*view));
   
     #other misc views google bot hits
-    push @lines, _lines("Disallow", qw(/id/));
     push @lines, _lines("Disallow", qw(/*/psychic));
   
     foreach my $row (('A'..'Z','a'..'z')){
@@ -67,10 +67,6 @@ sub create {
   
     # Doxygen
     push @lines, _lines("Disallow", "/info/docs/Doxygen");
-  
-    if (-e "$root/sitemaps/sitemap-index.xml") {
-      push @lines, _lines("Sitemap", "http://www.ensembl.org/sitemap-index.xml");
-    }
   
     push @lines, _lines("User-agent", "W3C-checklink");
     push @lines, _lines("Allow", "/info");

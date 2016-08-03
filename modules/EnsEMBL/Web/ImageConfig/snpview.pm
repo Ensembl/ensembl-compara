@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,7 +27,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    sortable_tracks => 1,  # allow the user to reorder tracks
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     opt_halfheight  => 1,  # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines       => 1,  # draw registry lines
   });
@@ -86,12 +87,12 @@ sub init {
   );
  
   $self->modify_configs(
-    [ 'gene_legend', 'regulatory_features_core', 'regulatory_features_non_core', 'functional_dna_methylation' ],
+    [qw(gene_legend seg_features reg_feats_core reg_feats_non_core functional_dna_methylation)],
     { display => 'off', menu => 'no' }
   );
 
   $self->modify_configs(
-    [ 'variation_feature_variation', 'variation_set_Phenotype-associated variations', 'regulatory_features', 'functional_other_regulatory_regions' ],
+    [ 'variation_feature_variation', 'variation_set_Phenotype-associated variations', 'regbuild', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
   );
   

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +49,7 @@ sub content {
     $fieldset->add_field({'type'=>'checkbox', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @urls;
   }
 
-  $fieldset->add_notes("You have no temporary data sources to save. Click on 'Add your data' in the left-hand menu to add sources.") unless $has_data;
+  $fieldset->add_notes("You have no temporary data sources to save. Click on 'Custom tracks' in the left-hand menu to add sources.") unless $has_data;
 
   return $form->render;
 }

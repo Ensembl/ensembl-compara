@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +21,10 @@ package EnsEMBL::Web::ZMenu::ComparaTreeNode;
 
 use strict;
 
+use LWP::Simple qw($ua head);
 use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
-use EnsEMBL::Web::File::Dynamic;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -121,7 +122,7 @@ sub content {
     order => 13
   }); 
   
-  my $action = 'Web/ComparaTree' . ($cdb =~ /pan/ ? '/pan_compara' : '');
+  my $action = 'Web/ComparaTree';
 
   if (not $is_supertree) {
 
@@ -137,11 +138,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 8,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => $self->build_link('Component', $hub->type, $action, $collapse)
     });
   }
 
@@ -157,11 +154,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 10,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => $self->build_link('Component', $hub->type, $action, $collapse)
     });
   }
   
@@ -214,11 +207,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 11,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       }); 
     }
   } else {
@@ -301,11 +290,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 7,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       });
     } else {
       my $collapse = join ',', $node_id, keys %collapsed_ids;
@@ -317,11 +302,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 9,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => $self->build_link('Component', $hub->type, $action, $collapse)
       });
     }
     
@@ -357,20 +338,18 @@ sub content {
   
     ## Build URL for data export 
     my $gene_name;
-    my $gene = $self->object->Obj;
-    my $dxr    = $gene->can('display_xref') ? $gene->display_xref : undef;
-
+    my $gene      = $self->object->Obj;
+    my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
     my $gene_name = $hub->species eq 'Multi' ? $hub->param('gt') : $dxr ? $dxr->display_id : $gene->stable_id;
-    
-    my $params = {
-                'type'      => 'DataExport',
-                'action'    => 'GeneTree',
-                'data_type' => 'Gene',
-                'component' => 'ComparaTree',
-                'gene_name' => $gene_name,
-                'align'     => 'tree',
-                'node'      => $node_id,
-                };
+    my $params    = {
+                      'type'      => 'DataExport',
+                      'action'    => 'GeneTree',
+                      'data_type' => 'Gene',
+                      'component' => 'ComparaTree',
+                      'gene_name' => $gene_name,
+                      'align'     => 'tree',
+                      'node'      => $node_id,
+                    };
 
     $self->add_entry({
       type        => 'Export sub-tree',
@@ -389,52 +368,76 @@ sub content {
       order       => 15,
     }); 
 
-    # Jalview
-    my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
+    # Get wasabi files if found in session store
+    my $gt_id               = $node->tree->stable_id;
+    my $wasabi_session_key  = $gt_id . "_" . $node_id;
+    my $wasabi_session_data = $hub->session->get_data(type=>'tree_files', code => 'wasabi');
+
+    my ($alignment_file, $tree_file, $link);
+    if ($wasabi_session_data->{$wasabi_session_key}) {
+      $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
+
+      # Create wasabi url to load from their end
+      $link = sprintf (
+                        '/wasabi/wasabi.htm?tree=%s',
+                        uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
+                      );
+    }
+    else {
+      my $rest_url = $hub->species_defs->ENSEMBL_REST_URL;
+
+      # Fall back to file generation if REST fails.
+      # To make it work for e! archives
+      $ua->timeout(10);
+
+      my $is_success = head($rest_url);
+      if ($is_success) {
+        $rest_url .= sprintf('/genetree/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s',
+                     $gt_id,
+                     $node_id);
+
+        if ($hub->wasabi_status) {
+          $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
+            'URL' => uri_escape($rest_url)
+          });
+        }
+      }
+      else {
+        my $filegen_url = $hub->url('Json', {
+                            type => 'GeneTree', 
+                            action => 'fetch_wasabi',
+                            node => $node_id, 
+                            gt => $gt_id, 
+                            treetype => 'json'
+                          });
+
+        $link = sprintf (
+                          '/wasabi/wasabi.htm?filegen_url=%s',
+                          uri_escape($filegen_url)
+                        );
+      }
+    }
+
+    # Wasabi Tree Link
     $self->add_entry({
       type       => 'View sub-tree',
-      label      => 'Expand for Jalview',
-      link_class => 'expand',
+      label      => $link ? 'View in Wasabi' : 'Not available' ,
+      link_class => 'popup',
       order      => 16,
-      link       => $hub->url({
-        type     => 'ZMenu',
-        action   => 'Gene',
-        function => 'Jalview',
-        file     => uri_escape($url_align),
-        treeFile => uri_escape($url_tree)
-      })
+      link       => $link || ''
     });
   }
 }
 
-# Takes a compara tree and dumps the alignment and tree as text files.
-# Returns the urls of the files that contain the trees
-sub dump_tree_as_text {
-  my $self = shift;
-  my $tree = shift || die 'Need a ProteinTree object';
-  
-  my $var;
 
-  my %args = (
-                'hub'             => $self->hub,
-                'sub_dir'         => 'gene_tree',
-                'input_drivers'   => ['IO'],
-                'output_drivers'  => ['IO'],
-              );
-
-  my $file_fa = EnsEMBL::Web::File::Dynamic->new(extension => 'fa', %args);
-  my $file_nh = EnsEMBL::Web::File::Dynamic->new(extension => 'nh', %args);
-
-  my $format  = 'fasta';
-  my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
-  my $aio     = Bio::AlignIO->new(-format => $format, -fh => IO::String->new($var));
-  
-  $aio->write_aln($align); # Write the fasta alignment using BioPerl
-  
-  $file_fa->write($var);
-  $file_nh->write($tree->newick_format('full_web'));
-  
-  return ($file_fa->read_url, $file_nh->read_url);
+sub build_link{
+  my ($self, $component, $type, $action, $collapse) = @_;
+    
+  return $self->hub->url($component, {
+     type     => $type,
+     action   => $action,
+     collapse => $collapse 
+  });
 }
 
 1;

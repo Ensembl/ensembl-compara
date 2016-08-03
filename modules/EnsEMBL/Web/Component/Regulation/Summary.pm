@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,19 +61,34 @@ sub content {
                                         $object->bound_end);
 
   my %active;
-  my $all_objs = $object->fetch_all_objs;
-  foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ) {
-    next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
-    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence == 1;
-  }
-  my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
+  my $reg_feat = $object->fetch_by_stable_id;
+  my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
 
+  foreach my $ag (@{$active_epigenomes}) {
+    $active{$ag->display_label} = 1;
+  }
+  my $num_active = scalar( @{$active_epigenomes});
+
+  my $show        = $self->hub->get_cookie_value('toggle_epigenomes_list') eq 'open';
   my @class = ($object->feature_type->name);
+
+  my $epigenome_count = map { $_ > 0 } values %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}; 
 
   $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  $summary->add_row('Active in', sprintf('<p>%s/%s epigenomes - <a title="Click to show list of epigenomes" rel="epigenomes_list" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p>
+                                          <div class="epigenomes_list twocol-cell">
+                                            <div class="toggleable" style="font-weight:normal;%s">
+                                              <ul>%s</ul>
+                                            </div>
+                                          </div>',
+                                          $num_active, $epigenome_count, 
+                                          $show ? 'open' : 'closed',
+                                          $show ? 'Hide' : 'Show',
+                                          $show ? '' : 'display:none',
+                                          join('', map "<li>$_</li>", sort {lc($a) cmp lc($b)} keys %active)
+                                          ));
 
   my $nav_buttons = $self->nav_buttons;
   return $nav_buttons.$summary->render;

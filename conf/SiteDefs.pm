@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 84;
-our $ARCHIVE_VERSION           = 'Mar2016';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'March 2016';
+our $ENSEMBL_VERSION           = 85;
+our $ARCHIVE_VERSION           = 'Jul2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'July 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -132,6 +132,11 @@ foreach my $k (sort { $APRIO{$a} <=> $APRIO{$b} } keys %ALIST) {
   }
 }
 
+# % 5' and 3' flanking region for images
+# Currently used for region comparison and location view
+our $FLANK5_PERC = 0.02;
+our $FLANK3_PERC = 0.02;
+
 # Needed for parsing BAM files
 our ($UDC_CACHEDIR, $HTTP_PROXY);
 
@@ -164,6 +169,7 @@ our $ENSEMBL_DEBUG_JS            = 0; # change these to 1 to prevent js minifica
 our $ENSEMBL_DEBUG_CSS           = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_IMAGES        = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_NOCACHE       = 0; # disable even in-run caches
+our $ENSEMBL_BOOK_DEBUG          = 0; # change this to 1,2 or 3 to get required level of EnsEMBL::Web::Query debug info
 our $ENSEMBL_SKIP_RSS            = 0; # set to 1 in sandboxes to avoid overloading blog
 
 our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
@@ -171,6 +177,8 @@ our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
 our $ENSEMBL_MART_ENABLED      = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
+
+our $UPLOAD_SIZELIMIT_WITHOUT_INDEX = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 
 # ENSEMBL_API_VERBOSITY: 
 #    0 OFF NOTHING NONE
@@ -336,7 +344,7 @@ our $OBJECT_TO_SCRIPT = {
   Phenotype           => 'Page',
   Experiment          => 'Page',
 
-  Info                => 'AltPage',
+  Info                => 'Page',
   Search              => 'Page',
   
   UserConfig          => 'Modal',
@@ -623,7 +631,8 @@ Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 LICENSE
                                                                                 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

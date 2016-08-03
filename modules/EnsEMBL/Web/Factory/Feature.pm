@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -282,27 +283,6 @@ sub _create_ProteinAlignFeature {
   $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) if $genes;
   
   return $features;
-}
-
-sub create_UserDataFeature {
-  my ($self, $logic_name) = @_;
-  my $hub      = $self->hub;
-  my $dba      = $hub->database('userdata');
-  my $features = [];
-  
-  return [] unless $dba;
-
-  $dba->dnadb($self->database('core'));
-
-  ## Have to do the fetch per-chromosome, since API doesn't have suitable call
-  my $chrs = $self->species_defs->ENSEMBL_CHROMOSOMES;
-  
-  foreach my $chr (@$chrs) {
-    my $slice = $self->database('core')->get_SliceAdaptor->fetch_by_region(undef, $chr);
-    push @$features, @{$dba->get_adaptor('DnaAlignFeature')->fetch_all_by_Slice($slice, $logic_name)} if $slice;
-  }
-  
-  return { UserDataAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($hub, @$features) };
 }
 
 sub _create_Gene {

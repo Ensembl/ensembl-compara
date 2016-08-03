@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,8 +66,6 @@ sub form_fields {
   my $self = shift;
   my $fields = {};
   
-  my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
- 
   $fields->{'collapsability'} = {
                                   type   => 'DropDown',
                                   select => 'select',
@@ -82,8 +81,10 @@ sub form_fields {
 
   my %other_clustersets;
   if ($self->hub->core_object('gene')) {
-    my $tree = $self->hub->core_object('gene')->get_GeneTree;
-    my $adaptor = $self->hub->database('compara')->get_adaptor('GeneTree');
+    my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
+    my $cdb = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
+    my $tree = $self->hub->core_object('gene')->get_GeneTree($cdb);
+    my $adaptor = $self->hub->database($cdb)->get_adaptor('GeneTree');
     %other_clustersets = map {$_->clusterset_id => 1} @{$adaptor->fetch_all_linked_trees($tree->tree)};
     $other_clustersets{$tree->tree->clusterset_id} = 1;
     delete $other_clustersets{default};

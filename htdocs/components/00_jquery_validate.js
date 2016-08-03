@@ -1,12 +1,13 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * 
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +16,14 @@
  */
 
 /*
- * This is based loosely on the jQuery validation plugin 1.6 available at 
+ * This is based loosely on the jQuery validation plugin 1.6 available at
  * http://bassistance.de/jquery-plugins/jquery-plugin-validation/
  * http://docs.jquery.com/Plugins/Validation
- * 
+ *
  * I wrote my own version after it became too frustrating to customise for usage in EnsEMBL
  * This plugin is much less customisable, but hey, it does what we want and I'm not putting
  * it out on the web.
- * 
+ *
  * Simon Brent
  */
 
@@ -33,12 +34,12 @@ $.extend($.fn, {
     return this.each(function () {
       if (this.nodeName === 'FORM') {
         var validator = $(this).data('validator');
-        
+
         if (!validator) {
           validator = new $.validator(options, this);
-          $(this).data('validator', validator); 
+          $(this).data('validator', validator);
         }
-        
+
         validator.validateInputs(null, 'initial');
       } else {
         if (this.nodeName.match(/SELECT|INPUT|TEXTAREA/)) {
@@ -54,7 +55,7 @@ $.extend($.fn, {
 
 $.validator = function (options, form) {
   var validator = this;
-  
+
   this.settings      = $.extend({}, $.validator.defaults, options);
   this.rules         = this.settings.rules;
   this.tests         = this.settings.tests; // Precompiled regular expressions
@@ -62,39 +63,39 @@ $.validator = function (options, form) {
   this.inputs        = $('input[type="text"], input[type="password"], input[type="file"], textarea, select', form);
   this.submitButtons = $('input[type="submit"]', form);
   this.result        = true;
-  
+
   $(form).on('submit.validate', function (e) {
     validator.result = true;
     validator.validateInputs(null, 'showError');
-    
+
     if (!validator.result) {
       e.stopImmediatePropagation();
       e.preventDefault();
     }
   });
-  
+
   this.inputs.each(function () {
     var el    = $(this);
     var input = { valid: true };
-    
+
     if (this.className) {
       if (el.hasClass(validator.settings.requiredClass)) {
         input.required = true;
       }
-      
+
       var rule = this.className.match(/.*\b_(\w+)\b.*/);
-      
+
       if (rule) {
         input.rule = rule[1];
-        
+
         var min = this.className.match(/\bmin_(.+)\b/);
         var max = this.className.match(/\bmax_(.+)\b/);
         var def = this.className.match(/\bdefault_([^\s]+)\b/);
-        
+
         if (min) {
           input.min = parseFloat(min[1], 10);
         }
-        
+
         if (max) {
           input.max = parseFloat(max[1], 10);
         }
@@ -104,20 +105,20 @@ $.validator = function (options, form) {
         }
       }
     }
-    
+
     el.data(input);
-    
+
     el = null;
   }).on({
-    'keyup.validate':  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
-    'change.validate': function ()  { validator.validateInputs($(this), 'delay'); },
-    'blur.validate':   function ()  { validator.validateInputs($(this), 'showError'); }
+    'keyup.validate':  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay', 'keyup'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
+    'change.validate': function ()  { validator.validateInputs($(this), 'delay', 'change'); },
+    'blur.validate':   function ()  { validator.validateInputs($(this), 'showError', 'blur'); }
   });
-  
+
   form = null;
 };
 
-$.extend($.validator, {  
+$.extend($.validator, {
   defaults: {
     validClass:    'valid',
     invalidClass:  'invalid',
@@ -149,58 +150,59 @@ $.extend($.validator, {
       url:         'Please enter a valid URL'
     }
   },
-  
+
   prototype: {
-    validateInputs: function (inputs, flag) {
+    validateInputs: function (inputs, flag, eventType) {
       inputs = inputs || this.inputs;
-      
+
       var validator = this;
-      
+
       var setClass = {
         'true':  function (el) { $(el).removeClass(validator.settings.invalidClass).addClass(validator.settings.validClass); },
         'false': function (el) { $(el).removeClass(validator.settings.validClass).addClass(validator.settings.invalidClass); },
         'null':  function (el) { $(el).removeClass(validator.settings.validClass + ' ' + validator.settings.invalidClass);   }
       };
-      
+
       function validate() {
         var isValid = true;
         var i;
-        
+
         inputs.each(function () {
           var el    = $(this);
           var input = $.extend({}, el.data());
+          var val   = this.value;
 
           if (validator.trim.indexOf(input.rule) >= 0) {
-            this.value = this.value.trim();
+            val = val.trim();
           }
 
-          if (this.value === '' && ('default' in input)) {
-            this.value = input['default'];
+          if (val === '' && ('default' in input)) {
+            val = input['default'];
           }
 
-          var state = (flag === 'initial' || !input.required) && !this.value ? null :                                       // Not required and no value - do nothing. On initial run, ignore empty fields
-                      input.rule && validator.rules[input.rule] ? validator.rules[input.rule].call(validator, this.value) : // Validate against rule
-                      input.rule && validator.tests[input.rule] ? validator.tests[input.rule].test(this.value) :            // Validate against test
-                      input.required ? !!this.value : null;                                                                 // No rule - check if required
-          
+          var state = (flag === 'initial' || !input.required) && !val ? null :                                       // Not required and no value - do nothing. On initial run, ignore empty fields
+                      input.rule && validator.rules[input.rule] ? validator.rules[input.rule].call(validator, val) : // Validate against rule
+                      input.rule && validator.tests[input.rule] ? validator.tests[input.rule].test(val) :            // Validate against test
+                      input.required ? !!val : null;                                                                 // No rule - check if required
+
           if (state && input.min) {
-            state = parseFloat(this.value, 10) >= input.min;
+            state = parseFloat(val, 10) >= input.min;
           }
-          
+
           if (state && input.max) {
-            state = parseFloat(this.value, 10) <= input.max;
+            state = parseFloat(val, 10) <= input.max;
           }
-          
+
           setClass[state](this);
           el.data('valid', state);
-          
+
           if (state === false) {
-            if (input.required && !this.value) {
+            if (input.required && !val) {
               input.rule = 'required';
             }
-            
+
             var message = validator.settings.messages[input.rule];
-            
+
             if (input.rule.match(/int$/)) {
               if (input.min && input.max) {
                 message = 'Please enter an integer between ' + input.min + ' and ' + input.max;
@@ -208,23 +210,23 @@ $.extend($.validator, {
                 message = 'Please enter an integer (' + (input.min ? 'min' : 'max') + 'imum ' + (input.min || input.max) + ')';
               }
             }
-            
+
             if (!input.error) {
               input.error = {
                 rule: input.rule,
-                el: $('<label>', { 
-                  'class': validator.settings.invalidClass, 
-                  'for':   this.id, 
+                el: $('<label>', {
+                  'class': validator.settings.invalidClass,
+                  'for':   this.id,
                   html:    message
                 }).hide().appendTo(el.parent())
               };
-              
+
               el.data('error', input.error);
             } else if (input.error.rule !== input.rule) {
               input.error.el.html(message);
               input.error.rule = input.rule;
             }
-            
+
             if (flag === 'showError') {
               input.error.el.css('display', 'inline');
             }
@@ -232,27 +234,31 @@ $.extend($.validator, {
             input.error.el.remove();
             el.data('error', false);
           }
-          
+
+          if (eventType !== 'keyup' && val !== this.value) { // change the value of the field if we have changed it
+            this.value = val;
+          }
+
           el = null;
         });
-        
+
         for (i in validator.inputs.toArray()) {
           if ($(validator.inputs[i]).data('valid') === false) {
             isValid = false;
             break;
           }
         }
-        
+
         if (typeof validator.settings.validate === 'function') {
           isValid = validator.settings.validate.call(validator, isValid, inputs, flag);
         }
-        
+
         if (isValid) {
           validator.submitButtons.prop('disabled', false).removeClass('disabled');
         } else {
           validator.submitButtons.prop('disabled', true).addClass('disabled');
         }
-        
+
         if (!isValid) {
           validator.result = false;
         }

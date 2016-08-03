@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +35,7 @@ sub populate_tree {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   
-  $self->create_node('Summary', 'Summary',
+  my $summary_menu = $self->create_node('Summary', 'Summary',
     [qw(
       gene_summary  EnsEMBL::Web::Component::Gene::GeneSummary
       navbar        EnsEMBL::Web::Component::ViewNav
@@ -43,28 +44,23 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
 
-  $self->create_node('Splice', 'Splice variants',
+  $summary_menu->append($self->create_node('Splice', 'Splice variants',
     [qw( image EnsEMBL::Web::Component::Gene::SpliceImage )],
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
-  );
+  ));
 
-  $self->create_node('TranscriptComparison', 'Transcript comparison',
+  $summary_menu->append($self->create_node('TranscriptComparison', 'Transcript comparison',
     [qw(
       select EnsEMBL::Web::Component::Gene::TranscriptComparisonSelector
       seq    EnsEMBL::Web::Component::Gene::TranscriptComparison
     )],
     { 'availability' => 'gene multiple_transcripts not_rnaseq' }
-  );
+  ));
 
-  $self->create_node('Evidence', 'Supporting evidence',
-    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
-    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
-  );
-
-  $self->create_node('Alleles', 'Gene alleles',
+  $summary_menu->append($self->create_node('Alleles', 'Gene alleles',
                      [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
                      { 'availability' => 'core has_alt_alleles', 'concise' => 'Gene Alleles' }
-                   );
+                   ));
 
   my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
@@ -78,41 +74,6 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
-  $self->create_node('Matches', 'External references',
-    [qw( 
-      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
-    )],
-    { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
-  );
-
-  $self->create_node('Regulation', 'Regulation',
-    [qw(
-      regulation EnsEMBL::Web::Component::Gene::RegulationImage
-      features   EnsEMBL::Web::Component::Gene::RegulationTable
-    )],
-    { 'availability' => 'regulation not_patch not_rnaseq' }
-  );
-
-  # get all ontologies mapped to this species
-  my $go_menu = $self->create_submenu('Ontologies', 'Ontologies');
-  my %olist   = map {$_ => 1} @{$species_defs->SPECIES_ONTOLOGIES || []};
-
-  if (%olist) {
-    # get all ontologies available in the ontology db
-    my %clusters = $species_defs->multiX('ONTOLOGIES');
-
-    # get all the clusters that can generate a graph
-    my @clist = grep {$olist{$clusters{$_}->{db}}} sort {$clusters{$a}->{db} cmp $clusters{$b}->{db}} keys %clusters;    # Find if this ontology has been loaded into ontology db
-
-    foreach my $oid (@clist) {
-      my $cluster = $clusters{$oid};
-
-      (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
-
-      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2 }));
-    }
-  }
-    
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core'}
@@ -176,8 +137,28 @@ sub populate_tree {
   ));
   
   $compara_menu->append($fam_node);
-  
-	$self->create_node('Phenotype',  'Phenotype',
+
+  # get all ontologies mapped to this species
+  my $go_menu = $self->create_submenu('Ontologies', 'Ontologies');
+  my %olist   = map {$_ => 1} @{$species_defs->SPECIES_ONTOLOGIES || []};
+
+  if (%olist) {
+    # get all ontologies available in the ontology db
+    my %clusters = $species_defs->multiX('ONTOLOGIES');
+
+    # get all the clusters that can generate a graph
+    my @clist = grep {$olist{$clusters{$_}->{db}}} sort {$clusters{$a}->{db} cmp $clusters{$b}->{db}} keys %clusters;    # Find if this ontology has been loaded into ontology db
+
+    foreach my $oid (@clist) {
+      my $cluster = $clusters{$oid};
+
+      (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
+
+      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2 }));
+    }
+  }
+
+  $self->create_node('Phenotype',  'Phenotypes',
     [qw(
       phenotype EnsEMBL::Web::Component::Gene::GenePhenotype
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
@@ -198,7 +179,7 @@ sub populate_tree {
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
-	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variants',
+  $var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variants',
     [qw(
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable
@@ -206,14 +187,38 @@ sub populate_tree {
     { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
-  my $ext_menu = $self->create_submenu('ExternalData', 'External data');
-  $ext_menu->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
+  $self->create_node('ExpressionAtlas', 'Gene expression',
     [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
     { 'availability'  => 'gene has_gxa' }
-  ));
-  
+  );
+
+  $self->create_node('Regulation', 'Regulation',
+    [qw(
+      regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features   EnsEMBL::Web::Component::Gene::RegulationTable
+    )],
+    { 'availability' => 'regulation not_patch not_rnaseq' }
+  );
+
+  $self->create_node('Matches', 'External references',
+    [qw( 
+      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
+    )],
+    { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
+  );
+
+  $self->create_node('Evidence', 'Supporting evidence',
+    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
+    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
+  );
+
+  $self->create_node('Evidence', 'Supporting evidence',
+    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
+    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
+  );
+
   my $history_menu = $self->create_submenu('History', 'ID History');
-  
+
   $history_menu->append($self->create_node('Idhistory', 'Gene history',
     [qw(
       display    EnsEMBL::Web::Component::Gene::HistoryReport
@@ -227,6 +232,8 @@ sub populate_tree {
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
+
+
 }
 
 1;

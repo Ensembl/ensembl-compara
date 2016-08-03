@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -218,13 +219,16 @@ sub configure {
   my $assume_valid = 0;
   $assume_valid = 1 if $hub->script eq 'Component';
   my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function,$assume_valid));
+  my $template;
   
   if ($node) {
     $self->node    = $node;
     $self->command = $node->data->{'command'};
     $self->filters = $node->data->{'filters'};
+    $template      = $node->data->{'template'} || $configuration->default_template;
   }
-  
+  $hub->template = $template || 'Legacy';  
+
   if ($hub->object_types->{$hub->type}) {
     $hub->components = $configuration->get_configurable_components($node);
   } elsif ($self->request eq 'modal') {

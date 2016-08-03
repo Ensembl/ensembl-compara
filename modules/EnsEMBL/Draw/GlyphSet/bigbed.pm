@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,13 +69,16 @@ sub get_data {
     ## Don't try and scale if we're just doing a zmenu!
     my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
+                    'action'          => $self->{'my_config'}->get('zmenu_action'), 
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
+                    'drawn_strand'    => $self->strand,
                     'strand_to_omit'  => $strand_to_omit,
                     'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                    'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
                     };
 
     ## Also set a default gradient in case we need it
@@ -94,7 +98,18 @@ sub get_data {
     ## Omit individual feature links if this glyphset has a clickable background
     #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
+    ## Some, very compact, zoomed-out styles only need a few of the
+    ## features. We need to make sure that they receive no more than these
+    ## as to attempt to retrieve them all causes us to run out of memory.
+    ## There should maybe be an API for this. But without this optimisation,
+    ## for example, Age of Base takes nearly a minute to render at 600kb
+    ## and makes the apache worker large enough that it's then retired.
+    my $style = $self->my_config('style') || $self->my_config('display') || '';
     ## Parse the file, filtering on the current slice
+    $metadata->{'skip_overlap'} = ($style eq 'compact');
+
+    $self->extra_metadata($metadata);
+
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
 
@@ -111,7 +126,9 @@ sub get_data {
 
   return $data;
 }
-  
+ 
+sub extra_metadata {}
+ 
 sub render_as_alignment_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('depth', 20);

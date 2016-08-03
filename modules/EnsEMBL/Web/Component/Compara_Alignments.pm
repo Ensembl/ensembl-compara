@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +25,8 @@ use warnings;
 use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
@@ -58,6 +61,7 @@ sub content {
                   });
   return $alert_box if $error;
   my ($warnings, $image_link);
+  $image_link = '';
   
   my $html = $alert_box;
   
@@ -133,7 +137,6 @@ sub content {
           'end'     => undef, 
           'db'      => $cdb, 
           'target'  => $target_slice,
-          'image'   => $self->has_image
     });
       
     if (scalar @$slices == 1) {
@@ -147,14 +150,41 @@ sub content {
   }
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
-  #Note that slice_length is not set if need to display a target_slice_eable
+  #Note that slice_length is not set if need to display a target_slice_table
   if ($hub->param('export')) {
     return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
   }
-  elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
+  elsif ($align && $slice_length && $slice_length >= $hub->param('display_width')) {
+    # Display show/hide full text alignment button if slice_length > display_width (currently 120bp)
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
-    $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
+    $html .= $image_link . $table;
+
+    my $subslice_length = $slice_length < $self->{'subslice_length'} ? $slice_length : $self->{'subslice_length'};
+
+    my $chunked_content = $self->chunked_content($slice_length, $subslice_length, { padding => $padding, length => $slice_length },1);
+
+    $html .= qq (
+          <div class="_text_alignment_display js_panel">
+          <input type="hidden" class="panel_type" value="AlignmentText" name="panel_type_AlignmentText" />
+        );
+
+    # Show message saying you are only display a small block from the whole alignment
+    my $view_all_button = sprintf qq{<div class="display_full_message_div"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
+                          $slice_length, 
+                          $subslice_length,
+                          $hub->param('display_width');
+
+    my $info = [{
+      severity => 'info',
+      title => 'Alignment',
+      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' columns only. To display the full alignment, please click the button below.' . $view_all_button
+    }];
+
+    ($alert_box, $error) = $self->show_warnings($info);
+    return $alert_box if $error;
+
+    $html .= $alert_box . $chunked_content;
 
   } else {
     my ($table, $padding);
@@ -169,15 +199,15 @@ sub content {
       $html .= $image_link . $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
-  
-  $html .= $self->show_warnings($warnings);
- 
+
   return $html;
 
 }
 
 sub content_sub_slice {
   my $self = shift;
+
+  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
   my ($sequence, $config) = $self->_get_sequence(@_);  
   return $self->build_sequence($sequence, $config,1);
 }
@@ -217,7 +247,6 @@ sub _get_sequence {
   }
   
   if ($config->{'line_numbering'} ne 'off') {
-    $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
   
@@ -236,8 +265,15 @@ sub _get_sequence {
   }
   
   $config->{'slices'} = $slices;
-  
+
+  my $view = $self->view;
+
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+
+  foreach my $slice (@{$config->{'slices'}}) {
+    my $seq = $view->new_sequence;
+    $seq->name($slice->{'display_name'} || $slice->{'name'});
+  }
   
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
@@ -256,13 +292,11 @@ sub _get_sequence {
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $class = ($start && $end && $end == $slice_length) ? '' : ' class="no-bottom-margin"';
   
-  $config->{'html_template'} = qq{$template<pre$class>%s</pre>};
+  $self->view->output->template(qq{$template<pre$class>%s</pre>});
 
   if ($padding) {
     my @pad = split ',', $padding;
-    
-    $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_)) for keys %{$config->{'padded_species'}};
-    
+
     if ($config->{'line_numbering'} and $config->{'line_numbering'} eq 'slice') {
       $config->{'padding'}->{'pre_number'} = $pad[1];
       $config->{'padding'}->{'number'}     = $pad[2];
@@ -300,8 +334,7 @@ sub draw_tree {
     #No alignment found
     return;
   } elsif ($class =~ /pairwise/) {
-    $html = $self->info_panel("Species Tree", "<p>No tree is drawn for pairwise alignments");
-    return $html;
+    return;
   }
 
   $image_config->set_parameters({
@@ -405,7 +438,8 @@ sub get_slice_table {
   my $hub             = $self->hub;
   my $primary_species = $hub->species;
   
-  my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
+  my $table_rows = '';
+  $_ = 0 for my ($species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
   foreach (@$slices) {
     my $species = $_->{'display_name'} || $_->{'name'};
@@ -417,7 +451,7 @@ sub get_slice_table {
       type    => 'Location',
       action  => 'View'
     );
-    
+
     $url_params{'__clear'} = 1 unless $_->{'name'} eq $primary_species;
 
     $species_padding = length $species if $return_padding && length $species > $species_padding;
@@ -609,13 +643,13 @@ sub markup_region_change {
     
     foreach (sort {$a <=> $b} keys %{$data->{'region_change'}}) {      
       $seq->[$_]->{'class'} .= 'end ';
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? "\n" : '') . $data->{'region_change'}->{$_} if $config->{'title_display'};
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? "\n" : '') . $data->{'region_change'}->{$_} if ($config->{'title_display'}||'off') ne 'off';
     }
     
     $i++;
   }
   
-  $config->{'key'}->{'align_change'} = 1 if $change;
+  $config->{'key'}->{'other'}{'align_change'} = 1 if $change;
 }
 
 
@@ -706,6 +740,14 @@ sub initialize_export {
                         'image'   => $self->has_image
                 });
   return $self->_get_sequence($object->slice, $slices, undef, $cdb);
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::ComparaAlignments->new(
+    $self->hub
+  );
 }
 
 1;

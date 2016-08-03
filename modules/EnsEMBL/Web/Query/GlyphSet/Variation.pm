@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::Query::GlyphSet::Variation;
 
 use strict;
@@ -5,7 +24,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-our $VERSION = 8;
+our $VERSION = 10;
 
 sub fixup {
   my ($self) = @_;
@@ -37,7 +56,7 @@ sub fixup {
 sub precache {
   return {
     '1kgindels' => {
-      loop => 'genome',
+      loop => ['genome'],
       args => {
         species => 'Homo_sapiens',
         id => 'variation_set_1kg_3',
@@ -51,10 +70,22 @@ sub precache {
         type => 'variation_set_1kg_3',
       }
     },
-    'ph-short' => {
-      loop => 'genome',
+    'variation-mouse' => {
+      loop => ['genome'],
       args => {
-        'species' => 'Homo_sapiens',
+        species => 'Mus_musculus',
+        id => 'variation_feature_variation',
+        config => {
+          no_label => 1,
+        },
+        var_db => 'variation',
+        config_type => 'contigviewbottom',
+        type => 'variation_feature_variation',
+      }
+    },
+    'ph-short' => {
+      loop => ['species','genome'],
+      args => {
         'id' => 'variation_set_ph_variants',
         'config' => {
           'no_label' => 1,
@@ -74,11 +105,15 @@ sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label a
 
 sub href {
   my ($self,$f,$args) = @_;
- 
+
+  # Fix URL encoding issue with the "<>" characters
+  my $var = $f->variation_name;
+  $var =~ s/(<|>)/_/g;
+
   return {
     species  => $args->{'species'},
     type     => 'Variation',
-    v        => $f->variation_name,
+    v        => $var,
     vf       => $f->dbID,
     vdb      => $args->{'var_db'} || 'variation',
     snp_fake => 1,
@@ -150,7 +185,7 @@ sub _plainify {
     tag => [$self->tag($f,$args)],
     feature_label => $self->feature_label($f),
     variation_name => $f->variation_name,
-    href => $self->href($f),
+    href => $self->href($f,$args),
     title => $self->title($f,$args),
     dbID => $f->dbID, # used in ZMenu, yuk!
   };    
@@ -188,7 +223,7 @@ sub fetch_features {
   my $sources = $args->{'config'}{'sources'};
   my $sets = $args->{'config'}{'sets'};
   my $set_name = $args->{'config'}{'set_name'};
-  my $var_db = $args->{'var_db'};
+  my $var_db = $args->{'var_db'} || 'variation';
   my $slice = $args->{'slice'}; 
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
@@ -219,6 +254,7 @@ sub fetch_features {
       my $short_name = ($args->{'config'}{'sets'})->[0];
       my $track_set  = $set_name;
       my $set_object = $vdb->get_VariationSetAdaptor->fetch_by_short_name($short_name);
+      return [] unless $set_object;
        
       # Enable the display of failed variations in order to display the failed variation track
       $vdb->include_failed_variations(1) if $track_set =~ /failed/i;

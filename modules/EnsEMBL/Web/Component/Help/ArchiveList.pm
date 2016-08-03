@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +35,10 @@ sub _init {
   $self->cacheable(1);
   $self->ajaxable(0);
   $self->configurable(0);
+}
+
+sub top_message {
+  return q(The following archives are available for this page:);
 }
 
 sub content {
@@ -140,7 +145,7 @@ sub content {
     my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
     push @links, map { $_ == $current ? () : $self->output_link($archives, $_, $url) } sort {$b <=> $a} keys %$archives;
   }
-  $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s</ul>', join '', @links if scalar @links;
+  $html .= sprintf '<p>%s</p><ul>%s</ul>', $self->top_message, join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
 
   return $html;

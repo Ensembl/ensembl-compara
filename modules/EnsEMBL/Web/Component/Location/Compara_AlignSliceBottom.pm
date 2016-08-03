@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,7 +60,6 @@ sub content {
   }
   
   my $image_width     = $self->image_width;
-  my $object          = $self->object || $self->hub->core_object('location');
   my $slice           = $object->slice;
   my ($slices)        = $object->get_slices({
                                               'slice' => $slice, 
@@ -106,7 +106,6 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
-  my $align = $hub->param('align');
   $image->{'export_params'} = ['align', $align];
   foreach ($hub->param) {
     push @{$image->{'export_params'}}, [$_, $hub->param($_)] if $_ =~ /^species_$align/;
@@ -121,11 +120,14 @@ sub content {
   
   $html .= $image->render;
 
-  my $alert_box = $self->check_for_align_problems({
+  my ($alert_box, $error) = $self->check_for_align_problems({
                                 'align'   => $align, 
                                 'species' => $primary_species, 
                                 'cdb'     => $hub->param('cdb') || 'compara',
                                 });
+
+  return $alert_box if $error;
+
   $html .=  $alert_box;
   
   return $html;

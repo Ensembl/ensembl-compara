@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -601,7 +602,7 @@ sub init_label {
     $config->{'hover_labels'}->{$class} = {
       header    => $name,
       desc      => $desc,
-      class     => "$class $track",
+      class     => "$class $track _track_$track",
       highlight => $track,
       component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
@@ -1349,8 +1350,9 @@ sub text_bounds {
 # This helps when, eg, we will later bump labels elsewhere, eg in the
 # gene renderer.
 sub mr_bump {
-  my ($self,$features,$show_label,$max,$strand) = @_;
+  my ($self,$features,$show_label,$max,$strand,$moat) = @_;
 
+  $moat ||= 0;
   my $pixperbp = $self->{'pix_per_bp'} || $self->scalex;
   foreach my $f (@$features) {
     my ($start,$end) = ($f->{'start'},$f->{'start'});
@@ -1369,8 +1371,8 @@ sub mr_bump {
         $end -= $overlap;
       }
     }
-    $f->{'_bstart'} = max(0,$start);
-    $f->{'_bend'} = min($end,$max);
+    $f->{'_bstart'} = max(0,$start-$moat/$pixperbp);
+    $f->{'_bend'} = min($end+$moat/$pixperbp,$max);
     if($strand and $f->{'strand'} and $strand != $f->{'strand'}) {
       $f->{'_bskip'} = 1;
     }

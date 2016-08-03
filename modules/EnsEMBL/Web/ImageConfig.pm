@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +49,7 @@ sub new {
   my $code    = shift;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
   my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
-  
+ 
   my $self = {
     hub              => $hub,
     _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
@@ -86,7 +87,11 @@ sub new {
       options     => 1,
       other       => 1,
     },
-    alignment_renderers => [
+    _legend => {'_settings' => {'max_length' => 0}},
+  };
+  
+  ## Better to duplicate arrays here than in various parts of the code
+  my @alignment_renderers = (
       'off',                  'Off',
       'as_alignment_nolabel', 'Normal',
       'as_alignment_label',   'Labels',
@@ -94,10 +99,13 @@ sub new {
       'stack',                'Stacked',
       'unlimited',            'Stacked unlimited',
       'ungrouped',            'Ungrouped',
-    ],
-    _legend => {'_settings' => {'max_length' => 0}},
-  };
-  
+                        ); 
+  my @transcript_renderers = @alignment_renderers;
+  splice @transcript_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+ 
+  $self->{'alignment_renderers'}  = \@alignment_renderers;
+  $self->{'transcript_renderers'} = \@transcript_renderers;
+
   return bless $self, $class;
 }
 
@@ -749,34 +757,17 @@ sub load_user_tracks {
       };
     }
     
-    ## Uploads that have been saved to the userdata database
+    ## Uploads that have been saved to the persistent filespace 
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
-     
-      if ($entry->analyses) {
-        ## Data saved to userdata db
-        ## TODO - remove in due course
-        foreach my $analysis (split /, /, $entry->analyses) {
-          $upload_sources{$analysis} = {
-            source_name => $name,
-            source_type => 'user',
-            assembly    => $assembly,
-            style       => $entry->style,
-          };
-        
-          $self->_compare_assemblies($entry, $session);
-        }
-      }
-      else {
-        ## New saved-to-permanent-location
-        my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
-        $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
-        $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
-        my $description = 'Data that has been saved to the web server. ';
-        my $extra_desc  = $entry->description;
-        $description   .= add_links($extra_desc) if $extra_desc;
-        my $display     = $self->check_threshold($entry->display);
-        $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
+      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
+      $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
+      $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+      my $description = 'Data that has been saved to the web server. ';
+      my $extra_desc  = $entry->description;
+      $description   .= add_links($extra_desc) if $extra_desc;
+      my $display     = $self->check_threshold($entry->display);
+      $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
@@ -790,8 +781,7 @@ sub load_user_tracks {
             description     => $description, 
             display         => $display,
             default_display => $entry->display || $default,
-        }));
-      }
+      }));
     }
   }
   
@@ -825,50 +815,6 @@ sub load_user_tracks {
     }
   }
   
-  ## And finally any saved uploads
-  ## TODO - remove once we have removed the userdata databases
-  if (keys %upload_sources) {
-    my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
-    my $dba        = $dbs->get_DBAdaptor('userdata');
-    my $an_adaptor = $dba->get_adaptor('Analysis');
-    my @tracks;
-    
-    foreach my $logic_name (keys %upload_sources) {
-      my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
-      
-      next unless $analysis;
-   
-      $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
-     
-      my ($strand, $renderers, $default) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
-      my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
-      my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
-      my $caption     = encode_entities($analysis->display_label);
-         $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
-         $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
-      
-      push @tracks, [ $logic_name, $caption, {
-        external        => 'user',
-        glyphset        => '_user_data',
-        colourset       => 'userdata',
-        sub_type        => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
-        renderers       => $renderers,
-        source_name     => $source_name,
-        logic_name      => $logic_name,
-        caption         => $caption,
-        data_type       => $analysis->module,
-        description     => $description,
-        display         => 'off',
-        default_display => $default,
-        style           => $analysis->web_data,
-        format          => $analysis->program_version,
-        strand      => $strand,
-      }];
-    }
-   
-    $menu->append($self->create_track(@$_)) for sort { lc $a->[2]{'source_name'} cmp lc $b->[2]{'source_name'} || lc $a->[1] cmp lc $b->[1] } @tracks;
-  }
- 
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
@@ -1297,6 +1243,7 @@ sub _add_htslib_track {
   ## Override default renderer (mainly used by trackhubs)
   my %options;
   $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+  $options{'strand'}  = 'b';
  
   $self->_add_file_format_track(
     format      => 'BAM',
@@ -1519,8 +1466,7 @@ sub _user_track_settings {
     $strand = 'f';
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
-    @user_renderers = @{$self->{'alignment_renderers'}};
-    splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+    @user_renderers = @{$self->{'transcript_renderers'}};
     $default = 'as_transcript_label';
   }
   else {
@@ -2787,7 +2733,6 @@ sub add_regulation_features {
   return unless $menu;
   
   my $reg_regions       = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
-  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -2834,26 +2779,42 @@ sub add_regulation_features {
       }));
     }
   }
-  
-  # Add internal methylation tracks
+
+  # Add other bigBed-based tracks 
+  my $methylation_menu  = $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   my $db_tables   = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $methylation = $db_tables->{'methylation'};
-  
-  foreach my $k (sort { $methylation->{$a}{'description'} cmp $methylation->{$b}{'description'} } keys %$methylation) {
-    $methylation_menu->append($self->create_track("methylation_$k", $methylation->{$k}{'name'}, {
-      data_id      => $k,
-      description  => $methylation->{$k}{'description'},
-      strand       => 'r',
-      nobump       => 1,
-      addhiddenbgd => 1,
-      display      => 'off',
-      renderers    => [ qw(off Off compact On) ],
-      glyphset     => 'fg_methylation',
-      colourset    => 'seq',
-    }));
+  my %file_tracks = ( 'methylation' => {'menu'      => $methylation_menu, 
+                                        'renderers' => [ qw(off Off compact On) ],
+                                        'default'   => 'compact',
+                                        'strand'    => 'r'},
+                      'crispr'      => {'menu'      => $reg_regions,
+                                        'renderers' => $self->{'transcript_renderers'},
+                                        'default'   => 'as_transcript_label',
+                                        'strand'    => 'b'},
+                    );
+ 
+  while (my ($key, $settings) = each (%file_tracks)) { 
+    my $dataset = $db_tables->{$key};
+    foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
+      (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
+      $settings->{'menu'}->append($self->create_track($key.'_'.$k, $name, {
+        data_id         => $k,
+        description     => $dataset->{$k}{'description'},
+        strand          => $settings->{'strand'},
+        nobump          => 1,
+        addhiddenbgd    => 1,
+        display         => 'off',
+        default_display => $settings->{'default'},
+        renderers       => $settings->{'renderers'},
+        glyphset        => 'fg_'.$key,
+        colourset       => 'seq',
+      }));
+    }
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
+
+
 }
 
 sub add_regulation_builds {
@@ -2862,11 +2823,10 @@ sub add_regulation_builds {
 
   return unless $menu;
 
-  my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
-  my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
-  my %fg_data           = (%$data_1, %$data_2);
+  my ($keys, $data) = $self->_merge($hashref->{'regulatory_build'});
   my $key_2             = 'Regulatory_Build';
-  my $type              = $fg_data{$key_2}{'type'};
+  my $build             = $data->{$key_2};
+  my $type              = $data->{$key_2}{'type'};
 
   return unless $type;
 
@@ -2875,10 +2835,26 @@ sub add_regulation_builds {
 
   return unless $db;
 
+  use Data::Dumper;
+
   $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
 
+  ## Main regulation track - replaces 'MultiCell'
+  $menu->append($self->create_track("regbuild", "Regulatory Build", {
+      glyphset    => 'fg_regulatory_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 0,
+      colourset   => 'fg_regulatory_features',
+      display     => 'off',
+      description => '',
+      renderers   => [qw(off Off normal On)],
+      caption     => 'Regulatory Build',
+    }));
+
   my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
+  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
@@ -2890,9 +2866,9 @@ sub add_regulation_builds {
     push @cell_lines, $name;
     $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
   }
-  @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
+  @cell_lines = sort { $a cmp $b } @cell_lines; 
  
-  my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
+  my (@renderers, %matrix_menus, %matrix_rows);
 
   # FIXME: put this in db
   my %default_evidence_types = (
@@ -2906,8 +2882,8 @@ sub add_regulation_builds {
     PolIII   => 1,
   );
 
-  if ($fg_data{$key_2}{'renderers'}) {
-    push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}};
+  if ($data->{$key_2}{'renderers'}) {
+    push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
   } else {
     @renderers = qw(off Off normal On);
   }
@@ -2921,15 +2897,17 @@ sub add_regulation_builds {
       }
     }
   }
+  
+  my @sets = qw(core non_core);
 
   foreach my $cell_line (@cell_lines) {
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
-    my $focus_sets = $db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {};
-    my @sets;
-
-    push @sets, 'core'     if scalar keys %$focus_sets && scalar keys %$focus_sets <= scalar keys %$ftypes;
-    push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
+    my $set_info;
+    $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
+    $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
+    
+    my $core_count      = scalar keys %{$set_info->{'core'}};
+    my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
 
     foreach my $set (@sets) {
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
@@ -2938,25 +2916,32 @@ sub add_regulation_builds {
         matrix => {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
+          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
           axes        => { x => 'Cell type', y => 'Evidence type' },
         }
       }];
 
       foreach (@{$all_types{$set}||[]}) {
-        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
+        if ($set_info->{$set}{$_->dbID}) {
+          $matrix_rows{$cell_line}{$set}{$_->name} ||= {  
+                            row         => $_->name, 
+                            group       => $_->class, 
+                            group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, 
+                            on          => $default_evidence_types{$_->name} 
+                          };
+        }
       }
     }
   }
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
-  # New file-based segmentation tracks
+  # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
-    $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+    $reg_segs->append($self->create_track("seg_$key", $name, {
       db          => $key,
       glyphset    => 'fg_segmentation_features',
       sources     => 'undef',
@@ -2966,33 +2951,30 @@ sub add_regulation_builds {
       colourset   => 'fg_segmentation_features',
       display     => 'off',
       description => $segs->{$key}{'desc'},
-      renderers   => [qw(off Off normal On)],
+      renderers   => [qw(off Off compact On)],
       celltype    => $segs->{$key}{'web'}{'celltype'},
-      caption     => "Reg. Segs. ($segs->{$key}{'web'}{'anntype'})",
+      seg_name    => $segs->{$key}{'web'}{'seg_name'},
+      caption     => "Reg. Segs.",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section     => $segs->{$key}{'web'}{'celltypename'},
       height      => 4,
     }));
   }
+
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my ($label, %evidence_tracks);
+    my $label     = ": $cell_line";
+    my %evidence_tracks;
     
-    if ($cell_line eq 'MultiCell') {  
-      $display = $fg_data{$key_2}{'display'} || 'off';
-    } else {
-      $label = ": $cell_line";
-    }
-    
-    $prev_track = $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
+    $reg_feats->append($self->create_track($track_key, "Activity in $cell_names{$cell_line}", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
       strand      => 'r',
-      depth       => $fg_data{$key_2}{'depth'}     || 0.5,
-      colourset   => $fg_data{$key_2}{'colourset'} || $type,
-      description => "Reg. Feats. $cell_names{$cell_line}",
+      depth       => $data->{$key_2}{'depth'}     || 0.5,
+      colourset   => $data->{$key_2}{'colourset'} || $type,
+      description => "Activity in epigenome $cell_names{$cell_line}",
       display     => $display,
       renderers   => \@renderers,
       cell_line   => $cell_line,
@@ -3001,32 +2983,11 @@ sub add_regulation_builds {
       caption     => "Regulatory Features",
     }));
 
-    # Old database-based segementation tracks
-    if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
-        db          => $key,
-        glyphset    => 'fg_segmentation_features',
-        sources     => 'undef',
-        strand      => 'r',
-        labels      => 'on',
-        depth       => 0,
-        colourset   => 'fg_segmentation_features',
-        display     => 'off',
-        description => $fg_data{"seg_$cell_line"}{'description'},
-        renderers   => \@renderers,
-        cell_line   => $cell_line,
-        caption     => "Reg. Segments",
-        section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-        section     => $cell_line,
-        height      => 4,
-      }));
-    }
-
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
       strand    => 'r',
-      depth     => $fg_data{$key_2}{'depth'} || 0.5,
+      depth     => $data->{$key_2}{'depth'} || 0.5,
       colourset => 'feature_set',
       cell_line => $cell_line,
       section   => $cell_line,
@@ -3041,7 +3002,7 @@ sub add_regulation_builds {
     
     next if $params->{'reg_minimal'};
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $prev_track = $self->add_matrix({
+      $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section => $cell_line,
         matrix      => {
@@ -3053,7 +3014,7 @@ sub add_regulation_builds {
         column_data => {
           set         => $_,
           label       => "$evidence_info->{$_}{'label'}",
-          description => $fg_data{$key_2}{'description'}{$_},
+          description => $data->{$key_2}{'description'}{$_},
           %column_data
         }, 
       }, $matrix_menus{$_});
@@ -3062,6 +3023,7 @@ sub add_regulation_builds {
   
   if ($db_tables->{'cell_type'}{'ids'}) {
     $self->add_track('information', 'fg_regulatory_features_legend',   'Regulation Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });        
+    $self->add_track('information', 'fg_segmentation_features_legend',   'Segmentation Legend',          'fg_segmentation_features_legend',   { strand => 'r', colourset => 'fg_segmentation_features'   });        
     $self->add_track('information', 'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
@@ -3166,6 +3128,8 @@ sub add_sequence_variations_meta {
                                $a->{order} <=> $b->{order} || $a->{'long_name'} cmp $b->{'long_name'}
                               } @menus) {
     my $node;
+    my $track_options = $options;
+    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD)/i);
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
@@ -3179,11 +3143,26 @@ sub add_sequence_variations_meta {
       $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => $other_sources ? undef : [ $source_name ],
         description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
+      });
+
+      # Study tracks
+    } elsif ($menu_item->{'type'} eq 'study') {
+      my $study_name    = $menu_item->{'long_name'};
+      my $caption       = $menu_item->{'long_name'};
+      my $label_caption = $menu_item->{'short_name'};
+      my $description   = $hashref->{'study'}{'descriptions'}{$study_name};
+
+      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+        %$track_options,
+        caption      => $caption,
+        labelcaption => $label_caption,
+        study_name   => $study_name,
+        description  => ($description) ? $description : $study_name,
       });
 
     } elsif ($menu_item->{'type'} eq 'set') { # set type
@@ -3201,7 +3180,7 @@ sub add_sequence_variations_meta {
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
-        %$options,
+        %$track_options,
         caption      => $caption,
         labelcaption => $label_caption,
         sources      => undef,
@@ -3349,7 +3328,7 @@ sub add_phenotypes {
     caption => 'Phenotypes',
     type => undef,
     description => $track_desc.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
-  }));
+  })); 
   $p_menu->append($pf_menu);
 }
 

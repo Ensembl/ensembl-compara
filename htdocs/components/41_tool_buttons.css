@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +20,7 @@
 .tool_buttons div        { display: inline-block; }
 .tool_buttons a,
 .tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
+.tool_buttons input.disabled { background-position: 7px 50%; background-repeat: no-repeat;  padding-left: 29px; }
 .tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
 .tool_buttons .togglebutton.off { background-color: [[BUTTON_ON]]; outline: 1px outset [[BUTTON_ON]]; outline-offset: -4px; }
@@ -50,6 +52,9 @@
 .tool_buttons .add          { background-image: url(/i/16/rev/add.png);           }
 .tool_buttons .save         { background-image: url(/i/16/rev/save.png);          }
 .tool_buttons .load         { background-image: url(/i/16/rev/paste.png);         }
+.tool_buttons .enable       { background-image: url(/i/16/rev/check.png);         }
+.tool_buttons .disable      { background-image: url(/i/16/rev/cross.png);         }
+.tool_buttons .delete       { background-image: url(/i/16/rev/trash.png);         }
 .tool_buttons .list         { background-image: url(/i/16/rev/list.png);          }
 .tool_buttons .share        { background-image: url(/i/16/rev/share.png);         }
 .tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }

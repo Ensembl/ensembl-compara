@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,11 +62,12 @@ sub populate_tree {
   $self->create_node('FeedbackPreview', '', [qw(preview EnsEMBL::Web::Component::Help::FeedbackPreview)]);
   $self->create_node('Trackhub',        '', [qw(preview EnsEMBL::Web::Component::Help::Trackhub)]);
   
-  $self->create_node('EmailSent',   '', [qw(sent      EnsEMBL::Web::Component::Help::EmailSent)]);
-  $self->create_node('Results',     '', [qw(results   EnsEMBL::Web::Component::Help::Results)]);
-  $self->create_node('ArchiveList', '', [qw(archive   EnsEMBL::Web::Component::Help::ArchiveList)]);
-  $self->create_node('Permalink',   '', [qw(permalink EnsEMBL::Web::Component::Help::Permalink)]);
-  $self->create_node('View',        '', [qw(view      EnsEMBL::Web::Component::Help::View)],);
+  $self->create_node('EmailSent',       '', [qw(sent      EnsEMBL::Web::Component::Help::EmailSent)]);
+  $self->create_node('Results',         '', [qw(results   EnsEMBL::Web::Component::Help::Results)]);
+  $self->create_node('ArchiveList',     '', [qw(archive   EnsEMBL::Web::Component::Help::ArchiveList)]);
+  $self->create_node('ArchiveRedirect', '', [qw(archive   EnsEMBL::Web::Component::Help::ArchiveRedirect)]);
+  $self->create_node('Permalink',       '', [qw(permalink EnsEMBL::Web::Component::Help::Permalink)]);
+  $self->create_node('View',            '', [qw(view      EnsEMBL::Web::Component::Help::View)],);
 
   ## And command nodes
   $self->create_node('DoSearch',   '', [], { command => 'EnsEMBL::Web::Command::Help::DoSearch'   });

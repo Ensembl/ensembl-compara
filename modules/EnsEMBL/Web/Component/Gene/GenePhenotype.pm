@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -85,11 +86,15 @@ sub gene_phenotypes {
           if ($source_uc =~ /GOA/) {
             my $attribs = $pf->get_all_attributes;
             $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          } elsif($source_uc =~ /MGI/) {
+            my $marker_accession_id = $pf->marker_accession_id;
+            $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $marker_accession_id, TAX => $tax});
           }
           else {
             $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});
           }
         }
+
         my $locs = sprintf(
             '<a href="%s" class="karyotype_link">View on Karyotype</a>',
             $hub->url({
@@ -194,7 +199,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotype, disease or trait is known to be directly associated with this gene $g_name.</p>";
+    $html = "<p>No phenotype, disease or trait has been associated with this gene $g_name.</p>";
   }
   return $html;
 }

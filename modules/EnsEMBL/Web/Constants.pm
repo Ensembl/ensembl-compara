@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,8 +50,7 @@ sub ICON_MAPPINGS {
     'search'        => { 'file' => 'search.png',          'alt' => 'search',      'title' => "Search this $component"             },
     'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => "Download data from this $component" },
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
-    'userdata_add'  => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Add your data"                   },
-    'userdata_manage' => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your data"                   },
+    'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Custom tracks"                      },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
     'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config','title' => "Reset configuration"                },
     'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                  },
@@ -96,7 +96,7 @@ sub IMAGE_EXPORT_PRESETS {
                           'size'      => '1000',
                           'scale'     => '2',
                           'contrast'  => 2,
-                          'order'     => 1,
+                          'order'     => 4,
                           },
           'poster'    => {'label'     => 'Poster',
                           'desc'      => 'Very high resolution, suitable for posters and other large print uses',
@@ -105,7 +105,7 @@ sub IMAGE_EXPORT_PRESETS {
                           'size'      => '1000',
                           'scale'     => '5',
                           'contrast'  => 2,
-                          'order'     => 2,
+                          'order'     => 3,
                           },
           'projector' => {'label'     => 'Presentation',
                           'desc'      => 'Saturated image, better suited to projectors',
@@ -114,18 +114,18 @@ sub IMAGE_EXPORT_PRESETS {
                           'size'      => '1200',
                           'scale'     => '1.00',
                           'contrast'  => 2,
-                          'order'     => 3,
+                          'order'     => 2,
                           },
           'png'       => {'label'     => 'Web',
                           'desc'      => 'Standard image, suitable for web pages, blog posts, etc.',
                           'info'      => '<ul><li>PNG</li><li>Same size, resolution and colours as original image</li></ul>',
                           'format'    => 'png',
-                          'order'     => 4,
+                          'order'     => 5,
                           },
           'pdf'       => {'label'     => 'PDF file',
                           'desc'      => 'Standard image as PDF file',
                           'format'    => 'pdf',
-                          'order'     => 5,
+                          'order'     => 1,
                           },
           'custom'    => {'label'     => 'Custom image',
                           'desc'      => 'Select from a range of formats and sizes',

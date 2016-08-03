@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +36,17 @@ sub content {
   my $object    = $self->object || $self->hub->core_object('transcript');
   my $stable_id = $object->stable_id;
   my $extent    = $object->extent;
+  
+  # set up VCF if needed
+  my $vdb           = $object->Obj->adaptor->db->get_db_adaptor('variation');
+  my $species_defs  = $self->hub->species_defs;
+  my $collections   = $species_defs->ENSEMBL_VCF_COLLECTIONS;
+
+  if($collections && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($collections->{'CONFIG'});
+    $vdb->vcf_root_dir($species_defs->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($collections->{'ENABLED'});
+  }
   
   # Get two slices -  gene (4/3x) transcripts (+-EXTENT)
   foreach my $slice_type (

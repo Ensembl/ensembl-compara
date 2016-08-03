@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +23,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Document::HTML::HomeSearch;
 
 sub _init {
   my $self = shift;
@@ -33,8 +33,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new($self->hub);
-  return $search->render;
+  return '';
 }
 
 1;

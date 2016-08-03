@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +22,9 @@ package EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet;
 use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
+
+use EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub initialize {
   my ($self, $export) = @_;
@@ -51,7 +55,6 @@ sub initialize {
     export        => $export
   };
   
-  $config->{'end_number'}  = $config->{'number'};
   $config->{'last_number'} = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
   $config->{'snp_display'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
@@ -159,7 +162,6 @@ sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
   my ($data, $config) = $self->initialize(1);
-  $config->{'v_space'} = "\n";
   return ($data, $config, 1);
 }
 
@@ -319,7 +321,7 @@ sub add_variations {
       !$self->too_rare_snp($_->variation_feature,$config)
     } @transcript_variations;
   }
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   
@@ -401,30 +403,31 @@ sub add_line_numbers {
       
       $start  = $end;
       $offset = $skip = 0;
+      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
+      $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
       
       last if ($strand == 1 && $end >= $length) || ($strand == -1 && $start && $start <= $length);
     }
   }
   
+  $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
   $config->{'last_number'} = $end;
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  my $view = EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
+    $self->hub,
+  );
+  $view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  return $view;
 }
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
+  $self->view->output->template('<pre class="text_sequence exon_sequence">%s</pre>');
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
-}
-
-sub get_key {
-  return shift->SUPER::get_key($_[0], {
-    'exons/Introns' => {
-      exon0    => { class => 'e0', text => 'Non-coding exon'     },
-      exon1    => { class => 'e1', text => 'Translated sequence' },
-      intron   => { class => 'ei', text => 'Intron sequence'     },
-      utr      => { class => 'eu', text => 'UTR'                 },
-      flanking => { class => 'ef', text => 'Flanking sequence'   },
-    }
-  }, $_[2]);
 }
 
 1;

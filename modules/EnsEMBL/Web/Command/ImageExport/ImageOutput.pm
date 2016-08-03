@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,6 +66,9 @@ sub process {
   ## Create component
   my ($component, $error) = $self->object->create_component;
   my $controller;
+
+  # another terrible hack to deal with the stupid caching mechanism of view config object in hub->viewcofig and use it for hub->param calls!
+  $hub->get_viewconfig($component->id, $hub->param('data_type'), 'cache') if $hub->param('data_type');
 
   if ($error) {
     warn ">>> ERROR CREATING COMPONENT: $error";

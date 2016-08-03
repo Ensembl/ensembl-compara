@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -235,9 +236,9 @@ sub get_parsed_features {
       }
     }
     else {
-      $data->{$name} = {'features' => $track->{'features'}{1} || [], 
+      $data->{$name} = {'features' => $track->{'features'} || [], 
                         'metadata' => $track->{'metadata'} || {}};
-      push @{$data->{$name}{'features'}}, @{$track->{'features'}{-1} || []}; 
+      push @{$data->{$name}{'features'}}, @{$track->{'features'} || []}; 
     }
     
     $count++ unless ($track->{'metadata'}{'color'} || $track->{'metadata'}{'colour'});
@@ -264,7 +265,11 @@ sub get_bigwig_features {
 }
 
 sub create_user_features {
-## Deprecated - use load_user_track_data instead
+warn "############### DEPRECATED #################
+THIS METHOD WILL BE REMOVED IN RELEASE 86 - 
+USE load_user_track_data INSTEAD
+###########################################     
+";
   my $self   = shift;
   my $hub    = $self->hub;
   my $menu   = $self->get_node('user_data');

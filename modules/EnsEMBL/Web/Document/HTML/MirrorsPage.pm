@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,7 +66,7 @@ sub render {
       push @$html, sprintf('%s %s - <span class="red">YOU ARE HERE!</span>', $flag, $site);
     } else {
       push @$html, sprintf('<a href="%s">%s</a> <a href="%1$s"><strong>%s</strong></a> - %s', 
-        $mirror->{'url'},
+        $mirror->{'url'}.'?redirect=no',
         $flag,
         $mirror->{'name'},
         $mirror->{'blurb'}

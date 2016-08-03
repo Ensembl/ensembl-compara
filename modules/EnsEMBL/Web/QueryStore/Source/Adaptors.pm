@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::QueryStore::Source::Adaptors;
 
 use strict;
@@ -48,6 +67,24 @@ sub gene_adaptor {
   return $self->_get_adaptor('get_GeneAdaptor',$type||'core',$species);
 }
 
+sub transcript_adaptor {
+  my ($self,$species,$type) = @_;
+
+  return $self->_get_adaptor('get_TranscriptAdaptor',$type||'core',$species);
+}
+
+sub variation_feature_adaptor {
+  my ($self,$species) = @_;
+
+  return $self->_get_adaptor('get_VariationFeatureAdaptor','variation',$species);
+}
+
+sub transcript_variation_adaptor {
+  my ($self,$species) = @_;
+
+  return $self->_get_adaptor('get_TranscriptVariationAdaptor','variation',$species);
+}
+
 sub slice_by_name {
   my ($self,$species,$name) = @_;
 
@@ -59,6 +96,13 @@ sub gene_by_stableid {
 
   return $self->gene_adaptor($species,$type)->fetch_by_stable_id($id);
 }
+
+sub transcript_by_stableid {
+  my ($self,$species,$type,$id) = @_;
+
+  return $self->transcript_adaptor($species,$type)->fetch_by_stable_id($id);
+}
+
 
 sub compara_member {
   my ($self,$id) = @_;

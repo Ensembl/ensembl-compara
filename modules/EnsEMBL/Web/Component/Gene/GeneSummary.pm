@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -64,7 +65,7 @@ sub content {
   if (scalar @Uniprot) {
     my %temp = map { $_->primary_id, 1 } @Uniprot;
     @Uniprot = sort keys %temp;
-    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following UniProtKB identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   ## add RefSeq match info where appropriate

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +35,13 @@ sub _init {
 ## (see public-plugins/ensembl for an example data structure)
 sub _species_sets {}
 
+sub _get_all_analysed_species {
+  my ($self, $cdb) = @_;
+  $self->{"_mlss_adaptor_$cdb"} ||= $self->hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
+  my $self->{'_all_analysed_species'} ||= {map {ucfirst($_->name) => 1} @{$self->{"_mlss_adaptor_$cdb"}->fetch_all_by_method_link_type('PROTEIN_TREES')->[0]->species_set_obj->genome_dbs}};
+  return %{$self->{'_all_analysed_species'}};
+}
+
 our %button_set = ('download' => 1, 'view' => 0);
 
 sub content {
@@ -44,16 +52,17 @@ sub content {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
+  my $species_name = $species_defs->DISPLAY_NAME;
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
   );
-
+  
   my %orthologue_list;
   my %skipped;
 
-  my $mlss_adaptor = $hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
-  my %not_seen = map {ucfirst($_->name) => 1} @{$mlss_adaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0]->species_set_obj->genome_dbs};
+  my %not_seen = $self->_get_all_analysed_species($cdb);
+  
   delete $not_seen{$hub->species};
   
   foreach my $homology_type (@orthologues) {
@@ -74,7 +83,7 @@ sub content {
 
   ##--------------------------- SUMMARY TABLE ----------------------------------------
 
-  my ($species_sets, $sets_by_species, $set_order) = $self->_species_sets(\%orthologue_list, \%skipped, \%orthologue_map);
+  my ($species_sets, $sets_by_species, $set_order) = $self->_species_sets(\%orthologue_list, \%skipped, \%orthologue_map, $cdb);
 
   if ($species_sets) {
     $html .= qq{
@@ -121,8 +130,8 @@ sub content {
     { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
     { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
-    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', title => $self->get_glossary_entry('Target % id')    },
-    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  title => $self->get_glossary_entry('Query %id')      },
+    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', help => "Percentage of the orthologous sequence matching the $species_name sequence" },
+    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -165,7 +174,7 @@ sub content {
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => undef,
+          r      => $hub->create_padded_region()->{'r'} || $hub->param('r'),
           config => 'opt_join_genes_bottom=on',
         })
       ) : '';
@@ -239,8 +248,8 @@ sub content {
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
-        'Target %id' => $target,
-        'Query %id'  => $query,
+        'Target %id' => sprintf('%.2f&nbsp;%%', $target),
+        'Query %id'  => sprintf('%.2f&nbsp;%%', $query),
         'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +41,7 @@ sub render {
     my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
 
     $html = qq(<p>Alternatively to search for track hubs from within Ensembl, go to
-Region in Detail, click on 'Add your data' and select
+Region in Detail, click on 'Custom tracks' and select
 '<b>Track Hub Registry Search</b>' from the lefthand menu.
 </p>
 <p>&rarr; See the <a href="$url" class="modal_link">Track Hub Registry Search</a> for $common_name.</p>

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -142,8 +143,8 @@ sub convert_to_drawing_parameters {
     if ($object_type =~ /^(Gene|Variation|StructuralVariation)$/) {
       %url_params = (
         type      => 'ZMenu',
-        ftype     => 'Xref',
-        action    => $object_type,
+        ftype     => $object_type,
+        action    => 'Phenotype',
         $id_param => $name,
         vdb       => 'variation'
       );

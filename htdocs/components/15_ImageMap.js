@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -481,24 +482,35 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if ($(this).hasClass('pinned')) {
           return;
         }
-        // show label
-        $(this).find('.hover_label').toggle();
-        e.stopPropagation && e.stopPropagation();
+        // show/hide hover label
+        $(this).find('.hover_label')
+               .toggle()
+               .click(function(e){
+                  e.stopPropagation && e.stopPropagation();
+               });
+
+       $(document).off('.hoverMenuRemove').on('click.hoverMenuRemove', function(e) {
+          if ($(e.target).is('._label_layer')) {
+            return;
+          }
+          $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
+          $(this).off('.hoverMenuRemove');
+        });
+
       }
-    }).find('.close')
+    })
+    .find('.close')
       .on ({
         click: function(e) {
           $(this).parent().hide();
           // Remove pinned class
           $(this).siblings('._hl_pin').removeClass('on')
                  .closest('._label_layer').removeClass('pinned');
-          e.stopPropagation && e.stopPropagation();
+          e.stopPropagation(); // aviod triggering click on parent _label_layer
+          $(document).off('.hoverMenuRemove');
         }
       });
 
-    $(document).on('click', function(e) {
-      $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
-    });
 
     // apply css positions to the hover layers
     this.positionLayers();
@@ -1148,6 +1160,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         coords.clickChr   = range.chr;
         coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
         coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : Math.max(coords.clickStart,Math.floor(location));
+
+        coords.clickY     = area.a.coords[3] - coords.y;
         
         id += '_multi';
       }

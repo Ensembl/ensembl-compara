@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,11 +23,13 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+use List::MoreUtils qw(any);
+
 sub init {
   my $self = shift; 
 
   $self->set_parameters({
-    sortable_tracks => 1,  # allow the user to reorder tracks
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     opt_lines       => 1,  # draw registry lines
   });
 
@@ -61,15 +64,40 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
+
+  my @gtex_tissues = sort keys %{$self->hub->species_defs->REST_gtex_tissues||{}};
+
+  my $gtex_tissue_example = "Whole_Blood";
+  unless(any { $_ eq $gtex_tissue_example } @gtex_tissues) {
+    $gtex_tissue_example = $gtex_tissues[0];
+  }
+
+  # Should really come from REST server.
+  foreach my $tissue (sort @gtex_tissues) {
+    my $tissue_readable = $tissue;
+    $tissue_readable =~ s/_/ /g;
+    my $manplot_desc = qq(
+      Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
+      The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660. DOI: 10.1126/science. PMID: 1262110.
+    );
+    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
+      tissue => $tissue,
+      display => ($tissue eq $gtex_tissue_example)?'normal':'off',
+      strand => 'r',
+      colours     => $self->species_defs->colour('variation'),
+      description => $manplot_desc,
+    });
+  }
   
   $self->add_tracks('other',
     [ 'ruler',     '',  'ruler',     { display => 'normal', strand => 'r', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '',  'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'scalebar',  '',  'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }],
+    [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variant Legend'                                                              }],
   );
 
   $self->modify_configs(
-    [ 'reg_feats_MultiCell' ],
+    [ 'regbuild' ],
     { display => 'normal' }
   );
   
@@ -83,7 +111,7 @@ sub init {
   
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
-    { display => 'transcript_label' }
+    { display => 'collapsed_label' }
   );
   
   $self->modify_configs(

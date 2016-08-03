@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,6 +60,7 @@ sub content {
     { key => 'length',   title => 'Length (bp)',            width => '5%',  align => 'left', sort => 'numeric'        },
     { key => 'seq',      title => "Sequence ($str strand)", width => '20%', align => 'left', sort => 'none'           },
   );
+  my $idx = 0;
   # First process Ensembl regulatory features
   foreach my $feature (@reg_features){
     my $regulation_obj      = $self->new_object('Regulation', $feature, $object->__data);
@@ -74,10 +76,11 @@ sub content {
       analysis  => $analysis,
       type      => $type,
       location  => $self->get_location_link($regulation_obj),
-      seq       => $sequence,
+      seq       => qq(<a class="toggle closed toggle_link" href="#seq-$idx" rel="seq-$idx">Show</a><div class="toggleable seq-$idx" style="display: none">$sequence</div>),
       length    => $length,
   };
     $table->add_row($row);
+    $idx++;
   }
 
   # Then add info from external sources
@@ -89,10 +92,10 @@ sub content {
       analysis  => $self->get_analysis($factor),
       type      => $self->get_type($factor),
       location  => $self->get_location_link($factor),
-      seq       => $sequence,
+      seq       => qq(<a class="toggle closed toggle_link" href="#seq-$idx" rel="seq-$idx">Show</a><div class="toggleable seq-$idx" style="display: none">$sequence</div>),
       length    => $length,
     };
-
+    $idx++;
     $table->add_row($row);
   }
 

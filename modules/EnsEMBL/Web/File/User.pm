@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -253,6 +254,7 @@ sub upload {
                       no_attach => $no_attach,
                       timestamp => time,
                       assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
+                      site      => $hub->species_defs->ENSEMBL_SERVERNAME,
                       %inputs
                      };
 

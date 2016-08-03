@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,8 +110,6 @@ sub _colour {
     $self->add_string(" /_$X { 1 0 0 setrgbcolor } def\n" );
     $self->{'colours'}{$X} = 1;
   }
-}
-sub add_canvas_frame {
 }
 
 sub ps_rgb_by_id {

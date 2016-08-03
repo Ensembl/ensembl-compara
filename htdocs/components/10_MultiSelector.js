@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +22,6 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.paramMode = params.paramMode;
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);
-    Ensembl.EventManager.register('modalPanelResize',    this, this.style);
   },
   
   init: function () {
@@ -37,6 +37,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     
     var ul    = $('ul', this.elLk.list);
     var spans = $('span', ul);
+    var lis = $('li', ul);
     
     this.elLk.spans    = spans.filter(':not(.switch)');
     this.elLk.form     = $('form', this.elLk.content);
@@ -44,18 +45,21 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.elLk.excluded = ul.filter('.excluded');
     
     this.setSelection(true);
+    this.updateTitleCount();
     
     this.elLk.included.sortable({
       containment: this.elLk.included.parent(),
       stop: $.proxy(this.setSelection, this)
     });
-    
-    this.buttonWidth = spans.filter('.switch').on('click', function () {
-      var li = $(this).parent();
+
+    this.buttonWidth = lis.on('click', function () {
+
+      var li = $(this);
       var excluded, i;
      
-      var from_cat = li.parent().data('category'); 
+      var from_cat = li.parent().data('category');
       if (li.parent().hasClass('included')) {
+        // ul element
         var excluded_ul =
           panel.elLk.excluded.filter("[data-category='"+from_cat+"']");
         if(!excluded_ul.length) {
@@ -90,12 +94,13 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         included_ul.append(li);
         panel.selection.push(li.attr('class'));
       }
+
+      panel.updateTitleCount();
       
       li = null;
       from_cat = null;
-    }).width();
-    
-    this.style();
+    });
+    this.buttonWidth = spans.width();
     
     $('.select_by select', this.el).on('change', function () {
       var toAdd, toRemove;
@@ -117,7 +122,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       }
       
       panel.setSelection();
-      
+      panel.updateTitleCount();
       toAdd = toRemove = null;
     });
     
@@ -125,23 +130,12 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     ul = null;
   },
   
-  style: function () {
-    var width = 0;
-    var initialWidth = this.elLk.list.removeClass('multi_selector_list_wide').width();
-    
-    this.elLk.list.addClass('multi_selector_list_wide');
-    
-    this.elLk.spans.each(function () {
-      var w = $(this).width();
-      
-      if (w > width) {
-        width = w;
-      }
-    });
-    
-    if (initialWidth > width + this.buttonWidth) {
-      this.elLk.list.removeClass('multi_selector_list_wide');
-    }
+  updateTitleCount: function() {
+    var panel = this;
+    var unselected_count = this.elLk.excluded.children().length;
+    var selected_count = this.elLk.included.children().length;
+    this.el.find('._unselected_species h2 span').html(unselected_count);
+    this.el.find('._selected_species h2 span').html(selected_count);
   },
   
   setSelection: function (init) {

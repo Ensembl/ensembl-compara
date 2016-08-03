@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -255,10 +256,6 @@ sub render {
       $Ta->{$method}[1]++;   
     }
   }
-  
-  
-  # the last thing we do in the render process is add a frame so that it appears on the top of everything else
-  $self->add_canvas_frame($config, $im_width, $im_height);
 }
 
 sub add_location_marking_layer {

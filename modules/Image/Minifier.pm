@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Image::Minifier;
 
 use strict;
@@ -159,7 +178,7 @@ sub minify {
   return if !kit_complete('not building sprite page');
   my @prefetch;
   my $conf = build_conf();
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log');
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot open '$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log'";
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
   $title .= ('=' x length $title)."\n\n";
   print LOG $title;
@@ -294,11 +313,13 @@ sub maybe_generate_sprite {
   my $num = 0;
   my %attrs;
   my $outq = '"';
-  while($num<20 and $attrs =~ s/\s*(\w+)=(['"])//) {
-    my ($key,$quot) = ($1,$2);
+  while($num<20 and $attrs =~ s/\s*(\w+)=(\\?)(['"])//) {
+    my ($key,$backslash,$quot) = ($1,$2,$3);
     last unless $attrs =~ s/^([^$quot]*)$quot//;
     $attrs{$key} = $1;
+    $attrs{$key} =~ s/\\$// if $backslash;
     $outq = $quot;
+    $outq = q(\\).$quot if $backslash;
     $num++;
   }
   if($attrs =~ /\S/ or !$attrs{'src'}) {
@@ -397,7 +418,7 @@ sub maybe_generate_sprite {
   $classes = join(' ',@classes) if @classes;
   my $more_attrs = '';
   $more_attrs = join(' ', @more_attrs) if @more_attrs;
-  return qq(<img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="autosprite-src-$s_t $classes" $style $more_attrs/>);
+  return qq(<img src=${outq}data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==$outq class=${outq}autosprite-src-$s_t $classes$outq $style $more_attrs/>);
 }
 
 sub load_config {
@@ -438,7 +459,7 @@ sub find_file {
 sub data_url_convert {
   my ($key,$prefix,$suffix,$sd,$url) = @_;
 
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log');
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot write '$SiteDefs::ENSEMBL_LOGDIR/image-minify.log':$!";
   $url =~ s/^"(.*)"$/$1/;
   $url =~ s/^'(.*)'$/$1/;
   return undef unless $url =~ m!^/!;

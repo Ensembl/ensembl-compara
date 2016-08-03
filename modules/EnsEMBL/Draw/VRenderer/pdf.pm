@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,12 +48,6 @@ sub init_canvas {
     { 'im_height' => $im_height, 'page' => $page, 'pdf' => $pdf, 'g' => $page->gfx, 't'=>$page->text, 'font' => $pdf->corefont('Helvetica-Bold',1), 'rotate' => 1 }
   );
   $self->{'canvas'}{'g'}->linewidth(0.25);
-}
-
-sub add_canvas_frame {
-  my ($self, $config, $im_height, $im_width) = @_;
-  
-  return;
 }
 
 sub canvas {
