@@ -20,11 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::single_transcript;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     no_labels => 1,
@@ -47,4 +51,3 @@ sub init {
 }
 
 1;
-
