@@ -106,13 +106,14 @@ sub fetch_input {
   # get the compara data: MethodLinkSpeciesSet, reference DnaFrag, 
   # and all GenomicAlignBlocks
   ################################################################
-  print "mlss: ",$self->param('input_method_link')," ",$qy_gdb->dbID," ",$tg_gdb->dbID,"\n";
 
   my $mlss = $mlssa->fetch_by_dbID($self->param_required('input_mlss_id'))
               || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
 
   my $out_mlss = $mlssa->fetch_by_dbID($self->param_required('output_mlss_id'))
               || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
+
+  print "mlss: ",$self->param('input_mlss_id')," ",$qy_gdb->dbID," ",$tg_gdb->dbID,"\n";
 
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
