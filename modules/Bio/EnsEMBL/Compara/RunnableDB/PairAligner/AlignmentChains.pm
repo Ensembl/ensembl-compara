@@ -174,9 +174,12 @@ sub fetch_input {
       $parameters{'-query_slice'} = $query_slice;
       # If there is no .nib file, preload the sequence
       if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $query_slice->seq_region_name . ".nib")) {
+          print STDERR "reusing the query nib file\n";
           $parameters{'-query_nib_dir'} = $query_nib_dir;
       } else {
+          print STDERR "fetching the query sequence\n";
           $query_slice->{'seq'} = $query_slice->seq;
+          print STDERR length($query_slice->{'seq'}), " bp\n";
       }
   } );
 
@@ -186,9 +189,12 @@ sub fetch_input {
       $parameters{'-target_slices'} = {$self->param('target_dnafrag')->name => $target_slice};
       # If there is no .nib file, preload the sequence
       if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_slice->seq_region_name . ".nib")) {
+          print STDERR "reusing the target nib file\n";
           $parameters{'-target_nib_dir'} = $target_nib_dir;
       } else {
+          print STDERR "fetching the target sequence\n";
           $target_slice->{'seq'} = $target_slice->seq;
+          print STDERR length($target_slice->{'seq'}), " bp\n";
       }
   } );
 
