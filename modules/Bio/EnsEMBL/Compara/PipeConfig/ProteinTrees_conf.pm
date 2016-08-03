@@ -484,6 +484,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
+        'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
         'reuse_goc'                     => $self->o('reuse_goc'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
@@ -1181,8 +1182,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'polyploid_genomes' => 0,
-                'component_genomes' => $self->o('reuse_level') eq 'members' ? 0 : 1,
-                'normal_genomes'    => $self->o('reuse_level') eq 'members' ? 0 : 1,
+                'component_genomes' => '#expr( (#reuse_level# eq "members") ? 0 : 1 )expr#',
+                'normal_genomes'    => '#expr( (#reuse_level# eq "members") ? 0 : 1 )expr#',
                 'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
@@ -1195,7 +1196,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'polyploid_genomes' => 0,
-                'species_set_id'    => $self->o('reuse_level') eq 'members' ? undef : '#nonreuse_ss_id#',
+                'species_set_id'    => '#expr( (#reuse_level# eq "members") ? undef : #nonreuse_ss_id# )expr#',
             },
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
