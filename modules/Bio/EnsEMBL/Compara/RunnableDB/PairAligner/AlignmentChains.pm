@@ -176,7 +176,7 @@ sub fetch_input {
       if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $query_slice->seq_region_name . ".nib")) {
           $parameters{'-query_nib_dir'} = $query_nib_dir;
       } else {
-          $query_slice->seq;
+          $query_slice->{'seq'} = $query_slice->seq;
       }
   } );
 
@@ -188,7 +188,7 @@ sub fetch_input {
       if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_slice->seq_region_name . ".nib")) {
           $parameters{'-target_nib_dir'} = $target_nib_dir;
       } else {
-          $target_slice->seq;
+          $target_slice->{'seq'} = $target_slice->seq;
       }
   } );
 
