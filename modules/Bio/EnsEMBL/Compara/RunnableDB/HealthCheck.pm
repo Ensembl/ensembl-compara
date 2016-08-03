@@ -513,8 +513,8 @@ sub _run_compare_to_previous_db_test {
 	  if (!$previous_gdb) {
 	      $self->warning($g_db->name. " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
 	      return;
-	  } elsif ($g_db->component_genome_db and not $previous_gdb->component_genome_db) {
-              $previous_gdb = $previous_gdb->component_genome_dbs($g_db->component_genome_db);
+	  } elsif ($g_db->genome_component and not $previous_gdb->genome_component) {
+              $previous_gdb = $previous_gdb->component_genome_dbs($g_db->genome_component);
           }
 	  push @$previous_gdbs, $previous_gdb->dbID;
       }
