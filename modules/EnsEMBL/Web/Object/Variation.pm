@@ -1749,7 +1749,11 @@ sub get_snpedia_data {
     }
   };
 
-  my $ref = $rest->fetch('api.php', $args);
+  my ($ref, $error) = $rest->fetch('api.ph', $args);
+
+  if($error || ref $ref ne 'hash') {
+    return {};
+  }
 
   # get the page id and the page hashref with title and revisions
   my ($pageid, $pageref) = each %{ $ref->{query}->{pages} };
