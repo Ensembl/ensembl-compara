@@ -29,10 +29,10 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Exception;
-use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require_fallback);
 
 my @EXPORT          = qw(try catch throw exception);
 my $EXCEPTION_BASE  = qq(EnsEMBL::Web::Exception);
+my %EXCEPTION_CLASS;
 
 sub import {
   ## Imports the functions try, catch, throw & exception to the caller and registers any exceptions if provided in the arguments
@@ -47,6 +47,16 @@ sub import {
     foreach my $exception_name (@_) {
 
       *{"${caller}::${exception_name}"} = sub { return exception($exception_name, @_); };
+
+      if (!$EXCEPTION_CLASS{$exception_name}) {
+
+        my $exception_class_name = "${EXCEPTION_BASE}::${exception_name}";
+
+        eval { require $exception_class_name };
+
+        $EXCEPTION_CLASS{$exception_name} = $@ ? $EXCEPTION_BASE : $exception_class_name;
+        $@ = undef;
+      }
     }
 
     # import functions
@@ -88,7 +98,7 @@ sub exception {
   # if data is provided as second argument with no message
   ref $message and $data = $message and $message = '';
 
-  return dynamic_require_fallback(sprintf('%s::%s', $EXCEPTION_BASE, $type), $EXCEPTION_BASE)->new({'type' => $type, 'message' => $message, 'data' => $data});
+  return ($EXCEPTION_CLASS{$type} || $EXCEPTION_BASE)->new({'type' => $type, 'message' => $message, 'data' => $data});
 }
 
 1;

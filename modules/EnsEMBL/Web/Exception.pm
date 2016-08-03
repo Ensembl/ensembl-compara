@@ -54,7 +54,7 @@ sub new {
   }
 
   return bless {
-    '_type'    => $params->{'type'}     || 'UnknownException',
+    '_type'    => $params->{'type'}     || 'Unknown',
     '_message' => $params->{'message'}  || '',
     '_data'    => $params->{'data'}     || undef,
     '_stack'   => $stack
