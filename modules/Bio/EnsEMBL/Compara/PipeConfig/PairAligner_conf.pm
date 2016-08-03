@@ -536,7 +536,6 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
-			       'dump_nib'=>1,
 			       'dump_min_size' => $self->o('dump_min_nib_size'),
                                'MT_only' => $self->o('MT_only'),
 			      },
@@ -550,7 +549,6 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
-			       'dump_nib'=>1,
                                'overwrite'=>1,
 			      },
 	       -can_be_empty  => 1,
@@ -564,7 +562,6 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
-			       'dump_nib'=>1,
                                'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,

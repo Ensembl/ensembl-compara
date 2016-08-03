@@ -84,9 +84,6 @@ sub fetch_input {
       $self->param('faToNib_exe', 'faToNib');
   }
 
-  #must have dump_nib
-  die("Missing dump_nib") unless $self->param('dump_nib');
-
   return 1;
 }
 
@@ -96,9 +93,7 @@ sub run
 {
   my $self = shift;
 
-  if ($self->param('dump_nib')) {
-      $self->dumpNibFiles;
-  }
+  $self->dumpNibFiles;
 
   return 1;
 }

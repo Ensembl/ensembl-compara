@@ -69,9 +69,7 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
- if ($self->param('dump_nib')) {
-      $self->dumpNibFilesFactory;
-  }
+  $self->dumpNibFilesFactory;
 
   return 1;
 }
