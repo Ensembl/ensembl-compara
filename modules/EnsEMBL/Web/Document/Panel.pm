@@ -389,11 +389,11 @@ sub component_content {
       };
       
       if ($@) {
-        $html .= $self->component_failure($@, $entry, $module_name);
+        $html .= $self->component_failure($@, $entry->[0], $module_name);
         next;
       }
     } else {
-      $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
+      $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry->[0], $module_name);
       next;
     }
 
@@ -436,7 +436,7 @@ sub component_content {
       };
       
       if ($@) {
-        $html .= $self->component_failure($@, $entry, $module_name);
+        $html .= $self->component_failure($@, $entry->[0], $module_name);
       } elsif ($content) {
         if ($ajax_request) {
           my $id         = $component->id;
