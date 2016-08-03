@@ -85,15 +85,23 @@ sub fetch_features {
   }
 
   if (scalar @$reg_feats) {
-    my $legend_entries = [];
+    my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
+    my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
     foreach (@$reg_feats) {
-      my $key = $self->colour_key($_);
-      push $legend_entries, $key;
-      push $legend_entries, 'promoter_flanking';
+      my ($key, $is_activity) = $self->colour_key($_);
+      if ($is_activity) {
+        push @$activities, $key;
+      }
+      else {
+        push @$legend_entries, $key;
+      }
     }
-    if(grep { $_ eq 'promoter' } @$legend_entries) {
-    }
-    $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };	
+    push @$legend_entries, 'promoter_flanking' if scalar @$legend_entries;
+
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $legend_entries;
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
   }
 
   return $reg_feats;
@@ -119,26 +127,26 @@ sub colour_key {
     $type = 'Unclassified';
   }
 
+  my $is_activity = 0;
   my $config      = $self->{'config'};
-  if ($config->hub->type eq 'Regulation') {
-    my $epigenome = $self->{'my_config'}->get('epigenome');
-    if ($epigenome) {
-      my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
-      if ($regact) {
-        my $activity  = $regact->activity;
-        if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
-          $type = $activity;
-        }
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  if ($epigenome) {
+    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+    if ($regact) {
+      my $activity  = $regact->activity;
+      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
+        $type = $activity;
+        $is_activity = 1;
       }
     }
   }
 
-  return lc $type;
+  return (lc $type, $is_activity);
 }
 
 sub tag {
   my ($self, $f) = @_;
-  my $colour_key = $self->colour_key($f);
+  my ($colour_key) = $self->colour_key($f);
   my $colour     = $self->my_colour($colour_key);
   my $flank_colour = $colour;
   if ($colour_key eq 'promoter') {
@@ -249,7 +257,8 @@ sub href {
 
 sub title {
   my ($self, $f) = @_;
-  return sprintf 'Regulatory Feature: %s; Type: %s; Location: Chr %s:%s-%s', $f->stable_id, ucfirst $self->colour_key($f), $f->seq_region_name, $f->start, $f->end;
+  my ($colour_key) = $self->colour_key($f);
+  return sprintf 'Regulatory Feature: %s; Type: %s; Location: Chr %s:%s-%s', $f->stable_id, ucfirst $colour_key, $f->seq_region_name, $f->start, $f->end;
 }
 
 sub export_feature {
