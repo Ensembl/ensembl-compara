@@ -23,7 +23,11 @@ use warnings;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Attributes;
+
 use parent qw(EnsEMBL::Web::Form);
+
+sub view_config :Accessor;
 
 sub new {
   ## @override
@@ -35,27 +39,21 @@ sub new {
   my $self = $class->SUPER::new({
     'id'      => $id,
     'action'  => $action,
-    'class'   => 'configuration std'
+    'class'   => 'configuration std bgcolour'
   });
 
-  $self->{'_view_config'} = $view_config;
+  $self->{'view_config'} = $view_config;
 
   return $self;
 }
 
-sub view_config {
-  return shift->{'_view_config'};
-}
-
 sub add_fieldset {
-  my ($self, $legend, $class, $no_tree) = @_;
+  my ($self, $legend, $no_tree) = @_;
 
   $legend ||= '';
 
   my $div_class = $legend =~ s/ /_/gr;
   my $fieldset  = $self->SUPER::add_fieldset($legend);
-
-  $fieldset->set_attribute('class', $class) if $class;
 
   unless ($no_tree) {
     my $tree = $self->view_config->tree;
@@ -115,224 +113,173 @@ sub add_form_element {
 }
 
 sub build {
+  ## Build the html form for both image config and view config
   my ($self, $object, $image_config) = @_;
 
   my $view_config = $self->view_config;
   my $hub         = $view_config->hub;
 
-  $self->build_imageconfig_form($image_config) if $image_config;
+  $self->_build_imageconfig_form($image_config) if $image_config;
 
   $view_config->init_form($object);
 
+  ## Add image width field to horizintal images
   if ($image_config && $image_config->orientation eq 'horizontal') {
     my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
 
     $fieldset->add_field({
-      type   => 'DropDown',
-      name   => 'image_width',
-      value  => $hub->get_cookie_value('DYNAMIC_WIDTH') ? 'bestfit' : $hub->image_width,
-      label  => 'Width of image',
-      values => [
-        { value => 'bestfit', caption => 'best fit' },
-        map {{ value => $_, caption => "$_ pixels" }} map $_*100, 5..20
-      ]
+      'type'   => 'dropdown',
+      'name'   => 'image_width',
+      'value'  => $hub->get_cookie_value('DYNAMIC_WIDTH') ? 'bestfit' : $hub->image_width,
+      'label'  => 'Width of image',
+      'values' => [ { 'value' => 'bestfit', 'caption' => 'best fit' }, map {{ 'value' => $_, 'caption' => "$_ pixels" }} map $_*100, 5..20 ]
     });
   }
 
+  # Wrap non-empty fieldsets and replace empty fieldsets with divs to allow JS to show/hide these when LHS link is clicked
   foreach my $fieldset (@{$self->fieldsets}) {
-    next if $fieldset->get_flag('_has_select_all');
-
-    my %element_types;
-    my $elements = $fieldset->inputs; # returns all input, select and textarea nodes
-
-    $element_types{$_->node_name . $_->get_attribute('type')}++ for @$elements;
-
-    delete $element_types{$_} for qw(inputhidden inputsubmit);
-
-    # If the fieldset is mostly checkboxes, provide a select/deselect all option
-    if ($element_types{'inputcheckbox'} && $element_types{'inputcheckbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'inputcheckbox') {
-      my $reference_element = undef;
-
-      foreach (@$elements) {
-        $reference_element = $_;
-        last if $_->get_attribute('type') eq 'checkbox';
-      }
-
-      $reference_element = $reference_element->parent_node while defined $reference_element && ref($reference_element) !~ /::Form::Field$/; # get the wrapper of the element before using it as reference
-
-      next unless defined $reference_element;
-
-      my $select_all = $fieldset->add_field({
-        type        => 'checkbox',
-        name        => 'select_all',
-        label       => 'Select/deselect all',
-        value       => 'select_all',
-        field_class => 'select_all',
-        selected    => 1
-      });
-
-      $reference_element->before($select_all);
-      $fieldset->set_flag('_has_select_all'); # Add select all checkboxes
-    }
-  }
-
-  foreach (@{$self->fieldsets}) {
     my $wrapper_div = $self->dom->create_element('div');
-    my $legend      = $_->get_legend;
 
-    if ($legend) {
-      (my $div_class = $legend->inner_HTML) =~ s/ /_/g;
-      $wrapper_div->set_attribute('class', "config $div_class view_config");
+    if (my $legend = $fieldset->get_legend) {
+      $wrapper_div->set_attribute('class', ['config', 'view_config', $legend->inner_HTML =~ s/ /_/gr]);
     }
 
-    if ($_->get_attribute('class') eq 'empty') {
-      $_->parent_node->replace_child($wrapper_div, $_);
-    } else {
-      $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
-    }
-  }
-
-  if ($image_config) {
-    my $extra_menus = $image_config->{'_extra_menus'}; # TODO - dont access private variable
-    my $tree        = $view_config->tree;
-    $_->remove for map $extra_menus->{$_} == 0 ? $tree->get_node($_) || () : (), keys %$extra_menus;
+    $fieldset->parent_node->replace_child($wrapper_div, $fieldset);
+    $wrapper_div->append_child($fieldset) unless $fieldset->has_flag('empty');
   }
 }
 
-sub build_imageconfig_form {
+sub _build_imageconfig_form {
+  ## @private
+  ## Generates HTML and JSON requiured for the image config panel
   my $self          = shift;
   my $image_config  = shift;
+  my $ic_root_node  = $image_config->tree->root;
   my $view_config   = $self->view_config;
   my $img_url       = $view_config->species_defs->img_url;
-  my $extra_menus   = $image_config->{'_extra_menus'};
   my $tree          = $view_config->tree;
-  my %node_options  = ( availability => 1, url => '#', rel => 'multi' );
   my $track_order;
 
-  $tree->append_node('active_tracks',    { caption => 'Active tracks',    class => 'active_tracks',    %node_options }) if $extra_menus->{'active_tracks'};
-  $tree->append_node('favourite_tracks', { caption => 'Favourite tracks', class => 'favourite_tracks', %node_options }) if $extra_menus->{'favourite_tracks'};
+  $self->{'json'}   = {};
 
-  if ($extra_menus->{'track_order'}) {
-    $tree->append_node('track_order', { caption => 'Track order', class => 'track_order', %node_options, rel => undef });
+  # Search results menu
+  if ($image_config->has_extra_menu('search_results')) {
+    $self->append_child('div', { class => 'config no_search', inner_HTML => 'Sorry, your search did not find any tracks' });
+    $self->prepend_child('h1', { class => 'search_results', inner_HTML => 'Search results' });
+    $tree->prepend_node('search_results', { caption => 'Search results', class => 'search_results disabled', availability => 1, url => '#', rel => 'multi' });
+  }
+
+  # Track order menu
+  if ($image_config->has_extra_menu('track_order')) {
+    $self->append_child('div', { class => 'config track_order', inner_HTML => '<h1 class="track_order">Track order</h1><ul class="config_menu"></ul>' });
+    $tree->prepend_node('track_order', { caption => 'Track order', class => 'track_order', availability => 1, url => '#' });
     $self->{'json'}{'order'} = { map { join('.', grep $_, $_->id, $_->get_data('drawing_strand')) => $_->get_data('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
 
-  $tree->append_node('search_results', { caption => 'Search results', class => 'search_results disabled', %node_options }) if $extra_menus->{'search_results'};
+  # Favourite tracks menu
+  if ($image_config->has_extra_menu('favourite_tracks')) {
+    $self->append_child('div', { class => 'config favourite_tracks', inner_HTML => qq(You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites) });
+    $self->prepend_child('h1', { class => 'favourite_tracks', inner_HTML => 'Favourite tracks' });
+    $tree->prepend_node('favourite_tracks', { caption => 'Favourite tracks', class => 'favourite_tracks', availability => 1, url => '#', rel => 'multi' });
+  }
+
+  # Active tracks menu
+  if ($image_config->has_extra_menu('active_tracks')) {
+    $self->prepend_child('h1', { class => 'active_tracks', inner_HTML => 'Active tracks' });
+    $tree->prepend_node('active_tracks', { caption => 'Active tracks', class => 'active_tracks', availability => 1, url => '#', rel => 'multi' });
+  }
 
   # Delete empty menus nodes
-  _remove_disabled_menus($image_config->tree->root);
+  _remove_disabled_menus($ic_root_node);
 
-  # In the scenario where the tree structure is menu -> sub menu -> sub menu, and the 3rd level contains only one non-external menu,
-  # move all the tracks in that 3rd level menu up to the 2nd level, and delete the 3rd level.
-  # This avoids a bug where the 2nd level menu has an h3 header, and no enable/disable all, and the enable/disable all for the 3rd level is printed in the wrong place.
-  # An example of this would be in a species with one type of variation set subset
-  foreach my $node (grep $_->get_data('node_type') eq 'menu', $image_config->tree->nodes) {
-    my @child_menus = grep $_->get_data('node_type') eq 'menu', @{$node->child_nodes};
+  # Remove unnecessay deep nesting of menus
+  _clean_nested_menus($ic_root_node);
 
-    if (scalar @child_menus == 1 && scalar @{$node->child_nodes} == 1 && scalar(grep !$_->get_data('external'), @child_menus) == 1) {
-      $child_menus[0]->before($_) for @{$child_menus[0]->child_nodes};
-      $child_menus[0]->remove;
-    }
-  }
-
-  $self->{'favourite_tracks'} = $image_config->get_favourite_tracks;
-
-  foreach my $node (@{$image_config->tree->root->child_nodes}) {
-    my $section = $node->id;
-
-    $section =~ s|-|_|g;
-    next if $section eq 'track_order';
-
-    my $caption = $node->get_data('caption');
-    my $class   = $node->get_data('trackhub_menu') || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
-    my $div     = $self->append_child('div', { class => "config $section $class" });
-
-    $div->append_child('h2', { class => 'config_header', inner_HTML => $caption});
-
-    if(my $desc = $node->get_data('description')) {
-      $div->append_child('div', { class => 'long_label',   inner_HTML => $desc });
-    }
-
-    my $parent_menu = $tree->append_node($section, {
-      caption  => $caption,
-      class    => $section,
-      li_class => $class,
-      url      => '#',
-    });
-
-    if ($node->has_child_nodes) {
-      my @child_nodes = @{$node->child_nodes};
-
-      # If all children are menus
-      if (scalar @child_nodes && !grep $_->get_data('node_type') ne 'menu', @child_nodes) {
-        my $first = 'first ';
-
-        foreach (@child_nodes) {
-          my $id = $_->id;
-
-          $self->build_imageconfig_menus($_, $div->append_child('div', { class => "subset $first$id" }), $section, $id);
-
-          $first = '';
-
-          next if scalar @child_nodes == 1 && !$node->get_data('trackhub_menu');
-
-          my $url = $_->get_data('url');
-          my ($total, $on);
-
-          my @child_ids = map $_->id, grep { $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } $_->nodes;
-             $total     = scalar @child_ids;
-             $on        = 0;
-             $on       += $self->{'enabled_tracks'}{$_} || 0 for @child_ids;
-
-          # Add submenu entries to the navigation tree
-          $parent_menu->append_child($tree->get_node($id) || $tree->create_node($id, {
-            caption      => $_->get_data('caption'),
-            class        => $url ? $id : $parent_menu->id . "-$id",
-            url          => $url || '#',
-            count        => $total ? qq{(<span class="on">$on</span>/$total)} : '',
-            availability => $url ? 1 : $total > 0,
-          }));
-
-          $self->add_fieldset($id, 'empty', 1) if $url;
-        }
-      } else {
-        my $parent = $div->append_child('div', { class => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { class => "config_menu $section" }); # Add a subset div to keep the HTML consistent
-
-        $self->build_imageconfig_menus($_, $parent, $section) for @child_nodes;
-        $self->add_select_all($node, $parent, $section);
-      }
-    }
-
-    my $on    = $self->{'enabled_tracks'}{$section} || 0;
-    my $total = $self->{'total_tracks'}{$section}   || 0;
-
-    $parent_menu->set('count', qq{(<span class="on">$on</span>/$total)}) if $total;
-    $parent_menu->set('availability', $total > 0);
-  }
+  # Add all first level menu nodes to the LHS menu column
+  $self->_add_imageconfig_menu($_) for @{$ic_root_node->child_nodes};
 
   # When creating HTML for the form, we want only the tracks which are turned on, and their parent nodes - remove all other track nodes before rendering.
   # Also remove any empty UL tags. These can occur when a menu which is not explicitly external contains only external tracks.
   $_->remove for grep { ($_->node_name eq 'li' && !$_->get_flag('display')) || ($_->node_name eq 'ul' && !$_->has_child_nodes) } @{$self->get_all_nodes};
 
-  if ($extra_menus->{'favourite_tracks'}) {
-    $self->prepend_child('h1', { class => 'favourite_tracks',        inner_HTML => 'Favourite tracks' });
-    $self->append_child('div', { class => 'config favourite_tracks', inner_HTML => qq(You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites) });
-  }
-
-  $self->append_child('div', { class => 'config track_order', inner_HTML => '<h1 class="track_order">Track order</h1><ul class="config_menu"></ul>' }) if $self->{'json'}{'order'};
-  $self->append_child('div', { class => 'config no_search',   inner_HTML => 'Sorry, your search did not find any tracks' });
-  $self->prepend_child('h1', { class => 'search_results',     inner_HTML => 'Search results' });
-  $self->prepend_child('h1', { class => 'active_tracks',      inner_HTML => 'Active tracks'  });
-
   return $self;
 }
 
-sub build_imageconfig_menus {
+sub _add_imageconfig_menu {
+  ## @private
+  ## Adds main sections to the image config panel on the RHS and corresponding main heading to the LHS menu
+  my ($self, $node) = @_;
+
+  my $section = $node->id =~ s/\-/_/gr;
+
+  return if $section eq 'track_order'; # FIXME - avoid hard coding
+
+  my $tree        = $self->view_config->tree;
+  my $caption     = $node->get_data('caption');
+  my $desc        = $node->get_data('description');
+  my $parent_menu = $tree->append_node($section, { 'caption' => $caption, 'class' => $section, 'url' => '#' }); # LHS menu
+  my $div         = $self->append_child('div', { 'class' => ['config', $section] }); # RHS section
+
+  # Add the main menu
+  $div->append_child('h2', {'class' => 'config_header', 'inner_HTML' => $caption});
+  $div->append_child('div', {'class' => 'long_label', 'inner_HTML' => $desc }) if $desc;
+
+  # Add sub menus and sub sections
+  if ($node->has_child_nodes) {
+    my @child_nodes = grep !$_->get_data('cloned'), @{$node->child_nodes};
+
+    # If all children are menus
+    if (scalar @child_nodes && !grep $_->get_data('node_type') ne 'menu', @child_nodes) {
+      my $first = 'first ';
+
+      foreach my $child (@child_nodes) {
+        my $id      = $child->id;
+        my $parent  = $div->append_child('div', { 'class' => "subset $first$id" });
+
+        $self->_build_imageconfig_menus($child, $parent, $section, $id);
+        $first = '';
+
+        my $url = $child->get_data('url');
+
+        # Count the required tracks for the LHS menu
+        my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
+        my $total     = scalar @track_ids;
+        my $on        = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+
+        # Add submenu entries to the LHS menu
+        $parent_menu->append_child($tree->create_node($id, {
+          'caption'       => $child->get_data('caption'),
+          'class'         => $url ? $id : $parent_menu->id . "-$id",
+          'url'           => $url || '#',
+          'count'         => $total ? qq{(<span class="on">$on</span>/$total)} : '',
+          'availability'  => $url ? 1 : $total > 0,
+        }));
+
+        # Add an empty fieldset corresponding to the menu entry in the form
+        $self->add_fieldset($id, 1)->set_flag('empty') if $url;
+      }
+    } else {
+
+      my $parent = $div->append_child('div', {'class' => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { 'class' => "config_menu $section" }); # Add a subset div to keep the HTML consistent
+
+      $self->_build_imageconfig_menus($_, $parent, $section) for @child_nodes;
+      $self->add_select_all($node, $parent, $section);
+    }
+  }
+
+  my $on    = $self->{'enabled_tracks'}{$section} || 0;
+  my $total = $self->{'total_tracks'}{$section}   || 0;
+
+  $parent_menu->set_data('count', qq{(<span class="on">$on</span>/$total)}) if $total;
+  $parent_menu->set_data('availability', $total > 0);
+}
+
+sub _build_imageconfig_menus {
   my ($self, $node, $parent, $menu_class, $submenu_class) = @_;
   my $menu_type = $node->get_data('menu');
   my $id        = $node->id;
 
-  return if $node->get_data('cloned');
+  return if $menu_type eq 'no';
 
   if ($menu_type eq 'matrix_subtrack') {
     my $display = $node->get('display');
@@ -355,8 +302,6 @@ sub build_imageconfig_menus {
     return;
   }
 
-  return if $menu_type eq 'no';
-
   my $external = $node->get_data('external');
 
   if ($node->get_data('node_type') eq 'menu') {
@@ -367,7 +312,7 @@ sub build_imageconfig_menus {
       if ($external) {
         $parent = $parent->parent_node;                                # Move external tracks to a separate ul, after other tracks
       } else {
-        $parent = $parent->append_child('li', { flags => 'display' }); # Children within a subset (eg variation sets)
+        $parent = $parent->append_child('li', { 'flags' => 'display' }); # Children within a subset (eg variation sets)
       }
     }
 
@@ -378,7 +323,7 @@ sub build_imageconfig_menus {
       $element = $parent->append_child('ul', { class => "config_menu $menu_class" . ($menu_type eq 'hidden' ? ' hidden' : '') });
     }
 
-    $self->build_imageconfig_menus($_, $element, $menu_class, $submenu_class) for @{$node->child_nodes};
+    $self->_build_imageconfig_menus($_, $element, $menu_class, $submenu_class) for grep !$_->get_data('cloned'), @{$node->child_nodes};
     $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
     my $img_url     = $self->view_config->species_defs->img_url;
@@ -483,7 +428,7 @@ sub build_imageconfig_menus {
   }
 }
 
-sub add_select_all {
+sub add_select_all { # TODO - move the functionality to JS
   my ($self, $node, $menu, $id) = @_;
 
   return if $node->get_data('menu') eq 'hidden';
@@ -541,6 +486,22 @@ sub add_select_all {
   }
 }
 
+sub add_species_fieldset {
+  my $self          = shift;
+  my $species_defs  = $self->view_config->species_defs;
+  my %species       = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
+
+  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
+    $self->add_form_element({
+      'fieldset'  => 'Selected species',
+      'type'      => 'CheckBox',
+      'label'     => $_,
+      'name'      => 'species_' . lc $species{$_},
+      'value'     => 'yes',
+    });
+  }
+}
+
 sub _remove_disabled_menus {
   ## @private
   ## Removes all the menus from the image config tree that have no nodes in them
@@ -551,6 +512,22 @@ sub _remove_disabled_menus {
   }
 
   $node->remove if !$node->has_child_nodes && $node->get_data('node_type') eq 'menu';
+}
+
+sub _clean_nested_menus {
+  ## @private
+  ## In the scenario where the tree structure is menu -> sub menu -> sub menu, and the 3rd level contains only one non-external menu,
+  ## move all the tracks in that 3rd level menu up to the 2nd level, and delete the 3rd level.
+  my $node      = shift;
+  my @subnodes  = @{$node->child_nodes};
+  my @submenus  = grep $_->get_data('node_type') eq 'menu' && !$_->get_data('external'), @subnodes;
+
+  _clean_nested_menus($_) for @submenus;
+
+  if ($node->parent_node && scalar @submenus == 1 && scalar @subnodes == 1) {
+    $node->append_child($_) for @{$submenus[0]->child_nodes};
+    $node->remove_child($submenus[0]);
+  }
 }
 
 1;
