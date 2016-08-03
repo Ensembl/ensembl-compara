@@ -446,7 +446,7 @@ sub _run_compare_to_previous_db_test {
   my $previous_db = $self->param_required('previous_db');
 
   my $method_link_type = $self->param('method_link_type');
-  my $current_genome_db_ids = $self->param_required('current_genome_db_ids');
+  my $current_genome_db_ids = $self->param('current_genome_db_ids');
   $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
 
   my $ensembl_release = $self->param('ensembl_release');
