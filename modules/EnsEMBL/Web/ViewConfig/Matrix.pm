@@ -23,32 +23,36 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Attributes;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
 # TODO: Support other track hub dimensions as filters?
+# TODO - fix json key since it's moved to ViewConfigForm now
 
-sub matrix_image_config :AccessorMutator;
+sub _new {
+  ## @override
+  ## TODO - re-bless existing view config instead of copying keys
+  my $self  = shift->SUPER::_new(@_);
+  my $hub   = $self->hub;
+  my $code  = $hub->type.'::'.$hub->function;
 
-sub init {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $code        = join '::', $hub->type, $hub->function;
   my $module_name = "EnsEMBL::Web::ViewConfig::$code";
-  my $view_config = $module_name->new($self->type, $self->component, $hub) if $self->dynamic_use($module_name);
+  my $view_config = $module_name->new($hub, $hub->type, $self->component) if dynamic_require($module_name, 1);
 
-  $self->{$_}                = $view_config->{$_} for keys %$view_config;
-  $self->code                = $code;
-  $self->matrix_image_config($hub->get_imageconfig($self->image_config_type));
-  $self->image_config_type('') unless $hub->param('submit') || $hub->param('reset');
+  $self->{$_}     = $view_config->{$_} for keys %$view_config;
+  $self->{'code'} = $code;
+
+  return $self;
 }
+
+sub init_cacheable {};
 
 sub init_form {
   my $self          = shift;
   my $hub           = $self->hub;
-  my $img_url       = $self->img_url;
-  my $image_config  = $self->matrix_image_config;
+  my $img_url       = $self->species_defs->img_url;
+  my $image_config  = $hub->get_imageconfig($self->image_config_type);
   my $user_settings = $image_config->get_user_settings;
   my $tree          = $image_config->tree;
   my $menu          = $hub->param('menu');
@@ -57,6 +61,8 @@ sub init_form {
   my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
+
+  $self->{'json'} = $self->form->{'json'} ||= {};
 
   foreach (@{$menu_node->child_nodes}) {
     my $x = $_->data->{'label_x'};
@@ -117,8 +123,8 @@ sub init_form {
   if (scalar keys %renderer_counts != 1) {
     $renderer_html .= sprintf $renderer_template[1], @$_ for [ 'off', 'Off' ], [ 'all_on', 'On' ];
   } else {
-    my $renderers      = $self->deepcopy($columns[0]{'renderers'});
-       $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @$renderers, 0, 2;
+    my @renderers      = @{$columns[0]{'renderers'}};
+       $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @renderers, 0, 2;
   }
 
   $headers_html[1] = "$renderer_template[0]$renderer_html$renderer_template[2]";
@@ -150,7 +156,7 @@ sub init_form {
 
         if ($cell_features) {
           # TODO: renderers. Currently assuming that subtrack renderers match parent renderers.
-          my @renderers = @{$self->deepcopy($_->{'renderers'})};
+          my @renderers = @{$_->{'renderers'}};
           my $total     = scalar @$cell_features;
           my $on        = 0;
           my ($subtracks, $select_all);
