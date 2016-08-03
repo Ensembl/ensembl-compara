@@ -520,32 +520,20 @@ sub pipeline_analyses {
  	       -parameters => {
                                'only_cellular_component' => $self->o('only_cellular_component'),
                                'mix_cellular_components' => $self->o('mix_cellular_components'),
-			       'flow_chunksets' => 0,
 			      },
 	       -flow_into => {
-			      1 => [ 'dump_large_nib_for_chains_factory' ],
+			      2 => [ 'dump_large_nib_for_chains' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
 	       -rc_name => 'crowd',
- 	    },
- 	    {  -logic_name => 'dump_large_nib_for_chains_factory',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
- 	       -parameters => {
-			       'dump_min_size' => $self->o('dump_min_nib_size'),
-			      },
-	       -hive_capacity => 1,
-	       -flow_into => {
-			      2 => { 'dump_large_nib_for_chains' => INPUT_PLUS() },
-			     },
-	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
+			       'dump_min_nib_size' => $self->o('dump_min_nib_size'),
                                'overwrite'=>1,
 			      },
-	       -can_be_empty  => 1,
 	       -hive_capacity => 10,
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
@@ -570,7 +558,7 @@ sub pipeline_analyses {
 			      1 => [ 'remove_inconsistencies_after_chain' ],
 			      2 => [ 'alignment_chains' ],
 			     },
- 	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
+               -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
 	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_chains',

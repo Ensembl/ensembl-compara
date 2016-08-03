@@ -63,28 +63,16 @@ use Bio::EnsEMBL::Analysis::RunnableDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for repeatmasker from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
 sub fetch_input {
   my( $self) = @_;
 
-  #Check for DnaFragChunk or DnaFragChunkSet
-  die("Missing DnaFragChunk or DnaFragChunkSet") unless ($self->param('DnaFragChunk') || $self->param('DnaFragChunkSet'));
+    #Convert chunkSetID into DnaFragChunkSet object
+    my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
+    die "No ChunkSet with the id " . $self->param('chunkSetID') unless $chunkset;
+    $self->param('dnaFragChunkSet', $chunkset);
 
-  #If not defined, use one in path
-  unless ($self->param('faToNib_exe')) {
-      $self->param('faToNib_exe', 'faToNib');
-  }
+    $self->param_required('faToNib_exe');
 
-  return 1;
 }
 
 
@@ -109,14 +97,21 @@ sub run
 sub dumpNibFiles {
   my $self = shift;
 
+  #
+  #Get all the chunks in this dnaFragChunkSet
+  #
+  my $chunkSet = $self->param('dnaFragChunkSet');
+  #Masking options are stored in the dna_collection
+  my $dna_collection = $chunkSet->dna_collection;
+  my $chunk_array = $chunkSet->get_all_DnaFragChunks;
+
   my $starttime = time();
 
-  my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
-  my $dump_loc = $dna_collection->dump_loc;
-
-  unless (defined $dump_loc) {
+  unless (defined $dna_collection->dump_loc) {
     die("dump_loc directory is not defined, can not dump nib files\n");
   }
+
+  my $dump_loc = $dna_collection->dump_loc.'/nib_files';
 
   #Make directory if does not exist
   if (!-e $dump_loc) {
@@ -124,8 +119,8 @@ sub dumpNibFiles {
       mkpath($dump_loc); 
   }
 
-  if ($self->param('DnaFragChunk')) {
-      my $dna_object = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('DnaFragChunk'));
+  foreach my $dna_object (@$chunk_array) {
+      next if $dna_object->length < $self->param_required('dump_min_nib_size');
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
