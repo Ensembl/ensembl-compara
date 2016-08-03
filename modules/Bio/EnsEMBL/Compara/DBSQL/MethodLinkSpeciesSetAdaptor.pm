@@ -477,7 +477,7 @@ sub fetch_by_method_link_type_GenomeDBs {
   Arg  1     : string $method_link_type
   Arg 2      : listref of int (dbIDs of GenomeDBs)
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_genome_db_id('ENSEMBL_ORTHOLOGUES',
+                   $mlssa->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',
                        [$human_genome_db->dbID,
                        $mouse_genome_db->dbID])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
