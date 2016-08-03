@@ -509,8 +509,8 @@ sub render {
 
   my $result = $image->write($content);
 
-  if (!$result->{'success'}) {
-    throw exception('WebException', $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
+  if (!$result || !$result->{'success'}) {
+    throw exception('WebException', $result && $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
   }
 
   if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
