@@ -22,6 +22,7 @@ package EnsEMBL::Web::Tree;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::TreeNode;
 use EnsEMBL::Web::Exceptions qw(WebException);
 
@@ -82,21 +83,17 @@ sub root {
   return $self->{'_root'} //= $self->create_node;
 }
 
-sub leaves {
-  ## Gets all the leaves in the tree (nodes that don't have children)
-  ## @return List of TreeNode objects
-  return $_[0]->root->leaves;
-}
-
 sub get_node {
   ## Gets a node with the given id from anywhere in the tree
   ## @param Node id
-  ## @return Requested node (EnsEMBL::Web::TreeNode object) or possibly undef if node with the given id doesn't exist
+  ## @return Requested node(s) (EnsEMBL::Web::TreeNode object or list of multiple objects in list context) or possibly undef if node with the given id doesn't exist
   my ($self, $id) = @_;
 
   throw WebException('Node id is needed to get a node') unless $id;
 
-  return $self->{'_node_lookup'}{$self->clean_id($id)};
+  my @nodes = @{$self->{'_node_lookup'}{$self->clean_id($id)} || []};
+
+  return wantarray ? @nodes : $nodes[0];
 }
 
 sub create_node {
@@ -104,13 +101,12 @@ sub create_node {
   ## @param id of the node
   ## @param Hashref to be saved in 'data' key
   ## @return TreeNode object
-  my ($self, $id, $data) = @_;
+  my ($self, $id, $data, $id_duplicate_ok) = @_;
 
   $id = $id ? $self->clean_id($id) : $self->_generate_unique_id;
 
   # if node exists, update data and return node object
-  if (exists $self->{'_node_lookup'}{$id}) {
-    my $node = $self->{'_node_lookup'}{$id};
+  if ((my $node = $self->get_node($id)) && !$id_duplicate_ok) {
     $node->set_data($_, $data->{$_}) for keys %{$data || {}};
 
     return $node;
@@ -120,19 +116,37 @@ sub create_node {
 
   $self->{'_dom'} ||= $node->dom; # save it once and use it for other nodes
 
-  return $self->{'_node_lookup'}{$id} = $node;
+  push @{$self->{'_node_lookup'}{$id}}, $node;
+
+  return $node;
+}
+
+sub append_node {
+  ## Append a node to the root node
+  ## @param As excepted by create_node or a TreeNode object
+  ## @return Newly appended TreeNode object
+  my $self = shift;
+
+  return $self->root->append_child(UNIVERSAL::isa($_[0], 'EnsEMBL::Web::TreeNode') ? $_[0] : $self->create_node(@_));
+}
+
+sub prepend_node {
+  ## Inserts a node to the beginning of the root node
+  ## @param As excepted by create_node or a TreeNode object
+  ## @return Newly inserted TreeNode object
+  my $self = shift;
+
+  return $self->root->prepend_child(UNIVERSAL::isa($_[0], 'EnsEMBL::Web::TreeNode') ? $_[0] : $self->create_node(@_));
 }
 
 sub clone_node {
   ## Clones a node without it's child nodes
   ## @param Node to be cloned
-  ## @param Id for the cloned node
+  ## @param Node id, if to be kept different than the original node
   ## @return Cloned node
   my ($self, $node, $id) = @_;
 
-  throw WebException('Node with given id already exists') if $id && $self->get_node($id);
-
-  return $self->create_node($id, { map { $_ => $node->get_data($_) } $node->data_keys });
+  return $self->create_node($id // $node->id, { map({ $_ => $node->get_data($_) } $node->data_keys), 'cloned' => 1 }, 1);
 }
 
 sub clean_id {
@@ -164,5 +178,8 @@ sub _cacheable_keys {
   ## @private
   return qw(_node_lookup _new_id _root _dom);
 }
+
+sub append :Deprecated('Use tree->root->append_child')                 { return shift->root->append_child(@_);  }
+sub leaves :Deprecated('Use tree->root->leaves')                       { return shift->root->leaves;  }
 
 1;
