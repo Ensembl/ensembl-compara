@@ -89,7 +89,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
                                                                                -dbID => 1,
                                                                                -adaptor => $method_link_species_set_adaptor,
                                                                                -method => $method,
-                                                                               -species_set_obj => $species_set,
+                                                                               -species_set => $species_set,
                                                                                -name => $mlss_name,
                                                                                -source => $mlss_source);
 

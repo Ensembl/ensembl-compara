@@ -156,7 +156,7 @@ sub _check_pairwise {
         $synt_name =~ s/ .*/ synteny/;
         $master_synt_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
             -METHOD             => $synt_method,
-            -SPECIES_SET_OBJ    => $mlss->species_set,
+            -SPECIES_SET        => $mlss->species_set,
             -NAME               => $synt_name,
             -SOURCE             => $self->param_required('synteny_source'),
         );

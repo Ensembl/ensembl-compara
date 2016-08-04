@@ -426,7 +426,7 @@ my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 $mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
 my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
     -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
-    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $gdbs ),
+    -species_set => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $gdbs ),
 );
 
 

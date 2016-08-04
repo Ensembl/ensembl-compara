@@ -162,7 +162,7 @@ sub fetch_input {
         
   my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set_obj    => $species_set_obj,
+        -species_set    => $species_set_obj,
   );
 
   $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);

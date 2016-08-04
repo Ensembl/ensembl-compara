@@ -267,7 +267,7 @@ foreach my $this_species (@species) {
 my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -adaptor => $method_link_species_set_adaptor,
         -method => new Bio::EnsEMBL::Compara::Method( -type => 'MULTIZ' ),
-        -species_set_obj => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => $species_set ),
+        -species_set => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => $species_set ),
     );
 
 # This method stores the new method_link_species_set and return the object with a new dbID. IF

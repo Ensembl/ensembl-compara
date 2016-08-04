@@ -86,7 +86,7 @@ if ($mlss_id) {
 } else {
     $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method => Bio::EnsEMBL::Compara::Method->new( -type => 'SYNTENY', -class => 'SyntenyRegion.synteny' ),
-        -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
+        -species_set => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
     );
     $mlssa->store($mlss);
 }

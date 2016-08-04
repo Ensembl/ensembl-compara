@@ -91,7 +91,7 @@ sub store_families {
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -adaptor            => $method_link_species_set_adaptor,
         -method             => Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY'),
-        -species_set_obj    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
+        -species_set    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
     );
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 

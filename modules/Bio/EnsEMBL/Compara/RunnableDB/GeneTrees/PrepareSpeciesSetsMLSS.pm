@@ -239,7 +239,7 @@ sub _write_mlss {
         }
     }
     unless ($mlss) {
-        $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new( -method => $method, -species_set_obj => $ss);
+        $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new( -method => $method, -species_set => $ss);
     }
     $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
     return $mlss;

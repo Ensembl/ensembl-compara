@@ -821,7 +821,7 @@ sub write_mlss_entry {
 
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set_obj    => $species_set_obj,
+        -species_set    => $species_set_obj,
         -name               => $name,
         -source             => $source,
     );

@@ -294,7 +294,7 @@ subtest "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method", sub {
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj,
+                                                                -species_set    => $species_set_obj,
                                                                );
     my $method_link_species_sets;
     push @$method_link_species_sets, $method_link_species_set;
@@ -325,7 +325,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj);
+                                                                -species_set    => $species_set_obj);
 
     $method_link_species_set_adaptor->store($method_link_species_set);
     is($method_link_species_set->dbID, $this_method_link_species_set_id);
@@ -354,7 +354,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
     
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $method,
-                                                                                   -species_set_obj    => $species_set_obj,
+                                                                                   -species_set    => $species_set_obj,
                                                                                    -max_alignment_length => 1000);
 
     $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag", "method_link_species_set_attr");
@@ -390,7 +390,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
     
     my $new_method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $new_method,
-                                                                                   -species_set_obj    => $new_species_set_obj,
+                                                                                   -species_set    => $new_species_set_obj,
                                                                                    -max_alignment_length => 1000);
 
     $method_link_species_set_adaptor->store($new_method_link_species_set);
@@ -409,7 +409,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj);
+                                                                -species_set    => $species_set_obj);
 
     $method_link_species_set_adaptor->store($method_link_species_set);
     is($method_link_species_set->dbID, $this_method_link_species_set_id);
@@ -437,7 +437,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method
     
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $method,
-                                                                                   -species_set_obj    => $species_set_obj,
+                                                                                   -species_set    => $species_set_obj,
                                                                                    -max_alignment_length => 1000);
 
     $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag","method_link_species_set_attr");

@@ -37,7 +37,7 @@ Relates every method_link with the species_set for which it has been used
   my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                        -adaptor             => $method_link_species_set_adaptor,
                        -method              => Bio::EnsEMBL::Compara::Method->new( -type => 'MULTIZ'),
-                       -species_set_obj     => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3]),
+                       -species_set     => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3]),
                        -max_alignment_length => 10000,
                    );
 
@@ -101,7 +101,7 @@ my $DEFAULT_MAX_ALIGNMENT = 20000;
   Example     : my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                        -adaptor => $method_link_species_set_adaptor,
                        -method => Bio::EnsEMBL::Compara::Method->new( -type => 'MULTIZ' ),
-                       -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3] ),
+                       -species_set => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2, $gdb3] ),
                        -max_alignment_length => 10000,
                    );
   Description : Creates a new MethodLinkSpeciesSet object

@@ -154,7 +154,7 @@ foreach my $this_species (@species) {
 my $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
         -adaptor => $method_link_species_set_adaptor,
         -method => new Bio::EnsEMBL::Compara::Method( -type => 'MAVID' ),
-        -species_set_obj => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => $species_set ),
+        -species_set => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => $species_set ),
     );
 $method_link_species_set = $method_link_species_set_adaptor->store($method_link_species_set);
 
