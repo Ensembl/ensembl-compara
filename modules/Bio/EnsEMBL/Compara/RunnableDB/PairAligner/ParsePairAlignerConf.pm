@@ -283,7 +283,7 @@ sub parse_conf {
 	if ($self->param('master_db')) {
 	    $self->get_species($speciesList, $self->param('master_db'));
 	    foreach my $species (@{$speciesList}) {
-		push @spp_names, $species->{genome_db}->_get_unique_name,
+		push @spp_names, $species->{genome_db}->dbID,
 	    }
 	}
 
@@ -528,7 +528,7 @@ sub get_default_chunking {
 
     unless (defined $dna_collection->{'dump_loc'}) {
 	if (defined $default_chunk->{'dump_dir'}) {
-	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->_get_unique_name;
+	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->dbID . "_" . $dna_collection->{'genome_db'}->_get_unique_name;
 	}
     }
     
@@ -657,7 +657,7 @@ sub parse_defaults {
     }
 
     foreach my $pair (@$collection) {
-	#print $pair->{ref_genome_db}->_get_unique_name . " " . $pair->{non_ref_genome_db}->_get_unique_name . "\n";
+	#print $pair->{ref_genome_db}->dbID . " vs " . $pair->{non_ref_genome_db}->dbID . "\n";
 	
 	my $pair_aligner = {};
 	$pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
@@ -689,42 +689,42 @@ sub parse_defaults {
 	}
 	
 	#create pair_aligners
-	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " raw";
-	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
-	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
+	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw";
+	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
+	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
 
         #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
         if ((!$self->param('net_ref_species')) || _name_matches($pair->{ref_genome_db}, $self->param('net_ref_species'))) {
-            $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
-            $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
+            $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
+            $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
         } elsif (_name_matches($pair->{non_ref_genome_db}, $self->param('net_ref_species'))) {
-            $net_config->{'reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
-            $net_config->{'non_reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
+            $net_config->{'reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
+            $net_config->{'non_reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
         } else {
-            throw ("Net reference species " . $self->param('net_ref_species') . " must be either " . $pair->{ref_genome_db}->_get_unique_name . " or " . $pair->{non_ref_genome_db}->_get_unique_name );
+            throw (sprintf('Net reference species must be either %s (%s) or %s ($s). Currently %s', $pair->{ref_genome_db}->_get_unique_name, $pair->{ref_genome_db}->dbID, $pair->{non_ref_genome_db}->_get_unique_name, $pair->{non_ref_genome_db}->dbID, $self->param('net_ref_species') ));
         }
 
 	my $dna_dump_loc = $self->param('dump_dir') . "/dna/";
-	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->_get_unique_name . "_nib_for_chain";
+	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->dbID . "_nib_for_chain";
 	
 	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
 									      'dump_loc' => $dump_loc);
 
-	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " raw";;
-	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
-	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
+	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw";;
+	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
+	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
 
         # self-alignments would have the same names for "reference" and
         # "non-reference" collections otherwise
-        if ($pair->{ref_genome_db}->_get_unique_name eq $pair->{non_ref_genome_db}->_get_unique_name) {
+        if ($pair->{ref_genome_db}->dbID eq $pair->{non_ref_genome_db}->dbID) {
             $net_config->{'non_reference_collection_name'} .= ' again';
             $pair_aligner->{'non_reference_collection_name'} .= ' again';
             $chain_config->{'non_reference_collection_name'} .= ' again';
         }
 	    
-	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->_get_unique_name . "_nib_for_chain";
+	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->dbID . "_nib_for_chain";
 	
 	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},

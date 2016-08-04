@@ -179,19 +179,18 @@ sub write_output {
 
 #
 #Write bed file to general repository for a new species or assembly. The naming scheme assumes the format
-#production_name.assembly.genome.bed for toplevel regions and production_name.assembly.coding_exons.bed for exonic
+#production_name(.component_name).dbID.genome.bed for toplevel regions and #production_name(.component_name).dbID.coding_exons.bed for exonic
 #regions. If a file of that convention already exists, it will not be overwritten.
 #
 sub dump_bed_file {
     my ($self, $genome_db, $dbc_url, $reg_conf) = @_;
 
-    my $assembly = $genome_db->assembly;
     my $name = $genome_db->_get_unique_name; #get production_name
     my $species_arg   = "--species ".$genome_db->name;
        $species_arg  .= " --component ".$genome_db->genome_component if $genome_db->genome_component;
     
     #Check if file already exists
-    my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "genome.bed";
+    my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $genome_db->dbID . "." . "genome.bed";
 
     if (-e $genome_bed_file && !(-z $genome_bed_file)) {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
@@ -270,7 +269,8 @@ sub store_mlss_tag_block_size {
 #
 sub calc_stats {
     my ($self, $dbc_url, $genome_db, $genome_bed) = @_;
-    my $species = $genome_db->_get_unique_name;
+
+    my $species = $genome_db->_get_unique_name . "_" . $genome_db->dbID;
 
     my $compara_url = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc)->url;
 
