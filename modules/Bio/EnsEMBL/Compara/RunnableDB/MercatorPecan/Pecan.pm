@@ -607,7 +607,6 @@ sub get_species_tree {
 
 sub _load_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
-  my $dnafrag_regions = [];
 
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($synteny_region_id);
@@ -618,15 +617,7 @@ sub _load_DnaFragRegions {
       $self->complete_early('Cannot work with a single region');
   }
 
-  #foreach my $dfr (@{$sr->children}) {  
-  foreach my $dfr (@$regions) {  
-    #$dfr->disavow_parent;
-    push(@{$dnafrag_regions}, $dfr);
-  }
-
-  #$sr->release_tree;
-
-  $self->param('dnafrag_regions', $dnafrag_regions);
+  $self->param('dnafrag_regions', $regions);
 }
 
 
