@@ -221,10 +221,13 @@ sub prune_tree {
         ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
         : $compara_dba->get_GenomeDBAdaptor->fetch_all;
 
-    my %leaves_names = map { ($_ => 1) } grep { !/ancestral/ } map { lc($_->name) } @$gdb_list;
+    my %leaves_names = map { (lc $_->name => $_) } grep { $_->name !~ /ancestral/i } @$gdb_list;
 
     foreach my $leaf (@{$input_tree->get_all_leaves}) {
-        unless ($leaves_names{lc($leaf->name)}) {
+        if ($leaves_names{lc($leaf->name)}) {
+            $leaf->genome_db_id( $leaves_names{lc($leaf->name)}->dbID );
+            $leaf->taxon_id( $leaves_names{lc($leaf->name)}->taxon_id );
+        } else {
             #print $leaf->name," leaf disavowing parent\n";
             $leaf->disavow_parent;
             $input_tree = $input_tree->minimize_tree;
