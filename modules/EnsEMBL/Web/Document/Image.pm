@@ -37,7 +37,11 @@ sub new {
   my ($class, $hub, $component, $args) = @_;
 
   unless (ref $component) {
+    my $i = 0;
     my @caller = caller;
+    while ($caller[0]->isa(__PACKAGE__)) {
+      @caller = caller(++$i);
+    }
     warn sprintf "DEPRECATED: Second argument should be Component instance, not id at %s line %s\n", $caller[1], $caller[2];
   }
 

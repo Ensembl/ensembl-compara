@@ -607,7 +607,7 @@ sub new_image {
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
-  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self->id, \@image_configs);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self, \@image_configs);
   $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -617,7 +617,7 @@ sub new_vimage {
   my $self  = shift;
   my @image_config = $_[1];
   
-  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, \@image_config);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self, \@image_config);
   $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
