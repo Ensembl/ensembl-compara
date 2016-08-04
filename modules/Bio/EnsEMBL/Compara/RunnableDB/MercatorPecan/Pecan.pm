@@ -155,7 +155,7 @@ sub run
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   $self->require_executable('exonerate');
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1); 
+  $self->compara_dba->dbc->disconnect_if_idle;
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
@@ -181,8 +181,6 @@ sub run
 	  throw("Pecan execution failed $@\n");
       }
   };
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 sub write_output {
