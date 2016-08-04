@@ -218,7 +218,7 @@ return [
       ],
  },
  -flow_into => { 
-   '1->A' => [ 'set_genome_db_locator_factory' ],
+   '1->A' => [ 'set_genome_db_locator_factory', 'make_species_tree' ],
    'A->1' => [ 'chunk_reference_dnafrags_factory' ],
  },
 },
@@ -229,7 +229,7 @@ return [
  -parameters => {
    'inputquery' => 'SELECT name AS species_loc_name FROM genome_db WHERE assembly_default',
   },
- -flow_into => { 2 => 'update_genome_db_locator', 1 => 'make_species_tree', },
+ -flow_into => { 2 => 'update_genome_db_locator' },
 },
 
 { # this sets up the locator field in the genome_db table
