@@ -614,6 +614,10 @@ sub _load_DnaFragRegions {
 
   my $regions = $sr->regions();
 
+  if (scalar(@$regions) == 1) {
+      $self->complete_early('Cannot work with a single region');
+  }
+
   #foreach my $dfr (@{$sr->children}) {  
   foreach my $dfr (@$regions) {  
     #$dfr->disavow_parent;
