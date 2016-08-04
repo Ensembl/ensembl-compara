@@ -659,6 +659,9 @@ sub _dump_fasta {
 
     print F ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, ".",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand,"\n";
+
+    $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
     my $slice = $dfr->slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
     my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
@@ -671,6 +674,7 @@ sub _dump_fasta {
     print F $seq,"\n";
 
     close F;
+    });
 
     $self->add_fasta_files($file);
     $self->add_species_order($dfr->dnafrag->genome_db_id);
