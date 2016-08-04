@@ -104,7 +104,7 @@ sub write_output {
 
     # each triplet is: [$pairwise_mlss, $synt_mlss, $ref_species]
     foreach my $triplet (@{$self->param('mlsss_ok')}) {
-        my $genome_db_ids = join(',', map {$_->dbID} @{$triplet->[0]->species_set_obj->genome_dbs});
+        my $genome_db_ids = join(',', map {$_->dbID} @{$triplet->[0]->species_set->genome_dbs});
         $self->dataflow_output_id( {
             pairwise_mlss_id    => $triplet->[0]->dbID,
             synteny_mlss_id     => $triplet->[1]->dbID,
@@ -121,7 +121,7 @@ sub _check_pairwise {
 
     # Check consistency with master for the pairwise MLSS
     my $master_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss->dbID);
-    if (($master_mlss->name ne $mlss->name) or ($master_mlss->method->type ne $mlss->method->type) or ($master_mlss->species_set_obj->dbID != $mlss->species_set_obj->dbID)) {
+    if (($master_mlss->name ne $mlss->name) or ($master_mlss->method->type ne $mlss->method->type) or ($master_mlss->species_set->dbID != $mlss->species_set->dbID)) {
         die sprintf("Mismatch between master database (%s) and pairwise database (%s) for MLSS object dbID=%d\n", $self->param('master_db'), $self->param('alignment_db'), $mlss->dbID);
     }
 
@@ -132,7 +132,7 @@ sub _check_pairwise {
     }
 
     # Do the species have karyotypes ?
-    my $genome_dbs = $master_mlss->species_set_obj->genome_dbs;
+    my $genome_dbs = $master_mlss->species_set->genome_dbs;
     if (grep {not $_->has_karyotype} @$genome_dbs) {
         if (not $self->param('include_non_karyotype')) {
             $self->warning(sprintf("Discarding '%s' because some species don't have a karyotype", $mlss->name));
@@ -147,7 +147,7 @@ sub _check_pairwise {
     # synteny MLSS
     my $synt_method = $self->param('master_dba')->get_MethodAdaptor->fetch_by_type($self->param_required('synteny_method_link_type'))
         or die sprintf("Could not find the method '%s' in the master database (%s)\n", $self->param('synteny_method_link_type'), $self->param('master_db'));
-    my $master_synt_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($synt_method->dbID, $mlss->species_set_obj->dbID);
+    my $master_synt_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($synt_method->dbID, $mlss->species_set->dbID);
 
     # Create a new one in the master database if needed
     if (not $master_synt_mlss) {
@@ -156,7 +156,7 @@ sub _check_pairwise {
         $synt_name =~ s/ .*/ synteny/;
         $master_synt_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
             -METHOD             => $synt_method,
-            -SPECIES_SET_OBJ    => $mlss->species_set_obj,
+            -SPECIES_SET        => $mlss->species_set,
             -NAME               => $synt_name,
             -SOURCE             => $self->param_required('synteny_source'),
         );
@@ -169,7 +169,7 @@ sub _check_pairwise {
         return;
     }
     # It should be in the current database
-    my $synt_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($synt_method->dbID, $mlss->species_set_obj->dbID)
+    my $synt_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($synt_method->dbID, $mlss->species_set->dbID)
         or die "Error: the method_link_species_set table hasn't been imported from master yet\n";
 
     push @{$self->param('mlsss_ok')}, [$mlss, $synt_mlss, $ref_species];

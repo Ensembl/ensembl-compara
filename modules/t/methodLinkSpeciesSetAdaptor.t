@@ -103,9 +103,9 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
     isa_ok($this_method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
 
     #species string ends up being too long
-    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs});
 
-    my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+    my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set->genome_dbs});
     if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
         print $this_method_link_species_set->dbID . "\n";
       is($this_method_link_species_set->method->dbID, $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
@@ -132,7 +132,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_b
     is($method_link_species_set->method->type, $all_mlss->{$this_method_link_species_set_id}->{type});
     is($method_link_species_set->method->class, $all_mlss->{$this_method_link_species_set_id}->{class});
 
-    my $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set_obj->genome_dbs});
+    my $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set->genome_dbs});
     is ($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
     done_testing();
@@ -285,7 +285,7 @@ subtest "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method", sub {
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => [map {$genome_db_adaptor->fetch_by_dbID($_)} split(",",
                                                                   $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
                                                                 );
@@ -294,7 +294,7 @@ subtest "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method", sub {
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj,
+                                                                -species_set    => $species_set,
                                                                );
     my $method_link_species_sets;
     push @$method_link_species_sets, $method_link_species_set;
@@ -316,7 +316,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => [map {$genome_db_adaptor->fetch_by_dbID($_)} split(",",
                                                                   $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
                                                                 );
@@ -325,7 +325,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj);
+                                                                -species_set    => $species_set);
 
     $method_link_species_set_adaptor->store($method_link_species_set);
     is($method_link_species_set->dbID, $this_method_link_species_set_id);
@@ -348,13 +348,13 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                     -type => "BLASTZ_NET",
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => [ $genome_db_adaptor->fetch_by_name_assembly("felis_catus"),
                                                                  $genome_db_adaptor->fetch_by_name_assembly("mus_musculus")],                                                               );
     
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $method,
-                                                                                   -species_set_obj    => $species_set_obj,
+                                                                                   -species_set    => $species_set,
                                                                                    -max_alignment_length => 1000);
 
     $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag", "method_link_species_set_attr");
@@ -384,13 +384,13 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                     -type => "BLASTZ_NET",
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
-    my $new_species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $new_species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => [ $genome_db_adaptor->fetch_by_name_assembly("felis_catus"),
                                                                  $genome_db_adaptor->fetch_by_name_assembly("mus_musculus")],                                                               );
     
     my $new_method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $new_method,
-                                                                                   -species_set_obj    => $new_species_set_obj,
+                                                                                   -species_set    => $new_species_set,
                                                                                    -max_alignment_length => 1000);
 
     $method_link_species_set_adaptor->store($new_method_link_species_set);
@@ -399,7 +399,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => \@genome_dbs
 #                                                  -genome_dbs => [map {$genome_db_adaptor->fetch_by_dbID($_)} split(",",
 #                                                                  $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
@@ -409,7 +409,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
                                                                 -dbID => $this_method_link_species_set_id,
                                                                 -adaptor => $method_link_species_set_adaptor,
                                                                 -method             => $method,
-                                                                -species_set_obj    => $species_set_obj);
+                                                                -species_set    => $species_set);
 
     $method_link_species_set_adaptor->store($method_link_species_set);
     is($method_link_species_set->dbID, $this_method_link_species_set_id);
@@ -431,13 +431,13 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method
                                                     -type => "BLASTZ_NET",
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
                                                   -genome_dbs => [ $genome_db_adaptor->fetch_by_name_assembly("felis_catus"),
                                                                  $genome_db_adaptor->fetch_by_name_assembly("mus_musculus")],                                                               );
     
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                                    -method             => $method,
-                                                                                   -species_set_obj    => $species_set_obj,
+                                                                                   -species_set    => $species_set,
                                                                                    -max_alignment_length => 1000);
 
     $multi->hide("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag","method_link_species_set_attr");
@@ -469,8 +469,8 @@ sub check_mlss {
     foreach my $this_method_link_species_set (@$method_link_species_sets) {
         isa_ok($this_method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
 
-        #my $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs});
-        my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+        #my $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs});
+        my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set->genome_dbs});
 
         if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
             is($this_method_link_species_set->method->dbID, $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id},

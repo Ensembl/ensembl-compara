@@ -487,7 +487,7 @@ sub _trim_gab_right {
 sub _write_gerp_dataflow {
     my ($self, $gab_id, $mlss) = @_;
     
-    my @species_set = map {$_->dbID} @{$mlss->species_set_obj->genome_dbs()};
+    my @species_set = map {$_->dbID} @{$mlss->species_set->genome_dbs()};
     
     my $output_id = { genomic_align_block_id => $gab_id, species_set => \@species_set };
     $self->dataflow_output_id($output_id);

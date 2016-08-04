@@ -160,7 +160,7 @@ if ($species && @$species > 0) {
     die "When the patched species is not the reference in the alignment, you must give --species with 1 species.\n" if not $patched_species_is_alignment_reference;
     foreach my $mlss (@pairwise_mlsss) {
         #print "name " . $mlss->name . " " . $mlss->dbID . "\n";
-        my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+        my $genome_dbs = $mlss->species_set->genome_dbs;
         
         foreach my $genome_db (@$genome_dbs) {
             #find non-reference species

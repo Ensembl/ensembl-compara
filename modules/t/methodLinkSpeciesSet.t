@@ -89,7 +89,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
                                                                                -dbID => 1,
                                                                                -adaptor => $method_link_species_set_adaptor,
                                                                                -method => $method,
-                                                                               -species_set_obj => $species_set,
+                                                                               -species_set => $species_set,
                                                                                -name => $mlss_name,
                                                                                -source => $mlss_source);
 
@@ -100,7 +100,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
     is($this_method->type, "BLASTZ_NET");
     is($this_method->class, "GenomicAlignBlock.pairwise_alignment");
 
-    my $species = join(" - ", sort {$a cmp $b} map {$_->name} @{$method_link_species_set->species_set_obj->genome_dbs});
+    my $species = join(" - ", sort {$a cmp $b} map {$_->name} @{$method_link_species_set->species_set->genome_dbs});
     is($species, "homo_sapiens - mus_musculus");
     
     is ($method_link_species_set->name, $mlss_name);

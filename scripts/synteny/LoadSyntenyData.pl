@@ -69,7 +69,7 @@ print ref($qy_gdb), " *** ", ref($tg_gdb), "\n";
 my $mlss;
 if ($mlss_id) {
     $mlss = $mlssa->fetch_by_dbID($mlss_id);
-    my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+    my $genome_dbs = $mlss->species_set->genome_dbs;
    # die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
     die "The mlss_id $mlss_id does not match the right method_link\n" if $mlss->method->type ne 'SYNTENY';
     my($qy_match, $tg_match)=(0,0);
@@ -86,7 +86,7 @@ if ($mlss_id) {
 } else {
     $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method => Bio::EnsEMBL::Compara::Method->new( -type => 'SYNTENY', -class => 'SyntenyRegion.synteny' ),
-        -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
+        -species_set => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
     );
     $mlssa->store($mlss);
 }

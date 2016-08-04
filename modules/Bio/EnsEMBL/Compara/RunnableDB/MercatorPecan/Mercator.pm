@@ -71,7 +71,7 @@ sub fetch_input {
 
   if (!defined $self->param('genome_db_ids')) {
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('mlss_id'));
-      my $species_set = $mlss->species_set_obj->genome_dbs;
+      my $species_set = $mlss->species_set->genome_dbs;
       my $gdb_ids;
       foreach my $gdb (@$species_set) {
 	    push @$gdb_ids, $gdb->dbID;
@@ -149,7 +149,7 @@ sub store_synteny {
   }
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
      -method => new Bio::EnsEMBL::Compara::Method( -type => $self->param('method_link_type') ),
-     -species_set_obj => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => \@genome_dbs ));
+     -species_set => new Bio::EnsEMBL::Compara::SpeciesSet( -genome_dbs => \@genome_dbs ));
   $mlssa->store($mlss);
 
   my $synteny_region_ids;

@@ -140,7 +140,7 @@ sub _get_species_tree {
     my $ordered_species;
 
     my $species_tree = $mlss->species_tree;
-    my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+    my $genome_dbs = $mlss->species_set->genome_dbs;
     return (undef, $genome_dbs) unless $species_tree;
     my $newick_species_tree = $species_tree->root->newick_format('ryo', '%{-n}:%{d}');
 
@@ -179,7 +179,7 @@ sub _create_specific_epo_low_coverage_readme {
     my ($self, $compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor) = @_;
 
     my $high_coverage_mlss = $mlss_adaptor->fetch_by_dbID($mlss->get_value_for_tag('high_coverage_mlss_id'));
-    my $high_coverage_species_set = $high_coverage_mlss->species_set_obj->genome_dbs;
+    my $high_coverage_species_set = $high_coverage_mlss->species_set->genome_dbs;
 
     my %high_coverage_species;
     foreach my $species (@$high_coverage_species_set) {

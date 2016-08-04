@@ -13,6 +13,6 @@ my $mlssa = Bio::EnsEMBL::Registry->get_adaptor( "Multi", "compara", "MethodLink
 
 my $mlss = $mlssa->fetch_by_method_link_type_species_set_name("EPO", "mammals");
 
-foreach my $genome_db (@{ $mlss->species_set_obj()->genome_dbs() }){
+foreach my $genome_db (@{ $mlss->species_set()->genome_dbs() }){
 	print $genome_db->name(), "\n";
 }

@@ -415,7 +415,7 @@ sub print_method_link_species_sets_to_update {
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
       next unless $this_method_link_species_set->is_current;
       $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
+          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs})} = $this_method_link_species_set;
     }
   }
 

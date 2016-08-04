@@ -460,8 +460,8 @@ if ($method_link_species_set->method->class eq "ConservationScore.conservation_s
 # will have disconnect_when_inactive set to 1.
 # For pairwise alignments, we consider that we can afford staying asleep
 # half of the time, with the benefit of not losing the connection
-if (scalar(@{$method_link_species_set->species_set_obj->genome_dbs}) <= 2) {
-    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set_obj->genome_dbs};
+if (scalar(@{$method_link_species_set->species_set->genome_dbs}) <= 2) {
+    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set->genome_dbs};
 }
 
 warn "Dumping ", $method_link_species_set->name, "\n" if $debug;

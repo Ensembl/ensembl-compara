@@ -99,7 +99,7 @@ sub fetch_input {
   my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('output_method_link_type'),
                                                    -class => "GenomicAlignBlock.pairwise_alignment");
 
-  my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs => ($ref_gdb->dbID == $non_ref_gdb->dbID)
                             ? [$ref_gdb]
                             : [$ref_gdb, $non_ref_gdb]
@@ -107,7 +107,7 @@ sub fetch_input {
         
   my $out_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set_obj    => $species_set_obj,
+        -species_set    => $species_set,
   );
 
   $mlssa->store($out_mlss);

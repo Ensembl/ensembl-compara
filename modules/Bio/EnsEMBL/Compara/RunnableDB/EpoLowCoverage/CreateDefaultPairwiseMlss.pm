@@ -88,7 +88,7 @@ sub create_default_mlss {
     #Find the genome_db for the reference species
     my $low_coverage_species_set;
     my %all_species_set;
-    foreach my $genome_db (@{$low_mlss->species_set_obj->genome_dbs}) {
+    foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
 	if ($genome_db->name eq $self->param('reference_species')) {
 	    $ref_genome_db = $genome_db;
 	}
@@ -99,7 +99,7 @@ sub create_default_mlss {
     }
 
     #Find only low coverage species by removing the high coverage ones from the list of all of them
-    foreach my $high_species (@{$base_mlss->species_set_obj->genome_dbs}) {
+    foreach my $high_species (@{$base_mlss->species_set->genome_dbs}) {
 	$all_species_set{$high_species->dbID} = 2;
     }
     foreach my $genome_db_id (keys %all_species_set) {

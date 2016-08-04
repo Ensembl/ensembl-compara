@@ -413,11 +413,11 @@ sub create_mlss {
   my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, $all_genome_dbs);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-        join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n";
+        join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set->genome_dbs}), "\n";
     print "  Name: ", $mlss->name, "\n";
     print "  Source: ", $mlss->source, "\n";
     print "  URL: ", $mlss->url, "\n";
-    print "  SpeciesSet name: ".($mlss->species_set_obj->name)."\n";
+    print "  SpeciesSet name: ".($mlss->species_set->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     if ($release and !$mlss->is_current) {
       $helper->transaction( -CALLBACK => sub { $mlssa->make_object_current($mlss) } );
@@ -492,7 +492,7 @@ sub create_mlss {
   
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                  -method => $method,
-                                                                 -species_set_obj => $species_set,
+                                                                 -species_set => $species_set,
                                                                  -name => $mlss_name,
                                                                  -source => $source,
                                                                  -url => $url);

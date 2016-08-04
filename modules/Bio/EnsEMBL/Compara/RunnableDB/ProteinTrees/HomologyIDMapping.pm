@@ -84,7 +84,7 @@ sub fetch_input {
 	# my $non_reuse_species = $self->param('reuse_species_csv');
 	# my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	# my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-	# my $species = $mlss->species_set_obj->genome_dbs;
+	# my $species = $mlss->species_set->genome_dbs;
 
 
 

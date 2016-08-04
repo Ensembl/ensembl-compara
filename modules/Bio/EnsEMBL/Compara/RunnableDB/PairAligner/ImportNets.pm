@@ -116,7 +116,7 @@ sub fetch_input {
   #Check if doing self_alignment where the species_set will contain only one
   #entry
   my $self_alignment = 0;
-  if (@{$mlss->species_set_obj->genome_dbs} == 1) {
+  if (@{$mlss->species_set->genome_dbs} == 1) {
       $self_alignment = 1;
   }
   

@@ -300,6 +300,11 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
 
+    # Needed to "load" the parameters, i.e. to force them to be substituted
+    # They can then be used in the healthcheck analysis
+    $self->o('max_percent_diff');
+    $self->o('max_percent_diff_patches');
+
     return [
 	    # ---------------------------------------------[Turn all tables except 'genome_db' to InnoDB]---------------------------------------------
 	    {   -logic_name    => 'get_species_list',

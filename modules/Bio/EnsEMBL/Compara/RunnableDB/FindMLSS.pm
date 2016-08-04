@@ -85,7 +85,7 @@ sub _find_all_matching_species_sets {
     if (my $mlss_id = $self->param('mlss_id')) {
         my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)
             or die "Could not find the MLSS dbID=$mlss_id in the master database\n";
-        return [$mlss->species_set_obj];
+        return [$mlss->species_set];
     }
 
     die "It was not possible to identify a species-set. Tried 'species_set_id', 'mlss_id', and 'species_set_name'\n";

@@ -585,7 +585,7 @@ sub parse_defaults {
     if ($self->param('mlss_id')) {
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-	$genome_dbs = $mlss->species_set_obj->genome_dbs;
+	$genome_dbs = $mlss->species_set->genome_dbs;
     } 
     #load genome_dbs from a collection
     if ($self->param('collection')) {
@@ -819,7 +819,7 @@ sub write_mlss_entry {
 	-class              => "GenomicAlignBlock.pairwise_alignment",
     );
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs         => ($ref_genome_db->dbID == $non_ref_genome_db->dbID)
                                         ? [$ref_genome_db]
                                         : [$ref_genome_db,$non_ref_genome_db]
@@ -827,7 +827,7 @@ sub write_mlss_entry {
 
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set_obj    => $species_set_obj,
+        -species_set    => $species_set,
         -name               => $name,
         -source             => $source,
     );

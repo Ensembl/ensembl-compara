@@ -234,7 +234,7 @@ sub write_pairaligner_statistics {
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Find the reference and non-reference genome_db
-    my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
+    my $species_set = $method_link_species_set->species_set->genome_dbs();
 
     my $ref_dbc_url = $self->param('ref_dbc_url');
     my $non_ref_dbc_url = $self->param('non_ref_dbc_url');

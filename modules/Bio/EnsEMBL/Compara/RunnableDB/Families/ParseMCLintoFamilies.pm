@@ -47,7 +47,7 @@ sub write_output {
         # make sure we have the correct $mlss:
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY'),
-        -species_set_obj    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
+        -species_set    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
     );
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 

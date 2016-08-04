@@ -74,7 +74,7 @@ sub fetch_input {
 	my $species1_dbid;
 	my $species2_dbid;
 	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($self->param_required('goc_mlss_id'));
-	my $speciesSet_obj= $mlss->species_set_obj();
+	my $speciesSet_obj= $mlss->species_set();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
 	
 	if ($speciesSet) {

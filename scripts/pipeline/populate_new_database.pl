@@ -458,7 +458,7 @@ sub get_all_default_genome_dbs {
         unless ($method_link_species_set_adaptor);
     foreach my $this_mlss_id (@$mlss_ids) {
       my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
-      foreach my $this_genome_db (@{$this_mlss->species_set_obj->genome_dbs}) {
+      foreach my $this_genome_db (@{$this_mlss->species_set->genome_dbs}) {
         $all_species->{$this_genome_db->dbID} = $this_genome_db;
       }
     }
@@ -550,7 +550,7 @@ sub get_all_method_link_species_sets {
     foreach my $this_method_link_species_set (@{$these_method_link_species_sets}) {
       next if $filter_current and !$this_method_link_species_set->is_current;
       my $all_included = 1;
-      foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs()}) {
+      foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set->genome_dbs()}) {
         if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
           $all_included = 0;
           last;

@@ -74,7 +74,7 @@ sub _test_mlss {
         die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
 
     } else {
-        my %species_in_mlss = map {$_->name => 1} @{$mlss->species_set_obj->genome_dbs};
+        my %species_in_mlss = map {$_->name => 1} @{$mlss->species_set->genome_dbs};
         my @ref_species_in = grep {$species_in_mlss{$_}} @{$self->param('species_priority')};
         if (not scalar(@ref_species_in)) {
             die "Could not find any of (".join(", ", map {'"'.$_.'"'} @{$self->param('species_priority')}).") in mlss_id $mlss_id. Edit the 'species_priority' list in MLSSJobFactory.\n";
