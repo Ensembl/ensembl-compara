@@ -55,11 +55,13 @@ use EnsEMBL::Web::Form::ModalForm;
 sub new {
   my ($class, $hub, $builder, $renderer, $key) = @_;
 
+  my $id = [split /::/, $class]->[-1];
+
   my $self = {
     hub           => $hub,
     builder       => $builder,
     renderer      => $renderer,
-    id            => [split /::/, $class]->[-1],
+    id            => $id,
     component_key => $key,
     object        => undef,
     cacheable     => 0,
@@ -71,10 +73,15 @@ sub new {
     html_format   => undef,
   };
   
-  if ($hub) { 
+  if ($hub) {
+    $self->{'viewconfig'}{$hub->type} = $hub->get_viewconfig({
+      'component' => $id,
+      'type'      => $hub->type,
+      'cache'     => 1
+    });
     $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   }
-  
+
   bless $self, $class;
   
   $self->_init;
