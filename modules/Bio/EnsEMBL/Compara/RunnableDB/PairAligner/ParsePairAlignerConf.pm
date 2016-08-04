@@ -1027,7 +1027,7 @@ sub create_chain_dataflows {
 
 	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
 
-	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name);
+	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->dbID, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->dbID);
 	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
 
 	#
@@ -1067,7 +1067,7 @@ sub create_chain_dataflows {
 	
 #	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
 
-#	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name);
+#	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->dbID, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->dbID);
 #	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
 
 	#
@@ -1115,8 +1115,8 @@ sub create_net_dataflows {
             $mlss->store_tag('non_reference_component', $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->genome_component);
         }
 
-	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name;
-	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name;
+	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->dbID;
+	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->dbID;
 
 	my ($input_method_link_id, $input_method_link_type) = @{$net_config->{'input_method_link'}};
 	my $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $ref_species, $non_ref_species);
@@ -1203,7 +1203,7 @@ sub create_net_dataflows {
 #Find pair_aligner with same reference and non-reference collection names as the chain_config. Return undef if not found
 #
 sub find_config {
-    my ($all_configs, $dna_collections, $method_link_type, $ref_name, $non_ref_name) = @_;
+    my ($all_configs, $dna_collections, $method_link_type, $ref_genome_db_id, $non_ref_genome_db_id) = @_;
 
     foreach my $config (@$all_configs) {
 	my ($output_method_link_id,$output_method_link_type);
@@ -1212,9 +1212,9 @@ sub find_config {
 	} elsif (defined $config->{'output_method_link'}) {
 	    ($output_method_link_id,$output_method_link_type) = @{$config->{'output_method_link'}};
 	}
-	if ($output_method_link_type eq $method_link_type && 
-	    $dna_collections->{$config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name eq $ref_name &&
-	    $dna_collections->{$config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name eq $non_ref_name) {
+	if ($output_method_link_type eq $method_link_type &&
+            ($dna_collections->{$config->{'reference_collection_name'}}->{'genome_db'}->dbID == $ref_genome_db_id) &&
+            ($dna_collections->{$config->{'non_reference_collection_name'}}->{'genome_db'}->dbID == $non_ref_genome_db_id)) {
 	    return $config;
 	}
     }
