@@ -214,7 +214,7 @@ return [
       'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES '
       .'(#overlaps_mlssid#, #overlaps_mlid#, "get_overlaps", #species_set_id#),'
       .'(#pecan_mlssid#, #pecan_mlid#, "pecan", #species_set_id#),'
-      .'(#gerp_ce_mlssid#, #gerp_ce_mlid#, "gerp", #species_set_id#),',
+      .'(#gerp_ce_mlssid#, #gerp_ce_mlid#, "gerp", #species_set_id#)',
       ],
  },
  -flow_into => { 
