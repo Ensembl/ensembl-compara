@@ -165,7 +165,7 @@ sub write_output {
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
-    $species_tree->label($self->param('label'));
+    $species_tree->label($self->param_required('label'));
 
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
