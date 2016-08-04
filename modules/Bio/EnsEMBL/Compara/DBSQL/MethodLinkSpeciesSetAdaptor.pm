@@ -141,11 +141,11 @@ sub store {
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $species_set_obj   = $mlss->species_set()  or die "No SpeciesSet defined, cannot store\n";
-  $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
+  my $species_set   = $mlss->species_set()  or die "No SpeciesSet defined, cannot store\n";
+  $self->db->get_SpeciesSetAdaptor->store( $species_set, $store_components_first );
 
   my $dbID;
-  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID) ) {
+  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set->dbID) ) {
     $dbID = $already_stored_method_link_species_set->dbID;
   }
 
@@ -153,7 +153,7 @@ sub store {
 
       my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url, first_release, last_release)';
       my $mlss_placeholders = '?, ?, ?, ?, ?, ?, ?';
-      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '', $mlss->first_release, $mlss->last_release);
+      my @mlss_data = ($method->dbID, $species_set->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '', $mlss->first_release, $mlss->last_release);
 
       $dbID = $mlss->dbID();
       if (!$dbID) {
@@ -254,22 +254,22 @@ sub _objs_from_sth {
     while ($sth->fetch()) {
 
             my $method          = $method_hash->get($method_link_id);
-            my $species_set_obj = $species_set_hash->get($species_set_id);
+            my $species_set = $species_set_hash->get($species_set_id);
 
             if (!$method) {
                 warning("MethodLinkSpeciesSet with dbID=$dbID is missing method_link entry with dbID=$method_link_id, so it will not be fetched");
             }
-            if (!$species_set_obj) {
+            if (!$species_set) {
                 warning("MethodLinkSpeciesSet with dbID=$dbID is missing species_set(_header) entry with dbID=$species_set_id, so it will not be fetched");
             }
 
-            if($method and $species_set_obj) {
+            if($method and $species_set) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
                     adaptor            => $self,
                     dbID               => $dbID,
                     
                     method             => $method,
-                    species_set        => $species_set_obj,
+                    species_set        => $species_set,
 
                     name               => $name,
                     source             => $source,

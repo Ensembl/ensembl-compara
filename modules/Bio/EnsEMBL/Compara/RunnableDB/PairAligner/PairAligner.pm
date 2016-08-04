@@ -154,7 +154,7 @@ sub fetch_input {
   my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type'),
                                                    -class => "GenomicAlignBlock.pairwise_alignment");
 
-  my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs => ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID)
                             ? [$first_qy_chunk->dnafrag->genome_db]
                             : [$first_qy_chunk->dnafrag->genome_db, $first_db_chunk->dnafrag->genome_db]
@@ -162,7 +162,7 @@ sub fetch_input {
         
   my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set    => $species_set_obj,
+        -species_set    => $species_set,
   );
 
   $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);

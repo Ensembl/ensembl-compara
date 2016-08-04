@@ -813,7 +813,7 @@ sub write_mlss_entry {
 	-class              => "GenomicAlignBlock.pairwise_alignment",
     );
 
-    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs         => ($ref_genome_db->dbID == $non_ref_genome_db->dbID)
                                         ? [$ref_genome_db]
                                         : [$ref_genome_db,$non_ref_genome_db]
@@ -821,7 +821,7 @@ sub write_mlss_entry {
 
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
-        -species_set    => $species_set_obj,
+        -species_set    => $species_set,
         -name               => $name,
         -source             => $source,
     );
