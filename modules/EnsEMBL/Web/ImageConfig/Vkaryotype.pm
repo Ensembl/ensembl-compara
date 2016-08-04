@@ -20,20 +20,22 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::Vkaryotype;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::Vertical);
+use parent qw(EnsEMBL::Web::ImageConfig::Vertical);
 
-sub init_extra_menus {}
-
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     label           => 'below',
     band_labels     => 'off',
     top_margin      => 5,
     band_links      => 'no',
-    all_chromosomes => 'yes'
+    all_chromosomes => 'yes',
   });
 
   $self->create_menus('ideogram', 'user_data');
