@@ -114,8 +114,7 @@ sub dumpNibFiles {
   my $starttime = time();
 
   my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
-  my $dump_loc = $dna_collection->dump_loc.'/nib_files';
-  mkpath(dirname($dump_loc));
+  my $dump_loc = $dna_collection->dump_loc;
 
   unless (defined $dump_loc) {
     die("dump_loc directory is not defined, can not dump nib files\n");
