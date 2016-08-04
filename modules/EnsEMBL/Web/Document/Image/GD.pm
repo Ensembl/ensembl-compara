@@ -79,12 +79,13 @@ sub karyotype {
   my $chr_name;
 
   my $image_config = $hub->get_imageconfig($config_name);
+  my $component = $self->component;
   
   # set some dimensions based on number and size of chromosomes
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
     my $total_chrs = @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
-    my $rows       = $hub->param('rows') || ceil($total_chrs / 18);
-    my $chr_length = $hub->param('chr_length') || 200;
+    my $rows       = $component->param('rows') || ceil($total_chrs / 18);
+    my $chr_length = $component->param('chr_length') || 200;
        $chr_name   = 'ALL';
 
     if ($chr_length) {
