@@ -382,22 +382,22 @@ sub get_dna_collection {
 	#Fill in genome_db
 	if (defined $dna_collection->{'genome_db_id'}) {
 	    $dna_collection->{'genome_db'} = $gdb_adaptor->fetch_by_dbID($dna_collection->{'genome_db_id'});
-	    #print "genome_db_id " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
+	    #print "genome_db_id " . $dna_collection->{'genome_db'}->toString . "\n";
 	} elsif (defined ($dna_collection->{'genome_name_assembly'})) {
 	    my ($genome_name, $assembly) = split ":", $dna_collection->{'genome_name_assembly'};
 	    $dna_collection->{'genome_db'} = $gdb_adaptor->fetch_by_name_assembly($genome_name, $assembly);
-	    #print "genome_name_assembly " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
+	    #print "genome_name_assembly " . $dna_collection->{'genome_db'}->toString . "\n";
 	} else {
 	    #Check if first field of collection name is valid genome name
 	    my @fields = split " ", $name;
 	    foreach my $species (@$speciesList) {
 		if ($species->{'genome_db'}->_get_unique_name eq $fields[0]) {
 		    $dna_collection->{'genome_db'} = $species->{'genome_db'};
-		    #print "collection_name " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
+		    #print "collection_name " . $dna_collection->{'genome_db'}->toString . "\n";
 		}
 	    }
 	}
-	#print "gdb " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
+	#print "gdb " . $dna_collection->{'genome_db'}->toString . "\n";
 	#print_conf($dna_collection);
 	#print "\n";
     }
