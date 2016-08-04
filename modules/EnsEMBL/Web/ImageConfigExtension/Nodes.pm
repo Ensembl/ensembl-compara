@@ -53,15 +53,13 @@ sub add_menus {
 
   foreach my $menu_key (@_) {
 
-    throw WebException("No menu entry found for $menu_key") unless $menus->{$menu_key};
-
-    my ($caption, $parent_key) = ref $menus->{$menu_key} ? @{$menus->{$menu_key}} : ($menus->{$menu_key});
+    my ($caption, $parent_key) = $menus->{$menu_key} && ref $menus->{$menu_key} ? @{$menus->{$menu_key}} : ($menus->{$menu_key});
 
     throw WebException("No menu entry found for $parent_key") if $parent_key && !$menus->{$parent_key};
 
     my $parent_node = $parent_key ? $tree->get_node($parent_key) || $root->append_child($self->create_menu_node($parent_key, $menus->{$parent_key})) : $root;
 
-    $parent_node->append_child($self->create_menu_node($menu_key, $caption));
+    $parent_node->append_child($self->create_menu_node($menu_key, $caption || ''));
 
     $count++;
   }
