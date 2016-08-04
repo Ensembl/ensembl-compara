@@ -101,7 +101,6 @@ sub param_defaults {
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local
-            'fasta_files' => undef, #local
            };
 }
 
@@ -123,6 +122,9 @@ sub fetch_input {
 
   #Check that mlss_id has been defined
   $self->param_required('mlss_id');
+
+  # Initialize the array
+  $self->param('fasta_files', []);
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
