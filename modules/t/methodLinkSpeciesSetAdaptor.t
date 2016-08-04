@@ -103,9 +103,9 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
     isa_ok($this_method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
 
     #species string ends up being too long
-    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+    #$species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs});
 
-    my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+    my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set->genome_dbs});
     if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
         print $this_method_link_species_set->dbID . "\n";
       is($this_method_link_species_set->method->dbID, $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id});
@@ -132,7 +132,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_b
     is($method_link_species_set->method->type, $all_mlss->{$this_method_link_species_set_id}->{type});
     is($method_link_species_set->method->class, $all_mlss->{$this_method_link_species_set_id}->{class});
 
-    my $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set_obj->genome_dbs});
+    my $species = join(",", sort map {$_->name} @{$method_link_species_set->species_set->genome_dbs});
     is ($species, $all_mlss->{$this_method_link_species_set_id}->{species_set});
 
     done_testing();
@@ -469,8 +469,8 @@ sub check_mlss {
     foreach my $this_method_link_species_set (@$method_link_species_sets) {
         isa_ok($this_method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet");
 
-        #my $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs});
-        my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs});
+        #my $species = join(",", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs});
+        my $gdbs = join(",", sort {$a <=> $b} map {$_->dbID} @{$this_method_link_species_set->species_set->genome_dbs});
 
         if (defined($all_mlss->{$this_method_link_species_set->dbID})) {
             is($this_method_link_species_set->method->dbID, $all_mlss->{$this_method_link_species_set->dbID}->{method_link_id},

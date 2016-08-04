@@ -88,7 +88,7 @@ sub fetch_input {
     } elsif ($self->param('mlss_id')) {
         my $mlss_id = $self->param('mlss_id');
         my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-        $genome_dbs = $mlss->species_set_obj->genome_dbs;
+        $genome_dbs = $mlss->species_set->genome_dbs;
 
     } elsif ($self->param('all_current')) {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();

@@ -104,7 +104,7 @@ if ($mlss_id) {
     $mlss = $mlssa->fetch_by_dbID($mlss_id);
     my $found_query = 0;
     #find target gdb from mlss
-    foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+    foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
         if ($qy_gdb->name ne $genome_db->name) {
             $tg_gdb = $genome_db;
         } else {

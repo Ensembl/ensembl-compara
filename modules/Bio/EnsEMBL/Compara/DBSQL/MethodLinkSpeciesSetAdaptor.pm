@@ -141,7 +141,7 @@ sub store {
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store\n";
+  my $species_set_obj   = $mlss->species_set()  or die "No SpeciesSet defined, cannot store\n";
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj, $store_components_first );
 
   my $dbID;
@@ -604,7 +604,7 @@ sub make_object_current {
     # Update the fields in the table
     $self->SUPER::make_object_current($mlss);
     # Also update the linked SpeciesSet
-    $self->db->get_SpeciesSetAdaptor->make_object_current($mlss->species_set_obj);
+    $self->db->get_SpeciesSetAdaptor->make_object_current($mlss->species_set);
 }
 
 
@@ -645,11 +645,11 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $mlss) = @_;
     return {
-        species_set_id => $mlss->species_set_obj->dbID,
+        species_set_id => $mlss->species_set->dbID,
         method => sprintf('%d', $mlss->method->dbID),
-        method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set_obj->dbID),
-        (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set_obj->genome_dbs()}),
-        (map {sprintf('genome_db_%d_method_%s', $_->dbID, uc $mlss->method->type) => 1} @{$mlss->species_set_obj->genome_dbs()}),
+        method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set->dbID),
+        (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set->genome_dbs()}),
+        (map {sprintf('genome_db_%d_method_%s', $_->dbID, uc $mlss->method->type) => 1} @{$mlss->species_set->genome_dbs()}),
     }
 }
 

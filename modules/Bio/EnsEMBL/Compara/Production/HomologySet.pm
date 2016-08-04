@@ -120,8 +120,8 @@ sub add {
     $self->{'gene_set'}->add($gene1);
     $self->{'gene_set'}->add($gene2);
     my $description = $homology->description;
-    if (scalar @{$homology->method_link_species_set->species_set_obj->genome_dbs} == 1) {
-      my $gdb = $homology->method_link_species_set->species_set_obj->genome_dbs->[0];
+    if (scalar @{$homology->method_link_species_set->species_set->genome_dbs} == 1) {
+      my $gdb = $homology->method_link_species_set->species_set->genome_dbs->[0];
       $description .= "_".$gdb->dbID;
     }
     $self->{'types'}->{$description}++;

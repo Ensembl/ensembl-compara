@@ -511,7 +511,7 @@ sub _run_compare_to_previous_db_test {
   } elsif (defined $current_mlss_id) {
       my $mlss = $current_mlss_adaptor->fetch_by_dbID($current_mlss_id);
       $method_link_type = $mlss->method->type;
-      @$current_genome_db_ids = map {$_->dbID} @{$mlss->species_set_obj->genome_dbs};
+      @$current_genome_db_ids = map {$_->dbID} @{$mlss->species_set->genome_dbs};
   } else {
       $self->throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
   }

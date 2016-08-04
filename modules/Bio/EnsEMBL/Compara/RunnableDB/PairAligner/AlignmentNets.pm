@@ -110,7 +110,7 @@ sub fetch_input {
   #Check if doing self_alignment where the species_set will contain only one
   #entry
   my $self_alignment = 0;
-  if (@{$mlss->species_set_obj->genome_dbs} == 1) {
+  if (@{$mlss->species_set->genome_dbs} == 1) {
       $self_alignment = 1;
   }
   
@@ -118,7 +118,7 @@ sub fetch_input {
   
   if (!$out_mlss) {
       #Try old pipeline
-      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set_obj->genome_dbs);
+      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set->genome_dbs);
    }
 
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))

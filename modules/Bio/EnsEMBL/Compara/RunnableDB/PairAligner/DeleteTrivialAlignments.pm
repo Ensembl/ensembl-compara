@@ -64,7 +64,7 @@ sub fetch_input {
     my ($self) = @_;
 
     my $mlss_id = $self->param_required('method_link_species_set_id');
-    if (scalar(@{ $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)->species_set_obj->genome_dbs }) != 1) {
+    if (scalar(@{ $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)->species_set->genome_dbs }) != 1) {
         $self->complete_early('Skipping DeleteTrivialAlignments as we are dealing with more than one species');
     }
 }

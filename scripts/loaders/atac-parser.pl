@@ -166,7 +166,7 @@ sub validate_mlss_and_species {
   my ($r_gdbid, $q_gdbid, $mlss_o) = @_;
   my @given_gdbids = ($r_gdbid, $q_gdbid);
   @given_gdbids = sort {$a <=> $b} @given_gdbids;
-  my $ss_gdbs = $mlss_o->species_set_obj()->genome_dbs();
+  my $ss_gdbs = $mlss_o->species_set()->genome_dbs();
   my @ss_gdbids = map {$_->dbID()} @{$ss_gdbs};
   #assume if there is one gdb_id in the species set that this
   #is a triticum self alignment, so duplicate the id

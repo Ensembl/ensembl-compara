@@ -97,7 +97,7 @@ sub coding_regions {
   my %total_lengths;
   my %coding_regions;
   my %coding_lengths;
-  foreach my $gdb (@{$self->param('mlss')->species_set_obj->genome_dbs}) {
+  foreach my $gdb (@{$self->param('mlss')->species_set->genome_dbs}) {
    my $species = $gdb->name;
    my $core_dba = $gdb->db_adaptor;
    $core_dba->dbc->prevent_disconnect( sub {

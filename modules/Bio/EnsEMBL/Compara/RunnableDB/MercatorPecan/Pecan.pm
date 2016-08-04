@@ -517,7 +517,7 @@ sub _write_gerp_dataflow {
     my ($self, $gab, $mlss) = @_;
     
 #    my $species_set = "[";
-#    my $genome_db_set  = $mlss->species_set_obj->genome_dbs;
+#    my $genome_db_set  = $mlss->species_set->genome_dbs;
     
 #    foreach my $genome_db (@$genome_db_set) {
 #	$species_set .= $genome_db->dbID . ","; 

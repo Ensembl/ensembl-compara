@@ -69,7 +69,7 @@ sub fetch_input {
   $self->param('species_tree', $self->param('species_tree_adap')->fetch_by_root_id($species_tree_root_id));
 
 	$self->param('mlss', $mlss);
-  $self->param('genome_dbs' , $mlss->species_set_obj()->genome_dbs());
+  $self->param('genome_dbs' , $mlss->species_set()->genome_dbs());
 
   print "------------START OF Fetch_genetic_distance ------------\n mlss_id --------- $mlss_id \n" if ($self->debug);
   

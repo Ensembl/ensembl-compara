@@ -67,7 +67,7 @@ sub run {
 
     my $synteny_mlss_id = $self->param('synteny_mlss_id');
     my $qy_species = $self->param_required('ref_species');
-    my ($gdb1, $gdb2) = @{$self->param('synteny_mlss')->species_set_obj->genome_dbs()};
+    my ($gdb1, $gdb2) = @{$self->param('synteny_mlss')->species_set->genome_dbs()};
     my ($qy_gdb, $tg_gdb) = $gdb1->name eq $qy_species ? ($gdb1,$gdb2) : ($gdb2,$gdb1);
 
     my $dfa = $self->compara_dba->get_DnaFragAdaptor();

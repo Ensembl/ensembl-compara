@@ -506,7 +506,7 @@ sub _parse_cons_file {
 
     my $species_set;
     if (!defined $self->param('species_set')) {
-	foreach my $gdb (@{$gab->method_link_species_set->species_set_obj->genome_dbs}) {
+	foreach my $gdb (@{$gab->method_link_species_set->species_set->genome_dbs}) {
 	    push @$species_set, $gdb->dbID;
 	}
     } else {

@@ -148,7 +148,7 @@ sub fetch_input {
 
   #Find the non_ref_species name
   if (!defined $self->param('non_ref_species')) {
-      my $species_set = $mlss->species_set_obj->genome_dbs;
+      my $species_set = $mlss->species_set->genome_dbs;
 
       if (@$species_set == 1) {
 	  $self->param('non_ref_species', $self->param('ref_species'));

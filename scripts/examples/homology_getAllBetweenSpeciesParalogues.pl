@@ -45,7 +45,7 @@ my $species2 = 'mouse';
 my $this_mlss = $mlss_adaptor->fetch_by_method_link_type_registry_aliases('ENSEMBL_ORTHOLOGUES', [$species1, $species2]);
 
 ## The two GenomeDB objects (one is human, the other one is mouse)
-my ($gdb1, $gdb2) = @{$this_mlss->species_set_obj->genome_dbs};
+my ($gdb1, $gdb2) = @{$this_mlss->species_set->genome_dbs};
 
 my %gene_member_id_2_stable_id = ();
 foreach my $gdb ($gdb1, $gdb2) {

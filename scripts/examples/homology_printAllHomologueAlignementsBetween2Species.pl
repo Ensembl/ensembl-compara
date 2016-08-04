@@ -43,7 +43,7 @@ my $sp2 = "mouse";
 my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases('ENSEMBL_ORTHOLOGUES', [$sp1, $sp2]);
 
 my $species_names = '';
-foreach my $gdb (@{$mlss->species_set_obj->genome_dbs}) {
+foreach my $gdb (@{$mlss->species_set->genome_dbs}) {
   $species_names .= $gdb->dbID.".".$gdb->name."  ";
 }
 printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method->type, $species_names);

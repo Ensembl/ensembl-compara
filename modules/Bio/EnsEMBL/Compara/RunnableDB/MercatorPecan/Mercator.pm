@@ -71,7 +71,7 @@ sub fetch_input {
 
   if (!defined $self->param('genome_db_ids')) {
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('mlss_id'));
-      my $species_set = $mlss->species_set_obj->genome_dbs;
+      my $species_set = $mlss->species_set->genome_dbs;
       my $gdb_ids;
       foreach my $gdb (@$species_set) {
 	    push @$gdb_ids, $gdb->dbID;

@@ -777,7 +777,7 @@ sub writeExperimentFiles {
                     throw("The database do not contain any data for method link species set id $method_link_species_set_id!") if (!$pairwise_mlss);
 
                     #find the non-reference pairwise name
-                    foreach my $spp (@{$pairwise_mlss->species_set_obj->genome_dbs}) {
+                    foreach my $spp (@{$pairwise_mlss->species_set->genome_dbs}) {
                         if ($spp->name ne $species_name) {
                             $pairwise_name = $spp->name;
                             last;

@@ -127,7 +127,7 @@ sub fetch_all_by_Member {
         my $mlss_id = $mlss;
         $mlss = $mlss_a->fetch_by_dbID($mlss_id) || throw("$mlss_id is not a valid dbID for MethodLinkSpeciesSet");
       }
-      push @filtered_method_link_species_set, $mlss->dbID if (grep {$_->dbID == $query_gdb_id} @{$mlss->species_set_obj->genome_dbs});
+      push @filtered_method_link_species_set, $mlss->dbID if (grep {$_->dbID == $query_gdb_id} @{$mlss->species_set->genome_dbs});
     }
     if (not scalar(@filtered_method_link_species_set)) {
       warn "In HomologyAdaptor::fetch_all_by_Member(), the query member is not part of any -METHOD_LINK_SPECIES_SET\n";

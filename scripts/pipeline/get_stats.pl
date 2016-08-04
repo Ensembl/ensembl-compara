@@ -321,7 +321,7 @@ sub print_stats_for_method_link_species_sets {
     last if ($method_link_species_set->method->dbID > 100); # keep only method_link related to genomic_aligns
     if ($detail == 1) {
       print uc($method_link_species_set->method->type), " for";
-      foreach my $this_genome_db (@{$method_link_species_set->species_set_obj->genome_dbs}) {
+      foreach my $this_genome_db (@{$method_link_species_set->species_set->genome_dbs}) {
         print " -", $this_genome_db->name, " (", $this_genome_db->assembly, ")";
       }
       $alignment1_sth->execute($method_link_species_set->dbID);
@@ -329,7 +329,7 @@ sub print_stats_for_method_link_species_sets {
       print ": ", ($values[0] or 0), " alignments\n";
     } else {
       print uc($method_link_species_set->method->type), " for\n";
-      foreach my $this_genome_db (@{$method_link_species_set->species_set_obj->genome_dbs}) {
+      foreach my $this_genome_db (@{$method_link_species_set->species_set->genome_dbs}) {
         if (!$this_genome_db->{my_num_of_dnafrags}) {
           $dnafrag_sth->execute($this_genome_db->dbID);
           @values = $dnafrag_sth->fetchrow_array();

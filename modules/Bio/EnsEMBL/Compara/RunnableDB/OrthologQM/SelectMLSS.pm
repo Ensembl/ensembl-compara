@@ -65,7 +65,7 @@ sub fetch_input {
 		foreach my $mlss_id ( @{$aln_mlss_ids} ){
 			my $this_mlss = $mlss_adap->fetch_by_dbID($mlss_id);
 			die "Could not find method_link_species_set (id $mlss_id)" unless ( defined $this_mlss );
-			my @mlss_gdbs = map { $_->dbID } @{ $this_mlss->species_set_obj->genome_dbs };
+			my @mlss_gdbs = map { $_->dbID } @{ $this_mlss->species_set->genome_dbs };
 			my $c = 0; # check both species are in the list
 			foreach my $g ( @mlss_gdbs ) {
 				$c++ if ( $g == $species1_id || $g == $species2_id );

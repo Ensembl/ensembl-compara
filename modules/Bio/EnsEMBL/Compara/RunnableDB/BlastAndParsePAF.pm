@@ -101,7 +101,7 @@ sub fetch_input {
 
     my $mlss_id         = $self->param_required('mlss_id');
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-    my $species_set     = $mlss->species_set_obj->genome_dbs;
+    my $species_set     = $mlss->species_set->genome_dbs;
 
     $self->param('all_blast_db', {});
 
@@ -150,7 +150,7 @@ sub fetch_input {
         # Otherwise, we get the set of species from mlss_id
         my $mlss_id         = $self->param_required('mlss_id');
         my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-        my $species_set     = $mlss->species_set_obj->genome_dbs;
+        my $species_set     = $mlss->species_set->genome_dbs;
 
         $genome_db_list = [ grep {$_->dbID != $self->param('genome_db_id')} @$species_set ];
 

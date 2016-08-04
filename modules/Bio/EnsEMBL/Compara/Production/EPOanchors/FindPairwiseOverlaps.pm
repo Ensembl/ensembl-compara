@@ -59,7 +59,7 @@ sub fetch_input {
 	foreach my $mlss_id(@pairwise_mlss_ids) {
 		my $mlss = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
 		my $non_ref_genome_db; 
-		foreach my $genome_db (@{ $mlss->species_set_obj->genome_dbs() }){
+		foreach my $genome_db (@{ $mlss->species_set->genome_dbs() }){
 			if($genome_db->dbID != $ref_genome_db->dbID){
 				$non_ref_genome_db = $genome_db;
 			}

@@ -107,7 +107,7 @@ if ($compara_url) {
 
 # Get all the species for the mlss:
 my $method_link_species_set = $compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($mlss);
-my $genome_dbs = $method_link_species_set->species_set_obj->genome_dbs();
+my $genome_dbs = $method_link_species_set->species_set->genome_dbs();
 
 my @sps_set = @$genome_dbs;
 if ($exclude_lcg) {

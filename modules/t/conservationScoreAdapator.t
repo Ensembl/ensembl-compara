@@ -48,12 +48,12 @@ my $epo_species_set_name = "mammals";
 my $pecan_species_set_name = "amniotes";
 
 #Rather complicated way of getting the original 35 and 19 way mlss. Can't use the species_set_name because of the newer addtions for the pipeline tests.
-my @mlss_epos = sort {$a->species_set_obj->dbID <=> $b->species_set_obj->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($epo_method_type)};
-my @mlss_pecans = sort {$a->species_set_obj->dbID <=> $b->species_set_obj->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($pecan_method_type)};
+my @mlss_epos = sort {$a->species_set->dbID <=> $b->species_set->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($epo_method_type)};
+my @mlss_pecans = sort {$a->species_set->dbID <=> $b->species_set->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($pecan_method_type)};
 
-my $cs_mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_epos[0]->species_set_obj->genome_dbs);
+my $cs_mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_epos[0]->species_set->genome_dbs);
 
-my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_pecans[0]->species_set_obj->genome_dbs);
+my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_pecans[0]->species_set->genome_dbs);
 
 #my $cs_mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($cs_method_type, $epo_species_set_name);
 #my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($cs_method_type, $pecan_species_set_name);

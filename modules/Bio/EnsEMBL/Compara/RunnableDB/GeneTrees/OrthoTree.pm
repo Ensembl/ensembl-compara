@@ -553,7 +553,7 @@ sub check_homology_consistency {
         next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
 
         my ($mlss, $seq_member_id) = split("_", $mlss_member_id);
-        next if $count > 1 and grep {$_->is_polyploid} @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss)->species_set_obj->genome_dbs};
+        next if $count > 1 and grep {$_->is_polyploid} @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss)->species_set->genome_dbs};
 
         $bad_key = "mlss seq_member_id : $mlss $seq_member_id";
         print "$bad_key\n" if ($self->debug);

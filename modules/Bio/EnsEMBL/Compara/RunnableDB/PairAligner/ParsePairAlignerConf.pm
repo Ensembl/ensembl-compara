@@ -581,7 +581,7 @@ sub parse_defaults {
     if ($self->param('mlss_id')) {
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-	$genome_dbs = $mlss->species_set_obj->genome_dbs;
+	$genome_dbs = $mlss->species_set->genome_dbs;
     } 
     #load genome_dbs from a collection
     if ($self->param('collection')) {

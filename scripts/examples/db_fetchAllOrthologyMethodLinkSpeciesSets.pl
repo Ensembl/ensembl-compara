@@ -39,7 +39,7 @@ my $mlss_list = $mlss_adaptor->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUE
 
 foreach my $mlss (@{$mlss_list}) {
   my $species_names = '';
-  foreach my $gdb (@{$mlss->species_set_obj->genome_dbs}) {
+  foreach my $gdb (@{$mlss->species_set->genome_dbs}) {
     $species_names .= $gdb->dbID.".".$gdb->name."  ";
   }
   printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method->type, $species_names);
