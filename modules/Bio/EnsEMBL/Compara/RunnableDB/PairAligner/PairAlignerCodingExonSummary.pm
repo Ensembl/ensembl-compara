@@ -68,7 +68,7 @@ sub fetch_input {
       }
   }
 
-  my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+  my $genome_dbs = $mlss->species_set->genome_dbs;
   my ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
   unless (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species'))
       && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
