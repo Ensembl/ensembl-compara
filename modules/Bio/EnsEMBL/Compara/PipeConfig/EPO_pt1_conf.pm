@@ -207,6 +207,8 @@ return [
   -parameters => {
       'species_set_id'  => $self->o('species_set_id'),
       'sql' => [
+      'INSERT INTO species_set_header (species_set_id, name, size) SELECT #species_set_id#, "dummy", COUNT(*) FROM genome_db',
+      'INSERT INTO species_set (species_set_id, genome_db_id) SELECT #species_set_id#, genome_db_id FROM genome_db',
       # method_link (ml) and method_link_species_set (mlss) entries for the overlaps, pecan and gerp
       'REPLACE INTO method_link (method_link_id, type) VALUES(#overlaps_mlid#, "#overlaps_method_link_name#")',
       'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES '
@@ -216,20 +218,9 @@ return [
       ],
  },
  -flow_into => { 
-   '1->A' => [ 'add_dummy_species_set_info_factory', 'set_genome_db_locator_factory' ],
+   '1->A' => [ 'set_genome_db_locator_factory' ],
    'A->1' => [ 'chunk_reference_dnafrags_factory' ],
  },
-},
-
-{ # this sets dummy values into the species_set table
-    # FIXME : direct writes into species_set are forbidden !
- -logic_name     => 'add_dummy_species_set_info_factory',
- -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -parameters => {
-  'inputquery' => 'SELECT genome_db_id FROM genome_db',
-  'species_set_id' => $self->o('species_set_id'), 
- },
- -flow_into => { 2 => '?table_name=species_set' },
 },
 
 {
