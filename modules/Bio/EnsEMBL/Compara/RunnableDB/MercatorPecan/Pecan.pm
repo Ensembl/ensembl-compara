@@ -128,7 +128,7 @@ sub fetch_input {
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
-  $self->_load_DnaFragRegions($self->param('synteny_region_id'));
+  $self->_load_DnaFragRegions($self->param_required('synteny_region_id'));
   if ($self->param('dnafrag_regions')) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
@@ -609,11 +609,8 @@ sub _load_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
   my $dnafrag_regions = [];
 
-  # Fail if dbID has not been provided
-  return $dnafrag_regions if (!$synteny_region_id);
-
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
-  my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
+  my $sr = $sra->fetch_by_dbID($synteny_region_id);
 
   my $regions = $sr->regions();
 
