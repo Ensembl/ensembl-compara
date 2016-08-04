@@ -91,7 +91,7 @@ my $DEFAULT_MAX_ALIGNMENT = 20000;
   Arg [-ADAPTOR]        : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor $adaptor
                             (the adaptor for connecting to the database)
   Arg [-METHOD]         : Bio::EnsEMBL::Compara::Method $method object
-  Arg [-SPECIES_SET_OBJ]: Bio::EnsEMBL::Compara::SpeciesSet $species_set object
+  Arg [-SPECIES_SET]    : Bio::EnsEMBL::Compara::SpeciesSet $species_set object
   Arg [-NAME]           : (opt.) string $name (the name for this method_link_species_set)
   Arg [-SOURCE]         : (opt.) string $source (the source of these data)
   Arg [-URL]            : (opt.) string $url (the original url of these data)
@@ -117,10 +117,10 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method, $species_set_obj,
+    my ($method, $species_set_obj, $species_set,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD SPECIES_SET_OBJ
+                METHOD SPECIES_SET_OBJ SPECIES_SET
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
   if($method) {
@@ -129,10 +129,13 @@ sub new {
       warning("method has not been set in MLSS->new");
   }
 
-  if ($species_set_obj) {
+  if ($species_set) {
+      $self->species_set($species_set);
+  } elsif ($species_set_obj) {
+      deprecate('MethodLinkSpeciesSet::new(-SPECIES_SET_OBJ => ...) is deprecated and will be removed in e89. Use -SPECIES_SET instead');
       $self->species_set_obj($species_set_obj);
   } else {
-      warning("species_set_obj has not been set in MLSS->new");
+      warning("species_set has not been set in MLSS->new");
   }
 
   $self->name($name) if (defined ($name));
