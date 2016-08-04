@@ -147,7 +147,7 @@ sub builder       :Accessor;
 sub hub           :Accessor;
 sub renderer      :Accessor;
 
-sub view_config {
+sub viewconfig {
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
   my ($self, $type) = @_;
@@ -156,14 +156,14 @@ sub view_config {
 
   $type ||= $hub->type;
 
-  unless ($self->{'view_config'}) {
-    $self->{'view_config'} = $hub->get_viewconfig({
+  unless ($self->{'viewconfig'}{$type}) {
+    $self->{'viewconfig'}{$type} = $hub->get_viewconfig({
       'component' => $self->id,
       'type'      => $type,
       'cache'     => $type eq $hub->type
     });
   }
-  return $self->{'view_config'};
+  return $self->{'viewconfig'}{$type};
 }
 
 sub dom {
@@ -323,7 +323,7 @@ sub content_buttons {
 sub set_cache_params {
   my $self        = shift;
   my $hub         = $self->hub;  
-  my $view_config = $self->view_config;
+  my $view_config = $self->viewconfig;
   my $key;
   
   # FIXME: check cacheable flag
@@ -346,7 +346,7 @@ sub set_cache_params {
 sub set_cache_key {
   my $self = shift;
   my $hub  = $self->hub;
-  my $key  = join '::', map $ENV{'CACHE_TAGS'}{$_} || (), qw(view_config image_config user_data);
+  my $key  = join '::', map $ENV{'CACHE_TAGS'}{$_} || (), qw(viewconfig image_config user_data);
   my $page = sprintf '::PAGE[%s]', md5_hex(join '/', grep $_, $hub->action, $hub->function);
     
   if ($key) {
@@ -583,7 +583,7 @@ sub new_image {
   my %formats     = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
-  my $config_type = $self->view_config ? $self->view_config->image_config : undef;
+  my $config_type = $self->viewconfig ? $self->viewconfig->image_config : undef;
   my (@image_configs, $image_config);
 
   if (ref $_[0] eq 'ARRAY') {
@@ -812,5 +812,7 @@ sub trim_large_string {
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
 }
+
+sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
 
 1;
