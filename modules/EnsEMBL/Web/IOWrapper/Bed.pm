@@ -34,16 +34,18 @@ sub validate {
   ### Wrapper around the parser's validation method
   ### We have to do extra for BED because it has alternative columns
   my $self = shift;
-  my ($valid, $format, $col_count) = $self->parser->validate($self->hub->param('format'));
+  my $format  = $self->hub->param('format');
+  my $valid = $self->parser->validate($format);
 
   if ($valid) {
+    $format                 = $self->parser->format->name;
     $self->{'format'}       = $format;
-    $self->{'column_count'} = $col_count;
+    $self->{'column_count'} = $self->parser->get_column_count;
     ## Update session record accordingly
     my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
     if ($record) {
-      $record->{'format'}       = $format;
-      $record->{'column_count'} = $col_count;
+      $record->{'format'}       = $self->{'format'};
+      $record->{'column_count'} = $self->{'column_count'};
       $self->hub->session->set_data(%$record);
     }
   }

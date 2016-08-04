@@ -110,7 +110,8 @@ sub file {
 
 sub format {
   ### a
-  my $self = shift;
+  my ($self, $format) = @_;
+  $self->{'format'} = $format if $format;
   return $self->{'format'};
 }
 
@@ -461,6 +462,9 @@ sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
   my $valid = $self->parser->validate;
+  if ($valid && $self->parser->format) {
+    $self->format($self->parser->format->name);
+  }
   return $valid ? undef : 'File did not validate as format '.$self->format;
 }
 
