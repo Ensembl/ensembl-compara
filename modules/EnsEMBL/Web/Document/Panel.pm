@@ -326,7 +326,7 @@ sub content {
   return $self->{'raw'} if exists $self->{'raw'};
   
   my $hub        = $self->hub;
-  my $status     = $hub ? $hub->param($self->{'status'}) : undef;
+  my $status     = $hub && $self->{'status'} ? $hub->param($self->{'status'}) : undef;
   my $content    = sprintf '%s<p class="invisible">.</p>', $status ne 'off' ? sprintf('<div class="content">%s</div>', $self->component_content) : '';
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
   
