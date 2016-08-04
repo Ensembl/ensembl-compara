@@ -235,7 +235,6 @@ return [
 { # this sets up the locator field in the genome_db table
  -logic_name => 'update_genome_db_locator',
  -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateGenomeDBLocator',
- -meadow_type    => 'LOCAL',
 },
 
 {
