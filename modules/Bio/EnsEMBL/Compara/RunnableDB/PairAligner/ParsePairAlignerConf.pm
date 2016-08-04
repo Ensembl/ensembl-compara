@@ -391,7 +391,7 @@ sub get_dna_collection {
 	    #Check if first field of collection name is valid genome name
 	    my @fields = split " ", $name;
 	    foreach my $species (@$speciesList) {
-		if ($species->{'genome_db'}->_get_unique_name eq $fields[0]) {
+		if (_name_matches($species->{'genome_db'}, $fields[0])) {
 		    $dna_collection->{'genome_db'} = $species->{'genome_db'};
 		    #print "collection_name " . $dna_collection->{'genome_db'}->toString . "\n";
 		}
@@ -695,10 +695,10 @@ sub parse_defaults {
 
         #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
-        if ((!$self->param('net_ref_species')) || ($self->param('net_ref_species') eq $pair->{ref_genome_db}->_get_unique_name)) {
+        if ((!$self->param('net_ref_species')) || _name_matches($pair->{ref_genome_db}, $self->param('net_ref_species'))) {
             $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
             $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
-        } elsif ($self->param('net_ref_species') eq $pair->{non_ref_genome_db}->_get_unique_name) {
+        } elsif (_name_matches($pair->{non_ref_genome_db}, $self->param('net_ref_species'))) {
             $net_config->{'reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
             $net_config->{'non_reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
         } else {
@@ -780,7 +780,7 @@ sub find_reference_species {
     my @non_ref_gdbs;
 
     foreach my $genome_db (@$genome_dbs) {
-        if (($ref_species eq $genome_db->dbID) or ($ref_species eq $genome_db->_get_unique_name)) {
+        if (_name_matches($genome_db, $ref_species)) {
             $ref_genome_db = $genome_db;
         } else {
             push @non_ref_gdbs, $genome_db;
@@ -790,6 +790,10 @@ sub find_reference_species {
     return ($ref_genome_db, @non_ref_gdbs);
 }
 
+sub _name_matches {
+    my ($genome_db, $name) = @_;
+    return (($name eq $genome_db->dbID) or ($name eq $genome_db->_get_unique_name));
+}
 
 #
 #Write new method_link and method_link_species_set entries in database
