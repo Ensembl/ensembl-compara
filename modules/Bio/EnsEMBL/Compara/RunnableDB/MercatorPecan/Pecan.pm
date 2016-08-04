@@ -802,6 +802,7 @@ sub _update_tree {
 sub _run_ortheus {
     my ($self) = @_;
 
+    $self->compara_dba->dbc->disconnect_if_idle;
     my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
