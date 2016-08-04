@@ -38,7 +38,8 @@ sub validate {
   my $valid = $self->parser->validate($format);
 
   if ($valid) {
-    $format                 = $self->parser->format->name;
+    my $format_name = $self->parser->format->name;
+    $format = $format_name if $format_name;
     $self->{'format'}       = $format;
     $self->{'column_count'} = $self->parser->get_column_count;
     ## Update session record accordingly
