@@ -21,29 +21,37 @@ package EnsEMBL::Web::Document::Image;
 
 ### Parent class for visualisations
 
-### Examples
-
 use strict;
+use warnings;
 
-use POSIX qw(ceil);
-use List::Util qw(min max);
-use List::MoreUtils qw(uniq);
+use EnsEMBL::Web::Attributes;
+
+sub hub           :Accessor;
+sub component     :Accessor;
+sub component_id  :Accessor;
 
 sub new {
-### Generic constructor
+  ## @constructor
+  ## @param Hub object
+  ## @param Component object (Component that contains this image)
   my ($class, $hub, $component, $args) = @_;
+
+  unless (ref $component) {
+    my @caller = caller;
+    warn sprintf "DEPRECATED: Second argument should be Component instance, not id at %s line %s\n", $caller[1], $caller[2];
+  }
 
   return bless {
     hub                => $hub,
     component          => $component,
+    component_id       => ref $component ? $component->id : $component, # TMP - change it to $component->id when $component is a Component instance
     toolbars           => {},
     static             => $hub->species_defs->ENSEMBL_STATIC_SERVER || '',
     %$args,
   }, $class;
 }
 
-sub hub                { my $self = shift; return $self->{'hub'};  }
-sub component          { my $self = shift; return $self->{'component'}; }
+
 sub height             :lvalue { $_[0]->{'height'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
 sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
@@ -84,9 +92,7 @@ sub render_toolbar {
 
   ## Add icons specific to our standard dynamic images
   my $hub         = $self->hub;
-  my $component   = $self->component;
-  my $component_name = ref($component) ? $component->id : $component;
-  my $viewconfig  = $hub->get_viewconfig($component_name);
+  my $viewconfig  = $hub->get_viewconfig($self->component_id);
 
   my $icons  = [];
   my $extra_html;
@@ -132,22 +138,23 @@ sub _render_toolbars {
 ### @param extra_html String (optional) - additional HTML for inclusion in toolbar
 ### @return Array - HTML for top and bottom toolbars
   my ($self, $icons, $extra_html) = @_;
-  my @toolbars;
+
   my $icon_mappings = EnsEMBL::Web::Constants::ICON_MAPPINGS('image');
   return unless $icon_mappings;
 
   my $toolbar;
   foreach my $icon (@$icons) {
     $toolbar .= sprintf('<a href="%s" class="%s" title="%s" rel="%s"></a>',
-                          $icon->{'href'},
-                          $icon->{'class'},
-                          $icon_mappings->{$icon->{'icon_key'}}{'title'},
-                          $icon->{'rel'},
+                          $icon->{'href'} || '#',
+                          $icon->{'class'} || '',
+                          $icon_mappings->{$icon->{'icon_key'}}{'title'} || '',
+                          $icon->{'rel'} || '',
                         );
   }
 
   my @toolbars;
   if ($toolbar) {
+    $extra_html //= '';
     my $top    = $self->toolbars->{'top'} ? qq(<div class="image_toolbar top print_hide">$toolbar</div>$extra_html) : '';
     ### Force a toolbar if the image is long enough to disappear off most screens!
     my $bottom = ($self->toolbars->{'bottom'} || $self->height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $extra_html : '';
@@ -161,14 +168,14 @@ sub add_config_icon {
 ### Configure icon for track configuration
 ### @return Hashref of icon parameters
   my $self = shift;
-  my $hub         = $self->hub;
-  my $component   = $self->component;
-  my $config_url = $hub->url('Config', { action => $component, function => undef });
+  my $hub           = $self->hub;
+  my $component_id  = $self->component_id;
+  my $config_url    = $hub->url('Config', { action => $component_id, function => undef });
   return {
           'href'      => $config_url,
           'class'     => 'config modal_link force',
           'icon_key'  => 'config',
-          'rel'       => 'modal_config_'.lc($component), 
+          'rel'       => 'modal_config_'.lc($component_id),
           };
 }
 
@@ -192,10 +199,9 @@ sub add_userdata_icon {
 sub add_share_icon {
 ### Configure icon for share link popup 
 ### @return Hashref of icon parameters
-  my $self = shift;
-  my $hub        = $self->hub;
-  my $component   = $self->component;
-  my $share_url  = $hub->url('Share', { action => $component, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $share_url = $hub->url('Share', { action => $self->component_id, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
   return {
           'href'      => $share_url,
           'class'     => 'share popup',
@@ -207,13 +213,13 @@ sub add_export_icon {
 ### Configure icon for data export 
 ### @return Hashref of icon parameters
   my $self = shift;
-  my $hub        = $self->hub;
-  my $component   = $self->component;
-  my $params = {
+  my $hub           = $self->hub;
+  my $component_id  = $self->component_id;
+  my $params        = {
                    'type'      => 'DataExport', 
                    'action'    => $self->{'data_export'},
                    'data_type' => $hub->type,
-                   'component' => $component,
+                   'component' => $component_id,
                 };
   foreach (@{$self->{'export_params'}||[]}) {
     if (ref($_) eq 'ARRAY') {
@@ -279,7 +285,7 @@ sub add_image_export_icon {
                 'action'      => 'ImageFormats',
                 'data_type'   => $hub->type,
                 'data_action' => $hub->action,
-                'component'   => $self->component,
+                'component'   => $self->component_id,
                 };
 
   foreach (@{$self->{'export_params'}||[]}) {
