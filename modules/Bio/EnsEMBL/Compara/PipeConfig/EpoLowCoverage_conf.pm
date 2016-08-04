@@ -130,7 +130,6 @@ sub default_options {
 	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw', #location of full species tree, will be pruned 
-	'newick_format' => 'simple',
 	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
         'species_to_skip' => undef,
 
@@ -272,7 +271,6 @@ sub pipeline_analyses {
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
                                    'blength_tree_file' => $self->o('species_tree_file'),
-                                   'newick_format' => 'simple',
 				  },
 		-rc_name => '100Mb',
 		-flow_into => [ 'create_default_pairwise_mlss'],

@@ -287,7 +287,6 @@ return
 	-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 	-parameters    => {
 			'mlss_id' => $self->o('epo_mlss_id'),
-			'newick_format' => 'simple',
 			'blength_tree_file' => $self->o('species_tree_file'),		
 	},
         -flow_into     => [ 'dump_mappings_to_file' ],

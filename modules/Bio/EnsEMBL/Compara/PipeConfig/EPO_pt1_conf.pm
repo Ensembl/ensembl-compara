@@ -254,12 +254,8 @@ return [
  -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
  -parameters    => {
    'mlss_id' => '#pecan_mlssid#',
-   'newick_format' => 'simple',
    'blength_tree_file' => $self->o('species_tree_file'),    
  },
- # -flow_into => {
- #   4 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
- # },
 },
 
 # ------------------------------------- now for the modules which create the anchors
