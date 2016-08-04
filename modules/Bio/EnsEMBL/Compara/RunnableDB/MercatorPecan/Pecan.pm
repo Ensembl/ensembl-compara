@@ -83,6 +83,7 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
@@ -96,7 +97,6 @@ sub param_defaults {
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local
-            'fasta_files' => undef, #local
            };
 }
 
@@ -119,9 +119,12 @@ sub fetch_input {
   #Check that mlss_id has been defined
   $self->param_required('mlss_id');
 
+  # Initialize the array
+  $self->param('fasta_files', []);
+
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
-  $self->_load_DnaFragRegions($self->param('synteny_region_id'));
+  $self->_load_DnaFragRegions($self->param_required('synteny_region_id'));
   if ($self->param('dnafrag_regions')) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
@@ -151,7 +154,7 @@ sub run
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   $self->require_executable('exonerate');
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1); 
+  $self->compara_dba->dbc->disconnect_if_idle;
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
@@ -177,8 +180,6 @@ sub run
 	  throw("Pecan execution failed $@\n");
       }
   };
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 sub write_output {
@@ -596,25 +597,17 @@ sub get_species_tree {
 
 sub _load_DnaFragRegions {
   my ($self, $synteny_region_id) = @_;
-  my $dnafrag_regions = [];
-
-  # Fail if dbID has not been provided
-  return $dnafrag_regions if (!$synteny_region_id);
 
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
-  my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
+  my $sr = $sra->fetch_by_dbID($synteny_region_id);
 
   my $regions = $sr->regions();
 
-  #foreach my $dfr (@{$sr->children}) {  
-  foreach my $dfr (@$regions) {  
-    #$dfr->disavow_parent;
-    push(@{$dnafrag_regions}, $dfr);
+  if (scalar(@$regions) == 1) {
+      $self->complete_early('Cannot work with a single region');
   }
 
-  #$sr->release_tree;
-
-  $self->param('dnafrag_regions', $dnafrag_regions);
+  $self->param('dnafrag_regions', $regions);
 }
 
 
@@ -651,6 +644,9 @@ sub _dump_fasta {
 
     print F ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, ".",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand,"\n";
+
+    $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
     my $slice = $dfr->slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
     my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
@@ -663,6 +659,7 @@ sub _dump_fasta {
     print F $seq,"\n";
 
     close F;
+    });
 
     $self->add_fasta_files($file);
     $self->add_species_order($dfr->dnafrag->genome_db_id);
@@ -794,6 +791,7 @@ sub _update_tree {
 sub _run_ortheus {
     my ($self) = @_;
 
+    $self->compara_dba->dbc->disconnect_if_idle;
     my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC

@@ -67,7 +67,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
  my ($self) = @_;
- my $species_name = $self->param('species_loc_name');
+
+ my $genome_db_id = $self->param_required('genome_db_id');
+ $self->param('genome_db_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
+ my $genome_db = $self->param('genome_db_adaptor')->fetch_by_dbID($genome_db_id);
+ $self->param('genome_db', $genome_db);
+ my $species_name = $genome_db->name;
 
 # load the species db into the registry
  if($species_name eq "ancestral_sequences" && not $self->param('no_ancestral_sequences')){
@@ -91,21 +96,13 @@ sub fetch_input {
  my $locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=";
  $locator_string .= $host.";port=".$port.";user=".$user.$pass.";dbname=".$dbname.";species=".$species_name.";disconnect_when_inactive=1";
 
- $self->param('locator_string', $locator_string);
+ $genome_db->locator( $locator_string );
 }
 
 sub write_output {
  my ($self) = @_;
- return unless $self->param('locator_string');
- my $gdb_a = $self->compara_dba->get_adaptor("GenomeDB");
- 
-# store the locator in the db
- foreach my $genome_db (@{ $gdb_a->fetch_all }){
-  if($genome_db->name eq $self->param('species_loc_name')) {
-   $genome_db->locator( $self->param('locator_string') );
-   $gdb_a->store($genome_db);
-  } 
- }
+
+ $self->param('genome_db_adaptor')->store( $self->param('genome_db') );
 }
 
 1;

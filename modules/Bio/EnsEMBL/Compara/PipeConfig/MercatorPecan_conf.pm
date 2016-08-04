@@ -388,7 +388,6 @@ sub pipeline_analyses {
             -parameters    => { 
                                'mlss_id' => $self->o('mlss_id'),
                                'blength_tree_file' => $self->o('species_tree_file'),
-                               'newick_format' => 'simple',
                               },
             -flow_into => {
                            1 => [ 'genome_reuse_factory' ],

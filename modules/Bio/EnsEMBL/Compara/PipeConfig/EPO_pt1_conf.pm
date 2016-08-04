@@ -187,17 +187,15 @@ return [
 # ------------------------------------- set up the necessary database tables
     @{$self->init_basic_tables_analyses('#compara_pairwise_db#', 'delete_from_copied_tables', 1, 0, 1, [{}])},
 
-    # FIXME: assembly_default does not exist any more
 {
   -logic_name => 'delete_from_copied_tables',
   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
   -parameters => {
    'sql' => [
     'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN (#list_of_pairwise_mlss_ids#)',
-    'DELETE sh.* FROM species_set_header sh LEFT OUTER JOIN method_link_species_set mlss ON sh.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON ss.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
+    'DELETE sh.* FROM species_set_header sh LEFT OUTER JOIN method_link_species_set mlss ON sh.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE df.*, gdb.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id LEFT OUTER JOIN species_set ss ON gdb.genome_db_id = ss.genome_db_id WHERE ss.genome_db_id IS NULL',
-   'DELETE FROM genome_db WHERE ! assembly_default',
    ],
   },
  -flow_into => { 1 => [ 'add_dummy_mlss_info' ] },
@@ -209,44 +207,31 @@ return [
   -parameters => {
       'species_set_id'  => $self->o('species_set_id'),
       'sql' => [
+      'INSERT INTO species_set_header (species_set_id, name, size) SELECT #species_set_id#, "dummy", COUNT(*) FROM genome_db',
+      'INSERT INTO species_set (species_set_id, genome_db_id) SELECT #species_set_id#, genome_db_id FROM genome_db',
       # method_link (ml) and method_link_species_set (mlss) entries for the overlaps, pecan and gerp
       'REPLACE INTO method_link (method_link_id, type) VALUES(#overlaps_mlid#, "#overlaps_method_link_name#")',
       'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES '
       .'(#overlaps_mlssid#, #overlaps_mlid#, "get_overlaps", #species_set_id#),'
       .'(#pecan_mlssid#, #pecan_mlid#, "pecan", #species_set_id#),'
-      .'(#gerp_ce_mlssid#, #gerp_ce_mlid#, "gerp", #species_set_id#),',
+      .'(#gerp_ce_mlssid#, #gerp_ce_mlid#, "gerp", #species_set_id#)',
       ],
  },
  -flow_into => { 
-   '1->A' => [ 'add_dummy_species_set_info_factory', 'set_genome_db_locator_factory' ],
+   '1->A' => [ 'set_genome_db_locator_factory', 'make_species_tree' ],
    'A->1' => [ 'chunk_reference_dnafrags_factory' ],
  },
 },
 
-{ # this sets dummy values into the species_set table
-    # FIXME : direct writes into species_set are forbidden !
- -logic_name     => 'add_dummy_species_set_info_factory',
- -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -parameters => {
-  'inputquery' => 'SELECT genome_db_id FROM genome_db',
-  'species_set_id' => $self->o('species_set_id'), 
- },
- -flow_into => { 2 => '?table_name=species_set' },
-},
-
 {
  -logic_name => 'set_genome_db_locator_factory',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -parameters => {
-   'inputquery' => 'SELECT name AS species_loc_name FROM genome_db WHERE assembly_default',
-  },
- -flow_into => { 2 => 'update_genome_db_locator', 1 => 'make_species_tree', },
+ -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+ -flow_into => { 2 => 'update_genome_db_locator' },
 },
 
 { # this sets up the locator field in the genome_db table
  -logic_name => 'update_genome_db_locator',
  -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateGenomeDBLocator',
- -meadow_type    => 'LOCAL',
 },
 
 {
@@ -254,12 +239,8 @@ return [
  -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
  -parameters    => {
    'mlss_id' => '#pecan_mlssid#',
-   'newick_format' => 'simple',
    'blength_tree_file' => $self->o('species_tree_file'),    
  },
- # -flow_into => {
- #   4 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
- # },
 },
 
 # ------------------------------------- now for the modules which create the anchors

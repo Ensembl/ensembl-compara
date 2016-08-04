@@ -34,8 +34,8 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
                 { 'species_tree_input_file' => $self->o('species_tree_input_file') },   # if this parameter is set, the tree will be taken from the file, otherwise it will be generated
             ],
             -flow_into  => {
-                # store the tree in 'method_link_species_set_tag' table (as an example)
-                3 => { '?table_name=method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
+                # Will receive the root_id of the species-tree
+                2 => [ 'hc_species_tree' ],
             },
         },
 
@@ -62,7 +62,6 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
             'label'                 => 'default',
-            'newick_format'         => 'ncbi_taxon',    # the desired output format
             'species_set_id'        => undef,
             'no_previous'           => undef,
             'blength_tree_file'     => undef,
@@ -160,14 +159,12 @@ sub write_output {
     my $self = shift @_;
 
     my $species_tree_root = $self->param('species_tree_root');
-    my $newick_format = $self->param('newick_format');
-    my $species_tree_string = $species_tree_root->newick_format( $newick_format );
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
-    $species_tree->label($self->param('label'));
+    $species_tree->label($self->param_required('label'));
 
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 

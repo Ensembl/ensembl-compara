@@ -68,6 +68,18 @@ sub _complete_cast_node {
 }
 
 
+sub copy {
+    my $self = shift;
+
+    my $mycopy = $self->SUPER::copy(@_);
+
+    $mycopy->taxon_id($self->taxon_id);
+    $mycopy->genome_db_id($self->genome_db_id);
+    $mycopy->name($self->name);
+    return $mycopy;
+}
+
+
 sub find_nodes_by_field_value {
     my ($self, $field, $expected) = @_;
 
