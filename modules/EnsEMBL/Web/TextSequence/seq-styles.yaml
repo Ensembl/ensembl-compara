@@ -139,6 +139,8 @@
   type: both
   colour: name
   section: variants
+  css:
+    text-decoration: underline
 
 - name: failed
   section: variants
