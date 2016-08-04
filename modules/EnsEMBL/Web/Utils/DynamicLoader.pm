@@ -22,7 +22,7 @@ package EnsEMBL::Web::Utils::DynamicLoader;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(DynamicLoaderException);
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(dynamic_require dynamic_require_fallback dynamic_use dynamic_use_fallback);
@@ -39,7 +39,7 @@ sub dynamic_require {
 
   if (my $error_message = _dynamic_require($classname)) {
     return 0 if $no_exception;
-    throw exception('DynamicLoaderException', $error_message);
+    throw DynamicLoaderException($error_message);
   }
 
   return $classname;
