@@ -413,6 +413,7 @@ sub run_gerp_v2 {
     my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
     my $species_tree_string = $species_tree->root->newick_format('simple');
     $self->compara_dba->dbc->disconnect_if_idle();
+    $species_tree_string =~ s/:0;$//;
     my $neutral_rate = _calculateNeutralRate($species_tree_string);
 
     if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {
