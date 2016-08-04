@@ -1292,7 +1292,7 @@ sub add_sequence_variations_meta {
       if ($menu_item->{'long_name'} =~ /clinvar/i) {
         $menu_item->{order} = ($menu_item->{'long_name'} =~ /all /i) ? 1 : 2;
       }
-      elsif ($menu_item->{'long_name'} =~ /all /i) {
+      elsif ($menu_item->{'long_name'} =~ /all( |$)/i) {
         $menu_item->{order} = 3;
       }
       elsif ($menu_item->{'long_name'} =~ /dbsnp/i) {
