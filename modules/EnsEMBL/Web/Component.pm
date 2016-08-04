@@ -98,6 +98,42 @@ sub button_style {
   return {};
 }
 
+sub param {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $hub_vc = delete $hub->{'viewconfig'}; # TMP - while viewconfig is 'cached' in hub's viewconfig key for the current component
+
+  if (@_) {
+    my @vals = $hub->param(@_);
+    $hub->{'viewconfig'} = $hub_vc; # TMP - just putting it back
+    return wantarray ? @vals : $vals[0] if @vals;
+
+    if (my $view_config = $self->viewconfig) {
+      if (@_ > 1) {
+        my @caller = caller;
+        warn sprintf "DEPRECATED: To set view_config param, use view_config->set method at %s line %s.\n", $caller[1], $caller[2];
+        $view_config->set(@_);
+      }
+      my @val = $view_config->get(@_);
+      return wantarray ? @val : $val[0];
+    }
+
+    return wantarray ? () : undef;
+
+  } else {
+    my @params = $hub->param;
+    $hub->{'viewconfig'} = $hub_vc; # TMP - just putting it back
+
+    my $view_config = $self->viewconfig;
+
+    push @params, $view_config->options if $view_config;
+    my %params = map { $_, 1 } @params; # Remove duplicates
+
+    return keys %params;
+  }
+}
+
 #################### ACCESSORS ###############################
 
 sub component_key :AccessorMutator;
