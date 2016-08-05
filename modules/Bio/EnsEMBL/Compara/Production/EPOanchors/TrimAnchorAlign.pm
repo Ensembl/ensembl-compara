@@ -255,7 +255,7 @@ sub get_best_trimming_position {
     }
     # 3 points for every gap
     for (my $j=0; $j<4; $j++) {
-      $total_score -= 3 * $these_gaps[$j];
+      $total_score -= 3 * ($these_gaps[$j] || 0);
     }
     my $all_bases;
     for (my $j=0; $j<4; $j++) {
