@@ -376,7 +376,7 @@ sub pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       10 => [ 'create_filter_duplicates_net_jobs' ],
-			       7 => [ 'register_mlss' ],
+			       7 => [ 'pairaligner_stats' ],
 			       8 => [ 'healthcheck' ],
 			      },
 	       -rc_name => '1Gb',
@@ -720,13 +720,6 @@ sub pipeline_analyses {
 	      -wait_for => [ 'set_internal_ids_collection' ],
 	      -rc_name => '1Gb',
 	    },
-            {   -logic_name         => 'register_mlss',
-                -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-                -parameters         => {
-                    'master_db' => $self->o('master_db'),
-                },
-                -flow_into          => [ 'pairaligner_stats' ],
-            },
 	    { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
 	      -parameters => {
