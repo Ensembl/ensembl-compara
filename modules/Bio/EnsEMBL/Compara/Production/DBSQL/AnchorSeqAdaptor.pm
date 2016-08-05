@@ -32,12 +32,6 @@ sub store {
   my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence) = 
 	rearrange([qw(ANCHOR_ID DNAFRAG_ID START END STRAND MLSSID SEQUENCE LENGTH)], @args);
 
-
-  # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?
-  my $dcs = $self->dbc->disconnect_when_inactive();
-  $self->dbc->disconnect_when_inactive(0);
-  
-  $self->dbc->do("LOCK TABLE anchor_sequence WRITE");
   my $length = length($sequence);
 
 print join(":", $anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence,$length), "\n";
@@ -45,8 +39,6 @@ print join(":", $anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequen
 	length, dnafrag_id, start, end, strand, anchor_id, method_link_species_set_id) VALUES (?,?,?,?,?,?,?,?)");	  
   $sth->execute($sequence, $length, $dnafrag_id, $start, $end, $strand, $anchor_id, $mlssid);
   $sth->finish;
-  $self->dbc->do("UNLOCK TABLES");
-  $self->dbc->disconnect_when_inactive($dcs);
 }
 
 sub get_anchor_sequences {
