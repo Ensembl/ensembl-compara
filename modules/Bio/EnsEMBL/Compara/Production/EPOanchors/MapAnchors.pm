@@ -62,18 +62,16 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub configure_defaults {
- 	my $self = shift;
-	$self->param('mapping_exe', "/usr/local/ensembl/bin/exonerate-1.0.0" ) unless $self->param('mapping_exe');
-	$self->param('mapping_params', { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", })
-		unless $self->param('mapping_params');
+sub param_defaults {
+    return {
+        'mapping_exe'       => '/usr/local/ensembl/bin/exonerate-1.0.0',
+        'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
+    }
 }
 
 sub fetch_input {
 	my ($self) = @_;
         $self->dbc->disconnect_if_idle();
-	$self->configure_defaults();
         # FIXME : we only need a DBConnection here, not a Compara DBAdaptor
         my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
 	my $genome_db_file = $self->param('genome_db_file');

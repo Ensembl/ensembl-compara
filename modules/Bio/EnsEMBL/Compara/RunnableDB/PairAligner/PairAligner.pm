@@ -62,29 +62,30 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 
 use strict;
 use warnings;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'max_alignments'    => undef,
+    }
+}
 
 ##########################################
 #
 # subclass override methods
 # 
 ##########################################
-
-sub configure_defaults {
-  my $self = shift;
-  return 0;
-}
 
 sub configure_runnable {
   my $self = shift;
@@ -111,61 +112,25 @@ sub configure_runnable {
 sub fetch_input {
   my( $self) = @_;
 
-  #
-  # run subclass configure_defaults method
-  #
-  $self->configure_defaults();
-  
-  my $query_DnaFragChunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-
-  if(defined($self->param('qyChunkSetID'))) {
-      my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('qyChunkSetID'));
-      $query_DnaFragChunkSet = $chunkset;
-  } else {
-      throw("Missing qyChunkSetID");
-  }
+  my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
-
-  my $db_DnaFragChunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-
-  if(defined($self->param('dbChunkSetID'))) {
-      my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('dbChunkSetID'));
-      $db_DnaFragChunkSet = $chunkset;
-  } else {
-      throw("Missing dbChunkSetID");
-  }
-  $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with $self->db (Hive DBAdaptor)
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
   throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
+
+  my $db_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('dbChunkSetID'));
+  $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
   throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
+
+  my %chunks_lookup;
+  map {$chunks_lookup{$_->dbID} = $_} @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
+  map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
+  $self->param('chunks_lookup', \%chunks_lookup);
+
+  #$db_DnaFragChunkSet->load_all_sequences();
+  $query_DnaFragChunkSet->load_all_sequences() unless $query_DnaFragChunkSet->dna_collection->dump_loc && (-s $query_DnaFragChunkSet->dump_loc_file);
+
   throw("Missing method_link_type") unless($self->param('method_link_type'));
-  
 
-  my ($first_qy_chunk) = @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
-  my ($first_db_chunk) = @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
-  
-  #
-  # create method_link_species_set
-  #
-  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type'),
-                                                   -class => "GenomicAlignBlock.pairwise_alignment");
-
-  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
-        -genome_dbs => ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID)
-                            ? [$first_qy_chunk->dnafrag->genome_db]
-                            : [$first_qy_chunk->dnafrag->genome_db, $first_db_chunk->dnafrag->genome_db]
-  );
-        
-  my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-        -method             => $method,
-        -species_set    => $species_set,
-  );
-
-  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
   $self->param('method_link_species_set', $mlss);
 
   if (defined $self->param('max_alignments')) {
@@ -174,12 +139,13 @@ sub fetch_input {
       $sth->execute();
       my ($num_alignments) = $sth->fetchrow_array();
       $sth->finish();
-      if ($num_alignments >= $self->max_alignments) {
+      if ($num_alignments >= $self->param('max_alignments')) {
 	  throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
 		"  Try changing the parameters or increase the max_alignments option if you think\n".
 		"  your system can cope with so many alignments.");
       }
   }
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   #
   # execute subclass configure_runnable method
@@ -194,7 +160,7 @@ sub run
 {
   my $self = shift;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);  
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   my $starttime = time();
   my $work_dir = $self->worker_temp_directory;
@@ -205,7 +171,6 @@ sub run
 
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
   return 1;
 }
 
@@ -215,10 +180,7 @@ sub delete_fasta_dumps_but_these {
 
   my $work_dir = $self->worker_temp_directory;
 
-  open F, "ls $work_dir|";
-  while (my $file = <F>) {
-    chomp $file;
-    next unless ($file =~ /\.fasta$/);
+  foreach my $file (glob('*.fasta')) {
     my $delete = 1;
     foreach my $fasta_file (@{$fasta_files_not_to_delete}) {
       if ($file eq basename($fasta_file)) {
@@ -228,31 +190,17 @@ sub delete_fasta_dumps_but_these {
     }
     unlink "$work_dir/$file" if ($delete);
   }
-  close F;
 }
 
 sub write_output {
   my( $self) = @_;
-  my $starttime = time();
-
-  #since the Blast runnable takes in analysis parameters rather than an
-  #analysis object, it creates new Analysis objects internally
-  #(a new one for EACH FeaturePair generated)
-  #which are a shadow of the real analysis object ($self->analysis)
-  #The returned FeaturePair objects thus need to be reset to the real analysis object
 
   #
   #Start transaction
   #
-  if ($self->param('do_transactions'))  {
-      my $compara_conn = $self->compara_dba->dbc;
-      my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-      $compara_helper->transaction(-CALLBACK => sub {
-	  $self->_write_output;
-      });
-  } else {
+  $self->call_within_transaction( sub {
       $self->_write_output;
-  }
+  } );
 
   return 1;
 }
@@ -260,13 +208,17 @@ sub write_output {
 sub _write_output {
     my ($self) = @_;
     my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+  my $starttime = time();
 
-  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-  #LOCK TABLES which does an implicit commit and prevent any rollback
-  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
   foreach my $runnable (@{$self->param('runnable')}) {
       foreach my $fp ( @{ $runnable->output() } ) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
+              #since the Blast runnable takes in analysis parameters rather than an
+              #analysis object, it creates new Analysis objects internally
+              #(a new one for EACH FeaturePair generated)
+              #which are a shadow of the real analysis object ($self->analysis)
+              #The returned FeaturePair objects thus need to be reset to the real analysis object
+
               $fp->analysis($fake_analysis);
 
               $self->store_featurePair_as_genomicAlignBlock($fp);
@@ -289,6 +241,14 @@ sub dumpChunkSetToWorkdir
   my $self      = shift;
   my $chunkSet   = shift;
 
+  if ($chunkSet->dna_collection->dump_loc) {
+      my $fastafile = $chunkSet->dump_loc_file;
+      if (-s $fastafile) {
+          if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
+          return $fastafile
+      }
+  }
+
   my $starttime = time();
 
   my $fastafile = $self->worker_temp_directory. "chunk_set_". $chunkSet->dbID .".fasta";
@@ -296,44 +256,10 @@ sub dumpChunkSetToWorkdir
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
-  
-  #Masking options are stored in the dna_collection
-  my $dna_collection = $chunkSet->dna_collection;
-
-  my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
 
-  #Load all sequences in a dnafrag_chunk_set and set masking options
-  my $sequence_ids;
-  foreach my $chunk (@$chunk_array) {
-    $chunk->masking_options($dna_collection->masking_options);
-  }
+  $chunkSet->dump_to_fasta_file($fastafile);
 
-  my $sequences = $self->compara_dba->get_SequenceAdaptor->fetch_all_by_chunk_set_id($chunkSet->dbID);
-
-  foreach my $chunk (@$chunk_array) {
-    #only have sequences for chunks with sequence_id > 0 - but this resets the sequence_id to 0. Why?
-
-    my $this_seq_id = $chunk->sequence_id; #save seq_id
-
-    $chunk->sequence($sequences->{$this_seq_id}) if ($chunk->sequence_id > 0); #this sets $chunk->sequence_id=0
-    $chunk->sequence_id($this_seq_id); #reset seq_id
-
-    #Retrieve sequences with sequence_id=0 (ie too big to store in the sequence table)
-    my $bioseq = $chunk->bioseq;
-
-    # This may not be necessary now as already have all the sequences in the sequence table
-    if($chunk->sequence_id==0) {
-      my $this_seq_id = $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
-    }
-
-    $output_seq->write_seq($bioseq);
-  }
-
-  close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
   return $fastafile
 }
@@ -342,6 +268,15 @@ sub dumpChunkToWorkdir
 {
   my $self = shift;
   my $chunk = shift;
+  my $dna_collection = shift;
+
+  if ($dna_collection->dump_loc) {
+      my $fastafile = $chunk->dump_loc_file($dna_collection);
+      if (-s $fastafile) {
+          if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
+          return $fastafile
+      }
+  }
 
   my $starttime = time();
 
@@ -352,8 +287,6 @@ sub dumpChunkToWorkdir
 
   if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
 
-
-  $chunk->cache_sequence;
   $chunk->dump_to_fasta_file($fastafile);
 
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
@@ -372,14 +305,12 @@ sub store_featurePair_as_genomicAlignBlock
   if($fp->seqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
     #printf("%s => %d\n", $fp->seqname, $chunk_id);
-    $qyChunk = $self->compara_dba->get_DnaFragChunkAdaptor->
-                     fetch_by_dbID($chunk_id);
+    $qyChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   if($fp->hseqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
     #printf("%s => %d\n", $fp->hseqname, $chunk_id);
-    $dbChunk = $self->compara_dba->get_DnaFragChunkAdaptor->
-                     fetch_by_dbID($chunk_id);
+    $dbChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   unless($qyChunk and $dbChunk) {
     warn("unable to determine DnaFragChunk objects from FeaturePair");
@@ -402,13 +333,12 @@ sub store_featurePair_as_genomicAlignBlock
                  $fp->cigar_string."\n";
   }                 
 
-  $fp->slice($qyChunk->slice);
-  $fp->hslice($dbChunk->slice);               
-
   #
   # test if I'm getting the indexes right
   #
   if($self->debug > 2) {
+    $fp->slice($qyChunk->slice);
+    $fp->hslice($dbChunk->slice);
     print_simple_align($fp->get_SimpleAlign, 80);
 
     my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
@@ -441,6 +371,12 @@ sub store_featurePair_as_genomicAlignBlock
   $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend -1);
   $genomic_align2->dnafrag_strand($fp->hstrand);
   $genomic_align2->visible(1);
+
+  # Don't store self-alignments
+  return undef if ($genomic_align1->dnafrag_id == $genomic_align2->dnafrag_id)
+                    && ($genomic_align1->dnafrag_start == $genomic_align2->dnafrag_start)
+                    && ($genomic_align1->dnafrag_end == $genomic_align2->dnafrag_end)
+                    && ($genomic_align1->dnafrag_strand == $genomic_align2->dnafrag_strand);
 
   my $cigar2 = $fp->cigar_string;
   $cigar2 =~ s/D/M/g;

@@ -159,7 +159,6 @@ sub new {
   Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                 object or if $dnafrag does not match a previously defined
                 dnafrag_id
-  Warning     : warns if getting data from other sources fails.
   Caller      : object->methodname
 
 =cut
@@ -189,10 +188,6 @@ sub dnafrag {
       # clause because the attribute can be retrieved from other sources if it has not been already defined.
       my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
       $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
-    } else {
-      warning("Fail to get data from other sources in ".ref($self)."->dnafrag".
-          " You either have to specify more information (see perldoc for ".
-          ref($self).") or to set it up directly");
     }
   }
   return $self->{'dnafrag'};
@@ -213,7 +208,6 @@ sub dnafrag {
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
-  Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
   Status     : Stable
 
@@ -254,7 +248,6 @@ sub dnafrag_id {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : scalar
   Exceptions : none
-  Warning    : warns if getting data from other sources fails.
   Caller     : internal
 
 =cut
@@ -269,10 +262,6 @@ sub _lazy_getter_setter {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::Locus object
       $self->adaptor->retrieve_all_direct_attributes($self);
-    } else {
-      warning("Fail to get data from other sources in ".ref($self)."->$field".
-          " You either have to specify more information (see perldoc for ".
-          ref($self).") or to set it up directly");
     }
   }
 
@@ -290,7 +279,6 @@ sub _lazy_getter_setter {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
   Status     : Stable
 
@@ -314,7 +302,6 @@ sub dnafrag_start {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
   Status     : Stable
 
@@ -338,7 +325,6 @@ sub dnafrag_end {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Warning    : warns if getting data from other sources fails.
   Caller     : object->methodname
   Status     : Stable
 

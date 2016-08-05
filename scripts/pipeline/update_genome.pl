@@ -151,6 +151,7 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use Getopt::Long;
 
@@ -264,10 +265,10 @@ sub process_species {
     my $gdbs = $helper->transaction( -CALLBACK => sub {
         my $genome_db = update_genome_db($species_db, $compara_dba, $force);
         print "GenomeDB after update: ", $genome_db->toString, "\n\n";
-        update_dnafrags($compara_dba, $genome_db, $species_db);
+        Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $genome_db, $species_db);
         my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_dba);
         foreach my $component_gdb (@$component_genome_dbs) {
-            update_dnafrags($compara_dba, $component_gdb, $species_db);
+            Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
         }
         print_method_link_species_sets_to_update($compara_dba, $genome_db);
         return [$genome_db, @$component_genome_dbs];
@@ -387,68 +388,6 @@ sub update_component_genome_dbs {
     return \@gdbs;
 }
 
-
-=head2 update_dnafrags
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
-  Description : This method fetches all the dnafrag in the compara DB
-                corresponding to the $genome_db. It also gets the list
-                of top_level seq_regions from the species core DB and
-                updates the list of dnafrags in the compara DB.
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub update_dnafrags {
-  my ($compara_dba, $genome_db, $species_dba) = @_;
-
-  my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
-  my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
-  my $old_dnafrags_by_id;
-  foreach my $old_dnafrag (@$old_dnafrags) {
-    $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
-  }
-
-  my $gdb_slices = $genome_db->genome_component
-    ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
-    : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
-  die "Could not fetch any toplevel slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
-
-  my $current_verbose = verbose();
-  verbose('EXCEPTION');
-
-  my $new_dnafrags_ids = 0;
-  foreach my $slice (@$gdb_slices) {
-    my $length = $slice->seq_region_length;
-    my $name = $slice->seq_region_name;
-    my $coordinate_system_name = $slice->coord_system_name;
-
-    #Find out if region is_reference or not
-    my $is_reference = $slice->is_reference;
-
-    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-            -genome_db => $genome_db,
-            -coord_system_name => $coordinate_system_name,
-            -name => $name,
-            -length => $length,
-            -is_reference => $is_reference
-        );
-    my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
-    $new_dnafrags_ids++ if not exists $old_dnafrags_by_id->{$dnafrag_id};
-    delete($old_dnafrags_by_id->{$dnafrag_id});
-    throw() if ($old_dnafrags_by_id->{$dnafrag_id});
-  }
-  verbose($current_verbose);
-  print "Inserted $new_dnafrags_ids new DnaFrags.\n";
-  print "Now deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
-  foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
-    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
-  }
-  print "  ok!\n\n";
-}
 
 =head2 print_method_link_species_sets_to_update
 

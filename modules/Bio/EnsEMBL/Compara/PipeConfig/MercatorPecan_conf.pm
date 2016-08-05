@@ -98,9 +98,6 @@ sub default_options {
     #master database
         'master_db_name' => 'mm14_ensembl_compara_master',
 
-    'do_transactions'   => 1, #use transactions in Pecan and Gerp modules
-
-
     # Mercator default parameters
     'strict_map'        => 1,
 #    'cutoff_score'     => 100,   #not normally defined
@@ -245,7 +242,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('mercator_dir'),
         'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
-        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
         'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
      ];
 }
@@ -560,7 +557,6 @@ sub pipeline_analyses {
             -parameters    => {
                 'blast_params'      => $self->o('blast_params'),
                 'blast_bin_dir'     => $self->o('blast_bin_dir'),
-                'do_transactions' => 1,
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('blastdb_dir'),
             },
@@ -618,7 +614,6 @@ sub pipeline_analyses {
                  'mlss_id'                    => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
-                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -640,7 +635,6 @@ sub pipeline_analyses {
                  'mlss_id'                    => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
-                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -660,7 +654,6 @@ sub pipeline_analyses {
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
-                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -680,7 +673,6 @@ sub pipeline_analyses {
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
-                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -699,7 +691,6 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
-                 'do_transactions' => $self->o('do_transactions'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
              -hive_capacity => 500,  
@@ -715,7 +706,6 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
-                 'do_transactions' => $self->o('do_transactions'),
              },
             -hive_capacity => 500,  
 	     -rc_name => 'higerp',

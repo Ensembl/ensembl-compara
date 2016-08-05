@@ -63,7 +63,6 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
             'label'                 => 'default',
             'species_set_id'        => undef,
-            'do_transactions'       => 0,
             'no_previous'           => undef,
             'blength_tree_file'     => undef,
             'extrataxon_sequenced'  => undef,

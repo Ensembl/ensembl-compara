@@ -147,11 +147,6 @@ sub fetch_input {
     throw("MethodLinkSpeciesSet is not defined for this Ortheus job");
   }
 
-  #set default to do transactions
-  if (!defined $self->param('do_transactions')) {
-      $self->param('do_transactions', 1);
-  }
-
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
   ## DnaFragRegions are in random order
   $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param_required('synteny_region_id')) );
@@ -232,7 +227,6 @@ sub write_output {
     my ($self) = @_;
 
     print "WRITE OUTPUT\n" if $self->debug;
-    if ($self->param('do_transactions')) {
 	my $compara_conn = $self->compara_dba->dbc;
 	my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
 	my $ancestral_conn = $ancestor_genome_db->db_adaptor->dbc;
@@ -244,12 +238,6 @@ sub write_output {
 		 $self->_write_output;
 	     });
          });
-    } else {
-	$self->_write_output;
-    }
-
-  return 1;
-
 }
 
 sub _write_output {

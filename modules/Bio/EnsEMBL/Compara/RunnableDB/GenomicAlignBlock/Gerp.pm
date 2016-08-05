@@ -82,7 +82,6 @@ $| = 1;
 sub param_defaults {
     return {
 	    'program_version' => 2.1,
-            'do_transactions' => 1, #set default to do transactions
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,
@@ -108,8 +107,6 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
@@ -234,7 +231,7 @@ sub run {
     if (!$self->param('run_gerp')) {
 	return;
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(1);  
+    $self->compara_dba->dbc->disconnect_if_idle();
     if ($self->param('program_version') == 1) { 
 	$self->run_gerp;
     } elsif ($self->param('program_version') == 2.1) { 
@@ -242,7 +239,6 @@ sub run {
     } else {
 	throw("Invalid version number. Valid values are 1 or 2 or 2.1\n");
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 =head2 write_output
@@ -260,16 +256,9 @@ sub write_output {
 
     print "WRITE OUTPUT\n" if $self->debug;
 
-    if ($self->param('do_transactions')) {
-	my $compara_conn = $self->compara_dba->dbc;
-
-	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-	$compara_helper->transaction(-CALLBACK => sub {
-	     $self->_write_output;
-         });
-    } else {
-	$self->_write_output;
-    }
+    $self->call_within_transaction( sub {
+        $self->_write_output;
+    } );
 
   return 1;
 
@@ -423,6 +412,8 @@ sub run_gerp_v2 {
     #depth_threshold is too high to call any constrained elements (eg 3way birds)
     my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
     my $species_tree_string = $species_tree->root->newick_format('simple');
+    $self->compara_dba->dbc->disconnect_if_idle();
+    $species_tree_string =~ s/:0;$//;
     my $neutral_rate = _calculateNeutralRate($species_tree_string);
 
     if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {

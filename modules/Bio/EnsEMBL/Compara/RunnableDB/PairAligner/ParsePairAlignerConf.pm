@@ -50,8 +50,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+use File::Path;
+
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 use Bio::EnsEMBL::Hive::Utils 'stringify';
@@ -112,14 +116,14 @@ sub write_output {
 
     #No configuration file or no master_db, so no species list. Flow an empty speciesList
     if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
-	my $output_id = "{'speciesList'=>'\"\"'}";
+	my $output_id = {'speciesList' => ''};
 	$self->dataflow_output_id($output_id,1);
 	return;
     }
 
     #Have configuration file and getting only the speciesList. Dataflow to populate_new_database
     if ($self->param('get_species_list')) {
-	my $output_id = "{'speciesList'=>'" . join (",", $self->param('species_list')) . "', 'mlss_id'=>'\"\"'}";
+	my $output_id = {'speciesList' => $self->param('species_list'), 'mlss_id' => ''};
 	$self->dataflow_output_id($output_id,1);
 	return;
     }
@@ -186,7 +190,7 @@ sub write_output {
     #Create dataflows for pair_aligner parts of the pipeline
     $self->create_pair_aligner_dataflows();
 
-    #Write dataflow to chunk_and_group_dna (2) and dump_dna_factory(9)
+    #Write dataflow to chunk_and_group_dna (2)
     foreach my $dna_collection (keys %$pair_aligner_collection_names) {
         #print "dna_collection $dna_collection\n";
 
@@ -209,7 +213,7 @@ sub write_output {
 	}
 	$self->dataflow_output_id($output_hash,2);
         if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
-	    $self->dataflow_output_id($output_hash, 9);
+            mkpath($dna_collections->{$dna_collection}->{'dump_loc'});
         }
     }
 
@@ -279,7 +283,7 @@ sub parse_conf {
 	if ($self->param('master_db')) {
 	    $self->get_species($speciesList, $self->param('master_db'));
 	    foreach my $species (@{$speciesList}) {
-		push @spp_names, $species->{genome_db}->name,
+		push @spp_names, $species->{genome_db}->_get_unique_name,
 	    }
 	}
 
@@ -378,22 +382,22 @@ sub get_dna_collection {
 	#Fill in genome_db
 	if (defined $dna_collection->{'genome_db_id'}) {
 	    $dna_collection->{'genome_db'} = $gdb_adaptor->fetch_by_dbID($dna_collection->{'genome_db_id'});
-	    #print "genome_db_id " . $dna_collection->{'genome_db'}->name . "\n";
+	    #print "genome_db_id " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
 	} elsif (defined ($dna_collection->{'genome_name_assembly'})) {
 	    my ($genome_name, $assembly) = split ":", $dna_collection->{'genome_name_assembly'};
 	    $dna_collection->{'genome_db'} = $gdb_adaptor->fetch_by_name_assembly($genome_name, $assembly);
-	    #print "genome_name_assembly " . $dna_collection->{'genome_db'}->name . "\n";
+	    #print "genome_name_assembly " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
 	} else {
 	    #Check if first field of collection name is valid genome name
 	    my @fields = split " ", $name;
 	    foreach my $species (@$speciesList) {
-		if ($species->{'genome_db'}->name eq $fields[0]) {
+		if ($species->{'genome_db'}->_get_unique_name eq $fields[0]) {
 		    $dna_collection->{'genome_db'} = $species->{'genome_db'};
-		    #print "collection_name " . $dna_collection->{'genome_db'}->name . "\n";
+		    #print "collection_name " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
 		}
 	    }
 	}
-	#print "gdb " . $dna_collection->{'genome_db'}->name . "\n";
+	#print "gdb " . $dna_collection->{'genome_db'}->_get_unique_name . "\n";
 	#print_conf($dna_collection);
 	#print "\n";
     }
@@ -524,7 +528,7 @@ sub get_default_chunking {
 
     unless (defined $dna_collection->{'dump_loc'}) {
 	if (defined $default_chunk->{'dump_dir'}) {
-	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->name;
+	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->_get_unique_name;
 	}
     }
     
@@ -644,6 +648,7 @@ sub parse_defaults {
 	}
 	push @$collection, $pair;
     } else {
+        # Self-alignment
         my %pair = (
             'ref_genome_db'     => $genome_dbs->[0],
             'non_ref_genome_db' => $genome_dbs->[0],
@@ -652,7 +657,7 @@ sub parse_defaults {
     }
 
     foreach my $pair (@$collection) {
-	#print $pair->{ref_genome_db}->name . " " . $pair->{non_ref_genome_db}->name . "\n";
+	#print $pair->{ref_genome_db}->_get_unique_name . " " . $pair->{non_ref_genome_db}->_get_unique_name . "\n";
 	
 	my $pair_aligner = {};
 	$pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
@@ -684,43 +689,44 @@ sub parse_defaults {
 	}
 	
 	#create pair_aligners
-	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " raw";
-	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
-	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
+	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " raw";
+	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
+	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
 
         #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
-        if ((!$self->param('net_ref_species')) || ($self->param('net_ref_species') eq $pair->{ref_genome_db}->name)) {
-            $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
-            $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
-        } elsif ($self->param('net_ref_species') eq $pair->{non_ref_genome_db}->name) {
-            $net_config->{'reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
-            $net_config->{'non_reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
+        if ((!$self->param('net_ref_species')) || ($self->param('net_ref_species') eq $pair->{ref_genome_db}->_get_unique_name)) {
+            $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
+            $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
+        } elsif ($self->param('net_ref_species') eq $pair->{non_ref_genome_db}->_get_unique_name) {
+            $net_config->{'reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
+            $net_config->{'non_reference_collection_name'} = $pair->{ref_genome_db}->_get_unique_name . " for chain";
         } else {
-            throw ("Net reference species " . $self->param('net_ref_species') . " must be either " . $pair->{ref_genome_db}->name . " or " . $pair->{non_ref_genome_db}->name );
+            throw ("Net reference species " . $self->param('net_ref_species') . " must be either " . $pair->{ref_genome_db}->_get_unique_name . " or " . $pair->{non_ref_genome_db}->_get_unique_name );
         }
 
-	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->name . "_nib_for_chain";
+	my $dna_dump_loc = $self->param('dump_dir') . "/dna/";
+	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->_get_unique_name . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
+	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
 									      'dump_loc' => $dump_loc);
 
-	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " raw";;
-	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
-	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
+	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " raw";;
+	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
+	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->_get_unique_name . " for chain";
 
         # self-alignments would have the same names for "reference" and
         # "non-reference" collections otherwise
-        if ($pair->{ref_genome_db}->name eq $pair->{non_ref_genome_db}->name) {
+        if ($pair->{ref_genome_db}->_get_unique_name eq $pair->{non_ref_genome_db}->_get_unique_name) {
             $net_config->{'non_reference_collection_name'} .= ' again';
             $pair_aligner->{'non_reference_collection_name'} .= ' again';
             $chain_config->{'non_reference_collection_name'} .= ' again';
         }
 	    
-	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->name . "_nib_for_chain";
+	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->_get_unique_name . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
+	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db}, 'dump_loc' => $dna_dump_loc);
 	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},
 										   'dump_loc' => $dump_loc);
 
@@ -774,7 +780,7 @@ sub find_reference_species {
     my @non_ref_gdbs;
 
     foreach my $genome_db (@$genome_dbs) {
-        if (($ref_species eq $genome_db->dbID) or ($ref_species eq $genome_db->name)) {
+        if (($ref_species eq $genome_db->dbID) or ($ref_species eq $genome_db->_get_unique_name)) {
             $ref_genome_db = $genome_db;
         } else {
             push @non_ref_gdbs, $genome_db;
@@ -1015,7 +1021,7 @@ sub create_chain_dataflows {
 
 	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
 
-	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name);
 	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
 
 	#
@@ -1055,7 +1061,7 @@ sub create_chain_dataflows {
 	
 #	my ($input_method_link_id, $input_method_link_type) = @{$chain_config->{'input_method_link'}};
 
-#	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+#	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name);
 #	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
 
 	#
@@ -1084,28 +1090,37 @@ sub create_net_dataflows {
 
     foreach my $net_config (@$net_configs) {
 
-	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name;
-	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name;
+	my $ref_species_name = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name;
+	my $non_ref_species_name = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name;
 
 	#
-	#Write ref_species and non_ref_species to method_link_species_set_tag table
+	#Write ref_species_name and non_ref_species_name to method_link_species_set_tag table
 	#
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	my $mlss = $mlss_adaptor->fetch_by_dbID($net_config->{'mlss_id'});
 
-	$mlss->store_tag("reference_species", $ref_species);
-	$mlss->store_tag("non_reference_species", $non_ref_species);
+	$mlss->store_tag("reference_species", $ref_species_name);
+	$mlss->store_tag("non_reference_species", $non_ref_species_name);
 
+        if ($dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component) {
+            $mlss->store_tag('reference_component', $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component);
+        }
+        if ($dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->genome_component) {
+            $mlss->store_tag('non_reference_component', $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->genome_component);
+        }
+
+	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name;
+	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name;
 
 	my ($input_method_link_id, $input_method_link_type) = @{$net_config->{'input_method_link'}};
-	my $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+	my $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $ref_species, $non_ref_species);
         #If chain_config not found, try swapping reference_collection_name and non_reference_collection_name (which may be different for the net than the chain)
         unless ($chain_config) {
-            $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name);
+            $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $non_ref_species, $ref_species);
         }
 
 	my ($chain_input_method_link_id, $chain_input_method_link_type) = @{$chain_config->{'input_method_link'}};
-	my $pairaligner_config = find_config($all_configs, $dna_collections, $chain_input_method_link_type, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
+	my $pairaligner_config = find_config($all_configs, $dna_collections, $chain_input_method_link_type, $ref_species, $non_ref_species);
         
         $self->write_parameters_to_mlss_tag($mlss, $pairaligner_config);
 
@@ -1192,8 +1207,8 @@ sub find_config {
 	    ($output_method_link_id,$output_method_link_type) = @{$config->{'output_method_link'}};
 	}
 	if ($output_method_link_type eq $method_link_type && 
-	    $dna_collections->{$config->{'reference_collection_name'}}->{'genome_db'}->name eq $ref_name &&
-	    $dna_collections->{$config->{'non_reference_collection_name'}}->{'genome_db'}->name eq $non_ref_name) {
+	    $dna_collections->{$config->{'reference_collection_name'}}->{'genome_db'}->_get_unique_name eq $ref_name &&
+	    $dna_collections->{$config->{'non_reference_collection_name'}}->{'genome_db'}->_get_unique_name eq $non_ref_name) {
 	    return $config;
 	}
     }
@@ -1265,24 +1280,25 @@ sub populate_database_from_core_db {
     my ($self, $species) = @_;
 
     my $genome_db;
+    my $species_dba;
     #Load from SPECIES tag in conf_file
     if ($species->{dbname}) {
 	my $port = $species->{port} || 3306;
-	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
 							     -host => $species->{host},
 							     -user => $species->{user},
 							     -port => $port,
 							     -species => $species->{species},
 							     -dbname => $species->{dbname});
 	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
-	update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     } elsif ($species->{-dbname}) {
 	#Load form curr_core_dbs_locs in default_options file
-	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
+	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
 	$genome_db = update_genome_db($species_dba, $self->compara_dba);
-	update_dnafrags($self->compara_dba, $genome_db, $species_dba);	
     }
+
+    Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     return ($genome_db);
 }
@@ -1343,74 +1359,5 @@ sub update_genome_db {
     return $genome_db;
 }
 
-=head2 update_dnafrags
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
-  Description : This method fetches all the dnafrag in the compara DB
-                corresponding to the $genome_db. It also gets the list
-                of top_level seq_regions from the species core DB and
-                updates the list of dnafrags in the compara DB.
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub update_dnafrags {
-  my ($compara_dba, $genome_db, $species_dba) = @_;
-
-  my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
-  my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
-  my $old_dnafrags_by_id;
-  foreach my $old_dnafrag (@$old_dnafrags) {
-    $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
-  }
-
-  my $sql1 = qq{
-      SELECT
-        cs.name,
-        sr.name,
-        sr.length
-      FROM
-        coord_system cs,
-        seq_region sr,
-        seq_region_attrib sra,
-        attrib_type at
-      WHERE
-        sra.attrib_type_id = at.attrib_type_id
-        AND at.code = 'toplevel'
-        AND sr.seq_region_id = sra.seq_region_id
-        AND sr.coord_system_id = cs.coord_system_id
-        AND cs.species_id =?
-    };
-  my $sth1 = $species_dba->dbc->prepare($sql1);
-  $sth1->execute($species_dba->species_id());
-  my $current_verbose = verbose();
-  verbose('EXCEPTION');
-  while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {
-
-    #Find out if region is_reference or not
-    my $slice = $species_dba->get_SliceAdaptor->fetch_by_region($coordinate_system_name,$name);
-    my $is_reference = $slice->is_reference;
-
-    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-            -genome_db => $genome_db,
-            -coord_system_name => $coordinate_system_name,
-            -name => $name,
-            -length => $length,
-            -is_reference => $is_reference
-        );
-    my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
-    delete($old_dnafrags_by_id->{$dnafrag_id});
-    throw() if ($old_dnafrags_by_id->{$dnafrag_id});
-  }
-  verbose($current_verbose);
-  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
-  foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
-    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
-  }
-  print "  ok!\n\n";
-}
 
 1;

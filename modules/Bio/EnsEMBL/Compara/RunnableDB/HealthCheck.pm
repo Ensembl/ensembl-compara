@@ -200,17 +200,13 @@ sub test_table {
 
 =head2 _run_conservation_jobs_test
 
-  Arg[1]      : string representing a hashref of options.
-                Possible options are:
+  Description : Tests whether there is one conservation job per multiple
+                alignment or not. This test only look at the number of jobs.
+                Required parameters (in $self->param())
                   logic_name => Logic name for the Conservation Score
                       analysis. Default: Gerp
                   method_link_type => corresponds to the multiple
                       alignments. Default: PECAN
-  Example     : $self->_run_conservation_jobs_test();
-  Example     : $self->_run_conservation_jobs_test("{logic_name=>'GERP',
-                    method_link_type=>'PECAN'}");
-  Description : Tests whether there is one conservation job per multiple
-                alignment or not. This test only look at the number of jobs.
   Returntype  :
   Exceptions  : die on failure
   Caller      : general
@@ -218,7 +214,7 @@ sub test_table {
 =cut
 
 sub _run_conservation_jobs_test {
-  my ($self, $parameters) = @_;
+  my ($self) = @_;
 
   my $logic_name = "Gerp";
   my $method_link_type = "PECAN";
@@ -249,16 +245,12 @@ sub _run_conservation_jobs_test {
 
 =head2 _run_conservation_scores_test
 
-  Arg[1]      : string representing a hashref of options.
-                Possible options are:
-                  method_link_species_set_id => method_link_species_set_id
-                      for the conservation scores
-  Example     : $self->_run_conservation_scores_test();
-  Example     : $self->_run_conservation_scores_test(
-                    "{method_link_species_set_id=>123}");
   Description : Tests whether there are conservation scores in the table, whether
                 these correspond to existing genomic_align_blocks, and hether there
                 are no alignments with more than 3 seqs and no scores.
+                Required parameters (in $self->param())
+                  method_link_species_set_id => method_link_species_set_id
+                      for the conservation scores
   Returntype  :
   Exceptions  : die on failure
   Caller      : general
@@ -266,7 +258,7 @@ sub _run_conservation_jobs_test {
 =cut
 
 sub _run_conservation_scores_test {
-  my ($self, $parameters) = @_;
+  my ($self) = @_;
 
   my $method_link_species_set_id = $self->param('method_link_species_set_id');
 
@@ -337,19 +329,15 @@ sub _run_conservation_scores_test {
 
 =head2 _run_pairwise_gabs_test
 
-  Arg[1]      : string representing a hashref of options.
-                Possible options are:
-                  method_link_species_set_id => method_link_species_set id for
-                  the pairwise alignment.
-                  method_link_type => method_link_type for pairwise segment
-                  genome_db_ids => array of genome_db_ids
-  Example     : $self->_run_pairwise_gabs_test();
-  Example     : $self->_run_pairwise_gabs_test("{method_link_species_set_id=>123}");
-  Example     : self->_run_pairwise_gabs_test("{method_link_type=>'LASTZ_NET', genome_db_ids=>'[1,2]'}");
   Description : Tests whether the genomic_align_block and genomic_align tables
                 are not empty, whether there are twice as many genomic_aligns
                 as genomic_align_blocks and whether each genomic_align_block
                 has two genomic_aligns.
+                Required parameters (in $self->param())
+                  method_link_species_set_id => method_link_species_set id for
+                  the pairwise alignment.
+                  genome_db_ids => array of genome_db_ids
+                  method_link_type => method_link_type for pairwise segment
   Returntype  :
   Exceptions  : die on failure
   Caller      : general
@@ -357,13 +345,13 @@ sub _run_conservation_scores_test {
 =cut
 
 sub _run_pairwise_gabs_test {
-  my ($self, $parameters) = @_;
+  my ($self) = @_;
 
   #print "_run_pairwise_gabs_test\n";
 
   my $method_link_species_set_id = $self->param('mlss_id') || $self->param('method_link_species_set_id');
   my $method_link_type = $self->param('method_link_type');
-  my $genome_db_ids = eval($self->param('genome_db_ids') || '');
+  my $genome_db_ids = $self->param('genome_db_ids');
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -420,8 +408,11 @@ sub _run_pairwise_gabs_test {
 
 =head2 _run_compare_to_previous_db_test
 
-  Arg[1]      : string representing a hashref of options.
-                Possible options are:
+  Description : Tests whether there are genomic_align_blocks, genomic_aligns
+                and method_link_species_sets in the tables and whether the
+                total number of genomic_align_blocks between 2 databases are
+                within a certain percentage of each other.
+                Required parameters (in $self->param())
                   previous_db_url => url of the previous database. Must be
                   defined.
                   previous_method_link_species_set_id => method_link_species_set
@@ -434,13 +425,6 @@ sub _run_pairwise_gabs_test {
                   max_percentage_diff => the percentage difference between the
                   number of genomic_align_blocks in the query and the target
                   databases before being flaged as an error. Default 20.
-  Example     : $self->_run_compare_to_previous_db_test("{previous_db_url=>'mysql://anonymous@ensembldb.ensembl.org:3306/ensembl_compara_47', previous_method_link_species_set_id=>123, current_method_link_species_set_id=>123, max_percentage_diff=>20}");
- Example      : $self->_run_compare_to_previous_db_test("{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'LASTZ_NET\',current_genome_db_ids=>\'[25,22,]\'}")
-  Description : Tests whether there are genomic_align_blocks, genomic_aligns
-                and method_link_species_sets in the tables and whether the
-                total number of genomic_align_blocks between 2 databases are
-                within a certain percentage of each other.
-
   Returntype  :
   Exceptions  : die on failure
   Caller      : general
@@ -462,8 +446,7 @@ sub _run_compare_to_previous_db_test {
   my $previous_db = $self->param_required('previous_db');
 
   my $method_link_type = $self->param('method_link_type');
-  my $current_genome_db_ids;
-  $current_genome_db_ids = eval($self->param('current_genome_db_ids'));
+  my $current_genome_db_ids = $self->param('current_genome_db_ids');
   $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
 
   my $ensembl_release = $self->param('ensembl_release');
@@ -525,11 +508,14 @@ sub _run_compare_to_previous_db_test {
       foreach my $g_db_id (@$current_genome_db_ids) {
 	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
 
-	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
+	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_dbID($g_db_id)
+                               || $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
 	  if (!$previous_gdb) {
 	      $self->warning($g_db->name. " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
 	      return;
-	  }
+	  } elsif ($g_db->genome_component and not $previous_gdb->genome_component) {
+              $previous_gdb = $previous_gdb->component_genome_dbs($g_db->genome_component);
+          }
 	  push @$previous_gdbs, $previous_gdb->dbID;
       }
 

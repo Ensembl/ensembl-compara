@@ -52,12 +52,15 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection;
 
 use strict;
 use warnings;
+
+use File::Path;
+use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
+
 use Bio::EnsEMBL::Analysis::Runnable::Blat;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use File::Path;
 
 
 =head2 fetch_input
@@ -81,9 +84,6 @@ sub fetch_input {
       $self->param('faToNib_exe', 'faToNib');
   }
 
-  #must have dump_nib or dump_dna defined
-  die("Missing dump_nib or dump_dna") unless ($self->param('dump_nib') || $self->param('dump_dna'));
-
   return 1;
 }
 
@@ -93,22 +93,11 @@ sub run
 {
   my $self = shift;
 
-  if ($self->param('dump_nib')) {
-      $self->dumpNibFiles;
-  }
-  if ($self->param('dump_dna')) {
-      $self->dumpDnaFiles;
-  }
-
+  $self->dumpNibFiles;
 
   return 1;
 }
 
-
-sub write_output {
-  my( $self) = @_;
-  return 1;
-}
 
 
 ##########################################
@@ -168,76 +157,5 @@ sub dumpNibFiles {
   return 1;
 }
 
-sub dumpDnaFiles {
-  my $self = shift;
-
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-  my $starttime = time();
-
-  my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
-  my $dump_loc = $dna_collection->dump_loc;
-  unless (defined $dump_loc) {
-    die("dump_loc directory is not defined, can not dump nib files\n");
-  }
-
-  #Make directory if does not exist
-  if (!-e $dump_loc) {
-      print "$dump_loc does not currently exist. Making directory\n";
-      mkpath($dump_loc); 
-  }
-
-  if ($self->param('DnaFragChunkSet')) {
-	my $dna_object = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('DnaFragChunkSet'));
-
-      my $first_dna_object = $dna_object->get_all_DnaFragChunks->[0];
-      my $chunk_array = $dna_object->get_all_DnaFragChunks;
-
-      my $name = $first_dna_object->dnafrag->name . "_" . $first_dna_object->seq_start . "_" . $first_dna_object->seq_end;
-
-      my $fastafile = "$dump_loc/". $name . ".fa";
-
-      #Must always dump new fasta files because different runs call the chunks
-      #different names and the chunk name is what is stored in the fasta file.
-      if (-e $fastafile) {
-	  unlink $fastafile
-      }
-      foreach my $chunk (@$chunk_array) {
-	  #A chunk_set will contain several seq_regions which will be appended
-	  #to a single fastafile. This means I can't use
-	  #dump_chunks_to_fasta_file because this deletes the fastafile each
-	  #time!
-	  $chunk->dump_to_fasta_file(">".$fastafile);
-      }
-    }
-
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  return 1;
-}
-
-#Xreate a ooc file used in blat analysis. Not used for translated blat.
-sub create_ooc_file {
-  my ($dir, $seq_region) = @_;
-
-  my $ooc_file = "$dir/$seq_region/5ooc";
-
-  #make new directory to store 5ooc file for each seq_region
-  if (!-e "$dir/$seq_region") {
-      mkdir("$dir/$seq_region")
-        or die("Directory $dir/$seq_region cannot be created");
-  }
-
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Blat (
-							     -database => "$dir/$seq_region.fa",
-							     -query_type => "dnax",
-							     -target_type => "dnax",
-							     -options => "-ooc=$ooc_file -tileSize=5 -makeOoc=$ooc_file -mask=lower -qMask=lower");
-  $runnable->run;
-
-  return $ooc_file;
-}
 
 1;

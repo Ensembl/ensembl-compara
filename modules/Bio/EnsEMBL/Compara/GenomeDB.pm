@@ -166,12 +166,13 @@ sub db_adaptor {
             ? $dba
             : undef;
         if ($self->{'_db_adaptor'} && $update_other_fields) {
+            my $was_connected = $self->{'_db_adaptor'}{_dbc}->connected;
             $self->name( $self->{'_db_adaptor'}->get_MetaContainer->get_production_name );
             $self->assembly( $self->{'_db_adaptor'}->assembly_name );
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
             $self->has_karyotype( $self->{'_db_adaptor'}->get_GenomeContainer->has_karyotype );
-	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle;
+	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle unless $was_connected;
         }
     }
 
@@ -277,7 +278,26 @@ sub get_short_name {
       }
     }
   }
+  $name .= ".".(uc $self->genome_component) if $self->genome_component;
   return $name;
+}
+
+
+=head2 _get_unique_name
+
+  Example     : print $genome_db->_get_unique_name();
+  Description : Returns the name of the GenomeDB augmented with any information
+                (such as the genome-component) to make it unique
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub _get_unique_name {
+    my $self = shift;
+    my $n = $self->name;
+    $n .= '.'.$self->genome_component if $self->genome_component;
+    return $n;
 }
 
 

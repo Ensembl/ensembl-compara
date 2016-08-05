@@ -100,10 +100,7 @@ sub default_options {
     'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#min length to dump dna as nib file
-#	'dump_min_size' => 11500000, 
-
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-#	'do_transactions' => 1,
+#	'dump_min_nib_size' => 11500000,
 
         #
 	#Default filter_duplicates
@@ -250,7 +247,6 @@ sub e_analyses {
                      update_max_alignment_length_after_net
                      alignment_nets
                      update_max_alignment_length_before_FD
-                     dump_dna
                      no_chunk_and_group_dna
                      populate_new_database
                      dump_large_nib_for_chains
@@ -267,7 +263,6 @@ sub e_analyses {
                      set_internal_ids
                      set_internal_ids_collection
                      store_sequence_again
-                     dump_dna_factory
                      create_filter_duplicates_jobs
                      check_not_too_many_blocks
                      delete_trivial_alignments

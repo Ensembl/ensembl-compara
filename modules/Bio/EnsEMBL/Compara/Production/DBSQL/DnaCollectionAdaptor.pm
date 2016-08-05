@@ -50,15 +50,14 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use DBI qw(:sql_types);
+
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 #
 # STORE METHODS
@@ -121,38 +120,6 @@ sub store {
 ################
 
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::Compara::Production::DnaCollection
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID{
-  my ($self,$id) = @_;
-
-  unless(defined $id) {
-    throw("fetch_by_dbID must have an id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
-}
-
 =head2 fetch_by_set_description
 
   Arg [1]    : string $set_description
@@ -168,16 +135,11 @@ sub fetch_by_set_description {
   my ($self,$set_description) = @_;
 
   unless(defined $set_description) {
-    throw("fetch_by_set_description must have a description");
+    $self->throw("fetch_by_set_description must have a description");
   }
 
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "dc.description = '$set_description'";
-  #print("fetch_by_set_name contraint:\n$constraint\n");
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
+  $self->bind_param_generic_fetch($set_description, SQL_VARCHAR);
+  return $self->generic_fetch_one('dc.description = ?');
 }
 
 #
@@ -200,85 +162,6 @@ sub _columns {
              dc.masking_options);
 }
 
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-sub _final_clause {
-  my $self = shift;
-
-  return '';
-}
-
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
-=cut
-  
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-  
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-  
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-        
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      } 
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-      
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) { 
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause";
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  #print STDERR $sql,"\n";
-
-  return $self->_objs_from_sth($sth);
-}
-
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -290,13 +173,13 @@ sub _objs_from_sth {
     my $collection = $collections_hash{$row_hashref->{'dna_collection_id'}};
     
     unless($collection) {
-      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new(
-                -dbid            => $row_hashref->{'dna_collection_id'},
-                -description     => $row_hashref->{'description'},
-                -dump_loc        => $row_hashref->{'dump_loc'},
-                -masking_options => $row_hashref->{'masking_options'},
-                -adaptor         => $self
-      );
+      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new_fast({
+            'dbID'              => $row_hashref->{'dna_collection_id'},
+            'adaptor'           => $self,
+            '_description'      => $row_hashref->{'description'},
+            '_dump_loc'         => $row_hashref->{'dump_loc'},
+            '_masking_options'  => $row_hashref->{'masking_options'},
+      });
 
       $collections_hash{$collection->dbID} = $collection;
     }

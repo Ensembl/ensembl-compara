@@ -45,11 +45,14 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Utils::Exception;
+
+use File::Path;
+use File::Basename;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
-use Time::HiRes qw(time gettimeofday tv_interval);
+
+use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -223,5 +226,97 @@ sub total_basepairs {
   }
   return $self->{'_total_basepairs'};
 }
+
+
+=head2 load_all_sequences
+
+  Example     : $chunkset->load_all_sequences();
+  Description : Loads all the chunk sequences with 1 API call
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_sequences {
+    my $self = shift;
+
+    if ($self->count == 1) {
+
+        my $chunk = $self->get_all_DnaFragChunks()->[0];
+        unless($chunk->sequence) {
+            $chunk->masking_options($self->dna_collection->masking_options);
+            # Will fetch the masked sequence from the core db and cache it in the object
+            $chunk->fetch_masked_sequence();
+        }
+
+    } else {
+
+        my $sequences = $self->adaptor->db->get_SequenceAdaptor->fetch_all_by_chunk_set_id($self->dbID);
+
+        foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+
+            if (my $this_seq_id = $chunk->sequence_id) {
+                $chunk->sequence($sequences->{$this_seq_id}); #this sets $chunk->sequence_id=0
+                $chunk->sequence_id($this_seq_id); #reset seq_id
+            } else {
+                $chunk->masking_options($self->dna_collection->masking_options);
+                # Will fetch the masked sequence from the core db and cache it in the object
+                $chunk->fetch_masked_sequence();
+            }
+        }
+    }
+}
+
+
+=head2 dump_to_fasta_file
+
+  Example     : $chunkset->dump_to_fasta_file();
+  Description : Use BioPerl to print all the sequences in a Fasta file
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub dump_to_fasta_file {
+    my ($self, $fastafile) = @_;
+
+    mkpath(dirname($fastafile));
+
+    open(my $fh, '>', $fastafile)
+        or $self->throw("Error opening $fastafile for write");
+    my $output_seq = Bio::SeqIO->new( -fh => $fh, -format => 'Fasta');
+
+    foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+        $output_seq->write_seq($chunk->bioseq);
+    }
+
+    close $fh;
+}
+
+
+=head2 dump_loc_file
+
+  Example     : $chunk_set->dump_loc_file();
+  Description : Returns the path to this ChunkSet in the dump location of its DnaCollection
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub dump_loc_file {
+    my $self = shift;
+    my $dump_loc = $self->dna_collection->dump_loc;
+    my $sub_dir  = dir_revhash($self->dbID);
+    return sprintf('%s/%s/chunk_set_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+}
+
+
+
 
 1;

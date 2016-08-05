@@ -152,7 +152,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
         'include_MT' => 1,
@@ -162,7 +162,7 @@ sub default_options {
 	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
 
 	#min length to dump dna as nib file
-	'dump_min_size' => 11500000, 
+	'dump_min_nib_size' => 11500000,
 
 	#
 	#Default chunking parameters
@@ -188,9 +188,6 @@ sub default_options {
    						'masking_options' => '{default_soft_masking => 1}'},
    			    },
 	    
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-	'do_transactions' => 1,
-
         #
 	#Default filter_duplicates
 	#

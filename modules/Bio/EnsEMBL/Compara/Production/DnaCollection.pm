@@ -47,11 +47,8 @@ package Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-use Bio::EnsEMBL::Utils::Exception;
+
 use Bio::EnsEMBL::Utils::Argument;
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -149,19 +146,5 @@ sub get_all_DnaFragChunkSets {
   return $self->{'_object_list'};
 }
 
-=head2 count
-
-  Example    : $count = $chunkSet->count;
-  Description: returns count of DnaFragChunkSets in this set
-  Returntype : int
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub count {
-  my $self = shift;
-  return scalar(@{$self->{'_object_list'}});
-}
 
 1;

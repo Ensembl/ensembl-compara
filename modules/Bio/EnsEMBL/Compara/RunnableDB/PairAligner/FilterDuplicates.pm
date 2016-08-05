@@ -32,10 +32,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates
 
 =cut
 
-=head1 SYNOPSIS
-
-=cut
-
 =head1 DESCRIPTION
 
 This analysis/RunnableDB is designed to run after all GenomicAlignBlock entries for a 
@@ -56,10 +52,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates;
 
 use strict;
 use warnings;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Analysis::RunnableDB;
+
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 
@@ -167,7 +163,6 @@ sub filter_duplicates {
     } else {
 	#get correct start and end if non_reference eg haplotype. 
 	#NB cannot overwrite by defining seq_region_start and seq_region_end
-	if (!$dnafrag->is_reference) {
 	    my $slice_adaptor = $dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
 	    my $slices = $slice_adaptor->fetch_by_region_unique($dnafrag->coord_system_name, $dnafrag->name);
 	    foreach my $slice (@$slices) {
@@ -182,7 +177,6 @@ sub filter_duplicates {
 		    $self->find_edge_artefacts($seq_region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
 		}
 	    }
-	}
     }
   }
 
@@ -219,33 +213,7 @@ sub filter_duplicates {
 sub find_identical_matches {
     my ($self, $region_start, $seq_region_end, $window_size, $mlss, $dnafrag) = @_;
 
-    my $GAB_DBA = $self->compara_dba->get_GenomicAlignBlockAdaptor;
-
-    while($region_start <= $seq_region_end) {
-	my  $region_end = $region_start + $window_size;
-
-	my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
-	  ($mlss, $dnafrag, $region_start, $region_end);
-	
-          if ($self->param('is_self_alignment')) {
-              if ($self->param('is_reference')) {
-                  $genomic_align_block_list = [grep {$_->reference_genomic_align_id < $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
-              } else {
-                  $genomic_align_block_list = [grep {$_->reference_genomic_align_id > $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
-              }
-          }
-	printf STDERR "IDENTICAL MATCHES: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
-	      $region_start, $region_end, scalar(@$genomic_align_block_list);
-
-	my $sort_time = time();
-
-	# first sort the list for processing
-	my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
-	$self->param('gab_count', $self->param('gap_count')+scalar(@sorted_GABs));
-	# remove all the equal duplicates from the list
-	$self->removed_equals_from_genomic_align_block_list(\@sorted_GABs);
-        $region_start = $region_end;
-    }
+    return $self->_process_gabs_per_chunk($region_start, $seq_region_end, $window_size, $window_size, $mlss, $dnafrag, 'removed_equals_from_genomic_align_block_list');
 }
 
 #Remove matches spanning the overlap using "in_chunk_overlap" mode which 
@@ -253,33 +221,34 @@ sub find_identical_matches {
 sub find_edge_artefacts {
     my ($self, $region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag) = @_;
 
+    return $self->_process_gabs_per_chunk($region_start+$chunk_size-$overlap, $seq_region_end, $chunk_size-$overlap, $overlap-1, $mlss, $dnafrag, 'remove_edge_artifacts_from_genomic_align_block_list');
+}
+
+# Convenient method to check $dnafrag with a sliding window
+sub _process_gabs_per_chunk {
+    my ($self, $region_start, $seq_region_end, $step_size, $window_size, $mlss, $dnafrag, $method) = @_;
+
     my $GAB_DBA = $self->compara_dba->get_GenomicAlignBlockAdaptor;
 
-    $region_start += $chunk_size - $overlap;
     while($region_start <= $seq_region_end) {
-       my $region_end = $region_start + $overlap - 1;
+        my $region_end = $region_start + $window_size;
 
-       my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
-        ($mlss, $dnafrag, $region_start, $region_end);
-        if ($self->param('is_self_alignment')) {
-            if ($self->param('is_reference')) {
-                $genomic_align_block_list = [grep {$_->reference_genomic_align_id < $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
-            } else {
-                $genomic_align_block_list = [grep {$_->reference_genomic_align_id > $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
-            }
+        my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss, $dnafrag, $region_start, $region_end);
+
+        if ($self->param('is_reference')) {
+            $genomic_align_block_list = [grep {($_->reference_genomic_align->dnafrag_id != $_->get_all_non_reference_genomic_aligns->[0]->dnafrag_id) || ($_->reference_genomic_align_id < $_->get_all_non_reference_genomic_aligns->[0]->dbID)} @$genomic_align_block_list];
+        } else {
+            $genomic_align_block_list = [grep {($_->reference_genomic_align->dnafrag_id != $_->get_all_non_reference_genomic_aligns->[0]->dnafrag_id) || ($_->reference_genomic_align_id > $_->get_all_non_reference_genomic_aligns->[0]->dbID)} @$genomic_align_block_list];
         }
-       printf STDERR "EDGE ARTEFACTS: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, $region_start, $region_end, scalar(@$genomic_align_block_list);
-       
-       # first sort the list for processing
-       my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
-       $self->param('gab_count', $self->param('gab_count')+scalar(@sorted_GABs));
+        printf STDERR "PROCESS GABS: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, $region_start, $region_end, scalar(@$genomic_align_block_list);
 
-       # now process remaining list (still sorted) for overlaps
-       $self->remove_edge_artifacts_from_genomic_align_block_list(\@sorted_GABs, $region_start, $region_end);
-       
-        $region_start += $chunk_size - $overlap;
+        # first sort the list for processing
+        my @sorted_GABs = sort sort_alignments @$genomic_align_block_list;
+        $self->param('gab_count', $self->param('gab_count')+scalar(@sorted_GABs));
+        # and call the method
+        $self->$method(\@sorted_GABs, $region_start, $region_end);
+        $region_start += $step_size;
     }
-
 }
 
 sub sort_alignments{
@@ -317,8 +286,6 @@ sub remove_deletes_from_list {
 sub removed_equals_from_genomic_align_block_list {
   my $self = shift;
   my $genomic_align_block_list = shift;
-  my $region_start = shift;
-  my $region_end = shift;
   
   # Flag to define whether we are filtering raw alignments or net alignments
   # By default, it is set to raw alignment

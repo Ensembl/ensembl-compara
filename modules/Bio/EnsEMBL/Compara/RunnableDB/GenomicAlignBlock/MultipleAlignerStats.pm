@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::PairAlignerConfig
+Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats
 
 =cut
 
@@ -86,7 +86,7 @@ sub fetch_input {
   } else{
       if (defined $self->param('method_link_type') && $self->param('genome_db_ids')) {
 	  die ("No method_link_species_set") if (!$mlss_adaptor);
-	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), eval($self->param('genome_db_ids')));
+	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('genome_db_ids'));
 	  $self->param('mlss_id', $mlss->dbID);
       } else {
 	  die("must define either mlss_id or method_link_type and genome_db_ids");
@@ -108,24 +108,8 @@ sub fetch_input {
   #Need to protect with quotes
   $self->param('dbc_url', "\"$url\"");
 
-  my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-
-  #Set up paths to various perl scripts
-  unless ($self->param('dump_features')) {
-      $self->param('dump_features', $perl_path . "/ensembl-compara/scripts/dumps/dump_features.pl");
-  }
-  
-  unless (-e $self->param('dump_features')) {
-      die($self->param('dump_features') . " does not exist");
-  }
-
-  unless ($self->param('compare_beds')) {
-      $self->param('compare_beds', $perl_path . "/ensembl-compara/scripts/pipeline/compare_beds.pl");
-  }
-  
-  unless (-e $self->param('compare_beds')) {
-      die($self->param('compare_beds') . " does not exist");
-  }
+  $self->require_executable('dump_features');
+  $self->require_executable('compare_beds');
   
   #Get ensembl schema version from meta table if not defined
   if (!defined $self->param('ensembl_release')) {

@@ -42,7 +42,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -53,23 +52,8 @@ sub fetch_input {
     
     $self->param('query_DnaFrag_hash', {});
     $self->param('target_DnaFrag_hash', {});
-
-    unless (defined $self->param('do_transactions')) {
-	$self->param('do_transactions', 1);
-    }
 }
 
-
-=head2 run
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::RunnableDB
-  Function  : cycles through all the runnables, calls run and pushes
-  their output into the RunnableDBs output array
-  Returntype: array ref
-  Exceptions: none
-  Example   : 
-
-=cut
 
 sub run{
     my ($self) = @_;
@@ -115,32 +99,21 @@ sub run{
 sub write_output {
   my($self) = @_;
 
-  my @gen_al_groups;
-
-  #
-  #Start transaction
-  #
-  if ($self->param('do_transactions'))  {
-      my $compara_conn = $self->compara_dba->dbc;
-      my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-      $compara_helper->transaction(-CALLBACK => sub {
-	  $self->_write_output;
-      });
-  } else {
-      $self->_write_output;
-  }
+  foreach my $chain (@{ $self->param('chains') }) {
+      $self->_write_output($chain);
+    }
 
   return 1;
 
 }
 
 sub _write_output {
-    my ($self) = @_;
+    my ($self, $chain) = @_;
+  #
+  #Start transaction
+  #
+  $self->call_within_transaction( sub {
     
-    #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-    #LOCK TABLES which does an implicit commit and prevent any rollback
-    $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
-    foreach my $chain (@{ $self->param('chains') }) {
         my $group_id;
         
         #store first block
@@ -162,7 +135,7 @@ sub _write_output {
             }
             $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
         }
-    }
+  } );
 }
 
 ###########################################

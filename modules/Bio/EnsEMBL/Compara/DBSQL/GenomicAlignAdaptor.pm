@@ -67,8 +67,6 @@ Bio::EnsEMBL::DBSQL::GenomicAlignAdaptor - Object adaptor to access data in the 
   $genomic_align = $genomic_align_adaptor->
       retrieve_all_direct_attributes($genomic_align);
 
-  $genomic_align_adaptor->use_autoincrement(0);
-
 =head1 DESCRIPTION
 
 This module is intended to access data in the genomic_align table. In most cases, you want to use
@@ -136,7 +134,6 @@ sub new {
 
   my $self = $class->SUPER::new(@_);
 
-  $self->{_use_autoincrement} = 1;
 
   return $self;
 }
@@ -178,7 +175,7 @@ sub store {
   my $genomic_align_sth = $self->prepare($genomic_align_sql);
   
   for my $ga ( @$genomic_aligns ) {
-    if(!defined($ga->dnafrag) or !defined($ga->dnafrag->dbID)) {
+    if(!defined($ga->dnafrag_id)) {
       throw( "dna_fragment in GenomicAlign is not in DB" );
     }
     if(!defined($ga->genomic_align_block) or !defined($ga->genomic_align_block->dbID)) {
@@ -188,29 +185,11 @@ sub store {
       throw( "method_link_species_set in GenomicAlign is not in DB" );
     }
 
-    my $lock_tables = 0;
-    if (!$ga->dbID and !$self->use_autoincrement()) {
-      ## Lock tables
-      $lock_tables = 1;
-      $self->dbc->do(qq{ LOCK TABLES genomic_align WRITE });
-
-      my $sql =
-              "SELECT MAX(genomic_align_id) FROM genomic_align WHERE".
-              " genomic_align_block_id > ".$ga->method_link_species_set->dbID.
-              "0000000000 AND genomic_align_block_id < ".
-              ($ga->method_link_species_set->dbID + 1)."0000000000";
-      my $sth = $self->prepare($sql);
-      $sth->execute();
-      my $genomic_align_id = ($sth->fetchrow_array() or
-          ($ga->method_link_species_set->dbID * 10000000000));
-      $ga->dbID($genomic_align_id + 1);
-    }
-
     $genomic_align_sth->execute(
             ($ga->dbID or undef),
             $ga->genomic_align_block->dbID,
             $ga->method_link_species_set->dbID,
-            $ga->dnafrag->dbID,
+            $ga->dnafrag_id,
             $ga->dnafrag_start,
             $ga->dnafrag_end,
             $ga->dnafrag_strand,
@@ -219,10 +198,6 @@ sub store {
 	    ($ga->node_id or undef)
         );
 
-    if ($lock_tables) {
-      ## Unlock tables
-      $self->dbc->do("UNLOCK TABLES");
-    }
     if (!$ga->dbID) {
       $ga->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align', 'genomic_align_id') );
     }
@@ -231,7 +206,7 @@ sub store {
           ($ga->dbID or "NULL").
           ", gab=".$ga->genomic_align_block->dbID.
           ", mlss=".$ga->method_link_species_set->dbID.
-          ", dnaf=".$ga->dnafrag->dbID.
+          ", dnaf=".$ga->dnafrag_id.
           " [".$ga->dnafrag_start.
           "-".$ga->dnafrag_end."]".
           " (".$ga->dnafrag_strand.")".
@@ -532,35 +507,6 @@ sub retrieve_all_direct_attributes {
   $genomic_align->node_id($node_id) if (defined($node_id));
 
   return $genomic_align;
-}
-
-
-=head2 use_autoincrement
-
-  [Arg  1]   : (optional)int value
-  Example    : $genomic_align_adaptor->use_autoincrement(0);
-  Description: Getter/setter for the _use_autoincrement flag. This flag
-               is used when storing new objects with no dbID in the
-               database. If the flag is ON (default), the adaptor will
-               let the DB set the dbID using the AUTO_INCREMENT ability.
-               If you unset the flag, then the adaptor will look for the
-               first available dbID after 10^10 times the
-               method_link_species_set_id.
-  Returntype : integer
-  Exceptions : 
-  Caller     : none
-  Status     : Stable
-
-=cut
-
-sub use_autoincrement {
-  my ($self, $value) = @_;
-
-  if (defined $value) {
-    $self->{_use_autoincrement} = $value;
-  }
-
-  return $self->{_use_autoincrement};
 }
 
 

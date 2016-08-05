@@ -476,17 +476,36 @@ sub display_id {
 sub isMT {
     my ($self) = @_;
 
-    return 1 if ($self->name eq "MT");
+    return 1 if ($self->name =~ /^MT$/i);
 
     #Check synonyms
     my $slice = $self->slice;
     foreach my $synonym (@{$slice->get_all_synonyms}) {
-        if ($synonym->name eq "MT") {
+        if ($synonym->name =~ /^MT$/i) {
             return 1;
         }
     }
     return 0;
 }
+
+
+=head2 dna_type
+
+  Example     : my $type = $dnafrag->dna_type();
+  Description : Tells whether the dnafrag represent a nuclear genome, the mitochondrion or the chloroplast
+  Returntype  : "", "MT", or "PT"
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub dna_type {
+    my $self = shift;
+    return 'MT' if $self->isMT;
+    return 'PT' if ($self->name =~ /^PT$/i);
+    return '';
+}
+
 
 1;
 

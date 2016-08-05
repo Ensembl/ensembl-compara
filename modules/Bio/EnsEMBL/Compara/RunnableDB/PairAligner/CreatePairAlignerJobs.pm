@@ -32,20 +32,14 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
+
+Iterates over two DnaCollections (a "query" and a "target") and dataflows
+all the pairs of DnaFragChunkSets (one of each collection).
+
+Exceptions:
+ - Throws if a MT DnaFragChunkSet contains more than 1 DnaFragChunk
+ - Pairs crossing MT and non-MT dnafrags are not created
 
 =cut
 
@@ -61,45 +55,26 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Analysis::RunnableDB;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-use Bio::EnsEMBL::Compara::Production::DnaCollection;
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
-  my $self = shift;
+    my $self = shift;
 
-  # get DnaCollection of query
-  throw("must specify 'query_collection_name' to identify DnaCollection of query") 
-    unless(defined($self->param('query_collection_name')));
-  $self->param('query_collection', $self->compara_dba->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->param('query_collection_name')));
-  throw("unable to find DnaCollection with name : ". $self->param('query_collection_name'))
-    unless(defined($self->param('query_collection')));
+    my $dca = $self->compara_dba->get_DnaCollectionAdaptor;
 
-  # get DnaCollection of target
-  throw("must specify 'target_collection_name' to identify DnaCollection of query") 
-    unless(defined($self->param('target_collection_name')));
-  $self->param('target_collection', $self->compara_dba->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->param('target_collection_name')));
-  throw("unable to find DnaCollection with name : ". $self->param('target_collection_name'))
-    unless(defined($self->param('target_collection')));
+    # get DnaCollection of query
+    my $query_collection = $dca->fetch_by_set_description($self->param_required('query_collection_name'))
+                            || die "unable to find DnaCollection with name : ". $self->param('query_collection_name');
+    $self->param('query_collection', $query_collection);
 
+    # get DnaCollection of target
+    my $target_collection = $dca->fetch_by_set_description($self->param_required('target_collection_name'))
+                            || die "unable to find DnaCollection with name : ". $self->param('target_collection_name');
+    $self->param('target_collection', $target_collection);
 
-  $self->print_params;
-    
-  
-  return 1;
-}
-
-
-sub run
-{
-  my $self = shift;
-  return 1;
+    $self->print_params;
 }
 
 
@@ -141,64 +116,58 @@ sub createPairAlignerJobs
   #get dnafrag adaptors
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
-  my $dnafrag_chunk_set_adaptor = $self->compara_dba->get_DnaFragChunkSetAdaptor;
+
+  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
+  #instead of reading from the mlss_tag table
+  my $pairaligner_hash = {
+      'mlss_id' => $self->param('method_link_species_set_id'),
+  };
+  if ($self->param('options')) {
+      $pairaligner_hash->{'options'} = $self->param('options');
+  }
 
   my $count=0;
   foreach my $target_dnafrag_chunk_set (@{$target_dnafrag_chunk_set_list}) {
-    my $pairaligner_hash = {};
     
-    $pairaligner_hash->{'mlss_id'} = $self->param('method_link_species_set_id');
-
-    if ($self->param('target_collection')->dump_loc) {
-	$pairaligner_hash->{'target_fa_dir'} = $self->param('target_collection')->dump_loc;
-    }
-
-    #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job 
-    #instead of reading from the mlss_tag table
-    if ($self->param('options')) {
-        $pairaligner_hash->{'options'} = $self->param('options');
-    }
-
-    $pairaligner_hash->{'dbChunkSetID'} = undef;
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
 
     #find the target dnafrag name to check if it is MT. It can only be part of set of 1
     my $num_target_chunks = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
     my ($first_db_chunk) = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
-    my $target_dnafrag_name = $first_db_chunk->dnafrag->name;
+    my $target_dnafrag_type = $first_db_chunk->dnafrag->dna_type;
 
     #Check synonyms for MT
-    if ($first_db_chunk->dnafrag->isMT) {
-        $target_dnafrag_name = "MT";
+    if ($target_dnafrag_type) {
         if ($num_target_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $target_dnafrag_name for MT");
+            throw("Number of DnaFragChunk objects must be 1 not $num_target_chunks for $target_dnafrag_type");
         }
     }
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
-      $pairaligner_hash->{'qyChunkSetID'} = undef;
 
+     my $query_dnafrag_type = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'};
+     unless (defined $query_dnafrag_type) {
       #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
       my $num_query_chunks = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
       my ($first_qy_chunk) = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
-      my $query_dnafrag_name = $first_qy_chunk->dnafrag->name;
+      $query_dnafrag_type = $first_qy_chunk->dnafrag->dna_type;
 
       #Check synonyms for MT
-      if ($first_qy_chunk->dnafrag->isMT) {
-          $query_dnafrag_name = "MT";
+      if ($query_dnafrag_type) {
         if ($num_query_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for MT");
+            throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for $num_query_chunks");
         }
       }
+      $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'} = $query_dnafrag_type;
+    }
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
 
       #only allow mitochrondria chromosomes to find matches to each other
-      next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
-	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
+      next if ($target_dnafrag_type or $query_dnafrag_type) and ($target_dnafrag_type ne $query_dnafrag_type);
 
       #Skip MT unless param is set
-      next if ($query_dnafrag_name eq "MT" && $target_dnafrag_name eq "MT" && !$self->param('include_MT'));
+      next if ($query_dnafrag_type eq "MT" && $target_dnafrag_type eq "MT" && !$self->param('include_MT'));
 
       $self->dataflow_output_id($pairaligner_hash,2);
       $count++;

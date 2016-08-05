@@ -46,8 +46,7 @@ use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 #############################
@@ -400,36 +399,6 @@ sub fetch_all_filtered_anchors {
 	return \%Return_hash;
 }
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $dbID
-  Example    :
-  Description: Returns the AnchorAlign obejcts with this anchor_align_id
-  Returntype : Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign object
-  Exceptions :
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self, $id) = @_;
-
-  unless (defined $id) {
-    throw("fetch_by_dbID must have an id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
-}
-
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
 
@@ -447,22 +416,16 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
 
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "aa.method_link_species_set_id = ". $method_link_species_set->dbID;
 
-  #return first element of _generic_fetch list
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 
 ############################
 #
 # INTERNAL METHODS
-# (pseudo subclass methods)
 #
 ############################
 
@@ -491,16 +454,6 @@ sub _columns {
             );
 }
 
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-sub _final_clause {
-  my $self = shift;
-  $self->{'_final_clause'} = shift if(@_);
-  return $self->{'_final_clause'};
-}
 
 
 sub _objs_from_sth {
@@ -529,75 +482,6 @@ sub _objs_from_sth {
   $sth->finish;
 
   return \@anchor_aligns;
-}
-
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::Production::DnaFragChunk in contig coordinates
-  Exceptions : none
-  Caller     : internal
-
-=cut
-
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      }
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) {
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause" if($final_clause);
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  # print STDERR "sql execute finished. about to build objects\n";
-
-  return $self->_objs_from_sth($sth);
 }
 
 

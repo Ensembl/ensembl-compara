@@ -98,14 +98,8 @@ sub fetch_input {
   # get the compara data: MethodLinkSpeciesSet, reference DnaFrag, 
   # and GenomicAlignBlocks
   ################################################################
-  my $mlss = $mlssa->fetch_by_dbID($self->param('input_mlss_id'));
-  if (!$mlss) {
-      #try old pipeline
-      $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
-  }
-
-  throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'))
-      if not $mlss;
+  my $mlss = $mlssa->fetch_by_dbID($self->param_required('input_mlss_id'))
+              || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
 
   #Check if doing self_alignment where the species_set will contain only one
   #entry
@@ -114,15 +108,8 @@ sub fetch_input {
       $self_alignment = 1;
   }
   
-  my $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
-  
-  if (!$out_mlss) {
-      #Try old pipeline
-      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set->genome_dbs);
-   }
-
-  throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
-      if not $out_mlss;
+  my $out_mlss = $mlssa->fetch_by_dbID($self->param_required('output_mlss_id'))
+                  || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
 
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
@@ -257,6 +244,7 @@ sub delete_alignments {
 sub run {
   my ($self) = @_;
 
+  $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
   my $runnable = $self->param('runnable');
   $runnable->run;
   $self->cleanse_output($runnable->output);

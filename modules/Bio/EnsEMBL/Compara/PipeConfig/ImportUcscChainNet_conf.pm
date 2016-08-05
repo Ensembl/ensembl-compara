@@ -128,9 +128,6 @@ sub default_options {
 	#Reference species (if not using pairwise configuration file)
 	'ref_species' => 'homo_sapiens',
 
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-	'do_transactions' => 1,
-
          'skip_pairaligner_stats' => 0, #skip this module if set to 1
 
 	'chain_method_link_type' => 'LASTZ_CHAIN',
@@ -165,19 +162,12 @@ sub pipeline_create_commands {
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        $self->db_cmd('CREATE TABLE ucsc_to_ensembl_mapping (genome_db_id int(10) unsigned, ucsc varchar(40),ensembl  varchar(40)) ENGINE=InnoDB'),
 
     ];
 }
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-
-    return {
-	    'do_transactions' => $self->o('do_transactions'),
-    };
-}
 
 sub resource_classes {
     my ($self) = @_;

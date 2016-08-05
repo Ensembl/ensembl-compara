@@ -70,9 +70,6 @@ Supported keys:
        the region for DnaFrag 2046355 from position 126902742 only and 
        the region for DnaFrag 1045566 to position 139208434 only
 
-    'do_transactions' => <0|1>
-       Use transactions. Default is yes.
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 
@@ -97,7 +94,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'do_transactions' => 1, #set default to do transactions
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local
@@ -203,15 +199,9 @@ sub write_output {
 	$self->input_job->autoflow(0);
     } else {
 	#Job succeeded, write output
-	if ($self->param('do_transactions')) {
-	    my $compara_conn = $self->compara_dba->dbc;
-	    my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-	    $compara_helper->transaction(-CALLBACK => sub {
-					     $self->_write_output;
-					 });
-	} else {
-	    $self->_write_output;
-	} 
+        $self->call_within_transaction( sub {
+            $self->_write_output;
+        } );
     }
 }
 
