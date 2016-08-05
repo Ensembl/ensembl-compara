@@ -161,7 +161,10 @@ sub _dump_fasta {
     print F ">AnchorAlign", $anchor_align_id, "|", $anchor_align->dnafrag->name, ".",
         $anchor_align->dnafrag_start, "-", $anchor_align->dnafrag_end, ":",
         $anchor_align->dnafrag_strand, "\n";
-    my $seq = $anchor_align->seq;
+    my $seq;
+    $anchor_align->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+        $seq = $anchor_align->seq;
+    } );
     if ($seq =~ /[^ACTGactgNnXx]/) {
       print STDERR "AnchorAlign $anchor_align_id contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
       $seq =~ s/[^ACTGactgNnXx]/N/g;
