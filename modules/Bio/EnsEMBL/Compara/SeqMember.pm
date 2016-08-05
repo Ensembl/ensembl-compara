@@ -168,7 +168,7 @@ sub copy {
 sub new_from_Transcript {
     my ($class, @args) = @_;
 
-    my ($transcript, $genome_db, $translate) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
+    my ($transcript, $genome_db, $translate, $dnafrag) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DNAFRAG)], @args);
 
     assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
 
@@ -212,7 +212,7 @@ sub new_from_Transcript {
         dnafrag_end => $end,
         dnafrag_strand => $transcript->seq_region_strand,
 
-        dnafrag => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $transcript->seq_region_name),
+        dnafrag => $dnafrag || $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $transcript->seq_region_name),
         _genome_db => $genome_db,
         _genome_db_id => $genome_db->dbID,
         _taxon_id => $genome_db->taxon_id,

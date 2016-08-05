@@ -101,7 +101,7 @@ use base ('Bio::EnsEMBL::Compara::Member');
 sub new_from_Gene {
     my ($class, @args) = @_;
 
-    my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
+    my ($gene, $genome_db, $dnafrag) = rearrange([qw(GENE GENOME_DB DNAFRAG)], @args);
 
     assert_ref($gene, 'Bio::EnsEMBL::Gene');
     assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
@@ -116,7 +116,7 @@ sub new_from_Gene {
         dnafrag_start => $gene->seq_region_start,
         dnafrag_end => $gene->seq_region_end,
         dnafrag_strand => $gene->seq_region_strand,
-        dnafrag => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
+        dnafrag => $dnafrag || $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
         _genome_db => $genome_db,
         _genome_db_id => $genome_db->dbID,
         _taxon_id => $genome_db->taxon_id,
