@@ -55,15 +55,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    if ( $self->param('reuse_db') ) {
-
         #Get adaptors
         #----------------------------------------------------------------------------------------------------------------------------
         #get compara_dba adaptor
         $self->param( 'compara_dba', $self->compara_dba );
 
         #get reuse compara_dba adaptor
-        $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) );
+        $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('reuse_db') ) );
 
         print Dumper $self->param('compara_dba')       if ( $self->debug );
         print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
@@ -138,12 +136,6 @@ sub fetch_input {
             }
         }
 
-    } ## end if ( $self->param('reuse_db'...))
-    else {
-        $self->warning("reuse_db hash has not been set, so cannot reuse");
-        $self->param( 'reuse_this', 0 );
-        return;
-    }
 } ## end sub fetch_input
 
 sub write_output {
