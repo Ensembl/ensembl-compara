@@ -2857,9 +2857,26 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
-            -flow_into  => [ 'ortho_tree' ],
+            -flow_into  => [ 'ortho_tree_decision' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
             %hc_analysis_params,
+        },
+
+        {   -logic_name => 'ortho_tree_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: ortho_tree analysis.
+                    'gene_count'          => 0,
+                },
+            },
+            -flow_into  => {
+                1 => WHEN(
+                    '(#tree_gene_count# <= 400)' => 'ortho_tree',
+                    ELSE 'ortho_tree_himem',
+                ),
+            },
+            %decision_analysis_params,
         },
 
         {   -logic_name => 'ortho_tree',
