@@ -58,13 +58,14 @@ sub fetch_input {
         push @{ $famid2srcname2descs{$family_id}{$source_name} }, apply_edits(uc $description);
     }
     $sth->finish();
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     $self->param('famid2srcname2descs', \%famid2srcname2descs);
 }
 
 sub run {
     my $self = shift @_;
+
+    $self->compara_dba->dbc->disconnect_if_idle();
 
     my $famid2srcname2descs = $self->param('famid2srcname2descs');
 

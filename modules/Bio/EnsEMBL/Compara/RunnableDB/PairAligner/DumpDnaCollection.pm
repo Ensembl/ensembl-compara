@@ -109,8 +109,6 @@ sub run
 sub dumpNibFiles {
   my $self = shift;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-
   my $starttime = time();
 
   my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
@@ -135,6 +133,8 @@ sub dumpNibFiles {
       if (! -e $nibfile || $self->param("overwrite")) {
           my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
           
+          $dna_object->dnafrag->genome_db;  # to preload it before disconnecting
+          $self->compara_dba->dbc->disconnect_if_idle();
           #$dna_object->dump_to_fasta_file($fastafile);
           #use this version to solve problem of very large chromosomes eg opossum
           $dna_object->dump_chunks_to_fasta_file($fastafile);
@@ -152,9 +152,6 @@ sub dumpNibFiles {
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  return 1;
 }
 
 
