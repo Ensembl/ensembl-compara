@@ -1565,7 +1565,7 @@ sub _munge_meta {
     provider.url                  PROVIDER_URL
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
-    species.sql_name              SYSTEM_NAME
+    species.strain_collection     STRAIN_COLLECTION
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
@@ -1609,7 +1609,6 @@ sub _munge_meta {
       $self->tree->{$species}{$key} = $value;
     }
 
-
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
     
@@ -1635,7 +1634,6 @@ sub _munge_meta {
     } else {
       $self->tree->{'DB_SPECIES'} = [ $species ];
     }
-
     
     $self->tree->{$species}{'SPECIES_META_ID'} = $species_id;
 
@@ -1683,6 +1681,7 @@ sub _munge_meta {
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
   }
+
 }
 
 sub _munge_variation {
