@@ -92,16 +92,6 @@ sub run
 }
 
 
-sub write_output 
-{
-  my $self = shift;
-
-  my $output_id = $self->input_id;
-
-  print("output_id = $output_id\n");
-  #$self->input_id($output_id);
-}
-
 
 ######################################
 #
