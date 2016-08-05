@@ -145,14 +145,6 @@ sub run {
     }
 }
 
-sub write_output {
-    my $self = shift @_;
-
-    $self->dataflow_output_id( {
-        'genome_db_id'      => $self->param('genome_db_id'),
-        'reuse_this'        => 0,
-    } , 1);
-}
 
 
 ######################################
