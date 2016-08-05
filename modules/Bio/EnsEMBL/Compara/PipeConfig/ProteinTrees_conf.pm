@@ -316,6 +316,7 @@ sub default_options {
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
         #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
@@ -327,6 +328,7 @@ sub default_options {
         #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
         #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
         #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
+        #   'ortholog' the orthologs will be copied from the reuse db
         #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
         #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
@@ -439,8 +441,8 @@ sub pipeline_create_commands {
 
     my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
     die "'reuse_level' must be set to one of: clusters, blastp, members" if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
-    my %clustering_modes = (blastp => 1, hmm => 1, hybrid => 1, topup => 1);
-    die "'clustering_mode' must be set to one of: blastp, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+    my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
+    die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
@@ -1504,8 +1506,9 @@ sub core_pipeline_analyses {
                 '1->A' => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
                     '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# eq "ortholog")' => 'ortholog_cluster',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog") and #library_exists#' => 'load_InterproAnnotation',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog") and !#library_exists#' => 'panther_databases_factory',
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
@@ -1520,6 +1523,18 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
                 'A->1' => [ 'hcluster_merge_factory' ],
             },
+        },
+
+        {   -logic_name => 'ortholog_cluster',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters',
+            -parameters => {
+                'species_set_id'     => '#reuse_ss_id#',
+                'member_type'             => 'protein',
+                'sort_clusters'         => 1,
+                
+
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name => 'hcluster_dump_input_per_genome',
