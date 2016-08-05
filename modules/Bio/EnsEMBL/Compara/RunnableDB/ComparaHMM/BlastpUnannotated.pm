@@ -30,9 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Create fasta file containing batch_size number of sequences. Run ncbi_blastp and parse the output into
