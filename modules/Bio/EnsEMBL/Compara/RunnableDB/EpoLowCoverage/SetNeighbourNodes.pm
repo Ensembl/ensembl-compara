@@ -54,24 +54,6 @@ $| = 1;
 
 my $flanking_region = 1000000;
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for gerp from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub fetch_input {
-  my( $self) = @_;
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with $self->db (Hive DBAdaptor)
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-}
-
 sub run {
     my( $self) = @_;
 

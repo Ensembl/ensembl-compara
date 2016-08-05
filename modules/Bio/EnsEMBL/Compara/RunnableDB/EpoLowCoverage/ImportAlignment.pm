@@ -66,10 +66,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with $self->db (Hive DBAdaptor)
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
     #if the database name is defined in the url, then open that
     if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
 	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));

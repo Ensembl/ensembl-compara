@@ -71,8 +71,6 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my ($self) = @_;
 
-  $self->compara_dba()->dbc->disconnect_when_inactive(0);
-
   if (!$self->param('anchor_id')) {
     return 0;
   }
