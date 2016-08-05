@@ -20,11 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::lrg_sv_view;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     sortable_tracks   => 'drag',  # allow the user to reorder tracks
@@ -51,7 +55,7 @@ sub init {
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
   );
- 
+
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs',  'contig', { display => 'normal', strand => 'r' }]
   );
@@ -78,8 +82,8 @@ sub init {
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
     { display => 'off' }
   );
-  
-  $self->modify_configs(   
+
+  $self->modify_configs(
     [ 'transcript_core_ensembl', 'transcript_core_sg' ],
     { display => 'transcript_label' }
   );
@@ -88,8 +92,8 @@ sub init {
     [ 'transcript_otherfeatures_refseq_human_import', 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
-  
-  
+
+
   # structural variations
   $self->modify_configs(
     ['variation_feature_structural_larger'],

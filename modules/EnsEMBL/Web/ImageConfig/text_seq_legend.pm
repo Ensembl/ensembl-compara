@@ -20,11 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::text_seq_legend;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
     storable  => 0,
     no_labels => 1,

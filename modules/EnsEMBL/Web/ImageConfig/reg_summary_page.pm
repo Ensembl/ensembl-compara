@@ -22,21 +22,20 @@ package EnsEMBL::Web::ImageConfig::reg_summary_page;
 use strict;
 use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::reg_detail);
+use parent qw(EnsEMBL::Web::ImageConfig::reg_detail);
 
-sub init {
+sub init_cacheable {
   my $self = shift;
 
-  $self->SUPER::init(@_);
- 
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) { 
+  $self->SUPER::init_cacheable(@_);
+
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $submenu = $self->get_node($type);
     next unless $submenu;
     foreach my $node (@{$submenu->child_nodes}) {
-      $self->modify_configs([$node->id],{ display => 'off' });  
+      $self->modify_configs([$node->id],{ display => 'off' });
     }
   }
-
 }
 
 1;

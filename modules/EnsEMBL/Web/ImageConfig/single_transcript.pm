@@ -34,7 +34,7 @@ sub init_cacheable {
     no_labels => 1,
     storable  => 0,
   });
-  
+
   $self->create_menus('transcript', 'prediction', 'other');
 
   $self->add_tracks('other',

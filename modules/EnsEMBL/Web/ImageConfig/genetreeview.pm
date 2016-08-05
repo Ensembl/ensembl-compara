@@ -20,15 +20,19 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::genetreeview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub init_extra_menus {
   shift->add_extra_menu('display_option');
 }
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     storable          => 0,
