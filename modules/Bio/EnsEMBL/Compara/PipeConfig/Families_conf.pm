@@ -151,6 +151,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'uniprot_dir'       => $self->o('uniprot_dir'),
         'file_basename'     => $self->o('file_basename'),
         'blastdb_name'      => $self->o('blastdb_name'),
+        'protein_trees_db'  => $self->o('protein_trees_db'),
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
@@ -179,6 +180,7 @@ sub resource_classes {
         '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
+
 =cut
 
 sub hive_meta_table {
@@ -194,20 +196,9 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'find_protein_trees_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
-            -parameters => {
-                compara_db   => '#master_db#',
-                method_links => {
-                    PROTEIN_TREES => 'protein_trees_db',
-                },
-            },
-            -input_ids => [ {} ],
-            -flow_into => [ 'copy_table_factory' ],
-        },
-
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -input_ids => [ {} ],
             -parameters => {
                 'inputlist'     => [
                                         [ '#protein_trees_db#'   => 'genome_db' ],       # we need them in "located" state

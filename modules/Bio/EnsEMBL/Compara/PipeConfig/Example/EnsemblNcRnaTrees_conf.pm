@@ -132,7 +132,7 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 4,
-            'epo_species_set_name'  => 'mammals',
+            'epo_db'                => 'mysql://ensro@compara1/epolc_mammals',
 
             # connection parameters
 
