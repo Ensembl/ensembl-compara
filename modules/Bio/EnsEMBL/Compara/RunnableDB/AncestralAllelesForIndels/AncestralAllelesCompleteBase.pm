@@ -208,11 +208,7 @@ sub run_cmd {
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
 
-    #temporary hack to deal with supercontigs until core fixes a bug
-    my $orig_disconnect_when_inactive = $slice_adaptor->dbc->disconnect_when_inactive();
-    if ($dnafrag->coord_system_name eq "supercontig") {
-        $slice_adaptor->dbc->disconnect_when_inactive(0);
-    }
+    $slice_adaptor->dbc->prevent_disconnect( sub {
 
     #Skip if near the start or end of the chromosome
     if ($seq_region_start <= $left) {
@@ -452,9 +448,7 @@ sub run_cmd {
     close OUT if ($verbose);
     close TIME if ($show_time);
 
-    if ($dnafrag->coord_system_name eq "supercontig") {
-        $slice_adaptor->dbc->disconnect_when_inactive($orig_disconnect_when_inactive);
-    }
+    } );
 
     $self->param('output', $output);
 
