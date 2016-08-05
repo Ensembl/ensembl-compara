@@ -325,7 +325,7 @@ our $config = {
             {
                 description => 'Checks that right_index-left_index is not greater than 1 only on leaves',
                 query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN gene_tree_node gtn2 ON (gtn.node_id = gtn2.parent_id) WHERE gtn2.node_id IS NULL AND (gtn.right_index - gtn.left_index) > 1 AND gtn1.root_id = #gene_tree_id#',
-            }
+            },
             {
                 description => 'Checks that right_index-left_index is not equal to 1 on internal nodes',
                 query => 'SELECT * FROM gene_tree_node gtn LEFT JOIN gene_tree_node gtn2 ON (gtn.node_id = gtn2.parent_id) WHERE gtn2.node_id IS NOT NULL AND (gtn.right_index - gtn.left_index) = 1 AND gtn1.root_id = #gene_tree_id#',
