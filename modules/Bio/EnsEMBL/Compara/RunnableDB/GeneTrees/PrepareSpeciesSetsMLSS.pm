@@ -175,7 +175,7 @@ sub write_output {
         'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1),
     );
 
-    $self->dataflow_output_id($self->input_id, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
+    $self->dataflow_output_id(undef, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
     $self->db->hive_pipeline->save_collections();
 }
 

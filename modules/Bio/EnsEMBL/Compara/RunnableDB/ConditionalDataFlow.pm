@@ -126,10 +126,10 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
     if ($result) {
         print STDERR "Success: dataflowing to branch #".$self->param_required('branch_if_success')."\n" if $self->debug;
-        $self->dataflow_output_id($self->input_id, $self->param_required('branch_if_success'));
+        $self->dataflow_output_id(undef, $self->param_required('branch_if_success'));
     } else {
         print STDERR "Failure: dataflowing to branch #".$self->param_required('branch_if_failure')."\n" if $self->debug;
-        $self->dataflow_output_id($self->input_id, $self->param_required('branch_if_failure'));
+        $self->dataflow_output_id(undef, $self->param_required('branch_if_failure'));
     }
 }
 

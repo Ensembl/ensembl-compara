@@ -54,7 +54,7 @@ sub get_gene_tree_file {
     my $new_root = $self->init_remove_long_subtrees($gene_tree_root);
 
     unless ($self->param('long_branches')) {
-        $self->dataflow_output_id($self->input_id, 4);
+        $self->dataflow_output_id(undef, 4);
         $self->input_job->autoflow(0);
         $self->complete_early("No branches to remove / re-insert.");
     }

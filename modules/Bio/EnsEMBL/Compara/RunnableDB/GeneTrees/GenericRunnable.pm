@@ -126,7 +126,7 @@ sub fetch_input {
     my $self = shift @_;
 
     if (defined $self->param('escape_branch') and $self->input_job->retry_count >= $self->input_job->analysis->max_retry_count) {
-        $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        $self->dataflow_output_id(undef, $self->param('escape_branch'));
         $self->input_job->autoflow(0);
         $self->complete_early(sprintf("The job is being tried for the %dth time: escaping to branch #%d\n", $self->input_job->retry_count, $self->param('escape_branch')));
     }
@@ -277,12 +277,12 @@ sub run_generic_command {
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
     if ($number_actual_genes < $self->param('minimum_genes')) {
-        $self->dataflow_output_id($self->input_id, 2);
+        $self->dataflow_output_id(undef, 2);
         $self->input_job->autoflow(0);
         $self->complete_early("There are only $number_actual_genes genes in this tree. Not running the command.\n");
     }
     if ($number_actual_genes > $self->param('maximum_genes')) {
-        $self->dataflow_output_id($self->input_id, 3);
+        $self->dataflow_output_id(undef, 3);
         $self->input_job->autoflow(0);
         $self->complete_early("There are too many genes ($number_actual_genes) in this tree. Not running the command.\n");
     }
@@ -295,11 +295,11 @@ sub run_generic_command {
     my $run_cmd = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
     if ($run_cmd->exit_code) {
         if ($run_cmd->exit_code == -2) {
-            $self->dataflow_output_id( $self->input_id, -2 );
+            $self->dataflow_output_id(undef, -2);
             $self->input_job->autoflow(0);
             $self->complete_early(sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime')));
         } elsif ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
-            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->dataflow_output_id(undef, -1);
             $self->input_job->autoflow(0);
             $self->complete_early("Java heap space is out of memory.\n");
         }

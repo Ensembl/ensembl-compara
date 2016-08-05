@@ -88,7 +88,7 @@ sub fetch_input {
   my( $self) = @_;
 
     if (defined $self->param('escape_branch') and $self->input_job->retry_count >= 3) {
-        $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        $self->dataflow_output_id(undef, $self->param('escape_branch'));
         $self->input_job->autoflow(0);
         $self->complete_early("The MSA failed 3 times. Trying another method.");
     }
@@ -164,7 +164,7 @@ sub write_output {
             # Perhaps not a MEMLIMIT, after all. Let's die and hope that
             # next run will be better
             die "There is no output file !\n";
-            #my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+            #my $new_job = $self->dataflow_output_id(undef, $self->param('escape_branch'));
             #if (scalar(@$new_job)) {
                 #$self->input_job->autoflow(0);
                 #$self->complete_early('Probably not enough memory. Switching to the _himem analysis.');
@@ -226,7 +226,7 @@ sub run_msa {
     my $cmd_out = $self->run_command("cd $tempdir; $cmd", { timeout => $self->param('cmd_max_runtime') });
 
     if ($cmd_out->exit_code == -2) {
-        $self->dataflow_output_id( $self->input_id, -2 );
+        $self->dataflow_output_id(undef, -2);
         $self->input_job->autoflow(0);
         $self->complete_early(sprintf("The command is taking more than %d seconds to complete.\n", $self->param('cmd_max_runtime')));
     } elsif ($cmd_out->exit_code) {

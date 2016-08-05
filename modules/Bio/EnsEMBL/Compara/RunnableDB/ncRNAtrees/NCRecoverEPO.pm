@@ -101,7 +101,7 @@ sub fetch_input {
 
   if ($self->param('max_members') and scalar(@{$self->param('nc_tree')->get_all_Members}) > $self->param('max_members')) {
     $self->input_job->autoflow(0);
-    $self->dataflow_output_id($self->input_id, -1);
+    $self->dataflow_output_id(undef, -1);
     $self->complete_early('Too many members, going to _himem');
   }
 

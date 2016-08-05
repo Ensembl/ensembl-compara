@@ -90,7 +90,7 @@ sub fetch_input {
 
         #Is tree marked as 'new_build'? If so we need to dataflow it to alignment_entry_point. (Tree has changed too much)
         if ( ( $self->param('current_gene_tree')->has_tag('new_build') ) && ( $self->param('current_gene_tree')->get_value_for_tag('new_build') == 1 ) ) {
-            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
+            $self->dataflow_output_id( undef, $self->param('branch_for_new_tree') );
             $self->input_job->autoflow(0);
             $self->complete_early("Tree is marked as new_build, hence it shoud go to the cluster_factory.");
         }
@@ -103,7 +103,7 @@ sub fetch_input {
             #If can't fetch previous tree:
             #Escape branch to deal with the trees that brand new (New HMMs).
             if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
-                $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
+                $self->dataflow_output_id( undef, $self->param('branch_for_new_tree') );
                 $self->input_job->autoflow(0);
                 $self->complete_early("HMM model is brand new so tree is brand new, it didnt exist before. It needs to go to the cluster_factory.");
             }
@@ -220,7 +220,7 @@ sub write_output {
 
             my $target_tree = $self->store_alternative_tree( $scrap_newick, $self->param('output_clusterset_id'), $self->param('current_gene_tree'), undef, 1 );
 
-            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_wiped_out_trees') );
+            $self->dataflow_output_id( undef, $self->param('branch_for_wiped_out_trees') );
             $self->input_job->autoflow(0);
             $self->complete_early("All the previous leaves were removed, the tree is now treated as brand new. So it needs to go to the cluster_factory.");
         }
@@ -234,7 +234,7 @@ sub write_output {
                   scalar( keys %{ $self->param('updated_and_added_members_count') } ) . " / " .
                   scalar( @{ $self->param('all_leaves_current_tree') } ) . " = " .
                   scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
-                $self->dataflow_output_id( $self->input_id, $self->param('branch_for_update_threshold_trees') );
+                $self->dataflow_output_id( undef, $self->param('branch_for_update_threshold_trees') );
                 $self->input_job->autoflow(0);
                 $self->complete_early( "The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
             }
