@@ -59,7 +59,6 @@ sub fetch_input {
         $self->param( 'compara_dba',       $self->compara_dba );
     }
     else {
-        $self->param( 'reuse_this', 0 );
         $self->complete_early("reuse_db hash has not been set, so cannot reuse");
         return;
     }
