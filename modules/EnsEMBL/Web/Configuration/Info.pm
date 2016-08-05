@@ -58,6 +58,13 @@ sub populate_tree {
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]
   );
 
+  my $has_strains = $species_defs->ALL_STRAINS;
+  if ($has_strains) {
+    $self->create_node('Strains', '',
+      [qw(blurb EnsEMBL::Web::Component::Info::Strains)]
+    );
+  }
+
   $index->append($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { no_menu_entry => 1, }
