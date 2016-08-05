@@ -240,7 +240,7 @@ sub loadMembersFromCoreSlices {
              ) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
-              $self->store_gene_and_all_transcripts($gene, $dnafrag);
+              $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
               
               print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
           }
@@ -259,7 +259,7 @@ sub loadMembersFromCoreSlices {
 }
 
 
-sub store_gene_and_all_transcripts {
+sub store_protein_coding_gene_and_all_transcripts {
     my $self = shift;
     my $gene = shift;
     my $dnafrag = shift;
@@ -412,7 +412,7 @@ sub store_all_coding_exons {
           warn("COREDB error: does not contain exon stable id for translation_id ".$exon->dbID."\n");
           next;
         }
-        my $description = $self->fasta_description($exon, $transcript);
+        my $description = $self->_protein_description($exon, $transcript);
         
         my $exon_member = new Bio::EnsEMBL::Compara::SeqMember(
             -source_name    => 'ENSEMBLPEP',
@@ -480,7 +480,7 @@ sub store_all_coding_exons {
 }
 
 
-sub fasta_description {
+sub _protein_description {
   my ($self, $gene, $transcript) = @_;
 
   my $description = "Transcript:" . $transcript->stable_id .
