@@ -177,7 +177,6 @@ sub loadMembersFromCoreSlices {
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
 
-  my @genes;
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $gene_adaptor;
 
@@ -200,24 +199,20 @@ sub loadMembersFromCoreSlices {
         }
     }
 
-    @genes = ();
-    my $current_end;
-
     # Heuristic: it usually takes several seconds to load more than 500 genes,
     # so let's disconnect from compara
     $gene_adaptor ||= $slice->adaptor->db->get_GeneAdaptor;
     $self->compara_dba->dbc->disconnect_if_idle() if $gene_adaptor->count_all_by_Slice($slice) > 500;
 
-    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
-      $self->param('geneCount', $self->param('geneCount')+1 );
+    my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)};
+    $self->param('geneCount', $self->param('geneCount') + scalar(@relevant_genes) );
 
-      next if $excluded_logic_names{$gene->analysis->logic_name};
+    if ($self->param('coding_exons')) {
 
-      # LV and C are for the Ig/TcR family, which rearranges
-      # somatically so is considered as a different biotype in EnsEMBL
-      # D and J are very short or have no translation at all
+       my @genes = ();
+       my $current_end;
+       foreach my $gene (@relevant_genes) {
 
-      if ($self->param('coding_exons')) {
           $current_end = $gene->end unless (defined $current_end);
           if((lc($gene->biotype) eq 'protein_coding')) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
@@ -231,7 +226,14 @@ sub loadMembersFromCoreSlices {
                   push @genes, $gene;
               }
           }
-      } else {
+       } # foreach
+       $self->store_all_coding_exons(\@genes, $dnafrag);
+
+      # LV and C are for the Ig/TcR family, which rearranges
+      # somatically so is considered as a different biotype in EnsEMBL
+      # D and J are very short or have no translation at all
+    } else {
+       foreach my $gene (@relevant_genes) {
           if ( lc($gene->biotype) eq 'protein_coding'
                || lc($gene->biotype) =~ /ig_._gene/
                || lc($gene->biotype) =~ /tr_._gene/
@@ -244,11 +246,7 @@ sub loadMembersFromCoreSlices {
               
               print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
           }
-      }
-    } # foreach
-
-    if ($self->param('coding_exons')) {
-        $self->store_all_coding_exons(\@genes, $dnafrag);
+       } # foreach
     }
   }
 
