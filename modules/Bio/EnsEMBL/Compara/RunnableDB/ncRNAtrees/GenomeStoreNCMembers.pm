@@ -96,10 +96,6 @@ sub fetch_input {
     my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
     $self->param('core_db', $core_db);
 
-       # GeneMember and SeqMember adaptors
-    $self->param('gene_member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-    $self->param('seq_member_adaptor',  $self->compara_dba->get_SeqMemberAdaptor);
-
     return;
 }
 
@@ -176,9 +172,8 @@ sub run {
 sub store_ncrna_gene {
     my ($self, $gene) = @_;
 
-    my $core_db = $self->param('core_db');
-    my $gene_member_adaptor = $self->param('gene_member_adaptor');
-    my $seq_member_adaptor  = $self->param('seq_member_adaptor');
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
 
     my $longest_ncrna_member;
     my $max_ncrna_length = 0;
