@@ -271,14 +271,12 @@ sub pipeline_analyses {
 	    -rc_name => '1Gb',
         },
 
-        {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+        {   -logic_name => 'create_reuse_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
             -parameters => {
                 'master_db' => $self->o('master_db'),
-				'tree_method_link' => 'PECAN',
             },
             -flow_into => [ 'make_species_tree' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'make_species_tree',
