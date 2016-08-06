@@ -142,7 +142,7 @@ sub write_output {
 ## Write a species-set that is made available pipeline-wide
 sub _write_shared_ss {
     my ($self, $name, $gdbs) = @_;
-    my $ss = $self->_write_ss($gdbs, 1);
+    my $ss = $self->_write_ss($gdbs, 1, $name);
     $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => $name.'_ss_id',
         'param_value' => $ss->dbID,
@@ -158,7 +158,7 @@ sub _write_shared_ss {
 # Write the species-set of the given genome_dbs
 # Try to reuse the data from the reference db if possible
 sub _write_ss {
-    my ($self, $genome_dbs, $is_local_ss) = @_;
+    my ($self, $genome_dbs, $is_local_ss, $name) = @_;
 
     my $ss;
     if ($self->param('reference_dba')) {
@@ -168,7 +168,7 @@ sub _write_ss {
         }
     }
     unless ($ss) {
-        $ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $genome_dbs );
+        $ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $genome_dbs, -name => $name );
     }
     $self->compara_dba->get_SpeciesSetAdaptor->store($ss);
     return $ss;
