@@ -219,7 +219,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_table' ],
-                'A->1' => [ 'offset_and_innodbise_tables' ],  # backbone
+                'A->1' => [ 'offset_tables' ],  # backbone
             },
         },
 
@@ -231,20 +231,24 @@ sub pipeline_analyses {
             -analysis_capacity => 10,
         },
 
-        {   -logic_name => 'offset_and_innodbise_tables',
+        {   -logic_name => 'offset_tables',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -parameters => {
+                'range_index'   => 2,
+            },
+            -flow_into => [ 'innodbise_tables' ],
+        },
+
+        {   -logic_name => 'innodbise_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE sequence                   AUTO_INCREMENT=200000001',
-                    'ALTER TABLE gene_member                AUTO_INCREMENT=200000001',
-                    'ALTER TABLE seq_member                 AUTO_INCREMENT=200000001',
                     'ALTER TABLE method_link                ENGINE=InnoDB',
                     'ALTER TABLE ncbi_taxa_node             ENGINE=InnoDB',
                     'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
                     'ALTER TABLE species_set_header         ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
                     'ALTER TABLE dnafrag                    ENGINE=InnoDB',
-                    'ALTER TABLE dnafrag                    AUTO_INCREMENT=200000000000001',
                 ],
             },
             -flow_into => {

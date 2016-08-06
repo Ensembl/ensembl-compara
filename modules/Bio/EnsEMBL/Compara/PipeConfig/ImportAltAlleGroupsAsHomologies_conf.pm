@@ -151,14 +151,9 @@ sub pipeline_analyses {
 
 
         {   -logic_name => 'offset_tables',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
             -parameters => {
-                'sql'   => [
-                    'ALTER TABLE sequence       AUTO_INCREMENT=300000001',
-                    'ALTER TABLE gene_member    AUTO_INCREMENT=300000001',
-                    'ALTER TABLE seq_member     AUTO_INCREMENT=300000001',
-                    'ALTER TABLE homology       AUTO_INCREMENT=300000001',
-                ],
+                'range_index'   => 3,
             },
             -flow_into => [ 'species_factory' ],
         },

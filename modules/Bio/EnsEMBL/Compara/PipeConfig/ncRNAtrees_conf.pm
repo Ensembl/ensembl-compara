@@ -221,17 +221,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'offset_tables',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -flow_into  => [ 'offset_more_tables' ],
+        },
+
+        {   -logic_name => 'offset_more_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE gene_member       AUTO_INCREMENT=100000001',
-                    'ALTER TABLE seq_member        AUTO_INCREMENT=100000001',
-                    'ALTER TABLE sequence          AUTO_INCREMENT=100000001',
-                    'ALTER TABLE homology          AUTO_INCREMENT=100000001',
-                    'ALTER TABLE gene_align        AUTO_INCREMENT=100000001',
-                    'ALTER TABLE gene_tree_node    AUTO_INCREMENT=100000001',
-                    'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=100000001',
-                    'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
                     'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
                     'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
