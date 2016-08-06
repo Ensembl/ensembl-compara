@@ -74,7 +74,9 @@ sub default_options {
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
 
-        'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
+        'clusterset_id'     => 'default',
+
+        'pipeline_name'     => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         'rel_db'        => 'compara_curr',
@@ -114,6 +116,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'ftp_dir'       => $self->o('ftp_dir'),
 
         'member_type'   => $self->o('member_type'),
+        'clusterset_id' => $self->o('clusterset_id'),
 
         'name_root'     => $self->o('name_root'),
 
@@ -180,7 +183,7 @@ sub pipeline_analyses {
                         JOIN seq_member pm on (gm.gene_member_id = pm.gene_member_id)
                     WHERE
                         gtr.member_type = '#member_type#'
-                        AND gtr.clusterset_id = 'default'
+                        AND gtr.clusterset_id = '#clusterset_id#'
                 |,
             },
             -flow_into => {
@@ -253,7 +256,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => '#rel_db#',
-                'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "#member_type#"',
+                'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -meadow_type => 'LOCAL',
             -flow_into => {
