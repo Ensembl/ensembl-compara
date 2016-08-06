@@ -136,10 +136,10 @@ sub fetch_default_AlignedMember_for_Member {
 
     assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $seq_member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
-    my $constraint = '(m.seq_member_id = ?) AND (tr.clusterset_id = "default")';
+    my $constraint = '(m.seq_member_id = ?) AND (tr.ref_root_id IS NULL)';
     $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
-    return $self->generic_fetch_one($constraint);
+    return $self->generic_fetch_one($constraint, undef, 'ORDER BY tr.root_id');
 }
 
 
