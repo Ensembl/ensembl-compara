@@ -130,15 +130,19 @@ sub run {
     # It may take some time to load the slices, so let's free the connection
     $compara_dba->dbc->disconnect_if_idle();
 
+   $core_dba->dbc->prevent_disconnect( sub {
+
     my $unfiltered_slices = $self->param('genome_db')->genome_component
         ? $core_dba->get_SliceAdaptor->fetch_all_by_genome_component($self->param('genome_db')->genome_component)
         : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 'include_non_reference', undef, 'include_lrg') : ());   #include_duplicates is not set
     die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
     # Let's make sure disconnect_when_inactive is set to 0 on both connections
-    $core_dba->dbc->prevent_disconnect( sub { $compara_dba->dbc->prevent_disconnect( sub {
+    $compara_dba->dbc->prevent_disconnect( sub {
         $self->loadMembersFromCoreSlices( $unfiltered_slices );
-    } ) } );
+    } );
+
+   } );
 
     if (not $self->param('sliceCount')) {
         $self->warning("No suitable toplevel slices found in ".$core_dba->dbc->dbname());
