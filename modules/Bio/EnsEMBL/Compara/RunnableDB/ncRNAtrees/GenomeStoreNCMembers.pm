@@ -203,6 +203,7 @@ sub store_ncrna_gene {
                                                                             -gene => $gene,
                                                                             -dnafrag => $dnafrag,
                                                                             -genome_db => $self->param('genome_db'),
+                                                                            -biotype_group => 'snoncoding', # hardcoded until this runnable has access to the production db
                                                                            );
             print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
 

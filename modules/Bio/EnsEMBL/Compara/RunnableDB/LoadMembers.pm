@@ -68,6 +68,8 @@ use warnings;
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -118,6 +120,8 @@ sub fetch_input {
     unless($self->param('include_reference') or $self->param('include_nonreference')) {
         die "Either 'include_reference' or 'include_nonreference' or both have to be true";
     }
+
+    $self->_load_biotype_groups($self->param_required('production_db_url'));
 }
 
 
@@ -174,6 +178,8 @@ sub loadMembersFromCoreSlices {
         }
     }
 
+    my $biotype_groups= $self->param('biotype_groups');
+
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
 
@@ -229,17 +235,12 @@ sub loadMembersFromCoreSlices {
        } # foreach
        $self->store_all_coding_exons(\@genes, $dnafrag);
 
-      # LV and C are for the Ig/TcR family, which rearranges
-      # somatically so is considered as a different biotype in EnsEMBL
-      # D and J are very short or have no translation at all
     } else {
        foreach my $gene (@relevant_genes) {
-          if ( lc($gene->biotype) eq 'protein_coding'
-               || lc($gene->biotype) =~ /ig_._gene/
-               || lc($gene->biotype) =~ /tr_._gene/
-               || lc($gene->biotype) eq 'polymorphic_pseudogene'     # mm14 says it is ok :)
-               || lc($gene->biotype) eq 'lrg_gene'
-             ) {
+          die "Unknown biotype ".$gene->biotype unless $biotype_groups->{$gene->biotype};
+
+          if (($biotype_groups->{$gene->biotype} eq 'coding') or
+              ($biotype_groups->{$gene->biotype} eq 'LRG')) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
               $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
@@ -335,6 +336,7 @@ sub store_protein_coding_gene_and_all_transcripts {
                     -GENE       => $gene,
                     -DNAFRAG    => $dnafrag,
                     -GENOME_DB  => $self->param('genome_db'),
+                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{$gene->biotype},
                 );
                 print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
                 $gene_member_adaptor->store($gene_member);
@@ -493,6 +495,18 @@ sub _protein_description {
                     " Start:" .     $gene->seq_region_start .
                     " End:" .       $gene->seq_region_end;
   return $description;
+}
+
+
+sub _load_biotype_groups {
+    my ($self, $production_db_url) = @_;
+
+    my $gene_biotype_sql = q{SELECT name, biotype_group FROM biotype WHERE is_current=1 AND is_dumped = 1 AND object_type = "gene" AND FIND_IN_SET('core', db_type)};
+
+    my $production_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $production_db_url);
+    my %biotype_groups = map {$_->[0] => $_->[1]} @{ $production_dbc->db_handle->selectall_arrayref($gene_biotype_sql) };
+    $self->param('biotype_groups', \%biotype_groups);
+    $production_dbc->disconnect_if_idle();
 }
 
 
