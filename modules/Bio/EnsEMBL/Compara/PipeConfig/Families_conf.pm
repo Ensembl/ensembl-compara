@@ -227,6 +227,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity => 10,
         },
@@ -236,24 +237,7 @@ sub pipeline_analyses {
             -parameters => {
                 'range_index'   => 2,
             },
-            -flow_into => [ 'innodbise_tables' ],
-        },
-
-        {   -logic_name => 'innodbise_tables',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql'   => [
-                    'ALTER TABLE method_link                ENGINE=InnoDB',
-                    'ALTER TABLE ncbi_taxa_node             ENGINE=InnoDB',
-                    'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
-                    'ALTER TABLE species_set_header         ENGINE=InnoDB',
-                    'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
-                    'ALTER TABLE dnafrag                    ENGINE=InnoDB',
-                ],
-            },
-            -flow_into => {
-                    1 => [ 'genomedb_factory' ],
-            },
+            -flow_into => [ 'genomedb_factory' ],
         },
 
         {   -logic_name => 'genomedb_factory',
