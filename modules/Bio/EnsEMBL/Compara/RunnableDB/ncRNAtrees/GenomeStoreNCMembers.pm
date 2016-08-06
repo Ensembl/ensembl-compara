@@ -150,25 +150,6 @@ sub run {
 }
 
 
-=head2 write_output
-
-    Create downstream jobs that will be loading individual ncRNA members
-
-=cut
-
-# sub write_output {
-#     my $self = shift @_;
-
-    # my $genome_db_id    = $self->param('genome_db_id');
-
-    # foreach my $stable_id (@{ $self->param('stable_ids') }) {
-    #     $self->dataflow_output_id( {
-    #         'genome_db_id'    => $genome_db_id,
-    #         'stable_id'       => $stable_id,
-    #     }, 2);
-    # }
-#}
-
 sub store_ncrna_gene {
     my ($self, $gene) = @_;
 
