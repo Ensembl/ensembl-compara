@@ -188,6 +188,33 @@ sub assembly_text {
                             scalar @$strains,
                             $hub->url({'action' => 'Strains'}), 
   }
+  
+  ## Also look for strains on closely-related species
+  my $related_taxon = $species_defs->RELATED_TAXON;
+  if ($related_taxon) {
+
+    ## Loop through all species, looking for others in this taxon
+    my @related_species;
+    foreach $_ ($species_defs->valid_species) {
+      next if $_ eq $self->hub->species;
+      next if $species_defs->get_config($_, 'SPECIES_STRAIN');
+      my $taxonomy = $species_defs->get_config($_, 'TAXONOMY');
+      next unless ($taxonomy && ref $taxonomy eq 'ARRAY');
+      next unless grep { $_ eq $related_taxon } @$taxonomy;
+      push @related_species, $_;
+    }
+  
+    if (scalar @related_species) {
+      $html .= '<h3 class="light top-margin">Related strains</h3><p>Strain data is now available on the following closely-related species:</p><ul>';
+      foreach (@related_species) {
+        $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
+                  $hub->url({'species' => $_, 'action' => 'Strains'}), 
+                  $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+                  $species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+      }
+      $html .= '</ul>';
+    }
+  }
 
   return $html;
 }
