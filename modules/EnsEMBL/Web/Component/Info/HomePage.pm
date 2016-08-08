@@ -173,10 +173,20 @@ sub assembly_text {
     
     $hub->url({ type => 'UserData', action => 'SelectFile', __clear => 1 }), sprintf($self->{'icon'}, 'page-user'), $species_defs->ENSEMBL_SITETYPE
   );
-  
+ 
+  my $strains = $species_defs->ALL_STRAINS;
+
   ## Insert dropdown list of other assemblies
   if (my $assembly_dropdown = $self->assembly_dropdown) {
-    $html .= '<h3 class="light top-margin">Other assemblies</h3>'.$assembly_dropdown;
+    my $ref_text = $strains ? 'reference' : '';
+    $html .= sprintf '<h3 class="light top-margin">Other %s assemblies</h3>%s', $ref_text, $assembly_dropdown;
+  }
+
+  ## Insert link to strains page 
+  if ($strains) {
+    $html .= sprintf '<h3 class="light top-margin">Other strains</h3><p>This species has data on %s additional strains. <a href="%s">View list of strains</a></p>', 
+                            scalar @$strains,
+                            $hub->url({'action' => 'Strains'}), 
   }
 
   return $html;
