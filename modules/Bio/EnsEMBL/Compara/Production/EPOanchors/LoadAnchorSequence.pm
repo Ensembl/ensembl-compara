@@ -50,7 +50,10 @@ sub fetch_input {
 		$anc_end += $mid_size - 2;
 		$anc_start = $anc_start < $df_start ? $df_start : $anc_start;
 		$anc_end = $anc_end > $df_end ? $df_end : $anc_end;
-		my $anc_seq = $dnafrag->slice->sub_Slice($anc_start,$anc_end,$df_strand)->seq;
+		my $anc_seq;
+                $dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+                    $anc_seq = $dnafrag->slice->sub_Slice($anc_start,$anc_end,$df_strand)->seq;
+                } );
 		my @NS=$anc_seq=~/(N)/g;
 		my $ns=join("",@NS);
 		my $ratio = 0;
