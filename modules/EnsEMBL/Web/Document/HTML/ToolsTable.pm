@@ -85,7 +85,7 @@ sub render {
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
       'code'  => sprintf('<a href="https://github.com/FAANG/faang-format-transcriber" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
-      'docs'  => '',
+      'docs'  =>  sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/FileChameleon'}}), $img_url),
     });
   }
 
