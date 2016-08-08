@@ -41,6 +41,8 @@ sub _init {
   return unless $show; 
  
   my @features = @{$self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}||[]};
+  my @activities = @{$self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}||[]};
+
   # Let them accumulate in structure if accumulating and not last
   my $Config         = $self->{'config'};
   return if ($self->my_config('accumulate') eq 'yes' &&
@@ -66,12 +68,26 @@ sub _init {
     
     $empty = 0;
   }
+
   unless($empty) {
     $self->add_to_legend({
       legend => '... but inactive in this cell line',
       colour => 'black',
       stripe => 'hatch_really_thick|grey90',
     });
+
+    if (scalar @activities) {
+      $self->add_space;
+      foreach (@activities) {
+        my $colour = $self->my_colour($_);
+        my $legend = $self->my_colour($_, 'text');
+        next if $legend =~ /unknown/i; 
+        $self->add_to_legend({
+          legend => 'Activity in epigenome - '.$legend,
+          colour => $self->my_colour($_),
+        });
+      }
+    }
   }
   
   $self->errorTrack('No Regulatory Features in this panel') if $empty;

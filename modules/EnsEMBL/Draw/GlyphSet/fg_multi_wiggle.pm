@@ -214,6 +214,7 @@ sub get_features {
   my ($self, $dataset, $args) = @_;
 
   my $data = [];
+  my $legend = {};
 
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
     my $subtrack = {'metadata' => {},
@@ -226,6 +227,7 @@ sub get_features {
 
     my $colour        = $args->{'colours'}{$feature_name};
     $subtrack->{'metadata'}{'colour'} = $colour;
+    $legend->{$feature_name} = $colour;
 
     my $label         = $feature_name;
     my $cell_line     = join(':',@temp);
@@ -270,6 +272,16 @@ sub get_features {
     }
     push @$data, $subtrack;
   }
+  
+  ## Add colours to legend
+  if (keys %$legend) {
+    my $legend_colours = $self->{'legend'}{'fg_multi_wiggle_legend'}{'colours'} || {};
+    $legend_colours->{$_} = $legend->{$_} for keys %$legend;
+    $self->{'legend'}{'fg_multi_wiggle_legend'} = { priority => 1030, 
+                                                    legend => [], 
+                                                    colours => $legend_colours };
+  }
+
   return $data; 
 }
 
