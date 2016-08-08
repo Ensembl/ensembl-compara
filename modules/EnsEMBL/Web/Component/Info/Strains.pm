@@ -46,17 +46,31 @@ sub content {
   if (scalar @$strains) {
     my $columns = [];
     my $table = EnsEMBL::Web::Document::Table->new([      
-        { key => 'strain',      title => 'Strain',     width => '40%', align => 'left', sort => 'html'   },
-        { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
-        { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
-        { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
+        { key => 'strain',      title => 'Strain',          width => '30%', align => 'left', sort => 'html'   },
+        { key => 'species',     title => 'Scientific name', width => '30%', align => 'left', sort => 'string' },
+        { key => 'assembly',    title => 'Ensembl Assembly',width => '20%', align => 'left' },
+        { key => 'accession',   title => 'Accession',       width => '20%', align => 'left' },
       ], [], { data_table => 1, exportable => 1 }
     );
 
+    my $ref_samples   = $sd->SAMPLE_DATA;
+    my $ref_location  = $ref_samples->{'LOCATION_PARAM'}; 
+
     foreach my $strain (@$strains) {
+      my $sample_data = $sd->get_config($strain, 'SAMPLE_DATA');
+      my $location    = $sample_data->{'LOCATION_PARAM'} || $ref_location;
+      my $url         = $hub->url({
+                                    'species' => $strain,
+                                    'type'    => 'Location',
+                                    'action'  => 'View',
+                                    'r'       => $location,
+                                  });
+
+      my $link    = sprintf('<a href="%s">View example location</a>', $url);
+      my $species_badge = sprintf '<img src="/i/species/48/%s.png" alt="icon" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $strain, $sd->get_config($strain, 'SPECIES_COMMON_NAME'), $link; 
 
       $table->add_row({
-                        'strain'    => $sd->get_config($strain, 'SPECIES_COMMON_NAME'),
+                        'strain'    => $species_badge,
                         'species'   => $sd->get_config($strain, 'SPECIES_SCIENTIFIC_NAME'),
                         'assembly'  => $sd->get_config($strain, 'ASSEMBLY_NAME'),
                         'accession' => $sd->get_config($strain, 'ASSEMBLY_ACCESSION'),
