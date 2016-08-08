@@ -196,10 +196,12 @@ sub assembly_text {
     ## Loop through all species, looking for others in this taxon
     my @related_species;
     foreach $_ ($species_defs->valid_species) {
-      next if $_ eq $self->hub->species;
-      next if $species_defs->get_config($_, 'SPECIES_STRAIN');
+      next if $_ eq $self->hub->species; ## Skip if current species
+      next unless $species_defs->get_config($_, 'ALL_STRAINS'); ## Skip if it doesn't have strains
+      next if $species_defs->get_config($_, 'SPECIES_STRAIN'); ## Skip if it _is_ a strain
+      ## Finally, check taxonomy
       my $taxonomy = $species_defs->get_config($_, 'TAXONOMY');
-      next unless ($taxonomy && ref $taxonomy eq 'ARRAY');
+      next unless ($taxonomy && ref $taxonomy eq 'ARRAY'); 
       next unless grep { $_ eq $related_taxon } @$taxonomy;
       push @related_species, $_;
     }
