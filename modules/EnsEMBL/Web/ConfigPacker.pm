@@ -1615,6 +1615,7 @@ sub _munge_meta {
     if ($taxonomy && scalar(@$taxonomy)) {
       my %valid_taxa = map {$_ => 1} @{ $self->tree->{'TAXON_ORDER'} };
       my @matched_groups = grep {$valid_taxa{$_}} @$taxonomy;
+      $self->tree->{$species}{'TAXONOMY'} = $taxonomy;
       $self->tree->{$species}{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
       $self->tree->{$species}{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
     }
