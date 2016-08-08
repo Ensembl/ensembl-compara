@@ -1531,8 +1531,6 @@ sub core_pipeline_analyses {
                 'species_set_id'     => '#reuse_ss_id#',
                 'member_type'             => 'protein',
                 'sort_clusters'         => 1,
-                
-
             },
             -hive_capacity => $self->o('reuse_capacity'),
         },
