@@ -281,7 +281,7 @@ return [
 		-1 => [ 'pecan_high_mem' ],  # LSF killed because of MEMLIMIT
 		1 => [ 'gerp_constrained_element' ],
    },
- -hive_capacity => 50,
+ -hive_capacity => 300,
  -max_retry_count => 1,
 },
 
@@ -293,7 +293,7 @@ return [
    java_options => '-server -Xmx6000M',
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
- -hive_capacity => 10, 
+ -hive_capacity => 300,
  -rc_name => 'mem7500',
  -max_retry_count => 1,
  -flow_into      => {
@@ -342,7 +342,7 @@ return [
     'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
- -hive_capacity => 200,
+ -hive_capacity => 100,
  -batch_size    => 10,
  -flow_into     => {
      -1 => [ 'trim_anchor_align_himem' ],
@@ -357,7 +357,7 @@ return [
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
  -rc_name => 'mem7500',
- -hive_capacity => 200,
+ -hive_capacity => 100,
  -batch_size    => 10,
 },
 
@@ -381,7 +381,7 @@ return [
     'min_anchor_seq_len' => $self->o('min_ce_length'),
  },
  -batch_size    => 10,
- -hive_capacity => 100,
+ -hive_capacity => 10,
 },
 ];
 }	
