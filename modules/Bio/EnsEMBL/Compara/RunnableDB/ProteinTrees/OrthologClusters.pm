@@ -66,8 +66,8 @@ sub param_defaults {
 
     return {
             'species_set_id'         => 10000002, #[31,150,60], # macaque, human, orangutan
-            'compara_db'           =>  'mysql://ensadmin:ensembl@compara4/wa2_protein_trees_84',
-            'reuse_db'				=> 'mysql://ensadmin:ensembl@compara2/mp14_protein_trees_85',
+            'compara_db'           =>  'mysql://ensro@compara4/wa2_protein_trees_84',
+            'reuse_db'				=> 'mysql://ensro@compara2/mp14_protein_trees_85',
             'sort_clusters'         => 1,  #needed by the store_clusterset sub 
             'member_type'           => 'protein', #needed by the store_clusterset sub 
             'mlss_id'				=> 40101, #needed by the store_clusterset sub
