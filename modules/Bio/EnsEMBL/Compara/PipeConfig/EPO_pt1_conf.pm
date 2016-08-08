@@ -264,7 +264,6 @@ return [
 		2 => [ 'pecan' ],
 		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
 	},
- -failed_job_tolerance => 5, # allowing 5% of job failures
  -hive_capacity => 50,
  -batch_size    => 20,
 },
@@ -282,8 +281,7 @@ return [
 		-1 => [ 'pecan_high_mem' ],  # LSF killed because of MEMLIMIT
 		1 => [ 'gerp_constrained_element' ],
    },
- -hive_capacity => 50,
- -failed_job_tolerance => 10, # a proportion of these will probably fail - which is fine 
+ -hive_capacity => 300,
  -max_retry_count => 1,
 },
 
@@ -295,9 +293,8 @@ return [
    java_options => '-server -Xmx6000M',
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
- -hive_capacity => 10, 
+ -hive_capacity => 300,
  -rc_name => 'mem7500',
- -failed_job_tolerance => 10,
  -max_retry_count => 1,
  -flow_into      => {
 		1 => [ 'gerp_constrained_element' ],
@@ -311,7 +308,6 @@ return [
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => '#pecan_mlssid#', },
  -hive_capacity => 100,
  -batch_size    => 10,
- -failed_job_tolerance => 10,
 },
 
 { # copies the constrained element data to the anchor_align table 
@@ -346,8 +342,7 @@ return [
     'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
- -failed_job_tolerance => 10,
- -hive_capacity => 200,
+ -hive_capacity => 100,
  -batch_size    => 10,
  -flow_into     => {
      -1 => [ 'trim_anchor_align_himem' ],
@@ -362,8 +357,7 @@ return [
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
  -rc_name => 'mem7500',
- -failed_job_tolerance => 10,
- -hive_capacity => 200,
+ -hive_capacity => 100,
  -batch_size    => 10,
 },
 
@@ -371,7 +365,7 @@ return [
  -logic_name => 'load_anchor_sequence_factory',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
  -parameters => {
-	'inputquery'  => 'SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = #overlaps_mlssid',
+	'inputquery'  => 'SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = #overlaps_mlssid#',
   },
  -flow_into => {
 	2 => [ 'load_anchor_sequence' ],	
@@ -387,7 +381,7 @@ return [
     'min_anchor_seq_len' => $self->o('min_ce_length'),
  },
  -batch_size    => 10,
- -hive_capacity => 100,
+ -hive_capacity => 10,
 },
 ];
 }	

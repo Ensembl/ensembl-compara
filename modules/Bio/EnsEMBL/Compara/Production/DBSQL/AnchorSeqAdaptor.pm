@@ -30,7 +30,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub store {
   my ($self, @args) = @_;
   my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence) = 
-	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE, LENGTH)], @args);
+	rearrange([qw(ANCHOR_ID DNAFRAG_ID START END STRAND MLSSID SEQUENCE LENGTH)], @args);
 
 
   # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?

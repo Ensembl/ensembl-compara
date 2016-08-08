@@ -604,6 +604,7 @@ sub _load_DnaFragRegions {
   my $regions = $sr->regions();
 
   if (scalar(@$regions) == 1) {
+      $self->input_job->autoflow(0);
       $self->complete_early('Cannot work with a single region');
   }
 
