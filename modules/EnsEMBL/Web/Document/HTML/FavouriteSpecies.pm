@@ -84,7 +84,12 @@ sub render_ajax_reorder_list {
   my @fav_list      = map qq\<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, map $species_info{$_}, @$favourites;
   
   delete $species_info{$_} for @$favourites;
-  
+ 
+  ## remove strains
+  while (my ($k, $v) = each (%species_info)) {
+    delete $species_info{$k} if $v->{'strain'};
+  }
+ 
   my @sorted       = sort { $a->{'common'} cmp $b->{'common'} } values %species_info;
   my @species_list = map qq\<li id="species-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>\, @sorted;
   

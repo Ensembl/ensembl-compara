@@ -43,6 +43,7 @@ sub render {
   my %species;
 
   foreach my $sp (@valid_species) {
+    next if $species_defs->get_config($sp, 'SPECIES_STRAIN');
     my $info    = {
         'dir'         => $sp,
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
