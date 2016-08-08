@@ -340,7 +340,8 @@ sub get_species_info {
         'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
-        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP')
+        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
+        'strain'            => $species_defs->get_config($_, 'SPECIES_STRAIN') || '',
       } unless exists $self->{'_species_info'}{$_};
     }
 
