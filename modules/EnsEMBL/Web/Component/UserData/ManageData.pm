@@ -45,7 +45,7 @@ sub header {
             });
 
   return qq{
-    <h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
+    <h2 class="legend">Your data <span class="_ht"><span class="_ht_tip hidden">$tip</span>$info_icon</span></h2>
   };
 }
 
