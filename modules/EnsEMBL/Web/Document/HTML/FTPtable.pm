@@ -99,6 +99,7 @@ sub render {
 
   my @other_species;
   foreach ($species_defs->valid_species) {
+    next if $species_defs->get_config($_, 'SPECIES_STRAIN');
     push @other_species, {
                           'dir'         => lc($_), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
