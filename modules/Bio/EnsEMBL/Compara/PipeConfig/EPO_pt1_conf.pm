@@ -264,7 +264,6 @@ return [
 		2 => [ 'pecan' ],
 		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
 	},
- -failed_job_tolerance => 5, # allowing 5% of job failures
  -hive_capacity => 50,
  -batch_size    => 20,
 },
@@ -283,7 +282,6 @@ return [
 		1 => [ 'gerp_constrained_element' ],
    },
  -hive_capacity => 50,
- -failed_job_tolerance => 10, # a proportion of these will probably fail - which is fine 
  -max_retry_count => 1,
 },
 
@@ -297,7 +295,6 @@ return [
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 10, 
  -rc_name => 'mem7500',
- -failed_job_tolerance => 10,
  -max_retry_count => 1,
  -flow_into      => {
 		1 => [ 'gerp_constrained_element' ],
@@ -311,7 +308,6 @@ return [
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => '#pecan_mlssid#', },
  -hive_capacity => 100,
  -batch_size    => 10,
- -failed_job_tolerance => 10,
 },
 
 { # copies the constrained element data to the anchor_align table 
@@ -346,7 +342,6 @@ return [
     'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
- -failed_job_tolerance => 10,
  -hive_capacity => 200,
  -batch_size    => 10,
  -flow_into     => {
@@ -362,7 +357,6 @@ return [
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
   },
  -rc_name => 'mem7500',
- -failed_job_tolerance => 10,
  -hive_capacity => 200,
  -batch_size    => 10,
 },

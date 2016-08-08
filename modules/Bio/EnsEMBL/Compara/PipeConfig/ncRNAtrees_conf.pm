@@ -603,7 +603,6 @@ sub pipeline_analyses {
                                    'ss_picts_dir'  => $self->o('ss_picts_dir'),
                                    'r2r_exe'       => $self->o('r2r_exe'),
                                   },
-                -failed_job_tolerance =>  30,
                 -rc_name       => '2Gb_job',
             },
 
