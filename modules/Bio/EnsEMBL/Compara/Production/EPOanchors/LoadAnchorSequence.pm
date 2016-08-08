@@ -43,13 +43,12 @@ sub fetch_input {
 							$anchors->{$anchor_align_id}->{'dnafrag_end'},
 							$anchors->{$anchor_align_id}->{'dnafrag_strand'});
 		my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($df_id);
-		my ($df_start,$df_end)=($dnafrag->start,$dnafrag->end);
 		my ($max_anc_seq_size, $min_anc_seq_size) = ($self->param('max_anchor_seq_len'), $self->param('min_anchor_seq_len'));
 		my $mid_size = $max_anc_seq_size / 2;
 		$anc_start -= $mid_size + 2;
 		$anc_end += $mid_size - 2;
-		$anc_start = $anc_start < $df_start ? $df_start : $anc_start;
-		$anc_end = $anc_end > $df_end ? $df_end : $anc_end;
+		$anc_start = $anc_start < 1 ? 1 : $anc_start;
+		$anc_end = $anc_end > $dnafrag->length ? $dnafrag->length : $anc_end;
 		my $anc_seq;
                 $dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
                     $anc_seq = $dnafrag->slice->sub_Slice($anc_start,$anc_end,$df_strand)->seq;
