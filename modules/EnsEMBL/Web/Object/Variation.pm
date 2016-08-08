@@ -1751,7 +1751,7 @@ sub get_snpedia_data {
 
   my ($ref, $error) = $rest->fetch('api.php', $args);
 
-  if($error || ref $ref ne 'hash') {
+  if($error || ref $ref ne 'HASH') {
     return {};
   }
 
