@@ -110,10 +110,9 @@ sub run {
 print $run_str, "\n";
 
   $self->compara_dba()->dbc->disconnect_if_idle();
-  my $msa_string = qx"$run_str";
-  $self->param('msa_string', $msa_string);
 
-  my $trim_position = $self->get_best_trimming_position($self->param('msa_string'));
+  my $msa_string = qx"$run_str";
+  my $trim_position = $self->get_best_trimming_position($msa_string);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
   return 1;
 }
