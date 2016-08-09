@@ -71,7 +71,7 @@ sub _init {
 
   unless($empty) {
     $self->add_to_legend({
-      legend => '... but inactive in this cell line',
+      legend => 'Activity in epigenome - Inactive',
       colour => 'black',
       stripe => 'hatch_really_thick|grey90',
     });
