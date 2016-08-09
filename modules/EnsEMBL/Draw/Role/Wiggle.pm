@@ -183,9 +183,10 @@ sub _get_min_max {
   }
   else {
     foreach (@$features) {
-      next unless $_->{'score'};
-      $min = $_->{'score'} if !$min || $_->{'score'} < $min;
-      $max = $_->{'score'} if !$max || $_->{'score'} > $max;
+      my $score = ref $_ eq 'HASH' ? $_->{'score'} : $_;
+      next unless $score;
+      $min = $score if !$min || $score < $min;
+      $max = $score if !$max || $score > $max;
     }
   }
   return ($min, $max);
