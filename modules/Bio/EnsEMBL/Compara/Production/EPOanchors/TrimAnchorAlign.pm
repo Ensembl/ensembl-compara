@@ -107,12 +107,9 @@ sub run {
   $run_str .= " -b '" . $self->param('tree_string') . "'";
   $run_str .= " -h"; # output leaves only
 
-print $run_str, "\n";
+  my $cmd = $self->run_command($run_str, { 'die_on_failure' => 1 });
 
-  $self->compara_dba()->dbc->disconnect_if_idle();
-
-  my $msa_string = qx"$run_str";
-  my $trim_position = $self->get_best_trimming_position($msa_string);
+  my $trim_position = $self->get_best_trimming_position($cmd->out);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
   return 1;
 }
