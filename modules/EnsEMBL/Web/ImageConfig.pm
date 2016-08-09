@@ -1308,6 +1308,7 @@ sub _add_bigwig_track {
     'off',     'Off',
     'signal',  'Wiggle plot',
     'compact', 'Compact',
+    'scatter', 'Manhattan plot',
   ];
 
   my $options = {
