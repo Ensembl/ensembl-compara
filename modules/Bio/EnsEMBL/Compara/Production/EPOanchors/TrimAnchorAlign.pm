@@ -102,12 +102,12 @@ sub run {
   exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
   exit(1) if (!$self->param('tree_string'));
 
-  my $run_str = "/software/ensembl/compara/OrtheusC/bin/OrtheusC";
-  $run_str .= " -a " . join(" ", @{$self->param('fasta_files')});
-  $run_str .= " -b '" . $self->param('tree_string') . "'";
-  $run_str .= " -h"; # output leaves only
+  my @ortheus_cmd = ('/software/ensembl/compara/OrtheusC/bin/OrtheusC');
+  push @ortheus_cmd, '-a', @{$self->param('fasta_files')};
+  push @ortheus_cmd, '-b', $self->param('tree_string');
+  push @ortheus_cmd, '-h'; # output leaves only
 
-  my $cmd = $self->run_command($run_str, { 'die_on_failure' => 1 });
+  my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1 });
 
   my $trim_position = $self->get_best_trimming_position($cmd->out);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
