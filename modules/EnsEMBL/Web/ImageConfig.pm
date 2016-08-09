@@ -26,7 +26,6 @@ use warnings;
 
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities decode_entities);
-use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Web::Attributes;
@@ -161,11 +160,12 @@ sub apply_user_settings {
   return unless keys %$user_settings && keys %{$user_settings->{'nodes'} || {}};
 
   foreach my $track_key (keys %{$user_settings->{'nodes'}}) {
-    my $node  = $self->get_node($track_key);
-    my $data  = $user_settings->{'nodes'}{$track_key};
 
-    next unless $node;        # track doesn't exist, move on the next one (it could be a track on another species, or externally attached one)
-    next unless keys %$data;  # no changes to this track
+    my $node = $self->get_node($track_key);
+    next unless $node; # track doesn't exist, move on the next one (it could be a track on another species, or externally attached one)
+
+    my $data = $user_settings->{'nodes'}{$track_key} || {};
+    next unless keys %$data; # no changes to this track
 
     # add track specific user data to the corresponding track node
     while (my ($setting, $value) = each %$data) {
@@ -234,7 +234,6 @@ sub update_from_url {
 sub update_from_input {
   ## Abstract method implementation
   my ($self, $params) = @_;
-
 
   # if user is resetting the configs
   if (my $reset = $params->{'reset'}) {
@@ -418,10 +417,10 @@ sub add_extra_menu {
 
 sub remove_extra_menu {
   ## Removes an extra menu item
-  ## @params List of menu names
+  ## @params List of menu names (removes all if no argument provided)
   my $self = shift;
 
-  delete $self->{'_extra_menus'}{$_} for @_;
+  delete $self->{'_extra_menus'}{$_} for @_ ? @_ : keys %{$self->{'_extra_menus'}};
 }
 
 sub has_extra_menu {
@@ -726,7 +725,7 @@ sub modify_configs {
 sub _update_missing {
   my ($self, $object) = @_;
   my $species_defs    = $self->species_defs;
-  my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->get_tracks;
+  my $count_missing   = grep { !$_->get('display') || $_->get('display') eq 'off' } @{$self->get_tracks};
   my $missing         = $self->get_node('missing');
 
   $missing->set_data('extra_height', 4) if $missing;
