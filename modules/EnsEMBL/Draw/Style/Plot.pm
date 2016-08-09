@@ -60,7 +60,7 @@ sub create_glyphs {
   }
 
   ## Single line? Build into singleton set.
-  $data = [{'features' => $data}] if ref $data->[0] ne 'ARRAY';
+  $data = [{'features' => $data}] if ref $data->[0] ne 'HASH';
 
   # Draw plots
   my $options = {
@@ -68,14 +68,32 @@ sub create_glyphs {
                 'filled'    => $track_config->get('filled') || 0,
                 'height'    => $height,
                 };
-  $self->draw_plots($data, $options);
+  foreach my $track (@$data) {
+    $self->draw_plots($height, $track, $plot_diameter);
+  }
   return @{$self->glyphs||[]};
 }
 
 sub draw_plots {
   my ($self, $features, $options) = @_;
 
-  foreach my $feature (@$features) {
+  my $metadata = $track->{'metadata'} || {};
+
+  ## Convert wiggle array to feature hash if necessary
+  my $wiggle;
+  my $plain_x = 0;
+
+  foreach my $feature (@{$track->{'features'}||[]}) {
+    next unless defined $feature;
+    $wiggle ||= ref $feature eq 'HASH' ? 0 : 1;
+    if ($wiggle) {
+      $feature = {
+                    start   => $plain_x,
+                    score   => $feature,
+                    colour  => $metadata->{'colour'},
+                  };
+      $plain_x += $metadata->{'unit'};      
+    }
     $self->draw_plot($feature, $options);
   }
 }
