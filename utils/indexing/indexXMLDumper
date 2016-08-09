@@ -261,6 +261,7 @@ foreach my $index (@indexes) {
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
       $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
+      $conf->{'strain_of'}           = $SD->get_config($species,'IS_STRAIN_OF');
     }
 
     if ($create_elevate) {
@@ -3411,6 +3412,7 @@ sub footer {
 sub common_fields {
   my ($species,$feature_type,$db) = @_;
   my $species_name = $species eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my $strain_of = $conf->{'strain_of'};
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
@@ -3418,6 +3420,10 @@ sub common_fields {
     $xml .= qq(
   <field name="species">$species_name</field>
   <field name="species_name">$species</field>);
+  }
+  if ($strain_of) {
+    $xml .= qq(
+  <field name="strain_of">$strain_of</field>);
   }
   if ($db) {
     $xml .= qq(
