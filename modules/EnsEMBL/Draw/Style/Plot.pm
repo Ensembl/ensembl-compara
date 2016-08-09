@@ -60,7 +60,7 @@ sub create_glyphs {
   }
 
   ## Single line? Build into singleton set.
-  $data = [ $data ] if ref $data->[0] ne 'ARRAY';
+  $data = [{'features' => $data}] if ref $data->[0] ne 'ARRAY';
 
   # Draw plots
   my $options = {
@@ -69,7 +69,7 @@ sub create_glyphs {
                 'height'    => $height,
                 };
   $self->draw_plots($data, $options);
-
+  return @{$self->glyphs||[]};
 }
 
 sub draw_plots {
@@ -78,7 +78,6 @@ sub draw_plots {
   foreach my $feature (@$features) {
     $self->draw_plot($feature, $options);
   }
-  return @{$self->glyphs||[]};
 }
 
 sub draw_plot {
@@ -90,10 +89,9 @@ sub draw_plot {
   my $filled  = $options->{'filled'};
   my $height  = $options->{'height'};
 
-  my $score   = $feature->{'score'};
-  my $start   = $feature->{'start'};
-  my $end     = $feature->{'end'};
-  my $colour  = $feature->{'colour'};
+  my $score  = $feature->{'score'};
+  my $start  = $feature->{'start'};
+  my $colour = $feature->{'colour'};
 
   my $y = $self->get_y($height,$score) + $radius;
      $y = $height if ($y > $height);

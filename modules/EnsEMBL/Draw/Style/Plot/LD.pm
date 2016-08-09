@@ -77,6 +77,7 @@ sub create_glyphs {
                 'adjusted_height' => $adjusted_height,
                 };
   $self->draw_plots($data, $options);
+  return @{$self->glyphs||[]};
 }
 
 
@@ -151,6 +152,9 @@ sub draw_plots {
 
   foreach my $feature (@$features) {
 
+  use Data::Dumper;
+  foreach my $feature (@{$track->{'features'}||[]}) {
+    #warn ">>> FEATURE ".Dumper($feature);
     # Selected variant
     if ($focus_variant && $feature->{'label'} eq $focus_variant) {
       $self->draw_focus_variant($feature, $options);
@@ -159,7 +163,6 @@ sub draw_plots {
       $self->draw_plot($feature, $options);
     }
   }
-  return @{$self->glyphs||[]};
 }
 
 sub draw_focus_variant {
