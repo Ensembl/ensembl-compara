@@ -50,13 +50,13 @@ sub check_data {
   my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
   if ($hubCheck && !$self->{'registry'}) {
     my $url = $self->{'url'};
-    my $hc_error = system("$hubCheck $url -checkSettings -noTracks");
+    my $hc_error = `$hubCheck $url -checkSettings -noTracks`;	
     if ($hc_error) {
       ## Parse and ignore issues we don't care about
       my @lines = split /\n/, $hc_error;
       my $problematic = 0;
       for my $line (@lines) {
-        next if $line =~ /deprecated|cram/;
+        next if $line =~ m/deprecated|cram|^Found\s[0-9]*\sproblems?:$/;
         $problematic = 1;
       }
       $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>. Please contact the creator of this hub if you wish to use it with Ensembl.</p>) if $problematic;
