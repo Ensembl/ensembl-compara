@@ -55,15 +55,18 @@ use base ('Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
 
 
+# FIXME
 # For now, lambdas are fetched from the root table.
 # In the future we would need to have links from the nodes to the header object
 sub lambdas {
     my ($self) = @_;
+    return $self->{'_lambdas'} if exists $self->{'_lambdas'};
     my $cafe_gene_family_id = $self->cafe_gene_family_id;
     my $sql = "SELECT lambdas FROM CAFE_gene_family WHERE CAFE_gene_family_id = ?";
     my $sth = $self->adaptor->prepare($sql);
     $sth->execute($cafe_gene_family_id);
     my ($lambdas) = $sth->fetchrow_array();
+    $self->{'_lambdas'} = $lambdas;
     return $lambdas;
 }
 
