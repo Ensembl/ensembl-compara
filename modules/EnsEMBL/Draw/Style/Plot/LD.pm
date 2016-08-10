@@ -45,10 +45,7 @@ sub create_glyphs {
   my $data          = $self->data;
   my $track_config  = $self->track_config;
 
-  ## Set some track-wide variables
   my $height        = $track_config->get('height') || 40;
-  my $focus_variant = $track_config->get('focus_variant');
-  my $plot_diameter = $track_config->get('plot_diameter') || 6;
 
   # Adjusts the height of the basal horizontal line because the values in pixels can't render the data with a high accuracy
   my $adjusted_height = $height - 1;
@@ -72,8 +69,14 @@ sub create_glyphs {
   $self->_draw_score($adjusted_height, $min_score,$track_config->get('min_score_label')); # Min
 
   # Draw plots
-  $self->draw_plots($height, $adjusted_height, $data, $focus_variant, $plot_diameter);
-
+  my $options = {
+                'focus_variant'   => $track_config->get('focus_variant'),
+                'diameter'        => $track_config->get('plot_diameter') || 6,
+                'filled'          => 1,
+                'height'          => $height,
+                'adjusted_height' => $adjusted_height,
+                };
+  $self->draw_plots($data, $options);
 }
 
 
@@ -143,33 +146,34 @@ sub draw_h_line {
 
 
 sub draw_plots {
-  my ($self, $height, $adjusted_height, $features, $focus_variant, $diam) = @_;
+  my ($self, $features, $options) = @_;
+  my $focus_variant = $options->{'focus_variant'};
 
   foreach my $feature (@$features) {
 
     # Selected variant
     if ($focus_variant && $feature->{'label'} eq $focus_variant) {
-      $self->draw_focus_variant($adjusted_height, $feature);
+      $self->draw_focus_variant($feature, $options);
     }
     else {
-      $self->draw_plot($height, $feature, $diam);
+      $self->draw_plot($feature, $options);
     }
   }
   return @{$self->glyphs||[]};
 }
 
 sub draw_focus_variant {
-  my ($self, $height, $feature) = @_;
+  my ($self, $feature, $options) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->{'pix_per_bp'};
 
-  my $start = $feature->{'start'};
-  my $end   = $feature->{'end'};
+  my $start     = $feature->{'start'};
+  my $end       = $feature->{'end'};
+  my $width     = $end - $start + 1;
+  my $height    = $options->{'adjusted_height'};
 
-  my $width = $end - $start + 1;
-
-  my $t_width  = 6 / $pix_per_bp;
-  my $t_height = 8;
+  my $t_width   = 6 / $pix_per_bp;
+  my $t_height  = 8;
 
   # Vertical line
   push @{$self->glyphs}, $self->Rect({
