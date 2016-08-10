@@ -63,29 +63,37 @@ sub create_glyphs {
   $data = [ $data ] if ref $data->[0] ne 'ARRAY';
 
   # Draw plots
-  $self->draw_plots($height, $data, $plot_diameter);
+  my $options = {
+                'diameter'  => $track_config->get('plot_diameter') || 6,
+                'filled'    => $track_config->get('filled') || 0,
+                'height'    => $height,
+                };
+  $self->draw_plots($data, $options);
 
 }
 
 sub draw_plots {
-  my ($self, $height, $features, $focus_variant, $diam) = @_;
+  my ($self, $features, $options) = @_;
 
   foreach my $feature (@$features) {
-    $self->draw_plot($height, $feature, $diam);
+    $self->draw_plot($feature, $options);
   }
   return @{$self->glyphs||[]};
 }
 
 sub draw_plot {
-  my ($self, $height, $feature, $diam) = @_;
+  my ($self, $feature, $options) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
-  my $radius = $diam/2;
+  my $pix_per_bp  = $self->{'pix_per_bp'};
+  my $diam    = $options->{'diameter'};
+  my $radius  = $diam/2;
+  my $filled  = $options->{'filled'};
+  my $height  = $options->{'height'};
 
-  my $score  = $feature->{'score'};
-  my $start  = $feature->{'start'};
-  my $end    = $feature->{'end'};
-  my $colour = $feature->{'colour'};
+  my $score   = $feature->{'score'};
+  my $start   = $feature->{'start'};
+  my $end     = $feature->{'end'};
+  my $colour  = $feature->{'colour'};
 
   my $y = $self->get_y($height,$score) + $radius;
      $y = $height if ($y > $height);
@@ -96,7 +104,7 @@ sub draw_plot {
     diameter      => $diam,
     colour        => $colour,
     absolutewidth => 1,
-    filled        => 1,
+    filled        => $filled,
   });
 
   # Invisible rectangle with a link to the ZMenu
