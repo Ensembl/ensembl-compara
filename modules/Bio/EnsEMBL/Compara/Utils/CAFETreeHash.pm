@@ -67,10 +67,8 @@ sub _convert_node {
   my ($self, $node) = @_;
   my $hash;
 
-  my $NCBITaxon_adaptor = $node->adaptor->db->get_NCBITaxonAdaptor();
   my $taxon_id   = $node->taxon_id();
-  my $taxon = $NCBITaxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-  if ($taxon) {
+  if (my $taxon = $node->taxon) {
     $hash->{tax} = {
 		    'id' => $taxon_id + 0,
 		    'scientific_name' => $taxon->scientific_name,
