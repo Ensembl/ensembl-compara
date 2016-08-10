@@ -77,22 +77,23 @@ sub create_glyphs {
 sub draw_plots {
   my ($self, $track, $options) = @_;
 
-  my $metadata = $track->{'metadata'} || {};
+  my $metadata  = $track->{'metadata'} || {};
+  my $features  = $track->{'features'} || [];
 
   ## Convert wiggle array to feature hash if necessary
-  my $wiggle;
-  my $plain_x = 0;
+  my $wiggle = (defined $features->[0] && ref $features->[0] eq 'HASH') ? 0 : 1;
+  my $bin_x = 0;
 
   foreach my $feature (@{$track->{'features'}||[]}) {
-    next unless defined $feature;
-    $wiggle ||= ref $feature eq 'HASH' ? 0 : 1;
     if ($wiggle) {
-      $feature = {
-                    start   => $plain_x,
+      if (defined $feature) {
+        $feature = {
+                    start   => $bin_x,
                     score   => $feature,
                     colour  => $metadata->{'colour'},
-                  };
-      $plain_x += $metadata->{'unit'};      
+                    };
+      }
+      $bin_x += $metadata->{'unit'};      
     }
     $self->draw_plot($feature, $options);
   }
@@ -110,6 +111,7 @@ sub draw_plot {
   my $score  = $feature->{'score'};
   my $start  = $feature->{'start'};
   my $colour = $feature->{'colour'};
+  my $offset = $radius/$pix_per_bp;
 
   my $y = $self->get_y($height,$score) + $radius;
      $y = $height if ($y > $height);
