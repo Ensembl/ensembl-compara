@@ -170,7 +170,7 @@ sub apply_user_settings {
 
     # track doesn't exist, move the data aside temporarily (it could be a track on another species, or externally attached one)
     if (!$node) {
-      $user_settings->{'_missing_nodes'}{$track_key} = delete $user_settings->{'_missing_nodes'}{$track_key};
+      $user_settings->{'_missing_nodes'}{$track_key} = delete $user_settings->{'nodes'}{$track_key};
       next;
     }
 
@@ -202,9 +202,11 @@ sub get_cacheable_object {
 
 sub reset_user_settings {
   ## Abstract method implementation
-  my ($self, $reset_type)           = @_;
-  my ($reset_tracks, $reset_order)  = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
-  my $user_settings                 = $self->get_user_settings;
+  my $self          = shift;
+  my $reset_type    = shift || '';
+  my $user_settings = $self->get_user_settings;
+
+  my ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
 
   my @altered;
 
