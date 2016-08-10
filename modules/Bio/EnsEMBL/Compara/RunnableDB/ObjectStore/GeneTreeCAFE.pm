@@ -73,17 +73,17 @@ sub fetch_input {
     my $gene_tree       = $tree_adaptor->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     my $cafe_adaptor    = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
     my $cafe_tree       = $cafe_adaptor->fetch_by_GeneTree($gene_tree);
+    my $copy            = $cafe_adaptor->fetch_by_GeneTree($gene_tree);
 
     unless ($cafe_tree) {
         $self->complete_early("No CAFE tree for the gene_tree dbID=$gene_tree_id");
     }
 
-    # To pre-load all the tree nodes
-    $cafe_tree->root->get_all_nodes;
-    $self->param('cafe_tree', $cafe_tree);
+    # To pre-load all the tree nodes and all the taxon information
+    my $taxa = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->compara_dba->get_NCBITaxonAdaptor, $cafe_tree->root->get_all_nodes, $copy->root->get_all_nodes);
+    $self->compara_dba->get_NCBITaxonAdaptor->_load_tagvalues_multiple( $taxa );
 
-    my $copy = $cafe_adaptor->fetch_by_GeneTree($gene_tree);
-    $copy->root->get_all_nodes;
+    $self->param('cafe_tree', $cafe_tree);
     $self->param('cafe_tree_copy', $copy);
 }
 
