@@ -141,7 +141,7 @@ sub save_user_settings {
   $settings->{'type'} = $self->config_type;
   $settings->{'code'} = $self->code;
 
-  $hub->set_record_data($settings);
+  $hub->set_record_data(_rm_empty_vals($settings));
 
   return 1;
 }
@@ -161,6 +161,21 @@ sub is_altered {
   ## Tells if any change has been applied to the config
   ## @return 0 or 1 accordingly
   return scalar keys %{$_[0]->{'_altered'}} ? 1 : 0;
+}
+
+sub _rm_empty_vals {
+  ## @private
+  ## @function
+  my $pointer = shift;
+  my $ref     = ref($pointer // '') || '';
+  if ($ref eq 'HASH') {
+    $pointer = { map { my $val = _rm_empty_vals($pointer->{$_}); defined $val ? ($_ => $val) : () } keys %$pointer };
+    return keys %$pointer ? $pointer : undef;
+  } elsif ($ref eq 'ARRAY') {
+    $pointer = [ map { _rm_empty_vals($_) // () } @$pointer ];
+    return @$pointer ? $pointer : undef;
+  }
+  return ($pointer // '') eq '' ? undef : "$pointer";
 }
 
 ######## TODO
