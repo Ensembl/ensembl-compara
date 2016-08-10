@@ -19,6 +19,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::Role::Wiggle;
 
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
 ### Role for tracks that draw data as a continuous line 
 
 use Role::Tiny;
