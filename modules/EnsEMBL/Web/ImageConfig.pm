@@ -82,6 +82,7 @@ sub _new {
 
   $self->{'code'}             = $code;
   $self->{'_parameters'}      = {}, # hash to contain all parameters
+  $self->{'track_order'}      = []; # state changes for track order as saved in db
   $self->{'user_track_count'} = 0;
   $self->{'load_threshold'}   = $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 20;
 
@@ -154,15 +155,24 @@ sub apply_user_settings {
   ## Abstract method implementation
   my $self          = shift;
   my $hub           = $self->hub;
+  my $species       = $self->species;
   my $user_settings = $self->get_user_settings;
 
   # no user setting to apply to the tracks
-  return unless keys %$user_settings && keys %{$user_settings->{'nodes'} || {}};
+  return unless keys %$user_settings;
 
-  foreach my $track_key (keys %{$user_settings->{'nodes'}}) {
+  # copy track order
+  $self->{'track_order'} = $user_settings->{'track_order'} && $user_settings->{'track_order'}{$species} || [];
+
+  foreach my $track_key (keys %{$user_settings->{'nodes'} || {}}) {
 
     my $node = $self->get_node($track_key);
-    next unless $node; # track doesn't exist, move on the next one (it could be a track on another species, or externally attached one)
+
+    # track doesn't exist, move the data aside temporarily (it could be a track on another species, or externally attached one)
+    if (!$node) {
+      $user_settings->{'_missing_nodes'}{$track_key} = delete $user_settings->{'_missing_nodes'}{$track_key};
+      next;
+    }
 
     my $data = $user_settings->{'nodes'}{$track_key} || {};
     next unless keys %$data; # no changes to this track
@@ -198,23 +208,21 @@ sub reset_user_settings {
 
   my @altered;
 
-  if ($reset_order && delete $user_settings->{'track_order'}) {
+  if ($reset_order && @{$self->{'track_order'}}) {
+    $self->{'track_order'} = [];
     push @altered, 'Track order';
   }
 
   if ($reset_tracks) {
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
-      my $node = $self->get_node($node_key);
 
-      push @altered, $node->get_data('name') || $node->get_data('caption') || 1 if $node;
+      if (my $node = $self->get_node($node_key)) {
+        $node->reset_user_settings;
+        push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
+      }
     }
 
-    push @altered, 1 if delete $user_settings->{'nodes'};
-  }
-
-  if (!exists $user_settings->{'nodes'} && !exists $user_settings->{'track_order'}) { # remove all data if both keys are missing
-    delete $user_settings->{$_} for keys %$user_settings;
-    push @altered, 1;
+    push @altered, 1 if delete $user_settings->{'_missing_nodes'}; # remove the data from other missing nodes too
   }
 
   return @altered;
@@ -337,7 +345,7 @@ sub update_track_order {
   ## @param Track order changes (arrayref of arrayrefs [ [ track1, prev_track1 ], [ track2, prev_track2 ], ... ])
   my ($self, $state_changes) = @_;
 
-  $self->get_user_settings->{'track_order'}{$self->species} = $state_changes;
+  $self->{'track_order'} = $state_changes;
 
   return 1;
 }
@@ -350,7 +358,7 @@ sub _favourite_tracks {
 
   $self->{'_favourite_tracks'} ||= $self->hub->get_record_data({'type' => 'favourite_tracks', 'code' => 'favourite_tracks'}) || {};
 
-  return $self->{'favourite_tracks'}{'tracks'} || {};
+  return $self->{'_favourite_tracks'}{'tracks'} || {};
 }
 
 sub is_track_favourite {
@@ -364,12 +372,25 @@ sub is_track_favourite {
 
 sub save_user_settings {
   ## @override
-  ## Along with config record, save favourite tracks record too
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $fav_data  = $self->_favourite_tracks;
+  ## Before saving record, modify record data according to the changed nodes on tree
+  ## Also save favourite tracks record along with main config data record
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $fav_data    = $self->_favourite_tracks;
+  my $user_data   = $self->tree->user_data;
+  my $record_data = $self->get_user_settings;
 
+  # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
   $hub->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
+
+  # Move data for the missing nodes to the main 'nodes' key before saving
+  $record_data->{'nodes'} = delete $record_data->{'_missing_nodes'} || {};
+
+  # Copy user setting from the tree back to the record data
+  $record_data->{'nodes'}{$_} = $user_data->{$_} for keys %$user_data;
+
+  # Save track order
+  $record_data->{'track_order'}{$self->species} = $self->{'track_order'};
 
   return $self->SUPER::save_user_settings(@_);
 }
@@ -611,14 +632,6 @@ sub _order_tracks_by_strands {
   return \@ordered;
 }
 
-sub _user_track_order {
-  ## @private
-  ## Gets the tracks order array
-  my $self = shift;
-
-  return ($self->get_user_settings->{'track_order'} || {})->{$self->species} || [];
-}
-
 sub glyphset_tracks {
   ## Gets the ordered list of tracks that need be drawn on the image
   ## @return Array of track nodes
@@ -640,7 +653,7 @@ sub glyphset_tracks {
       }
 
       # sort the tracks according to user preferences
-      my $user_track_order = $self->_user_track_order;
+      my $user_track_order = $self->{'track_order'};
       if (@$user_track_order) {
 
         my ($pointer, $first_track, $last_immovable_track, %lookup, $glyphset_tracks);

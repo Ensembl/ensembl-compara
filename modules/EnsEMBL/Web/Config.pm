@@ -124,6 +124,7 @@ sub _save_to_cache {
 
 sub get_user_settings {
   ## Gets settings saved by the user from the session/user record
+  ## Any changes made to the returned hashref will get saved to the db when save_user_settings method is called
   ## @return User settings as a hashref
   my $self = shift;
 
@@ -132,6 +133,7 @@ sub get_user_settings {
 
 sub save_user_settings {
   ## Saves (or removes) user settings to the corresponding user/session record for this image/view config
+  ## Does not take any arguments but any changes made to the hash returned by get_user_settings method will get saved
   my $self      = shift;
   my $hub       = $self->hub;
   my $settings  = $self->get_user_settings;
