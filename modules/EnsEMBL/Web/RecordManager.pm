@@ -121,6 +121,7 @@ sub set_record_data {
   $row->{'data'}            = $data;
   $row->{'record_type'}     = $self->record_type;
   $row->{'record_type_id'}  = $self->record_type_id;
+  $row->{'modified_at'}     = 'now';
 
   # if record id is provided, the record HAS TO BE there among the record set
   if (my $record_id = delete $row->{'record_id'}) {
@@ -141,7 +142,7 @@ sub set_record_data {
 
   # if new record needs to be added
   if (!$record || !$record->count) {
-    $record = $self->records->add($self->rose_manager->create_empty_object({}));
+    $record = $self->records->add($self->rose_manager->create_empty_object({'created_at' => 'now'}));
   }
 
   # update column values
