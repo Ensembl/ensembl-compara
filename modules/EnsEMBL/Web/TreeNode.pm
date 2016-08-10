@@ -119,7 +119,7 @@ sub reset_user_settings {
   ## Removes shared user data settings for the current node
   ## @return 1 if data is removed, 0 otherwise
   my $self      = shift;
-  my $node_id   = $self->node_id;
+  my $node_id   = $self->id;
   my $user_data = $self->tree->user_data;
 
   # remove node specific data if it exists
