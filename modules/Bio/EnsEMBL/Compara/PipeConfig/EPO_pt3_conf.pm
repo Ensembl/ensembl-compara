@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -password <your_password> -epo_mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -compara_master <>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -78,13 +78,13 @@ sub default_options {
   %{$self->SUPER::default_options},
 
         # Change this name
-        'species_set_name' => '17mammals_reuse',
+        'species_set_name' => 'primates',
 
         # But not this one
         'pipeline_name' => $self->o('species_set_name').'_epo',
 
         # Where the pipeline lives
-        'host'  => 'compara2',
+        'host'  => 'compara5',
 
   'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
   #'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
@@ -131,7 +131,7 @@ sub default_options {
 	# master db
         'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 	# anchor mappings
-        'compara_mapped_anchor_db' => 'mysql://ensro@compara3:3306/sf5_17mammals_epo_anchor_mappings77',
+        'compara_mapped_anchor_db' => 'mysql://ensadmin:ensembl@compara5/wa2_primates_epo_anchor_mapping',
 
      }; 
 }
@@ -500,7 +500,7 @@ return
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
                     '2->A' => [ 'multiplealigner_stats' ],
-                    '1->A' => [ 'block_size_distribution' ],
+                    'A->1' => [ 'block_size_distribution' ],
                                },
             },
 
