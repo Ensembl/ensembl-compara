@@ -40,7 +40,6 @@ sub render_scatter {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Plot']);
   $self->{'my_config'}->set('height', 60);
-  $self->{'my_config'}->set('plot_diameter', 20);
   $self->_render;
 }
 
