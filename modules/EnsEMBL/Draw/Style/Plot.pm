@@ -69,13 +69,13 @@ sub create_glyphs {
                 'height'    => $height,
                 };
   foreach my $track (@$data) {
-    $self->draw_plots($height, $track, $plot_diameter);
+    $self->draw_plots($track, $options);
   }
   return @{$self->glyphs||[]};
 }
 
 sub draw_plots {
-  my ($self, $features, $options) = @_;
+  my ($self, $track, $options) = @_;
 
   my $metadata = $track->{'metadata'} || {};
 

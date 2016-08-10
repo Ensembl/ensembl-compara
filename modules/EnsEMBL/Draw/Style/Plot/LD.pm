@@ -76,7 +76,9 @@ sub create_glyphs {
                 'height'          => $height,
                 'adjusted_height' => $adjusted_height,
                 };
-  $self->draw_plots($data, $options);
+  foreach my $track (@$data) {
+    $self->draw_plots($track, $options);
+  }
   return @{$self->glyphs||[]};
 }
 
@@ -147,10 +149,8 @@ sub draw_h_line {
 
 
 sub draw_plots {
-  my ($self, $features, $options) = @_;
+  my ($self, $track, $options) = @_;
   my $focus_variant = $options->{'focus_variant'};
-
-  foreach my $feature (@$features) {
 
   foreach my $feature (@{$track->{'features'}||[]}) {
     # Selected variant
