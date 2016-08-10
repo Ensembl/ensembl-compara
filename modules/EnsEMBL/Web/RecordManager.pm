@@ -165,7 +165,7 @@ sub delete_records {
   return $to_delete->delete;
 }
 
-sub store {
+sub store_records {
   ## Does a final commit to db for all the changes
   my $self = shift;
 
@@ -174,9 +174,9 @@ sub store {
 
 sub _record_column_names {
   ## @private
-  ## save column names from the rose db meta object
+  ## Gets column names from the rose db meta object
   my $self = shift;
-  $self->{'_record_column_names'} ||= $self->rose_manager->object_class->meta->column_names;
+  $self->{'_record_column_names'} ||= [ grep $_ ne 'data', $self->rose_manager->object_class->meta->column_names ];
 }
 
 sub _query_records {
@@ -191,7 +191,7 @@ sub _query_records {
 
     while (my ($key, $value) = each %$column_filter) {
       my $reverse   = $key =~ s/^\!// ? 1 : 0;
-      my $cmp_value = $column_hash->{$key} ? $record->$key : $data->{$key};
+      my $cmp_value = ($column_hash->{$key} ? $record->$key : $data->{$key}) // '';
       my $match     = $reverse;
 
       if (defined $value && $value ne '') {
@@ -206,7 +206,7 @@ sub _query_records {
           $match = $value eq $cmp_value;
         }
       } else { # $value is undef or empty string
-        $match = ($cmp_value // '') eq '';
+        $match = $cmp_value eq '';
       }
 
       return 0 if $match xor !$reverse;
@@ -247,5 +247,7 @@ sub DESTROY {
   # just rollback if no changes were stored permanently
   $_[0]->{'_db'}->rollback if $_[0]->{'_db'};
 }
+
+sub store :Deprecated('use store_records') { shift->store_records(@_) }
 
 1;
