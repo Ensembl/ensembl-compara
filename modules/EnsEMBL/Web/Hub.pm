@@ -211,8 +211,8 @@ sub get_cookie_value {
   ## @param Cookie name
   ## @param Flag kept on if cookie is encrypted
   ## @return Cookie value, possibly an empty string if cookie doesn't exist
-  my $self    = shift;
-  my $cookie  = $self->cookies->{$name} ? $self->get_cookie(@_) : undef; # don't create a new cookie
+  my ($self, $name) = splice @_, 0, 2;
+  my $cookie  = $self->cookies->{$name} ? $self->get_cookie($name, @_) : undef; # don't create a new cookie
 
   return $cookie ? $cookie->value : '';
 }
@@ -455,7 +455,9 @@ sub order_species_by_clade {
 
 sub redirect {
   ## Does an http redirect
-  ## Since it actually throws an exception, code that follows this call will not get executed
+  ## Since it actually throws a RedirectionRequired exception, code that follows this call will not get executed
+  ## @param URL to redirect to
+  ## @param Flag kept on if it's a permanent redirect
   my ($self, $url, $permanent) = @_;
 
   $url = $self->url($url) if $url && ref $url;
@@ -556,10 +558,19 @@ sub param {
     return wantarray ? @T : $T[0] if @T;
     
     my $view_config = $self->viewconfig;
-    
+
     if ($view_config) {
+
+      my @caller = caller;
+
+      if (@_ > 1) {
+        warn sprintf "ERROR: Setting view_config from hub at %s line %s\n", $caller[1], $caller[2];
+      }
       $view_config->set(@_) if @_ > 1;
       my @val = $view_config->get(@_);
+
+      warn sprintf "DEPRECATED: If trying to get Component's ViewConfig specific param, use param method on component at %s line %s\n", $caller[1], $caller[2] if @val;
+
       return wantarray ? @val : $val[0];
     }
     
