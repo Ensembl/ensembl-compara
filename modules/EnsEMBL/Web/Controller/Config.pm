@@ -66,7 +66,7 @@ sub update_configuration {
   $params->{$_} = from_json($params->{$_} || '{}') for qw(image_config view_config);
 
   if ($view_config->update_from_input($params)) {
-    $hub->store_records;
+    $hub->session->store_records;
     $response->{'updated'} = 1;
   }
 
