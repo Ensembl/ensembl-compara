@@ -52,8 +52,6 @@ sub delete {
 
   return 0 unless $self->count;
 
-  $self->[0]->db->begin_work;
-
   return scalar grep { $_->delete(%$args) } @$self;
 }
 
