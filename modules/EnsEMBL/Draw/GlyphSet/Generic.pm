@@ -80,6 +80,12 @@ The keys of the feature hashref refer to the strand on which we wish to draw the
 =cut
 }
 
+sub no_file {
+### Error message when a file is not available
+  my $self  = shift;
+  $self->errorTrack("File unavailable");
+}
+
 sub get_strand_filters {
 ### The strand settings in imageconfig are the reverse of filters,
 ### so for clarity we need to convert them here
