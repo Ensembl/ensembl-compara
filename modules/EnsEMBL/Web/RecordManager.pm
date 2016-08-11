@@ -96,7 +96,7 @@ sub get_record_data {
   my $self    = shift;
   my $record  = $self->record(@_);
 
-  return unless $record->count;
+  return {} unless $record->count;
 
   my $data = $record->data->raw;
   $data->{$_} = $record->$_ for @{$self->_record_column_names};
@@ -141,7 +141,7 @@ sub set_record_data {
   }
 
   # if new record needs to be added
-  if (!$record || !$record->count) {
+  if (!$record) {
     $record = $self->records->add($self->rose_manager->create_empty_object({'created_at' => 'now'}));
   }
 
