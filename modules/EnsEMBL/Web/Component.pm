@@ -639,7 +639,7 @@ sub new_table {
   my $options  = $_[2];
   $self->{'_table_count'}++ if $options->{'exportable'};
   
-  $table->session    = $hub->session;
+  $table->hub($hub);
   $table->format     = $self->format;
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
