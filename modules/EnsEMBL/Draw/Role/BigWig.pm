@@ -27,6 +27,9 @@ use strict;
 use Role::Tiny;
 use List::Util qw(min max);
 
+use EnsEMBL::Web::File::Utils::IO;
+use EnsEMBL::Web::File::Utils::URL;
+
 use EnsEMBL::Web::IOWrapper::Indexed;
 
 sub render_signal {
@@ -114,6 +117,19 @@ sub _fetch_data {
     }
   }
   return [] unless $url;
+
+  my $check;
+  if ($url =~ /^http|ftp/) {
+    $check = EnsEMBL::Web::File::Utils::URL::file_exists($url, {'nice' => 1});
+  }
+  else {
+    $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
+  }
+
+  if ($check->{'error'}) {
+    $self->no_file($check->{'error'}->[0]);
+    return [];
+  }
 
   my $slice     = $self->{'container'};
   my $args      = { 'options' => {
