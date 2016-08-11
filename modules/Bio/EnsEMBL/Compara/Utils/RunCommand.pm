@@ -103,7 +103,7 @@ sub _run {
 
     my $starttime = time() * 1000;
     local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", $cmd);
+    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", ref($cmd) ? @$cmd : $cmd);
     $self->{_out} = $self->_read_output(\*CATCHOUT);
     waitpid($pid,0);
     $self->{_exit_code} = $?>>8;

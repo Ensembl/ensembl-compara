@@ -209,7 +209,8 @@ sub run_command {
 
     $options //= {};
     my $timeout = $options->{timeout};
-    print STDERR "COMMAND: $cmd\n" if ($self->debug);
+    my $flat_cmd = ref($cmd) ? join(' ', @$cmd) : $cmd;
+    print STDERR "COMMAND: $flat_cmd\n" if ($self->debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
     my $runCmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new($cmd, $timeout);
     $self->dbc->disconnect_if_idle() if ($self->dbc);
@@ -217,7 +218,7 @@ sub run_command {
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
-    die sprintf("Could not run '%s', got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
+    die sprintf("Could not run '%s', got %s\nSTDOUT %s\nSTDERR %s\n", $flat_cmd, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
     return $runCmd;
 }
 

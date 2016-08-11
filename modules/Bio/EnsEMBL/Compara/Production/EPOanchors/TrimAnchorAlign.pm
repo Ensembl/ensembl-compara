@@ -71,8 +71,6 @@ use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my ($self) = @_;
 
-  $self->compara_dba()->dbc->disconnect_when_inactive(0);
-
   if (!$self->param('anchor_id')) {
     return 0;
   }
@@ -104,18 +102,14 @@ sub run {
   exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
   exit(1) if (!$self->param('tree_string'));
 
-  my $run_str = "/software/ensembl/compara/OrtheusC/bin/OrtheusC";
-  $run_str .= " -a " . join(" ", @{$self->param('fasta_files')});
-  $run_str .= " -b '" . $self->param('tree_string') . "'";
-  $run_str .= " -h"; # output leaves only
+  my @ortheus_cmd = ('/software/ensembl/compara/OrtheusC/bin/OrtheusC');
+  push @ortheus_cmd, '-a', @{$self->param('fasta_files')};
+  push @ortheus_cmd, '-b', $self->param('tree_string');
+  push @ortheus_cmd, '-h'; # output leaves only
 
-print $run_str, "\n";
+  my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1 });
 
-  $self->compara_dba()->dbc->disconnect_if_idle();
-  my $msa_string = qx"$run_str";
-  $self->param('msa_string', $msa_string);
-
-  my $trim_position = $self->get_best_trimming_position($self->param('msa_string'));
+  my $trim_position = $self->get_best_trimming_position($cmd->out);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
   return 1;
 }

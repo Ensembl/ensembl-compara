@@ -74,7 +74,6 @@ sub fetch_input {
   $self->SUPER::fetch_input;
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
@@ -251,16 +250,6 @@ sub run {
     }
 }
 
-sub write_output {
-    my $self = shift;
-
-    # FIXME: disconnect_when_inactive() probably not needed
-    my $disconnect_when_inactive_default = $self->compara_dba->dbc->disconnect_when_inactive;
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-    $self->SUPER::write_output;
-    $self->compara_dba->dbc->disconnect_when_inactive($disconnect_when_inactive_default);
-    
-}
 
 1;
 

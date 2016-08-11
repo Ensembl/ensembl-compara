@@ -79,17 +79,21 @@ print $synteny_region_id, " ***********\n";
 	while( my $dnafrag_data = $sth1->fetchrow_arrayref ){
 		my($coord_sys, $dnafrag_id, $dnafrag_name, $species_name, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = @{ $dnafrag_data };
 		my $dnafrag_obj = $self->compara_dba()->get_adaptor("DnaFrag")->fetch_by_dbID($dnafrag_id);
+            $dnafrag_obj->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 		if($dnafrag_strand){
 			my $slice = $dnafrag_obj->slice()->sub_Slice($dnafrag_start, $dnafrag_end, $dnafrag_strand);
+                        $slice->{'seq'} = $slice->seq;
 			push(@$target_set, [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $slice, $dnafrag_strand ]); 
 		} else {
 			my $slice = $dnafrag_obj->slice()->sub_Slice($dnafrag_start, $dnafrag_end, 1);
+                        $slice->{'seq'} = $slice->seq;
 			push(@$query_set, [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $slice ]);
 			eval { $query_index->{ $slice->name } = $z++ };
 			if($@){
 				print $@, join(":", $coord_sys, $dnafrag_id, $dnafrag_name, $species_name, $dnafrag_start, $dnafrag_end, $dnafrag_strand), "\n";
 			}
 		}
+            } );
 	}
 	# if all the sequences have 0 strand, use the first one as the target
 	unless(ref($target_set)){

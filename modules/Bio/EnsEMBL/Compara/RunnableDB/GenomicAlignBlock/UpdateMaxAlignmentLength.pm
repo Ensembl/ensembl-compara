@@ -82,8 +82,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
   if (defined $self->param('output_method_link') && defined $self->param('query_genome_db_id') && $self->param('target_genome_db_id')) {
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->param('output_method_link'), [$self->param('query_genome_db_id'),$self->param('target_genome_db_id')]);
