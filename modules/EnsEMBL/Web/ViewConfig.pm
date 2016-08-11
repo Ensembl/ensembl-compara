@@ -194,7 +194,7 @@ sub update_from_url {
     }
 
     if ($self->is_altered) {
-      $session->set_record_data({
+      $hub->session->set_record_data({
         'type'      => 'message',
         'function'  => '_info',
         'code'      => 'configuration',

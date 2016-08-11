@@ -358,7 +358,7 @@ sub _favourite_tracks {
   ## List of favourite tracks is not specific to one image config - if a track exists in multiple images and is favourited in one, it gets favourited in all
   my $self = shift;
 
-  $self->{'_favourite_tracks'} ||= $self->hub->get_record_data({'type' => 'favourite_tracks', 'code' => 'favourite_tracks'}) || {};
+  $self->{'_favourite_tracks'} ||= $self->hub->session->get_record_data({'type' => 'favourite_tracks', 'code' => 'favourite_tracks'});
 
   return $self->{'_favourite_tracks'}{'tracks'} || {};
 }
@@ -383,7 +383,7 @@ sub save_user_settings {
   my $record_data = $self->get_user_settings;
 
   # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
-  $hub->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
+  $hub->session->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
 
   # Move data for the missing nodes to the main 'nodes' key before saving
   $record_data->{'nodes'} = delete $record_data->{'_missing_nodes'} || {};

@@ -128,7 +128,7 @@ sub get_user_settings {
   ## @return User settings as a hashref
   my $self = shift;
 
-  return $self->{'_user_settings'} ||= $self->hub->get_record_data({'type' => $self->config_type, 'code' => $self->code}) || {};
+  return $self->{'_user_settings'} ||= $self->hub->session->get_record_data({'type' => $self->config_type, 'code' => $self->code});
 }
 
 sub save_user_settings {
@@ -141,7 +141,7 @@ sub save_user_settings {
   $settings->{'type'} = $self->config_type;
   $settings->{'code'} = $self->code;
 
-  $hub->set_record_data(_rm_empty_vals($settings));
+  $hub->session->set_record_data(_rm_empty_vals($settings));
 
   return 1;
 }
