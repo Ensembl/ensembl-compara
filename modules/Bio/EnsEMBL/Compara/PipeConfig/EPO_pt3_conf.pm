@@ -131,7 +131,7 @@ sub default_options {
 	# master db
         'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 	# anchor mappings
-        'compara_mapped_anchor_db' => 'mysql://ensadmin:ensembl@compara5/wa2_primates_epo_anchor_mapping',
+        'compara_mapped_anchor_db' => 'mysql://ensro@compara5/wa2_primates_epo_anchor_mapping',
 
      }; 
 }
