@@ -71,14 +71,13 @@ sub update_configuration_for_request {
   my $r           = $self->r;
   my $input       = $self->input;
   my $hub         = $self->hub;
+  my $core_params = $hub->core_params;
   my @components  = @{$self->configuration->get_configurable_components};
 
   my $do_redirect = 0;
-  my $url_params  = {};
-  my $post_params = {};
 
   # Go through each view config and get a list of required params
-  my @view_config = map $hub->get_viewconfig(@{$components[$_]}), 0..$#components;
+  my @view_config = map $hub->get_viewconfig({'type' => $components[$_][1], 'component' => $components[$_][0]}), 0..$#components;
   my %url_params  = map { $_ => 1 } map $_->config_url_params, @view_config;
   my %inp_params;
 
@@ -93,19 +92,20 @@ sub update_configuration_for_request {
     }
   }
 
-  # Get all the GET/POST params to pass them to the update_for_input method
+  # Get all the non-core GET/POST params to pass them to the update_for_input method
   for ($input->param) {
+    next if $core_params->{$_};
     my @vals = $input->param($_);
     $inp_params{$_} = scalar @vals > 1 ? \@vals : $vals[0];
   }
 
   # now update all the view configs accordingly
   for (@view_config) {
-    $view_config->update_from_input({ %inp_params }); # avoid passing reference to the original hash to prevent manipulation
-    $do_redirect++ if $view_config->update_from_url({ %url_params });
+    $_->update_from_input({ %inp_params }) if keys %inp_params; # avoid passing reference to the original hash to prevent manipulation
+    $do_redirect++ if keys %url_params && $_->update_from_url({ %url_params });
   }
 
-  if (keys %$url_params && $do_redirect) {
+  if ($do_redirect) {
     $input->param('time', time); # Add time to cache-bust the browser
     $hub->redirect(join('?', $r->uri, uri_unescape($input->query_string)));
   }
