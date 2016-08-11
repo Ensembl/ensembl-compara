@@ -82,8 +82,9 @@ The keys of the feature hashref refer to the strand on which we wish to draw the
 
 sub no_file {
 ### Error message when a file is not available
-  my $self  = shift;
-  $self->errorTrack("File unavailable");
+  my ($self, $error)  = @_;
+  $error ||= 'File unavailable';
+  $self->errorTrack($error);
 }
 
 sub get_strand_filters {
