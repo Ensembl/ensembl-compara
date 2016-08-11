@@ -27,7 +27,7 @@ use JSON qw(from_json);
 use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::Attributes;
-use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Form::ViewConfigForm;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
 
 use parent qw(EnsEMBL::Web::Config);
@@ -37,17 +37,16 @@ sub field_order       :Abstract;  ## @return List of field ids in same order as 
 
 sub image_config_type :AccessorMutator;
 sub title             :AccessorMutator;
-sub code              :AccessorMutator; ## @override Code can be modified by sub classes after initialisation
 sub component         :Accessor;
 
 sub _new {
   ## Abstract method implementation
-  ## @param (String) Species
+  ## @param EnsEMBL::Web::Hub
   ## @param (String) Type
   ## @param (String) Component name
   my ($class, $hub, $type, $component) = @_;
 
-  my $self = $class->SUPER::_new($hub, $type, $hub->species);
+  my $self = $class->SUPER::_new($hub, $hub->species, $type);
 
   $self->{'component'}    = $component;
   $self->{'code'}         = "${type}::$component";
@@ -163,6 +162,14 @@ sub extra_tabs {
   ## @return List of arrayrefs ([ caption, url ] ... )
 }
 
+sub field_values {
+  ## Gets the values as set by user (or default if not changed by user) for each form fields
+  ## @return Hashref of keys as form field name, values as values of each field
+  my $self = shift;
+
+  return $self->{'_field_values'} ||= { map { $_ => $self->get($_) // '' } $self->field_order };
+}
+
 sub config_url_params {
   ## Abstract method implementation
   my $self          = shift;
@@ -231,31 +238,44 @@ sub update_from_input {
   } else {
 
     my $settings = $params->{$self->config_type};
-       $settings = $settings ? from_json($settings) : undef;
 
-    if ($settings) {
+    foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
-      foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
-
-        my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
-        $self->altered($key) if $self->set_user_option($key, @values > 1 ? \@values : $values[0]);
-      }
+      my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
+      $self->altered($key) if $self->set_user_option($key, @values > 1 ? \@values : $values[0]);
     }
   }
 
   # now apply config changes to linked image config
-  $self->altered('image_config') if $image_config &&$image_config->update_from_input($params);
+  my $image_config = $self->image_config;
+  $self->altered('image_config') if $image_config && $image_config->update_from_input($params);
 
-  $self->save_user_settings if $self->is_altered;; # update the record table
+  $self->save_user_settings if $self->is_altered; # update the record table
 
   return $self->is_altered;
+}
+
+sub init_form {
+  ## Generic form-building method based on fields provided in form_field and field_order methods
+  ## @return ViewConfigForm object
+  my $self    = shift;
+  my $form    = $self->form;
+  my $fields  = $self->form_fields || {};
+
+  $form->add_form_element($_) for map $fields->{$_} || (), $self->field_order;
+
+  return $form;
+}
+
+sub init_form_non_cacheable {
+  ## TODO
 }
 
 ######## -----------
 
 sub form {
   my $self = shift;
-  return $self->{'form'} ||= EnsEMBL::Web::ViewConfigForm->new(sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
+  return $self->{'form'} ||= EnsEMBL::Web::Form::ViewConfigForm->new($self, sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
 }
 
 sub add_fieldset {
@@ -307,17 +327,6 @@ sub reg_renderer {
 
 
 
-sub init_form {
-  ## Generic form-building method - overridden in views that have not yet been
-  ## upgraded to use the new export interface
-  my $self    = shift;
-  my $fields  = $self->form_fields;
-
-  foreach ($self->field_order) {
-    $self->add_form_element($fields->{$_});
-  }
-}
-
 sub set_label { $_[0]{'labels'}{$_[1]} = $_[2]; }
 sub get_label { $_[0]{'labels'}{$_[1]}; }
 
@@ -333,7 +342,7 @@ sub add_image_config :Deprecated('Use method image_config_type') {
   $self->image_config_type($image_config);
 }
 
-sub set :Deperecated('Use set_user_option') {
+sub set :Deprecated('Use set_user_option') {
   return shift->set_user_option(@_);
 }
 

@@ -137,8 +137,8 @@ sub init_config {
   $self->tree    = $view_config->tree;
   $self->caption = 'Configure view';
   
-  $self->{'json'} = $view_config->{'json'} || {};
-  
+  $self->{'json'} = $view_config->form->{'json'} || {}; #TODO - respect encapsulation
+
   $self->add_image_config_notes($controller) if $image_config;
 }
 
@@ -175,7 +175,7 @@ sub add_image_config_notes {
   $self->add_panel($panel);
 }
 
-sub save_as {
+sub save_as { return '';
   my ($self, $user, $view_config, $image_config) = @_;
   my $hub    = $self->hub;
   my $data   = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
