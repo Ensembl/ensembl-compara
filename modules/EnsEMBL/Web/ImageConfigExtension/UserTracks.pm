@@ -26,6 +26,8 @@ package EnsEMBL::Web::ImageConfig;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Utils::FormatText qw(add_links);
+
 sub load_user_tracks {
   ## Loads tracks attached by user
   my $self = shift;
@@ -106,7 +108,7 @@ sub _load_url_feature_track {
   # if not in the url, get a previous one from session record
   } else {
     $session_record_data = $session->get_record_data({'code' => 'custom_feature', 'type' => 'custom'});
-    if ($session_record_data) {
+    if (keys %$session_record_data) {
       $data   = $session_record_data->{'data'};
       $format = $session_record_data->{'format'};
     }

@@ -22,6 +22,8 @@ package EnsEMBL::Web::ImageConfig::contigviewbottom;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Command::UserData::AddFile;
+
 use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub glyphset_tracks {
@@ -112,7 +114,9 @@ sub update_from_url {
       }
 
       # Don't add if the URL or menu are the same as an existing track
-      if ($session->get_record_data({'type' => 'url', 'code' => $code})) {
+      my $url_record_data = $session->get_record_data({'type' => 'url', 'code' => $code});
+      my $duplicate_record_data = $session->get_record_data({'name' => $n, 'type' => 'url'});
+      if (keys %$url_record_data) {
         $session->set_record_data({
           'type'      => 'message',
           'function'  => '_warning',
@@ -121,7 +125,7 @@ sub update_from_url {
         });
 
         next;
-      } elsif ($session->get_record_data({'name' => $n, 'type' => 'url'})) {
+      } elsif (%$duplicate_record_data) {
         $session->set_record_data({
           'type'      => 'message',
           'function'  => '_error',

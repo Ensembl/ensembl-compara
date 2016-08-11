@@ -31,14 +31,8 @@ use URI::Escape qw(uri_unescape);
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions qw(WebException);
 
-
 use EnsEMBL::Draw::Utils::TextHelper;
 use EnsEMBL::Draw::Utils::Transform;
-
-use EnsEMBL::Web::Utils::FormatText qw(add_links);
-
-use EnsEMBL::Web::Command::UserData::AddFile;
-use EnsEMBL::Web::DBSQL::DBConnection;
 
 use EnsEMBL::Web::DataStructure::DoubleLinkedList;
 
@@ -454,6 +448,19 @@ sub has_extra_menu {
   return $self->{'_extra_menus'}{$menu_name} || 0;
 }
 
+sub modify_configs {
+  ## Modifies given config data on multiple track nodes at once
+  ## @param Arrayref of node ids
+  ## @param Hasref of configs to be updated with keys as config name and value as new value to be set
+  my ($self, $node_ids, $config) = @_;
+
+  foreach my $node (map { $self->get_node($_) || () } @$node_ids) {
+    foreach my $track (grep $_->get_data('node_type') eq 'track', $node, @{$node->get_all_nodes}) {
+      $track->set_data($_, $config->{$_}) for keys %$config;
+    }
+  }
+}
+
 sub get_sortable_tracks {
   ## Get a list of all sortable tracks (after applying user sorting and display preferences)
   ## @param (Optional) if true, will return only the ones that are not hidden
@@ -725,16 +732,6 @@ sub get_track_key {
   my $db_key     = 'DATABASE_' . uc $db;
   my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{lc $logic_name}{'web'}{'key'} || lc $logic_name;
   return join '_', $prefix, $db, $key;
-}
-
-sub modify_configs {
-  my ($self, $nodes, $config) = @_;
-
-  foreach my $node (map { $self->get_node($_) || () } @$nodes) {
-    foreach my $n (grep $_->get_data('node_type') eq 'track', $node, @{$node->get_all_nodes}) {
-      $n->set_data($_, $config->{$_}) for keys %$config;
-    }
-  }
 }
 
 sub _update_missing {
