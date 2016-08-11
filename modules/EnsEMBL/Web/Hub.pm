@@ -38,6 +38,7 @@ use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -59,7 +60,11 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::Tools::FailOver::Wasabi;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
 use base qw(EnsEMBL::Web::Root);
+
+sub viewconfig  :Accessor; # Store viewconfig for the current component being rendered (FIXME - this is done to that param method can return viewconfig param value - causes lots of problems)
 
 sub new {
   my ($class, $controller) = @_;
@@ -98,6 +103,9 @@ sub new {
     _species_info  => {},
     _components    => [],
     _req_cache     => {},
+
+    _view_configs   => {},
+    _image_configs  => {},
   };
 
   bless $self, $class;
@@ -145,7 +153,6 @@ sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub template    :lvalue { $_[0]{'_template'};    }
 sub components  :lvalue { $_[0]{'_components'};  }
-sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
 sub r              { return $_[0]{'_r'}; }
 sub controller     { return $_[0]{'_controller'};     }
@@ -713,64 +720,55 @@ sub glossary_lookup {
   return $self->{'_glossary_lookup'};
 }
 
-# VIEW / IMAGE CONFIGS
-
 sub get_viewconfig {
-  ### Create a new EnsEMBL::Web::ViewConfig object for the component and type passed.
-  ### Stores the ViewConfig as $self->viewconfig if a third argument of "cache" is passed.
+  ## Gets the ViewConfig object for the given component and type
+  ## @param Component name or hashref with keys below:
+  ##  - component Name of the component
+  ##  - type      (Optional) Object type - take default as hub->type
+  ##  - cache     (Optional) Flag kept on if it's the main viewconfig for the current request and thus should be safe to cache it in hub
+  ## TODO - fix this 'cache' bs - it's only needed because 'param' method needs to know the current viewconfig
+  ## @return An instance of EnsEMBL::Web::ViewConfig sub-class
+  my ($self, $params) = @_;
 
-  my $self       = shift;
-  my $component  = shift;
-  my $type       = shift || $self->type;
-  my $cache      = shift eq 'cache';
-  my $session    = $self->session;
-  my $cache_code = "${type}::$component";
-  
-  return undef unless $session;
-  
-  my $view_config = $session->view_configs->{$cache_code};
-  
-  if (!$view_config) {
+  $params = { 'component' => $params } unless ref $params;
+
+  my $component   = $params->{'component'}  || '';
+  my $type        = $params->{'type'}       || $self->type;
+  my $cache_code  = "${type}::$component";
+
+  if (!exists $self->{'_view_configs'}{$cache_code}) {
+
     my $module_name = $self->get_module_names('ViewConfig', $type, $component);
-    
-    return unless $module_name;
-    
-    $view_config = $module_name->new($type, $component, $self);
-    
-    $session->apply_to_view_config($view_config, $cache_code); # $view_config->code and $cache_code can be different
+
+    $self->{'_view_configs'}{$cache_code} = $module_name ? $module_name->new($self, $type, $component) : undef;
   }
-  
-  $self->viewconfig = $view_config if $cache;
-  
-  return $view_config;
+
+  # if it's the main one
+  $self->{'viewconfig'} = $self->{'_view_configs'}{$cache_code} if $params->{'cache'};
+
+  return $self->{'_view_configs'}{$cache_code};
 }
 
 sub get_imageconfig {
-  ### Returns an EnsEMBL::Web::ImageConfig object
-  ### If passed one parameter then it loads the data (and doesn't cache it)
-  ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
-  ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
-  
-  my $self       = shift;
-  my $type       = shift;
-  my $cache_code = shift || $type;
-  my $species    = shift;
-  my $session    = $self->session;
-  
-  return undef unless $session;
-  return $session->image_configs->{$cache_code} if $session->image_configs->{$cache_code};
-  
-  my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
-  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species, $cache_code) : undef;
-  
-  if ($image_config) {
-    $session->apply_to_image_config($image_config, $cache_code);
-    $image_config->initialize;
-  } else {
-    $self->dynamic_use_failure($module_name);
+  ## Gets the ImageConfig object for the given type
+  ## @param Type of the image config required (string) OR Hashref with following keys:
+  ##  - type        Type of the image config required
+  ##  - cache_code  (optional) Cache code to retrieve/save the config in cache (takes type as the cache code if not present)
+  ##  - species     (optional) Species for the image config
+  ## @return An instance of EnsEMBL::Web::ImageConfig sub-class
+  my ($self, $params) = @_;
+
+  $params = { 'type' => $params } unless ref $params;
+
+  my $type        = $params->{'type'};
+  my $species     = $params->{'species'}    || $self->species;
+  my $cache_code  = $params->{'cache_code'} || $type;
+
+  if (!exists $self->{'_image_configs'}{$cache_code}) {
+    $self->{'_image_configs'}{$cache_code} = dynamic_require("EnsEMBL::Web::ImageConfig::$type")->new($self, $species, $type, $cache_code);
   }
-  
-  return $image_config;
+
+  return $self->{'_image_configs'}{$cache_code};
 }
 
 sub fetch_userdata_by_id {
