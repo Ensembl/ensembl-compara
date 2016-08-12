@@ -86,8 +86,9 @@ sub fetch_input {
 		}); 
     $serializer->chunk_factor($chunk_factor);
     $serializer->line_width($seq_width);
+    my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1);
+    $self->compara_dba->dbc->disconnect_if_idle();
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-            my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1);
             foreach my $ref_dnafrag( @$reference_dnafrags ) {
                 next if (($ref_dnafrag->dna_type eq 'MT') and $self->param('dont_dump_MT'));
                 $serializer->print_Seq($ref_dnafrag->slice);
