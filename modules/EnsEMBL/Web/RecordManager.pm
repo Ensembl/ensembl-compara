@@ -190,7 +190,8 @@ sub _query_records {
     my $data    = $record->data;
     my ($column_filter, $column_hash) = @_;
 
-    while (my ($key, $value) = each %$column_filter) {
+    foreach my $key (keys %$column_filter) {
+      my $value     = $column_filter->{$key};
       my $reverse   = $key =~ s/^\!// ? 1 : 0;
       my $cmp_value = ($column_hash->{$key} ? $record->$key : $data->{$key}) // '';
       my $match     = $reverse;
