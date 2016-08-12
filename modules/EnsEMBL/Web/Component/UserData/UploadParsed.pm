@@ -74,10 +74,10 @@ sub content_ajax {
 
   ## Can't find a user record - check session
   unless ($data) {
-    $data = $hub->session->get_data(type => $type, code => $code);
+    $data = $hub->session->get_record_data({type => $type, code => $code});
   }
 
-  return unless $data;
+  return unless keys %$data;
   
   my $format  = $data->{'format'};
   my $html;
@@ -108,7 +108,7 @@ sub content_ajax {
           else {
             $data->{'nearest'}      = $nearest;
             $data->{'description'}  = $description if $description;
-            $session->set_data(%$data);
+            $session->set_record_data($data);
           }
    
           if ($hub->param('count')) { 
@@ -179,7 +179,7 @@ sub content_ajax {
     }
   }
 
-  $session->configure_user_data($type, $data);
+  $hub->configure_user_data($type, $data);
 
   $html .= '<p>Close this window to return to current page</p>';
 

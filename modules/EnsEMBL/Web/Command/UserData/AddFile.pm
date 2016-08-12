@@ -22,25 +22,27 @@ package EnsEMBL::Web::Command::UserData::AddFile;
 ## Attaches or uploads a file and does some basic checks on the format
 
 use strict;
+use warnings;
 
 use List::Util qw(first);
 
 use EnsEMBL::Web::File::AttachedFormat;
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects file_exists);
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-use base qw(EnsEMBL::Web::Command::UserData);
+use parent qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return $self->set_format if $hub->function eq 'set_format';
 
   my $url_params = $self->upload_or_attach;
-  
+
   return $self->ajax_redirect($self->hub->url($url_params));
 }
- 
+
 sub upload_or_attach {
   my ($self, $renderer) = @_;
   my $hub  = $self->hub;
@@ -56,7 +58,7 @@ sub upload_or_attach {
 
   if ($method eq 'text' && $hub->param('text') =~ /^\s*(http|ftp)/) {
     ## Attach the file from the remote URL
-    $url = $hub->param('text'); 
+    $url = $hub->param('text');
     $url =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
 
     ## Move URL into appropriate parameter, because we need to distinguish it from pasted data
@@ -68,7 +70,7 @@ sub upload_or_attach {
     my $format_info = $species_defs->multi_val('DATA_FORMAT_INFO');
     if ($format_info->{lc($format_name)}{'remote'}) {
       $attach = 1;
-    } 
+    }
     elsif (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
       ## Is this an indexed file? Check formats that could be either
       my $tabix_url   = $url.'.tbi';
@@ -95,9 +97,9 @@ sub upload_or_attach {
       else {
         my $package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
 
-        if ($self->dynamic_use($package)) {
+        if (dynamic_require($package, 1)) {
           $attachable = $package->new(%args);
-        } 
+        }
         else {
           $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
         }
@@ -111,7 +113,7 @@ sub upload_or_attach {
   else {
     ## Upload the data
     $url_params = $self->upload($method, $format_name, $renderer, $index_err ? $species_defs->UPLOAD_SIZELIMIT_WITHOUT_INDEX : 0);
-    $url_params->{ __clear}       = 1;
+    $url_params->{__clear}        = 1;
     $url_params->{'action'}       = 'UploadFeedback';
     $url_params->{'record_type'}  = 'upload';
   }
@@ -134,7 +136,7 @@ sub check_for_index {
     $error = $ok_url->{'error'}[0];
   }
   else {
-    my $check = file_exists($ok_url, $args);    
+    my $check = file_exists($ok_url, $args);
     if ($check->{'error'}) {
       $error = $check->{'error'}[0];
     }
@@ -142,14 +144,14 @@ sub check_for_index {
       $index_exists = $check->{'success'};
     }
   }
-  
+
   if ($error) {
-    $self->hub->session->add_data(
+    $self->hub->session->set_record_data({
       type     => 'message',
       code     => 'userdata_upload',
       message  => "Your file has no tabix index, so we have attempted to upload it. If the upload fails (e.g. your file is too large), please provide a tabix index and try again.",
       function => '_warning'
-    );
+    });
   }
   return $index_exists;
 }
@@ -160,9 +162,15 @@ sub set_format {
   my $session = $hub->session;
   my $code    = $hub->param('code');
   my $format  = $hub->param('format');
-  
-  $session->set_data(%{$session->get_data(code => $code)}, format => $format) if $format;
-  
+
+  if ($format) {
+    my $record_data = $session->get_record_data({'code' => $code});
+    if (keys %$record_data) {
+      $record_data->{'format'} = $format;
+      $session->set_record_data($record_data);
+    }
+  }
+
   $self->ajax_redirect($hub->url({
     action   => $format ? 'UploadFeedback' : 'MoreInput',
     function => undef,
