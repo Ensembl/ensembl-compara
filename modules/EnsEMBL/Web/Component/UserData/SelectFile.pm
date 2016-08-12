@@ -23,9 +23,8 @@ package EnsEMBL::Web::Component::UserData::SelectFile;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
 
-use base qw(EnsEMBL::Web::Component::UserData);
+use parent qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
@@ -34,23 +33,15 @@ sub _init {
 }
 
 sub caption {
-  my $self = shift;
   return 'Select File to Upload';
 }
 
 sub content {
-  my $self            = shift;
-  my $hub             = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
   ## Only show this form on 'Manage Data' if there are no records
-  if ($hub->action eq 'ManageData') {
-    my @data = map $hub->session->get_data('type' => $_), qw(upload url nonpositional);
-    return if scalar @data;
-    if ($hub->user) {
-      @data = map $hub->user->get_records($_), qw(uploads urls);
-      return if scalar @data;
-    }
-  }
+  return if $hub->action eq 'ManageData' && @{$self->object->get_userdata_records};
 
   my $sd              = $hub->species_defs;
   my $sitename        = $sd->ENSEMBL_SITETYPE;
