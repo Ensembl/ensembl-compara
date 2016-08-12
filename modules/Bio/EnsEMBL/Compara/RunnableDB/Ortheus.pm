@@ -1073,6 +1073,8 @@ sub _dump_fasta {
     print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
 
+    $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
 # my $slice = $dfr->dnafrag->slice->sub_Slice($dfr->dnafrag_start,$dfr->dnafrag_end,$dfr->dnafrag_strand);
  
     my $slice = $dfr->slice;
@@ -1087,6 +1089,8 @@ sub _dump_fasta {
     print F $seq,"\n";
 
     close F;
+
+    } );
 
     push @{$self->param('fasta_files')}, $file;
     push @{$self->param('species_order')}, $dfr->dnafrag->genome_db_id;
