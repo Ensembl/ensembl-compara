@@ -124,7 +124,7 @@ sub _species_tree_node_id {
     ## Leaves don't have species_tree_node_id tag, so this value has to be taken from the GeneTreeMember (via its genome_db_id);
     if (not $self->has_tag('species_tree_node_id') and $self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         $self->tree->species_tree->attach_to_genome_dbs() unless $self->genome_db->_species_tree_node_id;
-        $self->add_tag('species_tree_node_id', $self->genome_db->_species_tree_node_id);
+        $self->{'_tags'}->{'species_tree_node_id'} = $self->genome_db->_species_tree_node_id;
     }
 
     return $self->get_value_for_tag('species_tree_node_id')
