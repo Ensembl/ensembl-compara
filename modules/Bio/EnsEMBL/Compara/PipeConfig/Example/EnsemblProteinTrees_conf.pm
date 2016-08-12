@@ -244,7 +244,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
-        'prev_rel_db' => 'mysql://ensro@compara5:3306/cc21_ensembl_compara_84',
+        'prev_rel_db' => 'mysql://ensro@compara5:3306/wa2_ensembl_compara_85',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
