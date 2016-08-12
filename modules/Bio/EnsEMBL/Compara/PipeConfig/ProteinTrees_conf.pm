@@ -1328,7 +1328,7 @@ sub core_pipeline_analyses {
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },
              -hive_capacity => $self->o('HMMer_classifyPantherScore_capacity'),
-             -rc_name => '4Gb_job_gpfs',
+             -rc_name => '4Gb_job',
             },
 
             {
