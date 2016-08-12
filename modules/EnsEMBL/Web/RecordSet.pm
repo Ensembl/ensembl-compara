@@ -26,6 +26,8 @@ use warnings;
 
 use overload qw(bool count);
 
+use EnsEMBL::Web::Exceptions qw(ORMException);
+
 our $AUTOLOAD;
 
 sub new {
@@ -41,9 +43,17 @@ sub save {
   ## Saves all the records in the set
   my ($self, $args) = @_;
 
+  my $count = 0;
+
   $args = {'changes_only' => 1, %{$args || {}}};
 
-  return scalar grep { $_->save(%$args) } @$self;
+  try {
+    $count = scalar grep { $_->save(%$args) } @$self;
+  } catch {
+    throw ORMException($_->message(1));
+  };
+
+  return $count;
 }
 
 sub delete {
