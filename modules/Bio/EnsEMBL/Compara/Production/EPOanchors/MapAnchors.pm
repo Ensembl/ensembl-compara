@@ -69,6 +69,11 @@ sub param_defaults {
     }
 }
 
+sub pre_cleanup {
+	my ($self) = @_;
+        $self->compara_dba->dbc->do('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?', undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+}
+
 sub fetch_input {
 	my ($self) = @_;
         $self->dbc->disconnect_if_idle();
