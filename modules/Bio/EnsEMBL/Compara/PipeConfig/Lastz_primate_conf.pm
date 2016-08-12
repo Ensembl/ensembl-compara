@@ -83,8 +83,8 @@ sub default_options {
 					       'overlap'    => 0,
 					       'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
 					                                      #0  => do not include non_reference regions
-					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
-					                                      #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
+					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species has a karyotype
+					                                      #since these analyses are the only ones we keep up-to-date with the patches-pipeline, with the exception of self-alignments)
                                                'masking_options' => '{default_soft_masking => 1}'},
 			    #primate
    			    'non_reference' => {'chunk_size'      => 10100000,

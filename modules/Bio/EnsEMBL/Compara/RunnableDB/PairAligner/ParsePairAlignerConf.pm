@@ -153,26 +153,17 @@ sub write_output {
 	my $ref_genome_db = $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'genome_db'};
 	#If include_non_reference is in auto-detect mode (-1), need to auto-detect!
-	#Auto-detect if need to use patches ie only use patches if the non-reference species has chromosomes
+	#Auto-detect if need to use patches ie only use patches if the non-reference species has a karyotype
 	#(because these are the only analyses that we keep up-to-date by running the patch-pipeline)
+        #with the exception of self-alignments
 
 	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} && 
             $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} == -1) {
-	    if (defined $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
-		my ($coord_system_name, $name) = split ":", $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
-		if ($coord_system_name eq 'chromosome') {
+		if($non_ref_genome_db->has_karyotype && ($non_ref_genome_db->dbID != $ref_genome_db->dbID)){
 		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
 		} else {
 		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
 		}
-
-	    } else {
-		if($non_ref_genome_db->has_karyotype){
-		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
-		} else {
-		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
-		}
-	    }
 	}
 	
         if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
