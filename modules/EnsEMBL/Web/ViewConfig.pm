@@ -130,7 +130,7 @@ sub set_default_options {
   }
 }
 
-sub set_user_option {
+sub set_user_setting {
   ## Sets an option to the given value (Value set by the user)
   ## TODO - $force?
   my ($self, $key, $value, $force) = @_;
@@ -138,7 +138,11 @@ sub set_user_option {
   my $user_settings = $self->get_user_settings;
 
   if (($force || exists $self->{'options'}{$key}) && (!exists $user_settings->{$key} || !is_same($user_settings->{$key}, $value))) {
-    $user_settings->{$key} = $value;
+    if (is_same($self->{'options'}{$key}, $value)) {
+      delete $user_settings->{$key};
+    } else {
+      $user_settings->{$key} = $value;
+    }
     return 1;
   }
   return 0;
@@ -197,7 +201,7 @@ sub update_from_url {
         $self->altered('Image Width');
       }
 
-      $self->altered(1) if $self->set_user_option($config_key, $config_val);
+      $self->altered(1) if $self->set_user_setting($config_key, $config_val);
     }
 
     if ($self->is_altered) {
@@ -242,7 +246,7 @@ sub update_from_input {
     foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
       my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
-      $self->altered($key) if $self->set_user_option($key, @values > 1 ? \@values : $values[0]);
+      $self->altered($key) if $self->set_user_setting($key, @values > 1 ? \@values : $values[0]);
     }
   }
 
@@ -342,7 +346,7 @@ sub add_image_config :Deprecated('Use method image_config_type') {
   $self->image_config_type($image_config);
 }
 
-sub set :Deprecated('Use set_user_option') {
+sub set :Deprecated('Use set_user_setting') {
   return shift->set_user_option(@_);
 }
 
