@@ -77,7 +77,7 @@ sub fetch_input {
 	my $dnafrag_adaptor = $self->compara_dba()->get_adaptor("DnaFrag");
 	my $genome_dump_file = "$seq_dump_loc/genome_seq";
     $self->param('genome_dump_file', $genome_dump_file);
-	open(my $filehandle, ">$genome_dump_file") or die "cant open $genome_dump_file\n";
+	open(my $filehandle, '>', $genome_dump_file) or die "cant open $genome_dump_file\n";
     my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle,
 		  sub{
 			my $slice = shift;
