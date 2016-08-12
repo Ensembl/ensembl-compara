@@ -85,10 +85,11 @@ sub fetch_input {
         my $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
-	open F, ">$query_file" || throw("Couldn't open $query_file");
+	open(my $fh, '>', $query_file) || throw("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
-		print F ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
+		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 	}
+        close($fh);
         $sth->finish;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
@@ -107,7 +108,7 @@ sub run {
 	my $command = join(" ", $program, $option_st, $query_file, $target_file); 
 	print $command, "\n";
 	my $out_fh;
-	open( $out_fh, "$command |" ) or throw("Error opening exonerate command: $? $!"); #run mapping program
+	open( $out_fh, '-|', $command ) or throw("Error opening exonerate command: $? $!"); #run mapping program
 	$self->param('out_file', $out_fh);
 }
 
