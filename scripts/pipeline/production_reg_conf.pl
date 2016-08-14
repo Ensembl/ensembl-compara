@@ -41,16 +41,26 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 Bio::EnsEMBL::Registry->load_registry_from_url(
   'mysql://ensro@ens-staging2/86');
 
-# Extra core databases that live on genebuilders' servers:
-Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'genebuild12',
-    -user => 'ensro',
-    -port => 3306,
-    -species => 'gallus_gallus',
-    -group => 'core',
-    -dbname => 'th3_chicken_core_mt',
-);
+# # Extra core databases that live on genebuilders' servers:
+# Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
+# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+#     -host => 'genebuild12',
+#     -user => 'ensro',
+#     -port => 3306,
+#     -species => 'gallus_gallus',
+#     -group => 'core',
+#     -dbname => 'th3_chicken_core_mt',
+# );
+
+# Bio::EnsEMBL::Registry->remove_DBAdaptor('mus_musculus', 'core'); # deregister old version
+# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+#     -host => 'ens-staging2',
+#     -user => 'ensro',
+#     -port => 3306,
+#     -species => 'mus_musculus',
+#     -group => 'core',
+#     -dbname => 'mus_musculus_core_86_38',
+# );
 
 
 # ------------------------- COMPARA DATABASES: -----------------------------------
