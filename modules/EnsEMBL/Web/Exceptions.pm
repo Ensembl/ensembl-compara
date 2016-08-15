@@ -52,7 +52,7 @@ sub import {
 
         my $exception_class_name = "${EXCEPTION_BASE}::${exception_name}";
 
-        eval { require $exception_class_name };
+        eval "require $exception_class_name";
 
         $EXCEPTION_CLASS{$exception_name} = $@ ? $EXCEPTION_BASE : $exception_class_name;
         $@ = undef;
