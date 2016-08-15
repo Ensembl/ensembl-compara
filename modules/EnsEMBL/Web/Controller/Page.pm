@@ -101,8 +101,13 @@ sub update_configuration_for_request {
 
   # now update all the view configs accordingly
   for (@view_config) {
-    $_->update_from_input({ %inp_params }) if keys %inp_params; # avoid passing reference to the original hash to prevent manipulation
-    $do_redirect++ if keys %url_params && $_->update_from_url({ %url_params });
+    if (keys %inp_params) {
+      $_->update_from_input({ %inp_params }); # avoid passing reference to the original hash to prevent manipulation
+    }
+    if (keys %url_params) {
+      $_->update_from_url({ %url_params });
+      $do_redirect++;
+    }
   }
 
   if ($do_redirect) {
