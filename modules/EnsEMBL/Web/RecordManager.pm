@@ -57,6 +57,10 @@ sub record_type_id :Abstract;
   ## @abstract
   ## @return id of the session/user against which the records are saved (value for record_type_id column  in record table)
 
+sub has_changes :AccessorMutator;
+  ## @param Flag passed as true if some changes have been made to records
+  ## @return Flag if true means changes have been made to the records
+
 sub records {
   ## Gets all the records for the given filter
   ## @param String type, or hasref with keys to filter all session records or subroutine callback to be passed to 'grep' for all records
@@ -96,12 +100,7 @@ sub get_record_data {
   my $self    = shift;
   my $record  = $self->record(@_);
 
-  return {} unless $record->count;
-
-  my $data = $record->data->raw;
-  $data->{$_} = $record->$_ for @{$self->_record_column_names};
-
-  return $data;
+  return $record->count ? $self->_get_record_data($record) : {};
 }
 
 sub set_record_data {
@@ -148,7 +147,21 @@ sub set_record_data {
   # update column values
   $record->$_($row->{$_}) for keys %$row;
 
-  return $record->save;
+  # type and code are required
+  throw WebException(q(Record can not be created without 'type' and 'code.)) unless $record->type && $record->code;
+
+  $self->has_changes(1);
+
+  return $record->save ? $self->_get_record_data($record) : {};
+}
+
+sub get_records_data {
+  ## Gets the records and converts them into hashes
+  ## @params Filter arguments, same as records method
+  ## @return List of Hashrefs
+  my $self = shift;
+
+  return map $self->_get_record_data($_), @{$self->records(@_)};
 }
 
 sub delete_records {
@@ -163,14 +176,27 @@ sub delete_records {
   $self->{'_record_set'} = $self->records(sub { return !$_[0]->{$_->record_id}; }, { map { $_->record_id => 1 } @$to_delete });
 
   # delete the records from db
+  $self->has_changes(1);
   return $to_delete->delete;
 }
 
 sub store_records {
   ## Does a final commit to db for all the changes
-  my $self = shift;
+  ## @param Force - if true will made commit changes even if has_changes flag is false
+  my ($self, $force) = @_;
 
-  $self->_commit_transaction;
+  $self->_commit_transaction if $force || $self->has_changes;
+}
+
+sub _get_record_data {
+  ## @private
+  ## Converts a record to a hash by using columns as keys and combining key from 'data' column
+  my ($self, $record) = @_;
+
+  my $data = $record->data->raw;
+  $data->{$_} = $record->$_ for @{$self->_record_column_names};
+
+  return $data;
 }
 
 sub _record_column_names {
