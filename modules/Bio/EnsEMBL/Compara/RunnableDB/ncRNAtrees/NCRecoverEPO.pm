@@ -360,6 +360,11 @@ sub run_low_coverage_best_in_alignment {
   foreach my $gdb_id (keys %{$hc_gdb_id}) {
 
    my $genome_db = $gdb_per_dbID{$gdb_id};
+   if (! defined $genome_db){
+       $self->warning("genome_db_id: $gdb_id is not found in the current DB. Probably an old id was being used.");
+       next;
+   }
+
    my $gdb_name = $genome_db->name;
    print STDERR "doing $gdb_name\n" if $self->debug;
 
@@ -391,6 +396,10 @@ sub run_low_coverage_best_in_alignment {
   foreach my $gdb_id (keys %{$lc_gdb_id}) {
 
    my $genome_db = $gdb_per_dbID{$gdb_id};
+   if (! defined $genome_db){
+       $self->warning("genome_db_id: $gdb_id is not found in the current DB. Probably an old id was being used.");
+       next;
+   }
    my $gdb_name = $genome_db->name;
    print STDERR "working on $gdb_name\n" if $self->debug;
    my $leaves = $members_per_genome_db_id{$gdb_id};
