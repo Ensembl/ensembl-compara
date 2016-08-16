@@ -171,7 +171,7 @@ sub store_ncrna_gene {
         next if ($merged_short_and_long_ncRNA and ($transcript->biotype eq 'lincRNA'));
 
         if (defined $transcript->translation) {
-            warn ("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=", transcript->dbID. ")\n");
+            warn ("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=", $transcript->dbID. ")\n");
             next;
         }
 
