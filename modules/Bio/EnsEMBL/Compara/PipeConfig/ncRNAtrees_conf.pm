@@ -118,6 +118,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'master_db'     => $self->o('master_db'),
 
         'skip_epo'      => $self->o('skip_epo'),
+        'epo_db'        => $self->o('epo_db'),
+
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
     }
