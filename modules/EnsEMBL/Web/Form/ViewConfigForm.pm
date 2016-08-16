@@ -189,6 +189,9 @@ sub _build_imageconfig_form {
     $tree->prepend_node('active_tracks', { caption => 'Active tracks', class => 'active_tracks', availability => 1, url => '#', rel => 'multi' });
   }
 
+  # Move user data/external data to top
+  _prioritize_userdata_menus($ic_root_node);
+
   # Delete empty menus nodes
   _remove_disabled_menus($ic_root_node);
 
@@ -500,6 +503,15 @@ sub add_species_fieldset {
       'value'     => 'yes',
     });
   }
+}
+
+sub _prioritize_userdata_menus {
+  ## @private
+  ## Moves the user data menus and externally added tracks to top
+  my $node = shift;
+
+  $node->prepend_child($node->remove_child($_)) for sort {lc $a->get_data('caption') cmp lc $b->get_data('caption')} grep $_->get_data('external'), @{$node->child_nodes};
+  $node->prepend_child($node->remove_child($_)) for grep $_->id eq 'user_data', @{$node->child_nodes};
 }
 
 sub _remove_disabled_menus {
