@@ -1407,6 +1407,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
             },
+            -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into  => [ 'hcluster_run' ],
         },
