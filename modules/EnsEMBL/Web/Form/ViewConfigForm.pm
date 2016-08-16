@@ -266,7 +266,7 @@ sub _add_imageconfig_menu {
       my $parent = $div->append_child('div', {'class' => 'subset' . (scalar @child_nodes > 1 ? ' first' : '') })->append_child('ul', { 'class' => "config_menu $section" }); # Add a subset div to keep the HTML consistent
 
       $self->_build_imageconfig_menus($_, $parent, $section) for @child_nodes;
-      $self->add_select_all($node, $parent, $section);
+      $self->_add_select_all($node, $parent, $section);
     }
   }
 
@@ -327,7 +327,7 @@ sub _build_imageconfig_menus {
     }
 
     $self->_build_imageconfig_menus($_, $element, $menu_class, $submenu_class) for grep !$_->get_data('cloned'), @{$node->child_nodes};
-    $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
+    $self->_add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
     my $img_url     = $self->view_config->species_defs->img_url;
     my @states      = @{$node->get_data('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
@@ -431,7 +431,7 @@ sub _build_imageconfig_menus {
   }
 }
 
-sub add_select_all { # TODO - move the functionality to JS
+sub _add_select_all {
   my ($self, $node, $menu, $id) = @_;
 
   return if $node->get_data('menu') eq 'hidden';
