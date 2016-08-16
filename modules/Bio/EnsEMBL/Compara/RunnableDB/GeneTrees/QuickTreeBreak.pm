@@ -411,10 +411,12 @@ sub generate_subtrees {
     $supertree_leaf1->add_child($cluster1->root);
     $supertree_leaf1->tree($supertree);
     $attach_node->add_child($supertree_leaf1, $max_subtree->distance_to_parent/2);
+    $cluster1->root->{'_different_tree_object'} = 1;
     
     $supertree_leaf2->add_child($cluster2->root);
     $supertree_leaf2->tree($supertree);
     $attach_node->add_child($supertree_leaf2, $max_subtree->distance_to_parent/2);
+    $cluster2->root->{'_different_tree_object'} = 1;
 
     $max_subtree->disavow_parent;
 
