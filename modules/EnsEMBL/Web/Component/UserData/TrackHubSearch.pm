@@ -77,7 +77,7 @@ sub content {
       my $current_species = $hub->data_species;
 
       my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
-          'class'             => 'check',
+          'class'             => 'bgcolour',
           'no_button'         => 1
       });
 
