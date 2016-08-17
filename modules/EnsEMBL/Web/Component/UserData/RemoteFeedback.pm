@@ -24,6 +24,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -103,7 +104,7 @@ sub get_message {
   }
 
   if ($trackhub_ok) {
-    (my $menu_name = $hub->param('name')) =~ s/ /_/g;
+    my $menu_id     = clean_id($hub->param('name'));
     my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
     my $current_loc = $hub->referer->{'params'}->{'r'}[0];
@@ -114,7 +115,7 @@ sub get_message {
                           function  => undef,
                           r         => $current_loc || $default_loc,
               });
-    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_name);
+    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_id);
   }
 
   if ($try_archive) {
