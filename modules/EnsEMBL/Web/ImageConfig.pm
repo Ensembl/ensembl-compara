@@ -176,7 +176,7 @@ sub apply_user_settings {
 
       # if changing the track renderer
       if ($setting eq 'display') {
-        $self->update_track_renderer($track_key, $value // '');
+        $self->update_track_renderer($node, $value // '');
       } else {
         $node->set_user_setting($setting, $value) if defined $value;
       }
@@ -289,12 +289,14 @@ sub update_from_input {
 
 sub update_track_renderer {
   ## Updated renderer for a given track
-  ## @param Track key
+  ## @param Track node or Track key
   ## @param Renderer string
   ## @return Track name if renderer changed
-  my ($self, $key, $renderer) = @_;
+  my ($self, $node, $renderer) = @_;
 
-  if (my $node = $self->get_node($key)) {
+  $node = $self->get_node($node) unless ref $node;
+
+  if ($node) {
 
     if (my $renderers = $node->get_data('renderers')) {
 
