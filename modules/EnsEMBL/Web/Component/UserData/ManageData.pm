@@ -20,7 +20,6 @@ limitations under the License.
 package EnsEMBL::Web::Component::UserData::ManageData;
 
 use strict;
-use warnings;
 
 use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
