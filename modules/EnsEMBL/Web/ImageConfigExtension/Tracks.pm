@@ -25,6 +25,7 @@ package EnsEMBL::Web::ImageConfig;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 sub load_tracks {
   ## Loop through core/compara/funcgen/variation like dbs and loads in various database derived tracks
@@ -208,19 +209,21 @@ sub _add_matrix {
     my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
     my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
 
-    my $node = $self->create_option_node($option_key, $_->{'row'}, {
-      menu      => 'no',
-      display   => $display,
-      renderers => [qw(on on off off)],
-      caption   => "$column - $_->{'row'}",
-      group => $_->{'group'},
-    });
+  # $option_key, $caption, $display, $values, $renderers
+
+    my $node = $self->create_option_node($option_key, $_->{'row'}, $display, undef, [qw(on on off off)]);
+
+    $node->set_data('menu', 'no');
+    $node->set_data('caption', "$column - $_->{'row'}");
+    $node->set_data('group', $_->{'group'}) if $_->{'group'};
+
     ## Hack to get trackhub matrix visibility to work
-    if ($display eq 'on' && $name) { # $name is only present for trackhubs
-      my $renderer = $data->{'display'} || $data->{'renderers'}[2] || 'normal';
-      $node->{'user_data'}{$option_key} ||= {'display' => 'on',       'hack' => 1}; # do not overwrite - user may have changed it himself if it's present already
-      $node->{'user_data'}{$name}       ||= {'display' => $renderer,  'hack' => 1}; # change individual track renderer along with the cell display
-    }
+#     if ($display eq 'on' && $name) { # $name is only present for trackhubs
+#       my $renderer = $data->{'display'} || $data->{'renderers'}[2] || 'normal';
+#       $node->{'user_data'}{$option_key} ||= {'display' => 'on',       'hack' => 1}; # do not overwrite - user may have changed it himself if it's present already
+#       $node->{'user_data'}{$name}       ||= {'display' => $renderer,  'hack' => 1}; # change individual track renderer along with the cell display
+#     }
+
     $column_track->append_child($node);
 
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };

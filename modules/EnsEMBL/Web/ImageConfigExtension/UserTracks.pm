@@ -25,7 +25,9 @@ package EnsEMBL::Web::ImageConfig;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
+use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
 sub load_user_tracks {
@@ -225,7 +227,7 @@ sub _load_uploaded_tracks {
     my $data    = $record->data;
     my $is_user = $record->record_type ne 'session'; # both user and group
 
-    my ($strand, $renderers, $default) = $self->_user_track_settings($data->{'style'}, $data->{'format'});
+    my ($strand, $renderers, $default) = $self->_user_track_settings($data->{'style'} // '', $data->{'format'} // '');
 
     $strand         = $data->{'strand'}     // $strand;
     $renderers      = $data->{'renderers'}  // $renderers;
@@ -282,6 +284,7 @@ sub _add_trackhub {
     }
     foreach my $assembly (@$assemblies) {
       $node = $hub_info->{'genomes'}{$assembly}{'tree'};
+      $node = $node->root if $node;
       last if $node;
     }
     if ($node) {
