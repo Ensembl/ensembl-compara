@@ -237,11 +237,11 @@ sub attach {
 
           $code = $data->{'code'};
           # Store last uploaded userdata to highlight on pageload
-          $hub->session->set_record_data(
+          $hub->session->set_record_data({
             type => 'userdata_upload_code',
             code => $code,
             upload_code => $code
-          );    
+          });
           $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
         }
       }
