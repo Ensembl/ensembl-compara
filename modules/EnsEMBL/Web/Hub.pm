@@ -951,4 +951,52 @@ sub create_padded_region {
   return $padded;
 }
 
+sub configure_user_data {
+  my ($self, @track_data) = @_;
+  my $species = $self->species;
+
+  foreach my $view_config (map { $self->get_viewconfig(@$_) || () } @{$self->components}) {
+    my $ic_code = $view_config->image_config;
+
+    next unless $ic_code;
+
+    my $image_config = $self->get_imageconfig($ic_code, $ic_code . time);
+    my $vertical     = $image_config->orientation eq 'vertical';
+
+    while (@track_data) {
+      my ($track_type, $track) = (shift @track_data, shift @track_data);
+      next unless $track->{'species'} eq $species;
+
+      my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
+
+      if (scalar @nodes) {
+        foreach (@nodes) {
+          my $renderers = $_->get_data('renderers');
+          my %valid     = @$renderers;
+          if ($vertical) {
+            $_->set_user_setting('ftype', $track->{'ftype'});
+            $_->set_user_setting('display', $track->{'style'} || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
+          } else {
+            my $default_display = $_->get_data('default_display') || 'normal';
+            $_->set_user_setting('display', $valid{$default_display} ? $default_display : $renderers->[2]);
+          }
+          $image_config->altered($_->data->{'name'} || $_->data->{'coption'});
+        }
+
+        $image_config->{'code'} = $ic_code;
+        $view_config->altered(1);
+      }
+    }
+  }
+}
+
+sub store_records_if_needed {
+  my $self    = shift;
+  my $session = $self->session;
+  my $user    = $self->user;
+
+  $session->store_records if $session;
+  $user->store_records if $user;
+}
+
 1;
