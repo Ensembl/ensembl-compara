@@ -40,7 +40,7 @@ sub new {
     $container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
     
     my @chromosomes = ($container->{'chr'});
-    my @configs     = $config->get_tracks;
+    my @configs     = @{$config->get_tracks};
     my $scalex      = $config->get_parameter('image_height') / $config->get_parameter('container_width');
     my $pos         = 100000;
     my $tmp         = {};
