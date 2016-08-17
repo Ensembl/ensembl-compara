@@ -98,7 +98,7 @@ sub init_cacheable {
     'multi_species'     => 0,               # is it a multi species image?
     'margin'            => 5,
     'spacing'           => 2,
-    'label_width'       => 113,             # width of the labels on the left hand side of the image
+    'label_width'       => 130,             # width of the labels on the left hand side of the image
     'slice_number'      => '1|1',
     'bgcolor'           => 'background1',
     'top_toolbar'       => 1,
