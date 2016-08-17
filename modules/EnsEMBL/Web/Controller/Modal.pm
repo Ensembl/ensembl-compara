@@ -21,6 +21,8 @@ package EnsEMBL::Web::Controller::Modal;
 
 use strict;
 
+use EnsEMBL::Web::Exceptions qw(InvalidRequest);
+
 use base qw(EnsEMBL::Web::Controller::Page);
 
 sub page_type { return 'Popup'; }
@@ -31,6 +33,11 @@ sub init {
 
   $self->_create_objects;
   $self->renderer->{'_modal_dialog_'} = $self->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' || $self->hub->param('X-Requested-With') eq 'iframe'; # Flag indicating that this is modal dialog panel, loaded by AJAX/hidden iframe
+
+  if (!$self->renderer->{'_modal_dialog_'}) {
+    throw InvalidRequest('Modal window can not served as a separate page');
+  }
+
   $self->page->initialize; # Adds the components to be rendered to the page module
   $self->configure;
   $self->render_page;
@@ -41,6 +48,13 @@ sub _create_objects {
   my $self = shift;
 
   $self->builder->create_objects unless !scalar grep $_, values %{$self->hub->core_params};
+}
+
+sub render_page {
+  my $self = shift;
+
+  $self->r->content_type('application/json');
+  $self->SUPER::render_page(@_);
 }
 
 1;
