@@ -151,13 +151,13 @@ sub _add_track {
     %$options
   };
 
-  $self->_add_matrix($data, $menu, $name) if $data->{'matrix'};
+  $self->_add_matrix($data, $menu) if $data->{'matrix'};
 
   return $menu->append_child($self->create_track_node($name, $data->{'name'}, $data));
 }
 
 sub _add_matrix {
-  my ($self, $data, $menu, $name) = @_;
+  my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
   my $caption      = $data->{'caption'};
@@ -206,27 +206,21 @@ sub _add_matrix {
   }
 
   foreach (@rows) {
-    my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
-    my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
+    my $option_key  = "${subset}_${column}_$_->{'row'}";
+    my $node        = $self->get_node($option_key);
+    my $display     = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
 
-  # $option_key, $caption, $display, $values, $renderers
+    if ($node) {
+      $node->set_data('display', 'on') if $display eq 'on';
+    } else {
 
-    my $node = $self->create_option_node($option_key, $_->{'row'}, $display, undef, [qw(on on off off)]);
+      $node = $column_track->append_child($self->create_option_node($option_key, $_->{'row'}, $display, undef, [qw(on on off off)]));
 
-    $node->set_data('menu', 'no');
-    $node->set_data('caption', "$column - $_->{'row'}");
-    $node->set_data('group', $_->{'group'}) if $_->{'group'};
-
-    ## Hack to get trackhub matrix visibility to work
-#     if ($display eq 'on' && $name) { # $name is only present for trackhubs
-#       my $renderer = $data->{'display'} || $data->{'renderers'}[2] || 'normal';
-#       $node->{'user_data'}{$option_key} ||= {'display' => 'on',       'hack' => 1}; # do not overwrite - user may have changed it himself if it's present already
-#       $node->{'user_data'}{$name}       ||= {'display' => $renderer,  'hack' => 1}; # change individual track renderer along with the cell display
-#     }
-
-    $column_track->append_child($node);
-
-    $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
+      $node->set_data('menu', 'no');
+      $node->set_data('caption', "$column - $_->{'row'}");
+      $node->set_data('group', $_->{'group'}) if $_->{'group'};
+      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
+    }
   }
 
   return $column_track;
