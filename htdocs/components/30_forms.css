@@ -437,6 +437,10 @@ div.filterable-dropdown p.filterable-dropdown-nomatch {
   padding: 3px 3px 1px;
 }
 
+div.species-tag           { padding-left: 23px; width: 189px; background-repeat: no-repeat; background-position: 2px 2px; }
+div.species-tag.disabled  { background-color: #f0f0f0; border: 1px solid #cccccc; color: #cccccc; }
+div.species-tag img       { display: block; float: left; margin: 2px 5px 2px 2px; }
+
 /* Override the standard layout */
 
 form.freeform,
