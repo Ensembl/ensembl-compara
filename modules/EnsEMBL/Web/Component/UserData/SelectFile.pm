@@ -50,7 +50,7 @@ sub content {
 
   my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {
     'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
-    'class'             => 'check',
+    'class'             => 'check bgcolour',
     'no_button'         => 1
   });
 
@@ -61,25 +61,24 @@ sub content {
   # Create a data structure for species, with display labels and their current assemblies
   my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
 
-  # Create HTML for showing/hiding assembly names to work with JS
-  my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
-
+  # Species dropdown list
   $fieldset->add_field({
-    'type'          => 'dropdown',
-    'name'          => 'species',
     'label'         => 'Species',
-    'values'        => \@species,
-    'value'         => $current_species,
-    'class'         => '_stt'
-  });
-
-  $fieldset->add_field({
-    'type'          => 'noedit',
-    'label'         => 'Assembly',
-    'name'          => 'assembly_name',
-    'value'         => $assembly_names,
-    'no_input'      => 1,
-    'is_html'       => 1,
+    'elements'      => [{
+      'type'          => 'speciesdropdown',
+      'name'          => 'species',
+      'values'        => [ map {
+        'value'         => $_->{'value'},
+        'caption'       => $_->{'caption'},
+        'class'         => '_stt',
+        'checked'       => $_->{'value'} eq $current_species ? 1 : 0
+      }, @species ]
+    }, {
+      'type'          => 'noedit',
+      'value'         => 'Assembly: '. join('', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, $_->{'assembly'} } @species),
+      'no_input'      => 1,
+      'is_html'       => 1
+    }]
   });
 
   $fieldset->add_field({
