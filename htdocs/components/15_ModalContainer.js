@@ -256,7 +256,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       },
       error: function (e) {
          if (e.status !== 0) {
-          contentEl.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request failed to load.</p></div></div>');
+          contentEl.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request failed to load.</p><pre></pre></div></div>').find('pre').text(e.responseText);
         }
       },
       complete: function () {
