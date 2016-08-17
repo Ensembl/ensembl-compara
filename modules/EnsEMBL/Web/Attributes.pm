@@ -64,6 +64,17 @@ sub Abstract {
   };
 }
 
+sub Cacheable {
+  ## Attribute to declare a method that should cache its output in a key and return the cached value in further calls
+  ## @param Key name where the cached return value should be saved (defaults to method name)
+  my ($package, $code, $glob, $method, $key) = @_;
+  *{$glob} = sub {
+    my $object = shift;
+    $object->{$key // $method} = $code->($object, @_) unless exists $object->{$key // $method};
+    return $object->{$key // $method};
+  };
+}
+
 sub Deprecated {
   ## Attribute to declare a method to have been deprecated
   ## It modifies the code to print a warning to stderr before calling the actual method
