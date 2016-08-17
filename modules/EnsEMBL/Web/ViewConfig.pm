@@ -28,6 +28,7 @@ use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
+use EnsEMBL::Web::Form::ViewConfigMatrix;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
 
 use parent qw(EnsEMBL::Web::Config);
@@ -279,7 +280,13 @@ sub init_form_non_cacheable {
 
 sub form {
   my $self = shift;
-  return $self->{'form'} ||= EnsEMBL::Web::Form::ViewConfigForm->new($self, sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
+
+  if (!$self->{'form'}) {
+    my $view = $self->hub->param('matrix') ? 'EnsEMBL::Web::Form::ViewConfigMatrix' : 'EnsEMBL::Web::Form::ViewConfigForm';
+    $self->{'form'} = $view->new($self, sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
+  }
+
+  return $self->{'form'};
 }
 
 sub add_fieldset {
