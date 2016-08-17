@@ -93,6 +93,7 @@ sub process {
   $hub->qstore_open;
   $self->init;
   $hub->qstore_close;
+  $hub->store_records_if_needed;
 }
 
 sub query_form {
@@ -148,7 +149,7 @@ sub init_cache {
     'page'    => sprintf('PAGE_%s', $self->page_type),
     'path'    => sprintf('PATH_%s', join('/', @{$self->path_segments})),
     'query'   => sprintf('Q_%s', join(';', sort map sprintf('%s=%s', $_, join(',', sort @{$query->{$_}})), keys %$query) || ''), # stringify the url query hash
-    'session' => sprintf('SESSION_%s', $hub->session->session_id),
+    'session' => sprintf('SESSION_%s', $hub->session),
     'mac'     => $agent =~ /Macintosh/ ? 'MAC' : '',
     'ie'      => $agent =~ /MSIE (\d+)/ ? "IE_$1" : '',
   });
@@ -411,9 +412,9 @@ sub configure {
   
   if ($node) {
     $self->node    = $node;
-    $self->command = $node->data->{'command'};
-    $self->filters = $node->data->{'filters'};
-    $template      = $node->data->{'template'} || $configuration->default_template;
+    $self->command = $node->get_data('command');
+    $self->filters = $node->get_data('filters');
+    $template      = $node->get_data('template') || $configuration->default_template;
   }
   $hub->template = $template || 'Legacy';  
 
