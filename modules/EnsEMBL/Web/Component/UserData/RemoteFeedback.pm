@@ -91,7 +91,7 @@ sub get_message {
   elsif ($reattach) {
     $message = $messages{'hub_'.$reattach}{'message'};
     ## Internally configured hub
-    if ($reattach == 'preconfig') {
+    if ($reattach eq 'preconfig') {
       $trackhub_ok = 0;
       my $link = $hub->url({'type' => 'Config', 'action' => 'Location', 'function' => 'ViewBottom'});
       my $menu = $hub->param('menu') || '';
@@ -103,6 +103,8 @@ sub get_message {
     $message = $messages{'hub_ok'}{'message'};
   }
 
+  ## We should only reach this step if the trackhub has a mixture of available species/assemblies 
+  ## and unavailable ones, and therefore we want to warn the user before proceeding
   if ($trackhub_ok) {
     my $menu_id     = clean_id($hub->param('name'));
     my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
