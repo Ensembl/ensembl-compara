@@ -54,12 +54,16 @@ sub check_data {
     if ($hc_error) {
       ## Parse and ignore issues we don't care about
       my @lines = split /\n/, $hc_error;
+      my @error_lines;
       my $problematic = 0;
       for my $line (@lines) {
         next if $line =~ m/deprecated|cram|^Found\s[0-9]*\sproblems?:$/;
-        $problematic = 1;
+        push @error_lines, $line;
       }
-      $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>. Please contact the creator of this hub if you wish to use it with Ensembl.</p>) if $problematic;
+      if (scalar @error_lines) {
+        my $error_list = '<ul><li>'.join('</li><li>', @error_lines).'</li></ul>'; 
+        $error = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>, producing the following errors:</p>$error_list<p>Please contact the creator of this hub if you wish to use it with Ensembl.</p>);
+      }
     }
   }
  
@@ -72,6 +76,7 @@ sub check_data {
     $error .= "<p>$_.</p>" for ref $hub_info->{'error'} eq 'ARRAY' 
                 ? @{$hub_info->{'error'}} : $hub_info->{'error'};
   }
+
   my @assemblies = keys %{$hub_info->{'genomes'}||{}};
   return ($self->url, $error, { 
                                 name        => $hub_info->{'details'}{'shortLabel'}, 
