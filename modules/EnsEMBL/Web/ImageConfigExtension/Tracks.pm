@@ -197,7 +197,7 @@ sub _add_matrix {
     my $hub = $self->hub;
 
     $menu_data->{'menu'}   = 'matrix';
-    $menu_data->{'url'}    = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $menu->id });
+    $menu_data->{'url'}    = $hub->url('Config', { 'matrix' => 1, 'menu' => $menu->id });
     $menu_data->{'matrix'} = {
       section => $menu->parent_node->data->{'caption'},
       header  => $menu_data->{'caption'},
@@ -1090,7 +1090,7 @@ sub add_regulation_builds {
     foreach my $set (@sets) {
       $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
         menu   => 'matrix',
-        url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
+        url    => $hub->url('Config', { 'matrix' => 1, 'menu' => "reg_feats_$set" }),
         matrix => {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
