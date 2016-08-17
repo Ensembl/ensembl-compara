@@ -33,18 +33,20 @@ use parent qw(EnsEMBL::Web::IOWrapper);
 sub validate {
   ### Wrapper around the parser's validation method
   ### We have to do extra for BED because it has alternative columns
-  my $self = shift;
-  my ($valid, $format, $col_count) = $self->parser->validate($self->hub->param('format'));
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my ($valid, $format, $col_count) = $self->parser->validate($hub->param('format'));
 
   if ($valid) {
     $self->{'format'}       = $format;
     $self->{'column_count'} = $col_count;
     ## Update session record accordingly
-    my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
-    if ($record) {
+    my $record = $session->get_record_data({'type' => 'upload', 'code' => $self->file->code});
+    if (keys %$record) {
       $record->{'format'}       = $format;
       $record->{'column_count'} = $col_count;
-      $self->hub->session->set_data(%$record);
+      $session->set_record_data($record);
     }
   }
 
