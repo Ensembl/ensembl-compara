@@ -249,13 +249,14 @@ sub update_from_input {
     if (my $diff = delete $params->{$self->config_type}) {
 
       # update renderers
-      foreach my $track (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
-        $self->altered($self->update_track_renderer($track, $diff->{$track}{'renderer'}));
+      foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
+        $self->altered($self->update_track_renderer($track_key, $diff->{$track_key}{'renderer'}));
       }
 
       # update track order
       if ($diff->{'track_order'}) {
-        $self->altered('Track order') if $self->update_track_order($diff->{'track_order'});
+        $self->reset_user_settings('track_order');
+        $self->altered('Track order') if $self->update_track_order(@{$diff->{'track_order'}});
       }
 
       # update favourite tracks
@@ -340,10 +341,10 @@ sub update_favourite_tracks {
 
 sub update_track_order {
   ## Updates track order for the image
-  ## @param Track order changes (arrayref of arrayrefs [ [ track1, prev_track1 ], [ track2, prev_track2 ], ... ])
-  my ($self, $state_changes) = @_;
+  ## @params Track order changes (array of arrayrefs [ track1, prev_track1 ], [ track2, prev_track2 ], ... )
+  my $self = shift;
 
-  $self->{'track_order'} = $state_changes;
+  push @{$self->{'track_order'}}, @_;
 
   return 1;
 }
