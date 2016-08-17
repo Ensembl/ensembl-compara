@@ -25,6 +25,7 @@ use warnings;
 use Scalar::Util qw(weaken);
 
 use EnsEMBL::Web::TextSequence::Line;
+use EnsEMBL::Web::TextSequence::RopeOutput;
 
 # Represents all the lines of a single sequence in sequence view. On many
 # views there will be multiple of these entwined, either different views
@@ -32,12 +33,11 @@ use EnsEMBL::Web::TextSequence::Line;
 # sequences.
 
 sub new {
-  my ($proto,$view,$id) = @_;
+  my ($proto,$view) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
     view => $view,
-    id => $id,
     exon => "",
     pre => "",
     configured => 0,
@@ -47,8 +47,12 @@ sub new {
     # the sequence itself
     seq => [],
     idx => 0,
+    # XXX output should be resettable or subclassable or both
+    ropeoutput => undef,
   };
   bless $self,$class;
+  $self->{'ropeoutput'} =
+    EnsEMBL::Web::TextSequence::RopeOutput->new($self);
   weaken($self->{'view'});
   $self->init;
   return $self;
@@ -57,6 +61,8 @@ sub new {
 sub init {} # For subclasses
 sub ready {} # For subclasses
 sub fixup_markup {} # For subclasses
+
+sub output { return $_[0]->{'ropeoutput'}; }
 
 sub principal { $_[0]->{'principal'} = $_[1] if @_>1; return $_[0]->{'principal'}; }
 sub legacy { $_[0]->{'legacy'} = $_[1] if @_>1; return $_[0]->{'legacy'}; }
@@ -123,7 +129,6 @@ sub pre {
   return $self->{'pre'};
 }
 
-sub id { return $_[0]->{'id'}; }
 
 sub add_data {
   my ($self,$lines,$config) = @_;

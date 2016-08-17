@@ -104,14 +104,14 @@ sub add_line {
   }
   $self->{'adorn'}->line_done($line->line_num);
 
-  push @{$self->{'data'}[$line->seq->id]},{
+  $line->seq->output->add_line({
     line => $letters,
     length => length $letters,
     principal => $line->principal,
     pre => $line->pre,
     post => $line->post,
     adid => $line->line_num
-  };
+  });
 
   $self->{'adorn'}->flourish('post',$line->line_num,$line->post) if $line->post;
 }

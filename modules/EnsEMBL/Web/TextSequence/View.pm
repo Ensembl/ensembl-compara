@@ -55,7 +55,6 @@ sub reset {
 
   %$self = (
     %$self,
-    seq_num => -1,
     all_line => 0,
     annotation => [],
     markup => [],
@@ -106,16 +105,15 @@ sub set_annotations {
 sub set_markup {}
 
 sub make_sequence { # For IoC: override me if you want to
-  my ($self,$id) = @_;
+  my ($self) = @_;
 
-  return EnsEMBL::Web::TextSequence::Sequence->new($self,$id);
+  return EnsEMBL::Web::TextSequence::Sequence->new;
 }
 
 sub new_sequence {
   my ($self) = @_;
 
-  $self->{'seq_num'}++;
-  my $seq = $self->make_sequence($self->{'seq_num'});
+  my $seq = $self->make_sequence();
   push @{$self->{'sequences'}},$seq;
   return $seq;
 }
