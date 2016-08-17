@@ -22,6 +22,7 @@ package EnsEMBL::Web::Command::UserData::TrackHubRedirect;
 use strict;
 
 use EnsEMBL::Web::File::AttachedFormat::TRACKHUB;
+use EnsEMBL::Web::Utils::UserData qw(check_attachment);
 use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command::UserData);
@@ -56,7 +57,7 @@ sub process {
   if ($species) {
     if ($url) {
       my $new_action  = '';
-      ($new_action, $params)  = $self->check_attachment($url);
+      ($new_action, $params)  = check_attachment($hub, $url);
 
       if ($new_action) {
         ## Hub is already attached, so just go there
