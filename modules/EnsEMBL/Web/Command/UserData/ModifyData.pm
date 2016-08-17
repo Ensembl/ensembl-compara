@@ -31,7 +31,7 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $func    = $hub->function;
+  my $func    = 'md_'.$hub->function;
   my $object  = $self->object;
   my $rtn     = $object->$func();
 
