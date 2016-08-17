@@ -47,6 +47,11 @@ sub new {
   return $self;
 }
 
+sub js_panel {
+  ## Panel used by JS
+  return 'Configurator';
+}
+
 sub add_fieldset {
   my ($self, $legend, $no_tree) = @_;
 
