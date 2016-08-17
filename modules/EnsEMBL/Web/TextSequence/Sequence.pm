@@ -42,13 +42,17 @@ sub new {
     pre => "",
     configured => 0,
     name => undef,
+    hidden => 0,
     # legacy input
     legacy => undef,
     # the sequence itself
     seq => [],
     idx => 0,
+    # relate this rope to others
+    relations => {},
     # XXX output should be resettable or subclassable or both
     ropeoutput => undef,
+    isroot => 0,
   };
   bless $self,$class;
   $self->{'ropeoutput'} =
@@ -84,6 +88,9 @@ sub new_line {
   return $line;
 }
 
+sub make_root { $_[0]->{'root'} = 1; $_[0]->view->add_root($_[0]); }
+sub is_root { return $_[0]->{'root'}; }
+
 sub view { return $_[0]->{'view'}; }
 sub line_num { return $_[0]->{'line'}; }
 
@@ -94,6 +101,8 @@ sub _here { return ($_[0]->{'seq'}[$_[0]->{'idx'}]||={}); }
 sub set { $_[0]->_here->{$_[1]} = $_[2]; }
 sub add { push @{$_[0]->_here->{$_[1]}},$_[2]; }
 sub append { $_[0]->_here->{$_[1]} .= $_[2]; }
+
+sub hidden { $_[0]->{'hidden'} = $_[1] if @_>1; return $_[0]->{'hidden'}; }
 
 # only for use in Line
 sub _exon {
@@ -129,6 +138,18 @@ sub pre {
   return $self->{'pre'};
 }
 
+sub relation {
+  my ($self,$key,$dest) = @_;
+
+  if(@_>2) {
+    if(defined $dest) {
+      $self->{'relate'}{$key} = $dest;
+    } else {
+      delete $self->{'relate'}{$key};
+    }
+  }
+  return $self->{'relate'}{$key};
+}
 
 sub add_data {
   my ($self,$lines,$config) = @_;

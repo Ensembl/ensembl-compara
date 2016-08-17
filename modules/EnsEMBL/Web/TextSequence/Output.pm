@@ -94,7 +94,7 @@ sub format_lines {
   my ($self,$layout,$config,$line_numbers,$multi) = @_;
 
   my $view = $self->view;
-  my $ropes = $view->sequences;
+  my $ropes = [grep { !$_->hidden } @{$view->sequences}];
 
   my $html = "";
  

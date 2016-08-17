@@ -26,11 +26,21 @@ use parent qw(EnsEMBL::Web::TextSequence::View::ComparaAlignments);
 
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
+use EnsEMBL::Web::TextSequence::Annotation::Sequence;
+use EnsEMBL::Web::TextSequence::Annotation::Variations;
+
 use EnsEMBL::Web::TextSequence::Markup::VariationConservation;
 
 sub make_sequence {
   return
     EnsEMBL::Web::TextSequence::Sequence::Comparison->new(@_);
+}
+
+sub set_annotations {
+  my ($self) = @_;
+
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
+#  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new);
 }
 
 sub set_markup {

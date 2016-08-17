@@ -270,8 +270,7 @@ sub _get_sequence {
 
   my ($sequence, $markup) = $self->get_sequence_data_new($config->{'slices'}, $config);
 
-  my $view = $self->view;
-  my @s2 = @{$view->sequences};
+  my @s2 = @{$view->root_sequences};
 
   foreach my $slice (@{$config->{'slices'}}) {
     my $seq = shift @s2;

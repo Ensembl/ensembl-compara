@@ -27,12 +27,20 @@ use EnsEMBL::Web::TextSequence::View::VariationComparaAlignments;
 
 sub get_sequence_data_new {
   my ($self, $slices, $config) = @_;
-  my (@sequence, @markup, @temp_slices);
+  my (@sequence, @markup);
   
   $self->set_variation_filter($config);
- 
+
+  # XXX
+  $_->{'use_aux'} = 1 for @$slices;
+
+  $self->view->set_annotations($config);
+  $self->view->prepare_ropes($config,$slices);
+
   my @out; 
+  my @seqs  = @{$self->view->root_sequences};
   foreach my $sl (@$slices) {
+    my $seq2 = shift @seqs;
     my $mk            = {};
     my $slice         = $sl->{'slice'};
     my $name          = $sl->{'name'};
@@ -43,34 +51,38 @@ sub get_sequence_data_new {
     
     $self->set_alignments($config, $sl, $mk, $seq) if $config->{'align'};
     $self->set_variations($config, $sl, $mk, \@variation_seq);
+    $self->set_focus_variant($config,$sl,$mk,$seq);
     
-    foreach (@{$config->{'focus_position'} || []}) {
-      $mk->{'variants'}{$_}{'align'} = 1;
-      delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
-    }
-    
-    if (!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
-      push @temp_slices, {};
+    my $seq3 = $seq2->relation('aux');
+    if(!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
       push @markup,      {};
-      my $seq2 = $self->view->new_sequence;
-      $seq2->legacy([ map {{ letter => $_ }} @variation_seq ]);
-      push @out,$seq2;
+      $seq3->legacy([ map {{ letter => $_ }} @variation_seq ]);
+      push @out,$seq3;
+    } elsif($seq3) {
+      $seq3->hidden(1);
     }
     
-    push @temp_slices, $sl;
     push @markup,      $mk;
-  
-    my $seq2 = $self->view->new_sequence;
-    $seq2->legacy([ map {{ letter => $_ }} split '', $seq ]);
+
+    $config->{'ref_slice_seq'} ||= [split '',$seq];
+    $self->view->annotate_new($config,$sl,$mk,$seq,$seq2);
     push @out,$seq2;
  
-    $config->{'ref_slice_seq'} ||= $out[-1];
   }
   
   $config->{'display_width'} = $config->{'length'};
-  $config->{'slices'}        = \@temp_slices;
   
   return (\@out, \@markup);
+}
+
+sub set_focus_variant {
+  my ($self,$config,$l,$mk,$seq) = @_;
+
+  foreach (@{$config->{'focus_position'} || []}) {
+    $mk->{'variants'}{$_}{'align'} = 1;
+    # XXX naughty messing with other's markup
+    delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
+  }
 }
 
 sub content {  

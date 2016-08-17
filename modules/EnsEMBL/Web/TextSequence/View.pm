@@ -60,6 +60,7 @@ sub reset {
     markup => [],
     slices => [],
     sequences => [],
+    rootsequences => [],
     fieldsize => {},
     lines => [],
     phase => 0,
@@ -119,6 +120,9 @@ sub new_sequence {
 }
 
 sub sequences { return $_[0]->{'sequences'}; }
+sub root_sequences { return $_[0]->{'root_sequences'}; }
+
+sub add_root { push @{$_[0]->{'root_sequences'}},$_[1]; }
 
 sub slices { $_[0]->{'slices'} = $_[1] if @_>1; return $_[0]->{'slices'}; }
 
