@@ -163,7 +163,7 @@ sub add_options {
   my $self    = shift;
   my $parent  = $self->get_node(shift);
 
-  return $parent ? scalar @{$parent->append_children(map $self->create_option(@$_), @_)} : 0;
+  return $parent ? scalar @{$parent->append_children(map $self->create_option_node(@$_), @_)} : 0;
 }
 
 sub get_option_value {
