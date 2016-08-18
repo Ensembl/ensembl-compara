@@ -926,7 +926,6 @@ sub fetch_homology_species_hash {
         $genome_db_name = $member->genome_db->name;
         $target_member  = $gene_member;
         $dnds_ratio     = $homology->dnds_ratio;
-warn ">>>".$homology->goc_score; 
       }
     }
     
