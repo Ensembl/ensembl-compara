@@ -1337,6 +1337,7 @@ sub core_pipeline_analyses {
              -parameters => {
                  'division'     => $self->o('division'),
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
+                 'only_canonical'   => 1,
              },
              -rc_name => '8Gb_job',
              -flow_into => {
