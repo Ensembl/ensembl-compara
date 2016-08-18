@@ -125,7 +125,6 @@ sub create_hash {
 
   ## We may need to deal with BigBed or bigGenePred AutoSQL fields
   my $column_map = $self->parser->{'column_map'} || {};
-  use Data::Dumper; warn Dumper($column_map);
 
   if ($metadata->{'display'} eq 'text') {
     ## Want the real coordinates, not relative to the slice
