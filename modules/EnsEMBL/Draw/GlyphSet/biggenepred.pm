@@ -29,23 +29,20 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::IOWrapper::Indexed;
-
 use parent qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub render_as_collapsed_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
-  $self->{'my_config'}->set('collapse', 1);
+  $self->{'my_config'}->set('collapsed', 1);
   $self->{'my_config'}->set('show_labels', 0);
   $self->draw_features;
 }
  
 sub render_as_collapsed_label {
   my $self = shift;
-  warn ">>> RENDERING COLLAPSED";
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
-  $self->{'my_config'}->set('collapse', 1);
+  $self->{'my_config'}->set('collapsed', 1);
   $self->{'my_config'}->set('show_labels', 1);
   $self->draw_features;
 }
