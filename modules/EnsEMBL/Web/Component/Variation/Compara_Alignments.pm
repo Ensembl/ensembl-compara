@@ -74,6 +74,16 @@ sub get_sequence_data_new {
   return (\@out, \@markup);
 }
 
+sub set_focus_variant {
+  my ($self,$config,$sl,$mk,$seq) = @_;
+
+  foreach (@{$config->{'focus_position'} || []}) {
+    $mk->{'variants'}{$_}{'align'} = 1;
+    # XXX naughty messing with other's markup
+    delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
+  }
+}
+
 sub content {  
   my $self         = shift;
   my $hub          = $self->hub;
