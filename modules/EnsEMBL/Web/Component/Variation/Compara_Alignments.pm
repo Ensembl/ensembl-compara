@@ -64,7 +64,7 @@ sub get_sequence_data {
     push @markup,      $mk;
 
     $config->{'ref_slice_seq'} ||= [split '',$seq];
-    $self->view->annotate_new($config,$sl,$mk,$seq,$seq2);
+    $self->view->annotate($config,$sl,$mk,$seq,$seq2);
     push @out,$seq2;
  
   }

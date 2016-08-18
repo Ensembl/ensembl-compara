@@ -5,7 +5,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Exons);
 
-sub annotate_new {
+sub annotate {
   my ($self, $config, $slice_data, $markup, $seq, $hub,$real_sequence) = @_;
 
   my $sequence = $real_sequence->legacy;

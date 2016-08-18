@@ -25,6 +25,4 @@ sub prepare_ropes {}
 
 sub add_rope { return $_[0]->{'view'}->new_sequence; }
 
-sub annotate_new { my $self = shift; return $self->annotate(@_); }
-
 1;

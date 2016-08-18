@@ -178,6 +178,14 @@ sub add_markup {
   $markup->view($self);
 }
 
+sub prepare_ropes {
+  my ($self,$config,$slices) = @_;
+
+  foreach my $a (@{$self->{'annotation'}}) {
+    $a->prepare_ropes($config,$slices);
+  }
+}
+
 sub annotate {
   my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
 
@@ -187,26 +195,6 @@ sub annotate {
     next if $p and not any { $cur_phase == $_ } @$p;
     # XXX no hub should be passed
     $a->annotate($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
-  }
-}
-
-sub prepare_ropes {
-  my ($self,$config,$slices) = @_;
-
-  foreach my $a (@{$self->{'annotation'}}) {
-    $a->prepare_ropes($config,$slices);
-  }
-}
-
-sub annotate_new {
-  my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
-
-  my $cur_phase = $self->phase;
-  foreach my $a (@{$self->{'annotation'}}) {
-    my $p = $a->phases;
-    next if $p and not any { $cur_phase == $_ } @$p;
-    # XXX no hub should be passed
-    $a->annotate_new($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
   }
 }
 

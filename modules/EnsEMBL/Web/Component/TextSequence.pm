@@ -145,7 +145,7 @@ sub get_sequence_data {
     my $sequence = shift @sequences;
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
-    $view->annotate_new($config,$sl,$mk,$seq,$sequence);
+    $view->annotate($config,$sl,$mk,$seq,$sequence);
     push @markup, $mk;
   }
  
