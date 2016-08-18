@@ -50,39 +50,37 @@ sub render_as_collapsed_label {
 sub post_process {
   my ($self, $features) = @_;
   return unless scalar @$features;
-  my $merged_features = [];
+  my $merged_features = {};
 
   ## Merge transcripts into genes if required
   if ($self->{'my_config'}->get('collapsed')) {
  
-    my %merge;
-    my $previous;
-
     foreach my $f (@$features) {
-      if ($f->{'gene'} eq $previous) {
+      #warn ">>> FEATURE ".$f->{'label'}." BELONGS TO GENE ".$f->{'gene'};
+
+      ## Have we seen this gene already?
+      my $merge = $merged_features->{$f->{'gene'}};
+
+      ## Another transcript of an existing gene?
+      if ($merge) {
         if ($f->{'strand'} == 1) {
-          $merge{'start'} = $f->{'start'} if $f->{'start'} < $merge{'start'};
-          $merge{'end'}   = $f->{'end'} if $f->{'end'} > $merge{'end'};
+          $merge->{'start'} = $f->{'start'} if $f->{'start'} < $merge->{'start'};
+          $merge->{'end'}   = $f->{'end'} if $f->{'end'} > $merge->{'end'};
         }
         else {
-          $merge{'start'} = $f->{'start'} if $f->{'start'} > $merge{'start'};
-          $merge{'end'}   = $f->{'end'} if $f->{'end'} < $merge{'end'};
+          $merge->{'start'} = $f->{'start'} if $f->{'start'} > $merge->{'start'};
+          $merge->{'end'}   = $f->{'end'} if $f->{'end'} < $merge->{'end'};
         }
       }
-      else {
-        ## New feature - save the previous one, if any
-        if (keys %merge) {
-          push @$merged_features, \%merge;
-          %merge = ();
-        }
-        %merge = %$f;
-        $merge{'label'} = $f->{'gene'};
-        $previous = $f->{'gene'};
+      else { ## New gene
+        $f->{'label'} = $f->{'gene'};
+        $merged_features->{$f->{'gene'}} = $f;
       }
     }
   }
   
-  return $merged_features;
+  my @merged = sort {$a->{'start'} <=> $b->{'start'}} values $merged_features;
+  return \@merged;
 }
 
 1;
