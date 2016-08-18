@@ -126,30 +126,6 @@ sub too_rare_snp {
   return ($vf->minor_allele_frequency - $val)*$mul < 0;
 }
 
-# Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
-sub get_sequence_data {
-  my ($self, $slices, $config) = @_;
-  my $hub      = $self->hub;
-  my $sequence = [];
-  my @markup;
- 
-  $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
-  
-  $config->{'length'} ||= $slices->[0]{'slice'}->length;
-
-  my $view = $self->view;
-  $view->set_annotations($config);
-  
-  foreach my $sl (@$slices) {
-    my $mk  = {};    
-    my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
-    $view->annotate($config,$sl,$mk,$seq,$sequence);
-    push @markup, $mk;
-  }
-  
-  return ($sequence, \@markup);
-}
-
 sub get_sequence_data_new {
   my ($self, $slices, $config) = @_;
   my $hub      = $self->hub;

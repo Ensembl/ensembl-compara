@@ -108,7 +108,7 @@ sub set_markup {}
 sub make_sequence { # For IoC: override me if you want to
   my ($self) = @_;
 
-  return EnsEMBL::Web::TextSequence::Sequence->new;
+  return EnsEMBL::Web::TextSequence::Sequence->new($self);
 }
 
 sub new_sequence {
@@ -240,7 +240,6 @@ sub markup_new {
     $a->markup($sequence,$markup,$config,$self->_hub);
   }
 }
-
 
 sub transfer_data {
   my ($self,$data,$config) = @_;
