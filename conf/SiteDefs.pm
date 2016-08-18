@@ -368,6 +368,9 @@ our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 our $ENSEMBL_BOOK_DIR      = defer { "$ENSEMBL_WEBROOT/conf/book" };
 our $ENSEMBL_BOOK_DISABLE  = 0;
 
+## File location for the temporary message for the website
+our $ENSEMBL_TMP_MESSAGE_FILE = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };
+
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################
 # You should not change anything below here
