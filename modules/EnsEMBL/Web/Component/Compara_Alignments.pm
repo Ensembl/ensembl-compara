@@ -268,7 +268,7 @@ sub _get_sequence {
 
   my $view = $self->view;
 
-  my ($sequence, $markup) = $self->get_sequence_data_new($config->{'slices'}, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 
   my @s2 = @{$view->root_sequences};
 

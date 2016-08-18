@@ -126,7 +126,7 @@ sub too_rare_snp {
   return ($vf->minor_allele_frequency - $val)*$mul < 0;
 }
 
-sub get_sequence_data_new {
+sub get_sequence_data {
   my ($self, $slices, $config) = @_;
   my $hub      = $self->hub;
   my @markup;

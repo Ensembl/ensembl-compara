@@ -366,7 +366,7 @@ sub get {
 
 ###
 
-sub get_sequence_data_new {
+sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
   my %qconfig;
@@ -398,7 +398,6 @@ sub get_sequence_data_new {
   return (\@seqs,$markup,$names,$length);
 }
 
-
 sub initialize_new {
   my $self   = shift;
   my $hub    = $self->hub;
@@ -427,7 +426,7 @@ sub initialize_new {
   
   my $view = $self->view($config);
   
-  my ($sequences, $markup,$names,$length) = $self->get_sequence_data_new($object, $config, $adorn);
+  my ($sequences, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
 
   # XXX hack to set principal
   $sequences->[1]->principal(1) if @$sequences>1 and $config->{'snp_display'};

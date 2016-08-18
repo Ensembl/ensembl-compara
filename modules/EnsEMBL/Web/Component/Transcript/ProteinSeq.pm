@@ -29,7 +29,7 @@ use EnsEMBL::Web::TextSequence::Annotation::Protein::Exons;
 use EnsEMBL::Web::TextSequence::Annotation::Protein::Variations;
 use EnsEMBL::Web::TextSequence::Annotation::Protein::Sequence;
 
-sub get_sequence_data_new {
+sub get_sequence_data {
   my ($self, $translation, $config) = @_;
   my $object   = $self->object || $self->hub->core_object('transcript');
   my $pep_seq  = $translation->Obj->seq;
@@ -49,7 +49,7 @@ sub get_sequence_data_new {
  
   # XXX didn't call set_variation_filter before
 
-  return $self->SUPER::get_sequence_data_new($config->{'slices'},$config);
+  return $self->SUPER::get_sequence_data($config->{'slices'},$config);
 }
 
 sub initialize_new {
@@ -71,7 +71,7 @@ sub initialize_new {
   
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
-  my ($sequence, $markup) = $self->get_sequence_data_new($translation, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
   $self->view->markup_new($sequence,$markup,$config);
   
   return ($sequence, $config);

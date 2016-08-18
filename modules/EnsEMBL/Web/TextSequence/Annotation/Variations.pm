@@ -367,5 +367,4 @@ sub annotate_new {
   }
 }
 
-
 1;

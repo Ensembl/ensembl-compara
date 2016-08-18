@@ -75,7 +75,7 @@ sub content {
   if (scalar @samples) {
     $config->{'slices'} = $self->get_slices($ref_slice->Obj, \@samples, $config);
     
-    my ($sequence, $markup) = $self->get_sequence_data_new($config->{'slices'}, $config, $adorn);
+    my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config, $adorn);
     
     my $view = $self->view;
     my @s2 = @{$view->sequences};

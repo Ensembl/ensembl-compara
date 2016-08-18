@@ -61,7 +61,7 @@ sub initialize_new {
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
   $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
 
-  my ($sequence, $markup) = $self->get_sequence_data_new($config->{'slices'}, $config,$adorn);
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
   $self->view->markup_new($sequence,$markup,$config);
 
   return ($sequence, $config);

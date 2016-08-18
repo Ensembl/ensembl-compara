@@ -60,7 +60,7 @@ sub initialize_new {
     $config->{'number'}     = 1;
   }
   
-  my ($sequence, $markup) = $self->get_sequence_data_new($config);
+  my ($sequence, $markup) = $self->get_sequence_data($config);
   $self->view->markup_new($sequence,$markup,$config);
 
   my $view = $self->view;
@@ -165,7 +165,7 @@ sub get_export_data {
   return @transcripts;
 }
 
-sub get_sequence_data_new {
+sub get_sequence_data {
   my ($self, $config) = @_;
   my $hub            = $self->hub;
   my $object         = $self->object || $hub->core_object('gene');
@@ -200,7 +200,7 @@ sub get_sequence_data_new {
   }
   my $view = $self->view;
 
-  my ($sequences,$markup) = $self->SUPER::get_sequence_data_new($config->{'slices'},$config);
+  my ($sequences,$markup) = $self->SUPER::get_sequence_data($config->{'slices'},$config);
   
   my @sequences = @{$view->sequences};
   foreach my $sl (@{$config->{'slices'}}) {

@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 
 use EnsEMBL::Web::TextSequence::View::VariationComparaAlignments;
 
-sub get_sequence_data_new {
+sub get_sequence_data {
   my ($self, $slices, $config) = @_;
   my (@sequence, @markup);
   
