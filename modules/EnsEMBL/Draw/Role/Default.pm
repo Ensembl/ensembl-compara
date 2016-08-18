@@ -73,6 +73,11 @@ sub draw_features {
     next unless scalar @{$features||[]};
     $skipped = 0;
 
+    ## Do any required post-processing of features
+    if ($self->can('post_process')) {
+      $features = $self->post_process($features);
+    }
+
     ## Set alternative colour (used by some styles)
     if ($metadata->{'color'} && !$metadata->{'altColor'}) {
         ## No alt set, so default to a half-tint of the main colour
