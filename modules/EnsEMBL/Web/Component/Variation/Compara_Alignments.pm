@@ -43,13 +43,11 @@ sub get_sequence_data_new {
     my $seq2 = shift @seqs;
     my $mk            = {};
     my $slice         = $sl->{'slice'};
-    my $name          = $sl->{'name'};
     my $seq           = uc $slice->seq(1);
     my @variation_seq = map ' ', 1..length $seq;
     
     $config->{'length'} ||= $slice->length;
     
-    $self->set_alignments($config, $sl, $mk, $seq) if $config->{'align'};
     $self->set_variations($config, $sl, $mk, \@variation_seq);
     $self->set_focus_variant($config,$sl,$mk,$seq);
     

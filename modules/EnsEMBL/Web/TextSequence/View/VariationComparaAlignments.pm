@@ -27,6 +27,7 @@ use parent qw(EnsEMBL::Web::TextSequence::View::ComparaAlignments);
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
 use EnsEMBL::Web::TextSequence::Annotation::Sequence;
+use EnsEMBL::Web::TextSequence::Annotation::Alignments;
 use EnsEMBL::Web::TextSequence::Annotation::Variations;
 
 use EnsEMBL::Web::TextSequence::Markup::VariationConservation;
@@ -37,9 +38,10 @@ sub make_sequence {
 }
 
 sub set_annotations {
-  my ($self) = @_;
+  my ($self,$config) = @_;
 
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
 #  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new);
 }
 
