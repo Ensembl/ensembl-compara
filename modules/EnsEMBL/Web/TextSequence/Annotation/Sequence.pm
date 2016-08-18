@@ -14,7 +14,9 @@ sub prepare_ropes {
     if($sl->{'use_aux'} && !$sl->{'no_variations'}) {
       $aux_rope = $self->add_rope;
     }
-    my $main_rope = $self->add_rope;
+    my $pos = 'bottom';
+    $pos = 'top' if $sl->{'vtype'} and $sl->{'vtype'} eq 'top';
+    my $main_rope = $self->add_rope($pos);
     # XXX plain string key names are not optimal
     $main_rope->relation('aux',$aux_rope) if $aux_rope;
     $main_rope->make_root;

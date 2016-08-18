@@ -140,7 +140,7 @@ sub get {
   my $start_pad    = $start_phase > 0 ? $start_phase : 0; # Determines if the transcript starts mid-codon
   my $cd_start     = $trans->cdna_coding_start;
   my $cd_end       = $trans->cdna_coding_end;
-  my $config = {%{$args->{'config'}}};
+  my $config = $args->{'config'};
   $config->{'species'} = $args->{'species'};
   my $adorn = $args->{'adorn'};
 
@@ -157,7 +157,7 @@ sub get {
     $seq = $trans->seq->seq;
   }
   my $length = length $seq;
-  my @sequence;
+  $config->{'length'} = $length;
   my @markup;
 
   my @reference_seq = map {{ letter => $_ }} split '', $seq;
@@ -312,25 +312,35 @@ sub get {
     }
   }
 
-  push @sequence, \@reference_seq;
   push @markup, $mk;
+
+  $config->{'slices'} = [{ vtype => 'normal', seq => \@reference_seq }];
 
   my @seq_names = ( $config->{'species'} );
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'snp_display') {
-        unshift @sequence, $_->{'seq'};
         unshift @markup, {}; 
-        unshift @{$config->{'slices'}}, {}; 
+        unshift @{$config->{'slices'}}, { vtype => 'snp', seq => $_->{'seq'} }; 
         unshift @seq_names,$_->{'name'};
       } else {
-        push @sequence, $_->{'seq'};
         push @markup, {}; 
-        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} , vtype => 'normal', seq => $_->{'seq'} };
         push @seq_names,$_->{'name'};
       }
     }     
   }
+ 
+  $self->view->set_annotations($config);
+  $self->view->prepare_ropes($config,$config->{'slices'});
+
+  my @nseq = @{$self->view->sequences};
+  foreach my $sl (@{$config->{'slices'}}) {
+    my $seq = shift @nseq;
+    $seq->legacy($sl->{'seq'});
+  }
+
+  my @sequence = map { $_->legacy } @{$self->view->sequences};
  
   if (!$config->{'utr'}) {
     foreach (@sequence) {
@@ -338,13 +348,13 @@ sub get {
       splice @$_, 0, $cd_start - 1;
     }     
         
-    $length = scalar @{$sequence[0]};
+    $config->{'length'} = scalar @{$sequence[0]};
         
     foreach my $mk (grep scalar keys %$_, @markup) {
       my $shifted; 
           
       foreach my $type (keys %$mk) {
-        my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $length ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
+        my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $config->{'length'} ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
         my $decap = max(-1,grep {  $_-$cd_start+1 < 0 } keys %{$mk->{$type}});
         $shifted->{$type} = \%tmp;
         if($decap > 0 and $type eq 'exons') {
@@ -360,8 +370,8 @@ sub get {
   if ($config->{'exons'}) {
     $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
   }
- 
-  return [{ sequence => \@sequence, markup => \@markup, names => \@seq_names, length => $length }];
+  
+  return ($self->view->sequences,\@markup,\@seq_names);
 }
 
 ###
@@ -369,33 +379,23 @@ sub get {
 sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
-  my %qconfig;
-  $qconfig{$_} = $config->{$_}
-      for(qw(hide_long_snps utr codons hide_rare_snps translation
-             exons rna snp_display coding_seq));
+#  my %qconfig;
+#  $qconfig{$_} = $config->{$_}
+#      for(qw(hide_long_snps utr codons hide_rare_snps translation
+#             exons rna snp_display coding_seq));
   my $hub = $self->hub;
-  my $data = $self->get({
+  my ($sequence,$markup,$names) = $self->get({
     species => $config->{'species'},
     type => $object->get_db,
     transcript => $object->Obj,
     config => $config,
     adorn => $adorn,
     conseq_filter => [$hub->param('consequence_filter')],
-    config => \%qconfig,
   });
-  my ($sequence,$markup,$names,$length) = map { $data->[0]{$_} } qw(sequence markup names length);
  
   $config->{'names'} = $names;
-  $config->{'length'} = $length;
  
-  # XXX hack
-  my @seqs;
-  foreach my $s (@$sequence) {
-    my $s2 = $self->view->new_sequence;
-    $s2->legacy($s);
-    push @seqs,$s2;
-  }
-  return (\@seqs,$markup,$names,$length);
+  return ($sequence,$markup,$names);
 }
 
 sub initialize_new {
@@ -426,7 +426,7 @@ sub initialize_new {
   
   my $view = $self->view($config);
   
-  my ($sequences, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
+  my ($sequences, $markup,$names) = $self->get_sequence_data($object, $config, $adorn);
 
   # XXX hack to set principal
   $sequences->[1]->principal(1) if @$sequences>1 and $config->{'snp_display'};

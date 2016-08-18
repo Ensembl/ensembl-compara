@@ -99,7 +99,7 @@ sub set_annotations {
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
-  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if $config->{'exon_display'} ne 'off';
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if ($config->{'exon_display'}||'off') ne 'off';
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
 }
 
@@ -112,10 +112,14 @@ sub make_sequence { # For IoC: override me if you want to
 }
 
 sub new_sequence {
-  my ($self) = @_;
+  my ($self,$position) = @_;
 
   my $seq = $self->make_sequence();
-  push @{$self->{'sequences'}},$seq;
+  if($position eq 'top') {
+    unshift @{$self->{'sequences'}},$seq;
+  } else {
+    push @{$self->{'sequences'}},$seq;
+  }
   return $seq;
 }
 

@@ -23,6 +23,6 @@ sub replaces { return undef; }
 
 sub prepare_ropes {}
 
-sub add_rope { return $_[0]->{'view'}->new_sequence; }
+sub add_rope { my $self = shift; return $self->{'view'}->new_sequence(@_); }
 
 1;
