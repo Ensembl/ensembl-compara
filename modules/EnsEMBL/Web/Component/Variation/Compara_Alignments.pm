@@ -31,6 +31,8 @@ sub get_sequence_data_new {
   
   $self->set_variation_filter($config);
 
+  $slices->[0]{'main_slice'} = 1;
+
   # XXX
   $_->{'use_aux'} = 1 for @$slices;
 
@@ -49,7 +51,6 @@ sub get_sequence_data_new {
     $config->{'length'} ||= $slice->length;
     
     $self->set_variations($config, $sl, $mk, \@variation_seq);
-    $self->set_focus_variant($config,$sl,$mk,$seq);
     
     my $seq3 = $seq2->relation('aux');
     if(!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
@@ -71,16 +72,6 @@ sub get_sequence_data_new {
   $config->{'display_width'} = $config->{'length'};
   
   return (\@out, \@markup);
-}
-
-sub set_focus_variant {
-  my ($self,$config,$l,$mk,$seq) = @_;
-
-  foreach (@{$config->{'focus_position'} || []}) {
-    $mk->{'variants'}{$_}{'align'} = 1;
-    # XXX naughty messing with other's markup
-    delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
-  }
 }
 
 sub content {  

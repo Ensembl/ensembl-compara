@@ -29,6 +29,7 @@ use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 use EnsEMBL::Web::TextSequence::Annotation::Sequence;
 use EnsEMBL::Web::TextSequence::Annotation::Alignments;
 use EnsEMBL::Web::TextSequence::Annotation::Variations;
+use EnsEMBL::Web::TextSequence::Annotation::FocusVariant;
 
 use EnsEMBL::Web::TextSequence::Markup::VariationConservation;
 
@@ -42,6 +43,7 @@ sub set_annotations {
 
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::FocusVariant->new);
 #  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new);
 }
 
