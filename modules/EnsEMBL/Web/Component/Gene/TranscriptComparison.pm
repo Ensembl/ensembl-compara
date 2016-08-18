@@ -193,7 +193,7 @@ sub get_sequence_data {
   $_-- for grep $_, $subslice_start, $subslice_end;
   
   foreach my $transcript (map $_->[1], sort { $a->[0] <=> $b->[0] } @transcripts) {
-    my $transcript_id   = $transcript->stable_id;
+    my $transcript_id   = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $transcript_name = $transcript->external_name || $transcript_id;
        $transcript_name = $transcript_id if $transcript_name eq $gene_name;
     my @exons           = @{$transcript->get_all_Exons};

@@ -114,7 +114,7 @@ sub get_go_list {
   my %go_hash;  
   my $transcript_id;
   foreach my $transcript (@my_transcripts) {    
-    $transcript_id = $transcript->stable_id;
+    $transcript_id = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     
     foreach my $goxref (sort { $a->display_id cmp $b->display_id } @{$transcript->get_all_DBLinks}) {
       my $go = $goxref->display_id;
@@ -422,6 +422,7 @@ sub get_gene_supporting_evidence {
   my $e;
   foreach my $trans (@{$obj->get_all_Transcripts()}) {
     my $tsi = $trans->stable_id;
+    $e->{$tsi}{version} = $trans->version ? $trans->version : "";
     my %t_hits;
     my %vega_evi;
   EVI:
@@ -924,7 +925,8 @@ sub fetch_homology_species_hash {
         $target_perc_id = $member->perc_id;
         $genome_db_name = $member->genome_db->name;
         $target_member  = $gene_member;
-        $dnds_ratio     = $homology->dnds_ratio; 
+        $dnds_ratio     = $homology->dnds_ratio;
+warn ">>>".$homology->goc_score; 
       }
     }
     
