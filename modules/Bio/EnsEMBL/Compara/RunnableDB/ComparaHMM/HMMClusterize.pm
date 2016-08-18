@@ -58,6 +58,7 @@ sub param_defaults {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 1,
             'member_type'           => 'protein',
+            'only_canonical'        => 0,
     };
 }
 
@@ -88,7 +89,10 @@ sub load_hmmer_classifications {
     $self->param('allclusters', \%allclusters);
 
     # Get statement handler to query all hmm classifications from 'hmm_annot' table
-    my $sth  = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_hmm_annot();
+    my $sth = $self->param_required('only_canonical')
+      ? $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_canonical_hmm_annot()
+      : $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_hmm_annot();
+
     $sth->execute();
     while (my $res = $sth->fetchrow_arrayref){
         push @{$allclusters{$res->[1]}{members}}, $res->[0];
