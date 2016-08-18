@@ -59,6 +59,15 @@ sub fetch_all_hmm_annot {
 return $sth;
 }
 
+sub fetch_all_canonical_hmm_annot {
+    my ($self) = @_;
+
+    my $sql = "SELECT seq_member_id, model_id, evalue FROM hmm_annot JOIN gene_member ON hmm_annot.seq_member_id=gene_member.canonical_member_id";
+    my $sth = $self->prepare($sql);
+
+    return $sth;
+}
+
 my $sql_canonical = 'SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL';
 my $sql_all = 'SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL';
 
