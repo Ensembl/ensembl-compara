@@ -106,16 +106,6 @@ sub new {
  
   $self->{'alignment_renderers'}  = \@alignment_renderers;
   $self->{'transcript_renderers'} = \@transcript_renderers;
-  $self->{'gene_renderers'}       = [
-                                      'off',                     'Off',
-                                      'gene_nolabel',            'No exon structure without labels',
-                                      'gene_label',              'No exon structure with labels',
-                                      'transcript_nolabel',      'Expanded without labels',
-                                      'transcript_label',        'Expanded with labels',
-                                      'collapsed_nolabel',       'Collapsed without labels',
-                                      'collapsed_label',         'Collapsed with labels',
-                                      #'transcript_label_coding', 'Coding transcripts only (in coding genes)',
-                                    ];
 
   return bless $self, $class;
 }
@@ -996,14 +986,14 @@ sub _add_trackhub_tracks {
                                       'default' => 'coverage_with_reads',
                                       },
                         'bigbed'  => {
-                                      'full'    => 'as_transcript_label',
+                                      'full'    => 'as_transcript_nolabel',
                                       'pack'    => 'as_transcript_label',
                                       'squish'  => 'half_height',
                                       'dense'   => 'as_alignment_nolabel',
                                       'default' => 'as_transcript_label',
                                       },
                         'biggenepred' => {
-                                      'full'    => 'as_transcript_label',
+                                      'full'    => 'as_transcript_nolabel',
                                       'pack'    => 'as_transcript_label',
                                       'squish'  => 'half_height',
                                       'dense'   => 'as_collapsed_label',
@@ -1489,7 +1479,7 @@ sub _add_file_format_track {
       $desc = $args{'description'};
     }
   }
- 
+
   $args{'options'}->{'display'} = $self->check_threshold($args{'options'}->{'display'});
   $self->generic_add($menu, undef, $args{'key'}, {}, {
     display     => 'off',
@@ -1526,7 +1516,8 @@ sub _user_track_settings {
     $default = 'as_transcript_label';
   }
   elsif (uc($format) eq 'BIGGENEPRED') {
-    @user_renderers = @{$self->{'gene_renderers'}};
+    @user_renderers = @{$self->{'transcript_renderers'}};
+    splice @user_renderers, 6, 0, 'as_collapsed_nolabel', 'Collapsed', 'as_collapsed_label', 'Collapsed with labels';
     $default = 'as_collapsed_label';
   }
   else {
