@@ -36,6 +36,13 @@ sub make_sequence {
     EnsEMBL::Web::TextSequence::Sequence::Transcript->new(@_);
 }
 
+sub set_annotations {
+  my ($self,$config) = @_;
+
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::TranscriptVariations->new([0,2])) if $config->{'snp_display'} ne 'off';
+}
+
 sub set_markup {
   my ($self,$config) = @_;
 

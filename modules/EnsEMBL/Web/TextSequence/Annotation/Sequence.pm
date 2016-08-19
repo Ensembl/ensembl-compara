@@ -8,6 +8,7 @@ use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 sub prepare_ropes {
   my ($self,$config,$slices) = @_;
 
+  my %vtypes;
   foreach my $sl (@$slices) {
     # XXX belongsin variation
     my $aux_rope;
@@ -15,11 +16,17 @@ sub prepare_ropes {
       $aux_rope = $self->add_rope;
     }
     my $pos = 'bottom';
-    $pos = 'top' if $sl->{'vtype'} and $sl->{'vtype'} eq 'top';
+    $pos = 'top' if $sl->{'vtype'} and $sl->{'vtype'} eq 'snp_display';
     my $main_rope = $self->add_rope($pos);
     # XXX plain string key names are not optimal
     $main_rope->relation('aux',$aux_rope) if $aux_rope;
     $main_rope->make_root;
+    # XXX belongs elsewhere
+    $vtypes{$sl->{'vtype'}} = $main_rope if $sl->{'vtype'};
+  }
+  if($vtypes{'main'}) {
+    $vtypes{'main'}->relation('protein',$vtypes{'translation'});
+    $vtypes{'main'}->relation('aux',$vtypes{'snp_display'});
   }
 }
 

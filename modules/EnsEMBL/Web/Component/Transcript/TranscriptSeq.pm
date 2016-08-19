@@ -26,6 +26,7 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 use EnsEMBL::Web::TextSequence::View::Transcript;
 
 use EnsEMBL::Web::TextSequence::Annotation::Exons;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptVariations;
 
 use List::Util qw(max);
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
@@ -251,94 +252,42 @@ sub get {
 
     splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end;
   }
+  
+  $config->{'slices'} = [{ vtype => 'main', seq => \@reference_seq, slice => $slice }];
 
-  my $has_var = exists $self->hub->species_defs->databases->{'DATABASE_VARIATION'};
-  if ($config->{'snp_display'} and $adorn ne 'none' and $has_var) {
-    foreach my $snp (reverse @{$self->_get_variation_data($args,$slice, $config->{'utr'}, $trans_strand,$args->{'conseq_filter'})}) {
-      next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
-      next if $self->too_rare_snp($snp->{'vf'},$config);
-      $snp->{'position'}||=0;
-
-      my $dbID              = $snp->{'vdbid'};
-      my $tv                = $snp->{'tv'};
-      my $var               = $snp->{'vf'}->transfer($slice);
-      my $variation_name    = $snp->{'snp_id'};
-      my $alleles           = $snp->{'allele'};
-      my $ambigcode         = $snp->{'ambigcode'} || '*';
-      my $amino_acid_pos    = $snp->{'position'} * 3 + $cd_start - 4 - $start_pad;
-      my $type              = lc($config->{'consequence_types'} ? [ grep $config->{'consequence_types'}{$_}, @{$tv->consequence_type} ]->[0] : $snp->{'type'});
-      my $start             = $tv->cdna_start;
-      my $end               = $tv->cdna_end;
-      my $pep_allele_string = $tv->pep_allele_string;
-      my $aa_change         = $pep_allele_string =~ /\// && $tv->affects_peptide;
-         
-      # Variation is an insert if start > end
-      ($start, $end) = ($end, $start) if $start > $end;
-    
-      ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
-         
-      foreach ($start..$end) {
-        $mk->{'variants'}{$_}{'alleles'}   .= ($mk->{'variants'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
-        $mk->{'variants'}{$_}{'transcript'} = 1;
-          
-        my $url = $mk->{'variants'}{$_}{'url_params'} ? { type => 'Variation', action => 'Explore', %{$mk->{'variants'}{$_}{'url_params'}} } : undef;
-        
-        $mk->{'variants'}{$_}{'type'} = $type;
-            
-        if ($config->{'translation'} && $aa_change) {
-          foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
-            $protein_seq->{'seq'}[$aa]{'class'}  = 'aa';
-            $protein_seq->{'seq'}[$aa]{'title'} .= "\n" if $protein_seq->{'seq'}[$aa]{'title'};
-            $protein_seq->{'seq'}[$aa]{'title'} .= "$variation_name: $pep_allele_string";      
-          }
-        }     
-            
-        $mk->{'variants'}{$_}{'href'} ||= {
-          type        => 'ZMenu',
-          action      => 'TextSequence',
-          factorytype => 'Location'
-        };    
-            
-        push @{$mk->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
-            
-        $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
-        $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;
-        $variation_seq->{'seq'}[$_]{'href'} = $url;
-        $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
-        $variation_seq->{'seq'}[$_]{'tag'} = 'a';
-        $variation_seq->{'seq'}[$_]{'class'} = '';
-      }
-    }
-  }
-
-  push @markup, $mk;
-
-  $config->{'slices'} = [{ vtype => 'normal', seq => \@reference_seq }];
-
+  unshift @markup, $mk;
   my @seq_names = ( $config->{'species'} );
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'snp_display') {
         unshift @markup, {}; 
-        unshift @{$config->{'slices'}}, { vtype => 'snp', seq => $_->{'seq'} }; 
+        unshift @{$config->{'slices'}}, { vtype => $_->{'name'}, seq => $_->{'seq'} }; 
         unshift @seq_names,$_->{'name'};
       } else {
         push @markup, {}; 
-        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} , vtype => 'normal', seq => $_->{'seq'} };
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} , vtype => $_->{'name'}, seq => $_->{'seq'} };
         push @seq_names,$_->{'name'};
       }
     }     
   }
- 
   $self->view->set_annotations($config);
   $self->view->prepare_ropes($config,$config->{'slices'});
 
+  my $main_idx;
+  my $idx = 0;
   my @nseq = @{$self->view->sequences};
   foreach my $sl (@{$config->{'slices'}}) {
     my $seq = shift @nseq;
     $seq->legacy($sl->{'seq'});
+    $main_idx = $idx if $sl->{'vtype'} eq 'main';
+    $idx++;
   }
+  
+  $config->{'transcript'} = $args->{'transcript'};
+
+  my $seq0 = $self->view->sequences->[$main_idx];
+  die "No seq0" unless $seq0 and defined $main_idx;
+  $self->view->annotate($config,$config->{'slices'}[$main_idx],$markup[$main_idx],$seq,$seq0);
 
   my @sequence = map { $_->legacy } @{$self->view->sequences};
  
@@ -379,10 +328,6 @@ sub get {
 sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
-#  my %qconfig;
-#  $qconfig{$_} = $config->{$_}
-#      for(qw(hide_long_snps utr codons hide_rare_snps translation
-#             exons rna snp_display coding_seq));
   my $hub = $self->hub;
   my ($sequence,$markup,$names) = $self->get({
     species => $config->{'species'},
