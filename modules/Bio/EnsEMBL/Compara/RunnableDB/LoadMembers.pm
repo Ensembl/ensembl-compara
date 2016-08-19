@@ -395,12 +395,19 @@ sub store_all_coding_exons {
       #print " gene " . $gene->stable_id . "\n";
 
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
-      $self->param('transcriptCount', $self->param('transcriptCount')+1);
+      my $translation = $transcript->translation;
+      next unless (defined $translation);
 
+      $self->param('transcriptCount', $self->param('transcriptCount')+1);
       print("     transcript " . $transcript->stable_id ) if($self->param('verbose'));
+
+      unless ($translation->length) {
+          $self->warning(sprintf("The translation of %s is defined (%s) but is 0aa long", $transcript->stable_id, $translation->stable_id));
+          next;
+      }
       
       foreach my $exon (@{$transcript->get_all_translateable_Exons}) {
-#	  print "        exon " . $exon->stable_id . "\n";
+        print "        exon " . $exon->stable_id . "\n" if($self->param('verbose'));
         unless (defined $exon->stable_id) {
           warn("COREDB error: does not contain exon stable id for translation_id ".$exon->dbID."\n");
           next;
