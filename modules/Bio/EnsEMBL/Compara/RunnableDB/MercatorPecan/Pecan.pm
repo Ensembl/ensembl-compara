@@ -133,6 +133,7 @@ sub fetch_input {
     }
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
+    $self->compara_dba->dbc->disconnect_if_idle;
     $self->_dump_fasta;
 
     #if have duplications, run Ortheus.py with -y option to create a tree 
