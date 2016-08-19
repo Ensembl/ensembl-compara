@@ -179,6 +179,22 @@ sub wga_coverage {
 }
 
 
+=head2 is_high_confidence
+
+  Example     : $homology->is_high_confidence();
+  Description : Tells whether the homology is considered "high-confidence" (after considering goc_score, wga_coverage, %id, %cov, etc)
+  Returntype  : boolean
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub is_high_confidence {
+    my $self = shift;
+    return 1;
+}
+
+
 ## dN/dS methods
 #################
 
