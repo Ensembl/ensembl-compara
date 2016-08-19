@@ -750,7 +750,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => [ 'multiplealigner_stats' ],
-                '1->A' => [ 'block_size_distribution' ],
+                'A->1' => [ 'block_size_distribution' ],
             },
         },
 

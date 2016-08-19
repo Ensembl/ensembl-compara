@@ -125,7 +125,7 @@ sub pipeline_analyses {
             ],
             -flow_into  => {
                 '2->A' => [ 'multiplealigner_stats' ],
-                '1->A' => [ 'block_size_distribution' ],
+                'A->1' => [ 'block_size_distribution' ],
             },
         },
 
