@@ -111,7 +111,7 @@ sub _columns {
                cgf.gene_tree_root_id
 
                str.method_link_species_set_id
-               str.species_tree
+               str.label
              );
 }
 
