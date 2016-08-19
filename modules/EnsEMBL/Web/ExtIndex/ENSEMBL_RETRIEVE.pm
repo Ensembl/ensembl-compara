@@ -81,7 +81,7 @@ sub get_sequence {
           @seqs = {
             'id'          => $object->stable_id,
             'sequence'    => $object->seq->seq,
-            'description' => sprintf('%s %s Transcript %s', $object->display_id, $sitetype, $object->seqname),
+            'description' => sprintf('%s %s Transcript %s', $object->version ? $object->display_id . "." . $object->version : $object->display_id, $sitetype, $object->seqname),
             'length'      => $object->length
           };
         }
