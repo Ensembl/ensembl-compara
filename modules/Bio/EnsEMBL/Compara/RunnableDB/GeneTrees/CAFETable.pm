@@ -119,7 +119,7 @@ sub run {
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (tree, tabledata) VALUES (?,?);");
         $sth->execute($cafe_tree_string, $table);
         $sth->finish();
-        my $fam_id = $self->compara_dba->dbc->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
+        my $fam_id = $self->compara_dba->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
         $self->param('all_fams', [$fam_id]);
     } else {
         $self->get_per_family_cafe_table_from_db();
