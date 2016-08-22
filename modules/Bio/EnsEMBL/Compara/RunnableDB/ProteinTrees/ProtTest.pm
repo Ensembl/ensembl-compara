@@ -51,6 +51,17 @@ sub param_defaults {
     };
 }
 
+sub fetch_input {
+    my $self = shift;
+
+    if ($self->param('cdna')) {
+        $self->complete_early("ProtTest is skipped in 'cdna' mode");
+    }
+
+    #Give back control to fetch_input in GenericRunnable
+    return $self->SUPER::fetch_input(@_);
+
+}
 
 sub run {
     my $self = shift;
