@@ -196,6 +196,8 @@ div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
 
 div.filter-error    { margin: 1em 1em 0; }
 
+.box-highlight      { background-color: #55aa55; font-weight: bold; border-radius: 4px; color: [[PAGE_BG]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
+
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
