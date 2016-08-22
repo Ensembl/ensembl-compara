@@ -38,9 +38,6 @@ example:
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters
 
-=head1 SYNOPSIS
-
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -61,7 +58,7 @@ use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 use Data::Dumper;
 
-=head
+=head2
 sub param_defaults {
 
     return {
@@ -76,7 +73,8 @@ sub param_defaults {
     };
 }
 
-=cut 
+=cut
+
 =head2 fetch_input
 
 	Description: pull orthologs for all pairwise combination of species in the list of given species
