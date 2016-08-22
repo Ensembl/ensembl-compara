@@ -229,8 +229,8 @@ sub get {
   my $ad = $self->source('Adaptors');
   my $out = $self->super_availability($args);
 
-  my $member = $self->compara_member($args);
-  my $panmember = $self->pancompara_member($args);
+  my $member = $self->compara_member($args) if $out->{'database:compara'};
+  my $panmember = $self->pancompara_member($args) if $out->{'database:pancompara'};
   my $counts = $self->_counts($args,$member,$panmember);
   my %clusters = $self->multiX('ONTOLOGIES');
 
@@ -280,7 +280,7 @@ sub get {
   if($self->variation_db_adaptor($args)) {
     $out->{'has_phenotypes'} = $self->_get_phenotype($args);
   }
-  if($self->pancompara_db_adaptor) {
+  if($out->{'database:pancompara'} && $self->pancompara_db_adaptor) {
     $out->{'family_pan_ensembl'} = !!$counts->{'families_pan'};
     $out->{'has_gene_tree_pan'} =
       $panmember ? $panmember->has_GeneTree : 0;

@@ -29,6 +29,7 @@ use URI::Escape     qw(uri_unescape);
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
@@ -152,9 +153,6 @@ sub ajax_multi_species {
 sub ajax_cell_type {
   my ($self,$hub) = @_;
   my $cell = $hub->param('cell');
-  my $image_config_name = $hub->param('image_config') || 'regulation_view';
-
-  my $image_config = $hub->get_imageconfig($image_config_name);
 
   # What changed
   my %changes;
@@ -162,12 +160,14 @@ sub ajax_cell_type {
   foreach my $key (keys %renderers) {
     my $renderer = $renderers{$key};
     foreach my $cell (split(/,/,uri_unescape($hub->param($key)))) {
-      my $id = $image_config->tree->clean_id($cell);
-      $changes{$image_config->tree->clean_id($cell)} = $renderer;
+      my $id = clean_id($cell);
+      $changes{clean_id($cell)} = $renderer;
     }
   }
 
   # Which evidences have any cell-lines on at all
+  my $image_config_name = $hub->param('image_config') || 'regulation_view';
+  my $image_config      = $hub->get_imageconfig($image_config_name);
   my %any_on;
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);

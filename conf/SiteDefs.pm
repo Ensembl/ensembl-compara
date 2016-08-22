@@ -158,6 +158,7 @@ our $ENSEMBL_PROTOCOL          = 'http';
 our $ENSEMBL_MAIL_COMMAND      = '/usr/bin/Mail -s';               # Mail command
 our $ENSEMBL_MAIL_ERRORS       = '0';                              # Do we want to email errors?
 our $ENSEMBL_ERRORS_TO         = 'webmaster&#064;mydomain.org';    # ...and to whom?
+our $ENSEMBL_REST_URL          = 'http://rest.mydomain.org';       # url to your REST service
 
 our $ENSEMBL_SITETYPE          = 'Ensembl';
 our $ENSEMBL_USER              = getpwuid($>); # Auto-set web serveruser
@@ -367,6 +368,9 @@ our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 
 our $ENSEMBL_BOOK_DIR      = defer { "$ENSEMBL_WEBROOT/conf/book" };
 our $ENSEMBL_BOOK_DISABLE  = 0;
+
+## File location for the temporary message for the website
+our $ENSEMBL_TMP_MESSAGE_FILE = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };
 
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################

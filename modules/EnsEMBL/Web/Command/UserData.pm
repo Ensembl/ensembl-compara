@@ -27,6 +27,7 @@ use Digest::MD5 qw(md5_hex);
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::ImageConfig;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -101,54 +102,6 @@ sub upload {
   } 
  
   return $params;
-}
-
-sub check_attachment {
-  my ($self, $url) = @_;
-  my $hub = $self->hub;
-  my $species_defs = $hub->species_defs;
-
-  my $already_attached = 0;
-  my ($redirect, $params, $menu);
-
-  ## Check for pre-configured hubs
-  my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_TRACKHUB_SOURCES||{}};
-  while (my($k, $v) = each (%preconfigured)) {
-    my $hub_info = $species_defs->get_config($hub->species, $k);
-    if ($hub_info->{'url'} eq $url) {
-      $already_attached = 'preconfig';
-      ## Probably a submenu, so get full id
-      my $menu_tree = EnsEMBL::Web::ImageConfig::menus({});
-      my $menu_settings = $menu_tree->{$v};
-      if (ref($menu_settings) eq 'ARRAY') {
-        $menu = $menu_settings->[1].'-'.$v;
-      }
-      else {
-        $menu = $v;
-      }
-      last;
-    }
-  }
-
-  ## Check user's own data
-  unless ($already_attached) {
-    my @attachments = $hub->session->get_data('type' => 'url');
-    foreach (@attachments) {
-      if ($_->{'url'} eq $url) {
-        $already_attached = 'user';
-        ($menu = $_->{'name'}) =~ s/ /_/;
-        last;
-      }
-    }
-  }
-
-  if ($already_attached) {
-    $redirect = 'RemoteFeedback';
-    $params = {'format' => 'TRACKHUB', 'reattach' => $already_attached};
-    $params->{'menu'} = $menu if $menu;
-  }
-
-  return ($redirect, $params);
 }
 
 sub attach {

@@ -233,7 +233,14 @@ sub add_label {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the label's size and position
   my ($self, $feature, $position) = @_;
-  
+  my $start = $feature->{'start'};  
+
+  ## Only show labels if they're shorter than the visible portion of the feature
+  if ($start < 0) {
+    my $feature_visible = $feature->{'end'} * $self->{'pix_per_bp'};
+    return unless $feature_visible > $position->{'width'};
+  }
+
   my $colour = $feature->{'label_colour'} || $feature->{'colour'};
   if ($colour) {
     $colour = $self->make_readable($colour);
@@ -242,15 +249,12 @@ sub add_label {
     $colour = 'black';
   }
 
-  my $x = $feature->{'start'};
-  $x = 1 if $x < 1;
-
   my $label = {
                 font      => $self->{'font_name'},
                 colour    => $colour,
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
-                x         => $x-1,
+                x         => $start - 1,
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},

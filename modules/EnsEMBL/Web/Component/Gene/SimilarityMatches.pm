@@ -82,7 +82,7 @@ sub matches_to_html {
   
 
   foreach my $transcript (@{$self->object->Obj->get_all_Transcripts}) {
-    my $url = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Transcript', action => 'Summary', function => undef, t => $transcript->stable_id }), $transcript->stable_id;
+    my $url = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Transcript', action => 'Summary', function => undef, t => $transcript->stable_id }), $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $row = { 'transcriptid' => $url };
     $columns_with_data{'transcriptid'} = 1;
 
