@@ -33,6 +33,7 @@ use Role::Tiny;
 
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
+use EnsEMBL::Web::File::Utils::IO qw(file_exists);
 
 sub my_empty_label {
   return 'No data found for this region';
@@ -308,6 +309,7 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
+    die "no_file:". $self->get_data->[1][0] . "\n" if $self->get_data->[0] eq 'file_error';
     my $features = $self->get_data->[0]{'features'};
     if (!scalar(@$features)) {
       $self->no_features;
@@ -321,12 +323,14 @@ sub _render {
     }
     alarm 0;
   };
+
   if ($@) {
     my $error_message;
     if ($@ eq "alarm\n") {
       $error_message = " could not be rendered within the specified time limit (${timeout} sec)";
-    }
-    else {
+    } elsif ($@ =~ /no_file/) {
+      ($error_message = $@) =~ s/no_file//gi;
+    } else {
       $error_message = ' could not be retrieved.';
       warn "######## BAM ERROR: $@"; # propagate unexpected errors
     }
@@ -360,10 +364,12 @@ sub get_data {
     }
 
     my $data;
+
     foreach my $seq_region_name (@$seq_region_names) {
+      return ['file_error', $self->bam_adaptor->{'error'}] if($self->bam_adaptor->{'error'});
       $data = $self->bam_adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
       last if @$data;
-    } 
+    }
 
     $self->{_cache}->{data} = $data;
 
@@ -532,6 +538,7 @@ sub bam_adaptor {
   return $self->{_cache}->{_bam_adaptor} if $self->{_cache}->{_bam_adaptor};
 
   my $url = $self->my_config('url');
+
   if ($url) { ## remote bam file
     if ($url =~ /\#\#\#CHR\#\#\#/) {
       my $region = $self->{'container'}->seq_region_name;
@@ -550,6 +557,8 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
+      my $check = file_exists($url, {'nice' => 1});
+      return $check if ($check->{'error'});
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
