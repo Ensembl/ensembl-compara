@@ -310,7 +310,7 @@ Ensembl.LayoutManager.extend({
 
   showTemporaryMessage: function() {
     var messageSeen = Ensembl.cookie.get('tmp_message_ok');
-    var messageDiv  = $('#tmp_message');
+    var messageDiv  = $('#tmp_message').remove();
     var message     = messageDiv.children('div').text();
     var messageMD5  = messageDiv.children('input[name=md5]').val();
     var messageCol  = messageDiv.children('input[name=colour]').val();
@@ -332,8 +332,6 @@ Ensembl.LayoutManager.extend({
       });
       return true;
     }
-
-    messageDiv.remove();
 
     return false;
   },
