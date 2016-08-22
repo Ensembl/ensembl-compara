@@ -79,7 +79,7 @@ sub merge_split_genes {
 
     warn sprintf("%d leaves in the tree before merge_split_genes()\n", scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
     my %leaf_by_seq_member_id = (map {$_->seq_member_id => $_} @{ $gene_tree->get_all_leaves });
-    my $seq_type = $self->param('cdna') ? 'cds' : undef;
+    my $seq_type = ($self->param('cdna') && ($gene_tree->member_type eq 'protein')) ? 'cds' : undef;
     my %split_genes;
 
     my $sth = $gene_tree->adaptor->db->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
@@ -184,7 +184,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
         -ID_TYPE => 'MEMBER',
-        -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef,
+        -SEQ_TYPE => ($self->param('cdna') && ($gene_tree->{'_member_type'} eq 'protein')) ? 'cds' : undef,
         -STOP2X => 1,
         -REMOVED_COLUMNS => $removed_columns,
         -REMOVED_MEMBERS => $removed_members,

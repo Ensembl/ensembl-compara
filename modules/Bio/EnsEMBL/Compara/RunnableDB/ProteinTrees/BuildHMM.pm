@@ -118,6 +118,7 @@ sub fetch_input {
     }
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
+    $self->param('protein_align')->{'_member_type'} = $protein_tree->member_type;
 
     $self->require_executable('hmmbuild_exe');
     $self->require_executable('hmmcalibrate_exe') if $self->param('hmmer_version') eq '2';
