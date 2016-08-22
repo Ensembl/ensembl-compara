@@ -136,9 +136,9 @@ sub _buildConnectedComponents {
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
     while ( my $ortholog = shift( @{ $ortholog_objects } ) ) {
-		my $gene_members = $ortholog->get_all_GeneMembers();
-		my $seq_mid1 = $gene_members->[0]->get_canonical_SeqMember()->dbID;
-		my $seq_mid2 = $gene_members->[1]->get_canonical_SeqMember()->dbID;
+		my $gene_members = $ortholog->get_all_Members();
+		my $seq_mid1 = $gene_members->[0]->dbID;
+		my $seq_mid2 = $gene_members->[1]->dbID;
 		print "seq mem ids   :   $seq_mid1     :    $seq_mid2   \n " if $self->debug() ;
 		$self->param('connected_split_genes')->add_connection($seq_mid1, $seq_mid2);
 		$c++;
