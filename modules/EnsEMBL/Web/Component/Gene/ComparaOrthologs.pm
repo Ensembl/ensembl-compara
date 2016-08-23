@@ -157,7 +157,6 @@ sub content {
       my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Y' : $orthologue->{'highconfidence'} eq '0' ? 'N' : 'n/a';
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
-warn ">>>".$orthologue->{wga_threshold};
          
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
       my $link_url = $hub->url({
