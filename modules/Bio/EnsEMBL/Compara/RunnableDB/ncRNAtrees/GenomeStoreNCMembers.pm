@@ -189,7 +189,7 @@ sub store_ncrna_gene {
         print STDERR "SEQMEMBER: ", $ncrna_member->description, "    ... ", $ncrna_member->display_label, "\n" if ($self->debug);
 
         print STDERR  " => ncrna_member " . $ncrna_member->stable_id if ($self->debug);
-        my $transcript_spliced_seq = $transcript->spliced_seq;
+        my $transcript_spliced_seq = $ncrna_member->sequence;
 
         # store gene_member here only if at least one ncRNA is to be loaded for the gene
         if ($self->param('store_genes') and (! $gene_member_stored)) {
