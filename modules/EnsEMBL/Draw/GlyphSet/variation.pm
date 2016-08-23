@@ -28,7 +28,7 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
-use EnsEMBL::Draw::Style::Feature::Tagged;
+use EnsEMBL::Draw::Style::Feature::Marked;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
@@ -62,7 +62,7 @@ sub render_normal {
   return unless scalar @{$data->[0]{'features'}||[]};
 
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature::Tagged->new($config, $data);
+  my $style  = EnsEMBL::Draw::Style::Feature::Marked->new($config, $data);
   $self->push($style->create_glyphs);
 }
 
@@ -95,7 +95,7 @@ sub get_data {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    my $features_list = $hub->get_query('GlyphSet::Variation')->go($self,{
+    my $features_list = $hub->get_query('GlyphSet::Variant')->go($self,{
       species => $self->{'config'}{'species'},
       slice => $self->{'container'},
       id => $self->{'my_config'}->id,
