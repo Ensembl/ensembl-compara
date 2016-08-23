@@ -578,9 +578,14 @@ sub pipeline_analyses {
             },
 
             {   -logic_name    => 'tree_entry_point',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+                -parameters    => {
+                                   'tags'  => {
+                                       'model_id'          => '',
+                                   },
+                                  },
                 -flow_into => {
-                               '1->A' => [ 'genomic_alignment', 'infernal' ],
+                               '1->A' => [ 'genomic_alignment', WHEN('#tree_model_id#' => 'infernal') ],
                                'A->1' => [ 'treebest_mmerge' ],
                               },
             },
