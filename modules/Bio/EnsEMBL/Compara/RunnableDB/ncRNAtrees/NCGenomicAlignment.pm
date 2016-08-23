@@ -78,7 +78,7 @@ sub run {
         $self->input_job->autoflow(0);
         $self->complete_early(sprintf("Family too big for normal branch (%s bps) -- Only FastTrees will be generated\n", $self->param('tag_residue_count')));
     }
-    if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem')) { ## Big family -- queue in hugemem
+    if (($self->param('tag_residue_count') > 40000) && !$self->param('inhugemem')) { ## Big family -- queue in hugemem
         $self->dataflow_output_id (
                                    {
                                     'gene_tree_id' => $self->param('gene_tree_id'),
