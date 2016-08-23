@@ -27,6 +27,9 @@ use strict;
 use Role::Tiny;
 use List::Util qw(min max);
 
+use EnsEMBL::Web::File::Utils::IO;
+use EnsEMBL::Web::File::Utils::URL;
+
 use EnsEMBL::Web::IOWrapper::Indexed;
 
 sub render_signal {
@@ -34,6 +37,14 @@ sub render_signal {
   $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
   $self->{'my_config'}->set('height', 60);
   $self->_render_aggregate;
+}
+
+sub render_scatter {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Plot']);
+  $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('filled', 1);
+  $self->_render;
 }
 
 sub get_data {
@@ -114,6 +125,19 @@ sub _fetch_data {
     }
   }
   return [] unless $url;
+
+  my $check;
+  if ($url =~ /^http|ftp/) {
+    $check = EnsEMBL::Web::File::Utils::URL::file_exists($url, {'nice' => 1});
+  }
+  else {
+    $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
+  }
+
+  if ($check->{'error'}) {
+    $self->no_file($check->{'error'}->[0]);
+    return [];
+  }
 
   my $slice     = $self->{'container'};
   my $args      = { 'options' => {

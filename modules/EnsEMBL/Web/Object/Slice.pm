@@ -35,7 +35,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
-use EnsEMBL::Web::Tree;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -355,7 +355,7 @@ sub get_cell_line_data {
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
     my $ic_cell_line = $cell_line;
-    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+    clean_id($ic_cell_line);
 
     foreach my $set (@sets) {
       if ($image_config) {

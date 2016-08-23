@@ -52,11 +52,24 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
+  ## Redirect strains to the strain page for the parent species
+  if ($species_defs->SPECIES_STRAIN) {
+    my $url = $self->hub->url({'species' => $species_defs->STRAIN_COLLECTION, 'action' => 'Strains'});
+    $self->page->ajax_redirect($url, 'page');
+  }
+
   my $index = $self->create_node('Index', '', [qw(homepage EnsEMBL::Web::Component::Info::HomePage)], {});
 
   $self->create_node('Annotation', '',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]
   );
+
+  my $has_strains = $species_defs->ALL_STRAINS;
+  if ($has_strains) {
+    $self->create_node('Strains', '',
+      [qw(blurb EnsEMBL::Web::Component::Info::Strains)]
+    );
+  }
 
   $index->append($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],

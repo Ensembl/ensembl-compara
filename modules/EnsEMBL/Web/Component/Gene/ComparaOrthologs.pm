@@ -75,7 +75,7 @@ sub content {
   }
   
   return '<p>No orthologues have been identified for this gene</p>' unless keys %orthologue_list;
-  
+
   my %orthologue_map = qw(SEED BRH PIP RHS);
   my $alignview      = 0;
  
@@ -119,19 +119,18 @@ sub content {
 
   ##----------------------------- FULL TABLE -----------------------------------------
 
-  $html .= '<h3>Selected orthologues</h3>' if $species_sets;
-
-  my $column_name = $self->html_format ? 'Compare' : 'Description';
+  $html .= '<h3>Selected orthologues</h3>' if $species_sets; 
   
   $columns = [
     { key => 'Species',    align => 'left', width => '10%', sort => 'html'                                                },
-    { key => 'Type',       align => 'left', width => '5%',  sort => 'string'                                              },
+    { key => 'Type',       align => 'left', width => '10%', sort => 'string'                                            },   
+    { key => 'identifier', align => 'left', width => '15%', sort => 'none', title => 'Orthologue'},      
     { key => 'dN/dS',      align => 'left', width => '5%',  sort => 'numeric'                                             },
-    { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
-    { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
-    { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
     { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', help => "Percentage of the orthologous sequence matching the $species_name sequence" },
     { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
+    { key => 'goc_score',  align => 'left', width => '5%',  sort => 'html', label => 'GOC Score',  help => "Gene Order Conservation Score (values are 0-100)" },
+    { key => 'wgac',  align => 'left', width => '5%',  sort => 'html', label => 'WGA Coverage',  help => "Whole Genome Alignment Coverage (values are 0-100)" },
+    { key => 'confidence',  align => 'left', width => '5%',  sort => 'string', label => 'High Confidence'},
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -145,16 +144,21 @@ sub content {
       my $orthologue = $orthologue_list{$species}{$stable_id};
       my ($target, $query);
       
-      # (Column 2) Add in Orthologue description
+      # Add in Orthologue description
       my $orthologue_desc = $orthologue_map{$orthologue->{'homology_desc'}} || $orthologue->{'homology_desc'};
       
-      # (Column 3) Add in the dN/dS ratio
+      # Add in the dN/dS ratio
       my $orthologue_dnds_ratio = $orthologue->{'homology_dnds_ratio'} || 'n/a';
+      my $dnds_class  = ($orthologue_dnds_ratio ne "n/a" && $orthologue_dnds_ratio >= 1) ? "box-highlight" : "";
+      
+      # GOC Score, wgac and high confidence
+      my $goc_score  = $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0 ? $orthologue->{'goc_score'} : 'n/a';
+      my $wgac       = $orthologue->{'wgac'} && $orthologue->{'wgac'} >= 0 ? $orthologue->{'wgac'} : 'n/a';
+      my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Y' : $orthologue->{'highconfidence'} eq '0' ? 'N' : 'n/a';
+      my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
+      my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
+warn ">>>".$orthologue->{wga_threshold};
          
-      # (Column 4) Sort out 
-      # (1) the link to the other species
-      # (2) information about %ids
-      # (3) links to multi-contigview and align view
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
       my $link_url = $hub->url({
         species => $spp,
@@ -164,11 +168,11 @@ sub content {
       });
 
       # Check the target species are on the same portal - otherwise the multispecies link does not make sense
-      my $target_links = ($link_url =~ /^\// 
+      my $region_link = ($link_url =~ /^\// 
         && $cdb eq 'compara'
         && $availability->{'has_pairwise_alignments'}
-      ) ? sprintf(
-        '<ul class="compact"><li class="first"><a href="%s" class="notext">Region Comparison</a></li>',
+      ) ?
+        sprintf('<a href="%s">Compare Regions</a>&nbsp;('.$orthologue->{'location'}.')',
         $hub->url({
           type   => 'Location',
           action => 'Multi',
@@ -177,40 +181,46 @@ sub content {
           r      => $hub->create_padded_region()->{'r'} || $hub->param('r'),
           config => 'opt_join_genes_bottom=on',
         })
-      ) : '';
+      ) : $orthologue->{'location'};
       
+      my ($alignment_link, $target_class, $query_class);
       if ($orthologue_desc ne 'DWGA') {
         ($target, $query) = ($orthologue->{'target_perc_id'}, $orthologue->{'query_perc_id'});
+         $target_class    = ($target && $target <= 10) ? "bold red" : "";
+         $query_class     = ($query && $query <= 10) ? "bold red" : "";
        
-        my $align_url = $hub->url({
-            action   => 'Compara_Ortholog',
-            function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''),
-            hom_id   => $orthologue->{'dbID'},
-            g1       => $stable_id,
-          });
-        
+        my $page_url = $hub->url({
+          type    => 'Gene',
+          action  => 'Compara_Ortholog',
+          g       => $hub->param('g'), 
+        });
+          
+        my $zmenu_url = $hub->url({
+          type    => 'ZMenu',
+          action  => 'ComparaOrthologs',
+          g1      => $stable_id,
+          dbID    => $orthologue->{'dbID'},
+          cdb     => $cdb
+        });
+
         if ($is_ncrna) {
-          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+          $alignment_link .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $hub->url({action => 'Compara_Ortholog', function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''), hom_id => $orthologue->{'dbID'}, g1 => $stable_id});
         } else {
-          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
-          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
+          $alignment_link .= sprintf '<a href="%s" class="_zmenu">View Sequence Alignments</a><a class="hidden _zmenu_link" href="%s"></a>', $page_url ,$zmenu_url;          
         }
         
         $alignview = 1;
-      }
-      
-      $target_links .= sprintf(
-        '<li><a href="%s" class="notext">Gene Tree (image)</a></li></ul>',
-        $hub->url({
-          type   => 'Gene',
-          action => 'Compara_Tree' . ($cdb =~ /pan/ ? '/pan_compara' : ''),
-          g1     => $stable_id,
-          anc    => $orthologue->{'gene_tree_node_id'},
-          r      => undef
-        })
-      );
-      
-      # (Column 5) External ref and description
+      }      
+     
+      my $tree_url = $hub->url({
+        type   => 'Gene',
+        action => 'Compara_Tree' . ($cdb =~ /pan/ ? '/pan_compara' : ''),
+        g1     => $stable_id,
+        anc    => $orthologue->{'gene_tree_node_id'},
+        r      => undef
+      });
+
+      # External ref and description
       my $description = encode_entities($orthologue->{'description'});
          $description = 'No description' if $description eq 'NULL';
          
@@ -219,19 +229,17 @@ sub content {
         $description   .= sprintf '[Source: %s; acc: %s]', $edb, $hub->get_ExtURL_link($acc, $edb, $acc) if $acc;
       }
       
-      my @external = (qq{<span class="small">$description</span>});
-      
+      my $id_info;
       if ($orthologue->{'display_id'}) {
-        if ($orthologue->{'display_id'} eq 'Novel Ensembl prediction' && $description eq 'No description') {
-          @external = ('<span class="small">-</span>');
+        if ($orthologue->{'display_id'} eq 'Novel Ensembl prediction') {
+          $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>};
         } else {
-          unshift @external, $orthologue->{'display_id'};
+          $id_info = qq{<p class="space-below">$orthologue->{'display_id'}&nbsp;&nbsp;<a href="$link_url">($stable_id)</a></p>};
         }
       }
+      $id_info .= qq{<p class="space-below">$region_link</p><p class="space-below">$alignment_link</p>};
 
-      my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>} . join '<br />', @external;
-
-      ## (Column 6) Location - split into elements to reduce horizonal space
+      ##Location - split into elements to reduce horizonal space
       my $location_link = $hub->url({
         species => $spp,
         type    => 'Location',
@@ -243,13 +251,14 @@ sub content {
       
       my $table_details = {
         'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
-        'Type'       => $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues"),
-        'dN/dS'      => $orthologue_dnds_ratio,
+        'Type'       => $self->html_format ? $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
+        'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
-        'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
-        $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
-        'Target %id' => sprintf('%.2f&nbsp;%%', $target),
-        'Query %id'  => sprintf('%.2f&nbsp;%%', $query),
+        'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
+        'Query %id'  => q{<span class="$query_class">}.sprintf('%.2f&nbsp;%%', $query).qq{</span>},
+        'goc_score'  => qq{<span class="$goc_class">$goc_score</span>},
+        'wgac'       => qq{<span class="$wga_class">$wgac</span>},
+        'confidence' => $confidence,
         'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);

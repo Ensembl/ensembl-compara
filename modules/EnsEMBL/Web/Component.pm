@@ -476,6 +476,14 @@ sub hint_panel {
   return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id);
 }
 
+sub sidebar_panel {
+  ## Similar to an info panel, but smaller and floats right rather than filling the page
+  ## @params Heading, description text, width of the box (defaults to 50%)
+  my ($self, $caption, $desc, $width) = @_;
+  $width ||= '50%';
+  return $self->_info_panel('sidebar', $caption, $desc, $width);
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }

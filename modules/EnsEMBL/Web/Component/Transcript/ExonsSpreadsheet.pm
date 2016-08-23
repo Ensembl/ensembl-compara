@@ -321,7 +321,7 @@ sub add_variations {
       !$self->too_rare_snp($_->variation_feature,$config)
     } @transcript_variations;
   }
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   
@@ -403,11 +403,14 @@ sub add_line_numbers {
       
       $start  = $end;
       $offset = $skip = 0;
+      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
+      $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
       
       last if ($strand == 1 && $end >= $length) || ($strand == -1 && $start && $start <= $length);
     }
   }
   
+  $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
   $config->{'last_number'} = $end;
 }
 

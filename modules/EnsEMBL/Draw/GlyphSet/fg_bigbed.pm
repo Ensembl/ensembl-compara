@@ -22,6 +22,8 @@ package EnsEMBL::Draw::GlyphSet::fg_bigbed;
 
 use strict;
 
+use EnsEMBL::Web::File::Utils::IO qw(file_exists);
+
 use parent qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub supports_subtitles { 0; }
@@ -51,6 +53,12 @@ sub get_data {
   ## Clean up any whitespace
   $bigbed_file =~ s/\s//g;
   
+  my $check = file_exists($bigbed_file, {'nice' => 1});
+  if ($check->{'error'}) {
+    $self->no_file($check->{'error'}->[0]);
+    return [];
+  }
+
   return $self->SUPER::get_data($bigbed_file);
 }
 

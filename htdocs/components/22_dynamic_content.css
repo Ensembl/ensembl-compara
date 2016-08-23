@@ -190,8 +190,12 @@ div.redirect-message          { position: fixed; z-index: 999999999999; left: 0;
 div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
 div.redirect-message p a      { color: inherit; font-weight: bold; }
 
-/* cookie message */
-div.cookie-message          { background-color: [[MH_BG]]; border-radius: 10px; bottom: 20px; color: #fff; left: 20px; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
-div.cookie-message div      { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
-div.cookie-message p        { margin: 0; line-height: 30px; text-align: center; }
-div.cookie-message p a      { color: inherit; font-weight: bold; }
+/* cookie message and temporary message */
+div.cookie-message, div.tmp-message               { background-color: [[MH_BG]]; border-radius: 10px; bottom: 20px; color: #fff; left: 20px; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
+div.tmp-message                                   { left: auto; right: 20px; }
+div.tmp-message.warning                           { background-color: [[WARNING_BG]]; }
+div.tmp-message.error                             { background-color: [[ERROR_BG]];   }
+div.tmp-message.info                              { background-color: [[INFO_BG]]; color: #333; }
+div.cookie-message div,div.tmp-message div.close  { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
+div.cookie-message p, div.tmp-message p           { margin: 0; line-height: 30px; text-align: center; }
+div.cookie-message p a, div.tmp-message p a       { color: inherit; font-weight: bold; }

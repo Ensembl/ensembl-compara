@@ -60,32 +60,58 @@ sub create_glyphs {
   }
 
   ## Single line? Build into singleton set.
-  $data = [ $data ] if ref $data->[0] ne 'ARRAY';
+  $data = [{'features' => $data}] if ref $data->[0] ne 'HASH';
 
   # Draw plots
-  $self->draw_plots($height, $data, $plot_diameter);
-
-}
-
-sub draw_plots {
-  my ($self, $height, $features, $focus_variant, $diam) = @_;
-
-  foreach my $feature (@$features) {
-    $self->draw_plot($height, $feature, $diam);
+  my $options = {
+                'diameter'  => $track_config->get('plot_diameter') || 6,
+                'filled'    => $track_config->get('filled') || 0,
+                'height'    => $height,
+                };
+  foreach my $track (@$data) {
+    $self->draw_plots($track, $options);
   }
   return @{$self->glyphs||[]};
 }
 
-sub draw_plot {
-  my ($self, $height, $feature, $diam) = @_;
+sub draw_plots {
+  my ($self, $track, $options) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
-  my $radius = $diam/2;
+  my $metadata  = $track->{'metadata'} || {};
+  my $features  = $track->{'features'} || [];
+
+  ## Convert wiggle array to feature hash if necessary
+  my $wiggle = (defined $features->[0] && ref $features->[0] eq 'HASH') ? 0 : 1;
+  my $bin_x = 0;
+
+  foreach my $feature (@{$track->{'features'}||[]}) {
+    if ($wiggle) {
+      if (defined $feature) {
+        $feature = {
+                    start   => $bin_x,
+                    score   => $feature,
+                    colour  => $metadata->{'colour'},
+                    };
+      }
+      $bin_x += $metadata->{'unit'};      
+    }
+    $self->draw_plot($feature, $options);
+  }
+}
+
+sub draw_plot {
+  my ($self, $feature, $options) = @_;
+
+  my $pix_per_bp  = $self->{'pix_per_bp'};
+  my $diam    = $options->{'diameter'};
+  my $radius  = $diam/2;
+  my $filled  = $options->{'filled'};
+  my $height  = $options->{'height'};
 
   my $score  = $feature->{'score'};
   my $start  = $feature->{'start'};
-  my $end    = $feature->{'end'};
   my $colour = $feature->{'colour'};
+  my $offset = $radius/$pix_per_bp;
 
   my $y = $self->get_y($height,$score) + $radius;
      $y = $height if ($y > $height);
@@ -96,7 +122,7 @@ sub draw_plot {
     diameter      => $diam,
     colour        => $colour,
     absolutewidth => 1,
-    filled        => 1,
+    filled        => $filled,
   });
 
   # Invisible rectangle with a link to the ZMenu

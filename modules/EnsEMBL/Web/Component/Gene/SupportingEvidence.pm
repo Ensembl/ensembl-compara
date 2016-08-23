@@ -89,7 +89,7 @@ sub content {
       action => 'SupportingEvidence',
       t      => $transcript
     );
-    my $row = $has_ev ? { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $hub->url(\%url_params)) } : { transcript => $transcript };
+    my $row = $has_ev ? { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $evidence->{$transcript}{version} ? $transcript . "." . $evidence->{$transcript}{version}: $transcript, $hub->url(\%url_params)) } : { transcript => $transcript };
     $row->{'exon'} = scalar keys %{$evidence->{$transcript}{'extra_evidence'}} if $evidence->{$transcript}{'extra_evidence'};
     $row->{'intron'} = scalar @{$evidence->{$transcript}{'intron_supporting_evidence'}} if $evidence->{$transcript}{'intron_supporting_evidence'};
 

@@ -110,7 +110,8 @@ sub file {
 
 sub format {
   ### a
-  my $self = shift;
+  my ($self, $format) = @_;
+  $self->{'format'} = $format if $format;
   return $self->{'format'};
 }
 
@@ -267,8 +268,10 @@ sub create_tracks {
                         'score'      => $score,
                         'colour'     => $metadata->{'colour'},
                         };
-      $max_score = $score if $score >= $max_score; 
-      $min_score = $score if $score <= $min_score; 
+      if ($score && $score !~ /,/) { ## Ignore pairwise "scores" that are RGB colours
+        $max_score = $score if $score >= $max_score; 
+        $min_score = $score if $score <= $min_score; 
+      }
     }
     $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
     $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
@@ -393,7 +396,7 @@ sub build_feature {
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
 
-  if ($hash->{'score'}) {
+  if ($hash->{'score'} && $hash->{'score'} !~ /,/) { ## Ignore pairwise "scores" that are RGB colours
     $metadata->{'max_score'} = $hash->{'score'} if $hash->{'score'} >= $metadata->{'max_score'};
     $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
   }
@@ -461,6 +464,9 @@ sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
   my $valid = $self->parser->validate;
+  if ($valid && $self->parser->format) {
+    $self->format($self->parser->format->name);
+  }
   return $valid ? undef : 'File did not validate as format '.$self->format;
 }
 
@@ -531,9 +537,6 @@ sub nearest_feature {
 
   my $location = $self->hub->param('r') || $self->hub->referer->{'params'}->{'r'}[0];
 
-  my @chromosomes = @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES||[]};
-  return unless scalar @chromosomes;
-
   my ($browser_region, $browser_start, $browser_end) = $location ? split(':|-', $location) 
                                                                   : (0,0,0);
   my ($nearest_region, $nearest_start, $nearest_end, $first_region, $first_start, $first_end);
@@ -568,12 +571,10 @@ sub nearest_feature {
   }
 
   if ($nearest_region) {
-    return unless grep { $nearest_region eq $_ } @chromosomes;
     ($nearest_start, $nearest_end) = $self->_adjust_coordinates($nearest_start, $nearest_end);
     return ($nearest_region, $nearest_start, $nearest_end, $count, 'nearest');
   }
   else {
-    return unless grep { $first_region eq $_ } @chromosomes;
     ($first_start, $first_end) = $self->_adjust_coordinates($first_start, $first_end);
     return ($first_region, $first_start, $first_end, $count, 'first');
   }

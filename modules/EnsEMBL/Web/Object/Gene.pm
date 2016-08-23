@@ -49,7 +49,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
-
+    
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
@@ -59,6 +59,7 @@ sub availability {
           type => $self->get_db,
           gene => $self->Obj,
         })->[0];
+
       $availability->{'has_gxa'} = $self->gxa_check;
       $availability->{'logged_in'} = $self->user;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -816,7 +817,7 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id) = @$homology;
+        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold ) = @$homology;
         
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
@@ -837,7 +838,12 @@ sub get_homology_matches {
           gene_tree_node_id   => $gene_tree_node_id,
           dbID                => $homology_id,
           order               => $order,
-          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $homologue->$_, qw(dnafrag_start dnafrag_end dnafrag_strand))
+          goc_score           => $goc_score,
+          goc_threshold       => $goc_threshold,
+          wgac                => $wgac,
+          wga_threshold       => $wga_threshold,
+          highconfidence      => $highconfidence,
+          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $self->thousandify($homologue->$_), qw(dnafrag_start dnafrag_end dnafrag_strand))
         };
         
         $order++;
@@ -913,7 +919,7 @@ sub fetch_homology_species_hash {
   my %homologues;
 
   foreach my $homology (@$homologies) {
-    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
+    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold);
     
     foreach my $member (@{$homology->get_all_Members}) {
       my $gene_member = $member->gene_member;
@@ -925,18 +931,23 @@ sub fetch_homology_species_hash {
         $genome_db_name = $member->genome_db->name;
         $target_member  = $gene_member;
         $dnds_ratio     = $homology->dnds_ratio; 
-      }
+        $goc_score      = $homology->goc_score;
+        $goc_threshold  = $homology->method_link_species_set->get_value_for_tag('goc_quality_threshold');        
+        $wgac           = $homology->wga_coverage;
+        $wga_threshold  = $homology->method_link_species_set->get_value_for_tag('wga_quality_threshold');
+        $highconfidence = $homology->is_high_confidence;
+      }      
     }
-    
+
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $wgac, $highconfidence ];    
   }
-  
+   
   $self->timer_push('homologies hacked', 6);
   
-  @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;
-  
+  @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
+   
   return \%homologues;
 }
 

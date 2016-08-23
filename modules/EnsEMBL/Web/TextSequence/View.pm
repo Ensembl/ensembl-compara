@@ -57,6 +57,7 @@ sub reset {
     %$self,
     seq_num => -1,
     all_line => 0,
+    annotation => [],
     slices => [],
     sequences => [],
     fieldsize => {},
@@ -130,6 +131,24 @@ sub field_size {
     $self->{'fieldsize'}{$key} = max($self->{'fieldsize'}{$key}||0,$value);
   }
   return $self->{'fieldsize'}{$key};
+}
+
+sub add_annotation {
+  my ($self,$annotation) = @_;
+
+  push @{$self->{'annotation'}},$annotation;
+}
+
+sub annotate {
+  my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
+
+  my $cur_phase = $self->phase;
+  foreach my $a (@{$self->{'annotation'}}) {
+    my $p = $a->phases;
+    next if $p and not any { $cur_phase == $_ } @$p;
+    # XXX no hub should be passed
+    $a->annotate($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
+  }
 }
 
 sub transfer_data {

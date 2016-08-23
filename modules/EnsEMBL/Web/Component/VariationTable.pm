@@ -610,7 +610,7 @@ sub variation_table {
             my $status = join('~',@$evidences);
             my $clin_sig = join("~",@$clin_sigs);
 
-            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
+            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript->version ? $transcript_stable_id.".".$transcript->version : $transcript_stable_id;
           
             my $more_row = {
               vf         => $raw_id,

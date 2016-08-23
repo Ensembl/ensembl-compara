@@ -71,12 +71,14 @@
         $box.on("propertychange change keyup paste input",function() {
           change_event($table);
         });
+        /* Default value? */
+        var value = $table.data('view').search;
+        if(value) { $box.val(value); }
       },
       position: data.position,
       pipe: function() {
         return [
           function(need,got) {
-            if(!got) { return null; }
             var orig_search = need.search;
             var search = orig_search;
             var search_was_defined = need.hasOwnProperty('search');

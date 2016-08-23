@@ -149,6 +149,7 @@ Ensembl.LayoutManager.extend({
 
     this.showMobileMessage();
     this.showCookieMessage();
+    this.showTemporaryMessage();
     this.showMirrorMessage();
   },
   
@@ -301,6 +302,34 @@ Ensembl.LayoutManager.extend({
           Ensembl.cookie.set('cookies_ok', 'yes');
           $(this).parents('div').first().fadeOut(200);
       }).filter('div').helptip({content:"Don't show this again"});
+      return true;
+    }
+
+    return false;
+  },
+
+  showTemporaryMessage: function() {
+    var messageSeen = Ensembl.cookie.get('tmp_message_ok');
+    var messageDiv  = $('#tmp_message').remove();
+    var message     = messageDiv.children('div').text();
+    var messageMD5  = messageDiv.children('input[name=md5]').val();
+    var messageCol  = messageDiv.children('input[name=colour]').val();
+    var expiryHours = parseInt(messageDiv.children('input[name=expiry]').val()) || 24;
+
+    if (message && (!messageSeen || messageSeen !== messageMD5)) {
+      $(['<div class="tmp-message hidden ' + messageCol + '">',
+        '<div>' + message + '</div>',
+        '<p><button>Close</button></p>',
+        '</div>'
+      ].join(''))
+        .appendTo(document.body).show().find('button').on('click', {
+          cookieValue: messageMD5,
+          cookieExpiry: new Date(new Date().getTime() + expiryHours * 60 * 60 * 1000).toUTCString()
+        }, function (e) {
+          e.preventDefault();
+          Ensembl.cookie.set('tmp_message_ok', e.data.cookieValue, e.data.cookieExpiry);
+          $(this).parents('div').first().fadeOut(200);
+      });
       return true;
     }
 

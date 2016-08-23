@@ -118,10 +118,11 @@ sub format_lines {
     foreach my $seq (@$output) {
       my $i = 0;
       foreach my $x (@$seq) {
-        my $num = shift @{$line_numbers->{$y++}};
+        my $num = shift @{$line_numbers->{$y}};
         $self->format_line($layout,$x,$num,$config,$multi && $i == $#$seq);
         $i++;
       }
+      $y++;
     }
   }
 

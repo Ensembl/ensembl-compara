@@ -24,6 +24,8 @@ package EnsEMBL::Draw::GlyphSet::fg_segmentation_features;
 
 use strict;
 
+use EnsEMBL::Web::File::Utils::IO qw(file_exists);
+
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub get_data {
@@ -140,6 +142,12 @@ sub fetch_features_from_file {
                            $self->species_defs->ASSEMBLY_VERSION);
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   $bigbed_file =~ s/\s//g;
+  my $check = file_exists($bigbed_file, {'nice' => 1});
+  if ($check->{'error'}) {
+    $self->no_file($check->{'error'}->[0]);
+    return [];
+  }
+
   my $out = $self->SUPER::get_data($bigbed_file);
 
   ## Create legend
