@@ -113,6 +113,9 @@ sub report_up { return 3600; }
 # Which directory to store failure files in?
 sub failure_dir { return "/tmp"; }
 
+# Local overrides (should be local disk)
+sub override_failure_dir { return "/tmp"; }
+
 # seconds to assume failed after initial uncertainy before checking again
 sub fail_for { return 600; }
 
@@ -134,12 +137,30 @@ sub successful { return defined $_[1]; }
 
 sub debug { return 0; }
 
+sub _force_filename {
+  my ($self,$dir,$suffix) = @_;
+
+  return sprintf("%s/%s-%s",$dir,$self->{'prefix'},$suffix);
+}
+
+sub _force {
+  my ($self,$suffix) = @_;
+
+  my $filename = $self->_force_filename($self->failure_dir,$suffix);
+  my $ov_filename =
+    $self->_force_filename($self->override_failure_dir,$suffix);
+  return (-e $filename) || (-e $ov_filename);
+}
+
 # 1 = Yes, 0 = No, -1 = Don't know
 sub is_dead {
   my ($self,$endpoint,$set) = @_;
 
   my $failbase = $self->failure_dir;
+  my $override_failbase = $self->override_failure_dir;
   return 0 unless $failbase;
+  return 0 if $self->_force('ISGOOD');
+  return 1 if $self->_force('ISBAD');
   my $timeout = $self->fail_for;
   my $now = time;
   my $filename = $failbase."/".$self->{'prefix'}."-".md5_hex($endpoint);
