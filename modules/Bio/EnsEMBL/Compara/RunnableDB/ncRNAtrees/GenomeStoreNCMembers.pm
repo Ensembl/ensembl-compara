@@ -228,6 +228,7 @@ sub store_ncrna_gene {
         $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member); ## Watchout merged genes!
     }
 
+    return $gene_member;
 }
 
 sub _ncrna_description {

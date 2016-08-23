@@ -380,7 +380,7 @@ sub store_protein_coding_gene_and_all_transcripts {
         $self->warning(sprintf('No canonical peptide for %s', $gene->stable_id));
     }
 
-    return 1;
+    return $gene_member;
 }
 
 
