@@ -240,7 +240,7 @@ sub variation_table {
   });
 
   my $var_styles = $hub->species_defs->colour('variation');
-  my $al_colours = $self->get_allele_genotype_colours; 
+  my $al_colours = $self->object->get_allele_genotype_colours; 
 #  my %strain_data;
 #  my $strain_slice_adaptor = $hub->get_adaptor('get_StrainSliceAdaptor', 'variation');
 
