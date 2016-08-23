@@ -34,12 +34,12 @@ sub fixup {
   $self->fixup_location('start','slice',0);
   $self->fixup_location('end','slice',1);
   $self->fixup_slice('slice','species',20000);
-  $self->fixup_location('tag/*/start','slice',0);
-  $self->fixup_location('tag/*/end','slice',1);
-  $self->fixup_colour('tag/*/colour',undef,undef,'colour_type');
-  $self->fixup_colour('tag/*/label_colour','black',['label'],undef,1);
-  $self->fixup_href('tag/*/href');
-  $self->fixup_label_width('tag/*/label','end');
+  $self->fixup_location('marks/*/start','slice',0);
+  $self->fixup_location('marks/*/end','slice',1);
+  $self->fixup_colour('marks/*/colour',undef,undef,'colour_type');
+  $self->fixup_colour('marks/*/label_colour','black',['label'],undef,1);
+  $self->fixup_href('marks/*/href');
+  $self->fixup_label_width('marks/*/label','end');
 
   # Fix class key (depends on depth)
   if($self->phase eq 'post_process') {
@@ -122,16 +122,16 @@ sub href {
   };   
 }
 
-sub tag {
+sub marks {
   my ($self,$f,$args) = @_;
   my $colour_key = $self->colour_key($f);
   my $label      = $f->ambig_code;
      $label      = '' if $label && $label eq '-';
-  my @tags;
+  my @marks;
 
   if (($args->{'config'}{'style'}||'') eq 'box') {
     my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
-    push @tags, {
+    push @marks, {
       style        => $style,
       colour       => $colour_key,
       letter       => $style eq 'box' ? $label : '',
@@ -140,7 +140,7 @@ sub tag {
   } else {
     if (!$args->{'config'}{'no_label'}) {
       my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
-      push @tags, {
+      push @marks, {
         style  => 'label',
         label  => $label,
         colour => $colour_key,
@@ -150,8 +150,9 @@ sub tag {
       };
     }
     if($f->start > $f->end) {
-      push @tags, {
-        style => 'insertion',
+      push @marks, {
+        style => 'triangle',  
+        direction => 'up',
         colour => $colour_key,
         start => $f->start,
         end => $f->end,
@@ -160,7 +161,7 @@ sub tag {
     }
   }
 
-  return @tags;
+  return @marks;
 }
 
 sub title {
@@ -182,7 +183,7 @@ sub _plainify {
     start => $f->start,
     end => $f->end,
     colour_key => $self->colour_key($f),
-    tag => [$self->tag($f,$args)],
+    marks => [$self->marks($f,$args)],
     label => $self->feature_label($f),
     variation_name => $f->variation_name,
     href => $self->href($f,$args),
