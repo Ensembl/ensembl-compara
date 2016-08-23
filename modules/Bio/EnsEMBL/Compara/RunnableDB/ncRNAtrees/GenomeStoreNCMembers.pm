@@ -190,6 +190,10 @@ sub store_ncrna_gene {
 
         print STDERR  " => ncrna_member " . $ncrna_member->stable_id if ($self->debug);
         my $transcript_spliced_seq = $ncrna_member->sequence;
+        if ($transcript_spliced_seq =~ /^N+$/i) {
+            $self->warning($transcript->stable_id . " cannot be loaded because its sequence is only composed of Ns");
+            next;
+        }
 
         # store gene_member here only if at least one ncRNA is to be loaded for the gene
         if ($self->param('store_genes') and (! $gene_member_stored)) {

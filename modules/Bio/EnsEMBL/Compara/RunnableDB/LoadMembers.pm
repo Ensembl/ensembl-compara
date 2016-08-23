@@ -318,6 +318,12 @@ sub store_protein_coding_gene_and_all_transcripts {
             print "  => NO SEQUENCE for pep_member " . $pep_member->stable_id."\n";
             next;
         }
+
+        if ($pep_member->sequence =~ /^X+$/i) {
+            $self->warning($transcript->stable_id . " cannot be loaded because its sequence is only composed of Xs");
+            next;
+        }
+
         print(" len=",$pep_member->seq_length ) if($self->param('verbose'));
         $longestTranslation = $pep_member if not defined $longestTranslation or $pep_member->seq_length > $longestTranslation->seq_length;
 
