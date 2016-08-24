@@ -32,17 +32,6 @@ use EnsEMBL::Draw::Style::Feature::Variant;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
-sub init {
-  my $self = shift;
-  if ($self->{'container'}->length <= 1e4) {
-    $self->{'my_config'}->set('bumped', 1);
-    $self->{'my_config'}->set('show_labels', 1);
-    $self->{'my_config'}->set('label_overlay', 1);
-    $self->{'my_config'}->set('centre_labels', 1);
-  }
-  $self->SUPER::init;
-}
-
 sub depth {
   my $self   = shift;
   my $length = $self->{'container'}->length;
@@ -57,28 +46,48 @@ sub depth {
 
 sub render_normal {
   my $self = shift;
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('depth', 20);
+  return $self->_render_normal;
+}
+
+sub render_compact {
+  my $self = shift;
+  return $self->_render_normal;
+}
+
+sub render_labels {
+  my $self = shift;
+  $self->{'my_config'}->set('bumped', 'features_only');
+
+  if ($self->{'container'}->length <= 1e4) {
+    $self->{'my_config'}->set('show_labels', 1);
+    $self->{'my_config'}->set('label_overlay', 0);
+  }
+  return $self->_render_normal;
+}
+
+sub render_nolabels {
+  my $self = shift;
+  $self->{'my_config'}->set('bumped', 1);
+  return $self->_render_normal;
+}
+
+sub _set_depth {
+  my $self = shift;
+
+}
+
+sub _render_normal {
+  my $self = shift;
 
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};
-
-  $self->{'my_config'}->set('show_labels', 0);
 
   my $config = $self->track_style_config;
   my $style  = EnsEMBL::Draw::Style::Feature::Variant->new($config, $data);
   $self->push($style->create_glyphs);
 }
-
-#sub render_labels {
-#  my ($self, $labels) = @_;
-#  $self->{'show_labels'} = 1 if $self->{'container'}->length <= 1e4;
-#  return $self->render_normal;
-#}
-
-#sub _init {
-#  my $self = shift;
-#  $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
-#  return $self->SUPER::_init(@_);
-#}
 
 sub my_label { 
   my $self  = shift;  
