@@ -64,6 +64,11 @@ sub content {
       'type'        => 'hidden',
       'name'        => 'colour',
       'value'       => $self->{'file'}{'colour'} || 'warning'
+    }, {
+      'node_name'   => 'input',
+      'type'        => 'hidden',
+      'name'        => 'position',
+      'value'       => $self->{'file'}{'position'} || ''
     }]
   })->render : '';
 }
