@@ -21,8 +21,12 @@ package EnsEMBL::Draw::Style::Feature::Variant;
 
 =pod
 
-Renders a variation track with variants drawn differently
-depending on what type they are 
+Renders a variation track with variants drawn differently depending on what type they are. 
+
+Whilst we try to keep biological information out of the lower-level drawing code as much 
+as possible, the density of the variation tracks means we have to avoid looping through
+the array of features. Hence this module decides how to draw each variant, rather than
+the glyphset. 
 
 =cut
 
@@ -35,6 +39,11 @@ sub draw_feature {
   my ($self, $feature, $position) = @_;
 
   return unless ($feature->{'colour'} || $feature->{'bordercolour'});
+
+  ## SNPs have two kinds of "label" - an ambiguity code which may be drawn on the feature,
+  ## and an ID which is used as a normal label
+  $feature->{'overlay_colour'} = $feature->{'label_colour'};
+  $feature->{'label_colour'} = $feature->{'colour'};
 
   if ($feature->{'type'}) {
     my $method = 'draw_'.$feature->{'type'};
@@ -80,11 +89,13 @@ sub draw_insertion {
                                 }));
 
   ## Draw a triangle below the line to identify it as an insertion
+  ## Note that we can't add the triangle to the composite, for Reasons
+  my $y = $position->{'y'} + $position->{'height'};
   $params = {
               width         => int(6 / $self->{'pix_per_bp'}),
               height        => 4,
               direction     => 'up',
-              mid_point     => [ $x - 1, $position->{'height'} - 1 ],
+              mid_point     => [ $x - 1, $y - 1 ],
               colour        => $feature->{'colour'},
               absolutey     => 1,
               no_rectangle  => 1,
@@ -92,7 +103,6 @@ sub draw_insertion {
   my $triangle = $self->Triangle($params);
 
   ## OK, all done!
-  ## Note that we can't add the triangle to the composite, for Reasons
   push @{$self->glyphs}, $composite, $triangle;
 }
 
