@@ -96,7 +96,7 @@ sub create_glyphs {
       #next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
       my $text_info   = $self->get_text_info($feature->{'label'});
-      my $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $overlay     = $track_config->get('label_overlay');
 
       ## Default colours, if none set in feature
