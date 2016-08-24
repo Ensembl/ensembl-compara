@@ -127,7 +127,7 @@ sub create_glyphs {
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
         my $bump = $feature->{'_bump'};
-        $label_row   = $bump;
+        $label_row   = $bump unless $bumped eq 'features_only';
         $feature_row = $bump unless $bumped eq 'labels_only';       
       }
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
@@ -192,8 +192,11 @@ sub create_glyphs {
 
       ## OK, we definitely want a label!
       if ($show_label) {
-        if ($overlay) {
+        my $new_x = $feature->{'start'};
+        $new_x = 1 if $new_x < 1;
+        if ($overlay || $bumped eq 'features_only') {
           $new_y = $position->{'y'} + $approx_height - $text_height;
+          $new_x = $feature->{'end'} + 4 / $self->{'pix_per_bp'} if $bumped eq 'features_only';
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
@@ -203,6 +206,7 @@ sub create_glyphs {
         }
 
         $position = {
+                      'x'           => $new_x,
                       'y'           => $new_y,
                       'height'      => $text_info->{'height'},
                       'width'       => $position->{'width'},
@@ -279,12 +283,10 @@ sub add_label {
     $colour = 'black';
   }
 
-  my $x = $feature->{'start'};
-  $x = 1 if $x < 1;
   my $halign = $self->track_config->get('centre_labels') ? 'center' : 'left';
 
   my $label = {
-                x         => $x - 1,
+                x         => $position->{'x'} - 1,
                 y         => $position->{'y'},
                 height    => $position->{'height'},
                 width     => $position->{'width'},
