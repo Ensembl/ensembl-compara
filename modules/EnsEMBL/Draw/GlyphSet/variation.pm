@@ -28,7 +28,7 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
-use EnsEMBL::Draw::Style::Feature::Marked;
+use EnsEMBL::Draw::Style::Feature::Variant;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
@@ -61,8 +61,10 @@ sub render_normal {
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};
 
+  $self->{'my_config'}->set('show_labels', 0);
+
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature::Marked->new($config, $data);
+  my $style  = EnsEMBL::Draw::Style::Feature::Variant->new($config, $data);
   $self->push($style->create_glyphs);
 }
 
