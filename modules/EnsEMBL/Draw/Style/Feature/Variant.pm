@@ -79,11 +79,11 @@ sub draw_insertion {
   $composite->push($self->Rect($params));
 
   ## invisible box to make inserts more clickable
-  my $width = min(1, 16 / $self->{'pix_per_bp'});
+  my $box_width = min(1, 16 / $self->{'pix_per_bp'});
   $composite->push($self->Rect({
-                                  x         => $x - 1 - $position->{'width'} / 2,
+                                  x         => $x - 1 - $box_width/2, 
                                   y         => $position->{'y'},
-                                  width     => $width,
+                                  width     => $box_width,
                                   height    => $position->{'height'} + 2,
                                 }));
 
