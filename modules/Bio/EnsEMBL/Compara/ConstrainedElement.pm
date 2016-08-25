@@ -532,6 +532,7 @@ sub get_SimpleAlign {
 		$msa_mlss, $self->slice->sub_Slice($start, $end, $self->slice->strand));
 
 	my $sa = Bio::SimpleAlign->new();
+        $sa->missing_char('.'); # only useful for Nexus files
 
 	warn "should be only one genomic_align_block associated with each constrained element\n" if @$gabs > 1;
 

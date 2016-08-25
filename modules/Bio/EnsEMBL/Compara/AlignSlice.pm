@@ -658,6 +658,7 @@ sub get_SimpleAlign {
   ## Create a single Bio::SimpleAlign for the projection  
   $simple_align = Bio::SimpleAlign->new();
   $simple_align->id("ProjectedMultiAlign");
+  $simple_align->missing_char('.'); # only useful for Nexus files
 
   my $genome_db_name_counter;
 

@@ -758,6 +758,7 @@ sub write_genomic_align_block {
           -idlength => 10
       );
   my $simple_align = Bio::SimpleAlign->new();
+  $simple_align->missing_char('.'); # only useful for Nexus files
 
 
   #only valid for a GenomicAlignBlock not a GenomicAlignTree

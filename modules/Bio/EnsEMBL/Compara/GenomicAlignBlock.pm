@@ -920,6 +920,7 @@ sub get_SimpleAlign {
   }
 
   my $sa = Bio::SimpleAlign->new();
+  $sa->missing_char('.'); # only useful for Nexus files
 
   my $all_genomic_aligns;
   if ($self->reference_genomic_align) {

@@ -353,6 +353,7 @@ if ($print_genomic) {
   $simple_align = $align_slice->get_SimpleAlign();
 } else {
   $simple_align = new Bio::SimpleAlign;
+  $simple_align->missing_char('.'); # only useful for Nexus files
 }
 
 if ($print_contigs) {
