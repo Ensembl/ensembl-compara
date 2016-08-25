@@ -34,6 +34,7 @@ package Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 use strict;
 use warnings;
 
+
 use Bio::EnsEMBL::Registry;
 #use Bio::EnsEMBL::Compara::HAL::GenomicAlignBlockAdaptor;
 #use Bio::EnsEMBL::Compara::HAL::MethodLinkSpeciesSetAdaptor;
@@ -42,10 +43,10 @@ die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a vali
 
 use Inline C => Config =>
              LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
-             MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halMaf.a"],
-             INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/C/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/api/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/maf/inc/";
-use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/compara-master/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
-#use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
+             MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halMaf.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a"],
+             INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/maf/inc/";
+#use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/compara-master/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
+use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
 
 =head2 new
 
@@ -68,8 +69,6 @@ sub new {
     } else {
         $self->{'use_hal_genomes'} = 0;
     }
-
-    #print Dumper $self;
 
     return $self;
 }

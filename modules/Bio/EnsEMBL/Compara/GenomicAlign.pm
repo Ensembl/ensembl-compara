@@ -177,7 +177,6 @@ use Bio::EnsEMBL::Mapper;
 use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
 use Data::Dumper;
-$Data::Dumper::Pad = '<br>';
 
 =head2 new (CONSTRUCTOR)
 
@@ -1083,6 +1082,8 @@ sub _print {    ## DEPRECATED
   dnafrag_start = ".($self->dnafrag_start or "-undef-")."
   dnafrag_end = ".($self->dnafrag_end or "-undef-")."
   dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
+  dnafrag_name = ".($self->dnafrag->name)."
+  genome_db_name = ".($self->dnafrag->genome_db->name)."
   cigar_line = ".($self->cigar_line or "-undef-")."
   visible = ".($self->visible or "-undef-")."
   original_sequence = ".($self->original_sequence or "-undef-")."
@@ -1882,7 +1883,7 @@ sub restrict {
   ## Save genomic_align's cigar_line
   my $l = ($end-$start) > 0 ? ($end-$start) : ($start-$end);
   #print "Adding new aligned_sequence!! $l bp from $start-1 <br>";
-  $restricted_genomic_align->{aligned_sequence} = substr( $self->{aligned_sequence}, $start, $l );
+  $restricted_genomic_align->{aligned_sequence} = substr( $self->{aligned_sequence}, $start-1, $l+1 );
   $restricted_genomic_align->{cigar_line} = join("", @$cigar_arrayref);
   $restricted_genomic_align->{cigar_arrayref} = $cigar_arrayref;
 

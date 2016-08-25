@@ -1488,13 +1488,22 @@ sub _print {    ## DEPRECATED
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
   foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
-    my $slice = $this_genomic_align->get_Slice;
+    my $species_name = $this_genomic_align->genome_db->name;
+    # my $slice = $this_genomic_align->get_Slice;
+    my $slice = $this_genomic_align->dnafrag->slice;
+    $slice = $slice->sub_Slice(
+              $this_genomic_align->dnafrag_start,
+              $this_genomic_align->dnafrag_end,
+              $this_genomic_align->dnafrag_strand
+          );
+    print "slice not defined\n" if ( !defined $slice && $species_name eq 'rattus_norvegicus' );
     if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
       print $FILEH "    * ", $this_genomic_align->genome_db->name, " ",
           ($slice?$slice->name:"--error--"), "\n";
     } else {
       print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
           ($slice?$slice->name:"--error--"), "\n";
+      # print Dumper $this_genomic_align->dnafrag->slice unless ( defined $slice );
     }
   }
 

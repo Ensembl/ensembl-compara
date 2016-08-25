@@ -6,10 +6,21 @@
 // #include <iostream.h>
 // #include <fstream.h>
 #include <stdio.h>
-// #include "hal.h"
+//#include "hal.h"
 #include "halBlockViz.h"
 // #include "halMafExport.h"
 // #include "halDefs.h"
+
+/** Some information about a genome */
+// struct hal_species_t
+// {
+//    struct hal_species_t* next;
+//    char* name;
+//    hal_int_t length;
+//    hal_int_t numChroms;
+//    char* parentName;
+//    double parentBranchLength;
+// };
 
 int _open_hal(char *halFilePath) {
     return halOpen(halFilePath, NULL);
@@ -138,7 +149,7 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
     Inline_Stack_Vars;
     Inline_Stack_Reset;
 
-    printf("%s\t%s\t%s\t%s\n", querySpecies, queryChrom, targetSpecies, targetChrom );
+    //printf("%s\t%s\t%s\t%s\n", querySpecies, queryChrom, targetSpecies, targetChrom );
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
     // Last parameter (0 or 1) controls the inclusion of overlapping blocks
@@ -202,42 +213,100 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
     Inline_Stack_Done;
 }
 
-void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies[], char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
+// pass querySpecies as a comma-seperated string
+void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd) {
+    //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
     Inline_Stack_Vars;
     Inline_Stack_Reset;
 
-    // prepare reference handles
-    // const Genome* refGenome = NULL;
-    // if (targetSpecies != "\"\"")
-    // {
-    //   refGenome = alignment->openGenome(targetSpecies);
-    //   if (refGenome == NULL)
-    //   {
-    //     throw hal_exception(string("Reference genome, ") + targetSpecies + 
-    //                         ", not found in alignment");
-    //   }
-    // }
-    // else
-    // {
-    //   refGenome = alignment->openGenome(alignment->getRootName());
-    // }
-    // const SegmentedSequence* ref = refGenome;
+    // open memory file buffer
+    char *bp;
+    size_t size;
+    FILE *stream;
+    stream = open_memstream (&bp, &size);
 
-    // // prepare target genome handles
-    // set<const Genome*> targetSet;
-    // for (size_t i = 0; i < querySpecies.size(); ++i)
-    // {
-    //     const Genome* tgtGenome = alignment->openGenome(querySpecies[i]);
-    //     if (tgtGenome == NULL)
-    //     {
-    //       throw hal_exception(string("Target genome, ") + querySpecies[i] + 
-    //                           ", not found in alignment");
+    //printf("%s\n", "MSA 1");
+
+    // unpack querySpecies arrayref
+    // AV *query_list = newAV();
+    char *str_copy = strdup(querySpecies);
+    char *token;
+    // while ((token = strsep(&str_copy, ","))) av_push(query_list, token);;
+
+    // create a hal_species_t struct for querySpecies
+    //hal_species_t* cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
+    // hal_species_t* head = NULL;
+    // hal_species_t* prev = NULL;
+    // hal_species_t* cur  = NULL;
+
+    // while ((token = strsep(&str_copy, ","))) {
+    //     cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
+    //     char name[100];
+    //     strcpy(name, token);
+    //     cur->name = name;
+    //     if ( head == NULL ){ //struct start
+    //         head = cur;
     //     }
-    //     targetSet.insert(tgtGenome);
+    //     else {
+    //         prev->next = cur;
+    //     }
+    //     prev = cur;
     // }
 
-    // SV *msa_blocks = halGetMSABlocksInTargetRange(halfileHandle, ref, targetStart, targetEnd, targetSet, maxRefGap, true, printTree, maxBlockLen);
-    // Inline_Stack_Push(msa_blocks);
+    // only way seems to be to fetch all and split structure into 2
+    int num_q_species = sizeof(querySpecies) / sizeof(int);
+    struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
+    struct hal_species_t *curGenome = hal_genomes; // iterator
+    struct hal_species_t* query_species = NULL; // pointer for head of query list
+    struct hal_species_t* other_species = NULL; // pointer for head of non-query list
+    struct hal_species_t* prev_q = NULL; // iterator - holds previous query genome
+    struct hal_species_t* prev_o = NULL; // iterator - holds prev non-query genome
+    struct hal_species_t* last = NULL;  // used to terminate lists
 
+    while (curGenome != NULL) {
+        int x;
+        int found = 0; 
+        str_copy = strdup(querySpecies);
+        // check if curGenome is a query genome or not - set found boolean if so
+        while ((token = strsep(&str_copy, ","))) {
+            if (strcmp(curGenome->name, token) == 0) {
+                found = 1;
+                break;
+            }
+        }
+        if ( found == 0 ) { // non-query genome
+            if ( other_species == NULL ) { //start a new list
+                other_species = curGenome;
+            } else {
+                prev_o->next = curGenome;
+            }
+            prev_o = curGenome;
+        } else { // query genome
+            if ( query_species == NULL ) {
+                query_species = curGenome;
+            } else {
+                prev_q->next = curGenome; 
+            }
+            prev_q = curGenome;
+        }
+        curGenome = curGenome->next;
+    }
+    // terminate both lists
+    prev_o->next = last;
+    prev_q->next = last;
+
+    // print MAF to buffer
+    char *errStr = NULL;
+    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, 0, &errStr );
+    fclose (stream);
+    
+    SV *maf = newSVpv(bp, strlen(bp));
+
+    Inline_Stack_Push(maf);
+    halFreeSpeciesList(other_species);
+    halFreeSpeciesList(query_species);
+    free(last);
+    free(token);
+    free(str_copy);
     Inline_Stack_Done;
 }

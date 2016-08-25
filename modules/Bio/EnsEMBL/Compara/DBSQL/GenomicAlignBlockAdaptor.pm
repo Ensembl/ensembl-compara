@@ -120,6 +120,7 @@ use vars qw(@ISA);
 use strict;
 use warnings;
 
+use Bio::AlignIO;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -579,22 +580,22 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     #for restricted_aln_start and restricted_aln_end
     foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
 
-	#print "GAB restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
+	    #print "GAB restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
 
-	if (defined $this_genomic_align_block->{'restricted_aln_start'}) {
-	    my $tmp_start = $this_genomic_align_block->{'restricted_aln_start'};
-	    #if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand) {
+    	if (defined $this_genomic_align_block->{'restricted_aln_start'}) {
+	      my $tmp_start = $this_genomic_align_block->{'restricted_aln_start'};
+	      #if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand) {
 
-	    #the start and end are always calculated for the forward strand
-	    if ($reference_slice->strand == 1) {
-		$this_genomic_align_block->{'restricted_aln_start'}++;
-		$this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $this_genomic_align_block->{'restricted_aln_end'};
-	    } else {
-		$this_genomic_align_block->{'restricted_aln_start'} = $this_genomic_align_block->{'restricted_aln_end'} + 1;
-		$this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $tmp_start;
+	      #the start and end are always calculated for the forward strand
+	      if ($reference_slice->strand == 1) {
+		      $this_genomic_align_block->{'restricted_aln_start'}++;
+		      $this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $this_genomic_align_block->{'restricted_aln_end'};
+	      } else {
+		      $this_genomic_align_block->{'restricted_aln_start'} = $this_genomic_align_block->{'restricted_aln_end'} + 1;
+		      $this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $tmp_start;
+	      }
+	      #print "GAB after restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
 	    }
-	    #print "GAB after restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
-	}
     }
 
     my $top_slice = $slice_adaptor->fetch_by_region($dnafrag_type, 
@@ -1259,6 +1260,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my @gabs = ();
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
+    my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
 
     my %species_map = %{ eval $mlss->get_tagvalue('HAL_mapping') }; # read species name mapping hash from mlss_tag
     my $ref = $species_map{ $ref_gdb->dbID };
@@ -1266,104 +1268,398 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $hal_fh = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file)->hal_filehandle;
     my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $dnafrag_adaptor);
 
-    my $id_base  = $mlss->dbID * 10000000000;
-    my $id_count = 0;
+    my $num_targets  = scalar @$targets_gdb;
+    my $id_base      = $mlss->dbID * 10000000000;
+    my ($gab_id_count, $ga_id_count)  = (0, 0);
+    my ($min_gab_len, $min_ga_len)    = (20, 5);
 
-    foreach my $target_gdb (@$targets_gdb) {
-        my $target = $species_map{ $target_gdb->dbID };
-	
-        # my $linebreak = "<br>";
+    if ( $num_targets > 1 ){ # multiple sequence alignment
+      my %hal_species_map = reverse %species_map;
+      my @hal_targets = map { $species_map{ $_->dbID } } @$targets_gdb;
+      shift @hal_targets unless ( defined $hal_targets[0] );
+      my $targets_str = join(',', @hal_targets);
+      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end );
+      open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
+      # print start_of_file($maf_file_str);
+      my $maf_io  = Bio::AlignIO->new(-fh => \*MAF, -format => 'maf');
+      
+      while (my $aln_block = $maf_io->next_aln()){
+        my $duplicates_found = 0;
+        my %species_found;
 
-        # print "hal_file is $hal_file $linebreak";
-        # print "ref is $ref $linebreak";
-        # print "target is $target $linebreak";
-        # print "seq_region is $hal_seq_reg $linebreak";
-        # print "target_seq_region is $target_seq_reg $linebreak" if (defined $target_seq_reg);
-        # print "start is $start $linebreak";
-        # print "end is $end $linebreak";
+        next if ( $aln_block->length < $min_gab_len );
+        # print Dumper $aln_block if ( $gab_id_count == 70 );
 
-        my @blocks;
-        if ( $target_seq_reg ){
-	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $dnafrag_adaptor );
-            @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
+        my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+          -length => $aln_block->length,
+          -method_link_species_set => $mlss,
+          -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
+          -dbID => $id_base + $gab_id_count,
+        );
+        $gab_id_count++;
+
+        my (@genomic_align_array, $ref_genomic_align);
+        foreach my $seq ($aln_block->each_seq) {
+          # find dnafrag for the region
+          #print "SEQ->DISPLAY_ID: " . $seq->display_id . "\n";
+          my ( $species_id, $chr ) = split(/\./, $seq->display_id);
+          next if ( $chr =~ m/scaffold/ );
+          #print "SPECIES_ID: $species_id; CHR: $chr\n\n";
+          my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
+          my $seq_name = $self->_seq_region_ucsc_ensembl($chr, $this_gdb, $dnafrag_adaptor);
+          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $seq_name);
+
+          if ( $this_dnafrag->slice->length < $seq->end ) {
+            $self->warning('Ommitting ' . $this_gdb->name . ' from GenomicAlignBlock. Alignment position does not fall within the length of the chromosome');
+            next;
+          }
+
+          # check length of genomic align meets threshold
+          next if ( abs( $seq->start - $seq->end ) + 1 < $min_ga_len );
+
+          if ( !$duplicates_found ){
+            my $species_name = $this_dnafrag->genome_db->name;
+            if ( $species_found{$species_name} ){
+                $duplicates_found = 1;
+            } else {
+                $species_found{$species_name} = 1;
+            }
+          }
+          
+
+          # create cigar line
+          my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq);
+
+          my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+            -genomic_align_block => $gab,
+            -aligned_sequence => $seq->seq, 
+            -dnafrag => $this_dnafrag, 
+            -dnafrag_start => $seq->start,
+            -dnafrag_end => $seq->end,
+            -dnafrag_strand => $seq->strand,
+            -cigar_line => $this_cigar, 
+            -dbID => $id_base + $ga_id_count,
+            -visible => 1,
+          );
+          push( @genomic_align_array, $genomic_align );
+          $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
+          $ga_id_count++;
         }
-        else {
-            @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
+
+        next if ( scalar(@genomic_align_array) < 2 );
+
+        $gab->genomic_align_array(\@genomic_align_array);
+        $gab->reference_genomic_align($ref_genomic_align);
+
+        # my $dstr = $duplicates_found ? 'yep' : 'nope';
+        # print "!!!!!!!!! duplicates_found?? $dstr\n";
+
+        # check for duplicate species
+        if ( $duplicates_found ) {
+            # print "--------ORIGINAL BLOCK------------\n";
+            # for my $g ( @{$gab->genomic_align_array} ) {
+            #     $g->_print;
+            # }
+
+            my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
+
+            my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
+            # print "--------SPLIT BLOCKS------------\n";
+            foreach my $this_gab ( @$split_gabs ) {
+                $this_gab->adaptor($gab_adaptor);
+                $this_gab->dbID($id_base + $gab_id_count);
+
+                # for my $ga ( @{$this_gab->genomic_align_array} ) {
+                #     $ga->_print;
+                # }
+                # print "\n\n\n\n\n";
+
+                #$gab->_print;
+                push( @gabs, $this_gab );
+                $gab_id_count++;
+            }
+        } else {
+            push(@gabs, $gab);
         }
 
-        #print Dumper \@blocks;
-        
-        foreach my $entry (@blocks) {
-	    #
-	    # $entry = (target_seq_region, n, n, length,);
-	    #
+      }
+    }
 
-            if (defined $entry) {
-                next if (@$entry[3] < 200 );
+    else { # pairwise alignment
+      foreach my $target_gdb (@$targets_gdb) {
+          my $target = $species_map{ $target_gdb->dbID };
+  	
+          # my $linebreak = "<br>";
 
-		        #print Dumper $entry;
-                my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-                    -length => @$entry[3],
-                    -method_link_species_set => $mlss,
-		            -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
-                );
-		
-		        # Create cigar strings
-		        my ($ref_aln_seq, $target_aln_seq) = ( $entry->[6], $entry->[5] );
-		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
-		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
-		        #print "REF CIGAR: $ref_cigar\nTARG CIGAR: $target_cigar\n";
+          # print "hal_file is $hal_file $linebreak";
+          # print "ref is $ref $linebreak";
+          # print "target is $target $linebreak";
+          # print "seq_region is $hal_seq_reg $linebreak";
+          # print "target_seq_region is $target_seq_reg $linebreak" if (defined $target_seq_reg);
+          # print "start is $start $linebreak";
+          # print "end is $end $linebreak";
 
-                # normalize seq by removing "chr" prefix.
-                my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
-		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
-                next unless ( defined $target_dnafrag );
-                my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-                    -genomic_align_block => $gab,
-                    -aligned_sequence => $target_aln_seq, #@$entry[5],
-                    -dnafrag => $target_dnafrag,
-                    -dnafrag_start => @$entry[2],
-                    -dnafrag_end => @$entry[2] + @$entry[3],
-                    -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
-		            -cigar_line => $target_cigar,
-                    -dbID => $id_base + $id_count,
-		        );
-                $id_count++;
+          my @blocks;
+          if ( $target_seq_reg ){
+  	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $dnafrag_adaptor );
+              @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
+          }
+          else {
+              @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
+          }
 
-                my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
-		        my $ref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($ref_gdb, $ref_seq_name);
-                print "fetch_by_GenomeDB_and_name( " . $ref_gdb->name . ", $ref_seq_name )\n" if ( !defined $ref_dnafrag );
-                my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-                    -genomic_align_block => $gab,
-                    -aligned_sequence => $ref_aln_seq, #@$entry[6],
-                    -dnafrag => $ref_dnafrag,
-                    -dnafrag_start => @$entry[1],
-                    -dnafrag_end => @$entry[1] + @$entry[3],
-                    -dnafrag_strand => 1,
-		            -cigar_line => $ref_cigar,
-                    -dbID => $id_base + $id_count,
-		        );
-                $id_count++;
+          #print Dumper \@blocks;
+          
+          foreach my $entry (@blocks) {
+  	        if (defined $entry) {
+              next if (@$entry[3] < $min_gab_len ); # skip blocks shorter than 20bp
 
-        		#print "** targ ga: aligned_sequence: " . $genomic_align->{'aligned_sequence'} . "<br>";
-        		#print "**  ref ga: aligned_sequence: " . $ref_genomic_align->{'aligned_sequence'} . "<br>";
+              my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+                  -length => @$entry[3],
+                  -method_link_species_set => $mlss,
+                  -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
+                  -dbID => $id_base + $gab_id_count,
+              );
+              $gab_id_count++;
+  		
+  		        # Create cigar strings
+  		        my ($ref_aln_seq, $target_aln_seq) = ( $entry->[6], $entry->[5] );
+  		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
+  		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
+  		        #print "REF CIGAR: $ref_cigar\nTARG CIGAR: $target_cigar\n";
 
-		        $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
-                $gab->reference_genomic_align($ref_genomic_align);
-                push(@gabs, $gab);
+              # normalize seq by removing "chr" prefix.
+              my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
+  		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
+              next unless ( defined $target_dnafrag );
+              my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+                  -genomic_align_block => $gab,
+                  -aligned_sequence => $target_aln_seq, #@$entry[5],
+                  -dnafrag => $target_dnafrag,
+                  -dnafrag_start => @$entry[2],
+                  -dnafrag_end => @$entry[2] + @$entry[3],
+                  -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
+                  -cigar_line => $target_cigar,
+                  -dbID => $id_base + $ga_id_count,
+                  -visible => 1,
+  	          );
+              $ga_id_count++;
+
+              my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
+  		        my $ref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($ref_gdb, $ref_seq_name);
+              my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+                -genomic_align_block => $gab,
+                -aligned_sequence => $ref_aln_seq, #@$entry[6],
+                -dnafrag => $ref_dnafrag,
+                -dnafrag_start => @$entry[1],
+                -dnafrag_end => @$entry[1] + @$entry[3],
+                -dnafrag_strand => 1,
+                -cigar_line => $ref_cigar,
+                -dbID => $id_base + $ga_id_count,
+                -visible => 1,
+  		        );
+              $ga_id_count++;
+
+  		      $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
+              $gab->reference_genomic_align($ref_genomic_align);
+              push(@gabs, $gab);
             }
             last if ( $limit && scalar(@gabs) >= $limit );
-        }
+          }
+      }
     }
-    
-    #my $gas = $gabs[1]->get_all_GenomicAligns;
-    #foreach my $ga ( @$gas ) {
-    #	print "* aligned_sequence: '" . $ga->{'aligned_sequence'} . "'     cigar_line: '" . $ga->cigar_line . "'<br>";
-    #}
 
-    #print Dumper {"returning gabs[0]::GABAdaptor::1428" => $gabs[0]};
     return \@gabs;
 }
+
+# sub _split_genomic_aligns {
+#     my ( $self, $gab, $min_gab_len ) = @_;
+#     my @ga_array = @{ $gab->genomic_align_array };
+
+#     # find duplicated species
+#     my %counts;
+#     for my $ga ( @ga_array ) {
+#         $counts{ $ga->genome_db->name }++;
+#     }
+
+#     my @split_arrays = ( [], [] );
+#     my @duplicate_species = grep { $counts{$_} > 1 } keys %counts;
+#     for my $species ( @duplicate_species ) {
+#         my @species_gas = grep { $_->genome_db->name eq $species } @ga_array;
+#         # if it's the first species, just randomly assign to split_arrays
+#         if ( scalar @{ $split_arrays[0] } == 0 ) {
+#             push( @{ $split_arrays[0] }, $species_gas[0] );
+#             push( @{ $split_arrays[1] }, $species_gas[1] );
+#         } else {
+#             if ( $self->_similar_cigars( $species_gas[0], $split_arrays[0] ) ){
+#                 push( @{ $split_arrays[0] }, $species_gas[0] );
+#                 push( @{ $split_arrays[1] }, $species_gas[1] );
+#             } else {
+#                 push( @{ $split_arrays[1] }, $species_gas[0] );
+#                 push( @{ $split_arrays[0] }, $species_gas[1] );
+#             }
+#         }
+#     }
+# }
+
+# sub _similar_cigars {
+#     my ( $self, $ga, $ga_list ) = @_;
+
+
+# }
+
+sub _split_genomic_aligns {
+    my ( $self, $gab, $min_gab_len ) = @_;
+    my @ga_array = @{ $gab->genomic_align_array };
+
+    my @cigar_lines       = map { $_->cigar_line } @ga_array;
+    my $ref_genomic_align = shift @ga_array;
+    my $ref_cigar         = shift @cigar_lines;
+
+    # print "ref: $ref_cigar\n";
+    # print Dumper {'cigar_lines' => \@cigar_lines};
+
+    my @non_matching_cigars = grep { $_ ne $ref_cigar } @cigar_lines;
+    my @m_end = grep { $_ =~ m/M$/ } @non_matching_cigars;
+    my @d_end = grep { $_ =~ m/D$/ } @non_matching_cigars;
+
+    # print Dumper {'non_matching_cigars' => \@non_matching_cigars};
+    # print Dumper {'m_end' => \@m_end};
+    # print Dumper {'d_end' => \@d_end};
+
+    # find longest match at end of cigar
+    # my $max_end_match = 0;
+    # foreach my $end_match ( @m_end ){
+    #     $end_match =~ m/(\d+)M$/;
+    #     $max_end_match = $1 if ( $1 > $max_end_match );
+    # }
+    my $max_end_match = 0;
+    foreach my $end_match ( @d_end ){
+        $end_match =~ m/(\d+)D$/;
+        $max_end_match = $1 if ( $1 > $max_end_match );
+    }
+
+    # check whether we can split the block in half(ish) or whether it's
+    # better to keep the main block intact and move the offending genomic_aligns
+    # to a new block
+    my ($can_split, $trim) = (1, 0);
+    foreach my $end_gap ( @d_end ) {
+        # if it also starts with a deletion, then the match is surrounded on each
+        # side and we can't just split the block down the middle. If the deletion
+        # is shorter than the matched region, we should just trim it off (we lose
+        # less data this way) and split in two as usual
+        if ( $end_gap =~ m/^(\d*)D(\d*)M/ ) {
+            my $d = $1 eq '' ? 1 : $1;
+            my $m = $2 eq '' ? 1 : $2;
+            # print "d: $d; m: $m\n";
+            if ( $d < $m ) {
+                $trim = $d if ( $d > $trim );
+            } else {
+                $can_split = 0;
+                last;
+            }
+        }
+        $end_gap =~ m/(\d+)D$/;
+        if ( $1 < $max_end_match ){
+            $can_split = 0;
+            #last;
+        }
+    }
+
+    if ( $trim > 0) {
+        # print ">>>>>>>>>>restrict_between_alignment_positions(" . ($trim+1) . "," . $gab->length . ", 1 )\n\n";
+        my $new_gab = $gab->restrict_between_alignment_positions($trim+1, $gab->length, 1 );
+        $gab = $new_gab;
+        $can_split = 1;
+    }
+
+    # print ">>>>>>>>>>CAN SPLIT? $can_split\n";
+
+    my @split_blocks = ();
+    if ( $can_split ){ # restrict the block to create 2, non-overlapping ones
+        my $aln_length = $gab->length;
+        my $split_pos  = ($aln_length - $max_end_match);
+
+        # print "aln_length : $aln_length\nmax_end_match : $max_end_match\n";
+
+        if ( $split_pos > $min_gab_len ) {
+            my $block1 = $gab->restrict_between_alignment_positions(1, $split_pos, 1 );
+            push( @split_blocks, $block1 );
+        }
+
+        if ( $max_end_match > $min_gab_len ) {
+            my $block2 = $gab->restrict_between_alignment_positions($split_pos+1, $aln_length, 1 );
+            push( @split_blocks, $block2 );
+        }
+    } else { # keep main block, but remove offending duplications
+        # find duplicated species
+        my %counts;
+        for my $ga ( @ga_array ) {
+            $counts{ $ga->genome_db->name }++;
+        }
+
+        my @pruned_ga_array;
+        # my @duplicate_species = grep { $counts{$_} > 1 } keys %counts;
+        # for my $species ( @duplicate_species ) {
+        for my $species ( keys %counts ) {
+            if ( $counts{$species} > 1 ) {
+                my @species_gas = grep { $_->genome_db->name eq $species } @ga_array;
+                my $longest_genomic_align = shift @species_gas;
+                for my $this_genomic_align ( @species_gas ){
+                    $longest_genomic_align = $this_genomic_align if ( length($this_genomic_align->original_sequence) > length($longest_genomic_align->original_sequence) );
+                }
+                push(@pruned_ga_array, $longest_genomic_align);
+            } else {
+                for my $g ( @ga_array ) {
+                    if ( $g->genome_db->name eq $species ){
+                        push( @pruned_ga_array, $g );
+                        last;
+                    }
+                }
+            }
+        }
+        $gab->genomic_align_array( \@pruned_ga_array );
+    }
+
+    return \@split_blocks;
+}
+
+# else { # keep main block, but remove offending blocks
+#         my @split_gas = ([$ref_genomic_align],[$ref_genomic_align]);
+#         for my $g ( @ga_array ) {
+#             my $cigar = $g->cigar_line;
+#             $cigar =~ m/([MD])/;
+#             push( @{$split_gas[0]}, $g ) if $1 eq 'M';
+#             push( @{$split_gas[1]}, $g ) if $1 eq 'D';
+#         }
+#         $gab->genomic_align_array($split_gas[0]);
+#         push( @split_blocks, $gab );
+
+#         # create new genomic_align_block for rejects
+#         my $gab2 = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
+#             -length => $gab->length,
+#             -method_link_species_set => $gab->method_link_species_set,
+#             -genomic_align_array => $split_gas[1],
+#             -reference_genomic_align => $ref_genomic_align,
+#         );
+
+#         # check if new block needs trailing gaps trimmed
+#         my ($min_gaps_at_start, $min_gaps_at_end) = ($gab->length,$gab->length);
+#         for my $g ( @{ $split_gas[1] } ) {
+#             my $seq = $g->aligned_sequence;
+#             $seq =~ m/^(-+)/;
+#             $min_gaps_at_start = length($1) if (defined $1 && length($1) < $min_gaps_at_start);
+#             $seq =~ m/(-+)$/;
+#             $min_gaps_at_end = length($1) if (defined $1 && length($1) < $min_gaps_at_end);
+#         }
+#         if ( $min_gaps_at_start + $min_gaps_at_end > 0 ) {
+#             my ($trim_start, $trim_end) = ( $min_gaps_at_start+1, $gab2->length-$min_gaps_at_end );
+#             my $trimmed_gab = $gab2->restrict_between_alignment_positions( $trim_start, $trim_end, 1 );
+#             push( @split_blocks, $trimmed_gab );
+#         } else {
+#            push( @split_blocks, $gab2 );
+#         }
+#     }
 
 sub _seq_region_ensembl_ucsc {
     my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
@@ -1392,5 +1688,17 @@ sub _seq_region_ucsc_ensembl {
     $seq_reg =~ s/chr//; # !!! REMOVE: when all species have synonyms in core DBs
     return $seq_reg;
 }
+
+# sub start_of_file {
+#   my $str = shift;
+#   my $no_lines = 10;
+
+#   my @lines = split("\n", $str);
+#   my $c = 0;
+#   while ( $c < $no_lines ){
+#     print $lines[$c] . "<br>";
+#     $c++;
+#   }
+# }
 
 1;
