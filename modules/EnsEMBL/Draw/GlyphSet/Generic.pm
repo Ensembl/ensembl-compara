@@ -24,6 +24,7 @@ package EnsEMBL::Draw::GlyphSet::Generic;
 use strict;
 
 use Role::Tiny;
+use EnsEMBL::Web::Constants;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
@@ -84,6 +85,13 @@ sub no_file {
 ### Error message when a file is not available
   my ($self, $error)  = @_;
   $error ||= 'File unavailable';
+
+  if ($error =~ /^\d+$/) {
+    my %messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
+    my $message = $messages{$error};
+    $error = $message->[1];
+  }
+
   $self->errorTrack($error);
 }
 
