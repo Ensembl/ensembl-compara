@@ -197,7 +197,10 @@ sub create_glyphs {
         $new_x = 1 if $new_x < 1;
         if ($overlay) {
           $new_y = $position->{'y'} + $approx_height - $text_height;
-          $new_x = $feature->{'end'} + 4 / $self->{'pix_per_bp'} if $bumped eq 'features_only';
+        }
+        elsif ($bumped eq 'labels_alongside') {
+          $new_y = $position->{'y'} + $approx_height - $text_height;
+          $new_x = $feature->{'end'} + 4 / $self->{'pix_per_bp'};
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
