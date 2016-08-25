@@ -171,24 +171,25 @@ sub create_glyphs {
       ## Optional label
       my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $overlay     = $track_config->get('label_overlay');
+      my $font_size   = $self->{'font_size'};
       my $text_width  = $text_info->{'width'};
       my $text_height = $text_info->{'height'};
 
       ## Only overlay labels above a certain feature size
-      if ($show_label && $overlay) {
+      if (($show_label && $overlay) || $bumped eq 'labels_alongside') {
         ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
         my $bp_textwidth = $position->{'width'} / $self->{'pix_per_bp'};
         my $tmp_textwidth = $bp_textwidth;
 
-        if ($bp_textwidth >= $position->{'width'} && length $feature->{'label'} == 1) {
-          $self->{'font_size'} *= 0.9;
+        if (($bp_textwidth >= $position->{'width'} && length $feature->{'label'} == 1) || $bumped eq 'labels_alongside') {
+          $font_size       *= 0.9;
           my $tmp_text_info = $self->get_text_info($feature->{'label'});
           $text_width       = $tmp_text_info->{'width'};
           $text_height      = $tmp_text_info->{'height'};
           $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
         }
 
-        $show_label = 0 unless ($tmp_textwidth < $position->{'width'});
+        $show_label = 0 unless ($tmp_textwidth < $position->{'width'} || $bumped eq 'labels_alongside');
       }
 
       ## OK, we definitely want a label!
@@ -216,6 +217,7 @@ sub create_glyphs {
                       'width'       => $position->{'width'},
                       'text_width'  => $text_width, 
                       'image_width' => $slice_width,
+                      'font_size'   => $font_size,
                     };
         $self->add_label($feature, $position);
       }
@@ -298,7 +300,7 @@ sub add_label {
                 text      => $feature->{'label'},
                 font      => $self->{'font_name'},
                 colour    => $colour,
-                ptsize    => $self->{'font_size'},
+                ptsize    => $position->{'font_size'} || $self->{'font_size'},
                 halign    => $halign,
                 valign    => 'center',
                 href      => $feature->{'href'},
