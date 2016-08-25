@@ -61,6 +61,9 @@ sub draw_insertion {
   my ($self, $feature, $position) = @_;
 
   my $composite = $self->Composite;
+  foreach my $k (qw(title href class)) {
+    $composite->{$k} = $feature->{$k} if exists $feature->{$k};
+  }
 
   ## Draw a narrow line to mark the insertion point
   my $x = $feature->{'start'};
@@ -70,7 +73,6 @@ sub draw_insertion {
                   y         => $position->{'y'},
                   width     => $position->{'width'} / (2 * $self->{'pix_per_bp'}),
                   height    => $position->{'height'},
-                  href      => $feature->{'href'},
                   colour    => $feature->{'colour'},
                   title     => $feature->{'title'},
                 };
@@ -83,7 +85,6 @@ sub draw_insertion {
                                   y         => $position->{'y'},
                                   width     => $width,
                                   height    => $position->{'height'} + 2,
-                                  href      => $feature->{'href'},
                                 }));
 
   ## Draw a triangle below the line to identify it as an insertion
