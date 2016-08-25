@@ -32,17 +32,7 @@ use EnsEMBL::Draw::Style::Feature::Variant;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
-sub depth {
-  my $self   = shift;
-  my $length = $self->{'container'}->length;
-
-  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5) 
-      || $length <= 101) {
-    return $length > 1e4 ? 20 : undef;
-  }
-  
-  return $self->SUPER::depth;
-}
+sub supports_subtitles { return 1; }
 
 sub render_normal {
   my $self = shift;
