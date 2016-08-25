@@ -537,10 +537,6 @@ sub get_SimpleAlign {
 	warn "should be only one genomic_align_block associated with each constrained element\n" if @$gabs > 1;
 
 	my $this_genomic_align_block = $gabs->[0];
-	my $bio07 = 0; 
-	if(!$sa->can('add_seq')) {
-		$bio07 = 1; 
-	}
 	my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
 
 	my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
