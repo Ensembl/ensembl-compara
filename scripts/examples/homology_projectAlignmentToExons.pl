@@ -70,7 +70,6 @@ sub print_transcript {
   my $exon_num = scalar(@this_exons);
   my $this_exon = 0;
   my $merged_cdna_exon_length = 0;
-  my $merged_exons_dna_simple_align = new Bio::SimpleAlign;
   my $utr = $transcript->five_prime_utr;
   my $utr_length = 0;
   eval {$utr_length = length($utr->seq);};
