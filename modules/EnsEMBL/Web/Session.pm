@@ -39,7 +39,7 @@ sub init {
   $self->{'_session_id'}      = $self->{'_session_cookie'}->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
 }
 
-sub rose_manager {
+sub record_rose_manager {
   ## Abstract method implementation
   return 'ORM::EnsEMBL::DB::Session::Manager::Record';
 }

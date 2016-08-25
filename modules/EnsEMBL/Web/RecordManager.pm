@@ -45,7 +45,7 @@ sub init :Abstract;
   ## @abstract
   ## Initialise the object (called by new method after blessing the object)
 
-sub rose_manager :Abstract;
+sub record_rose_manager :Abstract;
   ## @abstract
   ## @return The package name of the rose manager to access the records
 
@@ -69,7 +69,7 @@ sub records {
   my ($self, $filter) = splice @_, 0, 2;
 
   # load records on demand
-  $self->{'_record_set'} //= EnsEMBL::Web::RecordSet->new(@{$self->rose_manager->get_objects('query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type])});
+  $self->{'_record_set'} //= EnsEMBL::Web::RecordSet->new(@{$self->record_rose_manager->get_objects('query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type])});
 
   # return all records if no filter applied
   return $self->{'_record_set'} unless $filter;
@@ -141,7 +141,7 @@ sub set_record_data {
 
   # if new record needs to be added
   if (!$record) {
-    $record = $self->records->add($self->rose_manager->create_empty_object({'created_at' => 'now'}));
+    $record = $self->records->add($self->record_rose_manager->create_empty_object({'created_at' => 'now'}));
   }
 
   # update column values
@@ -203,7 +203,7 @@ sub _record_column_names {
   ## @private
   ## Gets column names from the rose db meta object
   my $self = shift;
-  $self->{'_record_column_names'} ||= [ grep $_ ne 'data', $self->rose_manager->object_class->meta->column_names ];
+  $self->{'_record_column_names'} ||= [ grep $_ ne 'data', $self->record_rose_manager->object_class->meta->column_names ];
 }
 
 sub _query_records {
@@ -252,7 +252,7 @@ sub _begin_transaction {
   my $self = shift;
 
   if (!$self->{'_db'}) { # if $self->{'_db'} exists, we have already started transaction
-    $self->{'_db'} = $self->rose_manager->object_class->init_db;
+    $self->{'_db'} = $self->record_rose_manager->object_class->init_db;
     $self->{'_db'}->begin_work or throw ORMException($self->{'_db'}->error);
   }
 }
