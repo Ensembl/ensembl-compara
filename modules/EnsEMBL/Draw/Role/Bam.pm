@@ -581,7 +581,7 @@ sub bam_adaptor {
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
 
-  my $check = file_exists($url.'bogus', {'nice' => 1});
+  my $check = file_exists($url, {'nice' => 1});
   if ($check->{'error'}) {
     $self->{'file_error'} = $check->{'error'}[0];
   }
