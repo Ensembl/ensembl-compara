@@ -91,10 +91,10 @@ sub draw_insertion {
   ## Note that we can't add the triangle to the composite, for Reasons
   my $y = $position->{'y'} + $position->{'height'};
   $params = {
-              width         => int(4 / $self->{'pix_per_bp'}),
+              width         => 4 / $self->{'pix_per_bp'},
               height        => 3,
               direction     => 'up',
-              mid_point     => [ $x - 0.5, $y ],
+              mid_point     => [ $x - 1, $y ],
               colour        => $feature->{'colour'},
               absolutey     => 1,
               no_rectangle  => 1,
