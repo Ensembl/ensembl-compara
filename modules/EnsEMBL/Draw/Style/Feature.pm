@@ -151,7 +151,8 @@ sub create_glyphs {
       }
 
       my $labels_height   = $label_row * $label_height;
-      my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
+      ## Only "ordinary" bumping requires adding the label to the feature height
+      my $add_labels      = ($bumped && $bumped eq '1') ? $labels_height : 0;
       my $y               = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
 
       my $position  = {
@@ -194,7 +195,7 @@ sub create_glyphs {
       if ($show_label) {
         my $new_x = $feature->{'start'};
         $new_x = 1 if $new_x < 1;
-        if ($overlay || $bumped eq 'features_only') {
+        if ($overlay) {
           $new_y = $position->{'y'} + $approx_height - $text_height;
           $new_x = $feature->{'end'} + 4 / $self->{'pix_per_bp'} if $bumped eq 'features_only';
         }

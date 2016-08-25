@@ -58,11 +58,11 @@ sub render_compact {
 
 sub render_labels {
   my $self = shift;
-  $self->{'my_config'}->set('bumped', 'features_only');
 
   if ($self->{'container'}->length <= 1e4) {
     $self->{'my_config'}->set('show_labels', 1);
     $self->{'my_config'}->set('label_overlay', 0);
+    $self->{'my_config'}->set('bumped', 'labels_alongside');
   }
   return $self->_render_normal;
 }

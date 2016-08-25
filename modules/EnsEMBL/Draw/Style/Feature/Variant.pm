@@ -73,7 +73,6 @@ sub draw_insertion {
                   href      => $feature->{'href'},
                   colour    => $feature->{'colour'},
                   title     => $feature->{'title'},
-                  absolutey => 1,
                 };
   $composite->push($self->Rect($params));
 
@@ -81,11 +80,10 @@ sub draw_insertion {
   my $width = min(1, 16 / $self->{'pix_per_bp'});
   $composite->push($self->Rect({
                                   x         => $x - 1 - $position->{'width'} / 2,
-                                  y         => 0,
+                                  y         => $position->{'y'},
                                   width     => $width,
                                   height    => $position->{'height'} + 2,
                                   href      => $feature->{'href'},
-                                  absolutey => 1,
                                 }));
 
   ## Draw a triangle below the line to identify it as an insertion
