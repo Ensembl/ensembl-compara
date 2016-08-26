@@ -32,11 +32,12 @@ sub hub :Accessor;
 sub new {
   ## @constructor
   ## @param Hub
-  my ($class, $hub) = @_;
+  my $class = shift;
+  my $hub   = shift;
 
   my $self = bless { 'hub' => $hub }, $class;
 
-  $self->init;
+  $self->init(@_); # pass any extra arguments to init
 
   return $self;
 }
