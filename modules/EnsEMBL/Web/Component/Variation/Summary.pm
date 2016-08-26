@@ -50,17 +50,17 @@ sub content {
   my @str_array = $self->feature_summary($avail);
   
   my $summary_table = $self->new_twocol(    
-    $self->variation_source,
+    $self->most_severe_consequence($variation_features),
     $self->alleles($feature_slice),
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
-    $self->most_severe_consequence($variation_features),
     $self->evidence_status,
     $self->clinical_significance,
     $self->hgvs,
     $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
     $self->synonyms,
     $self->sets,
+    $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
     ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
   );
@@ -449,6 +449,7 @@ sub alleles {
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
+    $alleles =~ s/\//<span style="color:#000">\/<\/span>/g;
     $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$extra_allele_info};
   }
 
@@ -687,8 +688,9 @@ sub hgvs {
     ];
   } elsif ($count == 1) {
     return ['HGVS name', $html];
+  } else {
+    return ();
   }
-
   return ['HGVS name', 'None'];
 }
 
@@ -758,14 +760,14 @@ sub most_severe_consequence {
 
       if (scalar(@$overlapping_features) != 0) {
         $consequence_link = sprintf(qq{
-          <div class="text-float-left">%s<a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+          <div class="text-float-left">%s<a href="%s" title="'Genes and regulation' page">See all predicted consequences</a></div>
         }, $self->text_separator(1), $url);
       }
 
       # Line display
       my $html = sprintf(qq{
          <div>
-           <div class="text-float-left">%s</div>%s
+           <div class="text-float-left bold">%s</div>%s
            <div class="clear"></div>
          </div>},
          $html_consequence, $consequence_link
@@ -790,8 +792,8 @@ sub three_prime_co_located{
   my @scl;
 
   foreach my $scl (@{$shifted_co_located}){
+    next if ($scl eq '');
     my $link      = $self->hub->url({ action => 'Explore', v => $scl });
-
     my $variation = qq{<a href="$link">$scl</a>};
     $count++;
     push @scl, $variation;
@@ -815,7 +817,7 @@ sub three_prime_co_located{
 
     my $html = join ', ', @scl;
     my $s = ($count > 1) ? 's' : '';
-    return ["Variant$s with equivalent alleles", $html];
+    return ($count && $count > 0)  ? ["Variant$s with equivalent alleles", $html] : ();
   }
 }
 
