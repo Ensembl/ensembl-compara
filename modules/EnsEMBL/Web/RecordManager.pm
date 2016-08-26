@@ -165,6 +165,21 @@ sub get_records_data {
   return map $self->_get_record_data($_), @{$self->records(@_)};
 }
 
+sub add_record {
+  ## Adds a new record to the current RecordSet
+  ## @param Columns and their values as a hash
+  my ($self, $row) = @_;
+
+  $row                    ||= {};
+  $row->{'data'}          ||= {};
+  $row->{'record_type'}     = $self->record_type;
+  $row->{'record_type_id'}  = $self->record_type_id;
+  $row->{'modified_at'}     = 'now';
+  $row->{'created_at'}      = 'now';
+
+  return $self->records->add($self->record_rose_manager->create_empty_object($row));
+}
+
 sub delete_records {
   ## Deletes records according to the filtering arguments
   ## @param RecordSet object or filter params as excepted by the records method
