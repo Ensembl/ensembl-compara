@@ -48,7 +48,7 @@ sub save {
   $args = {'changes_only' => 1, %{$args || {}}};
 
   try {
-    $count = scalar grep { $_->save(%$args) } @$self;
+    $count = scalar grep { $_->data($_->data); $_->save(%$args); } @$self; # data is set again to make sure it's considered by 'changes_only' argument
   } catch {
     throw ORMException($_->message(1));
   };
