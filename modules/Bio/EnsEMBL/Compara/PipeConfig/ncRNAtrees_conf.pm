@@ -668,6 +668,7 @@ sub pipeline_analyses {
                            },
          -rc_name => '8Gb_ncores_job',
          -flow_into => {
+                        3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                         -2 => [ 'genomic_alignment_basement_himem' ],
                        },
@@ -685,6 +686,7 @@ sub pipeline_analyses {
                            },
          -rc_name => '8Gb_basement_ncores_job',
          -flow_into => {
+                        3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                        },
         },
