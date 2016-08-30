@@ -664,6 +664,7 @@ sub pipeline_analyses {
                             'mafft_exe' => $self->o('mafft_exe'),
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'inhugemem' => 1,
                            },
          -rc_name => '8Gb_ncores_job',
          -flow_into => {
@@ -680,6 +681,7 @@ sub pipeline_analyses {
                             'mafft_exe' => $self->o('mafft_exe'),
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'inhugemem' => 1,
                            },
          -rc_name => '8Gb_basement_ncores_job',
          -flow_into => {
