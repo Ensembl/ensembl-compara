@@ -164,6 +164,7 @@ sub _load_tagvalues_multiple {
         $val->{'_tags'} = {};
         $perl_keys{$val->$perl_keyname} = $val;
     };
+    return unless scalar(keys %perl_keys);
 
     # This closure can process a set of objects
 my $load_some_tags = sub {

@@ -270,7 +270,9 @@ sub _uncached_fetch_by_dbID {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    return [grep {$_->has_tag($tag)} $self->_id_cache->cached_values()];
+    my $all_objects = $self->fetch_all();
+    $self->_load_tagvalues_multiple($all_objects, 1);
+    return [grep {$_->has_tag($tag)} @$all_objects];
 }
 
 
@@ -294,7 +296,10 @@ sub fetch_all_by_tag_value {
 
     # Only scalar values are accepted
     return [] if ref $value;
-    return [grep {$_->has_tag($tag) && ($_->get_value_for_tag($tag) eq $value)} $self->_id_cache->cached_values()];
+
+    my $all_objects = $self->fetch_all();
+    $self->_load_tagvalues_multiple($all_objects, 1);
+    return [grep {$_->has_tag($tag) && ($_->get_value_for_tag($tag) eq $value)} @$all_objects];
 }
 
 
