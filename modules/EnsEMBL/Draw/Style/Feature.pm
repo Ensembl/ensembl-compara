@@ -265,8 +265,16 @@ sub draw_feature {
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
 
+  ## Are we highlighting this feature? Default is no!
+  my $highlight = $self->highlight($feature, $params);
+
+  if ($highlight) {
+    push @{$self->glyphs}, $highlight;
+  }
   push @{$self->glyphs}, $self->Rect($params);
 }
+
+sub highlight {}
 
 sub add_label {
 ### Create a text label

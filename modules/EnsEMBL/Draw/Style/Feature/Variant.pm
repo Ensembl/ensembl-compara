@@ -37,8 +37,8 @@ use parent qw(EnsEMBL::Draw::Style::Feature);
 sub draw_feature {
 ### Draw a block with optional tags
   my ($self, $feature, $position) = @_;
-
-  return unless ($feature->{'colour'} || $feature->{'bordercolour'});
+  #warn ">>> DRAWING VARIANT OF TYPE ".$feature->{'type'};
+  return unless $feature->{'colour'};
 
   ## SNPs have two kinds of "label" - an ambiguity code which may be drawn on the feature,
   ## and an ID which is used as a normal label
@@ -103,6 +103,31 @@ sub draw_insertion {
 
   ## OK, all done!
   push @{$self->glyphs}, $composite, $triangle;
+}
+
+sub highlight {
+### Highlight the variant by adding a 2-pixel black border
+  my ($self, $feature, $params) = @_;
+  return unless $self->image_config->get_option('opt_highlight_feature') != 0;
+
+  my $var_id;
+  my $variant = $self->image_config->core_object('variation');
+  if ($variant) {
+    $var_id = $variant->name;
+  }
+  return unless $var_id && $var_id eq $feature->{'label'};
+ 
+  ## Put feature in front of this highlight 
+  $params->{'z'} = 20;
+
+  return $self->Rect({
+      x      => $params->{'x'} - 2 / $self->{'pix_per_bp'},
+      y      => $params->{'y'} - 2,
+      width  => $params->{'width'}  + 4 / $self->{'pix_per_bp'},
+      height => $params->{'height'} + 4,
+      colour => 'black',
+      z      => 10,
+  });
 }
 
 1;
