@@ -38,7 +38,7 @@ sub _init {
 sub header {
   my $self = shift;
 
-  return sprintf '<h2 class="legend">Your data <span class="ht _ht"><span class="_ht_tip hidden">%s</span><img src="%s16/info.png" /></span></h2>',
+  return sprintf '<h2 class="legend">Your data <span class="_ht"><span class="_ht_tip hidden">%s</span><img src="%s16/info.png" /></span></h2>',
     encode_entities(qq{
       <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
       <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
@@ -154,7 +154,7 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my $trackhub_search = sprintf '<a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/globe.png" style="margin-right:8px; vertical-align:middle" />Search for public track hubs</a></p>', $hub->url({'action' => 'TrackHubSearch'});
+  my $trackhub_search = $self->trackhub_search;
 
   if (scalar @$records_data) {
     my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
@@ -167,6 +167,7 @@ sub content {
   }
   else {
     $html .= $trackhub_search;
+    $html .= $self->userdata_form;
   }
 
   return $html;

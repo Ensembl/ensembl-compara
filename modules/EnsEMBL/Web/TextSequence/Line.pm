@@ -41,6 +41,7 @@ sub new {
   return $self;
 }
 
+sub principal { return $_[0]->seq->principal; }
 sub seq { return $_[0]->{'seq'}; }
 sub line_num { return $_[0]->{'line_num'}; }
 sub pre { return $_[0]->seq->{'pre'}.$_[0]->{'pre'}; }

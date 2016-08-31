@@ -27,6 +27,7 @@ use warnings;
 use List::Util qw(first);
 
 use EnsEMBL::Web::File::AttachedFormat;
+use EnsEMBL::Web::Utils::UserData qw(check_attachment);
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects file_exists);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
@@ -81,7 +82,7 @@ sub upload_or_attach {
 
   if ($attach) {
     ## Is this file already attached?
-    ($new_action, $url_params) = $self->check_attachment($url);
+    ($new_action, $url_params) = check_attachment($hub, $url);
 
     if ($new_action) {
       $url_params->{'action'} = $new_action;

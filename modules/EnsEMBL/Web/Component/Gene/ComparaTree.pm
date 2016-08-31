@@ -577,10 +577,15 @@ sub get_export_data {
 ## Get data for export
   my ($self, $type) = @_;
   my $hub   = $self->hub;
-  my $cdb   = $hub->param('cdb') || 'compara';
+  my $cdb   = $hub->param('cdb');
   my $gene  = $hub->core_object('gene');
   my ($tree, $node, $member);
 
+  unless ( $cdb ) {
+    my $function = $hub->referer->{'ENSEMBL_FUNCTION'};
+    $cdb = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';  
+  }
+  
   ## First, get tree
   if ($type && $type eq 'genetree') { 
     $tree = $gene->get_GeneTree($cdb, 1);

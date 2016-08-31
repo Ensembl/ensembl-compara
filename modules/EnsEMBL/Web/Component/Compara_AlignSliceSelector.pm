@@ -37,7 +37,7 @@ sub content {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $species_defs = $hub->species_defs;
   my $db_hash      = $species_defs->multi_hash;
-  my $align        = $hub->param('align');
+  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash

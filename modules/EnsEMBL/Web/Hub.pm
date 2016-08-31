@@ -55,6 +55,7 @@ use EnsEMBL::Web::Tools::FailOver::SNPedia;
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
+use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
@@ -390,7 +391,8 @@ sub get_species_info {
         'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
-        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP')
+        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
+        'strain'            => $species_defs->get_config($_, 'SPECIES_STRAIN') || '',
       } unless exists $self->{'_species_info'}{$_};
     }
 
@@ -912,7 +914,7 @@ sub query_store_setup {
   } else {
     $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
   }
-  $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
+  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({

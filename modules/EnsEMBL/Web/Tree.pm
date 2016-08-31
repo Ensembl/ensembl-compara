@@ -25,10 +25,11 @@ use warnings;
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::TreeNode;
 use EnsEMBL::Web::Exceptions qw(WebException);
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 sub new {
   ## @constructor
-  ## @param Object with allowed keys if initialising from a cached object
+  ## @param Object with allowed keys if initialising from a cached object
   my ($class, $cached_object) = shift;
 
   my $self = bless {
@@ -50,7 +51,7 @@ sub new {
 
 sub get_cacheable_object {
   ## Gets the object that can be safely saved to a cache for this instance
-  ## @return Hashref
+  ## @return Hashref
   my $self = shift;
 
   return { map { $_ => $self->{$_} } $self->_cacheable_keys };
@@ -91,7 +92,7 @@ sub get_node {
 
   throw WebException('Node id is needed to get a node') unless $id;
 
-  my @nodes = @{$self->{'_node_lookup'}{$self->clean_id($id)} || []};
+  my @nodes = @{$self->{'_node_lookup'}{clean_id($id)} || []};
 
   return wantarray ? @nodes : $nodes[0];
 }
@@ -103,7 +104,7 @@ sub create_node {
   ## @return TreeNode object
   my ($self, $id, $data, $id_duplicate_ok) = @_;
 
-  $id = $id ? $self->clean_id($id) : $self->_generate_unique_id;
+  $id = $id ? clean_id($id) : $self->_generate_unique_id;
 
   # if node exists, update data and return node object
   if ((my $node = $self->get_node($id)) && !$id_duplicate_ok) {
@@ -124,7 +125,7 @@ sub create_node {
 sub append_node {
   ## Append a node to the root node
   ## @param As excepted by create_node or a TreeNode object
-  ## @return Newly appended TreeNode object
+  ## @return Newly appended TreeNode object
   my $self = shift;
 
   return $self->root->append_child(UNIVERSAL::isa($_[0], 'EnsEMBL::Web::TreeNode') ? $_[0] : $self->create_node(@_));
@@ -133,7 +134,7 @@ sub append_node {
 sub prepend_node {
   ## Inserts a node to the beginning of the root node
   ## @param As excepted by create_node or a TreeNode object
-  ## @return Newly inserted TreeNode object
+  ## @return Newly inserted TreeNode object
   my $self = shift;
 
   return $self->root->prepend_child(UNIVERSAL::isa($_[0], 'EnsEMBL::Web::TreeNode') ? $_[0] : $self->create_node(@_));
@@ -147,11 +148,6 @@ sub clone_node {
   my ($self, $node, $id) = @_;
 
   return $self->create_node($id // $node->id, { map({ $_ => $node->get_data($_) } $node->data_keys), 'cloned' => 1 }, 1);
-}
-
-sub clean_id {
-  ## Replaces anything other than a word (\w) and a hiphen with underscore
-  return $_[1] =~ s/[^\w-]/_/gr;
 }
 
 sub clear_references {

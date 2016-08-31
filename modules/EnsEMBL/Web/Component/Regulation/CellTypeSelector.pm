@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::Regulation::CellTypeSelector;
 
 use strict;
 
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
+
 use base qw(EnsEMBL::Web::Component::CloudMultiSelector EnsEMBL::Web::Component::Regulation);
 
 sub _init {
@@ -51,7 +53,7 @@ sub content_ajax {
   my $fg = $hub->database('funcgen');
   my %all_cells = map { (my $k = $_) =~ s/:\w+$//; 
                         my $v = $k;
-                        EnsEMBL::Web::Tree->clean_id($k) => $v;
+                        clean_id($k) => $v;
                       } @{$object->all_epigenomes};
 
   $self->{'all_options'}      = \%all_cells;

@@ -36,11 +36,12 @@ sub add_head {
   my $page = $self->page;
   
   $page->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
-    prefetch   EnsEMBL::Web::Document::Element::Prefetch
+    title           EnsEMBL::Web::Document::Element::Title
+    stylesheet      EnsEMBL::Web::Document::Element::Stylesheet
+    links           EnsEMBL::Web::Document::Element::Links
+    meta            EnsEMBL::Web::Document::Element::Meta
+    prefetch        EnsEMBL::Web::Document::Element::Prefetch
+    head_javascript EnsEMBL::Web::Document::Element::HeadJavascript
   ));
 }
 
@@ -64,6 +65,7 @@ sub add_body {
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+    tmp_message      EnsEMBL::Web::Document::Element::TmpMessage
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }
@@ -186,6 +188,7 @@ sub render_page_end {
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
     $elements->{'modal'}
+    $elements->{'tmp_message'}
     $elements->{'body_javascript'}
   );
   

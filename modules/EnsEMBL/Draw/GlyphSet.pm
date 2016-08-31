@@ -198,12 +198,13 @@ sub push {
   my ($gx, $gx1, $gy, $gy1);
 
   foreach my $Glyph (@_) {
-      CORE::push @{$self->{'glyphs'}}, $Glyph;
+    next unless $Glyph;
+    CORE::push @{$self->{'glyphs'}}, $Glyph;
 
-      $gx  =     $Glyph->x() || 0;
-      $gx1 = $gx + ($Glyph->width() || 0);
+    $gx  =     $Glyph->x() || 0;
+    $gx1 = $gx + ($Glyph->width() || 0);
     $gy  =     $Glyph->y() || 0;
-      $gy1 = $gy + ($Glyph->height() || 0);
+    $gy1 = $gy + ($Glyph->height() || 0);
 
   ######### track max and min dimensions
     $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;

@@ -25,14 +25,22 @@ use parent qw(EnsEMBL::Draw::Style::Feature::Structured);
 
 sub draw_join {
   my ($self, %params) = @_;
-  $params{'colour'} = $params{'join_colour'};
-  delete $params{'join_colour'};
+
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
-  push @{$self->glyphs}, $self->Intron(\%params);
+
+  ## Draw the join as a horizontal line or a "hat"?
+  if ($self->track_config->get('collapsed')) {
+    $params{'y'} += $params{'height'}/2;
+    $params{'height'} = 0;
+    push @{$self->glyphs}, $self->Line(\%params);
+  }
+  else {
+    push @{$self->glyphs}, $self->Intron(\%params);
+  }
 }
 
 sub draw_block {
@@ -77,17 +85,26 @@ sub draw_coding_block {
 
 sub draw_noncoding_block {
   my ($self, %params) = @_;
-  $params{'bordercolour'} = $params{'colour'};
-  delete $params{'colour'};
   $params{'height'} = $params{'height'} - 2;
   $params{'y'} += 1;
   delete $params{'structure'};
+
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
-  push @{$self->glyphs}, $self->Rect(\%params);
+
+  if ($self->track_config->get('collapsed')) {
+    $params{'y'} += $params{'height'}/2;
+    $params{'height'} = 0;
+    push @{$self->glyphs}, $self->Line(\%params);
+  }
+  else {
+    $params{'bordercolour'} = $params{'colour'};
+    delete $params{'colour'};
+    push @{$self->glyphs}, $self->Rect(\%params);
+  }
 }
 
 

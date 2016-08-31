@@ -271,6 +271,7 @@ sub content {
       my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
       my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
       my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
+      $trans_name .= ".".$trans->version if($trans->version); #transcript version, leave this here so that it doesn't overwrite trans_name before
 
       my $row = {
         allele    => $allele,

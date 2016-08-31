@@ -127,7 +127,7 @@ sub source {
 }
 
 sub precache {
-  my ($self,$kind,$i,$n,$r,$subpart) = @_;
+  my ($self,$kind,$i,$n,$subpart) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fns = $conf->{'loop'};
@@ -156,31 +156,21 @@ sub precache {
       $p->{$k} = $p->{$k}->($self->{'impl'},$p);
     }
   }
-  my $TIME_TOT = 0;
-  my $TIME_NUM  = 0;
-  $self->{'store'}->open($r||0);
+  $self->{'store'}->open;
   my $start = time();
   foreach my $args (@parts) {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
-      next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
       if(time()-$start > 300) {
         $self->{'store'}->close();
         $self->{'store'}->open(-1);
         $start = time();
       }
-      my $TIME_A = time;
-      $self->run_miss($a,1);
-      my $TIME_B = time;
-      $TIME_TOT += $TIME_B - $TIME_A;
-      $TIME_NUM++;
-      warn sprintf("  -> %s %s [%d] %6dms avg %6dms\n",
-                    $kind,join(' ',@{$a->{'__full_name'}}),$i,($TIME_B-$TIME_A)*1000,
-                    $TIME_TOT*1000/$TIME_NUM);
+      $self->run_miss($a,$kind);
     }
   }
-  $self->{'store'}->close();      
+  $self->{'store'}->close();
 }
 
 1;

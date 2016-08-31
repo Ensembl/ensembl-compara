@@ -157,8 +157,11 @@ sub init_form_non_cacheable {
 
   my %other_clustersets;
   if ($gene) {
-    my $gene_tree       = $gene->get_GeneTree;
-    %other_clustersets  = map { $_->clusterset_id => 1 } @{$hub->database('compara')->get_adaptor('GeneTree')->fetch_all_linked_trees($gene_tree->tree)};
+    my $function        = $self->referer->{'ENSEMBL_FUNCTION'};
+    my $cdb             = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
+    my $gene_tree       = $gene->get_GeneTree($cdb);
+    my $adaptor         = $self->database($cdb)->get_adaptor('GeneTree');
+    %other_clustersets  = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree->tree)};
 
     $other_clustersets{$gene_tree->tree->clusterset_id} = 1;
     delete $other_clustersets{'default'};

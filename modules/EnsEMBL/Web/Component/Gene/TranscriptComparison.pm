@@ -193,7 +193,7 @@ sub get_sequence_data {
   $_-- for grep $_, $subslice_start, $subslice_end;
   
   foreach my $transcript (map $_->[1], sort { $a->[0] <=> $b->[0] } @transcripts) {
-    my $transcript_id   = $transcript->stable_id;
+    my $transcript_id   = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $transcript_name = $transcript->external_name || $transcript_id;
        $transcript_name = $transcript_id if $transcript_name eq $gene_name;
     my @exons           = @{$transcript->get_all_Exons};
@@ -302,7 +302,7 @@ sub set_variations {
   my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
   my $variation_features = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   @transcript_variations = grep { !$self->too_rare_snp($_->variation_feature,$config) } @transcript_variations;
   my $length                = scalar @$sequence - 1;
   my $transcript_id         = $transcript->stable_id;

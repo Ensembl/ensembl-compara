@@ -89,6 +89,8 @@ use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
+our $CONFIG_QUIET = 0; # Set to 1 by scripts to remove natter
+
 use base qw(EnsEMBL::Web::Root);
 
 our $AUTOLOAD;
@@ -348,7 +350,7 @@ sub parse {
   $self->{'_last_time'}  = $self->{'_start_time'};
   
   if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}) {
-    warn " Retrieving conf from $self->{'_filename'}\n";
+    warn " Retrieving conf from $self->{'_filename'}\n" unless $CONFIG_QUIET;
     if($self->retrieve) {
       $reg_conf->configure;
       return 1;
@@ -665,23 +667,45 @@ sub _parse {
   # grab the contents of the ini file AND
   # IF  the DB packed files exist expand them
   # o/w attach the species databases
+
   # load the data and store the packed files
   foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
     $config_packer->species($species);
-    
     $self->process_ini_files($species, $config_packer, $defaults);
     $self->_merge_db_tree($tree, $db_tree, $species);
   }
   
   $self->_info_log('Parser', 'Post processing ini files');
-  
+
+  # Prepare to process strain information
+  my $name_lookup = {};
+  my $species_to_strains = {};
+
   # Loop over each tree and make further manipulations
   foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
+
+    ## Need to gather strain info for all species
+    $name_lookup->{$config_packer->tree->{$species}{'SPECIES_COMMON_NAME'}} = $species;
+    my $collection = $config_packer->tree->{$species}{'STRAIN_COLLECTION'};
+    if ($collection) {
+      if ($species_to_strains->{$collection}) {
+        push @{$species_to_strains->{$collection}}, $species;
+      }
+      else {
+        $species_to_strains->{$collection} = [$species];
+      }
+    }
   }
 
+  ## Compile strain info into a single structure
+  while (my($k, $v) = each (%$species_to_strains)) {
+    my $species = $name_lookup->{ucfirst($k)};
+    $tree->{$species}{'ALL_STRAINS'} = $v;
+  } 
+ 
   $CONF->{'_storage'} = $tree; # Store the tree
 }
 

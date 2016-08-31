@@ -106,7 +106,6 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
-  my $align = $hub->param('align');
   $image->{'export_params'} = ['align', $align];
   foreach ($hub->param) {
     push @{$image->{'export_params'}}, [$_, $hub->param($_)] if $_ =~ /^species_$align/;
@@ -121,11 +120,14 @@ sub content {
   
   $html .= $image->render;
 
-  my $alert_box = $self->check_for_align_problems({
+  my ($alert_box, $error) = $self->check_for_align_problems({
                                 'align'   => $align, 
                                 'species' => $primary_species, 
                                 'cdb'     => $hub->param('cdb') || 'compara',
                                 });
+
+  return $alert_box if $error;
+
   $html .=  $alert_box;
   
   return $html;

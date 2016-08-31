@@ -51,7 +51,6 @@ sub populate_tree {
   ## Data management
   $data_menu->append($self->create_node('ManageData',            'Custom tracks', [qw(
                     manage_remote EnsEMBL::Web::Component::UserData::ManageData
-                    select_file   EnsEMBL::Web::Component::UserData::SelectFile
     )]));
 
   ## Trackhub attachment

@@ -25,6 +25,7 @@ use warnings;
 use File::Basename;
 use JSON qw(encode_json);
 use List::Util qw(max);
+use List::MoreUtils qw(any);
 
 use EnsEMBL::Web::TextSequence::Sequence;
 use EnsEMBL::Web::TextSequence::Output::Web;
@@ -56,6 +57,7 @@ sub reset {
     %$self,
     seq_num => -1,
     all_line => 0,
+    annotation => [],
     slices => [],
     sequences => [],
     fieldsize => {},
@@ -131,14 +133,34 @@ sub field_size {
   return $self->{'fieldsize'}{$key};
 }
 
+sub add_annotation {
+  my ($self,$annotation) = @_;
+
+  push @{$self->{'annotation'}},$annotation;
+}
+
+sub annotate {
+  my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
+
+  my $cur_phase = $self->phase;
+  foreach my $a (@{$self->{'annotation'}}) {
+    my $p = $a->phases;
+    next if $p and not any { $cur_phase == $_ } @$p;
+    # XXX no hub should be passed
+    $a->annotate($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
+  }
+}
+
 sub transfer_data {
   my ($self,$data,$config) = @_;
 
   my @vseqs = @{$self->sequences};
+  my $missing = @$data - @vseqs;
+  $self->new_sequence for(1..$missing);
+  @vseqs = @{$self->sequences};
+  $vseqs[0]->principal(1) unless(any { $_->principal } @vseqs);
   foreach my $seq (@$data) {
-    my $tseq;
-    if(@vseqs) { $tseq = shift @vseqs; }
-    else { $tseq = $self->new_sequence; }
+    my $tseq = shift @vseqs;
     $tseq->add_data($seq,$config);
   }
 }

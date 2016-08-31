@@ -36,16 +36,19 @@ sub validate {
   my $self    = shift;
   my $hub     = $self->hub;
   my $session = $hub->session;
-  my ($valid, $format, $col_count) = $self->parser->validate($hub->param('format'));
+  my $format  = $self->hub->param('format');
+  my $valid = $self->parser->validate($format);
 
   if ($valid) {
+    my $format_name = $self->parser->format->name;
+    $format = $format_name if $format_name;
     $self->{'format'}       = $format;
-    $self->{'column_count'} = $col_count;
+    $self->{'column_count'} = $self->parser->get_column_count;
     ## Update session record accordingly
     my $record = $session->get_record_data({'type' => 'upload', 'code' => $self->file->code});
     if (keys %$record) {
-      $record->{'format'}       = $format;
-      $record->{'column_count'} = $col_count;
+      $record->{'format'}       = $self->{'format'};
+      $record->{'column_count'} = $self->{'column_count'};
       $session->set_record_data($record);
     }
   }
@@ -122,13 +125,15 @@ sub create_hash {
     'href'          => $href,
   };
 
+  ## We may need to deal with BigBed or bigGenePred AutoSQL fields
+  my $column_map = $self->parser->{'column_map'} || {};
+
   if ($metadata->{'display'} eq 'text') {
     ## Want the real coordinates, not relative to the slice
     $feature->{'start'} = $feature_start;
     $feature->{'end'}   = $feature_end;
     ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
-    my $column_map      = $self->parser->{'column_map'};
-    if ($column_map) {
+    if (keys %$column_map) {
       $feature->{'extra'} = [];
       ## Synonyms for standard columns used in zmenus
       my %skipped = (
@@ -171,6 +176,9 @@ sub create_hash {
     $feature->{'structure'}     = $self->create_structure($feature_start, $feature_end, $slice->start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
+    if ($column_map->{'name2'}) {
+      $feature->{'gene'}          = $self->parser->get_name2;
+    }
   }
   return $feature;
 }

@@ -137,7 +137,6 @@ sub content {
           'end'     => undef, 
           'db'      => $cdb, 
           'target'  => $target_slice,
-          'image'   => $self->has_image
     });
       
     if (scalar @$slices == 1) {

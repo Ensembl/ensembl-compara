@@ -221,10 +221,9 @@ sub upload {
         my $user    = $hub->user;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
-        my $format  = $self->get_format || $hub->param('format');
+        my $format  = $self->get_format || lc $hub->param('format');
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
-        $inputs{'format'}    = $format if $format;
         my $species = $hub->param('species') || $hub->species;
 
         ## Extra renderers for fancy formats

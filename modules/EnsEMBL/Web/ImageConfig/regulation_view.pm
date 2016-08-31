@@ -22,9 +22,9 @@ package EnsEMBL::Web::ImageConfig::regulation_view;
 use strict;
 use warnings;
 
-use parent qw(EnsEMBL::Web::ImageConfig);
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
-use EnsEMBL::Web::Tree;
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub cache_key        { return $_[0]->code eq 'cell_line' ? '' : $_[0]->SUPER::cache_key; }
 sub load_user_tracks { return $_[0]->SUPER::load_user_tracks($_[1]) unless $_[0]->code eq 'set_evidence_types'; } # Stops unwanted cache tags being added for the main page (not the component)
@@ -107,15 +107,14 @@ sub init_cacheable {
 
   $self->get_node('opt_empty_tracks')->set('display', 'normal');	
 
-  my $cell_line = $self->hub->species_defs->get_config($self->species, 'REGULATION_DEFAULT_CELL');
-  EnsEMBL::Web::Tree->clean_id($cell_line); # Eugh, modifies arg.
+  my $cell_line = clean_id($self->hub->species_defs->get_config($self->species, 'REGULATION_DEFAULT_CELL')); # Eugh, modifies arg.
   foreach my $type (qw(reg_feats seg reg_feats_non_core reg_feats_core)) {
     my $node = $self->get_node("${type}_$cell_line");
     next unless $node;
     $node->set('display',$type =~ /_core/ ? 'compact' : 'normal');
   }
   foreach my $cell_line (@cell_lines) {
-    EnsEMBL::Web::Tree->clean_id($cell_line); # Eugh, modifies arg.
+    clean_id($cell_line); # Eugh, modifies arg.
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
   }
 

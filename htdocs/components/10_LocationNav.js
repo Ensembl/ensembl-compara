@@ -328,7 +328,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }));
 
       /* replacing chr, _ and .. in location search */
-      var new_r = (r[1].replace(/(chr)/,''))+":"+r[2].replace(/\,/g,'')+(r[3].replace(/(_|\.\.)/, '-'))+r[4].replace(/\,/g,'');
+      var new_r = (r[1].replace(/^(chr)/,''))+":"+r[2].replace(/\,/g,'')+(r[3].replace(/(_|\.\.)/, '-'))+r[4].replace(/\,/g,'');
       new_r     = new_r.replace(/\s/g,''); //replacing any blank space
       Ensembl.updateLocation(new_r);
     } else {

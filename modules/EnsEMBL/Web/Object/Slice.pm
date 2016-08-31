@@ -35,7 +35,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
-use EnsEMBL::Web::Tree;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -261,7 +261,7 @@ sub filter_munged_snps {
     if ($needsource) {
       @filtered_snps =
  # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        grep { $sources->{$_->[2]->source->name} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
         @filtered_snps;
     }
  
@@ -355,7 +355,7 @@ sub get_cell_line_data {
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
     my $ic_cell_line = $cell_line;
-    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+    clean_id($ic_cell_line);
 
     foreach my $set (@sets) {
       if ($image_config) {

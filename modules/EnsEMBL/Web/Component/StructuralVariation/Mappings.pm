@@ -190,6 +190,7 @@ sub gene_transcript_table {
         });
       }
       
+      $trans_name .= ".".$t->version if($t->version); #transcript version
       foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
         my $type = $self->render_consequence_type($tsva);
         

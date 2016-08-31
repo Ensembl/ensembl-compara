@@ -775,7 +775,14 @@ sub ERROR_MESSAGES {
     401 => [
       'Not authorised',
       'You were not authorised to view that page, a username and password is required',
-    ]
+    ],
+    ## bogus HTTP error for internal tracks sourced from files
+    ## (Yes, it's a reference to the fictional US area code used in movies!)
+    555 => [
+      'Unavailable',
+      #'This resource is temporarily unavailable - please check our blog for service updates',
+      'This resource is temporarily unavailable owing to the Hinxton datacentre shutdown',
+    ],
   );
 }
 

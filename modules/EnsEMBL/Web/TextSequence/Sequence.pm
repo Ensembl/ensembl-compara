@@ -56,6 +56,8 @@ sub init {} # For subclasses
 sub ready {} # For subclasses
 sub fixup_markup {} # For subclasses
 
+sub principal { $_[0]->{'principal'} = $_[1] if @_>1; return $_[0]->{'principal'}; }
+
 sub configure {
   my ($self) = @_;
 

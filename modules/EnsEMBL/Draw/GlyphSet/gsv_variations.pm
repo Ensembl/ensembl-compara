@@ -105,10 +105,14 @@ sub _init {
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
        
     my $row  =  EnsEMBL::Draw::Utils::Bump::bump_row($bump_start, $bump_end, $bitmap_length, \@bitmap);
+    ## Don't bother to draw more than 10 rows, as the image won't return 
+    ## if there are thousands of SNPs 
+    next if $row > 10;
     $max_row = $row if $row > $max_row;
     
     $tglyph->y($voffset + $tglyph->{'y'} + ($row * (2 + $h)) + 1);
     $bglyph->y($voffset + $bglyph->{'y'} + ($row * (2 + $h)) + 1);
+
     $self->push($bglyph, $tglyph);
   }
 }

@@ -218,6 +218,7 @@ sub draw_glyphs {
         'id'          => $hit_name,
         'hit_length'  => $block->{'hit_length'},
         'exon'        => $exon->stable_id,
+        't_version'   => $wuc->cache('trans_object')->{'transcript'}->version ? $wuc->cache('trans_object')->{'transcript'}->version : "",
         'exon_length' => $block->{'exon_length'},
       };
       if ($hit_details->{'evidence_removed'}) {

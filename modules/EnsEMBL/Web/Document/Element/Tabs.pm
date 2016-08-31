@@ -105,6 +105,7 @@ sub init_species_list {
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
     map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
+    grep !$species_defs->get_config($_, 'SPECIES_STRAIN'), 
     $species_defs->valid_species
   ];
   
