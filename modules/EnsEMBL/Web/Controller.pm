@@ -60,6 +60,12 @@ sub new {
   ##  - filename      : Name of the file to be served (for static file request)
   my ($class, $r, $species_defs, $params) = @_;
 
+  # Temporary
+  if (!UNIVERSAL::isa($r // '', 'Apache2::RequestRec') || !UNIVERSAL::isa($species_defs // '', 'EnsEMBL::Web::SpeciesDefs')) {
+    use Carp qw(cluck);
+    cluck('Invalid parameters');
+  }
+
   my $self = bless {
     'r'             => $r,
     'species_defs'  => $species_defs,
