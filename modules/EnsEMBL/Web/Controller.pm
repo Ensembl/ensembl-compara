@@ -428,9 +428,10 @@ sub configure {
     $hub->components = $configuration->get_configurable_components($node);
   } elsif ($self->request eq 'modal') {
     my $referer     = $self->referer;
-    my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
-    
-    $hub->components = $module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
+
+    if ($referer->{'ENSEMBL_TYPE'} && (my $module_name = dynamic_require("EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}", 1))) {
+      $hub->components = $module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'});
+    }
   }
 }
 
