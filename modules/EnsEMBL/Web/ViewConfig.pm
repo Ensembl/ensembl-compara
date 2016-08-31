@@ -126,8 +126,8 @@ sub set {
 sub get {
   my ($self, $key) = @_;
   
-  return undef unless exists $self->{'options'}{$key};
   
+  return (wantarray?():undef) unless exists $self->{'options'}{$key};
   my $type = exists $self->{'options'}{$key}{'user'} ? 'user' : 'default';
  
   return ref $self->{'options'}{$key}{$type} eq 'ARRAY' ? @{$self->{'options'}{$key}{$type}} : $self->{'options'}{$key}{$type};
