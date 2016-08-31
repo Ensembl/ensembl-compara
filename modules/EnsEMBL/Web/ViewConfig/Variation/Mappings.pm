@@ -34,7 +34,7 @@ sub init_cacheable {
 
 sub field_order {
   ## Abstract method implementation
-  return $self->hub->species =~ /homo_sapiens|mus_musculus/i ? qw(motif_scores) : (); # TODO - don't hardcode species, add a variable in ini files
+  return $_[0]->hub->species =~ /homo_sapiens|mus_musculus/i ? qw(motif_scores) : (); # TODO - don't hardcode species, add a variable in ini files
 }
 
 sub form_fields {
