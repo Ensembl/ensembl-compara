@@ -272,6 +272,7 @@ sub initialize_search_bot {
 sub _init {
   my $self = shift;
   
+  my %shared;
   foreach my $entry (@{$self->head_order}, @{$self->body_order}) {
     my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::Element::Content' ]
     
@@ -285,7 +286,8 @@ sub _init {
         input    => $self->{'input'},
         format   => $self->{'format'},
         hub      => $self->hub,
-        renderer => $self->renderer
+        renderer => $self->renderer,
+        shared   => \%shared,
       });
     };
     

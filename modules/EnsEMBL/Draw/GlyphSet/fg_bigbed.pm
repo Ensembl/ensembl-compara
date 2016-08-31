@@ -55,7 +55,7 @@ sub get_data {
   
   my $check = file_exists($bigbed_file, {'nice' => 1});
   if ($check->{'error'}) {
-    $self->no_file($check->{'error'}->[0]);
+    $self->no_file('555');
     return [];
   }
 

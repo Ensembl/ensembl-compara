@@ -135,7 +135,9 @@ sub _fetch_data {
   }
 
   if ($check->{'error'}) {
-    $self->no_file($check->{'error'}->[0]);
+    my $error = $self->{'my_config'}->get('on_error');
+    $error ||=  $check->{'error'}[0];
+    $self->no_file($error);
     return [];
   }
 

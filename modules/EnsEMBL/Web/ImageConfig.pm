@@ -2179,6 +2179,7 @@ sub add_data_files {
       strand    => 'f',
       renderers => $renderers, 
       gang      => 'rnaseq',
+      on_error  => 555,
     });
   }
 }
