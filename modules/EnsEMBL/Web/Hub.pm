@@ -462,6 +462,8 @@ sub redirect {
 
   $url = $self->url($url) if $url && ref $url;
 
+  $self->store_records_if_needed;
+
   $self->controller->redirect($url || $self->current_url, $permanent);
 }
 
@@ -993,10 +995,8 @@ sub configure_user_data {
 sub store_records_if_needed {
   my $self    = shift;
   my $session = $self->session;
-  my $user    = $self->user;
 
   $session->store_records if $session;
-  $user->store_records if $user;
 }
 
 1;
