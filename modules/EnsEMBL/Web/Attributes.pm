@@ -82,7 +82,7 @@ sub Deprecated {
   my ($package, $code, $glob, $method, $message) = @_;
   *{$glob} = sub {
     my @caller = caller(0);
-    warn sprintf "Call to deprecated method %s::%s: %s at %s:%s\n", $package, $method, $message || '', $caller[1], $caller[2];
+#    warn sprintf "Call to deprecated method %s::%s: %s at %s:%s\n", $package, $method, $message || '', $caller[1], $caller[2];
     goto &$code;
   };
 }
