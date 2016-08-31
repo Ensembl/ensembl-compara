@@ -27,6 +27,8 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
+
 sub load_tracks {
   ## Loop through core/compara/funcgen/variation like dbs and loads in various database derived tracks
   ## @params List of arguments to be passed on the individual method to add a specific type of track
@@ -164,7 +166,7 @@ sub _add_matrix {
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
   my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
-  my $column_key   = $self->tree->clean_id("${subset}_$column");
+  my $column_key   = clean_id("${subset}_$column");
   my $column_track = $self->get_node($column_key);
 
   if (!($column_track && $column_track->parent_node)) {
@@ -183,7 +185,7 @@ sub _add_matrix {
 
   if ($matrix->{'row'}) {
     push @{$column_track->data->{'subtrack_list'}}, [ $caption, $column_track->data->{'no_subtrack_description'} ? () : $data->{'description'} ];
-    $data->{'option_key'} = $self->tree->clean_id("${subset}_${column}_$matrix->{'row'}");
+    $data->{'option_key'} = clean_id("${subset}_${column}_$matrix->{'row'}");
   }
 
   $data->{'column_key'}  = $column_key;
@@ -317,6 +319,7 @@ sub add_data_files {
       strand    => 'f',
       renderers => $renderers,
       gang      => 'rnaseq',
+      on_error  => 555,
     });
   }
 }
@@ -1827,6 +1830,20 @@ sub _transcript_renderers {
     unlimited             => 'Stacked unlimited',
     ungrouped             => 'Ungrouped',
   ];
+}
+
+sub _gene_renderers {
+
+  if (!$_[0]->{'_gene_renderers'}) {
+
+    my @gene_renderers = @{$self->_transcript_renderers};
+
+    splice @gene_renderers, 6, 0, 'as_collapsed_nolabel', 'Collapsed', 'as_collapsed_label', 'Collapsed with labels';
+
+    $_[0]->{'_gene_renderers'} = \@gene_renderers;
+  }
+
+  return $_[0]->{'_gene_renderers'};
 }
 
 1;
