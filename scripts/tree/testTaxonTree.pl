@@ -57,7 +57,6 @@ GetOptions('help'        => \$help,
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
            'tag=s'     => \$self->{'tag'},
-           'no_previous'             => \$self->{'no_previous'},
 
            'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
