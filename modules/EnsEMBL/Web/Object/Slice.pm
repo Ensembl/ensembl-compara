@@ -261,7 +261,7 @@ sub filter_munged_snps {
     if ($needsource) {
       @filtered_snps =
  # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        grep { $sources->{$_->[2]->source->name} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
         @filtered_snps;
     }
  
