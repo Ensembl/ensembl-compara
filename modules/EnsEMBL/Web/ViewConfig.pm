@@ -136,6 +136,8 @@ sub set_user_setting {
   ## TODO - $force?
   my ($self, $key, $value, $force) = @_;
 
+  use Carp; Carp::cluck('$force used') if $force; # To find where's $force being used
+
   my $user_settings = $self->get_user_settings;
 
   if (($force || exists $self->{'options'}{$key}) && (!exists $user_settings->{$key} || !is_same($user_settings->{$key}, $value))) {
@@ -153,6 +155,8 @@ sub get {
   ## Gets value of an option giving precedence to user set value over default values
   ## @return Value for the option (possibly a list in case of multiple values)
   my ($self, $key) = @_;
+
+  use Carp; Carp::cluck unless defined $key;
 
   return unless exists $self->{'options'}{$key};
 
