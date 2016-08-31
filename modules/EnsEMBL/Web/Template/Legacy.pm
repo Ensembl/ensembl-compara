@@ -36,11 +36,12 @@ sub add_head {
   my $page = $self->page;
   
   $page->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
-    prefetch   EnsEMBL::Web::Document::Element::Prefetch
+    title           EnsEMBL::Web::Document::Element::Title
+    stylesheet      EnsEMBL::Web::Document::Element::Stylesheet
+    links           EnsEMBL::Web::Document::Element::Links
+    meta            EnsEMBL::Web::Document::Element::Meta
+    prefetch        EnsEMBL::Web::Document::Element::Prefetch
+    head_javascript EnsEMBL::Web::Document::Element::HeadJavascript
   ));
 }
 
