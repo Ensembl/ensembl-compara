@@ -88,7 +88,7 @@ sub param_defaults {
 
 sub fetch_input {
   my $self = shift;
-#  $self->debug(9);
+#  $self->debug(2);
   my $ortholog_hashref = $self->param_required('ortholog_info_hashref');
   print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
   my $mlss_id = $self->param_required('goc_mlss_id');
@@ -136,21 +136,22 @@ sub _reusable_species {
     for (my $homolog_index = 0; $homolog_index < scalar @{$orth_sorted}; $homolog_index++ ) {
       my $curr_homology_id = $orth_sorted->[$homolog_index];
       my $prev_homology_id = $self->param('homologyID_map')->{$curr_homology_id};
-      print "\n curr_homology_id ----> $curr_homology_id   \n prev_homology_id --------> $prev_homology_id \n" if ( $self->debug > 3);
+      print "\n curr_homology_id ----> $curr_homology_id   \n prev_homology_id --------> $prev_homology_id \n" if ( $self->debug > 1);
 
       if ( defined $prev_homology_id) {
         my $curr_homology_obj = $self->param('homolog_adaptor')->fetch_by_dbID($curr_homology_id);
         my $curr_ref_gmem_dbID = $curr_homology_obj->get_all_GeneMembers($self->param('ref_species_dbid'))->[0]->dbID;
         my $prev_homology_obj = $self->param('prev_homolog_adaptor')->fetch_by_dbID($prev_homology_id);
         my $prev_ref_gmem_dbID = $prev_homology_obj->get_all_GeneMembers($self->param('ref_species_dbid'))->[0]->dbID;
-        print "\n curr_homology_id ----> $curr_homology_id can be reuseddddd  \n curr_ref_gmem_dbID --------> $curr_ref_gmem_dbID \n  prev_ref_gmem_dbID ------>$prev_ref_gmem_dbID" if ( $self->debug > 3);
+        print "\n curr_homology_id ----> $curr_homology_id can be reuseddddd  \n curr_ref_gmem_dbID --------> $curr_ref_gmem_dbID \n  prev_ref_gmem_dbID ------>  $prev_ref_gmem_dbID \n" if ( $self->debug > 1);
 
         my $homology_goc_score = $self->_copy_homology_goc_score($prev_homology_id,$prev_ref_gmem_dbID);
         $homology_goc_score->{'gene_member_id'} = $curr_ref_gmem_dbID;
         $homology_goc_score->{'homology_id'} = $curr_homology_id;
         $homology_goc_score->{'dnafrag_id'} = $ref_dnafragID;
-        print Dumper($homology_goc_score) if ( $self->debug > 3);
+        print Dumper($homology_goc_score) if ( $self->debug > 1);
         $self->_update_ortholog_goc_table($homology_goc_score);
+
       }
       
       else {
@@ -182,12 +183,16 @@ sub _new_homolog_at_0 {
   $query = $sorted_homologs->[$h_index];
   $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
   #recalculate the goc score for the homolog at right1 of the query homolog (query position +1 is now the query)
-  ($left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
-   $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
-  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
-  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
-#  print $left2, " left2 \n", $left1, " left1 \n", $query, " query \n", $right1, " right1 \n", $right2, " right2  \n\n";
-  $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  if (defined $sorted_homologs->[$h_index +1]) { 
+	($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
+  	$self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  	
+  	if (defined $sorted_homologs->[$h_index +2]) { 
+	  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
+  	  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
+      $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+    }
+  }
 }
 
 sub _new_homolog_at_1 {
@@ -203,11 +208,16 @@ sub _new_homolog_at_1 {
   ($left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1],$sorted_homologs->[$h_index],$sorted_homologs->[$h_index +1],$sorted_homologs->[$h_index +2]);
   $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
   #recalculate the goc score for the homolog at right1 of the query homolog (query position +1 is now the query)
-  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
-  $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
-  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
-  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
-  $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  if (defined $sorted_homologs->[$h_index +1]) { 
+	($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
+  	$self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  	
+  	if (defined $sorted_homologs->[$h_index +2]) { 
+	  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
+  	  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
+      $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+    }
+  }
 }
 
 sub _new_homolog {
@@ -227,11 +237,16 @@ sub _new_homolog {
   ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -2], $sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2]);
   $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
   #recalculate the goc score for the homolog at right1 of the query homolog (query position +1 is now the query)
-  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
-  $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
-  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
-  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
-  $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  if (defined $sorted_homologs->[$h_index +1]) { 
+	($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index -1], $sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3]);
+  	$self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+  	
+  	if (defined $sorted_homologs->[$h_index +2]) { 
+	  #recalculate the goc score for the homolog at right2 of the query homolog (query position +2 is now the query)
+  	  ($left2, $left1, $query, $right1, $right2) = ($sorted_homologs->[$h_index], $sorted_homologs->[$h_index +1], $sorted_homologs->[$h_index +2], $sorted_homologs->[$h_index +3], $sorted_homologs->[$h_index +4]);
+      $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $curr_ref_dnafragID );
+    }
+  }
 }
 
 sub _delete_from_goc_table {
@@ -253,7 +268,7 @@ sub _copy_homology_goc_score {
   print "\n Starting ------  _copy_homology_goc_score \n" if ( $self->debug );
   my ($query_hID, $query_gmem_ID) = @_; 
   my $mlss_id = $self->param_required('goc_mlss_id');
-  my $query2 = "SELECT goc_score, left1, left2, right1, right2 FROM ortholog_goc_metric 
+  my $query2 = "SELECT method_link_species_set_id, goc_score, left1, left2, right1, right2 FROM ortholog_goc_metric 
                 WHERE method_link_species_set_id = $mlss_id AND homology_id = $query_hID and gene_member_id = $query_gmem_ID ";
   my $query_goc_score = $self->param('previous_compara_dba')->dbc->db_handle->selectrow_hashref($query2);
   return $query_goc_score;              
