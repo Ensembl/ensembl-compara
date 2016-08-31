@@ -70,7 +70,7 @@ sub records {
   my ($self, $filter) = splice @_, 0, 2;
 
   # load records on demand
-  $self->{'_record_set'} //= EnsEMBL::Web::RecordSet->new(@{$self->record_rose_manager->get_objects('query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type])});
+  $self->{'_record_set'} //= $self->_recordset_class->new(@{$self->record_rose_manager->get_objects('query' => ['record_type_id' => $self->record_type_id, 'record_type' => $self->record_type])});
 
   # return all records if no filter applied
   return $self->{'_record_set'} unless $filter;
@@ -167,9 +167,10 @@ sub get_records_data {
 
 sub add_record {
   ## Adds a new record to the current RecordSet
-  ## @param Columns and their values as a hash
+  ## @param Columns and their values as a hash (or type string)
   my ($self, $row) = @_;
 
+  $row                      = {'type' => $row} unless ref $row;
   $row                    ||= {};
   $row->{'data'}          ||= {};
   $row->{'record_type'}     = $self->record_type;
@@ -184,7 +185,7 @@ sub delete_records {
   ## Deletes records according to the filtering arguments
   ## @param RecordSet object or filter params as excepted by the records method
   my $self      = shift;
-  my $to_delete = ref $_[0] && UNIVERSAL::isa($_[0], 'EnsEMBL::Web::RecordSet') ? $_[0] : $self->records(@_);
+  my $to_delete = ref $_[0] && UNIVERSAL::isa($_[0], __PACKAGE__->_recordset_class) ? $_[0] : $self->records(@_);
 
   return 0 unless $to_delete->count;
 
@@ -287,8 +288,14 @@ sub _commit_transaction {
   }
 }
 
+sub _recordset_class {
+  ## @private
+  return 'EnsEMBL::Web::RecordSet';
+}
+
 sub DESTROY {
   # just rollback if no changes were stored permanently
+  warn sprintf "%s: Data not saved - doing a rollback on transaction\n", ref $_[0];
   $_[0]->{'_db'}->rollback if $_[0]->{'_db'};
 }
 
