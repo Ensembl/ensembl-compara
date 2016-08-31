@@ -34,9 +34,9 @@ sub init {
   $self->_create_objects;
   $self->renderer->{'_modal_dialog_'} = $self->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' || $self->hub->param('X-Requested-With') eq 'iframe'; # Flag indicating that this is modal dialog panel, loaded by AJAX/hidden iframe
 
-  if (!$self->renderer->{'_modal_dialog_'}) {
-    throw InvalidRequest('Modal window can not served as a separate page');
-  }
+#   if (!$self->renderer->{'_modal_dialog_'}) {
+#     throw InvalidRequest('Modal window can not served as a standalone page');
+#   }
 
   $self->page->initialize; # Adds the components to be rendered to the page module
   $self->configure;
@@ -53,7 +53,7 @@ sub _create_objects {
 sub render_page {
   my $self = shift;
 
-  $self->r->content_type('application/json');
+  $self->r->content_type('application/json') if $self->renderer->{'_modal_dialog_'};
   $self->SUPER::render_page(@_);
 }
 
