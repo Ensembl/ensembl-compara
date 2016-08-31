@@ -51,4 +51,9 @@ sub init_cacheable {
   $self->add_tracks('synteny', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
 }
 
+sub init_non_cacheable {
+  ## @override
+  ## Nothing non cacheable
+}
+
 1;
