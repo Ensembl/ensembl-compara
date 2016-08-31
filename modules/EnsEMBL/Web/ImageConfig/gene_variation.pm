@@ -129,11 +129,6 @@ sub init_transcript {
   );
   
   $self->get_node('transcript')->remove;
-  
-  $self->modify_configs(
-    [ 'gsv_variations' ],
-    { display => 'box' }
-  );
 }
 
 sub init_transcripts_bottom {
