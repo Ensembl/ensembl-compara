@@ -116,18 +116,10 @@ sub highlight {
     $var_id = $variant->name;
   }
   return unless $var_id && $var_id eq $feature->{'label'};
- 
-  ## Put feature in front of this highlight 
-  $params->{'z'} = 20;
 
-  return $self->Rect({
-      x      => $params->{'x'} - 2 / $self->{'pix_per_bp'},
-      y      => $params->{'y'} - 2,
-      width  => $params->{'width'}  + 4 / $self->{'pix_per_bp'},
-      height => $params->{'height'} + 4,
-      colour => 'black',
-      z      => 10,
-  });
+  ## Use default highlight style
+  $feature->{'highlight'} = 1;
+  $self->SUPER::highlight($feature, $params); 
 }
 
 1;
