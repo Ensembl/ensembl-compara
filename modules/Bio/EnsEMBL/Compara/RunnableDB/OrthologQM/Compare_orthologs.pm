@@ -128,7 +128,7 @@ sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID ) = @_;
     print " ------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
-    print " \n\n\n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug >3);
+    print " \n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug >1);
     my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2, 'ref_chr_dnafragID' => $ref_chr_dnafragID);
 
     #create an array of only the present neighbours
