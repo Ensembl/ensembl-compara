@@ -26,7 +26,7 @@ use warnings;
 
 use overload qw(bool count);
 
-use EnsEMBL::Web::Exceptions qw(ORMException);
+use EnsEMBL::Web::Exceptions qw(ORMException WebException);
 
 our $AUTOLOAD;
 
@@ -113,12 +113,31 @@ sub add {
   return $records;
 }
 
+sub can {
+  ## @override UNIVERSAL's can to implement AUTOLOAD
+  my ($self, $method) = @_;
+
+  my $coderef = $self->SUPER::can($method);
+
+  return $coderef if $coderef;
+
+  return unless $self->[0] && $self->[0]->can($method);
+
+  return sub {
+    my $self = shift;
+    return $self->[0]->can($method)->($self->[0], @_);
+  }
+}
+
 sub AUTOLOAD {
   ## Falls back to calling the corresponding method on the first record object inside the set
   my $self    = shift;
   my $method  = $AUTOLOAD =~ s/.*:://r;
+  my $coderef = $self->can($method);
 
-  return $self->[0]->$method(@_);
+  throw WebException(sprintf 'Could not call method "%s" on "%s"', $method, ref $self) unless $coderef;
+
+  return $coderef->($self, @_);
 }
 
 sub DESTROY {}
