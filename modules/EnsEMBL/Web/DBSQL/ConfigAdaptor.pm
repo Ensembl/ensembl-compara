@@ -31,7 +31,7 @@ use EnsEMBL::Web::Controller;
 my $DBH_SESSION; # package database handle for persistence
 my $DBH_USER;
 
-sub new {
+sub new { die ('ConfigAdaptor not in use');
   my ($class, $hub) = @_;
   my $species_defs  = $hub->species_defs;
   my $user          = $hub->user;
