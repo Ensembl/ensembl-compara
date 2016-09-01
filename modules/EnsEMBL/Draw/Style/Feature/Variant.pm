@@ -40,11 +40,6 @@ sub draw_feature {
   #warn ">>> DRAWING VARIANT OF TYPE ".$feature->{'type'};
   return unless $feature->{'colour'};
 
-  ## SNPs have two kinds of "label" - an ambiguity code which may be drawn on the feature,
-  ## and an ID which is used as a normal label
-  $feature->{'overlay_colour'} = $feature->{'label_colour'};
-  $feature->{'label_colour'} = $feature->{'colour'};
-
   if ($feature->{'type'}) {
     my $method = 'draw_'.$feature->{'type'};
     $self->$method($feature, $position) if $self->can($method); 
