@@ -761,7 +761,7 @@ sub add_select_all {
   # Add a select all if there is more than one non menu child (node_type can be track or option), or if there is one child track and some non external menus
   if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external_children > 1) {
     my $img_url = $self->img_url;
-    my %counts  = reverse %{$self->{'track_renderers'}{$id}};
+    my %counts  = reverse %{$self->{'track_renderers'}{$id}||{}};
     my $popup;
     
     $caption = $external ? $parent->data->{'caption'} : 'tracks' if $single_menu;
