@@ -1833,17 +1833,18 @@ sub _transcript_renderers {
 }
 
 sub _gene_renderers {
+  my $self = shift;
 
-  if (!$_[0]->{'_gene_renderers'}) {
+  if (!$self->{'_gene_renderers'}) {
 
     my @gene_renderers = @{$self->_transcript_renderers};
 
     splice @gene_renderers, 6, 0, 'as_collapsed_nolabel', 'Collapsed', 'as_collapsed_label', 'Collapsed with labels';
 
-    $_[0]->{'_gene_renderers'} = \@gene_renderers;
+    $self->{'_gene_renderers'} = \@gene_renderers;
   }
 
-  return $_[0]->{'_gene_renderers'};
+  return $self->{'_gene_renderers'};
 }
 
 1;
