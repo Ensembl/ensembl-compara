@@ -106,6 +106,7 @@ sub get_data {
 
 
       push @$features_list, $feature;
+      $self->{'legend'}{'variation_legend'}{$snp->{'vf'}->display_consequence} ||= $colour;
     }
 
     return [{'features' => $features_list}];
@@ -113,11 +114,6 @@ sub get_data {
 }
 
 sub colour_key { return lc $_[1]->display_consequence; }
-
-sub my_label { 
-  my $self = shift;  
-  return $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
-}
 
 
 ############ OLD CODE ##############
