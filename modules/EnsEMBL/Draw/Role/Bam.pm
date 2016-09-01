@@ -99,7 +99,7 @@ sub _render_coverage {
   my $consensus;
   if ($pix_per_bp > 1) {
     $consensus = $self->consensus_features;
-    $self->{'my_config'}->set('label_overlay', 1);
+    $self->{'my_config'}->set('overlay_label', 1);
     $self->{'my_config'}->set('hide_subtitle', 1);
   }
   elsif ($pix_per_bp < 1) {
