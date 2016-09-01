@@ -37,9 +37,9 @@ use EnsEMBL::Web::Exceptions;
 use parent qw(EnsEMBL::Web::Document::Image);
 
 sub new {
-  my ($class, $hub, $component, $image_configs) = @_;
+  my ($class, $hub, $component, $image_configs, $args) = @_;
 
-  my $args = {
+  $args = {
     image_configs      => $image_configs || [],
     drawable_container => undef,
     centred            => 0,
@@ -53,6 +53,7 @@ sub new {
     button_name        => undef,
     button_id          => undef,
     format             => 'png',
+    %{$args || {}}
   };
 
   if ($image_configs) {
