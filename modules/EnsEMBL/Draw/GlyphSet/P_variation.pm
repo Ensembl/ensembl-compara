@@ -20,11 +20,97 @@ limitations under the License.
 package EnsEMBL::Draw::GlyphSet::P_variation;
 
 ### Draws sequence variants on Transcript/ProteinSummary
-### as coloured squares
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet);
+use base qw(EnsEMBL::Draw::GlyphSet::variation);
+
+sub render_labels {
+  my $self = shift;
+
+  #if ($self->{'container'}->length <= 1e4) {
+    $self->{'my_config'}->set('show_labels', 1);
+    $self->{'my_config'}->set('bumped', 'labels_alongside');
+  #}
+  return $self->_render;
+}
+
+
+sub get_data {
+  my $self         = shift;
+  my $max_length   = $self->my_config('threshold') || 1000;
+  my $slice_length = $self->{'container'}->length;
+
+  my $hub = $self->{'config'}{'hub'};
+
+  if ($slice_length > $max_length * 1010) {
+    $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
+    return [];
+  } else {
+    my $snps       = $self->cache('image_snps');
+    return [] unless $snps;
+  
+    my $is_somatic = $self->{'my_config'}->id =~ /somatic/ ? 1 : 0;
+
+    my $features_list = [];
+    foreach my $snp (@$snps) {
+      my $vf = $snp->{'vf'}; 
+      next if $vf->is_somatic != $is_somatic;
+    
+      my $colour = $self->get_colour($vf);
+      my $feature_type;
+
+      my $url_params = {
+                        type   => 'Variation',
+                        action => 'VariationProtein',
+                        v      => $snp->{'snp_id'},
+                        vf     => $snp->{'vdbid'},
+                        };
+
+      my $x   = $snp->{'position'};
+
+      if ($snp->{'indel'}) {
+        my $type    = ucfirst $snp->{'indel'};
+        my $end     = $snp->{'indel'} eq 'insert' ? 1 : ($snp->{'length'} - 1);
+        my $pos     = $x . ($end ? '-' . ($x + $end) : '');
+        $url_params = {
+                        vtype  => $type,
+                        pos    => $pos,
+                        len    => $snp->{'length'},
+                        indel  => $snp->{'allele'},
+                        %$url_params
+                      };
+        $feature_type = 'insertion' if $snp->{'indel'} eq 'insert';
+      }
+      else {
+        $url_params = {
+                        res    => $x,
+                        cod    => $snp->{'ambigcode'} 
+                                  ? join('', map { $_ == $snp->{'codon_var_pos'} 
+                                      ? "[$snp->{'ambigcode'}]" 
+                                      : $snp->{'codon_seq'}->[$_] } 0..2) 
+                                  : '',
+                        ar     => $snp->{'pep_snp'},
+                        al     => $snp->{'allele'},
+                        %$url_params
+                      };
+      }
+
+      my $feature = {
+                      start   => $snp->{'position'},
+                      end     => $snp->{'position'} + $snp->{'length'},
+                      type    => $feature_type,
+                      colour  => $colour,
+                      href    => $self->_url($url_params),
+                    };
+
+
+      push @$features_list, $feature;
+    }
+
+    return [{'features' => $features_list}];
+  }
+}
 
 sub colour_key { return lc $_[1]->display_consequence; }
 
@@ -33,6 +119,10 @@ sub my_label {
   return $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
 }
 
+
+############ OLD CODE ##############
+
+=pod
 sub _init {
   my $self = shift;
   
@@ -159,5 +249,6 @@ sub render_text {
   
   return $export;
 }
+=cut
 
 1;
