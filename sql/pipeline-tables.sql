@@ -279,7 +279,9 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   right1 INT,
   right2 INT,
 
+  PRIMARY KEY (homology_id, gene_member_id),
   KEY method_link_species_set_id (method_link_species_set_id)
+  
             
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
