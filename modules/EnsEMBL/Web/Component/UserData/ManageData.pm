@@ -323,7 +323,7 @@ sub group_shared_data {
   my $self    = shift;
   my $hub     = $self->hub;
   my $user    = $hub->user        or return '';
-  my @groups  = $user->get_groups or return '';
+  my @groups  = @{$user->groups}  or return '';
 
   my @columns = (
     { key => 'type',    title => 'Type',         width => '10%', align => 'left'                  },
@@ -338,7 +338,7 @@ sub group_shared_data {
   foreach my $group (@groups) {
     my @rows;
 
-    foreach (grep $_, $user->get_group_records($group, 'uploads'), $user->get_group_records($group, 'urls')) {
+    foreach (grep $_, $group->records('uploads'), $group->records('urls')) {
       push @rows, {
         %{$self->table_row($_)},
         share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
