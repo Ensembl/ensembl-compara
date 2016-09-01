@@ -38,12 +38,12 @@ sub render_normal {
   my $self = shift;
   $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('depth', 20);
-  return $self->_render_normal;
+  return $self->_render;
 }
 
 sub render_compact {
   my $self = shift;
-  return $self->_render_normal;
+  return $self->_render;
 }
 
 sub render_labels {
@@ -51,16 +51,15 @@ sub render_labels {
 
   if ($self->{'container'}->length <= 1e4) {
     $self->{'my_config'}->set('show_labels', 1);
-    $self->{'my_config'}->set('label_overlay', 0);
     $self->{'my_config'}->set('bumped', 'labels_alongside');
   }
-  return $self->_render_normal;
+  return $self->_render;
 }
 
 sub render_nolabels {
   my $self = shift;
   $self->{'my_config'}->set('bumped', 1);
-  return $self->_render_normal;
+  return $self->_render;
 }
 
 sub _set_depth {
@@ -68,8 +67,9 @@ sub _set_depth {
 
 }
 
-sub _render_normal {
+sub _render {
   my $self = shift;
+  $self->{'my_config'}->set('show_overlay', 1);
 
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};
@@ -119,7 +119,6 @@ sub get_data {
         $colour_lookup->{$key} ||= $self->get_colours($_);
         my $colour = $self->{'legend'}{'variation_legend'}{$key} ||= $colour_lookup->{$key}{'feature'};
         $_->{'colour'}        = $colour;
-        $_->{'label_colour'}  = 'white';
         $_->{'colour_lookup'} = $colour_lookup->{$key};
       }
       return [{'features' => $features_list}];
