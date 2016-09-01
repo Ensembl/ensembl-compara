@@ -95,7 +95,7 @@ sub precache {
 }
 
 sub colour_key    { return lc $_[1]->display_consequence; }
-sub overlay_label { my $label = $_[1]->ambig_code; return $label unless $label and $label eq '-'; }
+sub text_overlay  { my $text = $_[1]->ambig_code; return $text unless $text and $text eq '-'; }
 
 sub href {
   my ($self,$f,$args) = @_;
@@ -150,8 +150,8 @@ sub _plainify {
     end => $f->end,
     colour_key => $self->colour_key($f),
     type => $self->type($f,$args),
-    overlay_label => $self->overlay_label($f),
     label => $f->variation_name,
+    text_overlay => $self->text_overlay($f),
     href => $self->href($f,$args),
     title => $self->title($f,$args),
     dbID => $f->dbID, # used in ZMenu, yuk!
