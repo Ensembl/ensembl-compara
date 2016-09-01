@@ -558,6 +558,7 @@ sub bam_adaptor {
   return $self->{_cache}->{_bam_adaptor} if $self->{_cache}->{_bam_adaptor};
 
   my $url = $self->my_config('url');
+  my $check = {};
 
   if ($url) { ## remote bam file
     if ($url =~ /\#\#\#CHR\#\#\#/) {
@@ -577,11 +578,11 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
+      $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
 
-  my $check = file_exists($url, {'nice' => 1});
   if ($check->{'error'}) {
     $self->{'file_error'} = $check->{'error'}[0];
   }
