@@ -581,7 +581,7 @@ sub init_label {
   $self->{'hover_label_class'} = $class;
 
   if ($hover) {
-    my $fav       = $config->get_favourite_tracks->{$track};
+    my $fav       = $config->is_track_favourite($track);
     my @renderers = grep !/default/i, @{$node->get('renderers') || []};
     my $subset    = $node->get('subset');
     my @r;
@@ -604,7 +604,7 @@ sub init_label {
       desc      => $desc,
       class     => "$class $track _track_$track",
       highlight => $track,
-      component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
+      component => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off",
