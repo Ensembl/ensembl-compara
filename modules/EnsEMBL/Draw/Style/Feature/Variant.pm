@@ -37,7 +37,6 @@ use parent qw(EnsEMBL::Draw::Style::Feature);
 sub draw_feature {
 ### Draw a block with optional tags
   my ($self, $feature, $position) = @_;
-  #warn ">>> DRAWING VARIANT OF TYPE ".$feature->{'type'};
   return unless $feature->{'colour'};
 
   if ($feature->{'type'}) {
