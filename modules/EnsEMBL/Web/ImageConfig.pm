@@ -3565,7 +3565,7 @@ sub add_somatic_mutations {
   my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
   my %options = (
     db         => $key,
-    glyphset   => '_variation',
+    glyphset   => 'variation',
     strand     => 'r',
     depth      => 0.5,
     bump_width => 0,
