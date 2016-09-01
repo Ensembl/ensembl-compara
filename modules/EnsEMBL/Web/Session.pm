@@ -85,4 +85,11 @@ sub to_boolean {
   return !!$_[0]->{'_session_id'};
 }
 
+
+use EnsEMBL::Web::Attributes;
+sub get_data :Deprecated('Use get_record_data') {
+  my $self = shift;
+  return $self->get_record_data({@_});
+}
+
 1;
