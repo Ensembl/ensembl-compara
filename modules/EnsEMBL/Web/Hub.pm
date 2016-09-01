@@ -43,7 +43,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(WebException);
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::Session;
@@ -69,6 +69,8 @@ sub viewconfig  :Accessor; # Store viewconfig for the current component being re
 
 sub new {
   my ($class, $controller) = @_;
+
+  throw WebException('Controller object required to initialise Hub') unless UNIVERSAL::isa($controller, 'EnsEMBL::Web::Controller');
 
   my $args            = {};
   my $r               = $controller->r;
