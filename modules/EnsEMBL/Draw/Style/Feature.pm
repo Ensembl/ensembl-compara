@@ -97,7 +97,8 @@ sub create_glyphs {
 
       my $text_info   = $self->get_text_info($feature->{'label'});
       my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
-      my $overlay     = $track_config->get('label_overlay');
+      my $overlay     = $track_config->get('overlay_label');
+      my $alongside   = $track_config->get('bumped') eq 'labels_alongside';
 
       ## Default colours, if none set in feature
       ## Note that a feature must have either a border colour or a fill colour,
@@ -112,8 +113,9 @@ sub create_glyphs {
       $feature->{'_bend'} = $feature->{'end'};
       if ($show_label && !$overlay) {
         my $lwidth_bp = ($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'};
-        $feature->{'_bend'} = max($feature->{'_bend'},$feature->{'_bstart'}+$lwidth_bp);
-        $label_height = max($label_height,$text_info->{'height'});
+        $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
+                                         : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
+        $label_height = max($label_height, $text_info->{'height'});
       }
     }
     EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
@@ -168,40 +170,23 @@ sub create_glyphs {
       my $approx_height = $feature_height + $extra;
       push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
     
-      ## Optional label
-      my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
-      my $overlay     = $track_config->get('label_overlay');
-      my $font_size   = $self->{'font_size'};
-      my $text_width  = $text_info->{'width'};
-      my $text_height = $text_info->{'height'};
+      ## Optional label(s)
+      my $font_size     = $self->{'font_size'};
+      my $text_width    = $text_info->{'width'};
+      my $text_height   = $text_info->{'height'};
 
-      ## Only overlay labels above a certain feature size
-      if (($show_label && $overlay) || $bumped eq 'labels_alongside') {
-        ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
-        my $bp_textwidth = $position->{'width'} / $self->{'pix_per_bp'};
-        my $tmp_textwidth = $bp_textwidth;
-
-        if (($bp_textwidth >= $position->{'width'} && length $feature->{'label'} == 1) || $bumped eq 'labels_alongside') {
-          $font_size       *= 0.9;
-          my $tmp_text_info = $self->get_text_info($feature->{'label'});
-          $text_width       = $tmp_text_info->{'width'};
-          $text_height      = $tmp_text_info->{'height'};
-          $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
-        }
-
-        $show_label = 0 unless ($tmp_textwidth < $position->{'width'} || $bumped eq 'labels_alongside');
-      }
-
-      ## OK, we definitely want a label!
-      if ($show_label) {
+      ## Regular labels (outside feature)
+      if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
+        
         my $new_x = $feature->{'start'};
         $new_x = 1 if $new_x < 1;
-        if ($overlay) {
+        my $new_y;
+
+        if ($bumped eq 'labels_alongside') {
+          warn ">>> LABEL ALONGSIDE";
+          $font_size       *= 0.9;
+          $new_x = $feature->{'end'} + 1 + (4 / $self->{'pix_per_bp'});
           $new_y = $position->{'y'} + $approx_height - $text_height;
-        }
-        elsif ($bumped eq 'labels_alongside') {
-          $new_y = $position->{'y'} + $approx_height - $text_height;
-          $new_x = $feature->{'end'} + 4 / $self->{'pix_per_bp'};
         }
         else {
           $new_y = $position->{'y'} + $approx_height;
@@ -221,6 +206,43 @@ sub create_glyphs {
                     };
         $self->add_label($feature, $position);
       }
+
+=pod
+      ## Overlaid labels (on top of feature)
+      ## Note that we can have these as well as regular labels, e.g. on variation tracks
+      if (($track_config->get('overlay_label') && $feature->{'label'}) ## Overlay the standard label
+          || ($track_config->get('show_overlay') && $feature->{'text_overlay'}) ## Separate text on feature
+        ) {
+       
+        ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
+        my $bp_textwidth = $position->{'width'} / $self->{'pix_per_bp'};
+        my $tmp_textwidth = $bp_textwidth;
+
+        if ($bp_textwidth >= $position->{'width'} && length $feature->{'label'} == 1) {
+          $font_size       *= 0.9;
+          my $tmp_text_info = $self->get_text_info($feature->{'label'});
+          $text_width       = $tmp_text_info->{'width'};
+          $text_height      = $tmp_text_info->{'height'};
+          $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
+        }
+
+        if ($position->{'width'} > $tmp_textwidth) { ## OK, so there's space for the overlay
+          my $new_x = $feature->{'start'};
+          $new_x = 1 if $new_x < 1;
+          my $new_y = $position->{'y'} + $approx_height - $text_height;
+          $position = {
+                      'x'           => $new_x,
+                      'y'           => $new_y,
+                      'height'      => $text_info->{'height'},
+                      'width'       => $position->{'width'},
+                      'text_width'  => $text_width, 
+                      'image_width' => $slice_width,
+                      'font_size'   => $font_size,
+                    };
+          $self->add_label($feature, $position, 'overlay');
+        }
+      }
+=cut
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -234,6 +256,7 @@ sub create_glyphs {
     $track_config->set('real_feature_height', $subtrack_height);
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
   }
+
   $self->draw_hidden_bgd($total_height);
   my $track_height = $track_config->get('total_height') || 0;
   $track_config->set('total_height', $track_height + $total_height);
@@ -298,21 +321,29 @@ sub add_label {
 ### Create a text label
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the label's size and position
-  my ($self, $feature, $position) = @_;
-  my $start = $feature->{'start'};  
+  my ($self, $feature, $position, $type) = @_;
 
   ## Only show labels if they're shorter than the visible portion of the feature
+  my $start = $feature->{'start'};  
   if ($start < 0) {
     my $feature_visible = $feature->{'end'} * $self->{'pix_per_bp'};
     return unless $feature_visible > $position->{'width'};
   }
 
-  my $colour = $feature->{'label_colour'} || $feature->{'colour'};
-  if ($colour) {
-    $colour = $self->make_readable($colour);
+  my ($text, $colour);
+  if ($type && $type eq 'overlay') {
+    $text   = $feature->{'text_overlay'} || $feature->{'label'};
+    $colour = $self->make_contrasting($feature->{'colour'});
   }
   else {
-    $colour = 'black';
+    $text   = $feature->{'label'};
+    $colour = $feature->{'label_colour'} || $feature->{'colour'};
+    if ($colour) {
+      $colour = $self->make_readable($colour);
+    }
+    else {
+      $colour = 'black';
+    }
   }
 
   my $halign = $self->track_config->get('centre_labels') ? 'center' : 'left';
@@ -323,9 +354,9 @@ sub add_label {
                 height    => $position->{'height'},
                 width     => $position->{'width'},
                 textwidth => $position->{'text_width'},
-                text      => $feature->{'label'},
-                font      => $self->{'font_name'},
+                text      => $text,
                 colour    => $colour,
+                font      => $self->{'font_name'},
                 ptsize    => $position->{'font_size'} || $self->{'font_size'},
                 halign    => $halign,
                 valign    => 'center',
