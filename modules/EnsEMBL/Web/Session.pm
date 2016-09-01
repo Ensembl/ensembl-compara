@@ -191,7 +191,10 @@ sub get_data {
   my @entries = EnsEMBL::Web::Data::Session->get_config(session_id => $session_id, %args);
   
   $self->{'data'}{$args{'type'}} ||= {};
-  $self->{'data'}{$args{'type'}}{$_->code} = { type => $args{'type'}, code => $_->code, %{$_->data||{}} } for @entries;
+  foreach (@entries) {
+    next unless $_->data;
+    $self->{'data'}{$args{'type'}}{$_->code} = { type => $args{'type'}, code => $_->code, %{$_->data} };
+  }
 
   return $self->get_cached_data(%args);
 }
