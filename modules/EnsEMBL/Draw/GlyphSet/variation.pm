@@ -96,7 +96,7 @@ sub get_data {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    my $features_list = $hub->get_query('GlyphSet::Variant')->go($self,{
+    my $features_list = $hub->get_query('GlyphSet::Variation')->go($self,{
       species => $self->{'config'}{'species'},
       slice => $self->{'container'},
       id => $self->{'my_config'}->id,
