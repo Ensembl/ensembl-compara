@@ -132,20 +132,22 @@ sub create_option_node {
   ## @param Default display option (has to be one among the keys 'renderers')
   ## @param Hashref of map of renderer values and actual values
   ## @param Renderers for the option (hash in an arrayref syntax to maintain order) - they decide what icons to be displayed for the option
-  my ($self, $option_key, $caption, $display, $values, $renderers) = @_;
+  ## @param Data hash (optional)
+  my ($self, $option_key, $caption, $display, $values, $renderers, $data) = @_;
 
+  $data       ||= {};
   $values     ||= { 'off' => 0,     'normal'  => 1    };
   $renderers  ||= [ 'off' => 'Off', 'normal'  => 'On' ];
   $display    ||= $renderers->[2];
 
-  return $self->tree->create_node($option_key, {
-    'node_type' => 'option',
-    'caption'   => $caption,
-    'name'      => $caption,
-    'values'    => $values,
-    'renderers' => $renderers,
-    'display'   => $display
-  });
+  $data->{'node_type'} = 'option';
+  $data->{'caption'}   = $caption;
+  $data->{'name'}      = $caption;
+  $data->{'values'}    = $values;
+  $data->{'renderers'} = $renderers;
+  $data->{'display'}   = $display;
+
+  return $self->tree->create_node($option_key, $data);
 }
 
 sub add_option {
