@@ -30,6 +30,7 @@ the glyphset.
 
 =cut
 
+use POSIX qw(floor);
 use List::Util qw(min);
 
 use parent qw(EnsEMBL::Draw::Style::Feature);
@@ -59,13 +60,23 @@ sub draw_insertion {
     $composite->{$k} = $feature->{$k} if exists $feature->{$k};
   }
 
+  ## Scale the insertion so that it doesn't disappear when zoomed in!
+  my $scale = 1;
+  if ($self->{'pix_per_bp'} > 1) {
+    $scale = floor($self->{'pix_per_bp'} / 5);
+    ## Limit scaling to something sensible
+    $scale = 1 if $scale < 1;
+    $scale = 5 if $scale > 5;
+  }
+
   ## Draw a narrow line to mark the insertion point
   my $x = $feature->{'start'};
   $x    = 1 if $x < 1;
+  my $w = ($position->{'width'} / (2 * $self->{'pix_per_bp'})) * $scale;
   my $params = {
-                  x         => $x - 1,
+                  x         => $x - 1 - ($w / 2),
                   y         => $position->{'y'},
-                  width     => $position->{'width'} / (2 * $self->{'pix_per_bp'}),
+                  width     => $w,
                   height    => $position->{'height'},
                   colour    => $feature->{'colour'},
                   title     => $feature->{'title'},
@@ -77,7 +88,7 @@ sub draw_insertion {
   $composite->push($self->Rect({
                                   x         => $x - 1 - $box_width/2, 
                                   y         => $position->{'y'},
-                                  width     => $box_width,
+                                  width     => $box_width * $scale,
                                   height    => $position->{'height'} + 2,
                                 }));
 
@@ -85,13 +96,14 @@ sub draw_insertion {
   ## Note that we can't add the triangle to the composite, for Reasons
   my $y = $position->{'y'} + $position->{'height'};
   $params = {
-              width         => 4 / $self->{'pix_per_bp'},
-              height        => 3,
+              width         => (4 / $self->{'pix_per_bp'}) * $scale,
+              height        => 3 * $scale,
               direction     => 'up',
               mid_point     => [ $x - 1, $y ],
               colour        => $feature->{'colour'},
               absolutey     => 1,
               no_rectangle  => 1,
+              href          => $composite->{'href'},
              };
   my $triangle = $self->Triangle($params);
 
