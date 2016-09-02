@@ -98,7 +98,7 @@ sub get_data {
 
       my $feature = {
                       start         => $snp->{'position'},
-                      end           => $snp->{'position'} + $snp->{'length'},
+                      end           => $snp->{'position'} + $snp->{'length'} - 1,
                       type          => $feature_type,
                       colour        => $colour,
                       label         => $vf->variation_name,
