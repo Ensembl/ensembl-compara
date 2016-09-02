@@ -225,6 +225,7 @@ foreach my $index (@indexes) {
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
+    next unless ($species =~ /^[M-N]/);
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -260,7 +261,13 @@ foreach my $index (@indexes) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
-      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
+      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');;
+      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($SD->get_config($species,'STRAIN_COLLECTION'));
+      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($SD->get_config($species,'SPECIES_SCIENTIFIC_NAME'));
+      $conf->{'strain_details'}{'strain_name'}        = ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) . ' ' . $SD->get_config($species,'SPECIES_STRAIN');
+      if (ucfirst($SD->get_config($species,'SPECIES_COMMON_NAME')) eq ucfirst($conf->{'strain_details'}{'parent_latin_name'})) {
+        $conf->{'strain_details'}{'reference_strain'} = 1;
+      }
     }
 
     if ($create_elevate) {
@@ -3409,15 +3416,34 @@ sub footer {
 }
 
 sub common_fields {
-  my ($species,$feature_type,$db) = @_;
-  my $species_name = $species eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my ($species_latin_name,$feature_type,$db) = @_;
+  my $species_common_name = $species_latin_name eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my $parent_common = $conf->{'strain_details'}{'parent_common_name'};
+  my ($parent_latin, $strain);
+
+  #for the front end we need the species details to be that of the parent, and the strain to be that of the species 
+  if ($parent_common) {
+    $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
+    $strain = $conf->{'strain_details'}{'strain_name'};
+    $species_latin_name = $parent_latin;
+    $species_common_name = $parent_common;
+  }
+
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-  if ($species) {
+  if ($species_latin_name) {
     $xml .= qq(
-  <field name="species">$species_name</field>
-  <field name="species_name">$species</field>);
+  <field name="species">$species_common_name</field>
+  <field name="species_name">$species_latin_name</field>);
+  }
+  if ($conf->{'strain_details'}{'reference_strain'}) {
+    $xml .= qq(
+  <field name="reference_strain">1</field>);
+  }
+  if ($strain) {
+    $xml .= qq(
+  <field name="strain">$strain</field>);
   }
   if ($db) {
     $xml .= qq(
