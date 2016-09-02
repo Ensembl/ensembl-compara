@@ -97,11 +97,13 @@ sub get_data {
       }
 
       my $feature = {
-                      start   => $snp->{'position'},
-                      end     => $snp->{'position'} + $snp->{'length'},
-                      type    => $feature_type,
-                      colour  => $colour,
-                      href    => $self->_url($url_params),
+                      start         => $snp->{'position'},
+                      end           => $snp->{'position'} + $snp->{'length'},
+                      type          => $feature_type,
+                      colour        => $colour,
+                      label         => $vf->variation_name,
+                      text_overlay  => $snp->{'ambigcode'},
+                      href          => $self->_url($url_params),
                     };
 
 
