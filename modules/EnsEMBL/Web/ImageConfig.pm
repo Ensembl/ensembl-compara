@@ -1420,10 +1420,11 @@ sub _add_file_format_track {
     $args{'options'}{'external'} = undef;
   } else {
     if ($args{'source'}{'source_type'} =~ /^session|user$/i) {       
+      my $format = $args{'format'} eq 'BAM' ? uc $args{'options'}{'sub_type'} : $args{'format'};
       $desc = sprintf(
         'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
         $article,
-        $args{'format'},
+        $format,
         $args{'description'},
         encode_entities($args{'source'}{'source_type'}),
         encode_entities($args{'source'}{'source_url'}),
