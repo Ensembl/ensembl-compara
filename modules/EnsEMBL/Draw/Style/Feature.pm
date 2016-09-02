@@ -51,6 +51,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use POSIX qw(ceil);
 use List::Util qw(max);
 
 use parent qw(EnsEMBL::Draw::Style);
@@ -112,7 +113,8 @@ sub create_glyphs {
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
       if ($show_label && !$overlay) {
-        my $lwidth_bp = ($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'};
+        ## Round up, since we're working in base-pairs - otherwise we may still overlap the next feature
+        my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
                                          : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
         $label_height = max($label_height, $text_info->{'height'});

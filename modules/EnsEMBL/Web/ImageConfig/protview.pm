@@ -55,10 +55,6 @@ sub init {
     { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
   );
   
-  $self->modify_configs(
-    [ 'variation_legend' ],
-    { glyphset => 'P_variation_legend' }
-  );
 }
 
 sub initialize {

@@ -62,11 +62,6 @@ sub render_nolabels {
   return $self->_render;
 }
 
-sub _set_depth {
-  my $self = shift;
-
-}
-
 sub _render {
   my $self = shift;
   $self->{'my_config'}->set('show_overlay', 1);
@@ -120,6 +115,7 @@ sub get_data {
         my $colour = $self->{'legend'}{'variation_legend'}{$key} ||= $colour_lookup->{$key}{'feature'};
         $_->{'colour'}        = $colour;
         $_->{'colour_lookup'} = $colour_lookup->{$key};
+        $self->{'legend'}{'variation_legend'}{$key} ||= $colour;
       }
       return [{'features' => $features_list}];
     }
