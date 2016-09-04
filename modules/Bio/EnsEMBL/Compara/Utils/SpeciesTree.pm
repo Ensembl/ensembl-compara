@@ -82,22 +82,17 @@ sub create_species_tree {
 
         my $gdb_list = $species_set ? $species_set->genome_dbs() : $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
-        # Identify the genome components that have their principal GenomeDB in the list
-        my %principal_gdbs = map {$_->dbID => 1} grep {$_->taxon_id and $_->is_polyploid} @$gdb_list;
-        my %component_gdbs = map {$_->dbID => 1} grep {$_->taxon_id and $_->genome_component and $principal_gdbs{$_->principal_genome_db->dbID}} @$gdb_list;
+        # Process the polyploid genomes first so that:
+        #  1) the default name is Triticum aestivum
+        #  2) all the components go to %gdbs_by_taxon_id and are added later with the component name added
+        my @sorted_gdbs = sort {$b->is_polyploid <=> $a->is_polyploid} @$gdb_list;
 
-        foreach my $gdb (@$gdb_list) {
-            if ($component_gdbs{$gdb->dbID}) {
-                # This is the component of a polyploid genome that is
-                # in the list. Expand it later
-                push @{$gdbs_by_taxon_id{$gdb->taxon_id}}, $gdb;
-                warn $gdb->dbID, " is the component ", $gdb->genome_component;
-                next;
-            }
+        foreach my $gdb (@sorted_gdbs) {
             my $taxon_id = $gdb->taxon_id;
             next unless $taxon_id;
             if ($taxa_for_tree{$taxon_id}) {
                 my $ogdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($taxa_for_tree{$taxon_id}->{_gdb_id_for_cast});
+                push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
                 warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
