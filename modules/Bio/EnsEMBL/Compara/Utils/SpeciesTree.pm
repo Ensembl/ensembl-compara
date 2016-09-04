@@ -189,6 +189,7 @@ sub create_species_tree {
         $new_node->node_id($taxon_id);
         $current_leaf->parent->add_child($new_node);
         $new_node->add_child($current_leaf);
+        $new_node->{'_genome_db_id'} = undef;
         foreach my $genome_db (@{$gdbs_by_taxon_id{$taxon_id}}) {
             my $new_leaf = $current_leaf->copy();
             $new_leaf->_complete_cast_node($current_leaf);
