@@ -161,4 +161,25 @@ sub name {
     return $self->node_name(@_);
 }
 
+sub string_node {
+    my $self = shift;
+
+    my $s = $self->right_index ? sprintf('(%s,%s)', $self->left_index, $self->right_index).' ' : '';
+    $s .= $self->toString()."\n";
+
+    return $s;
+}
+
+sub toString {
+    my $self = shift;
+
+    my @elts;
+    push @elts, ($self->name ||  '(unnamed)');
+    push @elts, sprintf('taxon_id=%s', $self->taxon_id) if $self->taxon_id;
+    push @elts, sprintf('genome_db_id=%s', $self->genome_db_id) if $self->genome_db_id;
+
+    return join(' ', @elts);
+}
+
+
 1;
