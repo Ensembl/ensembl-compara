@@ -74,7 +74,7 @@ sub fetch_input {
 	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
     }
 
-    $self->param('from_dbc', $self->param('from_dbc'));
+    $self->param('from_dbc', $self->param('from_comparaDBA')->dbc);
 }
 
 =head2 run

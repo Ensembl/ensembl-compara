@@ -33,38 +33,36 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'rel_suffix'	=> 80,
-	'prev_release'  => 78,
-
-	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { },
-	#'pairwise_exception_location' => { 765 => 'mysql://ensro@compara5/mp14_hsap_rnor_lastz_80', 
-	#								   766 => 'mysql://ensro@compara5/mp14_mmus_rnor_lastz_80',},
-        'host' => 'compara4',
-        'pipeline_db' => {
-            -host   => $self->o('host'),
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
-	    -driver => 'mysql',
-        },
+	'rel_suffix'	=> 86,
+	'ensembl_release' => 86, 
+	'prev_release'  => 85,
+    'host' => 'compara4',
+    'pipeline_db' => {
+        -host   => $self->o('host'),
+        -port   => 3306,
+        -user   => 'ensadmin',
+        -pass   => $self->o('password'),
+        -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
+    -driver => 'mysql',
+    },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-		#	-host   => 'ens-livemirror',
-            -host   => 'compara4',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-		#	-dbname => 'ensembl_compara_76',
-		#-dbname => 'ensembl_compara_' . $self->o('prev_release'),
-	    -dbname => 'mp14_ensembl_compara_78',
-	    -driver => 'mysql',
-        },
+        -host   => 'compara5',
+        -port   => 3306,
+        -user   => 'ensro',
+        -pass   => '',
+		-dbname => 'wa2_ensembl_compara_85',
+		-driver => 'mysql',
+    },
+
+    #location of new pairwise mlss if not in the pairwise_default_location eg:
+	#'pairwise_exception_location' => { },
+	'pairwise_exception_location' => { 820 => 'mysql://ensro@compara3/cc21_hsap_mmul_mmur_lastz_86', 
+									   821 => 'mysql://ensro@compara3/cc21_hsap_mmul_mmur_lastz_86',},
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
+	'epo_db' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
 
 	master_db => { 
             -host   => 'compara1',
@@ -215,7 +213,7 @@ sub pipeline_analyses {
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('ce_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')',
-                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", ' . $self->o('ref_species') . ')'
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", "' . $self->o('ref_species') . '")'
                               ],
                              },
               -flow_into => {
@@ -259,7 +257,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-			'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
+			'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2')], #, $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '100Mb',
@@ -365,6 +363,7 @@ sub pipeline_analyses {
 				'program_version' => $self->o('gerp_version'),
 				'window_sizes' => $self->o('gerp_window_sizes'),
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+				'mlss_id' => $self->o('low_epo_mlss_id'),
 			       },
 		-hive_capacity   => 600,
 		-rc_name => '1.8Gb',

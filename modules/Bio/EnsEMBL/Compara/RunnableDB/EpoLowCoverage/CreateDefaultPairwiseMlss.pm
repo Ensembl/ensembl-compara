@@ -139,7 +139,15 @@ sub create_default_mlss {
 
     #Store in meta table
     $self->dataflow_output_id({'param_name' => 'pairwise_default_mlss',
-			       'param_value' => $default_mlss}, 2);
+			       'param_value' => $self->_stringify($default_mlss)}, 2);
+}
+
+sub _stringify {
+    my ($self, $array_ref) = @_;
+    my $str = '[';
+    $str .= join(',', @$array_ref);
+    $str .= ']';
+    return $str;
 }
 
 1;
