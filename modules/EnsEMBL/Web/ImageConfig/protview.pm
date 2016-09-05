@@ -53,11 +53,6 @@ sub init_cacheable {
     [ 'variation_feature_variation', 'somatic_mutation_COSMIC' ],
     { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
   );
-
-  $self->modify_configs(
-    [ 'variation_legend' ],
-    { glyphset => 'P_variation_legend' }
-  );
 }
 
 sub init_non_cacheable {
