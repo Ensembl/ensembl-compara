@@ -142,6 +142,7 @@ sub _init {
     
     foreach my $tag (@tags) {
       if ($tag->{'style'} =~ /^(left-snp|delta|box)$/) {
+        ## Migrated to new drawing code - can probably be removed  
         $tag_start = $start - 1 - 4 / $pix_per_bp;
         $tag_end   = $start - 1 + 4 / $pix_per_bp;
       } elsif ($tag->{'style'} =~ /^(underline|fg_ends|label)$/) {
