@@ -69,8 +69,8 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 sub create_species_tree {
     my ($self, @args) = @_;
 
-    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes, $return_ncbi_tree) =
-        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES RETURN_NCBI_TREE)], @args);
+    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes, $allow_subtaxa, $return_ncbi_tree) =
+        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES ALLOW_SUBTAXA RETURN_NCBI_TREE)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     $taxon_adaptor->_id_cache->clear_cache();
@@ -120,8 +120,8 @@ sub create_species_tree {
     }
 
 
-    # build the tree
-    foreach my $taxon (values %taxa_for_tree) {
+    # build the tree taking the parents before the children
+    foreach my $taxon (sort {$a->left_index <=> $b->left_index} values %taxa_for_tree) {
         $taxon->no_autoload_children;
         if (not $root) {
             $root = $taxon->root;
@@ -132,10 +132,14 @@ sub create_species_tree {
         my $n2 = scalar(@{$root->get_all_leaves});
         if ($n1 != ($n2-1)) {
             my @anc = grep {$taxa_for_tree{$_->node_id}} @{$taxon->get_all_ancestors};
-            if (@anc) {
-                throw(sprintf('Cannot add %s because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name));
+            # @anc cannot be empty because we order the nodes by
+            # left_index, so we must have already processed a parent
+            if ($allow_subtaxa) {
+                $anc[0]->release_children;
+                push @{$gdbs_by_taxon_id{$anc[0]->dbID}}, $taxon->{'_gdb'};
+                warn sprintf('%s will be added later because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name);
             } else {
-                throw(sprintf('Cannot add %s because a descendant (%s) is already in the tree', $taxon->name, $taxon->get_all_leaves->[0]->name));
+                throw(sprintf('Cannot add %s because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name));
             }
         }
     }
@@ -203,6 +207,10 @@ sub create_species_tree {
             $new_leaf->node_id($taxon_id);
             $new_leaf->node_name(sprintf('%s (component %s)', $new_leaf->node_name, $genome_db->genome_component)) if $genome_db->genome_component;
             $new_node->add_child($new_leaf);
+            if ($genome_db->taxon_id != $taxon_id) {
+                $new_leaf->taxon_id($genome_db->taxon_id);
+                $new_leaf->node_name($genome_db->taxon->name);
+            }
         }
     }
 

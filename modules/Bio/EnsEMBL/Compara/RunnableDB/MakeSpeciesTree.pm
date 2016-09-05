@@ -132,7 +132,7 @@ sub fetch_input {
         my @tree_creation_args = ();
 
         foreach my $config_param
-                (qw(no_previous species_set extrataxon_sequenced multifurcation_deletes_node multifurcation_deletes_all_subnodes)) {
+                (qw(no_previous species_set extrataxon_sequenced multifurcation_deletes_node multifurcation_deletes_all_subnodes allow_subtaxa)) {
 
             if(defined(my $config_value = $self->param($config_param))) {
                 push @tree_creation_args, ("-$config_param", $config_value);
