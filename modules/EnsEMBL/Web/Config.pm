@@ -22,6 +22,7 @@ package EnsEMBL::Web::Config;
 
 use strict;
 use warnings;
+no warnings "uninitialized";
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Tree;
@@ -128,7 +129,7 @@ sub get_user_settings {
   ## @return User settings as a hashref
   my $self = shift;
 
-  return $self->{'_user_settings'} ||= $self->hub->session->get_record_data({'type' => $self->config_type, 'code' => $self->code});
+  return $self->{'_user_settings'} ||= $self->hub->session ? $self->hub->session->get_record_data({'type' => $self->config_type, 'code' => $self->code}) : {};
 }
 
 sub save_user_settings {

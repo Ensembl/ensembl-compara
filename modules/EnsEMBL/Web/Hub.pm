@@ -68,21 +68,34 @@ use base qw(EnsEMBL::Web::Root);
 sub viewconfig  :Accessor; # Store viewconfig for the current component being rendered (FIXME - this is done to that param method can return viewconfig param value - causes lots of problems)
 
 sub new {
-  my ($class, $controller) = @_;
+  my ($class, $controller, $test_args) = @_;
+  my $args = {};
+  my ($species, $species_defs, $cookies, $type, $action, $function, $script, $r);
 
-  throw WebException('Controller object required to initialise Hub') unless UNIVERSAL::isa($controller, 'EnsEMBL::Web::Controller');
+  if ($test_args) {
+    ## Arguments passed by a unit test
+    $species_defs = EnsEMBL::Web::SpeciesDefs->new;
+    $species      = $args->{'species'};
+    $type         = $args->{'type'};
+    $action       = $args->{'action'};
+    $function     = $args->{'function'}; 
+    $script       = $args->{'script'};
+    $cookies      = {};
+  }
+  else {
+    throw WebException('Controller object required to initialise Hub') unless UNIVERSAL::isa($controller, 'EnsEMBL::Web::Controller');
 
-  my $args            = {};
-  my $r               = $controller->r;
-  my $species_defs    = $controller->species_defs;
-  my $cookies         = EnsEMBL::Web::Cookie->new_from_header($r);
+    $r            = $controller->r;
+    $species_defs = $controller->species_defs;
+    $cookies      = EnsEMBL::Web::Cookie->new_from_header($r);
 
-  # TODO - get rid of %ENV usage
-  my $species   = $ENV{'ENSEMBL_SPECIES'}   = $controller->species;
-  my $type      = $ENV{'ENSEMBL_TYPE'}      = $controller->type;
-  my $action    = $ENV{'ENSEMBL_ACTION'}    = $controller->action;
-  my $function  = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
-  my $script    = $ENV{'ENSEMBL_SCRIPT'}    = [ split '::', ref($controller) ]->[-1];
+    # TODO - get rid of %ENV usage
+    $species   = $ENV{'ENSEMBL_SPECIES'}   = $controller->species;
+    $type      = $ENV{'ENSEMBL_TYPE'}      = $controller->type;
+    $action    = $ENV{'ENSEMBL_ACTION'}    = $controller->action;
+    $function  = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
+    $script    = $ENV{'ENSEMBL_SCRIPT'}    = [ split '::', ref($controller) ]->[-1];
+  }
 
   my $self = {
     _species       => $species,
@@ -113,18 +126,19 @@ sub new {
 
   bless $self, $class;
 
-  $CGI::POST_MAX    = $controller->upload_size_limit; # Set max upload size
   my $input         = CGI->new;
+  $self->{'_input'} = $input;
   my $factorytype   = $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/ ? 'MultipleLocation' : undef;
-     $factorytype ||= $input && $input->param('factorytype') || $type;
-
-  $self->{'_input'}       = $input;
+  $factorytype ||= $input && $input->param('factorytype') || $type;
   $self->{'_factorytype'} = $factorytype;
-  $self->{'_controller'}  = $controller;
-
   $self->query_store_setup;
-  $self->init_session;
   $self->set_core_params;
+
+  unless ($test_args) {
+    $CGI::POST_MAX          = $controller->upload_size_limit; # Set max upload size
+    $self->{'_controller'}  = $controller;
+    $self->init_session;
+  }
 
   return $self;
 }
