@@ -14,8 +14,7 @@ addons:
 
 before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
-
-install: true
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
 
 script: "./travisci/harness.sh"
 
