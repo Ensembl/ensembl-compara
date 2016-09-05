@@ -49,6 +49,8 @@ package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use LWP::Simple;
 use URI::Escape;
 
@@ -91,13 +93,14 @@ sub create_species_tree {
             my $taxon_id = $gdb->taxon_id;
             next unless $taxon_id;
             if ($taxa_for_tree{$taxon_id}) {
-                my $ogdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($taxa_for_tree{$taxon_id}->{_gdb_id_for_cast});
+                my $ogdb = $taxa_for_tree{$taxon_id}->{'_gdb'};
                 push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
                 warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-            $taxon->{_gdb_id_for_cast} = $gdb->dbID;
+            $taxon->{'_gdb'} = $gdb;
+            weaken($taxon->{'_gdb'});
             $taxa_for_tree{$taxon_id} = $taxon;
         }
     }

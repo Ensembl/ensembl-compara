@@ -57,7 +57,11 @@ use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 sub _complete_cast_node {
     my ($self, $orig) = @_;
-    $self->genome_db_id($orig->{_gdb_id_for_cast}) if exists $orig->{_gdb_id_for_cast};
+    if (exists $orig->{'_gdb'}) {
+        $self->{'_genome_db'} = $orig->{'_gdb'};
+        $self->genome_db_id($orig->{'_gdb'}->dbID);
+        weaken($self->{'_genome_db'});
+    }
     if ($orig->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
         $self->taxon($orig);
     } elsif ($orig->{'_taxon'}) {
