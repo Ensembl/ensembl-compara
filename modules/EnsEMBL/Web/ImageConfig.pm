@@ -23,6 +23,7 @@ package EnsEMBL::Web::ImageConfig;
 
 use strict;
 use warnings;
+no warnings "uninitialized";
 
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities decode_entities);
