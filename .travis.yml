@@ -13,6 +13,7 @@ addons:
     - unzip
 
 before_install:
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-compara.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
@@ -21,7 +22,7 @@ before_install:
 
 
 install:
-    - cpanm -v --installdeps --notest .
+- cpanm -v --installdeps --notest .
 
 script: "./travisci/harness.sh"
 
