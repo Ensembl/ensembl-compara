@@ -52,8 +52,6 @@ sub create_slice {
   $hub->species = $args->{'species'};
 
   my $db = $args->{'db'} || 'core';
-  my $adaptor = $hub->get_adaptor('get_CoordSystemAdaptor', $db);
-  return unless $adaptor;
 
   my $cs = Bio::EnsEMBL::CoordSystem->new(-NAME    => $args->{'cs_name'},
                                           -VERSION => $args->{'assembly'},
@@ -82,7 +80,7 @@ sub create_imageconfig {
   return unless ($slice && $hub);
   $args ||= {};
 
-  my $image_config = EnsEMBL::Web::ImageConfig->new($hub);
+  my $image_config = EnsEMBL::Web::ImageConfig->new($hub, $hub->species, $hub->type);
   return unless $image_config;
 
   ## Set up some sample values for our test image
