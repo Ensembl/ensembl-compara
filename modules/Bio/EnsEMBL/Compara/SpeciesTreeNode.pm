@@ -50,6 +50,8 @@ package Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 
@@ -141,10 +143,12 @@ sub genome_db_id {
 
 sub genome_db {
     my ($self) = @_;
+    return $self->{'_genome_db'} if $self->{'_genome_db'};
     my $genome_db_id = $self->genome_db_id;
     return undef unless (defined $genome_db_id);
-    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
-    return $genomeDBAdaptor->fetch_by_dbID($self->genome_db_id);
+    $self->{'_genome_db'} = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($self->genome_db_id);
+    weaken($self->{'_genome_db'});
+    return $self->{'_genome_db'};
 }
 
 sub node_name {
