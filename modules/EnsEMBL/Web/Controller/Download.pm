@@ -27,29 +27,16 @@ use EnsEMBL::Web::Hub;
 
 use parent qw(EnsEMBL::Web::Controller);
 
-sub new {
-  my $class     = shift;
-  my $r         = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args      = shift || {};
-  my $self      = bless {}, $class;
-
-  my $json;
-
-  my $hub = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
-
-  my $object = $self->new_object($hub->type, {}, {'_hub' => $hub});
+sub process {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $object  = $self->new_object($hub->type, {}, {'_hub' => $hub});
 
   if ($object && $object->can('handle_download')) {
     $object->handle_download($r);
   } else {
     print "Invalid download request\n";
   }
-
-  return $self;
 }
 
 1;
