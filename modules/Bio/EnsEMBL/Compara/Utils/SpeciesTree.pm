@@ -98,6 +98,9 @@ sub create_species_tree {
                 warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
+            # If we use $gdb->taxon here we'll alter it and further calls
+            # to $gdb->taxon will see the altered version. We take a fresh
+            # version instead
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
             $taxon->{'_gdb'} = $gdb;
             weaken($taxon->{'_gdb'});
