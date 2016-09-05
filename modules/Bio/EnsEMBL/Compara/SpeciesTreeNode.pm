@@ -141,7 +141,6 @@ sub genome_db_id {
 
 sub genome_db {
     my ($self) = @_;
-    return undef unless ($self->is_leaf);
     my $genome_db_id = $self->genome_db_id;
     return undef unless (defined $genome_db_id);
     my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
