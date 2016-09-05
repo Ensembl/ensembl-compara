@@ -75,9 +75,9 @@ sub create_species_tree {
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     $taxon_adaptor->_id_cache->clear_cache();
 
-    my $root;
-    my %taxa_for_tree = ();
-    my %gdbs_by_taxon_id = ();
+    my $root;                       # The root of the tree we're building
+    my %taxa_for_tree = ();         # taxon_id -> NCBITaxon mapping
+    my %gdbs_by_taxon_id = ();      # taxon_id -> [GenomeDB objects] with the extra GenomeDB to attach
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set) {
