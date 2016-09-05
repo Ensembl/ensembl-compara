@@ -37,7 +37,7 @@ sub _init {
   my $config                  = $self->{'config'}; 
   my $transcript              = $config->{'transcript'}->{'transcript'};
   my ($fontname, $fontsize)   = $self->get_font_details( 'innertext');
-  my $pix_per_bp              = $config->transform->{'scalex'};
+  my $pix_per_bp              = $config->transform_object->scalex;
   my @res                     = $self->get_text_width(0, 'M', '', font => $fontname, ptsize => $fontsize);
   my ($font_w_bp, $font_h_bp) = ($res[2] / $pix_per_bp, $res[3]);
   my $h                       = $res[3] + 4; 

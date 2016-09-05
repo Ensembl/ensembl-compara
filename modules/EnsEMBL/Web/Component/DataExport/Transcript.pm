@@ -39,8 +39,8 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
-  my $settings = $viewconfig->form_fields;
+  my $view_config  = $self->view_config;
+  my $settings = $view_config->form_fields;
 
   ## Configure sequence options - check if the transcript 
   ## has translations and/or UTRs
@@ -66,7 +66,7 @@ sub content {
   };
 
   ## Options per format
-  my $fields_by_format = $self->configure_fields($viewconfig);
+  my $fields_by_format = $self->configure_fields($view_config);
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
@@ -82,8 +82,8 @@ sub configure_fasta {
 }
 
 sub configure_fields {
-  my ($self, $viewconfig) = @_;
-  my @field_order = $viewconfig->field_order;
+  my ($self, $view_config) = @_;
+  my @field_order = $view_config->field_order;
 
   return {
           'RTF'   => [@field_order],

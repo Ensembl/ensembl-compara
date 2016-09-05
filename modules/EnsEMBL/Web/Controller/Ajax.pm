@@ -21,44 +21,28 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
-use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
-use EnsEMBL::Web::ViewConfig::Regulation::Page;
+use EnsEMBL::Web::ViewConfig::RegulationPage;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $self  = bless {
-    'hub' => EnsEMBL::Web::Hub->new({
-      apache_handle  => $r,
-      session_cookie => $args->{'session_cookie'},
-      user_cookie    => $args->{'user_cookie'},
-    })
-  }, $class;
+sub parse_path_segments {
+  my $self = shift;
 
-  $self->{'hub'}->qstore_open;
-  $self->process;
-  $self->{'hub'}->qstore_close;
-
-  return $self;
+  $self->{'function'} = sprintf 'ajax_%s', $self->path_segments->[0];
 }
 
 sub process {
   my $self  = shift;
-  my $hub   = $self->hub;
-  my $func  = 'ajax_'.$hub->action;
+  my $func  = $self->function;
 
-  $self->$func($hub) if $self->can($func);
+  $self->$func($self->hub) if $self->can($func);
 }
 
 sub ajax_autocomplete {
@@ -87,50 +71,38 @@ sub ajax_autocomplete {
 }
 
 sub ajax_track_order {
+  ## Adds a new state-change to image config's track order
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
-  my $species       = $image_config->species;
-  my $node          = $image_config->get_node('track_order');
-  my $track_order   = $node->get($species) || [];
-     $track_order   = [] unless ref $track_order eq 'ARRAY'; # ignore the old schema entry
   my $track         = $hub->param('track');
   my $prev_track    = $hub->param('prev');
-  my @order         = (grep($_->[0] ne $track, @$track_order), [ $track, $prev_track || '' ]); # remove existing entry for the same track and add a new one at the end
 
-  $node->set_user($species, \@order);
-  $image_config->altered('Track order');
-  $hub->session->store;
+  if ($image_config->update_track_order([$track, $prev_track])) {
+    $image_config->save_user_settings;
+    $hub->session->store_records;
+  }
 }
 
 sub ajax_order_reset {
+  ## Resets track order for the selected image
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
-  my $species       = $image_config->species;
-  my $node          = $image_config->get_node('track_order');
 
-  $node->set_user($species, undef);
-  $image_config->altered('Track order');
-  $hub->session->store;
+  if ($image_config->reset_user_settings('track_order')) {
+    $image_config->save_user_settings;
+    $hub->session->store_records;
+  }
 }
 
 sub ajax_config_reset {
+  ## Resets image config for the selected image
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
-  my $species       = $image_config->species;
-  my $node          = $image_config->tree;
 
-  for ($node, $node->nodes) {
-    my $user_data = $_->{'user_data'};
-
-    foreach (keys %$user_data) {
-      my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
-      $image_config->altered($text) if $user_data->{$_}{'display'};
-      delete $user_data->{$_}{'display'};
-      delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
-    }
+  if ($image_config->reset_user_settings) {
+    $image_config->save_user_settings;
+    $hub->session->store_records;
   }
-
-  $hub->session->store;
 }
 
 sub ajax_multi_species {
@@ -250,7 +222,7 @@ sub ajax_reg_renderer {
 
   my $renderer = $hub->input->url_param('renderer');
   my $state = $hub->param('state');
-  EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
+  EnsEMBL::Web::ViewConfig::RegulationPage->reg_renderer(
     $hub,'regulation_view',$renderer,$state);
 
   $hub->session->store;

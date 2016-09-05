@@ -34,7 +34,7 @@ sub init_canvas {
   $self->{'ttf_path'}   ||= '/usr/local/share/fonts/ttfonts/';
 
   $self->canvas($canvas);
-  my $bgcolor = $self->colour($config->bgcolor);
+  my $bgcolor = $self->colour($config->get_parameter('bgcolor'));
   $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_width, $self->{sf} * $im_height, $bgcolor );
 }
 

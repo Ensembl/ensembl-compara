@@ -42,10 +42,8 @@ sub features {
   }; 
   my $probe_feature_adaptor = $fg_db->get_ProbeFeatureAdaptor();
 
-  $self->timer_push( 'Preped'); 
   my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
   my $T = $probe_feature_adaptor->fetch_all_by_Slice_array_vendor( $slice, $array_name, $vendor_name );
-  $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
   return ( $self->my_config('array') => [$T] );
 }
 

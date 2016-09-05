@@ -105,7 +105,6 @@ sub new {
   my $self = bless({
     _start_time => undef,
     _last_time  => undef,
-    timer       => undef
   }, $class);
 
   my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
@@ -144,6 +143,8 @@ sub register_orm_databases {
 
   if (dynamic_require('ORM::EnsEMBL::Rose::DbConnection', 1)) { # ignore if ensembl-orm doesn't exist
 
+    $self->ENSEMBL_ORM_DATABASES->{'session'} = $self->session_db; # add session db to ORM
+
     while (my ($key, $value) = each %{$self->ENSEMBL_ORM_DATABASES}) {
 
       my $params = $value;
@@ -172,12 +173,11 @@ sub session_db {
   my $db   = $self->multidb->{'DATABASE_SESSION'};
 
   return {
-    'NAME'    => $db->{'NAME'},
-    'HOST'    => $db->{'HOST'},
-    'PORT'    => $db->{'PORT'},
-    'DRIVER'  => $db->{'DRIVER'}  || 'mysql',
-    'USER'    => $db->{'USER'}    || $self->DATABASE_WRITE_USER,
-    'PASS'    => $db->{'PASS'}    || $self->DATABASE_WRITE_PASS
+    'database'  => $db->{'NAME'},
+    'host'      => $db->{'HOST'},
+    'port'      => $db->{'PORT'},
+    'username'  => $db->{'USER'} || $self->DATABASE_WRITE_USER,
+    'password'  => $db->{'PASS'} || $self->DATABASE_WRITE_PASS
   };
 }
 
@@ -769,23 +769,6 @@ sub _munge_colours {
     }
   }
   return $out;
-}
-
-sub timer {
-  ### Provides easy-access to the ENSEMBL_WEB_REGISTRY's timer
-  my $self = shift;
-  
-  if (!$self->{'timer'}) {
-    $self->dynamic_use('EnsEMBL::Web::RegObj');
-    $self->{'timer'} = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->timer;
-  }
-  
-  return $self->{'timer'};
-}
-
-sub timer_push {
-  my $self = shift;
-  return $self->timer->push(@_);
 }
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }

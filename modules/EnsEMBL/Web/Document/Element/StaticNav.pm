@@ -40,8 +40,8 @@ sub content {
   (my $pathstring = $here) =~ s/^\///; ## Remove leading slash
   my @path        = split '/', $pathstring;
   my $img_url     = $self->img_url;
-  my $config      = $self->hub->session->get_data(type => 'nav', code => 'static') || {};
-  (my $dir        = $here) =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/;                                 ## Strip filename from current location - we just want directory
+  my $config      = $self->hub->session->get_record_data({type => 'nav', code => 'static'});
+  my $dir         = $here =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/r;                                 ## Strip filename from current location - we just want directory
   my $this_tree   = $dir eq 'info/' ? $tree : $self->walk_tree($tree, $dir, \@path, 1);    ## Recurse into tree until you find current location
   my @pages       = map { ref $this_tree->{$_} eq 'HASH' ? $_ : () } keys %$this_tree;
   my @page_order  = sort {

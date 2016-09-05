@@ -19,16 +19,13 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::Messages::Urgent;
 
-### Module to output warning messages from session, etc
+### Module to output warning messages saved in session records
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Component::Messages);
+use parent qw(EnsEMBL::Web::Component::Messages);
 
-sub content {
-  my $self = shift;
-  
-  return $self->SUPER::content(qw(_error _warning)); 
-}
+sub priority { qw(_error _warning) }
 
 1;

@@ -34,7 +34,7 @@ sub content {
   return unless $tree;
   
   my $active = $self->active;
-  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->child_nodes};
+  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->root->child_nodes};
   my $menu;
   
   if ($tree->get_node($active) || $nodes[0]) {

@@ -20,8 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::supporting_evidence_transcript;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub cache_key {
   my $self  = shift;
@@ -36,10 +37,12 @@ sub cache_key {
   );
 }
 
-sub init {
+sub init_cacheable {
   my $self  = shift;
   my $hub   = $self->hub;
   my $sd    = $hub->species_defs;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     sortable_tracks => 'drag',  # allow the user to reorder tracks

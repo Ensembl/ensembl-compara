@@ -38,7 +38,7 @@ sub content {
   my $hub   = $self->hub;
 
   ## Note - these options aren't available on the page, so they
-  ## don't belong in the viewconfig
+  ## don't belong in the view_config
   my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my %seq_element     = %{$markup_options->{'seq_type'}};
   my %align_element   = %seq_element;

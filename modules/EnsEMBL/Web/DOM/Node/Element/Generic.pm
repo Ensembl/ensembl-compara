@@ -33,7 +33,7 @@ sub new {
   return $self;
 }
 
-sub node_name :Accessor('_node_name'); ## @override
+sub node_name :AccessorMutator('_node_name'); ## @override
 
 sub clone_node {
   ## @override

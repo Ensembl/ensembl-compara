@@ -52,8 +52,6 @@ sub content {
   $image_config->cache('image_snps',   $object->variation_data);
   $image_config->cache('image_splice', $object->peptide_splice_sites);
 
-  $image_config->tree->dump('Tree', '[[caption]]') if $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
-
   my $image = $self->new_image($peptide, $image_config, []);
   
   return if $self->_export_image($image);

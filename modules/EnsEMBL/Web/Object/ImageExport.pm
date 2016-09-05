@@ -61,7 +61,7 @@ sub create_component {
                       hub           => $hub,
                       object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
     });
-    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
+    $builder->create_object(ucfirst($hub->param('data_type')));
     $hub->set_builder($builder);
     $component = $class->new($hub, $builder);
   }

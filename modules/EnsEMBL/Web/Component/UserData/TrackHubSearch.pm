@@ -82,7 +82,7 @@ sub content {
 
       ## Start creating form, as in most cases we need it
       $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
-            'class'             => 'check',
+            'class'             => 'bgcolour',
             'no_button'         => 1
       });
       $fieldset = $form->add_fieldset({'no_required_notes' => 1});

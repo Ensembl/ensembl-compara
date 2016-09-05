@@ -262,10 +262,10 @@ sub upload {
           $data = $user->add_to_uploads($record);
         }
         else {
-          $data = $session->add_data(%$record);
+          $data = $session->set_record_data($record);
         }
 
-        $session->configure_user_data('upload', $data);
+        $hub->configure_user_data('upload', $data);
         ## Store the session code so we can access it later
         $self->{'code'} = $code;
       }

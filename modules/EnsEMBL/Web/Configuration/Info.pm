@@ -71,13 +71,13 @@ sub populate_tree {
     );
   }
 
-  $index->append($self->create_subnode('Error', 'Unknown error',
+  $index->append_child($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { no_menu_entry => 1, }
   ));
   
   foreach (keys %error_messages) {
-    $index->append($self->create_subnode("Error/$_", "Error $_",
+    $index->append_child($self->create_subnode("Error/$_", "Error $_",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
       { no_menu_entry => 1 }
     ));
@@ -92,11 +92,11 @@ sub populate_tree {
 
   my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
   
-  $stats_menu->append($self->create_node('StatsTable', 'Assembly and Genebuild',
+  $stats_menu->append_child($self->create_node('StatsTable', 'Assembly and Genebuild',
     [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)]
   ));
   
-  $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
+  $stats_menu->append_child($self->create_node('IPtop500', 'Top 500 InterPro hits',
     [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
   ));
   $self->create_node('WhatsNew', '',

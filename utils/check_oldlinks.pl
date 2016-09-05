@@ -53,7 +53,7 @@ my $hub     = new EnsEMBL::Web::Hub;
 my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
 my (@object_types, %old_links);
 
-while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_SCRIPT})) {
+while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_CONTROLLER_MAP})) {
   push @object_types, $k if $v eq 'Page' && $k ne 'Tools' && $k ne 'Search';
 } 
 

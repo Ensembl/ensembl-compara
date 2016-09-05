@@ -20,44 +20,50 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::StructuralVariation::Context;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
-  my $defaults = { context => 5000 };
+  my $defaults = {'context' => 5000};
 
-  foreach (keys %options) {
+  foreach (keys %options) { ## TODO - defaults are being added but where are the corresponding fields?
     my %hash = %{$options{$_}};
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
-	
-  $self->set_defaults($defaults);
-  $self->add_image_config('structural_variation');
-  $self->title = 'Genomic context';
+
+  $self->set_default_options($defaults);
+  $self->image_config_type('structural_variation');
+  $self->title('Genomic context');
 }
 
-sub form {
-  my $self = shift;
-  
-  $self->add_fieldset('Display options');
-  
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'context',
-    label  => 'Context',
-    values => [
-      { value => 1000,  caption => '1kb'  },
-      { value => 5000,  caption => '5kb'  },
-      { value => 10000, caption => '10kb' },
-      { value => 20000, caption => '20kb' },
-      { value => 30000, caption => '30kb' }
-    ]
-  });
+sub field_order {
+  ## Abstract method implementation
+  return qw(context);
+}
+
+sub form_fields {
+  ## Abstract method implementation
+  return {
+    'context' => {
+      'fieldset'  => 'Display options',
+      'type'      => 'DropDown',
+      'name'      => 'context',
+      'label'     => 'Context',
+      'values'    => [
+        { 'value' => 1000,  'caption' => '1kb'  },
+        { 'value' => 5000,  'caption' => '5kb'  },
+        { 'value' => 10000, 'caption' => '10kb' },
+        { 'value' => 20000, 'caption' => '20kb' },
+        { 'value' => 30000, 'caption' => '30kb' }
+      ]
+    }
+  };
 }
 
 1;

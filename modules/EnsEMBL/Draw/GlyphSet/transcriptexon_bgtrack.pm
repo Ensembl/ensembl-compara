@@ -39,7 +39,7 @@ sub _init {
   my $colour        = $self->my_config ('colours'); #Config->get('transcriptexon_bgtrack','col' );
 
   my $fontname      = "Tiny";    
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $pix_per_bp    = $Config->transform_object->scalex;
  # my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
   my $bitmap_length = int($Config->container_width() * $pix_per_bp);
 

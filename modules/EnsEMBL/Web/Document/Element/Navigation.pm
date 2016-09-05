@@ -104,13 +104,13 @@ sub content {
   return unless $tree;
   
   my $active = $self->active;
-  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->child_nodes};
+  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->root->child_nodes};
   my $menu;
   
-  if ($tree->get_node($active) || scalar @nodes) {
+  if ($active && $tree->get_node($active) || scalar @nodes) {
     my $hub        = $self->{'hub'};
     my $modal      = $self->renderer->{'_modal_dialog_'};
-    my $config     = $hub->session->get_data(type => 'nav', code => $hub->type) || {};
+    my $config     = $hub->session->get_record_data({type => 'nav', code => $hub->type});
     my $img_url    = $hub->species_defs->img_url;
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};

@@ -40,7 +40,7 @@ sub _init {
   my $width       = $config->image_width;
   my @res         = $self->get_text_width(0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize);
   my $th          = $res[3];
-  my $pix_per_bp  = $config->transform->{'scalex'};
+  my $pix_per_bp  = $config->transform_object->scalex;
   my $box_width   = 0;
   my $label_width = 0;
   my $columns     = 3;

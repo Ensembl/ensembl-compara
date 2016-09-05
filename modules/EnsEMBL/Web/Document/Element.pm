@@ -23,7 +23,6 @@ use strict;
 
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 

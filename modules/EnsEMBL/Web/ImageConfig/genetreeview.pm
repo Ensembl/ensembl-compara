@@ -20,17 +20,27 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::genetreeview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_extra_menus {
+  shift->add_extra_menu('display_option');
+}
+
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    show_labels => 'no',
-    bgcolor     => 'background1',
-    bgcolour1   => 'background1',
-    bgcolour2   => 'background1',
+    storable          => 0,
+    image_resizeable  => 1,
+    no_labels         => 1,
+    bgcolor           => 'background1',
+    bgcolour1         => 'background1',
+    bgcolour2         => 'background1',
   });
 
   $self->create_menus('other');
@@ -39,10 +49,6 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
     [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r', menu => 'no' }],
   );
-  
-  $self->storable = 0;
-  $self->image_resize = 1;
-  $self->{extra_menus} = {'display_options' => 1};
 }
 
 1;

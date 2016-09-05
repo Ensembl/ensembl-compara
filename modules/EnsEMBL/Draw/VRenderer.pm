@@ -28,6 +28,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use EnsEMBL::Draw::Utils::Transform;
+
 sub new {
   my ($class, $config, $container, $glyphsets_ref) = @_;
 
@@ -37,7 +39,8 @@ sub new {
     'colourmap' => $config->colourmap,
     'config'    => $config,
     'container' => $container,
-    'sf'        => $config->get_parameter('sf') || 1
+    'sf'        => $config->get_parameter('sf') || 1,
+    'transform' => EnsEMBL::Draw::Utils::Transform->new
   };
   
   bless($self, $class);

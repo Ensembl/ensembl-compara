@@ -38,9 +38,9 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $view_config  = $self->view_config;
 
-  my $settings = $viewconfig->form_fields('export');
+  my $settings = $view_config->form_fields('export');
   $settings->{'Hidden'} = [qw(align align_type node)];
 
   ## Add export-specific settings

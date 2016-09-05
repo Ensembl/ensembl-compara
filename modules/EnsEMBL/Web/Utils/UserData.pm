@@ -55,7 +55,7 @@ sub check_attachment {
 
   ## Check user's own data
   unless ($already_attached) {
-    my @attachments = $hub->session->get_data('type' => 'url');
+    my @attachments = $hub->session->get_records_data({'type' => 'url'});
     foreach (@attachments) {
       if ($_->{'url'} eq $url) {
         $already_attached = 'user';

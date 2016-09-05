@@ -41,11 +41,11 @@ sub new {
   my $self    = $class->SUPER::new($hub, $species || $hub->species, @_);
   
   $self->{'all_species'} = !$species;
+
+  $self->set_parameter('multi_species', 1);
   
   return $self;
 }
-
-sub multi_species { return 1; }
 
 sub species_list {
   my $self = shift;
