@@ -731,8 +731,21 @@ sub pipeline_analyses {
             -parameters => {
                             'tag_split_genes'   => 0,
             },
-            -flow_into  => [ 'hc_tree_homologies' ],
+            -flow_into  => {
+                1 => [ 'hc_tree_homologies' ],
+                -1 => [ 'orthotree_himem' ],
+            },
            -rc_name => '250Mb_job',
+        },
+
+        {   -logic_name    => 'orthotree_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
+            -analysis_capacity => $self->o('orthotree_capacity'),
+            -parameters => {
+                            'tag_split_genes'   => 0,
+            },
+            -flow_into  => [ 'hc_tree_homologies' ],
+           -rc_name => '500Mb_job',
         },
 
         {   -logic_name    => 'ktreedist',
