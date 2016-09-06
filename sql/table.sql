@@ -1538,6 +1538,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
   FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (mcoffee_scores_gene_align_id) REFERENCES gene_align(gene_align_id),
 
   PRIMARY KEY (root_id),
   KEY (lca_node_id)
