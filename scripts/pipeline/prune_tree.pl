@@ -48,7 +48,7 @@ my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $url)
     or die "Must define a url";
 
 if (defined $output_taxon_file) {
-    my $species_tree    = Bio::EnsEMBL::Compara::Utils::SpeciesTree::create_species_tree(-COMPARA_DBA => $compara_dba);
+    my $species_tree    = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-COMPARA_DBA => $compara_dba);
 
     open  TF, ">$output_taxon_file" or die "$!";
     print TF $species_tree->newick_format( 'ncbi_taxon' );
@@ -58,7 +58,7 @@ if (defined $output_taxon_file) {
 if (defined $output_tree_file) {
 
     my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $tree_file` );
-    my $pruned_tree  = Bio::EnsEMBL::Compara::Utils::SpeciesTree::prune_tree( $blength_tree, $compara_dba, $species_set_id );
+    my $pruned_tree  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $compara_dba, $species_set_id );
 
     open FH, ">$output_tree_file" or die "$!";
     print FH $pruned_tree->newick_format('simple') . "\n";
