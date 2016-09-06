@@ -1021,6 +1021,7 @@ sub _load_GenomicAligns {
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
   foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
+    $ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
 
@@ -1030,6 +1031,7 @@ sub _load_GenomicAligns {
       if (@projection > 0) {
 	  push(@{$genomic_aligns}, $ga);
       }
+    });
   }
 
   #only store genomic_aligns if there are more than 1 genomic_align left in the
@@ -1401,6 +1403,8 @@ sub _dump_fasta_and_mfa {
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
         $ga->dnafrag_start, "-", $ga->dnafrag_end, ":", $ga->dnafrag_strand,"\n" if $self->debug;
 
+    $ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
     my $slice = $ga->get_Slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$ga->dnafrag->dbID) if (!$slice);
     
@@ -1421,6 +1425,8 @@ sub _dump_fasta_and_mfa {
     $aligned_seq =~ s/(.{60})/$1\n/g;
     $aligned_seq =~ s/\n$//;
     print MFA $aligned_seq, "\n";
+
+    } );
 
     push @{$self->fasta_files}, $file;
     push @{$self->species_order}, $ga->dnafrag->genome_db_id;
@@ -1875,8 +1881,11 @@ sub _create_mfa {
 	    
 	    my $pairwise_non_ref_ga = $pairwise_gab->get_all_non_reference_genomic_aligns->[0];
 	    my $pairwise_ref_ga = $pairwise_gab->reference_genomic_align;
-	    
-	    my $pairwise_fixed_seq = $pairwise_non_ref_ga->aligned_sequence("+FIX_SEQ");
+
+            my $pairwise_fixed_seq;
+            $pairwise_non_ref_ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+	        $pairwise_fixed_seq = $pairwise_non_ref_ga->aligned_sequence("+FIX_SEQ");
+            });
 	    
 	    #undef($pairwise_non_ref_ga->{'aligned_sequence'});
 
