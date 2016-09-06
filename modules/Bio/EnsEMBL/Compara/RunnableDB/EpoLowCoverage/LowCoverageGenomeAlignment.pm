@@ -1074,8 +1074,8 @@ sub _load_2XGenomes {
 
   #DEBUG this opens up connections to all the databases
   my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
-  my $ref_dba = $ref_genome_db->db_adaptor;
-  my $ref_slice_adaptor = $ref_dba->get_SliceAdaptor();
+  #my $ref_dba = $ref_genome_db->db_adaptor;
+  #my $ref_slice_adaptor = $ref_dba->get_SliceAdaptor();
 
   #Get multiple alignment genomic_align_block adaptor
   my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
@@ -1132,8 +1132,8 @@ sub _load_2XGenomes {
       }
      
       my $target_genome_db = $genome_db_adaptor->fetch_by_name_assembly($target_species);
-      my $target_dba = $target_genome_db->db_adaptor;
-      my $target_slice_adaptor = $target_dba->get_SliceAdaptor();
+      #my $target_dba = $target_genome_db->db_adaptor;
+      #my $target_slice_adaptor = $target_dba->get_SliceAdaptor();
 
       #Foreach copy of the ref_genome in the multiple alignment block, 
       #find the alignment blocks between the ref_genome and the 2x 
