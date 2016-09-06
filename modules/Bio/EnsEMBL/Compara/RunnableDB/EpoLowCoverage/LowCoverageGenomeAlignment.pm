@@ -732,7 +732,7 @@ sub create_2x_cigar_line {
     
     my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
     foreach my $piece (@pieces) {
-	my $elem;
+	my $elem = '';
 
 	#length of current piece
 	my $this_len = length($piece);
@@ -794,7 +794,7 @@ sub create_2x_cigar_line {
 #create cigar element from mode and length
 sub cigar_element {
     my ($mode, $len) = @_;
-    my $elem;
+    my $elem = '';
     if ($len == 1) {
 	$elem = $mode;
     } elsif ($len > 1) { #length can be 0 if the sequence starts with a gap
