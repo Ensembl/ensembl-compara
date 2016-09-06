@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use Test::Differences;
+use Test::Deep;
 use EnsEMBL::Web::Utils::UnitTest qw/:all/;
 
 use EnsEMBL::Draw::GlyphSet::marker;
@@ -11,11 +11,11 @@ use EnsEMBL::Draw::GlyphSet::marker;
 
 ## Create some sample objects (we don't want unit tests to depend on 
 ## a web server or db connection)
-my $hub   = create_hub({
-                        'species' => 'Homo_sapiens',
-                        'type'    => 'Location',
-                        'action'  => 'View',
-                        });
+my $hub = create_hub({
+                      'species' => 'Homo_sapiens',
+                      'type'    => 'Location',
+                      'action'  => 'View',
+                      });
 
 ok($hub, "Hub created...");
 
@@ -55,7 +55,7 @@ my $sample_data = [{'features' => [
                               'label' => 'RH11719',
                               '_unique' => 'RH11719:323096:323243',
                               'end' => 844,
-                              'start' => 697
+                              'start' => 697,
                             },
                             {
                               'label_colour' => '#000000',
@@ -102,7 +102,6 @@ ok($glyphset, "Glyphset 'marker' created");
 my $returned_data = $glyphset->get_data;
 
 ### Check that data matches what we expect
-eq_or_diff_data($returned_data, $sample_data, 'Checking glyphset data matches expected features');
-
+cmp_deeply($returned_data, $sample_data, 'Checking glyphset data matches expected features');
 
 done_testing();
