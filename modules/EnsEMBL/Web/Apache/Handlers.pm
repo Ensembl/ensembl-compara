@@ -50,6 +50,14 @@ use Preload;
 
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
+sub get_postread_redirect_uri {
+  ## Gets called at PostReadRequest stage and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed without executing to the actual handler
+  ## Used to perform any mirror site and mobile redirects etc
+  ## @param Apache2::RequestRec request object
+  ## @return URI string if redirection required, undef otherwise
+  ## In a plugin, use this function with PREV to add plugin specific rules
+}
+
 sub get_rewritten_uri {
   ## Recieves the current URI and returns a new URI in case it has to be rewritten
   ## The same request itself is handled according to the rewritten URI instead of making an external redirect request
@@ -59,7 +67,7 @@ sub get_rewritten_uri {
 }
 
 sub get_redirect_uri {
-  ## Recieves the current URI and returns a new URI in case an external HTTP redirect has to be performed on that
+  ## Recieves the current URI and returns a new URI in case a PERMANENT external HTTP redirect has to be performed on that
   ## @param URI string
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
@@ -88,7 +96,7 @@ sub get_redirect_uri {
   return undef;
 }
 
-sub stable_id_redirect_uri{
+sub stable_id_redirect_uri {
   ## Constructs complete URI according to a given stable id
   ## @param Type of short url - id or loc
   ## @param Stable ID string
@@ -267,6 +275,11 @@ sub postReadRequestHandler {
 
   return OK if $r->unparsed_uri eq '*';
 
+  # Any redirect needs to be performed at this stage?
+  if (my $redirect_uri = get_postread_redirect_uri($r)) {
+    return http_redirect($r, $redirect_uri);
+  }
+
   # VOID request to populate %ENV
   $r->subprocess_env;
 
@@ -438,136 +451,6 @@ sub childExitHandler {
   warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;
-}
-
-#### Temporarily adding them here - will be moved to plugins later
-
-
-sub redirect_to_mobile {}
-
-sub handle_mirror_redirect {
-  my $r = shift;
-
-  for (qw(redirected_from_nearest_mirror redirect_to_nearest_mirror)) {
-    my $return = __PACKAGE__->can($_)->($r);
-    return $return unless $return eq DECLINED;
-  }
-
-  return DECLINED;
-}
-
-sub redirected_from_nearest_mirror {
-  # This handler handles the redirect request from nearest mirror by parsing redirectsrc param from path
-  my $r = shift;
-
-  if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} }) {
-
-    my $uri = $r->unparsed_uri;
-
-    if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
-
-      # save a cookie for JS
-      EnsEMBL::Web::Cookie->new($r, {'name' => 'redirected_from_url', 'value' => $2})->bake;
-
-      $uri .= $1.($3 =~ s/^[\;\&]*//r);
-      $uri  =~ s/[\;\&]*$//;
-
-      $r->headers_out->add('Location' => $uri);
-      $r->child_terminate;
-
-      return HTTP_MOVED_TEMPORARILY;
-    }
-  }
-
-  return DECLINED;
-}
-
-sub redirect_to_nearest_mirror {
-  ## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
-  my $r           = shift;
-  my $server_name = $species_defs->ENSEMBL_SERVERNAME;
-  my $user_agent  = $r->headers_in->{'User-Agent'} ? $r->headers_in->{'User-Agent'} : "";
-
-  # redirect only if we have mirrors, and the ENSEMBL_SERVERNAME is same as headers HOST (this is to prevent redirecting a static server request)
-  if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} } && ( $r->headers_in->{'Host'} eq $server_name || $r->headers_in->{'X-Forwarded-Host'} eq $server_name ) && $user_agent !~ /Googlebot/i) {
-    my $unparsed_uri    = $r->unparsed_uri;
-    my $redirect_flag   = $unparsed_uri =~ /redirect=([^\&\;]+)/ ? $1 : '';
-    my $debug_ip        = $unparsed_uri =~ /debugip=([^\&\;]+)/ ?  $1 : '';
-    my $redirect_cookie = EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror'})->retrieve;
-
-    # If the user clicked on a link that's explicitly supposed to take him to
-    # another mirror, it should have an extra param 'redirect=no' in it. We save
-    # the 'redirect' cookie with value 'no' in that case to avoid redirecting
-    # any further requests. If there's a param in the url that says redirect=force, or
-    # we have a debug ip value, we ignore the existing 'redirect=no' cookie and deal
-    # with it as a new request.
-    if ($redirect_flag eq 'force' || $debug_ip) {
-
-      # remove any existing cookie
-      $redirect_cookie->clear;
-
-    }
-
-    # If the flag says don't redirect, or we have already decided in some previous request not to redirect and have set a cookie for that - don't redirect then
-    if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
-      if (!$redirect_cookie->value || $redirect_cookie->value ne 'no') { # if not already set, set it for 24 hours
-        $redirect_cookie->bake({'expires' => '+24h', 'value' => 'no'});
-      }
-      return DECLINED;
-    }
-
-    $redirect_cookie->clear;
-
-    # Getting the correct remote IP address isn't straight forward. We check all the possible
-    # ip addresses to get the correct one that is valid and isn't an internal address.
-    # If debug ip is provided, then the others are ignored.
-    my ($remote_ip) = grep {
-      $_ =~ /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/ && !($1 > 255 || $2 > 255 || $3 > 255 || $4 > 255 || $1 == 10 || $1 == 172 && $2 >= 16 && $2 <= 31 || $1 == 192 && $2 == 168);
-    } $debug_ip ? $debug_ip : (split(/\s*\,\s*/, $r->headers_in->{'X-Forwarded-For'}), $r->connection->remote_ip);
-
-    # If there is no IP address, don't do any redirect (there's a possibility this is Amazon's loadbalancer trying to do some healthcheck ping)
-    return DECLINED if !$remote_ip || $remote_ip eq '127.0.0.1';
-
-    # Just leave another warning if the GEOCITY file is missing
-    my $geocity_file = $species_defs->GEOCITY_DAT || '';
-    unless ($geocity_file && -e $geocity_file) {
-      warn "MIRROR REDIRECTION FAILED: GEOCITY_DAT file ($geocity_file) was not found.";
-      return DECLINED;
-    }
-
-    # Get the location record the for remote IP
-    my $record;
-    eval {
-      require Geo::IP;
-      my $geo = Geo::IP->open($geocity_file, 'GEOIP_MEMORY_CACHE');
-      $record = $geo->record_by_addr($remote_ip) if $geo;
-    };
-    if ($@ || !$record) {
-      warn sprintf 'MIRROR REDIRECTION FAILED: %s', $@ || "Geo::IP could not find details for IP address $remote_ip";
-      return DECLINED;
-    }
-
-    # Find our the nearest mirror according to the remote IP's location
-    my $mirror_map  = $species_defs->ENSEMBL_MIRRORS;
-
-    my $destination = $mirror_map->{$record->country_code || 'MAIN'} || $mirror_map->{'MAIN'};
-       $destination = $destination->{$record->region} || $destination->{'DEFAULT'} if ref $destination eq 'HASH';
-
-    # If the user is already on the nearest mirror, save a cookie
-    # to avoid doing these checks for further requests from the same machine
-    if ($destination eq $server_name) {
-      $redirect_cookie->bake({'expires' => '+24h', 'value' => 'no'});
-      return DECLINED;
-    }
-
-    # Redirect if the destination mirror is up
-    if (grep { $_ eq $destination } @SiteDefs::ENSEMBL_MIRRORS_UP) { # ENSEMBL_MIRRORS_UP contains a list of mirrors that are currently up
-      $r->headers_out->add('Location' => sprintf('//%s%s%sredirectsrc=//%s', $destination, $unparsed_uri, $unparsed_uri =~ /\?/ ? ';' : '?', uri_escape($server_name.$unparsed_uri)));
-      return HTTP_MOVED_TEMPORARILY;
-    }
-  }
-
-  return DECLINED;
 }
 
 1;
