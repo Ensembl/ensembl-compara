@@ -22,9 +22,6 @@ package EnsEMBL::Web::Controller::Download;
 use strict;
 use warnings;
 
-use Apache2::RequestUtil;
-use EnsEMBL::Web::Hub;
-
 use parent qw(EnsEMBL::Web::Controller);
 
 sub process {
