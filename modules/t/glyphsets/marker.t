@@ -2,9 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-
-use EnsEMBL::Web::Hub;
-use EnsEMBL::Web::Utils::SetUpTest qw/:all/;
+use Test::Differences;
+use EnsEMBL::Web::Utils::UnitTest qw/:all/;
 
 use EnsEMBL::Draw::GlyphSet::marker;
 
@@ -12,11 +11,12 @@ use EnsEMBL::Draw::GlyphSet::marker;
 
 ## Create some sample objects (we don't want unit tests to depend on 
 ## a web server or db connection)
-my $hub   = EnsEMBL::Web::Hub->new(undef, {
-                                      'species' => 'Homo_sapiens',
-                                      'type'    => 'Location',
-                                      'action'  => 'View',
-                                  });
+my $hub   = create_hub({
+                        'species' => 'Homo_sapiens',
+                        'type'    => 'Location',
+                        'action'  => 'View',
+                        });
+
 ok($hub, "Hub created...");
 
 my $slice = create_slice($hub, {
@@ -47,7 +47,7 @@ my $glyphset = EnsEMBL::Draw::GlyphSet::marker->new({
 
 ########## EXAMPLE DATA ################
 
-my $test_data = [{'features' => [ 
+my $sample_data = [{'features' => [ 
                             {
                               'label_colour' => '#000000',
                               'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=RH11719;track=test',
@@ -99,11 +99,10 @@ my $test_data = [{'features' => [
 
 ok($glyphset, "Glyphset 'marker' created");
 
-my $data = $glyphset->get_data;
-#use Data::Dumper;
-#warn ">>> DATA ".Dumper($data);
+my $returned_data = $glyphset->get_data;
 
 ### Check that data matches what we expect
+eq_or_diff_data($returned_data, $sample_data, 'Checking glyphset data matches expected features');
 
 
 done_testing();
