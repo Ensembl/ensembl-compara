@@ -62,7 +62,7 @@ sub content {
     $self->sets,
     $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
+    #($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -382,21 +382,22 @@ sub synonyms {
 
 sub alleles {
   my ($self, $feature_slice) = @_;
-  my $object     = $self->object;
-  my $variation  = $object->Obj;
-  my $alleles    = $object->alleles;
-  my @l_alleles  = split '/', $alleles;
-  my $c_alleles  = scalar @l_alleles;
-  my $alt_string = $c_alleles > 2 ? 's' : '';
-  my $ancestor   = $object->ancestor;
-     $ancestor   = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
-  my $ambiguity  = $variation->ambig_code;
-     $ambiguity  = 'not available' if $object->source =~ /HGMD/;
-     $ambiguity  = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
-  my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
-     $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
-  my $maf        = $variation->minor_allele;
-     $maf        = qq{<span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
+  my $object      = $self->object;
+  my $variation   = $object->Obj;
+  my $alleles     = $object->alleles;
+  my @l_alleles   = split '/', $alleles;
+  my $c_alleles   = scalar @l_alleles;
+  my $alt_string  = $c_alleles > 2 ? 's' : '';
+  my $ancestor    = $object->ancestor;
+     $ancestor    = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
+  my $ambiguity   = $variation->ambig_code;
+     $ambiguity   = 'not available' if $object->source =~ /HGMD/;
+     $ambiguity   = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+  my $freq        = sprintf '%.2f', $variation->minor_allele_frequency;
+     $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
+  my $maf_helptip = $self->helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
+  my $maf         = $variation->minor_allele;
+     $maf         = sprintf(qq{<span class="_ht ht">%s</span>: <strong>%s</strong> (%s)},$maf_helptip,$freq,$maf) if $maf;
   my $html;
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
 
@@ -411,8 +412,7 @@ sub alleles {
       $extra_allele_info .= qq{<span>$ambiguity</span>};
     }
     if ($maf) {
-      $extra_allele_info .= $self->text_separator;
-      $extra_allele_info .= qq{<span>$maf</span>};
+      $extra_allele_info .= $self->text_separator.$maf;
     }
   }
 
@@ -449,7 +449,7 @@ sub alleles {
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
-    $alleles =~ s/\//<span style="color:#000">\/<\/span>/g;
+    $alleles =~ s/\//<span style="color:black">\/<\/span>/g;
     $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$extra_allele_info};
   }
 
