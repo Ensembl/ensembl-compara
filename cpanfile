@@ -1,3 +1,4 @@
+requires 'Apache2::RequestUtil';
 requires 'Archive::Zip';
 requires 'Compress::Bzip2';
 requires 'DBI';
