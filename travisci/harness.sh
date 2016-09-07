@@ -12,7 +12,7 @@ cd httpd-2.2.31
 ./configure --enable-deflate --prefix=$ENSDIR/apache2
 cd ..
 echo '########## READY TO INSTALL MOD_PERL ##############'
-ls -l
+ls -l httpd-2.2.31
 cd mod_perl-2.0.9
 
 perl Makefile.PL PREFIX=$ENSDIR/apache2 MP_APXS=$ENSDIR/apache2/bin/apxs
