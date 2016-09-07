@@ -561,7 +561,7 @@ sub _parse_cons_file {
 sub _parse_rates_file {
     my ($self, $rates_file, $version) = @_;
     my %win_cnt;
-    my $win_sizes = eval($self->param('window_sizes'));
+    my $win_sizes = $self->param('window_sizes');
 
     my $j;
     
