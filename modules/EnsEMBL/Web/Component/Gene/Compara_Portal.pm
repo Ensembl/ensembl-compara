@@ -43,7 +43,8 @@ sub content {
     { title => 'Paralogues',         img => '80/compara_para.gif',  url => $availability->{'has_paralogs'}   ? $hub->url({ action => 'Compara_Paralog'    }) : '' },
     { title => 'Families',           img => '80/compara_fam.gif',   url => $availability->{'family'}         ? $hub->url({ action => 'Family'             }) : '' },
   ];
-
+  
+  @$buttons  = grep { $_->{title} ne 'Families' } @$buttons;
   my $html  = $self->button_portal($buttons, 'portal-small');
      $html .= qq{<p>More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$location">Location</a> page for this gene.</p>};
 

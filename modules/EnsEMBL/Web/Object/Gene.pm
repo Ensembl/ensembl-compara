@@ -65,6 +65,8 @@ sub availability {
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
+    #$availability->{'is_strain'} = $self->species_defs->IS_STRAIN_OF ? 1 : 0; #availability to check if species is a strain
+ 
     $self->{'_availability'} = $availability;
   }
 

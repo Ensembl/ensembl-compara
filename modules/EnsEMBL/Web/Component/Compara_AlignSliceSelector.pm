@@ -46,15 +46,17 @@ sub content {
   my $options = '<option value="">-- Select an alignment --</option>';
   
   # Order by number of species (name is in the form "6 primates EPO"
-  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-    (my $name = $row->{'name'}) =~ s/_/ /g;
-    
-    $options .= sprintf(
-      '<option value="%d"%s>%s</option>',
-      $row->{'id'},
-      $row->{'id'} == $align ? ' selected="selected"' : '',
-      encode_entities($name)
-    );
+  if(!$species_defs->IS_STRAIN_OF) {
+    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+      (my $name = $row->{'name'}) =~ s/_/ /g;
+      
+      $options .= sprintf(
+        '<option value="%d"%s>%s</option>',
+        $row->{'id'},
+        $row->{'id'} == $align ? ' selected="selected"' : '',
+        encode_entities($name)
+      );
+    }
   }
   
   # For the variation compara view, only allow multi-way alignments
