@@ -21,7 +21,7 @@ ENSDIR="${ENSDIR:-$PWD}"
 
 ## Proceed with test harness
 
-export PERL5LIB=$ENSDIR/bioperl-live:$ENSDIR/ensembl/modules:$ENSDIR/ensembl-variation/modules:$ENSDIR/ensembl-test/modules:$ENSDIR/ensembl-io/modules::$ENSDIR/ensembl-webcode/modules:$PWD/modules
+export PERL5LIB=$ENSDIR/bioperl-live:$ENSDIR/ensembl/modules:$ENSDIR/ensembl-variation/modules:$ENSDIR/ensembl-test/modules:$ENSDIR/ensembl-io/modules:$ENSDIR/ensembl-orm/modules:$ENSDIR/ensembl-webcode/modules:$PWD/modules
 export TEST_AUTHOR=$USER
 
 echo "Running test suite"
