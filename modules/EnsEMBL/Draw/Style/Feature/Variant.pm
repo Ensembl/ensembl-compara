@@ -133,12 +133,15 @@ sub draw_deletion {
   my $rectangle = $self->Rect($params);
 
   ## Now draw a triangle in the centre of the rectangle
+  ## - but only if the feature is big enough!
+  my $triangle;
   my $h = $position->{'height'} / 2;
   my $w = ($h * 4) / ($self->{'pix_per_bp'} * 3); 
-  my $m = ($x + $feature->{'end'} - 1) / 2;
-  my $y = $position->{'y'} + (($h + $position->{'height'}) / 2);
-  my $colour = $self->make_contrasting($feature->{'colour'});
-  $params = {
+  if ($w > 0 && ($position->{'width'} * $self->{'pix_per_bp'} > $w)) {  
+    my $m = ($x + $feature->{'end'} - 1) / 2;
+    my $y = $position->{'y'} + (($h + $position->{'height'}) / 2);
+    my $colour = $self->make_contrasting($feature->{'colour'});
+    $params = {
               width         => $w,
               height        => $h,
               direction     => 'down',
@@ -148,14 +151,16 @@ sub draw_deletion {
               no_rectangle  => 1,
               href          => $composite->{'href'},
              };
-  my $triangle = $self->Triangle($params);
+    $triangle = $self->Triangle($params);
+  }
 
   ## Are we highlighting this feature? Default is no!
   my $highlight = $self->highlight($feature, $params);
   if ($highlight) {
     push @{$self->glyphs}, $highlight;
   }
-  push @{$self->glyphs}, $rectangle, $triangle;
+  push @{$self->glyphs}, $rectangle;
+  push @{$self->glyphs}, $triangle if $triangle;
 }
 
 sub highlight {
