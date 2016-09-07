@@ -10,6 +10,7 @@ sudo: false
 addons:
   apt:
     packages:
+    - apache2
     - unzip
 
 before_install:
@@ -21,10 +22,6 @@ before_install:
 
 install:
     - cpanm -v --installdeps --notest .
-
-before_script:
-    - sudo apt-get update
-    - sudo apt-get install apache2
 
 script: "./travisci/harness.sh"
 
