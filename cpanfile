@@ -6,6 +6,7 @@ requires 'Class::DBI::Sweet';
 requires 'Clone';
 requires 'Compress::Bzip2';
 requires 'CSS::Minifier';
+requires 'DB_File';
 requires 'DBI';
 requires 'DBD::mysql';
 requires 'Digest::MD5';
