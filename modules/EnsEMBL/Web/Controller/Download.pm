@@ -30,7 +30,7 @@ sub process {
   my $object  = $self->new_object($hub->type, {}, {'_hub' => $hub});
 
   if ($object && $object->can('handle_download')) {
-    $object->handle_download($r);
+    $object->handle_download($self->r);
   } else {
     print "Invalid download request\n";
   }
