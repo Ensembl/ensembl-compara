@@ -120,13 +120,10 @@ sub type {
   my ($self, $f, $args) = @_;
   my $type;
 
-  if (($args->{'config'}{'style'}||'') eq 'box') {
-    ## We don't actually do anything with these styles, so ignore them for now
-    #$type = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : '';
+  if ($f->var_class eq 'insertion' || $f->var_class eq 'deletion') {
+    $type = $f->var_class; 
   }
-  elsif  ($f->start > $f->end) {
-    $type = 'insertion';
-  }
+
   return $type;
 }
 
