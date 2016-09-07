@@ -1,4 +1,5 @@
 requires 'Archive::Zip';
+requires 'Cache::Memcached';
 requires 'CGI::Session';
 requires 'Class::Accessor';
 requires 'Class::DBI::Sweet';
