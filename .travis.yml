@@ -17,6 +17,7 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
+    - git clone -b bioperl-release-1-6-1 --depth 1 https://github.com/bioperl/bioperl-live.git
 
 install:
     - cpanm -v --installdeps --notest .
