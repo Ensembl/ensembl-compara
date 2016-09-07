@@ -21,6 +21,10 @@ install:
 
 script: "./travisci/harness.sh"
 
+branches:
+  only:
+  - master
+
 notifications:
   email:
     on_success: always
