@@ -111,6 +111,53 @@ sub draw_insertion {
   push @{$self->glyphs}, $composite, $triangle;
 }
 
+sub draw_deletion {
+### Create a glyph that's a filled rectangle with a superimposed triangle
+### @param feature Hashref - data for a single feature
+### @param position Hashref - information about the feature's size and position
+  my ($self, $feature, $position) = @_;
+
+  ## First, create rectangle for deletion length 
+  my $x = $feature->{'start'};
+  $x    = 1 if $x < 1;
+  my $params = {
+                  x         => $x-1,
+                  y         => $position->{'y'},
+                  width     => $position->{'width'},
+                  height    => $position->{'height'},
+                  colour    => $feature->{'colour'},
+                  href      => $feature->{'href'},
+                  title     => $feature->{'title'},
+                  absolutey => 1,
+                };
+  my $rectangle = $self->Rect($params);
+
+  ## Now draw a triangle in the centre of the rectangle
+  my $h = $position->{'height'} / 2;
+  my $w = ($h * 4) / ($self->{'pix_per_bp'} * 3); 
+  my $m = ($x + $feature->{'end'} - 1) / 2;
+  my $y = $position->{'y'} + (($h + $position->{'height'}) / 2);
+  my $colour = $self->make_contrasting($feature->{'colour'});
+  $params = {
+              width         => $w,
+              height        => $h,
+              direction     => 'down',
+              mid_point     => [ $m, $y ],
+              colour        => $colour,
+              absolutey     => 1,
+              no_rectangle  => 1,
+              href          => $composite->{'href'},
+             };
+  my $triangle = $self->Triangle($params);
+
+  ## Are we highlighting this feature? Default is no!
+  my $highlight = $self->highlight($feature, $params);
+  if ($highlight) {
+    push @{$self->glyphs}, $highlight;
+  }
+  push @{$self->glyphs}, $rectangle, $triangle;
+}
+
 sub highlight {
 ### Highlight the variant by adding a 2-pixel black border
   my ($self, $feature, $params) = @_;
