@@ -12,6 +12,7 @@ requires 'IO::Uncompress::Bunzip2';
 requires 'JSON';
 requires 'List::MoreUtils';
 requires 'Role::Tiny';
+requires 'Rose::DB';
 requires 'RTF::Writer';
 requires 'Sys::Hostname::Long';
 requires 'URI';
