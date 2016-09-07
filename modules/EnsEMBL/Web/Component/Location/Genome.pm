@@ -582,7 +582,7 @@ sub _location_link {
             action  => 'View',
             r       => $coords, 
             h       => $f->{'label'},
-            ph      => $self->hub->param('ph'),
+            ph      => $self->hub->param('ph') || undef,
             __clear => 1
           }),
           $region, $f->{'start'}, $f->{'end'},
@@ -602,7 +602,7 @@ sub _names_link {
     'action'    => 'Summary',
     $obj_param  => $name,
     'r'         => $coords, 
-    'ph'        => $self->hub->param('ph'),
+    'ph'        => $self->hub->param('ph') || undef,
     __clear     => 1
   };
 
