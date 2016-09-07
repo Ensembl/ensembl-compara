@@ -140,11 +140,12 @@ sub default_file_name {
   my $name  = $hub->species_defs->SPECIES_COMMON_NAME;
 
   my $type = $hub->param('data_type');
+  my $action = $hub->param('data_action');
 
   if ($type eq 'Location') {
     ## Replace hyphens and colons, because they aren't export-friendly
-    (my $location = $hub->param('r')) =~ s/:|-/_/g;
-    $name .= "_$location";
+    my $suffix = $action eq 'Genome' ? 'genome' : ($hub->param('r') || '' =~ s/:|-/_/gr);
+    $name .= "_$suffix";
   }
   elsif ($type eq 'Gene') {
     my $data_object = $hub->param('g') ? $hub->core_object('gene') : undef;
