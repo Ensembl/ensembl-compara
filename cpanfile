@@ -9,7 +9,6 @@ requires 'DBI';
 requires 'DBD::mysql';
 requires 'Digest::MD5';
 requires 'File::Spec::Functions';
-requires 'GD';
 requires 'Hash::Merge';
 requires 'HTML::Entities';
 requires 'HTTP::Date';
