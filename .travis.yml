@@ -1,14 +1,16 @@
 language: "perl"
 
 perl:
-  - "5.14"
+  - "5.20-shrplib"
 
-sudo: false
+sudo: required
   
 addons:
   apt:
     packages:
     - unzip
+    - apache2-mpm-prefork
+    - apache2-prefork-dev
 
 before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
@@ -16,6 +18,9 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone -b bioperl-release-1-6-1 --depth 1 https://github.com/bioperl/bioperl-live.git
+    - cpanm --quiet --notest mod_perl2 --configure-args="MP_APXS=/usr/bin/apxs2 MP_AP_DESTDIR=/home/travis/perl5/perlbrew/perls/5.20-shrplib/" || (echo "Contents of Apache2/BuildConfig.pm:"; cat /home/travis/.cpanm/work/*/mod_perl-2*/lib/Apache2/BuildConfig.pm; false)
+    - sudo sh -c 'echo "LoadModule perl_module /home/travis/perl5/perlbrew/perls/5.20-shrplib/usr/lib/apache2/modules/mod_perl.so" > /etc/apache2/mods-enabled/perl.load'
+
 
 install:
     - cpanm -v --installdeps --notest .
