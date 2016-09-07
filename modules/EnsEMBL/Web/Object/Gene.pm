@@ -65,7 +65,7 @@ sub availability {
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
-    #$availability->{'is_strain'} = $self->species_defs->IS_STRAIN_OF ? 1 : 0; #availability to check if species is a strain
+    $availability->{'not_strain'} = $self->species_defs->IS_STRAIN_OF ? 0 : 1; #availability to check if species is a strain or not, it has to be this way round (used in Gene Configuration to disable main compara view on strain species)
  
     $self->{'_availability'} = $availability;
   }

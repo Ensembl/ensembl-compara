@@ -78,7 +78,7 @@ sub populate_tree {
 
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
-    {'availability' => 'gene database:compara core', 'closed' =>  $species_defs->IS_STRAIN_OF ? 1 : 0} #collapse and disable main compara menu if it is a strain
+    {'availability' => 'gene database:compara core not_strain', 'closed' =>  $species_defs->IS_STRAIN_OF ? 1 : 0} #collapse and disable main compara menu if it is a strain
   );
   
   $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
@@ -86,56 +86,56 @@ sub populate_tree {
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
     )],
-    { 'availability' => 'gene database:compara core has_alignments' }
+    { 'availability' => 'gene database:compara core has_alignments not_strain' }
   ));
   
   $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
+    { 'availability' => 'gene database:compara core has_gene_tree not_strain' }
   ));
   
   $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
-      { 'availability' => 'gene database:compara core has_species_tree' }
+      { 'availability' => 'gene database:compara core has_species_tree not_strain' }
     ));
     
   my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
-    { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
+    { 'availability' => 'gene database:compara core has_orthologs not_strain', 'concise' => 'Orthologues' }
   );
   
   $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
+    { 'availability'  => 'gene database:compara core has_orthologs not_strain', 'no_menu_entry' => 1 }
   ));
   
   $compara_menu->append($ol_node);
   
   my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
+    { 'availability' => 'gene database:compara core has_paralogs not_strain', 'concise' => 'Paralogues' }
   );
   
   $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability' => 'gene database:compara core has_paralogs', 'no_menu_entry' => 1 }
+    { 'availability' => 'gene database:compara core has_paralogs not_strain', 'no_menu_entry' => 1 }
   ));
   
   $compara_menu->append($pl_node);
   
   my $fam_node = $self->create_node('Family', 'Ensembl protein families',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
-    { 'availability' => 'family', 'concise' => 'Ensembl protein families' }
+    { 'availability' => 'family not_strain', 'concise' => 'Ensembl protein families' }
   );
   
   $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
     [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
-    { 'availability'  => 'family', 'no_menu_entry' => 1 }
+    { 'availability'  => 'family not_strain', 'no_menu_entry' => 1 }
   ));
 
   $fam_node->append($self->create_subnode('Family/Alignments', 'Multiple alignments in this family',
     [qw( jalview EnsEMBL::Web::Component::Gene::FamilyAlignments )],
-    { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }
+    { 'availability'  => 'family database:compara core not_strain', 'no_menu_entry' => 1 }
   ));
   
   $compara_menu->append($fam_node);
