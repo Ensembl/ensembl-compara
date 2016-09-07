@@ -335,7 +335,7 @@ sub create_tracks {
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
   ## 'empty track' glyphset we need to manually create the empty track
-  if (!keys $data) {
+  if (!keys %$data) {
     $order  = ['data'];
     $data   = {'data' => {'metadata' => $extra_config || {}}};
     if ($slice) {
