@@ -20,6 +20,7 @@ package EnsEMBL::Web::Form::ViewConfigForm;
 
 use strict;
 use warnings;
+no warnings "uninitialized";
 
 use HTML::Entities qw(encode_entities);
 
