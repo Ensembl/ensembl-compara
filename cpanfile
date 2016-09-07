@@ -1,4 +1,5 @@
 requires 'Archive::Zip';
+requires 'Clone';
 requires 'Compress::Bzip2';
 requires 'DBI';
 requires 'DBD::mysql';
