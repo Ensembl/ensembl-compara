@@ -52,8 +52,8 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
-  ## Redirect strains to the strain page for the parent species
-  if ($species_defs->SPECIES_STRAIN) {
+  ## Redirect strains to the strain page for the parent species as long as we're not on the parent species
+  if ($species_defs->SPECIES_STRAIN && (lc($species_defs->get_config($self->hub->species,'SPECIES_COMMON_NAME')) ne lc($species_defs->STRAIN_COLLECTION ))) {
     my $url = $self->hub->url({'species' => $species_defs->STRAIN_COLLECTION, 'action' => 'Strains'});
     $self->page->ajax_redirect($url, 'page');
   }
