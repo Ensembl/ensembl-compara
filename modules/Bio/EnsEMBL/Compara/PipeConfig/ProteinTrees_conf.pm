@@ -457,12 +457,6 @@ sub pipeline_create_commands {
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
 
-        $self->db_cmd( 'CREATE TABLE homology_id_mapping (
-            curr_release_homology_id  INT NOT NULL,
-            prev_release_homology_id  INT,
-            mlss_id                   INT NOT NULL,
-            INDEX (mlss_id)
-        )' ),
     ];
 }
 

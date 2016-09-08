@@ -310,6 +310,26 @@ CREATE TABLE `seq_member_id_current_reused_map` (
 
 -- ----------------------------------------------------------------------------------
 --
+-- Table structure for table 'homology_id_mapping'
+--
+-- overview: Mapping between homology_id in this database and the previous one
+--
+-- semantics:
+--   curr_release_homology_id  - homology_id in this database
+--   prev_release_homology_id  - homology_id in the previous database
+--   mlss_id                   - method_link_species_set_id of this homology
+
+CREATE TABLE homology_id_mapping (
+	curr_release_homology_id  INT UNSIGNED NOT NULL,
+	prev_release_homology_id  INT UNSIGNED,
+	mlss_id                   INT UNSIGNED NOT NULL,
+	PRIMARY KEY (curr_release_homology_id),
+	FOREIGN KEY (mlss_id) REFERENCES method_link_species_set(method_link_species_set_id),
+	INDEX (mlss_id)
+) ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------------
+--
 -- Table structure for table 'long_orth_genes'
 -- overview: Add new table to be used by the genesetQC pipeline to store genes that are longer than the avg length of their orthologs
 -- semantics:
