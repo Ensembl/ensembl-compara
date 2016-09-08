@@ -3275,18 +3275,14 @@ sub core_pipeline_analyses {
                 },
             },
             -flow_into => {
-                2 => {
-                    'id_map_homology_factory' => { 'homo_mlss_id' => '#mlss_id#' },
-                },
+                2 => [ 'mlss_id_mapping' ],
             },
         },
 
-        {   -logic_name => 'id_map_homology_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+        {   -logic_name => 'mlss_id_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -flow_into => {
-                '3'    => [ 'homology_id_mapping' ],
-            },
+            -flow_into => { 'homology_id_mapping' => INPUT_PLUS(), },
         },
 
         {   -logic_name => 'mlss_factory',

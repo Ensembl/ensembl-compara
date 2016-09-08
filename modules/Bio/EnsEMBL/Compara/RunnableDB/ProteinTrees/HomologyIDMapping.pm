@@ -30,12 +30,13 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping
 =head1 SYNOPSIS
 
 Required inputs:
-	- an arrayref of homology_ids
+	- homology mlss_id
+	- optionally a "previous_mlss_id"
 	- URL pointing to the previous release database
 	- pointer to current database (usually doesn't require explicit definition)
 
 Example:
-	standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping -input_id "{'homology_ids' => [11,12,13,14,15], 'prev_rel_db' => 'mysql://ensro@compara5/cc21_ensembl_compara_84', 'compara_db' => 'mysql://ensro@compara2/mp14_protein_trees_85'}"
+	standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping -mlss_id 20285 -compara_db mysql://ensro@compara5/cc21_protein_trees_no_reuse_86 -prev_rel_db mysql://ensro@compara2/mp14_protein_trees_85
 
 =cut
 
@@ -78,54 +79,68 @@ use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
-	my $self = shift;
+    my $self = shift;
 
-	my @homology_ids = @{ $self->param_required('homology_ids') };
-	my $mlss_id      =    $self->param_required('mlss_id');
+    my $mlss_id         = $self->param_required('mlss_id');
+    my $mlss            = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $prev_mlss_id    = $self->param_required('previous_mlss_id');
 
-	# # check orth mlss does not contain non-reuse species
-	# my $non_reuse_species = $self->param('reuse_species_csv');
-	# my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	# my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-	# my $species = $mlss->species_set->genome_dbs;
+    if ($prev_mlss_id) {
+        $self->_fetch_and_map_previous_homologies( $prev_mlss_id);
+    } else {
+        $self->_write_empty_mapping();
+    }
+}
 
+sub _fetch_and_map_previous_homologies {
+    my ($self, $previous_mlss_id) = @_;
 
+    $self->compara_dba->dbc->disconnect_if_idle;
 
-	my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
-	my $current_mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	my $mlss_obj = $current_mlss_adaptor->fetch_by_dbID($mlss_id);
-	my $previous_db = $self->param('prev_rel_db');
-	die("No prev_rel_db provided") unless ( defined $previous_db );
-	my $previous_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
-	my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
-	my $prev_gene_member_adaptor = $previous_compara_dba->get_GeneMemberAdaptor;
-	my $prev_mlss_id;
-	my @homology_mapping;
-	foreach my $hid ( @homology_ids ) {
-		my $curr_homology = $current_homo_adaptor->fetch_by_dbID( $hid );
-		next unless $curr_homology;
-		my @gene_members = @{ $curr_homology->get_all_GeneMembers() };
+    my $previous_db             = $self->param_required('prev_rel_db');
+    my $previous_compara_dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
+    my $previous_homologies     = $previous_compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($previous_mlss_id);
 
-		my @prev_gene_members;
-		foreach my $gm ( @gene_members ) {
-			my $prev_gm = $prev_gene_member_adaptor->fetch_by_stable_id( $gm->stable_id ); # must use stable_id as gene_member_id can change between releases
-			push ( @prev_gene_members, $prev_gm ) if defined $prev_gm;
-		}
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($previous_compara_dba->get_AlignedMemberAdaptor, $previous_homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($previous_compara_dba->get_GeneMemberAdaptor, $sms);
+    $previous_compara_dba->dbc->disconnect_if_idle;
+    undef $sms;
 
-		my $prev_homology_id; # should be left undef if 2 gene members are not found
-		my $prev_mlss_id;
-		if ( scalar @prev_gene_members == 2 ) {
-			my $prev_homology = $previous_homo_adaptor->fetch_by_Member_Member( @prev_gene_members );
-			$prev_homology_id = defined $prev_homology ? $prev_homology->dbID : undef;
-			if (! $prev_mlss_id) { 
-				$prev_mlss_id = defined $prev_homology ? $prev_homology->method_link_species_set_id() : undef;
-			}
-		}
-		push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] );
-		
-	}
-	$mlss_obj->store_tag("prev_release_mlss_id",              $prev_mlss_id); #store as an mlss tag
-	$self->param( 'homology_mapping', \@homology_mapping );
+    my %hash_previous_homologies;
+    foreach my $prev_homology (@$previous_homologies) {
+        my @gene_members = @{ $prev_homology->get_all_GeneMembers() };
+        $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id} = $prev_homology->dbID;
+        $hash_previous_homologies{$gene_members[1]->stable_id . '_' . $gene_members[0]->stable_id} = $prev_homology->dbID;
+    }
+    undef $previous_homologies;
+
+    my $mlss_id             = $self->param('mlss_id');
+    my $current_homologies  = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_id);
+    $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $current_homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
+    $self->compara_dba->dbc->disconnect_if_idle;
+
+    my @homology_mapping;
+    foreach my $curr_homology (@$current_homologies) {
+        my @gene_members        = @{ $curr_homology->get_all_GeneMembers() };
+        my $prev_homology_id    = $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id}
+                                   || $hash_previous_homologies{$gene_members[1]->stable_id . '_' . $gene_members[0]->stable_id};
+
+        push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] );
+
+    }
+
+    $self->param( 'homology_mapping', \@homology_mapping );
+}
+
+sub _write_empty_mapping {
+    my $self = shift;
+
+    my $mlss_id             = $self->param('mlss_id');
+    my $current_homologies  = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_id);
+    my @homology_mapping    = map { [$mlss_id, undef, $_->dbID] } @$current_homologies;
+
+    $self->param( 'homology_mapping', \@homology_mapping );
 }
 
 sub write_output {
