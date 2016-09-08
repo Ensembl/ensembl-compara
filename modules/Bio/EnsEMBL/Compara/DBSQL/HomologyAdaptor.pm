@@ -580,6 +580,7 @@ sub _columns {
              h.is_tree_compliant
              h.goc_score
              h.wga_coverage
+             h.is_high_confidence
              h.dn
              h.ds
              h.n
@@ -593,11 +594,11 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $is_tree_compliant, $goc_score, $wga_coverage, $dn, $ds, $n, $s, $lnl,
+  my ($homology_id, $description, $is_tree_compliant, $goc_score, $wga_coverage, $high, $dn, $ds, $n, $s, $lnl,
       $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$is_tree_compliant, \$goc_score, \$wga_coverage, \$dn, \$ds,
+                     \$description, \$is_tree_compliant, \$goc_score, \$wga_coverage, \$high, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
 
   my @homologies = ();
@@ -620,6 +621,7 @@ sub _objs_from_sth {
             '_gene_tree_root_id'            => $gene_tree_root_id,
             '_goc_score'                    => $goc_score,
             '_wga_coverage'                 => $wga_coverage,
+            '_is_high_confidence'           => $high,
        });
   }
   

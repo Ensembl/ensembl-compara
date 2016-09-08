@@ -63,6 +63,7 @@ Reconciliation with the gene tree:
  Ortholog quality scores
  - goc_score
  - wga_coverage
+ - is_high_confidence
 
 =head1 APPENDIX
 
@@ -191,7 +192,8 @@ sub wga_coverage {
 
 sub is_high_confidence {
     my $self = shift;
-    return 1;
+    $self->{'_is_high_confidence'} = shift if(@_);
+    return $self->{'_is_high_confidence'};
 }
 
 

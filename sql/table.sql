@@ -1710,6 +1710,7 @@ CREATE TABLE hmm_curated_annot (
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
 @column goc_score                      Gene order conservation score
 @column wga_coverage                   Whole genome alignment coverage of the homology
+@column is_high_confidence             Whether the homology is considered "high-confidence"
 
 @example    See species_names that participate in this particular homology entry
     @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
@@ -1733,6 +1734,7 @@ CREATE TABLE homology (
   gene_tree_root_id           int(10) unsigned,
   goc_score                   tinyint unsigned,
   wga_coverage                DEC(5,2),
+  is_high_confidence          tinyint(1),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (species_tree_node_id) REFERENCES species_tree_node(node_id),
@@ -2041,4 +2043,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_b.sql|species_tree_root.species_tree');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_c.sql|gene_tree_root.species_tree_root_id');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_85_86_d.sql|homology.high_confidence');
 
