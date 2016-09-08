@@ -88,16 +88,9 @@ sub content_ajax {
         
         if ($nearest) {
 
-          if ($hub->user) {
-            $record->nearest($nearest);
-            $record->description($description) if $description;
-            $record->save;
-          }
-          else {
-            $data->{'nearest'}      = $nearest;
-            $data->{'description'}  = $description if $description;
-            $session->set_record_data($data);
-          }
+          $data->{'nearest'}      = $nearest;
+          $data->{'description'}  = $description if $description;
+          $session->set_record_data($data);
    
           if ($hub->param('count')) { 
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
