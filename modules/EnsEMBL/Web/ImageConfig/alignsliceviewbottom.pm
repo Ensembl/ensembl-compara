@@ -109,7 +109,7 @@ sub init_cacheable {
   # Move last gene_legend to after alignslice_legend
 
   my $dest;
-  foreach my $track ($self->get_tracks) {
+  foreach my $track (@{$self->get_tracks}) {
     if($track->id eq 'alignslice_legend') {
       $self->modify_configs(['gene_legend'],{track_after => $track });
     }
