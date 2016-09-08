@@ -1,21 +1,117 @@
-
 .modal_content .panel_wide      { margin-left: 0.25em; }
 
 .taxon_selector h2 { margin: 0 }
 
 .taxon_selector .loader { background: #ffffff url("/i/e-loader.gif") no-repeat center center; height: 100%; }
 
-div.taxon_selector_tree         { width: 59%; font-weight: normal; float: left; margin: 0 0.5%; }
-div.taxon_selector_tree .finder { padding: 7px; border-left: 1px solid #ccc; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; background-color: #F0F0F0; }
-div.taxon_selector_tree .finder input { width: 350px; }
+.species_select_container {
+  display: flex;
+  flex-wrap: wrap;
+}
 
-div.taxon_selector_list     { width: 39%; font-weight: normal; float: left; margin: 0 0.5%; }
+.species_select_container div.taxon_selector_tree, 
+.species_select_container div.taxon_selector_list {
+  font-weight: normal;
+
+}
+.species_select_container div.taxon_selector_tree {
+  width: 67%;
+  margin-right: 1%
+}
+.species_select_container div.taxon_selector_tree .vscroll_container {
+  padding: 8px 24px;
+}
+.species_select_container div.taxon_selector_list {
+  width: 30%;
+}
+.species_select_container div.content {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 1em;
+  width: 100%;
+  padding: 0 !important;
+  overflow: auto;
+  border: #ccc 1px solid;
+}
+.species_select_container div.content h2{
+  background: rgba(222,220,194,0.34);
+  font-weight: 400;
+  font-size: 18px;
+  padding: 4px 8px;
+  text-align: center;
+  color: #6f6f6f;
+  letter-spacing: 0.4px;
+}
+.species_select_container div.content .vscroll_container {
+  flex-grow: 1;
+}
+
+div.taxon_selector_tree .finder { 
+  display: flex;
+  background-color: #F0F0F0;
+  box-sizing: border-box;
+}
+
+div.taxon_selector_tree .finder input { 
+  width: 100%;
+  font-size: 24px;
+  font-weight: 100;
+  padding-left: 8px;
+  outline: none;
+  height: 40px;
+  border: none;
+  letter-spacing: 1px;
+}
+
+div.taxon_selector_tree .finder input::-webkit-input-placeholder {
+   color: #ccc;
+}
+
+div.taxon_selector_tree .finder input:-moz-placeholder { /* Firefox 18- */
+   color: #ccc;  
+}
+
+div.taxon_selector_tree .finder input::-moz-placeholder {  /* Firefox 19+ */
+   color: #ccc;  
+}
+
+div.taxon_selector_tree .finder input:-ms-input-placeholder {  
+   color: #ccc;  
+}
+
+div.taxon_selector_list     {  }
 div.taxon_selector_list ul  { padding: 0; margin: 0; }
-div.taxon_selector_list li  { list-style-image: none; list-style-type: none; clear: both; height: 22px; padding-left: 4px; position: relative; }
-div.taxon_selector_list li  { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
-div.taxon_selector_list li span   {position: absolute; margin-top: 3px; white-space: nowrap;}
-div.taxon_selector_list li span.selected-sp-title {padding-left: 20px; padding-top: 1px;}
-div.taxon_selector_list li span.remove {cursor: pointer; height: 16px; width: 16px; margin: 3px; right: 0; background-image: url("/i/16/minus-button.png")}
+div.taxon_selector_list li  { 
+  list-style-image: none;
+  list-style-type: none;
+  clear: both;
+  height: 48px;
+  position: relative;
+  background-color: #ececec;
+  color: #464646;
+  border-bottom: 1px solid #bababb;
+  box-sizing: border-box;
+  margin-bottom: 0px !important;
+}
+div.taxon_selector_list li span {
+  position: absolute; 
+  white-space: nowrap;
+}
+div.taxon_selector_list li span.selected-sp-title {
+  padding-left: 56px;
+  padding-top: 16px;
+  font-size: 18px;
+  font-weight: 100;
+}
+div.taxon_selector_list li span.remove {
+  cursor: pointer; 
+  height: 16px;
+  width: 16px;
+  margin: 16px 8px;
+  right: 0;
+  background-image: url("/i/16/minus-button.png");
+}
 
 /*
 div.taxon_selector_hint         { margin: 0.25em 0.25em 0.5em 0.25em; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
@@ -25,14 +121,9 @@ div.taxon_selector_hint p   { padding-left: 10px; }
 
 div.taxon_selector_tree div.vscroll_container,
 div.taxon_selector_list div.vscroll_container {
-    height:450px;
     overflow-x: hidden;
     overflow-y: auto;
     margin-bottom: 10px;
-    padding: 7px 6px;
-    border-left: #ccc 1px solid;
-    border-bottom: #ccc 1px solid;
-    border-right: #ccc 1px solid;
 }
 
 div.taxon_selector_form div.checkboxes {
@@ -41,19 +132,202 @@ div.taxon_selector_form div.checkboxes {
 }
 
 div.taxon_selector_form div.list-wrapper {
-  border:#CCCCCC 1px solid;
   padding:6px;
   background-color:#FFFFFF;
   width:576px;
 }
 
-div.taxon_selector_form div.list {
-  max-height:80px;
-  overflow-y:scroll;
+div.taxon_selector_form ul.list {
+  max-height:100px;
+  overflow-y: auto;
   padding: 2px 4px;
-  border:#CCCCCC 1px solid;
+  margin: 2px;
+  padding: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start
 }
 
+div.taxon_selector_form ul.list li {
+  margin-right: 10px;
+  list-style: none;
+  /* margin: 0px; */
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  background: aliceblue;
+  display: flex;
+}
+
+div.taxon_selector_form ul.list li img {
+  width: 32px;
+  height: 32px;
+}
+div.taxon_selector_form ul.list li span.ss-selected {
+  padding: 8px;
+  font-size: 16px;
+  color: #464646;
+}
+div.taxon_selector_form ul.list li span.ss-selection-delete {
+  padding: 8px 8px 8px 0px;
+  color: #a7a7a7;
+  font-weight: 100;
+  font-size: 16px;
+  cursor: pointer;
+}
+div.taxon_selector_form ul.list li span.ss-selection-delete:hover {
+  color: #ff7c7c;
+}
 div.taxon_selector_form div.links {
   padding: 3px 0;
+}
+
+
+
+
+div.taxon_selector_tree .ss_breadcrumbs {
+  padding: 0px;
+  background: #D4D4D4;
+  list-style: none; 
+  overflow: hidden;
+  height: 24px;
+  /*margin-top: 20px;*/
+  /*border-radius: 4px;*/
+  margin: 0px;
+}
+
+div.taxon_selector_tree .ss_breadcrumbs li.active{
+  background: #D4D4D4;
+}
+
+div.taxon_selector_tree .ss_breadcrumbs>li+li:before {
+  padding: 0;
+}
+div.taxon_selector_tree .ss_breadcrumbs li { 
+  float: left; 
+  list-style: none;
+}
+div.taxon_selector_tree .ss_breadcrumbs li.active a {
+  background: brown;                   /* fallback color */
+  background: #ffc107; 
+}
+div.taxon_selector_tree .ss_breadcrumbs li.completed a {
+  background: brown;                   /* fallback color */
+  background: hsla(153, 57%, 51%, 1); 
+}
+div.taxon_selector_tree .ss_breadcrumbs li.active a:after {
+  border-left: 30px solid #ffc107 ;
+}
+div.taxon_selector_tree .ss_breadcrumbs li.completed a:after {
+  border-left: 30px solid hsla(153, 57%, 51%, 1);
+} 
+
+div.taxon_selector_tree .ss_breadcrumbs li a {
+  color: white;
+  text-decoration: none; 
+  padding: 4px 0 4px 45px;
+  position: relative; 
+  display: block;
+  float: left;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+div.taxon_selector_tree .ss_breadcrumbs li a:after { 
+  content: " "; 
+  display: block; 
+  width: 0; 
+  height: 0;
+  border-top: 50px solid transparent;           /* Go big on the size, and let overflow hide */
+  border-bottom: 50px solid transparent;
+  border-left: 30px solid hsla(0, 0%, 83%, 1);
+  position: absolute;
+  top: 50%;
+  margin-top: -50px; 
+  left: 100%;
+  z-index: 2; 
+} 
+div.taxon_selector_tree .ss_breadcrumbs li a:before { 
+  content: " "; 
+  display: block; 
+  width: 0; 
+  height: 0;
+  border-top: 50px solid transparent;           /* Go big on the size, and let overflow hide */
+  border-bottom: 50px solid transparent;
+  border-left: 30px solid white;
+  position: absolute;
+  top: 50%;
+  margin-top: -50px; 
+  margin-left: 1px;
+  left: 100%;
+  z-index: 1; 
+} 
+div.taxon_selector_tree .ss_breadcrumbs li:first-child a {
+  padding-left: 15px;
+}
+div.taxon_selector_tree .ss_breadcrumbs li a:hover { background: #ffc107; color: #757575; }
+div.taxon_selector_tree .ss_breadcrumbs li a:hover:after { border-left-color: #ffc107   !important; }
+
+div.species_division_buttons {
+  display: flex;
+  flex-wrap: wrap;
+}
+div.species_division_buttons a {
+  margin-right: 8px;
+}
+div.species_division_buttons a:hover {
+  color: #fff;
+  background-color: #26a69a;
+}
+div.species_division_buttons a.active {
+  color: #fff;
+  background-color: #26a69a;
+}
+.btn, .btn-large {
+    text-decoration: none;
+    color: #26a69a;
+    text-align: center;
+    letter-spacing: .5px;
+    transition: .2s ease-out;
+    cursor: pointer;
+    border: 1px solid #26a69a;
+    box-sizing: border-box;
+    border-radius: 2px;
+    display: inline-block;
+    height: 24px;
+    line-height: 24px;
+    outline: 0;
+    padding: 0 1.1rem;
+    margin: 4px 0px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.taxon_selector_tree .ss-strain {
+  background: #f6ffad;
+}
+
+.ss-autocomplete {
+  background-color: #f4f4f4 !important;
+}
+
+.ss-autocomplete.ui-autocomplete.ui-widget-content {
+  max-height: 200px;
+  overflow: auto;
+}
+.ss-autocomplete.ui-autocomplete .ss-ac-result.ui-state-focus {
+  border-left: 1px solid transparent !important;
+  border-right: 1px solid transparent !important;
+  border-top: 1px solid #d4d4d4 !important;
+  border-bottom: 1px solid #d4d4d4 !important;
+}
+.ss-autocomplete.ui-autocomplete.ui-menu .ui-menu-item a.ss-ac-result {
+  font-weight: 100;
+  color: grey;
+  font-size: 16px;
+  padding: 8px;
+  cursor: pointer;
+}
+/* Autocomplete highlight search letter */
+.ss-ac-highlight {
+  color: #e00000;
 }

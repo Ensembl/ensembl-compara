@@ -209,6 +209,8 @@ our $ENSEMBL_DEBUG_FLAG_NAMES     = [qw(
   VERBOSE_STARTUP
 )];
 
+our $ENSEMBL_SPECIES_SELECT_DIVISION = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" };
+
 my $i = 0;
 
 foreach (@$ENSEMBL_DEBUG_FLAG_NAMES) {
