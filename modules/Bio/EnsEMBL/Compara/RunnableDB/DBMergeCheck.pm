@@ -379,7 +379,7 @@ sub _assert_same_table_schema {
     if (! @$dest_schema){
         return;
     }
-    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+    die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
 }
 
 
