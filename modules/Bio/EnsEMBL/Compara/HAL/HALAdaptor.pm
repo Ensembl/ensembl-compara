@@ -45,8 +45,8 @@ use Inline C => Config =>
              LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
              MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halMaf.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a"],
              INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/maf/inc/";
-#use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/compara-master/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
-use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
+use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/compara-master/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
+#use Inline 'C' => "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/HAL/HALAdaptorSupport.c";
 
 =head2 new
 
