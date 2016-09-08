@@ -84,7 +84,7 @@ sub fetch_features {
     }
   }
 
-  if (scalar @$reg_feats) {
+  if (scalar @{$reg_feats||[]}) {
     my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
     my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
     foreach (@$reg_feats) {
