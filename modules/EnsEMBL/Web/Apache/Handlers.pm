@@ -198,29 +198,33 @@ sub parse_ensembl_uri {
   return undef;
 }
 
-sub get_sub_handler {
-  ## Finds out the sub handler that should handle this request
+sub get_sub_handlers {
+  ## Finds out the possible sub handlers that could handle this request
   ## @param Apache2::RequestRec request object
   ## @param Species name (string)
   ## @param Arrayref of path segments
-  ## @return List containing handler (possibly undef if no sub handler maps to this requests), species (possibly modified) and arrayref of path segments (possibly modified)
+  ## @return List containing possibe handlers and species (possibly modified)
   my ($r, $species, $path_seg) = @_;
 
-  my $handler;
+  my @combinations;
 
   # Try SpeciesHandler in all cases if species is present or the file path is not an explicit .html path
   if ($species || $path_seg->[-1] !~ /\.html$/) {
 
-    $species  ||= 'Multi';
-    $species    = 'Multi' if $species eq 'common';
-    $handler    = 'EnsEMBL::Web::Apache::SpeciesHandler';
-
-  # Finally try the SSI handler
-  } else {
-    $handler    = 'EnsEMBL::Web::Apache::SSI';
+    push @combinations, {
+      'handler' => 'EnsEMBL::Web::Apache::SpeciesHandler',
+      'species' => !$species || $species eq 'common' ? 'Multi' : $species
+    };
   }
 
-  return ($handler, $species, $path_seg);
+  # Finally try the SSI handler if species doesn't exist
+  if (!$species) {
+    push @combinations, {
+      'handler' => 'EnsEMBL::Web::Apache::SSI',
+    };
+  }
+
+  return @combinations;
 }
 
 sub http_redirect {
@@ -359,24 +363,34 @@ sub handler {
     $species = shift @$path_seg;
   }
 
-  # find the appropriate handler according to species and path
-  (my $handler, $species, $path_seg) = get_sub_handler($r, $species, $path_seg);
-
-  # there is a possibility ENSEMBL_SPECIES and ENSEMBL_PATH need to be updated
-  $r->subprocess_env('ENSEMBL_SPECIES', $species);
+  # ENSEMBL_PATH may need an update
   $r->subprocess_env('ENSEMBL_PATH', '/'.join('/', @$path_seg));
 
-  # delegate request to the required handler and get the response status code
-  my $response_code = $handler ? $handler->can('handler')->($r, $species_defs) : undef;
+  # find the possible handlers according to species and path
+  my @handler_combinations = get_sub_handlers($r, $species, $path_seg);
+  my $response_code;
 
-  # check for any permanent redirects requested by the code
-  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT')) {
-    return http_redirect($r, $redirect, 1);
-  }
+  for (@handler_combinations) {
+    my $handler = $_->{'handler'};
+    my $species = $_->{'species'};
 
-  # check for any temporary redirects requested by the code
-  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_TEMPORARY')) {
-    return http_redirect($r, $redirect);
+    # there is a possibility ENSEMBL_SPECIES needs an updated
+    $r->subprocess_env('ENSEMBL_SPECIES', $species);
+
+    # delegate request to the required handler and get the response status code
+    $response_code = $handler->can('handler')->($r, $species_defs);
+
+    # check for any permanent redirects requested by the code
+    if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT')) {
+      return http_redirect($r, $redirect, 1);
+    }
+
+    # check for any temporary redirects requested by the code
+    if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_TEMPORARY')) {
+      return http_redirect($r, $redirect);
+    }
+
+    last if defined $response_code;
   }
 
   # give up if no response code was set by any of the handlers

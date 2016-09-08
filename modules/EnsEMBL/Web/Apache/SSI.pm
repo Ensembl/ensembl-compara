@@ -74,7 +74,7 @@ sub handler {
   # Populate ENSEMBL_FILENAME or perform redirect if static file location is changed
   if (my $redirect = map_to_file($r)) {
     $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT', $redirect);
-    return OK;
+    return;
   }
 
   # get target filename

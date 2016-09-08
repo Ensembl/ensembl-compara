@@ -84,7 +84,7 @@ sub handler {
   # handle redirects
   if (my $redirect = get_redirect_uri($species, \@path_segments, $query)) {
     $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT', $redirect);
-    return OK;
+    return;
   }
 
   # get controller
