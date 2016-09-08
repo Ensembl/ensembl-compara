@@ -35,6 +35,25 @@ sub map_to_file {
   ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found ENSEMBL_FILENAME is not set)
   my $r     = shift;
   my $path  = $r->subprocess_env('ENSEMBL_PATH');
+  my $match = get_htdocs_path($path);
+
+  # we don't have any file corresponding to the path
+  return unless $match;
+
+  # if path corresponds to a folder, redirect to it's index.html page
+  return "$path/index.html" if $match->{'dir'};
+
+  # file found, save it in subprocess_env
+  $r->subprocess_env('ENSEMBL_FILENAME', $match->{'file'});
+
+  return undef;
+}
+
+sub get_htdocs_path {
+  ## Gets a filesystem path corresponding to the given url path
+  ## @param URL path string
+  ## @return Hashref with corresponding path saved against key 'dir' or 'file' accordingly
+  my $path = shift;
 
   if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to file with .html extension or without extension (possibly a folder)
 
@@ -44,16 +63,10 @@ sub map_to_file {
 
       my $filename = File::Spec->catfile($dir, @path_seg);
 
-      return "$path/index.html" if -d $filename; # if path corresponds to a folder, redirect to it's index.html page
-
-      if (-r $filename) {
-        $r->subprocess_env('ENSEMBL_FILENAME', $filename);
-        last;
-      }
+      return { 'dir'  => $filename } if -d $filename;
+      return { 'file' => $filename } if -r $filename;
     }
   }
-
-  return undef;
 }
 
 sub get_controller {
