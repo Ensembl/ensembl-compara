@@ -47,7 +47,7 @@ sub make_layout {
       then => [
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'start', width => max($config->{'padding'}{'number'},6) },
+        { key => 'start', width => max($config->{'padding'}{'number'}||0,6) },
         { post => ' ' },
       ]
     },
@@ -63,7 +63,7 @@ sub make_layout {
         { post => ' ' },
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'end', width => max($config->{'padding'}{'number'},6) },
+        { key => 'end', width => max($config->{'padding'}{'number'}||0,6) },
       ]
     },
     { key => ['adid','post'], fmt => '<span class="ad-post-%s">%s</span>' },
