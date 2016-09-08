@@ -3096,7 +3096,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_stat_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => ['id_map_group_genomes'],
+                '1->A' => ['id_map_mlss_factory'],
                 'A->1' => ['goc_group_genomes_under_taxa'],
                 '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],
             },
@@ -3113,21 +3113,17 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'id_map_group_genomes',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
-            -parameters => {
-                'taxlevels'             => ['all'],
-                'filter_high_coverage'  => 0,
-            },
-            -flow_into => {
-                2 => [ 'id_map_mlss_factory' ],
-            },
-        },
-
         {   -logic_name => 'id_map_mlss_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                },
+            },
             -flow_into => {
-                2 => [ 'id_map_homology_factory' ],
+                2 => {
+                    'id_map_homology_factory' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
             },
         },
 
