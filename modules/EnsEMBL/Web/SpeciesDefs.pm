@@ -519,7 +519,12 @@ sub _promote_general {
 
 sub _expand_database_templates {
   my ($self, $filename, $tree) = @_;
-  
+ 
+  ## NASTY HACK! Collapse strain names
+  if ($filename =~ /^([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)$/) {
+    $filename = sprintf '%s_%s_%s%s', $1, $2, $3, $4;
+  }
+ 
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
   my $USER   = $tree->{'general'}{'DATABASE_DBUSER'};    
