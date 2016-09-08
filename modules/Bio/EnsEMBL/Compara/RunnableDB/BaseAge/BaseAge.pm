@@ -234,7 +234,7 @@ sub base_age {
         for (my $i = 0; $i < @aligned_seq; $i++) {
             next if ($aligned_seq[$i] eq $gap); #skip gaps in ref sequence
             my $age = 0;
-            my $node_distance;
+            my $node_distance = 0;
             my $clade_name = $gdb_name;
             my $node_id = $reference_node->node_id; #default to reference node_id
             foreach my $ancestral_seq (@$ancestral_seqs) {
