@@ -41,7 +41,7 @@ sub get_sequence_data {
     transcript => $object->Obj,
     config => $config,
     adorn => $adorn,
-    conseq_filter => [$hub->param('consequence_filter')],
+    conseq_filter => [$self->param('consequence_filter')],
     config => \%qconfig,
   });
   return map { $data->[0]{$_} } qw(sequence markup names length);
@@ -133,11 +133,11 @@ sub initialize {
     transcript      => 1,
   };
  
-  $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
-  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
+  $config->{'display_width'} = $self->param('display_width');
+  $config->{$_} = ($self->param($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  
-  if ($hub->param('line_numbering') ne 'off') {
+  if ($self->param('line_numbering') ne 'off') {
     $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;
   }

@@ -307,7 +307,7 @@ sub get_flanking_sequence_data {
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
 
-  my $adorn = $self->param('adorn') || 'none';
+  my $adorn = $hub->param('adorn') || 'none';
 
   return if $adorn eq 'none';
 
