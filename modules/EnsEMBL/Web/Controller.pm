@@ -535,7 +535,7 @@ sub _use {
   
   if (!$module) {
     $error = $self->dynamic_use_failure($module_name);
-    $error = undef if $error =~ /^Can't locate/;
+    $error = undef if ($error && $error =~ /^Can't locate/);
   }
   
   return ($module, $error);
