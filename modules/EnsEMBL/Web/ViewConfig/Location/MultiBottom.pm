@@ -17,6 +17,8 @@ limitations under the License.
 
 =cut
 
+#TODO
+
 package EnsEMBL::Web::ViewConfig::Location::MultiBottom;
 
 use strict;
@@ -47,10 +49,8 @@ sub extra_tabs {
 
   return [
     'Select species or regions',
-    $hub->url('Component', {
-      action   => 'Web',
-      function => 'MultiSpeciesSelector/ajax',
-      time     => time,
+    $hub->url('MultiSelector', {
+      action   => 'MultiSpeciesSelector',
       %{$hub->multi_params}
     })
   ];

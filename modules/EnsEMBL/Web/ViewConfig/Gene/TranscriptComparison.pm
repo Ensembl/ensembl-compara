@@ -68,10 +68,8 @@ sub extra_tabs {
 
   return [
     'Select transcripts',
-    $hub->url('Component', {
-      'action'    => 'Web',
-      'function'  => 'TranscriptComparisonSelector/ajax',
-      'time'      => time,
+    $hub->url('MultiSelector', {
+      'action'    => 'TranscriptComparisonSelector',
       %{$hub->multi_params}
     })
   ];

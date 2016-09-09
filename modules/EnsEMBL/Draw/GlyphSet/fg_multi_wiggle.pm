@@ -346,14 +346,12 @@ sub _sublegend_links {
   my $self = shift;
  
   my $hub = $self->{'config'}->hub;
-  my $cell_type_url = $hub->url('Component', {
-            action   => 'Web',
-            function    => 'CellTypeSelector/ajax',
+  my $cell_type_url = $hub->url('MultiSelector', {
+            action   => 'CellTypeSelector',
             image_config => $self->{'config'}->type,
   });
-  my $evidence_url = $hub->url('Component', {
-            action => 'Web',
-            function => 'EvidenceSelector/ajax',
+  my $evidence_url = $hub->url('MultiSelector', {
+            action => 'EvidenceSelector',
             image_config => $self->{'config'}->type,
   });
 

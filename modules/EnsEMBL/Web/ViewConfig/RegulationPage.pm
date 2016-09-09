@@ -66,18 +66,14 @@ sub extra_tabs { # TODO - change old style Component urls
 
   return ([
     'Select cell types',
-    $hub->url('Component', {
-      'action'       => 'Web',
-      'function'     => 'CellTypeSelector/ajax',
+    $hub->url('MultiSelector', {
+      'action'       => 'CellTypeSelector',
       'image_config' => $self->image_config_type,
-      'time'         => time,
       %{$hub->multi_params}
     })], [
     'Select evidence',
-    $hub->url('Component', {
-      'action'   => 'Web',
-      'function' => 'EvidenceSelector/ajax',
-      'time'     => time,
+    $hub->url('MultiSelector', {
+      'action'   => 'EvidenceSelector',
       %{$hub->multi_params}
     })],
   );

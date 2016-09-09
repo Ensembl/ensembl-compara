@@ -51,16 +51,14 @@ sub regulation_content {
   }
 
   if(grep { $_ eq $context->{'image_config'} } qw(regulation_view)) {
-    my $cell_type_url = $self->hub->url('Component', {
+    my $cell_type_url = $self->hub->url('MultiSelector', {
       type => 'Regulation',
-      action   => 'Web',
-      function    => 'CellTypeSelector/ajax',
+      action   => 'CellTypeSelector',
       image_config => $context->{'image_config'},
     });
-    my $evidence_url = $self->hub->url('Component', {
+    my $evidence_url = $self->hub->url('MultiSelector', {
       type => 'Regulation',
-      action => 'Web',
-      function => 'EvidenceSelector/ajax',
+      action => 'EvidenceSelector',
       image_config => $context->{'image_config'},
     });
     $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });

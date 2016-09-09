@@ -204,9 +204,8 @@ sub evidence_button {
 
   my $n = keys %$ev;
   my $m = grep { $_->{'on'} } values %$ev;
-  my $url = $self->hub->url('Component', {
-    action => 'Web',
-    function => 'EvidenceSelector/ajax',
+  my $url = $self->hub->url('MultiSelector', {
+    action => 'EvidenceSelector',
   });
   
   push @{$self->{'buttons'}||=[]},{

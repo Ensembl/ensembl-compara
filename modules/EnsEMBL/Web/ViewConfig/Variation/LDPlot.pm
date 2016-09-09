@@ -54,10 +54,8 @@ sub extra_tabs { # TODO - fix the old style component link
 
   return [
     'Select populations',
-    $hub->url('Component', {
-      action   => 'Web',
-      function => 'SelectPopulation/ajax',
-      time     => time,
+    $hub->url('MultiSelector', {
+      action   => 'SelectPopulation',
       %{$hub->multi_params}
     })
   ];

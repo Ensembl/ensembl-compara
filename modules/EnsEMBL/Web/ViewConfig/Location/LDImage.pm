@@ -52,10 +52,8 @@ sub extra_tabs {
 
   return [
     'Select populations',
-    $hub->url('Component', {
-      action   => 'Web',
-      function => 'SelectPopulation/ajax',
-      time     => time,
+    $hub->url('MultiSelectort', {
+      action   => 'SelectPopulation',
       %{$hub->multi_params}
     })
   ];
