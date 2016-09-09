@@ -26,6 +26,15 @@ use base qw(EnsEMBL::Web::Controller::Page);
 sub page_type { return $_[0]->action =~ /Output/ ? 'Dynamic' : 'Popup'; }
 sub request   { return $_[0]->action =~ /Output/ ? 'Export'  : 'Modal'; }
 
+sub parse_path_segments {
+  ## @override
+  ## type is same as the controller name
+  my $self = shift;
+
+  $self->{'type'} = 'DataExport';
+
+  ($self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments}, '', '', '', '');
+}
 
 sub init {
   my $self = shift;

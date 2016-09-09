@@ -28,7 +28,11 @@ package EnsEMBL::Web::Component::DataExport;
 
 use strict;
 
+use EnsEMBL::Web::Attributes;
+
 use base qw(EnsEMBL::Web::Component);
+
+sub export_options :Abstract;
 
 sub id {
   my $id = shift->SUPER::id(@_);
