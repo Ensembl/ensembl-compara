@@ -91,9 +91,16 @@ sub exception {
   ## To be used as an argument to &throw
   ## Creates and returns an Exception object
   ## @param (String) Exception type
-  ## @param (String) Exception message
+  ## @param (String) Exception message or Exception object
   ## @param (Mixed) Any data that needs to be passed to the code that will eventually handle this exception
   my ($type, $message, $data) = @_;
+
+  # if second argument is the exception object already
+  if (UNIVERSAL::isa($message, $EXCEPTION_BASE)) {
+    $message->type($type);
+    $message->data($data) if defined $data;
+    return $message;
+  }
 
   # if data is provided as second argument with no message
   ref $message and $data = $message and $message = '';

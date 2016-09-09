@@ -101,9 +101,13 @@ sub message {
 }
 
 sub data {
-  ## Gets the data saved with the Exception
+  ## Gets/Sets the data saved with the Exception
   ## @return whatever was saved in the 'data' key
-  return shift->{'_data'};
+  my $self = shift;
+
+  $self->{'_data'} = $_[0] if @_;
+
+  return $self->{'_data'};
 }
 
 sub stack_trace_array {
