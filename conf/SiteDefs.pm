@@ -342,7 +342,7 @@ our $OBJECT_TO_CONTROLLER_MAP = {
   UserData            => 'Modal',
   Help                => 'Modal',
 };
-our $ALLOWED_URL_CONTROLLERS = [qw(Ajax Component ComponentAjax Config CSS DataExport Download Export ImageExport Json Psychic Share ZMenu)];
+our $ALLOWED_URL_CONTROLLERS = [qw(Ajax Component ComponentAjax Config CSS DataExport Download Export ImageExport Json MultiSelector Psychic Share ZMenu)];
 our $OBJECT_PARAMS = [
   [ 'Phenotype'           => 'ph'  ],
   [ 'Location'            => 'r'   ],
