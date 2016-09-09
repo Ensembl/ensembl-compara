@@ -42,7 +42,8 @@ sub init {
   
   if ($hub->script eq 'Config') {
     my $action       = $hub->action;
-    my $image_config = $hub->get_imageconfig($hub->get_viewconfig($action)->image_config_type);
+    my $image_config = $hub->get_viewconfig($action)->image_config_type;
+       $image_config = $hub->get_imageconfig($image_config) if $image_config;
     my $rel          = "modal_config_$action";
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->get_parameter('multi_species') && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
 
