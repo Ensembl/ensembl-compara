@@ -56,7 +56,7 @@ sub form_fields {
   my $markup  = $self->get_markup_options({'no_snp_link' => 1});
   my $fields  = {};
 
-  $fields->{$_} = $markup_options->{$_} for $self->field_order;
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }
