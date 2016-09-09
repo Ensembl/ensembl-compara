@@ -51,7 +51,7 @@ sub init_cacheable {
     information
   ));
 
-  if (my $gencode_version = $sd->GENCODE_VERSION || {}) {
+  if (my $gencode_version = $sd->GENCODE_VERSION || "") {
     $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
       labelcaption  => "Genes (Basic set from $gencode_version)",
       display       => 'off',
