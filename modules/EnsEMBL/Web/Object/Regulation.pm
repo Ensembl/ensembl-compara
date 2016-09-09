@@ -335,9 +335,9 @@ sub all_epigenomes {
 ################ Calls for Feature in Detail view ###########################
 
 sub get_focus_set_block_features {
-  my ($self, $slice) = @_;
+  my ($self, $slice, $opt_focus) = @_;
 
-  return unless $self->hub->param('opt_focus') eq 'yes';
+  return unless $opt_focus eq 'yes';
 
   my (%data, %colours);
 
