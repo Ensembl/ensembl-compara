@@ -37,7 +37,7 @@ sub content {
   my $object = $self->object || $self->hub->core_object('regulation'); 
   my $Configs;
 
-  my $context      = $object->param( 'context' ) || 200; 
+  my $context      = $self->param( 'context' ) || 200;
   my $object_slice = $object->get_bound_context_slice($context);
      $object_slice = $object_slice->invert if $object_slice->strand < 1;
 
@@ -46,7 +46,7 @@ sub content {
     'container_width'   => $object_slice->length,
     'image_width',      => $self->image_width || 800,
     'slice_number',     => '1|1',
-    'opt_highlight'    => $object->param('opt_highlight')
+    'opt_highlight'     => $self->param('opt_highlight') || ''
   });
 
   my $focus_set_blocks = $object->get_focus_set_block_features($object_slice);
@@ -54,7 +54,7 @@ sub content {
     $wuc->{'focus'}->{'data'}->{'block_features'} = $focus_set_blocks;
   }
 
-  if ($object->param('opt_focus') eq 'yes'){ 
+  if ($self->param('opt_focus') eq 'yes') {
     my ($focus_set_blocks, $colours) = $object->get_focus_set_block_features($object_slice);
     $wuc->{'data_by_cell_line'}{'MultiCell'}{'core'}{'block_features'} = $focus_set_blocks;
     $wuc->{'data_by_cell_line'}{'colours'} = $colours; 
