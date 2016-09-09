@@ -106,7 +106,7 @@ sub get_go_list {
   my $dbname_to_match = shift || join '|', @$ontologies;
   my $ancestor=shift;
   my $gene = $self->gene;
-  my $goadaptor = $self->hub->get_databases('go')->{'go'};
+  my $goadaptor = $self->hub->database('go');
 
   my @goxrefs = @{$gene->get_all_DBLinks};
   my @my_transcripts= @{$self->Obj->get_all_Transcripts};
@@ -335,7 +335,7 @@ sub count_go {
     if($go_name) {
       $go_name =~ s/,$//g;
 
-      my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+      my $goadaptor = $self->hub->database('go')->dbc;
 
       my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
 
@@ -1209,7 +1209,7 @@ sub store_TransformedSNPS {
 
   if ($have_so_terms) {
     # tva needs an ontology term adaptor to fetch by SO term
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   
     $method .= '_SO_terms';
 
@@ -1224,7 +1224,7 @@ sub store_TransformedSNPS {
 
   my $tvs;
   if (!$have_so_terms && $included_so ) {
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
     $tvs = $tva->fetch_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$included_so,1) ;
   } else {
     $tvs = $tva->$method($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,0, $included_so) ;
@@ -1276,7 +1276,7 @@ sub store_ConsequenceCounts {
     $included_so = $self->get_included_so_terms;
   }
 
-  $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
   my %conscounts;
 

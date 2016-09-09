@@ -116,7 +116,7 @@ sub getFakeMungedVariationFeatures {
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }
   my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);

@@ -140,7 +140,7 @@ sub _render_features {
 
           #add extra description only for GO (gene ontologies) which is determined by param gotype in url
           if($go) {
-            my $adaptor = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+            my $adaptor = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
             my $go_hash = $adaptor->fetch_by_accession($id);
             my $go_name = $go_hash->{name};
             $go_link    = $hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
@@ -423,7 +423,7 @@ sub _configure_Gene_table {
     #add extra description only for GO (gene ontologies) which is determined by param gotype in url
     my $go = $self->hub->param('gotype');
     if ( $go ) {
-      my $adaptor = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+      my $adaptor = $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
       my $go_hash = $adaptor->fetch_by_accession($id);
       my $go_name = $go_hash->{name};
       $go_link    = $self->hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
