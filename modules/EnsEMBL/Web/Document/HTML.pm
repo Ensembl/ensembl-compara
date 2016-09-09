@@ -22,7 +22,6 @@ package EnsEMBL::Web::Document::HTML;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file/;
 use LWP::UserAgent;
