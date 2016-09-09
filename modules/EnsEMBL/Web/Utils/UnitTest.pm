@@ -63,7 +63,7 @@ sub create_slice {
   return unless ($hub && $args->{'species'} && $args->{'cs_name'} && $args->{'cs_rank'} 
                   && $args->{'assembly'} && $args->{'seq_region_name'} && $args->{'start'});
 
-  $hub->species = $args->{'species'};
+  $hub->species($args->{'species'});
 
   my $db = $args->{'db'} || 'core';
 
