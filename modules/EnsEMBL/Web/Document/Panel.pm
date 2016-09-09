@@ -380,6 +380,7 @@ sub component_content {
     my ($code, $entry) = @$_;
     next unless @$entry;
     my ($module_name, $content_function) = split /\//, $entry->[0];
+    next unless $module_name;
     my $component;
     
     ### Attempt to require the Component module
