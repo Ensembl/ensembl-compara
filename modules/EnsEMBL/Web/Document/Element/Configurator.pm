@@ -108,7 +108,7 @@ sub init_config {
     $self->active($image_config->get_parameter('active_menu') || 'active_tracks');
   }
   
-  if (!$view_config->tree->get_node($self->active)) {
+  if (!$self->active || !$view_config->tree->get_node($self->active)) {
     my @nodes     = @{$view_config->tree->root->child_nodes};
     $self->active(undef);
     
