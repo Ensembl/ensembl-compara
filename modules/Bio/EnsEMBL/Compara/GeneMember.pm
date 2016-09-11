@@ -260,52 +260,46 @@ sub get_all_SeqMembers {
 }
 
 
+## Homology statistics
+
+sub _get_stat {
+    my ($self, $collection, $stat_name) = @_;
+    $collection = lc ($collection // 'default');
+    $self->{'_stats'} //= {};
+    unless ($self->{'_stats'}->{$collection}) {
+        $self->{'_stats'} = $self->adaptor->db->dbc->db_handle->selectall_hashref('SELECT * FROM gene_member_hom_stats WHERE gene_member_id = ?', 'collection', undef, $self->dbID);
+    }
+    return $self->{'_stats'}->{$collection}->{$stat_name};
+}
+
 sub number_of_families {
-  my ($self, $num_families) = @_;
-  if (defined $num_families) {
-      $self->{'_num_families'} = $num_families;
-  }
-  return $self->{'_num_families'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'families');
 }
 
 sub has_GeneTree {
-  my ($self, $has_genetree) = @_;
-  if (defined $has_genetree) {
-      $self->{'_has_genetree'} = $has_genetree;
-  }
-  return $self->{'_has_genetree'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'gene_trees');
 }
 
 sub has_GeneGainLossTree {
-  my ($self, $has_genegainlosstree) = @_;
-  if (defined $has_genegainlosstree) {
-      $self->{'_has_genegainlosstree'} = $has_genegainlosstree;
-  }
-  return $self->{'_has_genegainlosstree'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'gene_gain_loss_trees');
 }
 
 sub number_of_orthologues {
-  my ($self, $num_orthologues) = @_;
-  if (defined $num_orthologues) {
-      $self->{'_num_orthologues'} = $num_orthologues;
-  }
-  return $self->{'_num_orthologues'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'orthologues');
 }
 
 sub number_of_paralogues {
-  my ($self, $num_paralogues) = @_;
-  if (defined $num_paralogues) {
-      $self->{'_num_paralogues'} = $num_paralogues;
-  }
-  return $self->{'_num_paralogues'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'paralogues');
 }
 
 sub number_of_homoeologues {
-  my ($self, $num_homoeologues) = @_;
-  if (defined $num_homoeologues) {
-      $self->{'_num_homoeologues'} = $num_homoeologues;
-  }
-  return $self->{'_num_homoeologues'};
+    my ($self, $collection) = @_;
+    return $self->_get_stat($collection, 'homoeologues');
 }
 
 1;

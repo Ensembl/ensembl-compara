@@ -944,12 +944,6 @@ CREATE TABLE sequence (
 @column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
 @column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
 @column display_label         Display name (imported from the core database)
-@column families              The number of families associated with this member
-@column gene_trees            If this member is part of a gene tree
-@column gene_gain_loss_trees  If this member is part of a gene gain/loss tree
-@column orthologues           The number of orthologues for this member
-@column paralogues            The number of paralogues for this member
-@column homoeologues          The number of homoeologues for this member
 
 @see sequence
 */
@@ -969,14 +963,6 @@ CREATE TABLE gene_member (
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
-  `families`                 tinyint(1) unsigned default 0,
-  `gene_trees`               tinyint(1) unsigned default 0,
-  `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
-  `orthologues`              int(10) unsigned default 0,
-  `paralogues`               int(10) unsigned default 0,
-  `homoeologues`             int(10) unsigned default 0,
-
-
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -988,6 +974,40 @@ CREATE TABLE gene_member (
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
   KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table gene_member_hom_stats
+@desc  This table contains for each gene_member some statistics about the homology pipelines we've run
+@colour   #3CB371
+
+@column gene_member_id        External reference to gene_member_id in the @link gene_member table
+@column collection            Name of the collection this row of statistics refers to (usual values are "ensembl", "mouse", etc)
+@column families              The number of families associated with this member
+@column gene_trees            If this member is part of a gene tree
+@column gene_gain_loss_trees  If this member is part of a gene gain/loss tree
+@column orthologues           The number of orthologues for this member
+@column paralogues            The number of paralogues for this member
+@column homoeologues          The number of homoeologues for this member
+
+@see gene_member
+*/
+
+CREATE TABLE gene_member_hom_stats (
+  gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
+  collection                  varchar(40) NOT NULL,
+  `families`                 int(10) unsigned NOT NULL default 0,
+  `gene_trees`               tinyint(1) unsigned NOT NULL default 0,
+  `gene_gain_loss_trees`     tinyint(1) unsigned NOT NULL default 0,
+  `orthologues`              int(10) unsigned NOT NULL default 0,
+  `paralogues`               int(10) unsigned NOT NULL default 0,
+  `homoeologues`             int(10) unsigned NOT NULL default 0,
+
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+
+  PRIMARY KEY (gene_member_id, collection)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 /**
