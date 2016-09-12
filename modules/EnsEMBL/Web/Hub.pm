@@ -153,7 +153,7 @@ sub init_session {
   $self->{'session'} = EnsEMBL::Web::Session->new($self);
 }
 
-sub init_session {
+sub init_user {
   ## Initialise user - to be implemented in user plugin
   $_[0]->{'user'} = undef;
 }
