@@ -716,7 +716,8 @@ sub _parse {
     ## Need to gather strain info for all species
     $name_lookup->{$config_packer->tree->{$species}{'SPECIES_COMMON_NAME'}} = $species;
     my $collection = $config_packer->tree->{$species}{'STRAIN_COLLECTION'};
-    if ($collection) {
+    my $strain_name = $config_packer->tree->{$species}{'SPECIES_STRAIN'};
+    if ($collection && $strain_name !~ /reference/) {
       if ($species_to_strains->{$collection}) {
         push @{$species_to_strains->{$collection}}, $species;
       }
