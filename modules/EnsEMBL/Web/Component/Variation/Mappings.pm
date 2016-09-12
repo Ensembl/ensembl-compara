@@ -271,7 +271,7 @@ sub content {
       my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
       my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
       my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
-      $trans_name .= ".".$trans->version if($trans->version); #transcript version, leave this here so that it doesn't overwrite trans_name before
+      $trans_name .= ".".$trans->version if($trans->version); # transcript version, leave this here so that it doesn't overwrite trans_name before
 
       my $row = {
         allele    => $allele,
@@ -468,12 +468,14 @@ sub render_tables {
 # Description : Returns $start-$end if they are defined, else 'n/a'
 # Returns  string
 sub _sort_start_end {
-  my ($self, $start, $end) = @_;
+  my ($self, $start, $end, $length) = @_;
   
   if ($start || $end) { 
     if ($start == $end) {
       return $start;
     } else {
+      $end   = $length if ($length && $length < $end);
+      $start = $length if ($length && $length < $start);
       return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {
@@ -994,10 +996,14 @@ sub _overlap_glyph {
     $f_s = 0;
   }
 
-  return '' unless $v_s <= $f_e && $v_e >= $f_s;
+  return '' unless $v_s <= $f_e && $v_e >= $f_s && ($v_s || $v_e);
 
   my $f_length = ($f_e > $f_s) ? $f_e - $f_s + 1 : $f_s - $f_e + 1;
+ 
+  $v_s = 1 if (!$v_s);
+  $v_e = $f_length if ($f_length == ($v_e - 1));
   my $var_pos  = ($v_s == $v_e) ? $v_s : "$v_s-$v_e";
+     $var_pos  = 1 if ((!$var_pos || $var_pos eq '') && ($v_s || $v_e));
 
   my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $colour);
   $html .= $glyph if ($glyph);
@@ -1019,7 +1025,7 @@ sub _overlap_glyph_label {
     $end   = 1 if (!$end);
   }
 
-  my $pos   = $self->_sort_start_end($start, $end);
+  my $pos   = $self->_sort_start_end($start, $end, $length);
   my $range = ($pos ne '-') ? qq{<span class="small"> (out of $length)</span>} : '';
      $range = "<br />$range" if (length($pos) > 6);
 
