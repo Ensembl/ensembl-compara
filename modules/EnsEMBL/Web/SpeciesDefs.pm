@@ -219,6 +219,27 @@ sub valid_species {
   return @valid_species;
 }
 
+
+sub reference_species {
+  ### Filters the list of species to reference only, i.e. no secondary strains 
+  ### Returns: array of species names
+  my $self          = shift;
+  my @valid_species   = $self->{'_valid_species'} ? @{$self->{'_valid_species'}}
+                                                  : $self->valid_species;
+  return unless scalar @valid_species;
+
+  my @ref_species;
+  foreach (@valid_species) {
+    my $strain = $self->get_config($_, 'SPECIES_STRAIN');
+    if (!$strain || ($strain && $strain =~ /reference/)) {
+      push @ref_species, $_;
+    }
+  }
+
+  return @ref_species;
+}
+
+
 sub species_full_name {
   ### a
   ### returns full species name from the short name
