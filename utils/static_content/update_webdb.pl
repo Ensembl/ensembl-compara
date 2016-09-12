@@ -48,12 +48,12 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBHub;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 print "\n\n";
 
-my $hub = new EnsEMBL::Web::Hub;
+my $hub = EnsEMBL::Web::DBHub->new;
 my $sd  = $hub->species_defs;
 
 # Check database to see if this release is included already, then

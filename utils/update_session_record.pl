@@ -33,11 +33,11 @@ BEGIN {
   
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
-  require EnsEMBL::Web::Hub;
+  require EnsEMBL::Web::SpeciesDefs;
 }
 
 my $time  = Time::HiRes::time;
-my $sd    = EnsEMBL::Web::Hub->new->species_defs;
+my $sd    = EnsEMBL::Web::SpeciesDefs->new;
 my $db    = $sd->session_db;
 
 my $dsn = sprintf(
