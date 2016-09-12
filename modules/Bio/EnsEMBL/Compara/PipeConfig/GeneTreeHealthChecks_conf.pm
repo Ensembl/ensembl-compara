@@ -127,6 +127,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'species_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'    => '#db_conn#',
+            },
             -flow_into  => {
                 2 => [ 'hc_members_per_genome', 'hc_pafs' ],
             },
