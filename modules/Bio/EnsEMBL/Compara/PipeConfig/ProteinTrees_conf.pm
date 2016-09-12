@@ -987,17 +987,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'reset_gene_member_counters' ],
-            },
-        },
-
-        {   -logic_name => 'reset_gene_member_counters',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [  'UPDATE gene_member SET families = 0, gene_trees = 0, gene_gain_loss_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE genome_db_id = #genome_db_id#' ],
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
                 1 => [ 'other_sequence_table_reuse' ],
             },
         },
@@ -1740,17 +1729,9 @@ sub core_pipeline_analyses {
                     ELSE 'build_HMM_factory',
                 ),
                 WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-                'write_member_counts',
                 WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
             ],
             %hc_analysis_params,
-        },
-
-        {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
-            },
         },
 
         {   -logic_name     => 'write_stn_tags',

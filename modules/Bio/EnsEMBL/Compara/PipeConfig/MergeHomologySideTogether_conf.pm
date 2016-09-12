@@ -174,15 +174,6 @@ sub pipeline_analyses {
             -hive_capacity => 1,    # prevent several workers from updating the same table (brute force)
         },
 
-        {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -input_ids      => [{}],
-            -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
-            },
-            -wait_for       => [ 'generate_job_list', 'copy_table', 'merge_table' ],
-        },
-
     ];
 }
 

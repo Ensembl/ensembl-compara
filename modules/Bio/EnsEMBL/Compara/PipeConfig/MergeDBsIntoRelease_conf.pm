@@ -100,10 +100,6 @@ sub default_options {
         #    #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         #},
 
-        # When everything is copied and merged, apply the following scripts
-        'extra_sql_cmds'    => [
-            $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
-        ],
    };
 }
 
@@ -161,15 +157,6 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'pipeline_start',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ {} ],
-            -flow_into  => {
-                '1->A' => [ 'generate_job_list' ],
-                'A->1' => [ 'extra_cmd_list' ],
-            },
-        },
-
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck',
             -parameters => {
@@ -179,6 +166,7 @@ sub pipeline_analyses {
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
+            -input_ids  => [ {} ],
             -flow_into  => {
                 2      => [ 'copy_table'  ],
                 3      => WHEN(
@@ -265,26 +253,6 @@ sub pipeline_analyses {
                 ]
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-        },
-
-        {   -logic_name => 'extra_cmd_list',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'column_names' => [ 'sql_file' ],
-                'inputlist'    => $self->o('extra_sql_cmds'),
-            },
-            -flow_into => {
-                2 => [ 'extra_cmd_run' ],
-            },
-        },
-
-
-        {   -logic_name     => 'extra_cmd_run',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -parameters     => {
-                'db_conn'       => '#curr_rel_db#',
-                'input_file'    => '#sql_file#',
-            },
         },
 
     ];

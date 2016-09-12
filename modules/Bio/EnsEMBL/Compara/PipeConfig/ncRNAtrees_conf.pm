@@ -410,7 +410,7 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags', 'write_member_counts', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
+              -flow_into          => [ 'write_stn_tags', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
               %hc_params,
             },
 
@@ -426,13 +426,6 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
-            },
-        },
-
-        {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
             },
         },
 

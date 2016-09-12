@@ -614,7 +614,7 @@ sub pipeline_analyses {
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => WHEN (
-                    '#hmm_clustering#' => 'write_member_counts',
+                    '#hmm_clustering#' => 'warehouse_working_directory',
                     ELSE 'insert_redundant_peptides',
                 )
             },
@@ -659,17 +659,9 @@ sub pipeline_analyses {
                 'release'     => $self->o('ensembl_release'),
             },
             -flow_into => {
-                1 => [ 'write_member_counts' ],
+                1 => [ 'warehouse_working_directory' ],
             },
             -rc_name => '16GigMem',    # NB: make sure you give it enough memory or it will crash
-        },
-
-        {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
-            },
-            -flow_into => [ 'warehouse_working_directory' ],
         },
 
         {   -logic_name => 'warehouse_working_directory',
