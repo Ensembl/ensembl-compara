@@ -422,7 +422,8 @@ sub configure {
     $self->filters = $node->get_data('filters');
     $template      = $node->get_data('template') || $configuration->default_template;
   }
-  $hub->template = $template || 'Legacy';  
+  $template ||= 'Legacy';  
+  $hub->template($template);
 
   if ($hub->object_types->{$hub->type}) {
     $hub->components = $configuration->get_configurable_components($node);
