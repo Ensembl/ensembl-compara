@@ -37,7 +37,7 @@ sub create_hub {
   my ($args) = @_;
   ## Prevent webcode from spewing out its progress during Hub creation
   local $SIG{__WARN__} = sub {};
-  my $hub   = EnsEMBL::Web::Hub->new(undef, $args);
+  my $hub   = EnsEMBL::Web::Hub->new_for_test($args);
   ## Turn warnings back on
   local $SIG{__WARN__} = sub {
                               my $message = shift;
