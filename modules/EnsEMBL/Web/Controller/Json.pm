@@ -25,8 +25,6 @@ use warnings;
 use Apache2::RequestUtil;
 use JSON qw(to_json);
 
-use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Exceptions;
 
 use base qw(EnsEMBL::Web::Controller);
