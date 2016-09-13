@@ -265,7 +265,7 @@ sub make_table {
 
   my @exclude;
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
-  push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
+  push @exclude,'HGVS' unless $self->param('hgvs') eq 'on';
   if($is_lrg) {
     push @exclude,'Transcript';
   } else {
@@ -637,7 +637,7 @@ sub variation_table {
               polyphen_sort  => $polys->[0],
               polyphen_class => $polys->[1],
               polyphen_value => $polys->[2],
-              HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
+              HGVS       => $self->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
             };
             $row = { %$row, %$more_row };
           }

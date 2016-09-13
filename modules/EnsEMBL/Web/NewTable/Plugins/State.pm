@@ -51,7 +51,7 @@ sub activity_save_orient {
   my %args    = ( type => 'Newtable', code => $config->class );
 
   # Sequence check
-  my %data_in = %{$session->get_data(%args) || {}};
+  my %data_in = %{$session->get_record_data(\%args)};
   my $old_seq = $data_in{'seq'}||-1;
   my $new_seq = $hub->param('seq')||0;
 
@@ -64,8 +64,9 @@ sub activity_save_orient {
   };
   warn "$@\n" if $@;
 
-  $session->purge_data(%args);
-  $session->set_data(%args, %data) if scalar keys %data;
+  $session->set_record_data({%args, %data}) if scalar keys %data;
+
+  return {};
 }
 
 sub activity_load_orient {
@@ -73,7 +74,7 @@ sub activity_load_orient {
 
   my $hub = $self->hub;
   my %args    = ( type => 'Newtable', code => $config->class );
-  my $out = $hub->session->get_data(%args) || {};
+  my $out = $hub->session->get_record_data(\%args);
   return { orient => JSON->new->decode($out->{'orient'})||{} };
 }
 
