@@ -23,49 +23,26 @@ package EnsEMBL::Web::Controller::Psychic;
 ### based on analysis of the search string!
 
 use strict;
+use warnings;
 
-use Apache2::RequestUtil;
-use CGI;
 use URI::Escape qw(uri_escape);
 
-use EnsEMBL::Web::Hub;
+use parent qw(EnsEMBL::Web::Controller);
 
-use base qw(EnsEMBL::Web::Controller);
+sub process {
+  my $self = shift;
 
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $input = CGI->new;
- 
-  my $hub = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    input          => $input,
-    session_cookie => $args->{'session_cookie'}
-  });
-  
-  my $self = {
-    r     => $r,
-    input => $input,
-    hub   => $hub,
-    %$args
-  };
-  
-  bless $self, $class;
-  
-  if ($hub->action eq 'Location') {
+  if ($self->action eq 'Location') {
     $self->psychic_gene_location;
   } else {
     $self->psychic;
   }
-  
-  return $self;
 }
 
 sub psychic {
   my $self          = shift;
   my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
+  my $species_defs  = $self->species_defs;
   my $site_type     = lc $species_defs->ENSEMBL_SITETYPE;
   my $script        = 'Search/Results';
   my %sp_hash       = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
@@ -73,7 +50,7 @@ sub psychic {
   my $index         = $hub->param('idx')  || undef;
   my $query         = $hub->param('q');
   my $sp_param      = $hub->param('species');
-  my $species       = $sp_param || ($hub->species !~ /^(common|multi)$/i ? $hub->species : undef);
+  my $species       = $sp_param || $hub->species;
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
   my ($url, $site);
 
@@ -90,9 +67,9 @@ sub psychic {
   push @extra,"facet_feature_type=Documentation" if $species eq 'help';
   $species = undef if $dest_site =~ /_all/ or $species eq 'help';
 
-  return $hub->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")                          if $dest_site eq 'ebi';
-  return $hub->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")                                      if $dest_site eq 'sanger';
-  return $hub->redirect("http://www.ensemblgenomes.org/search/eg/$query")                                            if $dest_site eq 'ensembl_genomes';
+  return $self->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")  if $dest_site eq 'ebi';
+  return $self->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")              if $dest_site eq 'sanger';
+  return $self->redirect("http://www.ensemblgenomes.org/search/eg/$query")                    if $dest_site eq 'ensembl_genomes';
 
   my $extra = '';
   if(@extra) {
@@ -114,7 +91,7 @@ sub psychic {
   }
 
   my $flag = 0;
-  my $index_t;
+  my $index_t = '';
 
   #if there is a species at the beginning of the query term then make a note in case we trying to jump to another location
   my ($query_species, $query_without_species);
@@ -133,7 +110,7 @@ sub psychic {
 
     if ($query =~ /^rs\d+$/) {
 
-      return $hub->redirect($site.$hub->url({
+      return $self->redirect($site.$hub->url({
         'species'   => $species || $query_species,
         'type'      => 'Variation',
         'action'    => 'Explore',
@@ -201,7 +178,7 @@ sub psychic {
       ## str.string..str.string
       ## str.string-str.string
       $jump_query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
-      $url   = $self->escaped_url("$species_path/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s", $1, $3);
+      $url   = $self->escaped_url("$species_path/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s", $1, $3); # TODO - get rid of jump_to_contig
       $flag  = 1;
     }
   }
@@ -253,7 +230,7 @@ sub psychic {
     $url .= join(";",map {; "$_=".$hub->param($_) } @params).$extra;
   }
 
-  $hub->redirect($site . $url);
+  $self->redirect($site . $url);
 }
 
 sub psychic_gene_location {
@@ -274,15 +251,16 @@ sub psychic_gene_location {
   } else {
     $url = $hub->referer->{'absolute_url'};
     
-    $hub->session->add_data(
+    $hub->session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'location_search',
       message  => 'The gene you searched for could not be found.'
-    );
+    });
+    $hub->session->store_records;
   }
   
-  $hub->redirect($url);
+  $self->redirect($url);
 }
 
 sub escaped_url {

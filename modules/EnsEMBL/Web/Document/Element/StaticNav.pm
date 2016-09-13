@@ -134,7 +134,7 @@ sub content {
   ## SEARCH -------------------------------------------
   
   if ($ENV{'HTTP_USER_AGENT'} !~ /Sanger Search Bot/) {
-    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/psychic';
+    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/Psychic';
     my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
     my $form                = EnsEMBL::Web::Form->new({ action => $search_url, method => 'get', skip_validation => 1, class => [ 'search-form', 'clear' ] });
     

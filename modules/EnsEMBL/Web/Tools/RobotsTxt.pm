@@ -49,7 +49,7 @@ sub create {
     push @lines, _lines("Disallow", qw(*/*view));
   
     #other misc views google bot hits
-    push @lines, _lines("Disallow", qw(/*/psychic));
+    push @lines, _lines("Disallow", qw(/*/Psychic));
   
     foreach my $row (('A'..'Z','a'..'z')){
       next if lc $row eq 's';
