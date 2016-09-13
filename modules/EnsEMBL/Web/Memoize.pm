@@ -174,7 +174,7 @@ sub _memoized {
   my $base;
   unless($impossible) {
     my $hex = hexkey($tag);
-    my $base = filebase($hex);
+    $base = filebase($hex);
     my ($found,$value) = _get_cached($base);
     warn "CACHE $name : hit=$found\n" if $SiteDefs::MEMOIZE_DEBUG;
     return $value if $found;
