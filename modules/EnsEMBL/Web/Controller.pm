@@ -48,6 +48,14 @@ sub type          :Accessor;
 sub action        :Accessor;
 sub function      :Accessor;
 sub sub_function  :Accessor;
+sub page_type     :Accessor;
+sub request       :Accessor;
+sub renderer_type :Accessor;
+sub init          :Abstract;
+
+sub node          :lvalue { $_[0]->{'node'};          }
+sub command       :lvalue { $_[0]->{'command'};       }
+sub filters       :lvalue { $_[0]->{'filters'};       }
 
 sub new {
   ## @constructor
@@ -69,7 +77,7 @@ sub new {
   my $self = bless {
     'r'             => $r,
     'species_defs'  => $species_defs,
-    'cache_debug'   => $species_defs->ENSEMBL_DEBUG_CACHE,
+    'cache_debug'   => $species_defs->ENSEMBL_DEBUG_CACHE || 0,
     'page_type'     => 'Dynamic',
     'renderer_type' => 'String',
     'species'       => $params->{'species'}       || '',
@@ -80,6 +88,7 @@ sub new {
     'action'        => '',
     'function'      => '',
     'sub_function'  => '',
+    'request'       => '',
     'errors'        => []
   }, $class;
 
@@ -100,6 +109,12 @@ sub process {
   $self->init;
   $hub->qstore_close;
   $hub->store_records_if_needed;
+}
+
+sub update_user_history {
+  ## Updates history record for the current session
+  ## Used by child classes only
+  #TODO
 }
 
 sub query_form {
@@ -280,19 +295,19 @@ sub renderer {
 sub page {
   my $self       = shift;
   my $outputtype = $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/ ? 'search_bot' : shift;
-  
+
   if (!$self->{'page'}) {
     my $document_module = 'EnsEMBL::Web::Document::Page::' . $self->page_type;
-    
+
     ($self->{'page'}) = $self->_use($document_module, {
-      input        => $self->input,
-      hub          => $self->hub, 
-      species_defs => $self->species_defs, 
+      input        => $self->hub->input,
+      hub          => $self->hub,
+      species_defs => $self->species_defs,
       renderer     => $self->renderer,
       outputtype   => $outputtype
     });
   }
-  
+
   return $self->{'page'};
 }
 
@@ -346,63 +361,30 @@ sub referer {
   return $self->{'referer'};
 }
 
-sub _parse_query_form {
-  ## @private
-  my $query = shift;
-
-  my $q = {};
-  my @p = URI->new(sprintf '?%s', $query)->query_form;
-
-  while (my ($key, $val) = splice @p, 0, 2) {
-    next if $key eq 'time' || $key eq '_'; # ignore params added to clear browser cache by the frontend - they don't clear any backend cache
-    push @{$q->{$key}}, $val;
-  }
-
-  return $q;
-}
-
-sub init {}
-
-sub update_user_history {} # stub for users plugin
-
-sub OBJECT_PARAMS { return $_[0]->object_params;      }
-sub input         { return $_[0]->hub->input;         }
-sub errors        { return $_[0]->{'errors'};         }
-sub object        { return $_[0]->builder->object;    }
-sub page_type     { return $_[0]->{'page_type'};      }
-sub renderer_type { return $_[0]->{'renderer_type'};  }
-sub request       { return undef;                     }
-sub node          :lvalue { $_[0]->{'node'};          }
-sub command       :lvalue { $_[0]->{'command'};       }
-sub filters       :lvalue { $_[0]->{'filters'};       }
-
 sub configuration {
+  ## Initialises and returns the Configuration object for the request
+  ## @return EnsEMBL::Web::Configuration subclass instance
   my $self = shift;
   my $hub  = $self->hub;
-  
-  if (!$self->{'configuration'}) {
-    my $conf = {
+
+  if (!exists $self->{'configuration'}) {
+
+    my $module;
+
+    try {
+      $module = dynamic_require('EnsEMBL::Web::Configuration::' . $hub->type);
+    } catch {
+      throw $_ unless $_->type eq 'ModuleNotFound';
+    };
+
+    $self->{'configuration'} = $module ? $module->new($self->page, $hub, $self->builder, {
       default      => undef,
       action       => undef,
       configurable => 0,
       page_type    => $self->page_type
-    };
-    
-    my $module_name = 'EnsEMBL::Web::Configuration::' . $hub->type;
-    my ($configuration, $error) = $self->_use($module_name, $self->page, $hub, $self->builder, $conf);
-    
-    if ($error) {
-      # Handle "use" failures gracefully, but skip "Can't locate" errors
-      $self->add_error( 
-        'Configuration module compilation error',
-        '<p>Unable to use Configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>',
-        $module_name, $error
-      );
-    }
-    
-    $self->{'configuration'} = $configuration;
+    }) : undef;
   }
-  
+
   return $self->{'configuration'};
 }
 
@@ -415,7 +397,7 @@ sub configure {
   $assume_valid = 1 if $hub->script eq 'Component';
   my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function,$assume_valid));
   my $template;
-  
+
   if ($node) {
     $self->node    = $node;
     $self->command = $node->get_data('command');
@@ -426,12 +408,12 @@ sub configure {
   $hub->template($template);
 
   if ($hub->object_types->{$hub->type}) {
-    $hub->components($configuration->get_configurable_components($node));
+    $hub->add_components(@{$configuration->get_configurable_components($node)});
   } elsif ($self->request eq 'modal') {
     my $referer     = $self->referer;
 
     if ($referer->{'ENSEMBL_TYPE'} && (my $module_name = dynamic_require("EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}", 1))) {
-      $hub->components($module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}));
+      $hub->add_components(@{$module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})});
     }
   }
 }
@@ -444,25 +426,25 @@ sub render_page {
   my $elements = $page->elements;
   my @order    = map $_->[0], @{$page->head_order}, @{$page->body_order};
   my $content  = {};
-  
+
   foreach my $element (@order) {
     my $module = $elements->{$element};
     $module->init($self) if ($module && $module->can('init'));
   }
-  
+
   foreach my $element (@order) {
     my $module = $elements->{$element};
     $content->{$element} = $module->$func() if $module && $module->can($func);
   }
-  
+
   my $page_content = $page->render($content);
-  
+
   $self->set_cached_content($page_content) if $self->page_type =~ /^(Static|Dynamic)$/ && $page->{'format'} eq 'HTML' && !$self->hub->has_a_problem;
 }
 
 sub add_error {
  ### Wrapper for add_panel
- 
+
  my ($self, $caption, $template, @content) = @_;
  my $error = $self->_format_error(pop @content);
  push @{$self->errors}, EnsEMBL::Web::Document::Panel->new(caption => $caption, content => sprintf($template, @content, $error));
@@ -478,7 +460,7 @@ sub save_config {
   my $overwrite = $hub->param('overwrite');
      $overwrite = undef unless exists $configs->{$overwrite}; # check that the overwrite id belongs to this user
   my (%existing, $existing_config);
-  
+
   if ($overwrite) {
     foreach my $id ($overwrite, $configs->{$overwrite}{'link_key'} || ()) {
       $existing{$configs->{$id}{'type'}} = { config_key => $id };
@@ -488,22 +470,22 @@ sub save_config {
   }
 
   my $record_type_ids = delete $params{'record_type_ids'};
-  
+
   foreach my $record_type_id (ref $record_type_ids eq 'ARRAY' ? @$record_type_ids : $record_type_ids) {
     my (@links, $saved_config);
-    
+
     foreach (qw(view_config image_config)) {
       ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
- 
+
       my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, record_type_id => $record_type_id, data => $adaptor->get_config($_, $params{'code'}));
-      
+
       push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_keys => $params{'set_keys'} };
-      
+
       if ($deleted) {
         push @{$existing_config->{'deleted'}}, $deleted;
       } elsif ($saved) {
         my $conf = $configs->{$saved};
-        
+
          # only provide one saved entry for a linked pair
         $saved_config ||= {
           value => $saved,
@@ -512,33 +494,48 @@ sub save_config {
         };
       }
     }
-    
+
     push @{$existing_config->{'saved'}}, $saved_config if $saved_config;
-    
+
     $adaptor->link_configs(@links);
   }
-  
+
   $existing_config->{'saved'} = [ grep !$configs->{$_->{'value'}}{'link_key'}, @{$existing_config->{'saved'}} ] if $overwrite;
-  
+
   return $existing_config;
+}
+
+sub _parse_query_form {
+  ## @private
+  my $query = shift;
+
+  my $q = {};
+  my @p = URI->new(sprintf '?%s', $query)->query_form;
+
+  while (my ($key, $val) = splice @p, 0, 2) {
+    next if $key eq 'time' || $key eq '_'; # ignore params added to clear browser cache by the frontend - they don't clear any backend cache
+    push @{$q->{$key}}, $val;
+  }
+
+  return $q;
 }
 
 sub _use {
   ### Wrapper for EnsEMBL::Root::dynamic_use.
   ### Returns either a newly created module or the error detailing why the new function failed.
   ### Skips "Can't locate" errors - these come from trying to use non-existant modules in plugin directories and can be safely ignored.
-  
+
   my $self        = shift;
   my $module_name = shift;
-  
+
   my $module = $self->dynamic_use($module_name) && $module_name->can('new') ? $module_name->new(@_) : undef;
   my $error;
-  
+
   if (!$module) {
     $error = $self->dynamic_use_failure($module_name);
     $error = undef if ($error && $error =~ /^Can't locate/);
   }
-  
+
   return ($module, $error);
 }
 
@@ -552,5 +549,13 @@ sub DESTROY {
   Bio::EnsEMBL::Registry->disconnect_all;
   $_->disconnect || warn $_->errstr for @HANDLES_TO_DISCONNECT;
 }
+
+
+
+sub OBJECT_PARAMS :Deprecated('use object_params') { return  $SiteDefs::OBJECT_PARAMS; }
+sub input         :Deprecated('use hub->input')    { return $_[0]->hub->input;    }
+sub errors        :Deprecated('Use EnsEMBL::Web::Exceptions for error handling') { return $_[0]->{'errors'}; }
+sub object        :Deprecated('Use builder->object') { return $_[0]->builder->object; }
+
 
 1;

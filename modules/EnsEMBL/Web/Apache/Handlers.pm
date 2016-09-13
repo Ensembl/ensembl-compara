@@ -154,12 +154,12 @@ sub stable_id_redirect_uri {
       } elsif ($object_type eq 'Family') {
         $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
       } else {
-        $uri .= "psychic?q=$stable_id";
+        $uri .= "Psychic?q=$stable_id";
       }
     }
   }
 
-  return $uri || "/Multi/psychic?q=$stable_id";
+  return $uri || "/Multi/Psychic?q=$stable_id";
 }
 
 sub parse_ensembl_uri {

@@ -43,7 +43,7 @@ sub create {
  <Tags>Ensembl genome browser %s %%s</Tags>
  <Image width="16" height="16" type="image/png">%s%%s</Image>
  <Url type="text/html"
-      template="%s/%%s/psychic?q={searchTerms};site=%%s"/>
+      template="%s/%%s/Psychic?q={searchTerms};site=%%s"/>
 </OpenSearchDescription>
 ', 
   $sd->ENSEMBL_SITE_NAME_SHORT,
