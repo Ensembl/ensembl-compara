@@ -130,7 +130,7 @@ sub content {
     { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
     { key => 'goc_score',  align => 'left', width => '5%',  sort => 'html', label => 'GOC Score',  help => "Gene Order Conservation Score (values are 0-100)" },
     { key => 'wgac',  align => 'left', width => '5%',  sort => 'html', label => 'WGA Coverage',  help => "Whole Genome Alignment Coverage (values are 0-100)" },
-    { key => 'confidence',  align => 'left', width => '5%',  sort => 'string', label => 'High Confidence'},
+    { key => 'confidence',  align => 'left', width => '5%',  sort => 'html', label => 'High Confidence'},
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -254,7 +254,7 @@ sub content {
         'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
-        'Query %id'  => q{<span class="$query_class">}.sprintf('%.2f&nbsp;%%', $query).qq{</span>},
+        'Query %id'  => qq{<span class="$query_class">}.sprintf('%.2f&nbsp;%%', $query).qq{</span>},
         'goc_score'  => qq{<span class="$goc_class">$goc_score</span>},
         'wgac'       => qq{<span class="$wga_class">$wgac</span>},
         'confidence' => $confidence,
