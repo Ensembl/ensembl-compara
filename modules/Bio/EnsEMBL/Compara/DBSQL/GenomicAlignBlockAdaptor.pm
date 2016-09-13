@@ -131,6 +131,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Data::Dumper;
+use String::Escape qw( printable );
 use Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -1273,7 +1274,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $ref = $species_map{ $ref_gdb->dbID };
 
     my $hal_fh = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file)->hal_filehandle;
-    my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $dnafrag_adaptor);
+    my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $mlss, $dnafrag_adaptor);
 
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
@@ -1286,19 +1287,43 @@ sub _get_GenomicAlignBlocks_from_HAL {
       shift @hal_targets unless ( defined $hal_targets[0] );
       my $targets_str = join(',', @hal_targets);
       my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end );
+      # my $maf_file_str = encode("utf8", $maf_file);
+      # print "$maf_file_str\n\n";
+
+      # \cJ is a special control character synonymous to \n - remove it
+      # to prevent unintended newlines
+      # $maf_file_str =~ s/[^A-Za-z0-9_.+-]//g;
+
+      #my $maf_info = $self->_parse_maf( $maf_file_str );
+      #exit;
+
+      # $string =~ s/(.)/sprintf("%x",ord($1))/eg;
+      # print $string;
+      # print "\n\n";
+
+      # open(OUT, '>', "mmus.copy.maf");
+      # print OUT $maf_file_str;
+      # close OUT;
+
+      unless ( $maf_file_str =~ m/[A-Za-z]/ ){
+        print "MAF is empty!!\n";
+        return [];
+      }
+
+      # use open ':encoding(iso-8859-7)';
       open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
-      # print start_of_file($maf_file_str);
-      my $maf_io  = Bio::AlignIO->new(-fh => \*MAF, -format => 'maf');
+      my @maf_lines = <MAF>;
+      my $maf_info = $self->_parse_maf( \@maf_lines );
       
-      while (my $aln_block = $maf_io->next_aln()){
+      for my $aln_block ( @$maf_info ) {
         my $duplicates_found = 0;
         my %species_found;
+        my $block_len = $aln_block->[0]->{length};
 
-        next if ( $aln_block->length < $min_gab_len );
-        # print Dumper $aln_block if ( $gab_id_count == 70 );
+        next if ( $block_len <= $min_gab_len );
 
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
-          -length => $aln_block->length,
+          -length => $block_len,
           -method_link_species_set => $mlss,
           -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
           -dbID => $id_base + $gab_id_count,
@@ -1306,25 +1331,25 @@ sub _get_GenomicAlignBlocks_from_HAL {
         $gab_id_count++;
 
         my (@genomic_align_array, $ref_genomic_align);
-        foreach my $seq ($aln_block->each_seq) {
+        foreach my $seq (@$aln_block) {
           # find dnafrag for the region
-          #print "SEQ->DISPLAY_ID: " . $seq->display_id . "\n";
-          my ( $species_id, $chr ) = split(/\./, $seq->display_id);
+          my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           next if ( $chr =~ m/scaffold/ );
-          #print "SPECIES_ID: $species_id; CHR: $chr\n\n";
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
           my $seq_name = $self->_seq_region_ucsc_ensembl($chr, $this_gdb, $dnafrag_adaptor);
-          #print "dnafrag_adaptor->fetch_by_GenomeDB_and_name(" . $this_gdb->name . ", $seq_name)\n";
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $seq_name);
 
-          if ( $this_dnafrag->slice->length < $seq->end ) {
+          # when fetching by slice, input slice will be set as $dnafrag->slice, complete with start and end positions
+          # this can mess up subslicing down the line - reset it and it will be pulled fresh from the db
+          $this_dnafrag->{'_slice'} = undef; 
+
+          if ( $this_dnafrag->length < $seq->{end} ) {
             $self->warning('Ommitting ' . $this_gdb->name . ' from GenomicAlignBlock. Alignment position does not fall within the length of the chromosome');
-            print "slice len: " . $this_dnafrag->slice->length . "\tseq end: " . $seq->end . "\n";
             next;
           }
 
           # check length of genomic align meets threshold
-          next if ( abs( $seq->start - $seq->end ) + 1 < $min_ga_len );
+          next if ( abs( $seq->{start} - $seq->{end} ) + 1 < $min_ga_len );
 
           if ( !$duplicates_found ){
             my $species_name = $this_dnafrag->genome_db->name;
@@ -1337,19 +1362,23 @@ sub _get_GenomicAlignBlocks_from_HAL {
           
 
           # create cigar line
-          my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq);
+          my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->{seq});
 
           my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
             -genomic_align_block => $gab,
-            -aligned_sequence => $seq->seq, 
+            -aligned_sequence => $seq->{seq}, 
             -dnafrag => $this_dnafrag, 
-            -dnafrag_start => $seq->start,
-            -dnafrag_end => $seq->end,
-            -dnafrag_strand => $seq->strand,
+            -dnafrag_start => $seq->{start},
+            -dnafrag_end => $seq->{end},
+            -dnafrag_strand => $seq->{strand},
             -cigar_line => $this_cigar, 
             -dbID => $id_base + $ga_id_count,
             -visible => 1,
           );
+          $genomic_align->cigar_line($this_cigar);
+          $genomic_align->aligned_sequence( $seq->{seq} );
+          $genomic_align->genomic_align_block( $gab );
+          $genomic_align->dbID( $id_base + $ga_id_count );
           push( @genomic_align_array, $genomic_align );
           $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
           $ga_id_count++;
@@ -1360,30 +1389,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
         $gab->genomic_align_array(\@genomic_align_array);
         $gab->reference_genomic_align($ref_genomic_align);
 
-        # my $dstr = $duplicates_found ? 'yep' : 'nope';
-        # print "!!!!!!!!! duplicates_found?? $dstr\n";
-
         # check for duplicate species
         if ( $duplicates_found ) {
-            # print "--------ORIGINAL BLOCK------------\n";
-            # for my $g ( @{$gab->genomic_align_array} ) {
-            #     $g->_print;
-            # }
-
             my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
-
             my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
-            # print "--------SPLIT BLOCKS------------\n";
+
             foreach my $this_gab ( @$split_gabs ) {
                 $this_gab->adaptor($gab_adaptor);
                 $this_gab->dbID($id_base + $gab_id_count);
 
-                # for my $ga ( @{$this_gab->genomic_align_array} ) {
-                #     $ga->_print;
-                # }
-                # print "\n\n\n\n\n";
-
-                #$gab->_print;
                 push( @gabs, $this_gab );
                 $gab_id_count++;
             }
@@ -1392,6 +1406,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         }
 
       }
+      close MAF;
     }
 
     else { # pairwise alignment
@@ -1410,7 +1425,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
           my @blocks;
           if ( $target_seq_reg ){
-  	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $dnafrag_adaptor );
+  	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $mlss, $dnafrag_adaptor );
               @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
           }
           else {
@@ -1573,13 +1588,17 @@ sub _split_genomic_aligns {
         }
         $gab->genomic_align_array( \@pruned_ga_array );
     }
-    print "blocks are split!\n";
 
     return \@split_blocks;
 }
 
 sub _seq_region_ensembl_ucsc {
-    my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
+    my ( $self, $seq_reg, $gdb, $mlss, $dnafrag_adaptor ) = @_;
+
+    # first check if there are overriding synonyms in the mlss_tag table
+    my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
+    my %alt_synonyms = %{ eval $alt_syn_tag };
+    return $alt_synonyms{$gdb->dbID}->{$seq_reg} if ( defined $alt_synonyms{$gdb->dbID}->{$seq_reg} );
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name( $gdb, $seq_reg );
     my @external_dbs = ( 'UCSC', 'GenBank', 'INSDC' );
@@ -1590,23 +1609,6 @@ sub _seq_region_ensembl_ucsc {
         return $syns[0]->name if ( defined $syns[0] );
     }
     return "chr$seq_reg";
-
-    # my @syns = @{ $dnafrag->slice->get_all_synonyms('UCSC') };
-
-    # unless( defined $syns[0] ) {
-	   #  print "Can't find any UCSC synonyms for $seq_reg in " . $gdb->name . ".. Trying GenBank...\n";
-	   
-    #     @syns = @{ $dnafrag->slice->get_all_synonyms('GenBank') };
-    #     unless( defined $syns[0] ) {
-    #         print "Can't find any GenBank synonyms for $seq_reg in " . $gdb->name . ".. Trying INSDC...\n";
-            
-
-
-    #         return "chr" . $seq_reg; # !!! REMOVE: when all species have synonyms in core DBs
-    #     }
-    # }
-
-    # return $syns[0]->name;
 }
 
 sub _seq_region_ucsc_ensembl {
@@ -1623,6 +1625,33 @@ sub _seq_region_ucsc_ensembl {
     return $seq_reg;
 }
 
+# s    C57B6J.chr4     137467724       83      +       156508116       GTCTGAACCTGGGTATACAAAGTGATACATCTCTGGGACTGATGTATGTGAATCAGAGTGGGTCTATGAGTGATTCAGATCGT',
+
+sub _parse_maf {
+  my ($self, $maf_lines) = @_;
+
+  my @blocks;
+  my $x = 0;
+  for my $line ( @$maf_lines ) {
+    chomp $line;
+    push( @blocks, [] ) if ( $line =~ m/^a/ );
+
+    if ( $line =~ m/^s/ ) {
+      my %this_seq;
+      my @spl = split( /\s+/, $line );
+      $this_seq{display_id} = $spl[1];
+      $this_seq{start}      = $spl[2];
+      $this_seq{length}     = $spl[3];
+      $this_seq{strand}     = ($spl[4] eq '+') ? 1 : -1;
+      $this_seq{end}        = $spl[2] + $spl[3];
+      $this_seq{seq}        = $spl[6];
+      push( @{ $blocks[-1] }, \%this_seq );
+    }
+  }
+
+  return \@blocks;
+}
+
 # sub start_of_file {
 #   my $str = shift;
 #   my $no_lines = 10;
@@ -1633,6 +1662,18 @@ sub _seq_region_ucsc_ensembl {
 #     print $lines[$c] . "<br>";
 #     $c++;
 #   }
+# }
+
+# sub _text_to_hex {
+#   my $text = shift;
+#   $text =~ s/(.)/sprintf("%x",ord($1))/eg;
+#   return $text;
+# }
+
+# sub _hex_to_text {
+#   my $hex = shift;
+#   $hex =~ s/([a-fA-F0-9][a-fA-F0-9])/chr(hex($1))/eg;
+#   return $hex;
 # }
 
 1;

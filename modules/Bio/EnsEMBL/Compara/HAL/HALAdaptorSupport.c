@@ -300,7 +300,8 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, 0, &errStr );
     fclose (stream);
     
-    SV *maf = newSVpv(bp, strlen(bp));
+    //SV *maf = newSVpv(bp, strlen(bp));
+    SV *maf = newSVpvn(bp, size);
 
     Inline_Stack_Push(maf);
     halFreeSpeciesList(other_species);
@@ -308,5 +309,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     free(last);
     free(token);
     free(str_copy);
+    free(bp);
+    //free(size);
     Inline_Stack_Done;
 }

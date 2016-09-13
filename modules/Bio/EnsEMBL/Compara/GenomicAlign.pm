@@ -677,10 +677,9 @@ sub cigar_line {
   my ($self, $arg) = @_;
 
   my $debug = 0;
-  print "*CIGAR LINE SUB!!!!<br>" if ( $debug >= 2 );
 
   if (defined($arg)) {
-      print "setting new cigar...<br>" if ( $debug >= 1 );
+    print "setting new cigar...\n" if ( $debug >= 1 );
     if ($arg) {
       $self->{'cigar_line'} = $arg;
     } else {
@@ -691,19 +690,19 @@ sub cigar_line {
   } elsif (!defined($self->{'cigar_line'}) || $self->{'cigar_line'} eq '') {
     # Try to get the cigar_line from other sources...
       if ( $debug >= 1 ) {
-    	  print "trying to find cigar from elsewhere.......";
+    	  print "trying to find cigar from elsewhere.......\n";
     	  my $is_aln_seq = defined($self->{'aligned_sequence'}) ? "defined" : "undef";
-    	  print "aligned_sequence is $is_aln_seq .......<br>";
+    	  print "aligned_sequence is $is_aln_seq .......\n";
       }
     if (defined($self->{'aligned_sequence'})) {
         # ...from the aligned sequence
-	   print "aligned seq??<br>" if ( $debug >= 2 );
+	      print "from aligned_seq??\n" if ( $debug >= 2 );
         my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
         $self->cigar_line($cigar_line);
     
     } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
         # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-	   print "Trying to find cigar line in DB!!!!!!<db>" if ( $debug >= 2 );
+	   print "Trying to find cigar line in DB!!!!!!\n" if ( $debug >= 2 );
 	   $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
       warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->cigar_line".
@@ -712,7 +711,7 @@ sub cigar_line {
     }
   }
 
-  print "returning cigar: " . $self->{'cigar_line'} . "<br>" if ( $debug >= 2 );
+  print "returning cigar: " . $self->{'cigar_line'} . "\n" if ( $debug >= 2 );
 
   return $self->{'cigar_line'};
 }

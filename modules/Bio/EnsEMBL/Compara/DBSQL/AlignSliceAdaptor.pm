@@ -156,10 +156,6 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
           $reference_slice
       );
 
-  print STDERR "found " . scalar( @$genomic_align_blocks ) . " blocks........";
-  #$genomic_align_blocks->[0]->_print;
-  #print Dumper { "gabs from gblock adaptor::AlignSliceAdaptor::163" => $genomic_align_blocks };
-
   ## Remove all alignments not matching the target slice if any
   if (defined($target_slice)) {
     ## Get the DnaFrag for the target Slice
