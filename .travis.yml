@@ -13,7 +13,7 @@ addons:
     - apache2-prefork-dev
     - libdb4.6
     - libdb-dev
-    - libgd
+    - libgd-gd2-perl
 
 before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
