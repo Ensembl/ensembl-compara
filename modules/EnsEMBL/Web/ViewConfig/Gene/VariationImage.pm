@@ -20,14 +20,17 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::VariationImage;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Gene::VariationTable);
+use parent qw(EnsEMBL::Web::ViewConfig::Gene::VariationTable);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  $self->SUPER::init;
-  $self->add_image_config('gene_variation');
-  $self->set_defaults({ context => 100 });
+
+  $self->SUPER::init_cacheable(@_);
+  $self->image_config_type('gene_variation');
+  $self->set_default_options({ 'context' => 100 });
 }
 
 1;

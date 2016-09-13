@@ -1405,12 +1405,10 @@ sub get_alignment {
   my $command;
   if ($seq_type eq 'DNA') {
     $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln';
-    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
     `$command`;
     
     unless (open(OUT, "<$out_file")) {
       $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
-      warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
       `$command`;
     }
     
@@ -1419,7 +1417,6 @@ sub get_alignment {
     }
   } elsif ($seq_type eq 'PEP') {
     $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
-    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS;
     `$command`;
 
     unless (open(OUT, "<$out_file")) {

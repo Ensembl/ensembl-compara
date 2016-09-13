@@ -20,16 +20,21 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::MultiBottom;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
+use parent qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
+
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    sortable_tracks => 1,  # allow the user to reorder tracks
-    opt_lines       => 1,  # register lines
-    spritelib       => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
+    image_resizeable  => 1,
+    sortable_tracks   => 1,  # allow the user to reorder tracks
+    opt_lines         => 1,  # register lines
+    spritelib         => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
   my $sp_img_48 = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species/48'; # XXX make configurable
   if(-e $sp_img_48) {
@@ -46,26 +51,26 @@ sub init {
     transcript
     prediction
     dna_align_cdna
-    dna_align_est 
-    dna_align_rna 
-    dna_align_other 
+    dna_align_est
+    dna_align_rna
+    dna_align_other
     protein_align
     rnaseq
     simple
     misc_feature
-    variation 
-    somatic 
+    variation
+    somatic
     functional
     oligo
     repeat
     user_data
-    decorations 
-    information 
+    decorations
+    information
   ));
 
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
     display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
@@ -83,24 +88,23 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
-  
+
   # Add in additional tracks
   $self->load_tracks;
-  $self->image_resize = 1;
 
-  $self->add_tracks('sequence', 
+  $self->add_tracks('sequence',
     [ 'contig', 'Contigs',  'contig',   { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
     [ 'seq',    'Sequence', 'sequence', { display => 'normal', strand => 'b', description => 'Track showing sequence in both directions. Only displayed at 1Kb and below.', colourset => 'seq', threshold => 1, depth => 1 }],
   );
-  
+
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'nav',       '', 'navigation', { display => 'normal', strand => 'b', menu => 'no' }]
   );
-  
-  $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+
+  $_->set_data('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
 sub multi {
@@ -110,22 +114,22 @@ sub multi {
   my $primary_species = $self->hub->species;
   my $p               = $pos == $total && $total > 2 ? 2 : 1;
   my ($i, %alignments, @strands);
-  
+
   my $slice_summary = join(' ',map {
     join(':',$_->[0],$_->[1]->seq_region_name,$_->[1]->start,$_->[1]->end)
   } map { [$_->{'species'},$_->{'slice'}] } @$all_slices);
   foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
     next unless exists $multi_hash->{$db};
-    
+
     foreach (values %{$multi_hash->{$db}{'ALIGNMENTS'}}, @{$multi_hash->{$db}{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$sp}{$chr} || []}) {
       next unless $methods->{$_->{'type'}};
       next unless $_->{'class'} =~ /pairwise_alignment/;
       next unless $_->{'species'}{$sp} || $_->{'species'}{"$sp--$chr"};
-      
+
       my %align = %$_; # Make a copy for modification
-      
+
       $i = $p;
-      
+
       foreach (@slices) {
         if ($align{'species'}{$_->{'species'} eq $sp ? $_->{'species_check'} : $_->{'species'}} && !($_->{'species_check'} eq $primary_species && $sp eq $primary_species)) {
           $align{'order'} = $i;
@@ -133,20 +137,20 @@ sub multi {
           $align{'gene'}  = $_->{'g'};
           last;
         }
-        
+
         $i++;
       }
-      
+
       next unless $align{'order'};
-      
+
       $align{'db'} = lc substr $db, 9;
-      
+
       push @{$alignments{$align{'order'}}}, \%align;
-      
+
       $self->set_parameter('homologue', $align{'homologue'});
     }
   }
-  
+
   if ($pos == 1) {
     @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
   } elsif ($pos == $total) {
@@ -156,15 +160,15 @@ sub multi {
   } else {
     @strands = qw(r f); # Secondary species in the middle of the image
   }
-  
+
   # Double up for non primary species in the middle of the image
   $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
-  
+
   my $decorations = $self->get_node('decorations');
-  
+
   foreach (sort keys %alignments) {
     my $strand = shift @strands;
-    
+
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
 
@@ -205,31 +209,31 @@ sub multi {
 sub join_genes {
   my $self = shift;
   my ($pos, $total, @slices) = @_;
-  
+
   my ($prev_species, $prev_target, $next_species, $next_target) = map { $_->{'species'}, $_->{'target'} } @slices;
-  
+
   if (($pos == 1 && $total == 2) || ($pos == 2 && $total > 2)) {
      ($prev_species, $next_species) = ('', $prev_species);
      ($prev_target,  $next_target)  = ('', $prev_target);
   }
-  
+
   if ($pos > 2 && $pos < $total && $total > 3) {
     $next_species = $prev_species;
     $next_target  = $prev_target;
   }
-  
+
   foreach ($self->get_node('transcript')->nodes) {
-    $_->set('previous_species', $prev_species) if $prev_species;
-    $_->set('next_species',     $next_species) if $next_species;
-    $_->set('previous_target',  $prev_target)  if $prev_target;
-    $_->set('next_target',      $next_target)  if $next_target;
-    $_->set('join', 1);
+    $_->set_data('previous_species', $prev_species) if $prev_species;
+    $_->set_data('next_species',     $next_species) if $next_species;
+    $_->set_data('previous_target',  $prev_target)  if $prev_target;
+    $_->set_data('next_target',      $next_target)  if $next_target;
+    $_->set_data('join', 1);
   }
 }
 
 sub highlight {
   my ($self, $gene) = @_;
-  $_->set('g', $gene) for $self->get_node('transcript')->nodes; 
+  $_->set_data('g', $gene) for $self->get_node('transcript')->nodes;
 }
 
 1;

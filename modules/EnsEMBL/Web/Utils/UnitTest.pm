@@ -17,9 +17,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Utils::SetUpTest;
+package EnsEMBL::Web::Utils::UnitTest;
 
-## Create dummy objects for use in web tests
+## Create dummy objects for use in web unit tests
 
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Slice;
@@ -29,8 +29,22 @@ use EnsEMBL::Web::ImageConfig;
 
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(create_slice create_imageconfig create_trackconfig);
+our @EXPORT = our @EXPORT_OK = qw(create_hub create_slice create_imageconfig create_trackconfig);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
+
+
+sub create_hub {
+  my ($args) = @_;
+  ## Prevent webcode from spewing out its progress during Hub creation
+  local $SIG{__WARN__} = sub {};
+  my $hub   = EnsEMBL::Web::Hub->new_for_test($args);
+  ## Turn warnings back on
+  local $SIG{__WARN__} = sub {
+                              my $message = shift;
+                              print "$message\n";
+                              };
+  return $hub;
+}
 
 sub create_slice {
 ### @param hub - EnsEMBL::Web::Hub object
@@ -49,11 +63,9 @@ sub create_slice {
   return unless ($hub && $args->{'species'} && $args->{'cs_name'} && $args->{'cs_rank'} 
                   && $args->{'assembly'} && $args->{'seq_region_name'} && $args->{'start'});
 
-  $hub->species = $args->{'species'};
+  $hub->species($args->{'species'});
 
   my $db = $args->{'db'} || 'core';
-  my $adaptor = $hub->get_adaptor('get_CoordSystemAdaptor', $db);
-  return unless $adaptor;
 
   my $cs = Bio::EnsEMBL::CoordSystem->new(-NAME    => $args->{'cs_name'},
                                           -VERSION => $args->{'assembly'},
@@ -82,7 +94,7 @@ sub create_imageconfig {
   return unless ($slice && $hub);
   $args ||= {};
 
-  my $image_config = EnsEMBL::Web::ImageConfig->new($hub);
+  my $image_config = EnsEMBL::Web::ImageConfig->new($hub, $hub->species, $hub->type);
   return unless $image_config;
 
   ## Set up some sample values for our test image

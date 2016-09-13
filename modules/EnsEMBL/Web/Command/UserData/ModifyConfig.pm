@@ -153,7 +153,7 @@ sub mc_add_set {
   }
   
   my $set_id = $hub->config_adaptor->create_set(
-    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->create_session_id : $user ? $user->id : undef,
+    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->session_id : $user ? $user->id : undef,
     config_keys    => \@config_keys,
     %params
   );

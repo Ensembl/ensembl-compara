@@ -20,34 +20,39 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::ComparaOrthologs;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
-  my $self = shift;
-  $self->set_defaults({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
-  
-  $self->code  = 'Gene::HomologAlignment';
-  $self->title = 'Homologs';
+sub _new {
+  ## @override
+  my $self = shift->SUPER::_new(@_);
+
+  $self->{'code'} = 'Gene::HomologAlignment';
+
+  return $self;
 }
 
-sub form {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->add_fieldset('Selected species');
-  
-  my $species_defs = $self->species_defs;
-  my %species      = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
-  
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $_,
-      name  => 'species_' . lc $species{$_},
-      value => 'yes',
-      raw   => 1
-    });
-  }
+  $self->set_default_options({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
+
+  $self->title('Homologs');
+}
+
+sub field_order { } # no default fields
+sub form_fields { } # no default fields
+
+sub init_form {
+  ## @override
+  ## Fields are added according to species
+  my $self  = shift;
+  my $form  = $self->SUPER::init_form(@_);
+
+  $form->add_species_fieldset;
+
+  return $form;
 }
 
 1;

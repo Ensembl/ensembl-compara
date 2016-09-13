@@ -108,6 +108,7 @@ sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
   $self->_munge_file_formats;
+  $self->_munge_species_url_map;
 }
 
 # Implemented in plugins
@@ -1776,6 +1777,33 @@ sub _munge_file_formats {
   $self->tree->{'UPLOAD_FILE_FORMATS'} = \@upload;
   $self->tree->{'REMOTE_FILE_FORMATS'} = \@remote;
   $self->tree->{'DATA_FORMAT_INFO'} = \%formats;
+}
+
+sub _munge_species_url_map {
+  ## Used by apache handler to redirect requests to correct URLs for species
+  my $self        = shift;
+  my $multi_tree  = $self->full_tree->{'MULTI'};
+
+  return if $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'};
+
+  my $aliases = $multi_tree->{'SPECIES_ALIASES'} || {};
+
+  if (!keys %$aliases) {
+    warn "SPECIES_ALIASES has not been populated. This will not redirect aliases to correct species URLs.\n";
+    return;
+  }
+
+  my %species_map = (
+    %$aliases,
+    common        => 'common',
+    multi         => 'Multi',
+    perl          => $SiteDefs::ENSEMBL_PRIMARY_SPECIES,
+    map { lc($_)  => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %$SiteDefs::ENSEMBL_SPECIES_ALIASES
+  );
+
+  $species_map{lc $_} = $_ for values %species_map; # lower case species urls to the correct name
+
+  $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
 }
 
 1;

@@ -25,30 +25,14 @@ use warnings;
 use Apache2::RequestUtil;
 use JSON qw(to_json);
 
-use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Exceptions;
 
 use base qw(EnsEMBL::Web::Controller);
 
 sub new {
-  my $class     = shift;
-  my $r         = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args      = shift || {};
-  my $hub       = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
-
-  my $self      = bless {
-    r             => $r,
-    hub           => $hub,
-    cache         => $hub->cache,
-    type          => $hub->type,
-    action        => $hub->action,
-    function      => $hub->function,
-  }, $class;
+  my $self  = shift->SUPER::new(@_);
+  my $hub   = $self->hub;
+  my $r     = $self->r;
 
   $CGI::POST_MAX = $self->upload_size_limit; # Set max upload size
 
@@ -92,15 +76,6 @@ sub new {
   print sprintf $chunked ? '</head><body>%s</body></html>' : '%s', to_json($json);
 
   return $self;
-}
-
-sub builder {
-  my $self = shift;
-
-  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new({
-    hub               => $self->hub,
-    object_params     => $self->OBJECT_PARAMS
-  });
 }
 
 1;

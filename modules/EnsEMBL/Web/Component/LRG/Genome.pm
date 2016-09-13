@@ -46,7 +46,7 @@ sub content {
 
   my ($html, @all_features);
   
-  my $features = $self->builder->create_objects('Feature', 'lazy')->convert_to_drawing_parameters('LRG')->[0];
+  my $features = $self->builder->create_object('Feature')->convert_to_drawing_parameters('LRG')->[0];
   my $table    = $self->feature_tables($features);
   
   if ($chromosomes && scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {

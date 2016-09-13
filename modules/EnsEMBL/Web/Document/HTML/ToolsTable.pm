@@ -29,7 +29,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self    = shift;
-  my $hub     = EnsEMBL::Web::Hub->new;
+  my $hub     = $self->hub;
   my $sd      = $hub->species_defs;
   my $sp      = $sd->ENSEMBL_PRIMARY_SPECIES;
   my $img_url = $sd->img_url;

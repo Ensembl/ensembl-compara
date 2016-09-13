@@ -65,8 +65,6 @@ sub content {
   $image_config->set_parameter('single_Transcript' => $transcript->stable_id);
   $image_config->set_parameter('single_Gene'       => $object->gene->stable_id) if $object->gene;
 
-  $image_config->tree->dump('Tree', '[[caption]]') if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
-
   my $image = $self->new_image($slice, $image_config, []);
   
   return if $self->_export_image($image);

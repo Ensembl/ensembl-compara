@@ -20,14 +20,19 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::idhistoryview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
+
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    show_labels => 'no',
+    storable  => 0,
+    no_labels => 1,
   });
 
   $self->create_menus('idhistory');
@@ -37,8 +42,7 @@ sub init {
   $self->add_tracks('idhistory',
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
-  
-  $self->storable = 0;
+
 }
 
 1;

@@ -50,10 +50,11 @@ sub initialize_error {
   $self->include_navigation(1);
   
   $self->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
+    title           EnsEMBL::Web::Document::Element::Title
+    stylesheet      EnsEMBL::Web::Document::Element::Stylesheet
+    links           EnsEMBL::Web::Document::Element::Links
+    meta            EnsEMBL::Web::Document::Element::Meta
+    head_javascript EnsEMBL::Web::Document::Element::HeadJavascript
   ));
   
   $self->add_body_elements(qw(

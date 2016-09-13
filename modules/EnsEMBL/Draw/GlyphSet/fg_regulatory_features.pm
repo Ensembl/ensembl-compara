@@ -84,7 +84,7 @@ sub fetch_features {
     }
   }
 
-  if (scalar @$reg_feats) {
+  if (scalar @{$reg_feats||[]}) {
     my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
     my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
     foreach (@$reg_feats) {
@@ -159,7 +159,6 @@ sub tag {
   my $bound_end  = pop @loci;
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
- 
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
     push @result, {
@@ -187,43 +186,6 @@ sub tag {
   }
 
   return @result;
-}
-
-sub render_tag {
-  my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
-  
-  if ($tag->{'style'} eq 'fg_ends') {
-    my $f_start = $tag->{'start'} || $start;
-    my $f_end   = $tag->{'end'}   || $end;
-       $f_start = 1             if $f_start < 1;
-       $f_end   = $slice_length if $f_end   > $slice_length;
-       
-    $composite->push($self->Rect({
-      x         => $f_start - 1,
-      y         => $height / 2,
-      width     => $f_end - $f_start + 1,
-      height    => 0,
-      colour    => $tag->{'colour'},
-      absolutey => 1,
-      zindex    => 0
-    }), $self->Rect({
-      x       => $f_start - 1,
-      y       => 0,
-      width   => 0,
-      height  => $height,
-      colour  => $tag->{'colour'},
-      zindex => 1
-    }), $self->Rect({
-      x      => $f_end,
-      y      => 0,
-      width  => 0,
-      height => $height,
-      colour => $tag->{'colour'},
-      zindex => 1
-    }));
-  }
-  
-  return;
 }
 
 sub highlight {

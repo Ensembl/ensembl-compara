@@ -45,7 +45,7 @@ sub init_canvas {
 		$im_height * $self->{'sf'}
   );
 
-  $canvas->colorAllocate($config->colourmap->rgb_by_name($config->bgcolor()));
+  $canvas->colorAllocate($config->colourmap->rgb_by_name($config->get_parameter('bgcolor')));
   $self->canvas($canvas);
 }
 

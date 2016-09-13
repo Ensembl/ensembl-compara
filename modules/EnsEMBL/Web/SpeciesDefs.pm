@@ -105,7 +105,6 @@ sub new {
   my $self = bless({
     _start_time => undef,
     _last_time  => undef,
-    timer       => undef
   }, $class);
 
   my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
@@ -144,6 +143,8 @@ sub register_orm_databases {
 
   if (dynamic_require('ORM::EnsEMBL::Rose::DbConnection', 1)) { # ignore if ensembl-orm doesn't exist
 
+    $self->ENSEMBL_ORM_DATABASES->{'session'} = $self->session_db; # add session db to ORM
+
     while (my ($key, $value) = each %{$self->ENSEMBL_ORM_DATABASES}) {
 
       my $params = $value;
@@ -172,12 +173,11 @@ sub session_db {
   my $db   = $self->multidb->{'DATABASE_SESSION'};
 
   return {
-    'NAME'    => $db->{'NAME'},
-    'HOST'    => $db->{'HOST'},
-    'PORT'    => $db->{'PORT'},
-    'DRIVER'  => $db->{'DRIVER'}  || 'mysql',
-    'USER'    => $db->{'USER'}    || $self->DATABASE_WRITE_USER,
-    'PASS'    => $db->{'PASS'}    || $self->DATABASE_WRITE_PASS
+    'database'  => $db->{'NAME'},
+    'host'      => $db->{'HOST'},
+    'port'      => $db->{'PORT'},
+    'username'  => $db->{'USER'} || $self->DATABASE_WRITE_USER,
+    'password'  => $db->{'PASS'} || $self->DATABASE_WRITE_PASS
   };
 }
 
@@ -218,6 +218,27 @@ sub valid_species {
 
   return @valid_species;
 }
+
+
+sub reference_species {
+  ### Filters the list of species to reference only, i.e. no secondary strains 
+  ### Returns: array of species names
+  my $self          = shift;
+  my @valid_species   = $self->{'_valid_species'} ? @{$self->{'_valid_species'}}
+                                                  : $self->valid_species;
+  return unless scalar @valid_species;
+
+  my @ref_species;
+  foreach (@valid_species) {
+    my $strain = $self->get_config($_, 'SPECIES_STRAIN');
+    if (!$strain || ($strain && $strain =~ /reference/)) {
+      push @ref_species, $_;
+    }
+  }
+
+  return @ref_species;
+}
+
 
 sub species_full_name {
   ### a
@@ -519,7 +540,12 @@ sub _promote_general {
 
 sub _expand_database_templates {
   my ($self, $filename, $tree) = @_;
-  
+ 
+  ## NASTY HACK! Collapse strain names
+  if ($filename =~ /^([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)$/) {
+    $filename = sprintf '%s_%s_%s%s', $1, $2, $3, $4;
+  }
+ 
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
   my $USER   = $tree->{'general'}{'DATABASE_DBUSER'};    
@@ -769,23 +795,6 @@ sub _munge_colours {
     }
   }
   return $out;
-}
-
-sub timer {
-  ### Provides easy-access to the ENSEMBL_WEB_REGISTRY's timer
-  my $self = shift;
-  
-  if (!$self->{'timer'}) {
-    $self->dynamic_use('EnsEMBL::Web::RegObj');
-    $self->{'timer'} = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->timer;
-  }
-  
-  return $self->{'timer'};
-}
-
-sub timer_push {
-  my $self = shift;
-  return $self->timer->push(@_);
 }
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }

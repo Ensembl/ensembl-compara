@@ -133,8 +133,7 @@ Ensembl.LayoutManager.extend({
           if (Ensembl.dynamicWidth) {
             Ensembl.setWidth(undefined, true);
           }
-          
-          Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	
+
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {
@@ -315,9 +314,10 @@ Ensembl.LayoutManager.extend({
     var messageMD5  = messageDiv.children('input[name=md5]').val();
     var messageCol  = messageDiv.children('input[name=colour]').val();
     var expiryHours = parseInt(messageDiv.children('input[name=expiry]').val()) || 24;
+    var position    = (messageDiv.children('input[name=position]').val() || '').split(/\s+/);
 
     if (message && (!messageSeen || messageSeen !== messageMD5)) {
-      $(['<div class="tmp-message hidden ' + messageCol + '">',
+      $(['<div class="tmp-message hidden ' + $.makeArray($.map($.merge([messageCol], position), function(v) { return v ? 'tm-' + v : null; })).join(' ') + '">',
         '<div>' + message + '</div>',
         '<p><button>Close</button></p>',
         '</div>'

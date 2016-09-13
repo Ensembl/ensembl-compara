@@ -28,11 +28,19 @@ package EnsEMBL::Web::Component::DataExport;
 
 use strict;
 
+use EnsEMBL::Web::Attributes;
+
 use base qw(EnsEMBL::Web::Component);
 
-sub id {
-  my $id = shift->SUPER::id(@_);
-  return "DataExport_$id";
+sub export_options :Abstract;
+
+sub viewconfig {
+  ## @override
+  ## default type is not same as hub->type
+  my $self  = shift;
+  my $type  = shift || $self->hub->param('data_type');
+
+  return $self->SUPER::viewconfig($type);
 }
 
 sub create_form {
@@ -45,6 +53,11 @@ sub create_form {
 ### @return EnsEMBL::Web::Form
   my ($self, $settings, $fields_by_format, $tutorial) = @_;
   my $hub  = $self->hub;
+
+  # get user specified values for url/viewconfig
+  for (keys %$settings) {
+    $settings->{$_}{'value'} = $self->param($_);
+  }
 
   my $format_label = {
     'RTF'   => 'RTF (Word-compatible)',

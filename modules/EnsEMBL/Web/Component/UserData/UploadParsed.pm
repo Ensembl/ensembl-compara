@@ -55,33 +55,21 @@ sub content_ajax {
   my $code    = $hub->param('code');
   return unless $type && $code;
 
-  my ($data, $record);
+  my $data;
   if ($hub->user) {
-    my $plural = $type.'s';
-    foreach ($hub->user->$plural) {
-      if ($_->code eq $code) {
-        $record = $_;
-        $data   = {
-                  'code'    => $_->code,
-                  'name'    => $_->name,
-                  'format'  => $_->format,
-                  'species' => $_->species,
-                  };
-        last;
-      }
-    }
+    $data = $hub->user->get_record_data({type => $type, code => $code});
   }
 
   ## Can't find a user record - check session
-  unless ($data) {
-    $data = $hub->session->get_data(type => $type, code => $code);
+  unless (keys %{$data || {}}) {
+    $data = $hub->session->get_record_data({type => $type, code => $code});
   }
 
-  return unless $data;
-  
+  return unless keys %$data;
+
   my $format  = $data->{'format'};
   my $html;
-  
+
   unless ($format eq 'TRACKHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) { ## Don't give parsing message if this is a hub and we can't show it!
     if ($type eq 'url') {
       $html .= '<p>We cannot parse remote files to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
@@ -100,16 +88,9 @@ sub content_ajax {
         
         if ($nearest) {
 
-          if ($hub->user) {
-            $record->nearest($nearest);
-            $record->description($description) if $description;
-            $record->save;
-          }
-          else {
-            $data->{'nearest'}      = $nearest;
-            $data->{'description'}  = $description if $description;
-            $session->set_data(%$data);
-          }
+          $data->{'nearest'}      = $nearest;
+          $data->{'description'}  = $description if $description;
+          $session->set_record_data($data);
    
           if ($hub->param('count')) { 
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
@@ -179,7 +160,7 @@ sub content_ajax {
     }
   }
 
-  $session->configure_user_data($type, $data);
+  $hub->configure_user_data($type, $data);
 
   $html .= '<p>Close this window to return to current page</p>';
 

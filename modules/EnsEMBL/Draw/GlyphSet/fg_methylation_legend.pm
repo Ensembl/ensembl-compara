@@ -29,7 +29,7 @@ sub _init {
   my $self = shift;
 
   ## Hide if corresponding tracks are all off
-  my $node = $self->{'config'}{'_tree'}->get_node('functional_dna_methylation');
+  my $node = $self->{'config'}->get_node('functional_dna_methylation');
   return unless $node;
   my $show = 0;
   foreach ($node->descendants) {

@@ -37,11 +37,9 @@ use EnsEMBL::Web::Exceptions;
 use parent qw(EnsEMBL::Web::Document::Image);
 
 sub new {
-  my ($class, $hub, $component, $image_configs) = @_;
+  my ($class, $hub, $component, $image_configs, $args) = @_;
 
-  my $self = {
-    hub                => $hub,
-    component          => $component,
+  $args = {
     image_configs      => $image_configs || [],
     drawable_container => undef,
     centred            => 0,
@@ -55,15 +53,14 @@ sub new {
     button_name        => undef,
     button_id          => undef,
     format             => 'png',
+    %{$args || {}}
   };
 
   if ($image_configs) {
-    $self->{'toolbars'}{$_} = $image_configs->[0]->toolbars->{$_} for qw(top bottom);
+    $args->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
   }
 
-  bless $self, $class;
-
-  return $self;
+  return $class->SUPER::new($hub, $component, $args);
 }
 
 sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }
@@ -83,12 +80,13 @@ sub karyotype {
   my $chr_name;
 
   my $image_config = $hub->get_imageconfig($config_name);
+  my $component = $self->component;
   
   # set some dimensions based on number and size of chromosomes
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
     my $total_chrs = @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
-    my $rows       = $hub->param('rows') || ceil($total_chrs / 18);
-    my $chr_length = $hub->param('chr_length') || 200;
+    my $rows       = $component->param('rows') || ceil($total_chrs / 18);
+    my $chr_length = $component->param('chr_length') || 200;
        $chr_name   = 'ALL';
 
     if ($chr_length) {
@@ -407,7 +405,7 @@ sub track_boundaries {
   my $config          = $container->{'config'};
   my $spacing         = $config->get_parameter('spacing');
   my $top             = $config->get_parameter('margin') * 2 - $spacing;
-  my @sortable_tracks = grep { $_->get('display') ne 'off' } $config->get_sortable_tracks;
+  my @sortable_tracks = $config->get_sortable_tracks(1);
   my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
   my %strand_map      = ( f => 1, r => -1 );
   my @boundaries;
@@ -453,16 +451,15 @@ sub moveable_tracks {
   
   # Get latest uploaded user data to add highlight class
   my $last_uploaded_user_data_code = {};
+  my $userdata_upload_codes = $self->hub->session->records({'type' => 'userdata_upload_code'});
 
-  if ($self->hub->session->get_data(type => 'userdata_upload_code')) {
-    foreach my $hash ($self->hub->session->get_data(type => 'userdata_upload_code')) {
-      $last_uploaded_user_data_code->{$hash->{upload_code}} = 1;
-    }
+  for (@{$userdata_upload_codes}) {
+    $last_uploaded_user_data_code->{$_->{'upload_code'}} = 1;
   }
 
   # Purge this data so that it doesn't highlight second time.
-  $self->hub->session->purge_data(type => 'userdata_upload_code');
-  
+  $userdata_upload_codes->delete;
+
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
 
@@ -518,8 +515,8 @@ sub render {
 
   my $result = $image->write($content);
 
-  if (!$result->{'success'}) {
-    throw exception('WebException', $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
+  if (!$result || !$result->{'success'}) {
+    throw exception('WebException', $result && $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
   }
 
   if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
@@ -629,7 +626,6 @@ sub render {
   }
   
   $self->{'width'} = $image->width;
-  $self->hub->species_defs->timer_push('Image->render ending', undef, 'draw');
   
   return $html;
 }

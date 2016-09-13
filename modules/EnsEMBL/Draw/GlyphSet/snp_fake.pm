@@ -38,7 +38,7 @@ sub _init {
   
   my ($fontname, $fontsize)  = $self->get_font_details('innertext');
   my (undef, undef, $w, $th) = $self->get_text_width(0, 'A', '', font => $fontname, ptsize => $fontsize);
-  my $pix_per_bp             = $config->transform->{'scalex'}; 
+  my $pix_per_bp             = $config->transform_object->scalex;
   my $length                 = exists $self->{'container'}{'ref'} ? $self->{'container'}{'ref'}->length : $self->{'container'}->length; 
   my $tag2                   = $self->my_config('tag') + ($self->strand == -1 ? 1 : 0); 
   

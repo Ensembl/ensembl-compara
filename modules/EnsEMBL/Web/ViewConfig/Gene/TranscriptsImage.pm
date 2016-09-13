@@ -20,13 +20,18 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::TranscriptsImage;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  $self->add_image_config('gene_summary');
-  $self->title = 'Summary';
+  $self->image_config_type('gene_summary');
+  $self->title('Summary');
 }
+
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
 
 1;

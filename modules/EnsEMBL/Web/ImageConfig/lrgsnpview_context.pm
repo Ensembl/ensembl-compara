@@ -20,33 +20,37 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::lrgsnpview_context;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
-  my $self = shift; 
+sub init_cacheable {
+  ## @override
+  my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
-    title            => 'Context slice',
-    show_labels      => 'yes', # show track names on left-hand side
-    label_width      => 100,   # width of labels on left-hand side
-    features         => [],
-    opt_halfheight   => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,     # include empty tracks..
+    title             => 'Context slice',
+    no_labels         => 1, # show track names on left-hand side
+    label_width       => 100,   # width of labels on left-hand side
+    features          => [],
+    opt_halfheight    => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,     # include empty tracks..
   });
-  
+
   $self->create_menus(
     sequence   => 'Sequence',
     transcript => 'Genes',
-    variation  => 'Germline variation', 
+    variation  => 'Germline variation',
     somatic    => 'Somatic Mutations',
     other      => 'Other'
   );
-  
+
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]
   );
-  
+
   $self->load_tracks;
 
   $self->add_tracks('other',
@@ -57,7 +61,7 @@ sub init {
     [ 'ruler',            '', 'ruler',            { display => 'normal', strand => 'f', name => 'Ruler',     description => 'Shows the length of the region being displayed' } }],
     [ 'scalebar',         '', 'scalebar',         { display => 'normal', strand => 'f', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }]
   );
-  
+
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal' }

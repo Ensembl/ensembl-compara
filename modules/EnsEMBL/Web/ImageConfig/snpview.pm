@@ -20,18 +20,21 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::snpview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     sortable_tracks => 'drag',  # allow the user to reorder tracks
     opt_halfheight  => 1,  # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines       => 1,  # draw registry lines
   });
-  
+
   $self->create_menus(qw(
     sequence
     transcript
@@ -42,7 +45,7 @@ sub init {
     information
     other
   ));
-  
+
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]
   );
@@ -51,16 +54,16 @@ sub init {
     [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variant Legend', caption => 'Variant Legend' }],
     [ 'structural_variation_legend', '', 'structural_variation_legend', { display => 'normal', strand => 'r', name => 'Structural Variant Legend', caption => 'Structural Variant Legend' }],
   );
-  
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
-    display     => 'off',       
+
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
+    display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
-    colours     => $self->species_defs->colour('gene'), 
+    colours     => $self->species_defs->colour('gene'),
     label_key  => '[biotype]',
-    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'], 
+    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'],
     renderers   =>  [
       'off',                     'Off',
       'gene_nolabel',            'No exon structure without labels',
@@ -72,7 +75,7 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
-  
+
   $self->add_tracks('other',
     [ 'v_line',   '', 'v_line',   { display => 'normal', strand => 'b', name => 'Vertical mark', description => 'Shows the middle of the feature' }],
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar',     description => 'Shows the scalebar' }],
@@ -85,7 +88,7 @@ sub init {
     [ 'variation' ],
     { style => 'box', depth => 100000 }
   );
- 
+
   $self->modify_configs(
     [qw(gene_legend seg_features reg_feats_core reg_feats_non_core functional_dna_methylation)],
     { display => 'off', menu => 'no' }
@@ -95,9 +98,9 @@ sub init {
     [ 'variation_feature_variation', 'variation_set_Phenotype-associated variations', 'regbuild', 'functional_other_regulatory_regions' ],
     { display => 'normal' }
   );
-  
-  
-  
+
+
+
   # structural variations
   $self->modify_configs(
     ['variation_feature_structural_larger'],
@@ -107,18 +110,18 @@ sub init {
     ['variation_feature_structural_smaller'],
     { display => 'gene_nolabel', depth => 100 }
   );
-  
+
   # Somatic structural variations
   $self->modify_configs(
     [ 'somatic_sv_feature' ],
     { display => 'gene_nolabel', depth => 50 }
   );
-  
+
   $self->modify_configs(
     [ 'somatic_mutation_all' ],
     { display => 'normal', style => 'box', depth => 100000 }
   );
-  
+
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }

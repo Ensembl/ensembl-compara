@@ -70,7 +70,7 @@ sub buttons {
   my @namespace = split('::', ref($self));
   my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $namespace[-1]};
   foreach (@{$options->{'params'} || []}) {
-    $params->{$_} = $hub->param($_);
+    $params->{$_} = $self->param($_);
   }
 
   
@@ -102,7 +102,7 @@ sub _init {
   
   if ($subslice_length) {
     my $hub = $self->hub;
-    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || $vc->get('display_width'));
+    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * $self->param('display_width');
   }
 }
 
@@ -203,8 +203,8 @@ sub set_variation_filter {
   my ($self, $config) = @_;
   my $hub = $self->hub;
   
-  my @consequence       = $hub->param('consequence_filter');
-  my $pop_filter        = $hub->param('population_filter');
+  my @consequence       = $self->param('consequence_filter');
+  my $pop_filter        = $self->param('population_filter');
   my %consequence_types = map { $_ => 1 } @consequence if join('', @consequence) ne 'off';
   
   if (%consequence_types) {
@@ -214,13 +214,13 @@ sub set_variation_filter {
   
   if ($pop_filter && $pop_filter ne 'off') {
     $config->{'population'}        = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($pop_filter);
-    $config->{'min_frequency'}     = $hub->param('min_frequency');
+    $config->{'min_frequency'}     = $self->param('min_frequency');
     $config->{'population_filter'} = $pop_filter;
   }
   
   $config->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
-  $config->{'hide_long_snps'} = $hub->param('hide_long_snps') eq 'yes';
-  $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
+  $config->{'hide_long_snps'} = $self->param('hide_long_snps') eq 'yes';
+  $config->{'hide_rare_snps'} = $self->param('hide_rare_snps');
 }
 
 sub set_variations {
@@ -728,10 +728,10 @@ sub chunked_content {
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
   my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => 1 });
   my $html;
-  my $display_width = $hub->param('display_width') || 0;
+  my $display_width = $self->param('display_width') || 0;
   my $id = $self->id;
 
-  if ($teaser and !$hub->param('display_full_sequence')) {
+  if ($teaser) {
     $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
   }
   else {

@@ -116,7 +116,7 @@ sub getFakeMungedVariationFeatures {
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }
   my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);
@@ -261,7 +261,7 @@ sub filter_munged_snps {
     if ($needsource) {
       @filtered_snps =
  # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        grep { $sources->{$_->[2]->source->name} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
         @filtered_snps;
     }
  

@@ -29,9 +29,9 @@ package EnsEMBL::Web::Object::DataExport;
 ### data via their own Objects, and does any additional 
 ### export-specific munging as required. 
 
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::File::User;
+
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use strict;
 use warnings;
@@ -49,27 +49,14 @@ sub create_component {
 ###                plus error message (if any)
   my $self = shift;
   my $hub  = $self->hub;
-  my ($component, $error);
 
-  my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
-  if ($self->dynamic_use($class)) {
-    my $builder = EnsEMBL::Web::Builder->new({
-                      hub           => $hub,
-                      object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
-    });
-    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
-    $hub->set_builder($builder);
-    $component = $class->new($hub, $builder);
-  }
-  if (!$component) {
-    warn "!!! Could not create component $class";
-    $error = 'Export not available';
-  }
-  elsif (!$component->can('export_options')) {
-    warn "!!! Export not implemented in component $class";
-    $error = 'Export not available';
-  }
-  return ($component, $error);
+  my $builder = $hub->controller->builder;
+  $builder->create_object(ucfirst($hub->param('data_type')));
+
+  my $component = dynamic_require('EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component'));
+     $component = $component->new($hub, $builder, $hub->controller->renderer);
+
+  return $component;
 }
 
 sub handle_download {

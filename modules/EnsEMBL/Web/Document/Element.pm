@@ -23,7 +23,6 @@ use strict;
 
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -34,6 +33,7 @@ sub new {
   return $self;
 }
 
+sub shared { return $_[0]->{'shared'}; }
 sub renderer :lvalue { $_[0]->{'renderer'};                                                         }
 sub hub              { return $_[0]->{'hub'};                                                       }
 sub dom              { return $_[0]->{'dom'} ||= EnsEMBL::Web::DOM->new                             }

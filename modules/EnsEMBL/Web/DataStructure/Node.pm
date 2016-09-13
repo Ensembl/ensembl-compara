@@ -17,17 +17,21 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::RegObj;
+package EnsEMBL::Web::DataStructure::Node;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Registry;
+sub new {
+  my ($class, $obj) = @_;
 
-use base qw(Exporter);
+  return bless $obj, ref $class || $class;
+}
 
-our @EXPORT    = qw($ENSEMBL_WEB_REGISTRY);
-our @EXPORT_OK = qw($ENSEMBL_WEB_REGISTRY);
+sub node {
+  my $self = shift;
 
-our $ENSEMBL_WEB_REGISTRY;
+  return exists $self->{'__ds_node'} ? $self->{'__ds_node'} : $self;
+}
 
 1;

@@ -20,11 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::lrg_summary;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     sortable_tracks => 'drag',  # allow the user to reorder tracks
@@ -44,18 +48,18 @@ sub init {
     user_data
     information
   ));
-  
-  $self->get_node('transcript')->set('caption', 'Other genes');
-  
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
-    display     => 'off',       
+
+  $self->get_node('transcript')->set_data('caption', 'Other genes');
+
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
+    display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
-    colours     => $self->species_defs->colour('gene'), 
+    colours     => $self->species_defs->colour('gene'),
     label_key  => '[biotype]',
-    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'], 
+    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'],
     renderers   =>  [
       'off',                     'Off',
       'gene_nolabel',            'No exon structure without labels',
@@ -67,7 +71,7 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
-  
+
   $self->add_tracks('information',
     [ 'scalebar',  '', 'lrg_scalebar', { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'draggable', '', 'draggable',    { display => 'normal', strand => 'b', menu => 'no' }],
@@ -79,9 +83,9 @@ sub init {
     [ 'lrg_transcript', 'LRG transcripts', '_transcript', {
       display     => 'transcript_label',
       strand      => 'b',
-      name        => 'LRG transcripts', 
+      name        => 'LRG transcripts',
       description => 'Transcripts from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.',
-      logic_names => [ 'LRG_import' ], 
+      logic_names => [ 'LRG_import' ],
       logic_name  => 'LRG_import',
       colours     => $self->species_defs->colour('gene'),
       label_key   => '[display_label]',
@@ -97,14 +101,14 @@ sub init {
       zmenu       => 'LRG',
     }]
   );
- 
+
   $self->modify_configs(['transcript'], { strand => 'b'});
- 
+
   $self->modify_configs(
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
     { display => 'off' }
   );
-  
+
   $self->modify_configs(
     [ 'reg_feats_MultiCell' ],
     { display => 'normal' }

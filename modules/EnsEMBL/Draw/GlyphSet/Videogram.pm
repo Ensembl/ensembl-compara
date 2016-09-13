@@ -67,7 +67,7 @@ sub _init {
   my $padding       = $self->my_config('padding') || 6;
   my $style         = $self->my_config('style')   || '';
   my $h_wid         = int $wid / 2;
-  my $h_offset      = $style eq 'text' ? $padding : int($self->my_config('totalwidth') - $wid - ($self->get_parameter('band_labels') eq 'on' ? ($w * 6 + 4) : 0)) / 2; # get text labels in correct place
+  my $h_offset      = $style eq 'text' ? $padding : int(($self->my_config('totalwidth') || 0) - $wid - ($self->get_parameter('band_labels') eq 'on' ? ($w * 6 + 4) : 0)) / 2; # get text labels in correct place
   my @decorations;
 
   if ($padding) {

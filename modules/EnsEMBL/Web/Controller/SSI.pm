@@ -20,98 +20,45 @@ limitations under the License.
 package EnsEMBL::Web::Controller::SSI;
 
 use strict;
-
-use Apache2::Const qw(:common :methods :http);
-
-use SiteDefs;
+use warnings;
 
 use EnsEMBL::Web::Document::HTML::Movie;
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 
-use base qw(EnsEMBL::Web::Controller);
+use parent qw(EnsEMBL::Web::Controller);
+
+sub parse_path_segments {} ## @override - don't need type, action, function etc for .html pages
 
 sub page_type       { return 'Static';   }
 sub renderer_type   { return 'Apache';   }
 sub cacheable       { return 1;          }
 sub request         { return 'ssi';      }
-sub status  :lvalue { $_[0]->{'status'}; }
 
 sub init {
-  my $self = shift;
-  $self->update_user_history if $self->hub->user;
-  $self->status = $self->_init;
-}
+  my $self  = shift;
+  my $page  = $self->page('HTML');
+  my $uri   = $self->r->unparsed_uri;
 
-sub _init {
-  my $self = shift;
-  my $r    = $self->r;
-  
-  $self->clear_cached_content;
-  
-  return OK if $self->get_cached_content('page'); # Page retrieved from cache
-  
-  unless (-e $r->filename) {
-    $r->log->error('File does not exist: ', $r->filename);
-    return NOT_FOUND;
-  }
-  
-  unless (-r $r->filename) {
-    $r->log->error('File permissions deny server access: ', $r->filename);
-    return FORBIDDEN;
-  }
-  
-  my $page = $self->page;
-  
-  $page->include_navigation(0); 
+  # all requests coming into this controller are served as html
+  $self->r->content_type('text/html; charset=utf-8');
+
+  $page->include_navigation($uri =~ /Doxygen\/index.html/ || ($uri =~ /^\/info/ && $uri !~ /Doxygen\/(\w|-)+/));
   $page->initialize;
   $self->add_JSCSS($page);
   $self->render_page;
-  
-  return OK;
 }
 
 sub content {
+  ## Gets the actual content of the files after replacing the placeholders with relevant substitutions
   my $self = shift;
-  
+
   if (!$self->{'content'}) {
-    my $r    = $self->r;
-    my @dirs = reverse(split '/', $r->filename); # parse path and get first 'private_n_nn' folder above current page
-    my @groups;
-    
-    foreach my $d (@dirs) {
-      # Is this page under a 'private' folder?
-      if ($d =~ /^private(_[0-9]+)+/) {
-        (my $grouplist = $d) =~ s/private_//;
-        @groups = split '_', $grouplist; # groups permitted to access files 
-      }
-      
-      last if @groups;
-    }
 
-    # Read html file into memory to parse out SSI directives.
-    {
-      local($/) = undef;
-      open FH, $r->filename;
-      $self->{'content'} = <FH>;
-      close FH;
-    }
-    
-    $self->{'content'} =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; $self->$m($2);/ge;
+    # Read html file into memory and parse out SSI directives.
+    $self->{'content'} = file_get_contents($self->filename, sub { s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; $self->$m($2) || '';/ger });
   }
-  
+
   return $self->{'content'};
-}
-
-sub render_page {
-  my $self    = shift;
-  my $page    = $self->page;
-  my $content = $self->content;
-  
-  if ($content =~ /<!--#set var="decor" value="none"-->/ || $content =~ /^\s?<head>/) {
-    $self->r->print($content);
-    return $self->status = OK;
-  }
-  
-  $self->SUPER::render_page;
 }
 
 sub set_cache_params {

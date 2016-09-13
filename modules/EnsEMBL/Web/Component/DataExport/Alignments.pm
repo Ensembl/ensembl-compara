@@ -40,8 +40,8 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
-  my $settings = $viewconfig->form_fields;
+  my $view_config  = $self->view_config;
+  my $settings = $view_config->form_fields;
 
   $settings->{'Hidden'} = ['align'];
 

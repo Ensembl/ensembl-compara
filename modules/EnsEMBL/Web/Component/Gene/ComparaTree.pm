@@ -591,7 +591,7 @@ sub get_export_data {
     $tree = $gene->get_GeneTree($cdb, 1);
   }
   elsif ($hub->species eq 'Multi' && $hub->param('gt')) {
-    my $gene_tree = $hub->{'_builder'}->create_objects('GeneTree', 'lazy');
+    my $gene_tree = $hub->{'_builder'}->create_object('GeneTree');
     $tree         = $gene_tree->Obj;
   }
   else {

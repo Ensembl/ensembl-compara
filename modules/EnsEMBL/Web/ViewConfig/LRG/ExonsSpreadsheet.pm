@@ -20,6 +20,9 @@ limitations under the License.
 
 package EnsEMBL::Web::ViewConfig::LRG::ExonsSpreadsheet;
 
-use base qw(EnsEMBL::Web::ViewConfig::Transcript::ExonsSpreadsheet);
+use strict;
+use warnings;
+
+use parent qw(EnsEMBL::Web::ViewConfig::Transcript::ExonsSpreadsheet);
 
 1;

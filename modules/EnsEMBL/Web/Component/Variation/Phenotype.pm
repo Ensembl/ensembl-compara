@@ -307,8 +307,7 @@ sub table_data {
     my ($terms,  $accessions, $accessions_no_url);
     my $ontology_accessions = $pf->phenotype()->ontology_accessions();
 
-    my $adaptor = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
-
+    my $adaptor = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
     foreach my $oa (@{$ontology_accessions}){
 

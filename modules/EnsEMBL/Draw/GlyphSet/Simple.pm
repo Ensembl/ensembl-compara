@@ -23,6 +23,8 @@ package EnsEMBL::Draw::GlyphSet::Simple;
 
 use strict;
 
+use EnsEMBL::Draw::Style::Feature;
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub init {
@@ -67,6 +69,39 @@ sub init {
 
   ## OK, done!
   return $features; 
+}
+
+sub render_labels {
+  my $self = shift;
+  $self->{'my_config'}->set('show_labels', 1);
+  $self->render_normal;
+}
+
+sub render_normal {
+  my $self = shift;
+
+  my $data = $self->get_data;
+  return unless scalar @{$data->[0]{'features'}||[]};
+
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+  $self->push($style->create_glyphs);
+}
+
+sub get_colours {
+  my ($self, $f) = @_;
+  my ($colour_key, $flag) = $f->{'colour_key'};
+
+  if (!$self->{'feature_colours'}{$colour_key}) {
+    $self->{'feature_colours'}{$colour_key} = {
+      key     => $colour_key,
+      feature => $self->my_colour($colour_key, $flag),
+      label   => $self->my_colour($colour_key, 'label'),
+      part    => $self->my_colour($colour_key, 'style')
+    };
+  }
+ 
+  return $self->{'feature_colours'}{$colour_key};
 }
 
 sub ok_feature {

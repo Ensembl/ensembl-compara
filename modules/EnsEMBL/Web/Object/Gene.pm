@@ -106,7 +106,7 @@ sub get_go_list {
   my $dbname_to_match = shift || join '|', @$ontologies;
   my $ancestor=shift;
   my $gene = $self->gene;
-  my $goadaptor = $self->hub->get_databases('go')->{'go'};
+  my $goadaptor = $self->hub->database('go');
 
   my @goxrefs = @{$gene->get_all_DBLinks};
   my @my_transcripts= @{$self->Obj->get_all_Transcripts};
@@ -335,7 +335,7 @@ sub count_go {
     if($go_name) {
       $go_name =~ s/,$//g;
 
-      my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+      my $goadaptor = $self->hub->database('go')->dbc;
 
       my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
 
@@ -817,8 +817,8 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold ) = @$homology;
-        
+        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ) = @$homology;
+
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
         
@@ -870,8 +870,6 @@ sub get_homologies {
   my %homologues;
 
   return unless $database;
-  
-  $self->timer_push('starting to fetch', 6);
 
   my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
@@ -879,9 +877,6 @@ sub get_homologies {
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
-  #warn ">>> @$homologies_array";
-
-  $self->timer_push('fetched', 6);
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
@@ -900,9 +895,7 @@ sub get_homologies {
       $node = $node->children->[0];
     }
   }
-  
-  $self->timer_push('classification', 6);
-  
+
   my $ok_homologies = [];
   foreach my $homology (@$homologies_array) {
     push @$ok_homologies, $homology if $homology->description =~ /$homology_description/;
@@ -941,13 +934,11 @@ sub fetch_homology_species_hash {
 
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $wgac, $highconfidence ];    
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
   }
-   
-  $self->timer_push('homologies hacked', 6);
-  
+
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
-   
+
   return \%homologues;
 }
 
@@ -1218,7 +1209,7 @@ sub store_TransformedSNPS {
 
   if ($have_so_terms) {
     # tva needs an ontology term adaptor to fetch by SO term
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   
     $method .= '_SO_terms';
 
@@ -1233,7 +1224,7 @@ sub store_TransformedSNPS {
 
   my $tvs;
   if (!$have_so_terms && $included_so ) {
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
     $tvs = $tva->fetch_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$included_so,1) ;
   } else {
     $tvs = $tva->$method($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,0, $included_so) ;
@@ -1285,7 +1276,7 @@ sub store_ConsequenceCounts {
     $included_so = $self->get_included_so_terms;
   }
 
-  $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
   my %conscounts;
 

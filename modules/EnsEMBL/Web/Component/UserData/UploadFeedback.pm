@@ -51,12 +51,12 @@ sub content {
 
   ## Can't find a user record - check session
   unless ($upload) { 
-    $upload = $hub->session->get_data(code => $code);
+    $upload = $hub->session->get_record_data({code => $code});
   }
 
   my $html;
 
-  if ($upload) {
+  if (keys %$upload) {
     my $format  = $upload->{'format'} || $hub->param('format');
     my $species = $upload->{'species'} ? $hub->species_defs->get_config($upload->{'species'}, 'SPECIES_SCIENTIFIC_NAME') : '';
     

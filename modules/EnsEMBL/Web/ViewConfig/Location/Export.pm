@@ -20,7 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::Export;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Export);
+use parent qw(EnsEMBL::Web::ViewConfig::Export);
 
 1;

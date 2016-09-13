@@ -20,6 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::transcript_variation;
 
 use strict;
+use warnings;
 
 use base qw(EnsEMBL::Web::ImageConfig::gene_variation);
 

@@ -24,10 +24,10 @@ use strict;
 # stinky GD helper object for fonts
 #
 sub new {
-    my ($class, $transform_ref) = @_;
+    my ($class, $transform) = @_;
     my $this = {
-	'_scalex' => $$transform_ref{'scalex'} || 1,
-	'_scaley' => $$transform_ref{'scaley'} || 1,
+	'_scalex' => $transform->{'scalex'},
+	'_scaley' => $transform->{'scaley'},
 	'Tiny' => {
 		'width'  => 5,
 		'height' => 8,

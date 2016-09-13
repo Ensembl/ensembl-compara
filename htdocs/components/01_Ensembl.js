@@ -71,9 +71,7 @@ Ensembl.extend({
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
     }
-    
-    this.cookie.set('WINDOW_WIDTH', $(window).width());
-    
+
     if (hints) {
       $.each(hints.split(/:/), function () {
         Ensembl.hideHints[this] = 1;

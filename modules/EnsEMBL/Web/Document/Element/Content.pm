@@ -38,7 +38,6 @@ sub form          :lvalue { $_[0]->{'form'};          }
 sub filter_module :lvalue { $_[0]->{'filter_module'}; }
 sub filter_code   :lvalue { $_[0]->{'filter_code'};   }
 
-sub timer_push      { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 2); }
 sub add_panel_first { $_[1]->renderer = $_[0]->renderer; unshift @{$_[0]{'panels'}}, $_[1]; }
 sub add_panel       { $_[1]->renderer = $_[0]->renderer; push    @{$_[0]{'panels'}}, $_[1]; }
 
@@ -140,9 +139,7 @@ sub content {
   }
   
   foreach my $panel (@{$self->{'panels'}}) {
-    $panel->{'timer'} = $self->{'timer'};
     $content .= $panel->content;
-    $self->timer_push("Rendered panel $panel->{'code'}");
   }
   
   $content .= '</form>' if $self->{'form'};
@@ -261,7 +258,7 @@ sub ajax_content {
   my $controller = shift;
   my $panel      = $self->new_panel('Ajax', $controller, code => 'ajax_panel');
  
-  $panel->add_component('component', $ENV{'ENSEMBL_COMPONENT'});
+  $panel->add_component($controller->component_code, $controller->component);
   
   $controller->r->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
   $self->add_panel($panel);

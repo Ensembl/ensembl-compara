@@ -31,10 +31,10 @@ sub _init { $_[0]->SUPER::_init(100); }
 sub initialize {
   my ($self, $start, $end) = @_;
   my $hub         = $self->hub;
-  my @consequence = $hub->param('consequence_filter');
+  my @consequence = $self->param('consequence_filter');
   
   my $config = {
-    display_width   => $hub->param('display_width') || 60,
+    display_width   => $self->param('display_width') || 60,
     species         => $hub->species,
     comparison      => 1,
     exon_display    => 1,
@@ -47,7 +47,7 @@ sub initialize {
   my $adorn = $hub->param('adorn') || 'none';
 
   for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps)) {
-    $config->{$_} = $hub->param($_) unless ($hub->param($_) eq 'off' || $vc->get($_) eq 'off');
+    $config->{$_} = $self->param($_) unless ($self->param($_) eq 'off');
   }
   
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};

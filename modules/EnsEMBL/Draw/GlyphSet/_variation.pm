@@ -21,6 +21,15 @@ package EnsEMBL::Draw::GlyphSet::_variation;
 
 ### Draws a SNP track
 
+###################################################
+##                DEPRECATED                     ##
+###################################################
+
+## THIS MODULE HAS BEEN SUPERCEDED BY GlyphSet::variation
+
+## Please change your code to use that module instead
+
+
 use strict;
 
 use List::Util qw(min);
@@ -51,6 +60,9 @@ sub render_labels {
 
 sub _init {
   my $self = shift;
+  warn '########## DEPRECATED GLYPHSET _variation ##############';
+  warn 'This glyphset will be removed in release 88. Please alter your code to use GlyphSet::variation instead.';
+
   $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
   return $self->SUPER::_init(@_);
 }

@@ -57,11 +57,8 @@ sub create_component {
   $class   .= '::'.$hub->param('component');
 
   if ($self->dynamic_use($class)) {
-    my $builder = EnsEMBL::Web::Builder->new({
-                      hub           => $hub,
-                      object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
-    });
-    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
+    my $builder = $hub->controller->builder;
+    $builder->create_object(ucfirst($hub->param('data_type')));
     $hub->set_builder($builder);
     $component = $class->new($hub, $builder);
   }

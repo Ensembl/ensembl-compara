@@ -186,7 +186,7 @@ sub render_location {
   my ($self, $m) = @_;
   
   my $hub      = $self->hub;
-  my $location = $self->builder->create_objects('Location', 'lazy');
+  my $location = $self->builder->create_object('Location');
   my $sitetype = $hub->species_defs->ENSEMBL_SITETYPE;
   my $name     = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
   my $html;

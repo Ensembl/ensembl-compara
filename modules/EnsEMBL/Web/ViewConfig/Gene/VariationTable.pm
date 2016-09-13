@@ -20,7 +20,8 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::VariationTable;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::VariationTable);
+use parent qw(EnsEMBL::Web::ViewConfig::VariationTable);
 
 1;
