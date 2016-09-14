@@ -16,7 +16,7 @@
  */
 
 (function($) {
-  $.fn.new_table_search = function(config,data,widgets) {
+  $.fn.new_table_search = function(config,data,widgets,callw) {
 
     function identity_fn(x) { return x; }
 
@@ -26,9 +26,7 @@
         var cc = colconf[key];
         if(cleaner[key]===undefined) { continue; }
         if(!row[i]) { continue; }
-        if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-          continue;
-        }
+        if(callw('unshowable',cc)._any) { continue; }
         var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
         if(val===undefined) { return false; }

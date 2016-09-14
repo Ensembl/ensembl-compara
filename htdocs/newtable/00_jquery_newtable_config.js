@@ -42,10 +42,7 @@
       columns: function(config,columns) {
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
-          // TODO to plugin
-          if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-            return;
-          }
+          if(callw('unshowable',cc)._any) { return; }
           columns.push(new_th(key,cc));
         });
       }
