@@ -255,6 +255,7 @@ sub fetch_all_by_Member {
 =head2 fetch_default_for_Member
 
   Arg[1]     : GeneMember, SeqMember or seq_member_id
+  Arg[2]     : (optional) clusterset_id (example values: "default", "murinae")
   Example    : $trees = $genetree_adaptor->fetch_default_for_Member($member);
   Description: Fetches from the database the default gene tree that contains this member
                If the member is a non-canonical SeqMember, returns undef
@@ -265,9 +266,9 @@ sub fetch_all_by_Member {
 =cut
 
 sub fetch_default_for_Member {
-    my ($self, $member) = @_;
+    my ($self, $member, $clusterset_id) = @_;
 
-    my $all_trees = $self->fetch_all_by_Member($member);
+    my $all_trees = $self->fetch_all_by_Member($member, -CLUSTERSET_ID => $clusterset_id);
     my @sorted_trees = sort {$a->root_id <=> $b->root_id} grep {!$_->ref_root_id} @$all_trees;
     return $sorted_trees[0];
 }
