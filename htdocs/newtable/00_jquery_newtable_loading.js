@@ -28,7 +28,8 @@
         var $el = $('.new_table_'+type+'ing',$table);
         if(change) { $el.show(); } else { $el.hide(); }
       },
-      position: data.position
+      position: data.position,
+      position_order: 1
     };
   }; 
 
