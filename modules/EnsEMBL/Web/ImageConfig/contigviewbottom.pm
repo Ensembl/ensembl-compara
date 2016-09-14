@@ -50,14 +50,11 @@ sub update_from_url {
   ## @override
   my ($self, $params) = @_;
 
-  $self->SUPER::update_from_url($params);
-
-  my $hub           = $self->hub;
-  my $session       = $hub->session;
-  my $species       = $self->species;
-  my $species_defs  = $self->species_defs;
-  my $attach_param  = $params->{'attach'} || $params->{$self->type} || '';
-  my @values        = split /,/, $attach_param;
+  my $hub             = $self->hub;
+  my $session         = $hub->session;
+  my $species         = $self->species;
+  my $species_defs    = $self->species_defs;
+  my @values          = split(/,/, grep($_, delete $params->{'attach'}, delete $params->{$self->type}) || ''); # delete params to avoid doing it again when calling SUPER method
 
   # if param name is 'trackhub'
   push @values, $params->{'trackhub'} || ();
@@ -208,7 +205,7 @@ sub update_from_url {
     });
   }
 
-  return $self->is_altered;
+  return $self->SUPER::update_from_url($params);
 }
 
 sub init_cacheable {
