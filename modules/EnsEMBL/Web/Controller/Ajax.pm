@@ -25,7 +25,6 @@ use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
-use EnsEMBL::Web::ViewConfig::RegulationPage;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 use EnsEMBL::Web::File::Utils::URL;
@@ -218,16 +217,16 @@ sub ajax_evidence {
 }
 
 sub ajax_reg_renderer {
-  my ($self,$hub) = @_;
+  ## /Ajax/reg_renderer endpoint
+  ## Changes the renderer type for reg tracks
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $renderer  = $hub->input->url_param('renderer');
+  my $state     = $hub->param('state');
 
-  my $renderer = $hub->input->url_param('renderer');
-  my $state = $hub->param('state');
-  EnsEMBL::Web::ViewConfig::RegulationPage->reg_renderer(
-    $hub,'regulation_view',$renderer,$state);
+  $hub->get_imageconfig('regulation_view')->update_reg_renderer($renderer, $state);
 
-  $hub->session->store;
-
-  print $self->jsonify({
+  print to_json({
     reload_panels => ['FeaturesByCellLine'],
   });
 }

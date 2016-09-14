@@ -59,7 +59,7 @@ sub form_fields {
   };
 }
 
-sub extra_tabs { # TODO - change old style Component urls
+sub extra_tabs {
   ## @override
   my $self  = shift;
   my $hub   = $self->hub;

@@ -227,13 +227,20 @@ sub reset_user_settings {
 
 sub config_url_params {
   ## Abstract method implementation
-  ## Most of the images don't allow data attachment via url
-  ## Override this in a subclass that allows attaching data via url (eg. contigviewbottom)
+  return qw(plus_signal);
 }
 
 sub update_from_url {
   ## Abstract method implementation
-  ## Same as config_url_params
+  my ($self, $params) = @_;
+
+  # plus_signal turns on some regulation tracks in a complex algorithm
+  # on both regulation and location views. It can be specified in a URL
+  # and is currently used in some zmenus. Annoyingly there seems to
+  # be no better place for this code. Move it if you know of one. --dan
+  if ($params->{'plus_signal'}) { # TODO - move to update_from_url method in appropriate sub class --harpreet
+    $self->update_reg_renderer('signals', 1);
+  }
 }
 
 sub update_from_input {

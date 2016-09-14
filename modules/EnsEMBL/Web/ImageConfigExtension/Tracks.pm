@@ -27,6 +27,8 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
+use List::MoreUtils qw(firstidx);
+
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 sub load_tracks {
@@ -1232,6 +1234,31 @@ sub add_oligo_probes {
       renderers   => $self->_alignment_renderers
     }));
   }
+}
+
+sub update_reg_renderer {
+  ## Updates user settings for reg track renderer - signal, peak or both
+  my ($self, $renderer, $state) = @_;
+
+  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
+
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $self->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $old = $node->get('display');
+      my $renderer = firstidx { $old eq $_ }
+        qw(off compact signal signal_feature);
+      next if $renderer <= 0;
+      $renderer |= $mask if $state;
+      $renderer &=~ $mask unless $state;
+      $renderer = 1 unless $renderer;
+      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
+      $self->update_track_renderer($node, $renderer);
+    }
+  }
+
+  $self->save_user_settings;
 }
 
 #----------------------------------------------------------------------#

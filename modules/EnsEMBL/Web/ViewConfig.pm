@@ -24,7 +24,6 @@ use strict;
 use warnings;
 
 use JSON qw(from_json);
-use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
@@ -219,14 +218,6 @@ sub update_from_url {
     }
   }
 
-  # plus_signal turns on some regulation tracks in a complex algorithm
-  # on both regulation and location views. It can be specified in a URL
-  # and is currently used in some zmenus. Annoyingly there seems to
-  # be no better place for this code. Move it if you know of one. --dan
-  if (my $plus = $params->{'plus_signal'}) { # TODO - move to update_from_url method in appropriate sub class
-    $self->reg_renderer($hub, $plus, 'signals', 1);
-  }
-
   # now apply config changes to linked image config
   $self->altered('image_config') if $image_config && $image_config->update_from_url($params);
 
@@ -316,31 +307,6 @@ sub build_form {
 
   return $self->form->build($object, $image_config);
 }
-
-sub reg_renderer {
-  my ($self, $hub, $image_config, $renderer, $state) = @_;
-
-  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
-  $image_config = $hub->get_imageconfig($image_config);
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $old = $node->get('display');
-      my $renderer = firstidx { $old eq $_ }
-        qw(off compact signal signal_feature);
-      next if $renderer <= 0;
-      $renderer |= $mask if $state;
-      $renderer &=~ $mask unless $state;
-      $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
-      $image_config->update_track_renderer($node->id,$renderer);
-    }
-  }
-}
-
-
-
 
 sub set_label { $_[0]{'labels'}{$_[1]} = $_[2]; }
 sub get_label { $_[0]{'labels'}{$_[1]}; }
