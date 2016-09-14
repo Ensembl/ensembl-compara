@@ -34,7 +34,7 @@ sub populate_tree {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $strain       = $species_defs->ALL_STRAINS; #species who have strains
+  my $strain       = $species_defs->RELATED_TAXON; #species who have strains
   my $collapse     = $species_defs->IS_STRAIN_OF ? 0 : 1; # check if species is a strain
 
   my $summary_menu = $self->create_node('Summary', 'Summary',
@@ -76,9 +76,10 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
+  #not_stain to collapse and disable main compara menu if it is a strain
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
-    {'availability' => 'gene database:compara core not_strain', 'closed' =>  $species_defs->IS_STRAIN_OF ? 1 : 0} #collapse and disable main compara menu if it is a strain
+    {'availability' => 'gene database:compara core not_strain', 'closed' =>  $species_defs->IS_STRAIN_OF ? 1 : 0} 
   );
   
   $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
@@ -140,7 +141,9 @@ sub populate_tree {
   
   $compara_menu->append($fam_node);
   
-  if($strain || $species_defs->IS_STRAIN_OF) {
+  # Compara menu for strain (strain menu available on main species but collapse, main menu not available/grey out/collapse on strain page)
+  # The node key (Strain_) is used by Component.pm to determine if it is a strain link on the main species page, so be CAREFUL when changing this  
+  if($strain || $species_defs->IS_STRAIN_OF) {  
     my $strain_compara_menu = $self->create_node('Strain_Compara', 'Strain Comparative Genomics',
       [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
       {'availability' => 'gene database:compara core', 'closed' => $collapse }
@@ -151,34 +154,34 @@ sub populate_tree {
         strain_selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
         strain_alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
       )],
-      { 'availability' => 'gene database:compara core has_alignments' }
+      { 'availability' => 'gene database:compara core has_strain_alignments' }
     ));
 
     $strain_compara_menu->append($self->create_node('Strain_Compara_Tree', 'Gene tree',
       [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
-      { 'availability' => 'gene database:compara core has_gene_tree' }
+      { 'availability' => 'gene database:compara core has_strain_gene_tree' }
     ));
 
     my $strain_ol_node = $self->create_node('Strain_Compara_Ortholog', 'Orthologues',
       [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
-      { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
+      { 'availability' => 'gene database:compara core has_strain_orthologs', 'concise' => 'Orthologues' }
     );
 
     $strain_ol_node->append($self->create_subnode('Strain_Compara_Ortholog/Alignment', 'Orthologue alignment',
       [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-      { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
+      { 'availability'  => 'gene database:compara core has_strain_orthologs', 'no_menu_entry' => 1 }
     ));
 
     $strain_compara_menu->append($strain_ol_node);
     
     my $strain_pl_node = $self->create_node('Strain_Compara_Paralog', 'Paralogues',
       [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-      { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
+      { 'availability' => 'gene database:compara core has_strain_paralogs', 'concise' => 'Paralogues' }
     );
     
     $strain_pl_node->append($self->create_subnode('Strain_Compara_Paralog/Alignment', 'Paralogue alignment',
       [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-      { 'availability' => 'gene database:compara core has_paralogs', 'no_menu_entry' => 1 }
+      { 'availability' => 'gene database:compara core has_strain_paralogs', 'no_menu_entry' => 1 }
     ));
     
     $strain_compara_menu->append($strain_pl_node);
