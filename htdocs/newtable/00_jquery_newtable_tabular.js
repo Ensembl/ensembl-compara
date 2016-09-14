@@ -332,10 +332,11 @@
         var classes = [];
         attrs['data-key'] = key || '';
         if(cc.sort)  { classes.push('sorting'); }
-        if(cc.help) {
-          var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
-          text = $('<div/>').append(help).html();
-        }
+        text = callw('decorate_heading',cc,text)._last;
+//        if(cc.help) {
+//          var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
+//          text = $('<div/>').append(help).html();
+//        }
         var attr_str = "";
         $.each(attrs,function(k,v) {
           attr_str += ' '+k+'="'+v+'"';
