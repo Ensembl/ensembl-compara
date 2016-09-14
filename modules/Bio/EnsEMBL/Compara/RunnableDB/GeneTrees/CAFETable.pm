@@ -211,7 +211,7 @@ sub get_per_family_cafe_table_from_db {
         $ok_fams++;
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (tree, tabledata) VALUES (?,?);");
         $sth->execute($lca_str, $fam_table);
-        my $fam_id = $self->compara_dba->dbc->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
+        my $fam_id = $self->compara_dba->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_data', 'fam_id');
         $sth->finish();
         push @all_fams, $fam_id;
     }

@@ -121,17 +121,11 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_merge_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
-                        # copying from previous release:
-                                        #[ '528' => '#prev_ancestral_db#', ],     # 5 teleost fish
-                                        [ '647' => '#prev_ancestral_db#', ],     # 4 sauropsids
-                                        #[ '755' => '#prev_ancestral_db#', ],     # 17 eutherian mammals
-                                        [ '756' => '#prev_ancestral_db#', ],     # 8 primates
-
-                        # copying from new sources:
-                     #[ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
-                     [ '780' => 'mysql://ensadmin:'.$self->o('password').'@compara4/mp14_epo_17mammals_ancestral_core_80' ],   # 17-way mammals
-                     [ '768' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_5fish_ancestral_core_79' ],   # 5-way fish
+                'inputlist' => [ # this table needs to be edited prior to running the pipeline:
+                    [ '768' => '#prev_ancestral_db#', ], # 5 teleost fish
+                    [ '825' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_4sauropsids_new4sauranchor_hacked_86_ancestral_core_86', ], # 4 sauropsids
+                    [ '828' => 'mysql://ensadmin:'.$self->o('password').'@compara4/cc21_mammals_ancestral_core_86', ], # 18 eutherian mammals
+                    [ '822' => 'mysql://ensadmin:'.$self->o('password').'@compara4/wa2_primates_ancestral_core_85', ], # 8 primates
                 ],
             },
             -flow_into => {

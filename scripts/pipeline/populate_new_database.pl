@@ -296,7 +296,7 @@ if($only_show_intentions) {
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         print "\t".$mlss->dbID.": ".$mlss->name."\n";
     }
-    print "SpeciesSet entries to be copied:\n";
+    print "Additional SpeciesSet entries to be copied:\n";
     foreach my $ss (@$all_default_species_sets) {
         print "\t".$ss->dbID.": ".join(', ', map { $_->_get_unique_name} @{$ss->genome_dbs})."\n";
     }
