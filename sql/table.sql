@@ -2065,4 +2065,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_c.sql|gene_tree_root.species_tree_root_id');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_85_86_d.sql|homology.high_confidence');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_85_86_e.sql|gene_member_hom_stats');
 
