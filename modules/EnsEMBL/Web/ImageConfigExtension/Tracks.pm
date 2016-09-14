@@ -1236,6 +1236,41 @@ sub add_oligo_probes {
   }
 }
 
+sub update_cell_type {
+  ## Updates user settings for cell types for reg based image configs
+  my ($self, $changes) = @_;
+
+  foreach my $track (grep $_->get_data('node_type') eq 'track', @{$self->tree->root->get_all_nodes}) {
+    for (keys %$changes) {
+      if (clean_id($track->get_data('cell_line')) eq clean_id($_)) {
+        $self->update_track_renderer($track, $changes->{$_});
+      }
+    }
+  }
+
+  $self->save_user_settings;
+}
+
+sub update_evidence {
+  ## Updates user settings for evidences for reg based image configs
+  my ($self, $changes) = @_;
+
+  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
+    my $menu = $self->get_node($type);
+    next unless $menu;
+
+    foreach my $option (@{$menu->get_all_nodes}) {
+      for (keys %$changes) {
+        if (clean_id($option->get_data('name')) eq clean_id($_)) {
+          $self->update_track_renderer($option, $changes->{$_});
+        }
+      }
+    }
+  }
+
+  $self->save_user_settings;
+}
+
 sub update_reg_renderer {
   ## Updates user settings for reg track renderer - signal, peak or both
   my ($self, $renderer, $state) = @_;
