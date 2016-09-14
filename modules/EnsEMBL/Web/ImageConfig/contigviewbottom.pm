@@ -42,12 +42,15 @@ sub glyphset_tracks {
 sub config_url_params {
   ## @override
   ## Returns list of trackhub related params along with other url params that can change the image config
-  return shift->type, qw(attach trackhub format menu);
+  my $self = shift;
+  return $self->SUPER::config_url_params || (), $self->type, qw(attach trackhub format menu);
 }
 
 sub update_from_url {
   ## @override
   my ($self, $params) = @_;
+
+  $self->SUPER::update_from_url($params);
 
   my $hub           = $self->hub;
   my $session       = $hub->session;
