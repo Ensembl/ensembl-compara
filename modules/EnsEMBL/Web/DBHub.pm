@@ -68,7 +68,7 @@ sub database {
   ## @param (String) Species (if not the default one)
   my $self = shift;
 
-  if ($_[0] =~ /compara/) {
+  if ($_[0] && $_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
   } else {
     return $self->databases->get_DBAdaptor(@_);
