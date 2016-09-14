@@ -178,11 +178,11 @@ sub dom {
 
 sub object {
   ## @accessor
-  ## Included for backwards compatibility
+  ## @param EnsEMBL::Web::Object subclass instance if setting
   ## @return EnsEMBL::Web::Object::[type]
   my $self = shift;
   $self->{'object'} = shift if @_;
-  return $self->builder ? $self->builder->object : $self->{'object'};
+  return $self->{'object'} || $self->builder && $self->builder->object;
 }
 
 sub format {

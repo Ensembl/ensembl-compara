@@ -57,10 +57,11 @@ sub create_component {
   $class   .= '::'.$hub->param('component');
 
   if ($self->dynamic_use($class)) {
-    my $builder = $hub->controller->builder;
-    $builder->create_object(ucfirst($hub->param('data_type')));
-    $hub->set_builder($builder);
+    my $builder     = $hub->controller->builder;
+    my $object_type = ucfirst($hub->param('data_type'));
+    $builder->create_object($object_type);
     $component = $class->new($hub, $builder);
+    $component->object($builder->object($object_type));
   }
   if (!$component) {
     warn "!!! Could not create component $class";
