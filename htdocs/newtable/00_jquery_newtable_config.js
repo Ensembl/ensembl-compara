@@ -37,7 +37,7 @@
     return "<th "+attr_str+">"+text+"</th>";
   }
 
-  $.fn.new_table_config = function(config,data) {
+  $.fn.new_table_config = function(config,data,widgets,callw) {
     return {
       columns: function(config,columns) {
         $.each(config.columns,function(i,key) {

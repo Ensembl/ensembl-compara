@@ -74,19 +74,9 @@
     });
   }
 
-  function new_header($table,config,widgets) {
+  function new_header($table,config,widgets,callw) {
     var columns = [];
-
-    var cwidgets = [];
-    $.each(widgets,function(key,widget) { cwidgets.push(key); });
-    cwidgets.sort(function(a,b) { return (widgets[a].prio||50)-(widgets[b].prio||50); });
-    $.each(cwidgets,function(i,key) {
-      var widget = widgets[key];
-      if(widget.columns) {
-        widget.columns(config,columns);
-      }
-    });
-
+    callw('columns',config,columns);
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
  
@@ -331,10 +321,10 @@
     setTimeout(function() { eager(); },3000);
   }
 
-  $.fn.new_table_tabular = function(config,data) {
+  $.fn.new_table_tabular = function(config,data,widgets,callw) {
     return {
       layout: function($table,widgets) {
-        var header = new_header($table,config,widgets);
+        var header = new_header($table,config,widgets,callw);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div><div class="newtable_tabular"></div><div class="new_table_loading"><div>more rows loading</div></div>';
       },
       go: function($table,$el) {
