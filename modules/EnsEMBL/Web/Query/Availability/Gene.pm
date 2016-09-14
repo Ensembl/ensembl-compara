@@ -208,7 +208,10 @@ sub _counts {
   }
   if($member) {
     $out->{'orthologs'} = $member->number_of_orthologues;
+
+    $out->{'strain_orthologs'} =  $self->sd_config($args,'RELATED_TAXON') ? $member->number_of_orthologues($self->sd_config($args,'RELATED_TAXON')) : 0;
     $out->{'paralogs'} = $member->number_of_paralogues;
+    $out->{'strain_paralogs'} =  $self->sd_config($args,'RELATED_TAXON') ? $member->number_of_paralogues($self->sd_config($args,'RELATED_TAXON')) : 0;
     $out->{'families'} = $member->number_of_families;
   }
   my $alignments = $self->_count_alignments($args);
@@ -220,6 +223,7 @@ sub _counts {
     $out->{'paralogs_pan'} = $panmember->number_of_paralogues;
     $out->{'families_pan'} = $panmember->number_of_families;
   }
+
   return $out;
 }
 
@@ -241,6 +245,10 @@ sub get {
   $out->{'core'} = $args->{'type'} eq 'core';
   $out->{'has_gene_tree'} = $member ? $member->has_GeneTree : 0;
   $out->{'can_r2r'} = $self->sd_config($args,'R2R_BIN');
+  if($self->sd_config($args,'RELATED_TAXON')) { #gene tree availability check for strain
+    $out->{'has_strain_gene_tree'} = $member ? $member->has_GeneTree($self->sd_config($args,'RELATED_TAXON')) : 0; #TODO: replace hardcoded species
+  }  
+
   if($out->{'can_r2r'}) {
     my $canon = $args->{'gene'}->canonical_transcript;
     $out->{'has_2ndary'} = 0;
@@ -267,7 +275,7 @@ sub get {
   $out->{'family_count'} = $counts->{'families'};
   $out->{'not_rnaseq'} = $args->{'type'} ne 'rnaseq';
   for (qw(
-    transcripts alignments paralogs orthologs similarity_matches
+    transcripts alignments paralogs strain_paralogs orthologs strain_orthologs similarity_matches
     operons structural_variation pairwise_alignments
   )) {
     $out->{"has_$_"} = $counts->{$_};
@@ -288,6 +296,7 @@ sub get {
       $out->{"has_$_"} = $counts->{$_};
     }
   }
+
   return [$out];
 }
 
