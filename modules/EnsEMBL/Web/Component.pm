@@ -525,6 +525,9 @@ sub _info_panel {
   );
 }
 
+#the action check is wrong but for now will do, the reason for the function check is when you have both strain and main species menu on one page
+sub is_strain   { return $_[0]->hub->species_defs->IS_STRAIN_OF  || $_[0]->hub->action =~ /strain_/i ? 1 : 0; } 
+
 sub config_msg {
   my $self = shift;
   my $url  = $self->hub->url({
