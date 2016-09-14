@@ -227,12 +227,16 @@ sub reset_user_settings {
 
 sub config_url_params {
   ## Abstract method implementation
-  return qw(plus_signal);
+  return $_[0]->type, qw(plus_signal);
 }
 
 sub update_from_url {
   ## Abstract method implementation
   my ($self, $params) = @_;
+
+  foreach my $key_val (grep $_, split(/,/, $params->{$self->type} || '')) {
+    $self->altered($self->update_track_renderer(split /=/, $key_val));
+  }
 
   # plus_signal turns on some regulation tracks in a complex algorithm
   # on both regulation and location views. It can be specified in a URL
@@ -241,6 +245,10 @@ sub update_from_url {
   if ($params->{'plus_signal'}) { # TODO - move to update_from_url method in appropriate sub class --harpreet
     $self->update_reg_renderer('signals', 1);
   }
+
+  $self->save_user_settings if $self->is_altered;
+
+  return $self->is_altered;
 }
 
 sub update_from_input {
