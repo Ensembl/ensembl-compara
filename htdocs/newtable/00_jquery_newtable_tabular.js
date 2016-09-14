@@ -331,20 +331,13 @@
         var attrs = {};
         var classes = [];
         attrs['data-key'] = key || '';
-        if(cc.sort)  { classes.push('sorting'); }
-        text = callw('decorate_heading',cc,text)._last;
-//        if(cc.help) {
-//          var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
-//          text = $('<div/>').append(help).html();
-//        }
+        var html = callw('decorate_heading',cc,classes,attrs,text)._last;
+        if(html===undefined) { html = text; }
         var attr_str = "";
-        $.each(attrs,function(k,v) {
-          attr_str += ' '+k+'="'+v+'"';
-        });
-        if(classes.length) {
-          attr_str += ' class="'+classes.join(' ')+'"';
-        }
-        return "<th "+attr_str+">"+text+"</th>";
+        var $th = $('<th/>').html(html);
+        $.each(attrs,function(k,v) { $th.attr(k,v); });
+        $.each(classes,function(i,v) { $th.addClass(v); });
+        return $('<div/>').append($th).html();
       },
 
       go: function($table,$el) {

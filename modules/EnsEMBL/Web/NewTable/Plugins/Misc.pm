@@ -23,8 +23,8 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Misc;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Export Search Columns Styles HelpTips HelpTipHeader)]; }
-sub requires { return [qw(Export Search Columns HelpTipHeader)]; }
+sub children { return [qw(Export Search Columns Styles HelpTips HelpTipHeader SortUI)]; }
+sub requires { return [qw(Export Search Columns HelpTipHeader SortUI)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::Export;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
@@ -69,5 +69,11 @@ package EnsEMBL::Web::NewTable::Plugins::HelpTipHeader;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub js_plugin { return "newtable_helptip_header"; }
+
+
+package EnsEMBL::Web::NewTable::Plugins::SortUI;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "newtable_sortui"; }
 
 1;
