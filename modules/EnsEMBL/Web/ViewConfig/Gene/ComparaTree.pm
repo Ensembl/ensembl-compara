@@ -28,7 +28,7 @@ sub _new {
   ## @override
   ## Code depends upon referer
   ## TODO use of hub->referer should go away
-  my $self = shift->_new(@_);
+  my $self = shift->SUPER::_new(@_);
 
   $self->{'function'} = $self->hub->referer->{'ENSEMBL_FUNCTION'};
   $self->{'code'}     = join '::', 'Gene::ComparaTree', $self->{'function'} || ();
