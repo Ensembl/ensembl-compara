@@ -34,8 +34,8 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub; 
   my $object       = $self->object || $self->hub->core_object('regulation'); 
-  my $highlight    = $hub->param('opt_highlight');
-  my $context      = $hub->param('context') || 200;
+  my $highlight    = $self->param('opt_highlight');
+  my $context      = $self->param('context') || 200;
   my $image_width  = $self->image_width     || 800;
   my $slice        = $object->get_bound_context_slice($context);
      $slice        = $slice->invert if $slice->strand < 1;
