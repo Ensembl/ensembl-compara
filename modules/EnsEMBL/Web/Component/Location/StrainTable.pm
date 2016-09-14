@@ -241,57 +241,7 @@ sub variation_table {
 
   my $var_styles = $hub->species_defs->colour('variation');
   my $al_colours = $self->object->get_allele_genotype_colours; 
-#  my %strain_data;
-#  my $strain_slice_adaptor = $hub->get_adaptor('get_StrainSliceAdaptor', 'variation');
-
-
-#use Bio::EnsEMBL::MappedSliceContainer;
-#my $vdb = $hub->database('variation');
-#my $msc = Bio::EnsEMBL::MappedSliceContainer->new(-SLICE => $slice, -EXPANDED => 1);
-
-#$msc->set_StrainSliceAdaptor(Bio::EnsEMBL::Variation::DBSQL::StrainSliceAdaptor->new($vdb));
-
-#$msc->attach_StrainSlice($_->name) for @$samples;
-
-#foreach (@{$msc->get_all_MappedSlices}) {
-#  print "DATA ".$_->name.": ".$_->seq."<br />";
-#}
-
-my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
-
-
- 
-#print "<table>";
-#print "<tr><td>SEQ</td><td>".$slice->seq."</td></tr>";
-#  foreach my $sample (@$samples) {
-#    my $strain_slice = $strain_slice_adaptor->get_by_strain_Slice($sample, $slice);
-#    my $strain_slice = $strain_slice_adaptor->fetch_by_name($msc,$sample->name);
-#    my $sample_name = $sample->name;
-
-#print "<tr><td>$sample_name</td><td>".$strain_slice->seq."</td></tr>";
-#print "<tr><td>$sample_name</td><td>";
-#my $sample_genotypes = $sgfa->fetch_all_by_Slice($slice,$sample);
-#my $sample_genotypes = $sgfa->fetch_all_unique_by_Slice($slice,$sample,$pop);
-#my $sample_genotypes = $sga->fetch_all_by_Variation($var,$sample);
-
-
-#print "<ul>";
-#foreach my $sample_genotype (@$sample_genotypes) {
-#  print "<li>".$sample_genotype->variation->name.": ".$sample_genotype->genotype_string."</li>";
-#}
-#print "</ul>";
-
-#    foreach my $af_slice (@{$strain_slice->get_all_AlleleFeatures_Slice}) {
-#      my $var_name = $af_slice->variation_name;
-#      my $allele = $af_slice->allele_string;
-#print "ALLELE: $allele";
-   #   $strain_data{$var_name}{'vf'} = $af_slice->variation_feature;
-   #   $strain_data{$var_name}{'strain'}{$sample_name} = $allele;
-   # }
-#print "</td></tr>";
-#  } 
-#print "</table>";
-  
+  my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
   my $default_allele = '.';
 
   my $vf_adaptor = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
@@ -302,10 +252,8 @@ my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
     my $var      = $vf->variation;  
     my $var_name = $vf->variation_name;
     my $type     = $self->consequence_type($vf);
-#print "VAR: $var_name<br />";   
 
-#    next unless ($strain_data{$var_name});
-#    next if $callback->free_wheel();
+    next if $callback->free_wheel();
 
     my ($chr, $start, $end) = ($vf->seq_region_name,$vf->seq_region_start,$vf->seq_region_end);
     my $ref_allele = $vf->feature_Slice->seq;
@@ -317,7 +265,6 @@ my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
     foreach my $sample (@$samples) {
       my $sample_name = $sample->name;
       my $sample_genotypes = $sga->fetch_all_by_Variation($var,$sample);
-
       if ($sample_genotypes && $sample_genotypes->[0]) {
         $list_of_sample_genotypes{$sample_name} = $sample_genotypes->[0];
       }
@@ -361,10 +308,6 @@ my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
           $sample_allele =~ s/$al/$al_colours->{$al}/g;
         }
       }
-#      my $sample_allele = '';
-#      if ($strain_data{$var_name}{'strain'}{$sample_name}) {
-#        $sample_allele = $strain_data{$var_name}{'strain'}{$sample_name};
-#      }
       $row->{lc($sample_name).'_strain'} = qq{<div style="text-align:center">$sample_allele</div>};
     }
     $callback->add_row($row);
