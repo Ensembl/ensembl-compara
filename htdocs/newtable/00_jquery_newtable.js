@@ -167,7 +167,7 @@
     var view = $table.data('view');
     $('.layout',$table).html(
       '<div data-widget-name="'+view.format+'">'+
-      widgets[view.format].layout($table)+"</div>"
+      widgets[view.format].layout($table,widgets)+"</div>"
     );
     var $widget = $('div[data-widget-name='+view.format+']',$table);
     if($widget.hasClass('_inited')) { return; }

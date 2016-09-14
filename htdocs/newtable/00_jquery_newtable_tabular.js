@@ -41,26 +41,6 @@
     });
   }
 
-  function new_th(key,cc) {
-    var text = cc.label || cc.title || key;
-    var attrs = {};
-    var classes = [];
-    attrs['data-key'] = key || '';
-    if(cc.sort)  { classes.push('sorting'); }
-    if(cc.help) {
-      var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
-      text = $('<div/>').append(help).html();
-    }
-    var attr_str = "";
-    $.each(attrs,function(k,v) {
-      attr_str += ' '+k+'="'+v+'"';
-    });
-    if(classes.length) {
-      attr_str += ' class="'+classes.join(' ')+'"';
-    }
-    return "<th "+attr_str+">"+text+"</th>";
-  }
-
   function fix_widths($table,config,orient) {
     var totals = { u: 0, px: 0 };
     var widths = [];
@@ -94,17 +74,19 @@
     });
   }
 
-  function new_header($table,config) {
+  function new_header($table,config,widgets) {
     var columns = [];
 
-    $.each(config.columns,function(i,key) {
-      var cc = config.colconf[key];
-      // TODO to plugin
-      if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-        return;
+    var cwidgets = [];
+    $.each(widgets,function(key,widget) { cwidgets.push(key); });
+    cwidgets.sort(function(a,b) { return (widgets[a].prio||50)-(widgets[b].prio||50); });
+    $.each(cwidgets,function(i,key) {
+      var widget = widgets[key];
+      if(widget.columns) {
+        widget.columns(config,columns);
       }
-      columns.push(new_th(key,cc));
     });
+
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
  
@@ -351,8 +333,8 @@
 
   $.fn.new_table_tabular = function(config,data) {
     return {
-      layout: function($table) {
-        var header = new_header($table,config);
+      layout: function($table,widgets) {
+        var header = new_header($table,config,widgets);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div><div class="newtable_tabular"></div><div class="new_table_loading"><div>more rows loading</div></div>';
       },
       go: function($table,$el) {

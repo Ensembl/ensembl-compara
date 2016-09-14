@@ -209,7 +209,7 @@ sub make_table {
     push (@columns,
     {
       _key    => lc($sample->name).'_strain'  , _type => 'string no_filter no_sort',
-      label   => qq{<div style="text-align:center"><small>$sample_label</small></div>},
+      label   => $sample_label,
       helptip => $sample->name
     });
   }
