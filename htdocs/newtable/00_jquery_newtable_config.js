@@ -16,34 +16,13 @@
  */
 
 (function($) {
-  // TODO: should be moved back into tabular
-  function new_th(key,cc) {
-    var text = cc.label || cc.title || key;
-    var attrs = {};
-    var classes = [];
-    attrs['data-key'] = key || '';
-    if(cc.sort)  { classes.push('sorting'); }
-    if(cc.help) {
-      var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
-      text = $('<div/>').append(help).html();
-    }
-    var attr_str = "";
-    $.each(attrs,function(k,v) {
-      attr_str += ' '+k+'="'+v+'"';
-    });
-    if(classes.length) {
-      attr_str += ' class="'+classes.join(' ')+'"';
-    }
-    return "<th "+attr_str+">"+text+"</th>";
-  }
-
   $.fn.new_table_config = function(config,data,widgets,callw) {
     return {
       columns: function(config,columns) {
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
           if(callw('unshowable',cc)._any) { return; }
-          columns.push(new_th(key,cc));
+          columns.push(callw('layout_th',key,cc)._last);
         });
       }
     };

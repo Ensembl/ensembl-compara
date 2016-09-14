@@ -325,6 +325,27 @@
         var header = new_header($table,config,widgets,callw);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div><div class="newtable_tabular"></div><div class="new_table_loading"><div>more rows loading</div></div>';
       },
+
+      layout_th: function(key,cc) {
+        var text = cc.label || cc.title || key;
+        var attrs = {};
+        var classes = [];
+        attrs['data-key'] = key || '';
+        if(cc.sort)  { classes.push('sorting'); }
+        if(cc.help) {
+          var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
+          text = $('<div/>').append(help).html();
+        }
+        var attr_str = "";
+        $.each(attrs,function(k,v) {
+          attr_str += ' '+k+'="'+v+'"';
+        });
+        if(classes.length) {
+          attr_str += ' class="'+classes.join(' ')+'"';
+        }
+        return "<th "+attr_str+">"+text+"</th>";
+      },
+
       go: function($table,$el) {
         $('th',$table).click(function(e) {
           add_sort($table,config,$(this).data('key'),!e.shiftKey);

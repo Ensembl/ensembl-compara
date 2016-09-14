@@ -579,13 +579,14 @@
       var args = (arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); // copy args to avoid V8 performance penalty
       var method = args[0];
       args = args.slice(1);
-      var ret = { _all: true, _any: false };
+      var ret = { _all: true, _any: false, _last: undefined };
       $.each(cwidgets,function(i,key) {
         var widget = widgets[key];
         if(widget[method]) {
-          ret[key] = widget[method].apply(this,args);
+          ret[key] = widget[method].apply(this,args,ret._last);
           ret._all = ret._all && ret[key];
           ret._any = ret._any || ret[key];
+          ret._last = ret[key];
         }
       });
       return ret;
