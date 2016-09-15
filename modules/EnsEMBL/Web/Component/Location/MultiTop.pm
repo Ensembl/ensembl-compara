@@ -37,7 +37,7 @@ sub content {
   my $self = shift;
   my $hub  = $self->hub;
   
-  return if $hub->param('show_top_panel') eq 'no';
+  return if $self->param('show_top_panel') eq 'no';
   
   my $threshold       = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width     = $self->image_width;
@@ -48,7 +48,7 @@ sub content {
   my $i               = 1;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $compara_db      = EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database;
-  my $join_genes      = $hub->param('opt_join_genes_top') eq 'on';
+  my $join_genes      = $self->param('opt_join_genes_top') eq 'on';
   my @images;
   
   foreach (@$slices) {

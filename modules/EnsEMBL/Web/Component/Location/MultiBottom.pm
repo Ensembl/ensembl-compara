@@ -39,7 +39,7 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object || $self->hub->core_object('location');
   
-  return if $hub->param('show_bottom_panel') eq 'no';
+  return if $self->param('show_bottom_panel') eq 'no';
   
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   
@@ -56,9 +56,9 @@ sub content {
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), LASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch'), LASTZ_RAW => $hub->param('opt_pairwise_raw') };
+  my $methods         = { BLASTZ_NET => $self->param('opt_pairwise_blastz'), LASTZ_NET => $self->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat'), LASTZ_PATCH => $self->param('opt_pairwise_lpatch'), LASTZ_RAW => $self->param('opt_pairwise_raw') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $join_genes      = $hub->param('opt_join_genes_bottom') eq 'on';
+  my $join_genes      = $self->param('opt_join_genes_bottom') eq 'on';
 
   my $compara_db      = $join_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
@@ -146,7 +146,7 @@ sub content {
   my $image = $self->new_image(\@images);
   $image->{'export_params'} = [];
   foreach ($hub->param) {
-    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if ($_ =~ /^(r|s)\d/ || $_ =~ /^opt/);
+    push @{$image->{'export_params'}}, [$_, $self->param($_)] if ($_ =~ /^(r|s)\d/ || $_ =~ /^opt/);
   } 
   
   return if $self->_export_image($image);
