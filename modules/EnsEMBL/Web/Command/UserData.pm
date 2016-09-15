@@ -80,7 +80,7 @@ sub upload {
       else {
         my $data = $hub->session->get_record_data({'type' => 'upload', 'code' => $file->code});
         $data->{'description'} = $description if keys %$data;
-        $hub->session->set_record_data(%$data);
+        $hub->session->set_record_data($data);
       }
     }
 
