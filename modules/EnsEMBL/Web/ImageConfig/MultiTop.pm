@@ -28,6 +28,8 @@ sub init_cacheable {
   ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
     sortable_tracks  => 1,     # allow the user to reorder tracks
     opt_empty_tracks => 0,     # include empty tracks
