@@ -34,7 +34,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -45,15 +45,6 @@ sub default_options {
 
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
-        'division'        => 'ensembl',     # used to find the species set and the family / ncRNA-tree databases
-        'master_db'       => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara4/wa2_ensembl_families_85',
-        'ncrnatrees_db'   => 'mysql://ensro@compara3/cc21_ensembl_ncrna_85',
-
-        # Tables to copy and merge
-        'tables_from_master'    => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
-        'tables_from_family_db' => [ 'dnafrag', 'genome_db' ],
-        'tables_to_merge'       => [ 'seq_member', 'gene_member', 'sequence' ],
     };
 }
 
@@ -81,79 +72,13 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'find_other_mlss',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ { } ],
-            -flow_into => {
-                '1->A' => [ 'copy_from_master_factory', 'copy_from_familydb_factory', 'merge_tables_factory' ],
-                'A->1' => [ 'offset_tables' ],
-            },
-        },
-
-        {   -logic_name => 'copy_from_master_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'     => $self->o('tables_from_master'),
-                'column_names'  => [ 'table' ],
-            },
-            -flow_into => {
-                2 => [ 'copy_table_from_master_db'  ],
-            },
-        },
-
-        {   -logic_name    => 'copy_table_from_master_db',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => $self->o('master_db'),
-                'mode'          => 'topup',
-            },
-        },
-
-        {   -logic_name => 'copy_from_familydb_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'     => $self->o('tables_from_family_db'),
-                'column_names'  => [ 'table' ],
-            },
-            -flow_into => {
-                2 => [ 'topup_table_from_family_db'  ],
-            },
-        },
-
-        {   -logic_name => 'merge_tables_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'     => $self->o('tables_to_merge'),
-                'column_names'  => [ 'table' ],
-            },
-            -flow_into => {
-                2 => [ 'topup_table_from_ncrna_db' ],
-            },
-        },
-
- 
-        {   -logic_name    => 'topup_table_from_family_db',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => $self->o('family_db'),
-                'mode'          => 'topup',
-            },
-        },
-
-        {   -logic_name    => 'topup_table_from_ncrna_db',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => $self->o('ncrnatrees_db'),
-                'mode'          => 'topup',
-            },
-            -flow_into      => [ 'topup_table_from_family_db' ],
-        },
-
-
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -input_ids  => [ {
+                    'compara_db' => $self->o('compara_db'),
+                } ],
             -parameters => {
-                'range_index'   => 3,
+                'range_index'   => 5,
             },
             -flow_into => [ 'species_factory' ],
         },

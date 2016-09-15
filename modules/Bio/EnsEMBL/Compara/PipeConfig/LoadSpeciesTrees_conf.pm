@@ -68,6 +68,7 @@ sub default_options {
             [ 'Mammalia', 'Mammals' ],
             [ 'Neopterygii', 'Fish' ],
             [ 'Sauria', 'Sauropsids' ],
+            [ 'Murinae', 'Rat and all mice (incl. strains)' ],
         ],
 
         'ensembl_topology_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw',
@@ -154,6 +155,7 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'NCBI Taxonomy',
                 'mlss_id'   => '#method_link_species_set_id#',
+                'allow_subtaxa' => 1,
             },
             -flow_into  => {
                 2 => [ 'hc_species_tree' ],
