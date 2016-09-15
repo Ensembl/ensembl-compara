@@ -163,7 +163,10 @@ sub ajax_multi_species {
     delete $session_data->{$hub->species};
   }
 
-  $hub->set_session_data($session_data);
+  $session_data->{'type'} = 'multi_species';
+  $session_data->{'code'} = 'multi_species';
+
+  $hub->session->set_record_data($session_data);
 }
 
 sub ajax_cell_type {
