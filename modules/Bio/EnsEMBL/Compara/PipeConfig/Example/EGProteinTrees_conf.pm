@@ -176,6 +176,8 @@ sub default_options {
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
+        'goc_capacity'              => 200,
+        'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'hc_capacity'               =>   4,
@@ -350,4 +352,3 @@ sub tweak_analyses {
 
 
 1;
-
