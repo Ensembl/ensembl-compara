@@ -171,7 +171,7 @@ sub _load_remote_url_tracks {
       'colour'      => $data->{'colour'}    || '',
       'renderers'   => $data->{'renderers'} || '',
       'timestamp'   => $data->{'timestamp'} || time,
-      'display'     => $self->check_threshold($data->{'display'}),
+      'display'     => $data->{'display'}, #$self->check_threshold($data->{'display'}),
     };
   }
 
@@ -233,7 +233,7 @@ sub _load_uploaded_tracks {
     $strand         = $data->{'strand'}     // $strand;
     $renderers      = $data->{'renderers'}  // $renderers;
     my $description = sprintf 'Data that has been %s to the web server. %s', $is_user ? 'saved': 'temporarily uploaded', $data->{'description'} ? add_links($data->{'description'}) : '';
-    my $display     = $self->check_threshold($data->{'display'});
+    my $display     = $data->{'display'}; #$self->check_threshold($data->{'display'});
 
     $menu->append_child($self->create_track_node('upload_'.$record->code, $data->{'name'}, {
       'external'        => 'user',
@@ -456,9 +456,10 @@ sub _add_trackhub_tracks {
       $on_off = 'off';
     } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
       $on_off = 'on';
-    } elsif ($self->check_threshold($on_off) eq 'off') {
-      $on_off = 'off';
     }
+    #} elsif ($self->check_threshold($on_off) eq 'off') {
+    #  $on_off = 'off';
+    #}
 
     my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
 
@@ -808,7 +809,7 @@ sub _add_flat_file_track {
 
   my ($strand, $renderers, $default) = $self->_user_track_settings($options->{'style'}, $options->{'format'});
 
-  $options->{'display'} = $self->check_threshold($options->{'display'});
+  #$options->{'display'} = $self->check_threshold($options->{'display'});
 
   my $track = $self->create_track_node($key, $name, {
     display         => 'off',
@@ -860,7 +861,7 @@ sub _add_file_format_track {
     }
   }
 
-  $args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
+  #$args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
 
   $self->_add_track($menu, undef, $args{'key'}, {}, {
     strand      => 'f',
