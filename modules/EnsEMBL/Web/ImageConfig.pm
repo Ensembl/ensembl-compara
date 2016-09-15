@@ -79,7 +79,7 @@ sub _new {
   $self->{'_parameters'}      = {}, # hash to contain all parameters
   $self->{'track_order'}      = []; # state changes for track order as saved in db
   $self->{'user_track_count'} = 0;
-  $self->{'load_threshold'}   = $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 20;
+  $self->{'userdata_threshold'}   = $hub->species_defs->USERDATA_THRESHOLD || 20;
 
   return $self;
 }

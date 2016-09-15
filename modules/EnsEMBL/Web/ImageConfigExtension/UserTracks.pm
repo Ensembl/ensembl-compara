@@ -52,7 +52,7 @@ sub load_user_tracks {
 sub display_threshold_message {
   ## Displays a session message if number of loaded tracks is more than that can be accommodated
   my $self          = shift;
-  my $threshold     = $self->{'load_threshold'};
+  my $threshold     = $self->{'userdata_threshold'};
   my $hidden_tracks = $self->{'user_track_count'} - $threshold;
 
   if ($hidden_tracks > 0) {
@@ -70,13 +70,15 @@ sub check_threshold {
   ## @param display String
   ## @return 1 if still OK, 0 if check fails i.e. threshold exceeded
   my ($self, $display) = @_;
+  #warn ">>> CHECKING TRACK - CURRENTLY $display";
 
   $display ||= 'off';
 
   return $display if $display eq 'off';
 
   ## Track is supposed to be on, so compare with threshold
-  if ($self->{'user_track_count'} >= $self->{'load_threshold'}) {
+  if ($self->{'user_track_count'} >= $self->{'userdata_threshold'}) {
+    #warn "@@@ THRESHOLD EXCEEDED!";
     $display = 'off';
   } else {
     $self->{'user_track_count'}++;
