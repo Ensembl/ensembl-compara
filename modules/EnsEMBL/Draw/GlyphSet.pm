@@ -754,13 +754,24 @@ sub recast_label {
     hover     => $self->label->{'hover'},
   });
 
-  my $y = 0;
+  my $make_level = $self->use_subtitles ? 1 : 0; ## Adjust position if track has an in-image label
+  my $y = $make_level ? 5 : 0;
   my $h = $self->my_config('caption_height') || $self->label->{'height'};
+  my $count = 0;
+
   foreach my $row_data (@$rows) {
     my ($row_text,$row_width) = @$row_data;
     next unless $row_text;
     my $pad = 0;
-    $pad = 4 if !$y and @$rows>1;
+    # Add some extra delimiting margin for the next row (if any)
+    if ($make_level) {
+      if ($count > 0) {
+        $pad = 4;
+      }
+    }
+    else {
+      $y = 1 if !$count and @$rows > 1;
+    }
     my $row = $self->Text({
       font => $font,
       ptsize => $ptsize,
@@ -772,7 +783,8 @@ sub recast_label {
       halign => 'left',
     });
     $composite->push($row);
-    $y += $h + $pad; # The 4 is to add some extra delimiting margin
+    $y += $h + $pad; 
+    $count++;
   }
   $self->label($composite);
 }
