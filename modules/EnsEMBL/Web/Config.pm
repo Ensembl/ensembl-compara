@@ -132,12 +132,19 @@ sub get_user_settings {
   return $self->{'_user_settings'} ||= $self->hub->session ? $self->hub->session->get_record_data({'type' => $self->config_type, 'code' => $self->code}) : {};
 }
 
+sub get_user_settings_to_save {
+  ## @protected
+  ## Makes any final changes to the user data before its saved to the db
+  ## Override in a child class if needed
+  return shift->get_user_settings(@_);
+}
+
 sub save_user_settings {
   ## Saves (or removes) user settings to the corresponding user/session record for this image/view config
   ## Does not take any arguments but any changes made to the hash returned by get_user_settings method will get saved
   my $self      = shift;
   my $hub       = $self->hub;
-  my $settings  = $self->get_user_settings;
+  my $settings  = $self->get_user_settings_to_save;
 
   $settings->{'type'} = $self->config_type;
   $settings->{'code'} = $self->code;
