@@ -818,7 +818,7 @@ sub configure_user_data {
   my ($self, @track_data) = @_;
   my $species = $self->species;
 
-  foreach my $view_config (map { $self->get_viewconfig(@$_) || () } @{$self->components}) {
+  foreach my $view_config (map { $self->get_viewconfig({'component' => $_->[0], 'type' => $_->[1]}) || () } @{$self->components}) {
     my $ic_code = $view_config->image_config;
 
     next unless $ic_code;
