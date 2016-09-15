@@ -71,8 +71,14 @@ sub render {
 
   ## Sort species into desired groups
   my %phylo_tree;
+  my %has_strains;
   
   foreach (values %$species_info) {
+    ## Omit individual non-reference strains, but record number of strains
+    if ($_->{'strain_collection'} && $_->{'strain'} !~ /reference/) {
+      $has_strains{$_->{'strain_collection'}}++;
+      next;
+    }
     my $group = $_->{'group'} ? $labels->{$_->{'group'}} || $_->{'group'} : 'no_group';
     push @{$phylo_tree{$group}}, $_;
   }  
@@ -96,8 +102,20 @@ sub render {
       
       @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} } @$species_list;
     }
-    
-    $html .= sprintf qq{<option value="%s/Info/Index">%s</option>\n}, encode_entities($_->{'key'}), encode_entities($_->{'common'}) for @sorted_by_common;
+   
+    for (@sorted_by_common) {
+      $html .= sprintf qq{<option value="%s/Info/Index">%s</option>\n}, encode_entities($_->{'key'}), encode_entities($_->{'common'});
+      my $strain_count = $has_strains{$_->{'strain_collection'}};
+      if ($strain_count) {
+        my $strain_text = 'strain';
+        $strain_text .= 's' if $strain_count > 1;
+        $html .= sprintf qq{<option value="%s/Info/Strains">%s %s (%s)</option>\n}, 
+                      encode_entities($_->{'key'}), encode_entities($_->{'common'}), 
+                      $strain_text, $strain_count;
+      }
+    }
+
+ 
     
     if ($optgroup) {
       $html    .= "</optgroup>\n";
