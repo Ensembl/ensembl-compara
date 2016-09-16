@@ -34,10 +34,21 @@ sub init {
   ## @override
   my $self  = shift;
   my $hub   = $self->hub;
+  my $r     = $self->r;
 
+  # submit request returns just json - no need to re-send the entire form HTML again
   if ($hub->param('submit')) {
-    $self->update_configuration;
+    my $updated = $self->update_configuration;
+
+    $r->content_type('text/plain');
+    $r->print(to_json($updated ? {'updated' => 1} : {}));
+
   } else {
+
+    # id reset request, reset before showing the configs form
+    $self->update_configuration if $hub->param('reset');
+
+    # render the form
     $self->SUPER::init(@_);
   }
 }
@@ -54,24 +65,22 @@ sub _create_objects {
 sub update_configuration {
   ## Handles the request to make changes to the configs (when the config modal form is submitted)
   my $self        = shift;
-  my $r           = $self->r;
   my $hub         = $self->hub;
   my $view_config = $hub->get_viewconfig($hub->action);
-  my $response    = {};
+  my $updated;
 
   throw WebException('ViewConfig missing') unless $view_config;
 
-  my $params = { map { my $val = $hub->param($_); ($_ => $hub->param($_)) } $hub->param }; # update_from_input doesn't expect multiple values for a single param
+  my $params = { map { my $val = $hub->param($_); ($_ => $val) } $hub->param }; # update_from_input doesn't expect multiple values for a single param
 
   $params->{$_} = from_json($params->{$_} || '{}') for qw(image_config view_config);
 
   if ($view_config->update_from_input($params)) {
-    $hub->session->store_records;
-    $response->{'updated'} = 1;
+    $hub->store_records_if_needed;
+    $updated = 1;
   }
 
-  $r->content_type('text/plain');
-  $r->print(to_json($response));
+  return $updated;
 }
 
 1;
