@@ -571,6 +571,7 @@ sub load_configured_bigbed {
     $self->add_track('information', 'age_of_base_legend', 'Age of Base Legend', 'age_of_base_legend', { strand => 'r' });
   }
 }
+
 sub load_configured_bigwig    { shift->load_file_format('bigwig'); }
 sub load_configured_vcf       { shift->load_file_format('vcf');    }
 sub load_configured_trackhubs { shift->load_file_format('trackhub'); }
@@ -582,7 +583,7 @@ sub load_file_format {
   return unless ($format eq 'trackhub' || $self->can($function));
 
   my $internal = !defined $sources;
-  $sources  = $self->species_defs->get_config(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
+  $sources  = $self->species_defs->get_config($self->species, sprintf('ENSEMBL_INTERNAL_%s_SOURCES', uc $format)) || {} unless defined $sources; # get the internal sources from config
 
   foreach my $source_name (sort keys %$sources) {
     # get the target menu
@@ -608,6 +609,7 @@ sub load_file_format {
         $main_menu->insert_alphabetically($menu);
       }
     }
+
     if ($source) {
       if ($format eq 'trackhub') {
         ## Force hiding of internally configured trackhubs, because they should be
