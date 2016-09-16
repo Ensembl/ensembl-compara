@@ -789,7 +789,7 @@ sub features {
       
       if ($show_exons) {
         my $ref_genetree = $tree->tree;
-        $ref_genetree = $ref_genetree->alternative_trees->{default} if $ref_genetree->clusterset_id ne 'default';
+        $ref_genetree = $ref_genetree->alternative_trees->{default} if $ref_genetree->ref_root_id;
         unless ($ref_genetree->{_exon_boundaries_hash}) {
           my $gtos_adaptor = $tree->adaptor->db->get_GeneTreeObjectStoreAdaptor;
           my $json_string = $gtos_adaptor->fetch_by_GeneTree_and_label($ref_genetree, 'exon_boundaries');
