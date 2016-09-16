@@ -93,8 +93,6 @@ sub handler {
   # let the next handler handle it if the URL does not map to any Controller
   return unless $controller;
 
-  my $exception;
-
   try {
     $controller = dynamic_require($controller)->new($r, $species_defs, {
       'species'       => $species,
@@ -104,11 +102,8 @@ sub handler {
     $controller->process;
 
   } catch {
-    $exception = $_ unless $_->handle($controller);
+    throw $_ unless ref $controller && $_->handle($controller);
   };
-
-  # TODO - print proper error page
-  print $exception if $exception;
 
   return OK;
 }
