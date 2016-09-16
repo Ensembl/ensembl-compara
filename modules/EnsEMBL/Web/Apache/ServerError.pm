@@ -18,34 +18,60 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Web::Apache::ServerError;
-     
-use strict;
 
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Document::Panel;
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Template::Error;
+
+sub get_template {
+  return 'EnsEMBL::Web::Template::Error';
+}
 
 sub handler {
-  my $r          = shift;
-  my $controller = EnsEMBL::Web::Controller->new($r, { page_type => 'Static', renderer_type => 'Apache' });
-  my $page       = $controller->page;
-  my $admin      = $controller->species_defs->ENSEMBL_HELPDESK_EMAIL;
-  
-  $page->initialize;
-  $page->title->set('500: Internal Server Error');
-  
-  $page->content->add_panel(EnsEMBL::Web::Document::Panel->new(
-    raw => qq{
-      <div class="error left-margin right-margin">
-        <h3>Internal Server Error</h3>
-        <div class="message-pad">
-          <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
-          <p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to $admin</p>
-        </div>
-      </div>
+  ## Handles 500 errors (via /Crash) and internal exceptions (called by EnsEMBL::Web::Apache::Handlers)
+  ## @param Apache2::RequestRec request object
+  ## @param EnsEMBL::Web::SpeciesDefs object (only when called by EnsEMBL::Web::Apache::Handlers)
+  ## @param EnsEMBL::Web::Exception object (only when called by EnsEMBL::Web::Apache::Handlers)
+  my ($r, $species_defs, $exception) = @_;
+
+  my ($content, $content_type);
+
+  my $heading = '500 Server Error';
+  my $message = 'An unknown error has occurred';
+  my $stack   = '';
+
+  try {
+
+    if ($exception) {
+      $heading  = sprintf 'Server Exception: %s', $exception->type;
+      $message  = $exception->message;
+      $stack    = $exception->stack_trace;
+      warn $exception;
     }
-  ));
-  
-  $controller->render_page;
+
+    $content_type = 'text/html';
+    $content      = get_template->new({
+      'species_defs'  => $species_defs,
+      'heading'       => $heading,
+      'message'       => $message,
+      'content'       => $stack,
+      'helpdesk'      => 1,
+      'back_button'   => 1
+    })->render;
+
+  } catch {
+    warn $_;
+    $content_type = 'text/plain';
+    $content      = "$heading\n\n$message\n\n$stack";
+  };
+
+  $r->status(Apache2::Const::SERVER_ERROR);
+  $r->content_type($content_type) if $content_type;
+  $r->print($content);
+
+  return undef;
 }
 
 1;
