@@ -23,10 +23,12 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Exceptions;
-use EnsEMBL::Web::Template::Error;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub get_template {
-  return 'EnsEMBL::Web::Template::Error';
+  my $r = shift;
+
+ return $r->headers_in->get('X-Requested-With') eq 'XMLHttpRequest' ? 'EnsEMBL::Web::Template::AjaxError' : 'EnsEMBL::Web::Template::Error';
 }
 
 sub handler {
@@ -46,24 +48,26 @@ sub handler {
 
     if ($exception) {
       $heading  = sprintf 'Server Exception: %s', $exception->type;
-      $message  = $exception->message;
+      $message  = $exception->message(1);
       $stack    = $exception->stack_trace;
       warn $exception;
     }
 
-    $content_type = 'text/html';
-    $content      = get_template->new({
+    my $template = dynamic_require(get_template($r))->new({
       'species_defs'  => $species_defs,
       'heading'       => $heading,
       'message'       => $message,
       'content'       => $stack,
       'helpdesk'      => 1,
       'back_button'   => 1
-    })->render;
+    });
+
+    $content_type = $template->content_type;
+    $content      = $template->render;
 
   } catch {
     warn $_;
-    $content_type = 'text/plain';
+    $content_type = 'text/plain; charset=utf-8';
     $content      = "$heading\n\n$message\n\n$stack";
   };
 
