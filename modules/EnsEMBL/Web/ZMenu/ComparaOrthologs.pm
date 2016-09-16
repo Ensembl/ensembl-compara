@@ -26,12 +26,13 @@ use warnings;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self      = shift;
-  my $hub       = $self->hub;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $strain_url  = $hub->species_defs->IS_STRAIN_OF ? "Strain_" : "";
   
   my $align_url = $hub->url({
     type     => 'Gene',
-    action   => 'Compara_Ortholog',
+    action   => $strain_url.'Compara_Ortholog',
     function => 'Alignment' . ($hub->param('cdb') =~ /pan/ ? '_pan_compara' : ''),
     hom_id   => $hub->param('dbID'),
     g1       => $hub->param('g1'),
