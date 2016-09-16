@@ -22,6 +22,8 @@ package EnsEMBL::Web::Template::Error;
 use strict;
 use warnings;
 
+use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::SpeciesDefs;
 
 use parent qw(EnsEMBL::Web::Template);
@@ -33,6 +35,7 @@ sub new {
   $self->{'title'}        ||= $self->{'heading'};
   $self->{'css'}            = [ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'css'}} ]->[0]->minified_url_path;
   $self->{'static_server'}  = $self->{'species_defs'}->ENSEMBL_STATIC_SERVER || '/';
+  $self->{'message'}        = encode_entities($self->{'message'}) if $self->content_type =~ /html/i;
 
   return $self;
 }
@@ -40,10 +43,10 @@ sub new {
 sub render {
   ## @override
   my $self = shift;
-  return $self->_html =~ s/\[\[([^\]]+)\]\]/my $replacement = $self->{$1};/ger;
+  return $self->_template =~ s/\[\[([^\]]+)\]\]/my $replacement = $self->{$1};/ger;
 }
 
-sub _html {
+sub _template {
   qq(<!DOCTYPE html>
 <html lang="en-gb">
 <head>
