@@ -1086,7 +1086,7 @@ sub species_label {
   }
 
   $key = ucfirst $key;
-  
+
   return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_BIO_NAME');
   
   my $common = $self->get_config($key, 'SPECIES_COMMON_NAME');
@@ -1100,6 +1100,17 @@ sub species_label {
   } else {
     return "$common ($rtn)";
   }  
+}
+
+sub production_name_mapping {
+### As the name said, the function maps the production name with the species URL, 
+### @param production_name - species production name
+### Return string = the corresponding species.url name which is the name web uses for URL and other code
+  my ($self, $production_name) = @_;
+  
+  foreach ($self->valid_species) {
+    return $self->get_config($_, 'SPECIES_URL') if($self->get_config($_, 'SPECIES_PRODUCTION_NAME') eq lc($production_name));
+  }
 }
 
 sub assembly_lookup {
