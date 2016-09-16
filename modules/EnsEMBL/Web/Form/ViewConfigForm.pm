@@ -374,7 +374,7 @@ sub _build_imageconfig_menus {
 
     my $desc      = '';
     my $node_desc = $node->get_data('description');
-    my $desc_url  = $node->get_data('desc_url') ? $self->hub->url('Ajax', {'type' => 'fetch_html', 'url' => $node->get_data('desc_url')}) : '';
+    my $desc_url  = $node->get_data('desc_url') ? $self->view_config->hub->url('Ajax', {'type' => 'fetch_html', 'url' => $node->get_data('desc_url')}) : '';
 
     if ($node->get_data('subtrack_list')) { # it's a composite track
       $desc .= '<h1>Track list</h1>';
