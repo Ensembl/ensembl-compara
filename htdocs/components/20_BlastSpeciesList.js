@@ -49,7 +49,8 @@ Ensembl.Panel.BlastSpeciesList = Ensembl.Panel.extend({
         text: item.title,
         'data-title': item.title,
         'data-key': item.key,
-        class: 'ss-selected'
+        class: 'ss-selected',
+        title: item.title
       });
       
       var li = $('<li/>', {

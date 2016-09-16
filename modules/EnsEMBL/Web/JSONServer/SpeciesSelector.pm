@@ -24,102 +24,120 @@ use warnings;
 use JSON;
 use List::MoreUtils qw/ uniq /;
 use URI::Escape qw(uri_escape);
+use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::IOWrapper::Indexed;
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 
 use parent qw(EnsEMBL::Web::JSONServer);
 
-sub object_type {
-  my $self = shift;
-  return 'SpeciesSelector';
-}
-
-sub json_fetch_species {
+sub init {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $object  = $self->object;
   my $panel_type = $hub->param('panel_type');
-  my $json = {};
-  if ($panel_type eq 'Blast') {
-    $json = create_json_for_blast($self, $panel_type);
-  }
-
-  if (!$json) {
-    return {'err', 'Couldn\'t find e_species_division.json file'};
-  }
-  return { json => $json };
 }
 
-sub create_json_for_blast {
+sub json_to_dynatree {
   my $self = shift;
-  my $hub = $self->hub;
-  my $sd = $hub->species_defs;
-  my @species_list = $sd->valid_species;
-  my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
-  my $division_json = from_json(file_get_contents($file));
-  my $json = {};
-  my $species_info  = $hub->get_species_info;
+  my $division_hash = shift;
+  my $species_info = shift;
+  my $available_internal_nodes = shift;
+  my $extras = shift || {};
 
-  my $available_internal_nodes = get_available_internal_nodes($division_json, $species_info);
-
-  sub json_to_dynatree { 
-    my $tree_hash = shift;
-    my $species_info = shift;
-    my $available_internal_nodes = shift;
-    my @dyna_tree = ();
-    my @child_nodes = ();
-    my $is_strain = 0;
-    if ($tree_hash->{child_nodes}) {
-      @child_nodes = @{$tree_hash->{child_nodes}};
-    }
-
-    if ($tree_hash->{is_leaf}) {
-      if($species_info->{$tree_hash->{key}}) {
-        my $sp = $species_info->{$tree_hash->{key}};
-        my $t = {
-          key             => $tree_hash->{key},
-          scientific_name => $sp->{scientific},
-          title           => $sp->{common} eq 'Mouse' ? 'Mouse (' . $sp->{assembly_version} . ')' : $sp->{common},
-          tooltip         => $sp->{scientific} || ''
-        };
-        if ($sp->{strain} ne '') {
-          $t->{isStrain} = "true" ;
-          $t->{tooltip} = "Strain: " . $sp->{strain};
-        }
-        push @dyna_tree, $t;
-      }
-    }
-
-    if (scalar @child_nodes > 0) {
-      my @children = map { json_to_dynatree($_, $species_info, $available_internal_nodes) } @child_nodes;
-
-      if ($available_internal_nodes->{$tree_hash->{display_name}}) {    
-        my $t = {
-          key      => $tree_hash->{display_name},
-          title    => $tree_hash->{display_name},
-          children => [ @children ],
-          isFolder => 1,
-          isInternalNode => $tree_hash->{is_internal_node}
-        };
-        if(defined $tree_hash->{is_submenu} && $tree_hash->{is_submenu} eq 'true') {
-          $t->{is_submenu} = 1;
-        }
-        push @dyna_tree, $t;
-      }
-    }
-
-
-    return @dyna_tree;
+  my @dyna_tree = ();
+  my @child_nodes = ();
+  my $is_strain = 0;
+  if ($division_hash->{child_nodes}) {
+    @child_nodes = @{$division_hash->{child_nodes}};
   }
 
-  my @dyna_tree = json_to_dynatree($division_json, $species_info, $available_internal_nodes);
+  if ($division_hash->{is_leaf}) {
+    if($species_info->{$division_hash->{key}}) {
+      my $sp = $species_info->{$division_hash->{key}};
+      my $t = {
+        key             => $division_hash->{key},
+        scientific_name => $sp->{scientific},
+        title           => $sp->{common},
+        tooltip         => $sp->{scientific} || '',
+        searchable      => 1
+      };
+      if ($sp->{strain} && $sp->{strain} ne '') {
+        $t->{isStrain} = "true" ;
+        $t->{tooltip}  = "Strain: " . $sp->{strain};
+      }
+      if ($sp->{value}) {
+        $t->{value}    = $sp->{value};
+      }
 
-  return \@dyna_tree;
+
+      if($extras->{$division_hash->{key}}) {
+        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}});
+        $t->{isFolder} = 1;
+        $t->{searchable} = 1;
+        $t->{children} = $extra_dyna;
+      }
+
+      push @dyna_tree, $t;
+
+    }
+  }
+
+  if (scalar @child_nodes > 0) {
+    my @children = map { $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $extras) } @child_nodes;
+    if ($available_internal_nodes->{$division_hash->{display_name}}) {
+      my $t = {
+        key      => $division_hash->{display_name},
+        title    => $division_hash->{display_name},
+        children => [ @children ],
+        isFolder => 1,
+        searchable => 1,
+        # Get a display tree starting from the first internal node on a bottom up search
+        isInternalNode => $division_hash->{is_internal_node}
+      };
+      if(defined $division_hash->{is_submenu} && $division_hash->{is_submenu} eq 'true') {
+        $t->{is_submenu} = 1;
+      }
+      push @dyna_tree, $t;
+    }
+  }
+
+  return @dyna_tree;
+}
+
+sub get_extras_as_dynatree {
+  my $species = shift;
+  my $extras = shift || {};
+  my $extra_dyna = [];
+
+  foreach my $k (keys %$extras) {
+    my $folder = {};
+    $folder->{key} = $k;
+    $folder->{title} = ucfirst($k);
+    $folder->{isFolder} = 1;
+    $folder->{children} = [];
+    $folder->{expand} = 0;
+    $folder->{searchable} = 0;
+
+    foreach my $hash (@{$extras->{$k}}) {
+      my $t = {
+        key             => $hash->{scientific},
+        scientific_name => $hash->{scientific},
+        title           => $hash->{title},
+        tooltip         => $k . ': ' . $hash->{title},
+        extra           => 1, # used to get image file of the parent node, say for a haplotype
+        searchable      => 1
+      };
+      push @{$folder->{children}}, $t;
+    }
+
+    push @$extra_dyna, $folder;
+
+  }
+  return $extra_dyna;
 }
 
 # Get sub node display names as array to see all available internal nodes
 # This is used to remove all paths that doesnt have any child
 sub get_available_internal_nodes {
+  my $self = shift;
   my $json = shift;
   my $species_info = shift;
   my $available_paths = {};

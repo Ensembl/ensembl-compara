@@ -10,36 +10,50 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.isBlast   = params.isBlast ? true : false ;
     this.imagePath = '/i/species/48/';
     this.division_json = {};
-    if (params.selectionLimit) this.selectionLimit = params.selectionLimit;
-    if (params.defaultKeys)    this.defaultKeys    = params.defaultKeys;
-    if (params.entryNode)      this.entryNode      = params.entryNode;
-        
+
+    this.selectionLimit = params.selectionLimit || 25;
+    this.defaultKeys = new Array();
+    if (params.defaultKeys)     this.defaultKeys     = params.defaultKeys;
+    if (params.entryNode)       this.entryNode       = params.entryNode;
+    if (params.caller)          this.caller          = params.caller;
+    if (params.allOptions)      this.allOptions      = params.allOptions;
+    if (params.includedOptions) this.includedOptions = params.includedOptions;
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
-    //Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
-    },
+  },
   
   init: function () {
     var panel = this;  
     panel.base();
-    panel.elLk.form   = $('form', panel.el);
-    panel.elLk.tree   = $('.taxon_selector_tree .vscroll_container', panel.el);
-    panel.elLk.list   = $('.taxon_selector_list .vscroll_container ul', panel.el);
-    panel.elLk.mastertree   = $('.taxon_tree_master', panel.el);
-    panel.elLk.finder = $('.finder input', panel.el);
-    panel.elLk.divisions = $('.species_division_buttons', panel.el);
-    panel.elLk.breadcrumbs = $('.ss_breadcrumbs', panel.el);
+    panel.elLk.form       = $('form', panel.el);
+    panel.elLk.tree       = $('.taxon_selector_tree .vscroll_container', panel.el);
+    panel.elLk.list       = $('.taxon_selector_list .vscroll_container ul', panel.el);
+    panel.elLk.buttons    = $('.ss-buttons', panel.el);
+    panel.elLk.mastertree = $('.taxon_tree_master', panel.el);
+    panel.elLk.finder     = $('.finder input', panel.el);
+    panel.elLk.divisions  = $('.species_division_buttons', panel.el);
+    panel.elLk.breadcrumbs= $('.ss_breadcrumbs', panel.el);
+    panel.elLk.count      = $('.taxon_selector_list .ss-count', panel.el);
+    panel.elLk.msg        = $('.taxon_selector_tree .ss-msg', panel.el);
 
     // override the default modal close handler
-    if (this.isBlast) {
-      $('.modal_close').unbind().bind('click', function () { 
-        Ensembl.EventManager.trigger('modalClose', true);
-        return panel.updateConfigurationBLAST();
-      });
-    } else {
-      $('.modal_close').unbind().bind('click', function () { 
-        return panel.updateConfiguration() 
-      }); 
-    }
+    $('.modal_close').hide();
+    $('.modal_close').unbind().bind('click', function () { 
+      Ensembl.EventManager.trigger('modalClose', true);
+      return panel.updateConfiguration();
+    });
+
+    $('#ss-reset', panel.elLk.buttons).click(function() {
+      return panel.resetConfiguration();
+    });
+
+    $('#ss-cancel', panel.elLk.buttons).click(function() {
+      Ensembl.EventManager.trigger('modalClose', true);
+    });
+
+    $('#ss-submit', panel.elLk.buttons).click(function() {
+      Ensembl.EventManager.trigger('modalClose', true);
+      return panel.updateConfiguration();
+    });
 
     // FETCH TAXON DATA
     // This uses a $.getScript() instead of $.getJSON() because Firefox 3.x on KDE/Linux 
@@ -51,13 +65,10 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       async: false,
       dataType: 'JSON',
       success: function(data) {
-        panel.taxonTreeData = data.json[0];
-        panel.initAutoComplete();
-        // Create initial breadcrumb (All division)
-        panel.addBreadcrumbs();
-        panel.createMenu(panel.taxonTreeData.children);
-        // Populate default selected species on panel open
-        panel.populateDefaultSpecies();
+        if (data.json[0]) {
+          panel.taxonTreeData = data.json[0];
+          panel.initialize();
+        }
       },
       error: function(jqXHR, textStatus, errorThrown) {
         console.log('Error loading json: ', errorThrown);
@@ -65,7 +76,49 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       }
     });
 
-    panel.resize();  
+    panel.resize();
+    panel.updateCount();
+  },
+
+  updateCount: function() {
+    var panel = this;
+    panel.elLk.count.html('(' + panel.getCurrentSelectionCount() + '/' + panel.selectionLimit +')');
+
+    var curr_count = panel.getCurrentSelectionCount();
+    if (curr_count == 0) {
+      panel.disableButton(true);
+      return false;
+    }
+    if (curr_count > panel.selectionLimit) {
+      panel.elLk.msg.html('Selection limit of ' + panel.selectionLimit + ' species exeeded!')
+      panel.disableButton(true);
+      return false;
+    }
+
+    panel.disableButton(false);
+  },
+
+  resetConfiguration: function() {
+    var panel = this;
+    panel.initialize();
+  },
+
+  getCurrentSelectionCount: function() {
+    return $('li', this.elLk.list).length || 0;
+  },
+
+  initialize: function() {
+    var panel = this;
+    panel.elLk.tree.html('')
+    panel.elLk.list.html('')
+    if (panel.taxonTreeData) {
+      panel.initAutoComplete();
+      // Create initial breadcrumb (All division)
+      panel.addBreadcrumbs();
+      panel.createMenu(panel.taxonTreeData.children);
+      // Populate default selected species on panel open
+      panel.populateDefaultSpecies();
+    }
   },
 
   createMenu: function(arr) {
@@ -84,7 +137,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         if (child.is_submenu) {
           if (child.children) {
             panel.createMenu(child.children);
-            panel.removeTree();
+            panel.hideTree();
           }
         }
         else {
@@ -107,7 +160,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var node = panel.taxonTreeData;
     var breadcrumbs_li = [];
     // Get path
-    var path = key && key !== 'All Divisions' ? panel.getPath(key, node) : node.title;
+    var path = key && !key.match(/All Divisions|All Alignments/i) ? panel.getPath(key, node) : node.title;
     var highlight = false;
     if (path) {
       path = path.split(',');
@@ -125,7 +178,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var search = function(path, obj, target) {
       for (var k in obj) {
         if (obj.hasOwnProperty(k)) {
-
           if (obj[k].title === target) {
             if(obj[k].is_submenu) {
               return path + obj[k].title;
@@ -167,7 +219,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       var node = panel.getTree(li_text, panel.taxonTreeData);
       if (node.children) {
         panel.addBreadcrumbs(li_text);
-        panel.removeTree();
+        panel.hideTree();
         panel.createMenu(node.children);
       }
       else {
@@ -192,10 +244,18 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var acKeys = [];
 
     panel.elLk.mastertree.dynatree("getRoot").visit(function(node){
-      var search_text = node.data.title + ' (' + node.data.key + ')';
-      acTitles.push(search_text);
-      acKeys[node.data.title] = node.data.key;
-      acKeys[node.data.key] = node.data.key;
+      // var search_text = node.data.isFolder ? node.data.title : node.data.title + ' (' + node.data.key + ')';
+      // acTitles.push(search_text);
+
+      // Exclude submenu on search as a quick fix
+      if (!node.data.is_submenu && node.data.searchable) {
+        var search_text = node.data.isFolder ? node.data.title : node.data.title + ' (' + node.data.key + ')';
+        acTitles.push(search_text);
+        // acTitles.push(node.data.title);
+        // acTitles.push(node.data.key);
+        acKeys[search_text] = node.data.key;
+        acKeys[node.data.key] = node.data.key;
+      }
     });
     
     var finder = panel.elLk.finder;
@@ -206,6 +266,11 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       },
       source: function(request, response) { response(panel.filterArray($.unique(acTitles), request.term)) }, 
       select: function(event, ui) {
+        if (panel.caller === "Compara_Alignments") {
+          panel.elLk.mastertree.dynatree("getTree").selectKey(acKeys[ui.item.value], true);
+          $('.modal_close').trigger('click');
+          return;
+        }
         var isLeaf = panel.locateNode(acKeys[ui.item.value]);
         isLeaf && finder.val('');
       },
@@ -240,13 +305,17 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // highlight the term within each match
       var regex = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + $.ui.autocomplete.escapeRegex(this.term) + ")(?![^<>]*>)(?![^&;]+;)", "gi");
       item.label = item.label.replace(regex, "<span class='ss-ac-highlight'>$1</span>");
+      // regex = new RegExp("(.*) \(.*\)", "gi");
+      // item.value.match(regex);
+      // item.key = RegExp.$2.replace(/[()]/g, '');
+      // item.key = item.key || item.value;
       return $("<li/>").data("ui-autocomplete-item", item).addClass('ss-ac-result-li').append("<a class='ss-ac-result'>" + item.label + "</a>").appendTo(ul);
     };
   },
 
-  removeTree: function() {
+  hideTree: function() {
     var panel = this;
-    $(panel.elLk.tree).children().remove();
+    $(panel.elLk.tree).children().hide();
   },
 
   displayTree: function(taxon_key, locate) {
@@ -265,7 +334,15 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       checkbox: true,
       selectMode: 3,
       activeVisible: true,
-      onSelect: function(flag, node) { panel.setSelection(flag, node) },
+      onSelect: function(flag, node) { 
+        if (panel.caller === "Compara_Alignments") {
+          // Select item
+          panel.elLk.mastertree.dynatree("getTree").selectKey(node.data.key, flag);
+          $('.modal_close').trigger('click');
+          return;
+        }
+        panel.setSelection(flag, node) 
+      },
       onDblClick: function(node, event) { node.toggleSelect() },
       onKeydown: function(node, event) {
         if( event.which == 32 ) {
@@ -324,15 +401,20 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   },
 
   resize: function () {
-    var newHeight = $(this.el).height() - 50;
+    var newHeight = $(this.el).height() - 80;
     this.elLk.tree.parent('.content').height(newHeight);
-    this.elLk.list.closest('.vscroll_container').height(newHeight - 40);      
+    this.elLk.list.closest('.vscroll_container').height(newHeight - 40);
   },
   
   getSelectedItems: function(tree = this.elLk.mastertree, preserveOrder) {
     var selectedNodes = tree.dynatree("getTree").getSelectedNodes();
     var items = $.map(selectedNodes, function(node){
-      return node.data.isFolder ? null : {key: node.data.key, title: node.data.title, icon: node.data.icon};
+      return node.data.isFolder ? null : {
+        key   : node.data.key,
+        title : node.data.title,
+        icon  : node.data.extra ? node.data.key.split('--')[0] : '',
+        value : node.data.value
+      };
     });
     if (!preserveOrder) {
       items.sort(function (a, b) {return a.title.toLowerCase().localeCompare(b.title.toLowerCase())});
@@ -363,27 +445,35 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
     var all_selected_items = panel.getSelectedItems(this.elLk.mastertree);
     $.each(all_selected_items, function(index, item){
-      item.img_url = panel.imagePath + item.key + '.png';
+      var img_filename = (item.icon || item.key) + '.png';
+      item.img_url = panel.imagePath + img_filename;
       var species_img = item.img_url ? '<span class="selected-sp-img"><img src="'+ item.img_url +'"></span>' : '';
       var li = $('<li>' + species_img + '<span class="selected-sp-title">' + item.title + '</span><span class="remove"></span></li>').appendTo(panel.elLk.list);
-      $('.remove', li).click(function(){panel.removeListItem($(this).parent())});
+    });    
+    $('li span.remove', panel.elLk.list).off().on('click', function(){
+      panel.removeListItem($(this).parent());
+      panel.updateCount();
     });
+    panel.updateCount();
+  },
+
+  disableButton: function(bool) {
+    $('#ss-submit', this.elLk.buttons).attr('disabled', bool);
+    !bool ? $('#ss-submit', this.elLk.buttons).addClass('active') : $('#ss-submit', this.elLk.buttons).removeClass('active');
   },
   
   locateNode: function(key) {
     var panel = this;
-    var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
 
+    var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
     if (!mastertree_node.data.isFolder) {
       panel.setSelection(true, mastertree_node);
       return true;
     }
 
     var tree = panel.getTree(mastertree_node.data.title, panel.taxonTreeData);
+    panel.displayTree(tree.title);
 
-    if (panel.elLk.tree.html()) {
-      panel.displayTree(tree.title);
-    }
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);
     if (node) { 
       node.activate();
@@ -395,16 +485,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var panel = this;
     var title = li.text();
     var selectedNodes = [];
-    if (panel.elLk.tree.children().length) {
-      selectedNodes = panel.elLk.tree.dynatree("getTree").getSelectedNodes();
-    }
-    else {
-      selectedNodes = panel.elLk.mastertree.dynatree("getTree").getSelectedNodes();
-    }
-    
-    if (selectedNodes.length <= 1) {
-      panel.removeTree();
-    }
+    selectedNodes = panel.elLk.mastertree.dynatree("getTree").getSelectedNodes();
+    panel.hideTree();
+
     $.each(selectedNodes, function(index, node) {
       if (node.data.title == title) {
         node.toggleSelect();
@@ -433,38 +516,40 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     return matches;   
   },   
   
-  updateConfigurationBLAST: function() {
-        var panel = this;
-    var items = panel.getSelectedItems(this.elLk.mastertree);
-    // if (panel.selectionLimit && items.length > panel.selectionLimit) {
-    //     alert('Too many items selected.\nPlease select a maximum of ' + panel.selectionLimit + ' items.');
-    //     return false;
-    // } else {
-        Ensembl.EventManager.trigger('updateTaxonSelection', items);
-        return true;
-    // }
-  },
-  
   updateConfiguration: function() {
     var panel = this;
     var items = panel.getSelectedItems(this.elLk.mastertree);
 
-    if (panel.selectionLimit && items.length > panel.selectionLimit) {
-    
-      alert('Too many items selected.\nPlease select a maximum of ' + panel.selectionLimit + ' items.');
-      return false;
-    
-    } else {     
-      var html = '';
-      for (var i = 0; i < items.length; i++) {
-        html += '<input type="hidden" name="' + this.urlParam + '" value="' + items[i].key + '" />';
-      }
-      $(html).appendTo(this.elLk.form);
-      this.elLk.form.submit();      
-      alert('updating form')
-      return true;
+    if (panel.caller === 'Blast') {
+      Ensembl.EventManager.trigger('updateTaxonSelection', items);
     }
-  }
+    else if (panel.caller === 'Compara_Alignments') {
+      Ensembl.EventManager.trigger('updateAlignmentSpeciesSelection', items[0]);
+    }
+    else if (panel.caller === 'Multi') {
+      var params = [];
+      var currSelArr = new Array();
+      for (var i = 0; i < items.length; i++) {
+        params.push('s' + (i + 1) + '=' + items[i].key);
+        currSelArr.push(items[i].key);
+      }
 
+      if (!panel.approveSelection(currSelArr)) {
+        return false;
+      }
+
+      var url = this.elLk.form.attr('action').replace(/s\d+=.*(;)?/,'');
+      Ensembl.redirect(url + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + params.join(';')));
+      
+    }
+
+    return true;
+  },
+
+  // Check if there was any change in the selection. If not, then do nothing.
+  approveSelection: function(currSel) {
+    return currSel.sort().join(',') !== this.defaultKeys.sort().join(',');
+  }
+  
 });
 

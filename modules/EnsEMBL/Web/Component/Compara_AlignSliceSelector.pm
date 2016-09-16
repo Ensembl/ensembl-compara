@@ -44,72 +44,64 @@ sub content {
 
   my $species = $hub->species;
   my $options = '<option value="">-- Select an alignment --</option>';
-  
+  my $align_label = '';
   # Order by number of species (name is in the form "6 primates EPO"
-  if(!$species_defs->IS_STRAIN_OF) {
-    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-      (my $name = $row->{'name'}) =~ s/_/ /g;
-      
-      $options .= sprintf(
-        '<option value="%d"%s>%s</option>',
-        $row->{'id'},
-        $row->{'id'} == $align ? ' selected="selected"' : '',
-        encode_entities($name)
-      );
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+    (my $name = $row->{'name'}) =~ s/_/ /g;
+    if ($row->{id} == $align) {
+      $align_label = encode_entities($name);
+      last;
     }
   }
   
   # For the variation compara view, only allow multi-way alignments
-  if ($hub->type ne 'Variation') {
-    $options .= '<optgroup label="Pairwise alignments">';
-
+  if ($align_label eq '') {
     my %species_hash;
-    
-    foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
-      foreach (keys %{$alignments->{$i}->{'species'}}) {
-        if ($alignments->{$i}->{'species'}->{$species} && $_ ne $species) {
-          my $type = lc $alignments->{$i}->{'type'};
-          
-          $type =~ s/_net//;
-          $type =~ s/_/ /g;
-          
-          $species_hash{$species_defs->species_label($_, 1) . "###$type"} = $i;
+    foreach my $key (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
+      foreach (keys %{$alignments->{$key}->{'species'}}) {
+        if ($alignments->{$key}->{'species'}->{$species} && $_ ne $species) {
+          if ($key == $align) {
+            $align_label = $species_defs->get_config($_, 'SPECIES_BIO_NAME');
+            last;
+          }          
         }
       } 
-    }
-    
-    foreach (sort { $a cmp $b } keys %species_hash) {
-      my ($name, $type) = split /###/, $_;
-      
-      $options .= sprintf(
-        '<option value="%d"%s>%s</option>',
-        $species_hash{$_},
-        $species_hash{$_} eq $align ? ' selected="selected"' : '',
-        "$name - $type"
-      );
-    }
-    
-    $options .= '</optgroup>';
+    }    
   }
-  
+
+  my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
+
+  my $modal_uri       = $hub->url('Component', {qw(type Location action Web function TaxonSelector/ajax), align => $align});
+
+#  my $modal_uri = URI->new(sprintf '/%s/Component/Blast/Web/TaxonSelector/ajax?', $default_species || 'Multi' );
+#  $modal_uri->query_form(align => $align) if $align; 
+
   ## Get the species in the alignment
   return sprintf(qq{
-    <div class="js_panel">
-      <input type="hidden" class="panel_type" value="LocationNav" />
-      <div class="navbar alignment_select" style="width:%spx; text-align:left">
+    <div class="js_panel alignment_selector_form">
+      <input type="hidden" class="panel_type" value="ComparaAlignSliceSelector" />
+      <div class="navbar " style="width:%spx; text-align:left">
         <form action="%s" method="get">
-          <div>
-            <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
+          <div class="ss-alignment-container">
+            <label for="align">Alignment:</label>
+            <input class="ss-alignment-selected-label" value="%s" disabled />
+            <input class="ss-alignment-selected-value" type="hidden" name="align" value="%s" />
+            <input class="panel_type" value="SpeciesSelect" type="hidden">
             %s
-            <a class="go-button alignment-go" href="">Go</a>
+            <div class="links">
+              <a class="modal_link data alignment-slice-selector-link" href="${modal_uri}">Select %s alignment</a>
+              <a class="go-button alignment-go" href="">Go</a>
+            </div>            
           </div>
         </form>
       </div>
     </div>},
     $self->image_width, 
     $url->[0],
-    $options,
-    $extra_inputs
+    $align_label,
+    $align,
+    $extra_inputs,
+    ($align) ? 'another' : 'an'
   );
 }
 

@@ -235,7 +235,8 @@ DynaTreeNode.prototype = {
         href = data.href || "#";
       // var species_img_url = '<img src="/i/species/16/' + data.key.charAt(0).toUpperCase() + data.key.substr(1) + '.png">';
       var species_img_url = data.img_url ? '<img src="' + data.img_url + '">' : '';
-      var strain_class = data.isStrain ? opts.classNames.strain : '';
+      // var strain_class = data.isStrain ? opts.classNames.strain : '';
+      var strain_class = '';
       if( opts.noLink || data.noLink ) {
         nodeTitle =  species_img_url + '<span style="display:inline-block;" class="' + opts.classNames.title + ' ' + strain_class + '"' + tooltip + '>' + data.title + '</span>';
 //        this.tree.logDebug("nodeTitle: " + nodeTitle);
