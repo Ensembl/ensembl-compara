@@ -72,7 +72,7 @@ sub content {
   
   my ($caption_height,$caption_img_offset) = (0,-24);
   foreach (@$slices) {
-    my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
+    my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $species_defs->production_name_mapping($_->{'name'}); # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig({'type' => 'alignsliceviewbottom', 'cache_code' => "alignsliceviewbottom_$i", 'species' => $species});
     
     $image_config->set_parameters({
@@ -83,7 +83,7 @@ sub content {
       more_slices     => $i != @$slices,
     });
     
-    my ($species_name, $slice_name) = split ':', $_->{'name'};
+    my ($species_name, $slice_name) = split ':', $species_defs->production_name_mapping($_->{'name'});
     
     my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
