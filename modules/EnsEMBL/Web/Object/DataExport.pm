@@ -50,11 +50,13 @@ sub create_component {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $builder = $hub->controller->builder;
-  $builder->create_object(ucfirst($hub->param('data_type')));
+  my $builder     = $hub->controller->builder;
+  my $object_type = ucfirst($hub->param('data_type'));
+  $builder->create_object($object_type);
 
   my $component = dynamic_require('EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component'));
      $component = $component->new($hub, $builder, $hub->controller->renderer);
+     $component->object($builder->object($object_type));
 
   return $component;
 }
