@@ -42,9 +42,11 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Cookie;
+use EnsEMBL::Web::Exceptions;
 
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
+use EnsEMBL::Web::Apache::ServerError;
 
 use Preload;
 
@@ -378,7 +380,12 @@ sub handler {
     $r->subprocess_env('ENSEMBL_SPECIES', $species);
 
     # delegate request to the required handler and get the response status code
-    $response_code = $handler->can('handler')->($r, $species_defs);
+    try {
+      $response_code = $handler->can('handler')->($r, $species_defs);
+    } catch {
+      EnsEMBL::Web::Apache::ServerError::handler($r, $species_defs, $_);
+      $response_code = OK; # EnsEMBL::Web::Apache::ServerError sets the actual status code itself
+    };
 
     # check for any permanent redirects requested by the code
     if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT')) {
