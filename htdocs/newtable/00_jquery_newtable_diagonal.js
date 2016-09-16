@@ -16,12 +16,19 @@
  */
 
 (function($) {
-  $.fn.newtable_sortui = function(config,data,widgets,callw) {
+  $.fn.newtable_diagonal = function(config,data,widgets,callw) {
     return {
+      prio: 75,
       decorate_heading: function(cc,$th,first,html) {
-        $('div',$th).css('margin-right','12px');
-        if(cc.sort)  { $th.addClass('sorting'); }
-        return html;
+        if(html===undefined) { html = first; }
+        if(cc.heading && cc.heading.diagonal) {
+          var $span = $('<span/>').html(html).addClass('newtable_diagonal');
+          $th.addClass('newtable_diagonal_th');
+          return $('<div/>').append($span).html();
+        } else {
+          $th.addClass('newtable_not_diagonal_th');
+          return html;
+        }
       }
     };
   }; 

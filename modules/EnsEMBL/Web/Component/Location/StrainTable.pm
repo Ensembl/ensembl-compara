@@ -210,7 +210,8 @@ sub make_table {
     {
       _key    => lc($sample->name).'_strain'  , _type => 'string no_filter no_sort',
       label   => $sample_label,
-      helptip => $sample->name
+      helptip => $sample->name,
+      toggle_diagonal => 1,
     });
   }
 

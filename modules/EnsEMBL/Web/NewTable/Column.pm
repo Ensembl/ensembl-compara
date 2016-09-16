@@ -87,6 +87,13 @@ sub set_type {
   $self->{'conf'}{'type'}{$key} = $value;
 }
 
+sub set_heading {
+  my ($self,$key,$value) = @_;
+
+  $self->{'conf'}{'heading'} ||= {};
+  $self->{'conf'}{'heading'}{$key} = $value;
+}
+
 sub set_helptip {
   my ($self,$help) = @_;
 

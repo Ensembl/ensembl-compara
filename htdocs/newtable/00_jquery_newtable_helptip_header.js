@@ -18,7 +18,8 @@
 (function($) {
   $.fn.newtable_helptip_header = function(config,data,widgets,callw) {
     return {
-      decorate_heading: function(cc,classes,attrs,first,html) {
+      prio: 50,
+      decorate_heading: function(cc,$th,first,html) {
         if(html===undefined) { html = first; }
         if(cc.help) {
           var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(html);

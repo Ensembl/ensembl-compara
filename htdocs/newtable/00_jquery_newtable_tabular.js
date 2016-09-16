@@ -331,10 +331,11 @@
         var attrs = {};
         var classes = [];
         attrs['data-key'] = key || '';
-        var html = callw('decorate_heading',cc,classes,attrs,text)._last;
+        var $th = $('<th><div/></th>');
+        var html = callw('decorate_heading',cc,$th,text)._last;
         if(html===undefined) { html = text; }
         var attr_str = "";
-        var $th = $('<th/>').html(html);
+        $('div',$th).html(html);
         $.each(attrs,function(k,v) { $th.attr(k,v); });
         $.each(classes,function(i,v) { $th.addClass(v); });
         return $('<div/>').append($th).html();

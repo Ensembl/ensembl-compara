@@ -76,4 +76,14 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub js_plugin { return "newtable_sortui"; }
 
+package EnsEMBL::Web::NewTable::Plugins::Misc;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return 'newtable_diagonal'; }
+
+sub col_toggle_diagonal {
+  $_[1]->set_heading('diagonal',1);
+}
+
+
 1;
