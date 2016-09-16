@@ -22,6 +22,7 @@ use parent qw(EnsEMBL::Web::DOM::Node::Element::Generic);
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
