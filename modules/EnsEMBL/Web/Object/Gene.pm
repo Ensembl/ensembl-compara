@@ -985,13 +985,14 @@ sub get_compara_Member {
 }
 
 sub get_GeneTree {
-  my $self       = shift;
-  my $compara_db = shift || 'compara';
-  my $whole_tree = shift;
-  my $clusterset_id = $self->hub->param('clusterset_id') || 'default';
-  my $cache_key  = sprintf('_protein_tree_%s_%s', $compara_db, $clusterset_id);
+  my $self        = shift;
+  my $compara_db  = shift || 'compara';
+  my $whole_tree  = shift;
+  my $strain_tree = shift;
+  my $clusterset_id = $strain_tree || $self->hub->param('clusterset_id') || 'default';
+  my $cache_key  = sprintf('_protein_tree_%s_%s_%s', $compara_db, $clusterset_id, $strain_tree);
 
-  if (!$self->{$cache_key}) {
+  if (!$self->{$cache_key}) {  
     my $member  = $self->get_compara_Member($compara_db)           || return;
     my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
     my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id)->[0];
@@ -1040,8 +1041,9 @@ sub get_gene_slices {
 
 # Function to call compara API to get the species Tree
 sub get_SpeciesTree {
-  my $self       = shift;  
-  my $compara_db = shift || 'compara';
+  my $self        = shift;  
+  my $compara_db  = shift || 'compara';
+  my $strain_tree = shift;
 
   my $hub            = $self->hub;  
   my $collapsability = $hub->param('collapsability');
@@ -1053,7 +1055,7 @@ sub get_SpeciesTree {
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();
     
     my $member   = $self->get_compara_Member($compara_db)           || return;        
-    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
+    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member, $strain_tree) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree) || return;		   
     
     $cafeTree->multifurcate_tree();

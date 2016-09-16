@@ -38,8 +38,9 @@ sub get_details {
   my $member = $object->get_compara_Member($cdb);
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $species_tree = $object->get_SpeciesTree($cdb);
-  my $tree = $object->get_GeneTree($cdb);
+  my $strain_tree  = $self->hub->species_defs->get_config($self->hub->species,'RELATED_TAXON') if($self->is_strain || $self->hub->species_defs->IS_STRAIN_OF);
+  my $species_tree = $object->get_SpeciesTree($cdb, $strain_tree);  
+  my $tree = $object->get_GeneTree($cdb,"", $strain_tree);
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
 
   my $node = $tree->get_leaf_by_Member($member);
@@ -159,7 +160,7 @@ sub content {
           'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.', $clusterset_id
           )
       );
-    } elsif ($clusterset_id ne 'default') {
+    } elsif ($tree->tree->ref_root_id) {
 
       my $text = sprintf(
           'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.', $clusterset_id
