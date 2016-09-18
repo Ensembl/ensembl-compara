@@ -173,7 +173,7 @@ sub default_options {
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
         'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 200,
+        'homology_dNdS_capacity'    => 1500,
         'hc_capacity'               => 150,
         'decision_capacity'         => 150,
         'hc_post_tree_capacity'     => 100,

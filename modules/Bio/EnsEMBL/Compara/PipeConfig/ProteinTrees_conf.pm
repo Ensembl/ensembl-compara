@@ -265,7 +265,7 @@ sub default_options {
         #'goc_capacity'              => 200,
         #'genesetQC_capacity'        => 100,
         #'other_paralogs_capacity'   => 100,
-        #'homology_dNdS_capacity'    => 200,
+        #'homology_dNdS_capacity'    => 1500,
         #'hc_capacity'               =>   4,
         #'decision_capacity'         =>   4,
         #'hc_post_tree_capacity'     => 100,
