@@ -56,7 +56,7 @@ sub create_form {
 
   # get user specified values for url/viewconfig
   for (keys %$settings) {
-    $settings->{$_}{'value'} = $self->param($_);
+    $settings->{$_}{'value'} = $self->param($_) if(ref $settings->{$_} eq 'HASH');
   }
 
   my $format_label = {
