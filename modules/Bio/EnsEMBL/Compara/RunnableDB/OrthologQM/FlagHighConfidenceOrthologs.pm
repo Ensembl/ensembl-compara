@@ -119,6 +119,9 @@ sub write_output {
     my $sql_hc_per_gdb_count = "SELECT genome_db_id, COUNT(DISTINCT gene_member_id) FROM homology JOIN homology_member USING (homology_id) JOIN gene_member USING (gene_member_id) WHERE $homology_filter AND is_high_confidence = 1 GROUP BY genome_db_id";
     my ($n_hom, $n_hc) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_hc_count, undef, $mlss_id);
     my $hc_per_gdb = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_hc_per_gdb_count, undef, $mlss_id);
+
+    # There could be 0 homologies for this mlss
+    return unless $n_hom;
     
     # Print them
     my $msg_for_gdb = join(" and ", map {$_->[1]." for genome_db_id=".$_->[0]} @$hc_per_gdb);
