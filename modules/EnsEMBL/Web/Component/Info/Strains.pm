@@ -23,6 +23,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::Table;
 
 use base qw(EnsEMBL::Web::Component);
@@ -41,6 +42,8 @@ sub content {
   my $html;
 
   $html .= sprintf '<h1>%s strains</h1>', $sd->SPECIES_COMMON_NAME;
+
+  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 
   my $strains = $sd->ALL_STRAINS || [];
   if (scalar @$strains) {
