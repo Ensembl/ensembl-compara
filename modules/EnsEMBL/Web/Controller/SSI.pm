@@ -93,7 +93,7 @@ sub template_RELEASE {
 }
 
 sub template_INCLUDE {
-  my ($self, $include) = @_;
+  my ($self, $include, $no_error) = @_;
   my $hub = $self && $self->can('hub') ? $self->hub : undef;
   my $static_server;
 
@@ -121,7 +121,7 @@ sub template_INCLUDE {
   }
   
   # using $hub->apache_handle instead of $self->r because this function is also called by Component modules, providing THEIR $self as this $self
-  $hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include) if $hub;
+  $hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include) if ($hub && !$no_error);
   
   return $content;
 }
