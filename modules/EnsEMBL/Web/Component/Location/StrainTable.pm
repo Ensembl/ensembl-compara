@@ -213,9 +213,9 @@ sub make_table {
       helptip => $sample->name,
       toggle_diagonal => 1,
       width => 0.5,
+      recolour => { A => 'green', C => 'blue', G => '#ff9000', T => 'red' }
     });
   }
-
 
   $table->add_columns(\@columns,\@exclude);
 
@@ -242,7 +242,6 @@ sub variation_table {
   });
 
   my $var_styles = $hub->species_defs->colour('variation');
-  my $al_colours = $self->object->get_allele_genotype_colours; 
   my $sga = $hub->get_adaptor('get_SampleGenotypeAdaptor', 'variation');
   my $default_allele = '.';
 
@@ -304,11 +303,6 @@ sub variation_table {
 
       if ($sample_allele eq $ref_allele) {
         $sample_allele = '|';#$default_allele;
-      }
-      else {
-        foreach my $al (keys(%$al_colours)) {
-          $sample_allele =~ s/$al/$al_colours->{$al}/g;
-        }
       }
       $row->{lc($sample_name).'_strain'} = qq{<div style="text-align:center">$sample_allele</div>};
     }

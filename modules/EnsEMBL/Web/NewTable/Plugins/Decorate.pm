@@ -24,7 +24,7 @@ package EnsEMBL::Web::NewTable::Plugins::Decorate;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub children { return [qw(DecorateIconic DecorateLink DecorateEditorial
-                          DecorateAlso DecorateToggle)]; }
+                          DecorateAlso DecorateToggle DecorateRecolour)]; }
 sub decorate_key { return undef; }
 sub js_plugin {
   my $dk = $_[0]->decorate_key()||'';
@@ -123,6 +123,17 @@ sub col_also_cols {
 
   $cols = [ $cols ] unless ref($cols) eq 'ARRAY';
   $self->set_decorates($col,'*',{ cols => $cols });
+}
+
+package EnsEMBL::Web::NewTable::Plugins::DecorateRecolour;
+use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
+
+sub decorate_key { return 'recolour'; }
+
+sub col_recolour {
+  my ($self,$col,$colours) = @_;
+
+  $self->set_decorates($col,'*',{ recolour => $colours });
 }
 
 package EnsEMBL::Web::NewTable::Plugins::DecorateToggle;
