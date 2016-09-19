@@ -62,7 +62,7 @@ sub content {
     $node->{_sub_leaves_count} = scalar(@$members);
     my $link_gene = $members->[0];
     foreach my $g (@$members) {
-      $link_gene = $g if (lc $g->genome_db->name) eq (lc $hub->species);
+      $link_gene = $g if (lc $hub->species_defs->production_name_mapping($g->genome_db->name)) eq (lc $hub->species);
     }
     $node->{_sub_reference_gene} = $link_gene->gene_member;
   }
@@ -176,7 +176,7 @@ sub content {
         label => 'Switch to that tree',
         order => 11,
         link  => $hub->url({
-          species  => $link_gene->genome_db->name,
+          species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
           type     => 'Gene',
           action   => 'Compara_Tree',
           __clear  => 1,
@@ -318,11 +318,11 @@ sub content {
         # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
         # There should be a way of retrieving this name correctly instead.
         if ($s == 0) {
-          $url_params->{'species'} = ucfirst $_->genome_db->name;
+          $url_params->{'species'} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{'g'} = $gene;
         } 
         else {
-          $url_params->{"s$s"} = ucfirst $_->genome_db->name;
+          $url_params->{"s$s"} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{"g$s"} = $gene;
         }
         $s++;

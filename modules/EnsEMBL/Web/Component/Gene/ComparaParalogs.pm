@@ -139,7 +139,7 @@ sub content {
       } elsif (exists $cached_lca_desc{$species_tree_node->node_id}) {
         ($ancestral_taxonomy, $lca_desc) = @{$cached_lca_desc{$species_tree_node->node_id}};
       } elsif ($species_tree_node->is_leaf) {
-        $ancestral_taxonomy = $hub->species_defs->species_label($species_tree_node->genome_db->name);
+        $ancestral_taxonomy = $hub->species_defs->species_label($hub->species_defs->production_name_mapping($species_tree_node->genome_db->name));
       } else {
         if ($species_tree_node->taxon_id and exists $taxon_common_names->{$species_tree_node->taxon_id}) {
           $ancestral_taxonomy = sprintf('%s (%s)', $taxon_common_names->{$species_tree_node->taxon_id}, $species_tree_node->node_name());

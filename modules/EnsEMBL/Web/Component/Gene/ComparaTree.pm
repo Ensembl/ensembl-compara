@@ -178,7 +178,7 @@ sub content {
     foreach my $this_leaf (@$leaves) {
       if ($highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene) {
         $highlight_gene_display_label = $this_leaf->gene_member->display_label || $highlight_gene;
-        $highlight_species            = $this_leaf->gene_member->genome_db->name;
+        $highlight_species            = $hub->species_defs->production_name_mapping($this_leaf->gene_member->genome_db->name);
         $highlight_genome_db_id       = $this_leaf->gene_member->genome_db_id;
         last;
       }
@@ -188,7 +188,7 @@ sub content {
       $html .= $self->_info('Highlighted genes',
         sprintf(
           '<p>In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.</p>', 
-          $hub->species_defs->get_config(ucfirst $member->genome_db->name, 'SPECIES_COMMON_NAME'),
+          $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
           $highlight_gene_display_label,
           $hub->species_defs->get_config(ucfirst $highlight_species, 'SPECIES_COMMON_NAME'),
           $unhighlight

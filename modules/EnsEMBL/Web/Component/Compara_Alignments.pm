@@ -378,7 +378,7 @@ sub draw_tree {
     foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
-      my $node_name = $genomic_align_group->genome_db->name;
+      my $node_name = $hub->species_defs->production_name_mapping($genomic_align_group->genome_db->name);
       next if $slice_ok{$node_name};
       $this_node->disavow_parent;
       $restricted_tree = $restricted_tree->minimize_tree;
@@ -519,7 +519,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
+    $other_species = $hub->species_defs->production_name_mapping($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -596,7 +596,7 @@ sub _get_target_slice_table {
     if ($other_species) {
       $other_string = $non_ref_ga->dnafrag->name.":".$non_ref_start."-".$non_ref_end;
       $other_link = $hub->url({
-                                   species => $non_ref_ga->genome_db->name,
+                                   species => $hub->species_defs->production_name_mapping($non_ref_ga->genome_db->name),
                                    type   => 'Location',
                                    action => 'View',
                                    r      => $other_string,
