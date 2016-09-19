@@ -83,8 +83,8 @@ sub default_options {
         'range_label',  => undef,       # A name for the range
         'range_filter', => undef,       # An SQL boolean expression to filter homology_id
 
-        'capacity'    => 50,            # how many mlss_ids can be processed in parallel
-        'batch_size'  => 20,            # how many mlss_ids' jobs can be batched together
+        'capacity'    => 5,             # how many mlss_ids can be processed in parallel
+        'batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
 }
