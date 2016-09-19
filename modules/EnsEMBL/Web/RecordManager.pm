@@ -153,7 +153,7 @@ sub set_record_data {
 
   $self->has_changes(1);
 
-  return $record->save ? $self->_get_record_data($record) : {};
+  return $self->_save_record($record) ? $self->_get_record_data($record) : {};
 }
 
 sub get_records_data {
@@ -214,6 +214,14 @@ sub _get_record_data {
   $data->{$_} = $record->$_ for @{$self->_record_column_names};
 
   return $data;
+}
+
+sub _save_record {
+  ## @private
+  ## Saves a record
+  my ($self, $record, $args) = @_;
+
+  return $record->save($args ? %$args : ());
 }
 
 sub _record_column_names {
