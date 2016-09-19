@@ -96,6 +96,7 @@ sub init {
         type      => $view_config->type,
         action    => $component,
         function  => undef,
+        strain    => $hub->action =~ /Strain_/ ?  1 : 0, #once we have a better check for strain view, we can remove this dirty check
       })
     });
   } else {
@@ -120,10 +121,11 @@ sub init {
   });
  
   if ($object && $object->can_export) {
+    my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
     $self->add_entry({
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $self->export_url($hub)
+      url     => $self->export_url($hub).$strain_param
     });
   } else {
     $self->add_entry({

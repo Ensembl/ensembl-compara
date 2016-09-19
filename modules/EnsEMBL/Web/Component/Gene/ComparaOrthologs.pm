@@ -54,6 +54,7 @@ sub content {
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
   my $species_name = $species_defs->DISPLAY_NAME;
   my $strain_url   = $species_defs->IS_STRAIN_OF ? "Strain_" : "";
+  my $strain_param = ";strain=1" if($self->is_strain);
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
@@ -198,7 +199,7 @@ sub content {
        
         my $page_url = $hub->url({
           type    => 'Gene',
-          action  => 'Compara_Ortholog',
+          action  => $hub->action,
           g       => $hub->param('g'), 
         });
           
@@ -207,13 +208,13 @@ sub content {
           action  => 'ComparaOrthologs',
           g1      => $stable_id,
           dbID    => $orthologue->{'dbID'},
-          cdb     => $cdb
+          cdb     => $cdb,
         });
 
         if ($is_ncrna) {
           $alignment_link .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $hub->url({action => $strain_url.'Compara_Ortholog', function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''), hom_id => $orthologue->{'dbID'}, g1 => $stable_id});
         } else {
-          $alignment_link .= sprintf '<a href="%s" class="_zmenu">View Sequence Alignments</a><a class="hidden _zmenu_link" href="%s"></a>', $page_url ,$zmenu_url;          
+          $alignment_link .= sprintf '<a href="%s" class="_zmenu">View Sequence Alignments</a><a class="hidden _zmenu_link" href="%s%s"></a>', $page_url ,$zmenu_url, $strain_param;          
         }
         
         $alignview = 1;
@@ -325,13 +326,16 @@ sub get_export_data {
   else {
     my $cdb = $flag || $hub->param('cdb') || 'compara';
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
+
     my %ok_species;
     foreach (grep { /species_/ } $hub->param) {
       (my $sp = $_) =~ s/species_//;
-      $ok_species{$sp} = 1 if $hub->param($_) eq 'yes';
+      $ok_species{$sp} = 1 if $hub->param($_) eq 'yes';      
     }
+   
     if (keys %ok_species) {
-      return [grep {$ok_species{$_->get_all_Members->[1]->genome_db->name}} @$homologies];
+      # It's the lower case species url name which is passed through the data export URL
+      return [grep {$ok_species{lc($hub->species_defs->production_name_mapping($_->get_all_Members->[1]->genome_db->name))}} @$homologies];
     }
     else {
       return $homologies;

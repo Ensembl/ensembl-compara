@@ -31,7 +31,7 @@ sub _new {
   ## TODO - get rid of the use of referer
   my $self = shift->SUPER::_new(@_);
 
-  $self->{'is_compara_ortholog'}  = ($self->hub->referer->{'ENSEMBL_ACTION'} || '') eq 'Compara_Ortholog';
+  $self->{'is_compara_ortholog'}  = ($self->hub->referer->{'ENSEMBL_ACTION'} || '') =~ /^Compara_Ortholog$|^Strain_Compara_Ortholog$/;
   $self->{'code'}                 = $self->type.'::'.$self->component unless $self->{'is_compara_ortholog'}; # TODO - really needed
 
   return $self;

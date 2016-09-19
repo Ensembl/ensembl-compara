@@ -281,7 +281,8 @@ sub content_buttons {
     );
   }
   # Create the blue-rectangle buttons
-  my $blue_html = '';
+  my $blue_html = '';  
+
   foreach my $g (@groups) {
     my $group = '';
     my $all_disabled = 1;
@@ -296,7 +297,7 @@ sub content_buttons {
         $group .= sprintf('<div class="%s">%s</div>',
             join(' ',@classes), $b->{'caption'});
       }
-      else {
+      else {      
         $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
             $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
       }
@@ -317,6 +318,7 @@ sub content_buttons {
   $nav_html = qq(
     <div class="component-navs nav_buttons $class">$nav_html</div>
   ) if $nav_html;
+
   return $nav_html.$blue_html;
 }
 
@@ -525,7 +527,7 @@ sub _info_panel {
   );
 }
 
-#the action check is wrong but for now will do, the reason for the function check is when you have both strain and main species menu on one page
+#the action check is wrong but for now will do, the reason for the action check is when you have both strain and main species menu on one page (maybe pass a key inside the configuration node and create a new hub->strain (set to the new key value) when the view is accessed)
 sub is_strain   { return $_[0]->hub->species_defs->IS_STRAIN_OF  || $_[0]->hub->action =~ /strain_/i ? 1 : 0; } 
 
 sub config_msg {

@@ -36,7 +36,11 @@ sub _new {
 sub init_cacheable {
   ## Abstract method implementation
   my $self = shift;
-  $self->set_default_options({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
+  foreach ($self->species_defs->valid_species) {
+    # complicated if statement which basically show/hide strain or main species depending on the view you are (when you are on a main species, do not show strain species and when you are on a strain species or strain view from main species, show only strain species)          
+    next if(($self->hub->action !~ /Strain_/ && $self->hub->species_defs->get_config($_,'IS_STRAIN_OF')) || (($self->hub->action =~ /Strain_/  || $self->hub->species_defs->IS_STRAIN_OF) && !$self->hub->species_defs->get_config($_, 'RELATED_TAXON')));
+    $self->set_default_options({ 'species_' . lc($_) => 'yes' });    
+  }
 
   $self->title('Homologs');
 }
