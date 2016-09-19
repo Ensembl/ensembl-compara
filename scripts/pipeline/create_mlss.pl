@@ -458,6 +458,7 @@ sub create_mlss {
   my $mlss_name = $desired_mlss_name;
   if (!$mlss_name) {
       $mlss_name = $species_set->name." $ml_type";
+      $mlss_name =~ s/^collection-//;
       if ($method_link_type eq "BLASTZ_NET" || $method_link_type eq "LASTZ_NET") {
         if ($mlss_name =~ /H\.sap/) {
           $mlss_name .= " (on H.sap)";
