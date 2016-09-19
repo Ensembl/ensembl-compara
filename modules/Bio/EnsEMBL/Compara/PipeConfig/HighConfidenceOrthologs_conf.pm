@@ -112,7 +112,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'flag_high_confidence_orthologs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
             -parameters    => {
-                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#'
+                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'range_label'   => $self->o('range_label'),
+                'range_filter'  => $self->o('range_filter'),
             },
             -hive_capacity => $self->o('capacity'),
             -batch_size    => $self->o('batch_size'),
