@@ -212,6 +212,7 @@ sub make_table {
       label   => $sample_label,
       helptip => $sample->name,
       toggle_diagonal => 1,
+      width => 0.5,
     });
   }
 
