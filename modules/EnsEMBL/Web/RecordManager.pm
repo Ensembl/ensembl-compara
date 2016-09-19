@@ -221,7 +221,7 @@ sub _save_record {
   ## Saves a record
   my ($self, $record, $args) = @_;
 
-  return $record->save($args ? %$args : ());
+  return $record->save($args);
 }
 
 sub _record_column_names {
