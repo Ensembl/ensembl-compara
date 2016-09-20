@@ -28,7 +28,7 @@ use parent qw(EnsEMBL::Web::ViewConfig);
 
 sub _new {
   ## @override
-  my $self = shift->_new(@_);
+  my $self = shift->SUPER::_new(@_);
 
   $self->{'code'} = 'Gene::Family';
 
