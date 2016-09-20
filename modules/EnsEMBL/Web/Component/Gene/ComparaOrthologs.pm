@@ -65,17 +65,20 @@ sub content {
 
   my %not_seen = $self->_get_all_analysed_species($cdb);
   
-  delete $not_seen{ucfirst($species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME'))};
+  delete $not_seen{ucfirst($species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME'))}; #deleting current species
+  
+  #do not show non-strain species on strain view
+  if ($self->is_strain && !$species_defs->get_config($_, 'RELATED_TAXON')) { delete $not_seen{$_} for (keys %not_seen); }
   
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
 
-      #do not show strain species on main species view and show only strain with species under the same taxon on strain view
-      if ((!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($species), 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species_defs->production_name_mapping($species), 'RELATED_TAXON'))) {
+      #do not show strain species on main species view
+      if (!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($species), 'IS_STRAIN_OF')) {
         delete $not_seen{$species};
         next;
-      }     
+      }
 
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
       $skipped{$species}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
@@ -295,8 +298,8 @@ sub content {
         join "</li>\n<li>", sort map {$species_defs->species_label($species_defs->production_name_mapping($_))." ($skipped{$_})"} keys %skipped
       )
     );
-  }  
-
+  }   
+      
   if (%not_seen) {
     $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
       'Species without orthologues',
