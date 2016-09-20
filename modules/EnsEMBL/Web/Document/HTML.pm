@@ -40,6 +40,7 @@ sub new {
 
 sub renderer      :lvalue { $_[0]->{'_renderer'}; }
 sub hub           { return $_[0]->{'_hub'}; }
+sub dom           { return $_[0]->{'_dom'} ||= EnsEMBL::Web::DOM->new; }
 
 sub printf        { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print         { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
