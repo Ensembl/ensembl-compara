@@ -175,7 +175,7 @@ sub content {
   if ($highlight_gene) {
     my $highlight_gene_display_label;
     
-    foreach my $this_leaf (@$leaves) {
+    foreach my $this_leaf (@$leaves) {    
       if ($highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene) {
         $highlight_gene_display_label = $this_leaf->gene_member->display_label || $highlight_gene;
         $highlight_species            = $hub->species_defs->production_name_mapping($this_leaf->gene_member->genome_db->name);
@@ -354,7 +354,7 @@ sub content {
       my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);
       push @rank_options, sprintf qq{<option value="%s" %s>%s</option>\n}, $hub->url({ collapse => $collapsed_to_rank, g1 => $highlight_gene, gtr => $rank }), $rank eq $selected_rank ? 'selected' : '', ucfirst $rank;
     }
-    push @view_links, sprintf qq{<li>Collapse all the nodes at the taxonomic rank <select onchange="Ensembl.redirect(this.value)">%s</select></li>}, join("\n", @rank_options);
+    push @view_links, sprintf qq{<li>Collapse all the nodes at the taxonomic rank <select onchange="Ensembl.redirect(this.value)">%s</select></li>}, join("\n", @rank_options) if(!$self->is_strain);
   }
 
   $html .= $image->render;
