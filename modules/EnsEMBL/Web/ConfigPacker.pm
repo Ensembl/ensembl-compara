@@ -847,28 +847,28 @@ sub _summarise_funcgen_db {
 
   ## Methylation tracks - now in files
   my $m_aref = $dbh->selectall_arrayref(qq(
-      select 
-        eff.name,
-        a.display_label,
-        a.description,
-        epigenome.name,
-        g.name
-      from external_feature_file eff
-        join analysis_description a using (analysis_id)
-        join epigenome using (epigenome_id)
-        join feature_type using (feature_type_id)
-        join experiment using (epigenome_id)
-        join experimental_group g using (experimental_group_id)
+        select 
+          eff.name, 
+          a.description, 
+          epigenome.name, 
+          g.name 
+        from external_feature_file eff 
+          join analysis_description a on (a.analysis_id = eff.analysis_id) 
+          join feature_type ft using (feature_type_id) 
+          join epigenome using (epigenome_id) 
+          join experiment using (experiment_id) 
+          join experimental_group g using (experimental_group_id) 
+        where ft.name = '5mC';
     )
   );
- foreach (@$m_aref) {
-    my ($id, $a_name, $a_desc, $c_desc, $group) = @$_;
 
-    my $name = "$c_desc $a_name";
-    $name .= " $group" if $group;
-    my $desc = "$c_desc cell line: $a_desc";
-    $desc .= " ($group group)." if $group;    
-    $self->db_details($db_name)->{'tables'}{'methylation'}{$id} = {
+  foreach (@$m_aref) {
+    my ($name, $description, $epigenome, $group) = @$_;
+
+    my $id   = sprintf('%s_%s', $epigenome, $group);
+    my $desc = "$epigenome cell line: $description";
+    $desc .= " ($group group)." if $group;
+    $self->db_details($db_name)->{'tables'}{'methylation'}{$name} = {
                                                                     name        => $name,
                                                                     description => $desc,
                                                                   };
