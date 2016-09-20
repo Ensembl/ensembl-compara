@@ -1569,7 +1569,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -rc_name => '250Mb_job',
+            -rc_name => '8Gb_job',
         },
 
         {   -logic_name     => 'cluster_tagging',
@@ -1778,7 +1778,7 @@ sub core_pipeline_analyses {
                 'mafft_home'            => $self->o('mafft_home'),
                 'escape_branch'         => -1,
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -analysis_capacity    => 2000,
             -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
