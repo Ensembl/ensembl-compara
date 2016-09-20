@@ -76,6 +76,7 @@ div.news-item { margin-bottom:3em; }
 
 ul#favourites_list li, ul#species_list li { cursor:move; }
 
+div.species-list.faded { opacity: 0.3; }
 div.species-list div.species-box    { width: 50%; float: left; /* min-width: 250px; */ }
 div.species-list div.species-box span { font-size: 80%; padding-top: 4px; display: block; }
 div.species-list div.species-box span.sp-img { padding: 0; }
