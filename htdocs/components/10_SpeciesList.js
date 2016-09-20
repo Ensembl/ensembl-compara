@@ -15,43 +15,142 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({  
+Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
   init: function () {
     this.base();
-    
-    var reorder    = $('.reorder_species', this.el);
-    var full       = $('.full_species', this.el);
-    var favourites = $('.favourites', this.el);
-    var container  = $('.species_list_container', this.el);
-    var dropdown   = $('.dropdown_redirect',this.el);
-    
-    if (!reorder.length || !full.length || !favourites.length) {
-      return;
-    }
-    
-    $('.toggle_link', this.el).on('click', function () {
-      reorder.toggle();
-      full.toggle();
-    });
-    
-    $('.favourites, .species', this.el).sortable({
-      connectWith: '.list',
-      containment: this.el,
-      stop: function () {
-        $.ajax({
-          url: '/Account/Favourites/Save',
-          data: { favourites: favourites.sortable('toArray').join(',').replace(/(favourite|species)-/g, '') },
-          dataType: 'json',
-          success: function (data) {
-            container.html(data.list);
-            dropdown.html(data.dropdown);
-          }
-        });
+
+    this.elLk.container   = this.el.find('._species_fav_container');
+    this.elLk.list        = this.el.find('._species_sort_container');
+    this.elLk.dropdown    = this.el.find('select._all_species');
+    this.elLk.buttonEdit  = this.el.find('a._list_edit');
+    this.elLk.buttonDone  = this.el.find('a._list_done');
+    this.elLk.buttonReset = this.el.find('a._list_reset');
+
+    this.allSpecies       = this.params['species_list'];
+    this.favTemplate      = this.params['fav_template'];
+    this.listTemplate     = this.params['list_template'];
+    this.urlTemplate      = this.params['species_url_template'];
+    this.refreshURL       = this.params['ajax_refresh_url'];
+    this.saveURL          = this.params['ajax_save_url'];
+    this.displayLimit     = this.params['display_limit'];
+
+    this.elLk.buttonEdit.on('click', { panel: this }, function(e) {
+      e.preventDefault();
+      if (Ensembl.isLoggedInUser) {
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        e.data.panel.toggleList(true);
       }
     });
-    
-    $('select.dropdown_redirect', this.el).on('change', function () {
-      Ensembl.redirect(this.value);
+
+    this.elLk.buttonDone.on('click', { panel: this }, function(e) {
+      e.preventDefault();
+      e.data.panel.toggleList(false);
+    });
+
+    this.elLk.buttonReset.on('click', { panel: this }, function(e) {
+      e.preventDefault();
+      e.data.panel.updateFav('');
+      e.data.panel.toggleList(false);
+    });
+
+    this.elLk.dropdown.on('change', function() {
+      var url = $(this).val();
+      if (url) {
+        window.location.href = url;
+      }
+    });
+
+    this.refreshFav();
+    this.renderDropdown();
+  },
+
+  renderFav: function () {
+    this.elLk.container.empty();
+
+    for (var i = 0; i < this.allSpecies.length; i++) {
+      var species = this.allSpecies[i];
+
+      if (!species.favourite || i >= this.displayLimit) { // first few species in the list are favourite
+        break;
+      }
+
+      this.elLk.container.append(Ensembl.populateTemplate(this.favTemplate, {species: species}));
+    }
+  },
+
+  refreshFav: function() {
+    this.elLk.container.addClass('faded');
+    if (Ensembl.isLoggedInUser) {
+      $.ajax({
+        url : this.refreshURL,
+        context: this,
+        dataType: 'json',
+        success: function(allSpecies) {
+          this.allSpecies = allSpecies;
+          this.renderFav();
+          this.renderList();
+          this.elLk.container.removeClass('faded').externalLinks();
+        }
+      });
+    } else {
+      this.elLk.container.removeClass('faded').externalLinks();
+    }
+  },
+
+  renderList: function() {
+    var panel     = this;
+    var template  = this.listTemplate;
+    var fav       = this.elLk.list.find('ul._favourites').empty();
+    var sp        = this.elLk.list.find('ul._species').empty();
+
+    $.each(this.allSpecies, function(i, species) {
+      if (!species.external) {
+        (species.favourite ? fav : sp).append(Ensembl.populateTemplate(template, {species: species}));
+      }
+    });
+
+    fav.add(sp).sortable({
+      connectWith: '._species, ._favourites',
+      containment: this.el,
+      stop: function () {
+        panel.updateFav(fav.sortable('toArray').join(',').replace(/species\-/g, ''));
+      }
+    });
+  },
+
+  toggleList: function(flag) {
+    this.elLk.list.toggleClass('hidden', !flag);
+    this.elLk.buttonEdit.toggle(!flag);
+  },
+
+  renderDropdown: function() {
+    var template = this.urlTemplate;
+    var dropdown = this.elLk.dropdown.children(':not(:first-child)').remove().end();
+
+    $.each(this.allSpecies, function(i, species) {
+      if (!species.external) {
+        var groupClass  = species.group.replace(/\W/g, '_');
+        var optgroup    = dropdown.find('optgroup.' + groupClass);
+        if (!optgroup.length) {
+          optgroup = $('<optgroup class="' + groupClass + '" label="' + species.group + '"></optgroup>').appendTo(dropdown);
+        }
+        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' (' + species.name + ')</option>');
+      }
+    });
+  },
+
+  updateFav: function(favSpecies) {
+    $.ajax({
+      url: this.saveURL,
+      context: this,
+      data: { favourites: favSpecies },
+      dataType: 'json',
+      success: function (json) {
+        if (json.updated) {
+          this.refreshFav();
+        }
+      }
     });
   }
 });
