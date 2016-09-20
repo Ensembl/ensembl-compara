@@ -316,4 +316,26 @@ sub ajax_fetch_html {
   print $content;
 }
 
+sub ajax_nav_config {
+  ## /Ajax/nav_config
+  ## Saves the state of LHS menu nodes (open or close)
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $menu    = $hub->param('menu') or return;
+  my $code    = $hub->param('code') or return;
+  my $state   = $hub->param('state');
+  my $args    = {'type' => 'nav', 'code' => $code};
+  my $data    = $session->get_record_data($args);
+     $data    = $args unless keys %$data;
+
+  if ($hub->param('state')) {
+    $data->{$menu} = 1;
+  } else {
+    delete $data->{$menu};
+  }
+
+  $session->set_record_data($data);
+}
+
 1;
