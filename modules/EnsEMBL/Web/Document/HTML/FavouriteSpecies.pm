@@ -50,7 +50,7 @@ sub _get_dom_tree {
   my $template  = $self->_fav_template;
   my $prehtml   = '';
 
-  for (1..$self->SPECIES_DISPLAY_LIMIT) {
+  for (0..$self->SPECIES_DISPLAY_LIMIT-1) {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
 
