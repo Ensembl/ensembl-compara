@@ -391,6 +391,33 @@ Ensembl.extend({
     }
     
     return x1 + x2;
+  },
+
+  populateTemplate : function(template, data) {
+    var regexp  = /\{\{[^\}]+\}\}/g;
+    var matches = [];
+
+    var match;
+    while ((match = regexp.exec(template)) != null) {
+      matches.push({str: match[0], index: match.index});
+    }
+
+    var output = [];
+    for (var i = matches.length - 1; i >= 0; i--) {
+      if (matches[i].str.match(/\.\w/)) {
+        var match = matches[i].str.replace(/\{|\}/g, '');
+        try {
+          var replacement = eval('data.' + match);
+        } catch (ex) {
+          throw Error("Ensembl.populateTemplate could not parse '" + match + "': " + ex.message);
+        }
+        output.unshift(template.substring(matches[i].index + matches[i].str.length));
+        output.unshift(replacement);
+        template = template.substr(0, matches[i].index);
+      }
+    }
+    output.unshift(template);
+    return output.join('');
   }
 });
 
