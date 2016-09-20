@@ -52,7 +52,7 @@ sub get_details {
 sub content_sub_supertree {
   my $self = shift;
   my $hub = $self->hub;
-  my $cdb = $hub->param('cdb') || 'compara';
+  my $cdb = $self->param('cdb') || 'compara';
   my $object      = $self->object;
   my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node, $test_tree);
@@ -75,7 +75,7 @@ sub content_sub_supertree {
   });
   my $image = $self->new_image($parent->root, $super_image_config, []);
   $image->image_type       = 'genetree';
-  $image->image_name       = ($hub->param('image_width')) . "-SUPER-$tree_stable_id";
+  $image->image_name       = ($self->param('image_width')) . "-SUPER-$tree_stable_id";
   $image->imagemap         = 'yes';
   $image->set_button('drag', 'title' => 'Drag to select region');
   $html .= sprintf(
@@ -96,7 +96,7 @@ sub content {
   my $is_genetree = $object && $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node, $test_tree);
 
-  my $type   = $hub->param('data_type') || $hub->type;
+  my $type   = $self->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
 
   if ($is_genetree) {
@@ -107,21 +107,21 @@ sub content {
     ($member, $tree, $node, $test_tree) = $self->get_details($cdb);
   }
 
-  return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !$is_genetree && !defined $member;
+  return $tree . $self->genomic_alignment_links($cdb) if $self->param('g') && !$is_genetree && !defined $member;
 
   my $leaves               = $tree->get_all_leaves;
   my $tree_stable_id       = $tree->tree->stable_id;
-  my $highlight_gene       = $hub->param('g1');
-  my $highlight_ancestor   = $hub->param('anc');
-  my $unhighlight          = $highlight_gene ? $hub->url({ g1 => undef, collapse => $hub->param('collapse') }) : '';
+  my $highlight_gene       = $self->param('g1');
+  my $highlight_ancestor   = $self->param('anc');
+  my $unhighlight          = $highlight_gene ? $hub->url({ g1 => undef, collapse => $self->param('collapse') }) : '';
   my $image_width          = $self->image_width       || 800;
-  my $colouring            = $hub->param('colouring') || 'background';
-  my $collapsability       = $is_genetree ? '' : ($vc->get('collapsability') || $hub->param('collapsability'));
-  my $clusterset_id        = $vc->get('clusterset_id') || $hub->param('clusterset_id');
-  my $show_exons           = $hub->param('exons') eq 'on' ? 1 : 0;
+  my $colouring            = $self->param('colouring') || 'background';
+  my $collapsability       = $is_genetree ? '' : ($vc->get('collapsability') || $self->param('collapsability'));
+  my $clusterset_id        = $vc->get('clusterset_id') || $self->param('clusterset_id');
+  my $show_exons           = $self->param('exons') eq 'on' ? 1 : 0;
   my $image_config         = $hub->get_imageconfig('genetreeview');
-  my @hidden_clades        = grep { $_ =~ /^group_/ && $hub->param($_) eq 'hide'     } $hub->param;
-  my @collapsed_clades     = grep { $_ =~ /^group_/ && $hub->param($_) eq 'collapse' } $hub->param;
+  my @hidden_clades        = grep { $_ =~ /^group_/ && $self->param($_) eq 'hide'     } $self->param;
+  my @collapsed_clades     = grep { $_ =~ /^group_/ && $self->param($_) eq 'collapse' } $self->param;
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
   my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => 'Image', gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
@@ -138,7 +138,7 @@ sub content {
   my $parent      = $tree->tree->{'_supertree'};
   if (defined $parent) {
 
-    if ($vc->get('super_tree') eq 'on' || $hub->param('super_tree') eq 'on') {
+    if ($vc->get('super_tree') eq 'on' || $self->param('super_tree') eq 'on') {
       my $super_url = $self->ajax_url('sub_supertree',{ cdb => $cdb, update_panel => undef });
       $html .= qq(<div class="ajax"><input type="hidden" class="ajax_load" value="$super_url" /></div>);
     } else {
@@ -244,7 +244,7 @@ sub content {
   });
   
   # Keep track of collapsed nodes
-  my $collapsed_nodes = $hub->param('collapse');
+  my $collapsed_nodes = $self->param('collapse');
   my ($collapsed_to_gene, $collapsed_to_para);
   
   if (!$is_genetree) {
@@ -282,9 +282,9 @@ sub content {
     # get the largest clades first, so that they can be overwritten later
     # (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
     foreach my $clade_name (reverse @{ $self->hub->species_defs->TAXON_ORDER }) {
-      next unless $hub->param("group_${clade_name}_${mode}colour");
+      next unless $self->param("group_${clade_name}_${mode}colour");
       my $genome_db_ids = $genome_db_ids_by_clade{$clade_name};
-      my $colour        = $hub->param("group_${clade_name}_${mode}colour");
+      my $colour        = $self->param("group_${clade_name}_${mode}colour");
       my $nodes         = $self->find_nodes_by_genome_db_ids($tree, $genome_db_ids, $mode eq 'fg' ? 'all' : undef);
       
       push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
@@ -308,7 +308,7 @@ sub content {
 
 
   $image->image_type        = 'genetree';
-  $image->image_name        = ($hub->param('image_width')) . "-$image_id";
+  $image->image_name        = ($self->param('image_width')) . "-$image_id";
   $image->imagemap          = 'yes';
   $image->{'panel_number'}  = 'tree';
 
@@ -326,11 +326,11 @@ sub content {
   $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
   my @extra_params = qw(g1 anc collapse);
   foreach (@extra_params) {
-    push @{$image->{'export_params'}}, [$_, $hub->param($_)];
+    push @{$image->{'export_params'}}, [$_, $self->param($_)];
   }
-  foreach ($hub->param) {
+  foreach ($self->param) {
     if (/^group/) {
-      push @{$image->{'export_params'}}, [$_, $hub->param($_)];
+      push @{$image->{'export_params'}}, [$_, $self->param($_)];
     }
   }
   $image->{'data_export'}   = 'GeneTree';
@@ -349,7 +349,7 @@ sub content {
 
   {
     my @rank_options = ( q{<option value="#">-- Select a rank--</option>} );
-    my $selected_rank = $hub->param('gtr') || '';
+    my $selected_rank = $self->param('gtr') || '';
     foreach my $rank (qw(species genus family order class phylum kingdom)) {
       my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);
       push @rank_options, sprintf qq{<option value="%s" %s>%s</option>\n}, $hub->url({ collapse => $collapsed_to_rank, g1 => $highlight_gene, gtr => $rank }), $rank eq $selected_rank ? 'selected' : '', ucfirst $rank;
@@ -532,7 +532,7 @@ sub find_nodes_by_genome_db_ids {
 sub genomic_alignment_links {
   my $self          = shift;
   my $hub           = $self->hub;
-  my $cdb           = shift || $hub->param('cdb') || 'compara';
+  my $cdb           = shift || $self->param('cdb') || 'compara';
   (my $ckey = $cdb) =~ s/compara//;
   my $species_defs  = $hub->species_defs;
   my $alignments    = $species_defs->multi_hash->{$ckey}{'ALIGNMENTS'}||{};
@@ -578,7 +578,7 @@ sub get_export_data {
 ## Get data for export
   my ($self, $type) = @_;
   my $hub   = $self->hub;
-  my $cdb   = $hub->param('cdb');
+  my $cdb   = $self->param('cdb');
   my $gene  = $hub->core_object('gene');
   my ($tree, $node, $member);
 
@@ -591,7 +591,7 @@ sub get_export_data {
   if ($type && $type eq 'genetree') { 
     $tree = $gene->get_GeneTree($cdb, 1);
   }
-  elsif ($hub->species eq 'Multi' && $hub->param('gt')) {
+  elsif ($hub->species eq 'Multi' && $self->param('gt')) {
     my $gene_tree = $hub->{'_builder'}->create_object('GeneTree');
     $tree         = $gene_tree->Obj;
   }
@@ -600,8 +600,8 @@ sub get_export_data {
   }
 
   ## Get node if required
-  if ($hub->param('node')) {
-    $node = $tree->find_node_by_node_id($hub->param('node'))
+  if ($self->param('node')) {
+    $node = $tree->find_node_by_node_id($self->param('node'))
   }
 
   ## Finally return correct object type
