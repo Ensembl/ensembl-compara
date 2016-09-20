@@ -456,10 +456,52 @@ sub render_tables {
   my ($self, $table, $reg_table, $motif_table) = @_;
 
   my $table_html =  ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
+                    $self->_render_eqtl_table.
                     ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
                     ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
                     
   return $table_html;
+}
+
+sub _render_eqtl_table {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $eqtl_table_html = '';
+
+  if (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL) {
+    # empty table for eQTLs - get populated by JS via REST
+    my @eqtl_columns  = (
+      { key => 'gene',    title => 'Gene',                sort => 'html'    },
+      { key => 'p_val',   title => 'Minus log 10 p-val',  sort => 'numeric' },
+      { key => 'val',     title => 'Value',               sort => 'numeric' },
+      { key => 'tissue',  title => 'Tissue',              sort => 'html'    },
+    );
+
+    # add dummy rows to get pagination working
+    my %dummy_row   = map { $_->{'key'} => 0 } @eqtl_columns;
+    my @dummy_rows  = map {{ %dummy_row }} 0..10;
+
+    # create table
+    my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
+      data_table => 1, sorting => [ 'p_val asc' ], class => 'cellwrap_insideix', data_table_config => {
+        iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+      }
+    });
+
+    $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
+      <input type="hidden" class="panel_type" value="EQTLTable">
+      <input type="hidden" name="eqtl_rest_endpoint" class="js_param" value="%s">
+      <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
+      <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
+      </div>',
+      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value', $rest_url, lc $hub->species, $hub->param('v')),
+      $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => '{{geneId}}', 'r' => undef}),
+      $eqtl_table->render
+    );
+  }
+
+  return $eqtl_table_html;
 }
 
 # Mapping_table
@@ -694,7 +736,7 @@ sub detail_panel {
     }
     
     my $a_label = (length($allele) > 50) ? substr($allele,0,50).'...' : $allele;
-    $html .= $self->toggleable_table("Consequence detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html .= $self->toggleable_table("Consequence detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   }
   
   return $html;
