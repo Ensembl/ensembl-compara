@@ -40,7 +40,7 @@
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "recolour") {
+      if(cc.decorate && $.inArray("recolour",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
       }
     });

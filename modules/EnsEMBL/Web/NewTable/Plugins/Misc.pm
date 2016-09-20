@@ -82,7 +82,11 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 sub js_plugin { return 'newtable_diagonal'; }
 
 sub col_toggle_diagonal {
+  my ($self,$col) = @_;
+
   $_[1]->set_heading('diagonal',1);
+  $_[1]->decorate('diagonal',5);
+  $self->config->add_keymeta("decorate/diagonal",$col,'*',{});
 }
 
 

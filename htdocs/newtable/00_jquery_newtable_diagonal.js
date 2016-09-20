@@ -17,6 +17,19 @@
 
 (function($) {
   $.fn.newtable_diagonal = function(config,data,widgets,callw) {
+    function decorate_fn(column,extras,series) {
+      return function(html,row) {
+        return '<div style="text-align: center">'+html+'</div>';
+      }
+    }
+
+    var decorators = {};
+    $.each(config.colconf,function(key,cc) {
+      if(cc.heading && cc.heading.diagonal) {
+        decorators[key] = [decorate_fn];
+      }
+    });
+
     return {
       prio: 75,
       decorate_heading: function(cc,$th,first,html) {
@@ -29,7 +42,8 @@
           $th.addClass('newtable_not_diagonal_th');
           return html;
         }
-      }
+      },
+      decorators: { diagonal: decorators }
     };
   }; 
 })(jQuery);

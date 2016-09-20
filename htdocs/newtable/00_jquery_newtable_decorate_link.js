@@ -71,7 +71,7 @@
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "link") {
+      if(cc.decorate && $.inArray("link",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
       }
     });

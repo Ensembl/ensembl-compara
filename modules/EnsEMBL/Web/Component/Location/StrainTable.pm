@@ -304,7 +304,7 @@ sub variation_table {
       if ($sample_allele eq $ref_allele) {
         $sample_allele = '|';#$default_allele;
       }
-      $row->{lc($sample_name).'_strain'} = qq{<div style="text-align:center">$sample_allele</div>};
+      $row->{lc($sample_name).'_strain'} = $sample_allele;
     }
     $callback->add_row($row);
     last ROWS if $callback->stand_down;
