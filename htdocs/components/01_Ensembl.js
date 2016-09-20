@@ -407,10 +407,21 @@ Ensembl.extend({
       if (matches[i].str.match(/\.\w/)) {
         var match = matches[i].str.replace(/\{|\}/g, '');
         try {
-          var replacement = eval('data.' + match);
+          var replacement = (function(pointer, keys) {
+            while (keys.length) {
+              var key = keys.shift();
+              if (key in pointer) {
+                pointer = pointer[key];
+              } else {
+                throw Error("Missing key '" + key + "'");
+              }
+            }
+            return pointer;
+          })(data, match.split('.'));
         } catch (ex) {
           throw Error("Ensembl.populateTemplate could not parse '" + match + "': " + ex.message);
         }
+
         output.unshift(template.substring(matches[i].index + matches[i].str.length));
         output.unshift(replacement);
         template = template.substr(0, matches[i].index);
