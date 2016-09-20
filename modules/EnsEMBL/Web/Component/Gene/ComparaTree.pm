@@ -154,7 +154,7 @@ sub content {
   }
 
   if ($hub->type eq 'Gene') {
-    if ($tree->tree->clusterset_id ne $clusterset_id) {
+    if ($tree->tree->clusterset_id ne $clusterset_id && !$self->is_strain) {
       $html .= $self->_info('Phylogenetic model selection',
         sprintf(
           'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.', $clusterset_id
@@ -190,7 +190,7 @@ sub content {
           '<p>In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.</p>', 
           $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
           $highlight_gene_display_label,
-          $hub->species_defs->get_config(ucfirst $highlight_species, 'SPECIES_COMMON_NAME'),
+          $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME'),
           $unhighlight
         )
       );
@@ -204,9 +204,9 @@ sub content {
   # Ideally, this should be stored in $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}
   # or any other centralized place, to avoid recomputing it many times
   my %genome_db_ids_by_clade = map {$_ => []} @{ $self->hub->species_defs->TAXON_ORDER };
-  foreach my $species_name (keys %{$self->hub->get_species_info}) {
+  foreach my $species_name (keys %{$self->hub->get_species_info}) {  
     foreach my $clade (@{ $self->hub->species_defs->get_config($species_name, 'SPECIES_GROUP_HIERARCHY') }) {
-      push @{$genome_db_ids_by_clade{$clade}}, $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'GENOME_DB'}{lc $species_name};
+      push @{$genome_db_ids_by_clade{$clade}}, $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'GENOME_DB'}{lc ($hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME'))};
     }
   }
   $genome_db_ids_by_clade{LOWCOVERAGE} = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'}{'LOWCOVERAGE'};
@@ -290,7 +290,7 @@ sub content {
       push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
     }
   }
-  
+ 
   push @highlights, $collapsed_nodes        || undef;
   push @highlights, $coloured_nodes         || undef;
   push @highlights, $highlight_genome_db_id || undef;
@@ -492,13 +492,12 @@ sub find_nodes_by_genome_db_ids {
 
   if ($tree->is_leaf) {
     my $genome_db_id = $tree->genome_db_id;
-    
+
     if (grep $_ eq $genome_db_id, @$genome_db_ids) {
       $node_ids->{$tree->node_id} = 1;
     }
   } else {
     my $tag = 1;
-    
     foreach my $this_child (@{$tree->children}) {
       my $these_node_ids = $self->find_nodes_by_genome_db_ids($this_child, $genome_db_ids, $mode);
       
