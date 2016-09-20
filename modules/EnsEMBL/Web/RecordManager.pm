@@ -149,7 +149,7 @@ sub set_record_data {
   $record->$_($row->{$_}) for keys %$row;
 
   # type and code are required
-  throw WebException(q(Record can not be created without 'type' and 'code.)) unless $record->type && $record->code;
+  throw WebException(q(Record can not be created without 'type' and 'code'.)) unless $record->type && $record->code;
 
   $self->has_changes(1);
 
