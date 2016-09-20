@@ -171,6 +171,13 @@ sub get_rss_feed {
   return $items;
 }
 
+sub ajax_url {
+  ## Create a url that can reach render_ajax method of this module via an ajax reqest
+  my ($self, $params) = @_;
+
+ return $self->hub->url('Ajax', {%{$params || {}}, 'type' => 'html_doc', 'module' => [ split /::/, ref $self ]->[-1]});
+}
+
 sub _process_xml {
   my ($self, $rss_type, $content, $limit) = @_;
   my $items;
