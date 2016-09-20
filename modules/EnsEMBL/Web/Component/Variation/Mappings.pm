@@ -477,13 +477,26 @@ sub _render_eqtl_table {
       { key => 'val',     title => 'Value',               sort => 'numeric' },
       { key => 'tissue',  title => 'Tissue',              sort => 'html'    },
     );
-    my $eqtl_table = $self->new_table(\@eqtl_columns, [], { data_table => 1, sorting => [ 'p_val asc' ], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} });
+
+    # add dummy rows to get pagination working
+    my %dummy_row   = map { $_->{'key'} => 0 } @eqtl_columns;
+    my @dummy_rows  = map {{ %dummy_row }} 0..10;
+
+    # create table
+    my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
+      data_table => 1, sorting => [ 'p_val asc' ], class => 'cellwrap_insideix', data_table_config => {
+        iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+      }
+    });
 
     $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
+      <input type="hidden" class="panel_type" value="EQTLTable">
       <input type="hidden" name="eqtl_rest_endpoint" class="js_param" value="%s">
+      <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
       <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
       </div>',
       sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value', $rest_url, lc $hub->species, $hub->param('v')),
+      $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => '{{geneId}}', 'r' => undef}),
       $eqtl_table->render
     );
   }
