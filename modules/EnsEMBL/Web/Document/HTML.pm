@@ -40,6 +40,7 @@ sub new {
 
 sub renderer      :lvalue { $_[0]->{'_renderer'}; }
 sub hub           { return $_[0]->{'_hub'}; }
+sub dom           { return $_[0]->{'_dom'} ||= EnsEMBL::Web::DOM->new; }
 
 sub printf        { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print         { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
@@ -168,6 +169,13 @@ sub get_rss_feed {
     warn "!!! COULD NOT GET RSS FEED from $rss_url: ".$response->code.' ('.$response->message.')';
   }
   return $items;
+}
+
+sub ajax_url {
+  ## Create a url that can reach render_ajax method of this module via an ajax reqest
+  my ($self, $params) = @_;
+
+ return $self->hub->url('Ajax', {%{$params || {}}, 'type' => 'html_doc', 'module' => [ split /::/, ref $self ]->[-1]});
 }
 
 sub _process_xml {
