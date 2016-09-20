@@ -50,6 +50,15 @@ sub process {
   $self->hub->store_records_if_needed;
 }
 
+sub ajax_html_doc {
+  ## /Ajax/html_doc endpoint
+  ## Prints content returned by render_ajax from the required Document::HTML module
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  print dynamic_require(sprintf 'EnsEMBL::Web::Document::HTML::%s', $hub->param('module'))->new($hub)->render_ajax;
+}
+
 sub ajax_autocomplete {
   ## /Ajax/autocomplete endpoint
   ## Returns autocomplete JSON for gene box on nav bar
