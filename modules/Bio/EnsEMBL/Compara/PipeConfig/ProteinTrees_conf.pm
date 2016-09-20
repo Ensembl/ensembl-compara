@@ -447,6 +447,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
+        'rm -rf '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
