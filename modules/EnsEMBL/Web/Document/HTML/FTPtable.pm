@@ -99,7 +99,6 @@ sub render {
 
   my @other_species;
   foreach ($species_defs->valid_species) {
-    next if $species_defs->get_config($_, 'SPECIES_STRAIN');
     push @other_species, {
                           'dir'         => lc($_), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
@@ -135,13 +134,6 @@ sub render {
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     };
 
-    ## Add row publicising strain data
-    my $strains = $hub->species_defs->get_config(ucfirst($sp_dir), 'ALL_STRAINS');
-    if ($strains) {
-      push @$rows, {
-        'species' => sprintf '<b>%s %s strains</b>', scalar @$strains, $sp->{'common_name'},
-      };
-    }
   }
 
   my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });
