@@ -77,6 +77,10 @@ sub init_cacheable {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
+  my $menu = $self->get_node('functional');
+  my $other_node = $self->get_node('functional_other_regulatory_regions');
+  $menu->insert_before($self->create_menu_node('functional_gene_expression','Gene Expression correlations'),$other_node);
+
   # Should really come from REST server.
   foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
@@ -85,7 +89,7 @@ sub init_cacheable {
       Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
       The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660. DOI: 10.1126/science. PMID: 1262110.
     );
-    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
+    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',
