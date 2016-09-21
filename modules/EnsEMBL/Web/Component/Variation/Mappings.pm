@@ -496,7 +496,7 @@ sub _render_eqtl_table {
       <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
       </div>',
       sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value', $rest_url, lc $hub->species, $hub->param('v')),
-      $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => '{{geneId}}', 'r' => undef}),
+      $hub->url({'type' => 'Gene', 'action' => 'Regulation', 'g' => '{{geneId}}', 'r' => undef}),
       $eqtl_table->render
     );
   }
