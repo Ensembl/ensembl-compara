@@ -31,15 +31,13 @@ use parent qw(EnsEMBL::Web::ImageConfig);
 ##   Multi         => { ... }
 ## }
 
-sub _new {
+sub init_cacheable {
   ## @override
-  my ($class, $hub, $species, $type, $code) = @_;
+  my $self = shift;
 
-  my $self = $class->SUPER::_new($hub, $hub->species, $type, $code);
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameter('multi_species', 1);
-
-  return $self;
 }
 
 sub species_list {
