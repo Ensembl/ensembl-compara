@@ -110,12 +110,11 @@ sub form_fields {
     'label' => 'Show super-tree',
     'name'  => 'super_tree',
     'value' => 'on',
-  };
+  } if(!$self->hub->param('strain') && !$self->hub->species_defs->IS_STRAIN_OF); #hide this for strain view or strain species 
 
-  my @groups = $self->_groups;
+  my @groups = ($self->hub->param('strain') || $self->hub->species_defs->IS_STRAIN_OF) ? () : $self->_groups; #hide these options for strain view or strain species
 
   if (@groups) {
-
     my $taxon_labels = $self->hub->species_defs->TAXON_LABEL;
 
     $fields->{'colouring'} = {
