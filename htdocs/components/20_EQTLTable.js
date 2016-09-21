@@ -49,10 +49,21 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
       table.fnDeleteRow(i, false);
     }
 
+    // combine data
+    var dataCombined = {};
+    $.each(data, function(i,obj) {
+      var key = obj.gene + '-' + obj.tissue;
+      if (!(key in dataCombined)) {
+        dataCombined[key] = obj;
+      }
+      dataCombined[key][obj.statistic] = obj.statistic === 'beta' ? obj.value : obj.minus_log10_p_value;
+    });
+    data = null;
+
     // add rows from given data
-    table.fnAddData($.makeArray($.map(data, function(obj) {
+    table.fnAddData($.makeArray($.map(dataCombined, function(obj) {
       return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene}) + '">' + obj.gene + '</a>',
-        obj.minus_log10_p_value, obj.value, obj.tissue
+        obj['p-value'], obj.beta, obj.tissue
       ]];
     })), false);
 

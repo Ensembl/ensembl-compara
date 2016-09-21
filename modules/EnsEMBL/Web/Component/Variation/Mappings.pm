@@ -472,10 +472,10 @@ sub _render_eqtl_table {
   if (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL) {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
-      { key => 'gene',    title => 'Gene',                sort => 'html'    },
-      { key => 'p_val',   title => 'Minus log 10 p-val',  sort => 'numeric' },
-      { key => 'val',     title => 'Value',               sort => 'numeric' },
-      { key => 'tissue',  title => 'Tissue',              sort => 'html'    },
+      { key => 'gene',    title => 'Gene',                        sort => 'html'    },
+      { key => 'p_val',   title => 'P-value (log<sub>-10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
+      { key => 'tissue',  title => 'Tissue',                      sort => 'html'    },
     );
 
     # add dummy rows to get pagination working
@@ -495,7 +495,7 @@ sub _render_eqtl_table {
       <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
       <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
       </div>',
-      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json;statistic=p-value', $rest_url, lc $hub->species, $hub->param('v')),
+      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json', $rest_url, lc $hub->species, $hub->param('v')),
       $hub->url({'type' => 'Gene', 'action' => 'Regulation', 'g' => '{{geneId}}', 'r' => undef}),
       $eqtl_table->render
     );
