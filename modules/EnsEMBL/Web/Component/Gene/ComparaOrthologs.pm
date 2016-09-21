@@ -49,7 +49,7 @@ sub content {
   my $hub          = $self->hub;
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
-  my $cdb          = shift || $hub->param('cdb') || 'compara';
+  my $cdb          = shift || $self->param('cdb') || 'compara';
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
   my $species_name = $species_defs->DISPLAY_NAME;
@@ -75,13 +75,13 @@ sub content {
       (my $species = $_) =~ tr/ /_/;
 
       #do not show strain species on main species view
-      if (!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($species), 'IS_STRAIN_OF')) {
+      if ((!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($species), 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species_defs->production_name_mapping($species), 'RELATED_TAXON'))) {
         delete $not_seen{$species};
         next;
       }
 
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
-      $skipped{$species}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
+      $skipped{$species}        += keys %{$homology_type->{$_}} if $self->param('species_' . lc $species) eq 'off';
       delete $not_seen{$species};
     }
   }
@@ -189,7 +189,7 @@ sub content {
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => $hub->create_padded_region()->{'r'} || $hub->param('r'),
+          r      => $hub->create_padded_region()->{'r'} || $self->param('r'),
           config => 'opt_join_genes_bottom=on',
         })
       ) : $orthologue->{'location'};
@@ -203,7 +203,7 @@ sub content {
         my $page_url = $hub->url({
           type    => 'Gene',
           action  => $hub->action,
-          g       => $hub->param('g'), 
+          g       => $self->param('g'), 
         });
           
         my $zmenu_url = $hub->url({
@@ -327,13 +327,13 @@ sub get_export_data {
     return $object->get_homologue_alignments;
   }
   else {
-    my $cdb = $flag || $hub->param('cdb') || 'compara';
+    my $cdb = $flag || $self->param('cdb') || 'compara';
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
 
     my %ok_species;
-    foreach (grep { /species_/ } $hub->param) {
+    foreach (grep { /species_/ } $self->param) {
       (my $sp = $_) =~ s/species_//;
-      $ok_species{$sp} = 1 if $hub->param($_) eq 'yes';      
+      $ok_species{$sp} = 1 if $self->param($_) eq 'yes';      
     }
    
     if (keys %ok_species) {
@@ -368,8 +368,8 @@ sub buttons {
                 };
 
     ## Add any species settings
-    foreach (grep { /^species_/ } $hub->param) {
-      $params->{$_} = $hub->param($_);
+    foreach (grep { /^species_/ } $self->param) {
+      $params->{$_} = $self->param($_);
     }
 
     push @buttons, {
