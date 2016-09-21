@@ -340,8 +340,6 @@ sub new {
         }
     }
   } elsif ($genomic_align_blocks) {
-        #print STDERR Dumper stack_trace();
-      #print Dumper {"underlying slice gabs[0]::AlignSlice::342" => $genomic_align_blocks->[0]};  
     $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
   }
@@ -990,8 +988,6 @@ sub _create_underlying_Slices {
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
   my $sorted_genomic_align_blocks;
 
-  #print Dumper {"PRE-SORTED GABS[0]::AlignSlice::992" => $genomic_align_blocks->[0]};
-
   if ($solve_overlapping eq "restrict") {
     $sorted_genomic_align_blocks = _sort_and_restrict_GenomicAlignBlocks($genomic_align_blocks);
   } elsif ($solve_overlapping) {
@@ -1014,7 +1010,7 @@ sub _create_underlying_Slices {
         if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
             next;
         }
-	#print Dumper [ 'this_genomic_align_block::AlignSlice::1010', $this_genomic_align_block->get_all_GenomicAligns ];
+
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
     }
@@ -1022,9 +1018,6 @@ sub _create_underlying_Slices {
     $original_genomic_align_block->{_alignslice_from} = $from;
     $original_genomic_align_block->{_alignslice_to} = $to;
 
-#    print "-------AlignSlice: this_gab: ";
-#    print Dumper $this_genomic_align_block;
-#    print "-------";
     my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align;
 
     #If I haven't needed to restrict, I don't gain this link so add it here
@@ -1071,7 +1064,6 @@ sub _create_underlying_Slices {
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
       $reference_genomic_align->genomic_align_block->end($align_slice_length);
-      #print "------AlignSlice: reference_genomic_align: " . $reference_genomic_align->display_id . "------aln_seq---" . $reference_genomic_align->aligned_sequence . "-----";
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0));
     } else {
       $align_slice_length += $reference_genomic_align->dnafrag_end - $reference_genomic_align->dnafrag_start + 1;
@@ -1124,7 +1116,6 @@ sub _create_underlying_Slices {
   if ($species_order) {
     foreach my $species_def (@$species_order) {
       my $genome_db_name = $species_def->{genome_db}->name;
-# print STDERR "SPECIES:: ", $genome_db_name, "\n";
       my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
               -length => $align_slice_length,
               -requesting_slice => $self->reference_Slice,
@@ -1140,7 +1131,6 @@ sub _create_underlying_Slices {
       push(@{$self->{_slices}}, $new_slice);
     }
   } else {
-# print STDERR "SPECIES:: ", $ref_genome_db->name, "\n";
     $self->{slices}->{lc($ref_genome_db->name)} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
@@ -1457,14 +1447,11 @@ sub _sort_and_restrict_GenomicAlignBlocks {
   foreach my $this_genomic_align_block (sort _sort_gabs @{$genomic_align_blocks}) {
     if (defined($last_end) && $this_genomic_align_block->reference_genomic_align->dnafrag_start <= $last_end) {
       if ($this_genomic_align_block->reference_genomic_align->dnafrag_end > $last_end) {
-	    #print Dumper {"pre-restricted block::AlignSlice::1460" => $this_genomic_align_block};
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
-	    #print "<br>----------------------------------<br>";
-	    #print Dumper {"post-restricted block::AlignSlice::1463" => $this_genomic_align_block};
+
       } else {
 	  warning("Ignoring GenomicAlignBlock because it overlaps".
-                " previous GenomicAlignBlock ");
-#                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
+             " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
         next;
       }
     }
