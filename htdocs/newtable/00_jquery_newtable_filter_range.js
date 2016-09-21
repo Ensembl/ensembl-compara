@@ -200,6 +200,9 @@
     if(km && km['*']) {
       var end_left = km['*'].endpoint_left;
       var end_right = km['*'].endpoint_right;
+      if(km['*'].slider_class) {
+        $main.addClass(km['*'].slider_class);
+      }
     }
     if(!end_left) { end_left = ''; }
     if(!end_right) { end_right = ''; }

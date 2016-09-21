@@ -240,3 +240,5 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_not_diagonal_th { padding-bottom: 10px; vertical-align: bottom; }
 .newtable_diagonal_th { height: 90px; }
 .newtable_diagonal { display: inline-block; text-align: left; transform: translate(14px,70px) rotate(-70deg); transform-origin: 0 50%; white-space: nowrap; }
+.newtable_slider_redgreen .ui-slider-range { background: linear-gradient(to right,red,yellow,green); }
+.newtable_slider_greenred .ui-slider-range { background: linear-gradient(to right,green,yellow,red); }

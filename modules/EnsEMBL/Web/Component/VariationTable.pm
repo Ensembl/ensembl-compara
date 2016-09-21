@@ -145,6 +145,9 @@ sub sift_poly_classes {
     my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
     $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
     $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
+    my $slider_class =
+      { sift => 'redgreen', polyphen => 'greenred' }->{$column_name};
+    $value_column->filter_slider_class("newtable_slider_$slider_class");
   }
 }
 

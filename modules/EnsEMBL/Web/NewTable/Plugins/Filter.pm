@@ -149,6 +149,14 @@ sub col_filter_endpoint_markup {
   });
 }
 
+sub col_filter_slider_class {
+  my ($self,$col,$class) = @_;
+
+  $self->config->add_keymeta("filter",$col,'*',{
+    slider_class => $class
+  });
+}
+
 sub col_filter_add_baked {
   my ($self,$col,$key,$name,$tooltip) = @_;
 
