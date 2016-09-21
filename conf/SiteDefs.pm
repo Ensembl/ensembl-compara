@@ -253,8 +253,6 @@ our $ENSEMBL_ALIGNMENTS_HIERARCHY = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'
 our $ENSEMBL_DATASETS             = [];
 our $ENSEMBL_PRIMARY_SPECIES      = 'Homo_sapiens'; # Default species
 our $ENSEMBL_SECONDARY_SPECIES    = undef;
-our $ENSEMBL_SPECIES_ALIASES      = {};    # gets populated later by _set_species_aliases()
-our %__species_aliases;
 ## This hash is used to configure the species available in this
 ## copy of EnsEMBL - comment out any lines which are not relevant
 ## If you add a new species MAKE sure that one of the values of the
@@ -349,9 +347,6 @@ sub import {
 
   # Load all plugins SiteDefs
   _update_conf();
-
-  # Populate species aliases
-  _set_species_aliases();
 
   # Set Mart servername
   _set_dedicated_mart();
@@ -510,46 +505,6 @@ sub _update_conf {
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
     "$ENSEMBL_SERVERROOT/ensembl/modules",
   );
-}
-
-sub _set_species_aliases {
-  ## Add self referential elements to ENSEMBL_SPECIES_ALIASES
-  ## And one without the _ in...
-  $ENSEMBL_DATASETS = [ sort keys %__species_aliases ] unless scalar @$ENSEMBL_DATASETS;
-
-  foreach my $name (@$ENSEMBL_DATASETS) {
-    $ENSEMBL_SPECIES_ALIASES->{lc $_} = $name for @{$__species_aliases{$name}};
-
-    my $key = lc $name;
-    $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # homo_sapiens
-
-    $key =~ s/\.//g;
-    $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # homosapiens
-
-    $key = lc $name;
-    $key =~ s/^([a-z])[a-z]*_/$1_/g;
-    $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # h_sapiens
-
-    $key =~ s/_/\./g;
-    $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # h.sapiens
-
-    $key =~ s/_//g;
-    $ENSEMBL_SPECIES_ALIASES->{$key} = $name;   # hsapiens
-  }
-
-  my @temp_species = @$ENSEMBL_DATASETS;
-
-  unless ($__species_aliases{$ENSEMBL_PRIMARY_SPECIES}) {
-    warn qq(Species "$ENSEMBL_PRIMARY_SPECIES" not defined in ENSEMBL_SPECIES_ALIASES);
-    $ENSEMBL_PRIMARY_SPECIES = shift @temp_species;
-  }
-
-  unless ($__species_aliases{$ENSEMBL_SECONDARY_SPECIES}) {
-    warn qq(Species "$ENSEMBL_SECONDARY_SPECIES" not defined in ENSEMBL_SPECIES_ALIASES);
-    $ENSEMBL_SECONDARY_SPECIES = shift @temp_species;
-  }
-
-  $ENSEMBL_SECONDARY_SPECIES = shift @temp_species if $ENSEMBL_SECONDARY_SPECIES eq $ENSEMBL_PRIMARY_SPECIES;
 }
 
 sub _set_dedicated_mart {

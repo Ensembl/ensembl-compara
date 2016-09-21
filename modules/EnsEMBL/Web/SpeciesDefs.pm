@@ -554,11 +554,6 @@ sub _promote_general {
 sub _expand_database_templates {
   my ($self, $filename, $tree) = @_;
  
-  ## NASTY HACK! Collapse strain names
-  if ($filename =~ /^([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)$/) {
-    $filename = sprintf '%s_%s_%s%s', $1, $2, $3, $4;
-  }
- 
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
   my $USER   = $tree->{'general'}{'DATABASE_DBUSER'};    
@@ -708,7 +703,7 @@ sub _parse {
   # o/w attach the species databases
 
   # load the data and store the packed files
-  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
     $config_packer->species($species);
     $self->process_ini_files($species, $config_packer, $defaults);
     $self->_merge_db_tree($tree, $db_tree, $species);
@@ -721,7 +716,7 @@ sub _parse {
   my $species_to_strains = {};
 
   # Loop over each tree and make further manipulations
-  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
@@ -744,6 +739,14 @@ sub _parse {
   while (my($k, $v) = each (%$species_to_strains)) {
     my $species = $name_lookup->{ucfirst($k)};
     $tree->{$species}{'ALL_STRAINS'} = $v;
+  } 
+
+  ## Finally, rename the tree keys for easy data access via URLs
+  ## (and backwards compatibility!)
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
+    my $url = $tree->{$species}{'SPECIES_URL'};
+    $tree->{$url} = $tree->{$species};
+    delete $tree->{$species};
   } 
  
   $CONF->{'_storage'} = $tree; # Store the tree
