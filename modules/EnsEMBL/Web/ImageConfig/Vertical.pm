@@ -233,8 +233,8 @@ sub get_parsed_features {
     if ($track->{'metadata'}) {
       $name = $track->{'metadata'}{'name'};
       $max = $track->{'metadata'}{'max_value'} if (defined($track->{'metadata'}{'max_value'}) && $max < $track->{'metadata'}{'max_value'});
-      $mapped += $track->{'metadata'}{'mapped'};
-      $unmapped += $track->{'metadata'}{'unmapped'};
+      $mapped += $track->{'metadata'}{'mapped'} || 0;
+      $unmapped += $track->{'metadata'}{'unmapped'} || 0;
     }
 
     if ($bins) {
