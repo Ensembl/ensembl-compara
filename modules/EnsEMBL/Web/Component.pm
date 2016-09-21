@@ -820,7 +820,7 @@ sub trim_large_string {
       <div class="toggle_div">
         <span class="%s">%s</span>
         <span class="cell_detail">%s</span>
-        <span class="toggle_img"/>
+        <span class="toggle_img"></span>
       </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
