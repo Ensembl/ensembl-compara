@@ -35,7 +35,7 @@ sub process {
   my $hub       = $self->hub;
   my $site_type = $hub->species_defs->ENSEMBL_SITETYPE;
   my $ftype     = $hub->param('ftype');
-  my $builder   = EnsEMBL::Web::Builder->new({ hub => $hub });
+  my $builder   = $hub->controller->builder;
   my $object    = $builder->create_object('Feature');
   my $features  = $object && $object->can('convert_to_drawing_parameters') ? $object->convert_to_drawing_parameters : {};
   my $desc      = $hub->param('name') || "Selected ${ftype}s";
