@@ -115,7 +115,7 @@ sub new_sequence {
   my ($self,$position) = @_;
 
   my $seq = $self->make_sequence();
-  if($position eq 'top') {
+  if(($position||'') eq 'top') {
     unshift @{$self->{'sequences'}},$seq;
   } else {
     push @{$self->{'sequences'}},$seq;

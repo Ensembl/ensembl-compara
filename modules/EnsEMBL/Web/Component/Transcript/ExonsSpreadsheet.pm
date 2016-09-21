@@ -42,13 +42,13 @@ sub initialize {
   my $vc = $self->view_config($type);
   
   my $config = {
-    exons_only    => $self->param('exons_only'),
-    display_width => $self->param('display_width'),
-    sscon         => $self->param('sscon'),     # no of bp to show either side of a splice site
-    flanking      => $self->param('flanking'),  # no of bp up/down stream of transcript
-    full_seq      => $self->param('fullseq'),   # flag to display full sequence (introns and exons)
-    snp_display   => $self->param('snp_display'),
-    number        => $self->param('line_numbering'),
+    exons_only    => scalar $self->param('exons_only'),
+    display_width => scalar $self->param('display_width'),
+    sscon         => scalar $self->param('sscon'),     # no of bp to show either side of a splice site
+    flanking      => scalar $self->param('flanking'),  # no of bp up/down stream of transcript
+    full_seq      => scalar $self->param('fullseq'),   # flag to display full sequence (introns and exons)
+    snp_display   => scalar $self->param('snp_display'),
+    number        => scalar $self->param('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
