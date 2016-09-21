@@ -76,12 +76,9 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
-  #not_stain to collapse and disable main compara menu if it is a strain
-  my $compara_menu = $self->create_submenu('Compara', 'Comparative Genomics');
-  
-  my $core_compara_menu = $self->create_node('Core_Compara', 'Multi-clade',
+  my $compara_menu = $self->create_node('ompara', 'Comparative Genomics',
     [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
-    {'availability' => 'gene database:compara core not_strain', 'closed' =>  $species_defs->IS_STRAIN_OF ? 1 : 0}
+    {'availability' => 'gene database:compara core not_strain'}
   );
   
   $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
@@ -92,12 +89,12 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
-  $core_compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
+  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
     { 'availability' => 'gene database:compara core has_gene_tree not_strain' }
   ));
   
-  $core_compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
+  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
       { 'availability' => 'gene database:compara core has_species_tree not_strain' }
     ));
@@ -112,7 +109,7 @@ sub populate_tree {
     { 'availability'  => 'gene database:compara core has_orthologs not_strain', 'no_menu_entry' => 1 }
   ));
   
-  $core_compara_menu->append($ol_node);
+  $compara_menu->append($ol_node);
   
   my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
@@ -124,8 +121,7 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_paralogs not_strain', 'no_menu_entry' => 1 }
   ));
   
-  $core_compara_menu->append($pl_node);
-  $compara_menu->append($core_compara_menu);
+  $compara_menu->append($pl_node);
   
   my $fam_node = $self->create_node('Family', 'Ensembl protein families',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
@@ -142,7 +138,7 @@ sub populate_tree {
     { 'availability'  => 'family database:compara core not_strain', 'no_menu_entry' => 1 }
   ));
   
-  $core_compara_menu->append($fam_node);
+  $compara_menu->append($fam_node);
   
   # Compara menu for strain (strain menu available on main species but collapse, main menu not available/grey out/collapse on strain page)
   # The node key (Strain_) is used by Component.pm to determine if it is a strain link on the main species page, so be CAREFUL when changing this  
