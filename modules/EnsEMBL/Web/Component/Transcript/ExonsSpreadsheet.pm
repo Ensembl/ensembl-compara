@@ -307,15 +307,17 @@ sub get_flanking_sequence_data {
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
 
+  my $hub = $self->hub;
+
   my $adorn = $hub->param('adorn') || 'none';
 
   return if $adorn eq 'none';
 
-  my $object = $self->object || $self->hub->core_object('transcript');
-  my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
+  my $object = $self->object || $hub->core_object('transcript');
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $variation_features    = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
   my @transcript_variations;
-  my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
+  my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
   if($config->{'hide_rare_snps'}) {
     @transcript_variations = grep {
       !$self->too_rare_snp($_->variation_feature,$config)
@@ -359,7 +361,7 @@ sub add_variations {
   }
   
   $sequence->[$_]{'class'} .= " $class{$_}"              for keys %class;
-  $sequence->[$_]{'href'}   = $self->hub->url($href{$_}) for keys %href;
+  $sequence->[$_]{'href'}   = $hub->url($href{$_}) for keys %href;
 }
 
 sub add_line_numbers {
