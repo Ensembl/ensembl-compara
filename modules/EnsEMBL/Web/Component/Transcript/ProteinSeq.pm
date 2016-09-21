@@ -126,8 +126,7 @@ sub export_options { return {'action' => 'Protein'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  my $vc = $hub->get_viewconfig('ProteinSeq', 'Transcript');
-  $hub->param('exons', $vc->get('exons'));
+  my $vc = $hub->get_viewconfig({component => 'ProteinSeq', type => 'Transcript', cache => 1});
   my $transcript = $self->object || $hub->core_object('transcript');
   return $self->initialize($transcript->translation_object);
 }

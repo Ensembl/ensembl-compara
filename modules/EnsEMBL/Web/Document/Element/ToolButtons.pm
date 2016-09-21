@@ -83,8 +83,11 @@ sub init {
   my $session    = $hub->session;
   my $user       = $hub->user;
   my $view_config;
-     $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
-  
+  while (!$view_config && scalar @components) {
+    my ($component, $type) = @{shift @components};
+    $view_config = $hub->get_viewconfig({component => $component, type => $type});
+  }
+
   if ($view_config) {
     my $component = $view_config->component;
     

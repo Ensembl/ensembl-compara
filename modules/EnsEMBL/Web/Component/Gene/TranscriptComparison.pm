@@ -147,11 +147,7 @@ sub export_options {
 sub initialize_export {
   my $self = shift;
   my $hub  = $self->hub;
-  my $vc = $hub->get_viewconfig('TranscriptComparison', 'Gene');
-  my @params = qw(sscon snp_display flanking line_numbering);
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
+  my $vc = $hub->get_viewconfig({component => 'TranscriptComparison', type => 'Gene', cache => 1});
   return $self->initialize;
 }
 

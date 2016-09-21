@@ -481,7 +481,7 @@ sub alignment {
   my $hub  = $self->hub;
   
   # Nasty hack to link export to the view config for alignments. Eww.
-  $hub->get_viewconfig('Compara_Alignments', $hub->type, 'cache');
+  $hub->get_viewconfig({component => 'Compara_Alignments', type => $hub->type, cache => 1});
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   

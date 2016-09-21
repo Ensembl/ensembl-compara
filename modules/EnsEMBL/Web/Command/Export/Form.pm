@@ -33,7 +33,7 @@ sub process {
   my $hub      = $self->hub;
   my $function = $hub->function;
   
-  $hub->get_viewconfig('Export', $function, 'cache')->update_from_input;
+  $hub->get_viewconfig({component => 'Export', type => $function, cache => 1})->update_from_input;
   $hub->session->store;  
   
   my $url    = $hub->url({ action => 'Formats', function => $function });
