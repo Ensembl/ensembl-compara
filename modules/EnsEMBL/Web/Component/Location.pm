@@ -151,16 +151,12 @@ sub configure_UserData_key {
   my $column_order = [qw(colour track)];
   my (@rows, %labels);
 
-  foreach (grep $_->get('display') ne 'off', $image_config->get_node('user_data')->nodes) {
-    my $id;
+  foreach (grep $_->get('display') ne 'off', @{$image_config->get_node('user_data')->get_all_nodes}) {
+
+    my $id = $_->id;
 
     ## Check for individual feature colours
-    while (my($key, $data) = each(%{$_->{'user_data'}||{}})) {
-      next unless $key eq $_->id;
-      $id = $key;
-      last;
-    }
-    if ($id) {
+    if ($_->has_user_settings) {
       my $data = $features->{$id};
       while (my($name, $track) = each (%$data)) {
         my %colour_key;
