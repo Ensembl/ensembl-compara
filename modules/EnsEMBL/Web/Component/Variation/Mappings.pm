@@ -271,12 +271,12 @@ sub content {
       my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
       my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
       my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
-      $trans_name .= ".".$trans->version if($trans->version); # transcript version, leave this here so that it doesn't overwrite trans_name before
+      my $trans_display      = "$trans_name.".$trans->version if($trans->version);
 
       my $row = {
         allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
         trans_pos => $trans_length_label . $cdna_overlap,
         cds_pos   => $cds_length_label . $cds_overlap,
