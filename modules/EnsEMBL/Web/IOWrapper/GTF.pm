@@ -114,7 +114,7 @@ sub post_process {
                                   || $a->{'start'} <=> $b->{'start'}
                                   || $b->{'end'} <=> $a->{'end'}
                                   } @{$data->{$track_key}{'features'}||[]};
-    $data->{$track_key}{'features'}{$s} = \@sorted_features;
+    $data->{$track_key}{'features'} = \@sorted_features;
   }
 }
 
