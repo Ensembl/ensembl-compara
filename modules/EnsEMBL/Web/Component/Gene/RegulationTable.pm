@@ -163,16 +163,12 @@ sub get_sequence {
   my $object = $self->object;
   my $sequence;
   
-  if ($f->isa('EnsEMBL::Web::Proxy::Object')){
-    $sequence = $f->get_seq($object->Obj->feature_Slice->strand);
+  my $gene_slice = $object->get_extended_reg_region_slice;
+   
+  if ($f->isa('EnsEMBL::Web::Object::Regulation')){
+    $sequence = $gene_slice->subseq($f->seq_region_start, $f->seq_region_end, 1);
   } else {
-    my $gene_slice = $object->get_extended_reg_region_slice;
-    
-    if ($f->isa('EnsEMBL::Web::Object::Regulation')){
-      $sequence = $gene_slice->subseq($f->seq_region_start, $f->seq_region_end, 1);
-    } else {
-      $sequence = $gene_slice->subseq($f->start, $f->end, 1);
-    }
+    $sequence = $gene_slice->subseq($f->start, $f->end, 1);
   }
 
   $sequence =~ s/([\.\w]{60})/$1<br \/>/g;

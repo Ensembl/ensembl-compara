@@ -23,8 +23,6 @@ package EnsEMBL::Web::Object::Variation;
 ### Wrapper around a Bio::EnsEMBL::Variation 
 ### or EnsEMBL::Web::VariationFeature object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 

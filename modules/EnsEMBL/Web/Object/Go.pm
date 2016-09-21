@@ -21,11 +21,6 @@ package EnsEMBL::Web::Object::Go;
 
 ### NAME: EnsEMBL::Web::Object::Go
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
-### STATUS: At Risk
-### Needs rewriting to use API->new
-
 ### DESCRIPTION                                                                                   
 use strict;
 use warnings;

@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::Translation;
 ### NAME: EnsEMBL::Web::Object::Translation
 ### Wrapper around a Bio::EnsEMBL::Translation object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Required functionality now moved to Object::Transcript
 
@@ -312,8 +310,7 @@ sub history {
 
 =head2 vega_projection
 
- Arg[1]         : EnsEMBL::Web::Proxy::Object
- Arg[2]         : Alternative assembly name
+ Arg[1]         : Alternative assembly name
  Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
  Description : map an object to an alternative (vega) assembly
  Return type : arrayref

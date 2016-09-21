@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::UserData;
 ### NAME: EnsEMBL::Web::Object::UserData
 ### Object for accessing data uploaded by the user
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 
 ### DESCRIPTION
