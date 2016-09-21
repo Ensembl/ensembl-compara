@@ -70,7 +70,7 @@ sub create_form {
     'FASTA' => 'FASTA',
   };
 
-  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post'});
+  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'bgcolour'});
 
   ## Generic fields
   my $fieldset = $form->add_fieldset;
@@ -145,18 +145,15 @@ sub create_form {
     { 'name'    => 'compression', 'value'   => '' }
   ]);
 
-  my $buttons = $fieldset->add_element([
-    { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
-    { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
-    { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
-  ]);
-
-  my $div = $self->dom->create_element('div', {
-    class => 'export_buttons_div',
-    children => $buttons
+  $fieldset->add_field({
+    'field_class' => 'export_buttons_div',
+    'inline'      => 1,
+    'elements'    => [
+      { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
+      { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
+      { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
+    ]
   });
-
-  $fieldset->append_child($div);
 
   ## Hidden fields needed to fetch and process data
   $fieldset->add_hidden([
