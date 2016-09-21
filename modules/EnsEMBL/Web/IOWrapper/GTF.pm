@@ -109,14 +109,12 @@ sub post_process {
     }
     ## Transcripts will be out of order, owing to being stored in hash
     ## Sort by start coordinate, then reverse length (i.e. longest first)
-    foreach my $s ('1', '-1') {
-      my @sorted_features = sort {
+    my @sorted_features = sort {
                                   $a->{'seq_region'} cmp $b->{'seq_region'}
                                   || $a->{'start'} <=> $b->{'start'}
                                   || $b->{'end'} <=> $a->{'end'}
-                                  } @{$data->{$track_key}{'features'}{$s}||[]};
-      $data->{$track_key}{'features'}{$s} = \@sorted_features;
-    }
+                                  } @{$data->{$track_key}{'features'}||[]};
+    $data->{$track_key}{'features'}{$s} = \@sorted_features;
   }
 }
 
