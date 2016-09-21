@@ -42,7 +42,7 @@ sub initialize {
   my $vc = $self->view_config($type);
   
   my $config = {
-    exons_only    => scalar $self->param('exons_only'),
+    exons_only    => (scalar $self->param('exons_only'))||'off',
     display_width => scalar $self->param('display_width'),
     sscon         => scalar $self->param('sscon'),     # no of bp to show either side of a splice site
     flanking      => scalar $self->param('flanking'),  # no of bp up/down stream of transcript
