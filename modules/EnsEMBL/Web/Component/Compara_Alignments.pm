@@ -209,7 +209,7 @@ sub content_sub_slice {
 
   $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
   my ($sequence, $config) = $self->_get_sequence(@_);  
-  return $self->build_sequence($sequence, $config,1);
+  return $self->build_sequence_new($sequence, $config,1);
 }
 
 sub _get_sequence {
@@ -270,20 +270,14 @@ sub _get_sequence {
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 
+  my @s2 = @{$view->root_sequences};
+
   foreach my $slice (@{$config->{'slices'}}) {
-    my $seq = $view->new_sequence;
+    my $seq = shift @s2;
     $seq->name($slice->{'display_name'} || $slice->{'name'});
   }
-  
-  # markup_comparisons must be called first to get the order of the comparison sequences
-  # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
-  $self->markup_comparisons($sequence, $markup, $config)   if $config->{'align'};
-  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'} ne 'off';
-  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'} ne 'off';
-  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'} ne 'off';
-  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'} ne 'off';
-  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'} ne 'off';
-  $self->markup_line_numbers($sequence, $config)           if $config->{'number'};
+
+  $view->markup_new($sequence,$markup,$config);
   
   # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = '';
@@ -630,29 +624,6 @@ sub _get_target_slice_table {
 
 }
 
-sub markup_region_change {
-  my $self = shift;
-  my ($sequence, $markup, $config) = @_;
-
-  my ($change, $class, $seq);
-  my $i = 0;
-
-  foreach my $data (@$markup) {
-    $change = 1 if scalar keys %{$data->{'region_change'}};
-    $seq = $sequence->[$i];
-    
-    foreach (sort {$a <=> $b} keys %{$data->{'region_change'}}) {      
-      $seq->[$_]->{'class'} .= 'end ';
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? "\n" : '') . $data->{'region_change'}->{$_} if ($config->{'title_display'}||'off') ne 'off';
-    }
-    
-    $i++;
-  }
-  
-  $config->{'key'}->{'other'}{'align_change'} = 1 if $change;
-}
-
-
 #Find the set of low coverage species (genome_dbs) from the EPO_LOW_COVERAGE set (high + low coverage)
 #This could be improved by having a direct link between the EPO_LOW_COVERAGE and the corresponding high coverage EPO set
 sub _get_low_coverage_genome_db_sets {
@@ -722,7 +693,7 @@ sub get_export_data {
   return $obj;
 }
 
-sub initialize_export {
+sub initialize_export_new {
   my $self = shift;
   my $hub = $self->hub;
 

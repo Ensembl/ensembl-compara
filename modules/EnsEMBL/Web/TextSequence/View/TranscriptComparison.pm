@@ -27,6 +27,15 @@ use parent qw(EnsEMBL::Web::TextSequence::View);
 use EnsEMBL::Web::TextSequence::Legend::TranscriptComparison;
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Sequence;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Exons;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Variations;
+
+use EnsEMBL::Web::TextSequence::Markup::Exons;
+use EnsEMBL::Web::TextSequence::Markup::Variations;
+use EnsEMBL::Web::TextSequence::Markup::Comparisons;
+use EnsEMBL::Web::TextSequence::Markup::LineNumbers;
+
 sub make_legend {
   return EnsEMBL::Web::TextSequence::Legend::TranscriptComparison->new(@_);
 }
@@ -35,5 +44,25 @@ sub make_sequence {
   return
     EnsEMBL::Web::TextSequence::Sequence::Comparison->new(@_);
 }
+
+sub set_annotations {
+  my ($self,$config) = @_;
+
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Sequence->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Exons->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Variations->new([0,2]));
+}
+
+
+sub set_markup {
+  my ($self,$config) = @_;
+
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Exons->new);
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Variations->new([0,2])) if $config->{'snp_display'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Comparisons->new);
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::LineNumbers->new) if $config->{'line_numbering'} ne 'off';
+}
+
+
 
 1;

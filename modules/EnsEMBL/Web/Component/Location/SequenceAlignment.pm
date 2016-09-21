@@ -77,19 +77,15 @@ sub content {
     
     my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config, $adorn);
     
-    my $view = $self->view($config);
+    my $view = $self->view;
+    my @s2 = @{$view->sequences};
     foreach my $slice (@{$config->{'slices'}}) {
-      my $seq = $view->new_sequence;
+      my $seq = shift @s2;
       $seq->name($slice->{'display_name'} || $slice->{'name'});
     }
 
-    # Order is important for the key to be displayed correctly
-    $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-    $self->markup_codons($sequence, $markup, $config)    if $config->{'codons_display'};
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-    $self->markup_comparisons($sequence, $markup, $config); # Always called in this view
-    $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
-    
+    $self->view->markup_new($sequence,$markup,$config);
+
     my $slice_name = $original_slice->name;
     
     my (undef, undef, $region, $start, $end) = split ':', $slice_name;
@@ -97,7 +93,7 @@ sub content {
 
     $self->view->output->template(qq(<p><b>$config->{'species'}</b>&nbsp;&gt;&nbsp;<a href="$url">$slice_name</a></p><pre>%s</pre>));
     
-    $html  = $self->build_sequence($sequence, $config);
+    $html  = $self->build_sequence_new($sequence, $config);
     $html .= $self->_hint(
       'strain_config', 
       ucfirst "$strain configuration",

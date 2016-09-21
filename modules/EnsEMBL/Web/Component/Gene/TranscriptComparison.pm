@@ -23,12 +23,15 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Sequence;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Exons;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Variations;
 use EnsEMBL::Web::TextSequence::View::TranscriptComparison;
 use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub _init { $_[0]->SUPER::_init(100); }
 
-sub initialize {
+sub initialize_new {
   my ($self, $start, $end) = @_;
   my $hub         = $self->hub;
   my @consequence = $self->param('consequence_filter');
@@ -57,24 +60,17 @@ sub initialize {
     $config->{'number'}     = 1;
   }
   
-  my ($sequence, $markup) = $self->get_sequence_data($config,$adorn);
+  my ($sequence, $markup) = $self->get_sequence_data($config);
+  $self->view->markup_new($sequence,$markup,$config);
 
   my $view = $self->view;
-  foreach my $slice (@{$config->{'slices'}}) {
-    my $seq = $view->new_sequence;
-    $seq->name($slice->{'display_name'} || $slice->{'name'});
-  }
-
-  $self->markup_exons($sequence, $markup, $config);
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  $self->markup_comparisons($sequence, $markup, $config);
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
 
   my $view = $self->view($config);
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
   
   return ($sequence, $config);
 }
+
 
 sub content {
   my $self   = shift;
@@ -108,7 +104,7 @@ sub content_sub_slice {
 
   $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
 
-  my ($sequence, $config) = $self->initialize($start, $end);
+  my ($sequence, $config) = $self->initialize_new($start, $end);
 
   my $template;
   if ($end && $end == $length) {
@@ -125,7 +121,7 @@ sub content_sub_slice {
 
   $self->id('');
   
-  return $self->build_sequence($sequence, $config,1);
+  return $self->build_sequence_new($sequence, $config,1);
 }
 
 sub selected_transcripts {
@@ -144,11 +140,15 @@ sub export_options {
   };
 }
 
-sub initialize_export {
+sub initialize_export_new {
   my $self = shift;
   my $hub  = $self->hub;
   my $vc = $hub->get_viewconfig({component => 'TranscriptComparison', type => 'Gene', cache => 1});
-  return $self->initialize;
+  my @params = qw(sscon snp_display flanking line_numbering);
+  foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
+  return $self->initialize_new;
 }
 
 sub get_export_data {
@@ -166,7 +166,7 @@ sub get_export_data {
 }
 
 sub get_sequence_data {
-  my ($self, $config,$adorn) = @_;
+  my ($self, $config) = @_;
   my $hub            = $self->hub;
   my $object         = $self->object || $hub->core_object('gene');
   my $gene           = $object->Obj;
@@ -175,109 +175,21 @@ sub get_sequence_data {
   my $subslice_end   = $config->{'sub_slice_end'};
   my $slice          = $object->slice;
      $slice          = $slice->sub_Slice($subslice_start, $subslice_end) if $subslice_start && $subslice_end;
-  my $start          = $slice->start;
   my $length         = $slice->length;
-  my $strand         = $slice->strand;
-  my @gene_seq       = split '', $slice->seq;
   my %selected       = map { $hub->param("t$_") => $_ } grep s/^t(\d+)$/$1/, $hub->param;
   my @transcripts    = map { $selected{$_->stable_id} ? [ $selected{$_->stable_id}, $_ ] : () } @{$gene->get_all_Transcripts};
-  my @sequence       = ([ map {{ letter => $_ }} @gene_seq ]);
-  my @markup         = ({'exons' => { map { $_ => {'type' => ['gene']} } 0..$#gene_seq } });
-  
-  push @{$config->{'slices'}}, { slice => $slice, name => $gene_name || $gene->stable_id };
-  
-  $_-- for grep $_, $subslice_start, $subslice_end;
-  
+ 
+  my @markup;
+  $config->{'snp_length_filter'} = 10;
+ 
+  push @{$config->{'slices'}}, { slice => $slice, name => $gene_name || $gene->stable_id, type => 'gene' };
   foreach my $transcript (map $_->[1], sort { $a->[0] <=> $b->[0] } @transcripts) {
     my $transcript_id   = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $transcript_name = $transcript->external_name || $transcript_id;
        $transcript_name = $transcript_id if $transcript_name eq $gene_name;
-    my @exons           = @{$transcript->get_all_Exons};
-    my @seq             = map {{ letter => $_ }} @gene_seq;
-    my $type            = 'exon1';
-    my $mk              = {};
-    
-    my ($crs, $cre, $transcript_start) = map $_ - $start, $transcript->coding_region_start, $transcript->coding_region_end, $transcript->start;
-    my ($first_exon, $last_exon)       = map $exons[$_]->stable_id, 0, -1;
-    
-    if ($strand == -1) {
-      $_ = $length - $_ - 1, for $crs, $cre;
-      ($crs, $cre) = ($cre, $crs);
-    }
-    
-    $crs--;
-
-    my $utr_type = defined $transcript->coding_region_start ? 'eu' : 'exon0'; # if coding_region_start returns unded, exons are marked non-coding
-
-    for my $exon (@exons) {
-      my $exon_id = $exon->stable_id;
-      my ($s, $e) = map $_ - $start, $exon->start, $exon->end;
-
-      if ($strand == -1) {
-        $_ = $length - $_ - 1, for $s, $e;
-        ($s, $e) = ($e, $s);
-      }
-      
-      if ($subslice_start || $subslice_end) {        
-        if ($e < 0 || $s > $subslice_end) {
-          if (!$config->{'exons_only'} && (($exon_id eq $first_exon && $s > $subslice_end) || ($exon_id eq $last_exon && $e < 0))) {
-            $seq[$_]{'letter'} = '-' for 0..$#seq;
-          }
-          
-          next;
-        }
-        
-        $s = 0           if $s < 0;
-        $e = $length - 1 if $e >= $length;
-      }
-      
-      if (!$config->{'exons_only'}) {
-        if ($exon_id eq $first_exon && $s) {
-          $seq[$_]{'letter'} = '-' for 0..$s-1;
-        } elsif ($exon_id eq $last_exon) {
-          $seq[$_]{'letter'} = '-' for $e+1..$#seq;
-        }
-      }
-
-      if ($exon->phase == -1) {
-
-        # if the exon phase is -1, it means it starts with a non-coding or utr makrup
-        $type = $utr_type;
-
-      } elsif ($exon->end_phase == -1) {
-
-        # if end phase is -1, that means it started with a coding region but then somewhere in the middle it became non-coding, so we start with $type = exon1
-        # That location where it became non-coding is coding end region of the transcript
-        # however, if we are in a subslice and the coding end region is negative wrt. the subslice coords, the start of this subslice is already non-coding then
-        # so in that case we start with utr or non-coding markup
-        $type = $cre < 0 ? $utr_type : 'exon1';
-      }
-      
-      # after having decided the starting markup type - exon1 or utr, we move along the sequence from start to end and add the decided markup type to each base pair
-      # but while progressing, when the current coord becomes same as coding exon start or coding exon end, we switch the markup since that point is a transition between coding and noncoding
-      for ($s..$e) {
-        push @{$mk->{'exons'}{$_}{'type'}}, $type;
-        $type = $type eq 'exon1' ? $utr_type : 'exon1' if $_ == $crs || $_ == $cre; # transition point between coding and non-coding
-        
-        $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $mk->{'exons'}{$_}{'id'} =~ /$exon_id/;
-      }
-    }
-    
-    if ($config->{'exons_only'}) {
-      $seq[$_]{'letter'} = '-' for grep !$mk->{'exons'}{$_}, 0..$#seq;
-    }
-
-    # finally mark anything left as introns
-    for (0..$#seq) {
-      $mk->{'exons'}{$_}{'type'} ||= ['intron'];
-    }
-
-    $self->set_variations($config, $slice, $mk, $transcript, \@seq) if $config->{'snp_display'} and $adorn ne 'none';
-    
-    push @sequence, \@seq;
-    push @markup, $mk;
     push @{$config->{'slices'}}, {
       slice => $slice,
+      transcript => $transcript,
       name  => sprintf(
         '<a href="%s"%s>%s</a>',
         $hub->url({ type => 'Transcript', action => 'Summary', t => $transcript_id }),
@@ -286,62 +198,19 @@ sub get_sequence_data {
       )
     };
   }
-  
-  $config->{'ref_slice_seq'} = $sequence[0];
-  $config->{'length'}        = $length;
-  
-  return (\@sequence, \@markup);
-}
+  my $view = $self->view;
 
-sub set_variations {
-  my ($self, $config, $slice, $markup, $transcript, $sequence) = @_;
-  my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
-  my $variation_features = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
-  my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
-  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
-  @transcript_variations = grep { !$self->too_rare_snp($_->variation_feature,$config) } @transcript_variations;
-  my $length                = scalar @$sequence - 1;
-  my $transcript_id         = $transcript->stable_id;
-  my $strand                = $transcript->strand;
-  my (%href, %class);
+  my ($sequences,$markup) = $self->SUPER::get_sequence_data($config->{'slices'},$config);
   
-  foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
-    my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-    
-    next if ($config->{'consequence_filter'} && !$consequence);
-    my $vf            = $transcript_variation->variation_feature;
-    my $name          = $vf->variation_name;
-    my $allele_string = $vf->allele_string(undef, $strand);
-    my $dbID          = $vf->dbID;
-    my $start         = $vf->start - 1;
-    my $end           = $vf->end   - 1;
-    
-    # Variation is an insert if start > end
-    ($start, $end) = ($end, $start) if $start > $end;
-    
-    $start = 0 if $start < 0;
-    $end   = $length if $end > $length;
-    
-    $consequence ||= lc $transcript_variation->display_consequence;
-    
-    $config->{'key'}{'variants'}{$consequence} = 1;
-    
-    for ($start..$end) {
-      next if $sequence->[$_]{'letter'} eq '-';
-      
-      $markup->{'variants'}{$_}{'type'}     = $consequence;
-      $markup->{'variants'}{$_}{'alleles'} .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
-      $markup->{'variants'}{$_}{'href'}   ||= {
-        type        => 'ZMenu',
-        action      => 'TextSequence',
-        factorytype => 'Location',
-        _transcript => $transcript_id,
-      };
-      
-      push @{$markup->{'variants'}{$_}{'href'}{'v'}},  $name;
-      push @{$markup->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
-    }
-  }
+  my @sequences = @{$view->sequences};
+  foreach my $sl (@{$config->{'slices'}}) {
+    my $sequence = shift @sequences;
+    $sequence->name($sl->{'display_name'} || $sl->{'name'});
+  } 
+
+  $config->{'ref_slice_seq'} = $view->sequences->[0]->legacy;
+
+  return ($sequences,$markup);
 }
 
 sub make_view {

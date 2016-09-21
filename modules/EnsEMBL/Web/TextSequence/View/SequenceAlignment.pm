@@ -26,9 +26,25 @@ use parent qw(EnsEMBL::Web::TextSequence::View);
 
 use EnsEMBL::Web::TextSequence::Sequence::Comparison;
 
+use EnsEMBL::Web::TextSequence::Markup::Exons;
+use EnsEMBL::Web::TextSequence::Markup::Codons;
+use EnsEMBL::Web::TextSequence::Markup::Variations;
+use EnsEMBL::Web::TextSequence::Markup::Comparisons;
+use EnsEMBL::Web::TextSequence::Markup::LineNumbers;
+
 sub make_sequence {
   return
     EnsEMBL::Web::TextSequence::Sequence::Comparison->new(@_);
+}
+
+sub set_markup {
+  my ($self,$config) = @_;
+
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Exons->new) if $config->{'exon_display'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Codons->new) if $config->{'codons_display'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Variations->new([0,2])) if $config->{'snp_display'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Comparisons->new);
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::LineNumbers->new) if $config->{'line_numbering'};
 }
 
 1;

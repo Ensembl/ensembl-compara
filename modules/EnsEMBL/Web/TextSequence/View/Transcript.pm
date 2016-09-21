@@ -26,9 +26,31 @@ use parent qw(EnsEMBL::Web::TextSequence::View);
 
 use EnsEMBL::Web::TextSequence::Sequence::Transcript;
 
+use EnsEMBL::Web::TextSequence::Markup::Exons;
+use EnsEMBL::Web::TextSequence::Markup::Codons;
+use EnsEMBL::Web::TextSequence::Markup::Variations;
+use EnsEMBL::Web::TextSequence::Markup::TranscriptLineNumbers;
+
 sub make_sequence {
   return
     EnsEMBL::Web::TextSequence::Sequence::Transcript->new(@_);
 }
+
+sub set_annotations {
+  my ($self,$config) = @_;
+
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::TranscriptVariations->new([0,2])) if $config->{'snp_display'} ne 'off';
+}
+
+sub set_markup {
+  my ($self,$config) = @_;
+
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Exons->new) if $config->{'exons'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Codons->new) if $config->{'codons'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Variations->new([0,2])) if $config->{'snp_display'};
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::TranscriptLineNumbers->new) if $config->{'line_numbering'} ne 'off';
+}
+
 
 1;

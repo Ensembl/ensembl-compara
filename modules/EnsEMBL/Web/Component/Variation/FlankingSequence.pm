@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::Variation::FlankingSequence;
 
 use strict;
 
+use EnsEMBL::Web::TextSequence::View::FlankingSequence;
+
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Variation);
 
 sub initialize {
@@ -65,26 +67,35 @@ sub initialize {
     length         => $flank[0] + $flank[1] + length $variation_string,
   };
   
+  my $seq = $self->view->new_sequence;
   foreach (grep $slices{$_}, @order) {
-    my $seq;
+    my $seq2;
     
     if ($_ eq 'var') {
-      $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
+      my $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
+      $seq2 = $self->view->make_sequence(0);
+      $seq2->legacy($seq);
     } else {
       my $slice  = $slices{$_};
       my $markup = {};
-         $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
-      
+      my $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
+      $seq2 = $self->view->make_sequence(0);
+      $seq2->legacy($seq);
+ 
       if ($config->{'snp_display'} eq 'on') {
+        $self->set_variation_filter($config);
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
-        $self->markup_variation([$seq], [$markup], $config);
+        $self->view->markup_new([$seq2],[$markup],$config);
       }
     }
     
-    push @sequence, @$seq;
+    push @sequence, $seq2;
   }
-  
-  return ([ \@sequence ], $config, join '', map $slices{$_} ? $slices{$_}->seq : (), @order);
+ 
+  # XXX horrible hack
+  $seq->legacy([map { @{$_->legacy} } @sequence]);
+ 
+  return ([ $seq ], $config);
 }
 
 sub content {
@@ -94,7 +105,7 @@ sub content {
   ## first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   
-  my ($sequence, $config, $raw_seq) = $self->initialize;
+  my ($sequence, $config) = $self->initialize;
  
   my $html; 
   my $hub           = $self->hub;
@@ -112,7 +123,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->build_sequence($sequence, $config);
+  $html .= $self->build_sequence_new($sequence, $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
@@ -130,9 +141,17 @@ sub get_export_data {
   return $self->initialize;
 }
 
-sub initialize_export {
+sub initialize_export_new {
   my $self = shift;
-  return $self->initialize;
+  return $self->initialize_new;
+}
+
+sub make_view {
+  my ($self) = @_; 
+
+  return EnsEMBL::Web::TextSequence::View::FlankingSequence->new(
+    $self->hub
+  );  
 }
 
 1;

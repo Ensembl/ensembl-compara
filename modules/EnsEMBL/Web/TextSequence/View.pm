@@ -25,7 +25,7 @@ use warnings;
 use File::Basename;
 use JSON qw(encode_json);
 use List::Util qw(max);
-use List::MoreUtils qw(any);
+use List::MoreUtils qw(any firstidx);
 
 use EnsEMBL::Web::TextSequence::Sequence;
 use EnsEMBL::Web::TextSequence::Output::Web;
@@ -55,11 +55,12 @@ sub reset {
 
   %$self = (
     %$self,
-    seq_num => -1,
     all_line => 0,
     annotation => [],
+    markup => [],
     slices => [],
     sequences => [],
+    rootsequences => [],
     fieldsize => {},
     lines => [],
     phase => 0,
@@ -91,22 +92,41 @@ sub legend {
   return $self->{'legend'};
 }
 
-sub make_sequence { # For IoC: override me if you want to
-  my ($self,$id) = @_;
+# XXX into subclasses
+sub set_annotations {
+  my ($self,$config) = @_;
 
-  return EnsEMBL::Web::TextSequence::Sequence->new($self,$id);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if ($config->{'exon_display'}||'off') ne 'off';
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
+}
+
+sub set_markup {}
+
+sub make_sequence { # For IoC: override me if you want to
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::Sequence->new($self);
 }
 
 sub new_sequence {
-  my ($self) = @_;
+  my ($self,$position) = @_;
 
-  $self->{'seq_num'}++;
-  my $seq = $self->make_sequence($self->{'seq_num'});
-  push @{$self->{'sequences'}},$seq;
+  my $seq = $self->make_sequence();
+  if(($position||'') eq 'top') {
+    unshift @{$self->{'sequences'}},$seq;
+  } else {
+    push @{$self->{'sequences'}},$seq;
+  }
   return $seq;
 }
 
 sub sequences { return $_[0]->{'sequences'}; }
+sub root_sequences { return $_[0]->{'root_sequences'}; }
+
+sub add_root { push @{$_[0]->{'root_sequences'}},$_[1]; }
 
 sub slices { $_[0]->{'slices'} = $_[1] if @_>1; return $_[0]->{'slices'}; }
 
@@ -136,7 +156,38 @@ sub field_size {
 sub add_annotation {
   my ($self,$annotation) = @_;
 
-  push @{$self->{'annotation'}},$annotation;
+  my $replaces = $annotation->replaces;
+  if($replaces) {
+    my $idx = firstidx { $_->name eq $replaces } @{$self->{'annotation'}};
+    return if $idx==-1;
+    $self->{'annotation'}[$idx] = $annotation;
+  } else {
+    push @{$self->{'annotation'}},$annotation;
+  }
+  $annotation->view($self);
+}
+
+# XXX should all be in annotation: markup is too late
+sub add_markup {
+  my ($self,$markup) = @_;
+
+  my $replaces = $markup->replaces;
+  if($replaces) {
+    my $idx = firstidx { $_->name eq $replaces } @{$self->{'markup'}};
+    return if $idx==-1;
+    $self->{'markup'}[$idx] = $markup;
+  } else {
+    push @{$self->{'markup'}},$markup;
+  }
+  $markup->view($self);
+}
+
+sub prepare_ropes {
+  my ($self,$config,$slices) = @_;
+
+  foreach my $a (@{$self->{'annotation'}}) {
+    $a->prepare_ropes($config,$slices);
+  }
 }
 
 sub annotate {
@@ -151,6 +202,37 @@ sub annotate {
   }
 }
 
+sub markup {
+  my ($self,$sequence,$markup,$config) = @_;
+
+  my $cur_phase = $self->phase;
+  foreach my $a (@{$self->{'markup'}}) {
+    my $good = 0;
+    my $p = $a->phases;
+    $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
+    $a->prepare($good);
+    next if !$good;
+    # XXX no hub should be passed
+    $a->markup($sequence,$markup,$config,$self->_hub);
+  }
+}
+
+sub markup_new {
+  my ($self,$sequence,$markup,$config) = @_;
+
+  $self->set_markup($config);
+  my $cur_phase = $self->phase;
+  foreach my $a (@{$self->{'markup'}}) {
+    my $good = 0;
+    my $p = $a->phases;
+    $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
+    $a->prepare($good);
+    next if !$good;
+    # XXX no hub should be passed
+    $a->markup($sequence,$markup,$config,$self->_hub);
+  }
+}
+
 sub transfer_data {
   my ($self,$data,$config) = @_;
 
@@ -158,11 +240,21 @@ sub transfer_data {
   my $missing = @$data - @vseqs;
   $self->new_sequence for(1..$missing);
   @vseqs = @{$self->sequences};
-  $vseqs[0]->principal(1) unless(any { $_->principal } @vseqs);
+  $vseqs[0]->principal(1) if @vseqs and not any { $_->principal } @vseqs;
   foreach my $seq (@$data) {
     my $tseq = shift @vseqs;
     $tseq->add_data($seq,$config);
   }
+}
+
+sub transfer_data_new {
+  my ($self,$config) = @_;
+
+  my $seqs = $self->sequences;
+  $seqs->[0]->principal(1) unless any { $_->principal } @$seqs;
+  foreach my $seq (@$seqs) {
+    $seq->add_data($seq->legacy,$config);
+  } 
 }
 
 sub style_files {

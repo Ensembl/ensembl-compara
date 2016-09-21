@@ -5,11 +5,22 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 
+sub too_rare_snp {
+  my ($self,$vf,$config) = @_;
+
+  return 0 unless $config->{'hide_rare_snps'} and $config->{'hide_rare_snps'} ne 'off';
+  my $val = abs $config->{'hide_rare_snps'};
+  my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
+  return ($mul>0) unless $vf->minor_allele_frequency;
+  return ($vf->minor_allele_frequency - $val)*$mul < 0;
+}
+
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $seq, $hub,$sequence) = @_;
+  my ($self, $config, $slice_data, $markup, $seq, $hub,$real_sequence) = @_;
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
 
+  my $sequence = $real_sequence->legacy;
   my $species = $slice->can('genome_db') ? ucfirst($slice->genome_db->name) : $hub->species;
   return unless $hub->database('variation', $species);
   my $strand = $slice->strand;
@@ -48,12 +59,12 @@ sub annotate {
     };
   }
 
-  $snps = [ grep $_->length <= $config->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+  $snps = [ grep $_->length <= $config->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if ($config->{'hide_long_snps'}||'off') ne 'off';
 
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others
-  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ (($_->dbID == $focus)||0), $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
+  my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ (($_->dbID||0) == ($focus||-1)), $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
 
   foreach (@ordered_snps) {
     my $dbID = $_->dbID;
@@ -144,13 +155,14 @@ sub annotate {
     });
 
     my $link_text  = qq{ <a href="$url">$snp_start: $variation_name</a>;};
-    (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code($strand) : '') =~ s/-//g;
+    (my $ambiguity = $config->{'ambiguity'} ? ($_->ambig_code($strand)||'') : '') =~ s/-//g;
 
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
       # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
       # uncomment last part to enable showing ALL variants on ref strain (might want to add as an opt later)
-      next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.\|~$sequence->[0][$_]{'letter'}]/i;# && scalar @$sequence > 1;
+
+      next if defined $config->{'match_display'} && ($sequence->[$_]{'letter'} =~ /[\.\|~]/i or $sequence->[$_]{'match'});
 
       $markup->{'variants'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
       $markup->{'variants'}{$_}{'type'}      = $snp_type;
@@ -176,7 +188,7 @@ sub annotate {
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
     }
 
-    $config->{'focus_position'} = [ $s..$e ] if $dbID eq $config->{'focus_variant'};
+    $config->{'focus_position'} = [ $s..$e ] if ($dbID||"\r") eq ($config->{'focus_variant'}||"\n");
   }
 }
 

@@ -25,6 +25,7 @@ use warnings;
 use Scalar::Util qw(weaken);
 
 use EnsEMBL::Web::TextSequence::Line;
+use EnsEMBL::Web::TextSequence::RopeOutput;
 
 # Represents all the lines of a single sequence in sequence view. On many
 # views there will be multiple of these entwined, either different views
@@ -32,21 +33,30 @@ use EnsEMBL::Web::TextSequence::Line;
 # sequences.
 
 sub new {
-  my ($proto,$view,$id) = @_;
+  my ($proto,$view) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
     view => $view,
-    id => $id,
     exon => "",
     pre => "",
     configured => 0,
     name => undef,
+    hidden => 0,
+    # legacy input
+    legacy => undef,
     # the sequence itself
     seq => [],
     idx => 0,
+    # relate this rope to others
+    relations => {},
+    # XXX output should be resettable or subclassable or both
+    ropeoutput => undef,
+    isroot => 0,
   };
   bless $self,$class;
+  $self->{'ropeoutput'} =
+    EnsEMBL::Web::TextSequence::RopeOutput->new($self);
   weaken($self->{'view'});
   $self->init;
   return $self;
@@ -56,7 +66,10 @@ sub init {} # For subclasses
 sub ready {} # For subclasses
 sub fixup_markup {} # For subclasses
 
+sub output { return $_[0]->{'ropeoutput'}; }
+
 sub principal { $_[0]->{'principal'} = $_[1] if @_>1; return $_[0]->{'principal'}; }
+sub legacy { $_[0]->{'legacy'} = $_[1] if @_>1; return $_[0]->{'legacy'}; }
 
 sub configure {
   my ($self) = @_;
@@ -75,6 +88,9 @@ sub new_line {
   return $line;
 }
 
+sub make_root { $_[0]->{'root'} = 1; $_[0]->view->add_root($_[0]); }
+sub is_root { return $_[0]->{'root'}; }
+
 sub view { return $_[0]->{'view'}; }
 sub line_num { return $_[0]->{'line'}; }
 
@@ -85,6 +101,8 @@ sub _here { return ($_[0]->{'seq'}[$_[0]->{'idx'}]||={}); }
 sub set { $_[0]->_here->{$_[1]} = $_[2]; }
 sub add { push @{$_[0]->_here->{$_[1]}},$_[2]; }
 sub append { $_[0]->_here->{$_[1]} .= $_[2]; }
+
+sub hidden { $_[0]->{'hidden'} = $_[1] if @_>1; return $_[0]->{'hidden'}; }
 
 # only for use in Line
 sub _exon {
@@ -120,7 +138,18 @@ sub pre {
   return $self->{'pre'};
 }
 
-sub id { return $_[0]->{'id'}; }
+sub relation {
+  my ($self,$key,$dest) = @_;
+
+  if(@_>2) {
+    if(defined $dest) {
+      $self->{'relate'}{$key} = $dest;
+    } else {
+      delete $self->{'relate'}{$key};
+    }
+  }
+  return $self->{'relate'}{$key};
+}
 
 sub add_data {
   my ($self,$lines,$config) = @_;

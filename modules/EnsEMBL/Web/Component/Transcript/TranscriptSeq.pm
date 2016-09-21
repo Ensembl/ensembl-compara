@@ -25,100 +25,325 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 
 use EnsEMBL::Web::TextSequence::View::Transcript;
 
+use EnsEMBL::Web::TextSequence::Annotation::Exons;
+use EnsEMBL::Web::TextSequence::Annotation::TranscriptVariations;
+
 use List::Util qw(max);
+use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
+
+sub too_rare_snp {
+  my ($self,$vf,$config) = @_;
+
+  return 0 unless $config->{'hide_rare_snps'} and $config->{'hide_rare_snps'} ne 'off'; 
+  my $val = abs $config->{'hide_rare_snps'};
+  my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
+  return ($mul>0) unless $vf->minor_allele_frequency;
+  return ($vf->minor_allele_frequency - $val)*$mul < 0; 
+}
+
+sub _transcript_variation_to_variation_feature {
+  my ($self,$tv) = @_;
+
+  my $vfid = $tv->_variation_feature_id;
+  my $val = ($self->{'vf_cache'}||{})->{$vfid};
+  return $val if defined $val;
+  return $tv->variation_feature;
+}
+
+sub _get_transcript_variations {
+  my ($self,$args,$vf_cache) = @_;
+
+  my $trans = $args->{'transcript'};
+  # Most VFs will be in slice for transcript, so cache them.
+  if($vf_cache and !$self->{'vf_cache'}) {
+
+    my $vfa = $self->hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+    $self->{'vf_cache'} = {};
+    my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
+    $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
+    $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+  }
+  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ]);
+}
+
+sub _get_variation_data {
+  my ($self,$args, $slice, $include_utr,$strand,$conseq_filter_in) = @_;
+
+  my $transcript = $args->{'transcript'};
+  my $cd_start           = $transcript->cdna_coding_start;
+  my $cd_end             = $transcript->cdna_coding_end;
+  my @coding_sequence;
+  if($cd_start) {
+    @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
+  }
+  my %consequence_filter = map { $_ ? ($_ => 1) : () } @$conseq_filter_in;
+     %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
+  my @data;
+
+  foreach my $tv (@{$self->_get_transcript_variations($args,1)}) {
+    my $pos = $tv->translation_start;
+
+    next if !$include_utr && !$pos;
+    next unless $tv->cdna_start && $tv->cdna_end;
+    next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
+
+    my $vf    = $self->_transcript_variation_to_variation_feature($tv) or next;
+    my $vdbid = $vf->dbID;
+
+    my $start = $vf->start;
+    my $end   = $vf->end;
+
+    push @data, lazy_hash({
+      tva           => sub {
+        return $tv->get_all_alternate_TranscriptVariationAlleles->[0];
+      },
+      tv            => $tv,
+      vf            => $vf,
+      position      => $pos,
+      vdbid         => $vdbid,
+      snp_source    => sub { $vf->source },
+      snp_id        => sub { $vf->variation_name },
+      ambigcode     => sub { $vf->ambig_code($strand) },
+      codons        => sub {
+        my $tva = $_[0]->get('tva');
+        return $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '';
+      },
+      allele        => sub { $vf->allele_string(undef, $strand) },
+      pep_snp       => sub {
+        my $tva = $_[0]->get('tva');
+        return join(', ', split '/', $tva->pep_allele_string);
+      },
+      type          => sub { $tv->display_consequence },
+      class         => sub { $vf->var_class },
+      length        => $vf->length,
+      indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
+      codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
+      codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+    });
+  }
+
+  @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;
+
+  return \@data;
+}
+
+sub get {
+  my ($self,$args) = @_;
+
+  my $trans = $args->{'transcript'};
+  my $object = EnsEMBL::Web::Root->new_object('Transcript',$trans);
+  my $slice = $trans->feature_Slice;
+  my @exons = @{$trans->get_all_Exons};
+  my $trans_strand = $exons[0]->strand;
+  my $start_phase  = $exons[0]->phase;
+  my $start_pad    = $start_phase > 0 ? $start_phase : 0; # Determines if the transcript starts mid-codon
+  my $cd_start     = $trans->cdna_coding_start;
+  my $cd_end       = $trans->cdna_coding_end;
+  my $config = $args->{'config'};
+  $config->{'species'} = $args->{'species'};
+  my $adorn = $args->{'adorn'};
+
+  my $seq;
+  my $mk = {};
+  if ($trans->translation) {
+    my $five_prime  = $trans->five_prime_utr;
+    my $three_prime = $trans->three_prime_utr;
+        
+    $_ = $_ ? $_->seq : $_ for $five_prime, $three_prime;
+        
+    $seq = join '', ($five_prime||''), $trans->translateable_seq, ($three_prime||'');
+  } else {
+    $seq = $trans->seq->seq;
+  }
+  my $length = length $seq;
+  $config->{'length'} = $length;
+  my @markup;
+
+  my @reference_seq = map {{ letter => $_ }} split '', $seq;
+  my $variation_seq = { name => 'snp_display', seq => [] };
+  my $coding_seq    = { name => 'coding_seq',  seq => [] };
+  my $protein_seq   = { name => 'translation', seq => [] };
+  my @rna_seq;
+  if ($config->{'rna'}) {
+    my @rna_notation = $object->rna_notation($trans);
+    
+    if (@rna_notation) {
+      @rna_seq = map {{ name => 'rna', seq => [ map {{ letter => $_ }} split '', $_ ] }} @rna_notation;
+    } else {
+      $config->{'rna'} = 0;
+    }
+  }
+
+  if ($config->{'exons'}) {
+    my $flip = 0;
+    my $pos = $start_pad;
+    
+    foreach (@exons) {
+      $pos += length $_->seq->seq;
+      $flip = 1 - $flip;
+      push @{$mk->{'exons'}{$pos}{'type'}}, $mk->{'exons'}{$pos}{'overlap'} ? 'exon2' : "exon$flip";
+    }   
+  }   
+  delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later
+
+  for (0..$length - 1) {
+    # Set default vaules
+    $variation_seq->{'seq'}[$_]{'letter'} = ' ';
+    $coding_seq->{'seq'}[$_]{'letter'}    = $protein_seq->{'seq'}[$_]{'letter'} = '.'; 
+    
+    if (defined $cd_start and $_ + 1 >= $cd_start && $_ + 1 <= $cd_end) {
+      $coding_seq->{'seq'}[$_]{'letter'} = $reference_seq[$_]{'letter'} if $config->{'coding_seq'};
+    } elsif ($config->{'codons'}) {
+      $mk->{'codons'}{$_}{'class'} = 'cu';
+    }     
+  }
+  
+  $_ += $start_pad for $cd_start, $cd_end; # Shift values so that codons and variations appear in the right place
+
+  my $can_translate = 0;
+
+  eval {
+    my $pep_obj    = $trans->translate;
+    my $peptide    = $pep_obj->seq;
+    my $flip       = 0;
+    my $startphase = $trans->translation->start_Exon->phase;
+    my $s          = 0;
+    
+    $can_translate = 1;
+    
+    if ($startphase > 0) {
+      $s = 3 - $startphase;
+      $peptide = substr $peptide, 1;
+    }   
+    
+    for (my $i = $cd_start + $s - 1; $i + 2 <= $cd_end; $i += 3) {
+      if ($config->{'codons'}) {
+        $mk->{'codons'}{$i}{'class'} = $mk->{'codons'}{$i + 1}{'class'} = $mk->{'codons'}{$i + 2}{'class'} = "c$flip";
+    
+        $flip = 1 - $flip;
+      }   
+    
+      if ($config->{'translation'}) {
+        $protein_seq->{'seq'}[$i]{'letter'}     = $protein_seq->{'seq'}[$i + 2]{'letter'} = '-';
+        $protein_seq->{'seq'}[$i + 1]{'letter'} = substr($peptide, int(($i + 1 - $cd_start) / 3), 1) || ($i + 1 < $cd_end ? '*' : '.'); 
+      }   
+    }   
+  };  
+
+  # If the transcript starts or ends mid-codon, make the protein sequence show -X- at the start or the end respectively
+  if ($config->{'translation'}) {
+    my ($pos_start, $pos_end, $strip_end);
+    my @partial = qw(- X -);
+
+    if ($start_pad) {
+      ($pos_start) = grep $protein_seq->{'seq'}[$_ - 1]{'letter'} eq '.', 1..3; # Find the positions of . characters at the start
+    }   
+
+    # If length is multiple of 3, ignore it. If length is 1 or 2 more than a multiple of 3 we use 2 or 1 (respectively) characters from @partial to complete 3 bases.
+    if ($strip_end = (3 - ($cd_end - $cd_start + 1) % 3) % 3) {
+      ($pos_end) = grep $protein_seq->{'seq'}[$_ + 1]{'letter'} =~ /\*|\-/, -3..-1; # Find the positions of - or * characters at the end
+    }   
+
+    # Replace with as much of -X- as fits in the space and remove the extra chars from the end if required
+    $protein_seq->{'seq'}[$pos_start]{'letter'} = $partial[ $pos_start ]  while $pos_start--;
+    $protein_seq->{'seq'}[$pos_end]{'letter'}   = $partial[ $pos_end ]    while $pos_end++;
+
+    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end;
+  }
+  
+  $config->{'slices'} = [{ vtype => 'main', seq => \@reference_seq, slice => $slice }];
+
+  unshift @markup, $mk;
+  my @seq_names = ( $config->{'species'} );
+  for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
+    if ($config->{$_->{'name'}}) {
+      if ($_->{'name'} eq 'snp_display') {
+        unshift @markup, {}; 
+        unshift @{$config->{'slices'}}, { vtype => $_->{'name'}, seq => $_->{'seq'} }; 
+        unshift @seq_names,$_->{'name'};
+      } else {
+        push @markup, {}; 
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} , vtype => $_->{'name'}, seq => $_->{'seq'} };
+        push @seq_names,$_->{'name'};
+      }
+    }     
+  }
+  $self->view->set_annotations($config);
+  $self->view->prepare_ropes($config,$config->{'slices'});
+
+  my $main_idx;
+  my $idx = 0;
+  my @nseq = @{$self->view->sequences};
+  foreach my $sl (@{$config->{'slices'}}) {
+    my $seq = shift @nseq;
+    $seq->legacy($sl->{'seq'});
+    $main_idx = $idx if $sl->{'vtype'} eq 'main';
+    $idx++;
+  }
+  
+  $config->{'transcript'} = $args->{'transcript'};
+
+  my $seq0 = $self->view->sequences->[$main_idx];
+  die "No seq0" unless $seq0 and defined $main_idx;
+  $self->view->annotate($config,$config->{'slices'}[$main_idx],$markup[$main_idx],$seq,$seq0);
+
+  my @sequence = map { $_->legacy } @{$self->view->sequences};
+ 
+  if (!$config->{'utr'}) {
+    foreach (@sequence) {
+      splice @$_, $cd_end;
+      splice @$_, 0, $cd_start - 1;
+    }     
+        
+    $config->{'length'} = scalar @{$sequence[0]};
+        
+    foreach my $mk (grep scalar keys %$_, @markup) {
+      my $shifted; 
+          
+      foreach my $type (keys %$mk) {
+        my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $config->{'length'} ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
+        my $decap = max(-1,grep {  $_-$cd_start+1 < 0 } keys %{$mk->{$type}});
+        $shifted->{$type} = \%tmp;
+        if($decap > 0 and $type eq 'exons') {
+          $shifted->{$type}{0}{'type'} = $mk->{$type}{$decap}{'type'};
+        }   
+      }     
+              
+      $mk = $shifted;
+    }
+  }
+
+ # Used to set the initial sequence colour
+  if ($config->{'exons'}) {
+    $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
+  }
+  
+  return ($self->view->sequences,\@markup,\@seq_names);
+}
+
+###
 
 sub get_sequence_data {
   my ($self, $object, $config,$adorn) = @_;
 
-  my %qconfig;
-  $qconfig{$_} = $config->{$_}
-      for(qw(hide_long_snps utr codons hide_rare_snps translation
-             exons rna snp_display coding_seq));
   my $hub = $self->hub;
-  my $data = $hub->get_query('Sequence::Transcript')->go($self,{
+  my ($sequence,$markup,$names) = $self->get({
     species => $config->{'species'},
     type => $object->get_db,
     transcript => $object->Obj,
     config => $config,
     adorn => $adorn,
     conseq_filter => [$self->param('consequence_filter')],
-    config => \%qconfig,
   });
-  return map { $data->[0]{$_} } qw(sequence markup names length);
-}
-
-sub markup_line_numbers {
-  my ($self, $sequence, $config,$names,$length) = @_;
  
-  # Keep track of which element of $sequence we are looking at
-  my $n = 0;
-
-  foreach my $name (@$names) {
-    my $seq  = $sequence->[$n];
-    my $data = $name ne 'snp_display' ? {
-      dir   => 1,  
-      start => 1,
-      end   => $length,
-      label => ''
-    } : {};
-    
-    my $s = 0;
-    my $e = $config->{'display_width'} - 1;
-    
-    my $row_start = $data->{'start'};
-    my ($start, $end);
-    
-    # One line longer than the sequence so we get the last line's numbers generated in the loop
-    my $loop_end = $length + $config->{'display_width'};
-    
-    while ($e < $loop_end) {
-      $start = '';
-      $end   = '';
-      
-      my $seq_length = 0;
-      my $segment    = '';
-      
-      # Build a segment containing the current line of sequence        
-      for ($s..$e) {
-        # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
-        if ($seq->[$_]) {
-          $seq_length++ if $config->{'line_numbering'} eq 'slice' || $seq->[$_]{'letter'} =~ /\w/;
-          $segment .= $seq->[$_]{'letter'};
-        }
-      }
-      
-      # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
-      $seq_length -= length $1 if $segment =~ /^(N+)\w/;
-      
-      $end   = $e < $length ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
-      $start = $row_start if $seq_length;
-      
-      # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
-      $start-- if $start > $data->{'start'} && $segment =~ /^([=-]{2})/;
-      
-      # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
-      $row_start = $end + $data->{'dir'} if $start && $end;
-      
-      # Remove the line number if the sequence doesn't start at the beginning of the line
-      $start = '' if $segment =~ /^(\.|N+\w)/;
-      
-      $s = $e + 1;
-      
-      push @{$config->{'line_numbers'}{$n}}, { start => $start, end => $end || undef };
-      
-      # Increase padding amount if required
-      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
-      
-      $e += $config->{'display_width'};
-    }
-    
-    $n++;
-  }
-  
-  $config->{'padding'}{'pre_number'}++ if $config->{'padding'}{'pre_number'}; # Compensate for the : after the label
+  $config->{'names'} = $names;
+ 
+  return ($sequence,$markup,$names);
 }
 
-sub initialize {
+sub initialize_new {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object || $hub->core_object('transcript');
@@ -145,47 +370,32 @@ sub initialize {
   $self->set_variation_filter($config);
   
   my $view = $self->view($config);
-  # This next line is a hack. If variations are on, it's the second line
-  # which is principal. This will go when sequence creation in views is
-  # refactored.
-  $view->new_sequence() if $config->{'snp_display'};
-  my $seq = $view->new_sequence();
-  $seq->principal(1);
   
-  my ($sequence, $markup,$names,$length) = $self->get_sequence_data($object, $config, $adorn);
+  my ($sequences, $markup,$names) = $self->get_sequence_data($object, $config, $adorn);
 
-  $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
-  $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
-  if ($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  }
-  if($config->{'snp_display'} and $config->{'snp_display'} ne 'off') {
-    if($adorn ne 'none') {
-      push @{$config->{'loaded'}||=[]},'variants';
-    } else {
-      push @{$config->{'loading'}||=[]},'variants';
-    }
-  }
-  $self->markup_line_numbers($sequence, $config,$names,$length) if $config->{'line_numbering'};
-  
+  # XXX hack to set principal
+  $sequences->[1]->principal(1) if @$sequences>1 and $config->{'snp_display'};
+
+  $self->view->markup_new($sequences,$markup,$config);
+
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
 
-  return ($sequence, $config);
+  return ($sequences, $config);
 }
 
 sub content {
   my $self = shift;
-  my ($sequence, $config) = $self->initialize;
+  my ($sequences, $config) = $self->initialize_new;
 
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence_new($sequences, $config);
 }
 
 sub export_options { return {'action' => 'Transcript'}; }
 
-sub initialize_export {
+sub initialize_export_new {
   my $self = shift;
   my $hub = $self->hub;
-  my ($sequence, $config) = $self->initialize;
+  my ($sequence, $config) = $self->initialize_new;
   return ($sequence, $config);
 }
 

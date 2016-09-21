@@ -55,13 +55,13 @@ sub add_line {
     push @letters,[$style,$letter];
   }
 
-  push @{$self->{'data'}[$line->seq->id]},{
+  $line->seq->output->add_line({
     line => \@letters,
     length => scalar @letters,
     pre => $self->_unhtml($line->pre),
     post => $self->_unhtml($line->post),
     adid => $line->line_num
-  };
+  });
 }
 
 sub format_letters {
@@ -86,7 +86,8 @@ sub make_layout {
       if => 'number',
       then => [
         { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'} },
+        { key => 'label', width => $config->{'padding'}{'pre_number'},
+          room => 1 },
         { key => 'start', width => $config->{'padding'}{'number'} },
         { post => ' ' },
       ]   

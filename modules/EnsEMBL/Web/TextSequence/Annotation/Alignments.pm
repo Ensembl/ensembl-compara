@@ -6,7 +6,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $seq, $hub) = @_;
+  my ($self, $config, $slice_data, $markup, $seq) = @_;
 
   if ($config->{'region_change_display'} && $slice_data->{'name'} ne $config->{'species'}) {
     my $s = 0;

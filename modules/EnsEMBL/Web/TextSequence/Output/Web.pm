@@ -46,7 +46,8 @@ sub make_layout {
       if => 'number',
       then => [
         { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'} },
+        { key => 'label', width => $config->{'padding'}{'pre_number'},
+          room => 1 },
         { key => 'start', width => max($config->{'padding'}{'number'}||0,6) },
         { post => ' ' },
       ]
@@ -103,14 +104,14 @@ sub add_line {
   }
   $self->{'adorn'}->line_done($line->line_num);
 
-  push @{$self->{'data'}[$line->seq->id]},{
+  $line->seq->output->add_line({
     line => $letters,
     length => length $letters,
     principal => $line->principal,
     pre => $line->pre,
     post => $line->post,
     adid => $line->line_num
-  };
+  });
 
   $self->{'adorn'}->flourish('post',$line->line_num,$line->post) if $line->post;
 }
