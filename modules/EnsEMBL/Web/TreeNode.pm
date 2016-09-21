@@ -116,6 +116,14 @@ sub set_user_setting {
   return 0;
 }
 
+sub has_user_settings {
+  ## Checks if the node has any user data linked to it
+  ## @return 1 if user settings for this node is presetn, 0 otherwise
+  my $self = shift;
+
+  return exists  $self->tree->user_data->{$self->id} ? 1 : 0;
+}
+
 sub reset_user_settings {
   ## Removes shared user data settings for the current node
   ## @return 1 if data is removed, 0 otherwise
