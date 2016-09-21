@@ -75,7 +75,7 @@ sub init_config {
   return unless $view_config;
 
   my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
-  my $image_config = $view_config->image_config_type ? $hub->get_imageconfig($view_config->image_config_type, 'configurator', $hub->species) : undef;
+  my $image_config = $view_config->image_config_type ? $hub->get_imageconfig({type => $view_config->image_config_type, cache_code => 'configurator', species => $hub->species}) : undef;
   my ($search_box, $species_select);
   
   $view_config->build_form($controller->object, $image_config);

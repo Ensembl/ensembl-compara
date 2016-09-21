@@ -66,7 +66,7 @@ sub content {
   my @images;
 
   foreach (@$slices) {
-    my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
+    my $image_config   = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_$i", species => $_->{'species'}});
     my $highlight_gene = $hub->param('g' . ($i - 1));
     
     $image_config->set_parameters({
@@ -108,7 +108,7 @@ sub content {
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
         if ($join_alignments || $join_genes) {
-          $primary_image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
+          $primary_image_config = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_1_$i", species => $primary_species});
           
           $primary_image_config->set_parameters({
             container_width => $primary_slice->length,

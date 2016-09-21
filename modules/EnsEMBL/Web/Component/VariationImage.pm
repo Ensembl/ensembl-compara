@@ -110,7 +110,7 @@ sub content {
 
   foreach my $trans_obj (@sorted_trans) {
     next if $transcript_object && $trans_obj->stable_id ne $transcript_object->stable_id;
-    my $image_config = $hub->get_imageconfig($ic_type, $trans_obj->stable_id);
+    my $image_config = $hub->get_imageconfig({type => $ic_type, cache_code => $trans_obj->stable_id});
     $image_config->init_transcript;
     
     # create config and store information on it

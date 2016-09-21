@@ -42,7 +42,7 @@ sub content {
   my $slice_length = $slice->length;
 
   # First configure top part of image - displays tracks that are not cell-line related
-  my $image_config = $hub->get_imageconfig('regulation_view', 'top');
+  my $image_config = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'top'});
   
   $image_config->set_parameters({
     container_width => $slice_length,
@@ -54,7 +54,7 @@ sub content {
   my @containers_and_configs = ($slice, $image_config);
 
   # Next add cell line tracks
-  my $image_config_cell_line = $hub->get_imageconfig('regulation_view', 'cell_line');
+  my $image_config_cell_line = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'cell_line'});
   
   $image_config_cell_line->set_parameters({
     container_width => $slice_length,
@@ -68,7 +68,7 @@ sub content {
   push @containers_and_configs, $slice, $image_config_cell_line;
 
   # Add config to draw legends and bottom ruler
-  my $image_config_bottom = $hub->get_imageconfig('regulation_view', 'bottom');
+  my $image_config_bottom = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'bottom'});
   
   $image_config_bottom->set_parameters({
     container_width => $slice_length,

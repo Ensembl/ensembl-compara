@@ -823,7 +823,7 @@ sub configure_user_data {
 
     next unless $ic_code;
 
-    my $image_config = $self->get_imageconfig($ic_code, $ic_code . time);
+    my $image_config = $self->get_imageconfig({type => $ic_code, cache_code => $ic_code . time});
     my $vertical     = $image_config->orientation eq 'vertical';
 
     while (@track_data) {

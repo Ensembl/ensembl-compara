@@ -54,7 +54,7 @@ sub content {
   foreach (@$slices) {
     my $highlight_gene    = $hub->param('g' . ($i - 1));
     my $slice             = $_->{'slice'};
-    my $image_config      = $hub->get_imageconfig('MultiTop', "contigviewtop_$i", $_->{'species'});
+    my $image_config      = $hub->get_imageconfig({type => 'MultiTop', cache_code => "contigviewtop_$i", species => $_->{'species'}});
     my $annotation_status = $image_config->get_node('annotation_status');
     
     if ($slice->length <= $threshold) {
