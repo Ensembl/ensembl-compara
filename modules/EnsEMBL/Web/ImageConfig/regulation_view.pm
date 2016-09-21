@@ -135,16 +135,16 @@ sub init_top {
   );
 
   $_->remove for map $self->get_node($_) || (), keys %{$self->{'reg_feats_tracks'}};
-  $_->remove for grep $_->id =~ /_legend/, $self->get_tracks;
+  $_->remove for grep $_->id =~ /_legend/, @{$self->get_tracks};
 }
 
 sub init_cell_line {
   my $self = shift;
   my (%on, $i);
 
-  $_->remove for grep !$self->{'reg_feats_tracks'}{$_->id}, $self->get_tracks;
+  $_->remove for grep !$self->{'reg_feats_tracks'}{$_->id}, @{$self->get_tracks};
 
-  $on{$_->data->{'cell_line'}} ||= [ $_, $i++ ] for grep $_->get('display') ne 'off', $self->get_tracks;
+  $on{$_->data->{'cell_line'}} ||= [ $_, $i++ ] for grep $_->get('display') ne 'off', @{$self->get_tracks};
 
   $self->add_tracks('other',
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
@@ -154,7 +154,7 @@ sub init_cell_line {
 sub init_bottom {
   my $self = shift;
 
-  $_->remove for grep $_->id !~ /_legend/, $self->get_tracks;
+  $_->remove for grep $_->id !~ /_legend/, @{$self->get_tracks};
 
   $self->add_tracks('other',
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
