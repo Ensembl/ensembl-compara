@@ -324,7 +324,7 @@ sub add_image_config :Deprecated('Use method image_config_type') {
 }
 
 sub set :Deprecated('Use set_user_setting') {
-  return shift->set_user_option(@_);
+  return shift->set_user_setting(@_);
 }
 
 1;
