@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [2009-2014] EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,20 +17,11 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Blast::TaxonSelector;
+package EnsEMBL::Web::Component::Location::TaxonSelector;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::Component::TaxonSelector);
 
-sub _init {
-  my $self = shift;
-  
-  $self->SUPER::_init;
-  
-  $self->{selection_limit} = 25;
-  $self->{is_blast}        = 1;
-}
-
 1;
+

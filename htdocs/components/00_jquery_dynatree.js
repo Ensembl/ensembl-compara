@@ -226,20 +226,22 @@ DynaTreeNode.prototype = {
     }
     // node title
     var nodeTitle = "";
+
     if ( opts.onCustomRender ){
       nodeTitle = opts.onCustomRender.call(tree, this) || "";
     }
     if(!nodeTitle){
       var tooltip = data.tooltip ? ' title="' + data.tooltip.replace(/\"/g, '&quot;') + '"' : '',
         href = data.href || "#";
-
       // var species_img_url = '<img src="/i/species/16/' + data.key.charAt(0).toUpperCase() + data.key.substr(1) + '.png">';
       var species_img_url = data.img_url ? '<img src="' + data.img_url + '">' : '';
+      // var strain_class = data.isStrain ? opts.classNames.strain : '';
+      var strain_class = '';
       if( opts.noLink || data.noLink ) {
-        nodeTitle =  species_img_url + '<span style="display:inline-block;" class="' + opts.classNames.title + '"' + tooltip + '>' + data.title + '</span>';
+        nodeTitle =  species_img_url + '<span style="display:inline-block;" class="' + opts.classNames.title + ' ' + strain_class + '"' + tooltip + '>' + data.title + '</span>';
 //        this.tree.logDebug("nodeTitle: " + nodeTitle);
       } else {
-        nodeTitle = species_img_url + '<a href="' + href + '" class="' + opts.classNames.title + '"' + tooltip + '>' + data.title + '</a>';
+        nodeTitle = species_img_url + '<a href="' + href + '" class="' + opts.classNames.title + ' ' + strain_class + '"' + tooltip + '>' + data.title + '</a>';
       }
     }
     res += nodeTitle;
@@ -1318,6 +1320,7 @@ DynaTreeNode.prototype = {
   visit: function(fn, includeSelf) {
     // Call fn(node) for all child nodes. Stop iteration, if fn() returns false.
     var res = true;
+
     if( includeSelf === true ) {
       res = fn(this);
       if( res === false || res == "skip" ){
@@ -2376,6 +2379,26 @@ DynaTree.prototype = {
     return match;
   },
 
+  getNodeInTree: function(key) {
+    // Search the DOM by element ID (assuming this is faster than traversing all nodes).
+    // $("#...") has problems, if the key contains '.', so we use getElementById()
+    var el = document.getElementById(this.options.idPrefix + key);
+    if( el ){
+      return el.dtnode ? el.dtnode : null;
+    }
+    // Not found in the DOM, but still may be in an unrendered part of tree
+    var match = null;
+    this.visit(function(node){
+      $.each(node.data, function(k, v) {
+        if(node.data[k] === key) {
+          match = node;
+          return false;
+        }       
+      })
+    }, true);
+    return match;
+  },
+
   getActiveNode: function() {
     return this.activeNode;
   },
@@ -3146,6 +3169,7 @@ $.ui.dynatree.prototype.options = {
     checkbox: "dynatree-checkbox",
     nodeIcon: "dynatree-icon",
     title: "dynatree-title",
+    strain: "ss-strain",
     noConnector: "dynatree-no-connector",
 
     nodeError: "dynatree-statusnode-error",
@@ -3189,7 +3213,7 @@ $.ui.dynatree.nodedatadefaults = {
   noLink: false, // Use <span> instead of <a> tag for this node
   activate: false, // Initial active status.
   focus: false, // Initial focused status.
-  expand: false, // Initial expanded status.
+  expand: true, // Initial expanded status.
   select: false, // Initial selected status.
   hideCheckbox: false, // Suppress checkbox display for this node.
   unselectable: false, // Prevent selection.

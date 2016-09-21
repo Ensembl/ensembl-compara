@@ -273,14 +273,16 @@ ul.dynatree-container a
     vertical-align: top;
     margin: 0px;
     margin-left: 3px;
+    border: 1px solid transparent;
 /*  outline: 0; /* @ Firefox, prevent dotted border after click */
 }
 
 ul.dynatree-container a:hover
 {
 /*  text-decoration: underline; */
-    background: #F2F7FD; /* light blue */
-    border-color: #B8D6FB; /* darker light blue */
+    /*border: 1px solid #B8D6FB;*/
+    background-color: #B8D6FB; /* darker light blue */
+    /*box-shadow:0 0 1px 1px #102447;*/
 }
 
 span.dynatree-node a

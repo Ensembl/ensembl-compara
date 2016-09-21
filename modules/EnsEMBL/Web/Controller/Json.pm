@@ -26,8 +26,13 @@ use Apache2::RequestUtil;
 use JSON qw(to_json);
 
 use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require_fallback);
 
 use base qw(EnsEMBL::Web::Controller);
+
+sub init {
+  1;
+}
 
 sub new {
   my $self  = shift->SUPER::new(@_);
@@ -50,7 +55,7 @@ sub new {
     my $method    = sprintf 'json_%s', pop @path;
     my $on_update = ($hub->param('X-Comet-Request') || '') eq 'true' || undef;
     my $json_page = 'EnsEMBL::Web::JSONServer';
-       $json_page = $self->dynamic_use_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
+       $json_page = dynamic_require_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
 
     if ($on_update && $json_page) {
       $chunked = 1;
