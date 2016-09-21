@@ -22,7 +22,7 @@ Ensembl.Panel.ComparaAlignSliceSelector = Ensembl.Panel.extend({
       text: label,
       'data-title': item.title,
       'data-key': item.key,
-      class: 'ss-alignment-selected-label',
+      'class': 'ss-alignment-selected-label',
       title: item.title
     });
 

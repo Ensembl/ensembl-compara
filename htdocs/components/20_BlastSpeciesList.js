@@ -23,7 +23,7 @@ Ensembl.Panel.BlastSpeciesList = Ensembl.Panel.extend({
   		key = item.key.charAt(0).toUpperCase() + item.key.substr(1); // ucfirst
       var _delete = $('<span/>', {
         text: 'x',
-        class: 'ss-selection-delete',
+        'class': 'ss-selection-delete',
         click: function() {
           // Update taxon selection
           var clicked_item_title = $(this).parent('li').find('span.ss-selected').html();
@@ -49,7 +49,7 @@ Ensembl.Panel.BlastSpeciesList = Ensembl.Panel.extend({
         text: item.title,
         'data-title': item.title,
         'data-key': item.key,
-        class: 'ss-selected',
+        'class': 'ss-selected',
         title: item.title
       });
       

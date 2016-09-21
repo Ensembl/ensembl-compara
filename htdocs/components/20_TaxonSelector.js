@@ -139,8 +139,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         hl_class = 'active'
       }
       var a = $('<a/>', {
-        class: 'division_button btn ' + hl_class,
-        text: child.title,
+        'class': 'division_button btn ' + hl_class,
+        text: child.title
       });
 
       $(a).on('click', function(){
@@ -219,7 +219,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   createListElement: function(li_text, highlight) {
     var panel = this;    
     var li = $('<li/>', {
-      class: highlight ? 'active' : '',
+      'class': highlight ? 'active' : ''
     });
 
     var a = $('<a/>', {
@@ -446,7 +446,10 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.elLk.list.closest('.vscroll_container').height(newHeight - 40);
   },
   
-  getSelectedItems: function(tree = this.elLk.mastertree, preserveOrder) {
+  getSelectedItems: function(tree, preserveOrder) {
+    if (!tree) {
+      tree = this.elLk.mastertree;
+    }
     var selectedNodes = tree.dynatree("getTree").getSelectedNodes(1);
     var items = $.map(selectedNodes, function(node){
       return node.data.isFolder ? null : {
