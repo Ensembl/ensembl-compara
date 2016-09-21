@@ -18,6 +18,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     if (params.caller)          this.caller          = params.caller;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
+    if (params.multiSelect)    this.multiSelect    = params.multiSelect;
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
   },
   
@@ -33,7 +34,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     panel.elLk.divisions  = $('.species_division_buttons', panel.el);
     panel.elLk.breadcrumbs= $('.ss_breadcrumbs', panel.el);
     panel.elLk.count      = $('.taxon_selector_list .ss-count', panel.el);
-    panel.elLk.msg        = $('.taxon_selector_tree .ss-msg', panel.el);
+    panel.elLk.msg        = $('.ss-msg span', panel.el);
 
     // override the default modal close handler
     $('.modal_close').hide();
@@ -82,7 +83,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   updateCount: function() {
     var panel = this;
-    panel.elLk.count.html('(' + panel.getCurrentSelectionCount() + '/' + panel.selectionLimit +')');
+    // panel.elLk.count.html('(' + panel.getCurrentSelectionCount() + '/' + panel.selectionLimit +')');
+    panel.elLk.count.html(panel.getCurrentSelectionCount());
+    panel.elLk.count.removeClass('warn');
 
     var curr_count = panel.getCurrentSelectionCount();
     if (curr_count == 0) {
@@ -91,8 +94,12 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
     if (curr_count > panel.selectionLimit) {
       panel.elLk.msg.html('Selection limit of ' + panel.selectionLimit + ' species exeeded!')
+                    .show();
+      panel.elLk.count.addClass('warn');
       panel.disableButton(true);
       return false;
+    }else {
+      panel.elLk.msg.hide();
     }
 
     panel.disableButton(false);
@@ -119,15 +126,20 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // Populate default selected species on panel open
       panel.populateDefaultSpecies();
     }
+
   },
 
-  createMenu: function(arr) {
+  createMenu: function(arr, highlight_title) {
     var panel = this;
     var menu_arr = [];
 
     $.each(arr, function(i, child) {
+      var hl_class = '';
+      if (child.title === highlight_title) {
+        hl_class = 'active'
+      }
       var a = $('<a/>', {
-        class: 'division_button btn',
+        class: 'division_button btn ' + hl_class,
         text: child.title,
       });
 
@@ -266,10 +278,11 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       },
       source: function(request, response) { response(panel.filterArray($.unique(acTitles), request.term)) }, 
       select: function(event, ui) {
-        if (panel.caller === "Compara_Alignments") {
+        if (!panel.multiSelect) {
           panel.elLk.mastertree.dynatree("getTree").selectKey(acKeys[ui.item.value], true);
-          $('.modal_close').trigger('click');
-          return;
+          panel.disableButton(false);
+
+          // $('.modal_close').trigger('click');
         }
         var isLeaf = panel.locateNode(acKeys[ui.item.value]);
         isLeaf && finder.val('');
@@ -332,16 +345,17 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       children: [taxon_tree.toDict(true)],
       imagePath: panel.imagePath,
       checkbox: true,
-      selectMode: 3,
+      selectMode: (panel.caller === 'Compara_Alignments') ? 1 : 3,
       activeVisible: true,
+
       onSelect: function(flag, node) { 
-        if (panel.caller === "Compara_Alignments") {
+        if (!panel.multiSelect) {
           // Select item
-          panel.elLk.mastertree.dynatree("getTree").selectKey(node.data.key, flag);
-          $('.modal_close').trigger('click');
+          panel.elLk.tree.dynatree("getTree").selectKey(node.data.key, flag);
+          panel.disableButton(!flag);
           return;
         }
-        panel.setSelection(flag, node) 
+        panel.setSelection(flag, node);
       },
       onDblClick: function(node, event) { node.toggleSelect() },
       onKeydown: function(node, event) {
@@ -400,6 +414,32 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     return getTree(key, node, node);
   },
 
+  getSubMenuTree: function(key, node) {
+    var panel = this;
+    
+    var getSubMenuTree = function(key, node, submenu) {
+
+      if (node.title === key) {
+        return node.is_submenu ? node : true;
+      }
+      if (node.isFolder) {
+        if (node.is_submenu) {
+          submenu = node;
+        }
+
+        for (var i in node.children) {
+          var child = getSubMenuTree(key, node.children[i], submenu);
+          if (child) {
+            return child === true ? submenu : child;
+          }
+        }
+      }
+      return false;
+    };
+
+    return getSubMenuTree(key, node, node);
+  },
+
   resize: function () {
     var newHeight = $(this.el).height() - 80;
     this.elLk.tree.parent('.content').height(newHeight);
@@ -407,7 +447,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   },
   
   getSelectedItems: function(tree = this.elLk.mastertree, preserveOrder) {
-    var selectedNodes = tree.dynatree("getTree").getSelectedNodes();
+    var selectedNodes = tree.dynatree("getTree").getSelectedNodes(1);
     var items = $.map(selectedNodes, function(node){
       return node.data.isFolder ? null : {
         key   : node.data.key,
@@ -448,13 +488,14 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       var img_filename = (item.icon || item.key) + '.png';
       item.img_url = panel.imagePath + img_filename;
       var species_img = item.img_url ? '<span class="selected-sp-img"><img src="'+ item.img_url +'"></span>' : '';
-      var li = $('<li>' + species_img + '<span class="selected-sp-title">' + item.title + '</span><span class="remove"></span></li>').appendTo(panel.elLk.list);
+      var li = $('<li>' + species_img + '<span class="selected-sp-title">' + item.title + '</span><span class="remove">x</span></li>').appendTo(panel.elLk.list);
     });    
     $('li span.remove', panel.elLk.list).off().on('click', function(){
       panel.removeListItem($(this).parent());
       panel.updateCount();
     });
     panel.updateCount();
+    $('h2', panel.elLk.taxon_selector_list).removeClass('active').addClass('active');
   },
 
   disableButton: function(bool) {
@@ -466,13 +507,15 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var panel = this;
 
     var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
-    if (!mastertree_node.data.isFolder) {
+    if (!mastertree_node.data.isFolder && panel.multiSelect) {
       panel.setSelection(true, mastertree_node);
-      return true;
     }
 
-    var tree = panel.getTree(mastertree_node.data.title, panel.taxonTreeData);
-    panel.displayTree(tree.title);
+    var subtree = panel.getTree(mastertree_node.data.title, panel.taxonTreeData);
+    var parent_tree = panel.getSubMenuTree(subtree.title, panel.taxonTreeData);
+    panel.createMenu(parent_tree.children, subtree.title)
+    panel.addBreadcrumbs(parent_tree.title);
+    panel.displayTree(subtree.title);
 
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);
     if (node) { 
@@ -483,13 +526,17 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   
   removeListItem: function(li) {
     var panel = this;
-    var title = li.text();
+    var title = $('.selected-sp-title', li).text();
     var selectedNodes = [];
     selectedNodes = panel.elLk.mastertree.dynatree("getTree").getSelectedNodes();
-    panel.hideTree();
 
     $.each(selectedNodes, function(index, node) {
       if (node.data.title == title) {
+        // If tree displayed and remove item available in the tree then toggle select
+        if ($('ul', panel.elLk.tree).length) {
+          tree_node = panel.elLk.tree.dynatree("getTree").getNodeInTree(title)
+          tree_node && tree_node.toggleSelect();
+        }
         node.toggleSelect();
         $(li).remove();
         return;
@@ -518,7 +565,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   
   updateConfiguration: function() {
     var panel = this;
-    var items = panel.getSelectedItems(this.elLk.mastertree);
+    var tree  = (panel.multiSelect) ? this.elLk.mastertree : this.elLk.tree;
+    var items = panel.getSelectedItems(tree);
 
     if (panel.caller === 'Blast') {
       Ensembl.EventManager.trigger('updateTaxonSelection', items);

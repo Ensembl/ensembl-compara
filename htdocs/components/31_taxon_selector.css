@@ -23,6 +23,11 @@
 .species_select_container div.taxon_selector_tree .vscroll_container {
   padding: 8px 24px;
 }
+
+.species_select_container div.taxon_selector_tree .vscroll_container ul li a{
+  outline: none;
+}
+
 .species_select_container div.taxon_selector_list {
   width: 30%;
 }
@@ -41,9 +46,24 @@
   font-size: 18px;
   padding: 4px 8px;
   text-align: center;
-  color: #6f6f6f;
+  color: #444343;
   letter-spacing: 0.4px;
 }
+
+div.taxon_selector_list h2 .ss-count {
+  font-size: 14px;
+  position: absolute;
+  padding: 7px;
+  background: #52b15a;
+  margin: -4px 0px 0 0;
+  right: 10px;
+  color: white;
+}
+
+div.taxon_selector_list h2 .ss-count.warn {
+  background-color: rgba(206, 62, 62, 0.88);
+}
+
 .species_select_container div.content .vscroll_container {
   flex-grow: 1;
 }
@@ -87,7 +107,7 @@ div.taxon_selector_list li  {
   list-style-image: none;
   list-style-type: none;
   clear: both;
-  height: 48px;
+  height: 40px;
   position: relative;
   background-color: #f7f7f7;
   color: #464646;
@@ -101,9 +121,9 @@ div.taxon_selector_list li span {
   white-space: nowrap;
 }
 div.taxon_selector_list li span.selected-sp-title {
-  padding-left: 56px;
-  padding-top: 16px;
-  font-size: 18px;
+  padding-left: 48px;
+  padding-top: 12px;
+  font-size: 14px;
   font-weight: 100;
   width: 75%;
   white-space: nowrap;
@@ -112,16 +132,17 @@ div.taxon_selector_list li span.selected-sp-title {
 }
 div.taxon_selector_list .selected-sp-img img{
   border-bottom: 1px solid #bababb;
-  box-shadow: 2px 0px 4px #d2d2d2;
-  height: 47px;
+  height: 39px;
 }
 div.taxon_selector_list li span.remove {
-  cursor: pointer; 
-  height: 16px;
-  width: 16px;
-  margin: 16px 8px;
-  right: 0;
-  background-image: url("/i/16/minus-button.png");
+    cursor: pointer;
+    /* height: 16px; */
+    /* width: 16px; */
+    font-size: 18px;
+    margin: 12px 12px;
+    right: 0;
+    color: #828181;
+    font-weight: 100;
 }
 
 /*
@@ -170,13 +191,28 @@ div.taxon_selector_form ul.list li {
   width: 30%;
 }
 
-div.taxon_selector_form ul.list li img {
-  width: 24px;
-  height: 24px;
+div.taxon_selector_form ul.list li img,
+div.ss-alignment-container .ss-alignment-selected-label img {
+  width: 23px;
+  height: 23px;
+  margin: -1px;
 }
-div.taxon_selector_form ul.list li span.ss-selected {
-  padding: 5px 0 0 6px;
-  /*font-size: 16px;*/
+
+div.ss-alignment-container,
+div.ss-alignment-container .ss-alignment-selected-label {
+  display: flex;
+  align-items: center;
+}
+div.ss-alignment-container .ss-alignment-selected-label {
+  margin: 0px 8px;
+  background-color: white;
+  border: 1px solid #ccc;
+}
+div.taxon_selector_form ul.list li span.ss-selected,
+div.ss-alignment-container .ss-alignment-selected-label .ss-selected {
+  padding: 4px 6px;
+  font-weight: 400;
+  font-size: 12px;
   color: #464646;
   white-space: nowrap;
   overflow: hidden;
@@ -373,7 +409,54 @@ div.taxon_selector .ss-buttons button{
   background-color: #e6e6e6;
   padding: 4px 16px;
   text-decoration: none;
+  outline: none;
+  position: relative;
+  overflow: hidden;
   /*text-shadow: 0px 0px 4px #52889c;*/
+}
+
+div.taxon_selector .ss-buttons button:after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  margin-top: -60px;
+  background: #fff;
+  border-radius: 100%;
+  opacity: .5;
+
+  transform: scale(0);
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+  }
+  20% {
+    transform: scale(0.75);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+div.taxon_selector .ss-buttons button:not(:active):after {
+  animation: ripple 1s ease-out;
+}
+
+/* fixes initial animation run, without user input, on page load.
+ */
+div.taxon_selector .ss-buttons button:after {
+  visibility: hidden;
+}
+
+div.taxon_selector .ss-buttons button:focus:after {
+  visibility: visible;
 }
 
 div.taxon_selector .ss-buttons button:hover {
@@ -384,6 +467,15 @@ div.taxon_selector .ss-buttons button:active {
   top:1px;
 }
 
+div.taxon_selector .ss-buttons button#ss-submit {
+  color: #c5c5c5;
+  border-color: #d4d4d4;
+}
+
+div.taxon_selector .ss-buttons button#ss-submit:hover {
+  background-color: #e6e6e6;
+}
+
 div.taxon_selector .ss-buttons button#ss-submit.active {
   border: 1px solid #709de0;
   color: white;
@@ -391,4 +483,34 @@ div.taxon_selector .ss-buttons button#ss-submit.active {
 }
 div.taxon_selector .ss-buttons button#ss-submit.active:hover {
   background-color:#2d9fc2;
+}
+
+div.taxon_selector .ss-msg {
+  display: flex;
+  justify-content: center;
+}
+div.taxon_selector .ss-msg span{
+  height: 50px;
+  background: rgba(206, 62, 62, 0.88);
+  color: white;
+  max-width: 400px;
+  font-size: 16px;
+  font-weight: 100;
+  display: none;
+  text-align: center;
+  box-sizing: border-box;
+  border-top-left-radius: 4px;
+  margin: auto auto;
+  border-top-right-radius: 4px;
+  padding: 16px 24px;
+  bottom: 0px;
+  position: absolute;
+}
+
+div.taxon_selector ul.dynatree-container li {
+  padding: 2px 0px;
+}
+
+div.taxon_selector span.dynatree-active a {
+  border-radius: 2px;
 }

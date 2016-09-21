@@ -27,6 +27,10 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
 
+sub init {
+  my $self = shift;
+  $self->{x} = 'amma';
+}
 sub object_type {
   return 'Location';
 }
@@ -44,10 +48,9 @@ sub json_fetch_species {
   my $species_info  = $hub->get_species_info;
 
   my $species = $hub->species;
-  
   my $species_hash_multiple = ();
 
-  # Order by number of species (name is in the form "6 primates EPO"
+  # Order by number of species (name is in the form "6 primates EPO")
   if(!$sd->IS_STRAIN_OF) {
     foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
       (my $name = $row->{'name'}) =~ s/_/ /g;
@@ -58,7 +61,7 @@ sub json_fetch_species {
       push @{$species_hash_multiple}, $t;
     }
   }
-  
+
   my $dynatree_multiple = {};
   $dynatree_multiple->{key} = 'Multiple';
   $dynatree_multiple->{title} = 'Multiple';
@@ -76,7 +79,6 @@ sub json_fetch_species {
   $dynatree_root->{unselectable} = "true";
   push @{$dynatree_root->{children}}, $dynatree_multiple;
 
-warn Data::Dumper::Dumper $species_info;
   # For the variation compara view, only allow multi-way alignments
   my $species_hash_pairwise = {};
 
@@ -86,13 +88,18 @@ warn Data::Dumper::Dumper $species_info;
       foreach (keys %{$alignments->{$align_id}->{'species'}}) {
         if ($alignments->{$align_id}->{'species'}->{$species} && $_ ne $species) {
 
-          my $common_name = $species_info->{$_}->{common};
-          warn Data::Dumper::Dumper $species_info->{$_}, $_ if (!$common_name);
+          my $common_name = $species_info->{$_}->{common} || '';
           my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
 
           my $t = {};
           $t->{scientific} = $_;
-          $t->{common} = $common_name eq 'Mouse' ? $common_name . $assembly_version : $common_name;
+          $t->{key} = $_;
+          if ($sd->get_config($_, 'STRAIN_COLLECTION')) {
+            $t->{common} = join ' ', [$sd->get_config($_, 'STRAIN_COLLECTION'), $sd->get_config($_, 'STRAIN_COLLECTION')];
+          }
+          else {
+            $t->{common} = $species_info->{$_}->{common};
+          }
           $t->{value} = $align_id;
           $species_hash_pairwise->{$_} = $t;
         }
@@ -103,9 +110,9 @@ warn Data::Dumper::Dumper $species_info;
   my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
   my $division_json = from_json(file_get_contents($file));
   my $json = {};
-
+  my $internal_node_select = 0;
   my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $species_hash_pairwise);
-  my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes);
+  my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes, $internal_node_select, {});
 
 
   if (scalar @dyna_tree) {

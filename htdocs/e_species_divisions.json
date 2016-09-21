@@ -1,16 +1,16 @@
 {  
-  "division":"All Divisions",
+  "key":"All Divisions",
   "display_name":"All Divisions",
   "is_internal_node":"true",
   "child_nodes":[  
   {
-    "division":"primates",
+    "key":"primates",
     "display_name":"Primates",
     "is_internal_node":"true",
-    "child_nodes":[  
+    "child_nodes":[
       {
-          "scientific_name":"Microcebus murinus",
-          "key":"Microcebus_murinus",
+          "scientific_name":"Homo sapiens",
+          "key":"Homo_sapiens",
           "is_leaf":"true"
       },
       {
@@ -19,8 +19,18 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Tarsius syrichta",
-          "key":"Tarsius_syrichta",
+          "scientific_name":"Pan troglodytes",
+          "key":"Pan_troglodytes",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Nomascus leucogenys",
+          "key":"Nomascus_leucogenys",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Gorilla gorilla gorilla",
+          "key":"Gorilla_gorilla",
           "is_leaf":"true"
       },
       {
@@ -34,13 +44,13 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Papio anubis",
-          "key":"Papio_anubis",
+          "scientific_name":"Microcebus murinus",
+          "key":"Microcebus_murinus",
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Chlorocebus sabaeus",
-          "key":"Chlorocebus_sabaeus",
+          "scientific_name":"Papio anubis",
+          "key":"Papio_anubis",
           "is_leaf":"true"
       },
       {
@@ -49,143 +59,39 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Gorilla gorilla gorilla",
-          "key":"Gorilla_gorilla",
+          "scientific_name":"Tarsius syrichta",
+          "key":"Tarsius_syrichta",
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Pan troglodytes",
-          "key":"Pan_troglodytes",
-          "is_leaf":"true"
-      },
-      {
-          "scientific_name":"Homo sapiens",
-          "key":"Homo_sapiens",
-          "is_leaf":"true"
-      },
-      {
-          "scientific_name":"Nomascus leucogenys",
-          "key":"Nomascus_leucogenys",
+          "scientific_name":"Chlorocebus sabaeus",
+          "key":"Chlorocebus_sabaeus",
           "is_leaf":"true"
       }
     ]
   },
   {  
-    "division":"rodents",
+    "key":"rodents",
     "display_name":"Rodents",
     "is_internal_node":"true",
     "is_submenu":"true",
     "child_nodes":[  
       {  
-        "division":"mice",
+        "key":"mice",
         "display_name":"Mice",
+        "extras_key":"mouse",
         "is_internal_node":"true",
         "child_nodes":[  
           {
             "scientific_name":"Mus musculus",
+            "display_name":"Mouse reference (CL57BL6)",
             "key":"Mus_musculus",
             "is_leaf":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_PWK_PhJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_AKR_J",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_CAST_EiJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_LP_J",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus spretus ",
-            "key":"Mus_spretus",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_BALB_cJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_CBA_J",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_NOD_ShiLtJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_129S1_SvImJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_C3H_HeJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_DBA_2J",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_NZO_HlLtJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_A_J",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_C57BL_6NJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_FVB_NJ",
-            "is_leaf":"true",
-            "is_strain":"true"
-          },
-          {
-            "scientific_name":"Mus_musculus",
-            "key":"Mus_musculus_WSB_EiJ",
-            "is_leaf":"true",
-            "is_strain":"true"
           }
         ]
       },
       {  
-        "division":"lagomorpha",
+        "key":"lagomorpha",
         "display_name":"Lagomorphs",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -202,7 +108,7 @@
         ]
       },
       {  
-        "division":"other_rodents",
+        "key":"other_rodents",
         "display_name":"Other Rodents",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -231,13 +137,13 @@
     ]
   },
   {  
-    "division":"other_mammals",
+    "key":"other_mammals",
     "display_name":"Other Mammals",
     "is_internal_node":"true",
     "is_submenu":"true",
     "child_nodes":[  
       {  
-        "division":"carnivores",
+        "key":"carnivores",
         "display_name":"Carnivores",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -264,7 +170,7 @@
         ]
       },
       {  
-        "division":"ungulates",
+        "key":"ungulates",
         "display_name":"Ungulates",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -301,7 +207,7 @@
         ]
       },
       {  
-        "division":"other_placental",
+        "key":"other_placental",
         "display_name":"Other Placental",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -358,7 +264,7 @@
         ]
       },
       {  
-        "division":"marsupials_monotremes",
+        "key":"marsupials_monotremes",
         "display_name":"Marsupials and Monotremes",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -387,13 +293,13 @@
     ]
   },
   {  
-    "division":"non_vertebrates",
+    "key":"non_vertebrates",
     "display_name":"Non Vertebrates",
     "is_internal_node":"true",
     "is_submenu":"true",
     "child_nodes":[  
       {  
-        "division":"bird_and_reptiles",
+        "key":"bird_and_reptiles",
         "display_name":"Birds and Reptiles",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -435,7 +341,7 @@
         ]
       },
       {  
-        "division":"fish",
+        "key":"fish",
         "display_name":"Fish",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -502,7 +408,7 @@
         ]
       },
       {  
-        "division":"others",
+        "key":"others",
         "display_name":"Others",
         "is_internal_node":"true",
         "child_nodes":[  
@@ -521,7 +427,7 @@
     ]
   },
   {  
-    "division":"other_species",
+    "key":"other_species",
     "display_name":"Other Species",
     "is_internal_node":"true",
     "child_nodes":[  

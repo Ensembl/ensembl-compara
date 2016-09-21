@@ -43,7 +43,6 @@ sub content {
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
   my $species = $hub->species;
-  my $options = '<option value="">-- Select an alignment --</option>';
   my $align_label = '';
   # Order by number of species (name is in the form "6 primates EPO"
   foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
@@ -53,7 +52,7 @@ sub content {
       last;
     }
   }
-  
+  # warn Data::Dumper::Dumper $alignments;
   # For the variation compara view, only allow multi-way alignments
   if ($align_label eq '') {
     my %species_hash;
@@ -61,7 +60,7 @@ sub content {
       foreach (keys %{$alignments->{$key}->{'species'}}) {
         if ($alignments->{$key}->{'species'}->{$species} && $_ ne $species) {
           if ($key == $align) {
-            $align_label = $species_defs->get_config($_, 'SPECIES_BIO_NAME');
+            $align_label = $species_defs->production_name_mapping($_);
             last;
           }          
         }
@@ -71,7 +70,7 @@ sub content {
 
   my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
 
-  my $modal_uri       = $hub->url('Component', {qw(type Location action Web function TaxonSelector/ajax), align => $align});
+  my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align, multiselect => 0});
 
 #  my $modal_uri = URI->new(sprintf '/%s/Component/Blast/Web/TaxonSelector/ajax?', $default_species || 'Multi' );
 #  $modal_uri->query_form(align => $align) if $align; 
@@ -84,13 +83,13 @@ sub content {
         <form action="%s" method="get">
           <div class="ss-alignment-container">
             <label for="align">Alignment:</label>
-            <input class="ss-alignment-selected-label" value="%s" disabled />
+            %s
             <input class="ss-alignment-selected-value" type="hidden" name="align" value="%s" />
             <input class="panel_type" value="SpeciesSelect" type="hidden">
             %s
             <div class="links">
-              <a class="modal_link data alignment-slice-selector-link" href="${modal_uri}">Select %s alignment</a>
-              <a class="go-button alignment-go" href="">Go</a>
+              <a class="modal_link data alignment-slice-selector-link go-button" href="${modal_uri}">Select %s alignment</a>
+              <a class="alignment-go" href=""></a>
             </div>            
           </div>
         </form>
@@ -98,11 +97,23 @@ sub content {
     </div>},
     $self->image_width, 
     $url->[0],
-    $align_label,
+    $self->getLabelHtml($align_label),
     $align,
     $extra_inputs,
     ($align) ? 'another' : 'an'
   );
+}
+
+sub getLabelHtml {
+  my $self = shift;
+  my $species = shift;
+  my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+  my $species_img = sprintf '<img src="/i/species/48/%s.png">', $species;
+  my $common_name = '';
+
+  return sprintf '<span class="ss-alignment-selected-label">%s <span class="ss-selected">%s</span></span>',
+          $species_label ? $species_img : '',
+          $species_label ? $species_label : $species;
 }
 
 1;

@@ -55,39 +55,7 @@ sub json_fetch_species {
 
   my $final_hash      = {};
 
-  my $extras = {
-    'Mus_musculus' => {
-      'haplotypes and patches' => [
-      {
-        "title" => "Mouse Haplo1",
-        "scientific" => "Mus_musculus--Haplo_1"
-      },
-      {
-        "title" => "Mouse Haplo2",
-        "scientific" => "Mus_musculus--Haplo_2",
-      }],
-      'strains' => [
-      {
-        "title" => "Mouse Strain1",
-        "scientific" => "Mus_musculus--Strain_1"
-      },
-      {
-        "title" => "Mouse Strain2",
-        "scientific" => "Mus_musculus--Strain_2",
-      }]
-    },
-    'Homo_sapiens' => {
-      'strains' => [
-      {
-        "title" => "Homo_sapiens_Strain_1",
-        "scientific" => "Homo_sapiens_Strain_1"
-      },
-      {
-        "title" => "Homo_sapiens_Strain_2",
-        "scientific" => "Homo_sapiens_Strain_2",
-      }]
-    }
-  };
+  my $extras = {};
 
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
@@ -97,16 +65,13 @@ sub json_fetch_species {
     s/_/ /g for $type, $target;
 
     $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
-    
+
     my $tmp = {};
     $tmp->{scientific} = $s;
-    $tmp->{title}      = (grep($target eq $_, @$chromosomes) ? 'Chromosome ' : '') . "$target";
+    $tmp->{key} = $s;
+    $tmp->{common}      = (grep($target eq $_, @$chromosomes) ? 'Chromosome ' : '') . "$target";
 
     push (@{$extras->{$sp}->{'haplotypes and patches'}}, $tmp);
-
-    # If intra species alignment found then change panel headers
-    $self->{'included_header'} = 'Selected species or haplotypes';
-    $self->{'excluded_header'} = 'Unselected species or haplotypes';
   }
 
   foreach (grep !$species{$_}, keys %shown) {
@@ -137,7 +102,13 @@ sub json_fetch_species {
           $species{$_} = $species_defs->species_label($_, 1) . " - $type";
           my $tmp = {};
           $tmp->{scientific} = $_;
-          $tmp->{common} = $species_info->{$_}->{common};
+          $tmp->{key} = $_;
+          if ($species_defs->get_config($_, 'STRAIN_COLLECTION')) {
+            $tmp->{common} = $species_defs->get_config($_, 'STRAIN_COLLECTION') . ' ' . $species_defs->get_config($_, 'STRAIN_COLLECTION');
+          }
+          else {
+            $tmp->{common} = $species_info->{$_}->{common};
+          }
           $final_hash->{species_info}->{$_} = $tmp;
         }
       }
@@ -156,6 +127,7 @@ sub json_fetch_species {
     my $tmp = {};
     if (!$final_hash->{species_info}->{$_}) {
       $final_hash->{species_info}->{$_}->{scientific} = $_;
+      $final_hash->{species_info}->{$_}->{key} = $_;
       $final_hash->{species_info}->{$_}->{common} = $species_info->{$_}->{common};
     }
   }
@@ -198,8 +170,7 @@ sub json_fetch_species {
   my $json = {};
 
   my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $final_hash->{species_info});
-  my @dyna_tree = $self->json_to_dynatree($division_json, $final_hash->{species_info}, $available_internal_nodes, $extras);
-# print Dumper \@dyna_tree;
+  my @dyna_tree = $self->json_to_dynatree($division_json, $final_hash->{species_info}, $available_internal_nodes, 1, $extras);
 
 #   if (scalar @dyna_tree) {
 #     my $dynatree_pairwise = {};

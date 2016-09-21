@@ -40,11 +40,11 @@ sub json_to_dynatree {
   my $division_hash = shift;
   my $species_info = shift;
   my $available_internal_nodes = shift;
+  my $internal_node_select = shift;
   my $extras = shift || {};
-
   my @dyna_tree = ();
   my @child_nodes = ();
-  my $is_strain = 0;
+
   if ($division_hash->{child_nodes}) {
     @child_nodes = @{$division_hash->{child_nodes}};
   }
@@ -52,12 +52,14 @@ sub json_to_dynatree {
   if ($division_hash->{is_leaf}) {
     if($species_info->{$division_hash->{key}}) {
       my $sp = $species_info->{$division_hash->{key}};
+
       my $t = {
         key             => $division_hash->{key},
         scientific_name => $sp->{scientific},
-        title           => $sp->{common},
+        title           => $division_hash->{display_name} || $sp->{common},
         tooltip         => $sp->{scientific} || '',
-        searchable      => 1
+        searchable      => 1,
+        icon            => '/i/species/16/' . $sp->{key} . '.png'
       };
       if ($sp->{strain} && $sp->{strain} ne '') {
         $t->{isStrain} = "true" ;
@@ -68,10 +70,13 @@ sub json_to_dynatree {
       }
 
 
-      if($extras->{$division_hash->{key}}) {
-        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}});
+      # Add extra groups like strains / haplotypes_and_patches etc
+      if($extras->{$division_hash->{key}} or $extras->{$division_hash->{extras_key}}) {
+        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}}, $internal_node_select);
         $t->{isFolder} = 1;
         $t->{searchable} = 1;
+        # Make it unselectable if it is not in the available species_list
+        $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
         $t->{children} = $extra_dyna;
       }
 
@@ -81,19 +86,29 @@ sub json_to_dynatree {
   }
 
   if (scalar @child_nodes > 0) {
-    my @children = map { $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $extras) } @child_nodes;
+    my @children = map { $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $internal_node_select, $extras) } @child_nodes;
     if ($available_internal_nodes->{$division_hash->{display_name}}) {
       my $t = {
-        key      => $division_hash->{display_name},
-        title    => $division_hash->{display_name},
-        children => [ @children ],
-        isFolder => 1,
-        searchable => 1,
+        key            => $division_hash->{display_name},
+        title          => $division_hash->{display_name},
+        children       => [ @children ],
+        isFolder       => 1,
+        searchable     => 1,
         # Get a display tree starting from the first internal node on a bottom up search
-        isInternalNode => $division_hash->{is_internal_node}
+        isInternalNode => $division_hash->{is_internal_node},
+        unselectable   => !$internal_node_select
       };
       if(defined $division_hash->{is_submenu} && $division_hash->{is_submenu} eq 'true') {
         $t->{is_submenu} = 1;
+      }
+
+      # Add extra groups like strains / haplotypes_and_patches etc
+      my $x = $extras->{$division_hash->{key}} || $extras->{$division_hash->{extras_key}};
+      if($x) {
+        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $x, $internal_node_select);
+        $t->{isFolder} = 1;
+        $t->{searchable} = 1;
+        push @{$t->{children}}, @$extra_dyna;
       }
       push @dyna_tree, $t;
     }
@@ -104,26 +119,36 @@ sub json_to_dynatree {
 
 sub get_extras_as_dynatree {
   my $species = shift;
-  my $extras = shift || {};
+  my $extras = shift;
+  my $internal_node_select = shift;
   my $extra_dyna = [];
-
   foreach my $k (keys %$extras) {
     my $folder = {};
-    $folder->{key} = $k;
-    $folder->{title} = ucfirst($k);
-    $folder->{isFolder} = 1;
-    $folder->{children} = [];
-    $folder->{expand} = 0;
-    $folder->{searchable} = 0;
+    $folder->{key}          = $k;
+    $folder->{title}        = ucfirst($k);
+    $folder->{isFolder}     = 1;
+    $folder->{children}     = [];
+    $folder->{expand}       = 0;
+    $folder->{searchable}   = 0;
+    $folder->{unselectable} = !$internal_node_select;
 
     foreach my $hash (@{$extras->{$k}}) {
+      my $icon = '';
+      if ($k =~/haplotype/ and $hash->{key} =~/--/) {
+        my ($sp, $type) = split('--', $hash->{key});
+      }
+      else {
+        $icon = '/i/species/16/' . $hash->{key} . '.png';        
+      }
+
       my $t = {
         key             => $hash->{scientific},
         scientific_name => $hash->{scientific},
-        title           => $hash->{title},
-        tooltip         => $k . ': ' . $hash->{title},
+        title           => $hash->{common},
+        tooltip         => $k . ': ' . $hash->{common},
         extra           => 1, # used to get image file of the parent node, say for a haplotype
-        searchable      => 1
+        searchable      => 1,
+        icon            => $icon
       };
       push @{$folder->{children}}, $t;
     }

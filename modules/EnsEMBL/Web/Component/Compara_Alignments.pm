@@ -50,7 +50,7 @@ sub content {
     );
   }
   
-  my $align_param = $hub->param('align');
+  my $align_param = $hub->param('align') || '';
 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
   my $target_slice = $object->get_target_slice;

@@ -317,7 +317,7 @@ sub check_for_align_in_database {
       }
     }
     else {
-      push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the box above.</p>'};
+      push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the above.</p>'};
     }
 
     return @messages;

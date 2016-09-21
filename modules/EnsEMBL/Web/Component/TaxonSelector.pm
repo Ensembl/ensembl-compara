@@ -41,14 +41,15 @@ sub _init {
   # $self->{form_action}    = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
   $self->{form_action}    = $hub->referer->{uri};
   $self->{link_text}      = 'Species selector';
-  $self->{finder_prompt}  = 'Start typing the name of a species or collection...';
+  $self->{finder_prompt}  = 'Start typing the name of a species...';
   $self->{data_url}       = $hub->url('Json', {
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
-                              action => $hub->action,
+                              action => $hub->referer->{'ENSEMBL_ACTION'},
                               align => $hub->param('align') ? $hub->param('align') : ''
                             });
-  $self->{caller}          = $hub->action; 
+  $self->{caller}          = $self->{hub_action} = $hub->referer->{'ENSEMBL_ACTION'};
+  $self->{multiselect}     = $self->param('multiselect');
   $self->{selection_limit} = undef;
   $self->{is_blast}        = 0,
   $self->{tip_text}        = 'Click the + and - icons to navigate the tree, click the checkboxes to select/deselect a species or collection.
@@ -66,7 +67,6 @@ sub content_ajax {
   my @default_species = $hub->param('s');
   my $urlParams = { map { ($_ => $hub->param($_)) } $hub->param };
 
-
   my %params = (
     dataUrl => $self->{data_url},
     isBlast => $self->{is_blast},
@@ -79,6 +79,7 @@ sub content_ajax {
   $params{entryNode}      = $self->{entry_node}      if $self->{entry_node};
   $params{selectionLimit} = $self->{selection_limit} if $self->{selection_limit};
   $params{defaultsEleId}  = $self->{defaults_ele_id} if $self->{defaults_ele_id};
+  $params{multiSelect}    = $self->{multiselect} if $self->{multiselect};
 
   # Get default keys (default selected) for region comparison
   my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
@@ -99,7 +100,6 @@ sub render_selector {
   my $action       = $self->{action};
   my $method       = $self->{method};
   my $extra_params = $self->{extra_params} || {};
-  
   # $extra_params->{redirect} = $self->{redirect} if $self->{redirect};
 
   my $hidden_fields;
@@ -107,7 +107,7 @@ sub render_selector {
   #   $hidden_fields .= qq{<input type="hidden" name="$_" value="$extra_params->{$_}" />\n};
   # }
   
-  my $is_cmp = ($hub->action eq 'Compara_Alignments')? 1 : 0;
+  my $is_cmp = ($self->{hub_action} eq 'Compara_Alignments')? 1 : 0;
   if ($is_cmp) {
     foreach (keys %{$hub->referer->{params}}) {
       if ($_ ne 'align') {
@@ -116,7 +116,7 @@ sub render_selector {
     }    
     $action = $self->{form_action};
   }
-  if ($hub->action eq 'Multi') {
+  if ($self->{hub_action} eq 'Multi') {
     $action = $self->{form_action};
   }
 
@@ -131,7 +131,6 @@ sub render_selector {
         <div class="species_division_buttons"></div>
         <div class="vscroll_container">
         </div>
-        <div class="ss-msg"></div>
       </div>
     </div>
   }, 
@@ -161,12 +160,12 @@ sub render_selector {
       <div class="ss-buttons">
         <button id="ss-reset" type="reset">Reset All</button>
         <button id="ss-cancel" type="cancel">Cancel</button>
-        %s
+        <button id="ss-submit" type="submit">Apply</button>
       </div>
+      <div class="ss-msg"><span></span></div>
     </div>
   },
-  ($hub->action eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list,
-  ($hub->action eq 'Compara_Alignments') ? '' : '<button id="ss-submit" type="submit">Apply</button>'
+  ($self->{hub_action} eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list,
 }
 
 sub render_tip {

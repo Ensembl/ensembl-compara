@@ -30,6 +30,10 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require_fallback);
 
 use base qw(EnsEMBL::Web::Controller);
 
+sub init {
+  1;
+}
+
 sub new {
   my $self  = shift->SUPER::new(@_);
   my $hub   = $self->hub;
