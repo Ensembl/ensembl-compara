@@ -83,8 +83,11 @@ sub init {
   my $session    = $hub->session;
   my $user       = $hub->user;
   my $view_config;
-     $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
-  
+  while (!$view_config && scalar @components) {
+    my ($component, $type) = @{shift @components};
+    $view_config = $hub->get_viewconfig({component => $component, type => $type});
+  }
+
   if ($view_config) {
     my $component = $view_config->component;
     
@@ -96,6 +99,7 @@ sub init {
         type      => $view_config->type,
         action    => $component,
         function  => undef,
+        strain    => $hub->action =~ /Strain_/ ?  1 : 0, #once we have a better check for strain view, we can remove this dirty check
       })
     });
   } else {
@@ -120,10 +124,11 @@ sub init {
   });
  
   if ($object && $object->can_export) {
+    my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
     $self->add_entry({
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $self->export_url($hub)
+      url     => $self->export_url($hub).$strain_param
     });
   } else {
     $self->add_entry({

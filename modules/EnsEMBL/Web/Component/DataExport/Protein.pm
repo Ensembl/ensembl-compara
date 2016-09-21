@@ -45,9 +45,9 @@ sub content {
   }
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $view_config  = $self->view_config;
 
-  my $settings = $viewconfig->form_fields;
+  my $settings = $view_config->form_fields;
 
   $settings->{'extra'} = {
           'type'      => 'Checklist',
@@ -57,7 +57,7 @@ sub content {
   };
 
   ## Options per format
-  my @field_order = $viewconfig->field_order;
+  my @field_order = $view_config->field_order;
 
   my $fields_by_format = {
                           'RTF'   => [@field_order],

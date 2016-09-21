@@ -39,6 +39,7 @@ sub render_normal {
   my $Config = $self->{'config'};  
   my $history_tree = $self->{'container'}; 
   my $a_id = $self->{'config'}->{_object}->stable_id;
+  my $version = $self->{'config'}->{_object}->version ? ".".$self->{'config'}->{_object}->version : "";
 
   ## Define basic set up variables ##
   my $panel_width = $Config->image_width();
@@ -102,19 +103,19 @@ sub render_normal {
     $yc{$id} = $y_coord;
     $y +=50;
 
+
     my $label_href = $self->_url({
       'type'        => 'Idhistory',
       'action'      => 'Label',
       'factorytype' => $ENV{'ENSEMBL_TYPE'},
-      'label'       => $id,
+      'label'       => ($version && $self->{'config'}->{_object}->type eq 'Transcript')  ? $id.$version : $id,
       'feat_type'   => $param2,
       $param        => $id, 
     });
-    
-    
+
     # label unique stable IDs
     $self->push( $self->Text({
-      'x'         => 5,
+      'x'         => 1,
       'y'         => $y_coord,
       'width'     => 140,
       'height'    => $fontheight,
@@ -122,7 +123,7 @@ sub render_normal {
       'ptsize'    => $fontsize,
       'halign'    => 'left',
       'colour'    => 'blue',
-      'text'      =>  $id,
+      'text'      =>  ($version && $self->{'config'}->{_object}->type eq 'Transcript') ? $id.$version : $id,
       'href'     =>   $label_href
     }));
 
@@ -401,7 +402,7 @@ sub render_normal {
 
   my @a_colours = ('contigblue1', 'contigblue2');
   my $i =0;
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $pix_per_bp = $self->{'config'}->transform_object->scalex;
   my $strand = ">";
 
   foreach my $r (@releases){

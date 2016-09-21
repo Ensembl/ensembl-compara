@@ -116,7 +116,7 @@ sub _init {
     $self->errorTrack("No $track_name data for this region");
   }
   else {
-    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $features);
+    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, [{'features' => $features}]);
     $self->push($style->create_glyphs);
   }
 }

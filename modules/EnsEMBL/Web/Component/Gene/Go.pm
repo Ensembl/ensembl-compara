@@ -45,7 +45,7 @@ sub content {
   
   my $hub         = $self->hub;
   my $function    = $hub->function;  
-  my $adaptor     = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  my $adaptor     = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   my %clusters    = $hub->species_defs->multiX('ONTOLOGIES');
   my $terms_found = 0;
   my $label       = 'Ontology';

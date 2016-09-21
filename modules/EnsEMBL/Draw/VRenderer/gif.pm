@@ -29,7 +29,7 @@ use base qw(EnsEMBL::Draw::VRenderer);
 sub init_canvas {
   my ($self, $config, $im_height, $im_width) = @_;
   my $canvas = GD::Image->new($im_width, $im_height);
-  $canvas->colorAllocate($config->colourmap()->rgb_by_name( $config->bgcolor ));
+  $canvas->colorAllocate($config->colourmap()->rgb_by_name( $config->get_parameter('bgcolor') ));
   $self->canvas($canvas);
 }
 

@@ -37,7 +37,7 @@ sub _init {
   my $config                  = $self->{'config'}; 
   my $transcript              = $config->{'transcript'}->{'transcript'};
   my ($fontname, $fontsize)   = $self->get_font_details( 'innertext');
-  my $pix_per_bp              = $config->transform->{'scalex'};
+  my $pix_per_bp              = $config->transform_object->scalex;
   my @res                     = $self->get_text_width(0, 'M', '', font => $fontname, ptsize => $fontsize);
   my ($font_w_bp, $font_h_bp) = ($res[2] / $pix_per_bp, $res[3]);
   my $h                       = $res[3] + 4; 
@@ -105,10 +105,14 @@ sub _init {
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
        
     my $row  =  EnsEMBL::Draw::Utils::Bump::bump_row($bump_start, $bump_end, $bitmap_length, \@bitmap);
+    ## Don't bother to draw more than 10 rows, as the image won't return 
+    ## if there are thousands of SNPs 
+    next if $row > 10;
     $max_row = $row if $row > $max_row;
     
     $tglyph->y($voffset + $tglyph->{'y'} + ($row * (2 + $h)) + 1);
     $bglyph->y($voffset + $bglyph->{'y'} + ($row * (2 + $h)) + 1);
+
     $self->push($bglyph, $tglyph);
   }
 }

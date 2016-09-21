@@ -71,9 +71,7 @@ Ensembl.extend({
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
     }
-    
-    this.cookie.set('WINDOW_WIDTH', $(window).width());
-    
+
     if (hints) {
       $.each(hints.split(/:/), function () {
         Ensembl.hideHints[this] = 1;
@@ -121,8 +119,8 @@ Ensembl.extend({
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
         '; expires=',
-        ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970' : expiry ? expiry : 'Tue, 19 Jan 2038'),
-        ' 00:00:00 GMT; path=/'
+        ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970 00:00:00 GMT' : expiry ? expiry : 'Tue, 19 Jan 2038 00:00:00 GMT'),
+        '; path=/'
       ].join('');
       document.cookie = cookie;
       
@@ -393,6 +391,42 @@ Ensembl.extend({
     }
     
     return x1 + x2;
+  },
+
+  populateTemplate : function(template, data) {
+    var regexp  = /\{\{[\.\w]+\}\}/g;
+    var matches = [];
+
+    var match;
+    while ((match = regexp.exec(template)) != null) {
+      matches.push({str: match[0], index: match.index});
+    }
+
+    var output = [];
+    for (var i = matches.length - 1; i >= 0; i--) {
+      var match = matches[i].str.replace(/\{|\}/g, '');
+      try {
+        var replacement = (function(pointer, keys) {
+          while (keys.length) {
+            var key = keys.shift();
+            if (key in pointer) {
+              pointer = pointer[key];
+            } else {
+              throw Error("Missing key '" + key + "'");
+            }
+          }
+          return pointer;
+        })(data, match.split('.'));
+      } catch (ex) {
+        throw Error("Ensembl.populateTemplate could not parse '" + match + "': " + ex.message);
+      }
+
+      output.unshift(template.substring(matches[i].index + matches[i].str.length));
+      output.unshift(replacement);
+      template = template.substr(0, matches[i].index);
+    }
+    output.unshift(template);
+    return output.join('');
   }
 });
 

@@ -44,6 +44,7 @@ properties:
 
   - patterns:
       - .*/i/80/compara_.*
+      - .*/i/80/strain_.*
     page:
       name: comparaexmplore
     action:

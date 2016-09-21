@@ -88,7 +88,7 @@ sub content {
   my $context     = $hub->param('context') || 100;
 
   foreach (qw(transcript transcripts_bottom transcripts_top)) {
-    $configs->{$_} = $hub->get_imageconfig('transcript_population', $_);
+    $configs->{$_} = $hub->get_imageconfig({type => 'transcript_population', cache_code => $_});
     $configs->{$_}->set_parameters({
       image_width  => $image_width, 
       slice_number => '1|1',
@@ -111,7 +111,7 @@ sub content {
     $configs->{$_}->set_parameters({ container_width => $fake_length });
   }
 
-  $configs->{'snps'} = $hub->get_imageconfig('gene_variation', 'snps');
+  $configs->{'snps'} = $hub->get_imageconfig({type => 'gene_variation', cache_code => 'snps'});
   $configs->{'snps'}->set_parameters({
     image_width     => $image_width,
     container_width => 100,
@@ -207,7 +207,7 @@ sub sample_configs {
     next unless $sample_slice; 
     
     ## Initialize content
-    my $sample_config = $hub->get_imageconfig('transcript_population', $sample);
+    my $sample_config = $hub->get_imageconfig({type => 'transcript_population', cache_code => $sample});
     $sample_config->init_sample_transcript;
     $sample_config->{'id'}         = $stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
@@ -262,7 +262,6 @@ sub sample_configs {
 
     $sample_config->{'_add_labels'} = 1;
     $sample_config->set_parameters({ container_width => $fake_length });
-    $sample_config->tree->dump('Transcript configuration', '([[caption]])') if $hub->species_defs->ENSEMBL_DEBUG_FLAGS & $hub->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
     
     push @containers_and_configs, $sample_slice, $sample_config;
   }

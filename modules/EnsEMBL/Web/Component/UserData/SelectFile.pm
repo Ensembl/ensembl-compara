@@ -23,9 +23,8 @@ package EnsEMBL::Web::Component::UserData::SelectFile;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
 
-use base qw(EnsEMBL::Web::Component::UserData);
+use parent qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
@@ -34,7 +33,6 @@ sub _init {
 }
 
 sub caption {
-  my $self = shift;
   return 'Select File to Upload';
 }
 

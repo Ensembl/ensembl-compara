@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::StructuralVariation;
 ### NAME: EnsEMBL::Web::Object::StructuralVariation
 ### Wrapper around a Bio::EnsEMBL::StructuralVariation
 
-### PLUGGABLE: Yes, using Proxy::Object
-
 use strict;
 use warnings;
 no warnings "uninitialized";

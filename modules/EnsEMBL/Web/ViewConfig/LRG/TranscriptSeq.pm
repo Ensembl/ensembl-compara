@@ -17,9 +17,11 @@ limitations under the License.
 
 =cut
 
-
 package EnsEMBL::Web::ViewConfig::LRG::TranscriptSeq;
 
-use base qw(EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq);
+use strict;
+use warnings;
+
+use parent qw(EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq);
 
 1;

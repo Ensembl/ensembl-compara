@@ -84,17 +84,18 @@ sub init {
   
   foreach (@$components) {
     my $component = $_->[0];
+    my $type      = $_->[1];
     
     next if $done{$component};
     
-    my $view_config = $hub->get_viewconfig(@$_);
+    my $view_config = $hub->get_viewconfig({component => $component, type => $type});
 
     if ($view_config) {
       $self->add_entry({
         id      => "config_$component",
         caption => 'Configure ' . (scalar @$components > 1 ? $view_config->title : '' || 'Page'),
         url     => $hub->url('Config', {
-          type      => $_->[1],
+          type      => $type,
           action    => $component,
           function  => undef
         })

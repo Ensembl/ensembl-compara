@@ -20,8 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::ldview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub _menus {
   return (qw(
@@ -37,17 +38,21 @@ sub _menus {
   ));
 }
 
-sub init {
-  my $self    = shift;
+sub init_cacheable {
+  ## @override
+  my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
+
   my $colours = $self->species_defs->colour('variation');
-  
+
   $self->set_parameters({
     sortable_tracks => 'drag',  # allow the user to reorder tracks
     label_width => 100
   });
-  
+
   $self->create_menus($self->_menus);
-  
+
   $self->load_tracks;
 
   my $r2_html = 'r&sup2;';
@@ -58,17 +63,17 @@ sub init {
     [ 'ld_r2',      '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD ($r2_html)", name => "LD ($r2_tag)", key => 'r2',                   }],
     [ 'ld_d_prime', '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD (D')",       name => "LD (D')",      key => 'd_prime'               }],
   );
-  
+
   $self->add_tracks('other',
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar', description => 'Shows the scalebar'                             }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'f', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
   );
-  
+
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
- 
+
   $self->modify_configs(
     ['simple', 'misc_feature'],
     { display => 'off', menu => 'no'}
@@ -78,7 +83,7 @@ sub init {
     ['simple_otherfeatures_human_1kg_hapmap_phase_2'],
     {'display' => 'tiling', menu => 'yes'}
   );
- 
+
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal', strand => 'r' }
@@ -87,25 +92,25 @@ sub init {
 
 sub init_slice {
   my ($self, $parameters) = @_;
-  
+
   $self->set_parameters({
     %$parameters,
     _userdatatype_ID   => 30,
     _transcript_names_ => 'yes',
     context            => 20000,
   });
-  
+
   $self->get_node('ld_population')->remove;
 }
 
 sub init_population {
   my ($self, $parameters, $pop_name) = @_;
-  
+
   $self->set_parameters($parameters);
-  
+
   $self->{'_ld_population'} = [ $pop_name ];
-  
-  $self->get_node('text')->set('text', $pop_name);
+
+  $self->get_node('text')->set_data('text', $pop_name);
   $self->get_node($_)->remove for grep $_ ne 'ld_population', $self->_menus;
 }
 

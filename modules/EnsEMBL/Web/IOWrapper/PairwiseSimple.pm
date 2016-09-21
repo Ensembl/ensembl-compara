@@ -57,23 +57,6 @@ sub create_hash {
   $feature_2_end     -= $slice_start;
   return if $feature_2_end < 0 || $feature_1_start > $slice->length;
 
-  ## Set colour for feature
-  my $colour_params  = {
-                        'metadata'  => $metadata,
-                        };
-  my $score = $self->parser->get_score;
-  if ($score) {
-    if ($score =~ /\d+,\d+,\d+/) {
-      $metadata->{'itemRgb'}  = 'On';
-      $colour_params->{'rgb'} = $score;
-    }
-    else {
-      $metadata->{'useScore'}   = 1;
-      $colour_params->{'score'} = $score;
-    }
-  }
-  my $colour = $self->set_colour($colour_params);
-
   my $structure = [
                   {'start' => $feature_1_start, 'end' => $feature_1_end},
                   {'start' => $feature_2_start, 'end' => $feature_2_end},
@@ -86,13 +69,12 @@ sub create_hash {
                         'strand'      => 0,
                         });
 
+  my $score = $self->parser->get_score;
   my $direction = $self->parser->get_direction;
   my $feature = {
     'seq_region'    => $self->parser->get_seqname,
     'direction'     => $direction,
     'score'         => $score,
-    'colour'        => $colour, 
-    'join_colour'   => $metadata->{'join_colour'} || $colour,
     'structure'     => $structure,
     'extra'         => [{'name' => 'Direction', 'value' => $direction}],
   };
@@ -106,6 +88,33 @@ sub create_hash {
     $feature->{'href'}  = $href;
   }
   return $feature;
+}
+
+sub post_process {
+### Adjust colours based on score
+  my ($self, $data) = @_;
+  my $colour_params;
+
+  while (my ($key, $info) = each (%$data)) {
+    foreach my $f (@{$info->{'features'}}) {
+      $colour_params  = {'metadata'  => $info->{'metadata'}};
+      my $score = $f->{'score'};
+      next unless defined $score;
+
+      if ($score =~ /\d+,\d+,\d+/) {
+        $info->{'metadata'}{'itemRgb'}  = 'On';
+        $colour_params->{'rgb'} = $score;
+      }
+      else {
+        $info->{'metadata'}{'spectrum'}   = 'on';
+        $colour_params->{'score'} = $score;
+      }
+      my $colour = $self->set_colour($colour_params);
+
+      $f->{'colour'}      = $colour;
+      $f->{'join_colour'} = $info->{'metadata'}{'join_colour'} || $colour;
+    }
+  }
 }
 
 1;

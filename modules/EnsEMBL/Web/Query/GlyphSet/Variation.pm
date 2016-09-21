@@ -34,12 +34,6 @@ sub fixup {
   $self->fixup_location('start','slice',0);
   $self->fixup_location('end','slice',1);
   $self->fixup_slice('slice','species',20000);
-  $self->fixup_location('tag/*/start','slice',0);
-  $self->fixup_location('tag/*/end','slice',1);
-  $self->fixup_colour('tag/*/colour',undef,undef,'colour_type');
-  $self->fixup_colour('tag/*/label_colour','black',['label'],undef,1);
-  $self->fixup_href('tag/*/href');
-  $self->fixup_label_width('tag/*/label','end');
 
   # Fix class key (depends on depth)
   if($self->phase eq 'post_process') {
@@ -101,7 +95,7 @@ sub precache {
 }
 
 sub colour_key    { return lc $_[1]->display_consequence; }
-sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label and $label eq '-'; }
+sub text_overlay  { my $text = $_[1]->ambig_code; return $text unless $text and $text eq '-'; }
 
 sub href {
   my ($self,$f,$args) = @_;
@@ -122,46 +116,17 @@ sub href {
   };   
 }
 
-sub tag {
-  my ($self,$f,$args) = @_;
-  my $colour_key = $self->colour_key($f);
-  my $label      = $f->ambig_code;
-     $label      = '' if $label && $label eq '-';
-  my @tags;
+sub type {
+  my ($self, $f, $args) = @_;
+  my $type;
 
-  if (($args->{'config'}{'style'}||'') eq 'box') {
-    my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
-    push @tags, {
-      style        => $style,
-      colour       => $colour_key,
-      letter       => $style eq 'box' ? $label : '',
-      start        => $f->start
-    };
-  } else {
-    if (!$args->{'config'}{'no_label'}) {
-      my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
-      push @tags, {
-        style  => 'label',
-        label  => $label,
-        colour => $colour_key,
-        colour_type => ['tag',undef],
-        start  => $f->end,
-        end    => $f->end + 1,
-      };
-    }
-    if($f->start > $f->end) {
-      push @tags, {
-        style => 'insertion',
-        colour => $colour_key,
-        start => $f->start,
-        end => $f->end,
-        href => $self->href($f,$args)
-      };
-    }
+  if ($f->var_class eq 'insertion' || $f->var_class eq 'deletion') {
+    $type = $f->var_class; 
   }
 
-  return @tags;
+  return $type;
 }
+
 
 sub title {
   my ($self,$f,$args) = @_;
@@ -182,9 +147,9 @@ sub _plainify {
     start => $f->start,
     end => $f->end,
     colour_key => $self->colour_key($f),
-    tag => [$self->tag($f,$args)],
-    feature_label => $self->feature_label($f),
-    variation_name => $f->variation_name,
+    type => $self->type($f,$args),
+    label => $f->variation_name,
+    text_overlay => $self->text_overlay($f),
     href => $self->href($f,$args),
     title => $self->title($f,$args),
     dbID => $f->dbID, # used in ZMenu, yuk!
@@ -264,7 +229,7 @@ sub fetch_features {
       # Reset the flag for displaying of failed variations to its original state
       $vdb->include_failed_variations($orig_failed_flag);
     } else {
-      my @temp_variations = @{$slice->get_all_VariationFeatures(undef, undef, undef, $var_db) || []}; 
+      my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_SO_terms($slice) || []}; 
       
       ## Add a filtering step here
       # Make "most functional" snps appear first; filter by source/set

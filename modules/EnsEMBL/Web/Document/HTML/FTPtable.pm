@@ -133,6 +133,7 @@ sub render {
       bam     => $databases->{'DATABASE_RNASEQ'}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bamcov/%s/genebuild/">BAM/BigWig</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     };
+
   }
 
   my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });

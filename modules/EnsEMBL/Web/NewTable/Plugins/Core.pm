@@ -23,7 +23,7 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Core;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Tabular Paragraph Loading Types Ancient ServerEnum)]; }
+sub children { return [qw(Tabular Paragraph Loading Types Ancient ServerEnum Config Unshowable)]; }
 sub requires { return children(); }
 
 package EnsEMBL::Web::NewTable::Plugins::Tabular;
@@ -51,5 +51,15 @@ package EnsEMBL::Web::NewTable::Plugins::Ancient;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub js_plugin { return "newtable_ancient"; }
+
+package EnsEMBL::Web::NewTable::Plugins::Config;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "new_table_config"; }
+
+package EnsEMBL::Web::NewTable::Plugins::Unshowable;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "new_table_unshowable"; }
 
 1;

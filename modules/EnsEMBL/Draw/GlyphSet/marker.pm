@@ -69,7 +69,6 @@ sub get_data {
                                 priority => $self->my_config('priority'),
                                 marker_id => $self->my_config('marker_id')
                   });
-  ## No need to de-strand since it's unstranded data
   return [{'features' => $features}];
 }
 

@@ -190,8 +190,17 @@ div.redirect-message          { position: fixed; z-index: 999999999999; left: 0;
 div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
 div.redirect-message p a      { color: inherit; font-weight: bold; }
 
-/* cookie message */
-div.cookie-message          { background-color: [[MH_BG]]; border-radius: 10px; bottom: 20px; color: #fff; left: 20px; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
-div.cookie-message div      { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
-div.cookie-message p        { margin: 0; line-height: 30px; text-align: center; }
-div.cookie-message p a      { color: inherit; font-weight: bold; }
+/* cookie message and temporary message */
+div.cookie-message, div.tmp-message               { background-color: [[MH_BG]]; border-radius: 10px; color: #fff; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
+div.tmp-message                                   { max-height: 500px; margin-left: -170px; left: 50%; top: 200px; overflow: auto; }
+div.cookie-message, div.tmp-message.tm-left       { left: 20px; margin-left: 0; right: auto; }
+div.cookie-message, div.tmp-message.tm-bottom     { bottom: 20px; top: auto; }
+div.tmp-message.tm-top                            { bottom: auto; top: 20px; }
+div.tmp-message.tm-right                          { left: auto; margin-left: 0; right: 20px; }
+div.tmp-message.tm-left                           { left: 20px; margin-left: 0; }
+div.tmp-message.tm-warning                        { background-color: [[WARNING_BG]]; }
+div.tmp-message.tm-error                          { background-color: [[ERROR_BG]];   }
+div.tmp-message.tm-info                           { background-color: [[INFO_BG]]; color: #333; }
+div.cookie-message div,div.tmp-message div.close  { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
+div.cookie-message p, div.tmp-message p           { margin: 0; line-height: 30px; text-align: center; }
+div.cookie-message p a, div.tmp-message p a       { color: inherit; font-weight: bold; }

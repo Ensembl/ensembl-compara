@@ -26,11 +26,11 @@ use base qw(EnsEMBL::Web::Component::Export);
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $view_config = $hub->get_viewconfig('Export', $hub->function);
+  my $view_config = $hub->get_viewconfig({component => 'Export', type => $hub->function, cache => 1});
   
   $view_config->build_form($self->object);
   
-  my $form = $view_config->get_form;
+  my $form = $view_config->form;
   
   $form->set_attribute('method', 'post');
  

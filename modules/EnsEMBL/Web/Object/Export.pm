@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::Export;
 ### NAME: EnsEMBL::Web::Object::Export
 ### Wrapper around a dynamically generated Bio::EnsEMBL data object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 
 ### DESCRIPTION
@@ -234,7 +232,7 @@ sub modify_gene_options {
 sub params :lvalue {$_[0]->{'params'};  }
 sub string { return shift->output('string', @_); }
 sub html   { return shift->output('html',   @_); }
-sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 
 sub html_format { return $_[0]->hub->param('_format') ne "TextGz"; }
@@ -483,7 +481,7 @@ sub alignment {
   my $hub  = $self->hub;
   
   # Nasty hack to link export to the view config for alignments. Eww.
-  $hub->get_viewconfig('Compara_Alignments', $hub->type, 'cache');
+  $hub->get_viewconfig({component => 'Compara_Alignments', type => $hub->type, cache => 1});
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   

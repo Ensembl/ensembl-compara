@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::Location;
 ### NAME: EnsEMBL::Web::Object::Location
 ### Wrapper around a Bio::EnsEMBL::Slice object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 
@@ -1621,6 +1619,18 @@ sub sorted_marker_features {
     $a->[1] <=> $b->[1] || 
     $a->[2] <=> $b->[2] 
   } map [ $_->seq_region_name, $_->start, $_->end, $_ ], @marker_features;
+}
+
+## Allele/genotype colours
+sub get_allele_genotype_colours {
+  my $self = shift;
+
+  my %colours = ('A' => '<span style="color:green">A</span>',
+                 'C' => '<span style="color:blue">C</span>',
+                 'G' => '<span style="color:#ff9000">G</span>',
+                 'T' => '<span style="color:red">T</span>'
+                );
+  return \%colours;
 }
 
 1;

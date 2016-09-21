@@ -25,7 +25,7 @@ use SiteDefs;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBHub;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::Cache;
 
@@ -40,7 +40,7 @@ sub handler {
   $r->err_headers_out->{'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::Rss'};
   $r->custom_response(SERVER_ERROR, '/Crash');
 
-  my $hub     = EnsEMBL::Web::Hub->new;
+  my $hub     = EnsEMBL::Web::DBHub->new;
   my $species = $hub->species;
 
   my $release_id = $SiteDefs::ENSEMBL_VERSION;

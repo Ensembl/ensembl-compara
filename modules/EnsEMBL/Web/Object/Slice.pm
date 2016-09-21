@@ -22,8 +22,6 @@ package EnsEMBL::Web::Object::Slice;
 ### NAME: EnsEMBL::Web::Object::Slice
 ### Wrapper around a Bio::EnsEMBL::Slice object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 
@@ -35,7 +33,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
-use EnsEMBL::Web::Tree;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -116,7 +114,7 @@ sub getFakeMungedVariationFeatures {
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }
   my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);
@@ -261,7 +259,7 @@ sub filter_munged_snps {
     if ($needsource) {
       @filtered_snps =
  # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        grep { $sources->{$_->[2]->source->name} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
         @filtered_snps;
     }
  
@@ -355,7 +353,7 @@ sub get_cell_line_data {
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
     my $ic_cell_line = $cell_line;
-    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+    clean_id($ic_cell_line);
 
     foreach my $set (@sets) {
       if ($image_config) {

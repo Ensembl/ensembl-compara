@@ -44,6 +44,10 @@ sub page {
   return $self->{'page'}; 
 }
 
+sub content_type {
+  return 'text/html; charset=utf-8';
+}
+
 sub render {}
 
 1;

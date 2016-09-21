@@ -156,12 +156,12 @@ sub content_config {
     my $image_config = $hub->get_imageconfig($ic->{'code'});
     my $settings     = ref $ic->{'data'} eq 'HASH' ? $ic->{'data'} : eval $ic->{'data'} || {};
     
-    if ($image_config->multi_species) {
+    if ($image_config->get_parameter('multi_species')) {
       my $species_defs = $hub->species_defs;
       
       foreach my $species (keys %$settings) {
         my $label        = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
-           $image_config = $hub->get_imageconfig($ic->{'code'}, undef, $species);
+           $image_config = $hub->get_imageconfig({type => $ic->{'code'}, species => $species});
         
         while (my ($key, $data) = each %{$settings->{$species}}) {
           push @config, $self->image_config_description($image_config, $key, $data, $label);

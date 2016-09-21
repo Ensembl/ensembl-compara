@@ -2,11 +2,11 @@
 
 use strict;
 
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBHub;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
-my $hub          = new EnsEMBL::Web::Hub;
+my $hub          = EnsEMBL::Web::DBHub->new;
 my $SD           = $hub->species_defs;
 my $release_id   = $SD->ENSEMBL_VERSION;
 my $species_name = $ENV{'ENSEMBL_SPECIES'};

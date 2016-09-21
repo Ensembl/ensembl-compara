@@ -36,7 +36,7 @@ sub content {
     output   => 'gen_var'
   };
   
-  my $view_config = $hub->get_viewconfig('VariationTable', 'Transcript');
+  my $view_config = $hub->get_viewconfig({component => 'VariationTable', type => 'Transcript', cache => 1});
 
   foreach ($view_config->options) {
     my $option = $view_config->get($_);

@@ -23,8 +23,8 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Misc;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Export Search Columns Styles HelpTips)]; }
-sub requires { return [qw(Export Search Columns)]; }
+sub children { return [qw(Export Search Columns Styles HelpTips HelpTipHeader SortUI)]; }
+sub requires { return [qw(Export Search Columns HelpTipHeader SortUI)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::Export;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
@@ -64,5 +64,30 @@ package EnsEMBL::Web::NewTable::Plugins::HelpTips;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub js_plugin { return "newtable_helptip"; }
+
+package EnsEMBL::Web::NewTable::Plugins::HelpTipHeader;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "newtable_helptip_header"; }
+
+
+package EnsEMBL::Web::NewTable::Plugins::SortUI;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "newtable_sortui"; }
+
+package EnsEMBL::Web::NewTable::Plugins::Misc;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return 'newtable_diagonal'; }
+
+sub col_toggle_diagonal {
+  my ($self,$col) = @_;
+
+  $_[1]->set_heading('diagonal',1);
+  $_[1]->decorate('diagonal',5);
+  $self->config->add_keymeta("decorate/diagonal",$col,'*',{});
+}
+
 
 1;

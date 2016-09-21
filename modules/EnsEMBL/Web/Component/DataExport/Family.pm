@@ -32,7 +32,7 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $view_config  = $self->view_config;
 
   my $settings = {'Hidden' => ['align','fm']};
 

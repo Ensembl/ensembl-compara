@@ -180,9 +180,8 @@ sub cell_line_button {
   my $object      = $self->object || $self->hub->core_object('regulation');
   my $total_count = scalar @{$object->all_epigenomes};
 
-  my $url = $self->hub->url('Component', {
-    action   => 'Web',
-    function    => 'CellTypeSelector/ajax',
+  my $url = $self->hub->url('MultiSelector', {
+    action   => 'CellTypeSelector',
     image_config => $image_config,
   });
 
@@ -205,9 +204,8 @@ sub evidence_button {
 
   my $n = keys %$ev;
   my $m = grep { $_->{'on'} } values %$ev;
-  my $url = $self->hub->url('Component', {
-    action => 'Web',
-    function => 'EvidenceSelector/ajax',
+  my $url = $self->hub->url('MultiSelector', {
+    action => 'EvidenceSelector',
   });
   
   push @{$self->{'buttons'}||=[]},{
@@ -262,8 +260,12 @@ sub advanced_button {
   my @components = @{$hub->components};
 
   my $view_config;
-  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components;
+  while (!$view_config && scalar @components) {
+    my ($component, $type) =  @{shift @components};
+    $view_config = $hub->get_viewconfig({component => $component, type => $type});
+  }
   return unless $view_config;
+
   my $url     = $self->hub->url('Config', {
     type      => $view_config->type,
     action    => $view_config->component,

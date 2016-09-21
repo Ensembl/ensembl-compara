@@ -20,39 +20,44 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::generegview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 use List::MoreUtils qw(any);
 
-sub init {
-  my $self = shift; 
+sub init_cacheable {
+  ## @override
+  my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
-    sortable_tracks => 'drag',  # allow the user to reorder tracks
-    opt_lines       => 1,  # draw registry lines
+    image_resizeable  => 1,
+    sortable_tracks   => 'drag',  # allow the user to reorder tracks
+    opt_lines         => 1,  # draw registry lines
   });
 
   $self->create_menus(qw(
     transcript
     prediction
+    variation
     functional
     other
     information
   ));
 
   $self->load_tracks;
-  $self->image_resize = 1;
- 
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
-    display     => 'off',       
+
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
+    display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
-    colours     => $self->species_defs->colour('gene'), 
+    colours     => $self->species_defs->colour('gene'),
     label_key  => '[biotype]',
-    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'], 
+    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'],
     renderers   =>  [
       'off',                     'Off',
       'gene_nolabel',            'No exon structure without labels',
@@ -73,6 +78,10 @@ sub init {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
+  my $menu = $self->get_node('functional');
+  my $other_node = $self->get_node('functional_other_regulatory_regions');
+  $menu->insert_before($self->create_menu_node('functional_gene_expression','Gene Expression correlations'),$other_node);
+
   # Should really come from REST server.
   foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
@@ -81,7 +90,7 @@ sub init {
       Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
       The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660. DOI: 10.1126/science. PMID: 1262110.
     );
-    $self->add_track('functional_other_regulatory_regions',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
+    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',
@@ -89,7 +98,7 @@ sub init {
       description => $manplot_desc,
     });
   }
-  
+
   $self->add_tracks('other',
     [ 'ruler',     '',  'ruler',     { display => 'normal', strand => 'r', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '',  'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
@@ -98,27 +107,30 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'regbuild' ],
+    [ 'regbuild', 'variation_set_ph_variants' ],
     { display => 'normal' }
   );
-  
+
   $self->modify_configs(
     [ 'regulatory_features_core', 'regulatory_features_non_core' ],
     { display => 'off', menu => 'no' }
   );
- 
+
   # hack to stop zmenus having the URL ZMenu/Transcript/Regulation, since this causes a ZMenu::Regulation to be created instead of a ZMenu::Transcript
   $_->data->{'zmenu'} ||= 'x' for $self->get_node('transcript')->nodes;
-  
+
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'collapsed_label' }
   );
-  
+
   $self->modify_configs(
     [ 'regulatory_regions_funcgen_feature_set' ],
     { depth => 25, height => 6 }
   );
+
+  $_->remove for grep $_->id ne 'variation_set_ph_variants', grep $_->get_data('node_type') eq 'track', @{$self->tree->get_node('variation')->get_all_nodes}; #only showing one track for variation
+
 }
 
 1;

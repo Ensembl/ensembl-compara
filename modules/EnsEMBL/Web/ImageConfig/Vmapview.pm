@@ -20,11 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::Vmapview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::Vertical);
+use parent qw(EnsEMBL::Web::ImageConfig::Vertical);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     label        => 'above',
@@ -43,9 +47,9 @@ sub init {
   });
 
   $self->create_menus('other', 'user_data');
-  
+
   $self->get_node('other')->set('caption', 'Features');
-  
+
   $self->add_tracks('other',
     [ 'drag_left', '', 'Vdraggable', { display => 'normal', part => 0, menu => 'no' }],
     [ 'Videogram', 'Ideogram', 'Videogram', {
@@ -111,7 +115,7 @@ sub init {
        colourset  => 'densities',
        keys       => [ 'percentgc', 'percentagerepeat' ],
        renderers  => [
-         'off',           'Off', 
+         'off',           'Off',
          'density_mixed', 'Histogram and line'
        ],
       'hide_empty'=> 1,
@@ -123,16 +127,25 @@ sub init {
        maxmin     => 1,
        keys       => [ 'snpdensity' ],
        renderers  => [
-         'off',             'Off', 
-         'density_line',    'Line graph', 
+         'off',             'Off',
+         'density_line',    'Line graph',
          'density_bar',     'Bar chart - filled',
          'density_outline', 'Bar chart - outline',
        ],
      }] : (),
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
-  
-  $self->{'extra_menus'} = {};
+
+  $self->remove_extra_menu;
+}
+
+sub init_non_cacheable {
+  ## @override
+  my $self = shift;
+
+  # Add user defined data sources
+  $self->load_user_tracks;
+  $self->display_threshold_message;
 }
 
 1;

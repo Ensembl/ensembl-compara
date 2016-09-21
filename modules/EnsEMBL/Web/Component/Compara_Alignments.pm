@@ -79,7 +79,7 @@ sub content {
     );
   }
   
-  $slice = $slice->invert if ($hub->param('strand') && $hub->param('strand') == -1);
+  $slice = $slice->invert if ($self->param('strand') && $self->param('strand') == -1);
 
   my $align_blocks;
   my $num_groups = 0;
@@ -154,7 +154,7 @@ sub content {
   if ($hub->param('export')) {
     return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
   }
-  elsif ($align && $slice_length && $slice_length >= $hub->param('display_width')) {
+  elsif ($align && $slice_length && $slice_length >= $self->param('display_width')) {
     # Display show/hide full text alignment button if slice_length > display_width (currently 120bp)
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
@@ -173,12 +173,12 @@ sub content {
     my $view_all_button = sprintf qq{<div class="display_full_message_div"> <a data-total-length="%s" data-chunk-length="%s" data-display-width="%s">Display full alignment</a></div><br />}, 
                           $slice_length, 
                           $subslice_length,
-                          $hub->param('display_width');
+                          $self->param('display_width');
 
     my $info = [{
       severity => 'info',
       title => 'Alignment',
-      message => 'Currently showing the alignment for first '. $hub->param('display_width') .' columns only. To display the full alignment, please click the button below.' . $view_all_button
+      message => 'Currently showing the alignment for first '. $self->param('display_width') .' columns only. To display the full alignment, please click the button below.' . $view_all_button
     }];
 
     ($alert_box, $error) = $self->show_warnings($info);
@@ -219,7 +219,7 @@ sub _get_sequence {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object($hub->param('data_type'));
      $slice      ||= $object->slice;
-     $slice        = $slice->invert if !$_[0] && $hub->param('strand') && $hub->param('strand') == -1;
+     $slice        = $slice->invert if !$_[0] && $self->param('strand') && $self->param('strand') == -1;
   my $species_defs = $hub->species_defs;
   my $start        = $hub->param('subslice_start');
   my $end          = $hub->param('subslice_end');
@@ -230,7 +230,7 @@ sub _get_sequence {
   my $vc = $self->view_config($type);
 
   my $config = {
-    display_width   => $hub->param('display_width') || $vc->get('display_width'),
+    display_width   => $self->param('display_width'),
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
     display_species => $species_defs->SPECIES_COMMON_NAME,
@@ -242,7 +242,7 @@ sub _get_sequence {
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
-    my $param = $hub->param($_) || $vc->get($_);
+    my $param = $self->param($_);
     $config->{$_} = $param;
   }
   
@@ -310,7 +310,7 @@ sub draw_tree {
   my $image_config    = $hub->get_imageconfig('speciestreeview');
 
   my $image_width     = $self->image_width || 800;
-  my $colouring       = $hub->param('colouring') || 'background';
+  my $colouring       = $self->param('colouring') || 'background';
   my $species         = $hub->species;
   my $species_name    = $hub->species_defs->get_config(ucfirst($species), 'SPECIES_SCIENTIFIC_NAME');
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
@@ -372,7 +372,7 @@ sub draw_tree {
     foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
-      my $node_name = $genomic_align_group->genome_db->name;
+      my $node_name = $hub->species_defs->production_name_mapping($genomic_align_group->genome_db->name);
       next if $slice_ok{$node_name};
       $this_node->disavow_parent;
       $restricted_tree = $restricted_tree->minimize_tree;
@@ -513,7 +513,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
+    $other_species = $hub->species_defs->production_name_mapping($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -590,7 +590,7 @@ sub _get_target_slice_table {
     if ($other_species) {
       $other_string = $non_ref_ga->dnafrag->name.":".$non_ref_start."-".$non_ref_end;
       $other_link = $hub->url({
-                                   species => $non_ref_ga->genome_db->name,
+                                   species => $hub->species_defs->production_name_mapping($non_ref_ga->genome_db->name),
                                    type   => 'Location',
                                    action => 'View',
                                    r      => $other_string,

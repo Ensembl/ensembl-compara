@@ -221,10 +221,9 @@ sub upload {
         my $user    = $hub->user;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
-        my $format  = $self->get_format || $hub->param('format');
+        my $format  = $self->get_format || lc $hub->param('format');
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
-        $inputs{'format'}    = $format if $format;
         my $species = $hub->param('species') || $hub->species;
 
         ## Extra renderers for fancy formats
@@ -263,10 +262,10 @@ sub upload {
           $data = $user->add_to_uploads($record);
         }
         else {
-          $data = $session->add_data(%$record);
+          $data = $session->set_record_data($record);
         }
 
-        $session->configure_user_data('upload', $data);
+        $hub->configure_user_data('upload', $data);
         ## Store the session code so we can access it later
         $self->{'code'} = $code;
       }

@@ -21,8 +21,8 @@ package EnsEMBL::Web::Document::Element;
 
 use strict;
 
+use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -33,8 +33,10 @@ sub new {
   return $self;
 }
 
+sub shared { return $_[0]->{'shared'}; }
 sub renderer :lvalue { $_[0]->{'renderer'};                                                         }
 sub hub              { return $_[0]->{'hub'};                                                       }
+sub dom              { return $_[0]->{'dom'} ||= EnsEMBL::Web::DOM->new                             }
 sub species_defs     { return $_[0]->hub->species_defs;                                             }
 sub home_url         { return $_[0]->{'home_url'} ||= $_[0]->species_defs->ENSEMBL_WEB_ROOT || '/'; }
 sub printf           { my $self = shift; $self->renderer->printf(@_) if $self->renderer;            }

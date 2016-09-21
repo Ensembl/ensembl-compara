@@ -51,7 +51,7 @@ sub process {
 
   ## Save size parameters (because we reset format in next block)
   my $resize = $hub->param('image_format') ? $hub->param('resize') : $presets->{$hub->param('format')}{'size'};
-  my $current_width = $ENV{'ENSEMBL_IMAGE_WIDTH'};
+  my $current_width = $hub->image_width;
 
   ## Reset parameters to something that the image component will understand
   $hub->param('format', $format);
@@ -68,7 +68,7 @@ sub process {
   my $controller;
 
   # another terrible hack to deal with the stupid caching mechanism of view config object in hub->viewcofig and use it for hub->param calls!
-  $hub->get_viewconfig($component->id, $hub->param('data_type'), 'cache') if $hub->param('data_type');
+  $hub->get_viewconfig({component => $component->id, type => $hub->param('data_type'), cache => 1}) if $hub->param('data_type');
 
   if ($error) {
     warn ">>> ERROR CREATING COMPONENT: $error";

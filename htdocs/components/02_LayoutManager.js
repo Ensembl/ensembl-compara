@@ -61,26 +61,23 @@ Ensembl.LayoutManager.extend({
     }).on('click', 'a[rel="external"]', function () { 
       this.target = '_blank';
     }).on('click', 'a.update_panel', function () {
-      var panelId = this.rel;
-      var url     = Ensembl.updateURL({ update_panel: 1 }, this.href);
- 
-      if (Ensembl.PanelManager.panels[panelId] && this.href.split('?')[0].match(Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0])) {
+      var panelId     = this.rel;
+      var linkedPanel = Ensembl.PanelManager.panels[panelId];
+
+      if (linkedPanel) {
         var params = {};
-        
-        if (!$('.update_url', this).add($(this).siblings('.update_url')).each(function () { params[this.name] = this.value; }).length) {
-          params = undefined;
+        if ($(this).find('.update_url').each(function () { params[this.name] = this.value; }).length) {
+          Ensembl.updateURL(params);
         }
-        
-        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, url, null, { updateURL: this.href }, params);
+
+        params['update_panel'] = 1;
+
+        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, Ensembl.updateURL(params, linkedPanel.params.updateURL));
+
       } else {
-        $.ajax({
-          url: url,
-          success: function () {
-            Ensembl.EventManager.triggerSpecific('updatePanel', panelId);
-          }
-        });
+        console.log('Missing panel: ' + panelId);
       }
-      
+
       return false;
     }).on('submit', 'form.update_panel', function (e) {
       var params    = $(this).serializeArray();
@@ -133,8 +130,7 @@ Ensembl.LayoutManager.extend({
           if (Ensembl.dynamicWidth) {
             Ensembl.setWidth(undefined, true);
           }
-          
-          Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	
+
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {
@@ -149,6 +145,7 @@ Ensembl.LayoutManager.extend({
 
     this.showMobileMessage();
     this.showCookieMessage();
+    this.showTemporaryMessage();
     this.showMirrorMessage();
   },
   
@@ -301,6 +298,35 @@ Ensembl.LayoutManager.extend({
           Ensembl.cookie.set('cookies_ok', 'yes');
           $(this).parents('div').first().fadeOut(200);
       }).filter('div').helptip({content:"Don't show this again"});
+      return true;
+    }
+
+    return false;
+  },
+
+  showTemporaryMessage: function() {
+    var messageSeen = Ensembl.cookie.get('tmp_message_ok');
+    var messageDiv  = $('#tmp_message').remove();
+    var message     = messageDiv.children('div').text();
+    var messageMD5  = messageDiv.children('input[name=md5]').val();
+    var messageCol  = messageDiv.children('input[name=colour]').val();
+    var expiryHours = parseInt(messageDiv.children('input[name=expiry]').val()) || 24;
+    var position    = (messageDiv.children('input[name=position]').val() || '').split(/\s+/);
+
+    if (message && (!messageSeen || messageSeen !== messageMD5)) {
+      $(['<div class="tmp-message hidden ' + $.makeArray($.map($.merge([messageCol], position), function(v) { return v ? 'tm-' + v : null; })).join(' ') + '">',
+        '<div>' + message + '</div>',
+        '<p><button>Close</button></p>',
+        '</div>'
+      ].join(''))
+        .appendTo(document.body).show().find('button').on('click', {
+          cookieValue: messageMD5,
+          cookieExpiry: new Date(new Date().getTime() + expiryHours * 60 * 60 * 1000).toUTCString()
+        }, function (e) {
+          e.preventDefault();
+          Ensembl.cookie.set('tmp_message_ok', e.data.cookieValue, e.data.cookieExpiry);
+          $(this).parents('div').first().fadeOut(200);
+      });
       return true;
     }
 

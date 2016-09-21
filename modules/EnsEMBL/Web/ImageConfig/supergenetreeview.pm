@@ -20,14 +20,22 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::supergenetreeview;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_extra_menus {
+  shift->remove_extra_menu('display_option');
+}
+
+sub init_cacheable {
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    show_labels => 'no',
+    storable    => 0,
+    no_labels   => 1,
     bgcolor     => 'background1',
     bgcolour1   => 'background1',
     bgcolour2   => 'background1',
@@ -38,9 +46,7 @@ sub init {
   $self->add_tracks('other',
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r', menu => 'no' }],
   );
-  
-  $self->storable = 0;
-  $self->{extra_menus} = {'display_options' => 0};
+
 }
 
 1;

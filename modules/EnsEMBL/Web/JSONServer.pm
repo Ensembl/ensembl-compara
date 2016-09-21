@@ -39,10 +39,10 @@ sub object {
   my $builder = $self->controller->builder;
   my $type    = $self->object_type;
 
-  if (!$builder->all_objects->{$type}) {
+  if (!$builder->object($type)) {
     $builder->create_objects($type);
   }
-  return $builder->all_objects->{$type} ||  $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
+  return $builder->object($type) ||  $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
 }
 
 sub object_type :Abstract {

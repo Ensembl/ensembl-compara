@@ -52,7 +52,7 @@ sub content {
   my $identity_title = '% identity'.(!$is_ncrna ? " ($seq)" : '');
 
   my $homologies = $self->get_homologies($cdb);
- 
+
   # Remove the homologies with hidden species
   foreach my $homology (@{$homologies}) {
 
@@ -73,7 +73,7 @@ sub content {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
 
-        my $member_species = ucfirst $peptide->genome_db->name;
+        my $member_species = $species_defs->production_name_mapping($peptide->genome_db->name);
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
        
         if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
@@ -174,7 +174,7 @@ sub get_homologies {
   my $homologies;
   my $ok_homologies = [];
   my $action        = $hub->param('data_action') || $hub->action;
-  my $homology_method_link = $action eq 'Compara_Ortholog' ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
+  my $homology_method_link = $action =~ /Compara_Ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
 
   eval {
     $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);

@@ -96,7 +96,7 @@ sub get_OntologyTerms{
   return undef unless defined $p;
 
   my $ontology_accessions = $p->ontology_accessions();
-  my $adaptor = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  my $adaptor = $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
   my @ot;
   foreach my $oa (@{$ontology_accessions}){

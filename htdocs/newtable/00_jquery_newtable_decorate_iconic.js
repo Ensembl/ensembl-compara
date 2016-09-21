@@ -75,7 +75,7 @@
     var decorators = {};
     var paints = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "iconic") {
+      if(cc.decorate && $.inArray("iconic",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
         paints[key] = [paint_fn];
       }

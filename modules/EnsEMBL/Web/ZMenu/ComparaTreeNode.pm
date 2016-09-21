@@ -62,7 +62,7 @@ sub content {
     $node->{_sub_leaves_count} = scalar(@$members);
     my $link_gene = $members->[0];
     foreach my $g (@$members) {
-      $link_gene = $g if (lc $g->genome_db->name) eq (lc $hub->species);
+      $link_gene = $g if (lc $hub->species_defs->production_name_mapping($g->genome_db->name)) eq (lc $hub->species);
     }
     $node->{_sub_reference_gene} = $link_gene->gene_member;
   }
@@ -122,8 +122,6 @@ sub content {
     order => 13
   }); 
   
-  my $action = 'Web/ComparaTree';
-
   if (not $is_supertree) {
 
   # Expand all nodes
@@ -138,7 +136,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 8,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $self->build_link('Component', $hub->type, $action, $collapse)
+      link          => '#'
     });
   }
 
@@ -154,7 +152,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 10,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $self->build_link('Component', $hub->type, $action, $collapse)
+      link          => '#'
     });
   }
   
@@ -176,7 +174,7 @@ sub content {
         label => 'Switch to that tree',
         order => 11,
         link  => $hub->url({
-          species  => $link_gene->genome_db->name,
+          species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
           type     => 'Gene',
           action   => 'Compara_Tree',
           __clear  => 1,
@@ -207,7 +205,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 11,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $self->build_link('Component', $hub->type, $action, $collapse)
+        link          => '#'
       }); 
     }
   } else {
@@ -290,7 +288,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 7,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $self->build_link('Component', $hub->type, $action, $collapse)
+        link          => '#'
       });
     } else {
       my $collapse = join ',', $node_id, keys %collapsed_ids;
@@ -302,7 +300,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 9,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $self->build_link('Component', $hub->type, $action, $collapse)
+        link          => '#'
       });
     }
     
@@ -318,11 +316,11 @@ sub content {
         # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
         # There should be a way of retrieving this name correctly instead.
         if ($s == 0) {
-          $url_params->{'species'} = ucfirst $_->genome_db->name;
+          $url_params->{'species'} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{'g'} = $gene;
         } 
         else {
-          $url_params->{"s$s"} = ucfirst $_->genome_db->name;
+          $url_params->{"s$s"} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{"g$s"} = $gene;
         }
         $s++;
@@ -421,23 +419,12 @@ sub content {
     # Wasabi Tree Link
     $self->add_entry({
       type       => 'View sub-tree',
-      label      => $link ? 'View in Wasabi' : 'Not available' ,
+      label      => $link ? 'Wasabi viewer' : 'Not available' ,
       link_class => 'popup',
       order      => 16,
       link       => $link || ''
     });
   }
-}
-
-
-sub build_link{
-  my ($self, $component, $type, $action, $collapse) = @_;
-    
-  return $self->hub->url($component, {
-     type     => $type,
-     action   => $action,
-     collapse => $collapse 
-  });
 }
 
 1;

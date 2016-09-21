@@ -20,41 +20,45 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::gene_variation;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
+
+  $self->SUPER::init_cacheable(@_);
+
   my %colours;
   $colours{$_} = $self->species_defs->colour($_) for qw(variation haplotype);
-  
+
   $self->set_parameters({
-    label_width      => 100,        # width of labels on left-hand side
-    opt_halfheight   => 0,          # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,          # include empty tracks
-    colours          => \%colours,  # colour maps
+    image_resizeable  => 1,
+    label_width       => 100,        # width of labels on left-hand side
+    opt_halfheight    => 0,          # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,          # include empty tracks
+    colours           => \%colours,  # colour maps
   });
-  
+
   $self->create_menus(qw(
     transcript
-    variation 
-    somatic 
+    variation
+    somatic
     gsv_transcript
-    other 
+    other
     gsv_domain
   ));
-  
+
   $self->load_tracks;
-  $self->image_resize = 1;
-  
-  $self->get_node('transcript')->set('caption', 'Other genes');
-  
+
+  $self->get_node('transcript')->set_data('caption', 'Other genes');
+
   $self->modify_configs(
     [ 'variation', 'somatic', 'gsv_transcript', 'other' ],
     { menu => 'no' }
   );
-  
+
   if ($self->{'code'} ne $self->{'type'}) {
     my $func = "init_$self->{'code'}";
     $self->$func if $self->can($func);
@@ -63,16 +67,16 @@ sub init {
 
 sub init_gene {
   my $self = shift;
-  
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
-    display     => 'off',       
+
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
+    display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
-    colours     => $self->species_defs->colour('gene'), 
+    colours     => $self->species_defs->colour('gene'),
     label_key  => '[biotype]',
-    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'], 
+    logic_names => ['proj_ensembl',  'proj_ncrna', 'proj_havana_ig_gene', 'havana_ig_gene', 'ensembl_havana_ig_gene', 'proj_ensembl_havana_lincrna', 'proj_havana', 'ensembl', 'mt_genbank_import', 'ensembl_havana_lincrna', 'proj_ensembl_havana_ig_gene', 'ncrna', 'assembly_patch_ensembl', 'ensembl_havana_gene', 'ensembl_lincrna', 'proj_ensembl_havana_gene', 'havana'],
     renderers   =>  [
       'off',                     'Off',
       'gene_nolabel',            'No exon structure without labels',
@@ -84,20 +88,20 @@ sub init_gene {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
-  
+
   $self->add_tracks('variation',
     [ 'snp_join',         '', 'snp_join',         { display => 'on',     strand => 'b', menu => 'no', tag => 0, colours => $self->get_parameter('colours')->{'variation'} }],
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'b', menu => 'no', tag => 0, colours => 'bisque', src => 'all'                         }]
   );
-  
+
   $self->add_tracks('other',
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'f', menu => 'no'               }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'f', menu => 'no', notext => 1  }],
     [ 'spacer',   '', 'spacer',   { display => 'normal', strand => 'r', menu => 'no', height => 52 }],
   );
-  
+
   $self->get_node('gsv_domain')->remove;
-  
+
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'compact', strand => 'f' }
@@ -111,60 +115,55 @@ sub init_gene {
 
 sub init_transcripts_top {
   my $self = shift;
-  
+
   $self->add_tracks('other',
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'f', menu => 'no', tag => 1, colours => 'bisque', src => 'all'                                        }],
     [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'f', menu => 'no', tag => 1, colours => $self->get_parameter('colours')->{'variation'}, context => 50 }],
   );
-  
+
   $self->get_node($_)->remove for qw(gsv_domain transcript);
 }
 
 sub init_transcript {
   my $self = shift;
-  
+
   $self->add_tracks('other',
     [ 'gsv_variations', '', 'gsv_variations', { display => 'on',     strand => 'r', menu => 'no', colours => $self->get_parameter('colours')->{'variation'} }],
     [ 'spacer',         '', 'spacer',         { display => 'normal', strand => 'r', menu => 'no', height => 10,                                             }],
   );
-  
+
   $self->get_node('transcript')->remove;
-  
-  $self->modify_configs(
-    [ 'gsv_variations' ],
-    { display => 'box' }
-  );
 }
 
 sub init_transcripts_bottom {
   my $self = shift;
-  
+
   $self->add_tracks('other',
     [ 'geneexon_bgtrack', '', 'geneexon_bgtrack', { display => 'normal', strand => 'r', menu => 'no', tag => 1, colours => 'bisque', src => 'all'                                        }],
     [ 'snp_join',         '', 'snp_join',         { display => 'normal', strand => 'r', menu => 'no', tag => 1, colours => $self->get_parameter('colours')->{'variation'}, context => 50 }],
     [ 'ruler',            '', 'ruler',            { display => 'normal', strand => 'r', menu => 'no', notext => 1, name => 'Ruler'                                                       }],
     [ 'spacer',           '', 'spacer',           { display => 'normal', strand => 'r', menu => 'no', height => 50,                                                                      }],
   );
-  
+
   $self->get_node($_)->remove for qw(gsv_domain transcript);
 }
 
 sub init_snps {
   my $self= shift;
-  
+
   $self->set_parameters({
     bgcolor   => 'background1',
     bgcolour1 => 'background3',
     bgcolour2 => 'background1'
   });
-  
+
   $self->add_tracks('other',
     [ 'snp_fake',             '', 'snp_fake',             { display => 'on',  strand => 'f', colours => $self->get_parameter('colours')->{'variation'}, tag => 2                                    }],
     [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variant Legend'                                                              }],
     [ 'snp_fake_haplotype',   '', 'snp_fake_haplotype',   { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}                                              }],
     [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}, caption => 'Haplotype legend', src => 'all' }],
   );
-  
+
   $self->get_node($_)->remove for qw(gsv_domain transcript);
 }
 

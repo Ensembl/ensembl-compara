@@ -82,7 +82,7 @@ sub process {
     ($component, $error) = $self->object->create_component;
 
     # Override the options saved in viewconfig by the one selected by the user in the form (these settings are not saved to session since we don't call session->store afterwards)
-    my $view_config = $hub->param('data_type') ? $hub->get_viewconfig($component->id, $hub->param('data_type'), 'cache') : undef;
+    my $view_config = $hub->param('data_type') ? $hub->get_viewconfig({component => $component->id, type => $hub->param('data_type'), cache => 1}) : undef;
     for ($view_config ? $view_config->field_order : ()) {
       $view_config->set($_, $hub->param(sprintf '%s_%s', $_, $format) || 'off');
     }

@@ -30,14 +30,14 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
   require EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-  require EnsEMBL::Web::Hub;  
+  require EnsEMBL::Web::DBHub;
 }
 
 my $nodelete = 0;
 GetOptions ('nodelete' => \$nodelete);
 
-my $hub = new EnsEMBL::Web::Hub;
-my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
+my $hub = EnsEMBL::Web::DBHub->new;
+my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
 my $sd  = $hub->species_defs;
 my $sth;
 

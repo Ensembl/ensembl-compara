@@ -74,7 +74,7 @@ sub init {
   
   $self->init_species_list($hub);
   
-  foreach (@{$builder->ordered_objects}) {
+  foreach (@{$hub->ordered_objects}) {
     my $o = $builder->object($_);
     push @data, { type => $_, action => $o->default_action, caption => $o->short_caption('global'), dropdown => !!($self->{'history'}{lc $_} || $self->{'bookmarks'}{lc $_} || $_ eq 'Location') } if $o;
   }
@@ -105,6 +105,7 @@ sub init_species_list {
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
     map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
+    grep !$species_defs->get_config($_, 'SPECIES_STRAIN'), 
     $species_defs->valid_species
   ];
   

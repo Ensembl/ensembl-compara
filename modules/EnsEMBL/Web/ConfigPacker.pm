@@ -108,6 +108,7 @@ sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
   $self->_munge_file_formats;
+  $self->_munge_species_url_map;
 }
 
 # Implemented in plugins
@@ -846,28 +847,28 @@ sub _summarise_funcgen_db {
 
   ## Methylation tracks - now in files
   my $m_aref = $dbh->selectall_arrayref(qq(
-      select 
-        eff.name,
-        a.display_label,
-        a.description,
-        epigenome.name,
-        g.name
-      from external_feature_file eff
-        join analysis_description a using (analysis_id)
-        join epigenome using (epigenome_id)
-        join feature_type using (feature_type_id)
-        join experiment using (epigenome_id)
-        join experimental_group g using (experimental_group_id)
+        select 
+          eff.name, 
+          a.description, 
+          epigenome.name, 
+          g.name 
+        from external_feature_file eff 
+          join analysis_description a on (a.analysis_id = eff.analysis_id) 
+          join feature_type ft using (feature_type_id) 
+          join epigenome using (epigenome_id) 
+          join experiment using (experiment_id) 
+          join experimental_group g using (experimental_group_id) 
+        where ft.name = '5mC';
     )
   );
- foreach (@$m_aref) {
-    my ($id, $a_name, $a_desc, $c_desc, $group) = @$_;
 
-    my $name = "$c_desc $a_name";
-    $name .= " $group" if $group;
-    my $desc = "$c_desc cell line: $a_desc";
-    $desc .= " ($group group)." if $group;    
-    $self->db_details($db_name)->{'tables'}{'methylation'}{$id} = {
+  foreach (@$m_aref) {
+    my ($name, $description, $epigenome, $group) = @$_;
+
+    my $id   = sprintf('%s_%s', $epigenome, $group);
+    my $desc = "$epigenome cell line: $description";
+    $desc .= " ($group group)." if $group;
+    $self->db_details($db_name)->{'tables'}{'methylation'}{$name} = {
                                                                     name        => $name,
                                                                     description => $desc,
                                                                   };
@@ -1565,7 +1566,7 @@ sub _munge_meta {
     provider.url                  PROVIDER_URL
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
-    species.sql_name              SYSTEM_NAME
+    species.strain_collection     STRAIN_COLLECTION
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
@@ -1609,13 +1610,13 @@ sub _munge_meta {
       $self->tree->{$species}{$key} = $value;
     }
 
-
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
     
     if ($taxonomy && scalar(@$taxonomy)) {
       my %valid_taxa = map {$_ => 1} @{ $self->tree->{'TAXON_ORDER'} };
       my @matched_groups = grep {$valid_taxa{$_}} @$taxonomy;
+      $self->tree->{$species}{'TAXONOMY'} = $taxonomy;
       $self->tree->{$species}{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
       $self->tree->{$species}{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
     }
@@ -1635,7 +1636,6 @@ sub _munge_meta {
     } else {
       $self->tree->{'DB_SPECIES'} = [ $species ];
     }
-
     
     $self->tree->{$species}{'SPECIES_META_ID'} = $species_id;
 
@@ -1683,6 +1683,7 @@ sub _munge_meta {
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
   }
+
 }
 
 sub _munge_variation {
@@ -1776,6 +1777,33 @@ sub _munge_file_formats {
   $self->tree->{'UPLOAD_FILE_FORMATS'} = \@upload;
   $self->tree->{'REMOTE_FILE_FORMATS'} = \@remote;
   $self->tree->{'DATA_FORMAT_INFO'} = \%formats;
+}
+
+sub _munge_species_url_map {
+  ## Used by apache handler to redirect requests to correct URLs for species
+  my $self        = shift;
+  my $multi_tree  = $self->full_tree->{'MULTI'};
+
+  return if $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'};
+
+  my $aliases = $multi_tree->{'SPECIES_ALIASES'} || {};
+
+  if (!keys %$aliases) {
+    warn "SPECIES_ALIASES has not been populated. This will not redirect aliases to correct species URLs.\n";
+    return;
+  }
+
+  my %species_map = (
+    %$aliases,
+    common        => 'common',
+    multi         => 'Multi',
+    perl          => $SiteDefs::ENSEMBL_PRIMARY_SPECIES,
+    map { lc($_)  => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %$SiteDefs::ENSEMBL_SPECIES_ALIASES
+  );
+
+  $species_map{lc $_} = $_ for values %species_map; # lower case species urls to the correct name
+
+  $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
 }
 
 1;

@@ -52,19 +52,32 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
+  ## Redirect strains to the strain page for the parent species as long as we're not on the parent species
+  if ($species_defs->STRAIN_COLLECTION && $species_defs->SPECIES_STRAIN !~ /reference/) {
+    my $url = $self->hub->url({'species' => $species_defs->STRAIN_COLLECTION, 'action' => 'Strains'});
+    $self->page->ajax_redirect($url, 'page');
+  }
+
   my $index = $self->create_node('Index', '', [qw(homepage EnsEMBL::Web::Component::Info::HomePage)], {});
 
   $self->create_node('Annotation', '',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]
   );
 
-  $index->append($self->create_subnode('Error', 'Unknown error',
+  my $has_strains = $species_defs->ALL_STRAINS;
+  if ($has_strains) {
+    $self->create_node('Strains', '',
+      [qw(blurb EnsEMBL::Web::Component::Info::Strains)]
+    );
+  }
+
+  $index->append_child($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { no_menu_entry => 1, }
   ));
   
   foreach (keys %error_messages) {
-    $index->append($self->create_subnode("Error/$_", "Error $_",
+    $index->append_child($self->create_subnode("Error/$_", "Error $_",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
       { no_menu_entry => 1 }
     ));
@@ -79,11 +92,11 @@ sub populate_tree {
 
   my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
   
-  $stats_menu->append($self->create_node('StatsTable', 'Assembly and Genebuild',
+  $stats_menu->append_child($self->create_node('StatsTable', 'Assembly and Genebuild',
     [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)]
   ));
   
-  $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
+  $stats_menu->append_child($self->create_node('IPtop500', 'Top 500 InterPro hits',
     [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
   ));
   $self->create_node('WhatsNew', '',

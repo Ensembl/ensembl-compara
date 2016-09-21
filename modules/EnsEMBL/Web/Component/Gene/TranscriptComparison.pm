@@ -34,10 +34,10 @@ sub _init { $_[0]->SUPER::_init(100); }
 sub initialize_new {
   my ($self, $start, $end) = @_;
   my $hub         = $self->hub;
-  my @consequence = $hub->param('consequence_filter');
+  my @consequence = $self->param('consequence_filter');
   
   my $config = {
-    display_width   => $hub->param('display_width') || 60,
+    display_width   => $self->param('display_width') || 60,
     species         => $hub->species,
     comparison      => 1,
     exon_display    => 1,
@@ -50,7 +50,7 @@ sub initialize_new {
   my $adorn = $hub->param('adorn') || 'none';
 
   for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps)) {
-    $config->{$_} = $hub->param($_) unless ($hub->param($_) eq 'off' || $vc->get($_) eq 'off');
+    $config->{$_} = $self->param($_) unless ($self->param($_) eq 'off');
   }
   
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
@@ -143,7 +143,7 @@ sub export_options {
 sub initialize_export_new {
   my $self = shift;
   my $hub  = $self->hub;
-  my $vc = $hub->get_viewconfig('TranscriptComparison', 'Gene');
+  my $vc = $hub->get_viewconfig({component => 'TranscriptComparison', type => 'Gene', cache => 1});
   my @params = qw(sscon snp_display flanking line_numbering);
   foreach (@params) {
     $hub->param($_, $vc->get($_));
@@ -184,7 +184,7 @@ sub get_sequence_data {
  
   push @{$config->{'slices'}}, { slice => $slice, name => $gene_name || $gene->stable_id, type => 'gene' };
   foreach my $transcript (map $_->[1], sort { $a->[0] <=> $b->[0] } @transcripts) {
-    my $transcript_id   = $transcript->stable_id;
+    my $transcript_id   = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $transcript_name = $transcript->external_name || $transcript_id;
        $transcript_name = $transcript_id if $transcript_name eq $gene_name;
     push @{$config->{'slices'}}, {

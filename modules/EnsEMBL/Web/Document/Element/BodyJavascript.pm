@@ -44,6 +44,7 @@ sub init {
 sub content {
   my $self = shift;
 
+  return '' if $self->shared->{'sent_js'};
   return join '',
     map(sprintf(qq(<script type="text/javascript" src="%s%s"></script>\n), $self->static_server, $_), @{$self->{'_sources'} || []}),
     map(sprintf(qq(<script type="text/javascript">%s</script>), $_), @{$self->{'_inline'} || []});

@@ -38,7 +38,7 @@ sub draw_glyphs {
   my $all_matches  = shift;
   my $wuc          = $self->{'config'};
   my $h            = 8; #height of glyph
-  my $pix_per_bp   = $wuc->transform->{'scalex'};
+  my $pix_per_bp   = $wuc->transform_object->scalex;
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my($font_w_bp, $font_h_bp) = $wuc->texthelper->px2bp($fontname);
   my $length       = $wuc->container_width(); 
@@ -218,6 +218,7 @@ sub draw_glyphs {
         'id'          => $hit_name,
         'hit_length'  => $block->{'hit_length'},
         'exon'        => $exon->stable_id,
+        't_version'   => $wuc->cache('trans_object')->{'transcript'}->version ? $wuc->cache('trans_object')->{'transcript'}->version : "",
         'exon_length' => $block->{'exon_length'},
       };
       if ($hit_details->{'evidence_removed'}) {

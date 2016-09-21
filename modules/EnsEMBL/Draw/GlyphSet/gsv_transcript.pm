@@ -40,7 +40,7 @@ sub render_normal {
   my @transcripts      = $config->{'transcripts'}; 
   my $y                = 0;
   my $h                = 8; # Single transcript mode - set height to 30 - width to 8
-  my $pix_per_bp       = $config->transform->{'scalex'};
+  my $pix_per_bp       = $config->transform_object->scalex;
   my $bitmap_length    = $config->image_width;
   my $length           = $config->container_width;
   my $transcript_drawn = 0;
@@ -139,7 +139,7 @@ sub render_normal {
     my $name =  ' ' . $transcript->external_name;
        $l    = length $name if length $name > $l;
     
-    foreach my $text_label ($transcript->stable_id, $name) {
+    foreach my $text_label ($transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id, $name) {
       next unless $text_label;
       next if $text_label eq ' ';
       
@@ -165,7 +165,7 @@ sub render_normal {
 sub href {
   my ($self, $transcript, $exon) = @_;
 
-  my $tid = $transcript->stable_id;
+  my $tid = $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
   my $eid = $exon->stable_id; 
   
   return $self->_url({

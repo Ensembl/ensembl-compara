@@ -20,31 +20,33 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Variation::Mappings;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->set_defaults({
-    motif_scores       => 'no'
-  });
 
-  $self->title = 'Genes and regulation';
+  $self->set_default_options({'motif_scores' => 'no'});
+  $self->title('Genes and regulation');
 }
 
-sub form {
-  my $self = shift;
-  
-  if ($self->hub->species =~ /homo_sapiens|mus_musculus/i) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => 'Show regulatory motif binding scores',
-      name  => 'motif_scores',
-      value => 'yes',
-      raw   => 1,
-    });
-  }
+sub field_order {
+  ## Abstract method implementation
+  return $_[0]->hub->species =~ /homo_sapiens|mus_musculus/i ? qw(motif_scores) : (); # TODO - don't hardcode species, add a variable in ini files
+}
+
+sub form_fields {
+  ## Abstract method implementation
+  return {
+    'motif_scores' => {
+      'type'  => 'CheckBox',
+      'label' => 'Show regulatory motif binding scores',
+      'name'  => 'motif_scores',
+      'value' => 'yes',
+    }
+  };
 }
 
 1;

@@ -16,7 +16,7 @@
  */
 
 (function($) {
-  $.fn.new_table_columns = function(config,data) {
+  $.fn.new_table_columns = function(config,data,widgets,callw) {
 
     function update_ticks($table,$popup) {
       var view = $table.data('view');
@@ -49,9 +49,7 @@
                   '<ul class="floating_popup">';
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
-          if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-            return;
-          }
+          if(callw('unshowable',cc)._any) { return; }
           var label = cc.label || key;
           out += '<li><input type="checkbox" data-key="'+key+'">'+
                  '<span>'+label+'</span></li>';

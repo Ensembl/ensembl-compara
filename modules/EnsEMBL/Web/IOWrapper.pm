@@ -110,7 +110,8 @@ sub file {
 
 sub format {
   ### a
-  my $self = shift;
+  my ($self, $format) = @_;
+  $self->{'format'} = $format if $format;
   return $self->{'format'};
 }
 
@@ -267,8 +268,10 @@ sub create_tracks {
                         'score'      => $score,
                         'colour'     => $metadata->{'colour'},
                         };
-      $max_score = $score if $score >= $max_score; 
-      $min_score = $score if $score <= $min_score; 
+      if ($score && $score !~ /,/) { ## Ignore pairwise "scores" that are RGB colours
+        $max_score = $score if $score >= $max_score; 
+        $min_score = $score if $score <= $min_score; 
+      }
     }
     $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
     $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
@@ -332,7 +335,7 @@ sub create_tracks {
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
   ## 'empty track' glyphset we need to manually create the empty track
-  if (!keys $data) {
+  if (!keys %$data) {
     $order  = ['data'];
     $data   = {'data' => {'metadata' => $extra_config || {}}};
     if ($slice) {
@@ -393,7 +396,7 @@ sub build_feature {
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
 
-  if ($hash->{'score'}) {
+  if ($hash->{'score'} && $hash->{'score'} !~ /,/) { ## Ignore pairwise "scores" that are RGB colours
     $metadata->{'max_score'} = $hash->{'score'} if $hash->{'score'} >= $metadata->{'max_score'};
     $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
   }
@@ -461,6 +464,9 @@ sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
   my $valid = $self->parser->validate;
+  if ($valid && $self->parser->format) {
+    $self->format($self->parser->format->name);
+  }
   return $valid ? undef : 'File did not validate as format '.$self->format;
 }
 

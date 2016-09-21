@@ -45,7 +45,7 @@ sub json_fetch_wasabi {
 
   # Wasabi key for session
   my $wasabi_session_key  = $gt_id . "_" . $node_id;
-  my $wasabi_session_data = $hub->session->get_data(type => 'tree_files', code => 'wasabi') ;
+  my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
 
   # Return data if found in session store
   if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
@@ -70,17 +70,9 @@ sub json_fetch_wasabi {
     $files = create_newick($self, $node);
   }
 
-  # Remove old data
-  $hub->session->purge_data(
-    type => 'tree_files',
-    code => 'wasabi');
-
   # Store new data into session
-  $hub->session->add_data(
-    type => 'tree_files',
-    code => 'wasabi',
-    $wasabi_session_key => $files
-  );
+  $wasabi_session_data->{$wasabi_session_key} = $files;
+  $hub->session->set_record_data($wasabi_session_data);
 
   return $files;
 }

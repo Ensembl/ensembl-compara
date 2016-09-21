@@ -161,15 +161,15 @@ sub glyphs {
 }
 
 sub transform {
-  my ($self, $transform_ref) = @_;
+  my ($self, $transform_obj) = @_;
   
-  $self->SUPER::transform($transform_ref);
+  $self->SUPER::transform($transform_obj);
   
   for my $sg (@{$self->{'composite'}}) {
-    my %tmp_transform = %{$transform_ref};
-    $tmp_transform{'translatex'} = $self->pixelx();
-    $tmp_transform{'translatey'} = $self->pixely();
-    $sg->transform(\%tmp_transform);
+    my $tmp_transform = $transform_obj->clone;
+    $tmp_transform->translatex($self->pixelx());
+    $tmp_transform->translatey($self->pixely());
+    $sg->transform($tmp_transform);
   }
 }
 

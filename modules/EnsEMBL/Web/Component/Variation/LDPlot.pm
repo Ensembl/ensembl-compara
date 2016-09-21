@@ -35,7 +35,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object('variation');
   my $vf_id  = $hub->param('vf'); 
 
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
@@ -100,6 +100,11 @@ sub content {
 
   my $image = $self->new_image($containers_and_configs, $object->highlights);
   
+  ## Add parameters needed by export
+  foreach ($hub->param) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if ($_ =~ /^pop(\d+|name)$/); 
+  }
+
   return if $self->_export_image($image);
   
   $image->{'panel_number'} = 'top';

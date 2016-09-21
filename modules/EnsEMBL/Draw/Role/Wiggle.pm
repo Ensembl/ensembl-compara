@@ -19,6 +19,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::Role::Wiggle;
 
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
 ### Role for tracks that draw data as a continuous line 
 
 use Role::Tiny;
@@ -146,7 +150,7 @@ sub _render {
   }
 
   foreach (@$tracks) {
-    next unless scalar(@{$_->{'features'}{$self->strand}||[]});
+    next unless scalar(@{$_->{'features'}||[]});
     ## Work out maximum and minimum scores
     my $track_min = $self->{'my_config'}->get('min_score');
     my $track_max = $self->{'my_config'}->get('max_score');
@@ -173,7 +177,7 @@ sub _render {
 sub _get_min_max {
 ### Get minimum and maximum scores for a set of features
   my ($self, $dataset) = @_;
-  my $features = $dataset->{'features'}{$self->strand} || [];
+  my $features = $dataset->{'features'} || [];
   return unless scalar @$features;
   my $metadata = $dataset->{'metadata'} || {};
   my ($min, $max) = (0, 0);
@@ -183,9 +187,10 @@ sub _get_min_max {
   }
   else {
     foreach (@$features) {
-      next unless $_->{'score'};
-      $min = $_->{'score'} if !$min || $_->{'score'} < $min;
-      $max = $_->{'score'} if !$max || $_->{'score'} > $max;
+      my $score = ref $_ eq 'HASH' ? $_->{'score'} : $_;
+      next unless $score;
+      $min = $score if !$min || $score < $min;
+      $max = $score if !$max || $score > $max;
     }
   }
   return ($min, $max);

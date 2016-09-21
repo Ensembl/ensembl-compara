@@ -38,6 +38,7 @@ sub add_body {
 
   $page->add_body_elements(qw(
     logo             EnsEMBL::Web::Document::Element::Logo
+    tabs             EnsEMBL::Web::Document::Element::Tabs
     account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
@@ -47,6 +48,7 @@ sub add_body {
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+    tmp_message      EnsEMBL::Web::Document::Element::TmpMessage
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }

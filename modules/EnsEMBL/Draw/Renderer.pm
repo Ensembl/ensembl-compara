@@ -18,10 +18,14 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::Renderer;
+
+use strict;
+
+use Time::HiRes qw(time);
+
 use EnsEMBL::Draw::Glyph::Poly;
 use EnsEMBL::Draw::Glyph::Rect;
-use strict;
-use Time::HiRes qw(time);
+use EnsEMBL::Draw::Utils::Transform;
 
 our $patterns = {
   # south-west - north-east thin line
@@ -98,7 +102,8 @@ sub new {
     'spacing'       => $config->get_parameter('spacing') || 2,
     'margin'        => $config->get_parameter('margin') || 5,
     'sf'            => $config->get_parameter('sf') || 1,
-    contrast        => $config->get_parameter('contrast') || 1,
+    'contrast'      => $config->get_parameter('contrast') || 1,
+    'transform'     => EnsEMBL::Draw::Utils::Transform->new
   };
   
   bless($self, $class);

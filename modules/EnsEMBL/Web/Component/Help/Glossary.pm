@@ -23,7 +23,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Help);
@@ -37,7 +36,7 @@ sub _init {
 
 sub content {
   my $self    = shift;
-  my $hub     = $self->hub || EnsEMBL::Web::Hub->new;
+  my $hub     = $self->hub;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $table   = $self->new_twocol({'striped' => 1});
   my $words   = [];

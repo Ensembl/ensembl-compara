@@ -24,7 +24,6 @@ use strict;
 use Math::Round;
 use List::Util qw(max);
 
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Table;
 
 use base qw(EnsEMBL::Web::Document::HTML::Compara);

@@ -19,16 +19,13 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::Messages::Other;
 
-### Module to output info messages from session, etc
+### Module to output info messages saved in session records
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Component::Messages);
+use parent qw(EnsEMBL::Web::Component::Messages);
 
-sub content {
-  my $self = shift;
-  
-  return $self->SUPER::content('_info', '_hint'); 
-}
+sub priority { qw(_info _hint) }
 
 1;

@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 85;
-our $ARCHIVE_VERSION           = 'Jul2016';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'July 2016';
+our $ENSEMBL_VERSION           = 86;
+our $ARCHIVE_VERSION           = 'Sep2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'Sept 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -158,6 +158,7 @@ our $ENSEMBL_PROTOCOL          = 'http';
 our $ENSEMBL_MAIL_COMMAND      = '/usr/bin/Mail -s';               # Mail command
 our $ENSEMBL_MAIL_ERRORS       = '0';                              # Do we want to email errors?
 our $ENSEMBL_ERRORS_TO         = 'webmaster&#064;mydomain.org';    # ...and to whom?
+our $ENSEMBL_REST_URL          = 'http://rest.mydomain.org';       # url to your REST service
 
 our $ENSEMBL_SITETYPE          = 'Ensembl';
 our $ENSEMBL_USER              = getpwuid($>); # Auto-set web serveruser
@@ -319,18 +320,10 @@ our $ENSEMBL_CONFIG_BUILD        = 0; # Build config on server startup? Setting 
 our $ENSEMBL_LONGPROCESS_MINTIME = 10;
 our $APACHE_DEFINE               = undef; # command line arguments for httpd command
 
-## ALLOWABLE DATA OBJECTS
-our $OBJECT_TO_SCRIPT = {
-  Config              => 'Config',
-  Component           => 'Component',
-  ZMenu               => 'ZMenu',
-  psychic             => 'Psychic',
-  Ajax                => 'Ajax',
-  Share               => 'Share',
-  Export              => 'Export',
-  DataExport          => 'DataExport',
-  ImageExport         => 'ImageExport',
-
+###############################################################################
+## Configurations to map URLs to appropriate Controllers and data Objects
+###############################################################################
+our $OBJECT_TO_CONTROLLER_MAP = {
   Gene                => 'Page',
   Transcript          => 'Page',
   Location            => 'Page',
@@ -343,16 +336,27 @@ our $OBJECT_TO_SCRIPT = {
   LRG                 => 'Page',
   Phenotype           => 'Page',
   Experiment          => 'Page',
-
   Info                => 'Page',
   Search              => 'Page',
-  
   UserConfig          => 'Modal',
   UserData            => 'Modal',
-  Help                => 'Modal',  
-
-  CSS                 => 'CSS',
+  Help                => 'Modal',
 };
+our $ALLOWED_URL_CONTROLLERS = [qw(Ajax Component ComponentAjax Config CSS DataExport Download Export ImageExport Json MultiSelector Psychic Share ZMenu)];
+our $OBJECT_PARAMS = [
+  [ 'Phenotype'           => 'ph'  ],
+  [ 'Location'            => 'r'   ],
+  [ 'Gene'                => 'g'   ],
+  [ 'Transcript'          => 't'   ],
+  [ 'Variation'           => 'v'   ],
+  [ 'StructuralVariation' => 'sv'  ],
+  [ 'Regulation'          => 'rf'  ],
+  [ 'Experiment'          => 'ex'  ],
+  [ 'Marker'              => 'm'   ],
+  [ 'LRG'                 => 'lrg' ],
+  [ 'GeneTree'            => 'gt'  ],
+  [ 'Family'              => 'fm'  ],
+];
 
 ## Set log directory and files
 our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };
@@ -367,6 +371,9 @@ our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 
 our $ENSEMBL_BOOK_DIR      = defer { "$ENSEMBL_WEBROOT/conf/book" };
 our $ENSEMBL_BOOK_DISABLE  = 0;
+
+## File location for the temporary message for the website
+our $ENSEMBL_TMP_MESSAGE_FILE = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };
 
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################

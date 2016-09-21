@@ -29,10 +29,10 @@ BEGIN {
   
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
-  require EnsEMBL::Web::Hub;
+  require EnsEMBL::Web::SpeciesDefs;
 }
 
-my $db  = EnsEMBL::Web::Hub->new->species_defs->session_db;
+my $db  = EnsEMBL::Web::SpeciesDefs->new->session_db;
 my $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}), $db->{'USER'}, $db->{'PASS'});
 
 $dbh->do('DELETE from sessions WHERE modified_at < DATE(NOW()) - INTERVAL 1 WEEK');

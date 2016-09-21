@@ -50,7 +50,7 @@ sub _init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};  
+  my $pix_per_bp = $self->{'config'}->transform_object->scalex;
   
   #my $bitmap_length = $Config->image_width(); 
    my $bitmap_length = int($Config->container_width() * $pix_per_bp); 

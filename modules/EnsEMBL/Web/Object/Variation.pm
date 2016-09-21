@@ -23,8 +23,6 @@ package EnsEMBL::Web::Object::Variation;
 ### Wrapper around a Bio::EnsEMBL::Variation 
 ### or EnsEMBL::Web::VariationFeature object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 
@@ -1749,7 +1747,11 @@ sub get_snpedia_data {
     }
   };
 
-  my $ref = $rest->fetch('api.php', $args);
+  my ($ref, $error) = $rest->fetch('api.php', $args);
+
+  if($error || ref $ref ne 'HASH') {
+    return {};
+  }
 
   # get the page id and the page hashref with title and revisions
   my ($pageid, $pageref) = each %{ $ref->{query}->{pages} };

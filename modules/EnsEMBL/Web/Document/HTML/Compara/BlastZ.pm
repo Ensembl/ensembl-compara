@@ -21,8 +21,6 @@ package EnsEMBL::Web::Document::HTML::Compara::BlastZ;
 
 use strict;
 
-use EnsEMBL::Web::Hub;
-
 use base qw(EnsEMBL::Web::Document::HTML::Compara);
 
 sub render { 

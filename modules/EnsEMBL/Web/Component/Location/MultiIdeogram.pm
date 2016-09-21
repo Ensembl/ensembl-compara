@@ -39,7 +39,7 @@ sub content {
   my @images;
   
   foreach (@{$object->multi_locations}) {
-    my $image_config      = $hub->get_imageconfig('chromosome', "chromosome_$i", $_->{'species'});
+    my $image_config      = $hub->get_imageconfig({type => 'chromosome', cache_code => "chromosome_$i", species => $_->{'species'}});
     my $chromosome        = $_->{'slice'}->adaptor->fetch_by_region(undef, $_->{'name'});
     my $annotation_status = $image_config->get_node('annotation_status');
     

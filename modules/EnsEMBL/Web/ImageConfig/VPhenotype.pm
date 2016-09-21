@@ -20,13 +20,15 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::VPhenotype;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::Vkaryotype);
+use parent qw(EnsEMBL::Web::ImageConfig::Vkaryotype);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
-  $self->SUPER::init;
+
+  $self->SUPER::init_cacheable(@_);
   $self->get_node('user_data')->remove;
 }
 

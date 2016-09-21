@@ -118,7 +118,7 @@ sub get_assoc {
     }
 
     # transcript
-    $tsi = $self->idhistoryview_link('Transcript', 't', $r->[1]->stable_id);
+    $tsi = $self->idhistoryview_link('Transcript', 't', $r->[1]->version ?  $r->[1]->stable_id.".".$r->[1]->version : $r->[1]->stable_id);
     
     # translation
     if ($r->[2]) {

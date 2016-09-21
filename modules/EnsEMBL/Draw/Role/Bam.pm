@@ -33,6 +33,8 @@ use Role::Tiny;
 
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
+use EnsEMBL::Web::File::Utils::IO qw(file_exists);
+use EnsEMBL::Web::Constants;
 
 sub my_empty_label {
   return 'No data found for this region';
@@ -97,7 +99,7 @@ sub _render_coverage {
   my $consensus;
   if ($pix_per_bp > 1) {
     $consensus = $self->consensus_features;
-    $self->{'my_config'}->set('label_overlay', 1);
+    $self->{'my_config'}->set('overlay_label', 1);
     $self->{'my_config'}->set('hide_subtitle', 1);
   }
   elsif ($pix_per_bp < 1) {
@@ -307,7 +309,10 @@ sub _render {
   eval {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
-    # render
+    ## Creating the adaptor checks if the file exists
+    my $adaptor = $self->bam_adaptor;
+    die if $self->{'file_error'};
+    # try to render
     my $features = $self->get_data->[0]{'features'};
     if (!scalar(@$features)) {
       $self->no_features;
@@ -321,17 +326,27 @@ sub _render {
     }
     alarm 0;
   };
+
   if ($@) {
     my $error_message;
     if ($@ eq "alarm\n") {
       $error_message = " could not be rendered within the specified time limit (${timeout} sec)";
-    }
-    else {
-      $error_message = ' could not be retrieved.';
+    } elsif ($self->{'file_error'}) {
+      my $custom_error = $self->{'my_config'}->get('on_error');
+      if ($custom_error) {     
+        my %messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
+        my $message  = $messages{$custom_error};
+        $error_message = $message->[1];
+      }
+      else {
+        $error_message = $self->{'file_error'};
+      }
+    } else {
+      $error_message = 'could not retrieve BAM file';
       warn "######## BAM ERROR: $@"; # propagate unexpected errors
     }
     $self->reset;
-    return $self->errorTrack($self->error_track_name . $error_message);
+    return $self->errorTrack($self->error_track_name . ': ' . $error_message);
   }
 }
 
@@ -349,6 +364,10 @@ sub reset {
 sub get_data {
 ## get the alignment features
   my $self = shift;
+  my $adaptor = $self->bam_adaptor;
+  if ($self->{'file_error'}) {
+    return [];
+  }
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{data})) {
@@ -360,15 +379,16 @@ sub get_data {
     }
 
     my $data;
+
     foreach my $seq_region_name (@$seq_region_names) {
-      $data = $self->bam_adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
+      $data = $adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
       last if @$data;
-    } 
+    }
 
     $self->{_cache}->{data} = $data;
 
     ## Explicitly close file, otherwise it can cause errors
-    $self->bam_adaptor->htsfile_close;
+    $adaptor->htsfile_close;
   }
 
   ## Return data in standard format expected by other modules
@@ -380,6 +400,12 @@ sub get_data {
 sub consensus_features {
   my $self = shift;
   unless ($self->{_cache}->{consensus_features}) {
+
+    my $adaptor = $self->bam_adaptor;
+    if ($self->{'file_error'}) {
+      return {};
+    }
+
     my $slice = $self->{'container'};
     
     ## Allow for seq region synonyms
@@ -390,7 +416,7 @@ sub consensus_features {
 
     my $consensus;
     foreach my $seq_region_name (@$seq_region_names) {
-      $consensus = $self->bam_adaptor->fetch_consensus($seq_region_name, $slice->start, $slice->end) || [];
+      $consensus = $adaptor->fetch_consensus($seq_region_name, $slice->start, $slice->end) || [];
       last if @$consensus;
     }    
 
@@ -532,6 +558,8 @@ sub bam_adaptor {
   return $self->{_cache}->{_bam_adaptor} if $self->{_cache}->{_bam_adaptor};
 
   my $url = $self->my_config('url');
+  my $check = {};
+
   if ($url) { ## remote bam file
     if ($url =~ /\#\#\#CHR\#\#\#/) {
       my $region = $self->{'container'}->seq_region_name;
@@ -550,9 +578,14 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
+      $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
+
+  if ($check->{'error'}) {
+    $self->{'file_error'} = $check->{'error'}[0];
+  }
 
   return $self->{_cache}->{_bam_adaptor};
 }

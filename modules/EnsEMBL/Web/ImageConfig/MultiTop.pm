@@ -20,12 +20,16 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::MultiTop;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
+use parent qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
+
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
     sortable_tracks  => 1,     # allow the user to reorder tracks
     opt_empty_tracks => 0,     # include empty tracks
@@ -49,9 +53,9 @@ sub init {
     information
   ));
 
-  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
-  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
-    labelcaption => "Genes (Basic set from GENCODE $gencode_version)",
+  my $gencode_version = $self->hub->species_defs->GENCODE_VERSION ? $self->hub->species_defs->GENCODE_VERSION : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from $gencode_version", '_gencode', {
+    labelcaption => "Genes (Basic set from $gencode_version)",
     display     => 'off',
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
@@ -69,10 +73,10 @@ sub init {
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
   }) if($gencode_version);
-    
+
   $self->add_track('sequence',    'contig', 'Contigs',     'contig', { display => 'normal', strand => 'f' });
   $self->add_track('information', 'info',   'Information', 'text',            { display => 'normal' });
-  
+
   $self->load_tracks;
 
   $self->add_tracks('decorations',
@@ -80,7 +84,7 @@ sub init {
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'f', menu => 'no' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
-  
+
   $self->modify_configs(
     [ 'transcript' ],
     { strand => 'r' }
@@ -93,11 +97,11 @@ sub join_genes {
   my $sp         = $self->{'species'};
   my $sd         = $self->species_defs;
   my $multi_hash = $sd->multi_hash;
-  
+
   for (map { @{$_->{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$ps}{$pt} || []}, @{$_->{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$ns}{$nt} || []} } map $multi_hash->{$_} || (), @{$sd->compara_like_databases}) {
     $self->set_parameter('homologue', $_->{'homologue'}) if $_->{'species'}{"$sp--$chr"};
   }
-  
+
   foreach ($self->get_node('transcript')->nodes) {
     $_->set('previous_species', $ps) if $ps;
     $_->set('next_species',     $ns) if $ns;
@@ -109,7 +113,7 @@ sub join_genes {
 
 sub highlight {
   my ($self, $gene) = @_;
-  $_->set('g', $gene) for $self->get_node('transcript')->nodes; 
+  $_->set_data('g', $gene) for $self->get_node('transcript')->nodes;
 }
 
 1;

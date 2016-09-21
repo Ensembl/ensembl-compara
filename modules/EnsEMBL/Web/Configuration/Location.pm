@@ -37,7 +37,7 @@ sub init {
   $self->SUPER::init;
   
   if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
-    my $multi_species = $hub->session->get_data(type => 'multi_species', code => 'multi_species');
+    my $multi_species = $hub->session->get_record_data({type => 'multi_species', code => 'multi_species'});
     $self->tree->get_node('Multi')->set('url', $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} })) if $multi_species && $multi_species->{$hub->species};
   }
 }
@@ -138,6 +138,15 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
+ 
+  $variation_menu->append($self->create_node('Strain', 'Strain table',
+    [qw(
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      strain  EnsEMBL::Web::Component::Location::StrainTable
+    )],
+    { 'availability' => 'slice has_strains' }
+  ));
+
   $variation_menu->append($self->create_node('LD', 'Linkage Data',
     [qw(
       summary EnsEMBL::Web::Component::Location::Summary

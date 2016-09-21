@@ -102,7 +102,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 body.ie6 .col_toggle .toggle { width: 135px; }
 body.ie67 .col_toggle ul     { margin: 18px 0 0 -125px; }
 
-.sorting      { background: url(/i/sort_both_light.png) no-repeat right center; }
+.sorting      { background: url(/i/sort_both_light.png) no-repeat right 90%; }
 .sorting_asc  { background: url(/i/sort_asc.png) no-repeat right center; }
 .sorting_desc { background: url(/i/sort_desc.png) no-repeat right center; }
 
@@ -237,3 +237,8 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filter .none_present { display: block; margin: 16px; }
 .newtable_filter .m .summary .more { background: url(/i/table-small.gif) no-repeat 0 50%; display: inline-block; padding-left: 16px; margin-right: 8px; white-space: nowrap; }
 .newtable_filter .m .summary_text { display: inline-block; }
+.newtable_not_diagonal_th { padding-bottom: 10px; vertical-align: bottom; }
+.newtable_diagonal_th { height: 90px; }
+.newtable_diagonal { display: inline-block; text-align: left; transform: translate(14px,70px) rotate(-70deg); transform-origin: 0 50%; white-space: nowrap; }
+.newtable_slider_redgreen .ui-slider-range { background: linear-gradient(to right,red,yellow,green); }
+.newtable_slider_greenred .ui-slider-range { background: linear-gradient(to right,green,yellow,red); }

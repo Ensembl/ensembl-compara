@@ -35,7 +35,7 @@
     return $.parseJSON(out);
   }
 
-  function make_widgets(config) {
+  function make_widgets(config,call_widgets) {
     var widgets = {};
     $.each(config.widgets,function(key,name) {
       var data = {};
@@ -44,7 +44,7 @@
         name = name[0];
       }
       if($.isFunction($.fn[name])) {
-        widgets[key] = $.fn[name](config,data,widgets);
+        widgets[key] = $.fn[name](config,data,widgets,call_widgets);
       }
     });
     return widgets;
@@ -167,7 +167,7 @@
     var view = $table.data('view');
     $('.layout',$table).html(
       '<div data-widget-name="'+view.format+'">'+
-      widgets[view.format].layout($table)+"</div>"
+      widgets[view.format].layout($table,widgets)+"</div>"
     );
     var $widget = $('div[data-widget-name='+view.format+']',$table);
     if($widget.hasClass('_inited')) { return; }
@@ -573,7 +573,29 @@
 
   function new_table($target) {
     var config = $.parseJSON($target.text());
-    var widgets = make_widgets(config);
+    var cwidgets = [];
+    var widgets = [];
+    var call_widgets = function(method) {
+      var args = (arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); // copy args to avoid V8 performance penalty
+      var method = args[0];
+      var ret = { _all: true, _any: false, _last: undefined };
+      args = args.slice(1);
+      $.each(cwidgets,function(i,key) {
+        var widget = widgets[key];
+        if(widget[method]) {
+          args.push(ret._last);
+          ret[key] = widget[method].apply(this,args);
+          args.pop();
+          ret._all = ret._all && ret[key];
+          ret._any = ret._any || ret[key];
+          ret._last = ret[key];
+        }
+      });
+      return ret;
+    };
+    widgets = make_widgets(config,call_widgets);
+    $.each(widgets,function(key,widget) { cwidgets.push(key); });
+    cwidgets.sort(function(a,b) { return (widgets[a].prio||50)-(widgets[b].prio||50); });
     var $table = $('<div class="layout"/>');
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);

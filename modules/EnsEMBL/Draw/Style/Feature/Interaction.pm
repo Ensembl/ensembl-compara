@@ -143,7 +143,7 @@ sub draw_join {
 
   my $image_width = $self->image_config->container_width;
   my $length      = $self->track_config->get('slice_length');
-  my $pix_per_bp  = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp  = $self->image_config->transform_object->scalex;
 
   my ($arc_start, $arc_end);
   my $direction       = $feature->{'direction'};

@@ -225,6 +225,7 @@ foreach my $index (@indexes) {
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
+#    next unless ($species =~ /^Mus/);
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -260,7 +261,14 @@ foreach my $index (@indexes) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
-      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
+      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');;
+      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($SD->get_config($species,'STRAIN_COLLECTION'));
+      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($SD->get_config($species,'SPECIES_SCIENTIFIC_NAME'));
+      $conf->{'strain_details'}{'strain_name'}        = ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) . ' ' . $SD->get_config($species,'SPECIES_STRAIN');
+      $conf->{'strain_details'}{'reference_strain'} = 1;
+      if ( ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) && ucfirst($SD->get_config($species,'SPECIES_COMMON_NAME')) ne  ucfirst($SD->get_config($species,'STRAIN_COLLECTION'))) {
+        $conf->{'strain_details'}{'reference_strain'} = 0;
+      }
     }
 
     if ($create_elevate) {
@@ -1614,10 +1622,15 @@ sub dumpGeneTree {
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
     header($fh);
-    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE clusterset_id = "default" AND tree_type = "tree" AND stable_id IS NOT NULL));
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(
+        SELECT gtr.stable_id
+          FROM gene_tree_root gtr
+         WHERE gtr.clusterset_id = "default"
+           AND gtr.tree_type = "tree"
+           AND gtr.stable_id IS NOT NULL));
     $sth->execute();
-    while( my( $gt_id) = $sth->fetchrow_array()) {
-      &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species), $fh);
+    while( my( $gt_id,$mlss_name) = $sth->fetchrow_array()) {
+      &p( GeneTreeLine($dbspecies,$gt_id,$mlss_name,$counter,$multi_species), $fh);
     }
     my $c = footer( $counter->(), $fh);
   }
@@ -1633,28 +1646,30 @@ sub dumpGeneTree {
   header($fh);
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
   my $sql = qq(
-        SELECT gtr.stable_id, gm.stable_id
+        SELECT gtr.stable_id, gm.stable_id, mlss.name
          FROM gene_tree_root gtr
          JOIN gene_tree_node USING (root_id)
          JOIN seq_member sm USING (seq_member_id)
          JOIN gene_member gm ON sm.gene_member_id = gm.gene_member_id
          JOIN genome_db gdb ON gm.genome_db_id = gdb.genome_db_id
+         JOIN method_link_species_set mlss ON gtr.method_link_species_set_id = mlss.method_link_species_set_id
         WHERE clusterset_id = "default"
           AND tree_type = "tree"
           AND gdb.name = '$dbspecies');
   my $sth =  $conf->{'dbh_compara'}->prepare($sql);
   $sth->execute;
-  while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
+  while (my ($gt_id, $gid, $mlss_name) = $sth->fetchrow_array() ) {
     next unless $gt_id;
     my $name = $gene_names->{$gid};
-    &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species,$gid,$name), $fh);
+    &p( GeneTreeLine($dbspecies,$gt_id,$mlss_name,$counter,$multi_species,$gid,$name), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
 sub GeneTreeLine {
-  my($species,$gt_id,$counter,$ms,$gid,$name) = @_;
+  my($species,$gt_id,$mlss_name,$counter,$ms,$gid,$name) = @_;
   my ($url,$xml,$desc);
+  my $is_strain = ($mlss_name =~ /^default/) ? 0 : 1;
   $xml = qq(
 <doc>
   <field name="id">$gt_id</field>);
@@ -1685,7 +1700,8 @@ sub GeneTreeLine {
   <field name="description">$desc</field>);
     }
     $xml .= &common_fields($species,'GeneTree','core');
-    $url = sprintf(qq($species/Gene/Compara_Tree?g=%s),$gid);
+    my $url_root = $is_strain ? 'Strain_Compara_Tree' : 'Compara_Tree';
+    $url = sprintf(qq($species/Gene/%s?g=%s),$url_root,$gid);
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
@@ -3409,15 +3425,33 @@ sub footer {
 }
 
 sub common_fields {
-  my ($species,$feature_type,$db) = @_;
-  my $species_name = $species eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my ($species_latin_name,$feature_type,$db) = @_;
+  my $species_common_name = $species_latin_name eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my $parent_common = $conf->{'strain_details'}{'parent_common_name'};
+  my ($parent_latin, $strain);
+
+  #for the front end we need the species details to be that of the parent, and the strain to be that of the species 
+  if ($parent_common) {
+    $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
+    $strain = $conf->{'strain_details'}{'strain_name'};
+    $species_latin_name = $parent_latin;
+    $species_common_name = $parent_common;
+  }
+
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-  if ($species) {
+  if ($species_latin_name) {
     $xml .= qq(
-  <field name="species">$species_name</field>
-  <field name="species_name">$species</field>);
+  <field name="species">$species_common_name</field>
+  <field name="species_name">$species_latin_name</field>);
+  }
+  my $ref_strain = $conf->{'strain_details'}{'reference_strain'};
+  $xml .= qq(
+  <field name="reference_strain">$ref_strain</field>);
+  if ($strain) {
+    $xml .= qq(
+  <field name="strain">$strain</field>);
   }
   if ($db) {
     $xml .= qq(

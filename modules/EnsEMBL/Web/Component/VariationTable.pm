@@ -145,6 +145,9 @@ sub sift_poly_classes {
     my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
     $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
     $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
+    my $slider_class =
+      { sift => 'redgreen', polyphen => 'greenred' }->{$column_name};
+    $value_column->filter_slider_class("newtable_slider_$slider_class");
   }
 }
 
@@ -265,7 +268,7 @@ sub make_table {
 
   my @exclude;
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
-  push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
+  push @exclude,'HGVS' unless $self->param('hgvs') eq 'on';
   if($is_lrg) {
     push @exclude,'Transcript';
   } else {
@@ -610,7 +613,7 @@ sub variation_table {
             my $status = join('~',@$evidences);
             my $clin_sig = join("~",@$clin_sigs);
 
-            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
+            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript->version ? $transcript_stable_id.".".$transcript->version : $transcript_stable_id;
           
             my $more_row = {
               vf         => $raw_id,
@@ -637,7 +640,7 @@ sub variation_table {
               polyphen_sort  => $polys->[0],
               polyphen_class => $polys->[1],
               polyphen_value => $polys->[2],
-              HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
+              HGVS       => $self->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
             };
             $row = { %$row, %$more_row };
           }

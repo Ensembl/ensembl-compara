@@ -84,7 +84,7 @@
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "toggle") {
+      if(cc.decorate && $.inArray("toggle",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
       }
     });

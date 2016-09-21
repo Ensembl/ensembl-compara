@@ -82,7 +82,7 @@ sub content {
 
       ## Start creating form, as in most cases we need it
       $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
-            'class'             => 'check',
+            'class'             => 'bgcolour',
             'no_button'         => 1
       });
       $fieldset = $form->add_fieldset({'no_required_notes' => 1});
@@ -153,10 +153,10 @@ sub content {
       push @$values, {'value' => $_, 'caption' => $_} for @data_types;
       $fieldset->add_field({
                             'type'          => 'dropdown',
-                            'name'          => 'type',
+                            'name'          => 'data_type',
                             'label'         => 'Data type',
                             'values'        => $values,
-                            'value'         => $hub->param('type') || '',
+                            'value'         => $hub->param('data_type') || '',
       });
    
       $fieldset->add_field({
