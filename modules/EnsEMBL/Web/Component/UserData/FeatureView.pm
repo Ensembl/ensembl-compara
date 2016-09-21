@@ -40,7 +40,7 @@ sub content {
   my $sitename        = $species_defs->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
 
-  my $form            = $self->new_form({'id' => 'select', 'action' => {qw(type UserData action FviewRedirect __clear 1)}, 'method' => 'post'});
+  my $form            = $self->new_form({'id' => 'select', 'class' => 'bgcolour', 'action' => {qw(type UserData action FviewRedirect __clear 1)}, 'method' => 'post'});
   my $add_track_link  = $hub->url({qw(type UserData action SelectFile __clear 1)});
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
