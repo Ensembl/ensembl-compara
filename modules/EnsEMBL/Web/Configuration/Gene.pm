@@ -34,7 +34,7 @@ sub populate_tree {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $strain       = $species_defs->RELATED_TAXON; #species who have strains
+  my $strain       = $species_defs->RELATED_TAXON; # species that are in a compara strain tree
   my $collapse     = $species_defs->IS_STRAIN_OF ? 0 : 1; # check if species is a strain
 
   my $summary_menu = $self->create_node('Summary', 'Summary',
@@ -76,7 +76,10 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
-  my $compara_menu = $self->create_node('ompara', 'Comparative Genomics',
+  #not_strain to collapse and disable main compara menu if it is a strain
+  my $compara_menu = $self->create_submenu('Compara', 'Comparative Genomics');
+  
+  my $core_compara_menu = $self->create_node('Core_Compara', 'Multi-clade',
     [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core not_strain'}
   );
