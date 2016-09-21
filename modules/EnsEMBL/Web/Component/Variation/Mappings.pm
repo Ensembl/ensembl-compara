@@ -473,7 +473,7 @@ sub _render_eqtl_table {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
       { key => 'gene',    title => 'Gene',                        sort => 'html'    },
-      { key => 'p_val',   title => 'P-value (log<sub>-10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'p_val',   title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
       { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
       { key => 'tissue',  title => 'Tissue',                      sort => 'html'    },
     );
@@ -484,7 +484,7 @@ sub _render_eqtl_table {
 
     # create table
     my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
-      data_table => 1, sorting => [ 'p_val asc' ], data_table_config => {
+      data_table => 1, sorting => [ 'p_val desc' ], data_table_config => {
         iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
       }
     });
