@@ -1569,7 +1569,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -rc_name => '8Gb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name     => 'cluster_tagging',
