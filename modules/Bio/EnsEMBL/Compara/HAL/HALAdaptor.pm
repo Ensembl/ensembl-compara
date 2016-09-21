@@ -36,12 +36,21 @@ use warnings;
 
 use Bio::EnsEMBL::Registry;
 
-die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a valid installation of Cactus.\n" unless defined $ENV{'PROGRESSIVE_CACTUS_DIR'};
+if ( eval {require SiteDefs} ){
+    #grep warn(">>>>>>" . $SiteDefs::PROGRESSIVE_CACTUS_DIR);
+    use Inline C => Config =>
+             LIBS => "-L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hdf5/lib -L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib -L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
+             MYEXTLIB => ["$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halChain.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLod.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLiftover.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLib.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halMaf.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/sonLib/lib/sonLib.a"],
+             INC => "-I$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/chain/inc/ -I$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/maf/inc/";
 
-use Inline C => Config =>
+} else {
+    die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a valid installation of Cactus.\n" unless defined $ENV{'PROGRESSIVE_CACTUS_DIR'};
+    use Inline C => Config =>
              LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
              MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halMaf.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a"],
              INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/maf/inc/";
+
+}
 
 =head2 new
 

@@ -1470,8 +1470,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
               $target_dnafrag->{'_slice'} = undef;
               next unless ( defined $target_dnafrag );
+              
               # check that alignment falls within requested range
               next if ( @$entry[2] + @$entry[3] > $end || @$entry[1] + @$entry[3] > $end );
+
+              # check length of genomic align meets threshold
+              print ">>>>>> THIS ALN LENGTH: " . @$entry[3] . "\n\n";
+              next if ( @$entry[3] < $min_ga_len );
 
               my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                   -genomic_align_block => $gab,
@@ -1485,6 +1490,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -visible => 1,
                   -adaptor => $ga_adaptor,
   	          );
+              $genomic_align->cigar_line($target_cigar);
+              $genomic_align->aligned_sequence( $target_aln_seq );
+              $genomic_align->genomic_align_block( $gab );
+              $genomic_align->dbID( $id_base + $ga_id_count );
               $ga_id_count++;
 
               my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
@@ -1492,19 +1501,30 @@ sub _get_GenomicAlignBlocks_from_HAL {
               $ref_dnafrag->{'_slice'} = undef;
               my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                 -genomic_align_block => $gab,
+                -genomic_align_block_id => $gab->dbID,
                 -aligned_sequence => $ref_aln_seq, #@$entry[6],
                 -dnafrag => $ref_dnafrag,
                 -dnafrag_start => @$entry[1],
                 -dnafrag_end => @$entry[1] + @$entry[3],
-                -dnafrag_strand => 1,
+                -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                 -cigar_line => $ref_cigar,
                 -dbID => $id_base + $ga_id_count,
                 -visible => 1,
                 -adaptor => $ga_adaptor,
   		        );
+              $genomic_align->cigar_line($ref_cigar);
+              $genomic_align->aligned_sequence( $ref_aln_seq );
+              $genomic_align->genomic_align_block( $gab );
+              $genomic_align->dbID( $id_base + $ga_id_count );
               $ga_id_count++;
 
-  		        $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
+              if ( @$entry[1] == 155810542 ) {
+                print "I think I'm the one you're looking for:\n";
+                $ref_genomic_align->_print;
+                print Dumper $entry;
+              }
+
+  		      $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
               $gab->reference_genomic_align($ref_genomic_align);
               push(@gabs, $gab);
             }
@@ -1689,7 +1709,7 @@ sub _detect_location_on_platform {
     my $hal_dir;
     if ( eval {require SiteDefs} ){
         # web setup
-        $hal_dir = $ENV{DATAFILE_BASE_PATH};
+        $hal_dir = $SiteDefs::DATAFILE_BASE_PATH;
     } elsif ( defined $ENV{COMPARA_HAL_DIR} ) {
         $hal_dir = $ENV{COMPARA_HAL_DIR};
         die ( "$hal_dir (defined in \$COMPARA_HAL_DIR) does not exist" ) unless ( -e $hal_dir );
@@ -1701,6 +1721,7 @@ sub _detect_location_on_platform {
 
     $hal_file =~ s/#base_dir#/$hal_dir/;
     die "Cannot find HAL file: $hal_file" unless ( defined $hal_file && -e $hal_file );
+    print "HAL FILE PATH : $hal_file\n<br>";
     return $hal_file;
 }
 

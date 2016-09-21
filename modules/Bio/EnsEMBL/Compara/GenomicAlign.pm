@@ -1343,10 +1343,8 @@ sub get_Mapper {
       }
     } else {
       my $cigar_line = $self->cigar_line;
-      #print "-------GENOMICALIGN---------";
-      #print $self->display_id . "\tcigar: '" . $self->cigar_line . "'\n";
       if (!$cigar_line) {
-	       #print Dumper $self;
+        $self->_print;
         throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
       my $alignment_position = (eval{$self->genomic_align_block->start} or 1);
