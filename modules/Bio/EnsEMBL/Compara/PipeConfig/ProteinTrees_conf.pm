@@ -1778,7 +1778,7 @@ sub core_pipeline_analyses {
                 'mafft_home'            => $self->o('mafft_home'),
                 'escape_branch'         => -1,
             },
-            -analysis_capacity    => 2000,
+            -analysis_capacity    => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
