@@ -101,6 +101,11 @@ sub init_cacheable {
   );
 
   $self->modify_configs(
+    [ 'crispr_WGE_CRISPR_sites'],
+    { display => 'as_transcript_nolabel' }
+  );
+
+  $self->modify_configs(
     [ 'regulatory_features_core', 'regulatory_features_non_core' ],
     { display => 'off', menu => 'no' }
   );
