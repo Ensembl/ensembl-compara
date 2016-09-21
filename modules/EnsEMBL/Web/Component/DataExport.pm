@@ -36,11 +36,17 @@ sub export_options :Abstract;
 
 sub viewconfig {
   ## @override
-  ## default type is not same as hub->type
-  my $self  = shift;
-  my $type  = shift || $self->hub->param('data_type');
+  ## Gets view config of the related component
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $type      = $hub->param('data_type');
+  my $component = $hub->param('component');
 
-  return $self->SUPER::viewconfig($type);
+  return $hub->get_viewconfig({
+    'component' => $component,
+    'type'      => $type,
+    'cache'     => 1
+  });
 }
 
 sub create_form {
