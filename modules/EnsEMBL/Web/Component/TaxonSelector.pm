@@ -142,7 +142,7 @@ sub render_selector {
       <div class="content">
         <h2>Selected species <span class="ss-count"></span></h2> 
         <div class="vscroll_container">
-        <ul></ul>
+          <ul></ul>
         </div>
       </div>
     </div>    

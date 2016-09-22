@@ -3,13 +3,11 @@
 Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id);
-    this.urlParam  = 's';
     this.dataUrl   = params.dataUrl;
     // this.dataUrl   = '/taxon_tree_data.js';
     this.taxonTreeData = null;
-    this.isBlast   = params.isBlast ? true : false ;
     this.imagePath = '/i/species/48/';
-    this.division_json = {};
+    this.lastSelected = new Object;
 
     this.selectionLimit = params.selectionLimit || 25;
     this.defaultKeys = new Array();
@@ -18,7 +16,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     if (params.caller)          this.caller          = params.caller;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
-    if (params.multiSelect)    this.multiSelect    = params.multiSelect;
+    if (params.multiselect)     this.multiSelect     = params.multiSelect;
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
   },
   
@@ -127,6 +125,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.populateDefaultSpecies();
     }
 
+    this.elLk.list.sortable({
+      containment: this.elLk.list.parent()
+    });
   },
 
   createMenu: function(arr, highlight_title) {
@@ -278,13 +279,11 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       },
       source: function(request, response) { response(panel.filterArray($.unique(acTitles), request.term)) }, 
       select: function(event, ui) {
-        if (!panel.multiSelect) {
-          panel.elLk.mastertree.dynatree("getTree").selectKey(acKeys[ui.item.value], true);
-          panel.disableButton(false);
-
-          // $('.modal_close').trigger('click');
+        var isLeaf = panel.locateNode(acKeys[ui.item.value], true);
+        if (isLeaf && !panel.multiSelect) {
+          var node = panel.elLk.tree.dynatree("getTree").getSelectedNodes();
+          panel.lastSelected = node.data;
         }
-        var isLeaf = panel.locateNode(acKeys[ui.item.value]);
         isLeaf && finder.val('');
       },
       open: function(event, ui) { $('.ui-menu').css('z-index', 999999999 + 1) } // force menu above modal
@@ -318,10 +317,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // highlight the term within each match
       var regex = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + $.ui.autocomplete.escapeRegex(this.term) + ")(?![^<>]*>)(?![^&;]+;)", "gi");
       item.label = item.label.replace(regex, "<span class='ss-ac-highlight'>$1</span>");
-      // regex = new RegExp("(.*) \(.*\)", "gi");
-      // item.value.match(regex);
-      // item.key = RegExp.$2.replace(/[()]/g, '');
-      // item.key = item.key || item.value;
       return $("<li/>").data("ui-autocomplete-item", item).addClass('ss-ac-result-li').append("<a class='ss-ac-result'>" + item.label + "</a>").appendTo(ul);
     };
   },
@@ -340,6 +335,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       console.log('master tree is null');
       return;
     }
+
     panel.elLk.tree.dynatree({
       // initAjax: {url: panel.dataUrl},
       children: [taxon_tree.toDict(true)],
@@ -347,15 +343,14 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       checkbox: true,
       selectMode: (panel.caller === 'Compara_Alignments') ? 1 : 3,
       activeVisible: true,
-
-      onSelect: function(flag, node) { 
+      onSelect: function(flag, node) {
         if (!panel.multiSelect) {
-          // Select item
-          panel.elLk.tree.dynatree("getTree").selectKey(node.data.key, flag);
+          // Update last selected item for single select
+          panel.lastSelected = flag ? node.data : null;
           panel.disableButton(!flag);
           return;
         }
-        panel.setSelection(flag, node);
+        panel.setSelection(node, flag);
       },
       onDblClick: function(node, event) { node.toggleSelect() },
       onKeydown: function(node, event) {
@@ -375,16 +370,14 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var treeObj = panel.elLk.mastertree.dynatree("getTree");
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
-      $.each(panel.defaultKeys, function(index, key) { 
+      $.each(panel.defaultKeys.reverse(), function(index, key) { 
         var node = treeObj.getNodeByKey(key);
         if (node) {
           node.select();      // tick it
           node.makeVisible(); // force parent path to be expanded
-          panel.setSelection(true, node)
+          panel.setSelection(node, true)
         }
       });
-
-      // panel.locateNode(panel.defaultKeys[0])
     }
   },
 
@@ -446,28 +439,36 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.elLk.list.closest('.vscroll_container').height(newHeight - 40);
   },
   
-  getSelectedItems: function(tree, preserveOrder) {
+  getSelectedItems: function(tree) {
+
     if (!tree) {
       tree = this.elLk.mastertree;
     }
-    var selectedNodes = tree.dynatree("getTree").getSelectedNodes(1);
-    var items = $.map(selectedNodes, function(node){
-      return node.data.isFolder ? null : {
-        key   : node.data.key,
-        title : node.data.title,
-        icon  : node.data.extra ? node.data.key.split('--')[0] : '',
-        value : node.data.value
-      };
+    var selectedNodes = this.elLk.mastertree.dynatree("getTree").getSelectedNodes();
+    var items = new Array();
+
+    var items_hash = {};
+    $.each(selectedNodes, function(i, node) {
+      if (!node.data.isFolder) {
+        items_hash[node.data.title] = {
+          key   : node.data.key,
+          title : node.data.title,
+          icon  : node.data.icon,
+          value : node.data.value
+        };
+      }
     });
-    if (!preserveOrder) {
-      items.sort(function (a, b) {return a.title.toLowerCase().localeCompare(b.title.toLowerCase())});
-    }
+
+    $.each($('li', this.elLk.list), function(i, li) {
+      items.push(items_hash[$('.selected-sp-title', this).text()]);
+    });
+
     return items;
   },
   
-  setSelection: function(flag, node) {
+  setSelection: function(node, flag) {
     var panel = this;
-    var items = [];
+    var items = new Array();
     // Get selected items from displayed subtree
     if(node.hasChildren()) {
       // If selected node is an internal node then get all its children
@@ -478,25 +479,32 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       items.push(node);
     }
 
-    // Update mastertree according to the flag true/false = select/deselect
     $.each(items, function(index, item){
+      // Update mastertree according to the flag true/false = select/deselect
       panel.elLk.mastertree.dynatree("getTree").selectKey(item.data.key, flag);
+      if (flag) {
+        var img_filename = item.data.key + '.png';
+        item.data.img_url = item.data.icon.replace('\/16\/', '\/48\/');
+        var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
+
+        $('<li/>')
+        .data(item.data)
+        .append(species_img, '<span class="selected-sp-title">' + item.data.title + '</span><span class="remove">x</span>')
+        .prependTo(panel.elLk.list);
+      }
+      else {
+        $.each($('li', panel.elLk.list), function(i, li) {
+          if ($(li).data('key') === item.data.key) {
+            $(li).remove();
+          }
+        });
+      }
     });
-
-    // Remove current list
-    $('li', panel.elLk.list).remove();
-
-    var all_selected_items = panel.getSelectedItems(this.elLk.mastertree);
-    $.each(all_selected_items, function(index, item){
-      var img_filename = (item.icon || item.key) + '.png';
-      item.img_url = panel.imagePath + img_filename;
-      var species_img = item.img_url ? '<span class="selected-sp-img"><img src="'+ item.img_url +'"></span>' : '';
-      var li = $('<li>' + species_img + '<span class="selected-sp-title">' + item.title + '</span><span class="remove">x</span></li>').appendTo(panel.elLk.list);
-    });    
     $('li span.remove', panel.elLk.list).off().on('click', function(){
       panel.removeListItem($(this).parent());
       panel.updateCount();
     });
+
     panel.updateCount();
     $('h2', panel.elLk.taxon_selector_list).removeClass('active').addClass('active');
   },
@@ -506,12 +514,12 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     !bool ? $('#ss-submit', this.elLk.buttons).addClass('active') : $('#ss-submit', this.elLk.buttons).removeClass('active');
   },
   
-  locateNode: function(key) {
+  locateNode: function(key, select) {
     var panel = this;
 
     var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
     if (!mastertree_node.data.isFolder && panel.multiSelect) {
-      panel.setSelection(true, mastertree_node);
+      panel.setSelection(mastertree_node, true);
     }
 
     var subtree = panel.getTree(mastertree_node.data.title, panel.taxonTreeData);
@@ -521,10 +529,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     panel.displayTree(subtree.title);
 
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);
-    if (node) { 
-      node.activate();
+    node && node.activate();
+    node && select && node.select();
       // node.li.scrollIntoView();
-    }
   },
   
   removeListItem: function(li) {
@@ -568,8 +575,16 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   
   updateConfiguration: function() {
     var panel = this;
-    var tree  = (panel.multiSelect) ? this.elLk.mastertree : this.elLk.tree;
-    var items = panel.getSelectedItems(tree);
+    // var tree  = (panel.multiSelect) ? this.elLk.mastertree : this.elLk.tree;
+    var items = new Array();
+    if (panel.multiSelect) {
+      var tree = this.elLk.mastertree;
+      // console.log('updateconf',tree)
+      items = panel.getSelectedItems(tree, true);
+    }
+    else {
+      items = [this.lastSelected];
+    }
 
     if (panel.caller === 'Blast') {
       Ensembl.EventManager.trigger('updateTaxonSelection', items);
@@ -581,25 +596,26 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       var params = [];
       var currSelArr = new Array();
       for (var i = 0; i < items.length; i++) {
-        params.push('s' + (i + 1) + '=' + items[i].key);
-        currSelArr.push(items[i].key);
+        if (items[i]) {
+          params.push('s' + (i + 1) + '=' + items[i].key);
+          currSelArr.push(items[i].key);
+        }
       }
 
       if (!panel.approveSelection(currSelArr)) {
         return false;
       }
 
-      var url = this.elLk.form.attr('action').replace(/s\d+=.*(;)?/,'');
+      var url = this.elLk.form.attr('action').replace(/[s,r]\d+=.*(;)?/,'');
       Ensembl.redirect(url + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + params.join(';')));
       
     }
-
     return true;
   },
 
   // Check if there was any change in the selection. If not, then do nothing.
   approveSelection: function(currSel) {
-    return currSel.sort().join(',') !== this.defaultKeys.sort().join(',');
+    return currSel.join(',') !== this.defaultKeys.join(',');
   }
   
 });

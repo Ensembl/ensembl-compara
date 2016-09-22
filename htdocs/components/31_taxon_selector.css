@@ -116,6 +116,11 @@ div.taxon_selector_list li  {
   box-sizing: border-box;
   margin-bottom: 0px !important;
 }
+
+div.taxon_selector_list li:hover  { 
+  cursor: ns-resize;
+}
+
 div.taxon_selector_list li span {
   position: absolute; 
   white-space: nowrap;
@@ -135,16 +140,16 @@ div.taxon_selector_list .selected-sp-img img{
   height: 39px;
 }
 div.taxon_selector_list li span.remove {
-    cursor: pointer;
-    /* height: 16px; */
-    /* width: 16px; */
-    font-size: 18px;
-    margin: 12px 12px;
-    right: 0;
-    color: #828181;
-    font-weight: 100;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 12px 12px;
+  right: 0;
+  color: #828181;
+  font-weight: 100;
 }
-
+div.taxon_selector_list li span.remove:hover {
+  color: coral;  
+}
 /*
 div.taxon_selector_hint         { margin: 0.25em 0.25em 0.5em 0.25em; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
 div.taxon_selector_hint h4  { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left;  margin: 0 0 5px 10px; padding-left: 16px; }
@@ -193,9 +198,8 @@ div.taxon_selector_form ul.list li {
 
 div.taxon_selector_form ul.list li img,
 div.ss-alignment-container .ss-alignment-selected-label img {
-  width: 23px;
-  height: 23px;
-  margin: -1px;
+  width: 24px;
+  height: 24px;
 }
 
 div.ss-alignment-container,
