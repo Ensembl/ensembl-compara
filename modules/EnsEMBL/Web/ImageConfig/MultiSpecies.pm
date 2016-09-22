@@ -67,6 +67,29 @@ sub get_user_settings {
   return $settings->{$self->species} ||= {};
 }
 
+sub reset_user_settings {
+  ## override
+  ## Reset user settings from other species too
+  my $self        = shift;
+  my $reset_type  = shift || '';
+  my $all_data    = $self->SUPER::get_user_settings;
+  my @species     = grep $_ ne $self->species, map $_->[0], @{$self->species_list};
+  my @keys        = $reset_type eq 'all' ? qw(nodes track_order) : ($reset_type eq 'track_order' ? ('track_order') : ('nodes'));
+  my @altered;
+
+  # remove other species keys
+  foreach my $species (@species) {
+    for (@keys) {
+      delete $all_data->{$species}{$_};
+      push @altered, 1;
+    }
+  }
+
+  push @altered, $self->SUPER::reset_user_settings($reset_type);
+
+  return @altered;
+}
+
 sub get_user_settings_to_save {
   ## @override
   return shift->SUPER::get_user_settings(@_);
