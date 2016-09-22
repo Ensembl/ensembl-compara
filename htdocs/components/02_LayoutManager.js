@@ -143,7 +143,6 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
-    this.showMobileMessage();
     this.showCookieMessage();
     this.showTemporaryMessage();
     this.showMirrorMessage();
@@ -331,8 +330,6 @@ Ensembl.LayoutManager.extend({
     }
 
     return false;
-  },
-
-  showMobileMessage: function() { }
+  }
 
 });
