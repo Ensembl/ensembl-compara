@@ -281,13 +281,13 @@ sub postReadRequestHandler {
 
   return OK if $r->unparsed_uri eq '*';
 
+  # VOID request to populate %ENV
+  $r->subprocess_env;
+
   # Any redirect needs to be performed at this stage?
   if (my $redirect_uri = get_postread_redirect_uri($r)) {
     return http_redirect($r, $redirect_uri);
   }
-
-  # VOID request to populate %ENV
-  $r->subprocess_env;
 
   # save request start time for logs
   $r->subprocess_env('LOG_REQUEST_START', sprintf('%0.6f', time));
