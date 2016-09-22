@@ -127,7 +127,7 @@ sub set_record_data {
   if (my $record_id = delete $row->{'record_id'}) {
     $record = $self->record({'record_id' => $record_id});
 
-    throw WebException('Record (' + $self->record_type + ') with id ' + $record_id + ' does not exist.') unless $record->count;
+    throw WebException('Record ('.$self->record_type.') with id '.$record_id.' does not exist.') unless $record->count;
   }
 
   # if type and code is provided, the record may or may not exist among the record set
