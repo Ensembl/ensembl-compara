@@ -49,6 +49,7 @@ sub new {
 sub counts            { return {};        }
 sub _counts           { return {};        } # Implemented in plugins
 sub availability      { return {};        }
+sub implausibility    { return {};        }
 sub can_export        { return 0;         }
 sub default_action    { return 'Summary'; }
 sub __data            { return $_[0]{'data'};                  }

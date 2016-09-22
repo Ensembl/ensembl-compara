@@ -24,6 +24,7 @@ package EnsEMBL::Web::Document::Element::Navigation;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+use List::MoreUtils qw(any);
 
 use base qw(EnsEMBL::Web::Document::Element);
 
@@ -74,6 +75,13 @@ sub availability {
   return $self->{'availability'};
 }
 
+sub implausibility {
+  my $self = shift;
+  $self->{'implausibility'} = shift if @_;
+  $self->{'implausibility'} ||= {};
+  return $self->{'implausibility'};
+}
+
 sub get_json {
   my $self = shift;
   return { nav => $self->content };
@@ -92,7 +100,8 @@ sub init {
   $self->active($action);
   $self->caption(ref $object && $object->short_caption ? $object->short_caption : $configuration->short_caption);
   $self->counts($object->counts) if ref $object;
-  $self->availability(ref $object ? $object->availability : {});     
+  $self->availability(ref $object ? $object->availability : {});
+  $self->implausibility(ref $object ? $object->implausibility : {});
   
   $self->{'hub'} = $hub;
 }
@@ -135,6 +144,28 @@ sub content {
   );
 }
 
+sub is_implausible {
+  my ($self,$key) = @_;
+
+  return $self->{'implausibility'}{$key};
+}
+
+sub plausible {
+  my ($self,$node) = @_;
+
+  my $implaus = $node->data->{'implausibility'};
+  return !$implaus || !$self->is_implausible($implaus);
+}
+
+sub plausible_children {
+  my ($self,$node) = @_;
+
+  my @children     = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$node->child_nodes};
+  return
+    any { $self->plausible($_) or $self->plausible_children($_) }
+    @children;
+}
+
 sub build_menu {
   my ($self, $node, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $is_last) = @_;
   
@@ -153,7 +184,9 @@ sub build_menu {
   my $toggle       = $state ? 'closed' : 'open';
   my @classes      = $data->{'li_class'} || ();
   my @append;
-  
+
+  @children = grep { $self->plausible($_) or $self->plausible_children($_) } @children;
+
   if ($modal) {
     if ($data->{'top_level'}) {
       @append = ([ 'img', { src => "$img_url${toggle}2.gif", class => "toggle $class", alt => '' }]) if scalar @children;

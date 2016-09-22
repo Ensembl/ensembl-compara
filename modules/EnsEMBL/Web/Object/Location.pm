@@ -87,6 +87,26 @@ sub availability {
   return $self->{'_availability'};
 }
 
+sub has_strainpop {
+  my ($self) = @_;
+
+  my $hub = $self->hub;
+  my $pop_adaptor = $hub->get_adaptor('get_PopulationAdaptor','variation');
+  my $pop = $pop_adaptor->fetch_by_name('Mouse Genomes Project');
+  return defined $pop;
+}
+
+sub implausibility {
+  my ($self) = @_;
+
+  if(!$self->{'_implausibility'}) {
+    my $implausibility = {};
+    $implausibility->{'strainpop'} = !$self->has_strainpop;
+    $self->{'_implausibility'} = $implausibility;
+  }
+  return $self->{'_implausibility'};
+}
+
 our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub counts {

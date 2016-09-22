@@ -144,7 +144,7 @@ sub populate_tree {
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
       strain  EnsEMBL::Web::Component::Location::StrainTable
     )],
-    { 'availability' => 'slice has_strains' }
+    { 'availability' => 'slice has_strains', implausibility => 'strainpop' }
   ));
 
   $variation_menu->append($self->create_node('LD', 'Linkage Data',
