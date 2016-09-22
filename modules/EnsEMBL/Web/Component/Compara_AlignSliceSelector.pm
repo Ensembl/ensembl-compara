@@ -97,7 +97,7 @@ sub content {
     </div>},
     $self->image_width, 
     $url->[0],
-    $self->getLabelHtml($align_label),
+    $align_label ? $self->getLabelHtml($align_label) : '',
     $align,
     $extra_inputs,
     ($align) ? 'another' : 'an'
