@@ -43,6 +43,8 @@ use EnsEMBL::Web::ImageConfigExtension::UserTracks;
 
 use parent qw(EnsEMBL::Web::Config);
 
+sub cache_code :Accessor;
+
 # quick methods to get/set some of the parameters
 sub font_face           { return shift->_parameter('font_face',       @_);  }
 sub font_size           { return shift->_parameter('font_size',       @_);  }
@@ -65,17 +67,27 @@ sub config_type {
   return 'image_config';
 }
 
+sub cache_key {
+  ## override
+  my $self        = shift;
+  my $cache_key   = $self->SUPER::cache_key;
+     $cache_key  .= '::'.$self->cache_code;
+
+  return $cache_key;
+}
+
 sub _new {
   ## @override
   ## @param Hub object
   ## @param (String) Species
   ## @param (String) Type
-  ## @param (String) Code
-  my ($class, $hub, $species, $type, $code) = @_;
+  ## @param (String) Cache Code
+  my ($class, $hub, $species, $type, $cache_code) = @_;
 
   my $self = $class->SUPER::_new($hub, $species, $type);
 
-  $self->{'code'}             = $code;
+  $self->{'code'}             = $type;        # TODO - remove usage of code as type in the subclasses
+  $self->{'cache_code'}       = $cache_code;  # TODO - remove this once above is done
   $self->{'_parameters'}      = {}, # hash to contain all parameters
   $self->{'track_order'}      = []; # state changes for track order as saved in db
   $self->{'user_track_count'} = 0;

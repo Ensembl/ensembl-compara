@@ -48,11 +48,10 @@ sub init_cacheable {
 
   $self->load_tracks;
 
-  if ($self->{'code'} ne $self->{'type'}) {
-    my $func = "init_$self->{'code'}";
+  if ($self->cache_code ne $self->type) {
+    my $func = "init_".$self->cache_code;
     $self->$func if $self->can($func);
   }
-
 }
 
 sub init_transcript {

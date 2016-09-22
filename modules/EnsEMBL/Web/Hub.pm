@@ -657,7 +657,7 @@ sub get_imageconfig {
   $self->{'_image_configs'} ||= {};
 
   if (!exists $self->{'_image_configs'}{$cache_code}) {
-    $self->{'_image_configs'}{$cache_code} = dynamic_require("EnsEMBL::Web::ImageConfig::$type")->new($self, $species, $type, $type);
+    $self->{'_image_configs'}{$cache_code} = dynamic_require("EnsEMBL::Web::ImageConfig::$type")->new($self, $species, $type, $cache_code);
   }
 
   return $self->{'_image_configs'}{$cache_code};
