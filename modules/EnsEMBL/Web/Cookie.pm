@@ -102,6 +102,8 @@ sub retrieve {
     $self->{'_real_value'}  = $cookie_header->{$_};
     $self->{'retrieved'}    = 1;
   }
+
+  return $self;
 }
 
 sub value {
