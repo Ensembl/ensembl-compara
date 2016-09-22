@@ -98,8 +98,9 @@ sub retrieve {
   my $cookie_header = _parse_cookie_header($self->{'_r'});
 
   # save the real value only if cookie found in headers
-  if (exists $cookie_header->{$_}) {
-    $self->{'_real_value'}  = $cookie_header->{$_};
+  my $name = $self->name;
+  if (exists $cookie_header->{$name}) {
+    $self->{'_real_value'}  = $cookie_header->{$name};
     $self->{'retrieved'}    = 1;
   }
 
