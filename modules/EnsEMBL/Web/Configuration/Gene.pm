@@ -76,10 +76,7 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
-  #not_strain to collapse and disable main compara menu if it is a strain
-  my $compara_menu = $self->create_submenu('Compara', 'Comparative Genomics');
-  
-  my $core_compara_menu = $self->create_node('Core_Compara', 'Multi-clade',
+  my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core not_strain'}
   );
