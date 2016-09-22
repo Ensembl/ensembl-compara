@@ -61,7 +61,7 @@ Ensembl.Panel.BlastSpeciesList = Ensembl.Panel.extend({
   	// update the modal link href in the form
   	var modalBaseUrl = panel.elLk.modalLink.attr('href').split('?')[0];
   	var keys = $.map(items, function(item){ return item.key; });
-  	var queryString = $.param({s: keys}, true);
+  	var queryString = $.param({s: keys, multiselect: 1}, true);
   	panel.elLk.modalLink.attr('href', modalBaseUrl + '?' + queryString);
   }
 });
