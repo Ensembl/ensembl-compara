@@ -133,22 +133,31 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     var optgroups = $();
 
     $.each(this.allSpecies, function(i, species) {
-      if (!species.external || species.favourite) { // no external species unless it's a favourite
-        var groupClass  = species.favourite ? 'Favourites' : species.group;
+
+      // favourites group
+      if (species.favourite) {
+        var optgroup = optgroups.filter('.favourites');
+        if (!optgroup.length) {
+          optgroup = $('<optgroup class="favourites" label="Favourites"></optgroup>');
+          optgroups = optgroups.add(optgroup);
+        }
+        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' ' + species.assembly + '</option>');
+      }
+
+      // taxon group
+      if (!species.external) {
+        var groupClass  = species.group;
         var optgroup    = optgroups.filter('.' + groupClass);
         if (!optgroup.length) {
           optgroup = $('<optgroup class="' + groupClass + '" label="' + (labels[species.group] || groupClass) + '"></optgroup>');
           optgroups = optgroups.add(optgroup);
         }
-        optgroup.append('<option value="' +
-          Ensembl.populateTemplate(template, {species: species}) + '">' + species.common +
-          (species.favourite ? ' ' + species.assembly + ' ' : ' (' + species.name + ')') +
-          '</option>');
+        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' (' + species.name + ')</option>');
       }
     });
 
     // add favourites on top
-    optgroups.filter('.Favourites').appendTo(dropdown);
+    optgroups.filter('.favourites').appendTo(dropdown);
 
     // add remaining optgroups acc to taxon order
     for (var i in this.taxonOrder) {
