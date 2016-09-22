@@ -62,7 +62,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -122,6 +122,14 @@ sub hive_meta_table {
     }
 }
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},       # here we inherit anything from the base class
+        'compara_db'    => $self->o('compara_db'),
+    }
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -139,7 +147,6 @@ sub pipeline_analyses {
             },
             -input_ids  => [
                 {
-                    'compara_db'    => $self->o('compara_db'),
                     'mlss_id'       => $self->o('mlss_id'),
                 }
             ],

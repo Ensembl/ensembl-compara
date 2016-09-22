@@ -115,7 +115,7 @@ sub pipeline_analyses_cafe {
                              'perFamTable'  => $self->o('per_family_table'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
-             -rc_name => '1Gb_job',
+             -rc_name => '4Gb_job',
              -meadow_type => 'LSF',
              -flow_into => {
                  '2->A' => [ 'CAFE_analysis' ],

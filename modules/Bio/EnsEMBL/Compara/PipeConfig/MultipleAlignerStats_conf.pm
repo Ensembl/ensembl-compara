@@ -64,7 +64,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -109,6 +109,14 @@ sub hive_meta_table {
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     }
 }
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},       # here we inherit anything from the base class
+        'compara_db'    => $self->o('compara_db'),
+    }
+}
+
 
 
 sub pipeline_analyses {
@@ -119,7 +127,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -input_ids  => [
                 {
-                    'compara_db'    => $self->o('compara_db'),
                     'mlss_id'       => $self->o('mlss_id'),
                 }
             ],

@@ -480,7 +480,7 @@ sub _homology_body {
     $w->startTag($tagname, 'id' => $homology->dbID);
 
     # Scores
-    foreach my $tag (qw(n s dn ds lnl dnds_ratio)) {
+    foreach my $tag (qw(n s dn ds lnl dnds_ratio goc_score wga_coverage)) {
         my $value = $homology->$tag;
         if (defined $value and $value ne '') {
             $w->emptyTag('score', 'id' => $tag, 'value' => $value);
@@ -489,8 +489,8 @@ sub _homology_body {
 
     # Properties
     _taxonomy_info_properties($w, $homology->species_tree_node);
-    foreach my $tag (qw(description is_tree_compliant)) {
-        $w->emptyTag('property', 'name' => $tag, 'value' => $homology->$tag);
+    foreach my $tag (qw(description is_tree_compliant is_high_confidence)) {
+        $w->emptyTag('property', 'name' => $tag, 'value' => $homology->$tag) if defined $homology->$tag;
     }
 
     foreach my $member (@{$homology->get_all_Members}) {

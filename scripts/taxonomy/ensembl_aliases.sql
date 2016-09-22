@@ -685,6 +685,35 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 -- </rel.79>
 
+-- <rel.86>
+
+SET @this_taxon_id=862507;
+SET @this_value='Mouse';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=10096;
+SET @this_value='Algerian mouse';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=10091;
+SET @this_value='Southeastern Asian house mouse';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=10092;
+SET @this_value='Western European house mouse';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=39442;
+SET @this_value='Eastern European house mouse';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </rel.86>
+
 -- -- Use these to ADD new internal node aliases
 
 -- SET @this_taxon_id=;
@@ -993,6 +1022,20 @@ SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 -- </rel.79>
+
+-- <rel.86>
+
+SET @this_taxon_id=862507;
+SET @this_value='1.7';
+SET @this_name_class='ensembl timetree mya';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=10090;
+SET @this_value='0.2';
+SET @this_name_class='ensembl timetree mya';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </rel.86>
 
 
 -- -- Use these to add new mya estimates

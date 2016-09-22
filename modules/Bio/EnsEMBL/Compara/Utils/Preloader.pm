@@ -176,6 +176,7 @@ sub _load_and_attach_all {
     }
 
     my @keys_to_fetch = grep {!$key2newobject{$_}} keys %key2iniobject;
+    return [] unless scalar(@keys_to_fetch);
     my $all_new_objects = $adaptor->fetch_all_by_dbID_list(\@keys_to_fetch);
     foreach my $o (@$all_new_objects, values %key2newobject) {
         $_->{$object_internal_key} = $o for @{$key2iniobject{$o->dbID}};
@@ -218,6 +219,7 @@ sub load_all_sequences {
       }
     }
     my @all_keys = keys %key2member;
+    return [] unless scalar(@all_keys);
 
     my $seqs = $seq_type ? $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@all_keys, $seq_type)
                          : $sequence_adaptor->fetch_by_dbIDs(\@all_keys);

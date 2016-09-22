@@ -83,6 +83,11 @@ sub fetch_input {
     my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description != "gene_split"', $mlss_id, $min_homology_id, $max_homology_id);
     my $homologies = $homology_adaptor->generic_fetch($constraint);
 
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $sms);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, 'cds', $sms);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $sms);
+
     $self->param('homologies', $homologies);
 }
 
@@ -134,7 +139,7 @@ sub calc_genetic_distance {
   my ($self, $homology, $codeml_parameters) = @_;
 
   #print("use codeml to get genetic distance of homology\n");
-  print $homology->toString if ($self->debug);
+  print $homology->toString, "\n" if ($self->debug);
   
   my $aln = $homology->get_SimpleAlign(-seq_type => 'cds', -ID_TYPE => 'member');
 

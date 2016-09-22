@@ -265,7 +265,7 @@ sub default_options {
         #'goc_capacity'              => 200,
         #'genesetQC_capacity'        => 100,
         #'other_paralogs_capacity'   => 100,
-        #'homology_dNdS_capacity'    => 200,
+        #'homology_dNdS_capacity'    => 1500,
         #'hc_capacity'               =>   4,
         #'decision_capacity'         =>   4,
         #'hc_post_tree_capacity'     => 100,
@@ -447,6 +447,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
+        'rm -rf '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
@@ -1568,7 +1569,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -rc_name => '250Mb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name     => 'cluster_tagging',
@@ -1777,7 +1778,7 @@ sub core_pipeline_analyses {
                 'mafft_home'            => $self->o('mafft_home'),
                 'escape_branch'         => -1,
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -analysis_capacity    => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT

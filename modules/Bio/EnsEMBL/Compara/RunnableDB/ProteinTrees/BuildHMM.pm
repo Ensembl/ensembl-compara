@@ -117,6 +117,8 @@ sub fetch_input {
         $self->complete_early(sprintf('No HMM will be buid (only %d members).', scalar(@$members)));
     }
 
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, $protein_tree->member_type, $members);
+
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
     $self->param('protein_align')->{'_member_type'} = $protein_tree->member_type;
 

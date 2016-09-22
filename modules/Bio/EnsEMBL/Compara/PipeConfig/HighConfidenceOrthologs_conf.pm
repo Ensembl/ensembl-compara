@@ -79,8 +79,12 @@ sub default_options {
             },
         ],
 
-        'capacity'    => 50,            # how many mlss_ids can be processed in parallel
-        'batch_size'  => 20,            # how many mlss_ids' jobs can be batched together
+        # By default the pipeline processes all homologies but you can # restrict this here
+        'range_label',  => undef,       # A name for the range
+        'range_filter', => undef,       # An SQL boolean expression to filter homology_id
+
+        'capacity'    => 5,             # how many mlss_ids can be processed in parallel
+        'batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
 }
@@ -108,7 +112,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'flag_high_confidence_orthologs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
             -parameters    => {
-                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#'
+                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'range_label'   => $self->o('range_label'),
+                'range_filter'  => $self->o('range_filter'),
             },
             -hive_capacity => $self->o('capacity'),
             -batch_size    => $self->o('batch_size'),

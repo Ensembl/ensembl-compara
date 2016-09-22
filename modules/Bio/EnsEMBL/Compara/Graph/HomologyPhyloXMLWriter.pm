@@ -237,6 +237,9 @@ sub _write_homology {
     $w->dataElement('confidence', $homology->is_tree_compliant,
         'type'  => 'is_compliant_to_gene_tree',
     );
+    $w->dataElement('confidence', $homology->is_high_confidence,
+        'type'  => 'is_high_confidence',
+    );
 
     $w->startTag('clade');
     my $stn = $homology->species_tree_node;
@@ -250,7 +253,7 @@ sub _write_homology {
     }
     $w->endTag('clade');
 
-    foreach my $tag (qw(n s dn ds lnl dnds_ratio)) {
+    foreach my $tag (qw(n s dn ds lnl dnds_ratio goc_score wga_coverage)) {
         my $value = $homology->$tag;
         if (defined $value and $value ne '') {
             $w->dataElement('property', $value,
