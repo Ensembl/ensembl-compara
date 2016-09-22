@@ -95,7 +95,7 @@ sub summary_zmenu {
 
     my $url = $self->hub->url({
       type => 'Variation',
-      action => 'Explore',
+      action => 'Mappings',
       v => $f->{'snp'},
     });
 
