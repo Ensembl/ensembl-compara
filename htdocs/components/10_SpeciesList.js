@@ -33,6 +33,8 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.refreshURL       = this.params['ajax_refresh_url'];
     this.saveURL          = this.params['ajax_save_url'];
     this.displayLimit     = this.params['display_limit'];
+    this.taxonOrder       = this.params['taxon_order'];
+    this.taxonLabels      = this.params['taxon_labels'];
 
     this.elLk.buttonEdit.on('click', { panel: this }, function(e) {
       e.preventDefault();
@@ -125,19 +127,33 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
   },
 
   renderDropdown: function() {
-    var template = this.urlTemplate;
-    var dropdown = this.elLk.dropdown.children(':not(:first-child)').remove().end();
+    var template  = this.urlTemplate;
+    var labels    = this.taxonLabels;
+    var dropdown  = this.elLk.dropdown.children(':not(:first-child)').remove().end();
+    var optgroups = $();
 
     $.each(this.allSpecies, function(i, species) {
-      if (!species.external) {
-        var groupClass  = species.group.replace(/\W/g, '_');
-        var optgroup    = dropdown.find('optgroup.' + groupClass);
+      if (!species.external || species.favourite) { // no external species unless it's a favourite
+        var groupClass  = species.favourite ? 'Favourites' : species.group;
+        var optgroup    = optgroups.filter('.' + groupClass);
         if (!optgroup.length) {
-          optgroup = $('<optgroup class="' + groupClass + '" label="' + species.group + '"></optgroup>').appendTo(dropdown);
+          optgroup = $('<optgroup class="' + groupClass + '" label="' + (labels[species.group] || groupClass) + '"></optgroup>');
+          optgroups = optgroups.add(optgroup);
         }
-        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' (' + species.name + ')</option>');
+        optgroup.append('<option value="' +
+          Ensembl.populateTemplate(template, {species: species}) + '">' + species.common +
+          (species.favourite ? ' ' + species.assembly + ' ' : ' (' + species.name + ')') +
+          '</option>');
       }
     });
+
+    // add favourites on top
+    optgroups.filter('.Favourites').appendTo(dropdown);
+
+    // add remaining optgroups acc to taxon order
+    for (var i in this.taxonOrder) {
+      optgroups.filter('.' + this.taxonOrder[i]).appendTo(dropdown);
+    }
   },
 
   updateFav: function(favSpecies) {
