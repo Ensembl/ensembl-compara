@@ -30,6 +30,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.favTemplate      = this.params['fav_template'];
     this.listTemplate     = this.params['list_template'];
     this.urlTemplate      = this.params['species_url_template'];
+    this.strainTemplate   = this.params['species_strain_url_template'];
     this.refreshURL       = this.params['ajax_refresh_url'];
     this.saveURL          = this.params['ajax_save_url'];
     this.displayLimit     = this.params['display_limit'];
@@ -128,9 +129,21 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
 
   renderDropdown: function() {
     var template  = this.urlTemplate;
+    var templateS = this.strainTemplate;
     var labels    = this.taxonLabels;
     var dropdown  = this.elLk.dropdown.children(':not(:first-child)').remove().end();
     var optgroups = $();
+
+    var addOption = function(optgroup, species) {
+      optgroup.append(
+        '<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' +
+        species.common + ( species.favourite ? (' ' + species.assembly ) : (' (' + species.name + ')') ) +
+        '</option>'
+      );
+      if (species.strains) {
+        optgroup.append('<option value="' + Ensembl.populateTemplate(templateS, {species: species}) + '">' + species.common + ' strains (' + species.name + ')</option>');
+      }
+    };
 
     $.each(this.allSpecies, function(i, species) {
 
@@ -141,7 +154,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
           optgroup = $('<optgroup class="favourites" label="Favourites"></optgroup>');
           optgroups = optgroups.add(optgroup);
         }
-        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' ' + species.assembly + '</option>');
+        addOption(optgroup, species);
       }
 
       // taxon group
@@ -152,7 +165,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
           optgroup = $('<optgroup class="' + groupClass + '" label="' + (labels[species.group] || groupClass) + '"></optgroup>');
           optgroups = optgroups.add(optgroup);
         }
-        optgroup.append('<option value="' + Ensembl.populateTemplate(template, {species: species}) + '">' + species.common + ' (' + species.name + ')</option>');
+        addOption(optgroup, species);
       }
     });
 

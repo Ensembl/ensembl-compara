@@ -113,6 +113,11 @@ sub _get_dom_tree {
     }, {
       'node_name'   => 'inputhidden',
       'class'       => 'js_param',
+      'name'        => 'species_strain_url_template',
+      'value'       => encode_entities($hub->url({'species' => '{{species.key}}', 'type' => 'Info', 'function' => 'Strains'}))
+    }, {
+      'node_name'   => 'inputhidden',
+      'class'       => 'js_param',
       'name'        => 'display_limit',
       'value'       => SPECIES_DISPLAY_LIMIT
     }, {
@@ -160,7 +165,8 @@ sub _species_list {
       img         => sprintf('%sspecies/48/%s.png', $img_url, $_),
       common      => $species->{$_}{'common'},
       assembly    => $species->{$_}{'assembly'},
-      favourite   => $fav{$_} ? 1 : 0
+      favourite   => $fav{$_} ? 1 : 0,
+      strains     => $species->{$_}{'strain'} ? 1 : 0
     };
 
     if (my $alt_assembly = $sd->get_config($_, 'SWITCH_ASSEMBLY')) {
