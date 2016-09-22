@@ -77,9 +77,19 @@ sub content {
   my $self      = shift;
   my $hub       = $self->hub;
   my $object    = $self->object;
-  my $threshold = 10001;
+  my $threshold = 100001;
 
-  return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
+  my $r = $self->param('r');
+  $r =~ /^(.*):(\d+)-(\d+)$/;
+  my ($chr,$s,$e) = ($1,$2,$3);
+  my $ss = int(($s+$e)/2);
+  my $ee = $ss+50000;
+  $ss -= 50000;
+  my $rr = "$chr:$ss-$ee";
+  my $centre_url = $hub->url({
+    r => $rr,
+  });
+  return $self->_warning('Region too large',qq(<p>The region selected is too large to display in this view - use the navigation above to zoom in or <a href="$centre_url">click here to zoom into $rr</a>...</p>)) if $object->length > $threshold;
 
   my $slice = $object->slice;
      $slice = $slice->invert if $hub->param('strand') == -1;
