@@ -203,10 +203,11 @@ sub make_table {
       toggle_highlight_over => 2
     });
 
+  my @sample_cols;
   foreach my $sample (@$samples) {
     my $sample_label = $sample->name;
        $sample_label =~ s/^MGP://;
-    push (@columns,
+    push (@sample_cols,
     {
       _key    => lc($sample->name).'_strain'  , _type => 'string no_filter no_sort',
       label   => $sample_label,
@@ -216,6 +217,7 @@ sub make_table {
       recolour => { A => 'green', C => 'blue', G => '#ff9000', T => 'red' }
     });
   }
+  push @columns,(sort { $a->{'_key'} cmp $b->{'_key'} } @sample_cols);
 
   $table->add_columns(\@columns,\@exclude);
 
