@@ -286,6 +286,7 @@ sub postReadRequestHandler {
 
   # Any redirect needs to be performed at this stage?
   if (my $redirect_uri = get_postread_redirect_uri($r)) {
+    $r->subprocess_env('LOG_REQUEST_IGNORE', 1);
     return http_redirect($r, $redirect_uri);
   }
 
@@ -416,6 +417,7 @@ sub logHandler {
   my $t = time;
 
   return DECLINED if $r->unparsed_uri eq '*';
+  return DECLINED if $r->subprocess_env('LOG_REQUEST_IGNORE');
 
   # more vars for logs
   $r->subprocess_env('LOG_REQUEST_END',   sprintf('%0.6f', $t));
