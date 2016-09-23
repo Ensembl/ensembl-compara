@@ -559,8 +559,8 @@ sub get_ext_seq {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     } else {
-      $indexer = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'DBFETCH';
-      $exe     = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
+      $indexer = $self->species_defs->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->species_defs->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'DBFETCH';
+      $exe     = $self->species_defs->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
     }
     if ($exe) {
       my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
