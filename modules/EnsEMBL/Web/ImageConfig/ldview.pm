@@ -111,7 +111,7 @@ sub init_population {
   $self->{'_ld_population'} = [ $pop_name ];
 
   $self->get_node('text')->set_data('text', $pop_name);
-  $self->get_node($_)->remove for grep $_ ne 'ld_population', $self->_menus;
+  $_->remove for grep $_, map $self->get_node($_), grep $_ ne 'ld_population', $self->_menus;
 }
 
 1;
