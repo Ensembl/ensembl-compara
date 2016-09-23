@@ -51,6 +51,7 @@ sub psychic {
   my $query         = $hub->param('q');
   my $sp_param      = $hub->param('species');
   my $species       = $sp_param || $hub->species;
+     $species       = '' if $species eq 'Multi';
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
   my ($url, $site);
 
