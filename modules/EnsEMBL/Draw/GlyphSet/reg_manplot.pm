@@ -177,6 +177,7 @@ sub bg_link {
     tissue => $self->{'my_config'}->get('tissue'),
     height => $self->{'my_config'}->get('height'),
     y_scale => $y_scale,
+    renderer => $self->{'display'},
   });
 }
 

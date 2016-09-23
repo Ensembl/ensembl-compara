@@ -43,6 +43,7 @@ sub summary_zmenu {
   my $e   = $args->{'end'};
   my $y   = $args->{'click_y'}/$args->{'height'};
   my $y_scale = $args->{'y_scale'};
+  my $renderer = $args->{'renderer'};
 
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
@@ -66,11 +67,12 @@ sub summary_zmenu {
 
   # Which match?
   my @hits;
+  my $statistic = "p-value";
+  $statistic= "beta" if $renderer eq 'beta';
   foreach my $f (@$data) {
+    next unless $f->{'statistic'} eq $statistic;
     next if $f->{'seq_region_end'} < $s;
     next if $f->{'seq_region_start'} > $e;
-    my $v = min($f->{'minus_log10_p_value'}/$y_scale,1);
-    next unless abs($v-$y) < 8/$args->{'height'};
     push @hits,$f;
   }
 
@@ -87,11 +89,22 @@ sub summary_zmenu {
   my $last_val;
   my $colourmap = $self->hub->colourmap;
   my $var_styles = $self->hub->species_defs->colour('variation');
-  foreach my $f (sort { $a->{'value'} <=> $b->{'value'} } @hits) {
-    my $exp = int(log($f->{'value'})/log(10))-1;
-    my $mant = $f->{'value'}/10**$exp;
-    my $value = sprintf("%2.2f",$mant);
-    $value .= " x 10^$exp" if $exp;
+  @hits = sort { abs($a->{'value'}) <=> abs($b->{'value'}) } @hits;
+  @hits = reverse @hits if $renderer eq 'beta';
+  my $fmt = "p < %s";
+  $fmt = "%s";
+  my $more_fmt = "p >= %s";
+  $more_fmt = "abs < %s" if $renderer eq 'beta';
+  foreach my $f (@hits) {
+    my $value;
+    if($renderer eq 'beta') {
+      $value = sprintf("%3.3f",$f->{'value'});
+    } else {
+      my $exp = int(log($f->{'value'})/log(10))-1;
+      my $mant = $f->{'value'}/10**$exp;
+      $value = sprintf("%2.2f",$mant);
+      $value .= " x 10^$exp" if $exp;
+    }
 
     my $url = $self->hub->url({
       type => 'Variation',
@@ -110,7 +123,7 @@ sub summary_zmenu {
     );
     $self->add_entry({
       label_html => $html,
-      type => "p < $value",
+      type => sprintf($fmt,$value),
     });
     $last_val = $value;
     last if $i++ > 18;
@@ -120,7 +133,7 @@ sub summary_zmenu {
   if($more) {
     $self->add_entry({
       label => "$more more hits",
-      type => "p >= $last_val",
+      type => sprintf($more_fmt,$last_val),
     });
   }
 }
@@ -151,6 +164,7 @@ sub content {
   my $s       = $hub->param('click_start');
   my $e       = $hub->param('click_end');
   my $scalex  = $hub->param('scalex');
+  my $renderer = $hub->param('renderer');
 
   $r =~ s/:.*$/:$s-$e/;
   # We need to defeat js-added fuzz to see if it was an on-target click.
@@ -168,7 +182,7 @@ sub content {
   }
 
   $args{'species'} = $hub->param('sp');
-
+  $args{'renderer'} = $renderer;
   $args{'start'}  = $s;
   $args{'end'}    = $e;
 
