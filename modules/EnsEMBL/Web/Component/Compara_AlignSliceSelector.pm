@@ -108,7 +108,7 @@ sub getLabelHtml {
   my $self = shift;
   my $species = shift;
   my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
-  my $species_img = sprintf '<img src="/i/species/48/%s.png">', $species;
+  my $species_img = sprintf '<img class="nosprite" src="/i/species/48/%s.png">', $species;
   my $common_name = '';
 
   return sprintf '<span class="ss-alignment-selected-label">%s <span class="ss-selected">%s</span></span>',
