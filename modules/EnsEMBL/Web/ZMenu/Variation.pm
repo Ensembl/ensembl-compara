@@ -156,7 +156,7 @@ sub feature_content {
     }  
   }
   
-  $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $name);
+  $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variant', $name);
 
   if ($db eq 'variation') {
     $self->add_entry({

@@ -43,7 +43,7 @@ sub content {
     }
   }
   
-  my @entries = ([ 'Variation type', $feature->display_consequence ]);
+  my @entries = ([ 'Variant type', $feature->display_consequence ]);
   
   if ($vtype) {
     my $type = lc $vtype;
@@ -64,10 +64,10 @@ sub content {
     [ 'Alleles',              $hub->param('al')  ]
   );
   
-  $self->caption('Variation Information');
+  $self->caption('Variant Information');
   
   $self->add_entry({
-    type       =>  'Variation ID',
+    type       =>  'Variant ID',
     label_html => $feature->variation_name,
     link       => $hub->url({
       type   => 'Variation', 
