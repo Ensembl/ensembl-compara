@@ -42,7 +42,8 @@ Ensembl.Panel.BlastSpeciesList = Ensembl.Panel.extend({
       item.img_url = panel.imagePath + item.key + '.png';
 
       var _selected_img = $('<img/>', {
-        src: item.img_url
+        src: item.img_url,
+        class: 'nosprite'
       });
 
       var _selected_item = $('<span/>', {
