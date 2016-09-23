@@ -88,7 +88,7 @@ sub content {
             <input class="panel_type" value="SpeciesSelect" type="hidden">
             %s
             <div class="links">
-              <a class="modal_link data alignment-slice-selector-link go-button" href="${modal_uri}">Select %s alignment</a>
+              <a class="modal_link data alignment-slice-selector-link go-button _species_selector" href="${modal_uri}">Select %s alignment</a>
               <a class="alignment-go" href=""></a>
             </div>            
           </div>

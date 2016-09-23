@@ -126,8 +126,15 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
 
     this.elLk.list.sortable({
-      containment: this.elLk.list.parent()
+      containment: this.elLk.list.parent(),
+      stop: function(event, ui) {
+        panel.startSort();
+      }
     });
+  },
+
+  startSort: function() {
+    return true;
   },
 
   createMenu: function(arr, highlight_title) {
