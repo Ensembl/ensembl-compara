@@ -53,6 +53,17 @@ sub _init {
   # Track height
   my $height = $self->my_config('height') || 80;
 
+  # p-value or beta
+  my $display = $self->{'display'};
+  my ($statistic,$key);
+  if($display eq 'beta') {
+    $key = 'value';
+    $statistic = 'beta';
+  } else {
+    $statistic = 'p-value';
+    $key = 'minus_log10_p_value';
+  }
+
   # Get data
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
   my ($data,$error) = $rest->fetch_via_ini($self->species,'gtex',{
@@ -64,7 +75,6 @@ sub _init {
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
-  my $y_scale = int(max(0,map { $_->{'minus_log10_p_value'} } @$data))+1;
 
   # Legends
   foreach my $f (@$data) {
@@ -73,10 +83,23 @@ sub _init {
     $self->{'legend'}{'variation_legend'}{lc $conseq} ||= $colour if $conseq;
   }
 
+  my ($y_scale,$y_off);
+  if($display eq 'beta') {
+    $self->{'my_config'}->set('min_score_label','-1');
+    $self->{'my_config'}->set('max_score_label',"1");
+    $self->{'my_config'}->set('h_mark',0.5);
+    $self->{'my_config'}->set('h_mark_label',"0");
+    $y_scale = 2;
+    $y_off = 0.5;
+  } else {
+    $y_scale = int(max(0,map { $_->{$key} } @$data))+1;
+    $y_off = 0;
+    $self->{'my_config'}->set('min_score_label','1');
+    $self->{'my_config'}->set('max_score_label',"<10^-$y_scale");
+  }
+
   # Track configuration
   $self->{'my_config'}->set('height', $height);
-  $self->{'my_config'}->set('min_score_label','1');
-  $self->{'my_config'}->set('max_score_label',"<10^-$y_scale");
   $self->{'my_config'}->set('baseline_zero', 1);
   $self->push($self->Rect({
     x => 0,
@@ -96,10 +119,11 @@ sub _init {
 
   my $slice = $self->{'container'};
   foreach my $f (@$data) {
+    next unless $statistic eq $f->{'statistic'};
     my $start = $f->{'seq_region_start'} - $slice->start+1;
     my $end = $f->{'seq_region_end'} - $slice->start+1;
     next if $start < 1 or $end > $slice->length;
-    my $value = max($f->{'minus_log10_p_value'}/$y_scale,0);
+    my $value = max($f->{$key}/$y_scale+$y_off,0);
     push @$features,{
       start => $start,
       end => $end,

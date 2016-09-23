@@ -95,6 +95,11 @@ sub init_cacheable {
       strand => 'r',
       colours     => $self->species_defs->colour('variation'),
       description => $manplot_desc,
+      renderers => [
+        'off',              'Off',
+        'pvalue',           'p-value',
+        'beta',             'beta',
+      ]
     });
   }
 

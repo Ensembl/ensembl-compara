@@ -50,12 +50,6 @@ sub create_glyphs {
   # Adjusts the height of the basal horizontal line because the values in pixels can't render the data with a high accuracy
   my $adjusted_height = $height - 1;
 
-  # Horizontal mark line
-  if ($track_config->get('h_mark')) {
-    $self->draw_mark_line($track_config->get('h_mark'), $height,
-                          $track_config->get('h_mark_label'));
-  }
-
   # Horizontal baseline
   if ($track_config->get('baseline_zero')) {
     $self->draw_h_line(0);       # Top line
@@ -79,6 +73,12 @@ sub create_glyphs {
   foreach my $track (@$data) {
     $self->draw_plots($track, $options);
   }
+
+  # Horizontal mark line
+  if (defined $track_config->get('h_mark')) {
+    $self->draw_mark_line($track_config->get('h_mark'), $height,
+                          $track_config->get('h_mark_label'));
+  }
   return @{$self->glyphs||[]};
 }
 
@@ -86,7 +86,7 @@ sub create_glyphs {
 sub draw_mark_line {
   my ($self, $v_value, $height, $label) = @_;
 
-  $label ||= $v_value;
+  $label //= $v_value;
   my $vclen      = $self->image_config->container_width;
   my $pix_per_bp = $self->image_config->transform_object->scalex;
 
@@ -116,7 +116,7 @@ sub draw_mark_line {
   }
 
   push @{$self->glyphs}, $self->Text({
-    x         => 4/$pix_per_bp,
+    x         => -16/$pix_per_bp,
     y         => $y_value,
     width     => $twidth,
     textwidth => $text_width,
