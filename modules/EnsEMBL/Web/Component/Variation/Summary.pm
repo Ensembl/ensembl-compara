@@ -554,16 +554,25 @@ sub evidence_status {
                           '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="%s/val/evidence_%s.png" title="%s"/>',
                            $self->img_url, $evidence, $evidence_label
                         );
-    my $url_type = 'Population';
-       $url_type = 'Citations' if ($evidence =~ /cited/i);
-       $url_type = 'Phenotype' if ($evidence =~ /phenotype/i);
+    my $url;
 
-    my $url = $hub->url({
+    if($evidence =~ /exac/i) {
+      $url = $hub->get_ExtURL('EXAC', $object->name) 
+    }
+    else {
+
+      my $url_type = 'Population';
+         $url_type = 'Citations' if ($evidence =~ /cited/i);
+         $url_type = 'Phenotype' if ($evidence =~ /phenotype/i);
+
+      $url = $hub->url({
          type   => 'Variation',
          action => $url_type,
          v      => $object->name,
          vf     => $hub->param('vf')
        });
+    }
+
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
