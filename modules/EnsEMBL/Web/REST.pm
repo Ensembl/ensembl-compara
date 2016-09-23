@@ -130,7 +130,7 @@ sub fetch_via_ini {
   return undef unless $ini;
   my $url = $ini->{$part||'url'};
   return undef unless $url;
-  $url =~ s/<<<(.*?)>>>/$self->species_defs->get_config($species,$1)/eg;
+  { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
   $url =~ s/<<(.*?)>>/$params->{$1}/eg;
   return $self->fetch_url($url,$args);
 }

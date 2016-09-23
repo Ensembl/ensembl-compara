@@ -52,6 +52,7 @@ sub munge_rest {
       map { s/^config_//; $_ } grep { /config_/ } keys %$source_conf;
     foreach my $c (@config_keys) {
       my $url = $self->tree->{$sources->{$key}}{"config_$c"};
+      { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
       $url =~ s/<<species>>/$self->species/ge;
       my $response = read_file($url,{
         proxy => $self->full_tree->{'ENSEMBL_WWW_PROXY'},
