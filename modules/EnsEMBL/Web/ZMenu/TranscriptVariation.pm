@@ -82,7 +82,7 @@ sub content {
   $self->caption($feature->variation_name);
   
   $self->add_entry({
-    label_html => 'Variation properties',
+    label_html => 'Variant properties',
     link       => $hub->url({
       type   => 'Variation', 
       action => 'Explore',
