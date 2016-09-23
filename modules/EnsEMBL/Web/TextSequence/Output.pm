@@ -90,6 +90,8 @@ sub format_line {
   });
 }
 
+sub goahead_line { return 1; }
+
 sub format_lines {
   my ($self,$layout,$config,$line_numbers,$multi) = @_;
 
@@ -111,6 +113,7 @@ sub format_lines {
       foreach my $rope (@$ropes) {
         my $ro = $rope->output->lines;
         my $num = shift @{$line_numbers->{$y}};
+        next unless $self->goahead_line($ro->[$x]);
         $self->format_line($layout,$ro->[$x],$num,$config,$multi && $y == $#$ropes);
         $y++;
       }

@@ -31,39 +31,31 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::TextSequence::Output::Web::Adorn;
 
+sub new {
+  my ($proto) = @_;
+
+  my $class = ref($proto) || $proto;
+  my $self = {
+    template =>
+      qq(<div class="text_sequence text_sequence_mobile">%s</div><p class="invisible">.</p>),
+    c2s => undef,
+    view => undef,
+  };
+  bless $self,$class;
+  $self->reset;
+  return $self;
+}
+
 sub make_layout {
   my ($self,$config) = @_;
 
   my $layout = EnsEMBL::Web::TextSequence::Layout::String->new([
-    { key => 'pre' },
-    {
-      if => 'number',
-      then => [
-        { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'},
-          room => 1 },
-        { key => 'start', width => max($config->{'padding'}{'number'}||0,6) },
-        { post => ' ' },
-      ]
-    },
     { 
       key => ['adid','seqclass','letters'], width => {
         letters => -$config->{'display_width'}
       },
       fmt => '<span class="adorn adorn-%s %s">%s</span>',
     },
-    {
-      if => 'number',
-      then => [
-        { post => ' ' },
-        { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'end', width => max($config->{'padding'}{'number'}||0,6) },
-      ]
-    },
-    { key => ['adid','post'], fmt => '<span class="ad-post-%s">%s</span>' },
-    { post => "\n" },
-    { if => 'vskip', then => [ { post => "\n" }] },
   ]);
   $layout->filter(sub { $_[1]->{'seqclass'} = "_seq" if $_[1]->{'principal'}; return $_[1]; });
   return $layout;
@@ -106,5 +98,7 @@ sub add_line {
 
   $self->{'adorn'}->flourish('post',$line->line_num,$line->post) if $line->post;
 }
+
+sub goahead_line { return $_[1]->{'principal'}; }
 
 1;
