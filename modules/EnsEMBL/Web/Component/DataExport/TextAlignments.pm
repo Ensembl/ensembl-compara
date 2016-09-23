@@ -32,7 +32,7 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $view_config  = $hub->view_config;
+  my $view_config  = $self->viewconfig;
 
   my $settings = $view_config->form_fields;
 
