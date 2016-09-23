@@ -10,7 +10,7 @@ sub annotate {
 
   my $translation = $config->{'translation'};
   my $pep_seq  = $translation->Obj->seq;
-  push @$sequence,[ map {{ letter => $_ }} split //, uc $pep_seq ]; 
+  $sequence->legacy([ map {{ letter => $_ }} split //, uc $pep_seq ]);
 }
 
 1;
