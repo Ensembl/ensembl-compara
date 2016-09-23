@@ -92,7 +92,7 @@ sub get_node {
 
   throw WebException('Node id is needed to get a node') unless $id;
 
-  my @nodes = @{$self->{'_node_lookup'}{clean_id($id)} || []};
+  my @nodes = grep $_->parent_node, @{$self->{'_node_lookup'}{clean_id($id)} || []};
 
   return wantarray ? @nodes : $nodes[0];
 }
