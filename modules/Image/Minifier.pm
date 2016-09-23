@@ -322,6 +322,9 @@ sub maybe_generate_sprite {
     $outq = q(\\).$quot if $backslash;
     $num++;
   }
+  if ($attrs{'class'} =~ /nosprite/) {
+    return "<img$tag>";
+  }
   if($attrs =~ /\S/ or !$attrs{'src'}) {
     warn "skipping weird tag: $tag\n";
     return "<img$tag>";
