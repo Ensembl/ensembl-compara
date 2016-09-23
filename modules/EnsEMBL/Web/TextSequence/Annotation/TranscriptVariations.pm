@@ -150,8 +150,16 @@ sub annotate {
       $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
       $mk->{'variants'}{$_}{'transcript'} = 1;
           
-      my $url = $mk->{'variants'}{$_}{'url_params'} ? { type => 'Variation', action => 'Explore', %{$mk->{'variants'}{$_}{'url_params'}} } : undef; 
-      
+      my $url = {
+        type => 'Variation',
+        action => 'Explore',
+        %{$mk->{'variants'}{$_}{'url_params'}}
+      };
+      $mk->{'variants'}{$_}{'href'} ||= {
+        type        => 'ZMenu',
+        action      => 'TextSequence',
+        factorytype => 'Location'
+      };
       $mk->{'variants'}{$_}{'type'} = $type;
 
       if ($config->{'translation'} && $aa_change) {
