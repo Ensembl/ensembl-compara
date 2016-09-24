@@ -60,10 +60,10 @@ sub content {
     });
     
     $self->add_entry({
-      label    => 'Export Protein',
-      link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'peptide', _format => 'Text' }),
-      external => 1,
-      position => 8
+      label       => 'Export Protein',
+      link        => $hub->url('DataExport', { type => 'Protein', action => '', component => 'ProteinSeq', data_type => 'Transcript', t => $trans_id }),
+      link_class  => 'modal_link',
+      position    => 8
     });
   }
 
@@ -73,9 +73,9 @@ sub content {
   });
   
   $self->add_entry({
-    label    => 'Export cDNA',
-    link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'cdna', _format => 'Text' }),
-    external => 1
+    label       => 'Export cDNA',
+    link        => $hub->url('DataExport', { type => 'Transcript', action => '', component => 'TranscriptSeq', data_type => 'Transcript', t => $trans_id }),
+    link_class  => 'modal_link'
   });
 }
 
