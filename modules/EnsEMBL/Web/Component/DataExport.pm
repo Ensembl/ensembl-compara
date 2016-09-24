@@ -34,6 +34,14 @@ use base qw(EnsEMBL::Web::Component);
 
 sub export_options :Abstract;
 
+sub new {
+  ## @override
+  ## Change id to avoid clash with the underlying component
+  my $self = shift->SUPER::new(@_);
+  $self->id('DataExport_'.$self->id);
+  return $self;
+}
+
 sub viewconfig {
   ## @override
   ## Gets view config of the related component

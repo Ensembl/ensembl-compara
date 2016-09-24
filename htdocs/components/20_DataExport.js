@@ -21,19 +21,21 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     var panel = this;
     this.base();
 
-    this.elLk.form      = this.el.find('form').first();
-    this.elLk.images    = this.elLk.form.find('div._export_formats div').on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
-    this.elLk.dropdown  = this.elLk.form.find('select._export_formats').on('change',  function() { panel.selectOption(this.value, true); });
-    // Highlight previosly selected option when users come back from preview
-    panel.selectOption(this.elLk.form.find('select._export_formats').val(), true)
+    this.elLk.form        = this.el.find('form').first();
+    this.elLk.images      = this.elLk.form.find('div._export_formats div').on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
+    this.elLk.dropdown    = this.elLk.form.find('select._export_formats').on('change',  function() { panel.selectOption(this.value, true); });
+    this.elLk.compression = this.elLk.form.find('input[name="compression"]');
+    this.elLk.buttons     = this.elLk.form.find('input.export_buttons');
 
-    this.elLk.form.find('input.export_buttons').on('click', function() {
-      var compression = panel.elLk.form.find('input[name="compression"]');
-      if(panel.elLk.form.find('select._export_formats').val() !== '') {
-        $(compression).val(this.name);
-        panel.elLk.form.submit();
+    this.elLk.buttons.on('click', function() {
+      if(panel.elLk.dropdown.val() !== '') {
+        panel.elLk.compression.val(this.name);
+        panel.elLk.form.trigger('submit');
       }
     });
+
+    // Highlight previosly selected option when users come back from preview
+    this.elLk.dropdown.trigger('change');
   },
 
   selectOption: function(val, dropdown) {
@@ -43,14 +45,12 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     }
 
     // Enable/disable download buttons
-    var buttons = this.elLk.form.find('input.export_buttons');
-    buttons.addClass('disabled');
-    buttons.prop('disabled', val === '');
-    val !== '' && buttons.removeClass('disabled')
+    this.elLk.buttons.toggleClass('disabled', val === '').prop('disabled', val === '');
 
     // Disable preview for RTF
-    var rtf_button = this.elLk.form.find('input.export_buttons[name="preview"]');
-    val === 'RTF' && rtf_button.prop('disabled', true).addClass('disabled');
+    if (val === 'RTF') {
+      this.elLk.buttons.filter('[name=preview]').prop('disabled', true).addClass('disabled');
+    }
   }
 
 });
