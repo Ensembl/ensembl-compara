@@ -203,7 +203,7 @@ sub get_export_data {
 ## Get data for export
   my $self    = shift;
   ## Need to explicitly create Family, as it's not a standard core object
-  $self->hub->{'_builder'}->create_object('Family');
+  $self->hub->builder->create_object('Family');
   my $family = $self->hub->core_object('family');
   if ($family) {
     return $family->Obj->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
