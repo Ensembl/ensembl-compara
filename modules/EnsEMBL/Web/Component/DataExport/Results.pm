@@ -57,7 +57,7 @@ sub content {
   my $download_compressed_action = $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1});
 
   ## Hidden form taking you back to the beginning
-  my $form      = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => $hub->param('export_action')}), 'method' => 'post'});
+  my $form      = $self->new_form({'id' => 'export', 'class' => 'bgcolour', 'action' => $hub->url({'action' => $hub->param('export_action')}), 'method' => 'post'});
   my $fieldset  = $form->add_fieldset;
 
   my @core_params = keys %{$hub->core_object('parameters')};
@@ -93,10 +93,6 @@ sub content {
     $fieldset->add_hidden($params);
   }
 
-  my $buttons_div = $self->dom->create_element('div', {
-    'id'        => 'DataExport'
-  });
-
   # Keep
   $fieldset->add_hidden([
     { name => 'back', value => $back_action },
@@ -104,18 +100,15 @@ sub content {
     { name => 'gz', value => $download_compressed_action },
   ]);
 
-  my $buttons = $fieldset->add_element([
-    { type => 'button', value => 'Back', name => 'back', class => 'export_buttons_preview' },
-    { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons_preview' },
-    { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons_preview' },
-  ]);
-
-  my $div = $self->dom->create_element('div', {
-    class => 'export_buttons_div',
-    children => $buttons
+  $fieldset->add_field({
+    'field_class' => [qw(export_buttons_div)],
+    'inline'      => 1,
+    'elements'    => [
+      { type => 'button', value => 'Back', name => 'back', class => 'export_buttons_preview' },
+      { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons_preview' },
+      { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons_preview' },
+    ]
   });
-
-  $fieldset->append_child($div);
 
   $html .= $form->render;
 
