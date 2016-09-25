@@ -22,8 +22,7 @@ package Image::Minifier;
 use strict;
 use warnings;
 
-require Exporter;
-our @ISA = qw(Exporter);
+use Exporter qw(import);
 our @EXPORT_OK = qw(minify generate_sprites data_url);
 
 our $VERSION = '0.01';
@@ -322,7 +321,7 @@ sub maybe_generate_sprite {
     $outq = q(\\).$quot if $backslash;
     $num++;
   }
-  if ($attrs{'class'} =~ /nosprite/) {
+  if ($attrs{'class'} && $attrs{'class'} =~ /nosprite/) {
     return "<img$tag>";
   }
   if($attrs =~ /\S/ or !$attrs{'src'}) {
