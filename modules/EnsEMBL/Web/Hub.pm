@@ -428,6 +428,33 @@ sub url {
   return $url;
 }
 
+sub get_permanent_url {
+  ## Get the permanent url for the current or given url
+  ## @param URL (string or hashref as expected by self->url method) (optional - takes current url as default)
+  my ($self, $url) = @_;
+
+  my $sd = $self->species_defs;
+
+  # if url hashref provided
+  $url  ||= $self->current_url;
+  $url    = $self->url($url) if ref $url;
+
+  return sprintf '%s/%s',
+    $self->_get_permanent_url_base =~ s/\/*$//r,
+    $url =~ s/^\/*//r;
+}
+
+sub _get_permanent_url_base {
+  ## @private
+  ## Get base url for permanent link
+  my $self  = shift;
+  my $sd    = $self->species_defs;
+
+  return $sd->ARCHIVE_BASE_DOMAIN
+    ? sprintf('%s://%s.%s', $sd->ENSEMBL_PROTOCOL, $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
+    : $sd->ENSEMBL_BASE_URL;
+}
+
 sub param {
   # @status - being changed to not deal with viewconfig params (only CGI params)
   my $self = shift;
