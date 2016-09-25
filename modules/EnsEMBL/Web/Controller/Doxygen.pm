@@ -20,15 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::Controller::Doxygen;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
-
-use base qw(EnsEMBL::Web::Controller::SSI);
-
-sub content {
-  my $self = shift;
-  return $self->{'content'} ||= file_get_contents($self->r->filename);
-}
+use parent qw(EnsEMBL::Web::Controller::SSI);
 
 sub render_page {
   my $self     = shift;
