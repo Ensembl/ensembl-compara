@@ -63,8 +63,8 @@ sub pipeline_analyses_GeneSetQC {
             -logic_name     => 'get_split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes',
             -flow_into      =>  {
-                1   =>  ['get_short_orth_genes','get_long_orth_genes' ], 
-                2   =>  ['?table_name=QC_split_genes'],
+                1   =>  ['get_short_orth_genes','get_long_orth_genes','get_orphaned_genes'], 
+                2   =>  ['?table_name=gene_member_qc'],
             },
             -hive_capacity  => 50,
             -batch_size     => 1,
@@ -74,12 +74,12 @@ sub pipeline_analyses_GeneSetQC {
             -logic_name =>  'get_short_orth_genes',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
             -parameters =>  {
-                'longer' => 0, 
+                'gene_status' => 'shorter', 
                 'coverage_threshold' => $self->o('coverage_threshold'), 
                 'species_threshold' => $self->o('species_threshold'), 
                 },
             -flow_into  => {
-                2   => ['?table_name=short_orth_genes'],
+                2   => ['?table_name=gene_member_qc'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
@@ -89,12 +89,27 @@ sub pipeline_analyses_GeneSetQC {
             -logic_name     =>  'get_long_orth_genes',
             -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
             -parameters     =>  { 
-                'longer' => 1, 
+                'gene_status' => 'longer', 
                 'coverage_threshold' => $self->o('coverage_threshold'), 
                 'species_threshold' => $self->o('species_threshold'), 
                 },
             -flow_into      =>  {
-                2   => ['?table_name=long_orth_genes'],
+                2   => ['?table_name=gene_member_qc'],
+            },
+            -analysis_capacity  => 2,
+            -hive_capacity      => 10,
+        },
+
+        {
+            -logic_name     =>  'get_orphaned_genes',
+            -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
+            -parameters     =>  { 
+                'gene_status' => 'orphaned', 
+                'coverage_threshold' => $self->o('coverage_threshold'), 
+                'species_threshold' => $self->o('species_threshold'), 
+                },
+            -flow_into      =>  {
+                2   => ['?table_name=gene_member_qc'],
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
