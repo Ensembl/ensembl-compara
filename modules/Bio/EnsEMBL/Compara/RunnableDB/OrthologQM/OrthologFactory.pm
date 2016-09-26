@@ -41,7 +41,7 @@ limitations under the License.
 
     Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory -goc_mlss_id <goc_mlss id>
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory -goc_mlss_id <goc_mlss id> -compara_db <>
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory;
@@ -145,7 +145,7 @@ sub run {
 	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------ref_ortholog_info_hashref\n" if ( $self->debug );
 	print Dumper($ref_ortholog_info_hashref) if ( $self->debug );
 
-	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n", $self->param('goc_threshold'), " <<<<-------- goc goc_threshold \n" if ( $self->debug );
+	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n" if ( $self->debug );
 	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug >3 );
 
 	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
