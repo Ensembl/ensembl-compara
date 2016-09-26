@@ -167,7 +167,10 @@ sub precache {
         $self->{'store'}->open(-1);
         $start = time();
       }
-      $self->run_miss($a,$kind);
+      eval { $self->run_miss($a,$kind); };
+      if($@) {
+        warn "Precache lost an item due to eval failure: $@\n";
+      }
     }
   }
   $self->{'store'}->close();
