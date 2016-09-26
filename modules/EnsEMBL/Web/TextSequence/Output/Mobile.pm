@@ -38,7 +38,7 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = {
     template =>
-      qq(<div class="text_sequence text_sequence_mobile">%s</div><p class="invisible">.</p>),
+      qq(<span class="text_sequence text_sequence_mobile">%s</span>),
     c2s => undef,
     view => undef,
   };
@@ -46,6 +46,8 @@ sub new {
   $self->reset;
   return $self;
 }
+
+sub template { return $_[0]->{'template'}; } # Setter: thanks, but no thanks
 
 sub subslicer {
   return EnsEMBL::Web::TextSequence::Output::MobileSubslice->new;
