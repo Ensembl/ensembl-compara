@@ -82,13 +82,13 @@ sub fetch_input {
     
     $self->param('species_tree_node', $this_species_tree_node);
 
-     my $short_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from short_orth_genes where genome_db_id = ?', undef, $genome_db_id);
+     my $short_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from gene_member_qc where status = "short-gene" AND genome_db_id = ?', undef, $genome_db_id);
     $self->param('short_genes', $short_genes);
     print "  short genes   , $short_genes " if ( $self->debug );
-    my $long_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from long_orth_genes where genome_db_id = ?', undef, $genome_db_id);
+    my $long_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from gene_member_qc where status = "long-gene" AND  genome_db_id = ?', undef, $genome_db_id);
     $self->param('long_genes', $long_genes);
     print "  long genes   , $long_genes " if ( $self->debug );
-    my $split_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from QC_split_genes where genome_db_id = ?', undef, $genome_db_id);
+    my $split_genes = $self->compara_dba->dbc->db_handle->selectrow_array('select COUNT(*) from gene_member_qc where status = "split-gene" AND  genome_db_id = ?', undef, $genome_db_id);
     $self->param('split_genes', $split_genes);
     print "  split genes   , $split_genes " if ( $self->debug );
     print "   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" if ( $self->debug );
