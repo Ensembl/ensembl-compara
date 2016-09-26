@@ -54,7 +54,7 @@ use Bio::EnsEMBL::Registry;
 
 sub fetch_input {
 	my $self = shift;
-  print " START OF Calculate_goc_perc_above_threshold-------------- mlss_id ------>>>>>>\n\n  ", $self->param('goc_mlss_id'), $self->param_required('goc_threshold'), "  ---\n\n" if ($self->debug);
+  print " START OF Calculate_goc_perc_above_threshold-------------- mlss_id ------>>>>>>\n\n  ", $self->param('goc_mlss_id'), "\n goc_threshold  :  ", $self->param_required('goc_threshold'), "  ---\n\n" if ($self->debug);
   my $mlss_id = $self->param('goc_mlss_id');
   my $query = "SELECT goc_score , COUNT(*) FROM homology where method_link_species_set_id =$mlss_id GROUP BY goc_score";
   my $goc_distribution = $self->compara_dba->dbc->db_handle->selectall_arrayref($query);
