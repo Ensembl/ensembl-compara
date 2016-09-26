@@ -86,23 +86,29 @@ sub run {
 			$orth_results->{$result->[0]} = $orth_results->{$result->[0]} >= $result->[1] ? $orth_results->{$result->[0]} : $result->[1] ; 
 
 			# ***** ONLY DATAFLOWING FOR THE TESTING PURPOSES!!!
-			print "method_link_species_set_id ", $self->param_required('goc_mlss_id'), ' homology_id ' , $result->[0], ' percent_conserved_score ' , $orth_results->{$result->[0]}, " \n\n";
-#			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('goc_mlss_id'), 'homology_id' => $result->[0], 'goc_score' => $orth_results->{$result->[0]} }, 2 );
+			#			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('goc_mlss_id'), 'homology_id' => $result->[0], 'goc_score' => $orth_results->{$result->[0]} }, 2 );
 
 			print "Updating homology table goc score\n" if ( $self->debug );
 
-			print $orth_results->{$result->[0]}, "  GOC score \n Homology id   ", $result->[0], "\nmlss id ----------- \n", $self->param_required('goc_mlss_id'), "\n\n" if ( $self->debug );
+			print $orth_results->{$result->[0]}, "  GOC score \n Homology id   ", $result->[0], "\n result mlss id :  ", 
+				$result->[2], "\n goc mlss id ------- \n", $self->param_required('goc_mlss_id'), "\n\n" if ( $self->debug );
 			$homology_adaptor->update_goc_score($result->[0], $orth_results->{$result->[0]});
-#			}
+			delete $orth_results->{$result->[0]}; #get rid of all the homologies with 2 goc scores
 		} 
 		else {
 			$orth_results->{$result->[0]} = $result->[1];
 		}
 	} 
 
+	print "\n what is left now are the homology_ids that have 1 goc score. This are one to many homologs where 
+		the one does not have a goc score because it was the only gene on its chromosome so the goc score will be NULL\n\n";
 	print Dumper($orth_results) if ( $self->debug > 3);
 
-	print "111111111111111111 mlss id -----------------------------  :  ",$self->param_required('goc_mlss_id')," 11111111111111 \n goc threshold  \n", $self->param('goc_threshold'), "\n\n" if ( $self->debug );
+	foreach my $key ( keys %{$orth_results} ) {
+		$homology_adaptor->update_goc_score($key, $orth_results->{$key});
+	}
+	
+	print "\n\n mlss id -- :  ",$self->param_required('goc_mlss_id')," 11111111111111 \n goc threshold  \n", $self->param('goc_threshold'), "\n\n" if ( $self->debug );
 }
 
 
