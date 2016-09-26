@@ -55,20 +55,32 @@ if(-e "$SiteDefs::ENSEMBL_BOOK_DIR/precache.idx") {
   push @candidates,"$SiteDefs::ENSEMBL_BOOK_DIR/precache.idx";
 }
 
-my %seen;  
+my (%seen,%lengths);
 foreach my $c (@candidates) {
   my $cand = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     filename => $c
   });
   $cand->cache_open;
-  $cache->addgood($cand,\%versions,\%seen);
+  $cache->addgood($cand,\%versions,\%seen,\%lengths);
   $cand->cache_close;
-  $cand->remove;
+  #$cand->remove;
+}
+
+sub size {
+  my $size = $_[0];
+
+  my @sizes = split(//,"bkMGTP");
+
+  while($size > 4000 and @sizes > 1) {
+    $size /= 1024;
+    shift @sizes;
+  }
+  return sprintf("%d%sb",$size,$sizes[0]);
 }
 
 warn "added:\n";
 foreach my $s (keys %seen) {
-  warn "    $seen{$s} $s\n";
+  warn "    $seen{$s} $s (".size($lengths{$s}).")\n";
 }
 warn "optimising\n";
 my $opt = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
@@ -79,7 +91,7 @@ my $opt = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
 $opt->cache_open;
 foreach my $k (keys %seen) {
   warn "optimising $k\n";
-  $opt->addgood($cache,\%versions,undef,$k);
+  $opt->addgood($cache,\%versions,undef,undef,$k);
 }
 $cache->cache_close;
 $opt->cache_close;

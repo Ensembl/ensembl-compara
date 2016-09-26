@@ -164,13 +164,14 @@ sub set {
 }
 
 sub _set_key {
-  my ($self,$key,$value,$build) = @_;
+  my ($self,$key,$value,$build,$length) = @_;
 
   return 0 if exists $self->{'idx'}{$key};
   my $start = systell $self->{'dat'};
   syswrite $self->{'dat'},$value,length($value);
   my $end = systell $self->{'dat'};
   $self->{'idx'}{$key} = JSON->new->encode([$start,$end-$start,$build]);
+  $$length += length $self->{'idx'}{$key} if $length;
   return 1;
 }
 
@@ -232,26 +233,28 @@ sub addall {
 }
 
 sub addgood {
-  my ($self,$source,$versions,$seen,$kindin) = @_;
+  my ($self,$source,$versions,$seen,$lengths,$kindin) = @_;
 
   my @good_prefixes =
     map { md5_base64($_).":".$versions->{$_}.":" } keys %$versions;
   my ($all,$ndups,$nold,$nskip) = (0,0,0,0);
   foreach my $k (keys %{$source->{'idx'}}) {
     $all++;
+    my ($data,$kind) = $source->_get_key($k);
+    next if $kindin and $kindin ne $kind;
+    $nskip++;
     next if $self->{'idx'}{$k}; # duplicate
     $ndups++;
     next unless any { substr($k,0,length $_) eq $_ } @good_prefixes;
     $nold++;
-    my ($data,$kind) = $source->_get_key($k);
-    next if $kindin and $kindin ne $kind;
-    $nskip++;
     ($seen->{$kind}||=0)++ if $seen;
-    $self->_set_key($k,$data,$kind);
+    my $length = $lengths->{$kind};
+    $self->_set_key($k,$data,$kind,\$length);
+    $lengths->{$kind} = $length;
   }
   my $f = $source->fn('idx');
   $f =~ s!^.*/!!;
-  warn sprintf("add %s: keys=%d dups=%d old=%d skipped=%d\n",$f,$all,$all-$ndups,$ndups-$nold,$nold-$nskip);
+  warn sprintf("add %s: keys=%d skipped=%d dups=%d old=%d\n",$f,$all,$all-$nskip,$nskip-$ndups,$ndups-$nold);
 }
 
 sub remove {
