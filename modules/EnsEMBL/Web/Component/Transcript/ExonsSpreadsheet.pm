@@ -24,7 +24,6 @@ use strict;
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
 use EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet;
-use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub initialize {
   my ($self, $export) = @_;
@@ -422,7 +421,7 @@ sub make_view {
   my $view = EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
     $self->hub,
   );
-  $view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  $self->view->output($self->view->output->subslicer);
   return $view;
 }
 

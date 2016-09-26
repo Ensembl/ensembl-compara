@@ -29,6 +29,7 @@ use List::Util qw(max);
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
+use EnsEMBL::Web::TextSequence::Output::MobileSubslice;
 use EnsEMBL::Web::TextSequence::Output::Web::Adorn;
 
 sub new {
@@ -44,6 +45,10 @@ sub new {
   bless $self,$class;
   $self->reset;
   return $self;
+}
+
+sub subslicer {
+  return EnsEMBL::Web::TextSequence::Output::MobileSubslice->new;
 }
 
 sub make_layout {

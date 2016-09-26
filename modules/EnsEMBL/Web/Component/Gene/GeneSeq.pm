@@ -24,7 +24,6 @@ use strict;
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
 use EnsEMBL::Web::TextSequence::View::GeneSeq;
-use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub _init { $_[0]->SUPER::_init(500); }
 
@@ -110,7 +109,7 @@ sub content_sub_slice {
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
   
-  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  $self->view->output($self->view->output->subslicer);
   $slice ||= $self->object->slice;
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
  

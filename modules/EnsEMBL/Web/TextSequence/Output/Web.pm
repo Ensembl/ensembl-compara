@@ -30,11 +30,16 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::TextSequence::Output::Web::Adorn;
+use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub reset {
   my $self = shift;
   $self->SUPER::reset(@_);
   $self->{'adorn'} = EnsEMBL::Web::TextSequence::Output::Web::Adorn->new;
+}
+
+sub subslicer {
+  return EnsEMBL::Web::TextSequence::Output::WebSubslice->new;
 }
 
 sub make_layout {

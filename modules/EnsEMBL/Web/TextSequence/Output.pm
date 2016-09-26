@@ -56,6 +56,8 @@ sub reset {
   );
 }
 
+sub subslicer { return $_[0]; }
+
 sub make_c2s {
   return EnsEMBL::Web::TextSequence::ClassToStyle::CSS->new($_[0]->view);
 }

@@ -26,7 +26,6 @@ use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
-use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
@@ -207,7 +206,7 @@ sub content {
 sub content_sub_slice {
   my $self = shift;
 
-  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  $self->view->output($self->view->output->subslicer);
   my ($sequence, $config) = $self->_get_sequence(@_);  
   return $self->build_sequence_new($sequence, $config,1);
 }

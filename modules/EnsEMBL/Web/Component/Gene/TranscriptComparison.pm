@@ -27,7 +27,6 @@ use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Sequence;
 use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Exons;
 use EnsEMBL::Web::TextSequence::Annotation::TranscriptComparison::Variations;
 use EnsEMBL::Web::TextSequence::View::TranscriptComparison;
-use EnsEMBL::Web::TextSequence::Output::WebSubslice;
 
 sub _init { $_[0]->SUPER::_init(100); }
 
@@ -102,7 +101,7 @@ sub content_sub_slice {
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
 
-  $self->view->output(EnsEMBL::Web::TextSequence::Output::WebSubslice->new);
+  $self->view->output($self->view->output->subslicer);
 
   my ($sequence, $config) = $self->initialize_new($start, $end);
 
