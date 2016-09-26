@@ -88,7 +88,7 @@ sub run {
   
   for my $smid (@sg_keys) {
     print " $smid->[0]    %%%%%%%%%% $smid->[1]   %%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" if ($self->debug >3);
-    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_stable_id' => $smid->[1] }, 2 );
+    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_stable_id' => $smid->[1], 'status' => 'split-gene' }, 2 );
     $count +=1;
 #    if ($count == 10){
  #     last;
