@@ -124,7 +124,7 @@ sub _get_dom_tree {
       'node_name'   => 'inputhidden',
       'class'       => 'js_param json',
       'name'        => 'taxon_labels',
-      'value'       => encode_entities(to_json($sd->TAXON_LABEL))
+      'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
     }, {
       'node_name'   => 'inputhidden',
       'class'       => 'js_param json',
