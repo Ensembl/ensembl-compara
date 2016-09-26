@@ -88,54 +88,73 @@ sub param_defaults {
 
 sub fetch_input {
   my $self = shift;
-  print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% find gene fragment stat Runnable\n\n";
+  print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% find gene fragment stat Runnable\n\n" if $self->debug(); 
   # get the seq_member_id of the split_genes
 #  my $query = "SELECT seq_member_id from QC_split_genes where genome_db_id= $self->param_required('genome_db_id')";
-  my %split_genes = map{$_ => 1} @{$self->data_dbc->db_handle->selectcol_arrayref('SELECT seq_member_id from QC_split_genes where genome_db_id= ?', undef, $self->param_required('genome_db_id') )};
-  print Dumper(%split_genes);
-  $self->param('split_genes_hash', \%split_genes);
-    #disconnect compara database
-  $self->compara_dba->dbc->disconnect_if_idle;
+  unless($self->param_required('gene_status') eq 'orphaned') { 
+    my %split_genes = map{$_ => 1} @{$self->data_dbc->db_handle->selectcol_arrayref('SELECT seq_member_id from gene_member_qc where status = "split-gene" AND genome_db_id= ?', undef, $self->param_required('genome_db_id') )};
+    print Dumper(%split_genes) if $self->debug(); 
+    $self->param('split_genes_hash', \%split_genes);
+    $self->compara_dba->dbc->disconnect_if_idle;
+  }
 }
 
 sub run {
   my $self = shift;
   my $genome_db_id        = $self->param_required('genome_db_id');
-  my $coverage_threshold  = $self->param_required('coverage_threshold');
-  my $species_threshold   = $self->param_required('species_threshold');
-  my $split_genes         = $self->param_required('split_genes_hash');
-  my $longer  = $self->param('longer');
 
   # Basically, we run this query and we filter on the Perl-side
     # Note: we could filter "avg_cov" and "n_species" in SQL
+    my $sql;
 
-    my $sql = ($self->param_required('longer')) ? 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm1.perc_cov) AS avg_cov 
+    if ($self->param_required('gene_status') eq 'orphaned') {
+      $sql = 'SELECT mg.stable_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
+      my $sth = $self->compara_dba->dbc->prepare($sql);
+      $sth->execute($genome_db_id);
+
+      while (my $row = $sth->fetchrow_hashref()) {
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'status' => "orphaned-gene" }, 2);
+      }
+
+    } else {
+      my $coverage_threshold  = $self->param_required('coverage_threshold');
+      my $species_threshold   = $self->param_required('species_threshold');
+      my $split_genes         = $self->param_required('split_genes_hash');
+      my $status;
+      if ($self->param_required('gene_status') eq 'longer') {
+        $status = "long-gene";
+        $sql = 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm1.perc_cov) AS avg_cov 
                     FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
                     JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
-                    WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id'
-              : 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm2.perc_cov) AS avg_cov 
+                    WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
+      } elsif ($self->param_required('gene_status') eq 'shorter') {
+        $status = "short-gene";
+        $sql = 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm2.perc_cov) AS avg_cov 
                   FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
                   JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
                   WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($genome_db_id);
-    while (my $row = $sth->fetchrow_hashref()) {
+      } 
+    
+      my $sth = $self->compara_dba->dbc->prepare($sql);
+      $sth->execute($genome_db_id);
+      while (my $row = $sth->fetchrow_hashref()) {
 
       # Split genes are known to be fragments, but they have been merged with their counterpart
-      next if $split_genes->{$row->{seq_member_id}};
+        next if $split_genes->{$row->{seq_member_id}};
 
       # We'll only consider the genes that have a low average coverage over a minimum number of species
 #      print Dumper($row->{n_species});
 #     print "  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 #     die;
-      next if $row->{avg_cov} >= $coverage_threshold;
-      next if $row->{n_species} < $species_threshold;
+        next if $row->{avg_cov} >= $coverage_threshold;
+        next if $row->{n_species} < $species_threshold;
 
 
-      warn join("\t", $row->{stable_id}, $row->{n_species}, $row->{n_orth}, $row->{avg_cov}), "\n";
-      $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'n_species' => $row->{n_species}, 'n_orth' => $row->{n_orth}, 'avg_cov' => $row->{avg_cov} }, 2)
+        warn join("\t", $row->{stable_id}, $row->{n_species}, $row->{n_orth}, $row->{avg_cov}), "\n" if $self->debug(); 
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'seq_member_id' => $row->{seq_member_id}, 'n_species' => $row->{n_species}, 'n_orth' => $row->{n_orth}, 'avg_cov' => $row->{avg_cov}, 'status' => $status }, 2);
 
-  }
+      }
+    }
     #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 }
