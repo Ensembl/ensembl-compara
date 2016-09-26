@@ -280,9 +280,11 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   right2 INT,
 
   PRIMARY KEY (homology_id, gene_member_id),
-  KEY method_link_species_set_id (method_link_species_set_id)
+  KEY method_link_species_set_id (method_link_species_set_id),
   
-            
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member (gene_member_id),
+  FOREIGN KEY (homology_id) REFERENCES homology (homology_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag (dnafrag_id)
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
@@ -384,4 +386,31 @@ CREATE TABLE QC_split_genes (
   seq_member_id int(10) NOT NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'gene_member_qc'
+--
+-- overview: Add a new table to hold information about the quality of gene members 
+-- semantics:
+--  gene_member_stable_id
+--  seq_member_id
+--  n_species
+--  n_orth
+--  avg_cov
+--  status
+
+CREATE TABLE `gene_member_qc` (
+  gene_member_stable_id varchar(128) NOT NULL,
+  genome_db_id int(10) unsigned NOT NULL,
+  seq_member_id int(10) DEFAULT NULL,
+  n_species int(11) DEFAULT NULL,
+  n_orth int(11) DEFAULT NULL,
+  avg_cov float DEFAULT NULL,
+  status varchar(50) NOT NULL,
+  KEY genome_db_id (genome_db_id),
+  KEY gene_member_stable_id (gene_member_stable_id),
+  CONSTRAINT gene_member_qc_ibfk_1 FOREIGN KEY (genome_db_id) REFERENCES genome_db (genome_db_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 
+
 
