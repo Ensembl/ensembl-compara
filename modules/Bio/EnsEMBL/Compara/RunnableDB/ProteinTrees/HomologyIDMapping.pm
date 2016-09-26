@@ -89,13 +89,14 @@ sub fetch_input {
 
 
 	my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
-
+	my $current_mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $mlss_obj = $current_mlss_adaptor->fetch_by_dbID($mlss_id);
 	my $previous_db = $self->param('prev_rel_db');
 	die("No prev_rel_db provided") unless ( defined $previous_db );
 	my $previous_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
 	my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
 	my $prev_gene_member_adaptor = $previous_compara_dba->get_GeneMemberAdaptor;
-
+	my $prev_mlss_id;
 	my @homology_mapping;
 	foreach my $hid ( @homology_ids ) {
 		my $curr_homology = $current_homo_adaptor->fetch_by_dbID( $hid );
@@ -109,14 +110,18 @@ sub fetch_input {
 		}
 
 		my $prev_homology_id; # should be left undef if 2 gene members are not found
+		my $prev_mlss_id;
 		if ( scalar @prev_gene_members == 2 ) {
 			my $prev_homology = $previous_homo_adaptor->fetch_by_Member_Member( @prev_gene_members );
 			$prev_homology_id = defined $prev_homology ? $prev_homology->dbID : undef;
+			if (! $prev_mlss_id) { 
+				$prev_mlss_id = defined $prev_homology ? $prev_homology->method_link_species_set_id() : undef;
+			}
 		}
 		push( @homology_mapping, { mlss_id => $mlss_id, prev_release_homology_id => $prev_homology_id, curr_release_homology_id => $curr_homology->dbID } );
 		
 	}
-
+	$mlss_obj->store_tag("prev_release_mlss_id",              $prev_mlss_id); #store as an mlss tag
 	$self->param( 'homology_mapping', \@homology_mapping );
 }
 
