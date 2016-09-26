@@ -55,7 +55,7 @@ foreach my $i (0..$#$jobs) {
     },
     run_on_finish => sub {
       $ndone++;
-      warn sprintf("%d/%d (%d%%) done\n",$ndone,$#$jobs+1,$ndone*100/@$jobs);
+      print sprintf("%d/%d (%d%%) done\n",$ndone,$#$jobs+1,$ndone*100/@$jobs);
     }
   )->ready();
 }
