@@ -155,10 +155,12 @@ sub tag {
   my $epigenome = $self->{'my_config'}->get('epigenome');
 
   my @result;
-  my @loci       = @{$f->get_underlying_structure($epigenome)};
-  my $bound_end  = pop @loci;
-  my $end        = pop @loci;
-  my ($bound_start, $start, @mf_loci) = @loci;
+  my $loci       = eval {$f->get_underlying_structure($epigenome)};
+  return if $@ || !$loci || !scalar(@$loci);
+
+  my $bound_end  = pop @$loci;
+  my $end        = pop @$loci;
+  my ($bound_start, $start, @mf_loci) = @$loci;
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
     push @result, {
