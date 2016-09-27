@@ -108,16 +108,6 @@ sub _get_dom_tree {
     }, {
       'node_name'   => 'inputhidden',
       'class'       => 'js_param',
-      'name'        => 'species_url_template',
-      'value'       => encode_entities($hub->url({'species' => '{{species.key}}', 'type' => 'Info', 'function' => 'Index'}))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'species_strain_url_template',
-      'value'       => encode_entities($hub->url({'species' => '{{species.key}}', 'type' => 'Info', 'function' => 'Strains'}))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
       'name'        => 'display_limit',
       'value'       => SPECIES_DISPLAY_LIMIT
     }, {
@@ -155,7 +145,8 @@ sub _species_list {
 
     $done{$_} = 1;
 
-    my $homepage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
+    my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
+    my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
 
     push @list, {
       key         => $_,
@@ -165,11 +156,13 @@ sub _species_list {
       img         => sprintf('%sspecies/48/%s.png', $img_url, $_),
       common      => $species->{$_}{'common'},
       assembly    => $species->{$_}{'assembly'},
+      assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
-      strains     => $species->{$_}{'strain'} ? 1 : 0
+      strainspage => $species->{$_}{'strain'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0,
+      has_alt     => $alt_assembly ? 1 : 0
     };
 
-    if (my $alt_assembly = $sd->get_config($_, 'SWITCH_ASSEMBLY')) {
+    if ($alt_assembly) {
       push @list, {
         key         => $_,
         group       => $species->{$_}{'group'},
@@ -179,7 +172,8 @@ sub _species_list {
         common      => $species->{$_}{'common'},
         assembly    => $alt_assembly,
         favourite   => $fav{$_} ? 1 : 0,
-        external    => 1
+        external    => 1,
+        has_alt     => 1,
       };
     }
   }
