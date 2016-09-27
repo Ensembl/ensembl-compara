@@ -46,11 +46,11 @@ sub init_cacheable {
 
 sub field_order {
   ## Abstract method implementation
-  return
+  return (
     qw(display_width strand exon_ori match_display),
     $_[0]->variation_fields,
-    qw(line_numbering codons_display title_display reference_sample)
-    sort keys %{$_[0]->_strains};
+    qw(line_numbering codons_display title_display reference_sample),
+    sort keys %{$_[0]->_strains});
 }
 
 sub form_fields {
@@ -100,6 +100,7 @@ sub form_fields {
     next unless $markup->{$_};
     $fields->{$_} = $markup->{$_};
   }
+  return $fields;
 }
 
 sub _strains {
