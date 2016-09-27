@@ -79,7 +79,7 @@ sub content_ajax {
   $params{entryNode}      = $self->{entry_node}      if $self->{entry_node};
   $params{selectionLimit} = $self->{selection_limit} if $self->{selection_limit};
   $params{defaultsEleId}  = $self->{defaults_ele_id} if $self->{defaults_ele_id};
-  $params{multiSelect}    = $self->{multiselect} if $self->{multiselect};
+  $params{multiselect}    = $self->{multiselect}     if $self->{multiselect};
 
   # Get default keys (default selected) for region comparison
   my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
