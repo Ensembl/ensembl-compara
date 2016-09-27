@@ -51,6 +51,7 @@ sub features {
         $main_dfr = $dfr;
       }
     }
+    next unless ($main_dfr && $other_dfr);
     
     ## Glyphset simple requires real Bio::EnsEMBL::Feature objects so 
     ## create one and set the start/end etc..
