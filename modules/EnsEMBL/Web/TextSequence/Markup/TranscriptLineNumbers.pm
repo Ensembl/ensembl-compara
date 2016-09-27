@@ -53,7 +53,7 @@ sub markup {
       $start = $row_start if $seq_length;
         
       # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
-      $start-- if $start > $data->{'start'} && $segment =~ /^([=-]{2})/;
+      $start-- if ($start||0) > $data->{'start'} && $segment =~ /^([=-]{2})/;
         
       # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
       $row_start = $end + $data->{'dir'} if $start && $end;

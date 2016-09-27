@@ -91,7 +91,7 @@ sub annotate {
       push @{$markup->{'exons'}{$_}{'type'}}, $type;
       $type = $type eq 'exon1' ? $utr_type : 'exon1' if $_ == $crs || $_ == $cre; # transition point between coding and non-coding
 
-      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $markup->{'exons'}{$_}{'id'} =~ /$exon_id/;
+      $markup->{'exons'}{$_}{'id'} .= ($markup->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $exon_id and $markup->{'exons'}{$_}{'id'} and $markup->{'exons'}{$_}{'id'} =~ /$exon_id/;
     }
   }
   if ($config->{'exons_only'}) {
