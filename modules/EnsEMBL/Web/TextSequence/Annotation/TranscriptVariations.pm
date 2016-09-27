@@ -125,6 +125,8 @@ sub annotate {
   foreach my $snp (@snps) {
     next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
     next if $self->too_rare_snp($snp->{'vf'},$config);
+    next if $self->hidden_source($snp->{'vf'},$config);
+
     $snp->{'position'}||=0;
 
     my $dbID              = $snp->{'vdbid'};

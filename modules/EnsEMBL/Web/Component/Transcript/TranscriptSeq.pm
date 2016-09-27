@@ -336,6 +336,7 @@ sub get_sequence_data {
     config => $config,
     adorn => $adorn,
     conseq_filter => [$self->param('consequence_filter')],
+    hidden_sources => [$self->param('hidden_sources')],
   });
  
   $config->{'names'} = $names;
