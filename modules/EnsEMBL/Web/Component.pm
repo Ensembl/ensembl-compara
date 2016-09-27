@@ -596,7 +596,7 @@ sub new_image {
   my %formats     = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
-  my $config_type = $self->viewconfig ? $self->viewconfig->image_config : undef;
+  my $config_type = $self->viewconfig ? $self->viewconfig->image_config_type : undef;
   my (@image_configs, $image_config);
 
   if (ref $_[0] eq 'ARRAY') {
@@ -618,7 +618,7 @@ sub new_image {
     $image_config->set_parameter('text_export', $export) if $formats{$export}{'extn'} eq 'txt';
   }
   
-  $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
+  $_->set_parameter('component', $id) for grep $_->type eq $config_type, @image_configs;
  
   my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self, \@image_configs);
   $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
