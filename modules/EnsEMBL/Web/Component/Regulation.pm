@@ -178,7 +178,7 @@ sub cell_line_button {
   my ($shown_cells, $partials) = $self->shown_cells($image_config);
   my $shown_count = scalar @$shown_cells;
   my $object      = $self->object || $self->hub->core_object('regulation');
-  my $total_count = scalar @{$object->all_epigenomes};
+  my $total_count = scalar @{$object->regbuild_epigenomes};
 
   my $url = $self->hub->url('MultiSelector', {
     action   => 'CellTypeSelector',

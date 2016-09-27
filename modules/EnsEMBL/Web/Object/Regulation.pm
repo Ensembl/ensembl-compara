@@ -332,6 +332,11 @@ sub all_epigenomes {
   return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
 }
 
+sub regbuild_epigenomes {
+  my ($self) = @_;
+  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+}
+
 ################ Calls for Feature in Detail view ###########################
 
 sub get_focus_set_block_features {
