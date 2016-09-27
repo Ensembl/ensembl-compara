@@ -757,6 +757,7 @@ sub _summarise_funcgen_db {
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_names'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
   }
 
