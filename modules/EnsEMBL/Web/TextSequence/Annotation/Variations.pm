@@ -46,6 +46,8 @@ sub annotate {
   };
   return unless scalar @$snps;
 
+  $snps = [ grep { !$self->hidden_source($_,$config) } @$snps ];
+
   foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
     next if $u_slice->seq_region_name eq 'GAP';
 
