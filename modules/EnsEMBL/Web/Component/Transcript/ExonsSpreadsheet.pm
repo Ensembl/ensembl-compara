@@ -325,7 +325,7 @@ sub add_variations {
   }
   if($config->{'hidden_sources'}) {
     @transcript_variations = grep {
-      !$self->hidden_source($_,$config)
+      !$self->hidden_source($_->variation_feature,$config)
     } @transcript_variations;
   }
   @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};

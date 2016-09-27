@@ -131,7 +131,7 @@ sub too_rare_snp {
 sub hidden_source {
   my ($self,$v,$config) = @_;
 
-  return any { $v->variation_feature->variation->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
+  return any { $v->variation->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
 }
 
 sub get_sequence_data {
@@ -220,7 +220,6 @@ sub set_variations {
   }
   return unless scalar @$snps;
 
-  warn "!!!!!\n"; 
   $snps = [ grep { !$self->hidden_source($_,$config) } @$snps ];
  
   foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
