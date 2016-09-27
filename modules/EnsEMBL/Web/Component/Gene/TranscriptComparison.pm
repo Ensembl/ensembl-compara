@@ -48,7 +48,7 @@ sub initialize_new {
   my $vc = $self->view_config($type);
   my $adorn = $hub->param('adorn') || 'none';
 
-  for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps)) {
+  for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps hidden_sources)) {
     $config->{$_} = $self->param($_) unless ($self->param($_) eq 'off');
   }
   

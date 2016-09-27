@@ -47,7 +47,14 @@ sub init_cacheable {
 sub variation_fields {
   ## Extra fields for form if variation db is present
   ## @return List of ordered field keys
-  return $_[0]->species_defs->databases->{'DATABASE_VARIATION'} ? qw(snp_display hide_long_snps hide_rare_snps) : ();
+  return $_[0]->species_defs->databases->{'DATABASE_VARIATION'} ? qw(snp_display hide_long_snps hide_rare_snps consequence_filter hidden_sources) : ();
+}
+
+sub source_list {
+  my ($self) = @_;
+
+  my $srca = $self->hub->database('variation')->get_SourceAdaptor;
+  return map { $_->name => $_->name } @{$srca->fetch_all};
 }
 
 sub get_markup_options {
@@ -88,10 +95,13 @@ sub get_markup_options {
       $markup->{'snp_display'}{'value'} = 'on';
     }
 
-    if ($options->{'no_consequence'}) {
+    unless($options->{'no_consequence'}) {
       my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
       push @{$markup->{'consequence_filter'}{'values'}}, map { 'value' => $consequence_types{$_}, 'caption' => $_ }, sort keys %consequence_types;
     }
+
+    my %sources = $self->source_list;
+    push @{$markup->{'hidden_sources'}{'values'}}, map { value => $sources{$_}, caption => $_ }, sort keys %sources;
   }
 
   # add vega exon and EST gene exon dropdown options if required

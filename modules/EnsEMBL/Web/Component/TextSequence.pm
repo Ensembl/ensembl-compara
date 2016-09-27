@@ -37,6 +37,8 @@ use EnsEMBL::Web::TextSequence::Annotation::Codons;
 use EnsEMBL::Web::TextSequence::Annotation::Variations;
 use EnsEMBL::Web::TextSequence::Annotation::Alignments;
 
+use List::MoreUtils qw(any);
+
 use base qw(EnsEMBL::Web::Component::Shared);
 
 sub new {
@@ -124,6 +126,12 @@ sub too_rare_snp {
   my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
   return ($mul>0) unless $vf->minor_allele_frequency;
   return ($vf->minor_allele_frequency - $val)*$mul < 0;
+}
+
+sub hidden_source {
+  my ($self,$v,$config) = @_;
+
+  return any { $v->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
 }
 
 sub get_sequence_data {

@@ -70,6 +70,8 @@ sub initialize {
     $config->{'hide_long_snps'}     = $self->param('hide_long_snps') eq 'yes';
     $config->{'hide_rare_snps'}     = $self->param('hide_rare_snps');
     delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
+    $config->{'hidden_sources'}     = $self->param('hidden_sources');
+    delete $config->{'hidden_sources'} if $config->{'hidden_sources'} eq 'off';
   }
   
   # Get flanking sequence
@@ -320,6 +322,11 @@ sub add_variations {
   if($config->{'hide_rare_snps'}) {
     @transcript_variations = grep {
       !$self->too_rare_snp($_->variation_feature,$config)
+    } @transcript_variations;
+  }
+  if($config->{'hidden_sources'}) {
+    @transcript_variations = grep {
+      $self->hidden_source($_,$config)
     } @transcript_variations;
   }
   @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
