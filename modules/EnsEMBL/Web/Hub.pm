@@ -392,9 +392,6 @@ sub url {
   delete $pars{'time'};
   delete $pars{'_'};
 
-  # remove transcript versioning
-  $params->{'t'} =~ s/\..+$// if $params->{'t'};
-
   # add the requested GET params to the query string
   foreach (keys %$params) {
     $_ =~ /^(__)?(species|type|action|function)?(.*)$/;
