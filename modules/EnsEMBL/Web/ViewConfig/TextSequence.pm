@@ -41,6 +41,7 @@ sub init_cacheable {
     'title_display'       => 'off',
     'hide_long_snps'      => 'on',
     'hide_rare_snps'      => 'off',
+    hidden_sources        => [],
   });
 }
 

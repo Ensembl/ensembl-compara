@@ -131,7 +131,7 @@ sub too_rare_snp {
 sub hidden_source {
   my ($self,$v,$config) = @_;
 
-  return any { $v->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
+  return any { $v->variation_feature->variation->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
 }
 
 sub get_sequence_data {
@@ -182,6 +182,7 @@ sub set_variation_filter {
   $config->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
   $config->{'hide_long_snps'} = $self->param('hide_long_snps') eq 'yes';
   $config->{'hide_rare_snps'} = $self->param('hide_rare_snps');
+  $config->{'hidden_sources'} = $self->param('hidden_sources');
 }
 
 sub set_variations {

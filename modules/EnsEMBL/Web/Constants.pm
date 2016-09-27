@@ -331,7 +331,7 @@ sub MARKUP_OPTIONS {
       'multiple' => 1,
       'size'     => 5,
       'select'   => 'select',
-      'name'     => 'consequence_filter',
+      'name'     => 'hidden_sources',
       'label'    => 'Hide individual variant sources',
       'values'   => [],
     },
