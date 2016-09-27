@@ -1041,10 +1041,10 @@ sub add_regulation_builds {
 
   my (@cell_lines,%cell_names);
 
-  foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+  foreach (keys %{$db_tables->{'cell_type'}{'regbuild_ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
     push @cell_lines, $name;
-    $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
+    $cell_names{$name} = $db_tables->{'cell_type'}{'regbuild_names'}{$_}||$name;
   }
   @cell_lines = sort { $a cmp $b } @cell_lines;
 
