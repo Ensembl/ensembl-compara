@@ -58,6 +58,7 @@ sub json_fetch_species {
       $t->{key} = encode_entities($name);
       $t->{title} = encode_entities($name);
       $t->{value} = $row->{'id'};
+      $t->{searchable} = 1;
       push @{$species_hash_multiple}, $t;
     }
   }

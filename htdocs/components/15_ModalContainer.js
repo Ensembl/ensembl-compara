@@ -107,7 +107,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.getContent(el.href || (tab.length ? tab[0].href : ''), rel.join('-'));
     
     tab = null;
-    
+    // Add class to stop page scroll on modal open
+    $("body").addClass("modal-open");
     return true;
   },
   
@@ -122,6 +123,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     } else if ($('.modal_reload', this.el).length) {
       this.setPageReload(false, true, true);
     }
+    // Remove class to enable page scroll on modal close
+    $("body").removeClass("modal-open");
   },
   
   showOverlay: function (el) {

@@ -16,7 +16,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     if (params.caller)          this.caller          = params.caller;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
-    if (params.multiselect)     this.multiSelect     = params.multiSelect;
+    if (params.multiselect)     this.multiSelect     = params.multiselect;
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
   },
   
@@ -269,7 +269,19 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
       // Exclude submenu on search as a quick fix
       if (!node.data.is_submenu && node.data.searchable) {
-        var search_text = node.data.isFolder ? node.data.title : node.data.title + ' (' + node.data.key + ')';
+        var search_text = '';
+        if (node.data.isFolder) {
+          search_text = node.data.title;
+        }
+        else {
+          if (node.data.title === node.data.key) {
+            search_text = node.data.title;
+          }
+          else {
+            search_text = node.data.title + ' (' + node.data.key + ')';
+          }
+        }
+
         acTitles.push(search_text);
         // acTitles.push(node.data.title);
         // acTitles.push(node.data.key);
@@ -473,13 +485,28 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     return items;
   },
   
+  getAllLeaves: function(node) {
+    var results = [];
+    function getAllLeaves(node) {
+      if (!!node.childList) {
+        for (var child in node.childList) {
+          getAllLeaves(node.childList[child]);
+        }
+      } else {
+        results[results.length] = node;
+      }
+      return results;
+    }
+    return getAllLeaves(node);
+  },
+
   setSelection: function(node, flag) {
     var panel = this;
     var items = new Array();
     // Get selected items from displayed subtree
     if(node.hasChildren()) {
       // If selected node is an internal node then get all its children
-      items = node.getChildren();
+      items = panel.getAllLeaves(node);
     }
     else {
       // If a single node is selected, directly get the data from it
@@ -490,21 +517,27 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // Update mastertree according to the flag true/false = select/deselect
       panel.elLk.mastertree.dynatree("getTree").selectKey(item.data.key, flag);
       if (flag) {
-        var img_filename = item.data.key + '.png';
-        item.data.img_url = item.data.icon.replace('\/16\/', '\/48\/');
-        var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
+        if (!$('li.'+item.data.key, panel.elLk.list).length) {
+          var img_filename = item.data.key + '.png';
+          item.data.img_url = item.data.icon.replace('\/16\/', '\/48\/');
+          var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
 
-        $('<li/>')
-        .data(item.data)
-        .append(species_img, '<span class="selected-sp-title">' + item.data.title + '</span><span class="remove">x</span>')
-        .prependTo(panel.elLk.list);
+          $('<li/>', {
+            class: item.data.key
+          })
+          .data(item.data)
+          .append(species_img, '<span class="selected-sp-title">' + item.data.title + '</span><span class="remove">x</span>')
+          .prependTo(panel.elLk.list);
+        }
       }
       else {
-        $.each($('li', panel.elLk.list), function(i, li) {
-          if ($(li).data('key') === item.data.key) {
-            $(li).remove();
-          }
-        });
+        if($('li.'+item.data.key, panel.elLk.list).length) {
+          $.each($('li', panel.elLk.list), function(i, li) {
+            if ($(li).data('key') === item.data.key) {
+              $(li).remove();
+            }
+          });          
+        }
       }
     });
     $('li span.remove', panel.elLk.list).off().on('click', function(){

@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
+/* Stop page scroll on modal open */
+body.modal-open {
+  overflow: hidden;
+}
+
 #modal_bg {
   position: fixed;
   top: 0;
