@@ -3,6 +3,8 @@ package EnsEMBL::Web::TextSequence::Annotation;
 use strict;
 use warnings;
 
+use List::MoreUtils qw(any);
+
 sub new {
   my ($proto,$p) = @_;
 
@@ -24,6 +26,13 @@ sub too_rare_snp {
   return ($mul>0) unless $vf->minor_allele_frequency;
   return ($vf->minor_allele_frequency - $val)*$mul < 0;
 }
+
+sub hidden_source {
+  my ($self,$v,$config) = @_;
+
+  return any { $v->variation->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
+}
+
 
 sub view { $_[0]->{'view'} = $_[1] if @_>1; return $_[0]->{'view'}; }
 sub phases { $_[0]->{'phases'} = $_[1] if @_>1; return $_[0]->{'phases'}; }

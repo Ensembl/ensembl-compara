@@ -333,7 +333,7 @@ sub MARKUP_OPTIONS {
       'select'   => 'select',
       'name'     => 'hidden_sources',
       'label'    => 'Hide individual variant sources',
-      'values'   => [],
+      'values'   => [{ value => '_all', caption => 'No filter' }],
     },
     'hide_long_snps' => {
       'type'   => 'Checkbox', 

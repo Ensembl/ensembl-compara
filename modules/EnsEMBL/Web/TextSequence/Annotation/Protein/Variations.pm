@@ -14,6 +14,7 @@ sub annotate {
   foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
     next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
     next if $self->too_rare_snp($snp->{'vf'},$config);
+    next if $self->hidden_source($snp->{'vf'},$config);
         
     my $pos  = $snp->{'position'} - 1;
     my $dbID = $snp->{'vdbid'};

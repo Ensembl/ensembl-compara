@@ -182,7 +182,7 @@ sub set_variation_filter {
   $config->{'snp_length_filter'} = 10; # Max length of VariationFeatures to be displayed
   $config->{'hide_long_snps'} = $self->param('hide_long_snps') eq 'yes';
   $config->{'hide_rare_snps'} = $self->param('hide_rare_snps');
-  $config->{'hidden_sources'} = $self->param('hidden_sources');
+  $config->{'hidden_sources'} = [$self->param('hidden_sources')];
 }
 
 sub set_variations {

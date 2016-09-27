@@ -22,7 +22,7 @@ sub set_markup {
 
   $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Exons->new) if $config->{'exons'};
   $self->add_markup(EnsEMBL::Web::TextSequence::Markup::Variations->new([0,2])) if $config->{'snp_display'};
-  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::LineNumbers->new) if $config->{'line_numbering'} ne 'off';
+  $self->add_markup(EnsEMBL::Web::TextSequence::Markup::LineNumbers->new) if ($config->{'line_numbering'}||'') ne 'off';
 }
 
 1;

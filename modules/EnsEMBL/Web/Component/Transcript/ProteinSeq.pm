@@ -68,7 +68,7 @@ sub initialize_new {
   }
   $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
   delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
-  
+  $config->{'hidden_sources'}     = [$self->param('hidden_sources')];
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
   my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
