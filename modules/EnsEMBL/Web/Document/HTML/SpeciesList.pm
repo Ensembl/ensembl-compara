@@ -28,7 +28,7 @@ sub render {
   my $self      = shift;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
 
-  return sprintf qq(<div class="clear"><h3>All genomes</h3>
+  return sprintf qq(<div class="clear static_all_species"><h3>All genomes</h3>
     <p><select class="_all_species"><option value="">-- Select a species --</option></select></p>
     <p><a href="/info/about/species.html">View full list of all %s species</a></p>
     </div>), $sitename;
