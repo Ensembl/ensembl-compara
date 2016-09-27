@@ -406,6 +406,17 @@ sub url {
     }
   }
 
+  ## Remove version numbers if exporting
+  my $page_action = $controller || $action;
+  if ($page_action =~ /[Data|Image]Export/) {
+    while (my ($k, $v) = each (%pars)) {
+      if ($k =~ /[g|t]\d?/) { # g, t, t1, t2, etc
+        $v =~ s/\.\d+$//;
+        $pars{$k} = $v;
+      }
+    }
+  }
+
   my $url = join '/', grep $_, $self->species_defs->species_path($species), $controller, $type, $action, $function, $sub_function;
   
   return [ $url, \%pars ] if $flag;
