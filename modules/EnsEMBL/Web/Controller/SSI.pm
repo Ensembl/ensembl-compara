@@ -54,8 +54,11 @@ sub content {
 
   if (!$self->{'content'}) {
 
-    # Read html file into memory and parse out SSI directives.
-    $self->{'content'} = file_get_contents($self->filename, sub { s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; $self->$m($2) || '';/ger });
+    # Read html file
+    $self->{'content'} = file_get_contents($self->filename);
+
+    # Parse out SSI directives
+    $self->{'content'} =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; $self->$m($2) || '';/ge;
   }
 
   return $self->{'content'};
