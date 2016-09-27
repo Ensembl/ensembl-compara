@@ -28,6 +28,7 @@ sub annotate {
     
     next if ($config->{'consequence_filter'} && !$consequence);
     my $vf            = $transcript_variation->variation_feature;
+    next if $self->hidden_source($vf,$config);
     my $name          = $vf->variation_name;
     my $allele_string = $vf->allele_string(undef, $strand);
     my $dbID          = $vf->dbID;

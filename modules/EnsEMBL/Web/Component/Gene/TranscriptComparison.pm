@@ -51,7 +51,9 @@ sub initialize_new {
   for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps hidden_sources)) {
     $config->{$_} = $self->param($_) unless ($self->param($_) eq 'off');
   }
-  
+ 
+  $config->{'hidden_sources'} = [$self->param('hidden_sources')];
+ 
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && scalar(@consequence) && join('', @consequence) ne 'off';
   

@@ -219,7 +219,10 @@ sub set_variations {
     };
   }
   return unless scalar @$snps;
-  
+
+  warn "!!!!!\n"; 
+  $snps = [ grep { !$self->hidden_source($_,$config) } @$snps ];
+ 
   foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
     next if $u_slice->seq_region_name eq 'GAP';
       
