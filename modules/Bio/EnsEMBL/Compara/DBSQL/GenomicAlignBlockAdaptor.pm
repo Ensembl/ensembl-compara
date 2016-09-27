@@ -581,8 +581,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     #for restricted_aln_start and restricted_aln_end
     foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
 
-	    #print "GAB restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
-
     	if (defined $this_genomic_align_block->{'restricted_aln_start'}) {
 	      my $tmp_start = $this_genomic_align_block->{'restricted_aln_start'};
 	      #if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand) {
@@ -595,7 +593,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 		      $this_genomic_align_block->{'restricted_aln_start'} = $this_genomic_align_block->{'restricted_aln_end'} + 1;
 		      $this_genomic_align_block->{'restricted_aln_end'} = $this_genomic_align_block->{'original_length'} - $tmp_start;
 	      }
-	      #print "GAB after restricted start " . $this_genomic_align_block->{'restricted_aln_start'} . " end " . $this_genomic_align_block->{'restricted_aln_end'} . " length " . $this_genomic_align_block->{'original_length'} . "\n";
 	    }
     }
 
@@ -604,9 +601,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
     # need to convert features to requested coord system
     # if it was different then the one we used for fetching
-
     if($top_slice->name ne $reference_slice->name) {
-        
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
         my $feature = new Bio::EnsEMBL::Feature(
                 -slice => $top_slice,
@@ -616,8 +611,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             );
 
         $feature = $feature->transfer($this_slice);
-#        $feature = $feature->transfer($reference_slice);
-	next if (!$feature);
+	      next if (!$feature);
 
         $this_genomic_align_block->reference_slice($reference_slice);
         $this_genomic_align_block->reference_slice_start($feature->start + $offset - 1);
@@ -1399,6 +1393,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         next if ( scalar(@genomic_align_array) < 2 );
 
         $gab->genomic_align_array(\@genomic_align_array);
+        next unless ( defined $ref_genomic_align );
         $gab->reference_genomic_align($ref_genomic_align);
 
         # check for duplicate species
@@ -1422,18 +1417,19 @@ sub _get_GenomicAlignBlocks_from_HAL {
     }
 
     else { # pairwise alignment
-      foreach my $target_gdb (@$targets_gdb) {
-          my $target = $species_map{ $target_gdb->dbID };
-  	
-          # my $linebreak = "<br>";
+      my $ref_slice_adaptor = $ref_gdb->db_adaptor->get_SliceAdaptor;
 
-          # print "hal_file is $hal_file $linebreak";
-          # print "ref is $ref $linebreak";
-          # print "target is $target $linebreak";
-          # print "seq_region is $hal_seq_reg $linebreak";
-          # print "target_seq_region is $target_seq_reg $linebreak" if (defined $target_seq_reg);
-          # print "start is $start $linebreak";
-          # print "end is $end $linebreak";
+      foreach my $target_gdb (@$targets_gdb) {
+          my $nonref_slice_adaptor = $target_gdb->db_adaptor->get_SliceAdaptor;
+          my $target = $species_map{ $target_gdb->dbID };
+
+          # print "hal_file is $hal_file\n";
+          # print "ref is $ref\n";
+          # print "target is $target\n";
+          # print "seq_region is $hal_seq_reg\n";
+          # print "target_seq_region is $target_seq_reg\n" if (defined $target_seq_reg);
+          # print "start is $start\n";
+          # print "end is $end\n";
 
           my @blocks;
           if ( $target_seq_reg ){
@@ -1443,8 +1439,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
           else {
               @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
           }
-
-          #print Dumper \@blocks;
           
           foreach my $entry (@blocks) {
   	        if (defined $entry) {
@@ -1463,7 +1457,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my ($ref_aln_seq, $target_aln_seq) = ( $entry->[6], $entry->[5] );
   		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
-  		        #print "REF CIGAR: $ref_cigar\nTARG CIGAR: $target_cigar\n";
 
               # normalize seq by removing "chr" prefix.
               my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
@@ -1475,14 +1468,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
               next if ( @$entry[2] + @$entry[3] > $end || @$entry[1] + @$entry[3] > $end );
 
               # check length of genomic align meets threshold
-              print ">>>>>> THIS ALN LENGTH: " . @$entry[3] . "\n\n";
               next if ( @$entry[3] < $min_ga_len );
 
               my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                   -genomic_align_block => $gab,
                   -aligned_sequence => $target_aln_seq, #@$entry[5],
                   -dnafrag => $target_dnafrag,
-                  -dnafrag_start => @$entry[2],
+                  -dnafrag_start => @$entry[2] + 1,
                   -dnafrag_end => @$entry[2] + @$entry[3],
                   -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                   -cigar_line => $target_cigar,
@@ -1494,17 +1486,16 @@ sub _get_GenomicAlignBlocks_from_HAL {
               $genomic_align->aligned_sequence( $target_aln_seq );
               $genomic_align->genomic_align_block( $gab );
               $genomic_align->dbID( $id_base + $ga_id_count );
-              $ga_id_count++;
+              $ga_id_count+=1;
 
               my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
   		        my $ref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($ref_gdb, $ref_seq_name);
               $ref_dnafrag->{'_slice'} = undef;
               my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                 -genomic_align_block => $gab,
-                -genomic_align_block_id => $gab->dbID,
                 -aligned_sequence => $ref_aln_seq, #@$entry[6],
                 -dnafrag => $ref_dnafrag,
-                -dnafrag_start => @$entry[1],
+                -dnafrag_start => @$entry[1] + 1,
                 -dnafrag_end => @$entry[1] + @$entry[3],
                 -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                 -cigar_line => $ref_cigar,
@@ -1512,17 +1503,11 @@ sub _get_GenomicAlignBlocks_from_HAL {
                 -visible => 1,
                 -adaptor => $ga_adaptor,
   		        );
-              $genomic_align->cigar_line($ref_cigar);
-              $genomic_align->aligned_sequence( $ref_aln_seq );
-              $genomic_align->genomic_align_block( $gab );
-              $genomic_align->dbID( $id_base + $ga_id_count );
+              $ref_genomic_align->cigar_line($ref_cigar);
+              $ref_genomic_align->aligned_sequence( $ref_aln_seq );
+              $ref_genomic_align->genomic_align_block( $gab );
+              $ref_genomic_align->dbID( $id_base + $ga_id_count );
               $ga_id_count++;
-
-              if ( @$entry[1] == 155810542 ) {
-                print "I think I'm the one you're looking for:\n";
-                $ref_genomic_align->_print;
-                print Dumper $entry;
-              }
 
   		      $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
               $gab->reference_genomic_align($ref_genomic_align);
@@ -1566,7 +1551,6 @@ sub _split_genomic_aligns {
         if ( $end_gap =~ m/^(\d*)D(\d*)M/ ) {
             my $d = $1 eq '' ? 1 : $1;
             my $m = $2 eq '' ? 1 : $2;
-            # print "d: $d; m: $m\n";
             if ( $d < $m ) {
                 $trim = $d if ( $d > $trim );
             } else {
@@ -1577,7 +1561,6 @@ sub _split_genomic_aligns {
         $end_gap =~ m/(\d+)D$/;
         if ( $1 < $max_end_match ){
             $can_split = 0;
-            #last;
         }
     }
 
@@ -1716,7 +1699,6 @@ sub _detect_location_on_platform {
     } else {
         # REST setup
         $hal_dir = "/mnt/shared/86"
-        # /mnt/shared/86/multi/hal_files/genbank_835.hal
     }
 
     $hal_file =~ s/#base_dir#/$hal_dir/;
