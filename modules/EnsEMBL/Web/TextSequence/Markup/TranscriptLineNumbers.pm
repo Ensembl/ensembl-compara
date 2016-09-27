@@ -49,7 +49,7 @@ sub markup {
       # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
       $seq_length -= length $1 if $segment =~ /^(N+)\w/;
         
-      $end   = $e < $length ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
+      $end   = $row_start + $seq_length - $data->{'dir'};
       $start = $row_start if $seq_length;
         
       # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
@@ -60,6 +60,7 @@ sub markup {
         
       # Remove the line number if the sequence doesn't start at the beginning of the line
       $start = '' if $segment =~ /^(\.|N+\w)/;
+      $end = '' if $segment =~ /^(\.|N+\w)+$/;
 
       $s = $e + 1;
 
