@@ -523,7 +523,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
 
           $('<li/>', {
-            class: item.data.key
+            'class': item.data.key
           })
           .data(item.data)
           .append(species_img, '<span class="selected-sp-title">' + item.data.title + '</span><span class="remove">x</span>')
