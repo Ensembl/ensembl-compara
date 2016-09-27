@@ -43,6 +43,7 @@ sub new {
     hub => $hub,
     output => undef,
     legend => undef,
+    phase => 0,
   };
   bless $self,$class;
   $self->output(EnsEMBL::Web::TextSequence::Output::Web->new);
@@ -63,7 +64,6 @@ sub reset {
     rootsequences => [],
     fieldsize => {},
     lines => [],
-    phase => 0,
   );
   $self->output->reset;
 }
