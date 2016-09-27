@@ -428,7 +428,7 @@ sub make_view {
   my $view = EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
     $self->hub,
   );
-  $self->view->output($self->view->output->subslicer);
+  $view->output($view->output->subslicer);
   return $view;
 }
 
