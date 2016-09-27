@@ -13,7 +13,10 @@ sub annotate {
   return if($slice_data->{'type'} eq 'gene');
   my $slice = $slice_data->{'slice'};
   my $transcript = $slice_data->{'transcript'};
-  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
+
+  my $vardb = $hub->database('variation');
+  return unless $vardb;
+  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor;
   my $variation_features = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
   my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
   @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
