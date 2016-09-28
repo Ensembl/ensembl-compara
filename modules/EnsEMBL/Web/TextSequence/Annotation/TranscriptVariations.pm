@@ -5,6 +5,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Variations);
 
+use EnsEMBL::Web::PureHub;
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
 
 sub too_rare_snp {
@@ -27,24 +28,23 @@ sub _transcript_variation_to_variation_feature {
 }
 
 sub _get_transcript_variations {
-  my ($self,$hub,$trans,$vf_cache) = @_;
+  my ($self,$ph,$config,$trans,$vf_cache) = @_;
 
   # Most VFs will be in slice for transcript, so cache them.
   if($vf_cache and !$self->{'vf_cache'}) {
-
-    my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+    my $vfa = $ph->get_adaptor($config->{'species'},'variation','get_VariationFeatureAdaptor');
     $self->{'vf_cache'} = {};
     my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
     $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
     $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
     $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
   }
-  my $tva = $hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  my $tva = $ph->get_adaptor($config->{'species'},'variation','get_TranscriptVariationAdaptor');
   return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ]);
 }
 
 sub _get_variation_data {
-  my ($self,$hub,$transcript, $slice, $include_utr,$strand,$conseq_filter_in) = @_;
+  my ($self,$ph,$config,$transcript, $slice, $include_utr,$strand,$conseq_filter_in) = @_;
 
   my $cd_start           = $transcript->cdna_coding_start;
   my $cd_end             = $transcript->cdna_coding_end;
@@ -56,7 +56,7 @@ sub _get_variation_data {
      %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
   my @data;
 
-  foreach my $tv (@{$self->_get_transcript_variations($hub,$transcript,1)}) {
+  foreach my $tv (@{$self->_get_transcript_variations($ph,$config,$transcript,1)}) {
     my $pos = $tv->translation_start;
 
     next if !$include_utr && !$pos;
@@ -106,6 +106,7 @@ sub _get_variation_data {
 sub annotate {
   my ($self, $config, $slice_data, $mk, $seq, $hub,$real_sequence) = @_;
 
+  my $ph = EnsEMBL::Web::PureHub->new($hub);
   my $transcript = $config->{'transcript'};
   my @exons = @{$transcript->get_all_Exons};
   my $trans_strand = $exons[0]->strand;
@@ -115,9 +116,9 @@ sub annotate {
   my $start_pad    = $start_phase > 0 ? $start_phase : 0; # mid-codon?
   my $slice = $slice_data->{'slice'};
   return unless $slice_data->{'vtype'} eq 'main';
-  my $has_var = exists $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  my $has_var = exists $ph->databases($config->{'species'})->{'DATABASE_VARIATION'};
   return unless $config->{'snp_display'} and $has_var;
-  my @snps = reverse @{$self->_get_variation_data($hub,$config->{'transcript'},$slice, $config->{'utr'}, $trans_strand,$config->{'conseq_filter'})};
+  my @snps = reverse @{$self->_get_variation_data($ph,$config,$config->{'transcript'},$slice, $config->{'utr'}, $trans_strand,$config->{'conseq_filter'})};
 
   my $protein_rope = $real_sequence->relation('protein');
   my $variation_rope = $real_sequence->relation('aux');
@@ -177,7 +178,7 @@ sub annotate {
       my $vseq = $variation_rope->legacy;
       $vseq->[$_]{'letter'} = $ambigcode;
       $vseq->[$_]{'new_letter'} = $ambigcode;
-      $vseq->[$_]{'href'} = $hub->url($url);
+      $vseq->[$_]{'href'} = $url;
       $vseq->[$_]{'title'} = $variation_name;
       $vseq->[$_]{'tag'} = 'a';
       $vseq->[$_]{'class'} = '';

@@ -193,6 +193,9 @@ sub prepare_ropes {
 sub annotate {
   my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
 
+  # XXX should be elsewhere
+  $config->{'species'} = $self->_hub->species;
+  #
   my $cur_phase = $self->phase;
   foreach my $a (@{$self->{'annotation'}}) {
     my $p = $a->phases;
