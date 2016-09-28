@@ -26,9 +26,10 @@ use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub get_template {
-  my $r = shift;
+  my $r       = shift;
+  my $request = $r->headers_in->get('X-Requested-With') || '';
 
- return $r->headers_in->get('X-Requested-With') eq 'XMLHttpRequest' ? 'EnsEMBL::Web::Template::AjaxError' : 'EnsEMBL::Web::Template::Error';
+ return $request eq 'XMLHttpRequest' ? 'EnsEMBL::Web::Template::AjaxError' : 'EnsEMBL::Web::Template::Error';
 }
 
 sub handler {
