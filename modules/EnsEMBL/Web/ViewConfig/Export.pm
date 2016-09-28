@@ -25,7 +25,8 @@ use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self      = shift;
   my $misc_sets = $self->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
   my $defaults  = {};
@@ -59,6 +60,9 @@ sub init {
 
   $self->set_default_options($defaults);
 }
+
+sub form_fields {}
+sub field_order {}
 
 sub init_form {
   my ($self, $object) = @_;
@@ -192,7 +196,7 @@ sub init_form {
     next unless $config->{$c}->{'params'};
 
     foreach my $f (@{$config->{$c}->{'formats'}}) {
-      $self->add_fieldset("Options for $f->[1]", "_stt_$f->[0]");
+      $self->add_fieldset("Options for $f->[1]")->set_attribute('class', "_stt_$f->[0]");
 
       if ($f->[0] eq 'fasta') {
         my $genomic = [
