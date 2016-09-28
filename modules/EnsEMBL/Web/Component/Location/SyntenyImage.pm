@@ -85,6 +85,8 @@ sub content {
   $image->image_name = "$species-$chr-$other";
   $image->set_button('drag', 'title' => 'Click or drag to change region');
 
+  $image->{'export_params'} = [['otherspecies', $other]];
+
   my $chr_form = $self->chromosome_form('Vsynteny');
 
   $chr_form->add_element(
