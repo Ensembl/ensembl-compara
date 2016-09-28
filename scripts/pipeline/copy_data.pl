@@ -640,6 +640,8 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
+  #print "SELECT count(*) FROM genomic_align_tree WHERE root_id >= $min_root_id AND root_id < $max_root_id\n\n";
+
   if(defined($max_gat)) {
     $sth = $to_dbc->prepare("SELECT count(*)
         FROM genomic_align_tree
@@ -783,7 +785,7 @@ sub copy_ancestral_dnafrags {
                                          MAX(dnafrag_id)
                                          FROM genomic_align
                                          LEFT JOIN dnafrag USING (dnafrag_id)
-                                         WHERE genome_db_id =ancestral_dbId
+                                         WHERE genome_db_id = $ancestral_dbID
                                          AND method_link_species_set_id = ?");
   $sth->execute($mlss_id);
   my ($min_dnafrag_id, $max_dnafrag_id) = $sth->fetchrow_array();
