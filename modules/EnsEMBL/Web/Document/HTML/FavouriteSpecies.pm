@@ -141,7 +141,7 @@ sub _species_list {
 
   for (@fav, sort {$species->{$a}{'common'} cmp $species->{$b}{'common'}} keys %$species) {
 
-    next if $done{$_} || ($species->{$_}{'strain'} && $species->{$_}{'strain'} !~ /reference/i);
+    next if $done{$_} || ($species->{$_}{'strain_collection'} && $species->{$_}{'strain'} !~ /reference/i);
 
     $done{$_} = 1;
 
@@ -158,7 +158,7 @@ sub _species_list {
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
-      strainspage => $species->{$_}{'strain'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0,
+      strainspage => $species->{$_}{'strain_collection'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0,
       has_alt     => $alt_assembly ? 1 : 0
     };
 
