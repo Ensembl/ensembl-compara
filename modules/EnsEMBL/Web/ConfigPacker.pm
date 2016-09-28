@@ -751,7 +751,7 @@ sub _summarise_funcgen_db {
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
-      where regulatory_build.is_current=1
+      where regulatory_build.is_current = 1
      '
   );
   foreach my $row (@$c_aref) {
@@ -766,10 +766,13 @@ sub _summarise_funcgen_db {
   $c_aref = $dbh->selectall_arrayref(
     'select
         epigenome.name, epigenome.epigenome_id, epigenome.display_label
-      from epigenome 
-      left join regulatory_build_epigenome as rbe 
-        on rbe.epigenome_id = epigenome.epigenome_id
-      where rbe.regulatory_build_id is null
+     from epigenome 
+        left join (regulatory_build_epigenome rbe, regulatory_build rb) 
+          on (rbe.epigenome_id = epigenome.epigenome_id 
+              and rb.regulatory_build_id = rbe.regulatory_build_id 
+              and rb.is_current = 1)
+     where 
+        rbe.regulatory_build_epigenome_id is null
      '
   );
   foreach my $row (@$c_aref) {
