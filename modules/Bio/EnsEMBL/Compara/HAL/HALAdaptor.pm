@@ -33,6 +33,7 @@ package Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Registry;
 
