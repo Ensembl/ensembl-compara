@@ -27,6 +27,7 @@ use JSON qw(encode_json);
 use List::Util qw(max);
 use List::MoreUtils qw(any firstidx);
 
+use EnsEMBL::Web::PureHub;
 use EnsEMBL::Web::TextSequence::Sequence;
 use EnsEMBL::Web::TextSequence::Output::Web;
 use EnsEMBL::Web::TextSequence::Legend;
@@ -196,12 +197,13 @@ sub annotate {
   # XXX should be elsewhere
   $config->{'species'} = $self->_hub->species;
   #
+  my $ph = EnsEMBL::Web::PureHub->new($self->_hub);
   my $cur_phase = $self->phase;
   foreach my $a (@{$self->{'annotation'}}) {
     my $p = $a->phases;
     next if $p and not any { $cur_phase == $_ } @$p;
     # XXX no hub should be passed
-    $a->annotate($config,$slice_data,$markup,$seq,$self->_hub,$sequence);
+    $a->annotate($config,$slice_data,$markup,$seq,$ph,$sequence);
   }
 }
 

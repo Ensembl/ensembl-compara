@@ -6,7 +6,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Sequence);
 
 sub annotate {
-  my ($self,$config,$slice_data,$markup,$seq,$hub,$sequence) = @_;
+  my ($self,$config,$slice_data,$markup,$seq,$ph,$sequence) = @_;
 
   my $translation = $config->{'translation'};
   my $pep_seq  = $translation->Obj->seq;

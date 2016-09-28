@@ -6,7 +6,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Exons);
 
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $seq, $hub,$real_sequence) = @_;
+  my ($self, $config, $slice_data, $markup, $seq, $ph,$real_sequence) = @_;
 
   my $sequence = $real_sequence->legacy;
   # XXX should have per-rope switchable Annotation
@@ -26,7 +26,7 @@ sub annotate {
   my $strand = $slice->strand;
   my $transcript = $slice_data->{'transcript'};
   my $utr_type = defined $transcript->coding_region_start ? 'eu' : 'exon0'; # if coding_region_start returns unded, exons are marked non-coding
-  my $type   = $hub->param('data_type') || $hub->type;
+  my $type   = 'exon1';
   my ($crs, $cre, $transcript_start) = map $_ - $start, $transcript->coding_region_start, $transcript->coding_region_end, $transcript->start;
   if ($strand == -1) {
     $_ = $length - $_ - 1, for $crs, $cre;

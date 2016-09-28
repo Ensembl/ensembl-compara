@@ -6,7 +6,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Variations);
 
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $seq, $hub,$real_sequence) = @_;
+  my ($self, $config, $slice_data, $markup, $seq, $ph,$real_sequence) = @_;
 
   my $sequence = $real_sequence->legacy;
   # XXX should have per-rope switchable Annotation
@@ -14,11 +14,11 @@ sub annotate {
   my $slice = $slice_data->{'slice'};
   my $transcript = $slice_data->{'transcript'};
 
-  my $vardb = $hub->database('variation');
+  my $vardb = $ph->database($config->{'species'},'variation');
   return unless $vardb;
   my $vf_adaptor = $vardb->get_VariationFeatureAdaptor;
   my $variation_features = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
-  my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
+  my @transcript_variations = @{$ph->get_adaptor($config->{'species'},'variation','get_TranscriptVariationAdaptor')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
   @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   @transcript_variations = grep { !$self->too_rare_snp($_->variation_feature,$config) } @transcript_variations;
   my $length                = scalar(@{$sequence}) - 1;

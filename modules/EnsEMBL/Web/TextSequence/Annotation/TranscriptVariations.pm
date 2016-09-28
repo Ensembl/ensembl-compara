@@ -5,7 +5,6 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::TextSequence::Annotation::Variations);
 
-use EnsEMBL::Web::PureHub;
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
 
 sub too_rare_snp {
@@ -104,9 +103,8 @@ sub _get_variation_data {
 }
 
 sub annotate {
-  my ($self, $config, $slice_data, $mk, $seq, $hub,$real_sequence) = @_;
+  my ($self, $config, $slice_data, $mk, $seq, $ph,$real_sequence) = @_;
 
-  my $ph = EnsEMBL::Web::PureHub->new($hub);
   my $transcript = $config->{'transcript'};
   my @exons = @{$transcript->get_all_Exons};
   my $trans_strand = $exons[0]->strand;

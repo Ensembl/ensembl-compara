@@ -18,11 +18,10 @@ sub too_rare_snp {
 }
 
 sub annotate {
-  my ($self, $config, $slice_data, $markup, $seq, $hub,$real_sequence) = @_;
+  my ($self, $config, $slice_data, $markup, $seq, $ph,$real_sequence) = @_;
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
 
-  my $ph = EnsEMBL::Web::PureHub->new($hub);
   my $sequence = $real_sequence->legacy;
   return unless $ph->database($config->{'species'},'variation');
   my $strand = $slice->strand;
