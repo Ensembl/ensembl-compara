@@ -132,7 +132,7 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Data::Dumper;
 use String::Escape qw( printable );
-use Bio::EnsEMBL::Compara::HAL::HALAdaptor;
+require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
