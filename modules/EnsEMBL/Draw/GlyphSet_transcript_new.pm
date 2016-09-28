@@ -133,7 +133,7 @@ sub _prepare_expanded {
       next if $target and $t->{'stable_id'} ne $target;
       next unless @{$t->{'exons'}};
       # set highlights
-      if(!defined $target and $this_db) {
+      if(!$target and $this_db) {
         if($t->{'stable_id'} eq $selected_trans) {
           $t->{'highlight'} = 'highlight2';
         } elsif($g->{'stable_id'} eq $selected_gene) {
