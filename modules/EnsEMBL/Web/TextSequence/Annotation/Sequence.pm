@@ -31,7 +31,7 @@ sub prepare_ropes {
 }
 
 sub annotate {
-  my ($self,$config,$slice_data,$markup,$seq,$hub,$sequence) = @_;
+  my ($self,$config,$slice_data,$markup,$seq,$ph,$sequence) = @_;
 
     if ($config->{'match_display'}) {
       if ($slice_data->{'name'} eq $config->{'ref_slice_name'}) {

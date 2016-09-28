@@ -31,7 +31,13 @@ sub markup {
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
       $seq->[$_]{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
-      my $new_post  = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      my $new_post;
+      if($config->{'snp_display'} eq 'snp_link' && $variation->{'links'}) {
+        $new_post = join(' ',map {
+          sprintf(qq( <a href="%s">%s</a>),$hub->url($_->{'url'}),$_->{'label'})
+        } @{$variation->{'links'}});
+      }
+
       $seq->[$_]{'new_post'} = $new_post if $new_post and $new_post ne $seq->[$_]{'post'};
       $seq->[$_]{'post'} = $new_post;
          
