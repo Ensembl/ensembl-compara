@@ -685,16 +685,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   if ( $method_link_species_set->method->type =~ /CACTUS_HAL/ ) {
         #return $self->fetch_all_by_MethodLinkSpeciesSet_Slice( $method_link_species_set, $dnafrag->slice );
 
-        my $hal_file = $self->_detect_location_on_platform($method_link_species_set);
-        # my $hal_file = $method_link_species_set->url;
-        # throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
-        
         my $ref = $dnafrag->genome_db;
         my @targets = grep { $_->dbID != $ref->dbID } @{ $method_link_species_set->species_set->genome_dbs };
 
         my $block_start = defined $start ? $start : $dnafrag->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag->slice->end;
-        return $self->_get_GenomicAlignBlocks_from_HAL( $hal_file, $ref, \@targets, $dnafrag->name, $block_start, $block_end, $method_link_species_set, $limit_number );
+        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag->name, $block_start, $block_end, $limit_number );
   }
 
   my $query_method_link_species_set_id = $method_link_species_set->dbID;
@@ -946,15 +942,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
   if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
         #return $self->fetch_all_by_MethodLinkSpeciesSet_Slice( $method_link_species_set, $dnafrag->slice );
 
-        my $hal_file = $method_link_species_set->url;
-        throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
-        
         my $ref = $dnafrag1->genome_db;
         my @targets = ( $dnafrag2->genome_db );
         
         my $block_start = defined $start ? $start : $dnafrag1->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag1->slice->end;
-        return $self->_get_GenomicAlignBlocks_from_HAL( $hal_file, $ref, \@targets, $dnafrag1->name, $block_start, $block_end, $method_link_species_set, $limit_number, $dnafrag2->name );
+        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag1->name, $block_start, $block_end, $limit_number, $dnafrag2->name );
   }
 
   #Create this here to pass into _create_GenomicAlign module
@@ -1250,7 +1243,7 @@ sub _load_DnaFrags {
 =cut
 
 sub _get_GenomicAlignBlocks_from_HAL {
-    my ($self, $hal_file, $ref_gdb, $targets_gdb, $seq_region, $start, $end, $mlss, $limit, $target_seq_reg) = @_;
+    my ($self, $mlss, $ref_gdb, $targets_gdb, $seq_region, $start, $end, $limit, $target_seq_reg) = @_;
     my @gabs = ();
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
@@ -1275,7 +1268,14 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my %species_map = %{ eval $map_tag }; # read species name mapping hash from mlss_tag
     my $ref = $species_map{ $ref_gdb->dbID };
 
-    my $hal_fh = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file)->hal_filehandle;
+    unless ($mlss->{'_hal_adaptor'}) {
+        my $hal_file = $self->_detect_location_on_platform($mlss);
+        # my $hal_file = $mlss->url;
+        # throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
+
+        $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file);
+    }
+    my $hal_fh = $mlss->{'_hal_adaptor'}->hal_filehandle;
     my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $mlss, $dnafrag_adaptor);
 
     my $num_targets  = scalar @$targets_gdb;
