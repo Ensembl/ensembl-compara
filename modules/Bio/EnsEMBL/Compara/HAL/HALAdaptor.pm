@@ -350,15 +350,13 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
 
     //printf("%s\n", "MSA 1");
 
-    char *str_copy = strdup(querySpecies);
-    char *token;
-
     // create a hal_species_t struct for querySpecies
-    //hal_species_t* cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
     // hal_species_t* head = NULL;
     // hal_species_t* prev = NULL;
     // hal_species_t* cur  = NULL;
 
+    // char *str_copy = strdup(querySpecies);
+    // char *token;
     // while ((token = strsep(&str_copy, ","))) {
     //     cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
     //     char name[100];
@@ -384,14 +382,17 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     while (curGenome != NULL) {
         int x;
         int found = 0; 
-        str_copy = strdup(querySpecies);
+        char *str_copy = strdup(querySpecies);
+        char *str_copy_ptr = str_copy;
+        char *token;
         // check if curGenome is a query genome or not - set found boolean if so
-        while ((token = strsep(&str_copy, ","))) {
+        while ((token = strsep(&str_copy_ptr, ","))) {
             if (strcmp(curGenome->name, token) == 0) {
                 found = 1;
                 break;
             }
         }
+        free(str_copy);
         if ( found == 0 ) { // non-query genome
             if ( other_species == NULL ) { //start a new list
                 other_species = curGenome;
@@ -424,8 +425,6 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     Inline_Stack_Push(maf);
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
-    free(token);
-    free(str_copy);
     free(bp);
     //free(size);
     Inline_Stack_Done;
