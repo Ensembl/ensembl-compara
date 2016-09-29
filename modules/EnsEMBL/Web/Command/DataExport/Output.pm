@@ -70,6 +70,7 @@ sub process {
   $compression = $hub->param('compression');
   $download_type = $hub->param('download_type');
   $name = $hub->param('name');
+  my $component;
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -78,7 +79,6 @@ sub process {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
   
     ## Create the component we need to get data from 
-    my $component;
     ($component, $error) = $self->object->create_component;
 
     # Override the options saved in viewconfig by the one selected by the user in the form (these settings are not saved to session since we don't call session->store afterwards)
@@ -164,7 +164,7 @@ sub process {
       push @core_params, $species;
     } 
     foreach (@core_params) {
-      my @values = $hub->param($_);
+      my @values = $component->param($_);
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
   }
