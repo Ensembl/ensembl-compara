@@ -149,6 +149,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        'crowd_long' => { 'LSF' => '-q long -C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
         'default_with_registry' => { 'LSF' => ['', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
         'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
     };
@@ -236,7 +237,7 @@ sub pipeline_analyses {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -rc_name => 'crowd',
+            -rc_name => 'crowd_long',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
@@ -244,8 +245,9 @@ sub pipeline_analyses {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -analysis_capacity => 50,
+            -analysis_capacity => 5,
             -rc_name => 'crowd',
+            -max_retry_count    => 0,
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
                 '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress' ],
