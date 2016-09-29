@@ -426,7 +426,6 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
     free(bp);
-    //free(size);
     Inline_Stack_Done;
 }
 END_OF_C_CODE
