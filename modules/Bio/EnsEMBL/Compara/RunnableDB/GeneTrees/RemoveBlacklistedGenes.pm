@@ -97,8 +97,8 @@ sub write_output {
     $self->call_within_transaction( sub {
         # NOTE: Here we assume that the default tree is flat !
         foreach my $m (@$blacklist_seq_members) {
-            $gene_tree_node_adaptor->remove_seq_member($m);
             $m->tree->store_tag( 'gene_count', $m->tree->get_value_for_tag('gene_count') - 1 );
+            $gene_tree_node_adaptor->remove_seq_member($m);
             # remove cluster if too small to create tree
             $gene_tree_adaptor->delete_tree( $m->tree ) if ( $m->tree->get_value_for_tag('gene_count') < 2 ); 
         }
