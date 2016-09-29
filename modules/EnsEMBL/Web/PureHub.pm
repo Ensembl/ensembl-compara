@@ -81,4 +81,10 @@ sub get_adaptor {
   return $dba->$method();
 }
 
+sub get_query {
+  my $self = shift;
+
+  return $self->{'_hub'}->get_query(@_);
+}
+
 1;

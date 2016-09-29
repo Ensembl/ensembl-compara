@@ -28,5 +28,6 @@ sub expect {
 }
 
 sub prepare {}
+sub pre_markup {}
 
 1;

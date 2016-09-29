@@ -196,13 +196,13 @@ sub annotate {
 
   # XXX should be elsewhere
   $config->{'species'} = $self->_hub->species;
+  $config->{'type'} = $self->_hub->get_db;
   #
   my $ph = EnsEMBL::Web::PureHub->new($self->_hub);
   my $cur_phase = $self->phase;
   foreach my $a (@{$self->{'annotation'}}) {
     my $p = $a->phases;
     next if $p and not any { $cur_phase == $_ } @$p;
-    # XXX no hub should be passed
     $a->annotate($config,$slice_data,$markup,$seq,$ph,$sequence);
   }
 }
@@ -211,15 +211,17 @@ sub markup {
   my ($self,$sequence,$markup,$config) = @_;
 
   my $cur_phase = $self->phase;
+  my @mods;
   foreach my $a (@{$self->{'markup'}}) {
     my $good = 0;
     my $p = $a->phases;
     $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
     $a->prepare($good);
     next if !$good;
-    # XXX no hub should be passed
-    $a->markup($sequence,$markup,$config,$self->_hub);
+    push @mods,$a;
   }
+  $_->pre_markup($sequence,$markup,$config,$self->_hub) for @mods;
+  $_->markup($sequence,$markup,$config,$self->_hub) for @mods;
 }
 
 sub markup_new {
@@ -227,15 +229,17 @@ sub markup_new {
 
   $self->set_markup($config);
   my $cur_phase = $self->phase;
+  my @mods;
   foreach my $a (@{$self->{'markup'}}) {
     my $good = 0;
     my $p = $a->phases;
     $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
     $a->prepare($good);
     next if !$good;
-    # XXX no hub should be passed
-    $a->markup($sequence,$markup,$config,$self->_hub);
+    push @mods,$a;
   }
+  $_->pre_markup($sequence,$markup,$config,$self->_hub) for @mods;
+  $_->markup($sequence,$markup,$config,$self->_hub) for @mods;
 }
 
 sub transfer_data {

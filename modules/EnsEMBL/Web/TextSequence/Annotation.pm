@@ -18,19 +18,23 @@ sub new {
 }
 
 sub too_rare_snp {
-  my ($self,$vf,$config) = @_;
+  my ($self,$in,$config) = @_;
 
   return 0 unless $config->{'hide_rare_snps'} and $config->{'hide_rare_snps'} ne 'off';
   my $val = abs $config->{'hide_rare_snps'};
   my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
-  return ($mul>0) unless $vf->minor_allele_frequency;
-  return ($vf->minor_allele_frequency - $val)*$mul < 0;
+  my $maf = $in;
+  $maf = $in->minor_allele_frequency if ref $in;
+  return ($mul>0) unless $maf;
+  return ($maf - $val)*$mul < 0;
 }
 
 sub hidden_source {
-  my ($self,$v,$config) = @_;
+  my ($self,$val,$config) = @_;
 
-  my $source = $v->source_name||'';
+  my $source = $val;
+  $source = $val->source_name if ref $val;
+  $source ||= '';
   return any { $source eq ($_||'') } @{$config->{'hidden_sources'}||[]};
 }
 

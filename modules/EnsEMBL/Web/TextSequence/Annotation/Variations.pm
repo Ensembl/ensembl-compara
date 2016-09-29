@@ -7,16 +7,6 @@ use parent qw(EnsEMBL::Web::TextSequence::Annotation);
 
 use EnsEMBL::Web::PureHub;
 
-sub too_rare_snp {
-  my ($self,$vf,$config) = @_;
-
-  return 0 unless $config->{'hide_rare_snps'} and $config->{'hide_rare_snps'} ne 'off';
-  my $val = abs $config->{'hide_rare_snps'};
-  my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
-  return ($mul>0) unless $vf->minor_allele_frequency;
-  return ($vf->minor_allele_frequency - $val)*$mul < 0;
-}
-
 sub annotate {
   my ($self, $config, $slice_data, $markup, $seq, $ph,$real_sequence) = @_;
   my $name   = $slice_data->{'name'};
