@@ -350,11 +350,8 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
 
     //printf("%s\n", "MSA 1");
 
-    // unpack querySpecies arrayref
-    // AV *query_list = newAV();
     char *str_copy = strdup(querySpecies);
     char *token;
-    // while ((token = strsep(&str_copy, ","))) av_push(query_list, token);;
 
     // create a hal_species_t struct for querySpecies
     //hal_species_t* cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
@@ -377,7 +374,6 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     // }
 
     // only way seems to be to fetch all and split structure into 2
-    int num_q_species = sizeof(querySpecies) / sizeof(int);
     struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
     struct hal_species_t *curGenome = hal_genomes; // iterator
     struct hal_species_t* query_species = NULL; // pointer for head of query list
