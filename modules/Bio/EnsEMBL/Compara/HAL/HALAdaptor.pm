@@ -351,17 +351,17 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     //printf("%s\n", "MSA 1");
 
     // create a hal_species_t struct for querySpecies
-    // hal_species_t* head = NULL;
-    // hal_species_t* prev = NULL;
-    // hal_species_t* cur  = NULL;
+    // struct hal_species_t* head = NULL;
+    // struct hal_species_t* prev = NULL;
+    // struct hal_species_t* cur  = NULL;
 
     // char *str_copy = strdup(querySpecies);
+    // char *str_copy_ptr = str_copy;
     // char *token;
-    // while ((token = strsep(&str_copy, ","))) {
-    //     cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
-    //     char name[100];
-    //     strcpy(name, token);
-    //     cur->name = name;
+    // while ((token = strsep(&str_copy_ptr, ","))) {
+    //     cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
+    //     cur->name = strdup(token);
+    //     cur->next = NULL;
     //     if ( head == NULL ){ //struct start
     //         head = cur;
     //     }
@@ -370,6 +370,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     //     }
     //     prev = cur;
     // }
+    // free(str_copy);
 
     // only way seems to be to fetch all and split structure into 2
     struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
