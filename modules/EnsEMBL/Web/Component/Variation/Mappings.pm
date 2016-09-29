@@ -469,7 +469,7 @@ sub _render_eqtl_table {
 
   my $eqtl_table_html = '';
 
-  if (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL) {
+  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL)) {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
       { key => 'gene',    title => 'Gene',                        sort => 'html'    },
