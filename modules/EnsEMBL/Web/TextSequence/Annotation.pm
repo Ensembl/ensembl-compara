@@ -30,7 +30,8 @@ sub too_rare_snp {
 sub hidden_source {
   my ($self,$v,$config) = @_;
 
-  return any { $v->variation->source_name eq $_ } @{$config->{'hidden_sources'}||[]};
+  my $source = $v->source_name||'';
+  return any { $source eq ($_||'') } @{$config->{'hidden_sources'}||[]};
 }
 
 
