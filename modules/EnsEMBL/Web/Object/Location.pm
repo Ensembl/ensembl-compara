@@ -91,7 +91,7 @@ sub has_strainpop {
   my ($self) = @_;
 
   my $hub = $self->hub;
-  my $pop_adaptor = $hub->databases->{'DATABASE_VARIATION'} ? $hub->get_adaptor('get_PopulationAdaptor','variation') : undef;
+  my $pop_adaptor = $hub->species_defs->databases->{'DATABASE_VARIATION'} ? $hub->get_adaptor('get_PopulationAdaptor','variation') : undef;
   my $pop = $pop_adaptor && $pop_adaptor->fetch_by_name('Mouse Genomes Project');
   return defined $pop;
 }
