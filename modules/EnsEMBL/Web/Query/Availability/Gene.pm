@@ -31,7 +31,6 @@ sub precache {
     'av-gene' => {
       loop => ['species','genes'],
       args => {
-        species => "Homo_sapiens",
         type => "core",
       }
     },
