@@ -2034,32 +2034,63 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 1 => WHEN (
-                    '#tree_gene_count# < 4'   => 'treebest_small_families',
-                    ELSE 'prottest',
+                    '#tree_gene_count# < 4'                                     => 'treebest_small_families',
+                    '!#tree_best_fit_model_family# && #do_model_selection#'     => 'prottest_decision',
+                    '!#tree_best_fit_model_family# && !#do_model_selection#'    => 'get_num_of_patterns',
+                    '#tree_best_fit_model_family# && #do_model_selection#'      => 'prottest_decision',
+                    '#tree_best_fit_model_family# && !#do_model_selection#'     => 'get_num_of_patterns',
                 ),
             },
             %decision_analysis_params,
         },
 
 # ---------------------------------------------[model test]-------------------------------------------------------------
+        {   -logic_name => 'prottest_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
+                    'aln_num_of_patterns' => 200,
+                    'gene_count'          => 0,
+                },
+            },
+            %decision_analysis_params,
+
+            -flow_into  => {
+                1 => WHEN (
+                    '(#tree_aln_length# <= 150) && (#tree_gene_count# <= 500)'                                   => 'prottest',
+                    '(#tree_aln_length# <= 150) && (#tree_gene_count# > 500)'                                    => 'prottest',
+                    '(#tree_aln_length# > 150) && (#tree_aln_length# <= 1200) && (#tree_gene_count# <= 500)'     => 'prottest_8_cores',
+                    '(#tree_aln_length# > 150) && (#tree_aln_length# <= 1200) && (#tree_gene_count# > 500)'      => 'prottest_8_cores',
+                    '(#tree_aln_length# > 1200) && (#tree_aln_length# <= 2400) && (#tree_gene_count# <= 500)'    => 'prottest_8_cores',
+                    '(#tree_aln_length# > 1200) && (#tree_aln_length# <= 2400) && (#tree_gene_count# > 500)'     => 'prottest_16_cores',
+                    '(#tree_aln_length# > 2400) && (#tree_aln_length# <= 8000) && (#tree_gene_count# <= 500)'    => 'prottest_16_cores',
+                    '(#tree_aln_length# > 2400) && (#tree_aln_length# <= 8000) && (#tree_gene_count# > 500)'     => 'prottest_16_cores',
+                    '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# <= 500)'   => 'prottest_32_cores',
+                    '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# > 500)'    => 'prottest_32_cores',
+                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# <= 500)'  => 'prottest_32_cores',
+                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# > 500)'   => 'prottest_64_cores',
+                    '(#tree_aln_length# > 32000)'                                                                => 'prottest_64_cores',
+                ),
+            },
+        },
 
         {   -logic_name => 'prottest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 3500,
-                'escape_branch'         => -1,
-                'n_cores'               => 8,
+                'n_cores'               => 1,
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
-            -rc_name    				=> '16Gb_16c_job',
+            -rc_name    				=> '2Gb_job',
             -max_retry_count			=> 1,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ],# This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-												   #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-												   #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
             }
         },
 
@@ -2068,16 +2099,92 @@ sub core_pipeline_analyses {
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 7000,
-                'escape_branch'         => -1,      # RAxML will use a default model, anyway
+                #'escape_branch'         => -1,      # RAxML will use a default model, anyway
+                'n_cores'               => 1,
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name					=> '4Gb_job',
+            -max_retry_count 			=> 1,
+            -flow_into  => {
+                #-1 => [ 'get_num_of_patterns' ],
+                1 => [ 'get_num_of_patterns' ],
+			}
+        },
+
+        {   -logic_name => 'prottest_8_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
+                #'escape_branch'         => -1,
                 'n_cores'               => 8,
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
-            -rc_name					=> '32Gb_16c_job',
-            -max_retry_count 			=> 1,
+            -rc_name    				=> '8Gb_8c_job',
+            -max_retry_count			=> 1,
             -flow_into  => {
-                -1 => [ 'get_num_of_patterns' ],
                 1 => [ 'get_num_of_patterns' ],
-			}
+				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+            }
+        },
+
+        {   -logic_name => 'prottest_16_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
+                #'escape_branch'         => -1,
+                'n_cores'               => 16,
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name    				=> '16Gb_16c_job',
+            -max_retry_count			=> 1,
+            -flow_into  => {
+                1 => [ 'get_num_of_patterns' ],
+				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+            }
+        },
+
+        {   -logic_name => 'prottest_32_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
+                #'escape_branch'         => -1,
+                'n_cores'               => 32,
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name    				=> '16Gb_32c_job',
+            -max_retry_count			=> 1,
+            -flow_into  => {
+                1 => [ 'get_num_of_patterns' ],
+				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+            }
+        },
+
+        {   -logic_name => 'prottest_64_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
+                #'escape_branch'         => -1,
+                'n_cores'               => 64,
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name    				=> '32Gb_64c_job',
+            -max_retry_count			=> 1,
+            -flow_into  => {
+                1 => [ 'get_num_of_patterns' ],
+				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+            }
         },
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
