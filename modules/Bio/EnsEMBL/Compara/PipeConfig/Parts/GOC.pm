@@ -63,7 +63,6 @@ sub pipeline_analyses_goc {
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
             -flow_into  =>  {
                 2   =>  ['check_ortholog_neighbors'],
-                3 => [ '?table_name=ortholog_goc_metric' ],
             },
             -rc_name => '2Gb_job',
             -hive_capacity  => 300,
@@ -73,13 +72,8 @@ sub pipeline_analyses_goc {
         {
             -logic_name =>  'check_ortholog_neighbors',
             -module =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-
-            -flow_into  => {
-               3 => [ '?table_name=ortholog_goc_metric' ],
-            },
             -hive_capacity  => 50,
             -batch_size     => 50,
-            
 
         },
 
