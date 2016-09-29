@@ -214,6 +214,19 @@ sub pipeline_analyses {
             },
             -rc_name => '1Gb_job',
             -flow_into => {
+                1 => { 'archive_long_files' => { 'full_name' => '#file#' } },
+               -1 => [ 'dump_all_trees_orthoxml_himem' ],  # MEMLIMIT
+            },
+        },
+
+        {   -logic_name => 'dump_all_trees_orthoxml_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML',
+            -parameters => {
+                'compara_db'            => '#rel_db#',
+                'tree_type'             => 'tree',
+            },
+            -rc_name => '1Gb_job',
+            -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#file#' },
                     }
