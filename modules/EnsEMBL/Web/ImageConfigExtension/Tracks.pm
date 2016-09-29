@@ -171,7 +171,7 @@ sub _add_matrix {
   my $column_key   = clean_id("${subset}_$column");
   my $column_track = $self->get_node($column_key);
 
-  if (!($column_track && $column_track->parent_node)) {
+  unless ($column_track && $column_track->parent_node) {
     $column_track = $self->create_track_node($column_key, $data->{'track_name'} || $column, {
       renderers   => $data->{'renderers'},
       label_x     => $column,
