@@ -429,7 +429,7 @@ sub new {
           my $band_max = $glyphset->maxy;
           my $fashionable_gap = 4;
           $glyphset->push($glyphset->Rect({
-            x => -122,
+            x => -139,
             y => $band_min + $fashionable_gap,
             width => 2,
             height => $band_max-$band_min - 2 * $fashionable_gap,
