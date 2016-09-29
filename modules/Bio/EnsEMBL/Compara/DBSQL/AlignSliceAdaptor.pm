@@ -95,6 +95,8 @@ use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+use Data::Dumper;
+#$Data::Dumper::Pad = '<br>';
 
 =head2 fetch_by_Slice_MethodLinkSpeciesSet
 
@@ -184,9 +186,11 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   my $genomic_align_trees = ();
   my $species_order;
 
-  #Get the species tree for PECAN alignments
+  #Get the species tree for PECAN or HAL alignments
   if ($method_link_species_set->method->class =~ /GenomicAlignBlock.multiple_alignment/ and  @$genomic_align_blocks) {
+#      print Dumper $genomic_align_blocks->[0];
     my $first_genomic_align_block = $genomic_align_blocks->[0];
+#    print Dumper $first_genomic_align_block;
     my $genomic_align_tree = $first_genomic_align_block->get_GenomicAlignTree;
     
     #want to create species_order
@@ -236,6 +240,9 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
     }
   }
+
+
+  #print Dumper { "gabs::AlignSliceAdaptor::254" => $genomic_align_blocks };
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
           -reference_Slice => $reference_slice,

@@ -61,6 +61,8 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
+use Data::Dumper;
+
 use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
@@ -2095,11 +2097,19 @@ sub project {
   my $self = shift;
   my $cs_name = shift;
   my $cs_version = shift;
+  my $force = shift || 0;
   my $projections = [];
+
+  ## HAL FIX ##
+  # bool to force projection to guess $new_end if mapper coords are not found
+  $force = 1;
 
   throw('Coord_system name argument is required') if(!$cs_name);
 
   foreach my $pair (@{$self->get_all_Slice_Mapper_pairs}) {
+    ## HAL FIX ##
+    # When start or end is negative, HAL alignments don't seem to map properly. Needs investigation
+    next if ( ! defined $pair->{start} || ! defined $pair->{end} || $pair->{start} < 0 || $pair->{end} < 0 );
     my $this_slice = $pair->{slice};
     my $this_mapper = $pair->{mapper};
     my $this_projections = $this_slice->project($cs_name, $cs_version);
@@ -2121,12 +2131,14 @@ sub project {
               1,
               'sequence'
           );
+
       foreach my $alignment_coord (@alignment_coords) {
         if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
           $new_start = $alignment_coord->start;
         }
       }
       next if (!defined($new_start));
+
       @alignment_coords = $this_mapper->map_coordinates(
               'sequence',
               $this_end,
@@ -2134,12 +2146,21 @@ sub project {
               1,
               'sequence'
           );
+
       foreach my $alignment_coord (@alignment_coords) {
         if ($alignment_coord->isa("Bio::EnsEMBL::Mapper::Coordinate")) {
           $new_end = $alignment_coord->start;
         }
       }
-      next if (!defined($new_end));
+      if (!defined($new_end)){
+          ## HAL FIX ##
+          # forces mapper to take a guess if no Mapper::Coordinates are found
+          if ( $force ) { 
+              $new_end = $new_start + $this_slice->length;
+          } else {
+              next;
+          }
+      }
 
       ## Truncate projection in order to fit into this AlignSlice
       if ($new_start > $self->end) {

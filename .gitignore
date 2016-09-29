@@ -1,1 +1,5 @@
 *.class
+_Inline/
+modules/Bio/EnsEMBL/Compara/HAL/*.hal
+modules/Bio/EnsEMBL/Compara/HAL/integration_test.pl
+modules/Bio/EnsEMBL/Compara/HAL/reg.conf

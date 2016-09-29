@@ -200,12 +200,15 @@ use warnings;
 use Scalar::Util qw(weaken);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose stack_trace);
 use Bio::EnsEMBL::Compara::AlignSlice::Exon;
 use Bio::EnsEMBL::Compara::AlignSlice::Slice;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
+
+use Data::Dumper;
+$Data::Dumper::Pad = '';
 
 ## Creates a new coordinate system for creating empty Slices.
 
@@ -1007,6 +1010,7 @@ sub _create_underlying_Slices {
         if ($this_genomic_align_block->reference_genomic_align->dnafrag_start > $self->reference_Slice->end || $this_genomic_align_block->reference_genomic_align->dnafrag_end < $self->reference_Slice->start) {
             next;
         }
+
       ($this_genomic_align_block, $from, $to) = $this_genomic_align_block->restrict_between_reference_positions(
           $self->reference_Slice->start, $self->reference_Slice->end);
     }
@@ -1112,7 +1116,6 @@ sub _create_underlying_Slices {
   if ($species_order) {
     foreach my $species_def (@$species_order) {
       my $genome_db_name = $species_def->{genome_db}->name;
-# print STDERR "SPECIES:: ", $genome_db_name, "\n";
       my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
               -length => $align_slice_length,
               -requesting_slice => $self->reference_Slice,
@@ -1128,7 +1131,6 @@ sub _create_underlying_Slices {
       push(@{$self->{_slices}}, $new_slice);
     }
   } else {
-# print STDERR "SPECIES:: ", $ref_genome_db->name, "\n";
     $self->{slices}->{lc($ref_genome_db->name)} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
@@ -1443,14 +1445,13 @@ sub _sort_and_restrict_GenomicAlignBlocks {
 
   my $last_end;
   foreach my $this_genomic_align_block (sort _sort_gabs @{$genomic_align_blocks}) {
-    if (defined($last_end) and
-        $this_genomic_align_block->reference_genomic_align->dnafrag_start <= $last_end) {
+    if (defined($last_end) && $this_genomic_align_block->reference_genomic_align->dnafrag_start <= $last_end) {
       if ($this_genomic_align_block->reference_genomic_align->dnafrag_end > $last_end) {
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
+
       } else {
 	  warning("Ignoring GenomicAlignBlock because it overlaps".
-                " previous GenomicAlignBlock ");
-#                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
+             " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
         next;
       }
     }

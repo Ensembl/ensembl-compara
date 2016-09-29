@@ -168,6 +168,9 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
+use Data::Dumper;
+#$Data::Dumper::Pad = '<br>';
+
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
@@ -1348,7 +1351,7 @@ sub restrict_between_alignment_positions {
           -method_link_species_set => $self->method_link_species_set,
           -genomic_align_array => $new_genomic_aligns,
           -group_id => $self->group_id,
-	  -level_id => $self->level_id,
+	        -level_id => $self->level_id,
       );
   $genomic_align_block->original_dbID($self->dbID or $self->original_dbID);
   $genomic_align_block->original_strand($self->original_strand);
@@ -1392,11 +1395,13 @@ sub get_GenomicAlignTree {
 
     #Check if a GenomicAlignTree object already exists and return
     my $genomic_align_tree;
-    eval {
-        my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
-        $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
-    };
-    return ($genomic_align_tree) if ($genomic_align_tree);
+    unless ( $self->method_link_species_set->method->type eq 'CACTUS_HAL'  ) {
+      eval {
+          my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
+          $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
+      };
+      return ($genomic_align_tree) if ($genomic_align_tree);
+    }
 
     #Create lookup of names to GenomicAlign objects
     my $leaf_names;
@@ -1420,10 +1425,9 @@ sub get_GenomicAlignTree {
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
                                                                                               -species_set => $species_set)->newick_format('ncbi_name');
     } else {
-        #Multiple alignment 
+        #Multiple alignment
         $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format("ncbi_name");
     }
-    #print "string $species_tree_string\n";
 
     #Convert the newick format tree into a GenomicAlignTree object
     $genomic_align_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string, "Bio::EnsEMBL::Compara::GenomicAlignTree");
@@ -1485,7 +1489,15 @@ sub _print {    ## DEPRECATED
   length = ", ($self->length or "-undef-"), "
   alignments: \n";
   foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
-    my $slice = $this_genomic_align->get_Slice;
+    my $species_name = $this_genomic_align->genome_db->name;
+    my $slice = $this_genomic_align->dnafrag->slice;
+
+    $slice = $slice->sub_Slice(
+              $this_genomic_align->dnafrag_start,
+              $this_genomic_align->dnafrag_end,
+              $this_genomic_align->dnafrag_strand
+          );
+
     if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
       print $FILEH "    * ", $this_genomic_align->genome_db->name, " ",
           ($slice?$slice->name:"--error--"), "\n";
