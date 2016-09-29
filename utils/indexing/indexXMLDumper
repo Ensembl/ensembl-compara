@@ -2247,19 +2247,23 @@ sub dumpGene {
         else {
           $desc .= ')'; 
         }
+        my $ext_syns;
         if ($external_synonyms->{$xref_id}) {
           my $syn_c = keys(%{$external_synonyms->{$xref_id}});
           $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
-          }
+            $ext_syns->{$syn}++,
+          };
+
         }
         $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
           desc        => $desc,
+          external_syns => $ext_syns,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
@@ -2595,19 +2599,22 @@ sub dumpTranscript {
         else {
           $desc .= ')'; 
         }
+        my $ext_syns;
         if ($external_synonyms->{$xref_id}) {
           my $syn_c = keys(%{$external_synonyms->{$xref_id}});
           $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
-          }
+            $ext_syns->{$syn}++,
+           }
         }
         $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
           desc        => $desc,
+          external_syns => $ext_syns,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
@@ -2708,7 +2715,6 @@ sub dumpTranscript {
        ORDER by t.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute();
-
 
     my $old;
     my $c = 0;
@@ -2942,18 +2948,25 @@ sub GeneTransLine {
     }
   }
 
- foreach my $xref (@$xrefs) {
+  my $ext_syns;
+  foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
-    my $xref_id     = $xref->{'id'};
+    my $id          = $xref->{'id'};
     my $desc        = $xref->{'desc'};
 
+    if ($xref->{'external_syns'}) {
+      foreach (keys %{$xref->{'external_syns'}}){
+        $ext_syns->{$_}++;
+      }
+    }
+
     #remove any duplicates
-    next if $seen_labels{$xref_id};
-    $seen_labels{$xref_id}++;
+    next if $seen_labels{$id};
+    $seen_labels{$id}++;
 
     #remove any records where the hit is an Ensembl stable ID or matches the display_xref
-    next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
-    next if $xref_id eq $disp_xref;
+    next if ($id eq $sid) || ( grep {$_ eq $id} keys(%$tsids), keys(%$tlsids));
+    next if $id eq $disp_xref;
 
     $search_term = &clean($search_term);
     $labels{$search_term}++;
@@ -2965,6 +2978,10 @@ sub GeneTransLine {
   my $xrefs = join ' ', keys %labels;
     $xml .= qq(
   <field name="xrefs">$xrefs</field>);
+  foreach my $syn (keys %$ext_syns){
+    $xml .= qq(
+  <field name="name_synonym">$syn"</field>);
+  } 
   my %seen_syns;
   foreach my $syn (@$synonyms) {
     next if $seen_syns{$syn};
