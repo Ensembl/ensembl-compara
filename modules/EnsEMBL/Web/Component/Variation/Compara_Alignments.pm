@@ -90,9 +90,6 @@ sub content {
   my $object       = $self->object;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
-  my $width        = 20;
-  my %mappings     = %{$object->variation_feature_mapping}; 
-  my $v            = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$hub->param('vf')};
   
   return $self->_info('Unable to draw SNP neighbourhood', $object->not_unique_location) if $object->not_unique_location;
   
@@ -106,19 +103,15 @@ sub content {
     ambiguity            => 0,
   };
   my $html;
-  
-  my $seq_type   = $v->{'type'}; 
-  my $seq_region = $v->{'Chr'};
-  my $start      = $v->{'start'} - ($width/2);  
-  my $end        = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
-  my $slice      = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-  my $align      = $hub->param('align');
-  my $alert      = $self->check_for_align_problems({
-                                'align'   => $align,
-                                'species' => $species,
-                                'slice'   => $slice,
-                                'ignore'  => 'ancestral_sequences',
-                                });
+ 
+  my $slice = $self->_get_slice($object);   
+  my $align = $hub->param('align');
+  my $alert = $self->check_for_align_problems({
+                                                'align'   => $align,
+                                                'species' => $species,
+                                                'slice'   => $slice,
+                                                'ignore'  => 'ancestral_sequences',
+                                              });
   
   $html .= $alert if $alert;
  
@@ -185,12 +178,40 @@ sub content {
   return $html;
 }
 
+sub _get_slice {
+  my ($self, $object) = @_;
+  my $hub = $self->hub;
+  
+  my %mappings    = %{$object->variation_feature_mapping}; 
+  my $v           = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$self->param('vf')};
+
+  my $width       = 20;
+  my $seq_type    = $v->{'type'}; 
+  my $seq_region  = $v->{'Chr'};
+  my $start       = $v->{'start'} - ($width/2);  
+  my $end         = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
+
+  return $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+}
+
 sub get_export_data {
-## Get data for export
+## Get data for export in most formats
   my $self = shift;
   ## Fetch explicitly, as we're probably coming from a DataExport URL
   return $self->hub->core_object('Location');
 }
+
+sub initialize_export_new {
+  ## Get data for RTF export
+  my $self = shift;
+
+  ## Get the correct slice
+  my $object = $self->hub->core_object('Variation');
+  my $slice  = $self->_get_slice($object);
+
+  return $self->SUPER::initialize_export_new($slice);
+}
+
 
 sub make_view {
   my ($self) = @_;

@@ -693,15 +693,15 @@ sub get_export_data {
 }
 
 sub initialize_export_new {
-  my $self = shift;
+  my ($self, $slice) = @_;
   my $hub = $self->hub;
 
-  my $object    = $self->builder->object($hub->param('data_type'));
-  my $location  = $object->Obj;
-  my $cdb       = $hub->param('cdb') || 'compara';
+  my $object    = $self->builder->object($self->param('data_type'));
+  $slice      ||= $object->slice;
+  my $cdb       = $self->param('cdb') || 'compara';
   my ($slices)  = $object->get_slices({
-                        'slice'   => $object->slice,
-                        'align'   => $hub->param('align'),
+                        'slice'   => $slice,
+                        'align'   => $self->param('align'),
                         'species' => $hub->species,
                         'start'   => undef,
                         'end'     => undef,
@@ -709,7 +709,7 @@ sub initialize_export_new {
                         'target'  => $object->get_target_slice,
                         'image'   => $self->has_image
                 });
-  return $self->_get_sequence($object->slice, $slices, undef, $cdb);
+  return $self->_get_sequence($slice, $slices, undef, $cdb);
 }
 
 sub make_view {
