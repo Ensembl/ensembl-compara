@@ -131,7 +131,6 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Data::Dumper;
-use String::Escape qw( printable );
 require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
