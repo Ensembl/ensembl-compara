@@ -131,8 +131,6 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use Data::Dumper;
-use String::Escape qw( printable );
-require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -1271,6 +1269,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
         }
         
     }
+
+    require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
     my %species_map = %{ eval $map_tag }; # read species name mapping hash from mlss_tag
     my $ref = $species_map{ $ref_gdb->dbID };

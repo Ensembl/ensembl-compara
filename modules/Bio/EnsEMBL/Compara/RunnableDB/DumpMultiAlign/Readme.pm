@@ -119,6 +119,8 @@ sub _create_specific_readme {
 	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
     } elsif ($mlss->method->type eq "LASTZ_NET") {
 	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'LastZ');
+    } elsif ($mlss->method->type eq "BLASTZ_NET") {
+	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'BlastZ');
     } elsif ($mlss->method->type eq 'TRANSLATED_BLAT_NET' ) {
 	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'Translated Blat');
     } else {
