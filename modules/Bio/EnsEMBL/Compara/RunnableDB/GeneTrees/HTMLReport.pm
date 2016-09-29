@@ -227,6 +227,7 @@ sub fetch_input {
                 $sums[4] += $node->get_value_for_tag('nb_dubious_nodes');
                 $sums[5] += $node->get_value_for_tag('avg_dupscore') * ($node->get_value_for_tag('nb_dup_nodes')+$node->get_value_for_tag('nb_dubious_nodes'));
                 $sums[6] += $node->get_value_for_tag('avg_dupscore_nondub') * $node->get_value_for_tag('nb_dup_nodes');
+
                 push @data3, [
                     $node->taxon_id,
                     $node->node_name,
@@ -235,10 +236,11 @@ sub fetch_input {
                     thousandify($node->get_value_for_tag('nb_gene_splits')),
                     thousandify($node->get_value_for_tag('nb_spec_nodes')),
                     thousandify($node->get_value_for_tag('nb_dubious_nodes')),
-                    ($node->get_value_for_tag('nb_dup_nodes')+$node->get_value_for_tag('nb_dubious_nodes')) ? roundperc2($node->get_value_for_tag('avg_dupscore')) : 'NA',
+                    ($node->get_value_for_tag('nb_dup_nodes')+$node->get_value_for_tag('nb_dubious_nodes')) ? roundpercdown2($node->get_value_for_tag('avg_dupscore')) : 'NA',
                     $node->get_value_for_tag('nb_dup_nodes') ? roundperc2($node->get_value_for_tag('avg_dupscore_nondub')) : 'NA',
                 ]
         }
+
         push @data3, [
             undef,
             'Total',
@@ -247,7 +249,7 @@ sub fetch_input {
             thousandify($sums[2]),
             thousandify($sums[3]),
             thousandify($sums[4]),
-            roundperc2($sums[5] / ($sums[1] + $sums[4])),
+            roundpercdown2($sums[5] / ($sums[1] + $sums[4])),
             roundperc2($sums[6] / $sums[1]),
         ];
         $self->param('html_array3', array_arrays_to_html_table(@data3));
@@ -277,6 +279,10 @@ sub array_arrays_to_html_table {
 
 
 # Functions to format the numbers
+
+sub roundpercdown2 {
+    ($_[0] > 0) ? return sprintf('%.2f&nbsp;%%', $_[0]/100) : return sprintf('%.2f&nbsp;%%', 0);
+}
 
 sub roundperc2 {
     return sprintf('%.2f&nbsp;%%', 100*$_[0]);
