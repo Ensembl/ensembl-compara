@@ -38,8 +38,8 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $object       = $self->object || $self->hub->core_object('location');
   my $threshold    = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
-  my $align_params = $hub->param('align');
-  my %options      = ( scores => $hub->param('opt_conservation_scores'), constrained => $hub->param('opt_constrained_elements') );
+  my $align_params = $self->param('align');
+  my %options      = ( scores => $self->param('opt_conservation_scores'), constrained => $self->param('opt_constrained_elements') );
   my ($align)      = split '--', $align_params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
@@ -107,8 +107,8 @@ sub content {
   
   my $image = $self->new_image(\@images);
   $image->{'export_params'} = ['align', $align];
-  foreach ($hub->param) {
-    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if $_ =~ /^species_$align/;
+  foreach ($self->param) {
+    push @{$image->{'export_params'}}, [$_, $self->param($_)] if $_ =~ /^species_$align/;
   }
 
   return if $self->_export_image($image);
@@ -123,7 +123,7 @@ sub content {
   my ($alert_box, $error) = $self->check_for_align_problems({
                                 'align'   => $align, 
                                 'species' => $primary_species, 
-                                'cdb'     => $hub->param('cdb') || 'compara',
+                                'cdb'     => $self->param('cdb') || 'compara',
                                 });
 
   return $alert_box if $error;
