@@ -380,7 +380,6 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     struct hal_species_t* other_species = NULL; // pointer for head of non-query list
     struct hal_species_t* prev_q = NULL; // iterator - holds previous query genome
     struct hal_species_t* prev_o = NULL; // iterator - holds prev non-query genome
-    struct hal_species_t* last = NULL;  // used to terminate lists
 
     while (curGenome != NULL) {
         int x;
@@ -411,8 +410,8 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
         curGenome = curGenome->next;
     }
     // terminate both lists
-    prev_o->next = last;
-    prev_q->next = last;
+    prev_o->next = NULL;
+    prev_q->next = NULL;
 
     // print MAF to buffer
     char *errStr = NULL;
@@ -425,7 +424,6 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     Inline_Stack_Push(maf);
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
-    free(last);
     free(token);
     free(str_copy);
     free(bp);
