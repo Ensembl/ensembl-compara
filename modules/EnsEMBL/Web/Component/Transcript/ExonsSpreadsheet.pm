@@ -334,9 +334,13 @@ sub add_variations {
   my (%href, %class);
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
-    my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-
-    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+    my $consequence = @{$transcript_variation->consequence_type}->[0];
+    my %cf = %{$config->{'consequence_filter'}||{}};
+    delete $cf{'off'} if exists $cf{'off'};
+    if(%cf) {
+      $consequence = lc [ grep $cf{$_}, @{$transcript_variation->consequence_type} ]->[0];
+      next if !$consequence;
+    }
 
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
