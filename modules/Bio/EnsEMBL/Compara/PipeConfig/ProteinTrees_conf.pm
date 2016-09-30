@@ -2069,8 +2069,8 @@ sub core_pipeline_analyses {
                     '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# <= 500)'   => 'prottest_32_cores',
                     '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# > 500)'    => 'prottest_32_cores',
                     '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# <= 500)'  => 'prottest_32_cores',
-                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# > 500)'   => 'prottest_64_cores',
-                    '(#tree_aln_length# > 32000)'                                                                => 'prottest_64_cores',
+                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# > 500)'   => 'get_num_of_patterns',
+                    '(#tree_aln_length# > 32000)'                                                                => 'get_num_of_patterns',
                 ),
             },
         },
@@ -2159,25 +2159,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_32c_job',
-            -max_retry_count			=> 1,
-            -flow_into  => {
-                1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
-            }
-        },
-
-        {   -logic_name => 'prottest_64_cores',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
-            -parameters => {
-                'prottest_jar'          => $self->o('prottest_jar'),
-                'prottest_memory'       => 3500,
-                #'escape_branch'         => -1,
-                'n_cores'               => 64,
-            },
-            -hive_capacity				=> $self->o('prottest_capacity'),
-            -rc_name    				=> '32Gb_64c_job',
             -max_retry_count			=> 1,
             -flow_into  => {
                 1 => [ 'get_num_of_patterns' ],
