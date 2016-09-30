@@ -131,7 +131,7 @@ sub content {
     Neighbouring variants are shown with highlighted letters and ambiguity codes.<br />
     To change the display of the flanking sequence (e.g. hide the other variants, change the length of the flanking sequence), 
     use the "<b>Configure this page</b>" link on the left.
-  }, 'auto') . $html;
+  }, 'auto') . $self->describe_filter($config) . $html;
 }
 
 sub export_options { return {'action' => 'FlankingSeq'}; }
