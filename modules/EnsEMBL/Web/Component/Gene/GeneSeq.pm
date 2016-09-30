@@ -49,6 +49,7 @@ sub initialize_new {
     sub_slice_start => $start,
     sub_slice_end   => $end,
     ambiguity       => 1,
+    variants_as_n   => scalar $self->param('variants_as_n'),
   };
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {

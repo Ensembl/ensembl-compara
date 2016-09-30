@@ -41,8 +41,9 @@ sub configure_fasta {
 sub configure_fields {
   my ($self, $view_config) = @_;
   my @field_order = $view_config->field_order;
+
   return {
-    'RTF'   => ['extra', @field_order],
+    'RTF'   => ['extra', @field_order,'variants_as_n'],
     'FASTA' => [qw(extra flanking)],
   };
 }

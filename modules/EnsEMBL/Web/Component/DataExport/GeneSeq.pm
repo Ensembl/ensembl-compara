@@ -66,13 +66,22 @@ sub content {
                           'values'    => $checklist,
                           'selectall' => 'off',
                           };
+  
+  $settings->{'variants_as_n'} = {
+    type  => 'CheckBox',
+    label => 'Replace ambiguous bases with N',
+    name  => 'variants_as_n',
+    value => 'on',
+    no_user => 1,
+  };
 
   ## Options per format
   my @field_order = $view_config->field_order;
   my @rtf_fields = map {$_ if $_ ne 'title_display'} @field_order;
 
+  my @extra_export_fields = qw(variants_as_n);
   my $fields_by_format = {
-                          'RTF' => [@rtf_fields],
+                          'RTF' => [@rtf_fields,@extra_export_fields],
                           'FASTA' => [qw(extra flank5_display flank3_display)],
   };
 

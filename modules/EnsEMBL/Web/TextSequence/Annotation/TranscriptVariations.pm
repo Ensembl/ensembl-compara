@@ -35,6 +35,7 @@ sub _get_variation_data {
 sub annotate {
   my ($self, $config, $slice_data, $mk, $seq, $ph,$real_sequence) = @_;
 
+  warn "A\n";
   my $transcript = $config->{'transcript'};
   my @exons = @{$transcript->get_all_Exons};
   my $cd_start     = $transcript->cdna_coding_start;
@@ -94,6 +95,9 @@ sub annotate {
       push @{$mk->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
 
       my $vseq = ($mk->{'variants'}{$_}{'vseq'} = {});
+      if($config->{'variants_as_n'} and $ambigcode ne $vseq->{'letter'} and $ambigcode !~ /CGAT\*/) {
+        $mk->{'variants'}{$_}{'ambiguity'} = 'N';
+      }
       $vseq->{'letter'} = $ambigcode;
       $vseq->{'new_letter'} = $ambigcode;
       $vseq->{'href'} = $url;
@@ -102,6 +106,7 @@ sub annotate {
       $vseq->{'class'} = '';
     }
   }
+  warn "B\n";
 }
 
 1;

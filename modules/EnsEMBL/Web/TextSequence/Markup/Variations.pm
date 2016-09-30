@@ -72,9 +72,12 @@ sub markup {
 
     foreach (sort { $a <=> $b } keys %{$data->{'variants'}}) {
       $variation = $data->{'variants'}{$_};
-    
-      $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-      $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
+
+      if($variation->{'ambiguity'}) {
+        my $ambiguity = $variation->{'ambiguity'};
+        $ambiguity = 'N' if $config->{'variants_as_n'};
+        $seq->[$_]{'letter'} = $ambiguity;
+      }
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if ($config->{'title_display'}||'off') ne 'off';
       $seq->[$_]{'class'} ||= '';
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}||''} || $variation->{'type'} || '') . ' ';

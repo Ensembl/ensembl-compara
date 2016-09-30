@@ -51,7 +51,8 @@ sub initialize {
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
-    export        => $export
+    export        => $export,
+    variants_as_n   => scalar $self->param('variants_as_n'),
   };
   
   $config->{'last_number'} = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
