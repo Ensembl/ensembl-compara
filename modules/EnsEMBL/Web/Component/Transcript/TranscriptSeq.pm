@@ -357,9 +357,12 @@ sub initialize_new {
   my $config = { 
     species         => $hub->species,
     transcript      => 1,
+    variants_as_n   => scalar $self->param('variants_as_n')
   };
+  use Data::Dumper;
+  warn Dumper($config);
  
-  $config->{'display_width'} = $self->param('display_width');
+  $config->{'display_width'} = $vc->get('display_width');
   $config->{$_} = ($self->param($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  

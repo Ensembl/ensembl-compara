@@ -65,6 +65,14 @@ sub content {
                           'selectall' => 'on',
   };
 
+  $settings->{'variants_as_n'} = {
+    type  => 'CheckBox',
+    label => 'Replace ambiguous bases with N',
+    name  => 'variants_as_n',
+    value => 'on',
+    no_user => 1,
+  };
+
   ## Options per format
   my $fields_by_format = $self->configure_fields($view_config);
 
@@ -85,8 +93,9 @@ sub configure_fields {
   my ($self, $view_config) = @_;
   my @field_order = $view_config->field_order;
 
+  my @extra_export_fields = qw(variants_as_n);
   return {
-          'RTF'   => [@field_order],
+          'RTF'   => [@field_order,@extra_export_fields],
           'FASTA' => ['extra'],
   };
 }
