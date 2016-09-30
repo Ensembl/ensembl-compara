@@ -81,6 +81,7 @@ sub share_create {
   my $self        = shift;
   my $hub         = $self->hub;
   my $components  = $self->_get_components($self->{'component_code'});
+  my $share_url   = $hub->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r);
 
   # extract data from all linked viewconfigs and imageconfigs
   my $data = {};
@@ -100,16 +101,13 @@ sub share_create {
   if (keys %$data) {
     my $code    = md5_hex(to_json($data).$hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
     my $manager = $self->rose_manager;
-    my $url     = 0;
 
-    if ($manager->fetch_by_primary_key($code)) {
-      $url = 1;
-    } else {
+    if (!$manager->fetch_by_primary_key($code)) {
 
       # add an entry in the table
       if ($manager->create_empty_object({
         'code'        => $code,
-        'url'         => $hub->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r),
+        'url'         => $share_url,
         'type'        => $self->type,
         'action'      => $self->action,
         'function'    => $self->function,
@@ -118,12 +116,15 @@ sub share_create {
         'created_at'  => 'now',
       })->save) {
         $manager->object_class->init_db->commit;
-        $url = 1;
+      } else {
+        $code = 0;
       }
     }
 
-    return $url && { url => $hub->get_permanent_url({'type' => 'Share', 'action' => $code, 'function' => '', __clear => 1 }) };
+    $share_url = $hub->get_permanent_url({'type' => 'Share', 'action' => $code, 'function' => '', __clear => 1 }) if $code;
   }
+
+  return { url => $share_url };
 }
 
 sub share_accept {
