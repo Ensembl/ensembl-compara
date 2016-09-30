@@ -196,14 +196,16 @@ sub describe_filter {
   # Hidden sources
   my %hs = map { $_ => 1 } @{$config->{'hidden_sources'}||[]};
   delete $hs{'_all'} if exists $hs{'_all'};
+  delete $hs{''} if exists $hs{''};
   if(%hs) {
     push @filters,"Hide variants from sources: ".join(', ',sort keys %hs);
   }
   # Hidden consequence types
   my %cf = map { $_ => 1 } @{$config->{'consequence_filter'}||[]};
   delete $cf{'off'} if exists $cf{'off'};
+  delete $cf{''} if exists $cf{''};
   if(%cf) {
-    push @filters,"Only variants with consequence types: ".
+    push @filters,"Only showing variants with consequence types: ".
       join(', ',sort keys %cf);
   }
   #

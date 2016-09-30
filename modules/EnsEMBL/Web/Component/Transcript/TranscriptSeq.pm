@@ -359,8 +359,6 @@ sub initialize_new {
     transcript      => 1,
     variants_as_n   => scalar $self->param('variants_as_n')
   };
-  use Data::Dumper;
-  warn Dumper($config);
  
   $config->{'display_width'} = $vc->get('display_width');
   $config->{$_} = ($self->param($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
@@ -391,7 +389,7 @@ sub content {
   my $self = shift;
   my ($sequences, $config) = $self->initialize_new;
 
-  return $self->build_sequence_new($sequences, $config);
+  return  $self->describe_filter($config).$self->build_sequence_new($sequences, $config);
 }
 
 sub export_options { return {'action' => 'Transcript'}; }
