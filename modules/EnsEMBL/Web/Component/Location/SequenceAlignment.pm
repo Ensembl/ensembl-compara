@@ -114,6 +114,7 @@ sub content {
   
   my $view = $self->view($config);
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
+  $html = $self->describe_filter($config).$html;
   return $html;
 }
 
