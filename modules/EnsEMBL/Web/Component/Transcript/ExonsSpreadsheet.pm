@@ -367,6 +367,9 @@ sub add_variations {
       
       push @{$href{$_}{'v'}},  $name;
       push @{$href{$_}{'vf'}}, $vf->dbID;
+      if($config->{'variants_as_n'}) {
+        $sequence->[$_]{'letter'} = 'N';
+      }
     }
   }
   
