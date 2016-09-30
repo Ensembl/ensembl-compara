@@ -350,23 +350,18 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
 
     //printf("%s\n", "MSA 1");
 
-    // unpack querySpecies arrayref
-    // AV *query_list = newAV();
-    char *str_copy = strdup(querySpecies);
-    char *token;
-    // while ((token = strsep(&str_copy, ","))) av_push(query_list, token);;
-
     // create a hal_species_t struct for querySpecies
-    //hal_species_t* cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
-    // hal_species_t* head = NULL;
-    // hal_species_t* prev = NULL;
-    // hal_species_t* cur  = NULL;
+    // struct hal_species_t* head = NULL;
+    // struct hal_species_t* prev = NULL;
+    // struct hal_species_t* cur  = NULL;
 
-    // while ((token = strsep(&str_copy, ","))) {
-    //     cur = (hal_species_t*)calloc(1, sizeof(hal_species_t));
-    //     char name[100];
-    //     strcpy(name, token);
-    //     cur->name = name;
+    // char *str_copy = strdup(querySpecies);
+    // char *str_copy_ptr = str_copy;
+    // char *token;
+    // while ((token = strsep(&str_copy_ptr, ","))) {
+    //     cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
+    //     cur->name = strdup(token);
+    //     cur->next = NULL;
     //     if ( head == NULL ){ //struct start
     //         head = cur;
     //     }
@@ -375,28 +370,30 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     //     }
     //     prev = cur;
     // }
+    // free(str_copy);
 
     // only way seems to be to fetch all and split structure into 2
-    int num_q_species = sizeof(querySpecies) / sizeof(int);
     struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
     struct hal_species_t *curGenome = hal_genomes; // iterator
     struct hal_species_t* query_species = NULL; // pointer for head of query list
     struct hal_species_t* other_species = NULL; // pointer for head of non-query list
     struct hal_species_t* prev_q = NULL; // iterator - holds previous query genome
     struct hal_species_t* prev_o = NULL; // iterator - holds prev non-query genome
-    struct hal_species_t* last = NULL;  // used to terminate lists
 
     while (curGenome != NULL) {
         int x;
         int found = 0; 
-        str_copy = strdup(querySpecies);
+        char *str_copy = strdup(querySpecies);
+        char *str_copy_ptr = str_copy;
+        char *token;
         // check if curGenome is a query genome or not - set found boolean if so
-        while ((token = strsep(&str_copy, ","))) {
+        while ((token = strsep(&str_copy_ptr, ","))) {
             if (strcmp(curGenome->name, token) == 0) {
                 found = 1;
                 break;
             }
         }
+        free(str_copy);
         if ( found == 0 ) { // non-query genome
             if ( other_species == NULL ) { //start a new list
                 other_species = curGenome;
@@ -415,8 +412,8 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
         curGenome = curGenome->next;
     }
     // terminate both lists
-    prev_o->next = last;
-    prev_q->next = last;
+    prev_o->next = NULL;
+    prev_q->next = NULL;
 
     // print MAF to buffer
     char *errStr = NULL;
@@ -429,11 +426,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     Inline_Stack_Push(maf);
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
-    free(last);
-    free(token);
-    free(str_copy);
     free(bp);
-    //free(size);
     Inline_Stack_Done;
 }
 END_OF_C_CODE
