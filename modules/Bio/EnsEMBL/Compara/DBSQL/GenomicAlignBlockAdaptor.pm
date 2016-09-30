@@ -1682,28 +1682,4 @@ sub _parse_maf {
   return \@blocks;
 }
 
-# sub start_of_file {
-#   my $str = shift;
-#   my $no_lines = 10;
-
-#   my @lines = split("\n", $str);
-#   my $c = 0;
-#   while ( $c < $no_lines ){
-#     print $lines[$c] . "<br>";
-#     $c++;
-#   }
-# }
-
-# sub _text_to_hex {
-#   my $text = shift;
-#   $text =~ s/(.)/sprintf("%x",ord($1))/eg;
-#   return $text;
-# }
-
-# sub _hex_to_text {
-#   my $hex = shift;
-#   $hex =~ s/([a-fA-F0-9][a-fA-F0-9])/chr(hex($1))/eg;
-#   return $hex;
-# }
-
 1;
