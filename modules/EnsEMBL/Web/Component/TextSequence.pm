@@ -185,6 +185,33 @@ sub set_variation_filter {
   $config->{'hidden_sources'} = [$self->param('hidden_sources')];
 }
 
+sub describe_filter {
+  my ($self,$config) = @_;
+
+  my $blurb = qq(
+    Filters have been applied to this sequence. If you no longer wish to
+    use these filters, use "Configure this page" to remove them.
+  );
+  my @filters;
+  # Hidden sources
+  my %hs = map { $_ => 1 } @{$config->{'hidden_sources'}||[]};
+  delete $hs{'_all'} if exists $hs{'_all'};
+  if(%hs) {
+    push @filters,"Hide variants from sources: ".join(', ',sort keys %hs);
+  }
+  # Hidden consequence types
+  my %cf = map { $_ => 1 } @{$config->{'consequence_filter'}||[]};
+  delete $cf{'off'} if exists $cf{'off'};
+  if(%cf) {
+    push @filters,"Only variants with consequence types: ".
+      join(', ',sort keys %cf);
+  }
+  #
+  return '' unless @filters;
+  $blurb .= "<ul>".join('',map { "<li>$_</li>" } @filters)."</ul>";
+  return $self->_info('Filters applied',$blurb);
+}
+
 sub set_variations {
   my ($self, $config, $slice_data, $markup, $sequence, $focus_snp_only) = @_;
   my $hub    = $self->hub;
@@ -428,19 +455,21 @@ sub chunked_content {
   my $display_width = $self->param('display_width') || 0;
   my $id = $self->id;
 
+  my $follow = 0;
   if ($teaser) {
-    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width" /></div>};
+    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width;follow=$follow" /></div>};
   }
   else {
     # The display is split into a managable number of sub slices, which will be processed in parallel by requests
     while ($j <= $total_length) {
-      $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$j" /></div>};
+      $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$j;follow=$follow" /></div>};
 
       last if $j == $total_length;
 
       $i  = $j + 1;
       $j += $chunk_length;
       $j  = $total_length if $j > $end;
+      $follow = 1;
     }    
   }
   $html .= '<div id="full_alignment"></div></div>';

@@ -94,6 +94,7 @@ sub content_sub_slice {
   my $start  = $hub->param('subslice_start');
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
+  my $follow = $hub->param('follow');
   
   $self->view->output($self->view->output->subslicer);
   $slice ||= $self->object->slice;
@@ -103,12 +104,13 @@ sub content_sub_slice {
   my ($sequence, $config) = $self->initialize_new($slice, $start, $end,$adorn);
 
   my $template;
+  $template = $self->describe_filter($config) unless $follow;
   if ($end && $end == $length) {
-    $template = '<pre class="text_sequence">%s</pre>';
+    $template .= '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $template = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
+    $template .= sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
-    $template = '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
+    $template .= '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
   }
   
   $template .= '<p class="invisible">.</p>';
