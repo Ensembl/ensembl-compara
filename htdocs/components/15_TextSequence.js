@@ -122,6 +122,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         url = panel.params.updateURL;
         url = url.replace(/subslice_start=(\d+);/, 'subslice_start=' + i + ';');
         url = url.replace(/subslice_end=(\d+);/, 'subslice_end=' + j + ';');
+        url = url.replace(/follow=0/,'');
+        url += ";follow=1";
         html += '<div class="ajax"><input type="hidden" class="ajax_load" value="'+ url +'" /></div>';
 
         if (j == panel.params.totalLength) break;

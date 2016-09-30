@@ -124,14 +124,16 @@ sub content {
   }
   
   $html .= $self->build_sequence_new($sequence, $config);
-  
+
+  my $desc = '';
+  $desc = $self->describe_filter($config) unless $self->param('follow');
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
     The variant is shown in <u style="color:red;font-weight:bold">red</u> text.
     Neighbouring variants are shown with highlighted letters and ambiguity codes.<br />
     To change the display of the flanking sequence (e.g. hide the other variants, change the length of the flanking sequence), 
     use the "<b>Configure this page</b>" link on the left.
-  }, 'auto') . $self->describe_filter($config) . $html;
+  }, 'auto') . $desc . $html;
 }
 
 sub export_options { return {'action' => 'FlankingSeq'}; }
