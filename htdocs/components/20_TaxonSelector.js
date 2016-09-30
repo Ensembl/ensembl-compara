@@ -34,6 +34,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     panel.elLk.count      = $('.taxon_selector_list .ss-count', panel.el);
     panel.elLk.msg        = $('.ss-msg span', panel.el);
 
+    panel.elLk.finder.focus();
     // override the default modal close handler
     $('.modal_close').hide();
     $('.modal_close').unbind().bind('click', function () { 

@@ -71,7 +71,7 @@ sub json_to_dynatree {
 
 
       # Add extra groups like strains / haplotypes_and_patches etc
-      if($extras->{$division_hash->{key}} or $extras->{$division_hash->{extras_key}}) {
+      if($extras->{$division_hash->{key}} or ($division_hash->{extras_key} && $extras->{$division_hash->{extras_key}})) {
         my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}}, $internal_node_select);
         $t->{isFolder} = 1;
         $t->{searchable} = 1;
@@ -103,7 +103,7 @@ sub json_to_dynatree {
       }
 
       # Add extra groups like strains / haplotypes_and_patches etc
-      my $x = $extras->{$division_hash->{key}} || $extras->{$division_hash->{extras_key}};
+      my $x = $extras->{$division_hash->{key}} || ($division_hash->{extras_key} ? $extras->{$division_hash->{extras_key}} : '');
       if($x) {
         my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $x, $internal_node_select);
         $t->{isFolder} = 1;
@@ -129,10 +129,8 @@ sub get_extras_as_dynatree {
     $folder->{title}        = ucfirst($k);
     $folder->{isFolder}     = 1;
     $folder->{children}     = [];
-    $folder->{expand}       = 0;
     $folder->{searchable}   = 0;
     $folder->{unselectable} = !$internal_node_select;
-
     foreach my $hash (@{$extras->{$k}}) {
       my $icon = '';
       if ($k =~/haplotype/ and $hash->{key} =~/--/) {
