@@ -201,7 +201,9 @@ sub describe_filter {
     push @filters,"Hide variants from sources: ".join(', ',sort keys %hs);
   }
   # Hidden consequence types
-  my %cf = map { $_ => 1 } @{$config->{'consequence_filter'}||[]};
+  my $cf = $config->{'consequence_filter'};
+  $cf = [ keys %$cf ] if ref($cf) eq 'HASH';
+  my %cf = map { $_ => 1 } @{$cf||[]};
   delete $cf{'off'} if exists $cf{'off'};
   delete $cf{''} if exists $cf{''};
   if(%cf) {

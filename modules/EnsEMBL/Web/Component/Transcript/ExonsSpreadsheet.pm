@@ -134,12 +134,12 @@ sub initialize {
     };
   }
   
-  return (\@data, $config);
+  return (\@data, $config,$self->describe_filter($config));
 }
 
 sub content {
   my $self = shift;
-  my ($data, $config) = $self->initialize;
+  my ($data, $config,$html) = $self->initialize;
   my $table = $self->new_table([
       { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
       { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
@@ -154,7 +154,8 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
+  $html .= sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
+  return $html;
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
