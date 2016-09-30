@@ -102,7 +102,7 @@ sub get_markup_options {
     }
 
     my %sources = $self->source_list;
-    push @{$markup->{'hidden_sources'}{'values'}}, map { value => $sources{$_}, caption => $_ }, sort keys %sources;
+    push @{$markup->{'hidden_sources'}{'values'}}, map { value => $sources{$_}, caption => "Hide $_" }, sort keys %sources;
   }
 
   # add vega exon and EST gene exon dropdown options if required
