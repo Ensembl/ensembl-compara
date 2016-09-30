@@ -283,8 +283,47 @@ sub url {
   if (defined($arg)) {
     $self->{'url'} = $arg ;
   }
+  if ($self->{'url'} && ($self->{'url'} =~ /^#base_dir#/)) {
+      $self->_detect_location_on_platform;
+  }
 
   return $self->{'url'};
+}
+
+
+=head2 _detect_location_on_platform
+
+  Example     : $mlss->_detect_location_on_platform();
+  Description : Replaces #base_dir# stubs with the most appropriate path for each platform.
+                Currently understand Web, user-defined path ($COMPARA_HAL_DIR) and defaults to Rest
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _detect_location_on_platform {
+    my ($self) = @_;
+
+    my $data_dir;
+    if ( eval {require SiteDefs} ){
+        # web setup
+        $data_dir = $SiteDefs::DATAFILE_BASE_PATH;
+    } elsif ( defined $ENV{COMPARA_HAL_DIR} ) {
+        $data_dir = $ENV{COMPARA_HAL_DIR};
+        die ( "$data_dir (defined in \$COMPARA_HAL_DIR) does not exist" ) unless ( -e $data_dir );
+    } else {
+        # REST setup
+        $data_dir = "/mnt/shared/86"
+    }
+
+    my $url = $self->{'url'};
+    warn "<- $url";
+    $url =~ s/#base_dir#/$data_dir/;
+
+    warn "-> $url";
+    $self->url($url) if ( defined $url && -e $url );
 }
 
 

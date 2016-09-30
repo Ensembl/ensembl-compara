@@ -1269,9 +1269,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $ref = $species_map{ $ref_gdb->dbID };
 
     unless ($mlss->{'_hal_adaptor'}) {
-        my $hal_file = $self->_detect_location_on_platform($mlss);
-        # my $hal_file = $mlss->url;
-        # throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
+        my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
+        throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
 
         $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file);
     }
@@ -1681,30 +1680,6 @@ sub _parse_maf {
   }
 
   return \@blocks;
-}
-
-sub _detect_location_on_platform {
-    my ( $self, $mlss ) = @_;
-
-    my $hal_file = $mlss->url;
-    my $mlss_id  = $mlss->dbID;
-
-    my $hal_dir;
-    if ( eval {require SiteDefs} ){
-        # web setup
-        $hal_dir = $SiteDefs::DATAFILE_BASE_PATH;
-    } elsif ( defined $ENV{COMPARA_HAL_DIR} ) {
-        $hal_dir = $ENV{COMPARA_HAL_DIR};
-        die ( "$hal_dir (defined in \$COMPARA_HAL_DIR) does not exist" ) unless ( -e $hal_dir );
-    } else {
-        # REST setup
-        $hal_dir = "/mnt/shared/86"
-    }
-
-    $hal_file =~ s/#base_dir#/$hal_dir/;
-    die "Cannot find HAL file: $hal_file" unless ( defined $hal_file && -e $hal_file );
-    print "HAL FILE PATH : $hal_file\n<br>";
-    return $hal_file;
 }
 
 # sub start_of_file {
