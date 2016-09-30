@@ -154,7 +154,7 @@ UPDATE species_tree_node_attr sta JOIN tmp_stats_per_node t
 	sta.nb_gene_splits= t.nb_gene_splits,
 	sta.nb_spec_nodes= t.nb_spec_nodes,
 	sta.nb_dubious_nodes= t.nb_dubious_nodes,
-	sta.avg_dupscore= t.nb_gene_splits,
+	sta.avg_dupscore= t.avg_dupscore,
 	sta.avg_dupscore_nondub= t.avg_dupscore_nondub
 	WHERE sta.node_id = t.species_tree_node_id;
 
