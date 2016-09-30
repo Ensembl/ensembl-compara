@@ -19,7 +19,7 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
   init: function () {
     this.base();
 
-    this.eQTLTRestURL       = this.params['eqtl_rest_endpoint'];
+    this.eQTLRestURL        = this.params['eqtl_rest_endpoint'];
     this.geneURLTemplate    = decodeURIComponent(this.params['eqtl_gene_url_template']);
     this.elLk.eQTLTable     = this.el.find('._variant_eqtl_table');
 
@@ -31,12 +31,11 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
     this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
 
     $.ajax({
-      url       : this.eQTLTRestURL,
+      url       : this.eQTLRestURL,
       dataType  : 'json',
       context   : this,
-      success   : function(json) { this.showEQTLTable(json) },
-      error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) },
-      complete  : function() { this.elLk.eQTLTable.children('p').remove(); }
+      success   : function(json) { this.showEQTLTable(json); this.elLk.eQTLTable.children('p').remove(); },
+      error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) }
     });
   },
 
@@ -71,9 +70,13 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
   },
 
   showError: function(err) {
-    if (!err) {
+    if (err) {
+      if (err.match(/not recognize/)) {
+        err = '';
+      }
+    } else {
       err = 'Error loading eQTL data from REST';
     }
-    this.elLk.eQTLTable.children('h3').html(err).show();
+    this.elLk.eQTLTable.children('h3').show().end().children('p').html(err).show();
   }
 });
