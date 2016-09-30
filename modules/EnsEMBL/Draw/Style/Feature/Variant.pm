@@ -85,12 +85,19 @@ sub draw_insertion {
 
   ## invisible box to make inserts more clickable
   my $box_width = min(1, 16 / $self->{'pix_per_bp'});
-  $composite->push($self->Rect({
-                                  x         => $x - 1 - $box_width/2, 
-                                  y         => $position->{'y'},
-                                  width     => $box_width * $scale,
-                                  height    => $position->{'height'} + 2,
-                                }));
+  $params = {
+              x         => $x - 1 - $box_width/2, 
+              y         => $position->{'y'},
+              width     => $box_width * $scale,
+              height    => $position->{'height'} + 2,
+            };
+  $composite->push($self->Rect($params));
+
+  ## Are we highlighting this feature? Default is no!
+  my $highlight = $self->highlight($feature, $params);
+  if ($highlight) {
+    push @{$self->glyphs}, $highlight;
+  }
 
   ## Draw a triangle below the line to identify it as an insertion
   ## Note that we can't add the triangle to the composite, for Reasons
