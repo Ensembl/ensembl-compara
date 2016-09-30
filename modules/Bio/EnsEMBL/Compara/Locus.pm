@@ -353,7 +353,7 @@ sub dnafrag_strand {
 sub get_Slice {
   my ($self) = @_;
 
-  if ( defined $self->{'dnafrag'} ) {
+  if ((defined $self->{'dnafrag'}) || (defined $self->{'dnafrag_id'})) {
     my $slice = $self->dnafrag->slice;
     return undef if (!defined($slice));
 
@@ -365,10 +365,6 @@ sub get_Slice {
 
     return $slice;
   }
-  # else {
-  #   my $slice_adaptor = $self->db_adaptor->get_SliceAdaptor;
-  #   my $slice = $slice_adaptor->fetch_by_region( 'chromosome', $self-> );
-  # }
   return undef;
 }
 
