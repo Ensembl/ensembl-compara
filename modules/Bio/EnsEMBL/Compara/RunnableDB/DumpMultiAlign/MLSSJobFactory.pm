@@ -69,6 +69,13 @@ sub _test_mlss {
 
     my $mlss_id     = $mlss->dbID();
 
+    unless ($mlss->method->class =~ /^GenomicAlign/) {
+        die sprintf("%s (%s) MLSSs cannot be dumped with this pipeline !\n", $mlss->method->type, $mlss->method->class);
+    }
+    if ($mlss->method->type =~ /^CACTUS_HAL/) {
+        die "Cactus alignments cannot be dumped because they already exist as files\n";
+    }
+
     if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
         my $ref_species = $mlss->get_value_for_tag('reference_species');
         die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
@@ -89,10 +96,6 @@ sub _test_mlss {
     my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name)
                              || $genome_db_adaptor->fetch_by_registry_name($species_name);
     $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
-
-    if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
-        $mlss = $mlss->adaptor->fetch_by_dbID($mlss->get_value_for_tag('msa_mlss_id'));
-    }
 
     my $filename = $mlss->name;
     $filename =~ s/[\W\s]+/_/g;
