@@ -428,8 +428,10 @@ sub new {
           my $band_min = $glyphset->miny + $glyphset->section_height;
           my $band_max = $glyphset->maxy;
           my $fashionable_gap = 4;
+          my $label_width = $self->{'config'}->get_parameter('label_width');
+          my $x = - ($label_width + 9);
           $glyphset->push($glyphset->Rect({
-            x => -139,
+            x => $x,
             y => $band_min + $fashionable_gap,
             width => 2,
             height => $band_max-$band_min - 2 * $fashionable_gap,
