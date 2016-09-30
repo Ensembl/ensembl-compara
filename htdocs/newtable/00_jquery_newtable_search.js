@@ -72,6 +72,10 @@
         /* Default value? */
         var value = $table.data('view').search;
         if(value) { $box.val(value); }
+        $table.on('view-updated',function() {
+          var value = $table.data('view').search;
+          if(value) { $box.val(value); }
+        });
       },
       position: data.position,
       pipe: function() {
