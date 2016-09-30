@@ -3227,7 +3227,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_stat_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => ['id_map_mlss_factory'],
+                '1->A'  => WHEN(
+                    '((#reuse_goc#) and (#prev_rel_db#))' => 'id_map_mlss_factory',
+                ),
                 'A->1' => ['goc_group_genomes_under_taxa'],
                 '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],
             },
