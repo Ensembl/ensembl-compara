@@ -3447,29 +3447,41 @@ sub common_fields {
   my $parent_common = $conf->{'strain_details'}{'parent_common_name'};
   my ($parent_latin, $strain);
 
-  #for the front end we need the species details to be that of the parent, and the strain to be that of the species 
-  if ($parent_common) {
-    $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
-    $strain = $conf->{'strain_details'}{'strain_name'};
-    $species_latin_name = $parent_latin;
-    $species_common_name = $parent_common;
-  }
-
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-  if ($species_latin_name) {
-    $xml .= qq(
+
+  if ($species_common_name eq 'CrossSpecies') {
+    $xml.= qq(
+  <field name="species">$species_common_name</field>
+  <field name="species_name">$species_latin_name</field>
+  <field name="reference_strain">1</field>);
+  }
+  else {
+    #for the front end we need the species details to be that of the parent, and the strain to be that of the species.
+    if ($parent_common) {
+      $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
+      $strain = $conf->{'strain_details'}{'strain_name'};
+      $species_latin_name = $parent_latin;
+      $species_common_name = $parent_common;
+    }
+
+    if ($species_latin_name) {
+      $xml .= qq(
   <field name="species">$species_common_name</field>
   <field name="species_name">$species_latin_name</field>);
-  }
-  my $ref_strain = $conf->{'strain_details'}{'reference_strain'};
-  $xml .= qq(
+    }
+    my $ref_strain = $conf->{'strain_details'}{'reference_strain'};
+    if ($ref_strain) {
+      $xml .= qq(
   <field name="reference_strain">$ref_strain</field>);
-  if ($strain) {
-    $xml .= qq(
+    }
+    if ($strain) {
+      $xml .= qq(
   <field name="strain">$strain</field>);
+    }
   }
+
   if ($db) {
     $xml .= qq(
   <field name="database_type">$db</field>);
