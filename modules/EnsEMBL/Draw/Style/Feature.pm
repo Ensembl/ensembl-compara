@@ -315,16 +315,13 @@ sub highlight {
 
   my $colour = $feature->{'highlight_colour'} || 'black';
 
-  ## Put feature in front of this highlight 
-  $params->{'z'} = 20;
-
   return $self->Rect({
       x      => $params->{'x'} - 2 / $self->{'pix_per_bp'},
       y      => $params->{'y'} - 2,
       width  => $params->{'width'}  + 4 / $self->{'pix_per_bp'},
       height => $params->{'height'} + 4,
       colour => $colour,
-      z      => 10,
+      z      => -10,
   });
 
 }
