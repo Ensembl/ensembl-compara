@@ -53,6 +53,18 @@ sub init {
   $self->{'data'} = $self->get_data;
 }
 
+sub render_normal {
+## Backwards-compatibility with old drawing code
+## Different tracks have different opinions of what is 'normal',
+## so let the configuration decide
+  my $self = shift;
+  my $renderers = $self->{'my_config'}->get('renderers');
+  my $default = $self->{'my_config'}->get('default_display')
+                  || $renderers->[2] || 'as_alignment_nolabel';
+  my $method = 'render_'.$default;
+  $self->$method;
+}
+
 sub get_data {
   my $self = shift;
   warn ">>> IMPORTANT - THIS METHOD MUST BE IMPLEMENTED IN MODULE $self!";
