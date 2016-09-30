@@ -30,8 +30,6 @@ use YAML qw(LoadFile);
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Draw::Utils::ColourMap;
 
-my $cache;
-
 my %assigns = (
   'background' => { 'background-color' => 'default' },
   'foreground' => { 'color' => 'default' },
@@ -42,7 +40,7 @@ sub new {
   my ($proto,$view) = @_;
 
   my $class = ref($proto) || $proto;
-  my $self = { view => $view };
+  my $self = { view => $view, cache => undef };
   bless $self,$class;
   return $self;
 }
@@ -78,8 +76,8 @@ sub style { return ($_[1],$_[2]); }
 sub make_class_to_style_map {
   my ($self,$config) = @_;
 
-  if(!$cache) {
-    $cache = {};
+  if(!$self->{'cache'}) {
+    $self->{'cache'} = {};
 
     # Load the config
     my $seq = $self->load_styles;
@@ -136,13 +134,13 @@ sub make_class_to_style_map {
           $out_style{$k} = $v;
         }
         my $key = _value($m->{'class'}||$m->{'name'},$config);
-        $cache->{$key} = [$j++,{}] unless $cache->{$key};
-        $cache->{$key}[1] = { %{$cache->{$key}[1]}, %out_style };
+        $self->{'cache'}{$key} = [$j++,{}] unless $self->{'cache'}{$key};
+        $self->{'cache'}{$key}[1] = { %{$self->{'cache'}{$key}[1]}, %out_style };
       }
     }
   }
 
-  return $cache;
+  return $self->{'cache'};
 }
 
 sub create_legend {
