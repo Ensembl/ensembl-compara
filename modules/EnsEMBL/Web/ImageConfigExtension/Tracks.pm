@@ -1027,7 +1027,7 @@ sub add_regulation_builds {
     labels      => 'on',
     depth       => 0,
     colourset   => 'fg_regulatory_features',
-    display     => 'off',
+    display     => 'normal',
     description => '',
     renderers   => [qw(off Off normal On)],
     caption     => 'Regulatory Build',
