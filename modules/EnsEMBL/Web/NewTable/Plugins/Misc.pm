@@ -41,7 +41,7 @@ sub position { return [qw(top-right)]; }
 sub filter_saved {
   my ($config,$data) = @_;
 
-#  delete $data->{'sort'};
+  delete $data->{'search'};
 }
 
 package EnsEMBL::Web::NewTable::Plugins::Columns;
