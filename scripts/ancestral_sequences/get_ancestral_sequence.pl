@@ -216,7 +216,6 @@ else {
     $reg->load_registry_from_db(
       -host=>'ensembldb.ensembl.org',
       -user=>'anonymous',
-      -db_version => 83
     );
     $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
