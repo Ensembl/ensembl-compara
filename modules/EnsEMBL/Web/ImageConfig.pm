@@ -215,9 +215,7 @@ sub apply_user_cache_tags {
 sub get_cacheable_object {
   ## Abstract method implementation
   my $self    = shift;
-  my $object  = { map { $_ => $self->{$_} } qw(code _parameters species type _extra_menus) };
-
-  $object->{'_tree'} = $self->tree->get_cacheable_object;
+  my $object  = { map { $_ => $self->{$_} } qw(code _parameters species type _extra_menus _tree) };
 
   return $object;
 }
