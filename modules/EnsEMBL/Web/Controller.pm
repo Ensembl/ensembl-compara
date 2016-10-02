@@ -166,21 +166,27 @@ sub init_cache {
   my $agent = $self->r->subprocess_env('HTTP_USER_AGENT');
   my $query = $self->query_form;
 
+  # init env cache tags
+  $ENV{'CACHE_TAGS'} = {};
+
   $self->add_cache_tags({
-    'page'    => sprintf('PAGE_%s', $self->page_type),
-    'path'    => sprintf('PATH_%s', join('/', @{$self->path_segments})),
-    'query'   => sprintf('Q_%s', join(';', sort map sprintf('%s=%s', $_, join(',', sort @{$query->{$_}})), keys %$query) || ''), # stringify the url query hash
-    'session' => sprintf('SESSION_%s', $hub->session),
+    'page'    => sprintf('PAGE[%s]', $self->page_type),
+    'path'    => sprintf('PATH[%s]', join('/', @{$self->path_segments})),
+    'query'   => sprintf('Q[%s]', join(';', sort map sprintf('%s=%s', $_, join(',', sort @{$query->{$_}})), keys %$query) || ''), # stringify the url query hash
+    'session' => sprintf('SESSION[%s]', $hub->session),
     'mac'     => $agent =~ /Macintosh/ ? 'MAC' : '',
     'ie'      => $agent =~ /MSIE (\d+)/ ? "IE_$1" : '',
+    'bot'     => $agent =~ /Sanger Search Bot/ ? 'BOT' : '',
   });
+
+  $self->cache_key; # set $ENV{'CACHE_KEY'}
 }
 
 sub cache_key {
   ## Gets the cache keys for the current request
   ## @return String
   my $self = shift;
-  return join '::', @{$self->cache_tags};
+  return $ENV{'CACHE_KEY'} ||= join '::', @{$self->cache_tags};
 }
 
 sub cache_tags {
@@ -188,25 +194,23 @@ sub cache_tags {
   ## @return Arrayref
   my $self = shift;
 
-  return [ sort grep $_, values %{$self->{'_cache_tags'} || {}} ];
+  return [ sort grep $_, values %{$ENV{'CACHE_TAGS'} || {}} ];
 }
 
 sub add_cache_tags {
   ## Adds given tags to the set of tags that are used to save/retrieve the request
   ## @param Hashref of the tags (keys of the hash are just for reference but values are actually used as a list of cache tags)
   my ($self, $tags) = @_;
-  $self->{'_cache_tags'} ||= {};
 
-  $self->{'_cache_tags'}{$_} = $tags->{$_} // '' for keys %$tags;
+  $ENV{'CACHE_TAGS'}{$_} = $tags->{$_} // '' for keys %$tags;
 }
 
 sub remove_cache_tags {
   ## Removes given or all tags from the set of tags that are used to save/retrieve the request
   ## @params List of tags to be removed (no argument will remove all tags)
   my $self = shift;
-  $self->{'_cache_tags'} ||= {};
 
-  delete $self->{'_cache_tags'}{$_} for @_ ? @_ : keys %{$self->{'_cache_tags'}};
+  delete $ENV{'CACHE_TAGS'}{$_} for @_;
 }
 
 sub get_cached_content {
@@ -250,7 +254,8 @@ sub clear_cached_content {
   return unless $cache && $cache_key && $self->cacheable;
 
   # delete cache if request by the user
-  if ($self->r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/) {
+  my $cache_header = $self->r->headers_in->{'Cache-Control'} || '';
+  if ($cache_header =~ /(max-age=0|no-cache)/) {
     $cache->delete_by_tags(@{$self->cache_tags});
   }
 

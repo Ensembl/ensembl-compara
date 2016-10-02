@@ -24,6 +24,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
+
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Tree;
 
@@ -83,6 +86,7 @@ sub init {
 
   $self->init_non_cacheable;
   $self->apply_user_settings;
+  $self->apply_user_cache_tags;
 }
 
 sub cache_key {
@@ -201,6 +205,20 @@ sub is_altered {
   ## Tells if any change has been applied to the config
   ## @return 0 or 1 accordingly
   return scalar keys %{$_[0]->{'_altered'}} ? 1 : 0;
+}
+
+sub apply_user_cache_tags {
+  ## Applies extra tags to the current component (i.e. sets any tags if any changes made by the user can change the output of component)
+  ## Note: Not to be confused with the cache key against which the current config is saved in the cache
+  my $self        = shift;
+  my $config_type = $self->config_type;
+  my $settings    = $self->get_user_settings;
+
+  if (keys %$settings) {
+    $self->hub->controller->add_cache_tags({
+      $config_type => sprintf('%s[%s]', uc $config_type, md5_hex(Data::Dumper->new([$self->get_user_settings])->Sortkeys(1)->Terse(1)->Indent(0)->Maxdepth(0)->Dump))
+    });
+  }
 }
 
 sub _rm_empty_vals {

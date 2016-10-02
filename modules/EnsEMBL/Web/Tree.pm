@@ -29,8 +29,7 @@ use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 sub new {
   ## @constructor
-  ## @param Object with allowed keys if initialising from a cached object
-  my ($class, $cached_object) = shift;
+  my $class = shift;
 
   my $self = bless {
     '_node_lookup'  => {},      # map of all the nodes belonging to this tree for easy lookup
@@ -40,21 +39,7 @@ sub new {
     '_dom'          => undef,   # DOM object as needed by TreeNode's constructor
   }, $class;
 
-  if ($cached_object) {
-    for ($self->_cacheable_keys) {
-      $self->{$_} = $cached_object;
-    }
-  }
-
   return $self;
-}
-
-sub get_cacheable_object {
-  ## Gets the object that can be safely saved to a cache for this instance
-  ## @return Hashref
-  my $self = shift;
-
-  return { map { $_ => $self->{$_} } $self->_cacheable_keys };
 }
 
 sub user_data {
