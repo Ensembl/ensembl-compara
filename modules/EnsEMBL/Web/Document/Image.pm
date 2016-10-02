@@ -205,7 +205,7 @@ sub add_share_icon {
 ### @return Hashref of icon parameters
   my $self      = shift;
   my $hub       = $self->hub;
-  my $share_url = $hub->url('Share', { action => $self->component_id, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
+  my $share_url = $hub->url('Share', { function => $self->component->component_key, __clear => 1, create => 1, share_type => 'image', time => time });
   return {
           'href'      => $share_url,
           'class'     => 'share popup',
