@@ -52,7 +52,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'cmd'   => ['#emf2maf_program#', '#output_file#'],
+        'cmd'   => '#emf2maf_program# #output_file#',   # Cannot use the array form becasue #output_file# may contain wildcard characters
     }
 }
 
