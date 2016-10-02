@@ -348,7 +348,7 @@ sub set_cache_params {
 sub set_cache_key {
   my $self = shift;
   my $hub  = $self->hub;
-  my $key  = join '::', map $ENV{'CACHE_TAGS'}{$_} || (), qw(viewconfig image_config user_data);
+  my $key  = join '::', map $ENV{'CACHE_TAGS'}{$_} || (), qw(view_config image_config user_data);
   my $page = sprintf '::PAGE[%s]', md5_hex(join '/', grep $_, $hub->action, $hub->function);
     
   if ($key) {
