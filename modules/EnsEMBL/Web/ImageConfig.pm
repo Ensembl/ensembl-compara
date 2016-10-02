@@ -197,10 +197,25 @@ sub apply_user_settings {
   }
 }
 
+sub apply_user_cache_tags {
+  ## @override
+  ## Add an extra cache tag for user data
+  my $self  = shift;
+  my $menu  = $self->get_node('user_data');
+
+  # get image_config cache tag
+  $self->SUPER::apply_user_cache_tags;
+
+  # set user_data cache tag
+  if ($menu && $menu->has_child_nodes) {
+    $self->hub->controller->add_cache_tags({'user_data' => sprintf('USER_DATA[%s]', md5_hex(join '|', map $_->id, @{$menu->get_all_nodes}))});
+  }
+}
+
 sub get_cacheable_object {
   ## Abstract method implementation
   my $self    = shift;
-  my $object  = { map { $_ => $self->{$_} } qw(code _parameter species type _extra_menus) };
+  my $object  = { map { $_ => $self->{$_} } qw(code _parameters species type _extra_menus) };
 
   $object->{'_tree'} = $self->tree->get_cacheable_object;
 
