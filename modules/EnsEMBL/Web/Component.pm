@@ -112,7 +112,7 @@ sub param {
     if (my $view_config = $self->viewconfig) {
       if (@_ > 1) {
         my @caller = caller;
-        warn sprintf "DEPRECATED: To set view_config param, use view_config->set method at %s line %s.\n", $caller[1], $caller[2];
+        #warn sprintf "DEPRECATED: To set view_config param, use view_config->set method at %s line %s.\n", $caller[1], $caller[2];
         $view_config->set(@_);
       }
       my @val = $view_config->get(@_);
