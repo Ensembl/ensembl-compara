@@ -146,11 +146,12 @@ sub pipeline_wide_parameters {
 sub resource_classes {
     my ($self) = @_;
 
+    my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        'default_with_registry' => { 'LSF' => ['', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
-        'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
+        'default_with_registry' => { 'LSF' => ['', $reg_options], 'LOCAL' => ['', $reg_options] },
+        'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
     };
 }
 
