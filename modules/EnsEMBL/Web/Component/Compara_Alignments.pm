@@ -637,7 +637,7 @@ sub _get_low_coverage_genome_db_sets {
   #Fetch all the high coverage EPO method_link_species_sets
   my $high_coverage_mlsss = $mlss->adaptor->fetch_all_by_method_link_type("EPO");
   foreach my $high_coverage_mlss (@$high_coverage_mlsss) {
-    my $species_set = $high_coverage_mlss->species_set_obj;
+    my $species_set = $high_coverage_mlss->species_set;
     foreach my $genome_db (@{$species_set->genome_dbs}) {
       $high_coverage_species_set->{ $high_coverage_mlss}{$genome_db->name} = 1;
     }
@@ -646,19 +646,19 @@ sub _get_low_coverage_genome_db_sets {
   #Find high coverage mlss which has the same tag name (eg mammals) and is a subset of the low_coverage species set
   foreach my $high_mlss (@$high_coverage_mlsss) {
     my $counter = 0;
-    foreach my $low_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
-      if ($high_coverage_species_set->{$high_mlss}{$low_genome_db->name} && $mlss->species_set_obj->get_value_for_tag("name") eq $high_mlss->species_set_obj->get_value_for_tag("name")) {
+    foreach my $low_genome_db (@{$mlss->species_set->genome_dbs}) {
+      if ($high_coverage_species_set->{$high_mlss}{$low_genome_db->name} && $mlss->species_set->name eq $high_mlss->species_set->name) {
         $counter++;
       }
     }
-    if ($counter == @{$high_mlss->species_set_obj->genome_dbs}) {
+    if ($counter == @{$high_mlss->species_set->genome_dbs}) {
       $found_high_mlss = $high_mlss;
       last;
     }
   }
 
   my $low_coverage_species;
-  foreach my $low_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+  foreach my $low_genome_db (@{$mlss->species_set->genome_dbs}) {
     unless ($high_coverage_species_set->{$found_high_mlss}{$low_genome_db->name}) {
 #      push @$low_coverage_species, $low_genome_db->dbID;
       $low_coverage_species->{$low_genome_db->dbID} = 1;

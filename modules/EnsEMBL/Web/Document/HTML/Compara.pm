@@ -83,7 +83,7 @@ sub print_wga_stats {
         $html .= sprintf('<h1>%s</h1>', $mlss->name);
         $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
         $html .= $self->error_message('API access', sprintf(
-              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set_obj->name), 'info');
+              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
@@ -94,7 +94,7 @@ sub print_wga_stats {
           { key => 'el',      title => 'Coding exon length (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
-        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
+        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
         my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
           my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
@@ -126,7 +126,7 @@ sub mlss_species_info {
   return [] unless $compara_db;
 
   my $species = [];
-  foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
+  foreach my $db (@{$mlss->species_set->genome_dbs||[]}) {
     push @$species, ucfirst($db->name);
   }
   return $self->get_species_info($species, 1, $mlss);
@@ -169,7 +169,7 @@ sub mlss_data {
         $species->{$ref_name}++;
 
         ## Build data matrix
-        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set_obj->genome_dbs};
+        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set->genome_dbs};
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
@@ -230,7 +230,7 @@ sub get_species_info {
   ## Lookup table from species name to genome_db
   my $genome_db_name_hash = {};
   if ($mlss) {
-    foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+    foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
       my $species_tree_name = $genome_db->name;
       $genome_db_name_hash->{$species_tree_name} = $genome_db;
     }
