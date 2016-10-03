@@ -142,11 +142,13 @@ sub fetch_features_from_file {
                            $self->species_defs->ASSEMBLY_VERSION);
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   $bigbed_file =~ s/\s//g;
+=pod
   my $check = file_exists($bigbed_file, {'nice' => 1});
   if ($check->{'error'}) {
     $self->no_file(555);
     return [];
   }
+=cut
 
   my $out = $self->SUPER::get_data($bigbed_file);
 

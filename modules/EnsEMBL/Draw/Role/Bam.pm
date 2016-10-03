@@ -578,15 +578,16 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
       $url = $df->path;
-      $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
+      #$check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
     }
   }
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
 
+=pod
   if ($check->{'error'}) {
     $self->{'file_error'} = $check->{'error'}[0];
   }
-
+=cut
   return $self->{_cache}->{_bam_adaptor};
 }
 
