@@ -202,7 +202,7 @@ sub get_species_info {
     return [] unless $compara_db;
     my $lookup = {};
 
-    my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db);
+    my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db, -ALLOW_SUBTAXA => 1);
     ## Compara now uses full trinomials for all species
     foreach (@$species_order) {
       my $prod_name = $hub->species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME');
