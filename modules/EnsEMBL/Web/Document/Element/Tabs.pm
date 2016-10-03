@@ -108,6 +108,12 @@ sub init_species_list {
     grep !$species_defs->get_config($_, 'SPECIES_STRAIN'), 
     $species_defs->valid_species
   ];
+
+  #adding species strain (Mouse strains) to the list above
+  foreach ($species_defs->valid_species) {
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( $self->{'species_list'}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
+  }
+  @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   
   my $favourites = $hub->get_favourite_species;
   
