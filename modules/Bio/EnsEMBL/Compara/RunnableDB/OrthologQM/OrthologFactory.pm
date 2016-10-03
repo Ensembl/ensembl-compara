@@ -117,11 +117,11 @@ sub run {
 		print $non_ref_gene_member->dbID() , "\n\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $non_ref_species_dbid \n" unless defined $non_ref_gene_member;
 
-		if ($ref_gene_member->get_canonical_SeqMember()->source_name() eq "ENSEMBLPEP") {
+		if ($ref_gene_member->get_canonical_SeqMember()->source_name() =~ "PEP") {
 			$ref_ortholog_info_hashref->{$ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $ref_gene_member->dnafrag_start();
 		}
 
-		if ($non_ref_gene_member->get_canonical_SeqMember()->source_name() eq "ENSEMBLPEP") {
+		if ($non_ref_gene_member->get_canonical_SeqMember()->source_name() =~ "PEP") {
 			$non_ref_ortholog_info_hashref->{$non_ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $non_ref_gene_member->dnafrag_start();
 			$c++;
 		}
