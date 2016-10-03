@@ -37,7 +37,7 @@ sub init_cacheable {
 
   my @feature_sets  = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
   my $cell_info     = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'};
-  my @cell_lines    = map { $cell_info->{$_} > 0 } sort keys %$cell_info;
+  my @cell_lines    = grep { $cell_info->{$_} > 0 } sort keys %$cell_info;
 
   s/\:\d*$// for @cell_lines;
 
@@ -114,7 +114,7 @@ sub init_cacheable {
     $node->set('display',$type =~ /_core/ ? 'compact' : 'normal');
   }
   foreach my $cell_line (@cell_lines) {
-    clean_id($cell_line); # Eugh, modifies arg.
+    $cell_line = clean_id($cell_line); # Eugh, modifies arg.
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
   }
 
@@ -140,11 +140,8 @@ sub init_top {
 
 sub init_cell_line {
   my $self = shift;
-  my (%on, $i);
 
   $_->remove for grep !$self->{'reg_feats_tracks'}{$_->id}, @{$self->get_tracks};
-
-  $on{$_->data->{'cell_line'}} ||= [ $_, $i++ ] for grep $_->get('display') ne 'off', @{$self->get_tracks};
 
   $self->add_tracks('other',
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
