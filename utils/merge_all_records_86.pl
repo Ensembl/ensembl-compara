@@ -79,7 +79,7 @@ sub get_session_ids {
 sub copy_records {
   my ($dbh, $table, $sql) = @_;
 
-  printf "  Copying records to %s\n", $table;
+  printf "  Copying records from `%s` table\n", $table;
 
   my $sth = $dbh->prepare($sql);
   $sth->execute;
