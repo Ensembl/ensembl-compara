@@ -90,8 +90,6 @@ sub default_options {
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
-
-        'ftp_dir'     => '/nfs/ensembl/ensembl/ftp_ensembl/release-'.$self->o('ensembl_release').'/',
     };
 }
 
@@ -113,7 +111,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'target_dir'    => $self->o('target_dir'),
         'work_dir'      => $self->o('work_dir'),
-        'ftp_dir'       => $self->o('ftp_dir'),
 
         'member_type'   => $self->o('member_type'),
         'clusterset_id' => $self->o('clusterset_id'),
@@ -380,15 +377,12 @@ sub pipeline_analyses {
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.emf_dumps.txt > #target_dir#/emf/README.#member_type#_trees.emf_dumps.txt'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.xml_dumps.txt > #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
-                    ['mkdir -p #ftp_dir#/emf/ensembl-compara/homologies'],
-                    ['mkdir -p #ftp_dir#/xml/ensembl-compara/homologies'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
             -meadow_type => 'LOCAL',
             -flow_into => {
-                '2->A' => [ 'prepare_dir' ],
-                'A->1' => 'copy_to_ensembl_ftp',
+                2 => [ 'prepare_dir' ],
             },
         },
 
@@ -398,13 +392,6 @@ sub pipeline_analyses {
             -meadow_type => 'LOCAL',
         },
 
-        {   -logic_name => 'copy_to_ensembl_ftp',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd' => 'cp -a #target_dir#/emf/* #ftp_dir#/emf/ensembl-compara/homologies; cp -a #target_dir#/xml/* #ftp_dir#/xml/ensembl-compara/homologies; chmod -fR g+w #ftp_dir#/emf/* #ftp_dir#/xml/*; chgrp -fR ensembl #ftp_dir#/emf/* #ftp_dir#/xml/*',
-            },
-            -meadow_type => 'LOCAL',
-        },
     ];
 }
 
