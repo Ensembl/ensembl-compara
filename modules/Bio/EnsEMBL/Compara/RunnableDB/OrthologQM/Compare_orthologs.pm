@@ -299,7 +299,6 @@ sub _compute_ortholog_score {
     print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
     print Dumper($self->param('result')) if ( $self->debug );
     print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
-#    $self->dataflow_output_id( $self->param('result'), 3 );
     return $self->param('result');
 
 }
