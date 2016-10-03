@@ -45,6 +45,7 @@ use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
+use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
@@ -876,7 +877,7 @@ sub configure_user_data {
           my %valid     = @$renderers;
           if ($vertical) {
             $_->set_user_setting('ftype', $track->{'ftype'});
-            $_->set_user_setting('display', $track->{'style'} || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
+            $_->set_user_setting('display', $track->{'style'} || style_by_filesize($track->{'filesize'}));
           } else {
             my $default_display = $_->get_data('default_display') || 'normal';
             $_->set_user_setting('display', $valid{$default_display} ? $default_display : $renderers->[2]);
