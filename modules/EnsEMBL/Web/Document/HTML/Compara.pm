@@ -205,18 +205,17 @@ sub get_species_info {
     my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db);
     ## Compara now uses full trinomials for all species
     foreach (@$species_order) {
-      my $full_name = $hub->species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME');
-      $full_name =~ s/ /_/g;
-      $lookup->{$full_name} = $_;
+      my $prod_name = $hub->species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME');
+      $lookup->{$prod_name} = $_;
     }
     $species_order = []; ## now we override the original order
 
     my $all_leaves = $tree->get_all_leaves;
     my @top_leaves = ();
     foreach my $top_name (@{$hub->species_defs->DEFAULT_FAVOURITES}) {
-      $top_name =~ s/_/ /g;
+      $top_name = $hub->species_defs->get_config($top_name, 'SPECIES_PRODUCTION_NAME');
       foreach my $this_leaf (@$all_leaves) {
-        if ($this_leaf->name eq $top_name) {
+        if ($this_leaf->genome_db->name eq $top_name) {
           push @top_leaves, $this_leaf;
         }
       }
@@ -224,9 +223,7 @@ sub get_species_info {
     $all_leaves = $tree->get_all_sorted_leaves(@top_leaves);
 
     foreach my $this_leaf (@$all_leaves) {
-      (my $name = $this_leaf->name) =~ s/ /_/g;
-      ## Filthy branch-only hack for error in compara database!
-      $name = 'Ictidomys_tridecemlineatus' if $name eq 'Spermophilus_tridecemlineatus';
+      my $name = $this_leaf->genome_db->name;
       push @$species_order, $lookup->{$name} if $lookup->{$name};
     }
   }
