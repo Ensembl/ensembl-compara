@@ -32,13 +32,13 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub sci_name {
   my ($self, $name) = @_;
-  $name = ucfirst($name);
+  $name = $self->hub->species_defs->production_name_mapping($name);
   return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME');
 }
 
 sub common_name {
   my ($self, $name) = @_;
-  $name = ucfirst($name);
+  $name = $self->hub->species_defs->production_name_mapping($name);
   return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
 }
 
@@ -130,7 +130,7 @@ sub mlss_species_info {
 
   my $species = [];
   foreach my $db (@{$mlss->species_set->genome_dbs||[]}) {
-    push @$species, ucfirst($db->name);
+    push @$species, $self->hub->species_defs->production_name_mapping($db->name);
   }
   return $self->get_species_info($species, 1, $mlss);
 }
@@ -168,7 +168,7 @@ sub mlss_data {
         my $ref_genome_db = $genome_adaptor->fetch_by_name_assembly( $mlss->get_value_for_tag('reference_species') );
       
         ## Add to full list of species
-        my $ref_name = ucfirst($ref_genome_db->name);
+        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_genome_db->name);
         $species->{$ref_name}++;
 
         ## Build data matrix
@@ -176,8 +176,9 @@ sub mlss_data {
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
-            $species->{ucfirst($nonref_db->name)}++;
-            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
+            my $nonref_name = $self->hub->species_defs->production_name_mapping($nonref_db->name);
+            $species->{$nonref_name}++;
+            $data->{$ref_name}{$nonref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
           }
         } else {
             # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
