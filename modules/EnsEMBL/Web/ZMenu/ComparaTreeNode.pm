@@ -313,8 +313,6 @@ sub content {
         
         next if $gene eq $hub->param('g');
         
-        # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
-        # There should be a way of retrieving this name correctly instead.
         if ($s == 0) {
           $url_params->{'species'} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{'g'} = $gene;
@@ -366,8 +364,8 @@ sub content {
       order       => 15,
     }); 
 
-
-    if ($hub->species_defs->IS_STRAIN_OF ne 'Mus_musculus') {
+    # FIXME - Quick hack to hide Wasabi for all strains trees. This should be removed once we have the HAL ready
+    if ($hub->referer->{ENSEMBL_ACTION} ne 'Strain_Compara_Tree') {
 
       # Get wasabi files if found in session store
       my $gt_id               = $node->tree->stable_id;
