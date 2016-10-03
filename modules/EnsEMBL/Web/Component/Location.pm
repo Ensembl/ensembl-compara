@@ -115,12 +115,15 @@ sub create_user_pointers {
   while (my ($key, $tracks) = each (%$data)) {
     my $display = $image_config->get_node($key)->get('display');
     my ($render, $style) = split '_', $display;
+    ## Set some defaults
+    $render = 'highlight' if $render eq 'normal';
+    $style ||= 'lharrow';
     $image_config->get_node($key)->set('display', $style);
 
     while (my ($name, $track) = each (%$tracks)) {    
-      my $colour = $self->_user_track_colour($track); 
-      if ($used_colour{$colour}) {
-        ## pick a unique colour instead
+      my $colour = $track->{'config'}{'color'}; 
+      if (!$colour || $used_colour{$colour}) {
+        ## pick a unique colour
         foreach (@all_colours) {
           next if $used_colour{$_};
           $colour = $_;
@@ -214,11 +217,6 @@ sub configure_UserData_key {
   
   return { header => $header, column_order => $column_order, rows => \@rows };
 } 
-
-sub _user_track_colour {
-  my ($self, $track) = @_;
-  return $track->{'config'} && $track->{'config'}{'color'} ? $track->{'config'}{'color'} : 'black';      
-}
 
 sub get_chr_legend {
   my ($self,$legend) = @_;
