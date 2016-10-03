@@ -76,7 +76,7 @@ sub print_wga_stats {
       my ($species_order, $info) = $self->mlss_species_info($mlss);
 
       if ($species_order && scalar(@{$species_order||[]})) {
-        my $rel = $mlss->get_value_for_tag('ensembl_release');
+        my $rel = $mlss->first_release;
         my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
         my $max_align = $self->thousandify($mlss->max_alignment_length - 1);
         my $count = scalar(@$species_order);
