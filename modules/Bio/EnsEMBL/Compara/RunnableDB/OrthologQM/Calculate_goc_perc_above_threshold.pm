@@ -70,8 +70,20 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
-  $self->param('perc_above_thresh', $self->_calculate_perc());
-  print "\n\n"  , $self->param('perc_above_thresh') , "\n\n" if ( $self->debug >3 );
+  if ( scalar @{$self->param('goc_dist')} == 1 ) {
+    if ( $self->param('goc_dist')->[0]->[0] eq '0' ) {
+      print "\n all the goc score are zeros \n" if ( $self->debug);
+      return '0';
+    }
+    else {
+      print "\n all the goc score are Nul \n" if ( $self->debug);
+      return 'NULL';
+    }
+  }
+  else { 
+    $self->param('perc_above_thresh', $self->_calculate_perc());
+    print "\n\n"  , $self->param('perc_above_thresh') , "\n\n" if ( $self->debug >3 );
+  }
 }
 
 sub write_output {
@@ -98,7 +110,12 @@ sub _calculate_perc {
 
     }
   }
-
+  if (!$total) {
+    #if all the goc scores are zero
+    #we will only get here if there both Null and zero goc scores
+    print "\n all the goc score are either zeros or nulls \n" if ( $self->debug);
+    return '0';
+  }
   my $perc_above_thresh = ($above_thresh_total/$total) * 100;
   return $perc_above_thresh;
 }
