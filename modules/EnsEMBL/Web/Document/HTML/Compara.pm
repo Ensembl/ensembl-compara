@@ -60,6 +60,9 @@ sub format_wga_list {
   my $html = '<ul>';
 
   my $list = $self->list_mlss_by_method($method);
+  unless (@$list) {
+      return '<p><em>No alignments of this type in this release of Ensembl.</em></p>';
+  }
   foreach my $mlss (@$list) {
       my $url = '/info/genome/compara/mlss.html?mlss='.$mlss->dbID;
       $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $mlss->name;
