@@ -126,14 +126,14 @@ sub run {
                     WHERE
                         method_link_id = %d
                         AND hm1.seq_member_id < hm2.seq_member_id
-            }, $self->param('ortholog_method_link_id'));
+            }, $self->param_required('ortholog_method_link_id'));
 
     if (defined $self->param('id_range')) {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
         $sql .= " AND homology_id BETWEEN $range";
     }
-    if ($self->param('strict_orthologies')) {
+    if ($self->param_required('strict_orthologies')) {
         $sql .= " AND is_tree_compliant = 1";
     }
     $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
