@@ -266,15 +266,19 @@ Ensembl.LayoutManager.extend({
       if (redirectBackLink.prop('hostname') != window.location.hostname) { // this will filter any invalid urls
 
         redirectBackLink.html('Click here to go back to <b>' + redirectBackLink.prop('hostname') + '</b>');
+        var messageDiv = $(['<div class="redirect-message hidden">',
+                              '<p class="msg">You have been redirected to your nearest mirror. ',
+                              '<span class="_redirect_link"></span>',
+                            '</p>',
+                            '<span class="close">x</span>',
+                            '</div>']
+                            .join(''))
+                            .find('span._redirect_link').append(redirectBackLink).end()
+                            .appendTo($('body')).fadeIn();
 
-        var paddingDiv = $('<div class="redirect-message-padding hidden"></div>');
-        var messageDiv = $('<div class="redirect-message hidden"><p>You have been redirected to your nearest mirror. <span></span> <button>Close</button></p></div>')
-                            .find('span').append(redirectBackLink).end()
-                            .appendTo($('body').prepend(paddingDiv.slideDown())).slideDown();
-
-        messageDiv.find('button').on('click', { divs: paddingDiv.add(messageDiv) }, function(e) {
+        messageDiv.find('.close').on('click', { divs: messageDiv }, function(e) {
           e.preventDefault();
-          e.data.divs.slideUp();
+          e.data.divs.fadeOut(200);
         });
 
         paddingDiv = messageDiv = redirectBackLink = null;
@@ -287,16 +291,17 @@ Ensembl.LayoutManager.extend({
 
     if (!cookiesAccepted) {
       $(['<div class="cookie-message hidden">',
-        '<div></div>',
-        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.</p>',
-        '<p><button>Don\'t show this again</button></p>',
-        '<p>Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</p>',
+          '<p class="msg">We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.',
+            '<span class="more-info"> Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</span>',
+          '</p>',
+          '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
+          '<span class="close">x</span>',
         '</div>'
       ].join(''))
-        .appendTo(document.body).show().find('button,div').on('click', function (e) {
+        .appendTo(document.body).show().find('span.close').on('click', function (e) {
           Ensembl.cookie.set('cookies_ok', 'yes');
           $(this).parents('div').first().fadeOut(200);
-      }).filter('div').helptip({content:"Don't show this again"});
+      });
       return true;
     }
 

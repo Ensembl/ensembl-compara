@@ -184,12 +184,6 @@ ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
 div.coltab span.coltab-tab  { float: left; line-height: 110%; }
 div.coltab div.coltab-text  { margin: 0 0 4px 8px; }
 
-/* 'redirecting to mirror' message*/
-div.redirect-message-padding  { height: 40px; }
-div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
-div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
-div.redirect-message p a      { color: inherit; font-weight: bold; }
-
 /* cookie message and temporary message */
 div.cookie-message, div.tmp-message               { background-color: [[MH_BG]]; border-radius: 10px; color: #fff; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
 div.tmp-message                                   { max-height: 500px; margin-left: -170px; left: 50%; top: 200px; overflow: auto; }
@@ -204,3 +198,99 @@ div.tmp-message.tm-info                           { background-color: [[INFO_BG]
 div.cookie-message div,div.tmp-message div.close  { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
 div.cookie-message p, div.tmp-message p           { margin: 0; line-height: 30px; text-align: center; }
 div.cookie-message p a, div.tmp-message p a       { color: inherit; font-weight: bold; }
+
+/* 'redirecting to mirror' message*/
+div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
+div.redirect-message p        { width: 100%; margin: 0; text-align: center; padding: 12px 0px;}
+div.redirect-message p a      { color: inherit; font-weight: bold; }
+
+
+div.cookie-message,
+div.redirect-message {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  bottom: 0;
+  left: 0;
+  border-radius: 0px;
+  font-weight: 100;
+  padding: 0px;
+  font-size: 1em;
+
+}
+div.cookie-message p.msg{
+  width: 100%;
+  padding: 6px;
+  font-weight: 100;
+}
+
+div.redirect-message p.msg a,
+div.cookie-message p.msg a{
+  text-decoration: none;
+  color: coral;
+}
+div.redirect-message span.close,
+div.cookie-message span.close{
+  margin-left: auto;
+  padding: 0px 16px;
+  font-size: 24px;
+  font-weight: 100;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+div.redirect-message span.close:hover,
+div.cookie-message span.close:hover{
+  background : coral;
+}
+div.cookie-message a.more-info-link {
+  display: none;
+}
+div.cookie-message a.more-info-link {
+  display: none;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 8px;
+  background-color: #ccc;
+  font-weight: 400;
+}
+div.cookie-message a.more-info-link:hover {
+  background-color: #fff;
+}
+
+@media screen and (max-width: 1201px) {
+  div.cookie-message p.msg{
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media screen and (max-width: 810px) {
+  div.cookie-message {
+    height: 40px;
+  }
+  div.cookie-message p.msg{
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+  }
+  div.cookie-message p.msg span.more-info {
+    display: none;
+  }
+  div.cookie-message a.more-info-link {
+    display: flex;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 694px) {
+  div.redirect-message p.msg{
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    font-size: 0.9em;
+  }
+}
