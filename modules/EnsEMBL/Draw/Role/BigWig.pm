@@ -127,12 +127,14 @@ sub _fetch_data {
   return [] unless $url;
 
   my $check;
+=pod
   if ($url =~ /^http|ftp/) {
     $check = EnsEMBL::Web::File::Utils::URL::file_exists($url, {'nice' => 1});
   }
   else {
     $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
   }
+=cut
 
   if ($check->{'error'}) {
     my $error = $self->{'my_config'}->get('on_error');

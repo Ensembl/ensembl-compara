@@ -52,12 +52,14 @@ sub get_data {
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   ## Clean up any whitespace
   $bigbed_file =~ s/\s//g;
-  
+ 
+=pod 
   my $check = file_exists($bigbed_file, {'nice' => 1});
   if ($check->{'error'}) {
     $self->no_file('555');
     return [];
   }
+=cut
 
   return $self->SUPER::get_data($bigbed_file);
 }
