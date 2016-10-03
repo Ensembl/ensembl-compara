@@ -1880,7 +1880,7 @@ sub restrict {
   ## Save genomic_align's cigar_line
   my $l = ($end-$start) > 0 ? ($end-$start) : ($start-$end);
   #print "Adding new aligned_sequence!! $l bp from $start-1 <br>";
-  $restricted_genomic_align->{aligned_sequence} = substr( $self->{aligned_sequence}, $start-1, $l+1 );
+  $restricted_genomic_align->{aligned_sequence} = substr( $self->{aligned_sequence}, $start-1, $l+1 ) if $self->{aligned_sequence};
   $restricted_genomic_align->{cigar_line} = join("", @$cigar_arrayref);
   $restricted_genomic_align->{cigar_arrayref} = $cigar_arrayref;
 

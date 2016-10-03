@@ -222,7 +222,7 @@ sub fetch_by_Slice {
   my $genome_db = $genome_db_adaptor->fetch_by_Slice($slice);
 
   my $d = $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
-  $d->{'_slice'} = $slice if $d;
+  $d->{'_slice'} = $slice->seq_region_Slice() if $d;
   return $d;
 }
 

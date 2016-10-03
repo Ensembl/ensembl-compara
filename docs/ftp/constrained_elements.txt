@@ -1,0 +1,8 @@
+The BED files in this directory represent highly conserved genomic regions which have undergone purifying selection over evolutionary time.
+They were generated from Multiple Sequence Alignments (MSA) using the GERP software:
+http://mendel.stanford.edu/SidowLab/downloads/gerp/
+
+Information on the current set of Ensembl MSA and the species used to generate them can be found here:
+http://www.ensembl.org/info/docs/compara/analyses.html
+
+Each BED file represents the genomic coordinates of the conserved regions for a selected species (indicated in the file title).
