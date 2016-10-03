@@ -73,6 +73,7 @@ sub param_defaults {
     return {
         "ortholog_method_link_id"   => 201,
         "strict_orthologies"        => 0,
+        "clusterset_id"             => 'default',
            };
 }
 
@@ -97,7 +98,10 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, seq_member_id';
+    my $sql = "SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name
+      FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id)
+      WHERE clusterset_id = '".$self->param_required('clusterset_id')."'
+      GROUP BY taxon_id, seq_member_id";
     my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
     $sth->execute;
     my $last;

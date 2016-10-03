@@ -88,7 +88,7 @@ sub fetch_input {
     $self->param('writer', $w);
 
     # List of all the trees
-    my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-clusterset_id => 'default', -member_type => $self->param('member_type'), -tree_type => 'tree');
+    my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-clusterset_id => $self->param('clusterset_id'), -member_type => $self->param('member_type'), -tree_type => 'tree');
 
     $self->param('tree_list', $list_trees);
 
@@ -103,7 +103,7 @@ sub run {
         my ($species) = @_;
         my $constraint = 'm.genome_db_id = '.($species->dbID);
         $constraint .= ' AND gtr.tree_type = "tree"';
-        $constraint .= ' AND gtr.clusterset_id = "default"';
+        $constraint .= ' AND gtr.clusterset_id = "'.($self->param('clusterset_id')).'"' if defined $self->param('clusterset_id');
         $constraint .= ' AND gtr.member_type = "'.($self->param('member_type')).'"' if defined $self->param('member_type');
         my $join = [[['gene_tree_node', 'gtn'], 'm.seq_member_id = gtn.seq_member_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
         return $seq_member_adaptor->generic_fetch($constraint, $join);
