@@ -51,7 +51,8 @@ sub load_user_tracks {
     my $format = $_->get_data('format');
 
     # except bigwig, remove all tracks with big remote formats
-    if ($remote_formats{lc $format} && lc $format ne 'bigwig') {
+    if (($remote_formats{lc $format} && lc $format ne 'bigwig')
+          || (lc $format eq 'vcf' && $_->get_data('url'))) {
       $_->remove;
     } else {
       my ($strand, $renderers) = $self->_user_track_settings($format);
