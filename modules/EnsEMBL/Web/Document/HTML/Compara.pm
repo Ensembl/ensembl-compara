@@ -248,7 +248,8 @@ sub get_species_info {
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
 
     if ($mlss) {
-      my $gdb = $genome_db_name_hash->{lc($sp)};
+      my $prod_name = $hub->species_defs->get_config($sp, 'SPECIES_PRODUCTION_NAME');
+      my $gdb = $genome_db_name_hash->{$prod_name};
       $info->{$sp}{'assembly'} = $gdb->assembly;
       ## Add coverage stats
       my $id = $gdb->dbID;
