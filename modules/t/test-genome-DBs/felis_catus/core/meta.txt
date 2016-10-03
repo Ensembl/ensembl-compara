@@ -1,4 +1,4 @@
-1	\N	schema_version	85
+1	\N	schema_version	86
 2	\N	patch	patch_38_39_a.sql|status_enum
 3	\N	patch	patch_38_39_b.sql|unique_assembly
 4	\N	patch	patch_38_39_c.sql|multiversion_objects
@@ -261,3 +261,6 @@
 1445	\N	patch	patch_83_84_e.sql|nullable_versions
 1446	\N	patch	patch_84_85_a.sql|schema_version
 1447	\N	patch	patch_84_85_b.sql|remove_duplicated_key
+1448	\N	patch	patch_85_86_a.sql|schema_version
+1449	\N	patch	patch_85_86_b.sql|add dna_align_feature_attrib table
+1450	\N	patch	patch_85_86_c.sql|meta_case_insensitive

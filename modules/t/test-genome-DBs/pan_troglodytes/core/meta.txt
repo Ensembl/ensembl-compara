@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	85
+2	\N	schema_version	86
 3	\N	patch	patch_61_62_a.sql|schema_version
 4	\N	patch	patch_61_62_b.sql|synonym_field_extension
 5	\N	patch	patch_61_62_c.sql|db_name_db_release_idx
@@ -163,3 +163,6 @@
 704	\N	patch	patch_83_84_e.sql|nullable_versions
 705	\N	patch	patch_84_85_a.sql|schema_version
 706	\N	patch	patch_84_85_b.sql|remove_duplicated_key
+707	\N	patch	patch_85_86_a.sql|schema_version
+708	\N	patch	patch_85_86_b.sql|add dna_align_feature_attrib table
+709	\N	patch	patch_85_86_c.sql|meta_case_insensitive
