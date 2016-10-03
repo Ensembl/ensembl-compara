@@ -64,8 +64,10 @@ sub format_wga_list {
       return '<p><em>No alignments of this type in this release of Ensembl.</em></p>';
   }
   foreach my $mlss (@$list) {
+      my $n = $mlss->name;
+      $n =~ s/cactus_hal/Cactus alignment/;
       my $url = '/info/genome/compara/mlss.html?mlss='.$mlss->dbID;
-      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $mlss->name;
+      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $n;
   }
   $html .= '</ul>';
   return $html;

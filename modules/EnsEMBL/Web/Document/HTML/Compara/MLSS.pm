@@ -68,6 +68,7 @@ our %pretty_method = (
   PECAN               => 'Pecan',
   EPO                 => 'EPO',
   EPO_LOW_COVERAGE    => 'EPO-Low-coverage',
+  CACTUS_HAL          => 'Progressive Cactus',
 );
 
 our $references = {
@@ -84,6 +85,10 @@ our $references = {
   'EPO-Low-coverage'=> qq{
     <a href="http://genome.cshlp.org/content/18/11/1814">Paten B et al., Genome Res,;18(11):1814-28</a>
     <a href="http://genome.cshlp.org/content/18/11/1829">Paten B et al., Genome Res.;18(11):1829-43</a>
+  },
+  'Progressive Cactus'=> qq{
+    <a href="http://dx.doi.org/10.1101/gr.123356.111">Algorithms for genome multiple sequence alignment</a>
+    <a href="http://dx.doi.org/10.1089/cmb.2010.0252">Cactus graphs for genome comparisons</a>
   }
 };
 
@@ -139,6 +144,8 @@ sub render {
     return $self->render_pairwise($mlss);
   } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
     return $self->render_pairwise($mlss);
+  } elsif ($mlss->method->type =~ /CACTUS/) {
+    return $self->render_cactus_multiple($mlss);
   } elsif ($mlss->method->class =~ /^GenomicAlign/) {
     return $self->render_multiple($mlss);
   } else {
@@ -518,6 +525,43 @@ sub render_multiple {
   $html .= $self->print_wga_stats($mlss);
   $html .= '<br/>';
   $html .= $self->html_size_distribution_1($alignment_results);
+  return $html;
+}
+
+
+# Temporary method as long as we don't have any stats in the database
+sub render_cactus_multiple {
+  my $self    = shift;
+  my $mlss    = shift;
+
+  my $hub     = $self->hub;
+  my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $html;
+  my ($species_order, $info) = $self->mlss_species_info($mlss);
+
+  if ($species_order && scalar(@{$species_order||[]})) {
+    my $rel = $mlss->first_release;
+    my $count = scalar(@$species_order);
+    my $n = $mlss->name;
+    $n =~ s/cactus_hal/Cactus alignment/;
+    $html .= sprintf('<h1>%s</h1>', $n);
+    $html .= qq{<p>This alignment of $count genomes has been imported from UCSC since release $rel.</p>};
+    $html .= $self->error_message('API access', sprintf(
+        '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
+
+    my $table = EnsEMBL::Web::Document::Table->new([
+        { key => 'species', title => 'Species',         width => '50%', align => 'left', sort => 'string' },
+        { key => 'asm',     title => 'Assembly',        width => '50%', align => 'left', sort => 'string' },
+      ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
+    foreach my $sp (@$species_order) {
+      $table->add_row({
+          'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+          'asm'     => $info->{$sp}{'assembly'},
+        });
+    }
+    $html .= $table->render;
+  }
+
   return $html;
 }
 
