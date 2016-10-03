@@ -268,7 +268,6 @@ sub pipeline_analyses {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
@@ -310,7 +309,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 '1->A' => [ 'generate_tarjobs' ],
                 '2->A' => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
@@ -337,7 +335,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
             },
@@ -380,7 +377,6 @@ sub pipeline_analyses {
                 ],
                 'column_names'      => [ 'cmd' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => [ 'prepare_dir' ],
             },
@@ -389,7 +385,6 @@ sub pipeline_analyses {
         # Is populated by the factory above
         {   -logic_name => 'prepare_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -meadow_type => 'LOCAL',
         },
 
     ];
