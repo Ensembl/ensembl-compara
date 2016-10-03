@@ -93,11 +93,23 @@ sub copy_records {
   foreach my $record (@$records) {
     my $data = eval("$record->[4]");
 
-    next if $@ || !(scalar keys %{$data || {}});
+    # ignore any possible errors or incompatible data column
+    next if $@ || !$data || !ref($data) || ref($data) ne 'HASH' || !scalar keys %$data;
 
     if ($record->[2] eq 'image_config') { # image configs save nodes specific data in a sub key 'nodes'
-      my %nodes = map { $_ => delete $data->{$_} } grep $_ ne 'track_order', keys %$data;
-      $data->{'nodes'} = \%nodes if keys %nodes;
+
+      if ($record->[3] && $record->[3] =~ /^(MultiBottom|MultiTop|alignslicebottom)$/) {
+
+        foreach my $species (keys %$data) {
+          my %nodes = map { $_ => delete $data->{$species}{$_} } grep $_ ne 'track_order', keys %{$data->{$species} || {}};
+          $data->{$species}{'nodes'} = \%nodes if keys %nodes;
+          delete $data->{$species} unless scalar keys %{$data->{$species}};
+        }
+      } else {
+
+        my %nodes = map { $_ => delete $data->{$_} } grep $_ ne 'track_order', keys %$data;
+        $data->{'nodes'} = \%nodes if keys %nodes;
+      }
 
       next unless keys %$data
     }
