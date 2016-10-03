@@ -58,8 +58,8 @@ sub content {
   my @features;
 
   foreach (@{$tracks||[]}) {
-    push @features, @{$_->{'features'}{1}||[]};
-    push @features, @{$_->{'features'}{-1}||[]};
+    push @features, @{$_->{'features'}||[]};
+    push @features, @{$_->{'features'}||[]};
   }
 
   $self->{'feature_count'} = scalar @features;
