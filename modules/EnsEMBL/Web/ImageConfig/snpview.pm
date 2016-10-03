@@ -99,7 +99,11 @@ sub init_cacheable {
     { display => 'normal' }
   );
 
-
+  # setting CRISPR track to structure
+  $self->modify_configs(
+    [ 'crispr_WGE_CRISPR_sites'],
+    { display => 'as_transcript_nolabel' }
+  );
 
   # structural variations
   $self->modify_configs(
