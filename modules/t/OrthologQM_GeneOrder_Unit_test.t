@@ -101,6 +101,7 @@ use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs');
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
 	{ # input param hash
+    'compara_db' => $dbc->url,
 	'goc_mlss_id'=>'100021',
     'ref_species_dbid' => 31,
     'non_ref_species_dbid' => 155,
@@ -153,55 +154,57 @@ standaloneJob(
                         }
 
 	},
-	[
-		[
-			'DATAFLOW',
-			{
-				"dnafrag_id" => 14026395,
-				"gene_member_id" => 9122574,
-				"goc_score" => 25,
-				"homology_id" => 14803,
-				"left1" => undef,
-				"left2" => undef,
-				"method_link_species_set_id" => 100021,
-				'right1' => 1,
-				"right2" => 0
-			},
-			3
-		],
 
-		[
-			'DATAFLOW',
-			{
-          'right1' => 1,
-          'gene_member_id' => '9122578',
-          'dnafrag_id' => '14026395',
-          'left1' => 1,
-          'left2' => undef,
-          'homology_id' => '14469',
-          'method_link_species_set_id' => '100021',
-          'right2' => undef,
-          'goc_score' => 50
-			},
-			3
-		],
+#**the code is no longer dataflowing. it is now doing a direct insert into the db to increase speed.
+#	[
+#		[
+		#	'DATAFLOW',
+		#	{
+		#		"dnafrag_id" => 14026395,
+		#		"gene_member_id" => 9122574,
+#				"goc_score" => 25,
+#				"homology_id" => 14803,
+#				"left1" => undef,
+#				"left2" => undef,
+#				"method_link_species_set_id" => 100021,
+#				'right1' => 1,
+#				"right2" => 0
+#			},
+#			3
+#		],
+#
+#		[
+#			'DATAFLOW',
+#			{
+ #         'right1' => 1,
+  #        'gene_member_id' => '9122578',
+   #       'dnafrag_id' => '14026395',
+    #      'left1' => 1,
+#          'left2' => undef,
+#          'homology_id' => '14469',
+ #         'method_link_species_set_id' => '100021',
+  #        'right2' => undef,
+#          'goc_score' => 50
+#			},
+#			3
+#		],
 
-		[
-			'DATAFLOW',
-			{
-				'right1' => undef,
-          'gene_member_id' => '9122579',
-          'dnafrag_id' => '14026395',
-          'left1' => 1,
-          'left2' => 1,
-          'homology_id' => '46043',
-          'method_link_species_set_id' => '100021',
-          'right2' => undef,
-          'goc_score' => 50
-			},
-			3
-		],
-	],
+#		[
+#			'DATAFLOW',
+#			{
+#				'right1' => undef,
+#          'gene_member_id' => '9122579',
+#          'dnafrag_id' => '14026395',
+#          'left1' => 1,
+ #         'left2' => 1,
+  #        'homology_id' => '46043',
+#          'method_link_species_set_id' => '100021',
+#          'right2' => undef,
+#          'goc_score' => 50
+#			},
+#			3
+#		],
+#	],
 );
 
 
@@ -216,7 +219,7 @@ standaloneJob(
 
 my $results = $dbc->db_handle->selectall_arrayref('SELECT homology_id, goc_score from homology', {});
 #print Dumper($results);
-my %expected_results_hash = ('14469' => 50, '14646' => 25, '14803' => 0, '46043' => 25, '46120' => 25);
+my %expected_results_hash = ('14469' => 50, '14646' => 25, '14803' => 25, '46043' => 50, '46120' => 25);
 
 foreach my $result (@{$results}) {
   is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
