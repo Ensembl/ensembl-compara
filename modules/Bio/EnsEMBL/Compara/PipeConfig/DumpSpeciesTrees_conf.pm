@@ -121,7 +121,7 @@ sub pipeline_analyses {
         {   -logic_name => 'sanitize_file',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" #name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"; rename "s/  */_/g" "#name#_#label#.nh"',
+                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" "#name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"; rename "s/  */_/g" "#name#_#label#.nh"',
             },
         },
     ];
