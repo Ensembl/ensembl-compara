@@ -392,10 +392,9 @@ sub pipeline_analyses {
             },
         },
 
+        # Is populated by the factory above
         {   -logic_name => 'prepare_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-            },
             -meadow_type => 'LOCAL',
         },
 
