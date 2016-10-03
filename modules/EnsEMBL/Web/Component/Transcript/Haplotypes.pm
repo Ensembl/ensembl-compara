@@ -60,7 +60,7 @@ sub content {
 
   # filter?
   my $filter;
-  if($self->hub->param('filter_enabled') eq 'on') {
+  if($self->param('filter_enabled') eq 'on') {
     
     # warn user filtering is enabled
     $html .= $self->_info(
@@ -139,7 +139,7 @@ sub content {
     title => 'Variants',
     sort  => 'html_numeric',
     help  => 'Variants that contribute to this haplotype\'s difference(s) to the reference',
-  } if $self->hub->param('show_variants') eq 'on';
+  } if $self->param('show_variants') eq 'on';
 
   $table->add_columns(@cols);
   
@@ -265,7 +265,7 @@ sub render_haplotype_row {
     freq      => sprintf("%.3g (%i)", $ht->frequency, $ht->count),
   };
 
-  $row->{variants} = join(", ", map {$self->render_var_link($_)} @{$ht->get_all_VariationFeatures}) if $self->hub->param('show_variants') eq 'on';
+  $row->{variants} = join(", ", map {$self->render_var_link($_)} @{$ht->get_all_VariationFeatures}) if $self->param('show_variants') eq 'on';
   
   # add per-population frequencies
   my $pop_freqs = $ht->get_all_population_frequencies;

@@ -32,7 +32,7 @@ sub init {
     filter_frequency => 0.01,
   };
   
-  $self->set_defaults($defaults);
+  $self->set_default_options($defaults);
 }
 
 sub form {
