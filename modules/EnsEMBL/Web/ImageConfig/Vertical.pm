@@ -117,7 +117,7 @@ sub load_user_track_data {
     next if $display eq 'off';
     ## Of the remote formats, only bigwig is currently supported on this scale
     my $format = lc $track->get('format');
-    next if ($format eq 'bigwig' || $format eq 'bam' || $format eq 'cram');
+    next if ($format eq 'bigbed' || $format eq 'bam' || $format eq 'cram');
 
     my $logic_name = $track->get('logic_name');
     my $colour     = \@colours;
@@ -249,7 +249,6 @@ sub get_parsed_features {
     else {
       $data->{$name} = {'features' => $track->{'features'} || [],
                         'metadata' => $track->{'metadata'} || {}};
-      push @{$data->{$name}{'features'}}, @{$track->{'features'} || []};
     }
 
     $count++ unless ($track->{'metadata'}{'color'} || $track->{'metadata'}{'colour'});
