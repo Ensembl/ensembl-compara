@@ -238,7 +238,7 @@ sub get_species_info {
   }
   ## Now munge information for selected species
   foreach my $sp (@$species_order) {
-    (my $display_name = $sp) =~ s/_/ /g;
+    my $display_name = $hub->species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME');
     (my $short_name = $sp) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]+/$1.$2/; ## e.g. H.sap
     (my $formatted_name = $display_name) =~ s/ /<br>/; ## Only replace first space
 
