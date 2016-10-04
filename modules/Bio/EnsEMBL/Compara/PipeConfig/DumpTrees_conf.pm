@@ -163,7 +163,7 @@ sub pipeline_analyses {
             -input_ids  => [ {} ],
             -flow_into  => {
                 '1->A' => [ 'create_dump_jobs' ],
-                'A->1' => [ 'generate_prepare_dir' ],
+                'A->1' => [ 'md5sum' ],
             },
         },
 
@@ -372,23 +372,11 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'generate_prepare_dir',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'     => [
-                    ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees'],
-                    ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees'],
-                ],
-                'column_names'      => [ 'cmd' ],
-            },
-            -flow_into => {
-                2 => [ 'prepare_dir' ],
-            },
-        },
-
-        # Is populated by the factory above
-        {   -logic_name => 'prepare_dir',
+        {   -logic_name => 'md5sum',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees',
+            },
         },
 
     ];
