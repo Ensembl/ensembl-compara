@@ -339,14 +339,6 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
 // pass querySpecies as a comma-seperated string
 void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd) {
     //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
-    Inline_Stack_Vars;
-    Inline_Stack_Reset;
-
-    // open memory file buffer
-    char *bp;
-    size_t size;
-    FILE *stream;
-    stream = open_memstream (&bp, &size);
 
     //printf("%s\n", "MSA 1");
 
@@ -417,18 +409,26 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     prev_o->next = NULL;
     prev_q->next = NULL;
 
-    // print MAF to buffer
     char *errStr = NULL;
+
+    // open memory file buffer
+    char *bp;
+    size_t size;
+    FILE *stream = open_memstream (&bp, &size);
+    // print MAF to buffer
     halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, 0, &errStr );
     fclose (stream);
-    
-    //SV *maf = newSVpv(bp, strlen(bp));
-    SV *maf = newSVpvn(bp, size);
 
+    // Inline::C stuff: Build a return array with the maf output
+    Inline_Stack_Vars;
+    Inline_Stack_Reset;
+    SV *maf = newSVpvn(bp, size);
     Inline_Stack_Push(maf);
+    Inline_Stack_Done;
+
+    // Free the memory
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
     free(bp);
-    Inline_Stack_Done;
 }
 END_OF_C_CODE
