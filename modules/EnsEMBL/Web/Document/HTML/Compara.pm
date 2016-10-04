@@ -32,13 +32,13 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub sci_name {
   my ($self, $name) = @_;
-  $name = ucfirst($name);
+  $name = $self->hub->species_defs->production_name_mapping($name);
   return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME');
 }
 
 sub common_name {
   my ($self, $name) = @_;
-  $name = ucfirst($name);
+  $name = $self->hub->species_defs->production_name_mapping($name);
   return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
 }
 
@@ -60,9 +60,14 @@ sub format_wga_list {
   my $html = '<ul>';
 
   my $list = $self->list_mlss_by_method($method);
+  unless (@$list) {
+      return '<p><em>No alignments of this type in this release of Ensembl.</em></p>';
+  }
   foreach my $mlss (@$list) {
+      my $n = $mlss->name;
+      $n =~ s/cactus_hal/Cactus alignment/;
       my $url = '/info/genome/compara/mlss.html?mlss='.$mlss->dbID;
-      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $mlss->name;
+      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $n;
   }
   $html .= '</ul>';
   return $html;
@@ -76,14 +81,14 @@ sub print_wga_stats {
       my ($species_order, $info) = $self->mlss_species_info($mlss);
 
       if ($species_order && scalar(@{$species_order||[]})) {
-        my $rel = $mlss->get_value_for_tag('ensembl_release');
+        my $rel = $mlss->first_release;
         my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
         my $max_align = $self->thousandify($mlss->max_alignment_length - 1);
         my $count = scalar(@$species_order);
         $html .= sprintf('<h1>%s</h1>', $mlss->name);
         $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
         $html .= $self->error_message('API access', sprintf(
-              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set_obj->name), 'info');
+              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
@@ -94,7 +99,7 @@ sub print_wga_stats {
           { key => 'el',      title => 'Coding exon length (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
-        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
+        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
         my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
           my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
@@ -126,8 +131,8 @@ sub mlss_species_info {
   return [] unless $compara_db;
 
   my $species = [];
-  foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
-    push @$species, ucfirst($db->name);
+  foreach my $db (@{$mlss->species_set->genome_dbs||[]}) {
+    push @$species, $self->hub->species_defs->production_name_mapping($db->name);
   }
   return $self->get_species_info($species, 1, $mlss);
 }
@@ -165,16 +170,17 @@ sub mlss_data {
         my $ref_genome_db = $genome_adaptor->fetch_by_name_assembly( $mlss->get_value_for_tag('reference_species') );
       
         ## Add to full list of species
-        my $ref_name = ucfirst($ref_genome_db->name);
+        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_genome_db->name);
         $species->{$ref_name}++;
 
         ## Build data matrix
-        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set_obj->genome_dbs};
+        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set->genome_dbs};
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
-            $species->{ucfirst($nonref_db->name)}++;
-            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
+            my $nonref_name = $self->hub->species_defs->production_name_mapping($nonref_db->name);
+            $species->{$nonref_name}++;
+            $data->{$ref_name}{$nonref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
           }
         } else {
             # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
@@ -198,21 +204,20 @@ sub get_species_info {
     return [] unless $compara_db;
     my $lookup = {};
 
-    my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db);
+    my $tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -compara_dba => $compara_db, -ALLOW_SUBTAXA => 1);
     ## Compara now uses full trinomials for all species
     foreach (@$species_order) {
-      my $full_name = $hub->species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME');
-      $full_name =~ s/ /_/g;
-      $lookup->{$full_name} = $_;
+      my $prod_name = $hub->species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME');
+      $lookup->{$prod_name} = $_;
     }
     $species_order = []; ## now we override the original order
 
     my $all_leaves = $tree->get_all_leaves;
     my @top_leaves = ();
     foreach my $top_name (@{$hub->species_defs->DEFAULT_FAVOURITES}) {
-      $top_name =~ s/_/ /g;
+      $top_name = $hub->species_defs->get_config($top_name, 'SPECIES_PRODUCTION_NAME');
       foreach my $this_leaf (@$all_leaves) {
-        if ($this_leaf->name eq $top_name) {
+        if ($this_leaf->genome_db->name eq $top_name) {
           push @top_leaves, $this_leaf;
         }
       }
@@ -220,9 +225,7 @@ sub get_species_info {
     $all_leaves = $tree->get_all_sorted_leaves(@top_leaves);
 
     foreach my $this_leaf (@$all_leaves) {
-      (my $name = $this_leaf->name) =~ s/ /_/g;
-      ## Filthy branch-only hack for error in compara database!
-      $name = 'Ictidomys_tridecemlineatus' if $name eq 'Spermophilus_tridecemlineatus';
+      my $name = $this_leaf->genome_db->name;
       push @$species_order, $lookup->{$name} if $lookup->{$name};
     }
   }
@@ -230,15 +233,15 @@ sub get_species_info {
   ## Lookup table from species name to genome_db
   my $genome_db_name_hash = {};
   if ($mlss) {
-    foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+    foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
       my $species_tree_name = $genome_db->name;
       $genome_db_name_hash->{$species_tree_name} = $genome_db;
     }
   }
   ## Now munge information for selected species
   foreach my $sp (@$species_order) {
-    (my $display_name = $sp) =~ s/_/ /g;
-    (my $short_name = $sp) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z]+/$1.$2/; ## e.g. H.sap
+    my $display_name = $hub->species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME');
+    (my $short_name = $sp) =~ s/([A-Z])[a-z]+_([a-z0-9]{2,3})[a-z]+/$1.$2/; ## e.g. H.sap
     (my $formatted_name = $display_name) =~ s/ /<br>/; ## Only replace first space
 
     $info->{$sp}{'long_name'}      = $display_name;
@@ -247,7 +250,8 @@ sub get_species_info {
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
 
     if ($mlss) {
-      my $gdb = $genome_db_name_hash->{lc($sp)};
+      my $prod_name = $hub->species_defs->get_config($sp, 'SPECIES_PRODUCTION_NAME');
+      my $gdb = $genome_db_name_hash->{$prod_name};
       $info->{$sp}{'assembly'} = $gdb->assembly;
       ## Add coverage stats
       my $id = $gdb->dbID;
