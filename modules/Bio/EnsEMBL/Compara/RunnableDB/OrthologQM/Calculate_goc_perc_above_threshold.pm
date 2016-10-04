@@ -73,11 +73,11 @@ sub run {
   if ( scalar @{$self->param('goc_dist')} == 1 ) {
     if ( $self->param('goc_dist')->[0]->[0] eq '0' ) {
       print "\n all the goc score are zeros \n" if ( $self->debug);
-      return '0';
+      $self->param('perc_above_thresh', '0');
     }
     else {
       print "\n all the goc score are Nul \n" if ( $self->debug);
-      return 'NULL';
+      $self->param('perc_above_thresh', 'NULL');
     }
   }
   else { 
@@ -88,7 +88,7 @@ sub run {
 
 sub write_output {
   	my $self = shift @_;
-    print $self->param('thresh') , "  <<<<------ goc_threshold "if ( $self->debug >3 );
+    print $self->param('thresh') , "  :  goc_threshold \n" , $self->param('perc_above_thresh') , "  :  perc_above_thresh \n " if ( $self->debug >3 );
     #goc threshold need to be dataflow'd  beacuse if it is given a default value by the user this would not have been dataflow'd atleast once, hence the next runnable after this will not be able to access it, causing failure.
     $self->dataflow_output_id( {'perc_above_thresh' => $self->param('perc_above_thresh'), 'goc_dist' => $self->param('goc_dist'), 'goc_threshold' => $self->param('thresh')} , 1);
 }
