@@ -153,7 +153,12 @@ sub pipeline_analyses {
         {   -logic_name => 'pipeline_start',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'   => 'mkdir -p #work_dir#; mkdir -p #target_dir#/xml; mkdir -p #target_dir#/emf',
+                'readme_dir'    => $self->o('readme_dir'),
+                'cmd'           => join('; ',
+                                    'mkdir -p #work_dir# #target_dir#/xml #target_dir#/emf',
+                                    'cp -af #readme_dir#/gene_trees.emf_dumps.txt #target_dir#/emf/README.#basename#_trees.emf_dumps.txt',
+                                    'cp -af #readme_dir#/gene_trees.xml_dumps.txt #target_dir#/xml/README.#basename#_trees.xml_dumps.txt',
+                                   ),
             },
             -input_ids  => [ {} ],
             -flow_into  => {
@@ -370,12 +375,9 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_prepare_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'readme_dir'    => $self->o('readme_dir'),
                 'inputlist'     => [
                     ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees'],
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees'],
-                    ['cp -af #readme_dir#/gene_trees.emf_dumps.txt #target_dir#/emf/README.#basename#_trees.emf_dumps.txt'],
-                    ['cp -af #readme_dir#/gene_trees.xml_dumps.txt #target_dir#/xml/README.#basename#_trees.xml_dumps.txt'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
