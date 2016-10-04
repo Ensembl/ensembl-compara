@@ -70,10 +70,11 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        # Commented out to make sure people define it on the command line
-        'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
-
-        'clusterset_id'     => 'default',
+        ## Commented out to make sure people define it on the command line
+        # either 'protein' or 'ncrna'
+        #'member_type'       => 'protein',
+        # either 'default' or 'murinae'
+        #'clusterset_id'     => 'default',
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
