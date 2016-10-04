@@ -203,45 +203,45 @@ sub add_species {
   $self->remove_species(\@remove) if scalar @remove;
   
   if (scalar @no_species) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_error',
       code     => 'invalid_species',
       message  => scalar @no_species > 1 ? 
         'The following species do not exist in the database: <ul><li>' . join('</li><li>', @no_species) . '</li></ul>' :
         'The following species does not exist in the database:' . $no_species[0]
-    );
+    });
   }
   
   if (scalar @no_alignment) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => scalar @no_alignment > 1 ? 
         'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
         'There is no alignment in this region for ' . $no_alignment[0]
-    );
+    });
   }
   
   if (scalar @haplotypes) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => scalar @haplotypes > 1 ? 
         'There are no alignments in this region for the following haplotypes / patches: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
         'There is no alignment in this region for ' . $haplotypes[0]
-    );
+    });
   }
 
   if ($paralogues) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => ($paralogues == 1 ? 'A paralogue has' : 'Paralogues have') . ' been removed for ' . $self->species
-    );
+    });
   }
   
   if (!scalar @remove) {

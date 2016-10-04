@@ -722,12 +722,12 @@ sub _create_from_sub_align_slice {
     $align_end += $step unless $end;
     
     if (time - $time > $time_limit) {
-      $session->add_data(
+      $session->set_record_data({
         type     => 'message',
         function => '_warning',
         code     => 'align_slice_failure',
         message  => 'No alignment was found for your selected region'
-      );
+      });
       
       $expired = 1;
       
@@ -896,12 +896,12 @@ sub _map_assembly {
       my $new_slice = $segments->[0]->to_Slice;
       my $r = sprintf '%s:%s-%s', $seq_region, $new_slice->start, $new_slice->end;
       
-      $session->add_data(
+      $session->set_record_data({
         type     => 'message',
         function => '_info',
         code     => 'new_coordinates',
         message  => "Your request for $seq_region:$start-$end in <b>$assembly</b> has been mapped to the new <b>$assembly_name</b> coordinates $r"
-      );
+      });
       
       %params = ( %params, r => $r );
     } elsif (@$segments) {
@@ -932,7 +932,7 @@ sub _map_assembly {
         );
       }
 
-      $session->add_data(
+      $session->set_record_data({
         type     => 'message',
         function => '_info',
         code     => 'several_new_coordinates',
@@ -940,21 +940,21 @@ sub _map_assembly {
                     "has been mapped to $count locations within new <b>$assembly_name</b>" .
                     "coordinates $seq_region:$new_start-$new_end <br />" .
                     "<strong>Mapped segments:</strong><br />$message"
-      );
+      });
 
       %params = ( %params, r => "$seq_region:$new_start-$new_end" );      
     } else {
-        $session->add_data(
+        $session->set_record_data({
           type     => 'message',
           function => '_info',
           code     => 'no_mappings_for_assembly',
           message  => "No changes in coordinates of this slice since <b>$assembly</b>",
-        );
+        });
     }
   } elsif (@mappings) {
     ## Assembly is not recognised among list of possible ones
     ## Put warning message and redirect
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'assembly_not_recognised',
@@ -963,15 +963,15 @@ sub _map_assembly {
                     join(' and ', reverse(pop @mappings,  join ', ', @mappings)) . ' assemblies only' :
                     "@mappings assembly only"
                   )
-    );
+    });
   } else {
     ## We do not have any assemblies to map
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'no_assemblies',
       message  => q{Sorry we currently don't have any other assemblies to map},
-    );
+    });
   }
   
   return $hub->problem('redirect', $hub->url(\%params));
