@@ -278,7 +278,7 @@ sub pipeline_analyses {
                         'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
                         'dump_all_homologies_orthoxml' => [
                             {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
-                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
+                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
                         ],
                     }
                 ],
