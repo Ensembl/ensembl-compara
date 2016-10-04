@@ -24,7 +24,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-our $VERSION = 11;
+our $VERSION = 13;
 
 use JSON;
 use List::Util qw(min max);
