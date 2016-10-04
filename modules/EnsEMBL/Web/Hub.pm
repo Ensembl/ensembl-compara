@@ -490,7 +490,7 @@ sub param {
       $view_config->set(@_) if @_ > 1;
       my @val = $view_config->get(@_);
 
-      warn sprintf "DEPRECATED: If trying to get Component's ViewConfig specific param, use param method on component at %s line %s\n", $caller[1], $caller[2] if @val;
+      #warn sprintf "DEPRECATED: If trying to get Component's ViewConfig specific param, use param method on component at %s line %s\n", $caller[1], $caller[2] if @val;
 
       return wantarray ? @val : $val[0];
     }
