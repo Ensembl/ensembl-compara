@@ -33,6 +33,7 @@ sub usage {
   print("\t-port=<port>                 \tDatbaase port (defaults to 3306)\n");
   print("\t-type=<user/session/both>    \tType of the records to be copied\n");
   print("\t-days=<number of days>       \tNumber of days for which records should be preserved (default 90)\n");
+  print("\t-after=<time since>          \tWhere clause for modified_at\n");
   print("\t--help                       \tDisplays this info and exits (optional)\n");
   exit;
 }
@@ -77,7 +78,7 @@ sub get_session_ids {
 }
 
 sub copy_records {
-  my ($dbh, $table, $sql) = @_;
+  my ($dbh, $table, $sql, $last_modified_hashref) = @_;
 
   printf "  Copying records from `%s` table\n", $table;
 
@@ -89,12 +90,15 @@ sub copy_records {
   printf "    %d records found\n", scalar @$records;
 
   my @filtered_records;
+  my $last_modified = 0;
 
   foreach my $record (@$records) {
     my $data = eval("$record->[4]");
 
     # ignore any possible errors or incompatible data column
     next if $@ || !$data || !ref($data) || ref($data) ne 'HASH' || !scalar keys %$data;
+
+    $last_modified = $record->[8];
 
     if ($record->[2] eq 'image_config') { # image configs save nodes specific data in a sub key 'nodes'
 
@@ -118,6 +122,8 @@ sub copy_records {
 
     push @filtered_records, $record;
   }
+
+  $last_modified_hashref->{$table} = $last_modified;
 
   my $count = push_record($dbh, \@filtered_records);
 
@@ -143,7 +149,30 @@ sub push_record {
 
   my $count = 0;
   for (@$records) {
-    $count++ if $sth->execute(@$_);
+    if ($sth->execute(@$_)) {
+      $count++;
+    } else {
+      print "      Couldn't INSERT, performing an UPDATE\n";
+
+      my $where = " WHERE
+          `record_type`     = ? AND
+          `record_type_id`  = ? AND
+          `type`            = ? AND
+          `code`            = ?
+        ";
+
+      my $sth1 = $dbh->prepare("SELECT modified_at FROM all_record $where");
+      if ($sth1->execute($_->[0], $_->[1], $_->[2], $_->[3])) {
+        my $rows = $sth1->fetchall_arrayref;
+        if ($rows && @$rows && $rows->[0][0] eq $_->[8]) {
+          next;
+        }
+      }
+
+      my $sth2 = $dbh->prepare("UPDATE all_record SET `data` = ?, `modified_at` = ? $where");
+
+      $count++ if $sth2->execute($_->[4], $_->[8], $_->[0], $_->[1], $_->[2], $_->[3]);
+    }
   }
 
   return $count;
@@ -151,7 +180,7 @@ sub push_record {
 
 
 # Get arguments
-my ($host, $dbname, $username, $pass, $type);
+my ($host, $dbname, $username, $pass, $type, $after);
 my $port = 3306;
 my $days = 90;
 GetOptions(
@@ -162,6 +191,7 @@ GetOptions(
   'port=i'    => \$port,
   'type=s'    => \$type,
   'days=i'    => \$days,
+  'after=s'   => \$after,
   'help'      => \&usage
 );
 
@@ -178,6 +208,9 @@ my $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $dbname,
 # Create table if it doesn't exist
 create_table($dbh);
 
+
+# last modified_at
+my $last_modified = {};
 
 # Copy session_records and configuration_record to all_record
 if ($type eq 'session' || $type eq 'both') {
@@ -206,6 +239,7 @@ if ($type eq 'session' || $type eq 'both') {
 
   my $i = 0;
   my $count = 0;
+  my $where = $after ? " WHERE modified_at > '$after' AND " : " WHERE ";
   while (@sessions) {
 
     printf "ITERATION: %d\n", ++$i;
@@ -227,8 +261,9 @@ if ($type eq 'session' || $type eq 'both') {
       from configuration_record cr
       left join configuration_details cd
       on cr.record_id = cd.record_id
-      where record_type = 'session' and active = 'y' and is_set ='n' and servername not like '%archive%' and 
-      cd.record_type_id in ($session_ids)");
+      $where record_type = 'session' and active = 'y' and is_set ='n' and servername not like '%archive%' and
+      cd.record_type_id in ($session_ids)
+      order by modified_at asc", $last_modified);
 
     $count += copy_records($dbh, 'session_record', "
       select
@@ -242,7 +277,8 @@ if ($type eq 'session' || $type eq 'both') {
         null as modified_by,
         modified_at
       from session_record
-      where session_id in ($session_ids)");
+      $where session_id in ($session_ids)
+      order by modified_at asc", $last_modified);
   }
 
   printf "Total session records copied: %d\n", $count;
@@ -251,6 +287,8 @@ if ($type eq 'session' || $type eq 'both') {
 
 # copy user records from record table
 if ($type eq 'user' || $type eq 'both') {
+  my $where = $after ? " WHERE modified_at > '$after' " : '';
+
   my $count = copy_records($dbh, 'record', "
     select
       record_type,
@@ -262,10 +300,15 @@ if ($type eq 'user' || $type eq 'both') {
       created_at,
       modified_by,
       modified_at
-    from record");
+    from record $where
+    order by modified_at asc", $last_modified);
 
   printf "Total user records copied: %d\n", $count;
 
+}
+
+for (keys %$last_modified) {
+  printf " ---- NOTE: %s last modified row: %s\n", $_, $last_modified->{$_};
 }
 
 $dbh->disconnect;
