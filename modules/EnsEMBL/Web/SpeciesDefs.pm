@@ -205,7 +205,7 @@ sub valid_species {
   my @valid_species = @{$self->{'_valid_species'} || []};
   
   if (!@valid_species) {
-    foreach my $sp (@$SiteDefs::ENSEMBL_DATASETS) {
+    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
       my $config = $self->get_config($sp, 'DB_SPECIES');
       
       if ($config->[0]) {
@@ -397,7 +397,7 @@ sub parse {
   $self->store;
   $reg_conf->configure;
   
-  EnsEMBL::Web::Tools::RobotsTxt::create($self->ENSEMBL_DATASETS, $self);
+  EnsEMBL::Web::Tools::RobotsTxt::create($self->multi_hash->{'ENSEMBL_DATASETS'}, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
   
   ## Set location for file-based data
@@ -472,7 +472,7 @@ sub _load_in_species_pages {
   if (-e $spp_tree_packed) {
     $spp_tree = lock_retrieve($spp_tree_packed);
   } else {
-    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $SiteDefs::ENSEMBL_DATASETS) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
+    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $self->multi_hash->{'ENSEMBL_DATASETS'}) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
     lock_nstore($spp_tree, $spp_tree_packed);
   }
   
@@ -687,8 +687,6 @@ sub _parse {
 
   # Parse the web tree to create the static content site map
   $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
-  ## Parse species directories for static content
-  $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $self->_info_line('Filesystem', 'Trawled web tree');
   
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
@@ -721,6 +719,7 @@ sub _parse {
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
+=pod
     ## Need to gather strain info for all species
     $name_lookup->{$config_packer->tree->{$species}{'SPECIES_COMMON_NAME'}} = $species;
     my $collection = $config_packer->tree->{$species}{'STRAIN_COLLECTION'};
@@ -733,23 +732,39 @@ sub _parse {
         $species_to_strains->{$collection} = [$species];
       }
     }
+=cut
   }
 
+
+=pod
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
     my $species = $name_lookup->{ucfirst($k)};
     $tree->{$species}{'ALL_STRAINS'} = $v;
   } 
+=cut
+
+  #use Data::Dumper; 
+  #$Data::Dumper::Maxdepth = 2;
+  #$Data::Dumper::Sortkeys = 1;
+  #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
 
   ## Finally, rename the tree keys for easy data access via URLs
   ## (and backwards compatibility!)
+  my $datasets = [];
   foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$species}{'SPECIES_URL'};
     $tree->{$url} = $tree->{$species};
+    push @$datasets, $url;
     delete $tree->{$species};
   } 
+  $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
+  #warn ">>> NEW KEYS: ".Dumper($tree);
  
+  ## Parse species directories for static content
+  $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
+  $self->_info_line('Filesystem', 'Trawled species static content');
 }
 
 sub process_ini_files {
