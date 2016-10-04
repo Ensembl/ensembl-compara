@@ -133,14 +133,14 @@ sub href {
     my $params = {
       'type'      => $type,
       'action'    => 'Phenotype',
-      'ph'        => $hub->param('ph'),
+      'ph'        => $hub->param('ph') || undef,
       $id_param   => $f->object_id,
       __clear     => 1
     };
-  
+
     $link = $hub->url($params);
   }
-  
+
   return $link;
 }
 
