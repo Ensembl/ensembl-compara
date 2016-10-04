@@ -96,7 +96,6 @@ sub create_glyphs {
       #next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
       #next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
-      my $text_info   = $self->get_text_info($feature->{'label'});
       my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $overlay     = $track_config->get('overlay_label');
       my $alongside   = $track_config->get('bumped') eq 'labels_alongside';
@@ -113,6 +112,7 @@ sub create_glyphs {
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
       if ($show_label && !$overlay) {
+        my $text_info   = $self->get_text_info($feature->{'label'});
         ## Round up, since we're working in base-pairs - otherwise we may still overlap the next feature
         my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
@@ -122,12 +122,13 @@ sub create_glyphs {
     }
     EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
 
+    my $typical_label_height;
+    $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
     ## SECOND LOOP - draw features
     foreach my $feature (@features) {
       my $new_y;
       my $feature_row = 0;
       my $label_row   = 0;
-      my $text_info   = $self->get_text_info($feature->{'label'});
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
         my $bump = $feature->{'_bump'};
@@ -137,7 +138,7 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $text_info->{'height'};
+      my $feature_height  = $track_config->get('height') || $typical_label_height;
       my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
       if ($feature_width == 0) {
@@ -174,12 +175,12 @@ sub create_glyphs {
     
       ## Optional label(s)
       my $font_size     = $self->{'font_size'};
-      my $text_width    = $text_info->{'width'};
-      my $text_height   = $text_info->{'height'};
 
       ## Regular labels (outside feature)
       if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
-        
+        my $text_info   = $self->get_text_info($feature->{'label'});
+        my $text_width    = $text_info->{'width'};
+        my $text_height   = $text_info->{'height'};
         my ($new_x, $new_y);
 
         if ($bumped eq 'labels_alongside') {
@@ -211,13 +212,17 @@ sub create_glyphs {
 
       ## Overlaid labels (on top of feature)
       ## Note that we can have these as well as regular labels, e.g. on variation tracks
-      if (($track_config->get('overlay_label') && $feature->{'label'}) ## Overlay the standard label
-          || ($track_config->get('show_overlay') && $feature->{'text_overlay'}) ## Separate text on feature
-        ) {
-       
+      my $overlay_standard =
+        ($track_config->get('overlay_label') && $feature->{'label'});
+      my $overlay_separate =
+        ($track_config->get('show_overlay') && $feature->{'text_overlay'});
+      if($self->{'pix_per_bp'} > 4 && ($overlay_standard || $overlay_separate)) {
         my $label_text;
         my $bp_textwidth;
 
+        my $text_info   = $self->get_text_info($feature->{'label'});
+        my $text_width    = $text_info->{'width'};
+        my $text_height   = $text_info->{'height'};
         ## If overlay text is different from main label, adjust accordingly
         if ($track_config->get('show_overlay') && $feature->{'text_overlay'}) {
           $label_text = $feature->{'text_overlay'};
