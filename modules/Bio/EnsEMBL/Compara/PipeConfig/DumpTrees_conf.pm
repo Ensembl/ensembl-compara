@@ -179,7 +179,8 @@ sub pipeline_analyses {
                         JOIN gene_member gm on (m.gene_member_id = gm.gene_member_id)
                         JOIN seq_member pm on (gm.gene_member_id = pm.gene_member_id)
                     WHERE
-                        gtr.member_type = '#member_type#'
+                        gtr.member_type = 'protein'
+                        AND gtr.stable_id IS NOT NULL
                         AND gtr.clusterset_id = '#clusterset_id#'
                 |,
             },
