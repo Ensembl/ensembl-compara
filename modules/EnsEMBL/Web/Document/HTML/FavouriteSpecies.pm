@@ -141,11 +141,13 @@ sub _species_list {
 
   for (@fav, sort {$species->{$a}{'common'} cmp $species->{$b}{'common'}} keys %$species) {
 
-    next if $done{$_} || ($species->{$_}{'strain_collection'} && $species->{$_}{'strain'} !~ /reference/i);
+    next if ($done{$_} || !$species->{$_} || !$species->{$_}{'is_reference'});
 
     $done{$_} = 1;
 
     my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
+    my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
+    my $strainspage   = $species->{$_}{'has_strains'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0;
 
     push @list, {
       key         => $_,
@@ -157,7 +159,8 @@ sub _species_list {
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
-      strainspage => $species->{$_}{'strain_collection'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0,
+      strainspage => $strainspage,
+      has_alt     => $alt_assembly ? 1 : 0
     };
 
   }
