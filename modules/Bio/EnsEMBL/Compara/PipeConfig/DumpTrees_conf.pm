@@ -298,9 +298,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'production_registry' => $self->o('production_registry'),
                 'dump_script'       => $self->o('dump_script'),
-                'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1 -cafe 1',
-                'tree_args'         => '#expr( $self->param(#member_type#."_tree_args") )expr#',
+                'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
