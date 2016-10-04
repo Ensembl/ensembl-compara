@@ -334,6 +334,10 @@ sub get_species_info {
        @required_species  = grep {$species eq $_} @required_species if $species;
 
     for (@required_species) {
+      my $strain            = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
+      my $strain_collection = $species_defs->get_config($_, 'STRAIN_COLLECTION') || '';
+      my $is_reference      = !$strain || ($strain && $strain =~ /reference/)
+                                       || !$strain_collection;
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
         'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
@@ -342,8 +346,9 @@ sub get_species_info {
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
-        'strain'            => $species_defs->get_config($_, 'SPECIES_STRAIN') || '',
-        'strain_collection' => $species_defs->get_config($_, 'STRAIN_COLLECTION') || '',
+        'strain'            => $strain,
+        'is_reference'      => $is_reference,
+        'strain_collection' => $strain_collection,
       } unless exists $self->{'_species_info'}{$_};
     }
 
