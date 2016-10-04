@@ -73,6 +73,7 @@ sub param_defaults {
     return {
         "ortholog_method_link_id"   => 201,
         "strict_orthologies"        => 0,
+        "clusterset_id"             => 'default',
            };
 }
 
@@ -97,7 +98,10 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, seq_member_id';
+    my $sql = "SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name
+      FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id)
+      WHERE clusterset_id = '".$self->param_required('clusterset_id')."'
+      GROUP BY taxon_id, seq_member_id";
     my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
     $sth->execute;
     my $last;
@@ -126,14 +130,14 @@ sub run {
                     WHERE
                         method_link_id = %d
                         AND hm1.seq_member_id < hm2.seq_member_id
-            }, $self->param('ortholog_method_link_id'));
+            }, $self->param_required('ortholog_method_link_id'));
 
     if (defined $self->param('id_range')) {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
         $sql .= " AND homology_id BETWEEN $range";
     }
-    if ($self->param('strict_orthologies')) {
+    if ($self->param_required('strict_orthologies')) {
         $sql .= " AND is_tree_compliant = 1";
     }
     $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });

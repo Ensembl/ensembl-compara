@@ -68,6 +68,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
+        'db_conn'   => '#compara_db#',
         'sql'   => [ $sql_num_blocks, $sql_totlength ],
     }
 }

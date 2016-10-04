@@ -269,6 +269,7 @@ sub fetch_default_for_Member {
     my ($self, $member, $clusterset_id) = @_;
 
     my $all_trees = $self->fetch_all_by_Member($member, -CLUSTERSET_ID => $clusterset_id);
+    return $all_trees->[0] if scalar(@$all_trees) == 1;
     my @sorted_trees = sort {$a->root_id <=> $b->root_id} grep {!$_->ref_root_id} @$all_trees;
     return $sorted_trees[0];
 }

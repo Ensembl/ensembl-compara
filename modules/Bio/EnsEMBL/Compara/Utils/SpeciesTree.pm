@@ -204,6 +204,7 @@ sub create_species_tree {
             my $new_leaf = $current_leaf->copy();
             $new_leaf->_complete_cast_node($current_leaf);
             $new_leaf->genome_db_id($genome_db->dbID);
+            $new_leaf->{'_genome_db'} = $genome_db;
             $new_leaf->node_id($taxon_id);
             $new_leaf->node_name(sprintf('%s (component %s)', $new_leaf->node_name, $genome_db->genome_component)) if $genome_db->genome_component;
             $new_node->add_child($new_leaf);

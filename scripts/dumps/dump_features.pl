@@ -159,6 +159,7 @@ my $mlss;
 my $dnafrag_adaptor = $compara_dba ? $compara_dba->get_DnaFragAdaptor : undef;
 my $track_name;
 my $description;
+my $extra_desc = 'useScore=0';
 my $version = $reg->get_adaptor($species, "core", "MetaContainer")->get_schema_version();
 
 if ($feature =~ /^top/) {
@@ -217,6 +218,7 @@ if ($feature =~ /^top/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
   $track_name = "gerp_score.".($mlss->species_set->name || $1).".$species_name.e$version";
   $description = $mlss->name." on $species_name in Ensembl $version";
+  $extra_desc = 'type=bedGraph';
 } elsif ($feature =~ /^nets_?(\d+)/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
   $track_name = $mlss->name.".e$version";
@@ -237,7 +239,7 @@ if ($feature =~ /^top/) {
 }
 
 if (!defined($from)) {
-  print "track name=$track_name description=\"$description\" useScore=0\n";
+  print "track name=$track_name description=\"$description\" $extra_desc\n";
 }
 
 my $all_slices;
@@ -502,7 +504,7 @@ foreach my $slice (sort {
         my $sub_slice = $it->next();
         warn $sub_slice->name();
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
-        print join("\t", $name, $_->start, $_->end, 'gerp_score', $_->diff_score), "\n" for @$scores;
+        print join("\t", $name, $_->start, $_->end, $_->diff_score), "\n" for @$scores;
     }
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {

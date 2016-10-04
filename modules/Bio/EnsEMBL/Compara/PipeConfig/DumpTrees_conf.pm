@@ -90,8 +90,6 @@ sub default_options {
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
-
-        'ftp_dir'     => '/nfs/ensembl/ensembl/ftp_ensembl/release-'.$self->o('ensembl_release').'/',
     };
 }
 
@@ -101,8 +99,8 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          'default'      => {'LSF' => [ '', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ]  },
-         '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $self->o('production_registry') ] },
-         '10Gb_job'      => {'LSF' => [ '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"', $self->o('production_registry') ] },
+         '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
+         '10Gb_job'      => {'LSF' => [ '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
     };
 }
 
@@ -113,7 +111,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'target_dir'    => $self->o('target_dir'),
         'work_dir'      => $self->o('work_dir'),
-        'ftp_dir'       => $self->o('ftp_dir'),
 
         'member_type'   => $self->o('member_type'),
         'clusterset_id' => $self->o('clusterset_id'),
@@ -271,7 +268,6 @@ sub pipeline_analyses {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
@@ -313,7 +309,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 '1->A' => [ 'generate_tarjobs' ],
                 '2->A' => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
@@ -340,7 +335,6 @@ sub pipeline_analyses {
                 'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
             },
@@ -380,32 +374,19 @@ sub pipeline_analyses {
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.emf_dumps.txt > #target_dir#/emf/README.#member_type#_trees.emf_dumps.txt'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.xml_dumps.txt > #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
-                    ['mkdir -p #ftp_dir#/emf/ensembl-compara/homologies'],
-                    ['mkdir -p #ftp_dir#/xml/ensembl-compara/homologies'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
-            -meadow_type => 'LOCAL',
             -flow_into => {
-                '2->A' => [ 'prepare_dir' ],
-                'A->1' => 'copy_to_ensembl_ftp',
+                2 => [ 'prepare_dir' ],
             },
         },
 
+        # Is populated by the factory above
         {   -logic_name => 'prepare_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-            },
-            -meadow_type => 'LOCAL',
         },
 
-        {   -logic_name => 'copy_to_ensembl_ftp',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd' => 'cp -a #target_dir#/emf/* #ftp_dir#/emf/ensembl-compara/homologies; cp -a #target_dir#/xml/* #ftp_dir#/xml/ensembl-compara/homologies; chmod -fR g+w #ftp_dir#/emf/* #ftp_dir#/xml/*; chgrp -fR ensembl #ftp_dir#/emf/* #ftp_dir#/xml/*',
-            },
-            -meadow_type => 'LOCAL',
-        },
     ];
 }
 
