@@ -363,6 +363,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
         }
         prev = cur;
     }
+    struct hal_species_t* query_species = head;
     free(str_copy);
     */
 
