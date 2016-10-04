@@ -189,7 +189,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'cc21_mammals_epo_pt3_86',
 );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
      -host => 'compara4',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
@@ -207,7 +207,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'wa2_primates_epo',
 );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
      -host => 'compara4',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
@@ -225,7 +225,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'mm14_4sauropsids_new4sauranchor_hacked_86_epo',
 );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
      -host => 'compara1',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
