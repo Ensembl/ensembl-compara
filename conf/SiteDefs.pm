@@ -226,24 +226,7 @@ our $ENSEMBL_PRECACHE_DEBUG   = 0;      # change this to 1, 2 or 3 to get requir
 
 
 ###############################################################################
-## Mart configs - just keeping flags off by default
-our $ENSEMBL_MART_ENABLED         = 0;  # Setting it to non zero will make the mart links appear on the site (the server itself may not be mart)
-our $ENSEMBL_MART_PLUGIN_ENABLED  = 0;  # Is set true by the mart plugin itself. No need to override it.
-our $ENSEMBL_MART_SERVER          = ''; # Server address if mart server is running on another server (biomart requests get proxied to ENSEMBL_MART_SERVER)
-###############################################################################
-
-
-###############################################################################
-## Memcached specific configs
-our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|1] and 'default_exptime'. See EnsEMBL::Web::Cache in public-plugins for details.
-###############################################################################
-
-
-###############################################################################
-## Page specific configurations
-our $FLANK5_PERC                  = 0.02; # % 5' flanking region for images (used for region comparison and location view)
-our $FLANK3_PERC                  = 0.02; # % 3' flanking region for images (used for region comparison and location view)
-our $ENSEMBL_ALIGNMENTS_HIERARCHY = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
+## Cookies and cookie encryption
 ###############################################################################
 
 
@@ -351,35 +334,22 @@ sub import {
   # Set Mart servername
   _set_dedicated_mart();
 
-  # Set ENV variables as specified in ENSEMBL_SETENV
-  _set_env();
-
-  # Finalise other configs that depends upon plugins SiteDefs.
-  $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
-  $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
+sub update_conf {
+  our $ENSEMBL_PLUGIN_ROOTS = [];
+  
+  my @plugins = reverse @{$ENSEMBL_PLUGINS || []}; # Go on in reverse order so that the first plugin is the most important
+  
+  while (my ($dir, $name) = splice @plugins, 0, 2) {
+    my $plugin_conf = "${name}::SiteDefs";
 
   $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
     $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
     $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
   );
-
-  $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
-  $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
-  $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
-  $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
-  $ENSEMBL_COHORT            = [ grep $ENSEMBL_IDS_USED->{$_}, sort keys %$ENSEMBL_IDS_USED ]->[0] || $ENSEMBL_SERVERROOT;
-
-  ### Quick hack to add machine name to config.packed
-  $ENSEMBL_COHORT = $ENSEMBL_COHORT =~ /^cluster:/ ? "$ENSEMBL_SERVERNAME-$ENSEMBL_COHORT" : $ENSEMBL_COHORT;
-
-  $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_COHORT =~ s/\W+/-/gr, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-  $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
-
-  _verbose_params() if $_VERBOSE;
 }
 
-sub _verbose_params {
-  ## Prints a list of all the parameters and their values
+sub verbose_params {
+
   my $params = {};
 
   no strict qw(refs);
