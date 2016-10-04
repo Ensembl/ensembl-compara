@@ -68,7 +68,6 @@ Ensembl.Panel.AlignmentText = Ensembl.Panel.Content.extend({
         full_alignment_panel = Ensembl.EventManager.trigger('createPanel', 'full_alignment', 'TextSequence', params);
 
         var ajax_html = full_alignment_panel.showFullTextSequence($(this).data('totalLength'), $(this).data('chunkLength'), $(this).data('displayWidth'));
-        console.log(ajax_html)
         full_alignment_panel.el.html(ajax_html);
         full_alignment_panel.init();
       }

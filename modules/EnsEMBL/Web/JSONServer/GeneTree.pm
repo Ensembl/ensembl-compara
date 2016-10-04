@@ -71,7 +71,11 @@ sub json_fetch_wasabi {
   }
 
   # Store new data into session
+  if (! keys %$wasabi_session_data) {
+    $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
+  }
   $wasabi_session_data->{$wasabi_session_key} = $files;
+
   $hub->session->set_record_data($wasabi_session_data);
 
   return $files;
@@ -96,7 +100,7 @@ sub create_json {
   my $file_handle = EnsEMBL::Web::File::User->new(hub => $self->hub, name => $filename, extension => 'json');
 
   my $json = my $hash = Bio::EnsEMBL::Compara::Utils::GeneTreeHash->convert (
-    $tree, 
+    $tree->tree, 
     -no_sequences => 0, 
     -aligned => 1, 
     -species_common_name => 0, 
