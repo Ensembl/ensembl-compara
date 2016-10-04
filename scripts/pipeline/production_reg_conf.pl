@@ -29,7 +29,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-
+use Bio::EnsEMBL::Production::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 # ------------------------- CORE DATABASES: --------------------------------------
 
@@ -275,7 +277,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 # ----------------------------------------------------------------------
 
 # Merged homologies
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
      -host => 'compara1',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
@@ -336,17 +338,18 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 # ensembl production (maintained by production team):
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::Production::DBSQL::DBAdaptor->new(
     -host => 'ens-staging',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ensembl_production',
     -dbname => 'ensembl_production',
+    -group => 'production',
 );
 
 # NCBI taxonomy database (also maintained by production team):
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -host => 'ens-livemirror',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
