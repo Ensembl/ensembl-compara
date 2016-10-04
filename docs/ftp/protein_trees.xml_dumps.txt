@@ -20,12 +20,6 @@ Compara.{release}.protein.alltrees.orthoxml.xml.gz
   Contains all the trees in a single OrthoXML file. All the trees are
   attached to the root 'groups' tag.
 
-Compara.{release}.protein.alltrees_possorthol.orthoxml.xml.gz
-  Also contains all the trees in a single OrthoXML file, but the duplication
-  nodes with a confidence score lower than 0.25 are considered as speciations.
-  This makes the gene tree inconsistent with the species tree, but the derived
-  orthologies include the 'possible_orthologs'.
-
 
 The following three files are tar archives containing one file per tree.
 CAUTION: Be aware that untaring any of these files will create in your current
