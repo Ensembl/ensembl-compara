@@ -196,13 +196,27 @@ sub pipeline_analyses {
             },
           },
 
+        {   -logic_name => 'fire_homology_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'               => '#rel_db#',
+                'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
+            },
+            -flow_into => {
+                2 => WHEN('#max_hom_id#' => {
+                        'dump_all_homologies_tsv' => undef,
+                        'dump_all_homologies_orthoxml' => [
+                            {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
+                        ],
+                    } ),
+            },
+        },
+
         {   -logic_name => 'dump_all_homologies_orthoxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
                 'compara_db'            => '#rel_db#',
-                'protein_tree_range'    => '0-99999999',
-                'ncrna_tree_range'      => '100000000-199999999',
-                'idrange'               => '#expr( $self->param(#member_type#."_tree_range") )expr#',
             },
             -flow_into => {
                 1 => {
@@ -244,8 +258,6 @@ sub pipeline_analyses {
                 'db_conn'       => '#rel_db#',
                 'output_file'   => '#target_dir#/tsv/#name_root#.homologies.tsv',
                 'append'        => [qw(-q)],
-                'min_hom_id'    => '#expr(#member_type# eq "protein" ? 0 : 100000000)expr#',
-                'max_hom_id'    => '#expr(#min_hom_id# + 99999999)expr#',
                 'input_query'   => sprintf q|
                     SELECT
                         gm1.stable_id AS gene_stable_id,
@@ -282,12 +294,8 @@ sub pipeline_analyses {
                 1 => [
                     WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
                     {
-                        'dump_all_homologies_tsv' => undef,
+                        'fire_homology_dumps' => undef,
                         'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                        'dump_all_homologies_orthoxml' => [
-                            {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
-                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
-                        ],
                     }
                 ],
             },

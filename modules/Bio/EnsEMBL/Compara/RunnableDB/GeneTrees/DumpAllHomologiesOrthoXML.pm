@@ -132,10 +132,11 @@ sub run {
                         AND hm1.seq_member_id < hm2.seq_member_id
             }, $self->param_required('ortholog_method_link_id'));
 
-    if (defined $self->param('id_range')) {
-        my $range = $self->param('id_range');
-        $range =~ s/-/ AND /;
-        $sql .= " AND homology_id BETWEEN $range";
+    if (defined $self->param('min_hom_id')) {
+        $sql .= " AND homology_id >= ".$self->param('min_hom_id');
+    }
+    if (defined $self->param('max_hom_id')) {
+        $sql .= " AND homology_id <= ".$self->param('max_hom_id');
     }
     if ($self->param_required('high_confidence')) {
         $sql .= " AND is_high_confidence = 1";
