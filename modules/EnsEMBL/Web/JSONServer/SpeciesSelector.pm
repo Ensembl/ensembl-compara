@@ -56,7 +56,7 @@ sub json_to_dynatree {
       my $t = {
         key             => $division_hash->{key},
         scientific_name => $sp->{scientific},
-        title           => $sp->{common} . ' ' . $sp->{strain},
+        title           => $division_hash->{display_name} || $sp->{common},
         tooltip         => $sp->{scientific} || '',
         searchable      => 1,
         icon            => '/i/species/16/' . $sp->{key} . '.png'
