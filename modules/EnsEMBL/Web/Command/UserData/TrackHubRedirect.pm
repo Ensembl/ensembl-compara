@@ -107,12 +107,12 @@ sub process {
               $anchor = 'modal_user_data';
             }
             else {
-              $hub->session->add_data(
+              $hub->session->set_record_data({
                 type     => 'message',
                 code     => 'AttachURL',
                 message  => $messages{$key}{'message'},
                 function => '_'.$messages{$key}{'type'},
-              );
+              });
             }
           }
         }

@@ -47,12 +47,12 @@ sub process {
   $url_params->{'action'} = 'ManageData';
 
   if ($hub_info->{'error'}) {
-    $hub->session->add_data(
+    $hub->session->set_record_data({
       type     => 'message',
       code     => 'trackhub_refresh_error',
       message  => "Sorry, we were unable to refresh your trackhub at this time. Please check the hub site and try again later.", 
       function => '_error'
-    );
+    });
   }
 
   return $self->ajax_redirect($self->hub->url($url_params));
