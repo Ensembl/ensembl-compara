@@ -85,6 +85,15 @@ sub get_redirect_uri {
     return $uri =~ s/Summary/Explore/r;
   }
 
+  if ($uri =~ /\/psychic/) {
+    return $uri =~ s/psychic/Psychic/r;
+  }
+
+  ## quick fix for solr autocomplete js bug
+  if ($uri =~ /undefined\//) {
+    return $uri =~ s/undefined\///r;
+  }
+
   ## Trackhub short URL
   if ($uri =~ m|^/trackhub\?|i) {
     return $uri = s/trackhub/UserData\/TrackHubRedirect/r;
