@@ -70,7 +70,6 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
 
@@ -80,7 +79,6 @@ sub default_options {
 
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         'rel_db'        => 'compara_curr',
-#        'rel_db'            => sprintf('mysql://ensro@%s/%s_ensembl_compara_%s', $self->o('rel_db_host'), $self->o('rel_coord'), $self->o('ensembl_release')),
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
