@@ -84,7 +84,7 @@ sub default_options {
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
 
-        'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
+        'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type').'_'.$self->o('clusterset_id'),  # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
@@ -234,7 +234,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => sprintf('#target_dir#/Compara.homologies.e%s.tsv', $self->o('ensembl_release')),
+                'output_file'   => sprintf('#target_dir#/Compara.#member_type#_#clusterset_id#.homologies.e%s.tsv', $self->o('ensembl_release')),
                 'append'        => [qw(-q)],
                 'min_hom_id'    => '#expr(#member_type# eq "protein" ? 0 : 100000000)expr#',
                 'max_hom_id'    => '#expr(#min_hom_id# + 99999999)expr#',
