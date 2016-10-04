@@ -146,6 +146,9 @@ sub colour_key {
 
 sub tag {
   my ($self, $f) = @_;
+
+  my $hub = $self->{'config'}{'hub'};
+
   my ($colour_key) = $self->colour_key($f);
   my $colour     = $self->my_colour($colour_key);
   my $flank_colour = $colour;
@@ -155,9 +158,16 @@ sub tag {
   my $epigenome = $self->{'my_config'}->get('epigenome');
 
   my @result;
-  my $loci       = eval {$f->get_underlying_structure($epigenome)};
-  return if $@ || !$loci || !scalar(@$loci);
+  my $loci = [ map { $_->{'locus'} }
+     @{$hub->get_query('GlyphSet::RFUnderlying')->go($self,{
+      species => $self->{'config'}{'species'},
+      type => 'funcgen',
+      epigenome => $epigenome,
+      feature => $f,
+    })}
+  ];
 
+  return if $@ || !$loci || !scalar(@$loci);
   my $bound_end  = pop @$loci;
   my $end        = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;

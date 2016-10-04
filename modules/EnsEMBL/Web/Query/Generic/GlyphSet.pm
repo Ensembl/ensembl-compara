@@ -266,6 +266,56 @@ sub fixup_slice {
   }
 }
 
+sub fixup_regulatory_feature {
+  my ($self,$key,$sk,$tk) = @_;
+
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    $data->{$key} = $data->{$key}->stable_id if $data->{$key};
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    if($data->{$key}) {
+      $data->{$key} = $ad->regulatoryfeature_by_stableid($data->{$sk},$data->{$tk},$data->{$key});
+    }
+  }
+}
+
+sub fixup_epigenome {
+  my ($self,$key,$sk,$tk) = @_;
+
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    $data->{$key} = $data->{$key}->name if $data->{$key};
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    if($data->{$key}) {
+      $data->{$key} = $ad->epigenome_by_stableid($data->{$sk},$data->{$tk},$data->{$key});
+    }
+  }
+}
+
+sub fixup_loci {
+  my ($self,$key,$fk) = @_;
+
+  if($self->phase eq 'post_generate') {
+    my $args = $self->args;
+    my $data = $self->data;
+    my $offset = $args->{$fk}->slice->start-1;
+    foreach my $d (@$data) {
+      $d->{$key} += $offset;
+    }
+  } elsif($self->phase eq 'post_process') {
+    my $args = $self->args;
+    my $data = $self->data;
+    my $offset = $args->{$fk}->slice->start-1;
+    foreach my $d (@$data) {
+      $d->{$key} -= $offset;
+    }
+  }
+}
+
 sub _split_slice {
   my ($self,$slice,$rsize) = @_;
 
