@@ -155,7 +155,7 @@ sub tag {
   if ($colour_key eq 'promoter') {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
-  my $epigenome = $self->{'my_config'}->get('epigenome');
+  my $epigenome = $self->{'my_config'}->get('epigenome')||'';
 
   my @result;
   my $loci = [ map { $_->{'locus'} }
