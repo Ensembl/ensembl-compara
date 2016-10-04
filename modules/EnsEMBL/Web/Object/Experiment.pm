@@ -60,7 +60,7 @@ sub new {
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
           my $cell_type_adaptor = $funcgen_db_adaptor->get_CellTypeAdaptor;
-          push @{$constraints->{'cell_types'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+          push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
         } elsif ($filter eq 'evidence_type') {
           $constraints->{'evidence_types'} = $value;
         } elsif ($filter eq 'project') {
