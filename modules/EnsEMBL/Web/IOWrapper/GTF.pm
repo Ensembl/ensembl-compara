@@ -100,6 +100,7 @@ sub post_process {
     }
 
     ## Now add any lone transcripts (with no exons) to the feature array
+    $data->{$track_key}{'features'} ||= [];
     push $data->{$track_key}{'features'}, values %{$data->{$track_key}{'transcripts'}||{}};
 
     ## Transcripts will be out of order, owing to being stored in hash
