@@ -59,7 +59,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     // This uses a $.getScript() instead of $.getJSON() because Firefox 3.x on KDE/Linux 
     // chokes when parsing the deeply nested JSON structure, giving the error: 
     // "InternalError: script stack space quota is exhausted".
-    $(document).ajaxError(function(e, request, settings, exception){ alert(exception) });
+    $(document).ajaxError(function(e, request, settings, exception){ console.log(exception) });
     $.ajax({
       url: panel.dataUrl,
       async: false,
