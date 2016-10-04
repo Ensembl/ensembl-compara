@@ -302,13 +302,17 @@ sub get_config {
   my $var = shift || $species;
 
   if (defined $CONF->{'_storage'}) {
-    return $CONF->{'_storage'}{$species}{$species}{$var} if exists $CONF->{'_storage'}{$species} && 
-                                                            exists $CONF->{'_storage'}{$species}{$species} && 
-                                                            exists $CONF->{'_storage'}{$species}{$species}{$var};
-                                                            
     return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
                                                   exists $CONF->{'_storage'}{$species}{$var};
-                                                  
+    
+    ## Try production name
+    $species = $CONF->{'_storage'}{$species}{'SPECIES_PRODUCTION_NAME'} if exists $CONF->{'_storage'}{$species};
+
+    if ($species) {
+      return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
+                                                    exists $CONF->{'_storage'}{$species}{$var};
+    }
+   
     return $CONF->{'_storage'}{$var} if exists $CONF->{'_storage'}{$var};
   }
 
