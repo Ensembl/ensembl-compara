@@ -94,6 +94,11 @@ sub init_cacheable {
   );
 
   $self->modify_configs(
+    [ 'crispr_WGE_CRISPR_sites'],
+    { display => 'off' }
+  );
+
+  $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_nolabel' }
   );
