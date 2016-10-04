@@ -76,7 +76,7 @@ sub json_to_dynatree {
         $t->{isFolder} = 1;
         $t->{searchable} = 1;
         # Make it unselectable if it is not in the available species_list
-        $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
+        # $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
         $t->{children} = $extra_dyna;
       }
 
