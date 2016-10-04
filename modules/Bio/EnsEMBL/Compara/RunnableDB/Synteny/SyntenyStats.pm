@@ -166,8 +166,6 @@ sub calculate_stats {
     $prefix = 'non_';
   }
   
-  $tags{'ensembl_release'} = $self->compara_dba->get_MetaContainer->get_schema_version();
-  
   foreach my $tag (sort keys %tags) {
     $self->warning("store_tag($mlss_id, $tag, ".$tags{$tag}.")");
     $mlss->store_tag($tag, $tags{$tag});

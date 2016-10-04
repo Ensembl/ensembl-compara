@@ -117,11 +117,6 @@ sub fetch_input {
   $self->require_executable('dump_features');
   $self->require_executable('create_pair_aligner_page');
 
-  #Get ensembl schema version from meta table if not defined
-  if (!defined $self->param('ensembl_release')) {
-      $self->param('ensembl_release', $self->compara_dba->get_MetaContainer->get_schema_version());
-  }
-
   return 1;
 }
 
@@ -229,8 +224,6 @@ sub write_pairaligner_statistics {
     $sth->execute();
     my ($num_blocks) = $sth->fetchrow_array();
 
-    $method_link_species_set->store_tag("ensembl_release", $self->param('ensembl_release'));
-    
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Find the reference and non-reference genome_db

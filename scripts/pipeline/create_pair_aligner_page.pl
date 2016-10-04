@@ -419,7 +419,7 @@ sub fetch_input {
 
     $pair_aligner_config->{method_link_type} = $mlss->method->type;
 
-    $pair_aligner_config->{ensembl_release} = $mlss->get_value_for_tag("ensembl_release");
+    $pair_aligner_config->{ensembl_release} = $mlss->first_release;
 
     if ($mlss->source eq "ucsc") {
 	$pair_aligner_config->{download_url} = $mlss->url;
