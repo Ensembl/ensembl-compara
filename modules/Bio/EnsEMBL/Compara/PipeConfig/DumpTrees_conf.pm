@@ -164,7 +164,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => sprintf('#target_dir#/ensembl.GeneTree_content.e%s.txt', $self->o('ensembl_release')),
+                'output_file'   => sprintf('#target_dir#/ensembl.GeneTree_content.#clusterset_id#.e%s.txt', $self->o('ensembl_release')),
                 'append'        => [qw(-N -q)],
                 'input_query'   => sprintf q|
                     SELECT 
