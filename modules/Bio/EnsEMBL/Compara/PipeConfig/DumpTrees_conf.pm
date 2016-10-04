@@ -78,6 +78,7 @@ sub default_options {
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
+        # Standard registry file
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         'rel_db'        => 'compara_curr',
 
@@ -293,7 +294,6 @@ sub pipeline_analyses {
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1 -cafe 1',
                 'tree_args'         => '#expr( $self->param(#member_type#."_tree_args") )expr#',
-#                'cmd'               => '#dump_script# --url #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
                 'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
