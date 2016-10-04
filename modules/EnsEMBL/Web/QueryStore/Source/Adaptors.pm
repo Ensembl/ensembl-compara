@@ -85,6 +85,18 @@ sub transcript_variation_adaptor {
   return $self->_get_adaptor('get_TranscriptVariationAdaptor','variation',$species);
 }
 
+sub regulatory_feature_adaptor {
+  my ($self,$species,$type) = @_;
+
+  return $self->_get_adaptor('get_RegulatoryFeatureAdaptor',$type,$species);
+}
+
+sub epigenome_adaptor {
+  my ($self,$species,$type) = @_;
+
+  return $self->_get_adaptor('get_EpigenomeAdaptor',$type,$species);
+}
+
 sub slice_by_name {
   my ($self,$species,$name) = @_;
 
@@ -103,6 +115,17 @@ sub transcript_by_stableid {
   return $self->transcript_adaptor($species,$type)->fetch_by_stable_id($id);
 }
 
+sub regulatoryfeature_by_stableid {
+  my ($self,$species,$type,$id) = @_;
+
+  return $self->regulatory_feature_adaptor($species,$type)->fetch_by_stable_id($id);
+}
+
+sub epigenome_by_stableid {
+  my ($self,$species,$type,$id) = @_;
+
+  return $self->epigenome_adaptor($species,$type)->fetch_by_name($id);
+}
 
 sub compara_member {
   my ($self,$id) = @_;
