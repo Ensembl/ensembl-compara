@@ -126,7 +126,7 @@ sub run {
 			$c++;
 		}
 		
-		last if $c >= 10;
+#		last if $c >= 10;
 	}
 
 	print " \n remove chromosome or scaffolds with only 1 gene--------------------------START\n\n" if ( $self->debug );
