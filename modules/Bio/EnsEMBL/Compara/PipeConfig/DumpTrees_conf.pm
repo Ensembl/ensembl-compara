@@ -232,7 +232,7 @@ sub pipeline_analyses {
                 'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
             },
-            -rc_name => '1Gb_job',
+            -rc_name => '4Gb_job',
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#file#' },
