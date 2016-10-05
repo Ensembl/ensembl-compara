@@ -193,7 +193,10 @@ sub pipeline_analyses {
                 |,
             },
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
+                1 => WHEN(
+                    '-z #output_file#' => { 'remove_empty_file' => { 'full_name' => '#output_file#' } },
+                    ELSE { 'archive_long_files' => { 'full_name' => '#output_file#' } },
+                ),
             },
           },
 
@@ -310,9 +313,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_collations',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'protein_tree_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
-                'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'nt.fasta' ],
-                'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
+                'inputlist'         => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta', 'nt.fasta' ],
                 'column_names'      => [ 'extension' ],
             },
             -flow_into => {
@@ -325,20 +326,22 @@ sub pipeline_analyses {
         {   -logic_name    => 'collate_dumps',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #target_dir#/emf/#dump_file_name#',
+                'collated_file' => '#target_dir#/emf/#dump_file_name#',
+                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
             },
             -hive_capacity => 2,
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/emf/#dump_file_name#' } },
+                1 => WHEN(
+                    '-z #collated_file#' => { 'remove_empty_file' => { 'full_name' => '#collated_file#' } },
+                    ELSE { 'archive_long_files' => { 'full_name' => '#collated_file#' } },
+                ),
             },
         },
 
         {   -logic_name => 'generate_tarjobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'protein_tree_list' => [ 'orthoxml.xml', 'phyloxml.xml', 'cafe_phyloxml.xml' ],
-                'ncrna_tree_list'   => [ 'orthoxml.xml', 'phyloxml.xml', 'cafe_phyloxml.xml' ],
-                'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
+                'inputlist'         => [ 'orthoxml.xml', 'phyloxml.xml', 'cafe_phyloxml.xml' ],
                 'column_names'      => [ 'extension' ],
             },
             -flow_into => {
@@ -349,11 +352,16 @@ sub pipeline_analyses {
         {   -logic_name => 'tar_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -C #work_dir# -T /dev/stdin --transform "s:^.*/:#member_type#:"',
+                'file_list'     => '#work_dir#/#extension#.list',
+                'tar_archive'   => '#target_dir#/xml/#dump_file_name#.tar',
+                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n | tee #file_list# | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -hive_capacity => 2,
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/xml/#dump_file_name#.tar' } },
+                1 => WHEN(
+                    '-z #file_list#' => { 'remove_empty_file' => { 'full_name' => '#tar_archive#' } },
+                    ELSE { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
+                ),
             },
         },
 
@@ -368,6 +376,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd'         => 'gzip #full_name#',
+            },
+        },
+
+        {   -logic_name => 'remove_empty_file',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'         => 'rm #full_name#',
             },
         },
 
