@@ -26,18 +26,14 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type protein
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type ncrna
+    By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
+    -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
-    A pipeline to dump either protein_trees or ncrna_trees.
-
-    In rel.60 protein_trees took 2h20m to dump.
-
-    In rel.63 protein_trees took 51m to dump.
-    In rel.63 ncrna_trees   took 06m to dump.
+    This pipeline dumps all the gene-trees and homologies under #target_dir#
 
 =head1 CONTACT
 
@@ -111,13 +107,20 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'target_dir'    => $self->o('target_dir'),
         'work_dir'      => $self->o('work_dir'),
 
-        'member_type'   => $self->o('member_type'),
-        'clusterset_id' => $self->o('clusterset_id'),
-
         'basename'      => '#member_type#_#clusterset_id#',
         'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
 
         'rel_db'        => $self->o('rel_db'),
+    };
+}
+
+
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     };
 }
 
@@ -144,6 +147,16 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
 sub pipeline_analyses {
     my ($self) = @_;
+    my $pa = $self->_pipeline_analyses();
+    $pa->[1]->{'-parameters'} = {
+        'column_names'      => [ 'clusterset_id', 'member_type' ],
+        'inputlist'         => [ [$self->o('clusterset_id'), $self->o('member_type')] ],
+    };
+    return $pa;
+}
+
+sub _pipeline_analyses {
+    my ($self) = @_;
     return [
 
         {   -logic_name => 'pipeline_start',
@@ -151,17 +164,37 @@ sub pipeline_analyses {
             -parameters => {
                 'readme_dir'    => $self->o('readme_dir'),
                 'cmd'           => join('; ',
-                                    'mkdir -p #work_dir# #target_dir#/xml #target_dir#/emf #target_dir#/tsv',
+                                    'mkdir -p #target_dir#/xml #target_dir#/emf #target_dir#/tsv',
                                     'cp -af #readme_dir#/README.gene_trees.emf_dumps.txt #target_dir#/emf/',
                                     'cp -af #readme_dir#/README.gene_trees.xml_dumps.txt #target_dir#/xml/',
                                     'cp -af #readme_dir#/README.gene_trees.tsv_dumps.txt #target_dir#/tsv/',
                                    ),
             },
             -input_ids  => [ {} ],
-            -flow_into  => {
-                '1->A' => [ 'create_dump_jobs' ],
+            -flow_into  => [ 'collection_factory' ],
+        },
+
+        {   -logic_name => 'collection_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -flow_into => {
+                '2->A' => [ 'mk_work_dir' ],
                 'A->1' => [ 'md5sum' ],
             },
+        },
+
+        {   -logic_name => 'mk_work_dir',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'         => 'mkdir -p #work_dir#',
+            },
+            -flow_into  => [
+                    WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
+                    {
+                        'create_dump_jobs' => undef,
+                        'fire_homology_dumps' => undef,
+                        'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
+                    }
+                ],
         },
 
           { -logic_name => 'dump_for_uniprot',
@@ -291,13 +324,6 @@ sub pipeline_analyses {
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
-                1 => [
-                    WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
-                    {
-                        'fire_homology_dumps' => undef,
-                        'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                    }
-                ],
             },
         },
 
