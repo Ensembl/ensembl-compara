@@ -169,6 +169,8 @@ sub init_cache {
   # init env cache tags
   $ENV{'CACHE_TAGS'} = {};
 
+  $self->add_cache_tags({'species' => sprintf('SPECIES[%s]', $self->species)}) if $self->species;
+
   $self->add_cache_tags({
     'page'    => sprintf('PAGE[%s]', $self->page_type),
     'path'    => sprintf('PATH[%s]', join('/', @{$self->path_segments})),
