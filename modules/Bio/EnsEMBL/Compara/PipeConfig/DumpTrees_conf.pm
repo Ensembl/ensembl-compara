@@ -137,8 +137,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
                     * 'collate_dumps'       actually merge/collate single trees into long dumps
 
-                    * 'remove_hash'         remove the temporary hash of directories
-
                     * 'archive_long_files'  zip the long dumps
 
                     * 'md5sum'              compute md5sum for compressed files
@@ -317,9 +315,8 @@ sub pipeline_analyses {
                 'column_names'      => [ 'extension' ],
             },
             -flow_into => {
-                '1->A' => [ 'generate_tarjobs' ],
-                '2->A' => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
-                'A->1' => 'remove_hash',
+                1 => [ 'generate_tarjobs' ],
+                2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
             },
         },
 
@@ -362,13 +359,6 @@ sub pipeline_analyses {
                     '-z #file_list#' => { 'remove_empty_file' => { 'full_name' => '#tar_archive#' } },
                     ELSE { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
                 ),
-            },
-        },
-
-        {   -logic_name => 'remove_hash',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'         => 'rm -rf #work_dir#',
             },
         },
 
