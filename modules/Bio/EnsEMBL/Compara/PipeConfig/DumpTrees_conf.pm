@@ -155,9 +155,10 @@ sub pipeline_analyses {
             -parameters => {
                 'readme_dir'    => $self->o('readme_dir'),
                 'cmd'           => join('; ',
-                                    'mkdir -p #work_dir# #target_dir#/xml #target_dir#/emf',
+                                    'mkdir -p #work_dir# #target_dir#/xml #target_dir#/emf #target_dir#/tsv',
                                     'cp -af #readme_dir#/README.gene_trees.emf_dumps.txt #target_dir#/emf/',
                                     'cp -af #readme_dir#/README.gene_trees.xml_dumps.txt #target_dir#/xml/',
+                                    'cp -af #readme_dir#/README.gene_trees.tsv_dumps.txt #target_dir#/tsv/',
                                    ),
             },
             -input_ids  => [ {} ],
@@ -242,7 +243,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => '#target_dir#/#name_root#.homologies.tsv',
+                'output_file'   => '#target_dir#/tsv/#name_root#.homologies.tsv',
                 'append'        => [qw(-q)],
                 'min_hom_id'    => '#expr(#member_type# eq "protein" ? 0 : 100000000)expr#',
                 'max_hom_id'    => '#expr(#min_hom_id# + 99999999)expr#',
@@ -373,7 +374,7 @@ sub pipeline_analyses {
         {   -logic_name => 'md5sum',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees',
+                'cmd' => 'cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/tsv ; md5sum *.gz >MD5SUM.#basename#_trees',
             },
         },
 
