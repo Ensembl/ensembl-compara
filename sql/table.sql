@@ -511,7 +511,9 @@ CREATE TABLE `species_tree_node_tag` (
 
 @see species_tree_node
 @see species_tree_root
-@see gene_member_qc
+@see QC_split_genes
+@see short_orth_genes
+@see long_orth_genes
 */
 
 
@@ -1592,35 +1594,6 @@ CREATE TABLE gene_tree_node_attr (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-/**
-@table gene_member_qc
-@desc  This table contains gene quality information from the geneset_QC pipeline
-@colour   #1E90FF
-
-@column gene_member_id           Internal unique ID
-@column stable_id                EnsEMBL stable ID
-@column genome_db_id             Internal unique ID for this table
-@column seq_member_id            canonical seq_member_id
-@column n_species                -n_species
-@column  n_orth                  -n_orth
-@column  avg_cov                 -avg_cov
-@column status                   "orphaned-gene", "split-gene", "long-gene" or "short-gene"
-*/
-
-CREATE TABLE gene_member_qc (
-  gene_member_stable_id       varchar(128) NOT NULL,
-  genome_db_id                int(10) unsigned NOT NULL,
-  seq_member_id               int(10),
-  n_species                   INT,
-  n_orth                      INT,
-  avg_cov                     FLOAT,
-  status                      varchar(50) NOT NULL,
-
-  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
-
-  key (gene_member_stable_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
 @table gene_tree_object_store
