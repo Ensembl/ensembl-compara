@@ -76,8 +76,6 @@ sub default_options {
         # either 'default' or 'murinae'
         #'clusterset_id'     => 'default',
 
-        'pipeline_name'     => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
-
         # Standard registry file
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         'rel_db'        => 'compara_curr',
