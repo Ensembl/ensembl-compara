@@ -73,21 +73,23 @@ sub new {
     html_format   => undef,
   };
   
+  bless $self, $class;
+
   if ($hub) {
     $self->{'viewconfig'}{$hub->type} = $hub->get_viewconfig({
       'component' => $id,
-      'type'      => $hub->type,
+      'type'      => $self->viewconfig_type || $hub->type,
       'cache'     => 1
     });
     $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   }
-
-  bless $self, $class;
   
   $self->_init;
   
   return $self;
 }
+
+sub viewconfig_type { return undef; }
 
 sub buttons {
   ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle, disabled, group, nav_image)
