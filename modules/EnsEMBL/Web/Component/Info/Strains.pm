@@ -62,14 +62,20 @@ sub content {
     foreach my $strain (@$strains) {
       my $sample_data = $sd->get_config($strain, 'SAMPLE_DATA');
       my $location    = $sample_data->{'LOCATION_PARAM'} || $ref_location;
-      my $url         = $hub->url({
+      my $loc_url     = $hub->url({
                                     'species' => $strain,
                                     'type'    => 'Location',
                                     'action'  => 'View',
                                     'r'       => $location,
                                   });
 
-      my $link    = sprintf('<a href="%s">View example location</a>', $url);
+      my $kar_url     = $hub->url({
+                                    'species' => $strain,
+                                    'type'    => 'Location',
+                                    'action'  => 'Genome',
+                                  });
+
+      my $link    = sprintf('<a href="%s">View example location</a> | <a href="%s">Karyotype and statistics</a>', $loc_url, $kar_url);
       my $species_badge = sprintf '<img src="/i/species/48/%s.png" alt="icon" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $strain, $sd->get_config($strain, 'SPECIES_COMMON_NAME'), $link; 
 
       ## Link to Jackson Labs for mouse strains
