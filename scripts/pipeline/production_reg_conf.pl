@@ -278,12 +278,10 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # Merged homologies
 Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
-     -host => 'compara1',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 3306,
+    # eHive DBAdaptor only accepts a URL
+     -url  => 'mysql://ensadmin:'.$ENV{'ENSADMIN_PSW'}.'@compara1:3306/mm14_pipeline_hom_final_merge_86',
      -species => 'homologies_merged',
-     -dbname => 'mm14_pipeline_hom_final_merge_86',
+     -no_sql_schema_version_check => 1,
 );
 
 # Compara Master database:

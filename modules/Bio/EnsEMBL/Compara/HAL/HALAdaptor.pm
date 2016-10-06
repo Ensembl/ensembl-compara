@@ -339,38 +339,33 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
 // pass querySpecies as a comma-seperated string
 void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd) {
     //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
-    Inline_Stack_Vars;
-    Inline_Stack_Reset;
-
-    // open memory file buffer
-    char *bp;
-    size_t size;
-    FILE *stream;
-    stream = open_memstream (&bp, &size);
 
     //printf("%s\n", "MSA 1");
 
+    /*
     // create a hal_species_t struct for querySpecies
-    // struct hal_species_t* head = NULL;
-    // struct hal_species_t* prev = NULL;
-    // struct hal_species_t* cur  = NULL;
+    struct hal_species_t* head = NULL;
+    struct hal_species_t* prev = NULL;
+    struct hal_species_t* cur  = NULL;
 
-    // char *str_copy = strdup(querySpecies);
-    // char *str_copy_ptr = str_copy;
-    // char *token;
-    // while ((token = strsep(&str_copy_ptr, ","))) {
-    //     cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
-    //     cur->name = strdup(token);
-    //     cur->next = NULL;
-    //     if ( head == NULL ){ //struct start
-    //         head = cur;
-    //     }
-    //     else {
-    //         prev->next = cur;
-    //     }
-    //     prev = cur;
-    // }
-    // free(str_copy);
+    char *str_copy = strdup(querySpecies);
+    char *str_copy_ptr = str_copy;
+    char *token;
+    while ((token = strsep(&str_copy_ptr, ","))) {
+        cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
+        cur->name = strdup(token);
+        cur->next = NULL;
+        if ( head == NULL ){ //struct start
+            head = cur;
+        }
+        else {
+            prev->next = cur;
+        }
+        prev = cur;
+    }
+    struct hal_species_t* query_species = head;
+    free(str_copy);
+    */
 
     // only way seems to be to fetch all and split structure into 2
     struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
@@ -415,18 +410,26 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     prev_o->next = NULL;
     prev_q->next = NULL;
 
-    // print MAF to buffer
     char *errStr = NULL;
+
+    // open memory file buffer
+    char *bp;
+    size_t size;
+    FILE *stream = open_memstream (&bp, &size);
+    // print MAF to buffer
     halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, 0, &errStr );
     fclose (stream);
-    
-    //SV *maf = newSVpv(bp, strlen(bp));
-    SV *maf = newSVpvn(bp, size);
 
+    // Inline::C stuff: Build a return array with the maf output
+    Inline_Stack_Vars;
+    Inline_Stack_Reset;
+    SV *maf = newSVpvn(bp, size);
     Inline_Stack_Push(maf);
+    Inline_Stack_Done;
+
+    // Free the memory
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
     free(bp);
-    Inline_Stack_Done;
 }
 END_OF_C_CODE

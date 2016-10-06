@@ -7,36 +7,30 @@ This directory contains all the XML dumps of the gene-tree related resources:
  - the orthologies, which are derived from the gene trees
  - the CAFE trees, which analyze the expansion and contraction of gene families
 
-Compara.{release}.protein.allhomologies.orthoxml.xml.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.allhomologies.orthoxml.xml.gz
   Contains all the orthologies in a single OrthoXML file. Each orthology is
   stored as an orthologGroup containing two genes.
 
-Compara.{release}.protein.allhomologies_strict.orthoxml.xml.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.allhomologies_strict.orthoxml.xml.gz
   Contains all the "strict" orthologies in a single OrthoXML file. Each
   orthology is stored as an orthologGroup containing two genes.
   In this file, all the homologies are fully compliant with the species tree.
 
-Compara.{release}.protein.alltrees.orthoxml.xml.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.alltrees.orthoxml.xml.gz
   Contains all the trees in a single OrthoXML file. All the trees are
   attached to the root 'groups' tag.
-
-Compara.{release}.protein.alltrees_possorthol.orthoxml.xml.gz
-  Also contains all the trees in a single OrthoXML file, but the duplication
-  nodes with a confidence score lower than 0.25 are considered as speciations.
-  This makes the gene tree inconsistent with the species tree, but the derived
-  orthologies include the 'possible_orthologs'.
 
 
 The following three files are tar archives containing one file per tree.
 CAUTION: Be aware that untaring any of these files will create in your current
-	   directory more than 19,000 files !
+	   directory hundreds or thousands of files !
 
-Compara.{release}.protein.tree.orthoxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.orthoxml.tar.gz
   Each file will contain one tree, in OrthoXML format.
 
-Compara.{release}.protein.tree.phyloxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.phyloxml.tar.gz
   Each file will contain one tree, in PhyloXML format.
 
-Compara.{release}.protein.tree.cafe_phyloxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.cafe_phyloxml.tar.gz
   Each file will contain one CAFE tree, in PhyloXML format.
 
