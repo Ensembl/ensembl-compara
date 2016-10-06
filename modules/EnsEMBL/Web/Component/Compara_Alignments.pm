@@ -374,7 +374,7 @@ sub draw_tree {
     foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
-      my $node_name = $hub->species_defs->production_name_mapping($genomic_align_group->genome_db->name);
+      my $node_name = $genomic_align_group->genome_db->name;
       next if $slice_ok{$node_name};
       $this_node->disavow_parent;
       $restricted_tree = $restricted_tree->minimize_tree;
