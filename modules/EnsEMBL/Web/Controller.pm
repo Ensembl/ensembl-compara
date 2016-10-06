@@ -368,6 +368,15 @@ sub referer {
   return $self->{'referer'};
 }
 
+sub is_ajax_request {
+  ## Checks if the request is an AJAX request
+  ## @return 1 or 0 accordingly
+  my $self = shift;
+  return 1 if (($self->r->headers_in->{'X-Requested-With'} || '') eq 'XMLHttpRequest');
+  return 1 if (($self->query_param('X-Requested-With') || '') eq 'iframe');
+  return 0;
+}
+
 sub configuration {
   ## Initialises and returns the Configuration object for the request
   ## @return EnsEMBL::Web::Configuration subclass instance

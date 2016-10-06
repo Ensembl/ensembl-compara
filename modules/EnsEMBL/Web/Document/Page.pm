@@ -134,8 +134,7 @@ sub ajax_redirect {
       print qq({"redirectURL":"$url", "redirectType":"$redirect_type", "modalTab":"$modal_tab"});
     }
   } else {
-    $r->headers_out->set('Location' => $url);
-    $r->status(Apache2::Const::REDIRECT);
+    $self->hub->redirect($url);
   }
 }
 
