@@ -106,7 +106,15 @@ sub add_form_element {
     }
   }
 
-  $self->add_fieldset('Display options') unless $self->has_fieldset;
+  my $fieldset;
+  if ($element->{'fieldset'}) {
+    ($fieldset) = grep { my $legend = $_->get_legend; $legend && $legend->inner_HTML eq $element->{'fieldset'} } @{$self->fieldsets};
+    $self->add_fieldset($element->{'fieldset'}) unless $fieldset;
+    delete $element->{'fieldset'};
+  } else {
+    $self->add_fieldset('Display options') unless $self->has_fieldset;
+  }
+
   $self->add_element(%$element);
 
   if (!$view_config->get_label($element->{'name'})) {
