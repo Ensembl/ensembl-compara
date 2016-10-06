@@ -294,7 +294,7 @@
   },
   {  
     "key":"non_vertebrates",
-    "display_name":"Non Vertebrates",
+    "display_name":"Other Vertebrates",
     "is_internal_node":"true",
     "is_submenu":"true",
     "child_nodes":[  
