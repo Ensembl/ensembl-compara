@@ -111,6 +111,11 @@ sub fetch_input {
   $self->require_executable('dump_features');
   $self->require_executable('compare_beds');
   
+  #Get ensembl schema version from meta table if not defined
+  if (!defined $self->param('ensembl_release')) {
+      $self->param('ensembl_release', $self->compara_dba->get_MetaContainer->list_value_by_key("schema_version")->[0]);
+  }
+
   return 1;
 }
 
@@ -215,6 +220,8 @@ sub write_statistics {
     $sth->execute();
     my ($num_blocks) = $sth->fetchrow_array();
 
+    $method_link_species_set->store_tag("ensembl_release", $self->param('ensembl_release'));
+    
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Calculate the genome and coding_exon statistics
