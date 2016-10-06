@@ -86,7 +86,7 @@ sub default_options {
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
-        'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
+        'work_dir'    => '#target_dir#/dump_hash/#basename#',                                                           # where directory hash is created and maintained
     };
 }
 
