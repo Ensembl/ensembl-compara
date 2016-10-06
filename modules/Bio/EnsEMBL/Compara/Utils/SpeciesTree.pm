@@ -95,7 +95,7 @@ sub create_species_tree {
             if ($taxa_for_tree{$taxon_id}) {
                 my $ogdb = $taxa_for_tree{$taxon_id}->{'_gdb'};
                 push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
-                warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
+                #warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
             # If we use $gdb->taxon here we'll alter it and further calls
@@ -113,7 +113,7 @@ sub create_species_tree {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
         throw("Unknown taxon_id '$extra_taxon'") unless $taxon;
         if ($taxa_for_tree{$extra_taxon}) {
-            warn $taxon->name, " is already in the tree\n";
+            #warn $taxon->name, " is already in the tree\n";
             next;
         }
         $taxa_for_tree{$extra_taxon} = $taxon;
@@ -137,7 +137,7 @@ sub create_species_tree {
             if ($allow_subtaxa) {
                 $anc[0]->release_children;
                 push @{$gdbs_by_taxon_id{$anc[0]->dbID}}, $taxon->{'_gdb'};
-                warn sprintf('%s will be added later because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name);
+                #warn sprintf('%s will be added later because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name);
             } else {
                 throw(sprintf('Cannot add %s because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name));
             }
