@@ -256,7 +256,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
-  $conf->MOBILE_URL,
+  $conf->MOBILE_URL ? $conf->MOBILE_URL : "",
 
   $conf->LUCENE_ENDPOINT,
 
