@@ -35,7 +35,27 @@ sub content {
   my $glossary  = $hub->glossary_lookup;
   my $common    = $hub->species_defs->SPECIES_COMMON_NAME;
 
-  my $html = "<p>$common gene expression data is available for the following tissues:</p>";
+  my $sample_data = $hub->species_defs->SAMPLE_DATA;
+  my $sample_gene = $sample_data->{'GENE_PARAM'};
+  my $sample_loc  = $sample_data->{'LOCATION_PARAM'};
+  my $anchor      = 'modal_config_viewbottom-rnaseq';
+
+  my $message   = sprintf 'This page will be removed in release 87, as you can now find expression data via our <a href="%s">Gene Expression Atlas widget</a>, as well as configuring <a href="%s#%s">Human BodyMap 2.0 tracks</a> in Region in Detail', 
+                      $hub->url({
+                                  'type'    => 'Gene', 
+                                  'action'  => 'ExpressionAtlas',
+                                  'g'       => $sample_gene,
+                                }),
+                      $hub->url({
+                                  'type'    => 'Location', 
+                                  'action'  => 'View',
+                                  'r'       => $sample_loc,
+                                }),
+                      $anchor;
+
+  my $html = $self->warning_panel('Deprecated page', $message); 
+
+  $html .= "<p>$common gene expression data is available for the following tissues:</p>";
 
   my @track_order = ('rnaseq', 'dna_align', 'data_file'); 
   my $columns = [

@@ -90,15 +90,6 @@ sub populate_tree {
     { 'availability' => 'database:rnaseq' }
   );
 
-  my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
-  
-  $stats_menu->append_child($self->create_node('StatsTable', 'Assembly and Genebuild',
-    [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)]
-  ));
-  
-  $stats_menu->append_child($self->create_node('IPtop500', 'Top 500 InterPro hits',
-    [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
-  ));
   $self->create_node('WhatsNew', '',
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );
