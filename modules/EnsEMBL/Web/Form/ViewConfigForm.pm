@@ -292,11 +292,13 @@ sub _build_imageconfig_menus {
 
   if ($menu_type eq 'matrix_subtrack') {
     my $display = $node->get('display');
+    if ($display ne 'off' && $display ne 'default'
 
-    if ($node->get_node($node->get_data('option_key')) &&
-      $node->get_node($node->get_data('option_key'))->get('display') eq 'on' &&                           # The cell option is turned on AND
-      $display ne 'off' &&                                                                                # The track is not turned off AND
-      !($display eq 'default' && $node->get_node($node->get_data('column_key'))->get('display') eq 'off') # The track renderer is not default while the column renderer is off
+#    if ($node->get_node($node->get_data('option_key')) &&
+#      $node->get_node($node->get_data('option_key'))->get('display') eq 'on' &&  # The cell option is turned on AND
+#      $display ne 'off' &&                                                       # The track is not turned off AND
+#      !($display eq 'default' && $node->get_node($node->get_data('column_key'))->get('display') eq 'off') 
+                                                # The track renderer is not default while the column renderer is off
     ) {
       $self->{'enabled_tracks'}{$menu_class}++;
       $self->{'enabled_tracks'}{$id} = 1;
