@@ -178,7 +178,7 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -flow_into => {
                 '2->A' => [ 'mk_work_dir' ],
-                'A->1' => [ 'md5sum' ],
+                'A->1' => [ 'md5sum_factory' ],
             },
         },
 
@@ -408,10 +408,21 @@ sub _pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'md5sum_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'     => [ [ 'emf' ], [ 'xml' ], [ 'tsv' ] ],
+                'column_names'  => [ 'format' ],
+            },
+            -flow_into => {
+                2 => [ 'md5sum' ],
+            },
+        },
+
         {   -logic_name => 'md5sum',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#basename#_trees; cd #target_dir#/tsv ; md5sum *.gz >MD5SUM.#basename#_trees',
+                'cmd' => 'cd #target_dir#/#format# ; md5sum *.gz >MD5SUM',
             },
         },
 
