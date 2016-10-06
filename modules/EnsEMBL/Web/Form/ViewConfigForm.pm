@@ -136,6 +136,7 @@ sub build {
   $self->_build_imageconfig_form($image_config) if $image_config;
 
   $view_config->init_form($object);
+  $view_config->init_form_non_cacheable; # ViewConfig form level caching is not implemented yet, so calling both methods
 
   ## Add image width field to horizintal images
   if ($image_config && $image_config->orientation eq 'horizontal') {
