@@ -61,6 +61,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Utils::URI;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -104,12 +105,9 @@ sub fetch_input {
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
-  my $ref_db = $ref_genome_db->db_adaptor;
-  my $non_ref_db = $non_ref_genome_db->db_adaptor;
-
-  #Create url from dbc
-  my $ref_url = generate_url($ref_db->dbc, $ref_genome_db->name);
-  my $non_ref_url = generate_url($non_ref_db->dbc, $non_ref_genome_db->name);
+  #Create url from db_adaptor
+  my $ref_url = $ref_genome_db->db_adaptor->url;
+  my $non_ref_url = $non_ref_genome_db->db_adaptor->url;
 
   $self->param('ref_dbc_url', $ref_url);
   $self->param('non_ref_dbc_url', $non_ref_url);
@@ -352,24 +350,6 @@ sub run_create_pair_aligner_page {
     unless (system($cmd) == 0) {
 	die("$cmd execution failed\n");
     }
-}
-
-sub generate_url {
-    my ($dbc, $species) = @_;
-
-    my $uri = Bio::EnsEMBL::Utils::URI->new("mysql");
-    $uri->user($dbc->username);
-    $uri->pass($dbc->password);
-    $uri->port($dbc->port);
-    $uri->host($dbc->host);
-    my $db_params;
-    %$db_params = (dbname => $dbc->dbname);
-    $uri->{db_params} = $db_params;
-    
-    $uri->add_param("group", "core");
-    $uri->add_param("species", $species);
-    
-    return ($uri->generate_uri);
 }
 
 1;

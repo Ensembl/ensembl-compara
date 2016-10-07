@@ -106,4 +106,44 @@ sub locator {
 }
 
 
+=head2 url
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example    : my $url = $genome_db->db_adaptor->url;
+  Description: Builds a URL that can be used later with the Registry or db_cmd.pl
+  Returntype : string
+
+=cut
+
+sub url {
+    my $core_dba = shift;
+    my $suffix_separator = shift;
+
+    return undef unless $core_dba;
+    return undef unless $core_dba->group eq 'core';
+
+    my $species_safe = $core_dba->species();
+    if ($suffix_separator) {
+        # The suffix was added to attain uniqueness and avoid collision, now we have to chop it off again.
+        ($species_safe) = split(/$suffix_separator/, $core_dba->species());
+    }
+
+    my $dbc = $core_dba->dbc();
+
+    require Bio::EnsEMBL::Utils::URI;
+    my $uri = Bio::EnsEMBL::Utils::URI->new($dbc->driver);
+    $uri->user($dbc->username);
+    $uri->pass($dbc->password);
+    $uri->port($dbc->port);
+    $uri->host($dbc->host);
+
+    $uri->{db_params} = {'dbname' => $dbc->dbname};
+    $uri->add_param('group', $core_dba->group);
+    $uri->add_param('species', $species_safe);
+    $uri->add_param('species_id', $core_dba->species_id);
+
+    return ($uri->generate_uri);
+}
+
+
 1;

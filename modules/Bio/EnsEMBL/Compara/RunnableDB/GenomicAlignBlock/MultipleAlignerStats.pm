@@ -60,6 +60,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use File::stat;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -100,10 +101,9 @@ sub fetch_input {
   $self->param('genome_db', $genome_db);
 
   $self->param('species', $genome_db->name);
-  my $core_db = $genome_db->db_adaptor;
 
-   #Create url from dbc
-  my $url = generate_url($core_db->dbc, $self->param('species'));
+   #Create url from db_adaptor
+  my $url = $genome_db->db_adaptor->url;
 
   #Need to protect with quotes
   $self->param('dbc_url', "\"$url\"");
@@ -314,22 +314,5 @@ sub parse_compare_bed_output {
     return $results;
 }
 
-sub generate_url {
-    my ($dbc, $species) = @_;
-
-    my $uri = Bio::EnsEMBL::Utils::URI->new("mysql");
-    $uri->user($dbc->username);
-    $uri->pass($dbc->password);
-    $uri->port($dbc->port);
-    $uri->host($dbc->host);
-    my $db_params;
-    %$db_params = (dbname => $dbc->dbname);
-    $uri->{db_params} = $db_params;
-    
-    $uri->add_param("group", "core");
-    $uri->add_param("species", $species);
-    
-    return ($uri->generate_uri);
-}
 
 1;
