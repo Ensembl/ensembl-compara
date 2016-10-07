@@ -77,6 +77,7 @@ sub markup {
         my $ambiguity = $variation->{'ambiguity'};
         $ambiguity = 'N' if $config->{'variants_as_n'};
         $seq->[$_]{'letter'} = $ambiguity;
+        $seq->[$_]{'new_letter'} = $ambiguity;
       }
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if ($config->{'title_display'}||'off') ne 'off';
       $seq->[$_]{'class'} ||= '';
