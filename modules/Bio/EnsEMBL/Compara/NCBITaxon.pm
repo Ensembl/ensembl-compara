@@ -29,9 +29,7 @@ Attributes:
 
 Names:
   - scientific_name()
-  - common_name()
-  - ensembl_alias_name()
-  - short_name()
+  - get_common_name()
   - get_short_name()
 
 Only for species level and below
@@ -339,33 +337,41 @@ sub _split_name_into_parts {
 }
 
 
-=head2 common_name
+=head2 get_common_name
 
-  Example    : $ncbi->common_name;
-  Description: Getter/setter for the comon name as defined by Genbank
+  Example    : $taxon->get_common_name;
+  Description: Returns the most appropriate common name for this taxon
   Returntype : string
-  Exceptions : returns undef if no genbank common name exists.
   Caller     : general
 
 =cut
 
-sub common_name {
+sub get_common_name {
     my $self = shift;
+    # These tags are expected to be unique
+    foreach my $tag ('ensembl alias name', 'blast name', 'genbank common name') {
+        return ucfirst $self->get_value_for_tag($tag) if $self->has_tag($tag);
+    }
+    # These tags may have multiple values
+    foreach my $tag ('common name', 'equivalent name') {
+        next unless $self->has_tag($tag);
+        my @names = sort {length($a) <=> length($b)} @{ $self->get_all_values_for_tag($tag) };
+        return ucfirst $names[0] if @names;
+    }
+    return
+}
+
+
+sub common_name {   ## DEPRECATED
+    my $self = shift;
+    deprecate('NCBITaxon::ensembl_alias_name() is deprecated will be removed in e90. Use get_common_name() instead');
     return $self->_getter_setter_for_tag('genbank common name', @_);
 }
 
-=head2 ensembl_alias_name
 
-  Example    : $ncbi->ensembl_alias_name;
-  Description: Getter/setter for the comon name as defined by ensembl alias
-  Returntype : string
-  Exceptions : returns undef if no ensembl alias name exists.
-  Caller     : general
-
-=cut
-
-sub ensembl_alias_name {
+sub ensembl_alias_name {    ## DEPRECATED
     my $self = shift;
+    deprecate('NCBITaxon::ensembl_alias_name() is deprecated will be removed in e90. Use get_common_name() instead');
     return $self->_getter_setter_for_tag('ensembl alias name', @_);
 }
 

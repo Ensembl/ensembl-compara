@@ -172,8 +172,9 @@ sub _convert_node {
       $hash->{taxonomy} = {
           id => $stn->taxon_id + 0,
           scientific_name => $stn->node_name,
-          common_name => $taxon->ensembl_alias_name || $taxon->common_name,
       };
+      my $cn = $taxon->get_common_name();
+      $hash->{taxonomy}{common_name} = $cn if $cn;
       if (($stn->taxon_id == 10090) and ($stn->genome_db_id != 134)) { my $s = $stn->node_name; $s =~ s/Mus musculus/Mouse/; $hash->{taxonomy}->{common_name} = $s};
       $hash->{taxonomy}{timetree_mya} = $taxon->get_value_for_tag('ensembl timetree mya') + 0 if $taxon->has_tag('ensembl timetree mya');
   }

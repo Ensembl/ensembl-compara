@@ -255,10 +255,9 @@ sub _write_taxonomy {
   $w->startTag('taxonomy');
   $w->dataElement('id', $taxon->dbID);
   $w->dataElement('scientific_name', $taxon->name);
-  my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+  my $common_name = $taxon->get_common_name;
   $w->dataElement('common_name', $common_name) if $common_name;
   $w->endTag();
-  return;
 }
 
 sub _write_species_tree_node {
