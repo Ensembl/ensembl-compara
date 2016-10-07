@@ -63,7 +63,7 @@ sub init_form_non_cacheable {
   ## Adding species specific fieldsets for configuring species within an alignment (TODO - get rid of referer)
   my $self          = shift;
   my $hub           = $self->hub;
-  my $form          = $self->form;
+  my $form          = $self->SUPER::init_form_non_cacheable(@_);
   my $referer       = $hub->referer;
   my $species       = $referer->{'ENSEMBL_SPECIES'};
   my $species_defs  = $self->species_defs;

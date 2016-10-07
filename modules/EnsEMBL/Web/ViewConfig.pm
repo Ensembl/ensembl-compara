@@ -268,7 +268,8 @@ sub init_form {
 }
 
 sub init_form_non_cacheable {
-  ## TODO
+  ## @return Form after making non-cacheable changes
+  return shift->form;
 }
 
 ######## -----------
