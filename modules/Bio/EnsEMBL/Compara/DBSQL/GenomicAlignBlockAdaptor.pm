@@ -1338,8 +1338,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           next if ( $chr =~ m/scaffold/ );
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
-          my $seq_name = $self->_seq_region_ucsc_ensembl($chr, $this_gdb, $dnafrag_adaptor);
-          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $seq_name);
+          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($this_gdb, $chr);
           unless ( defined $this_dnafrag ) {
             next;
           }
@@ -1457,9 +1456,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
-              # normalize seq by removing "chr" prefix.
-              my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
-  		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
+              my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($target_gdb, @$entry[0]);
               $target_dnafrag->{'_slice'} = undef;
               next unless ( defined $target_dnafrag );
               
@@ -1643,19 +1640,6 @@ sub _hal_name_for_dnafrag {
     return "chr$seq_reg";
 }
 
-sub _seq_region_ucsc_ensembl {
-    my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
-
-    my $species_name = $gdb->name;
-    my $slice_adaptor = $gdb->db_adaptor->get_SliceAdaptor;
-    my $slice = $slice_adaptor->fetch_by_region('chromosome', $seq_reg);
-    if ( defined $slice ) {
-        my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
-        return $dnafrag->name;
-    }
-    $seq_reg =~ s/chr//; # !!! REMOVE: when all species have synonyms in core DBs
-    return $seq_reg;
-}
 
 sub _parse_maf {
   my ($self, $maf_lines) = @_;
