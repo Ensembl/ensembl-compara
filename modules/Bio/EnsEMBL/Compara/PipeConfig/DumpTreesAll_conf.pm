@@ -50,6 +50,7 @@ sub pipeline_analyses {
     my $pa = $self->_pipeline_analyses();
     $pa->[1]->{'-parameters'} = {
         'inputquery'    => 'SELECT clusterset_id, member_type FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL GROUP BY clusterset_id, member_type',
+        'db_conn'       => '#rel_db#',
     };
     return $pa;
 }

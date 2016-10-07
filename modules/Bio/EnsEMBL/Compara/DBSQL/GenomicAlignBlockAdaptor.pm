@@ -690,7 +690,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 
         my $block_start = defined $start ? $start : $dnafrag->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag->slice->end;
-        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag->name, $block_start, $block_end, $limit_number );
+        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag, $block_start, $block_end, $limit_number );
   }
 
   my $query_method_link_species_set_id = $method_link_species_set->dbID;
@@ -947,7 +947,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
         
         my $block_start = defined $start ? $start : $dnafrag1->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag1->slice->end;
-        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag1->name, $block_start, $block_end, $limit_number, $dnafrag2->name );
+        return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag1, $block_start, $block_end, $limit_number, $dnafrag2 );
   }
 
   #Create this here to pass into _create_GenomicAlign module
@@ -1243,7 +1243,7 @@ sub _load_DnaFrags {
 =cut
 
 sub _get_GenomicAlignBlocks_from_HAL {
-    my ($self, $mlss, $ref_gdb, $targets_gdb, $seq_region, $start, $end, $limit, $target_seq_reg) = @_;
+    my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
@@ -1275,7 +1275,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file);
     }
     my $hal_fh = $mlss->{'_hal_adaptor'}->hal_filehandle;
-    my $hal_seq_reg = $self->_seq_region_ensembl_ucsc($seq_region, $ref_gdb, $mlss, $dnafrag_adaptor);
+    my $hal_seq_reg = $self->_hal_name_for_dnafrag($dnafrag, $mlss);
 
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
@@ -1338,8 +1338,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           next if ( $chr =~ m/scaffold/ );
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
-          my $seq_name = $self->_seq_region_ucsc_ensembl($chr, $this_gdb, $dnafrag_adaptor);
-          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $seq_name);
+          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($this_gdb, $chr);
           unless ( defined $this_dnafrag ) {
             next;
           }
@@ -1426,13 +1425,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "ref is $ref\n";
           # print "target is $target\n";
           # print "seq_region is $hal_seq_reg\n";
-          # print "target_seq_region is $target_seq_reg\n" if (defined $target_seq_reg);
+          # print "target_seq_region is ".$target_dnafrag->name."\n" if (defined $target_dnafrag);
           # print "start is $start\n";
           # print "end is $end\n";
 
           my @blocks;
-          if ( $target_seq_reg ){
-  	        my $t_hal_seq_reg = $self->_seq_region_ensembl_ucsc($target_seq_reg, $target_gdb, $mlss, $dnafrag_adaptor );
+          if ( $target_dnafrag ){
+              my $t_hal_seq_reg = $self->_hal_name_for_dnafrag($target_dnafrag, $mlss);
               @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
           }
           else {
@@ -1457,9 +1456,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
-              # normalize seq by removing "chr" prefix.
-              my $seq_name = $self->_seq_region_ucsc_ensembl(@$entry[0], $target_gdb, $dnafrag_adaptor);
-  		        my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $seq_name);
+              my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($target_gdb, @$entry[0]);
               $target_dnafrag->{'_slice'} = undef;
               next unless ( defined $target_dnafrag );
               
@@ -1487,13 +1484,11 @@ sub _get_GenomicAlignBlocks_from_HAL {
               $genomic_align->dbID( $id_base + $ga_id_count );
               $ga_id_count+=1;
 
-              my $ref_seq_name = $self->_seq_region_ucsc_ensembl($seq_region, $ref_gdb, $dnafrag_adaptor);
-  		        my $ref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($ref_gdb, $ref_seq_name);
-              $ref_dnafrag->{'_slice'} = undef;
+              $dnafrag->{'_slice'} = undef;
               my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                 -genomic_align_block => $gab,
                 -aligned_sequence => $ref_aln_seq, #@$entry[6],
-                -dnafrag => $ref_dnafrag,
+                -dnafrag => $dnafrag,
                 -dnafrag_start => @$entry[1] + 1,
                 -dnafrag_end => @$entry[1] + @$entry[3],
                 -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
@@ -1614,14 +1609,17 @@ sub _split_genomic_aligns {
     return \@split_blocks;
 }
 
-sub _seq_region_ensembl_ucsc {
-    my ( $self, $seq_reg, $gdb, $mlss, $dnafrag_adaptor ) = @_;
+sub _hal_name_for_dnafrag {
+    my ( $self, $dnafrag, $mlss ) = @_;
+
+    my $genome_db_id = $dnafrag->genome_db_id;
+    my $seq_reg = $dnafrag->name;
 
     # first check if there are overriding synonyms in the mlss_tag table
     my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
     if ( defined $alt_syn_tag ) {
         my %alt_synonyms = %{ eval $alt_syn_tag };
-        return $alt_synonyms{$gdb->dbID}->{$seq_reg} if ( defined $alt_synonyms{$gdb->dbID}->{$seq_reg} );
+        return $alt_synonyms{$genome_db_id}->{$seq_reg} if ( defined $alt_synonyms{$genome_db_id}->{$seq_reg} );
     }
 
     # next, check if an alt_hal_mlss has been defined
@@ -1629,10 +1627,9 @@ sub _seq_region_ensembl_ucsc {
     if ( defined $alt_mlss_id ) {
         $alt_syn_tag = $mlss->adaptor->fetch_by_dbID($alt_mlss_id)->get_value_for_tag('alt_synonyms');
         my %alt_synonyms = %{ eval $alt_syn_tag };
-        return $alt_synonyms{$gdb->dbID}->{$seq_reg} if ( defined $alt_synonyms{$gdb->dbID}->{$seq_reg} );
+        return $alt_synonyms{$genome_db_id}->{$seq_reg} if ( defined $alt_synonyms{$genome_db_id}->{$seq_reg} );
     }
 
-    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name( $gdb, $seq_reg );
     my @external_dbs = ( 'UCSC', 'GenBank', 'INSDC' );
 
     my @syns;
@@ -1643,19 +1640,6 @@ sub _seq_region_ensembl_ucsc {
     return "chr$seq_reg";
 }
 
-sub _seq_region_ucsc_ensembl {
-    my ( $self, $seq_reg, $gdb, $dnafrag_adaptor ) = @_;
-
-    my $species_name = $gdb->name;
-    my $slice_adaptor = $gdb->db_adaptor->get_SliceAdaptor;
-    my $slice = $slice_adaptor->fetch_by_region('chromosome', $seq_reg);
-    if ( defined $slice ) {
-        my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
-        return $dnafrag->name;
-    }
-    $seq_reg =~ s/chr//; # !!! REMOVE: when all species have synonyms in core DBs
-    return $seq_reg;
-}
 
 sub _parse_maf {
   my ($self, $maf_lines) = @_;
