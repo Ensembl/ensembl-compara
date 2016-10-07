@@ -125,7 +125,7 @@
       send: function(headers, completeCallback) {
 
         // The first load event gets fired after the iframe has been injected into the DOM, and is used to prepare the actual form submission.
-        iFrame = $('<iframe name="' + name + '" id="' + name + '" src="javascript:false;" style="display:none">').on('load', function() {
+        iFrame = $('<iframe name="' + name + '" id="' + name + '" src="javascript:false;" style="display:none">').on('load.initial', function() {
 
           // The second load event gets fired when the response to the form submission is received.
           // While the actual update is done via script tags in the iframe response, final 'success' method is called once complete response is recieved
@@ -141,6 +141,9 @@
 
         // After everything has been set up correctly, inject the form and the iframe into the DOM so that the submission can be initiated.
         $('body').append(form, iFrame);
+
+        // In case it doesn't trigger automatically (Firefox 49 bug)
+        iFrame.triggerHandler('load.initial');
       },
 
       abort: cleanUp
