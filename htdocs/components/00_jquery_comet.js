@@ -82,7 +82,12 @@
     }
 
     // Create a new form (that will be submitted via iFrame) and add required attributes to it
-    form = $('<form>', {action: options.url, name: name, target: name, enctype: 'multipart/form-data', method: options.type || 'GET'});
+    form = $('<form>', (function(attrs) {
+      if (attrs.method.match(/post/i)) {
+        attrs.enctype = 'multipart/form-data';
+      }
+      return attrs;
+    })({action: options.url, name: name, target: name, method: options.type || 'POST'}));
 
     // Convert data to a format as returned by serializeArray method
     var data = origOptions.data || [];
