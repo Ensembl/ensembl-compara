@@ -263,16 +263,14 @@ sub _write_taxonomy {
 
 sub _write_species_tree_node {
   my ($self, $stn) = @_;
-  my $w = $self->_writer();
-  $w->startTag('taxonomy');
-  $w->dataElement('scientific_name', $stn->node_name);
   if ($stn->taxon_id and (my $taxon = $stn->taxon)) {
-    $w->dataElement('id', $stn->taxon_id);
-    my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
-    $w->dataElement('common_name', $common_name) if $common_name;
+    $self->_write_taxonomy($taxon);
+  } else {
+    my $w = $self->_writer();
+    $w->startTag('taxonomy');
+    $w->dataElement('scientific_name', $stn->node_name);
+    $w->endTag();
   }
-  $w->endTag();
-  return;
 }
 
 # NB: this methods relies on parameters that *must* be defined in self:
