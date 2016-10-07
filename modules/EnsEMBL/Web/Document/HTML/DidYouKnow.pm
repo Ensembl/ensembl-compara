@@ -34,7 +34,7 @@ sub render {
 
   return if $sd->ENSEMBL_SKIP_RSS || ($sd->ENSEMBL_SUBTYPE && $sd->ENSEMBL_SUBTYPE eq 'Archive');
 
-  my $rss_path  = $sd->DATAFILE_BASE_PATH.'/web/blog/minifeed';
+  my $rss_path  = $sd->ENSEMBL_TMP_DIR.'/web/blog/minifeed';
   my $rss_url   = $sd->ENSEMBL_TIPS_RSS;
   my $got       = 0;
   my $tips      = {};
