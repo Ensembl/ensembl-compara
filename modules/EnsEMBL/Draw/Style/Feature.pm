@@ -138,7 +138,7 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $typical_label_height;
+      my $feature_height  = $track_config->get('height') || $typical_label_height->{'height'};
       my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
       if ($feature_width == 0) {
