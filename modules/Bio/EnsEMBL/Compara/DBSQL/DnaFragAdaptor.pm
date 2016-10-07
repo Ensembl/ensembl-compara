@@ -105,7 +105,7 @@ sub _build_id_cache {
 
   Arg [1]    : integer $genome_db_id
                   - or -
-               Bio::EnsEMBL::Compara::DBSQL::GenomeDB
+               Bio::EnsEMBL::Compara::GenomeDB
   Arg [2]    : string $name
   Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
   Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(1, 'X');
@@ -147,7 +147,7 @@ sub fetch_by_GenomeDB_and_name {
 
 =head2 fetch_all_by_GenomeDB_region
 
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomeDB
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB
   Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
   Arg [4]    : (optional) boolean $is_reference
