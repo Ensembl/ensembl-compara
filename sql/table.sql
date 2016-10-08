@@ -155,6 +155,7 @@ CREATE TABLE genome_db (
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
+  strain_name                 varchar(40) DEFAULT NULL,
   locator                     varchar(400),
   first_release               smallint,
   last_release                smallint,
@@ -2103,4 +2104,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_e.sql|biotype_group');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_f.sql|has_seq_edits');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_g.sql|genome_db.strain_name');
 

@@ -75,6 +75,24 @@ sub assembly_name {
 }
 
 
+=head2 strain_name
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example    : my $strain_name = $genome_db->db_adaptor->strain_name;
+  Description: Gets the strain name of this species
+  Returntype : string
+
+=cut
+
+sub strain_name {
+    my $core_dba = shift;
+
+    return undef unless $core_dba;
+    return undef unless $core_dba->group eq 'core';
+    return $core_dba->get_MetaContainer->single_value_by_key('species.strain');
+}
+
+
 =head2 locator
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor

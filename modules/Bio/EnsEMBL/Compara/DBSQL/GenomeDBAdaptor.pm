@@ -437,6 +437,7 @@ sub store {
                 'is_high_coverage'  => $gdb->is_high_coverage,
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
+                'strain_name'       => $gdb->strain_name,
                 'locator'           => $gdb->locator,
                 'first_release'     => $gdb->first_release,
                 'last_release'      => $gdb->last_release,
@@ -481,6 +482,7 @@ sub update {
                 #'is_high_coverage'  => $gdb->is_high_coverage,
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
+                'strain_name'       => $gdb->strain_name,
                 'locator'           => $gdb->locator,
                 'first_release'     => $gdb->first_release,
                 'last_release'      => $gdb->last_release,
@@ -599,6 +601,7 @@ sub _columns {
         g.has_karyotype
         g.is_high_coverage
         g.genome_component
+        g.strain_name
         g.locator
         g.first_release
         g.last_release
@@ -627,6 +630,7 @@ sub _objs_from_sth {
             'has_karyotype',
             'is_high_coverage',
             '_genome_component',
+            '_strain_name',
             'locator',
             '_first_release',
             '_last_release',

@@ -103,8 +103,8 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $is_high_coverage) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT IS_HIGH_COVERAGE)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $strain_name, $is_high_coverage) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT STRAIN_NAME IS_HIGH_COVERAGE)], @_);
 
     # If there is a Core DBAdaptor, we can get most of the info from there,
     # but we'll have to check it is consistent with the required attributes
@@ -120,6 +120,7 @@ sub new {
         $self->genebuild( $meta_container->get_genebuild() );
         $self->has_karyotype( $genome_container->has_karyotype() );
         $self->is_high_coverage( $genome_container->is_high_coverage() );
+        $self->strain_name( $db_adaptor->strain_name() );
 
         if ($genome_component and not scalar(grep {$_ eq $genome_component} @{$genome_container->get_genome_components})) {
             die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
@@ -134,6 +135,7 @@ sub new {
     defined $has_karyotype      && $self->has_karyotype($has_karyotype);
     defined $genome_component   && $self->genome_component($genome_component);
     defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
+    defined $strain_name        && $self->strain_name($strain_name);
 
     $self->_assert_equals($core_genome_db) if $core_genome_db;
 
@@ -172,6 +174,7 @@ sub db_adaptor {
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
             $self->has_karyotype( $self->{'_db_adaptor'}->get_GenomeContainer->has_karyotype );
+            $self->strain_name( $self->{'_db_adaptor'}->strain_name );
 	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle unless $was_connected;
         }
     }
@@ -205,7 +208,7 @@ sub _check_equals {
     my ($self, $ref_genome_db) = @_;
 
     my $diffs = '';
-    foreach my $field (qw(assembly taxon_id genebuild name has_karyotype is_high_coverage)) {
+    foreach my $field (qw(assembly taxon_id genebuild name strain_name has_karyotype is_high_coverage)) {
         if (($self->$field() xor $ref_genome_db->$field()) or ($self->$field() and $ref_genome_db->$field() and ($self->$field() ne $ref_genome_db->$field()))) {
             $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field(), $ref_genome_db->$field());
         }
@@ -572,6 +575,30 @@ sub component_genome_dbs {
 }
 
 
+#######################
+# Methods for strains #
+#######################
+
+=head2 strain_name
+
+  Example     : my $strain_name = $genome_db->strain_name();
+  Example     : $genome_db->strain_name($strain_name);
+  Description : The strain name of this genome
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub strain_name {
+    my $self = shift;
+    $self->{'_strain_name'} = shift if @_;
+    return $self->{'_strain_name'};
+}
+
+
+
 =head2 toString
 
   Example    : print $dbID->toString()."\n";
@@ -585,7 +612,7 @@ sub component_genome_dbs {
 
 sub toString {
     my $self = shift;
-    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
+    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), join(' ', $self->name, $self->strain_name ? ($self->strain_name) : (), $self->genome_component ? ('component', $self->genome_component) : ()), $self->assembly);
     $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
     $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
