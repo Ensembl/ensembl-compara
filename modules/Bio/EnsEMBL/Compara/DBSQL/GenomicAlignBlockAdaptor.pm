@@ -1260,8 +1260,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
             $msg .= "INSERT INTO method_link_species_set_tag VALUES (<mlss_id>, \"HAL_mapping\", '{ 1 => \"hal_species1\", 22 => \"hal_species7\" }')\n\n";
             die $msg;
         }
-        
     }
+    ### HACK e86 ###
+    $map_tag->{174} = 'SPRET_EiJ';
+    ################
 
     require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
