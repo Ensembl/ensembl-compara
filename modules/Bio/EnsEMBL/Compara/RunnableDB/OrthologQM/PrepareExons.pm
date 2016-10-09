@@ -51,6 +51,7 @@ sub fetch_input {
         # $c++;
         # last if ( $c >= 100 );
     }
+    $gdb->db_adaptor->dbc->disconnect_if_idle();
     $self->param('exons', \@exons);
 }
 
