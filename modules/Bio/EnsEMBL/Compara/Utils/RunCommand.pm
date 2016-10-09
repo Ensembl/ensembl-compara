@@ -107,6 +107,9 @@ sub _run {
     $self->{_out} = $self->_read_output(\*CATCHOUT);
     waitpid($pid,0);
     $self->{_exit_code} = $?>>8;
+    if ($? && !$self->{_exit_code}) {
+        $self->{_exit_code} = 256 + $?;
+    }
     $self->{_err} = $self->_read_output(\*CATCHERR);
     $self->{_runtime_msec} = int(time()*1000-$starttime);
     return;
