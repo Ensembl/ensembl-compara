@@ -71,6 +71,7 @@ use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
@@ -252,8 +253,8 @@ sub fetch_by_GenomeDB_and_synonym {
         $d->{'_slice'} = $slice if $d;
         return $d;
     }
-    $synonym=~ s/chr//; # !!! REMOVE: when all species have synonyms in core DBs
-    return $self->fetch_by_GenomeDB_and_name($genome_db, $synonym);
+    my $name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} || $synonym;
+    return $self->fetch_by_GenomeDB_and_name($genome_db, $name);
 }
 
 
