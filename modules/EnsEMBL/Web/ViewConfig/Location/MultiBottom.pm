@@ -51,6 +51,7 @@ sub extra_tabs {
     'Select species or regions',
     $hub->url('MultiSelector', {
       action   => 'MultiSpeciesSelector',
+      multiselect => 1,
       %{$hub->multi_params}
     })
   ];
