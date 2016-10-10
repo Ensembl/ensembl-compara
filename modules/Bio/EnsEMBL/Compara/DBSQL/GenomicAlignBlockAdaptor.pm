@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
+Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
 
 =head1 SYNOPSIS
 
@@ -129,6 +129,7 @@ use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
 
 use Data::Dumper;
 
@@ -1260,8 +1261,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
             $msg .= "INSERT INTO method_link_species_set_tag VALUES (<mlss_id>, \"HAL_mapping\", '{ 1 => \"hal_species1\", 22 => \"hal_species7\" }')\n\n";
             die $msg;
         }
-        
     }
+    ### HACK e86 ###
+    $map_tag->{174} = 'SPRET_EiJ';
+    ################
 
     require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
@@ -1336,7 +1339,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
-          next if ( $chr =~ m/scaffold/ );
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($this_gdb, $chr);
           unless ( defined $this_dnafrag ) {
@@ -1457,7 +1459,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
               my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($target_gdb, @$entry[0]);
-              $target_dnafrag->{'_slice'} = undef;
               next unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
@@ -1615,6 +1616,11 @@ sub _hal_name_for_dnafrag {
     my $genome_db_id = $dnafrag->genome_db_id;
     my $seq_reg = $dnafrag->name;
 
+    if (exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}
+        and exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}->{$seq_reg}) {
+        return $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}->{$seq_reg} || $seq_reg;
+    }
+
     # first check if there are overriding synonyms in the mlss_tag table
     my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
     if ( defined $alt_syn_tag ) {
@@ -1637,7 +1643,7 @@ sub _hal_name_for_dnafrag {
         @syns = @{ $dnafrag->slice->get_all_synonyms($ex_db) };
         return $syns[0]->name if ( defined $syns[0] );
     }
-    return "chr$seq_reg";
+    return $seq_reg;
 }
 
 
