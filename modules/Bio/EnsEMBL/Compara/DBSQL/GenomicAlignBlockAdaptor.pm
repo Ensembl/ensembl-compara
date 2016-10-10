@@ -1459,7 +1459,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
               my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($target_gdb, @$entry[0]);
-              $target_dnafrag->{'_slice'} = undef;
               next unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
