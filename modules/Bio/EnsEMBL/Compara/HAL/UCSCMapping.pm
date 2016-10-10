@@ -1072,4 +1072,9 @@ our $u2e_mappings = {
     155 => $u2e_mapping_rat,
 };
 
+our $e2u_mappings = {
+    134 => {reverse %$u2e_mapping_mouse},
+    155 => {reverse %$u2e_mapping_rat},
+};
+
 1;
