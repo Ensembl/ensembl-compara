@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
+Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
 
 =head1 SYNOPSIS
 
