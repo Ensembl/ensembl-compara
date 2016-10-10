@@ -39,9 +39,9 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 # Bio::EnsEMBL::Registry->load_registry_from_url(
 #   'mysql://ensro@ens-livemirror/85');
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/86');
+  'mysql://ensro@ens-staging1/87');
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/86');
+  'mysql://ensro@ens-staging2/87');
 
 # # Extra core databases that live on genebuilders' servers:
 # Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
