@@ -811,9 +811,13 @@ sub feature {
   else {
     @mapping_result = qw(seqid source type start end score strand phase);
   }
+  my $source = $feature->can('source_tag') ? $feature->source_tag  : $feature->can('source') ? $feature->source : 'Ensembl';
+  if (ref($source) eq 'Bio::EnsEMBL::Variation::Source') {
+    $source = $source->name;
+  }
   %vals = (%vals, (
      type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : 'sequence_feature'),
-     source => $feature->can('source_tag') ? $feature->source_tag  : $feature->can('source') ? $feature->source : 'Ensembl',
+     source => $source,
      score  => $feature->can('score') ? $feature->score : '.',
      phase  => '.'
    ));   
