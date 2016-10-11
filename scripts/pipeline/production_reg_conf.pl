@@ -352,6 +352,7 @@ Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
+    -group => 'taxonomy',
     -species => 'ncbi_taxonomy',
     -dbname => 'ncbi_taxonomy',
 );
