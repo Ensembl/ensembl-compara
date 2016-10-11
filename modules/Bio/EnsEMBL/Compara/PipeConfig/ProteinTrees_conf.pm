@@ -152,6 +152,7 @@ sub default_options {
     # tree building parameters:
         'use_raxml'                 => 0,
         'use_notung'                => 0,
+        'do_model_selection'        => 0,
         'use_quick_tree_break'      => 1,
 
         'treebreak_gene_count'      => 400,

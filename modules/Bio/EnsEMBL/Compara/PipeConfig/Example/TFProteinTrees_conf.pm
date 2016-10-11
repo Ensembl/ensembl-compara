@@ -101,6 +101,7 @@ sub default_options {
         'use_quick_tree_break'      => 0,
         'use_raxml'                 => 1,
         'use_notung'                => 1,
+        'do_model_selection'        => 0,
 
     # sequence type used on the phylogenetic inferences
     # It has to be set to 1 for the strains
