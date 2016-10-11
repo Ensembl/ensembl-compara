@@ -102,6 +102,11 @@ sub default_options {
         'use_raxml'                 => 1,
         'use_notung'                => 1,
 
+    # sequence type used on the phylogenetic inferences
+    # It has to be set to 1 for the strains
+        'use_dna_for_phylogeny'     => 0,
+        #'use_dna_for_phylogeny'     => 1,
+
     # alignment filtering options
 
     # species tree reconciliation

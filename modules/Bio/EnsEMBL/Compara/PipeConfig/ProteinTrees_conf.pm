@@ -170,6 +170,11 @@ sub default_options {
         'treebest_threshold_n_genes'    => 400,
         'update_threshold_trees'    => 0.2,
 
+    # sequence type used on the phylogenetic inferences
+    # It has to be set to 1 for the strains
+        'use_dna_for_phylogeny'     => 0,
+        #'use_dna_for_phylogeny'     => 1,
+
     # alignment filtering options
         'threshold_n_genes'       => 20,
         'threshold_aln_len'       => 1000,
