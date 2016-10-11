@@ -84,7 +84,7 @@ sub default_options {
 
         # Usually "maf", "emf", or "emf+maf". BioPerl alignment formats are
         # accepted in principle, but a healthcheck would have to be implemented
-        'format' => 'emf',
+        'format' => 'emf+maf',
 
         # If set to 1, will make a compressed tar archive of a directory of
         # uncompressed files. Otherwise, there will be a directory of
