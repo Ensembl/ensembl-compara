@@ -117,6 +117,9 @@ sub default_options {
         # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
 
+        # Protein Tree database
+        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara5/cc21_protein_trees_no_reuse_86',
+
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara1/mm14_ensembl_compara_master', };
 } ## end sub default_options
