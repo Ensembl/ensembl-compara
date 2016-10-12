@@ -596,6 +596,7 @@ CREATE TABLE synteny_region (
 @column genome_db_id       External reference to genome_db_id in the @link genome_db table
 @column coord_system_name  Refers to the coord system in which this dnafrag has been defined
 @column is_reference       Boolean, whether dnafrag is reference (1) or non-reference (0) eg haplotype
+@column codon_table_id     Integer. The numeric identifier of the codon-table that applies to this dnafrag (https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi)
 
 @see genomic_align_block
 @see dnafrag_region
@@ -608,6 +609,7 @@ CREATE TABLE dnafrag (
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
   is_reference                tinyint(1) DEFAULT 1 NOT NULL,
+  codon_table_id              tinyint(2) unsigned DEFAULT 1 NOT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
@@ -2085,4 +2087,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_b.sql|dnafrag_name_255');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_c.sql|codon_table_id');
 

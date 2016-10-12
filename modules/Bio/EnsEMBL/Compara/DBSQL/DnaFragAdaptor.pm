@@ -324,7 +324,8 @@ sub _columns {
           'df.name',
           'df.genome_db_id',
           'df.coord_system_name',
-          'df.is_reference'
+          'df.is_reference',
+          'df.codon_table_id',
           );
 }
 
@@ -348,14 +349,15 @@ sub _objs_from_sth {
 
   my $these_dnafrags = [];
 
-  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference);
+  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference, $codon_table_id);
   $sth->bind_columns(
           \$dbID,
           \$length,
           \$name,
           \$genome_db_id,
           \$coord_system_name,
-          \$is_reference
+          \$is_reference,
+          \$codon_table_id,
       );
 
   my $gda = $self->db->get_GenomeDBAdaptor();
@@ -364,15 +366,16 @@ sub _objs_from_sth {
 
     my $this_dnafrag = $self->_id_cache->cache->{$dbID};
     if (not defined $this_dnafrag) {
-        $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
-            {'dbID' => $dbID,
+        $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast( {
+            'dbID' => $dbID,
             'adaptor' => $self,
             'length' => $length,
             'name' => $name,
             'genome_db_id' => $genome_db_id,
             'coord_system_name' => $coord_system_name,
-            'is_reference' => $is_reference}
-        );
+            'is_reference' => $is_reference,
+            '_codon_table_id' => $codon_table_id,
+        } );
         $self->_id_cache->put($dbID, $this_dnafrag);
         my $cache_key = $genome_db_id . '//' . $name;
         $self->{'_lru_cache_gdb_id_name'}->{$cache_key} = $this_dnafrag;
@@ -440,10 +443,10 @@ sub store {
 
    my $sth = $self->prepare("
      INSERT IGNORE INTO dnafrag ( genome_db_id, coord_system_name,
-                                  name, length, is_reference )
-     VALUES (?,?,?,?,?)");
+                                  name, length, is_reference, codon_table_id )
+     VALUES (?,?,?,?,?,?)");
 
-   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference);
+   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference, $dnafrag->codon_table_id);
    
    if ($rows_inserted > 0) {
      $stored_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id');
@@ -571,6 +574,7 @@ sub update {
             'length'                => $dnafrag->length,
             'is_reference'          => $dnafrag->is_reference,
             'coord_system_name'     => $dnafrag->coord_system_name,
+            'codon_table_id'        => $dnafrag->codon_table_id,
         }, {
             'dnafrag_id'            => $dnafrag->dbID()
         } );

@@ -161,9 +161,9 @@ sub new {
 
   my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
-  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
+  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference, $codon_table_id,
       ) =
-    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
+    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE CODON_TABLE_ID
         )],@args);
 
   $self->length($length) if (defined($length));
@@ -172,6 +172,7 @@ sub new {
   $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
   $self->is_reference($is_reference) if (defined($is_reference));
+  $self->codon_table_id($codon_table_id) if (defined($codon_table_id));
 
   return $self;
 }
@@ -193,6 +194,10 @@ sub new {
 sub new_from_Slice {
     my ($class, $slice, $genome_db) = @_;
 
+    my ($attrib) = @{ $slice->get_all_Attributes('codon_table') };
+    my $codon_table_id;
+    $codon_table_id = $attrib->value() if $attrib;
+
     return $class->new_fast( {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
@@ -200,6 +205,7 @@ sub new_from_Slice {
         'is_reference' => $slice->is_reference(),
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
+        '_codon_table_id' => $codon_table_id || 1,
     } );
 }
 
@@ -404,6 +410,28 @@ sub is_reference {
   }
 
   return $self->{'is_reference'};
+}
+
+
+=head2 codon_table_id
+
+  Example     : my $codon_table_id = $dnafrag->codon_table_id();
+  Example     : $dnafrag->codon_table_id(4);
+  Description : Getter/Setter for the id of the codon-table needed to
+                translate sequences from this dnafrag. Refer to
+                https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+                for a list of valid ids
+  Returntype  : return_type
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub codon_table_id {
+    my $self = shift;
+    $self->{'_codon_table_id'} = shift if @_;
+    return $self->{'_codon_table_id'};
 }
 
 

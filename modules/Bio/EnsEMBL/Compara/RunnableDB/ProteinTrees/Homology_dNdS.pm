@@ -157,23 +157,28 @@ sub calc_genetic_distance {
   }
   $codeml->alignment($aln);
 
-  # Select the correct codon table for codeml
-  # default is 0: universal code
-  foreach my $member (@{$homology->get_all_Members}) {
-      next unless $member->dnafrag_id;
-      if ($member->dnafrag->dna_type eq 'MT') {
-          ## 7742 is the taxon_id of vertebrates (Vertebrata)
-          if (grep {$_->taxon_id == 7742} @{$member->taxon->get_all_ancestors}) {
-              # 1:mamalian mt
-              $codeml->set_parameter("icode", 1);
-          } else {
-              # 4:invertebrate mt
-              $codeml->set_parameter("icode", 4);
-          }
-          last;
-      } elsif ($member->dnafrag->dna_type eq 'PT') {
-      }
+  # Bail out if the dnafrags have different codon table
+  my $codon_table_id = $homology->get_all_Members()->[0]->dnafrag->codon_table_id;
+  if ($homology->get_all_Members()->[1]->dnafrag->codon_table_id != $codon_table_id) {
+      warn "Members are on chromosomes with different codon-tables. Cannot compute dN/dS.";
+      return $homology;
   }
+
+  # Compare paml4.8/codeml.ctl to https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi
+  my %genbank_to_codeml = (
+      1 => 0,
+      2 => 1,
+      3 => 2,
+      4 => 3,
+      5 => 4,
+      6 => 5,
+      9 => 6,
+      10 => 7,
+      12 => 8,
+      13 => 9,
+      15 => 10, # deprecated ?? Not listed on https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi but is on http://www.bioinformatics.org/jambw/2/3/TranslationTables.html#SG15
+  );
+  $codeml->set_parameter("icode", $genbank_to_codeml{$codon_table_id}) if exists $genbank_to_codeml{$codon_table_id};
 
   $self->compara_dba->dbc->disconnect_if_idle();
 
