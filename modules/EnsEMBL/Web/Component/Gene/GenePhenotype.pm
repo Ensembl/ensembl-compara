@@ -55,6 +55,7 @@ sub gene_phenotypes {
   my (@rows, %list, $list_html);
   my $has_allelic = 0;  
   my $has_study   = 0;
+  my %phenotypes;
 
   return if($obj->isa('Bio::EnsEMBL::Compara::Family'));
 
@@ -124,7 +125,7 @@ sub gene_phenotypes {
       }
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $phen    = $pf->phenotype->description;
+        my $phe     = $pf->phenotype->description;
         my $source  = $pf->source_name;
         my $ext_id  = $pf->external_id;
 
@@ -147,7 +148,10 @@ sub gene_phenotypes {
           $source_url = $hub->get_ExtURL_link($source, $source_uc);
         }
         $source_url = $source if ($source_url eq "" || !$source_url || $source_url =~ /\(ID\)/);
-        
+              
+        $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} };
+        $phenotypes{$phe}{'source'}{$source_url} = 1;
+
         my $locs = sprintf(
           '<a href="%s" class="karyotype_link">View on Karyotype</a>',
           $hub->url({
@@ -156,23 +160,39 @@ sub gene_phenotypes {
             ph      => $pf->phenotype->dbID
           }),
         );
-      
+        $phenotypes{$phe}{'locations'} = $locs;
+
         my $allelic_requirement = '-';
         if ($self->_inheritance($attribs)) {
-          $allelic_requirement = $attribs->{'inheritance_type'};
+          $phenotypes{$phe}{'allelic_requirement'}{$attribs->{'inheritance_type'}} = 1;
           $has_allelic = 1;
         }
 
         my $pmids   = '-';
         if ($pf->study) {
           $pmids = $self->add_study_links($pf->study->external_reference);
+          foreach my $pmid (@$pmids) {
+            $phenotypes{$phe}{'pmids'}{$pmid} = 1;
+          }
           $has_study = 1;
         }
+      }
+      # Loop after each phenotype entry
+      foreach my $phe (sort(keys(%phenotypes))) {
+        my @pmids = keys(%{$phenotypes{$phe}{'pmids'}});
+        my $study = (scalar(@pmids) != 0) ? $self->display_items_list($phenotypes{$phe}{'id'}.'pmids', 'Study links', 'Study links', \@pmids, \@pmids, 1) : '-';
 
-        push @rows, { source => $source_url, phenotype => $phen, locations => $locs, allelic => $allelic_requirement, study => $pmids };
+        push @rows, {
+          source    => join(', ', keys(%{$phenotypes{$phe}{'source'}})),
+          phenotype => $phe,
+          locations => $phenotypes{$phe}{'locations'},
+          allelic   => ($phenotypes{$phe}{'allelic_requirement'}) ? join(', ', keys(%{$phenotypes{$phe}{'allelic_requirement'}})) : '-',
+          study     => $study
+        };
       }
     }
   }
+
   if (scalar @rows) {
     $html = qq{<a id="gene_phenotype"></a><h2>Phenotype(s), disease(s) and trait(s) associated with this gene $g_name</h2>};
     my @columns = (
@@ -220,7 +240,7 @@ sub add_study_links {
     push @pmids_list, qq{<a rel="external" href="$link">$pmid</a>};
   }
 
-  return join(', ', @pmids_list);
+  return \@pmids_list;
 }
 
 1;
