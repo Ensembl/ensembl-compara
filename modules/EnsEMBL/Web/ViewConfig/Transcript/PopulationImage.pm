@@ -104,7 +104,7 @@ sub form_fields {
       { 'value' => 'label',   'caption' => 'Sequence Ontology terms' },
       { 'value' => 'display', 'caption' => 'Old Ensembl terms'       },
     ]
-  });
+  };
 
   # Add context selection
   $fields->{'context'} = {
@@ -179,7 +179,7 @@ sub _variation_options {
       foreach my $key (keys %{$options{$category}}) {
         $self->{'_var_options'}{lc $key} = {
           'category'  => $category,
-          'label'     => $options{$category}{$key}[1]
+          'label'     => $options{$category}{$key}[1],
           'value'     => $options{$category}{$key}[0],
         };
       }
