@@ -27,6 +27,7 @@ no warnings 'uninitialized';
 
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
+use EnsEMBL::Web::Controller::SSI;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
