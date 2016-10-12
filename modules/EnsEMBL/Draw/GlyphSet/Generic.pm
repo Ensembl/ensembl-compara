@@ -62,8 +62,11 @@ sub render_normal {
 ## so let the configuration decide
   my $self = shift;
   my $renderers = $self->{'my_config'}->get('renderers');
-  my $default = $self->{'my_config'}->get('default_display')
-                  || $renderers->[2] || 'as_alignment_nolabel';
+  my $default = $self->{'my_config'}->get('default_display');
+  my $default_is_valid = $default ? grep { $_ eq $default } @$renderers : 0;
+  unless ($default_is_valid) {
+    $default =  $renderers->[2];
+  }
   my $method = 'render_'.$default;
   $self->$method;
 }
