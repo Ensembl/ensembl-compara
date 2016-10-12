@@ -61,13 +61,14 @@ sub gene_phenotypes {
   my (@rows, %list, $list_html);
   my $has_allelic = 0;
   my $has_study   = 0;  
+  my %phenotypes;
 
   # add rows from Variation DB, PhenotypeFeature
   if ($hub->database('variation')) {
     my $pfa = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
     
     foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
-      my $phen    = $pf->phenotype->description;
+      my $phe     = $pf->phenotype->description;
       my $ext_id  = $pf->external_id;
       my $source  = $pf->source_name;
       my $attribs = $pf->get_all_attributes;
@@ -86,7 +87,10 @@ sub gene_phenotypes {
         $source_url = $hub->get_ExtURL_link($source, $source_uc);
       }
       $source_url = $source if ($source_url eq "" || !$source_url);
-        
+
+      $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} };
+      $phenotypes{$phe}{'source'}{$source_url} = 1;
+
       my $locs = sprintf(
         '<a href="%s" class="karyotype_link">View on Karyotype</a>',
         $hub->url({
@@ -95,23 +99,39 @@ sub gene_phenotypes {
           ph      => $pf->phenotype->dbID
         }),
       );
+      $phenotypes{$phe}{'locations'} = $locs;
 
       my $allelic_requirement = '-';
       if ($attribs->{'inheritance_type'}) {
-        $allelic_requirement = $attribs->{'inheritance_type'};
+        $phenotypes{$phe}{'allelic_requirement'}{$attribs->{'inheritance_type'}} = 1;
         $has_allelic = 1;
       }
 
       my $pmids   = '-';
       if ($pf->study) {
         $pmids = $self->add_study_links($pf->study->external_reference);
+        foreach my $pmid (@$pmids) {
+          $phenotypes{$phe}{'pmids'}{$pmid} = 1;
+        }
         $has_study = 1;
       }
+    }
 
-      push @rows, { source => $source_url, phenotype => $phen, locations => $locs, allelic => $allelic_requirement, study => $pmids };
+    # Loop after each phenotype entry
+    foreach my $phe (sort(keys(%phenotypes))) {
+      my @pmids = keys(%{$phenotypes{$phe}{'pmids'}});
+      my $study = (scalar(@pmids) != 0) ? $self->display_items_list($phenotypes{$phe}{'id'}.'pmids', 'Study links', 'Study links', \@pmids, \@pmids, 1) : '-';
+
+      push @rows, {
+        source    => join(', ', keys(%{$phenotypes{$phe}{'source'}})),
+        phenotype => $phe,
+        locations => $phenotypes{$phe}{'locations'},
+        allelic   => ($phenotypes{$phe}{'allelic_requirement'}) ? join(', ', keys(%{$phenotypes{$phe}{'allelic_requirement'}})) : '-',
+        study     => $study
+      }
     }
   }
- 
+
   if (scalar @rows) {
     my @columns = (
       { key => 'phenotype', align => 'left', title => 'Phenotype, disease and trait' },
