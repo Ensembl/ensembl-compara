@@ -19,54 +19,53 @@ limitations under the License.
 
 package EnsEMBL::Web::Apache::Error;
 
-### Serves standard Apache error messages within an Ensembl static page
-       
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
+sub get_template {
+  my $r       = shift;
+  my $request = $r->headers_in->get('X-Requested-With') || '';
+
+ return $request eq 'XMLHttpRequest' ? 'EnsEMBL::Web::Template::AjaxError' : 'EnsEMBL::Web::Template::Error';
+}
 
 sub handler {
-  my $r              = shift;
-  my $error_number   = $ENV{'REDIRECT_STATUS'};
-  my $error_url      = $ENV{'REDIRECT_URL'};
-  my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
-  
-  my ($error_subject, $error_text) = @{$error_messages{$error_number} || []};
-     ($error_subject, $error_text) = (" 'Unrecognised error' ", $ENV{'REDIRECT_ERROR_NOTES'}) unless $error_subject;
-  
-  warn "$error_number ERROR: $error_subject $error_url\n";
-  
-  my $controller = EnsEMBL::Web::Controller->new($r, { page_type => 'Static', renderer_type => 'Apache' });
-  my $page       = $controller->page;
+  ## Handles 4** errors (via /Error)
+  ## @param Apache2::RequestRec request object
+  my $r = shift;
 
-  $r->uri($error_url);
-  
-  $page->initialize;
-  $page->title->set("$error_number error: $error_subject");
-  
-  $page->content->add_panel(EnsEMBL::Web::Document::Panel->new(
-    raw => qq{<div class="error left-margin right-margin">
-      <h3>$error_number error: $error_subject</h3>
-      <div class="error-pad">
-        <p>$error_text</p>
-        <p>Please check that you have typed in the correct URL or else use the
-        <a href="/Multi/Search/Results">site search</a>
-        facility to try and locate information you require.
-        </p>
-        <p>
-        If you think an error has occurred, please
-        <a href="http://www.ensembl.org/Help/Contact">contact our HelpDesk</a>.
-        </p>
-      </div>
-    </div>}
-  ));
-  
-  $controller->render_page;
-  
-  return 0;
+  my ($content, $content_type);
+
+  my $heading = '404 Not Found'; # TODO - not always 404
+  my $message = 'Please check that you have typed in the correct URL or else use the <a href="/Multi/Search/Results">site search</a> facility to try and locate information you require.<br />If you think an error has occurred, please <a href="http://www.ensembl.org/Help/Contact">contact our HelpDesk</a>';
+
+  try {
+
+    my $template = dynamic_require(get_template($r))->new({
+      'title'           => $heading,
+      'heading'         => 'Page not found',
+      'message'         => $message,
+      'message_is_html' => 1,
+      'helpdesk'        => 1,
+      'back_button'     => 1
+    });
+
+    $content_type = $template->content_type;
+    $content      = $template->render;
+
+  } catch {
+    warn $_;
+    $content_type = 'text/plain; charset=utf-8';
+    $content      = "$heading\n\n$message";
+  };
+
+  $r->content_type($content_type) if $content_type;
+  $r->print($content);
+
+  return undef;
 }
 
 1;
-
