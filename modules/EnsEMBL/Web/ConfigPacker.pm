@@ -1110,7 +1110,7 @@ sub _summarise_compara_db {
       where mls.species_set_id = ss.species_set_id
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
-        and ml.type LIKE "LASTZ%"
+        and ml.type LIKE "LASTZ_PATCH"
         and ml.method_link_id != 22
         and ml.method_link_id != 23
       group by mls.method_link_species_set_id, mls.method_link_id
