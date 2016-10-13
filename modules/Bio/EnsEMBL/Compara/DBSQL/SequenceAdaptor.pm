@@ -25,12 +25,11 @@ use warnings;
 use DBI qw(:sql_types);
 use Digest::MD5 qw(md5_hex);
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
+use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 =head2 fetch_by_dbID
 
@@ -80,13 +79,11 @@ sub fetch_by_dbIDs {
 sub _fetch_by_list {
   my ($self, $id_list, $select_sql, $column_name, $column_sql_type, @args) = @_;
 
-  return {} unless scalar(@$id_list);
-  my $split_ids = split_list($id_list);
   my %seq_hash;
-  foreach my $these_ids (@$split_ids) {
-      my $sql = $select_sql . $self->generate_in_constraint($these_ids, $column_name, $column_sql_type, 1);
+  $self->split_and_callback($id_list, $column_name, $column_sql_type, sub {
+      my $sql = $select_sql . (shift);
       $self->generic_fetch_hash($sql, \%seq_hash, @args);
-  }
+  } );
   return \%seq_hash;
 }
 

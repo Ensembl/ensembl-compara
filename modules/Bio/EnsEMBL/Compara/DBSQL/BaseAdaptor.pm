@@ -334,14 +334,61 @@ sub generic_fetch_Iterator {
 }
 
 
+=head2 split_and_callback
+
+  Arg[1]      : Arrayref $list_of_values. All the IDs to retrieve
+  Arg[2]      : String $column_name - Name of the column in the table the IDs can be found in
+  Arg[3]      : Integer $column_sql_type. DBI's "SQL type"
+  Arg[4]      : Callback function $callback
+  Example     : $adaptor->split_and_callback($stable_ids, 'm.stable_id', SQL_VARCHAR, sub { ... });
+  Description : Wrapper around the given callback that calls it iteratively with IN constraints
+                that contain chunks of $list_of_values.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub split_and_callback {
+    my ($self, $list_of_values, $column_name, $column_sql_type, $callback) = @_;
+    foreach my $id_list (@{ split_list($list_of_values) }) {
+        $callback->($self->generate_in_constraint($id_list, $column_name, $column_sql_type, 1)) ;
+    }
+}
+
+
+=head2 generic_fetch_concatenate
+
+  Arg[1]      : Arrayref $list_of_values. All the IDs to retrieve
+  Arg[2]      : String $column_name - Name of the column in the table the IDs can be found in
+  Arg[3]      : Integer $column_sql_type. DBI's "SQL type"
+  Arg[4..n]   : Extra parameters passed to construct_sql_query() (after the where constraint)
+  Example     : $adaptor->generic_fetch_concatenate($stable_ids, 'm.stable_id', SQL_VARCHAR);
+  Description : Special version of split_and_callback() that calls generic_fetch() with the
+                The core API already has already such a method - _uncached_fetch_all_by_id_list() -
+                so this one is only needed if you want to use join clauses or a "final" clause.
+  Returntype  : Arrayref of objects
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
 sub generic_fetch_concatenate {
     my ($self, $list_of_values, $column_name, $column_sql_type, @generic_fetch_args) = @_;
     my @results;
-    foreach my $id_list (@{ split_list($list_of_values) }) {
-        push @results, @{ $self->generic_fetch( $self->generate_in_constraint($id_list, $column_name, $column_sql_type), @generic_fetch_args ) };
-    }
+    $self->split_and_callback($list_of_values, $column_name, $column_sql_type, sub {
+        push @results, @{ $self->generic_fetch(shift, @generic_fetch_args) };
+    } );
     return \@results;
 }
+
+
+# The Core API selects too large chunks. Here we reduce $max_size
+sub _uncached_fetch_all_by_id_list {
+    my ($self, $id_list_ref, $slice, $id_type, $numeric) = @_;
+    return $self->SUPER::_uncached_fetch_all_by_id_list($id_list_ref, $slice, $id_type, $numeric, 500);
+}
+
 
 sub _synchronise {
     my ($self, $object) = @_;

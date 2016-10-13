@@ -111,10 +111,8 @@ sub fetch_by_stable_id {
 sub fetch_all_by_stable_id_list {
     my ($self, $stable_ids) = @_;
 
-    throw('MemberAdaptor::fetch_all_by_stable_id_list() must have a list of stable_ids') if (not ref $stable_ids) or (ref $stable_ids ne 'ARRAY');
-
-    return [] if (!$stable_ids or !@$stable_ids);
-    return $self->generic_fetch_concatenate($stable_ids, 'm.stable_id', SQL_VARCHAR);
+    # Core's method does all the type-checks for us
+    return $self->SUPER::_uncached_fetch_all_by_id_list($stable_ids, undef, 'stable_id', 0);
 }
 
 
