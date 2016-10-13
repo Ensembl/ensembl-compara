@@ -203,6 +203,7 @@ sub _add_to_parent {
     ## Is this a child of the current level?
     if ($child->{'id'} eq $parent) {
       push @{$child->{'children'}}, $feature;
+      last;
     }
     elsif ($child->{'children'}) {
       $self->_add_to_parent($child->{'children'}, $feature, $parent);
