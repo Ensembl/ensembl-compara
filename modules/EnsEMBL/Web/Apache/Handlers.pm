@@ -95,8 +95,8 @@ sub get_redirect_uri {
   }
 
   ## Trackhub short URL
-  if ($uri =~ m|^/trackhub\?|i) {
-    return $uri = s/trackhub/UserData\/TrackHubRedirect/r;
+  if ($uri =~ /^\/Trackhub(\/|\?|$)/i) {
+    return $uri =~ s/trackhub/UserData\/TrackHubRedirect/ri;
   }
 
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
