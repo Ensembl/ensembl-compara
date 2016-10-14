@@ -28,6 +28,7 @@ use Bio::EnsEMBL::Compara::Utils::Scalar qw(:argument);
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
+use constant ID_CHUNK_SIZE => 500;
 
 sub attach {
     my ($self, $object, $dbID) = @_;
@@ -351,7 +352,7 @@ sub generic_fetch_Iterator {
 
 sub split_and_callback {
     my ($self, $list_of_values, $column_name, $column_sql_type, $callback) = @_;
-    foreach my $id_list (@{ split_list($list_of_values) }) {
+    foreach my $id_list (@{ split_list($list_of_values, ID_CHUNK_SIZE) }) {
         $callback->($self->generate_in_constraint($id_list, $column_name, $column_sql_type, 1)) ;
     }
 }
@@ -386,7 +387,7 @@ sub generic_fetch_concatenate {
 # The Core API selects too large chunks. Here we reduce $max_size
 sub _uncached_fetch_all_by_id_list {
     my ($self, $id_list_ref, $slice, $id_type, $numeric) = @_;
-    return $self->SUPER::_uncached_fetch_all_by_id_list($id_list_ref, $slice, $id_type, $numeric, 500);
+    return $self->SUPER::_uncached_fetch_all_by_id_list($id_list_ref, $slice, $id_type, $numeric, ID_CHUNK_SIZE);
 }
 
 

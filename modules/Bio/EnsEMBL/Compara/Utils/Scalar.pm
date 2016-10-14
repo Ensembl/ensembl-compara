@@ -122,7 +122,7 @@ sub assert_ref_or_dbID {
 =head2 split_list
 
   Arg[1]      : Arrayref $list
-  Arg[2]      : Integer $max_size (defaults to 500)
+  Arg[2]      : Integer $max_size
   Example     : split_list($node_ids, 300);
   Description : Split a list into lists that are not longer than $max_size elements
   Returntype  : Arrayref of arrayrefs
@@ -134,7 +134,6 @@ sub assert_ref_or_dbID {
 
 sub split_list {
     my ($id_list, $max_size) = @_;
-    $max_size ||= 500;
     my @id_list = @$id_list;
     my @list_of_lists;
     while (@id_list) {
