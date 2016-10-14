@@ -26,7 +26,6 @@ use DBI qw(:sql_types);
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
