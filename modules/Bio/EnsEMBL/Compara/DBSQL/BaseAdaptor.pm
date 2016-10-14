@@ -237,6 +237,8 @@ sub mysql_server_prepare {
 sub prepare {
     my ($self, $query, @args) = @_;
 
+    #$query =~ s/SELECT/SELECT SQL_NO_CACHE/i;
+
     if (exists $self->{'_cached_statements'}) {
         return $self->{'_cached_statements'}->{$query} if exists $self->{'_cached_statements'}->{$query};
         $self->dbc->db_handle->{mysql_server_prepare} = 1;
