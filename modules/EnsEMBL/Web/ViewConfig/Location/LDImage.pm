@@ -52,7 +52,7 @@ sub extra_tabs {
 
   return [
     'Select populations',
-    $hub->url('MultiSelectort', {
+    $hub->url('MultiSelector', {
       action   => 'SelectPopulation',
       %{$hub->multi_params}
     })
