@@ -169,6 +169,7 @@ sub _load_tagvalues_multiple {
     # This closure can process a set of objects
 my $load_some_tags = sub {
     my $where_constraint = shift;
+    $where_constraint = " WHERE ".$where_constraint if $where_constraint;
 
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT $db_keyname, $col_tag, $col_value FROM $db_tagtable $where_constraint");
@@ -212,9 +213,8 @@ my $load_some_tags = sub {
     if ($all_objects) {
         $load_some_tags->('');
     } else {
-        foreach my $id_list (@{ split_list([keys %perl_keys]) }) {
-            $load_some_tags->( "WHERE ".$self->generate_in_constraint($id_list, $db_keyname, SQL_INTEGER, 1) );
-        }
+        # This assumes that the class also inherits from BaseAdaptor
+        $self->split_and_callback([keys %perl_keys], $db_keyname, SQL_INTEGER, $load_some_tags);
     }
 }
 
