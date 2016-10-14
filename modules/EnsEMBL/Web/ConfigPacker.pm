@@ -787,11 +787,7 @@ sub _summarise_funcgen_db {
 # * Oligos
 #
   $t_aref = $dbh->selectall_arrayref(
-    'select a.vendor, a.name, a.array_id  
-       from array a, array_chip c, status s, status_name sn where  sn.name="DISPLAYABLE" 
-       and sn.status_name_id=s.status_name_id and s.table_name="array" and s.table_id=a.array_id 
-       and a.array_id=c.array_id
-    '       
+    'select vendor, name, array_id from array'
   );
   my $sth = $dbh->prepare(
     'select pf.probe_feature_id
