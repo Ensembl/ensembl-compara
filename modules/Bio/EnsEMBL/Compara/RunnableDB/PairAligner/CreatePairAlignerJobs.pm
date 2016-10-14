@@ -126,40 +126,22 @@ sub createPairAlignerJobs
       $pairaligner_hash->{'options'} = $self->param('options');
   }
 
+  # Prepopulate the dnafrag_type
+  foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
+    my $query_dnafrag_type = $query_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->dna_type;
+    $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'} = $query_dnafrag_type;
+  }
+
   my $count=0;
   foreach my $target_dnafrag_chunk_set (@{$target_dnafrag_chunk_set_list}) {
     
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
 
-    #find the target dnafrag name to check if it is MT. It can only be part of set of 1
-    my $num_target_chunks = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
-    my ($first_db_chunk) = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
-    my $target_dnafrag_type = $first_db_chunk->dnafrag->dna_type;
-
-    #Check synonyms for MT
-    if ($target_dnafrag_type) {
-        if ($num_target_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $num_target_chunks for $target_dnafrag_type");
-        }
-    }
+    my $target_dnafrag_type = $target_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->dna_type;
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
 
-     my $query_dnafrag_type = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'};
-     unless (defined $query_dnafrag_type) {
-      #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
-      my $num_query_chunks = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
-      my ($first_qy_chunk) = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
-      $query_dnafrag_type = $first_qy_chunk->dnafrag->dna_type;
-
-      #Check synonyms for MT
-      if ($query_dnafrag_type) {
-        if ($num_query_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for $num_query_chunks");
-        }
-      }
-      $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'} = $query_dnafrag_type;
-    }
+      my $query_dnafrag_type = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'};
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
 
