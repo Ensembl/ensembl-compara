@@ -25,6 +25,8 @@
 ## Miscellaneous, to be removed in Ensembl 91
 
 * `MethodLinkSpeciesSet::get_common_classification()`
+* `DnaFrag::isMT()`
+* `DnaFrag::dna_type()`
 
 ## \*MemberAdaptor methods, to be removed in Ensembl 91
 

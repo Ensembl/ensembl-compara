@@ -161,9 +161,9 @@ sub new {
 
   my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
-  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference, $codon_table_id,
+  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference, $cellular_component, $codon_table_id,
       ) =
-    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE CODON_TABLE_ID
+    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE CELLULAR_COMPONENT CODON_TABLE_ID
         )],@args);
 
   $self->length($length) if (defined($length));
@@ -172,6 +172,7 @@ sub new {
   $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
   $self->is_reference($is_reference) if (defined($is_reference));
+  $self->cellular_component($cellular_component) if (defined($cellular_component));
   $self->codon_table_id($codon_table_id) if (defined($codon_table_id));
 
   return $self;
@@ -198,6 +199,19 @@ sub new_from_Slice {
     my $codon_table_id;
     $codon_table_id = $attrib->value() if $attrib;
 
+    my %name_to_cellular_component = ( 'MT' => 'MT', 'chrM' => 'MT', 'PT' => 'PT' );
+    my $cellular_component = 'NUC';
+    if (exists $name_to_cellular_component{$slice->seq_region_name}) {
+        $cellular_component = $name_to_cellular_component{$slice->seq_region_name};
+    } else {
+        foreach my $synonym (@{$slice->get_all_synonyms}) {
+            if (exists $name_to_cellular_component{$synonym->name}) {
+                $cellular_component = $name_to_cellular_component{$synonym->name};
+                last;
+            }
+        }
+    }
+
     return $class->new_fast( {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
@@ -206,6 +220,7 @@ sub new_from_Slice {
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
+        '_cellular_component' => $cellular_component,
     } );
 }
 
@@ -413,6 +428,27 @@ sub is_reference {
 }
 
 
+=head2 cellular_component
+
+  Example     : my $cellular_component = $dnafrag->cellular_component();
+  Example     : $dnafrag->cellular_component($cellular_component);
+  Description : Getter/Setter for the cellular_component attribute. undef is
+                the default value and represents the nuclear genome. Other
+                values are "MT" and "PT"
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub cellular_component {
+    my $self = shift;
+    $self->{'_cellular_component'} = shift if @_;
+    return $self->{'_cellular_component'};
+}
+
+
 =head2 codon_table_id
 
   Example     : my $codon_table_id = $dnafrag->codon_table_id();
@@ -471,6 +507,10 @@ sub slice {
       warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db->name."]";
       return undef;
     }
+    if ($dba->isa("Bio::EnsEMBL::Compara::GenomeMF")) {
+      # The genome doesn't have a core db
+      return undef;
+    }
     $dba->dbc->reconnect_when_lost(1);
 
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
@@ -506,63 +546,17 @@ sub display_id {
 }
 
 
-=head2 isMT
-
-  Args       : none
-  Example    : my $isMT = $dnafrag->isMT;
-  Description: returns true if this dnafrag has MT as a name or synonym, else returns false
-  Returntype : boolean
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub isMT {
+sub isMT {  ## DEPRECATED
     my ($self) = @_;
-
-    return 1 if ($self->name =~ /^MT$/i);
-
-    if ($self->genome_db->db_adaptor->isa("Bio::EnsEMBL::Compara::GenomeMF")){
-        if (!defined($self->coord_system_name)) {
-            warn "Cannot get the coord_system_name corresponding to [".$self."]";
-            return 0;
-        }
-        elsif ($self->coord_system_name eq "MT"){
-            return 1;
-        }
-        else{
-            return 0;
-        }
-    }
-    else{
-        #Check synonyms
-        my $slice = $self->slice;
-        foreach my $synonym (@{$slice->get_all_synonyms}) {
-            if ($synonym->name =~ /^MT$/i) {
-                return 1;
-            }
-        }
-        return 0;
-    }
+    deprecate("DnaFrag::isMT() is deprecated and will be removed in Ensembl 91. Please check cellular_component() instead\n");
+    return $self->cellular_component eq 'MT';
 }
 
 
-=head2 dna_type
-
-  Example     : my $type = $dnafrag->dna_type();
-  Description : Tells whether the dnafrag represent a nuclear genome, the mitochondrion or the chloroplast
-  Returntype  : "", "MT", or "PT"
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub dna_type {
+sub dna_type {  ## DEPRECATED
     my $self = shift;
-    return 'MT' if $self->isMT;
-    return 'PT' if ($self->name =~ /^PT$/i);
-    return '';
+    deprecate("DnaFrag::dna_type() is deprecated and will be removed in Ensembl 91. Please use cellular_component() instead\n");
+    return $self->cellular_component(@_);
 }
 
 

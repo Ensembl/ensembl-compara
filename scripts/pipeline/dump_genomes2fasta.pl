@@ -43,7 +43,13 @@ foreach my $genome_db_id( @$genome_db_id_list ){
 	mkdir($dump_dir) or die;
 	open(IN, ">$dump_dir/genome_seq") or die "cant open $dump_dir\n";
 	foreach my $ref_dnafrag( @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1) } ){
-		next if (($ref_dnafrag->name->dna_type eq 'MT') and $ARGV[3]);
+                if ($ARGV[3]) {
+                    if ($ARGV[3] =~ /^-(.*)$/) {
+                        next if $ref_dnafrag->cellular_component eq $1;
+                    } else {
+                        next if $ref_dnafrag->cellular_component ne $ARGV[3];
+                    }
+                }
 		my $header = ">" . join(":", $ref_dnafrag->coord_system_name, $genome_db->assembly, 
 			$ref_dnafrag->name, 1, $ref_dnafrag->length, 1); 
 		print IN $header, "\n";

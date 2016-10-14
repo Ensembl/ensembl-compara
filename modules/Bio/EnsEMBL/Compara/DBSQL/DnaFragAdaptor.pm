@@ -325,6 +325,7 @@ sub _columns {
           'df.genome_db_id',
           'df.coord_system_name',
           'df.is_reference',
+          'df.cellular_component',
           'df.codon_table_id',
           );
 }
@@ -349,7 +350,7 @@ sub _objs_from_sth {
 
   my $these_dnafrags = [];
 
-  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference, $codon_table_id);
+  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference, $cellular_component, $codon_table_id);
   $sth->bind_columns(
           \$dbID,
           \$length,
@@ -357,6 +358,7 @@ sub _objs_from_sth {
           \$genome_db_id,
           \$coord_system_name,
           \$is_reference,
+          \$cellular_component,
           \$codon_table_id,
       );
 
@@ -374,6 +376,7 @@ sub _objs_from_sth {
             'genome_db_id' => $genome_db_id,
             'coord_system_name' => $coord_system_name,
             'is_reference' => $is_reference,
+            '_cellular_component' => $cellular_component,
             '_codon_table_id' => $codon_table_id,
         } );
         $self->_id_cache->put($dbID, $this_dnafrag);
@@ -443,10 +446,10 @@ sub store {
 
    my $sth = $self->prepare("
      INSERT IGNORE INTO dnafrag ( genome_db_id, coord_system_name,
-                                  name, length, is_reference, codon_table_id )
-     VALUES (?,?,?,?,?,?)");
+                                  name, length, is_reference, cellular_component, codon_table_id )
+     VALUES (?,?,?,?,?,?,?)");
 
-   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference, $dnafrag->codon_table_id);
+   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference, $dnafrag->cellular_component, $dnafrag->codon_table_id);
    
    if ($rows_inserted > 0) {
      $stored_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id');
@@ -575,6 +578,7 @@ sub update {
             'is_reference'          => $dnafrag->is_reference,
             'coord_system_name'     => $dnafrag->coord_system_name,
             'codon_table_id'        => $dnafrag->codon_table_id,
+            'cellular_component'    => $dnafrag->cellular_component,
         }, {
             'dnafrag_id'            => $dnafrag->dbID()
         } );
