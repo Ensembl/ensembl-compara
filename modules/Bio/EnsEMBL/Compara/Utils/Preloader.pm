@@ -222,7 +222,7 @@ sub load_all_sequences {
     return [] unless scalar(@all_keys);
 
     my $seqs = $seq_type ? $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@all_keys, $seq_type)
-                         : $sequence_adaptor->fetch_by_dbIDs(\@all_keys);
+                         : $sequence_adaptor->fetch_all_by_dbID_list(\@all_keys);
     while (my ($id, $seq) = each %$seqs) {
         $_->{$internal_sequence_key} = $seq for @{$key2member{$id}};
     }

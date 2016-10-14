@@ -27,7 +27,7 @@ use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -55,24 +55,29 @@ sub fetch_by_dbID {
   return $sequence;
 }
 
-=head2 fetch_by_dbIDs
+=head2 fetch_all_by_dbID_list
 
   Arg [1]    : array reference $sequence_ids
-  Example    : my $sequences = $sequence_adaptor->fetch_by_dbIDs($sequence_ids);
+  Example    : my $sequences = $sequence_adaptor->fetch_all_by_dbID_list($sequence_ids);
   Description: Fetch sequences from the database in batches.
-               Note: this is similar to fetch_all_by_dbID_list but the returned data is in a different format
+               Note: the returned data are in a different format than traditional fetch_all_by_dbID_list() methods
   Returntype : Hashref of sequence_id to strings
   Exceptions : none
   Caller     :
-  Status     : At risk
 
 =cut
 
-sub fetch_by_dbIDs {
+sub fetch_all_by_dbID_list {
   my ($self, $sequence_ids) = @_;
 
   my $select_sql = "SELECT sequence_id, sequence FROM sequence WHERE ";
   return $self->_fetch_by_list($sequence_ids, $select_sql, 'sequence_id', SQL_INTEGER);
+}
+
+sub fetch_by_dbIDs {    ## DEPRECATED
+    my $self = shift;
+    deprecate("SequenceAdaptor::fetch_by_dbIDs() is deprecated and will be removed in Ensembl 89. Use fetch_all_by_dbID_list() instead\n");
+    return $self->fetch_all_by_dbID_list(@_);
 }
 
 

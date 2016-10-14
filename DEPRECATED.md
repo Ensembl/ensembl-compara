@@ -25,6 +25,7 @@
 ## Miscellaneous, to be removed in Ensembl 89
 
 * `MethodLinkSpeciesSet::species_set_obj()`
+* `SequenceAdaptor::fetch_by_dbIDs()`
 
 # Deprecated methods not yet scheduled for deletion
 
