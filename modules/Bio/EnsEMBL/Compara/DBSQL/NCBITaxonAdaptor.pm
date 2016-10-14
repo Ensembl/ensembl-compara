@@ -146,7 +146,10 @@ sub fetch_all_by_dbID_list {
     if (@missing_taxon_ids) {
         my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
         my $more_nodes = $self->generic_fetch_concatenate(\@missing_taxon_ids, 'n.name', SQL_VARCHAR, $join);
-        push @$nodes, @$more_nodes;
+        foreach my $n (@$more_nodes) {
+            $seen_taxon_ids{$n->taxon_id} = $n unless $seen_taxon_ids{$n->taxon_id};
+        }
+        return [values %seen_taxon_ids];
     }
     return $nodes;
 }
