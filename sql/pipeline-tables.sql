@@ -269,10 +269,10 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 -- overview: This table contains the full breakdown of what is used to calculate the goc score.
 
 CREATE TABLE IF NOT EXISTS ortholog_goc_metric ( 
-  method_link_species_set_id INT NOT NULL,
+  method_link_species_set_id int(10) unsigned NOT NULL,
   homology_id int(10) unsigned NOT NULL,
   gene_member_id int(10) unsigned NOT NULL,
-  dnafrag_id bigint unsigned NOT NULL,
+  dnafrag_id bigint(20) unsigned NOT NULL,
   goc_score INT NOT NULL, 
   left1 INT,
   left2 INT,
