@@ -35,8 +35,17 @@ sub init {
   my $hub   = $self->hub;
 
   # retrieve existing session cookie or create a new one
-  $self->{'_session_cookie'}  = $hub->get_cookie($SiteDefs::ENSEMBL_SESSION_COOKIE, 1);
-  $self->{'_session_id'}      = $self->{'_session_cookie'}->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
+  my $cookie        = $hub->get_cookie($SiteDefs::ENSEMBL_SESSION_COOKIE, 1);
+  my $cookie_host   = $SiteDefs::ENSEMBL_SESSION_COOKIEHOST;
+  my ($actual_host) = split /\s*\,\s*/, ($hub->r->headers_in->{'X-Forwarded-Host'} || $hub->r->headers_in->{'Host'});
+
+  if ($cookie_host && $actual_host =~ /$cookie_host$/) { # only use ENSEMBL_SESSION_COOKIEHOST if it's same or a subdomain of the actual domain
+    $cookie->domain($cookie_host);
+    $cookie->bake if $cookie->value;
+  }
+
+  $self->{'_session_cookie'}  = $cookie;
+  $self->{'_session_id'}      = $cookie->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
 }
 
 sub record_rose_manager {
