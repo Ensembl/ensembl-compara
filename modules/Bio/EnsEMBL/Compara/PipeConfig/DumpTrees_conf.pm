@@ -301,7 +301,11 @@ sub _pipeline_analyses {
                         gm2.stable_id AS homology_gene_stable_id,
                         sm2.stable_id AS homology_protein_stable_id,
                         gdb2.name AS homology_species,
-                        hm2.perc_id AS homology_identity
+                        hm2.perc_id AS homology_identity,
+                        h.dn,
+                        h.ds,
+                        h.goc_score,
+                        h.wga_coverage
                     FROM
                         homology h
                         JOIN (homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) JOIN genome_db gdb1 USING (genome_db_id) JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)

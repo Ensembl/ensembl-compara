@@ -121,7 +121,11 @@ sub run {
                         h.homology_id,
                         h.description,
                         hm1.seq_member_id,
-                        hm2.seq_member_id
+                        hm2.seq_member_id,
+                        h.dn,
+                        h.ds,
+                        h.goc_score,
+                        h.wga_coverage
                     FROM
                         homology h
                         JOIN homology_member hm1 USING (homology_id)
@@ -145,11 +149,11 @@ sub run {
 
     $sth->execute;
 
-    my ($homology_id, $description, $seq_member_id1, $seq_member_id2);
-    $sth->bind_columns(\$homology_id, \$description, \$seq_member_id1, \$seq_member_id2);
+    my ($homology_id, $description, $seq_member_id1, $seq_member_id2, $dn, $ds, $goc_score, $wga_coverage );
+    $sth->bind_columns(\$homology_id, \$description, \$seq_member_id1, \$seq_member_id2, \$dn, \$ds, \$goc_score, \$wga_coverage);
 
     while ($sth->fetch()) {
-        print $HANDLE qq{<orthologGroup id="${homology_id}"><property name="homology_description" value="${description}" /><geneRef id="${seq_member_id1}" /><geneRef id="${seq_member_id2}" /></orthologGroup>\n};
+        print $HANDLE qq{<orthologGroup id="${homology_id}"><property name="homology_description" value="${description}" /><geneRef id="${seq_member_id1}" /> <geneRef id="${seq_member_id2}" /> <score id="dn" value="${dn}" /> <score id="ds" value="${ds}" /> <score id="goc_score" value="${goc_score}" /> <score id="wga_coverage" value="${wga_coverage}" /> </orthologGroup>\n};
     }
     
     print $HANDLE "</groups>\n";
