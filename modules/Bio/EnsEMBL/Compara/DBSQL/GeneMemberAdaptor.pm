@@ -147,6 +147,7 @@ sub _columns {
           'm.version',
           'm.taxon_id',
           'm.genome_db_id',
+          'm.biotype_group',
           'm.description',
           'm.dnafrag_id',
           'm.dnafrag_start',
@@ -167,6 +168,7 @@ sub create_instance_from_rowhash {
 		_version        => $rowhash->{version},
 		_taxon_id       => $rowhash->{taxon_id},
 		_genome_db_id   => $rowhash->{genome_db_id},
+                _biotype_group  => $rowhash->{biotype_group},
 		_description    => $rowhash->{description},
 		dnafrag_id      => $rowhash->{dnafrag_id},
 		dnafrag_start   => $rowhash->{dnafrag_start},
@@ -188,6 +190,7 @@ sub init_instance_from_rowhash {
   $member->version($rowhash->{'version'});
   $member->taxon_id($rowhash->{'taxon_id'});
   $member->genome_db_id($rowhash->{'genome_db_id'});
+  $member->biotype_group($rowhash->{'biotype_group'});
   $member->description($rowhash->{'description'});
   $member->dnafrag_id($rowhash->{'dnafrag_id'});
   $member->dnafrag_start($rowhash->{'dnafrag_start'});
@@ -217,7 +220,7 @@ sub store {
 
   my $sth = $self->prepare("INSERT ignore INTO gene_member (stable_id,version, source_name,
                               canonical_member_id,
-                              taxon_id, genome_db_id, description,
+                              taxon_id, genome_db_id, biotype_group, description,
                               dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, display_label)
                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
 
@@ -227,6 +230,7 @@ sub store {
                   $member->canonical_member_id,
                   $member->taxon_id,
                   $member->genome_db_id,
+                  $member->biotype_group,
                   $member->description,
                   $member->dnafrag_id,
                   $member->dnafrag_start,

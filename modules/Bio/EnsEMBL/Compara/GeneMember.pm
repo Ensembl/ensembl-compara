@@ -101,7 +101,7 @@ use base ('Bio::EnsEMBL::Compara::Member');
 sub new_from_Gene {
     my ($class, @args) = @_;
 
-    my ($gene, $genome_db, $dnafrag) = rearrange([qw(GENE GENOME_DB DNAFRAG)], @args);
+    my ($gene, $genome_db, $dnafrag, $biotype_group) = rearrange([qw(GENE GENOME_DB DNAFRAG BIOTYPE_GROUP)], @args);
 
     assert_ref($gene, 'Bio::EnsEMBL::Gene');
     assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
@@ -119,6 +119,7 @@ sub new_from_Gene {
         dnafrag => $dnafrag || $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
         _genome_db => $genome_db,
         _genome_db_id => $genome_db->dbID,
+        _biotype_group => $biotype_group,
         _taxon_id => $genome_db->taxon_id,
 
         _source_name => 'ENSEMBLGENE',
@@ -139,6 +140,25 @@ sub new_from_Gene {
 sub gene_member_id {
   my $self = shift;
   return $self->dbID(@_);
+}
+
+
+=head2 biotype_group
+
+  Example     : my $biotype_group = $gene_member->biotype_group();
+  Example     : $gene_member->biotype_group('snoncoding');
+  Description : Getter/Setter for the biotype_group attribute.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub biotype_group {
+    my $self = shift;
+    $self->{'_biotype_group'} = shift if @_;
+    return $self->{'_biotype_group'};
 }
 
 
@@ -260,7 +280,9 @@ sub get_all_SeqMembers {
 }
 
 
-## Homology statistics
+#
+# Homology statistics
+######################
 
 sub _get_stat {
     my ($self, $collection, $stat_name) = @_;

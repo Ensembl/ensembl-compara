@@ -937,6 +937,7 @@ CREATE TABLE sequence (
 @column source_name           The source of the member
 @column taxon_id              External reference to taxon_id in the @link ncbi_taxa_node table
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
+@column biotype_group         Biotype of this gene.
 @column canonical_member_id   External reference to seq_member_id in the @link seq_member table to allow linkage from a gene to its canonical peptide
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
 @column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
@@ -955,6 +956,7 @@ CREATE TABLE gene_member (
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
+  biotype_group               ENUM('coding', 'snoncoding', 'lnoncoding', 'mnoncoding', 'LRG') NOT NULL DEFAULT 'coding',
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
@@ -2093,4 +2095,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_c.sql|codon_table_id');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_d.sql|cellular_component');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_e.sql|biotype_group');
 
