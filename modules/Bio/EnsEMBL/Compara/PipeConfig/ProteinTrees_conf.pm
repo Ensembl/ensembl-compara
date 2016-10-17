@@ -2276,6 +2276,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'raxml_parsimony_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
+                'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
+                'raxml_cores'  => '#expr(#tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+
                 'tags'  => {
                     #The default value matches the default dataflow we want: _8_cores analysis.
                     'aln_num_of_patterns' => 200,
@@ -2298,19 +2301,19 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#tree_aln_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)'                                        => 'raxml_parsimony',
-                    '(#tree_aln_num_of_patterns# <= 150) && (#tree_gene_count# > 500)'                                         => 'raxml_parsimony',
-                    '(#tree_aln_num_of_patterns# > 150) && (#tree_aln_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)'     => 'raxml_parsimony_8_cores',
-                    '(#tree_aln_num_of_patterns# > 150) && (#tree_aln_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)'      => 'raxml_parsimony_8_cores',
-                    '(#tree_aln_num_of_patterns# > 1200) && (#tree_aln_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)'    => 'raxml_parsimony_8_cores',
-                    '(#tree_aln_num_of_patterns# > 1200) && (#tree_aln_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)'     => 'raxml_parsimony_16_cores',
-                    '(#tree_aln_num_of_patterns# > 2400) && (#tree_aln_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)'    => 'raxml_parsimony_16_cores',
-                    '(#tree_aln_num_of_patterns# > 2400) && (#tree_aln_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)'     => 'raxml_parsimony_16_cores',
-                    '(#tree_aln_num_of_patterns# > 8000) && (#tree_aln_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)'   => 'raxml_parsimony_32_cores',
-                    '(#tree_aln_num_of_patterns# > 8000) && (#tree_aln_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)'    => 'raxml_parsimony_32_cores',
-                    '(#tree_aln_num_of_patterns# > 16000) && (#tree_aln_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)'  => 'raxml_parsimony_32_cores',
-                    '(#tree_aln_num_of_patterns# > 16000) && (#tree_aln_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_64_cores',
-                    '(#tree_aln_num_of_patterns# > 32000)'                                                                     => 'raxml_parsimony_64_cores',
+                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# <= 500)'                          => 'raxml_parsimony',
+                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# > 500)'                           => 'raxml_parsimony',
+
+                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_8_cores',
+                    '( #raxml_cores# > 1 ) && (  #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)' => 'raxml_parsimony_8_cores',
+
+                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# <= 500)'  => 'raxml_parsimony_8_cores',
+                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_16_cores',
+
+                    '( #raxml_cores# > 16) && (#raxml_cores# <= 32 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_16_cores',
+                    '( #raxml_cores# > 16) && (#raxml_cores# <= 32 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_32_cores',
+
+                    '( #raxml_cores# > 32) ' => 'raxml_parsimony_64_cores',
                 ),
                 'A->1' => 'raxml_decision',
             },
@@ -2457,6 +2460,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'raxml_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
+                'examl_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '3500' : '1000',
+                'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
+
+                'examl_cores'  => '#expr(#tree_aln_num_of_patterns# / #examl_patterns_per_core# )expr#',
+                'raxml_cores'  => '#expr(#tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+
                 'tags'  => {
                     #The default value matches the default dataflow we want: _8_cores analysis.
                     'aln_num_of_patterns' => 200,
@@ -2479,19 +2488,25 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 1 => WHEN (
-                    '(#tree_aln_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)'                                        => 'raxml',
-                    '(#tree_aln_num_of_patterns# <= 150) && (#tree_gene_count# > 500)'                                         => 'raxml_8_cores',
-                    '(#tree_aln_num_of_patterns# > 150) && (#tree_aln_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)'     => 'raxml_8_cores',
-                    '(#tree_aln_num_of_patterns# > 150) && (#tree_aln_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)'      => 'raxml_16_cores',
-                    '(#tree_aln_num_of_patterns# > 1200) && (#tree_aln_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)'    => 'raxml_16_cores',
-                    '(#tree_aln_num_of_patterns# > 1200) && (#tree_aln_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)'     => 'examl_8_cores',
-                    '(#tree_aln_num_of_patterns# > 2400) && (#tree_aln_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)'    => 'examl_8_cores',
-                    '(#tree_aln_num_of_patterns# > 2400) && (#tree_aln_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)'     => 'examl_16_cores',
-                    '(#tree_aln_num_of_patterns# > 8000) && (#tree_aln_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)'   => 'examl_16_cores',
-                    '(#tree_aln_num_of_patterns# > 8000) && (#tree_aln_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)'    => 'examl_32_cores',
-                    '(#tree_aln_num_of_patterns# > 16000) && (#tree_aln_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)'  => 'examl_32_cores',
-                    '(#tree_aln_num_of_patterns# > 16000) && (#tree_aln_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)'   => 'examl_64_cores',
-                    '(#tree_aln_num_of_patterns# > 32000)'                                                                     => 'examl_64_cores',
+                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# <= 500)'                                                      => 'raxml',
+                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# > 500)'                                                       => 'raxml_8_cores',
+
+                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)'                             => 'raxml_8_cores',
+                    '( #raxml_cores# > 1 ) && (  #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)'                             => 'raxml_16_cores',
+
+                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# <= 500)'                              => 'raxml_16_cores',
+                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# > 500)'                               => 'examl_8_cores',
+
+                    '( #raxml_cores# > 16) && (#examl_cores# <= 8 ) && (#tree_gene_count# <= 500)'                              => 'examl_8_cores',
+                    '( #raxml_cores# > 16) && (#examl_cores# <= 8 ) && (#tree_gene_count# > 500)'                               => 'examl_16_cores',
+
+                    '( #raxml_cores# > 16) && ( #examl_cores# > 8 ) && (#examl_cores# <= 16 ) && (#tree_gene_count# <= 500)'    => 'examl_16_cores',
+                    '( #raxml_cores# > 16) && ( #examl_cores# > 8 ) && (#examl_cores# <= 16 ) && (#tree_gene_count# > 500)'     => 'examl_32_cores',
+
+                    '( #raxml_cores# > 16) && ( #examl_cores# > 16 ) && (#examl_cores# <= 32 ) && (#tree_gene_count# <= 500)'   => 'examl_32_cores',
+                    '( #raxml_cores# > 16) && ( #examl_cores# > 16 ) && (#examl_cores# <= 32 ) && (#tree_gene_count# > 500)'    => 'examl_64_cores',
+
+                    '( #examl_cores# > 32 )'    => 'examl_64_cores',
                 ),
             },
         },
