@@ -309,7 +309,7 @@ sub format_table {
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       if ($pop_info->{Size}) {
-        $pop_row{'detail'} = $self->ajax_add($hub->url('Component', { action => 'SampleGenotypes', function => 'samples',  pop => $pop_id, update_panel => 1 }), $pop_id);
+        $pop_row{'detail'} = $self->ajax_add($hub->url('Component', { action => 'Sample', function => 'sample',  pop => $pop_id, update_panel => 1 }), $pop_id);
         $has_pop_with_samples  = 1;
       }
       
