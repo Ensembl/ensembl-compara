@@ -51,7 +51,6 @@ sub param_defaults {
         %{ $self->SUPER::param_defaults() },
         'range_index'   => 1,
         'offset'        => '#range_index#00000001',
-        'db_conn'       => '#compara_db#',
         'sql'           => [
                     'ALTER TABLE gene_member       AUTO_INCREMENT=#offset#',
                     'ALTER TABLE seq_member        AUTO_INCREMENT=#offset#',
