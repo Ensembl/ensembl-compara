@@ -142,13 +142,6 @@ sub pipeline_create_commands {
             intron_length            INT NOT NULL,
             INDEX (homology_id)
         )'),
-        $self->db_cmd( 'CREATE TABLE exon_boundaries (
-            gene_member_id   INT NOT NULL,
-            dnafrag_start    INT NOT NULL,
-            dnafrag_end      INT NOT NULL,
-            seq_member_id    INT NOT NULL,
-            INDEX (gene_member_id)  
-        ) ENGINE=InnoDB' ),
 	];
 }
 

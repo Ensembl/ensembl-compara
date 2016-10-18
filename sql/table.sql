@@ -1077,6 +1077,31 @@ CREATE TABLE seq_member (
 
 
 /**
+@table exon_boundaries
+@desc  This table stores the exon coordinates of a seq_member. Coordinates are assumed to be on the dnafrag of the seq_member
+@colour   #1E90FF
+
+@column gene_member_id          External reference to gene_member_id in the @link gene_member table to allow querying all the exons of all the translations of a gene
+@column seq_member_id           External reference to seq_member_id in the @link seq_member table to indicate which translation the exons refer to
+@column dnafrag_start           Starting position within the dnafrag defined by the dnafrag_id of the seq_member
+@column dnafrag_end             Ending position within the dnafrag defined by the dnafrag_id of the seq_member
+
+@see seq_member
+@see gene_member
+@see dnafrag
+*/
+
+CREATE TABLE exon_boundaries (
+	gene_member_id   INT(10) UNSIGNED NOT NULL,
+	seq_member_id    INT(10) UNSIGNED NOT NULL,
+	dnafrag_start    INT NOT NULL,
+	dnafrag_end      INT NOT NULL,
+	INDEX (seq_member_id),
+	INDEX (gene_member_id)
+) ENGINE=MyISAM;
+
+
+/**
 @table external_db
 @desc  This table stores data about the external databases in which the objects described in the @link member_xref table are stored.
 @colour   #1E90FF
