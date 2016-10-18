@@ -399,7 +399,7 @@ sub init_legend { # begin (or reset)
   # Set up a separating line
   $self->push($self->Rect({
     x             => 0,
-    y             => 12,
+    y             => 0,
     width         => $im_width,
     height        => 0,
     colour        => 'grey50',
