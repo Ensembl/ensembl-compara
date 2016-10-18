@@ -34,7 +34,8 @@ sub new {
   $self->{'species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new;
   $self->{'title'}        ||= $self->{'heading'};
   $self->{'css'}            = [ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'css'}} ]->[0]->minified_url_path;
-  $self->{'static_server'}  = $self->{'species_defs'}->ENSEMBL_STATIC_SERVER || '/';
+  $self->{'js'}             = [ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'js'}} ]->[0]->minified_url_path;
+  $self->{'static_server'}  = $self->{'species_defs'}->ENSEMBL_STATIC_SERVER || '';
   $self->{'message'}        = encode_entities($self->{'message'}) if $self->content_type =~ /html/i && !$self->{'message_is_html'};
 
   return $self;
@@ -51,8 +52,9 @@ sub _template {
 <html lang="en-gb">
 <head>
   <title>[[title]]</title>
-  <link rel="stylesheet" type="text/css" media="all" href="[[static_server]][[css]]"/>
-  <link rel="icon" href="[[static_server]]i/ensembl-favicon.png" type="image/png" />
+  <link rel="stylesheet" type="text/css" media="all" href="[[static_server]]/[[css]]"/>
+  <link rel="icon" href="[[static_server]]/i/ensembl-favicon.png" type="image/png" />
+  <script type="text/javascript" src="[[static_server]]/[[js]]"></script>
 </head>
 <body>
   <div id="min_width_container">
