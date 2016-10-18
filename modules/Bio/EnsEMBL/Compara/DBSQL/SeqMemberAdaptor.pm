@@ -225,6 +225,26 @@ sub fetch_by_Transcript {
 }
 
 
+=head2 fetch_exon_boundaries_by_SeqMember
+
+  Example     : $seqmember_adaptor->fetch_exon_boundaries_by_SeqMember($seq);
+  Description : Returns the coordinates of all the exons of all the transcripts of this Seq
+  Returntype  : Arrayref of [start,end] coordinates
+  Exceptions  : none
+  Caller      : seqral
+  Status      : Stable
+
+=cut
+
+sub fetch_exon_boundaries_by_SeqMember {
+    my ($self, $seq_member) = @_;
+
+    assert_ref_or_dbID($seq_member, 'Bio::EnsEMBL::Compara::SeqMember', 'seq_member');
+    my $seq_member_id = ref($seq_member) ? $seq_member->dbID : $seq_member;
+    return $self->dbc->db_handle->selectall_arrayref('SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE seq_member_id = ?', undef, $seq_member_id);
+}
+
+
 #
 # INTERNAL METHODS
 #
