@@ -249,6 +249,8 @@ sub _columns {
           'm.dnafrag_strand',
           'm.sequence_id',
           'm.gene_member_id',
+          'm.has_transcript_edits',
+          'm.has_translation_edits',
           'm.display_label'
           );
 }
@@ -272,6 +274,8 @@ sub create_instance_from_rowhash {
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
 		_gene_member_id => $rowhash->{gene_member_id},
+                _has_transcript_edits   => $rowhash->{has_transcript_edits},
+                _has_translation_edits  => $rowhash->{has_translation_edits},
 	});
 }
 
@@ -294,6 +298,8 @@ sub init_instance_from_rowhash {
   $member->gene_member_id($rowhash->{'gene_member_id'});
   $member->source_name($rowhash->{'source_name'});
   $member->display_label($rowhash->{'display_label'});
+  $member->has_transcript_edits($rowhash->{'has_transcript_edits'});
+  $member->has_translation_edits($rowhash->{'has_translation_edits'});
   $member->adaptor($self) if ref $self;
 
   return $member;
@@ -315,15 +321,17 @@ sub store {
 
 
   my $sth = $self->prepare("INSERT ignore INTO seq_member (stable_id,version, source_name,
-                              gene_member_id,
+                              gene_member_id, has_transcript_edits, has_translation_edits,
                               taxon_id, genome_db_id, description,
                               dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, display_label)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
                   $member->source_name,
                   $member->gene_member_id,
+                  $member->has_transcript_edits,
+                  $member->has_translation_edits,
                   $member->taxon_id,
                   $member->genome_db_id,
                   $member->description,

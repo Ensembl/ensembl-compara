@@ -1028,6 +1028,8 @@ CREATE TABLE gene_member_hom_stats (
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
 @column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table, e.g. for a gene instance
 @column gene_member_id        External reference to gene_member_id in the @link gene_member table to allow linkage from peptides and transcripts to genes
+@column has_transcript_edits  Boolean. Whether there are SeqEdits that modify the transcript sequence. When this happens, the (exon) coordinates don't match the transcript sequence
+@column has_translation_edits Boolean. Whether there are SeqEdits that modify the protein sequence. When this happens, the protein sequence doesn't match the transcript sequence
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
 @column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
 @column dnafrag_start         Starting position within the dnafrag defined by dnafrag_id
@@ -1047,6 +1049,8 @@ CREATE TABLE seq_member (
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
+  has_transcript_edits        tinyint(1) DEFAULT 0 NOT NULL,
+  has_translation_edits       tinyint(1) DEFAULT 0 NOT NULL,
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
   dnafrag_start               int(10),
@@ -2097,4 +2101,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_d.sql|cellular_component');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_e.sql|biotype_group');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_f.sql|has_seq_edits');
 

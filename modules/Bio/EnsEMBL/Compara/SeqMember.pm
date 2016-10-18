@@ -221,6 +221,9 @@ sub new_from_Transcript {
         _sequence => $seq_string,
         _seq_length => length($seq_string),
         _description => $transcript->description,
+
+        _has_transcript_edits   => (scalar(@{$transcript->get_all_SeqEdits('_rna_edit')}) ? 1 : 0),
+        _has_translation_edits  => (($translate && scalar(@{$transcript->translation->get_all_SeqEdits('amino_acid_sub')})) ? 1 : 0),
     });
     $seq_member->{core_transcript} = $transcript;
     return $seq_member;
@@ -386,7 +389,7 @@ sub _prepare_exon_sequences {
         push @seq_edits, @{$transcript->get_all_SeqEdits('_rna_edit')};
 
         # @exons probably don't match the sequence if there are such edits
-        if (((scalar @exons) <= 1) or (scalar(@seq_edits) > 0)) {
+        if (((scalar @exons) <= 1) or $self->has_transcript_edits or $self->has_translation_edits) {
             $self->{_sequence_exon_cased} = $sequence;
             $self->{_sequence_exon_bounded} = $sequence;
             return;
@@ -613,6 +616,47 @@ sub get_Translation {
     my $transcript = $self->get_Transcript;
     return undef unless $transcript;
     return $transcript->translation();
+}
+
+
+=head2 has_transcript_edits
+
+  Example     : my $has_transcript_edits = $seq_member->has_transcript_edits();
+  Example     : $seq_member->has_transcript_edits(1);
+  Description : Tells whether the SeqMember has SeqEdits at the Transcript level.
+                When this happens, the (exon) coordinates don't match the transcript sequence
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub has_transcript_edits {
+    my $self = shift;
+    $self->{'_has_transcript_edits'} = shift if @_;
+    return $self->{'_has_transcript_edits'};
+}
+
+
+=head2 has_translation_edits
+
+  Example     : my $has_translation_edits = $seq_member->has_translation_edits();
+  Example     : $seq_member->has_translation_edits(1);
+  Description : Tells whether the SeqMember has SeqEdits at the Translation level.
+                When this happens, the protein sequence doesn't match the transcript sequence
+                Note: only relevant for protein-coding genes
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub has_translation_edits {
+    my $self = shift;
+    $self->{'_has_translation_edits'} = shift if @_;
+    return $self->{'_has_translation_edits'};
 }
 
 
