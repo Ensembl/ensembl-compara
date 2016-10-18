@@ -267,10 +267,12 @@ sub source {
 =head2 url
 
   Arg [1]    : (opt.) string $url
-  Example    : my $name = $method_link_species_set->source();
+  Example    : my $url = $method_link_species_set->url();
   Example    : $method_link_species_set->url("http://hgdownload.cse.ucsc.edu/goldenPath/monDom1/vsHg17/");
   Description: get/set for attribute url. Defines where the data come from if they
-               have been imported
+               have been imported. Note that some urls are defined with #base_dir# in the database to
+               represent a part that has to be substituted with runtime configuration. This method returns
+               the substituted URL.
   Returntype : string
   Exceptions : none
   Caller     : general
@@ -288,6 +290,23 @@ sub url {
   }
 
   return $self->{'url'};
+}
+
+
+=head2 get_original_url
+
+  Example    : my $url = $method_link_species_set->get_original_url();
+  Description: Returns the URL as stored in the database (before substitution)
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_original_url {
+    my $self = shift;
+
+    return ($self->{'original_url'} || $self->{'url'});
 }
 
 
@@ -319,10 +338,11 @@ sub _detect_location_on_platform {
     }
 
     my $url = $self->{'url'};
-    warn "<- $url";
+    $self->{'original_url'} = $url;
+    #warn "<- $url";
     $url =~ s/#base_dir#/$data_dir/;
 
-    warn "-> $url";
+    #warn "-> $url";
     $self->url($url) if ( defined $url && -e $url );
 }
 
