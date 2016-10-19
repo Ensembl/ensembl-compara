@@ -1262,14 +1262,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
             die $msg;
         }
     }
-    ### HACK e86 ###
-    $map_tag->{174} = 'SPRET_EiJ';
-    ################
 
     require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
     my %species_map = %{ eval $map_tag }; # read species name mapping hash from mlss_tag
     my $ref = $species_map{ $ref_gdb->dbID };
+
+    ### HACK e86 ###
+    $species_map{174} = 'SPRET_EiJ';
+    ################
 
     unless ($mlss->{'_hal_adaptor'}) {
         my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
