@@ -45,8 +45,8 @@ sub json_fetch_species {
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
-  my $species_info  = $hub->get_species_info;
-
+  my $species_info = $hub->get_species_info;
+  my $extras       = {};
   my $species = $hub->species;
   my $species_hash_multiple = ();
 
@@ -82,11 +82,11 @@ sub json_fetch_species {
 
   # For the variation compara view, only allow multi-way alignments
   my $species_hash_pairwise = {};
-
   if ($hub->type ne 'Variation') {
     
     foreach my $align_id (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
       foreach (keys %{$alignments->{$align_id}->{'species'}}) {
+        $_ = $hub->species_defs->production_name_mapping($_);
         if ($alignments->{$align_id}->{'species'}->{$species} && $_ ne $species) {
 
           my $common_name = $species_info->{$_}->{common} || '';
@@ -95,16 +95,16 @@ sub json_fetch_species {
           my $t = {};
           $t->{scientific} = $_;
           $t->{key} = $_;
-          if ($sd->get_config($_, 'STRAIN_COLLECTION')) {
-            $t->{common} = join ' ', [$sd->get_config($_, 'STRAIN_COLLECTION'), $sd->get_config($_, 'STRAIN_COLLECTION')];
+          $t->{common} = $species_info->{$_}->{common};
+          $t->{value} = $align_id;
+          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
+            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
           }
           else {
-            $t->{common} = $species_info->{$_}->{common};
+            $species_hash_pairwise->{$_} = $t;
           }
-          $t->{value} = $align_id;
-          $species_hash_pairwise->{$_} = $t;
         }
-      } 
+      }
     }
   }
 
@@ -113,7 +113,7 @@ sub json_fetch_species {
   my $json = {};
   my $internal_node_select = 0;
   my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $species_hash_pairwise);
-  my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes, $internal_node_select, {});
+  my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes, $internal_node_select, $extras);
 
 
   if (scalar @dyna_tree) {
