@@ -448,7 +448,7 @@ sub get_html_for_tree_stats_overview {
   my $width = $species_tree_root->max_depth * 2 + 4;
   my $height = scalar(@{$species_tree_root->get_all_leaves});
   my @matrix = map {[(undef) x $width]} 1..$height;
-  my $y_pos - 0;
+  my $y_pos = 0;
   my $internal_counter = 0;
   $self->draw_tree(\@matrix, $species_tree_root, \$y_pos, \$internal_counter, $method);
 
