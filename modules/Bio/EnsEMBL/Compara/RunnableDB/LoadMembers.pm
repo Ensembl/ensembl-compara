@@ -70,7 +70,7 @@ use Bio::EnsEMBL::Compara::GeneMember;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers');
 
 
 sub param_defaults {
@@ -85,6 +85,8 @@ sub param_defaults {
         'exclude_gene_analysis'         => undef,
 
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
+        'store_coding'                  => 1,
+        'store_ncrna'                   => 1,
 
             # only in 'ProteinTree' mode:
         'store_genes'                   => 1,   # whether the genes are also stored as members
@@ -239,14 +241,23 @@ sub loadMembersFromCoreSlices {
        foreach my $gene (@relevant_genes) {
           die "Unknown biotype ".$gene->biotype unless $biotype_groups->{$gene->biotype};
 
-          if (($biotype_groups->{$gene->biotype} eq 'coding') or
-              ($biotype_groups->{$gene->biotype} eq 'LRG')) {
-              $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+          my $gene_member;
+
+          if ($self->param('store_coding') && (($biotype_groups->{$gene->biotype} eq 'coding') or ($biotype_groups->{$gene->biotype} eq 'LRG'))) {
+              $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
               
-              $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
-              
-              print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
+          } elsif ( $self->param('store_ncrna') && ($biotype_groups->{$gene->biotype} =~ /noncoding$/) ) {
+              $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
+
+          } else {
+              # pseudogene, undefined, no_group
+              next;
           }
+
+          next unless $gene_member;
+
+          $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+          print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
        } # foreach
     }
   }
