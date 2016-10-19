@@ -50,8 +50,8 @@ sub json_fetch_species {
   my $end             = $object->seq_region_end;
   my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species};
   my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
+  my $species_info    = $hub->get_species_info;
   my (%species, %included_regions);
-  my $species_info  = $hub->get_species_info;
 
   my $final_hash      = {};
 
@@ -92,6 +92,7 @@ sub json_fetch_species {
 
   foreach my $alignment (grep { $_->{'species'}{$primary_species} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
     foreach (keys %{$alignment->{'species'}}) {
+      $_ = $hub->species_defs->production_name_mapping($_);
       if ($_ ne $primary_species) {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
@@ -103,23 +104,21 @@ sub json_fetch_species {
           my $tmp = {};
           $tmp->{scientific} = $_;
           $tmp->{key} = $_;
-          if ($species_defs->get_config($_, 'STRAIN_COLLECTION')) {
-            $tmp->{common} = $species_defs->get_config($_, 'STRAIN_COLLECTION') . ' ' . $species_defs->get_config($_, 'STRAIN_COLLECTION');
+          $tmp->{common} = $species_info->{$_}->{common};
+          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
+            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
           }
           else {
-            $tmp->{common} = $species_info->{$_}->{common};
+            $final_hash->{species_info}->{$_} = $tmp;
           }
-          $final_hash->{species_info}->{$_} = $tmp;
         }
       }
     }
   }
-
   if ($shown{$primary_species}) {
     my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
     $species{$primary_species} = "$species_label - chromosome $chr";
   }
-
 
   # Insert missing species into species info for all haplpotypes
 

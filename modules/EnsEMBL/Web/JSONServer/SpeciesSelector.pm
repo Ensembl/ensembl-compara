@@ -63,7 +63,6 @@ sub json_to_dynatree {
       };
       if ($sp->{strain} && $sp->{strain} ne '') {
         $t->{isStrain} = "true" ;
-        $t->{tooltip}  = "Strain: " . $sp->{strain};
       }
       if ($sp->{value}) {
         $t->{value}    = $sp->{value};
@@ -145,11 +144,13 @@ sub get_extras_as_dynatree {
         key             => $hash->{scientific},
         scientific_name => $hash->{scientific},
         title           => $hash->{common},
-        tooltip         => $k . ': ' . $hash->{common},
         extra           => 1, # used to get image file of the parent node, say for a haplotype
         searchable      => 1,
         icon            => $icon
       };
+      if ($hash->{value}) {
+        $t->{value}    = $hash->{value};
+      }
       push @{$folder->{children}}, $t;
     }
 

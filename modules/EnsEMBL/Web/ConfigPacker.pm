@@ -1046,8 +1046,6 @@ sub _build_compara_default_aligns {
       join species_set_header as ssh on mlss.species_set_id = ssh.species_set_id
      where ml.type = ?
        and ssh.name = ?
-       and ml.method_link_id != 22
-       and ml.method_link_id != 23
   ));
   my @defaults;
   my $cda_conf = $self->full_tree->{'MULTI'}{'COMPARA_DEFAULT_ALIGNMENTS'};
@@ -1076,9 +1074,6 @@ sub _build_compara_mlss {
         on mlss.species_set_id = ss.species_set_id
       join method_link as ml
         on mlss.method_link_id = ml.method_link_id
-      where
-           ml.method_link_id != 22
-       and ml.method_link_id != 23
   ));
   $sth->execute;
   my %mlss;
@@ -1107,8 +1102,6 @@ sub _summarise_compara_db {
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
         and ml.type LIKE "LASTZ_PATCH"
-        and ml.method_link_id != 22
-        and ml.method_link_id != 23
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
@@ -1127,8 +1120,6 @@ sub _summarise_compara_db {
         mlss.species_set_id = ss.species_set_id and 
         ss.genome_db_id = gd.genome_db_id and
         (ml.class like "GenomicAlign%" or ml.class like "%.constrained_element" or ml.class = "ConservationScore.conservation_score")
-        and ml.method_link_id != 22
-        and ml.method_link_id != 23
   ');
   
   my $constrained_elements = {};
@@ -1207,8 +1198,6 @@ sub _summarise_compara_db {
        mls2.species_set_id = ss2.species_set_id and
        ss1.genome_db_id = gd1.genome_db_id and
        ss2.genome_db_id = gd2.genome_db_id
-       and ml.method_link_id != 22
-       and ml.method_link_id != 23
   ');
   
   ## That's the end of the compara region munging!
@@ -1220,8 +1209,6 @@ sub _summarise_compara_db {
         ss.genome_db_id = gd.genome_db_id and
         mls.method_link_id = ml.method_link_id and
         ml.type not like '%PARALOGUES'
-        and ml.method_link_id != 22
-        and ml.method_link_id != 23
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   });
@@ -1338,8 +1325,6 @@ sub _summarise_compara_alignments {
     select mlss.method_link_species_set_id, ml.type, ml.class, mlss.name
       from method_link_species_set mlss, method_link ml
       where mlss.method_link_id = ml.method_link_id
-      and ml.method_link_id != 22
-      and ml.method_link_id != 23
   ';
   
   $sth = $dbh->prepare($q);
