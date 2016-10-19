@@ -44,7 +44,11 @@ sub init_cacheable {
 
 sub field_order {
   ## Abstract method implementation
-  return qw(flanking display_width sscon fullseq exons_only line_numbering), $_[0]->variation_fields, qw(consequence_filter);
+  my @out = (qw(flanking display_width sscon fullseq exons_only line_numbering), $_[0]->variation_fields);
+  unless(grep { $_ eq 'consequence_filter' } @out) {
+    push @out,'consequence_filter';
+  }
+  return @out;
 }
 
 sub form_fields {
