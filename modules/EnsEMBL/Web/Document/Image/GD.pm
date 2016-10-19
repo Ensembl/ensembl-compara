@@ -451,14 +451,15 @@ sub moveable_tracks {
   
   # Get latest uploaded user data to add highlight class
   my $last_uploaded_user_data_code = {};
-  my $userdata_upload_codes = $self->hub->session->records({'type' => 'userdata_upload_code'});
+  my $userdata_session_records = $self->hub->session->records({'type' => 'userdata_upload_code'});
 
-  for (@{$userdata_upload_codes}) {
-    $last_uploaded_user_data_code->{$_->{'upload_code'}} = 1;
+  for (@{$userdata_session_records}) {
+    # Create a map of all upload_codes
+    $last_uploaded_user_data_code->{$_->data->{'upload_code'}} = 1;
   }
 
   # Purge this data so that it doesn't highlight second time.
-  $userdata_upload_codes->delete;
+  $self->hub->session->delete_records($userdata_session_records);
 
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
