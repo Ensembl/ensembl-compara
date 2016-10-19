@@ -54,7 +54,7 @@ sub format_gene_tree_stats {
   return unless $mlss;
 
   my $species_tree_adaptor = $compara_db->get_adaptor('SpeciesTree');
-  my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
+  my $species_tree = $mlss->species_tree;
 
   # Reads the species set that are defined in the database (if any)
   my $ordered_species = $hub->order_species_by_clade($species_tree->root->get_all_leaves);
