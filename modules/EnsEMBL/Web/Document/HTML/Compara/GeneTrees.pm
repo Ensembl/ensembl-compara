@@ -50,7 +50,8 @@ sub format_gene_tree_stats {
   return unless $compara_db;
 
   my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $mlss = $mlss_adaptor->fetch_all_by_method_link_type($method)->[0];
+  my $all_mlsss       = $mlss_adaptor->fetch_all_by_method_link_type($method);
+  my ($mlss)          = sort {$b->species_set->size <=> $a->species_set->size} @$all_mlsss;  # The mouse-strains trees are not very interesting. Take the largest set instead
   return unless $mlss;
 
   my $species_tree_adaptor = $compara_db->get_adaptor('SpeciesTree');
