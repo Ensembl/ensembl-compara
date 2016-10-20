@@ -171,8 +171,9 @@ sub content {
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
          
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
+      $spp = $species_defs->production_name_mapping($spp);
       my $link_url = $hub->url({
-        species => $species_defs->production_name_mapping($spp),
+        species => $spp,
         action  => 'Summary',
         g       => $stable_id,
         __clear => 1
