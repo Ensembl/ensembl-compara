@@ -45,7 +45,7 @@ sub _init {
   $self->{data_url}       = $hub->url('Json', {
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
-                              action => $hub->referer->{'ENSEMBL_ACTION'},
+                              action => $hub->param('referer_action'),
                               align => $hub->param('align') ? $hub->param('align') : ''
                             });
   $self->{caller}          = $self->{hub_action} = $hub->referer->{'ENSEMBL_ACTION'};
