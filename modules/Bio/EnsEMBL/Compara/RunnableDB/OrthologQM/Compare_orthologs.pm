@@ -265,7 +265,7 @@ sub _compute_ortholog_score {
         $strand = 1;
     }
 
-    # get the all gene members with source name ENSEMBLPEP (ordered by their dnafrag start position)  spanning the specified start and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
+    # get the all protein-coding gene members (ordered by their dnafrag start position)  spanning the specified start and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
     $self->param('non_ref_gmembers_ordered', $self->_get_non_ref_gmembers($query_non_ref_dnafragID, $start, $end));
 
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
@@ -304,7 +304,7 @@ sub _compute_ortholog_score {
 }
 
 
-#get all the gene members of in a chromosome coordinate range, filter only the ones that are from a 'ENSEMBLPEP' source and order them based on their dnafrag start positions
+#get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
 sub _get_non_ref_gmembers {
     my $self = shift;
     print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
@@ -317,11 +317,11 @@ sub _get_non_ref_gmembers {
             JOIN
                 homology_member USING (gene_member_id)
             JOIN
-                homology USING (homology_id) JOIN seq_member s USING (seq_member_id)
+                homology USING (homology_id)
             WHERE
-                method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND s.source_name LIKE "%PEP%"};
+                method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND m.biotype_group = "coding"};
 
-        # Returns the rows hashed by 'gene_member_id', i.e. it is a Perl DBI way of doing GROUP BY / getting 1 entry per gene_member_id
+        # Returns the rows as an array of hashes (Slice parameter)
     my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
 
         #collapse tandem duplications
