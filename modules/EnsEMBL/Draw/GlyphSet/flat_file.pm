@@ -42,7 +42,7 @@ sub get_data {
   my $container    = $self->{'container'};
   my $hub          = $self->{'config'}->hub;
   my $species_defs = $self->species_defs;
-  my $type         = $self->my_config('type');
+  my $type         = $self->my_config('type') || $self->my_config('sub_type');
   my $format       = $self->my_config('format');
   my $legend       = {};
 
