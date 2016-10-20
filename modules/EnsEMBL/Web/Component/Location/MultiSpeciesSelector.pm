@@ -37,7 +37,7 @@ sub buttons {
   my $self = shift;
   my $class = $self->hub->param("$self->{'url_param'}1") ? '' : 'pulse';
   return {
-    'url'     => $self->ajax_url('ajax', {multiselect => 1}),
+    'url'     => $self->ajax_url('ajax', {multiselect => 1, referer_action => $self->hub->action}),
     'caption' => $self->{'link_text'},
     'class'   => 'config _species_selector ' . $class,
     'modal'   => 1,
