@@ -416,7 +416,7 @@ sub create_mlss {
         join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set->genome_dbs}), "\n";
     print "  Name: ", $mlss->name, "\n";
     print "  Source: ", $mlss->source, "\n";
-    print "  URL: ", $mlss->url, "\n";
+    print "  URL: ", $mlss->get_original_url, "\n";
     print "  SpeciesSet name: ".($mlss->species_set->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     if ($release and !$mlss->is_current) {

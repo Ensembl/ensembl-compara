@@ -153,7 +153,7 @@ sub store {
 
       my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url, first_release, last_release)';
       my $mlss_placeholders = '?, ?, ?, ?, ?, ?, ?';
-      my @mlss_data = ($method->dbID, $species_set->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '', $mlss->first_release, $mlss->last_release);
+      my @mlss_data = ($method->dbID, $species_set->dbID, $mlss->name || '', $mlss->source || '', $mlss->get_original_url || '', $mlss->first_release, $mlss->last_release);
 
       $dbID = $mlss->dbID();
       if (!$dbID) {

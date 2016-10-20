@@ -95,14 +95,14 @@ sub write_output {
     my $master_mlss = $self->param('master_mlss');
     my $this_url = $self->param('this_url');
 
-    if ($master_mlss->url) {
-        if ($master_mlss->url eq $this_url) {
+    if ($master_mlss->get_original_url) {
+        if ($master_mlss->get_original_url eq $this_url) {
             unless ($self->param('allow_reregistration')) {
                 die "This database [$this_url] is already registered for MLSS ", $master_mlss->dbID, "\n";
             }
         } else {
             unless ($self->param('allow_overwrite_other_database')) {
-                die "The MLSS ".$master_mlss->dbID." is already registered to a different database: ", $master_mlss->url, "\n";
+                die "The MLSS ".$master_mlss->dbID." is already registered to a different database: ", $master_mlss->get_original_url, "\n";
             }
         }
     }
