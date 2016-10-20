@@ -87,6 +87,7 @@ sub param_defaults {
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
         'store_coding'                  => 1,
         'store_ncrna'                   => 1,
+        'store_exon_coordinates'        => 1,
 
             # only in 'ProteinTree' mode:
         'store_genes'                   => 1,   # whether the genes are also stored as members
@@ -371,6 +372,9 @@ sub store_protein_coding_gene_and_all_transcripts {
             $pep_member->_prepare_exon_sequences;
             $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('exon_bounded'), 'exon_bounded');
         }
+        if ($self->param('store_exon_coordinates')) {
+            $self->store_exon_coordinates($transcript, $pep_member);
+        }
 
         print(" : stored\n") if($self->param('verbose'));
 
@@ -394,6 +398,19 @@ sub store_protein_coding_gene_and_all_transcripts {
     }
 
     return $gene_member;
+}
+
+
+sub store_exon_coordinates {
+    my ($self, $transcript, $seq_member) = @_;
+
+    my $exon_list;
+    if    ( $seq_member->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
+    elsif ( $seq_member->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
+
+    my @exons = map {[$_->start,$_->end]} @$exon_list;
+
+    $seq_member->adaptor->_store_exon_boundaries_for_SeqMember($seq_member, \@exons);
 }
 
 

@@ -218,6 +218,9 @@ sub store_ncrna_gene {
         $ncrna_member->gene_member_id($gene_member->dbID);
         $seq_member_adaptor->store($ncrna_member);
         print STDERR " : stored seq gene_member\n" if ($self->debug);
+        if ($self->param('store_exon_coordinates') and $self->can('store_exon_coordinates')) {
+            $self->store_exon_coordinates($transcript, $ncrna_member);
+        }
 
         ## Probably we will include here the hack to avoid merged lincRNAs and short ncRNAs
         if (length($transcript_spliced_seq) > $max_ncrna_length) {

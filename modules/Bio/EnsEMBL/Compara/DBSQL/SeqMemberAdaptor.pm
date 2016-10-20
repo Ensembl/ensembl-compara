@@ -231,8 +231,6 @@ sub fetch_by_Transcript {
   Description : Returns the coordinates of all the exons of all the transcripts of this Seq
   Returntype  : Arrayref of [start,end] coordinates
   Exceptions  : none
-  Caller      : seqral
-  Status      : Stable
 
 =cut
 
@@ -242,6 +240,33 @@ sub fetch_exon_boundaries_by_SeqMember {
     assert_ref_or_dbID($seq_member, 'Bio::EnsEMBL::Compara::SeqMember', 'seq_member');
     my $seq_member_id = ref($seq_member) ? $seq_member->dbID : $seq_member;
     return $self->dbc->db_handle->selectall_arrayref('SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE seq_member_id = ?', undef, $seq_member_id);
+}
+
+
+=head2 _store_exon_boundaries_for_SeqMember
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SeqMember $seq_member
+  Arg[2]      : Arrayref of [$start,$end] coordinates
+  Example     : $seqmember_adaptor->_store_exon_boundaries_for_SeqMember($seq_member, $exons);
+  Description : Store the given exon coordinates for this SeqMember
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub _store_exon_boundaries_for_SeqMember {
+    my ($self, $seq_member, $exons) = @_;
+
+    assert_ref($seq_member, 'Bio::EnsEMBL::Compara::SeqMember', 'seq_member');
+    my $seq_member_id = $seq_member->dbID;
+    my $gene_member_id = $seq_member->gene_member_id;
+
+    # Delete data from a previous (aborted ?) run
+    $self->dbc->do('DELETE FROM exon_boundaries WHERE seq_member_id = ?', undef, $seq_member_id);
+    # Insert the coordinates
+    my $sth = $self->prepare('INSERT INTO exon_boundaries (gene_member_id, seq_member_id, dnafrag_start, dnafrag_end) VALUES (?,?,?,?)');
+    $sth->execute($gene_member_id, $seq_member_id, @$_) for @$exons;
+    $sth->finish;
 }
 
 
