@@ -62,6 +62,8 @@ foreach my $emf_file (@ARGV) {
        print MAF "# original dump date: $1\n";
      } elsif ($_ =~ /^## ?RELEASE (.+)/) {
        print MAF "# ensembl release: $1\n";
+     } elsif ($_ =~ /^### (.+)/) {
+       print MAF "# epo2x composite sequence: $1\n";
      }
     } elsif ($_ =~ /^# *(.+)/) {
       print MAF "# emf comment: $1\n";
@@ -76,6 +78,8 @@ foreach my $emf_file (@ARGV) {
     } elsif ($_ =~ /^SCORE/) {
       $pattern .= " (\-?[\\d\.]+)";
       push(@$data, {type => "SCORE", values => []});
+    } elsif ($_ =~ /^TREE (.+)/) {
+      print MAF "# tree: $1\n"
     } elsif ($_ =~ /^DATA/) {
       if ($mode eq "header") {
         $mode = "data";
@@ -133,6 +137,8 @@ sub write_maf {
 	  $maf_start, $maf_length, $maf_strand,
 	  ($this_data->{chr_length} or 0);
       print MAF $this_data->{seq}, "\n"
+    } elsif ($this_data->{type} eq "SCORE") {
+      print MAF "# gerp scores: ", join(" ", @{$this_data->{values}}), "\n";
     }
   }
   print MAF "\n";
