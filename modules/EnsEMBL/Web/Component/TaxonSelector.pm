@@ -33,22 +33,22 @@ sub _init {
   $self->cacheable(0);
   $self->ajaxable(0);
   # these can be overridden in child
-  $self->{panel_type}     = 'TaxonSelector'; 
-  $self->{method}         = 'get'; # get|post
-  $self->{action}         = undef; # url to send data to
-  $self->{extra_params}   = {}; # additional params to send     
-  $self->{redirect}       = $hub->url({ function => undef }, 0, 1); # url to redirect to
-  # $self->{form_action}    = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
-  $self->{form_action}    = $hub->referer->{uri};
-  $self->{link_text}      = 'Species selector';
-  $self->{finder_prompt}  = 'Start typing the name of a species...';
-  $self->{data_url}       = $hub->url('Json', {
+  $self->{panel_type}      = 'TaxonSelector'; 
+  $self->{method}          = 'get'; # get|post
+  $self->{action}          = undef; # url to send data to
+  $self->{extra_params}    = {}; # additional params to send     
+  $self->{redirect}        = $hub->url({ function => undef }, 0, 1); # url to redirect to
+  # $self->{form_action}   = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
+  $self->{form_action}     = $hub->referer->{uri};
+  $self->{link_text}       = 'Species selector';
+  $self->{finder_prompt}   = 'Start typing the name of a species...';
+  $self->{data_url}        = $hub->url('Json', {
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
                               action => $hub->param('referer_action'),
                               align => $hub->param('align') ? $hub->param('align') : ''
                             });
-  $self->{caller}          = $self->{hub_action} = $hub->referer->{'ENSEMBL_ACTION'};
+  $self->{caller}          = $hub->param('referer_action');
   $self->{multiselect}     = $self->param('multiselect');
   $self->{selection_limit} = undef;
   $self->{is_blast}        = 0,
@@ -107,7 +107,7 @@ sub render_selector {
   #   $hidden_fields .= qq{<input type="hidden" name="$_" value="$extra_params->{$_}" />\n};
   # }
   
-  my $is_cmp = ($self->{hub_action} eq 'Compara_Alignments')? 1 : 0;
+  my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
   if ($is_cmp) {
     foreach (keys %{$hub->referer->{params}}) {
       if ($_ ne 'align') {
@@ -116,7 +116,7 @@ sub render_selector {
     }    
     $action = $self->{form_action};
   }
-  if ($self->{hub_action} eq 'Multi') {
+  if ($self->{caller} eq 'Multi') {
     $action = $self->{form_action};
   }
 
@@ -165,7 +165,7 @@ sub render_selector {
       <div class="ss-msg"><span></span></div>
     </div>
   },
-  ($self->{hub_action} eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list,
+  ($self->{caller} eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list,
 }
 
 sub render_tip {
