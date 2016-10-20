@@ -898,7 +898,7 @@ sub check_for_missing_species {
     } else {
       $warnings .= sprintf('<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
                                  scalar @missing,
-                                 join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
+                                 join "</li>\n<li>", sort map $species_defs->species_label($species_defs->production_name_mapping($_)), @missing
                             );
     }
   }

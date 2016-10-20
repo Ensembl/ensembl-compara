@@ -518,3 +518,7 @@ div.taxon_selector ul.dynatree-container li {
 div.taxon_selector span.dynatree-active a {
   border-radius: 2px;
 }
+
+div.taxon_selector_list ul li.ss-drag-active {
+  box-shadow: 2px 4px 24px grey;
+}
