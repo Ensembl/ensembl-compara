@@ -224,6 +224,8 @@ sub store_ncrna_gene {
             $self->store_exon_coordinates($transcript, $ncrna_member);
         }
 
+        $self->_store_seq_member_projection($ncrna_member, $transcript);
+
         ## Probably we will include here the hack to avoid merged lincRNAs and short ncRNAs
         if (length($transcript_spliced_seq) > $max_ncrna_length) {
             $max_ncrna_length = length($transcript_spliced_seq);
@@ -296,6 +298,17 @@ sub _load_biotype_groups {
     my %biotype_groups = map {lc($_->[0]) => $_->[1]} @{ $production_dbc->db_handle->selectall_arrayref($gene_biotype_sql) };
     $self->param('biotype_groups', \%biotype_groups);
     $production_dbc->disconnect_if_idle();
+}
+
+sub _store_seq_member_projection {
+    my ($self, $seq_member, $transcript) = @_;
+
+    my @proj_attrib = @{ $transcript->get_all_Attributes('proj_parent_t') };
+    if (@proj_attrib) {
+        my $parent_name = $proj_attrib[0]->value;
+        $parent_name =~ s/\.\d+$//;   # strip the version out
+        $self->compara_dba->dbc->do('INSERT INTO seq_member_projection_stable_id (target_seq_member_id, source_stable_id) VALUES (?,?)', undef, $seq_member->dbID, $parent_name);
+    }
 }
 
 1;

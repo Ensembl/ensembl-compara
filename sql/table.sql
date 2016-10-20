@@ -1109,17 +1109,45 @@ CREATE TABLE exon_boundaries (
 
 
 /**
+@table seq_member_projection_stable_id
+@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table links to the source stable_id and is used until the source members are loaded
+@colour   #1E90FF
+
+@example   The following query shows the projections of the mouse gene Pdk3 to all the other species
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.stable_id = source_stable_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_stable_id
+@column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+
+@see seq_member
+@see seq_member_projection
+*/
+
+CREATE TABLE seq_member_projection_stable_id (
+  target_seq_member_id      int(10) unsigned NOT NULL,
+  source_stable_id          VARCHAR(128) NOT NULL,
+
+  PRIMARY KEY (target_seq_member_id),
+  INDEX (source_stable_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
 @table seq_member_projection
-@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering
+@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table can only be used when both genomes have been loaded. Thus we first
+       populate @link seq_member_projection_stable_id and then copy the data whilst transforming the stable_id into a seq_member_id
 @colour   #1E90FF
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
 @sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
 
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
 @column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
-@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this gene was annotated by projection of source_seq_member_id
+@column identity                    (can be missing). The percentage of identity between the two members.
 
 @see seq_member
+@see seq_member_projection_stable_id
 */
 
 CREATE TABLE seq_member_projection (
@@ -1132,7 +1160,7 @@ CREATE TABLE seq_member_projection (
 
   PRIMARY KEY (target_seq_member_id),
   KEY (source_seq_member_id)
-) ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 /**

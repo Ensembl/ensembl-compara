@@ -380,6 +380,8 @@ sub store_protein_coding_gene_and_all_transcripts {
             $self->store_exon_coordinates($transcript, $pep_member);
         }
 
+        $self->_store_seq_member_projection($pep_member, $transcript);
+
         print(" : stored\n") if($self->param('verbose'));
 
         if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {

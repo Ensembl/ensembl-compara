@@ -72,6 +72,7 @@ sub run {
     $self->_copy_data_wrapper('other_member_sequence', 'SELECT other_member_sequence.* FROM seq_member JOIN other_member_sequence USING (seq_member_id)');
     $self->_copy_data_wrapper('exon_boundaries', 'SELECT exon_boundaries.* FROM seq_member JOIN exon_boundaries USING (seq_member_id)');
     $self->_copy_data_wrapper('hmm_annot', 'SELECT hmm_annot.* FROM seq_member JOIN hmm_annot USING (seq_member_id)');
+    $self->_copy_data_wrapper('seq_member_projection_stable_id', 'SELECT seq_member_projection_stable_id.* FROM seq_member JOIN seq_member_projection_stable_id ON seq_member_id = target_seq_member_id');
 }
 
 sub _copy_data_wrapper {
