@@ -19,7 +19,7 @@ limitations under the License.
 
 package EnsEMBL::Web::Document::HTML::Compara::GeneTrees;
 
-## Provides content for compara gene-trees documentation
+## Provides content for compara gene trees documentation
 ## Base class - does not itself output content
 
 use strict;
@@ -50,11 +50,12 @@ sub format_gene_tree_stats {
   return unless $compara_db;
 
   my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $mlss = $mlss_adaptor->fetch_all_by_method_link_type($method)->[0];
+  my $all_mlsss       = $mlss_adaptor->fetch_all_by_method_link_type($method);
+  my ($mlss)          = sort {$b->species_set->size <=> $a->species_set->size} @$all_mlsss;  # The mouse-strains trees are not very interesting. Take the largest set instead
   return unless $mlss;
 
   my $species_tree_adaptor = $compara_db->get_adaptor('SpeciesTree');
-  my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
+  my $species_tree = $mlss->species_tree;
 
   # Reads the species set that are defined in the database (if any)
   my $ordered_species = $hub->order_species_by_clade($species_tree->root->get_all_leaves);
@@ -64,20 +65,18 @@ sub format_gene_tree_stats {
 
   if ($method eq "NC_TREES") {
       $html = q{
-List of available views:
+This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.html">Ensembl phylogenetic analysis of ncRNA families</a>. The following views are available:
 <ul>
   <li><a href='?'>Overview</a></li>
-  <li><a href='?page=coverage'>Gene-tree coverage</a> for each species</li>
-  <li><a href='?page=sizes'>Size of the gene trees</a> (split by their root taxon)</li>
-  <li><a href='?page=nodes'>Gene-tree nodes</a>, and the inference of speciation / duplication events</li>
+  <li><a href='?page=coverage'>Gene tree coverage</a> for each species</li>
+  <li><a href='?page=sizes'>Size of gene trees</a> (split by their root taxon)</li>
+  <li><a href='?page=nodes'>Gene tree nodes</a>, and the inference of speciation / duplication events</li>
 </ul>
 <div class="js_panel">
 };
     if (not $page) {
 
-	   $html .= q{<p>This is an overview of the various statistics.
-      The phylogenetic tree summarizes all the piecharts found in the other views.
-      </p>};
+      $html .= q{<p>Overall Summary</p>};
       $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
 	   my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
 	   $html .= sprintf(qq{<table class="ss">
@@ -94,29 +93,30 @@ List of available views:
       </tr>
       <tr>
         <td $cell_style rowspan="2">Leaves (extant species)</td>
-        <td $cell_style>Gene events</td>
-        <td $cell_style><span style="color: #fc0">Default genes</span></td>
-        <td $cell_style><span style="color: #909">Species-specific duplications</span></td>
-        <td $cell_style><span </span></td>
+        <td $cell_style>Gene tree coverage</td>
+        <td $cell_style><span style="color: #8a2">Genes in multi-species trees</span></td>
+        <td $cell_style><span style="color: #25a">Genes in single-species trees</span></td>
+        <td $cell_style><span style="color: #a22">Orphaned genes</span></td>
         <td $cell_style>%s</td>
       </tr>
       <tr>
-        <td $cell_style>Gene-tree coverage</td>
-        <td $cell_style><span style="color: #8a2">Genes in multi-species trees</span></td>
-        <td $cell_style><span style="color: #a22">Orphaned genes</span></td>
-        <td $cell_style><span style="color: #25a">Genes in single-species trees</span></td>
+        <td $cell_style>Species-specific duplications</td>
+        <td $cell_style><span style="color: #fc0">Single-copy genes</span></td>
+        <td $cell_style><span style="color: #909">Multi-copy genes</span></td>
+        <td $cell_style><span </span></td>
         <td $cell_style>%s</td>
+      </tr>
         </table>
       }, $self->piechart_data([1,1,1], \$counter_raphael_holders),
-        $self->piechart_data([1,1], \$counter_raphael_holders),
         $self->piechart_data([0,0,0,1,1,1], \$counter_raphael_holders),
+        $self->piechart_data([1,1], \$counter_raphael_holders),
 	      );
 	      $html .= $self->get_html_for_tree_stats_overview($species_tree->root, \$counter_raphael_holders, $method);
 
     } elsif ($page eq 'coverage')  {
 
       my $n_group = scalar(@$ordered_species)-1;
-      $html .= q{<h2>Gene-tree coverage (per species)</h2>};
+      $html .= q{<h2>Gene tree coverage (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
       $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
       for (0..$n_group) {
@@ -126,12 +126,12 @@ List of available views:
       }
 
     } elsif ($page eq 'sizes') {
-      $html .= q{<h2>Size of the trees (per root node)</h2>};
+      $html .= q{<h2>Size of gene trees (per root node)</h2>};
       $html .= $self->piechart_header([qw(#89C #fff)]);
       $html .= $self->get_html_for_tree_size_statistics($species_tree->root, \$counter_raphael_holders);
 
     } elsif ($page eq 'nodes') {
-      $html .= q{<h2>Statistics about the gene-tree nodes</h2>};
+      $html .= q{<h2>Statistics about the gene tree nodes</h2>};
       $html .= $self->piechart_header([qw(#fc0 #909 #69f)]);
       $html .= $self->get_html_for_node_statistics($species_tree->root, \$counter_raphael_holders);
     }
@@ -139,21 +139,19 @@ List of available views:
 
   elsif ($method eq 'PROTEIN_TREES') {
      $html = q{
-List of available views:
+This page provides a summary of the <a href="/info/genome/compara/homology_method.html">Ensembl phylogenetic analysis of protein families</a>. The following views are available:
 <ul>
   <li><a href='?'>Overview</a></li>
-  <li><a href='?page=coverage'>Gene-tree coverage and Gene QC</a> for each species</li>
-  <li><a href='?page=sizes'>Size of the gene trees</a> (split by their root taxon)</li>
-  <li><a href='?page=nodes'>Gene-tree nodes</a>, and the inference of speciation / duplication events</li>
+  <li><a href='?page=coverage'>Gene tree coverage and Gene QC</a> for each species</li>
+  <li><a href='?page=sizes'>Size of gene trees</a> (split by their root taxon)</li>
+  <li><a href='?page=nodes'>Gene tree nodes</a>, and the inference of speciation / duplication events</li>
 </ul>
 <div class="js_panel">
 };
   
     if (not $page) {
 
-      $html .= q{<p>This is an overview of the various statistics.
-      The phylogenetic tree summarizes all the piecharts found in the other views.
-      </p>};
+      $html .= q{<p>Overall Summary</p>};
       $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
       my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
       $html .= sprintf(qq{<table class="ss">
@@ -171,32 +169,32 @@ List of available views:
       </tr>
       <tr>
         <td $cell_style rowspan="2">Leaves (extant species)</td>
+        <td $cell_style>Gene tree coverage</td>
+        <td $cell_style><span style="color: #8a2">Genes in multi-species trees</span></td>
+        <td $cell_style><span style="color: #25a">Genes in single-species trees</span></td>
+        <td $cell_style><span style="color: #a22">Orphaned genes</span></td>
+        <td $cell_style><span </span></td>
+        <td $cell_style>%s</td>
+      </tr>
+      <tr>
         <td $cell_style>Gene QC</td>
-        <td $cell_style><span style="color: #fc0">Genes in a tree</span></td>
+        <td $cell_style><span style="color: #fc0">Validated genes</span></td>
         <td $cell_style><span style="color: #8c2">Short genes</span></td>
         <td $cell_style><span style="color: #F00">Long genes</span></td>
         <td $cell_style><span style="color: #69f">Split genes</span></td>
         <td $cell_style>%s</td>
       </tr>
-      <tr>
-        <td $cell_style>Gene-tree coverage</td>
-        <td $cell_style><span style="color: #8a2">Genes in multi-species trees</span></td>
-        <td $cell_style><span style="color: #a22">Orphaned genes</span></td>
-        <td $cell_style><span style="color: #25a">Genes in single-species trees</span></td>
-        <td $cell_style><span </span></td>
-        <td $cell_style>%s</td>
-      </tr>
       </table>
       }, $self->piechart_data([1,1,1], \$counter_raphael_holders),
-        $self->piechart_data([1,0,1,0,0,0,1,1], \$counter_raphael_holders),
         $self->piechart_data([0,0,0,1,1,1], \$counter_raphael_holders),
+        $self->piechart_data([1,0,1,0,0,0,1,1], \$counter_raphael_holders),
       );
     $html .= $self->get_html_for_tree_stats_overview($species_tree->root, \$counter_raphael_holders, $method);
 
     } elsif ($page eq 'coverage')  {
 
       my $n_group = scalar(@$ordered_species)-1;
-      $html .= q{<h2>Gene-tree coverage and Gene QC (per species)</h2>};
+      $html .= q{<h2>Gene tree coverage and Gene QC (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
       $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
       for (0..$n_group) {
@@ -211,7 +209,7 @@ List of available views:
       $html .= $self->get_html_for_tree_size_statistics($species_tree->root, \$counter_raphael_holders);
 
     } elsif ($page eq 'nodes') {
-      $html .= q{<h2>Statistics about the gene-tree nodes</h2>};
+      $html .= q{<h2>Statistics about the gene tree nodes</h2>};
       $html .= $self->piechart_header([qw(#fc0 #909 #69f)]);
       $html .= $self->get_html_for_node_statistics($species_tree->root, \$counter_raphael_holders);
     }
@@ -291,7 +289,7 @@ sub get_html_for_gene_tree_coverage {
     { key => 'piechart_dup',                      width => '10%',  align => 'center', sort => 'none',    title => 'Gene QC', class => '_no_export'},
   ) if $method eq 'PROTEIN_TREES';  
   $table->add_columns(
-    { key => 'piechart_dup',                      width => '10%',  align => 'center', sort => 'none',    title => 'Gene events', class => '_no_export'},
+    { key => 'piechart_dup',                      width => '10%',  align => 'center', sort => 'none',    title => 'Species-specific duplications', class => '_no_export'},
   ) if $method eq 'NC_TREES'; 
 
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
@@ -360,7 +358,7 @@ sub get_piecharts_for_species_ncrna {
   my $v5 = $node->get_value_for_tag('nb_dup_nodes');
 
   my $piechart4 = $self->piechart_data([0, 0, 0, $v1, $v2, $v3], $counter_raphael_holders, sprintf("Gene coverage (%s)", $node->node_name));
-  my $piechart3 = $self->piechart_data([$v4-$v5, $v5], $counter_raphael_holders, sprintf("Gene events (%s)", $node->node_name));
+  my $piechart3 = $self->piechart_data([$v4-$v5, $v5], $counter_raphael_holders, sprintf("%s-specific duplications", $node->node_name));
 
   return [$piechart3, $piechart4];
 }
@@ -451,7 +449,7 @@ sub get_html_for_tree_stats_overview {
   my $width = $species_tree_root->max_depth * 2 + 4;
   my $height = scalar(@{$species_tree_root->get_all_leaves});
   my @matrix = map {[(undef) x $width]} 1..$height;
-  my $y_pos - 0;
+  my $y_pos = 0;
   my $internal_counter = 0;
   $self->draw_tree(\@matrix, $species_tree_root, \$y_pos, \$internal_counter, $method);
 

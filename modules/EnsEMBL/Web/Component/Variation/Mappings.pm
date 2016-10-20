@@ -292,7 +292,8 @@ sub content {
       $flag = 1;
     }
     
-    
+    next unless $hub->database('regulation');
+        
     ## Reg feats ##
     # reset allele string if recalculating for HGMD
     $vf_obj->allele_string('A/C/G/T') if $hub->param('recalculate');
