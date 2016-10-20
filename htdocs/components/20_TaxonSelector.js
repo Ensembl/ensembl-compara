@@ -82,7 +82,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   updateCount: function() {
     var panel = this;
-    // panel.elLk.count.html('(' + panel.getCurrentSelectionCount() + '/' + panel.selectionLimit +')');
     panel.elLk.count.html(panel.getCurrentSelectionCount());
     panel.elLk.count.removeClass('warn');
 
@@ -128,7 +127,11 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
     this.elLk.list.sortable({
       containment: this.elLk.list.parent(),
+      start: function(event, ui) {
+        $(ui.item).addClass('ss-drag-active')
+      },
       stop: function(event, ui) {
+        $(ui.item).removeClass('ss-drag-active')
         panel.startSort();
       }
     });
