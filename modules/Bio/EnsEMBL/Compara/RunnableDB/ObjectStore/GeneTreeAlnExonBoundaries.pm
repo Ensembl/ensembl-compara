@@ -74,9 +74,6 @@ sub fetch_input {
     my $gene_tree       = $tree_adaptor->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     my $alignment       = $gene_tree->alignment();
 
-    # This is faster because it loads all the sequences in 1 query
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, 'exon_bounded', $alignment);
-
     $self->param('alignment', $alignment);
     $self->param('gene_tree', $gene_tree);
 }

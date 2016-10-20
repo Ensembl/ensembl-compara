@@ -369,8 +369,6 @@ sub store_protein_coding_gene_and_all_transcripts {
         if ($self->param('store_related_pep_sequences')) {
             $pep_member->_prepare_cds_sequence;
             $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('cds'), 'cds');
-            $pep_member->_prepare_exon_sequences;
-            $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('exon_bounded'), 'exon_bounded');
         }
         if ($self->param('store_exon_coordinates')) {
             $self->store_exon_coordinates($transcript, $pep_member);

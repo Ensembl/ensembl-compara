@@ -364,7 +364,6 @@ sub _prepare_exon_sequences {
 
     # If there is the exon_bounded sequence, it is only a matter of splitting it and alternating the case
     my $exon_bounded_seq = $self->{_sequence_exon_bounded};
-    $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->seq_member_id, 'exon_bounded') unless $exon_bounded_seq;
 
     if ($exon_bounded_seq) {
         $self->{_sequence_exon_bounded} = $exon_bounded_seq;
