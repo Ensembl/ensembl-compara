@@ -88,7 +88,7 @@ sub create_objects {
   my $hub     = $self->hub;
   my $url     = $hub->url($hub->multi_params);
   my $species = $hub->species;
-  my $request = $hub->controller->isa('EnsEMBL::Web::Controller::Page') ? 'page' : ''; # TODO - any better idea to do this?
+  my $request = $hub->controller->isa('EnsEMBL::Web::Controller::Page') && !$hub->controller->isa('EnsEMBL::Web::Controller::Export') ? 'page' : ''; # TODO - any better idea to do this?
   $type     ||= $hub->factorytype;
 
   my ($factory, $new_factory, $data);
