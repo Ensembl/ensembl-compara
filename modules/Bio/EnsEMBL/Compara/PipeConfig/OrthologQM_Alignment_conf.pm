@@ -190,7 +190,11 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'reset_mlss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ResetMLSS',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => 'DELETE FROM ortholog_quality WHERE alignment_mlss = #aln_mlss_id#',
+            },
+            -analysis_capacity => 3,
         },
 
         {   -logic_name => 'select_mlss',

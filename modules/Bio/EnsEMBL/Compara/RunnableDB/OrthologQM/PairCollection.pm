@@ -154,7 +154,12 @@ sub write_output {
 
 	$self->dataflow_output_id( $self->param('genome_db_pairs'), 2 ); # array of input_ids to select_mlss
 	
-	$self->dataflow_output_id( { aln_mlss_ids => $self->param('aln_mlss_ids') }, 3 ); # to reset_mlss
+	# Removes all scores in the ortholog_quality table associated with the list of input MLSS
+	my $mlss_ids = $self->param('aln_mlss_ids');
+
+	if ( defined $mlss_ids && scalar( @{$mlss_ids} ) ) {
+            $self->dataflow_output_id( { aln_mlss_id => $_ }, 3 ) for @{$mlss_ids}; # to reset_mlss
+        }
 }
 
 1;

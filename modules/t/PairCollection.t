@@ -81,11 +81,6 @@ standaloneJob(
 			$exp_dataflow,
 			2
 		],
-		[
-			'DATAFLOW',
-			{ 'aln_mlss_ids' => undef },
-			3
-		],
 	]
 );
 
@@ -101,11 +96,6 @@ standaloneJob(
 			'DATAFLOW',
 			$exp_dataflow,
 			2
-		],
-		[
-			'DATAFLOW',
-			{ 'aln_mlss_ids' => undef },
-			3
 		],
 	]
 );
@@ -161,11 +151,6 @@ standaloneJob(
 			'DATAFLOW',
 			$exp_dataflow,
 			2
-		],
-		[
-			'DATAFLOW',
-			{ 'aln_mlss_ids' => undef },
-			3
 		],
 	]
 );
