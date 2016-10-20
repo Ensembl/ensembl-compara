@@ -99,6 +99,11 @@ sub get_redirect_uri {
     return $uri =~ s/trackhub/UserData\/TrackHubRedirect/ri;
   }
 
+  ## VEP shortlink
+  if ($uri =~ m|^/vep$|) {
+    return '/info/docs/tools/vep/index.html';
+  }
+
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
   if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
     return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);
