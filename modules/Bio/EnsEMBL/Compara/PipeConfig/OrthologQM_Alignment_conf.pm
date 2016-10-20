@@ -198,9 +198,12 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'exon_funnel',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ExonFunnel',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist' => '#genome_db_pairs#',
+            },
             -flow_into  => {
-                1 => [ 'select_mlss' ],
+                2 => [ 'select_mlss' ],
             }
         },
 
