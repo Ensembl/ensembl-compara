@@ -1085,6 +1085,8 @@ CREATE TABLE seq_member (
 @column seq_member_id           External reference to seq_member_id in the @link seq_member table to indicate which translation the exons refer to
 @column dnafrag_start           Starting position within the dnafrag defined by the dnafrag_id of the seq_member
 @column dnafrag_end             Ending position within the dnafrag defined by the dnafrag_id of the seq_member
+@column sequence_length         Length of the chunk of the sequence that corresponds to this exon
+@column left_over               Phase information (0, 1 or 2) used to produce the "exon_bounded" sequence
 
 @see seq_member
 @see gene_member
@@ -1096,6 +1098,8 @@ CREATE TABLE exon_boundaries (
 	seq_member_id    INT(10) UNSIGNED NOT NULL,
 	dnafrag_start    INT NOT NULL,
 	dnafrag_end      INT NOT NULL,
+	sequence_length  INT(10) UNSIGNED NOT NULL,
+	left_over        TINYINT(1) DEFAULT 0 NOT NULL,
 	INDEX (seq_member_id),
 	INDEX (gene_member_id)
 ) ENGINE=MyISAM;

@@ -375,20 +375,10 @@ sub _prepare_exon_sequences {
     } elsif ($self->source_name =~ /^ENSEMBL/) {
 
         my $sequence = $self->sequence;
-        my $transcript = $self->get_Transcript;
 
-        my @exons;
-        my @seq_edits;
-        my $scale_factor;
-        if ($transcript->translation) {
-            @exons = @{$transcript->get_all_translateable_Exons};
-            @seq_edits = @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')};
-            $scale_factor = 3;
-        } else {
-            @exons = @{$transcript->get_all_Exons};
-            $scale_factor = 1;
-        }
-        push @seq_edits, @{$transcript->get_all_SeqEdits('_rna_edit')};
+        # List of quadruplets [start, end, sequence_length, left_over]
+        my @exons = @{ $self->adaptor->fetch_exon_boundaries_by_SeqMember($self) };
+        my $scale_factor = $self->source_name =~ /PEP/ ? 3 : 1;
 
         # @exons probably don't match the sequence if there are such edits
         if (((scalar @exons) <= 1) or $self->has_transcript_edits or $self->has_translation_edits) {
@@ -399,20 +389,19 @@ sub _prepare_exon_sequences {
 
         # Otherwise, we have to parse the exons
         my %boundary_chars = (0 => 'o', 1 => 'b', 2 => 'j');
-        my $left_over = $exons[0]->phase > 0 ? -$exons[0]->phase : 0;
         my @this_seq = ();
         my @exon_sequences = ();
         foreach my $exon (@exons) {
-            my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / $scale_factor);
+            my $exon_pep_len = $exon->[2];
+            my $left_over = $exon->[3];
             my $exon_seq = substr($sequence, 0, $exon_pep_len, '');
-            $left_over += $scale_factor*$exon_pep_len - $exon->length;
-            #printf("%s: exon of len %d -> phase %d: %s\n", $transcript->stable_id, $exon_pep_len, $left_over, $exon_seq);
+            #printf("%s: exon of len %d -> phase %d: %s\n", $self->stable_id, $exon_pep_len, $left_over, $exon_seq);
             push @this_seq, $exon_seq;
             push @this_seq, $boundary_chars{$left_over};
             push @exon_sequences, scalar(@exon_sequences)%2 ? $exon_seq : lc($exon_seq);
             die sprintf('Invalid phase: %s', $left_over) unless exists $boundary_chars{$left_over}
         }
-        die sprintf('%d characters left in the sequence of %s', length($sequence), $transcript->stable_id) if $sequence;
+        die sprintf('%d characters left in the sequence of %s', length($sequence), $self->stable_id) if $sequence;
         pop @this_seq;
         $self->{_sequence_exon_bounded} = join('', @this_seq);
         $self->{_sequence_exon_cased} = join('', @exon_sequences);

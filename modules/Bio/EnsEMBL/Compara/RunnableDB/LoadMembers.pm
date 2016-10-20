@@ -408,7 +408,15 @@ sub store_exon_coordinates {
     if    ( $seq_member->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
     elsif ( $seq_member->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
 
-    my @exons = map {[$_->start,$_->end]} @$exon_list;
+    my $scale_factor = $seq_member->source_name =~ /PEP/ ? 3 : 1;
+    my @exons;
+    my $left_over = $exon_list->[0]->phase > 0 ? -$exon_list->[0]->phase : 0;
+    foreach my $exon (@$exon_list) {
+        my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / $scale_factor);
+        $left_over += $scale_factor*$exon_pep_len - $exon->length;
+        push @exons, [$exon->start, $exon->end, $exon_pep_len, $left_over];
+        die sprintf('Invalid phase: %s', $left_over) if (($left_over < 0) || ($left_over > 2));
+    }
 
     $seq_member->adaptor->_store_exon_boundaries_for_SeqMember($seq_member, \@exons);
 }
