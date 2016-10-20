@@ -80,6 +80,7 @@ sub fetch_all_by_Gene {
   Arg [-TARGET_TAXON] (opt) string or Bio::EnsEMBL::Compara::NCBITaxon
              : The taxon to find homologues with. By default, no filter is applied.
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member($member);
+             : $homologies = $HomologyAdaptor->fetch_all_by_Member($member, -TARGET_SPECIES=>"mus_musculus" );
   Description: fetch the homology relationships where the given member is implicated
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Exceptions : Throws if arguments are of incorrect type, or if conflicting arguments are used.
