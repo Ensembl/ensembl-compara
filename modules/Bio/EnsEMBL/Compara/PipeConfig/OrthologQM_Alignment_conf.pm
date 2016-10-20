@@ -172,8 +172,7 @@ sub pipeline_analyses {
         {   -logic_name => 'pair_species',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
-                '2->A' => [ 'prepare_exons' ],
-                'A->1' => [ 'exon_funnel' ],
+                '2'    => [ 'select_mlss' ],
                 '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
@@ -188,28 +187,6 @@ sub pipeline_analyses {
                 'alt_homology_db' => $self->o('alt_homology_db'),
                 'previous_rel_db' => $self->o('previous_rel_db'),
             }],
-        },
-
-        {   -logic_name => 'exon_funnel',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist' => '#genome_db_pairs#',
-            },
-            -flow_into  => {
-                2 => [ 'select_mlss' ],
-            }
-        },
-
-        {   -logic_name        => 'prepare_exons',
-            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareExons',
-            -analysis_capacity => 50,
-            -batch_size        => 10,
-            -flow_into         => {
-                1 => [ '?table_name=exon_boundaries' ] 
-            },
-            -rc_name => '4Gb_job_with_reg_conf',
-            -analysis_capacity => 50,
-            #-input_ids => {}
         },
 
         {   -logic_name => 'reset_mlss',
