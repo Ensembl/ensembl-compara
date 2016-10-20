@@ -563,7 +563,7 @@ sub _get_target_slice_table {
     my $slice_length = ($ref_end-$ref_start+1);
 
     my $align_params = "$align";
-    $align_params .= "--" . $non_ref_ga->genome_db->name . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
+    $align_params .= "--" . $hub->species_defs->production_name_mapping($non_ref_ga->genome_db->name) . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
 
     my %url_params = (
                      species => $ref_species,
