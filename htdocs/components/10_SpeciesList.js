@@ -26,7 +26,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.elLk.buttonDone  = this.el.find('a._list_done');
     this.elLk.buttonReset = this.el.find('a._list_reset');
 
-    this.allSpecies       = this.params['species_list'];
+    this.allSpecies       = this.params['species_list'] || [];
     this.favTemplate      = this.params['fav_template'];
     this.listTemplate     = this.params['list_template'];
     this.refreshURL       = this.params['ajax_refresh_url'];
