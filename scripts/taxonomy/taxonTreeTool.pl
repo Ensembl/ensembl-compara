@@ -147,6 +147,9 @@ sub get_distances_from_genetrees {
     }
     $root->print_tree($self->{'scale'});
     $self->{'root'} = $root;
+
+    my $newick = $root->newick_format;
+    print("\n$newick\n");
 }
 
 sub fetch_compara_ncbi_taxa {
