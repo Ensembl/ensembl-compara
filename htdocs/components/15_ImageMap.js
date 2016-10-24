@@ -483,7 +483,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).find('.hover_label')
                .toggle()
                .click(function(e){
-                  e.stopPropagation && e.stopPropagation();
+                    if(e.target.nodeName !== "A") {
+                      e.stopPropagation && e.stopPropagation();
+                    }
                });
 
        $(document).off('.hoverMenuRemove').on('click.hoverMenuRemove', function(e) {
