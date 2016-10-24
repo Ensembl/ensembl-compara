@@ -184,9 +184,11 @@ sub create_chunks
 
  $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
-  if($self->param('MT_only')){
-      #This will correctly get MT if the name or synonym is MT
-      push(@$chromosomes, $SliceAdaptor->fetch_by_region('toplevel', 'MT')); # Used when aligning only MT chromosomes
+  my %single_fetch_components = ('PT' => 1, 'MT' => 1);
+  if ($self->param('only_cellular_component') and $single_fetch_components{$self->param('only_cellular_component')}){
+      # Optimization: for these components, we expect there is a single seq_region
+      push(@$chromosomes, $SliceAdaptor->fetch_by_region('toplevel', $self->param('only_cellular_component')));
+
   } elsif(defined $self->param('region')) {
     #Support list of regions
     my @regions = split(/,/, $self->param('region'));  
@@ -227,7 +229,6 @@ sub create_chunks
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
   }
-  $_->get_all_synonyms() for @$chromosomes; # load all the synonyms within the same connection
  } );
 
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
@@ -257,6 +258,8 @@ sub create_chunks
     }
 
     my $dnafrag = $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr->seq_region_name);
+
+    next if $self->param('only_cellular_component') && ($dnafrag->cellular_component ne $self->param('only_cellular_component'));
 
     #Uncomment following line to prevent import of missing dnafrags
     #next unless ($dnafrag);
@@ -329,8 +332,8 @@ sub create_dnafrag_chunks {
     #set chunk masking_options
     $chunk->masking_options;
 
-    # do grouping if requested but do not group MT chr
-    if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and !$chunk->dnafrag->dna_type) {
+    # do grouping if requested
+    if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size'))) {
 
       if(($self->param('current_chunkset')->count > 0) and 
          (($self->param('current_chunkset')->total_basepairs + $chunk->length) > $self->param('group_set_size'))) 
@@ -354,13 +357,6 @@ sub create_dnafrag_chunks {
         $self->define_new_chunkset;
 
         $self->store_chunk_in_chunkset($chunk);
-
-        #MT must be stored on it's own in a chunkset so create a new one
-        if ($chunk->dnafrag->dna_type) {
-            print "Creating new chunkset for ".$chunk->dnafrag->dna_type."\n";
-            #Create new current_chunkset object
-            $self->define_new_chunkset;
-        }
 
       if($self->debug) {
         printf("dna_collection : chunk (%d) %s\n",$chunk->dbID, $chunk->display_id);
@@ -390,10 +386,21 @@ sub define_new_chunkset {
     );
     $self->param('current_chunkset', $new_chunkset);
     $self->param('chunkset_counter', $self->param('chunkset_counter')+1);
+    $self->param('current_cellular_component', undef);
 }
 
 sub store_chunk_in_chunkset {
     my ($self, $chunk) = @_;
+
+    # In some cases we don't want to mix different cellular components
+    if ($self->param('current_cellular_component')) {
+        if (!$self->param('mix_cellular_components') and ($self->param('current_cellular_component') ne $chunk->dnafrag->cellular_component)) {
+            print "Creating new chunkset for ".$chunk->dnafrag->cellular_component."\n";
+            $self->define_new_chunkset;
+        }
+    } else {
+        $self->param('current_cellular_component', $chunk->dnafrag->cellular_component);
+    }
 
     # Store the chunkset if it hasn't been stored before
     unless ($self->param('current_chunkset')->dbID) {

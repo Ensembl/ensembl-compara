@@ -61,7 +61,7 @@ sub fetch_input {
     push @cmd, $self->param_required('program');
     push @cmd, '--master', $self->param_required('master_db');
     push @cmd, '--new', $self->param('pipeline_db') if $self->param('pipeline_db');
-    push @cmd, '--MT_only', $self->param('MT_only') if $self->param('MT_only');
+    push @cmd, '--cellular_component', $self->param('cellular_component') if $self->param('cellular_component');
     push @cmd, '--species', $self->param('speciesList') if $self->param('speciesList');
     push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');
     push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');

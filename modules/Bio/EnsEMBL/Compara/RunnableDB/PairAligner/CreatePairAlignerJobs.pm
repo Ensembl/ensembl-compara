@@ -126,10 +126,10 @@ sub createPairAlignerJobs
       $pairaligner_hash->{'options'} = $self->param('options');
   }
 
-  # Prepopulate the dnafrag_type
+  # Prepopulate the cellular_component
   foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
-    my $query_dnafrag_type = $query_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->dna_type;
-    $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'} = $query_dnafrag_type;
+    my $query_cellular_component = $query_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->cellular_component;
+    $query_dnafrag_chunk_set->{'tmp_query_cellular_component'} = $query_cellular_component;
   }
 
   my $count=0;
@@ -137,19 +137,16 @@ sub createPairAlignerJobs
     
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
 
-    my $target_dnafrag_type = $target_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->dna_type;
+    my $target_cellular_component = $target_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->cellular_component;
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
 
-      my $query_dnafrag_type = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'};
+      my $query_cellular_component = $query_dnafrag_chunk_set->{'tmp_query_cellular_component'};
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
 
-      #only allow mitochrondria chromosomes to find matches to each other
-      next if ($target_dnafrag_type or $query_dnafrag_type) and ($target_dnafrag_type ne $query_dnafrag_type);
-
-      #Skip MT unless param is set
-      next if ($query_dnafrag_type eq "MT" && $target_dnafrag_type eq "MT" && !$self->param('include_MT'));
+      # in !mix_cellular_components mode, we only do MT vs MT, PT vs PT, NUC vs NUC
+      next if !$self->param('mix_cellular_components') and ($target_cellular_component ne $query_cellular_component);
 
       $self->dataflow_output_id($pairaligner_hash,2);
       $count++;

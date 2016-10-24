@@ -205,7 +205,7 @@ my $species = [];
 my $mlsss = [];
 my $exact_species_name_match = 0;
 my $only_show_intentions = 0;
-my $MT_only = 0;
+my $cellular_component = 0;
 my $collection = undef;
 my $filter_by_mlss = 0;
 
@@ -220,7 +220,7 @@ GetOptions(
     "mlss|method_link_species_sets=s@" => $mlsss,
     'exact_species_name_match' => \$exact_species_name_match,
     'n|intentions' => \$only_show_intentions,
-    'MT_only=i' => \$MT_only,
+    'cellular_component=i' => \$cellular_component,
     'collection=s' => \$collection,
     'filter_by_mlss' => \$filter_by_mlss,
   );
@@ -325,7 +325,7 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
 
 ## Copy all the DnaFrags for the default assemblies
 
-copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $MT_only);
+copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $cellular_component);
 
 
 if ($old_dba and !$skip_data) {
@@ -594,7 +594,7 @@ sub get_all_species_sets_with_tags {
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
   Arg[3]      : listref Bio::EnsEMBL::Compara::GenomeDB $genome_dbs
-  Arg[4]      : boolean $MT_only
+  Arg[4]      : string $cellular_component
   Description : copy from $from_dba to $to_dba all the DnaFrags which
                 correspond to GenomeDBs from the $genome_dbs list only.
   Returns     :
@@ -603,18 +603,14 @@ sub get_all_species_sets_with_tags {
 =cut
 
 sub copy_all_dnafrags {
-  my ($from_dba, $to_dba, $genome_dbs, $MT_only) = @_;
+  my ($from_dba, $to_dba, $genome_dbs, $cellular_component) = @_;
 
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   foreach my $this_genome_db (@$genome_dbs) {
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
-    my $nrows = copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''));
-    if ($MT_only && !$nrows) {
-        #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
-        copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint);
-    }
+    copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''));
   }
 }
 

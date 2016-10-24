@@ -135,12 +135,9 @@ sub default_options {
 	#directory to dump nib files
 	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
-        #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
-        'include_MT' => 1,
-	
-	#include only MT, in some cases we only want to align MT chromosomes (set to 1 for MT only and 0 for normal mode). 
-	#Also the name of the MT chromosome in the db must be the string "MT".    
-	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
+        # Dnafrags to load and align
+        'only_cellular_component'   => undef,   # Do we load *all* the dnafrags or only the ones from a specific cellular-component ?
+        'mix_cellular_components'   => 0,       # Do we try to allow the nuclear genome vs MT, etc ?
 
         #min length to dump
         'dump_min_nib_size'         => 11500000,
@@ -334,7 +331,7 @@ sub pipeline_analyses {
                                   'collection'     => $self->o('collection'),
                                   'master_db'      => $self->o('master_db'),
                                   'pipeline_db'    => $self->pipeline_url(),
-                                  'MT_only'        => $self->o('MT_only'),
+                                  'only_cellular_component' => $self->o('only_cellular_component'),
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -385,7 +382,8 @@ sub pipeline_analyses {
  	    {  -logic_name => 'chunk_and_group_dna',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
-			       'MT_only' => $self->o('MT_only'),
+                               'only_cellular_component' => $self->o('only_cellular_component'),
+                               'mix_cellular_components' => $self->o('mix_cellular_components'),
 			      },
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
@@ -418,7 +416,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
  	       -parameters => { 
-                               'include_MT' => $self->o('include_MT'),
+                               'mix_cellular_components' => $self->o('mix_cellular_components'),
                               },
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna'  ],
@@ -528,7 +526,8 @@ sub pipeline_analyses {
  	    {  -logic_name => 'no_chunk_and_group_dna',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
  	       -parameters => {
-			       'MT_only' => $self->o('MT_only'),
+                               'only_cellular_component' => $self->o('only_cellular_component'),
+                               'mix_cellular_components' => $self->o('mix_cellular_components'),
 			       'flow_chunksets' => 0,
 			      },
 	       -flow_into => {
@@ -540,9 +539,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'dump_large_nib_for_chains_factory',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
  	       -parameters => {
-			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_min_size' => $self->o('dump_min_nib_size'),
-                               'MT_only' => $self->o('MT_only'),
 			      },
 	       -hive_capacity => 1,
 	       -flow_into => {

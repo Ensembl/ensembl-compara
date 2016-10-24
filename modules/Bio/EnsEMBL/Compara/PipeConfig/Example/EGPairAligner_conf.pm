@@ -154,12 +154,9 @@ sub default_options {
 	#directory to dump nib files
 	'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
-        #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
-        'include_MT' => 1,
-	
-	#include only MT, in some cases we only want to align MT chromosomes (set to 1 for MT only and 0 for normal mode). 
-	#Also the name of the MT chromosome in the db must be the string "MT".    
-	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
+        # Dnafrags to load and align
+        'only_cellular_component'   => undef,   # Do we load *all* the dnafrags or only the ones from a specific cellular-component ?
+        'mix_cellular_components'   => 0,       # Do we try to allow the nuclear genome vs MT, etc ?
 
 	#min length to dump dna as nib file
 	'dump_min_nib_size' => 11500000,

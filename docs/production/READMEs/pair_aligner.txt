@@ -157,7 +157,9 @@ c) default_chunks. Chunking parameters for the reference and non-reference speci
 
 d) pair_aligner_options
 
-e) MT_only - set this option to 1 if you wish to only load MT dnafrags and then align them. If this is set to 1 you must also set the 'include_MT' option to 1.
+e) cellular-component restrictions
+"only_cellular_component": Name of the only cellular-component that should be loaded. Useful when topping up the alignment with MT. Otherwise, leave undefined
+"mix_cellular_components": By default, the nuclear genome is only aligned against itself, MT only against itself, etc. Switch this option on to allow cross-components alignments
 
 3.3- Using the pairwise alignment configuration file.
 eg $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara-hive-pairaligner-chain-net.conf.example
