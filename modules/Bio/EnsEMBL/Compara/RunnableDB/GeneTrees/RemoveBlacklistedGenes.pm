@@ -79,9 +79,9 @@ sub fetch_input {
             $self->warning( "Cannot find alignment for '$gene_name' in the database\n" );
             next;
         }
-
         push @blacklist_seq_members, $aligned_member;
     }
+
     $self->param('blacklist_seq_members', \@blacklist_seq_members);
 }
 
@@ -92,11 +92,14 @@ sub write_output {
     my $gene_tree_node_adaptor  = $self->compara_dba->get_GeneTreeNodeAdaptor;
     my $gene_tree_adaptor       = $self->compara_dba->get_GeneTreeAdaptor;
 
-    print Dumper $blacklist_seq_members;
+    print Dumper $blacklist_seq_members if $self->debug;
 
     $self->call_within_transaction( sub {
         # NOTE: Here we assume that the default tree is flat !
         foreach my $m (@$blacklist_seq_members) {
+            if (!$m->tree){
+                next;
+            }
             $m->tree->store_tag( 'gene_count', $m->tree->get_value_for_tag('gene_count') - 1 );
             $gene_tree_node_adaptor->remove_seq_member($m);
             # remove cluster if too small to create tree
