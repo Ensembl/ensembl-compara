@@ -199,9 +199,8 @@ sub _genomicaligntree_body {
 
     #Get taxon for extant species only (genomic_aligns are for a single species)
     if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
-      my $taxon = $all_genomic_aligns->[0]->genome_db->taxon();
-      #Taxon
-      $self->_write_taxonomy($taxon);
+      my $gdb = $all_genomic_aligns->[0]->genome_db;
+      $self->_write_genome_db($gdb);
     }
 
     if ($compact_alignments) {
