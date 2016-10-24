@@ -76,8 +76,8 @@ sub init_contigs {
   my $navigation           = $self->my_config('navigation') || 'on';
   my $show_navigation      = $length < $threshold_navigation && $navigation eq 'on';
   my $species              = $self->species;
-  my @colours              = ([ 'contigblue1', 'contigblue2' ], [ 'lightgoldenrod1', 'lightgoldenrod3' ]);
-  my @label_colours        = qw(white black);
+  my @colours              = ('contigblue1', 'contigblue2');
+  my $label_colour         = 'white';
   
   # Draw the Contig Tiling Path
   foreach (sort { $a->{'start'} <=> $b->{'start'} } @$contig_tiling_path) {
@@ -85,7 +85,6 @@ sub init_contigs {
     my $end    = $_->{'end'};
     my $start  = $_->{'start'};
     my $region = $_->{'name'};
-    my $i      = $_->get_all_Attributes('hap_contig')->[0]{'value'} ? 1 : 0; # if this is a haplotype contig then need a different pair of colours for the contigs
     
     # AlignSlice segments can be on different strands - hence need to check if start & end need a swap
     ($start, $end) = ($end, $start) if $start > $end;
@@ -97,15 +96,16 @@ sub init_contigs {
       y         => 0,
       width     => $end - $start + 1,
       height    => $box_h,
-      colour    => $colours[$i]->[0],
+      colour    => $colours[0],
       absolutey => 1,
       title     => $region,
       href      => $show_navigation && $species ne 'ancestral_sequences' ? $self->href($_) : ''
     }));
 
-    push @{$colours[$i]}, shift @{@colours[$i]};
+    push @colours, shift @colours;
 
-    if ($h) {
+    my $w_px = ($end-$start+1)*$pix_per_bp;
+    if ($h and $w_px > 50) {
       my @res = $self->get_text_width(($end - $start) * $pix_per_bp, $self->feature_label($_), $strand > 0 ? '>' : '<', font => $fontname, ptsize => $fontsize);
       
       if ($res[0]) {
@@ -117,7 +117,7 @@ sub init_contigs {
           y         => ($h - $res[3]) / 2,
           font      => $fontname,
           ptsize    => $fontsize,
-          colour    => $label_colours[$i],
+          colour    => $label_colour,
           text      => $res[0],
           absolutey => 1
         }));
