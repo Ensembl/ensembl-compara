@@ -48,14 +48,13 @@ sub content {
     <p>If you want to use your own data file, please go to the <a href="$add_track_link" class="modal_link" rel="modal_user_data">Add custom track</a> page instead.</p>
   }});
 
-  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map {'value' => $_, 'caption' => $species_defs->species_label($_, 1)}, $species_defs->valid_species;
   $form->add_field({
-    'type'    => 'dropdown',
-    'name'    => 'species',
+    'type'    => 'noedit',
+    'name'    => 'species_display',
     'label'   => 'Species',
-    'values'  => \@species,
-    'value'   => $current_species  # Species is set automatically for the page you are on
+    'value'   => $species_defs->species_label($current_species)  # Species is set automatically for the page you are on
   });
+  $form->add_hidden({'name' => 'species', 'value' => $current_species});
 
   my @types = (
     {'value'  => 'Gene',                'caption' => 'Gene'},
