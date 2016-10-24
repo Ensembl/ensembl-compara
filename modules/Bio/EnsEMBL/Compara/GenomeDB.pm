@@ -624,6 +624,26 @@ sub display_name {
 }
 
 
+=head2 get_scientific_name
+
+  Example     : my $get_scientific_name = $genome_db->get_scientific_name();
+  Description : Returns the scientific name of this GenomeDB (incl. the strain and component names)
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_scientific_name {
+    my $self = shift;
+    my $n = $self->taxon_id ? $self->taxon->scientific_name : $self->name;
+    $n .= " " . $self->strain_name if $self->strain_name;
+    $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
+    return $n;
+}
+
+
 =head2 toString
 
   Example    : print $dbID->toString()."\n";
@@ -637,8 +657,8 @@ sub display_name {
 
 sub toString {
     my $self = shift;
-    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), join(' ', $self->name, $self->strain_name ? ($self->strain_name) : (), $self->genome_component ? ('component', $self->genome_component) : ()), $self->assembly);
-    $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
+    my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), $self->name, $self->assembly);
+    $txt .= ' scientific_name='.$self->get_scientific_name if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
     $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
     $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';

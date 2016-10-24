@@ -62,7 +62,7 @@ sub _complete_cast_node {
         $self->{'_genome_db'} = $orig->{'_gdb'};
         $self->genome_db_id($orig->{'_gdb'}->dbID);
         weaken($self->{'_genome_db'});
-        $self->node_name($self->node_name . " " . $orig->{'_gdb'}->strain_name) if $orig->{'_gdb'}->strain_name;
+        $self->node_name($orig->{'_gdb'}->get_scientific_name);
     }
     if ($orig->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
         $self->taxon($orig);
@@ -178,6 +178,16 @@ sub string_node {
     return $s;
 }
 
+
+sub get_scientific_name {
+    my $self = shift;
+    if (my $gdb = $self->genome_db) {
+        return $gdb->get_scientific_name;
+    } elsif (my $taxon = $self->taxon) {
+        return $taxon->scientific_name();
+    }
+    return $self->node_name;
+}
 
 sub get_common_name {
     my $self = shift;

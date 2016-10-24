@@ -171,7 +171,7 @@ sub _convert_node {
       my $taxon = $stn->taxon;
       $hash->{taxonomy} = {
           id => $stn->taxon_id + 0,
-          scientific_name => $stn->node_name,
+          scientific_name => $stn->get_scientific_name,
       };
       my $cn = $stn->get_common_name();
       $hash->{taxonomy}{common_name} = $cn if $cn;
