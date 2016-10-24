@@ -178,6 +178,17 @@ sub string_node {
     return $s;
 }
 
+
+sub get_common_name {
+    my $self = shift;
+    if (my $gdb = $self->genome_db) {
+        return $gdb->display_name;
+    } elsif (my $taxon = $self->taxon) {
+        return $taxon->get_common_name();
+    }
+    return;
+}
+
 sub toString {
     my $self = shift;
 

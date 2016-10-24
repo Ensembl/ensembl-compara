@@ -511,7 +511,7 @@ sub _taxonomy_info_properties {
     if ($tax_id) {
         $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id);
         my $taxon = $species_tree_node->taxon;
-        my $common_name = $taxon->get_common_name;
+        my $common_name = $species_tree_node->get_common_name;
         $w->emptyTag('property', 'name' => 'common_name', 'value' => $common_name) if $common_name;
         $w->emptyTag('property', 'name' => 'timetree_mya', 'value' => $taxon->get_value_for_tag('ensembl timetree mya')) if $taxon->has_tag('ensembl timetree mya');
     }
