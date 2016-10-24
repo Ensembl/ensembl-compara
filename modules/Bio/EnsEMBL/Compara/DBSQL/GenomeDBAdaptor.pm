@@ -438,6 +438,7 @@ sub store {
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
                 'strain_name'       => $gdb->strain_name,
+                'display_name'      => $gdb->display_name,
                 'locator'           => $gdb->locator,
                 'first_release'     => $gdb->first_release,
                 'last_release'      => $gdb->last_release,
@@ -483,6 +484,7 @@ sub update {
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
                 'strain_name'       => $gdb->strain_name,
+                'display_name'      => $gdb->display_name,
                 'locator'           => $gdb->locator,
                 'first_release'     => $gdb->first_release,
                 'last_release'      => $gdb->last_release,
@@ -602,6 +604,7 @@ sub _columns {
         g.is_high_coverage
         g.genome_component
         g.strain_name
+        g.display_name
         g.locator
         g.first_release
         g.last_release
@@ -631,6 +634,7 @@ sub _objs_from_sth {
             'is_high_coverage',
             '_genome_component',
             '_strain_name',
+            '_display_name',
             'locator',
             '_first_release',
             '_last_release',
