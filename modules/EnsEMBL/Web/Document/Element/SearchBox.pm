@@ -56,7 +56,7 @@ sub content {
   my $self            = shift;
   my $img_url         = $self->img_url;
   my $species         = $self->species;
-  my $search_url      = $self->hub->url('Psychic', {'type' => '', '__clear' => 1});
+  my $search_url      = $self->hub->url('Psychic', {'species' => $species || 'Multi', 'type' => '', 'action' => '', 'function' => '', '__clear' => 1});
   my $options         = $self->search_options;
   my %options_hash    = @$options;
   my $search_code     = lc $self->default_search_code;
