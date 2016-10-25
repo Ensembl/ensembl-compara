@@ -108,7 +108,8 @@ sub default_options {
   'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
 
   # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
-  'addMT' => 1,
+  'add_non_nuclear_alignments' => 1,
+
   'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
   'gerp_version' => '2.1', #gerp program version
   'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
@@ -329,7 +330,7 @@ return
 	-logic_name => 'load_dnafrag_region',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::LoadDnaFragRegion',
 	-parameters => {
-		'addMT'	=> $self->o('addMT'),
+                'add_non_nuclear_alignments' => $self->o('add_non_nuclear_alignments'),
 	},
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],

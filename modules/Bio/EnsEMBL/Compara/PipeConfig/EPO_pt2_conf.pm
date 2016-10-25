@@ -92,7 +92,7 @@ sub default_options {
 	 # place to dump the genome sequences
 	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('ensembl_release'),
 	 # dont dump the MT sequence for mapping
-	'dont_dump_MT' => 1,
+	'only_nuclear_genome' => 1,
 	 # batch size of grouped anchors to map
 	'anchor_batch_size' => 10,
 	 # max number of sequences to allow in an anchor
@@ -281,7 +281,7 @@ sub pipeline_analyses {
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
 		-parameters => {
 			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
-			'dont_dump_MT' => $self->o('dont_dump_MT'),
+			'only_nuclear_genome' => $self->o('only_nuclear_genome'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
 		},
 		-flow_into => {
