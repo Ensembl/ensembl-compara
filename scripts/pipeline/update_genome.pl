@@ -330,11 +330,8 @@ sub update_genome_db {
   ## New genome or new assembly!!
   else {
 
-    $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
-        -DB_ADAPTOR => $species_dba,
-
-        -TAXON_ID   => $taxon_id,
-    );
+    $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($species_dba);
+    $genome_db->taxon_id( $taxon_id ) if $taxon_id;
 
     if (!defined($genome_db->name)) {
       throw "Cannot find species.production_name in meta table for ".($species_dba->locator).".\n";

@@ -201,11 +201,7 @@ sub create_genome_db {
 
     my $locator         = $asked_locator || $core_dba->locator($suffix_separator);
 
-    my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new(
-        -DB_ADAPTOR => $core_dba,
-        # Extra arguments that cannot be guessed from the core database
-        -GENOME_COMPONENT => $asked_genome_component,
-    );
+    my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($core_dba, $asked_genome_component);
     if ($master_object) {
         $genome_db->first_release($master_object->first_release);
         $genome_db->last_release($master_object->last_release);

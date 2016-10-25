@@ -102,6 +102,18 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
     done_testing();
 };
 
+subtest "Test Bio::EnsEMBL::Compara::GenomeDB::new_from_DBAdaptor", sub {
+    my $hs_dba = $species_db_adaptor->{'homo_sapiens'};
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($hs_dba);
+
+    is($genome_db->name, $name, "Checking genome_db name");
+    is($genome_db->assembly, $assembly, "Checking genome_db assembly");
+    is($genome_db->genebuild, $genebuild, "Checking genome_db genebuild");
+    is($genome_db->taxon_id, $taxon_id, "Checking genome_db taxon_id");
+
+    done_testing();
+};
+
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_name_assembly" , sub {
 
     my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
@@ -156,21 +168,17 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_core_DBAdaptor", sub {
 #Store new genome_db
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB::store", sub {
     my $hs_dba = $species_db_adaptor->{'homo_sapiens'};
+    my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 
     $multi->hide('compara', 'genome_db');
 
     #Make sure the cache is empty
     $genome_db_adaptor->{_id_cache}->clear_cache;
 
+    #disconnect the GenomeDB from the adaptor
+    $genome_db->adaptor(undef);
+
     #store new genome_db
-    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
-                                                             -dbID => $genome_db_id,
-                                                             -db_adaptor => $hs_dba,
-                                                             -name => $name,
-                                                             -assembly => $assembly,
-                                                             -taxon_id => $taxon_id,
-                                                             -genebuild => $genebuild
-                                                            );
     $genome_db_adaptor->store($genome_db);
 
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor

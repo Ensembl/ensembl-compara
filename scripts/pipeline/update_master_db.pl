@@ -174,7 +174,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
     if ($master_genome_db) {
         $found_genome_db_ids{$master_genome_db->dbID} = 1;
         # Make a new one with the core db information
-        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new( -DB_ADAPTOR => $db_adaptor );
+        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor );
         my $diffs = $proper_genome_db->_check_equals($master_genome_db);
         if ($diffs) {
             warn "> Differences for '$that_species' (assembly '$that_assembly')\n\t".($proper_genome_db->toString)."\n\t".($master_genome_db->toString)."\n$diffs\n";

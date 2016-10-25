@@ -1338,9 +1338,7 @@ sub update_genome_db {
 	    $compara_dba->dbc()->do('ALTER TABLE genome_db DROP FOREIGN KEY genome_db_ibfk_1');
 	}
 
-      $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
-          -DB_ADAPTOR => $species_dba,
-      );
+      $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $species_dba );
 
       if (not defined $genome_db->name) {
 	    throw "Cannot get the species name from the database ".$species_dba->dbname;
