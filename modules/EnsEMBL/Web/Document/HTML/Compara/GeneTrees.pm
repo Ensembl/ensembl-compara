@@ -77,7 +77,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
     if (not $page) {
 
       $html .= q{<p>Overall Summary</p>};
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #2a2 #F00)]);
 	   my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
 	   $html .= sprintf(qq{<table class="ss">
       <tr>
@@ -118,7 +118,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       my $n_group = scalar(@$ordered_species)-1;
       $html .= q{<h2>Gene tree coverage (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #2a2 #F00)]);
       for (0..$n_group) {
         my $set = $ordered_species->[$_];
         $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
@@ -152,7 +152,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
     if (not $page) {
 
       $html .= q{<p>Overall Summary</p>};
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #2a2 #F00)]);
       my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
       $html .= sprintf(qq{<table class="ss">
       <tr>
@@ -179,7 +179,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       <tr>
         <td $cell_style>Gene QC</td>
         <td $cell_style><span style="color: #fc0">Validated genes</span></td>
-        <td $cell_style><span style="color: #8c2">Short genes</span></td>
+        <td $cell_style><span style="color: #2a2">Short genes</span></td>
         <td $cell_style><span style="color: #F00">Long genes</span></td>
         <td $cell_style><span style="color: #69f">Split genes</span></td>
         <td $cell_style>%s</td>
@@ -196,7 +196,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       my $n_group = scalar(@$ordered_species)-1;
       $html .= q{<h2>Gene tree coverage and Gene QC (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #2a2 #F00)]);
       for (0..$n_group) {
         my $set = $ordered_species->[$_];
         $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
@@ -280,7 +280,7 @@ sub get_html_for_gene_tree_coverage {
     { key => 'nb_split_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#69f', title => '# Split genes', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
-    { key => 'nb_short_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#8c2', title => '# short genes', },
+    { key => 'nb_short_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#2a2', title => '# short genes', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
     { key => 'nb_long_genes',                   width => '8%', align => 'center', sort => 'numeric', style => 'color:#F00', title => '# Long genes',  },
