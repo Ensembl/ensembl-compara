@@ -86,7 +86,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       <tr>
         <td $cell_style>Internal nodes (ancestral taxa)</td>
         <td $cell_style>Node types</td>
-        <td $cell_style><span style="color: #fc0">Speciations</span></td>
+        <td $cell_style><span style="color: #c90">Speciations</span></td>
         <td $cell_style><span style="color: #909">Duplications</span></td>
         <td $cell_style><span style="color: #69f">Dubious nodes</span></td>
         <td $cell_style>%s</td>
@@ -101,7 +101,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       </tr>
       <tr>
         <td $cell_style>Species-specific duplications</td>
-        <td $cell_style><span style="color: #fc0">Single-copy genes</span></td>
+        <td $cell_style><span style="color: #c90">Single-copy genes</span></td>
         <td $cell_style><span style="color: #909">Multi-copy genes</span></td>
         <td $cell_style><span </span></td>
         <td $cell_style>%s</td>
@@ -161,7 +161,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       <tr>
         <td $cell_style>Internal nodes (ancestral taxa)</td>
         <td $cell_style>Node types</td>
-        <td $cell_style><span style="color: #fc0">Speciations</span></td>
+        <td $cell_style><span style="color: #c90">Speciations</span></td>
         <td $cell_style><span style="color: #909">Duplications</span></td>
         <td $cell_style><span style="color: #69f">Dubious nodes</span></td>
         <td $cell_style><span </span></td>
@@ -178,7 +178,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       </tr>
       <tr>
         <td $cell_style>Gene QC</td>
-        <td $cell_style><span style="color: #fc0">Validated genes</span></td>
+        <td $cell_style><span style="color: #c90">Validated genes</span></td>
         <td $cell_style><span style="color: #2a2">Short genes</span></td>
         <td $cell_style><span style="color: #F00">Long genes</span></td>
         <td $cell_style><span style="color: #69f">Split genes</span></td>
