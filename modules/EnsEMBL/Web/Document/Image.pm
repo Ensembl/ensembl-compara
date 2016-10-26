@@ -224,6 +224,7 @@ sub add_export_icon {
                    'action'    => $self->{'data_export'},
                    'data_type' => $hub->type,
                    'component' => $component_id,
+                    'strain'   => $hub->action =~ /Strain_/ ?  1 : 0, #once we have a better check for strain view, we can remove this dirty check
                 };
   foreach (@{$self->{'export_params'}||[]}) {
     if (ref($_) eq 'ARRAY') {
@@ -290,6 +291,7 @@ sub add_image_export_icon {
                 'data_type'   => $hub->type,
                 'data_action' => $hub->action,
                 'component'   => $self->component_id,
+                'strain'      => $hub->action =~ /Strain_/ ?  1 : 0, #once we have a better check for strain view, we can remove this dirty check
                 };
 
   foreach (@{$self->{'export_params'}||[]}) {
