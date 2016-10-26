@@ -268,7 +268,7 @@ sub get_html_for_gene_tree_coverage {
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',                         width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
       { key => 'nb_genes',                        width => '6%',  align => 'center', sort => 'numeric', title => '# Genes', },
-      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'numeric', style => 'color: #fc0', title => '# Genes in a tree', },
+      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'numeric', style => 'color: #fc0; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black', title => '# Genes in a tree', },
       { key => 'nb_orphan_genes',                 width => '9%',  align => 'center', sort => 'numeric', style => 'color: #a22', title => '# Orphaned genes', },
       { key => 'nb_genes_in_tree_single_species', width => '10%', align => 'center', sort => 'numeric', style => 'color: #25a', title => "# Genes in a single-species tree", },
       { key => 'nb_genes_in_tree_multi_species',  width => '10%', align => 'center', sort => 'numeric', style => 'color: #8a2', title => '# Genes in a multi-species tree', },
@@ -419,7 +419,7 @@ sub get_html_for_node_statistics {
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',               width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
       { key => 'nb_nodes',              width => '7%',  align => 'center', sort => 'numeric', title => '# Nodes', },
-      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'numeric', style => 'color: #ca4', title => '# speciation nodes', },
+      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'numeric', style => 'color: #fc0; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black', title => '# speciation nodes', },
       { key => 'nb_dup_nodes',          width => '12%', align => 'center', sort => 'numeric', style => 'color: #909', title => '# duplication nodes', },
       { key => 'nb_dubious_nodes',      width => '11%', align => 'center', sort => 'numeric', style => 'color: #69f', title => '# dubious nodes', },
       { key => 'piechart',              width => '7%', align => 'center', sort => 'none',    title => 'Node types', },
