@@ -85,7 +85,7 @@ sub initialize {
       if ($config->{'snp_display'} eq 'on') {
         $self->set_variation_filter($config);
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
-        $self->view->markup_new([$seq2],[$markup],$config);
+        $self->view->markup([$seq2],[$markup],$config);
       }
     }
     

@@ -378,7 +378,7 @@ sub initialize_new {
   # XXX hack to set principal
   $sequences->[1]->principal(1) if @$sequences>1 and $config->{'snp_display'};
 
-  $self->view->markup_new($sequences,$markup,$config);
+  $self->view->markup($sequences,$markup,$config);
 
   $view->legend->expect('variants') if ($config->{'snp_display'}||'off') ne 'off';
 

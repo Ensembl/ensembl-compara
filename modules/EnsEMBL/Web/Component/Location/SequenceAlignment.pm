@@ -84,7 +84,7 @@ sub content {
       $seq->name($slice->{'display_name'} || $slice->{'name'});
     }
 
-    $self->view->markup_new($sequence,$markup,$config);
+    $self->view->markup($sequence,$markup,$config);
 
     my $slice_name = $original_slice->name;
     

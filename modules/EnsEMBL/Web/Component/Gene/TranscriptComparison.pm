@@ -62,7 +62,7 @@ sub initialize_new {
   }
   
   my ($sequence, $markup) = $self->get_sequence_data($config);
-  $self->view->markup_new($sequence,$markup,$config);
+  $self->view->markup($sequence,$markup,$config);
 
   my $view = $self->view;
 

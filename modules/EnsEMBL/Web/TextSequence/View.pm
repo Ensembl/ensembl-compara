@@ -210,23 +210,6 @@ sub annotate {
 sub markup {
   my ($self,$sequence,$markup,$config) = @_;
 
-  my $cur_phase = $self->phase;
-  my @mods;
-  foreach my $a (@{$self->{'markup'}}) {
-    my $good = 0;
-    my $p = $a->phases;
-    $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
-    $a->prepare($good);
-    next if !$good;
-    push @mods,$a;
-  }
-  $_->pre_markup($sequence,$markup,$config,$self->_hub) for @mods;
-  $_->markup($sequence,$markup,$config,$self->_hub) for @mods;
-}
-
-sub markup_new {
-  my ($self,$sequence,$markup,$config) = @_;
-
   $self->set_markup($config);
   my $cur_phase = $self->phase;
   my @mods;

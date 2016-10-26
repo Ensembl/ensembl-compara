@@ -279,7 +279,7 @@ sub _get_sequence {
     $seq->name($slice->{'display_name'} || $slice->{'name'});
   }
 
-  $view->markup_new($sequence,$markup,$config);
+  $view->markup($sequence,$markup,$config);
   
   # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = '';
