@@ -16,7 +16,7 @@ sub markup {
     my $align_slice = 0;
     my @numbering;
     
-    if (!$slice) {
+    if (!$slice && !$sl->{'seq'}) {
       @numbering = ({});
     } elsif ($config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
