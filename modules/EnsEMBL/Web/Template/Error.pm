@@ -33,9 +33,9 @@ sub new {
 
   $self->{'species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new;
   $self->{'title'}        ||= $self->{'heading'};
-  $self->{'css'}            = [ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'css'}} ]->[0]->minified_url_path;
-  $self->{'js'}             = [ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'js'}} ]->[0]->minified_url_path;
-  $self->{'static_server'}  = $self->{'species_defs'}->ENSEMBL_STATIC_SERVER || '';
+  $self->{'css'}            = ([ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'css'}} ]->[0]->minified_url_path) =~ s/^\///r;
+  $self->{'js'}             = ([ grep $_->{'group_name'} eq 'components', @{$self->{'species_defs'}->ENSEMBL_JSCSS_FILES->{'js'}} ]->[0]->minified_url_path) =~ s/^\///r;
+  $self->{'static_server'}  = ($self->{'species_defs'}->ENSEMBL_STATIC_SERVER || '') =~ s/\/$//r;
   $self->{'message'}        = encode_entities($self->{'message'}) if $self->content_type =~ /html/i && !$self->{'message_is_html'};
 
   return $self;
