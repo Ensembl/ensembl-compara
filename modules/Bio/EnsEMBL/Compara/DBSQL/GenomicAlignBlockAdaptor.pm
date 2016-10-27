@@ -1246,6 +1246,7 @@ sub _load_DnaFrags {
 sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
+    my $max_ref_gaps = 50;
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
@@ -1284,14 +1285,18 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
     my ($gab_id_count, $ga_id_count)  = (0, 0);
-    my ($min_gab_len, $min_ga_len)    = (20, 5);
+    my $min_gab_len = int(abs($end-$start)/1000);
+    my $min_ga_len  = $min_gab_len/4;
+    # my ($min_gab_len, $min_ga_len) = (20, 5);
 
     if ( $num_targets > 1 ){ # multiple sequence alignment
       my %hal_species_map = reverse %species_map;
       my @hal_targets = map { $species_map{ $_->dbID } } @$targets_gdb;
       shift @hal_targets unless ( defined $hal_targets[0] );
       my $targets_str = join(',', @hal_targets);
-      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end );
+      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gaps );
+
+      # Experimental - please keep
       # my $maf_file_str = encode("utf8", $maf_file);
       # print "$maf_file_str\n\n";
 
