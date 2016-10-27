@@ -570,6 +570,7 @@ sub update {
         {
             'length'                => $dnafrag->length,
             'is_reference'          => $dnafrag->is_reference,
+            'coord_system_name'     => $dnafrag->coord_system_name,
         }, {
             'dnafrag_id'            => $dnafrag->dbID()
         } );
