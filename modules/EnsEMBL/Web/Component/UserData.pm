@@ -119,28 +119,24 @@ sub userdata_form {
 
   $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
 
-  # Create a data structure for species, with display labels and their current assemblies
-  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
-
   # Species dropdown list
   $fieldset->add_field({
     'label'         => 'Species',
     'elements'      => [{
-      'type'          => 'speciesdropdown',
-      'name'          => 'species',
-      'values'        => [ map {
-        'value'         => $_->{'value'},
-        'caption'       => $_->{'caption'},
-        'class'         => '_stt',
-        'checked'       => $_->{'value'} eq $current_species ? 1 : 0
-      }, @species ]
-    }, {
       'type'          => 'noedit',
-      'value'         => 'Assembly: '. join('', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, $_->{'assembly'} } @species),
+      'name'          => 'species_display',
+      'value'         => $sd->species_label($current_species),
+      'no_input'      => 1, 
+    },
+     {
+      'type'          => 'noedit',
+      'value'         => 'Assembly: '. $sd->get_config($current_species, 'ASSEMBLY_VERSION'),
       'no_input'      => 1,
       'is_html'       => 1
     }]
   });
+
+  $fieldset->add_hidden({'name' => 'species', 'value' => $current_species});
 
   $fieldset->add_field({
     'label'         => 'Data',
