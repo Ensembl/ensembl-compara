@@ -82,9 +82,13 @@ sub share_create {
   my $hub         = $self->hub;
   my $components  = $self->_get_components($self->{'component_code'});
   my $share_url   = $hub->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r);
+  my $ok_data     = $hub->param('custom_data'); # param passed by frontend if user is ok with sharing userdata
+     $ok_data     = $ok_data ? $ok_data eq 'none' ? {} : { map {$_ => 1} split ',', $ok_data } : undef;
 
   # extract data from all linked viewconfigs and imageconfigs
-  my $data = {};
+  my $data      = {};
+  my $user_data = [];
+
   foreach my $component_code (keys %$components) {
     my $viewconfig = $components->{$component_code}->viewconfig;
 
@@ -93,10 +97,20 @@ sub share_create {
       my $vc_settings = $viewconfig->get_shareable_settings;
       my $ic_settings = $imageconfig ? $imageconfig->get_shareable_settings : {};
 
+      if ($ok_data) {
+        $ok_data->{$_} or delete $ic_settings->{'user_data'}{$_} for keys %{$ic_settings->{'user_data'} || {}}; # delete user data that user doesn't want to share
+        delete $ic_settings->{'user_data'} unless keys %{$ic_settings->{'user_data'} || {}};
+      } else {
+        push @$user_data, [$ic_settings->{'user_data'}{$_}{'name'}, $_] for keys %{$ic_settings->{'user_data'} || {}}; # ask user which data he wants to share
+      }
+
       $data->{$component_code}{'view_config'}   = $vc_settings if keys %$vc_settings;
       $data->{$component_code}{'image_config'}  = $ic_settings if keys %$ic_settings;
     }
   }
+
+  # ask user what should be shared
+  return {'share' => $user_data} if @$user_data;
 
   if (keys %$data) {
     my $code    = md5_hex(to_json($data).$hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
