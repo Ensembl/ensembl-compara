@@ -210,7 +210,7 @@ sub content_sub_slice {
   my ($sequence, $config) = $self->_get_sequence(@_);
   my $html = '';
   $html .= $self->describe_filter($config) unless $self->param('follow');
-  $html .= $self->build_sequence_new($sequence, $config,1);
+  $html .= $self->build_sequence($sequence, $config,1);
   return $html;
 }
 

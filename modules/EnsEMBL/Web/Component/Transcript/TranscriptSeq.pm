@@ -389,7 +389,7 @@ sub content {
   my $self = shift;
   my ($sequences, $config) = $self->initialize_new;
 
-  return  $self->describe_filter($config).$self->build_sequence_new($sequences, $config);
+  return  $self->describe_filter($config).$self->build_sequence($sequences, $config);
 }
 
 sub export_options { return {'action' => 'Transcript'}; }

@@ -93,7 +93,7 @@ sub content {
 
     $self->view->output->template(qq(<p><b>$config->{'species'}</b>&nbsp;&gt;&nbsp;<a href="$url">$slice_name</a></p><pre>%s</pre>));
     
-    $html  = $self->build_sequence_new($sequence, $config);
+    $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(
       'strain_config', 
       ucfirst "$strain configuration",

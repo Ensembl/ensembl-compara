@@ -85,7 +85,7 @@ sub content {
   
   my ($sequence, $config) = $self->initialize_new($translation);
 
-  return $self->describe_filter($config).$self->build_sequence_new($sequence, $config);
+  return $self->describe_filter($config).$self->build_sequence($sequence, $config);
 }
 
 sub export_options { return {'action' => 'Protein'}; }

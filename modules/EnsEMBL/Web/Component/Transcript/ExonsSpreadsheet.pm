@@ -442,6 +442,9 @@ sub make_view {
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
+  $self->view->reset;
+  $self->view->new_sequence;
+  $self->view->sequences->[0]->legacy($sequence);
   $self->view->output->template('<pre class="text_sequence exon_sequence">%s</pre>');
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }

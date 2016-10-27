@@ -116,7 +116,7 @@ sub content_sub_slice {
   $template .= '<p class="invisible">.</p>';
   $self->view->output->template($template);
 
-  return $self->build_sequence_new($sequence,$config,1);
+  return $self->build_sequence($sequence,$config,1);
 }
 
 sub export_options { return {'action' => 'GeneSeq'}; }

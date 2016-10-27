@@ -123,7 +123,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->build_sequence_new($sequence, $config);
+  $html .= $self->build_sequence($sequence, $config);
 
   my $desc = '';
   $desc = $self->describe_filter($config) unless $self->param('follow');
