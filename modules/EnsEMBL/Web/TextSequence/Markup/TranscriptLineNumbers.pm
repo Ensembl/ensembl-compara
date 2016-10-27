@@ -19,7 +19,9 @@ sub markup {
       start => 1,
       end   => $length,
       label => ''
-    } : {}; 
+    } : {
+      dir => 0, start => 0, end => 0, label => ''
+    };
        
     my $s = 0;
     my $e = $config->{'display_width'} - 1;
@@ -41,15 +43,15 @@ sub markup {
       for ($s..$e) {
         # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
         if ($seq->[$_]) {
-          $seq_length++ if $config->{'line_numbering'} eq 'slice' || $seq->[$_]{'letter'} =~ /\w/;
-          $segment .= $seq->[$_]{'letter'};
+          $seq_length++ if $config->{'line_numbering'} eq 'slice' || ($seq->[$_]{'letter'}||'') =~ /\w/;
+          $segment .= ($seq->[$_]{'letter'}||'');
         }   
       }   
        
       # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
       $seq_length -= length $1 if $segment =~ /^(N+)\w/;
         
-      $end   = $row_start + $seq_length - $data->{'dir'};
+      $end   = ($row_start||0) + $seq_length - $data->{'dir'};
       $start = $row_start if $seq_length;
         
       # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
@@ -67,7 +69,8 @@ sub markup {
       push @{$config->{'line_numbers'}{$n}}, { start => $start, end => $end || undef };
 
       # Increase padding amount if required
-      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
+      my $slen = ((length $start)||0);
+      $config->{'padding'}{'number'} = $slen if $slen > ($config->{'padding'}{'number'}||0);
 
       $e += $config->{'display_width'};
     }
