@@ -119,10 +119,10 @@ DELETE ga1, ga2, gab FROM genomic_align ga1, genomic_align ga2, genomic_align_bl
 # human patches vs * chromosomes
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --patched_species homo_sapiens --patches chromosome:CHR_HSCHR15_6_CTG8,chromosome:CHR_HG2290_PATCH,chromosome:CHR_HG1651_PATCH,chromosome:CHR_HSCHR16_3_CTG3_1,chromosome:CHR_HG2237_PATCH,chromosome:CHR_HG2235_PATCH,chromosome:CHR_HG1342_HG2282_PATCH,chromosome:CHR_HG2239_PATCH > lastz_patch_human_81.conf
 
-# human chromosomes vs mouse patches
+# mouse patches vs * chromosomes (except human)
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --skip_species homo_sapiens > lastz_patch_mouse_81a.conf
 
-# mouse patches vs * chromosomes (except human)
+# human chromosomes vs mouse patches
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --patched_species_is_alignment_reference 0 --species homo_sapiens > lastz_patch_mouse_81b.conf
 
 
