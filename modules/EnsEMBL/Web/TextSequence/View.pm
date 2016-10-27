@@ -34,6 +34,8 @@ use EnsEMBL::Web::TextSequence::Legend;
 
 use EnsEMBL::Web::TextSequence::ClassToStyle::CSS;
 
+use EnsEMBL::Web::TextSequence::SequenceSet;
+
 # A view is comprised of one or more interleaved sequences.
 
 sub new {
@@ -45,6 +47,7 @@ sub new {
     output => undef,
     legend => undef,
     phase => 0,
+    sequenceset => undef,
   };
   bless $self,$class;
   $self->output(EnsEMBL::Web::TextSequence::Output::Web->new);
@@ -52,20 +55,11 @@ sub new {
   return $self;
 }
 
+# XXX deprecate
 sub reset {
   my ($self) = @_;
 
-  %$self = (
-    %$self,
-    all_line => 0,
-    annotation => [],
-    markup => [],
-    slices => [],
-    sequences => [],
-    rootsequences => [],
-    fieldsize => {},
-    lines => [],
-  );
+  $self->{'sequenceset'} = EnsEMBL::Web::TextSequence::SequenceSet->new($self);
   $self->output->reset;
 }
 
@@ -109,144 +103,67 @@ sub set_markup {}
 sub make_sequence { # For IoC: override me if you want to
   my ($self) = @_;
 
-  return EnsEMBL::Web::TextSequence::Sequence->new($self);
+  return $self->{'sequenceset'}->make_sequence;
 }
 
 sub new_sequence {
   my ($self,$position) = @_;
 
-  my $seq = $self->make_sequence();
-  if(($position||'') eq 'top') {
-    unshift @{$self->{'sequences'}},$seq;
-  } else {
-    push @{$self->{'sequences'}},$seq;
-  }
-  return $seq;
+  return $self->{'sequenceset'}->new_sequence($position);
 }
 
-sub sequences { return $_[0]->{'sequences'}; }
-sub root_sequences { return $_[0]->{'root_sequences'}; }
+sub sequences { return $_[0]->{'sequenceset'}->sequences; }
+sub root_sequences { return $_[0]->{'sequenceset'}->root_sequences; }
 
-sub add_root { push @{$_[0]->{'root_sequences'}},$_[1]; }
-
-sub slices { $_[0]->{'slices'} = $_[1] if @_>1; return $_[0]->{'slices'}; }
+sub slices { my $self = shift; return $self->{'sequenceset'}->slices(@_); }
 
 # Only to be called by line
-sub _new_line_num { return $_[0]->{'all_line'}++; }
+sub _new_line_num { return $_[0]->{'sequenceset'}->_new_line_num; }
 sub _hub { return $_[0]->{'hub'}; }
 
 sub width { $_[0]->{'width'} = $_[1] if @_>1; return $_[0]->{'width'}; }
-sub lines { return $_[0]->{'lines'}; }
-
-# Only to be called from sequence
-sub _add_line {
-  my ($self,$seq,$data) = @_;
-
-  push @{$self->{'lines'}[$seq]},$data;
-}
-
-sub field_size {
-  my ($self,$key,$value) = @_;
-
-  if(@_>2) {
-    $self->{'fieldsize'}{$key} = max($self->{'fieldsize'}{$key}||0,$value);
-  }
-  return $self->{'fieldsize'}{$key};
-}
 
 sub add_annotation {
-  my ($self,$annotation) = @_;
+  my $self = shift;
 
-  my $replaces = $annotation->replaces;
-  if($replaces) {
-    my $idx = firstidx { $_->name eq $replaces } @{$self->{'annotation'}};
-    return if $idx==-1;
-    $self->{'annotation'}[$idx] = $annotation;
-  } else {
-    push @{$self->{'annotation'}},$annotation;
-  }
-  $annotation->view($self);
+  return $self->{'sequenceset'}->add_annotation(@_);
 }
 
 # XXX should all be in annotation: markup is too late
 sub add_markup {
-  my ($self,$markup) = @_;
+  my $self = shift;
 
-  my $replaces = $markup->replaces;
-  if($replaces) {
-    my $idx = firstidx { $_->name eq $replaces } @{$self->{'markup'}};
-    return if $idx==-1;
-    $self->{'markup'}[$idx] = $markup;
-  } else {
-    push @{$self->{'markup'}},$markup;
-  }
-  $markup->view($self);
+  return $self->{'sequenceset'}->add_markup(@_);
 }
 
 sub prepare_ropes {
-  my ($self,$config,$slices) = @_;
+  my $self = shift;
 
-  foreach my $a (@{$self->{'annotation'}}) {
-    $a->prepare_ropes($config,$slices);
-  }
+  return $self->{'sequenceset'}->prepare_ropes(@_);
 }
 
 sub annotate {
-  my ($self,$config,$slice_data,$markup,$seq,$sequence) = @_;
+  my $self = shift;
 
-  # XXX should be elsewhere
-  $config->{'species'} = $self->_hub->species;
-  $config->{'type'} = $self->_hub->get_db;
-  #
-  my $ph = EnsEMBL::Web::PureHub->new($self->_hub);
-  my $cur_phase = $self->phase;
-  foreach my $a (@{$self->{'annotation'}}) {
-    my $p = $a->phases;
-    next if $p and not any { $cur_phase == $_ } @$p;
-    $a->annotate($config,$slice_data,$markup,$seq,$ph,$sequence);
-  }
+  return $self->{'sequenceset'}->annotate(@_);
 }
 
 sub markup {
-  my ($self,$sequence,$markup,$config) = @_;
+  my $self = shift;
 
-  $self->set_markup($config);
-  my $cur_phase = $self->phase;
-  my @mods;
-  foreach my $a (@{$self->{'markup'}}) {
-    my $good = 0;
-    my $p = $a->phases;
-    $good = 1 unless $p and not any { $cur_phase == $_ } @$p;
-    $a->prepare($good);
-    next if !$good;
-    push @mods,$a;
-  }
-  $_->pre_markup($sequence,$markup,$config,$self->_hub) for @mods;
-  $_->markup($sequence,$markup,$config,$self->_hub) for @mods;
+  return $self->{'sequenceset'}->markup(@_);
 }
 
 sub transfer_data {
-  my ($self,$data,$config) = @_;
+  my $self = shift;
 
-  my @vseqs = @{$self->sequences};
-  my $missing = @$data - @vseqs;
-  $self->new_sequence for(1..$missing);
-  @vseqs = @{$self->sequences};
-  $vseqs[0]->principal(1) if @vseqs and not any { $_->principal } @vseqs;
-  foreach my $seq (@$data) {
-    my $tseq = shift @vseqs;
-    $tseq->add_data($seq,$config);
-  }
+  return $self->{'sequenceset'}->transfer_data(@_);
 }
 
 sub transfer_data_new {
-  my ($self,$config) = @_;
+  my $self = shift;
 
-  my $seqs = $self->sequences;
-  $seqs->[0]->principal(1) unless any { $_->principal } @$seqs;
-  foreach my $seq (@$seqs) {
-    $seq->add_data($seq->legacy,$config);
-  } 
+  return $self->{'sequenceset'}->transfer_data_new(@_);
 }
 
 sub style_files {

@@ -134,12 +134,13 @@ sub initialize {
     };
   }
   
-  return (\@data, $config,$self->describe_filter($config));
+  return (\@data, $config);
 }
 
 sub content {
   my $self = shift;
-  my ($data, $config,$html) = $self->initialize;
+  my ($data, $config) = $self->initialize;
+  my $html = $self->describe_filter($config);
   my $table = $self->new_table([
       { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
       { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },

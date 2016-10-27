@@ -33,11 +33,11 @@ use EnsEMBL::Web::TextSequence::RopeOutput;
 # sequences.
 
 sub new {
-  my ($proto,$view) = @_;
+  my ($proto,$set) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
-    view => $view,
+    set => $set,
     exon => "",
     pre => "",
     configured => 0,
@@ -57,7 +57,7 @@ sub new {
   bless $self,$class;
   $self->{'ropeoutput'} =
     EnsEMBL::Web::TextSequence::RopeOutput->new($self);
-  weaken($self->{'view'});
+  weaken($self->{'set'});
   $self->init;
   return $self;
 }
@@ -88,10 +88,10 @@ sub new_line {
   return $line;
 }
 
-sub make_root { $_[0]->{'root'} = 1; $_[0]->view->add_root($_[0]); }
+sub make_root { $_[0]->{'root'} = 1; $_[0]->{'set'}->add_root($_[0]); }
 sub is_root { return $_[0]->{'root'}; }
 
-sub view { return $_[0]->{'view'}; }
+sub view { return $_[0]->{'set'}->view; }
 sub line_num { return $_[0]->{'line'}; }
 
 sub move { $_[0]->{'idx'}[$_[1]] = $_[2]; }
@@ -118,7 +118,7 @@ sub name {
   if(@_>1) {
     $self->{'name'} = $name;
     (my $plain_name = $name) =~ s/<[^>]+>//g;
-    $self->{'view'}->field_size('name',length $plain_name);
+    $self->{'set'}->field_size('name',length $plain_name);
   }
   return $self->{'name'};
 }
@@ -127,7 +127,7 @@ sub padded_name {
   my ($self) = @_;
 
   my $name = $self->name || '';
-  $name .= ' ' x ($self->{'view'}->field_size('name') - length $name);
+  $name .= ' ' x ($self->{'set'}->field_size('name') - length $name);
   return $name;
 }
 
