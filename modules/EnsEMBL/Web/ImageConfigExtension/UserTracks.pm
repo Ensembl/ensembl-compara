@@ -124,6 +124,7 @@ sub _load_url_feature_track {
   my ($strand, $renderers, $default) = $self->_user_track_settings(undef, $format);
 
   my $track = $self->create_track_node('custom_feature', 'Single feature', {
+    'linked_record'   => {'type' => $session_record_data->{'type'}, 'code' => $session_record_data->{'code'}, 'record_type' => 'session'},
     'external'        => 'user',
     'glyphset'        => 'flat_file',
     'colourset'       => 'classes',
@@ -164,16 +165,17 @@ sub _load_remote_url_tracks {
     next unless $source_name;
 
     $tracks_data{'url_'.$record->code} = {
-      'source_type' => $record->record_type,
-      'source_name' => $source_name,
-      'source_url'  => $data->{'url'}       || '',
-      'species'     => $data->{'species'}   || '',
-      'format'      => $data->{'format'}    || '',
-      'style'       => $data->{'style'}     || '',
-      'colour'      => $data->{'colour'}    || '',
-      'renderers'   => $data->{'renderers'} || '',
-      'timestamp'   => $data->{'timestamp'} || time,
-      'display'     => $data->{'display'}, #$self->check_threshold($data->{'display'}),
+      'linked_record' => {'type' => $record->type, 'code' => $record->code, 'record_type' => $record->record_type},
+      'source_type'   => $record->record_type,
+      'source_name'   => $source_name,
+      'source_url'    => $data->{'url'}       || '',
+      'species'       => $data->{'species'}   || '',
+      'format'        => $data->{'format'}    || '',
+      'style'         => $data->{'style'}     || '',
+      'colour'        => $data->{'colour'}    || '',
+      'renderers'     => $data->{'renderers'} || '',
+      'timestamp'     => $data->{'timestamp'} || time,
+      'display'       => $data->{'display'}, #$self->check_threshold($data->{'display'}),
     };
   }
 
@@ -238,6 +240,7 @@ sub _load_uploaded_tracks {
     my $display     = $data->{'display'}; #$self->check_threshold($data->{'display'});
 
     $menu->append_child($self->create_track_node('upload_'.$record->code, $data->{'name'}, {
+      'linked_record'   => {'type' => $record->type, 'code' => $record->code, 'record_type' => $record->record_type},
       'external'        => 'user',
       'glyphset'        => 'flat_file',
       'colourset'       => 'userdata',
