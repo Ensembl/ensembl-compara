@@ -119,9 +119,6 @@ sub userdata_form {
 
   $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
 
-  # Create a data structure for species, with display labels and their current assemblies
-  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
-
   # Species dropdown list
   $fieldset->add_field({
     'label'         => 'Species',
