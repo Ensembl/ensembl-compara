@@ -133,7 +133,8 @@ sub markup {
       push @{$config->{'line_numbers'}{$n}}, { start => $start, end => $end || undef, label => $label, post_label => $post_label };
 
       # Increase padding amount if required
-      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
+      my $slen = (length $start)||0;
+      $config->{'padding'}{'number'} = $slen if length $slen > ($config->{'padding'}{'number'}||0);
 
       $e += $config->{'display_width'};
     }
