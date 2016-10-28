@@ -97,11 +97,13 @@ sub share_create {
       my $vc_settings = $viewconfig->get_shareable_settings;
       my $ic_settings = $imageconfig ? $imageconfig->get_shareable_settings : {};
 
-      if ($ok_data) {
-        $ok_data->{$_} or delete $ic_settings->{'user_data'}{$_} for keys %{$ic_settings->{'user_data'} || {}}; # delete user data that user doesn't want to share
-        delete $ic_settings->{'user_data'} unless keys %{$ic_settings->{'user_data'} || {}};
-      } else {
-        push @$user_data, [$ic_settings->{'user_data'}{$_}{'name'}, $_] for keys %{$ic_settings->{'user_data'} || {}}; # ask user which data he wants to share
+      if (keys %$ic_settings && exists $ic_settings->{'user_data'}) {
+        if ($ok_data) {
+          $ok_data->{$_} or delete $ic_settings->{'user_data'}{$_} for keys %{$ic_settings->{'user_data'} || {}}; # delete userdata that user doesn't want to share
+          delete $ic_settings->{'user_data'} unless keys %{$ic_settings->{'user_data'} || {}};
+        } else {
+          push @$user_data, [$ic_settings->{'user_data'}{$_}{'name'}, $_] for keys %{$ic_settings->{'user_data'} || {}}; # ask user which data he wants to share
+        }
       }
 
       $data->{$component_code}{'view_config'}   = $vc_settings if keys %$vc_settings;
