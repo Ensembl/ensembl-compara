@@ -54,7 +54,7 @@ sub json_fetch_species {
   my (%species, %included_regions);
 
   my $final_hash      = {};
-
+  my $all_species     = {};
   my $extras = {};
 
   # Adding haplotypes / patches
@@ -107,14 +107,17 @@ sub json_fetch_species {
           $tmp->{common} = $species_info->{$_}->{common};
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
             push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
+            $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
           }
           else {
             $final_hash->{species_info}->{$_} = $tmp;
+            $all_species->{$_} = $tmp;
           }
         }
       }
     }
   }
+
   if ($shown{$primary_species}) {
     my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
     $species{$primary_species} = "$species_label - chromosome $chr";
@@ -131,58 +134,12 @@ sub json_fetch_species {
     }
   }
 
-#   my $dynatree_multiple = {};
-#   $dynatree_multiple->{key} = 'Multiple';
-#   $dynatree_multiple->{title} = 'Multiple';
-#   $dynatree_multiple->{isFolder} = 1;
-#   $dynatree_multiple->{isInternalNode} = "true";
-#   # push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
-
-#   my $dynatree_root = {};
-#   $dynatree_root->{key} = 'All Alignments';
-#   $dynatree_root->{title} = 'All Alignments';
-#   $dynatree_root->{isFolder} = 1;
-#   $dynatree_root->{is_submenu} = 1;
-#   $dynatree_root->{isInternalNode} = "true";
-#   push @{$dynatree_root->{children}}, $dynatree_multiple;
-
-
-#   # For the variation compara view, only allow multi-way alignments
-#   my $species_hash_pairwise = {};
-#   if ($hub->type ne 'Variation') {
-    
-#     foreach my $align_id (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
-#       foreach (keys %{$alignments->{$align_id}->{'species'}}) {
-#         if ($alignments->{$align_id}->{'species'}->{$species} && $_ ne $species) {
-#           my $t = {};
-#           $t->{scientific} = $_;
-#           $t->{common} = $sd->get_config($_, 'SPECIES_BIO_NAME');
-#           $t->{value} = $align_id;
-#           $species_hash_pairwise->{$_} = $t;
-#         }
-#       } 
-#     }
-#   }
-
   my $file = $species_defs->ENSEMBL_SPECIES_SELECT_DIVISION;
   my $division_json = from_json(file_get_contents($file));
   my $json = {};
 
-  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $final_hash->{species_info});
+  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $all_species);
   my @dyna_tree = $self->json_to_dynatree($division_json, $final_hash->{species_info}, $available_internal_nodes, 1, $extras);
-
-#   if (scalar @dyna_tree) {
-#     my $dynatree_pairwise = {};
-#     $dynatree_pairwise->{key} = 'Pairwise';
-#     $dynatree_pairwise->{title} = 'Pairwise';
-#     $dynatree_pairwise->{isFolder} = 1;
-#     $dynatree_pairwise->{is_submenu} = 1;
-#     $dynatree_pairwise->{isInternalNode} = "true";
-#     push @{$dynatree_pairwise->{children}}, @{$dyna_tree[0]->{children}};
-
-#     # Push pairwise tree into dynatree root node;
-#     push @{$dynatree_root->{children}}, $dynatree_pairwise;
-#   }
 
    return { json => \@dyna_tree };
 }

@@ -77,7 +77,7 @@
     "is_submenu":"true",
     "child_nodes":[  
       {  
-        "key":"mice",
+        "key":"Mice",
         "display_name":"Mice",
         "extras_key":"mouse",
         "is_internal_node":"true",

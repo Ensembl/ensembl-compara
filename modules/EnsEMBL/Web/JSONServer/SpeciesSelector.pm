@@ -68,7 +68,6 @@ sub json_to_dynatree {
         $t->{value}    = $sp->{value};
       }
 
-
       # Add extra groups like strains / haplotypes_and_patches etc
       if($extras->{$division_hash->{key}} or ($division_hash->{extras_key} && $extras->{$division_hash->{extras_key}})) {
         my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}}, $internal_node_select);
@@ -78,14 +77,13 @@ sub json_to_dynatree {
         # $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
         $t->{children} = $extra_dyna;
       }
-
       push @dyna_tree, $t;
-
     }
   }
 
   if (scalar @child_nodes > 0) {
-    my @children = map { $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $internal_node_select, $extras) } @child_nodes;
+
+    my @children = map {  $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $internal_node_select, $extras) } @child_nodes;
     if ($available_internal_nodes->{$division_hash->{display_name}}) {
       my $t = {
         key            => $division_hash->{display_name},
@@ -157,6 +155,7 @@ sub get_extras_as_dynatree {
     push @$extra_dyna, $folder;
 
   }
+
   return $extra_dyna;
 }
 
@@ -186,12 +185,11 @@ sub get_path {
 
   sub search {
     my ($path, $obj, $target) = @_;
-    if (defined $obj->{key} && $obj->{key} eq $target) {
-      if (defined $obj->{is_submenu}) {
-        $path .= $obj->{key};
-      }
+    if ((defined $obj->{key} && $obj->{key} eq $target) || (defined $obj->{extras_key} && $obj->{extras_key} eq $target)) {
+      $path .= $obj->{key};
       return $path;
     }
+
     if ($obj->{child_nodes}) {
       $path .= $obj->{display_name} . ',';
       foreach my $child (@{$obj->{child_nodes}}) {

@@ -26,11 +26,8 @@ use JSON;
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
+no warnings 'numeric';
 
-sub init {
-  my $self = shift;
-  $self->{x} = 'amma';
-}
 sub object_type {
   return 'Location';
 }
@@ -82,6 +79,7 @@ sub json_fetch_species {
 
   # For the variation compara view, only allow multi-way alignments
   my $species_hash_pairwise = {};
+  my $all_species = {};
   if ($hub->type ne 'Variation') {
     
     foreach my $align_id (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
@@ -99,9 +97,11 @@ sub json_fetch_species {
           $t->{value} = $align_id;
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
             push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
+            $all_species->{$species_info->{$_}->{strain_collection}} = $t;
           }
           else {
             $species_hash_pairwise->{$_} = $t;
+            $all_species->{$_} = $t;
           }
         }
       }
@@ -112,9 +112,8 @@ sub json_fetch_species {
   my $division_json = from_json(file_get_contents($file));
   my $json = {};
   my $internal_node_select = 0;
-  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $species_hash_pairwise);
+  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $all_species);
   my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes, $internal_node_select, $extras);
-
 
   if (scalar @dyna_tree) {
     my $dynatree_pairwise = {};
