@@ -761,7 +761,7 @@ sub glyphset_tracks {
 
 sub get_shareable_settings {
   ## @override
-  ## Add custom uplaoded/url tracks to the sharable data
+  ## Add custom uplaoded/url tracks to the shareable data
   my $self            = shift;
   my $share_settings  = $self->SUPER::get_shareable_settings;
   my $hub             = $self->hub;
@@ -809,7 +809,7 @@ sub receive_shared_settings {
 
   $self->hub->session->set_record_data($user_data->{$_}) for keys %{$user_data || {}};
 
-  return $self->SUPER::receive_shared_settings;
+  return $self->SUPER::receive_shared_settings($settings);
 }
 
 sub get_shareable_nodes {
