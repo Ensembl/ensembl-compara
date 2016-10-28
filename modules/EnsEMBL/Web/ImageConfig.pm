@@ -759,6 +759,68 @@ sub glyphset_tracks {
   return $self->{'_glyphset_tracks'};
 }
 
+sub get_shareable_settings {
+  ## @override
+  ## Add custom uplaoded/url tracks to the shareable data
+  my $self            = shift;
+  my $share_settings  = $self->SUPER::get_shareable_settings;
+  my $hub             = $self->hub;
+  my $record_owners   = {'user' => $hub->user, 'session' => $hub->session};
+  my @data_menus      = $self->get_shareable_nodes;
+  my @tracks          = grep {$_->get_data('linked_record')} map { $_ ? @{$_->get_all_nodes} : () } @data_menus;
+
+  my %share_data;
+
+  for (@tracks) {
+
+    # if track is turned off the user, remove it from the shared settings (will be a redundant setting if shared - track won't exist for other user)
+    if ($_->get('display') eq 'off') {
+      delete $share_settings->{'nodes'}{$_->id} if $share_settings->{'nodes'};
+
+    } else {
+
+      my $linked_record   = $_->get_data('linked_record');
+      my $key             = md5_hex(join '-', $linked_record->{'record_type'}, $linked_record->{'type'}, $linked_record->{'code'});
+
+      if (!$share_data{$key}) {
+        my $record = $record_owners->{delete $linked_record->{'record_type'}}->record($linked_record);
+        if ($record) {
+          $share_data{$key} = $record->data->raw;
+          $share_data{$key}{'type'}   = $record->type;
+          $share_data{$key}{'code'}   = $record->code;
+          $share_data{$key}{'shared'} = 1;
+        }
+      }
+    }
+  }
+
+  $share_settings->{'user_data'} = \%share_data if keys %share_data;
+
+  return $share_settings;
+}
+
+sub receive_shared_settings {
+  ## @override
+  ## Adds custom track list
+  my ($self, $settings) = @_;
+
+  my $session   = $self->hub->session;
+  my $user_data = delete $settings->{'user_data'};
+
+  $self->hub->session->set_record_data($user_data->{$_}) for keys %{$user_data || {}};
+
+  return $self->SUPER::receive_shared_settings($settings);
+}
+
+sub get_shareable_nodes {
+  ## Gets the nodes for user data that can be shared with other users
+  ## @return List of nodes that contain user data
+  my $self = shift;
+  my $node = $self->get_node('user_data');
+
+  return $node ? $node : ();
+}
+
 sub cache {
   my $self = shift;
   my $key  = shift;
