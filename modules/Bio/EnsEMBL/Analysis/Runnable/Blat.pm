@@ -73,7 +73,6 @@ use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::SeqFeature;
 use Bio::EnsEMBL::FeaturePair;
 use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Root;
 use Bio::PrimarySeqI;
 use Bio::SeqI;
 
