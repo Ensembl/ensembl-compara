@@ -798,6 +798,19 @@ sub get_shareable_settings {
   return $share_settings;
 }
 
+sub receive_shared_settings {
+  ## @override
+  ## Adds custom track list
+  my ($self, $settings) = @_;
+
+  my $session   = $self->hub->session;
+  my $user_data = delete $settings->{'user_data'};
+
+  $self->hub->session->set_record_data($user_data->{$_}) for keys %{$user_data || {}};
+
+  return $self->SUPER::receive_shared_settings;
+}
+
 sub get_shareable_nodes {
   ## Gets the nodes for user data that can be shared with other users
   ## @return List of nodes that contain user data
