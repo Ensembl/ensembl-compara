@@ -440,7 +440,12 @@ sub url {
 sub get_permanent_url {
   ## Get the permanent url for the current or given url
   ## @param URL (string or hashref as expected by self->url method) (optional - takes current url as default)
-  my ($self, $url) = @_;
+  ## @param Hashref with following keys:
+  ##  - ignore_archive Flag will on will not create a archive permalink
+  ##  - allow_redirect Flag if on will not add params that prevent mirror/mobile redirect
+  my ($self, $url, $options) = @_;
+
+  $options ||= {};
 
   my $sd = $self->species_defs;
 
@@ -448,8 +453,15 @@ sub get_permanent_url {
   $url  ||= $self->current_url;
   $url    = $self->url($url) if ref $url;
 
+  # remove time, redirect and mobileredirect params
+  $url =~ s/(\;|\&)*(time|redirect|mobileredirect)=[^\;\&]+(\;|\&)*/$1 && $3 ? q(;) : q()/eg;
+  $url =~ s/\;$//;
+
+  # add params to prevent redirect
+  $url .= ($url =~ /\?/ ? ';' : '?').'redirect=no;mobileredirect=no' unless $options->{'allow_redirect'};
+
   return sprintf '%s/%s',
-    $self->_get_permanent_url_base =~ s/\/*$//r,
+    ($options->{'ignore_archive'} ? $sd->ENSEMBL_BASE_URL : $self->_get_permanent_url_base) =~ s/\/*$//r,
     $url =~ s/^\/*//r;
 }
 

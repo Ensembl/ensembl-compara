@@ -81,7 +81,7 @@ sub share_create {
   my $self        = shift;
   my $hub         = $self->hub;
   my $components  = $self->_get_components($self->{'component_code'});
-  my $share_url   = $hub->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r);
+  my $share_url   = $self->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r, {'allow_redirect' => 1});
   my $ok_data     = $hub->param('custom_data'); # param passed by frontend if user is ok with sharing userdata
      $ok_data     = $ok_data ? $ok_data eq 'none' ? {} : { map {$_ => 1} split ',', $ok_data } : undef;
 
@@ -137,7 +137,7 @@ sub share_create {
       }
     }
 
-    $share_url = $hub->get_permanent_url({'type' => 'Share', 'action' => $code, 'function' => '', __clear => 1 }) if $code;
+    $share_url = $self->get_permanent_url({'type' => 'Share', 'action' => $code, 'function' => '', __clear => 1 }) if $code;
   }
 
   return { url => $share_url };
@@ -182,6 +182,17 @@ sub share_accept {
   }
 
   return '/';
+}
+
+sub get_permanent_url {
+  ## Gets permanent url for the given url
+  ## Calls get_permanent_url on hub with "ignore_archive" param true - overridden in 'www' plugin to not ignore archives
+  my ($self, $url, $options) = @_;
+
+  $options ||= {};
+  $options->{'ignore_archive'} = 1;
+
+  return $self->hub->get_permanent_url($url, $options);
 }
 
 sub _get_components {
