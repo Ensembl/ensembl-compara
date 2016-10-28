@@ -292,7 +292,7 @@ sub _delete_record {
     my $data = $record_manager->get_record_data({'type' => $type, 'code' => $code});
 
     if (keys %$data) {
-      $file = $data->{'file'};
+      $file = $data->{'shared'} ? undef : $data->{'file'};
       $record_manager->delete_records({'type' => $type, 'code' => $code}); # delete record
       last;
     }

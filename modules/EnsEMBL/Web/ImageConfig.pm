@@ -786,8 +786,9 @@ sub get_shareable_settings {
         my $record = $record_owners->{delete $linked_record->{'record_type'}}->record($linked_record);
         if ($record) {
           $share_data{$key} = $record->data->raw;
-          $share_data{$key}{'type'} = $record->type;
-          $share_data{$key}{'code'} = $record->code;
+          $share_data{$key}{'type'}   = $record->type;
+          $share_data{$key}{'code'}   = $record->code;
+          $share_data{$key}{'shared'} = 1;
         }
       }
     }
