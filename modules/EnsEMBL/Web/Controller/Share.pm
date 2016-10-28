@@ -110,7 +110,7 @@ sub share_create {
   }
 
   # ask user what should be shared
-  return {'share' => $user_data} if @$user_data;
+  return {'confirmShare' => $user_data} if @$user_data;
 
   if (keys %$data) {
     my $code    = md5_hex(to_json($data).$hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
