@@ -767,23 +767,33 @@ sub get_shareable_settings {
   my $hub             = $self->hub;
   my $record_owners   = {'user' => $hub->user, 'session' => $hub->session};
   my @data_menus      = $self->get_shareable_nodes;
-  my @tracks          = grep {$_->get_data('linked_record')} map { $_ ? @{$_->get_all_nodes} : () } @data_menus;
 
-  my %share_data;
+  my (%share_data, %done_record);
 
-  for (@tracks) {
+  foreach my $data_menu (@data_menus) {
+    my $linked_record = $data_menu->get_data('linked_record');
 
-    # if track is turned off the user, remove it from the shared settings (will be a redundant setting if shared - track won't exist for other user)
-    if ($_->get('display') eq 'off') {
-      delete $share_settings->{'nodes'}{$_->id} if $share_settings->{'nodes'};
+    foreach my $track (@{$data_menu->get_all_nodes}) {
+      $linked_record ||= $track->get_data('linked_record');
 
-    } else {
+      next unless $linked_record;
 
-      my $linked_record   = $_->get_data('linked_record');
-      my $key             = md5_hex(join '-', $linked_record->{'record_type'}, $linked_record->{'type'}, $linked_record->{'code'});
+      # if track is turned off the user, we can skip sharing the linked user data record
+      if ($track->get('display') eq 'off') {
 
-      if (!$share_data{$key}) {
-        my $record = $record_owners->{delete $linked_record->{'record_type'}}->record($linked_record);
+        # user has set track display 'off' - if the default is also 'off', it would be a redundant setting to share
+        delete $share_settings->{'nodes'}{$track->id} if $share_settings->{'nodes'} && $track->get_data('display') eq 'off';
+
+      } else {
+
+        my $key = join '-', $linked_record->{'record_type'}, $linked_record->{'type'}, $linked_record->{'code'};
+
+        next if $done_record{$key};
+        $done_record{$key} = 1;
+
+        $key = md5_hex($key);
+
+        my $record = $record_owners->{$linked_record->{'record_type'}}->record({'type' => $linked_record->{'type'}, 'code' => $linked_record->{'code'}});
         if ($record) {
           $share_data{$key} = $record->data->raw;
           $share_data{$key}{'type'}   = $record->type;

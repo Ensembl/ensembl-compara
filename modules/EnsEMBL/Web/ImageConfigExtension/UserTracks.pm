@@ -185,7 +185,11 @@ sub _load_remote_url_tracks {
     my $track_data = $tracks_data{$code};
 
     if (lc $track_data->{'format'} eq 'trackhub') {
-      $self->_add_trackhub($track_data->{'source_name'}, $track_data->{'source_url'}) if $self->get_parameter('can_trackhubs');
+      my ($trackhub_menu) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub($track_data->{'source_name'}, $track_data->{'source_url'}) : ();
+
+      if ($trackhub_menu && ($trackhub_menu = $self->get_node($trackhub_menu))) {
+        $trackhub_menu->set_data('linked_record', $track_data->{'linked_record'});
+      }
 
     } else {
 

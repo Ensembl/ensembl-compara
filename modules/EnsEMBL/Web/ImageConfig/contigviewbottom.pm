@@ -400,4 +400,16 @@ sub init_cacheable {
   $self->modify_configs(['regbuild'], {display => 'compact'});
 }
 
+sub get_shareable_nodes {
+  ## @override
+  ## Can share trackhubs too
+  my $self = shift;
+
+  my @nodes = $self->SUPER::get_shareable_nodes;
+
+  push @nodes, grep $_->get_data('trackhub_menu'), $self->tree->nodes;
+
+  return @nodes;
+}
+
 1;
