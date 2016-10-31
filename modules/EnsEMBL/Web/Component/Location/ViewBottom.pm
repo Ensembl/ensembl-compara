@@ -94,7 +94,7 @@ sub _add_object_track {
         
         if (!$flag->{'data'}) { # haven't done this before
           $image_config->update_track_renderer(lc $key, 'transcript_label');
-          $session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
+          $session->set_record_data({type => 'auto_add' , code => lc $key, data => 1}); 
           $session->store;
           
           $extra = $self->_info('Information', '<p>The track containing the highlighted gene has been added to your display.</p>');
