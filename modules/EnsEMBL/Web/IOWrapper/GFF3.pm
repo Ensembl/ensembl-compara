@@ -42,7 +42,6 @@ sub post_process {
     my %seen_gene;
 
     foreach my $f (@{$content->{'features'}||[]}) {
-      warn ">>> FEATURE ".$f->{'id'};
       if (scalar @{$f->{'parents'}||[]}) {
         foreach (@{$f->{'parents'}}) {
           $self->_add_to_parent($tree, $f, $_);
@@ -146,14 +145,21 @@ sub _build_transcript {
     ## We have exons but no explicit UTRs, so we need to use the CDS to create them
     if (!$utrs_done && scalar @{$transcript->{'children'}{'cds'}}) {
       foreach my $exon (@exons) {
+        my $match = 0;
         foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'cds'}}) {
-          if ($cds->{'start'} >= $exon->{'start'} && $cds->{'start'} <= $exon->{'end'}) {
+          ## Skip non-matching CDS
+          next if ($cds->{'start'} > $exon->{'end'} || $cds->{'end'} < $exon->{'start'});;
+          $match = 1;
+          if ($cds->{'start'} > $exon->{'start'}) {
             $exon->{'utr_5'} = $cds->{'start'};
           }
-          ## NOTE: Don't make this an elsif, because the whole CDS could lie within one exon
-          if ($cds->{'end'} >= $exon->{'start'} && $cds->{'end'} <= $exon->{'end'}) {
+          ## NOTE: Don't make this an elsif, as a CDS can lie wholely within one exon
+          if ($cds->{'end'} < $exon->{'end'}) {
             $exon->{'utr_3'} = $cds->{'end'};
           }
+        }
+        unless ($match) {
+          $exon->{'non_coding'} = 1;
         }
       }
     }
@@ -178,7 +184,7 @@ sub _build_transcript {
       }
 
       ## Then add 3-prime UTRs in order
-      $count == 0;
+      $count = 0;
       foreach my $utr (sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'three_prime_utr'}}) {
         my $last_exon = $exons[-1];
         if ($count == 0 && ($utr->{'start'} - $last_exon->{'end'} < 2)) {
@@ -228,7 +234,7 @@ sub _build_transcript {
     }
   }
   $transcript->{'structure'} = \@exons;
-  warn Dumper($transcript->{'structure'});
+#  use Data::Dumper; warn Dumper($transcript->{'structure'});
   delete $transcript->{'children'};
 }
 
