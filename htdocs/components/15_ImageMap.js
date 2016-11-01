@@ -481,9 +481,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
         // show/hide hover label
         $(this).find('.hover_label')
-               .toggle()
+               .toggle().off()
                .click(function(e){
-                  e.stopPropagation && e.stopPropagation();
+                  if (e.target.nodeName !== "A" || $(e.target).hasClass('config')) {
+                    e.stopPropagation();
+                  }
                });
 
        $(document).off('.hoverMenuRemove').on('click.hoverMenuRemove', function(e) {
@@ -506,7 +508,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           e.stopPropagation(); // aviod triggering click on parent _label_layer
           $(document).off('.hoverMenuRemove');
         }
-      });
+      }).externalLinks();
 
 
     // apply css positions to the hover layers
