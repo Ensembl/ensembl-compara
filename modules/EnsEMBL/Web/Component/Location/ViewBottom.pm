@@ -90,13 +90,12 @@ sub _add_object_track {
       my $default = $node->data->{'display'};
       
       if ($current eq 'off' && $default eq 'off') {
-        my $flag = $session->get_data(type => 'auto_add', code => lc $key);
+        my $flag = $session->get_record_data({type => 'auto_add', code => lc $key})->{'flag'};
         
-        if (!$flag->{'data'}) { # haven't done this before
+        if (!$flag) { # haven't done this before
           $image_config->update_track_renderer(lc $key, 'transcript_label');
-          $session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
-          $session->store;
-          
+          $session->set_record_data({type => 'auto_add' , code => lc $key, flag => 1});
+
           $extra = $self->_info('Information', '<p>The track containing the highlighted gene has been added to your display.</p>');
         }
       }
