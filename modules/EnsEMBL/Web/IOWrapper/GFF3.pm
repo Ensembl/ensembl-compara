@@ -104,11 +104,6 @@ sub _structured_feature {
 sub _build_transcript {
   my ($self, $transcript) = @_;
 
-  ## Make sure we set the UTRs correctly, based on strand
-  my $first_utr = $transcript->{'strand'} == -1 ? 'three_prime_utr' : 'five_prime_utr';
-  my $last_utr  = $transcript->{'strand'} == -1 ? 'five_prime_utr' : 'three_prime_utr';
-  my %utr_lookup = ('three_prime_utr' => 'utr_3', 'five_prime_utr' => 'utr_5');
-
   my @exons = sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'exon'}};
   my $true_exons = 1;
 
@@ -122,6 +117,7 @@ sub _build_transcript {
 
   ## Start by looking for UTRs in the data file
   if ($true_exons) {
+    my %utr_lookup = ('three_prime_utr' => 'utr_3', 'five_prime_utr' => 'utr_5');
     ## Mark the UTR points in the relevant exons
     my $utrs_done = 0;
     foreach my $key (keys %utr_lookup) {
@@ -152,11 +148,11 @@ sub _build_transcript {
       foreach my $exon (@exons) {
         foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'cds'}}) {
           if ($cds->{'start'} >= $exon->{'start'} && $cds->{'start'} <= $exon->{'end'}) {
-            $exon->{$utr_lookup{$first_utr}} = $cds->{'start'};
+            $exon->{'utr_5'} = $cds->{'start'};
           }
           ## NOTE: Don't make this an elsif, because the whole CDS could lie within one exon
           if ($cds->{'end'} >= $exon->{'start'} && $cds->{'end'} <= $exon->{'end'}) {
-            $exon->{$utr_lookup{$last_utr}} = $cds->{'end'};
+            $exon->{'utr_3'} = $cds->{'end'};
           }
         }
       }
