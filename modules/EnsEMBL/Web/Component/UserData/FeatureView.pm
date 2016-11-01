@@ -49,10 +49,11 @@ sub content {
   }});
 
   $form->add_field({
-    'type'    => 'noedit',
-    'name'    => 'species_display',
-    'label'   => 'Species',
-    'value'   => $species_defs->species_label($current_species)  # Species is set automatically for the page you are on
+    'type'      => 'noedit',
+    'label'     => 'Species',
+    'no_input'  => 1,
+    'is_html'   => 1,
+    'value'     => $species_defs->species_label($current_species)  # Species is set automatically for the page you are on
   });
   $form->add_hidden({'name' => 'species', 'value' => $current_species});
 
