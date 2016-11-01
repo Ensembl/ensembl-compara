@@ -46,11 +46,12 @@ sub draw_join {
 sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
-  ## Note total width, as we'll need it later for maths!
-  my $block_width = $params{'width'};
+
   ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
   ## not with respect to biology, because it makes the logic a lot simpler
-  my $coding_width = $params{'width'} - $structure->{'utr_5'} - $structure->{'utr_3'};
+  my $coding_start  = $structure->{'utr_5'} || $structure->{'start'};
+  my $coding_end    = $structure->{'utr_3'} || $structure->{'end'};
+  my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
@@ -62,14 +63,12 @@ sub draw_block {
     }
 
     $params{'x'}     += $structure->{'utr_5'};
-    $params{'width'}  = $structure->{'utr_3'} 
-                          ? $structure->{'utr_3'} - $structure->{'utr_5'} 
-                          : $block_width - $structure->{'utr_5'};
+    $params{'width'}  = $coding_width; 
     $self->draw_coding_block(%params);
 
     if ($structure->{'utr_3'}) {
       $params{'x'}     = $structure->{'utr_3'};
-      $params{'width'} = $block_width - $structure->{'utr_3'};
+      $params{'width'} = $structure->{'end'} - $structure->{'utr_3'};
       $self->draw_noncoding_block(%params);
     }
   }
