@@ -85,13 +85,9 @@ sub _structured_feature {
   my ($self, $f) = @_;
 
   foreach my $k (keys %{$f->{'children'}||{}}) {
-    warn ">>> KEY $k";
     foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}{$k}||[]}) {
-      warn "... CHILD $child";
-      warn Dumper($child->{'children'});
       if (keys %{$child->{'children'}||{}}) {
         ## Transcript or similar
-        warn "... CREATING TRANSCRIPT";
         $self->{'stored_features'}{$child->{'id'}} = $child;
         $self->_build_transcript($child);
       }
@@ -108,6 +104,11 @@ sub _structured_feature {
 sub _build_transcript {
   my ($self, $transcript) = @_;
 
+  ## Make sure we set the UTRs correctly, based on strand
+  my $first_utr = $transcript->{'strand'} == -1 ? 'three_prime_utr' : 'five_prime_utr';
+  my $last_utr  = $transcript->{'strand'} == -1 ? 'five_prime_utr' : 'three_prime_utr';
+  my %utr_lookup = ('three_prime_utr' => 'utr_3', 'five_prime_utr' => 'utr_5');
+
   my @exons = sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'exon'}};
   my $true_exons = 1;
 
@@ -122,9 +123,12 @@ sub _build_transcript {
   ## Start by looking for UTRs in the data file
   if ($true_exons) {
     ## Mark the UTR points in the relevant exons
-    my %utr_lookup = ('three_prime_utr' => 'utr_3', 'five_prime_utr' => 'utr_5');
+    my $utrs_done = 0;
     foreach my $key (keys %utr_lookup) {
       next unless $transcript->{'children'}{$key};
+      ## Assume that if at least one UTR is defined, we're OK - because the alternative
+      ## is that the data is just a mess!
+      $utrs_done = 1;
       foreach my $utr (sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{$key}}) {
         foreach my $exon (@exons) {
           ## Does this UTR match an exon?
@@ -139,6 +143,20 @@ sub _build_transcript {
             elsif ($utr->{'start'} > $exon->{'start'}) {
               $exon->{$utr_lookup{$key}} = $utr->{'start'};
             }
+          }
+        }
+      }
+    }
+    ## We have exons but no explicit UTRs, so we need to use the CDS to create them
+    if (!$utrs_done && scalar @{$transcript->{'children'}{'cds'}}) {
+      foreach my $exon (@exons) {
+        foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$transcript->{'children'}{'cds'}}) {
+          if ($cds->{'start'} >= $exon->{'start'} && $cds->{'start'} <= $exon->{'end'}) {
+            $exon->{$utr_lookup{$first_utr}} = $cds->{'start'};
+          }
+          ## NOTE: Don't make this an elsif, because the whole CDS could lie within one exon
+          if ($cds->{'end'} >= $exon->{'start'} && $cds->{'end'} <= $exon->{'end'}) {
+            $exon->{$utr_lookup{$last_utr}} = $cds->{'end'};
           }
         }
       }
