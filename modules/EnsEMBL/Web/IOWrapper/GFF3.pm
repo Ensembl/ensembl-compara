@@ -26,14 +26,11 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Data::Dumper;
-
 use parent qw(EnsEMBL::Web::IOWrapper::GXF);
 
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
-  #warn '>>> ORIGINAL DATA '.Dumper($data);
   $self->{'ok_features'} = [];
 
   while (my ($track_key, $content) = each (%$data)) {
@@ -55,7 +52,6 @@ sub post_process {
         push @$tree, $f;
       }
     }
-    #warn ">>> TREE ".Dumper($tree);
 
     ## Convert 'tree' into structured features
     foreach my $f (@$tree) {
@@ -65,7 +61,6 @@ sub post_process {
         $self->_structured_feature($f);
       }
     }
-    #warn ">>> STORED ".Dumper($self->{'stored_features'});
 
     ## Finally, add all structured features to the list
     foreach my $f (values %{$self->{'stored_features'}}) {
@@ -77,7 +72,6 @@ sub post_process {
 
     $content->{'features'}  = $self->{'ok_features'}; 
   }
-  #warn '################# PROCESSED DATA '.Dumper($data);
 }
 
 sub _structured_feature {
@@ -92,10 +86,15 @@ sub _structured_feature {
       }
       my $child_href_params       = $child->{'href_params'};
       $child->{'href'}            = $self->href($child_href_params);
-      ## Add a dummy exon to the end if the transcript extends beyond the end of the slice
-      #if (scalar @{$f->{'structure'}||[]} && $f->{'end'} > $f->{'structure'}[-1]{'end'}) {
-      #  push @{$f->{'structure'}}, {'start' => $self->{'slice_length'} + 1, 'end' => $f->{'end'}};
-      #}
+      ## Add a dummy exon to the start and/or end if the transcript extends beyond the end of the slice
+      if (scalar @{$child->{'structure'}||[]}) {
+        if ($child->{'end'} > $child->{'structure'}[-1]{'end'}) {
+          push @{$child->{'structure'}}, {'start' => $self->{'slice_length'} + 1, 'end' => $child->{'end'}};
+        }
+        if ($child->{'start'} < $child->{'structure'}[0]{'start'}) {
+          unshift @{$child->{'structure'}}, {'start' => $child->{'start'}, 'end' => -1};
+        }
+      }
     }
   }
 } 
@@ -234,7 +233,6 @@ sub _build_transcript {
     }
   }
   $transcript->{'structure'} = \@exons;
-#  use Data::Dumper; warn Dumper($transcript->{'structure'});
   delete $transcript->{'children'};
 }
 
