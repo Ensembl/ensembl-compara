@@ -49,10 +49,16 @@ sub draw_block {
   #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
   #warn Dumper($structure);
 
+  ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
+  my $start = $structure->{'start'};
+  $start    = 1 if $start < 0;
+  my $end   = $structure->{'end'};
+  my $edge = $self->image_config->container_width;
+  $end      = $edge if $end > $edge;  
   ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
   ## not with respect to biology, because it makes the logic a lot simpler
-  my $coding_start  = $structure->{'utr_5'} || $structure->{'start'};
-  my $coding_end    = $structure->{'utr_3'} || $structure->{'end'};
+  my $coding_start  = $structure->{'utr_5'} || $start;
+  my $coding_end    = $structure->{'utr_3'} || $end;
   my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
@@ -60,7 +66,7 @@ sub draw_block {
   }
   elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
     if (defined($structure->{'utr_5'})) {
-      $params{'width'}  = $structure->{'utr_5'} - $structure->{'start'};
+      $params{'width'}  = $structure->{'utr_5'} - $start;
       $self->draw_noncoding_block(%params);
     }
 
@@ -70,7 +76,7 @@ sub draw_block {
 
     if (defined($structure->{'utr_3'})) {
       $params{'x'}     = $structure->{'utr_3'};
-      $params{'width'} = $structure->{'end'} - $structure->{'utr_3'};
+      $params{'width'} = $end - $structure->{'utr_3'};
       $self->draw_noncoding_block(%params);
     }
   }
