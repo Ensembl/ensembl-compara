@@ -345,6 +345,8 @@ sub _render_features {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
+  ## Omit button from, e.g. Phenotype/Locations
+  return unless $hub->type eq 'Location';
   my @buttons;
 
   my $params = {
