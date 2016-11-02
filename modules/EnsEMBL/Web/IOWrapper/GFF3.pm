@@ -107,8 +107,8 @@ sub _structured_feature {
 
 sub _build_transcript {
   my ($self, $transcript) = @_;
-  use Data::Dumper; $Data::Dumper::Maxdepth = 1;
-  warn "\n\n@@@ BUILDING TRANSCRIPT ".$transcript->{'id'};
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  #warn "\n\n@@@ BUILDING TRANSCRIPT ".$transcript->{'id'};
 
   ## Separate child features by type
   my $children_by_type;
@@ -160,28 +160,28 @@ sub _build_transcript {
     ## We have exons but no explicit UTRs, so we need to use the CDS to create them
     if (!$utrs_done && scalar @{$children_by_type->{'cds'}||[]}) {
       foreach my $exon (@exons) {
-        warn sprintf '>>> EXON %s - %s', $exon->{'start'}, $exon->{'end'};
+        #warn sprintf '>>> EXON %s - %s', $exon->{'start'}, $exon->{'end'};
         my $match = 0;
         foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'cds'}}) {
           ## Skip non-matching CDS
           next if ($cds->{'start'} > $exon->{'end'} || $cds->{'end'} < $exon->{'start'});;
-          warn sprintf '>>> CDS %s - %s', $cds->{'start'}, $cds->{'end'};
+          #warn sprintf '>>> CDS %s - %s', $cds->{'start'}, $cds->{'end'};
           $match = 1;
           if ($cds->{'start'} > $exon->{'start'}) {
             $exon->{'utr_5'} = $cds->{'start'};
-            warn "... SET UTR 5";
+            #warn "... SET UTR 5";
           }
           ## NOTE: Don't make this an elsif, as a CDS can lie wholely within one exon
           if ($cds->{'end'} < $exon->{'end'}) {
             $exon->{'utr_3'} = $cds->{'end'};
-            warn "... SET UTR 3";
+            #warn "... SET UTR 3";
           }
           ## Ignore multiple CDSs for an exon for now, as we can't draw them
           last;
         }
         unless ($match) {
           $exon->{'non_coding'} = 1;
-          warn "... NON-CODING";
+          #warn "... NON-CODING";
         }
       }
     }
@@ -256,8 +256,8 @@ sub _build_transcript {
     }
   }
   $transcript->{'structure'} = \@exons;
-  use Data::Dumper; $Data::Dumper::Maxdepth = 2;
-  warn Dumper($transcript->{'structure'});
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 2;
+  #warn Dumper($transcript->{'structure'});
   delete $transcript->{'children'};
 }
 
