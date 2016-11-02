@@ -46,6 +46,8 @@ sub draw_join {
 sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  #warn Dumper($structure);
 
   ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
   ## not with respect to biology, because it makes the logic a lot simpler
@@ -56,17 +58,17 @@ sub draw_block {
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
-  elsif ($structure->{'utr_5'} || $structure->{'utr_3'}) {
-    if ($structure->{'utr_5'}) {
-      $params{'width'}  = $structure->{'utr_5'};
+  elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+    if (defined($structure->{'utr_5'})) {
+      $params{'width'}  = $structure->{'utr_5'} - $structure->{'start'};
       $self->draw_noncoding_block(%params);
     }
 
-    $params{'x'}     += $structure->{'utr_5'};
-    $params{'width'}  = $coding_width; 
+    $params{'x'} = $coding_start;
+    $params{'width'} = $coding_width; 
     $self->draw_coding_block(%params);
 
-    if ($structure->{'utr_3'}) {
+    if (defined($structure->{'utr_3'})) {
       $params{'x'}     = $structure->{'utr_3'};
       $params{'width'} = $structure->{'end'} - $structure->{'utr_3'};
       $self->draw_noncoding_block(%params);
