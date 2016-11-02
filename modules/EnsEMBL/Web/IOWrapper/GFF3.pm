@@ -39,9 +39,12 @@ sub post_process {
     my %seen_gene;
 
     foreach my $f (@{$content->{'features'}||[]}) {
+      ## Dereference the feature, because children can have duplicate parents 
+      ## and we don't want attributes such as UTRs bleeding over to siblings
+      my %new_f = %$f;
       if (scalar @{$f->{'parents'}||[]}) {
         foreach (@{$f->{'parents'}}) {
-          $self->_add_to_parents($tree, $f, $_);
+          $self->_add_to_parents($tree, $_, %new_f);
           ## Make a note of parent gene for later
           if ($f->{'type'} eq 'transcript' || $f->{'type'} =~ /rna/i) {
             $seen_gene{$_}++;
@@ -49,7 +52,7 @@ sub post_process {
         }
       }
       else {
-        push @{$tree->{$f->{'id'}}}, $f;
+        push @{$tree->{$f->{'id'}}}, \%new_f;
       }
     }
 
@@ -104,6 +107,8 @@ sub _structured_feature {
 
 sub _build_transcript {
   my ($self, $transcript) = @_;
+  use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  warn "\n\n@@@ BUILDING TRANSCRIPT ".$transcript->{'id'};
 
   ## Separate child features by type
   my $children_by_type;
@@ -155,23 +160,28 @@ sub _build_transcript {
     ## We have exons but no explicit UTRs, so we need to use the CDS to create them
     if (!$utrs_done && scalar @{$children_by_type->{'cds'}||[]}) {
       foreach my $exon (@exons) {
+        warn sprintf '>>> EXON %s - %s', $exon->{'start'}, $exon->{'end'};
         my $match = 0;
         foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'cds'}}) {
           ## Skip non-matching CDS
           next if ($cds->{'start'} > $exon->{'end'} || $cds->{'end'} < $exon->{'start'});;
+          warn sprintf '>>> CDS %s - %s', $cds->{'start'}, $cds->{'end'};
           $match = 1;
           if ($cds->{'start'} > $exon->{'start'}) {
             $exon->{'utr_5'} = $cds->{'start'};
+            warn "... SET UTR 5";
           }
           ## NOTE: Don't make this an elsif, as a CDS can lie wholely within one exon
           if ($cds->{'end'} < $exon->{'end'}) {
             $exon->{'utr_3'} = $cds->{'end'};
+            warn "... SET UTR 3";
           }
           ## Ignore multiple CDSs for an exon for now, as we can't draw them
           last;
         }
         unless ($match) {
           $exon->{'non_coding'} = 1;
+          warn "... NON-CODING";
         }
       }
     }
@@ -246,6 +256,8 @@ sub _build_transcript {
     }
   }
   $transcript->{'structure'} = \@exons;
+  use Data::Dumper; $Data::Dumper::Maxdepth = 2;
+  warn Dumper($transcript->{'structure'});
   delete $transcript->{'children'};
 }
 
@@ -272,7 +284,7 @@ sub _drawable_feature {
 }
 
 sub _add_to_parents {
-  my ($self, $tree, $feature, $parent) = @_;
+  my ($self, $tree, $parent, %feature) = @_;
 
   ## Don't recurse automatically, as this results in unnecessary loops
   my $found = 0;
@@ -280,7 +292,7 @@ sub _add_to_parents {
     foreach my $branch (@$node) {
       if ($branch->{'id'} eq $parent) {
         $found = 1;
-        push @{$branch->{'children'}{$feature->{'id'}}}, $feature;
+        push @{$branch->{'children'}{$feature{'id'}}}, \%feature;
         last;
       }
     }
@@ -291,7 +303,7 @@ sub _add_to_parents {
     while (my($id, $node) = each (%$tree)) {
       foreach my $branch (@$node) {
         next unless $branch->{'children'};
-        $self->_add_to_parents($branch->{'children'}, $feature, $parent);
+        $self->_add_to_parents($branch->{'children'}, $parent, %feature);
       }
     }
   }
