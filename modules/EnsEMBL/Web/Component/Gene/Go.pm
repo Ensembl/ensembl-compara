@@ -50,12 +50,13 @@ sub content {
   my $terms_found = 0;
   my $label       = 'Ontology';
   my $columns     = [   
-    { key => 'go',               title => 'Accession',         sort => 'html', width => '10%',  align => 'left'   },
-    { key => 'description',      title => 'Term',              sort => 'text', width => '25%', align => 'left'   },
-    { key => 'evidence',         title => 'Evidence',          sort => 'text', width => '3%',  align => 'left' },
-    { key => 'desc',             title => 'Annotation Source', sort => 'html', width => '20%', align => 'left' },    
-    { key => 'transcript_id',    title => 'Transcript IDs',     sort => 'text', width => '15%', align => 'left' },
-    { key => 'extra_link',       title => '',                  sort => 'none', width => '10%', align => 'left' },
+    { key => 'go',              title => 'Accession',         sort => 'html', width => '10%',  align => 'left'   },
+    { key => 'description',     title => 'Term',              sort => 'text', width => '20%', align => 'left'   },
+    { key => 'evidence',        title => 'Evidence',          sort => 'text', width => '3%',  align => 'left' },
+    { key => 'source',          title => 'Annotation source', sort => 'html', width => '15%', align => 'left' },    
+    { key => 'desc',            title => 'Mapped using',      sort => 'html', width => '15%', align => 'left', 'hidden' => 1 },    
+    { key => 'transcript_id',   title => 'Transcript IDs',    sort => 'text', width => '10%', align => 'left' },
+    { key => 'extra_link',      title => '',                  sort => 'none', width => '10%', align => 'left' },
   ];
     
   my $html    = '<ul>';
@@ -113,6 +114,7 @@ sub process_data {
     my ($desc);
 
     if ($hash->{'info'}) {
+      warn ">>> INFO ".$hash->{'info'};
       my ($gene, $type, $common_name);
       
       # create URL
@@ -142,7 +144,8 @@ sub process_data {
       $row->{'go'}               = $go_link;
       $row->{'description'}      = $hash->{'term'};
       $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
-      $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
+      $row->{'desc'}             = $desc;
+      $row->{'source'}           = $hash->{'source'};
       $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $hash->{transcript_id},}).'">'.$hash->{transcript_id}.'</a>';
       $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul class="compact">$mart_link$loc_link</ul>} : "";
       
