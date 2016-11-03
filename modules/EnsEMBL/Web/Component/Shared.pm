@@ -843,7 +843,7 @@ sub check_for_missing_species {
   ## Check what species are not present in the alignment
   my ($self, $args) = @_;
 
-  my (@skipped, @missing, $title, $warnings, %aligned_species);
+  my (@skipped, @missing, $title, $warnings, %aligned_species, $missing_hash);
 
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
@@ -851,7 +851,7 @@ sub check_for_missing_species {
   my $align         = $args->{align};
   my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
   my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
-
+  my $species_info  = $hub->get_species_info;
   my $slice         = $args->{slice} || $self->object->slice;
   $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
 
@@ -869,9 +869,15 @@ sub check_for_missing_species {
       push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
+      my $sp_prod = $hub->species_defs->production_name_mapping($_);
+
+      my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
+              'strains' : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
       push @missing, $_;
     }
   }
+  warn Data::Dumper::Dumper $missing_hash;
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
@@ -888,7 +894,6 @@ sub check_for_missing_species {
   my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
-
   if (scalar @missing) {
     $title .= ' species';
     if ($align_details->{'class'} =~ /pairwise/) {
@@ -896,8 +901,13 @@ sub check_for_missing_species {
     } elsif ($not_missing == $multi_check) {
       $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
     } else {
-      $warnings .= sprintf('<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
-                                 scalar @missing,
+      my $str = '';
+      $str = $missing_hash->{strains} ? @{$missing_hash->{strains}} . ' strain' : '';
+      $str .= $missing_hash->{strains} && @{$missing_hash->{strains}} > 1 ? 's' : '';
+      $str .= $missing_hash->{species} ? ' and ' . @{$missing_hash->{species}} . ' species' : '';
+
+      $warnings .= sprintf('<p>The following %s have no alignment in this region:<ul><li>%s</li></ul></p>',
+                                 $str,
                                  join "</li>\n<li>", sort map $species_defs->species_label($species_defs->production_name_mapping($_)), @missing
                             );
     }
