@@ -324,6 +324,22 @@ sub process {
       map { $params->{$_} = 1 if $_ } $hub->param('param');
       map { $params->{'misc_set'}->{$_} = 1 if $_ } $hub->param('misc_set'); 
       $self->params = $params;
+      my $access_info = 'referer=';
+      if ($hub->referer->{'absolute_url'}) {
+        $hub->referer->{'absolute_url'} =~ m/^http(s)?\:\/\/([^\/]+)/;
+        my $referer = $2;
+        if ($hub->species_defs->ENSEMBL_SERVERNAME eq $referer) {
+          $access_info .= "same--$referer"
+        }
+        else {
+          $access_info .= "different--$referer"
+        }
+      }
+      else {
+        $access_info .= 'notfound--notfound'
+      }
+
+      warn "ExporterEvent--$access_info--" . join('-', ($o, $hub->param('_format'))) . '-' . join(',',sort keys %$params);
       $outputs->{$o}();
     }
   }
