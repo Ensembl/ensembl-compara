@@ -116,6 +116,8 @@ sub default_options {
   'skip_multiplealigner_stats' => 0, #skip this module if set to 1
   'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
   'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+  'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
+  'epo_stats_report_email' => $ENV{'USER'} . '@sanger.ac.uk',
 
   'ancestral_sequences_name' => 'ancestral_sequences',
   # connection parameters to various databases:
@@ -501,6 +503,7 @@ return
                 -flow_into  => {
                     '2->A' => [ 'multiplealigner_stats' ],
                     'A->1' => [ 'block_size_distribution' ],
+                    '3'    => [ 'email_stats_report' ],
                                },
             },
 
@@ -525,6 +528,15 @@ return
             -parameters => {
                 'mlss_id'   => $self->o('epo_mlss_id'),
             },
+        },
+
+        {   -logic_name => 'email_stats_report',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
+            -parameters => {
+                'stats_exe' => $self->o('epo_stats_report_exe'),
+                'email'     => $self->o('epo_stats_report_email'),
+            }
+
         },
 
 ];
