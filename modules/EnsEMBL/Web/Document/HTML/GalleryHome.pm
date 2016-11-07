@@ -38,12 +38,11 @@ sub render {
   my ($species, $sample_data) = $self->_species_data;
 
   ## Check session for messages
-  my $error = $hub->session->get_data('type' => 'message', 'code' => 'gallery');
+  my $error = $hub->session->get_record_data({'type' => 'message', 'code' => 'gallery'});
 
-  if ($error) {
+  if ($error && $error->{'message'}) {
     $html .= sprintf(
       '<div style="width:95%" class="warning"><h3>Error</h3><div class="message-pad"><p>%s</p></div></div>', $error->{'message'});
-    $hub->session->purge_data(type => 'message', code => 'gallery');
   }
 
   $html .= '<div class="js_panel" id="site-gallery-home">
