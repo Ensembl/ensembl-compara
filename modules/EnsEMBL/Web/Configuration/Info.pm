@@ -85,15 +85,15 @@ sub populate_tree {
 
   $self->create_node('GeneGallery', '',
       [qw(gene_gallery EnsEMBL::Web::Component::Info::GeneGallery)],
-      { 'availability' => 1 }
+      { 'availability' => 1, 'template' => 'Legacy::Static' }
   );
   $self->create_node('VariationGallery', '',
       [qw(var_gallery EnsEMBL::Web::Component::Info::VariationGallery)],
-      { 'availability' => 'database:variation' }
+      { 'availability' => 'database:variation', 'template' => 'Legacy::Static' }
   );
   $self->create_node('LocationGallery', '',
       [qw(loc_gallery EnsEMBL::Web::Component::Info::LocationGallery)],
-      { 'availability' => 1 }
+      { 'availability' => 1, 'template' => 'Legacy::Static' }
   );
   $self->create_node('CheckGallery', '', [],
       { command => 'EnsEMBL::Web::Command::Info::CheckGallery', no_menu_entry => 1 }
