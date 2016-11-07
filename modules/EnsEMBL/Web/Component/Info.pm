@@ -152,6 +152,7 @@ sub format_gallery {
       my ($description, $img_disabled, $img_title, $next_action);
       my $action_class = '';
       my $link_class = '';
+      my $img_link;
 
       if ($page->{'disabled'}) {
         ## Disable views that are invalid for this feature
@@ -164,76 +165,48 @@ sub format_gallery {
       }
       elsif ($page->{'multi'}) {
         my $multi_type = $page->{'multi'}{'type'};
-        if ($page->{'multi'}{'zmenu'}) {
-          ## Link to a zmenu of features
-          my $params = $page->{'multi'}{'zmenu'};
-          ## Also pass the parameters for the page we want the zmenu to link to
-          while (my($k, $v) = each(%{$page->{'link_to'}})) {
-            $params->{"link_$k"} = $v;
+        ## Disable links on views that can't be mapped to a single feature/location
+        my $data_param  = $page->{'multi'}{'param'};
+        $description = sprintf('%s</p><p><b>This %s maps to multiple %s</b>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
+
+        my $link_to = $page->{'link_to'};
+        my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
+
+        my $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
+        while (my($k, $v) = each (%{$hub->core_params})) {
+          $v ||= $link_to->{$k};
+          if ($v) {
+            $multi_form->add_hidden({'name' => $k, 'value' => $v});
           }
-          my $zmenu_link  = $self->hub->url($params);
-          $url            = $zmenu_link;
-          $link_class     = ' class="_zmenu"';
-          my $choose    = $data_type->{$multi_type} ? $data_type->{$multi_type}{'label_1'} : 'Choose a '.lc($multi_type);
-          $description  = sprintf('%s</p><p><b>This %s maps to multiple %s</b></p><p class="button"><a href="%s" class="_zmenu">%s</a></p>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s', $zmenu_link, $choose);
-          $img_title    = sprintf 'This %s maps to multiple %s. Click to select one', $data_type->{$type}{'term'}, lc($multi_type).'s';
         }
-        else {
-          ## Disable links on views that can't be mapped to a single feature/location
-          my $data_param  = $page->{'multi'}{'param'};
-          $description = sprintf('%s</p><p><b>This %s maps to multiple %s</b>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
 
-          my $link_to = $page->{'link_to'};
-          my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
-
-          my $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
-          while (my($k, $v) = each (%{$hub->core_params})) {
-            $v ||= $link_to->{$k};
-            if ($v) {
-              $multi_form->add_hidden({'name' => $k, 'value' => $v});
-            }
-          }
-
-          my $field          = $multi_form->add_field({
+        my $field          = $multi_form->add_field({
                                         'type'    => 'Dropdown',
                                         'name'    => $data_param,
                                         'values'  => $page->{'multi'}{'values'},
                                         });
-          $field->add_element({'type' => 'submit', 'value' => 'Show me'}, 1);
-          $next_action = $multi_form->render;
-        }
+        $field->add_element({'type' => 'submit', 'value' => 'Show me'}, 1);
+        $next_action = $multi_form->render;
       }
       else {
         $description  = $page->{'caption'};
         $action_class = ' class = "button"';
         $next_action  = sprintf '<a href="%s">Show me</a>', $url;
+        $img_link     = $url;
       }
 
-=pod
-      my $form = $self->new_form({'action' => $url, 'method' => 'post', 'class' => 'freeform'});
-
-      my $data_param = $data_type->{$type}{'param'};
-      my $value      = $self->hub->param('default') ? $self->hub->param($data_param) : undef;
-      my $field      = $form->add_field({
-                                        'type'  => 'String',
-                                        'size'  => 10,
-                                        'name'  => $data_param,
-                                        'label' => $data_type->{$type}{$label},
-                                        'value' => $value,
-                                        });
-
-      $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
-
-      #$previews .= '<div class="gallery_preview preview_caption">'.$form->render.'</div>';
-=cut  
       my $image;
       if ($img_disabled) {
         $image = sprintf '<img src="/i/gallery/%s.png" title="%s" class="disabled"/>', 
                             $page->{'img'};
       }
+      elsif ($img_link) {
+        $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" class="embiggen" /></a>', 
+                          $img_link, $link_class, $page->{'img'};
+      }
       else {
-        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" />', $page->{'img'};
-
+        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a>', 
+                          $page->{'img'};
       }
 
       $previews .= sprintf($entry_template, $image, $_, $description, 

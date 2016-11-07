@@ -22,6 +22,8 @@ package EnsEMBL::Web::Component::Info::VariationGallery;
 
 use strict;
 
+use EnsEMBL::Web::REST;
+
 use base qw(EnsEMBL::Web::Component::Info);
 
 sub _init {
@@ -78,6 +80,20 @@ sub _get_pages {
   my $self = shift;
   my $hub = $self->hub;
   my $v = $hub->param('v');
+
+  ## Get consequences of this variant
+  my $rest = EnsEMBL::Web::REST->new($hub);
+  my $endpoint = sprintf '/vep/%s/id/%s', $hub->species, $v;
+  my $vep_output = $rest->fetch($endpoint); 
+  my $consequences = {};
+  unless (ref($vep_output) eq 'HASH' && $vep_output->{'error'}) {
+    foreach (@$vep_output) {
+      foreach my $c (@{$_->{'transcript_consequences'}||[]}) {
+        (my $description = $c->{'consequence_terms'}[0]) =~ s/_/ /g;
+        $consequences->{$c->{'transcript_id'}} = $description;
+      }
+    }
+  }
 
   ## Check availabity of views for this variant
   my ($no_location, $multi_location) = (0, 0);
@@ -140,20 +156,15 @@ sub _get_pages {
     
     if (scalar keys %transcripts) {
       if (scalar keys %transcripts > 1) {
-        my @strings;
-        while (my($id, $info) = each (%transcripts)) {
-          push @strings, $id.'_'.$info->{'biotype'};
-        }
-        my $params = {
-                      'type'        => 'ZMenu', 
-                      'action'      => 'Gallery_TranscriptVariant', 
-                      'transcripts' => join(':', @strings),
-                      'v'           => $v,
-                      };
         $multi_transcript = {
                             'type'  => 'Transcript',
-                            'zmenu' => $params,
+                            'param' => 't',
+                            'values'  => [{'value' => '', 'caption' => '-- Select transcript --'}],
                             };
+        while (my($id, $info) = each (%transcripts)) {
+          my $string = sprintf '%s (%s, consequence: %s)', $id, $info->{'biotype'}, $consequences->{$id};
+          push @{$multi_transcript->{'values'}}, {'value' => $id, 'caption' => $string};
+        }
       }
       else {
         my @ids = keys %transcripts;
