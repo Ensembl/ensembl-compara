@@ -19,13 +19,32 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
   init: function () {
     this.base.apply(this, arguments);
 
+    this.fixMenu();
+
     this.el.find(".embiggen").each( 
       function() {
         $(this).on({ mouseover: function () { $(this).addClass('zoom');    } });
         $(this).on({ mouseout:  function () { $(this).removeClass('zoom'); } });
       }
     );
+
+  },
+
+  fixMenu: function() {
+    if (!this.elLk.menuBar) {
+      this.elLk.menuBar = this.el.find('#gallery-toc');
+    }
+    this.elLk.menuBar.keepOnPage({
+      marginTop: 10,
+      onreset: function() {
+        $(this).removeClass('sticky');
+      },
+      onfix: function() {
+        $(this).addClass('sticky');
+      }
+    }).keepOnPage('trigger');
   }
+
 });
 
 Ensembl.Panel.SiteGalleryHome = Ensembl.Panel.Content.extend({

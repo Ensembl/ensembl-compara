@@ -185,7 +185,9 @@ floating archive box on help page
 /*-----------------------------------------------------------------------
 gallery page
 -------------------------------------------------------------------------*/
-div.gallery-toc     { margin:0 auto; }
+#gallery-toc        { height:120px; width:95%; margin:0 auto; background-color:[[PAGE_BG]];
+                      z-index:1000; }
+#gallery-toc.stick  { position: fixed; top: 5px; }
 div.gallery-nav     { display:inline-block; padding: 4px; height: 100px; width:15%; 
                       vertical-align:middle; border:1px solid [[TINT_BORDER]]; }
 a.gallery-navlabel  { font-size: 150%; font-weight:bold; }
