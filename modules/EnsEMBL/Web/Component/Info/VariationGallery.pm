@@ -86,7 +86,7 @@ sub _get_pages {
 
   my $no_protein_message = 'does not overlap any protein-coding transcripts';
 
-  my $builder   = $hub->{'_builder'};
+  my $builder   = EnsEMBL::Web::Builder->new($hub); 
   my $factory   = $builder->create_factory('Variation');
   my $object    = $factory->object;
 
