@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,12 +20,14 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::LDImage;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults = {};
@@ -33,22 +36,24 @@ sub init {
     my %hash = %{$options{$_}};
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
-  
-  $self->set_defaults($defaults);
-  $self->add_image_config('ldview');
-  $self->title = 'Linkage Disequilibrium'; 
+
+  $self->set_default_options($defaults);
+  $self->image_config_type('ldview');
+  $self->title('Linkage Disequilibrium');
 }
 
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
+
 sub extra_tabs {
+  ## @override
   my $self = shift;
   my $hub  = $self->hub;
-  
+
   return [
     'Select populations',
-    $hub->url('Component', {
-      action   => 'Web',
-      function => 'SelectPopulation/ajax',
-      time     => time,
+    $hub->url('MultiSelector', {
+      action   => 'SelectPopulation',
       %{$hub->multi_params}
     })
   ];

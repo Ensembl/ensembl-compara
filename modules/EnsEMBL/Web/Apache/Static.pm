@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,6 +73,10 @@ sub handler {
     $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri");
     $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri");
   }
+
+  # don't pollute logs with static file requests
+  $r->subprocess_env('LOG_REQUEST_IGNORE', 1);
+
   if ($content) {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');

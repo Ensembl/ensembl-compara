@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,30 +25,19 @@ use warnings;
 use Apache2::RequestUtil;
 use JSON qw(to_json);
 
-use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require_fallback);
 
 use base qw(EnsEMBL::Web::Controller);
 
-sub new {
-  my $class     = shift;
-  my $r         = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args      = shift || {};
-  my $hub       = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
+sub init {
+  1;
+}
 
-  my $self      = bless {
-    r             => $r,
-    hub           => $hub,
-    cache         => $hub->cache,
-    type          => $hub->type,
-    action        => $hub->action,
-    function      => $hub->function,
-  }, $class;
+sub new {
+  my $self  = shift->SUPER::new(@_);
+  my $hub   = $self->hub;
+  my $r     = $self->r;
 
   $CGI::POST_MAX = $self->upload_size_limit; # Set max upload size
 
@@ -65,7 +55,7 @@ sub new {
     my $method    = sprintf 'json_%s', pop @path;
     my $on_update = ($hub->param('X-Comet-Request') || '') eq 'true' || undef;
     my $json_page = 'EnsEMBL::Web::JSONServer';
-       $json_page = $self->dynamic_use_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
+       $json_page = dynamic_require_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
 
     if ($on_update && $json_page) {
       $chunked = 1;

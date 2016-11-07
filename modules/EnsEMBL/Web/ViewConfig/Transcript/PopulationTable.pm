@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,26 +20,41 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Transcript::PopulationTable;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Transcript::PopulationImage);
+use parent qw(EnsEMBL::Web::ViewConfig::Transcript::PopulationImage);
 
-sub form {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  $self->SUPER::form;
 
-  # Add layout
-  $self->add_fieldset('Grouping');
+  $self->SUPER::init_cacheable(@_);
+  $self->set_default_options({'data_grouping' => 'normal'});
+}
 
-  $self->add_form_element({
-    type   => 'DropDown',
-    select =>, 'select',
-    label  => 'Group data by',
-    name   => 'data_grouping',
-    values => [
-      { value => 'normal',   caption => 'By individual/population' },
-      { value => 'by_variant',  caption => 'By variation ID and position' },
+sub field_order {
+  ## @override
+  my $self = shift;
+  return $self->SUPER::field_order(@_), 'data_grouping';
+}
+
+sub form_fields {
+  ## @override
+  my $self    = shift;
+  my $fields  = $self->SUPER::form_fields(@_);
+
+  $fields->{'data_grouping'} = {
+    'fieldset'  => 'Grouping',
+    'type'      => 'DropDown',
+    'label'     => 'Group data by',
+    'name'      => 'data_grouping',
+    'values'    => [
+      { 'value' => 'normal',      'caption' => 'By individual/population' },
+      { 'value' => 'by_variant',  'caption' => 'By variation ID and position' },
     ]
-  });
+  };
+
+  return $fields;
 }
 
 1;

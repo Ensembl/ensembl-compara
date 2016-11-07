@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,7 +43,7 @@ sub content {
     }
   }
   
-  my @entries = ([ 'Variation type', $feature->display_consequence ]);
+  my @entries = ([ 'Variant type', $feature->display_consequence ]);
   
   if ($vtype) {
     my $type = lc $vtype;
@@ -63,10 +64,10 @@ sub content {
     [ 'Alleles',              $hub->param('al')  ]
   );
   
-  $self->caption('Variation Information');
+  $self->caption('Variant Information');
   
   $self->add_entry({
-    type       =>  'Variation ID',
+    type       =>  'Variant ID',
     label_html => $feature->variation_name,
     link       => $hub->url({
       type   => 'Variation', 

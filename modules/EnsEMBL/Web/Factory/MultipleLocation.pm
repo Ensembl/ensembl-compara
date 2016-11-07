@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,9 +122,11 @@ sub createObjects {
     
     eval { $slice = $self->slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
     next if $@;
-    
+
+    # Get image left and right padding
+    my $padding = $hub->create_padded_region();
     push @slices, {
-      slice         => $slice,
+      slice         => $slice->expand($padding->{flank5}, $padding->{flank3}),
       species       => $species,
       target        => $inputs{$_}->{'chr'},
       species_check => $species eq $hub->species ? join('--', grep $_, $species, $inputs{$_}->{'chr'}) : $species,
@@ -200,45 +203,45 @@ sub add_species {
   $self->remove_species(\@remove) if scalar @remove;
   
   if (scalar @no_species) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_error',
       code     => 'invalid_species',
       message  => scalar @no_species > 1 ? 
         'The following species do not exist in the database: <ul><li>' . join('</li><li>', @no_species) . '</li></ul>' :
         'The following species does not exist in the database:' . $no_species[0]
-    );
+    });
   }
   
   if (scalar @no_alignment) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => scalar @no_alignment > 1 ? 
         'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
         'There is no alignment in this region for ' . $no_alignment[0]
-    );
+    });
   }
   
   if (scalar @haplotypes) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => scalar @haplotypes > 1 ? 
         'There are no alignments in this region for the following haplotypes / patches: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
         'There is no alignment in this region for ' . $haplotypes[0]
-    );
+    });
   }
 
   if ($paralogues) {
-    $session->add_data(
+    $session->set_record_data({
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
       message  => ($paralogues == 1 ? 'A paralogue has' : 'Paralogues have') . ' been removed for ' . $self->species
-    );
+    });
   }
   
   if (!scalar @remove) {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,9 +56,9 @@ sub content {
   }
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $view_config  = $self->view_config;
 
-  my $settings = $viewconfig->form_fields;
+  my $settings = $view_config->form_fields;
 
   $settings->{'extra'} = {
                           'type'      => 'Checklist',
@@ -65,13 +66,22 @@ sub content {
                           'values'    => $checklist,
                           'selectall' => 'off',
                           };
+  
+  $settings->{'variants_as_n'} = {
+    type  => 'CheckBox',
+    label => 'Replace ambiguous bases with N',
+    name  => 'variants_as_n',
+    value => 'on',
+    no_user => 1,
+  };
 
   ## Options per format
-  my @field_order = $viewconfig->field_order;
+  my @field_order = $view_config->field_order;
   my @rtf_fields = map {$_ if $_ ne 'title_display'} @field_order;
 
+  my @extra_export_fields = qw(variants_as_n);
   my $fields_by_format = {
-                          'RTF' => [@rtf_fields],
+                          'RTF' => [@rtf_fields,@extra_export_fields],
                           'FASTA' => [qw(extra flank5_display flank3_display)],
   };
 

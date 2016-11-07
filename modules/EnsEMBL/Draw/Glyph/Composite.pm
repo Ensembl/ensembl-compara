@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -160,15 +161,15 @@ sub glyphs {
 }
 
 sub transform {
-  my ($self, $transform_ref) = @_;
+  my ($self, $transform_obj) = @_;
   
-  $self->SUPER::transform($transform_ref);
+  $self->SUPER::transform($transform_obj);
   
   for my $sg (@{$self->{'composite'}}) {
-    my %tmp_transform = %{$transform_ref};
-    $tmp_transform{'translatex'} = $self->pixelx();
-    $tmp_transform{'translatey'} = $self->pixely();
-    $sg->transform(\%tmp_transform);
+    my $tmp_transform = $transform_obj->clone;
+    $tmp_transform->translatex($self->pixelx());
+    $tmp_transform->translatey($self->pixely());
+    $sg->transform($tmp_transform);
   }
 }
 

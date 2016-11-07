@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,6 +89,83 @@ sub add_auto_format_dropdown {
       'class'   => 'hide',
       'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
     });
+}
+
+sub trackhub_search {
+  my $self            = shift;
+  my $hub             = $self->hub;
+  return sprintf '<a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/globe.png" style="margin-right:8px; vertical-align:middle" />Search for public track hubs</a></p>', $hub->url({'action' => 'TrackHubSearch'});
+}
+
+sub userdata_form {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  ## Only show this form on 'Manage Data' if there are no records
+  return if $hub->action eq 'ManageData' && @{$self->object->get_userdata_records};
+
+  my $sd              = $hub->species_defs;
+  my $sitename        = $sd->ENSEMBL_SITETYPE;
+  my $current_species = $hub->data_species;
+  my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
+
+  my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {
+    'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
+    'class'             => 'check bgcolour',
+    'no_button'         => 1
+  });
+
+  my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
+
+  $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
+
+  # Species dropdown list
+  $fieldset->add_field({
+    'label'         => 'Species',
+    'elements'      => [{
+      'type'          => 'noedit',
+      'value'         => $sd->species_label($current_species),
+      'no_input'      => 1,
+      'is_html'       => 1,
+    },
+    {
+      'type'          => 'noedit',
+      'value'         => 'Assembly: '. $sd->get_config($current_species, 'ASSEMBLY_VERSION'),
+      'no_input'      => 1,
+      'is_html'       => 1
+    }]
+  });
+
+  $fieldset->add_hidden({'name' => 'species', 'value' => $current_species});
+
+  $fieldset->add_field({
+    'label'         => 'Data',
+    'field_class'   => '_userdata_add',
+    'elements'      => [{
+      'type'          => 'Text',
+      'value'         => 'Paste in data or provide a file URL',
+      'name'          => 'text',
+      'class'         => 'inactive'
+    }, {
+      'type'          => 'noedit',
+      'value'         => "Or upload file (max $max_upload_size)",
+      'no_input'      => 1,
+      'element_class' => 'inline-label'
+    }, {
+      'type'          => 'File',
+      'name'          => 'file',
+    }]
+  });
+
+  $self->add_auto_format_dropdown($form);
+
+  $fieldset->add_button({
+    'type'          => 'Submit',
+    'name'          => 'submit_button',
+    'value'         => 'Add data'
+  });
+
+  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
 
 1;

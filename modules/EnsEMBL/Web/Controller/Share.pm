@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,333 +20,201 @@ limitations under the License.
 package EnsEMBL::Web::Controller::Share;
 
 use strict;
+use warnings;
 
-use Apache2::RequestUtil;
-use DBI;
-use Digest::MD5    qw(md5_hex);
-use HTML::Entities qw(encode_entities);
-use JSON           qw(from_json);
-use URI::Escape    qw(uri_escape uri_unescape);
+use Digest::MD5 qw(md5_hex);
+use JSON qw(to_json);
 
-use EnsEMBL::Web::Command::UserData::CheckShare;
-use EnsEMBL::Web::Hub;
+use ORM::EnsEMBL::DB::Session::Manager::ShareURL;
 
-use base qw(EnsEMBL::Web::Controller);
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $hub   = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
-  
-  my $self = { hub => $hub };
-  
-  bless $self, $class;
-    
-  my $func = $hub->param('create') ? 'create' : 'accept';
-  my $url  = $self->$func;
-  
-  $hub->redirect($url) if $func eq 'accept';
-  
-  return $self;
+use parent qw(EnsEMBL::Web::Controller);
+
+sub rose_manager {
+  ## Rose manager for share table
+  return 'ORM::EnsEMBL::DB::Session::Manager::ShareURL';
 }
 
-# TODO: rewrite sharing code so that it comes through here for everything (not ShareURL)
+sub parse_path_segments {
+  # Abstract method implementation
+  my $self          = shift;
+  my @path          = @{$self->path_segments};
+  my $request_type  = $self->{'request_type'} = $self->query_param('create') ? 'create' : 'accept';
+  my $share_type    = $self->{'share_type'} = $self->query_param('share_type') || 'page';
 
-sub dbh {
-  my $self  = shift;
-  my $db    = $self->hub->species_defs->session_db;
-  my $dbh;
+  # when accepting a share request, first segment is the share code
+  if ($request_type eq 'accept') {
+    my $code  = $self->{'code'} = shift @path;
+    my $row   = $self->{'row'}  = $self->rose_manager->fetch_by_primary_key($code) if $code;
 
-  # try and get user db connection. If it fails the use backup port
-  eval {
-    $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}), $db->{'USER'}, $db->{'PASS'});
-  };
+    if ($row) {
+      $self->{$_} = $row->$_ for qw(type action function);
+    }
+  } else {
 
-  return $dbh || undef;
-}
+    # for image share, last part in the path is the component code
+    if ($share_type eq 'image') {
+      $self->{'component_code'} = pop @path;
+    }
 
-sub image_config_data {
-  my ($self, $type, @species) = @_;
-  
-  return {} unless $type;
-  
-  my $hub           = $self->hub;
-  my $image_config  = $hub->get_imageconfig($type);
-  my $multi_species = $image_config->isa('EnsEMBL::Web::ImageConfig::MultiSpecies') && $image_config->{'all_species'};
-  my @user_data;
-  
-  foreach my $sp (scalar @species ? @species : $hub->species) {
-    my $ic = $multi_species ? $hub->get_imageconfig($type, $sp, $sp) : $image_config;
-    push @user_data, $ic->get_node('user_data'), grep $_->get('trackhub_menu'), @{$ic->tree->child_nodes};
+    ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@path, '', '', '', '');
   }
-  
-  return ($image_config, map { $_ ? $_->nodes : () } @user_data);
 }
 
-sub clean_hash {
-  my ($self, $hash) = @_;
-  
-  foreach (grep ref $hash->{$_} eq 'HASH', keys %$hash) {
-    $self->clean_hash($hash->{$_}) if scalar keys %{$hash->{$_}};
-    delete $hash->{$_} unless scalar keys %{$hash->{$_}};
-  }
-  
-  return $hash;
-}
-
-sub create {
+sub process {
+  ## @override
   my $self    = shift;
   my $hub     = $self->hub;
-  my $referer = $hub->referer;
-  
-  return if $referer->{'external'}; 
-  
-  my $type       = $hub->type = $referer->{'ENSEMBL_TYPE'};
-  my $share_type = $hub->param('share_type') || 'page';
-  my $configuration;
-  
-  if ($share_type eq 'page') {
-    $configuration = "EnsEMBL::Web::Configuration::$type";
-    return unless $self->dynamic_use($configuration);
-  }
-  
-  my $action       = $referer->{'ENSEMBL_ACTION'};
-  my $function     = $referer->{'ENSEMBL_FUNCTION'};
-  my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, $action, $function)} : $hub->get_viewconfig($hub->function);
-  my $custom_data  = uri_unescape($hub->param('custom_data'));
-  my $species      = from_json($hub->param('species') || "{}");
-  my $species_defs = $hub->species_defs;
-  my $version      = $species_defs->ENSEMBL_VERSION;
-  my $hash         = $hub->param('hash');
-  my $url          = $referer->{'absolute_url'};
-     $url          =~ s/www(\.ensembl\.org)/e$version$1/; # filthy hack to force correct site version usage for live ensembl website
-     $url         .= "#$hash" if $hash && $url !~ /#$hash/;
-  my $data         = {};
-  
-  foreach my $view_config (@view_configs) {
-    my @species       = @{$species->{$view_config->component} || []};
-    my %species_check = map { $_ => 1 } @species, $hub->species;
-    my ($image_config_settings, %shared_data);
-    
-    if ($view_config->image_config) {
-      my ($image_config, @user_data) = $self->image_config_data($view_config->image_config, @species);
-      
-      if (scalar @user_data) {
-        if ($custom_data eq 'none') {
-          $image_config_settings = $image_config->share;
-        } elsif ($custom_data) {
-          ($image_config_settings, %shared_data) = $self->get_shared_data($image_config, $custom_data);
-        } elsif ($self->get_custom_tracks(\%species_check, \@user_data)) {
-          return;
+  my $request = $self->{'request_type'};
+  my $return  = $self->can("share_$request")->($self);
+
+  # accept
+  $self->redirect($return) if $request eq 'accept';
+
+  # create
+  print to_json($return || {}) if $request eq 'create';
+}
+
+sub share_create {
+  ## Creates a share link
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $components  = $self->_get_components($self->{'component_code'});
+  my $share_url   = $self->get_permanent_url($self->referer->{'absolute_url'} =~ s/^http(s)?\:\/\/[^\/]+//r, {'allow_redirect' => 1});
+  my $ok_data     = $hub->param('custom_data'); # param passed by frontend if user is ok with sharing userdata
+     $ok_data     = $ok_data ? $ok_data eq 'none' ? {} : { map {$_ => 1} split ',', $ok_data } : undef;
+
+  # extract data from all linked viewconfigs and imageconfigs
+  my $data      = {};
+  my $user_data = [];
+
+  foreach my $component_code (keys %$components) {
+    my $viewconfig = $components->{$component_code}->viewconfig;
+
+    if ($viewconfig) {
+      my $imageconfig = $viewconfig->image_config;
+      my $vc_settings = $viewconfig->get_shareable_settings;
+      my $ic_settings = $imageconfig ? $imageconfig->get_shareable_settings : {};
+
+      if (keys %$ic_settings && exists $ic_settings->{'user_data'}) {
+        if ($ok_data) {
+          $ok_data->{$_} or delete $ic_settings->{'user_data'}{$_} for keys %{$ic_settings->{'user_data'} || {}}; # delete userdata that user doesn't want to share
+          delete $ic_settings->{'user_data'} unless keys %{$ic_settings->{'user_data'} || {}};
+        } else {
+          push @$user_data, [$ic_settings->{'user_data'}{$_}{'name'}, $_] for keys %{$ic_settings->{'user_data'} || {}}; # ask user which data he wants to share
         }
       }
-      
-      $image_config_settings ||= $image_config->get_user_settings;
-      
-      if (scalar @species) {
-        delete $image_config_settings->{$_} for grep !$species_check{$_}, keys %$image_config_settings;
+
+      $data->{$component_code}{'view_config'}   = $vc_settings if keys %$vc_settings;
+      $data->{$component_code}{'image_config'}  = $ic_settings if keys %$ic_settings;
+    }
+  }
+
+  # ask user what should be shared
+  return {'confirmShare' => $user_data} if @$user_data;
+
+  if (keys %$data) {
+    my $code    = md5_hex(to_json($data).$hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
+    my $manager = $self->rose_manager;
+
+    if (!$manager->fetch_by_primary_key($code)) {
+
+      # add an entry in the table
+      if ($manager->create_empty_object({
+        'code'        => $code,
+        'url'         => $share_url,
+        'type'        => $self->type,
+        'action'      => $self->action,
+        'function'    => $self->function,
+        'data'        => $data,
+        'share_type'  => $self->{'share_type'},
+        'created_at'  => 'now',
+      })->save) {
+        $manager->object_class->init_db->commit;
+      } else {
+        $code = 0;
       }
     }
-    
-    $data->{$view_config->component} = {
-      view_config  => $view_config->get_user_settings,
-      image_config => $image_config_settings,
-      %shared_data
-    };
+
+    $share_url = $self->get_permanent_url({'type' => 'Share', 'action' => $code, 'function' => '', __clear => 1 }) if $code;
   }
-  
-  $data = $self->clean_hash($data);
-  
-  if (scalar keys %$data) {
-    $data = $self->jsonify($data);
-    
-    my $code = join '', md5_hex("${url}::$data"), $hub->session->session_id, $hub->user ? $hub->user->id : '';
-    my $dbh  = $self->dbh;
-    
-    if ($dbh) {
-      if (!$dbh->selectrow_array('SELECT count(*) FROM share_url WHERE code = ?', {}, $code)) {
-        $dbh->do('INSERT INTO share_url VALUES (?, ?, ?, ?, ?, ?, 0, now())', {}, $code, $url, $type, join('/', grep $_, $action, $function), $data, $share_type);
-      }
-      
-      $dbh->disconnect;
-    }
-    
-    $url = $species_defs->ENSEMBL_BASE_URL . $hub->url({ type => 'Share', action => $code, function => undef, __clear => 1 });
-  }
-  
-  print $self->jsonify({ url => $url });
+
+  return { url => $share_url };
 }
 
-sub get_custom_tracks {
-  my ($self, $species_check, $user_data) = @_;
-  my $hub        = $self->hub;
-  my $session    = $hub->session;
-  my $user       = $hub->user;
-  my %off_tracks = map { $_->get('display') eq 'off' ? ($_->id => 1) : () } @$user_data;
-  my @custom_tracks;
-  
-  foreach (grep $species_check->{$_->{'species'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
-
-    my @track_ids = split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
-    
-    # don't prompt to share custom tracks which are turned off
-    push @custom_tracks, [ $_->{'name'}, $_->{'record_id'} ? join '-', $_->{'record_id'}, md5_hex($_->{'code'}) : $_->{'code'} ] unless scalar @track_ids == scalar grep $off_tracks{$_}, @track_ids; 
-  }
-  
-  if (scalar @custom_tracks) {
-    print $self->jsonify({ share => \@custom_tracks });
-    return 1;
-  }
-}
-
-sub get_shared_data {
-  my ($self, $image_config, $custom_data) = @_;
+sub share_accept {
+  ## Accepts an incoming share link and returns the link where user should be redirected
+  my $self    = shift;
   my $hub     = $self->hub;
-  my $session = $hub->session;
-  my $user    = $hub->user;
-  my $tree    = $image_config->tree;
-  my @allowed;
-  
-  my @shared_data = split ',', $custom_data;
-  
-  @shared_data = EnsEMBL::Web::Command::UserData::CheckShare->new({ hub => $hub, object => $self->new_object('UserData', {}, { _hub => $hub }) })->process(@shared_data) if scalar @shared_data;
-  
-  # Sharing an uploaded file will change the track ids used in the image_config, so re-apply the configuration record
-  $session->apply_to_image_config($image_config);
-  
-  my %shared = map { $_ => 1 } @shared_data;
-  
-  foreach (grep $shared{$_->{'user_record_id'} || $_->{'code'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
-    push @allowed, uc $_->{'format'} eq 'TRACKHUB' ? $tree->clean_id($_->{'name'}) : split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
+  my $manager = $self->rose_manager;
+  my $code    = $self->{'code'};
+  my $row     = $self->{'row'};
+
+  if ($row) {
+    my $data        = $row->data->raw;
+    my $components  = $self->_get_components(keys %$data);
+
+    foreach my $component_code (keys %$components) {
+      my $viewconfig = $components->{$component_code}->viewconfig;
+
+      if ($viewconfig) {
+        if (my $vc_settings = $data->{$component_code}{'view_config'}) {
+          $viewconfig->receive_shared_settings($vc_settings);
+        }
+
+        if (
+          (my $ic_settings = $data->{$component_code}{'image_config'}) &&
+          (my $imageconfig = $viewconfig->image_config)
+        ) {
+          $imageconfig->receive_shared_settings($ic_settings);
+        }
+      }
+    }
+
+    $row->used($row->used + 1);
+    $row->save;
+
+    $hub->store_records_if_needed;
+    $manager->object_class->init_db->commit; # store_records_if_needed may not do it if no records where changed
+
+    return $row->url;
   }
-  
-  return (
-    $image_config->share(map { $_ => 1 } @allowed),
-    scalar @shared_data ? (shared_data => \@shared_data) : (),
-  );
+
+  return '/';
 }
 
-sub accept {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my $dbh  = $self->dbh;
-  
-  return '/' unless $dbh;
-  
-  my ($url, $type, $action, $data, $share_type) = $dbh->selectrow_array('SELECT url, type, action, data, share_type FROM share_url WHERE code = ?', {}, $hub->action);
-  
-  $dbh->do('UPDATE share_url SET used = used + 1 WHERE code = ?', {}, $hub->action) if $url;
-  $dbh->disconnect;
-  
-  return '/' unless $url;
-  
-  my $configuration;
-  
-  if ($share_type eq 'page') {
-    $configuration = "EnsEMBL::Web::Configuration::$type";
-    return '/' unless $self->dynamic_use($configuration);
-  }
-  
-  $hub->type = $type;
-  $hub->param('reset', 'all');
-  
-  my $session      = $hub->session;
-  my $user         = $hub->user;
-  my %custom_data  = map { $_->{'code'} => 1 } map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url);
-     $data         = from_json($data);
-  my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, split '/', $action, 2)} : $hub->get_viewconfig(keys %$data);
-  my (@revert, $manage,%saveds);
- 
-  my @altered; 
-  foreach my $view_config (@view_configs) {
-    my $config       = $data->{$view_config->component};
-    my $ic_type      = $view_config->image_config;
-    ## Save current config for this component (if any)
-    my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
-                            $hub->config_adaptor->get_config('image_config', $ic_type));
-    my $record_type_id  = $hub->user ? $hub->user->id : $session->create_session_id;
+sub get_permanent_url {
+  ## Gets permanent url for the given url
+  ## Calls get_permanent_url on hub with "ignore_archive" param true - overridden in 'www' plugin to not ignore archives
+  my ($self, $url, $options) = @_;
 
-    if (scalar(@current_configs)) {
-      $saveds{$view_config->component} =
-        $self->save_config($view_config->code, $ic_type, (
-          record_type     => 'session',
-          record_type_ids => [$record_type_id],
-          name            => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
-          description     => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
-        ));
-    }
-    
-    $session->receive_shared_data(grep !$custom_data{$_}, @{$config->{'shared_data'}}) if $config->{'shared_data'};
-  }
-  foreach my $view_config (@view_configs) {
-    my $config       = $data->{$view_config->component};
-    my $ic_type      = $view_config->image_config;
-    my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
+  $options ||= {};
+  $options->{'ignore_archive'} = 1;
 
-    $self->clean_hash($config->{'image_config'});
-    
-    $view_config->reset($image_config);
-    
-    if ($image_config && scalar keys %{$config->{'image_config'}}) {
-      my @changes;
-      foreach (keys %{$config->{'image_config'}}) {
-        my $node = $image_config->get_node($_) or next;
-        my $track_name = $node->data->{'name'} || $node->data->{'caption'};
-        push @changes, $track_name if $track_name;
-      }
-      $image_config->set_user_settings($config->{'image_config'});
-      $image_config->altered(@changes);
-      push @altered, @changes;
-    }
-    
-    if (scalar keys %{$config->{'view_config'}}) {
-      $view_config->set_user_settings($config->{'view_config'});
-      $view_config->altered = 1;
-    }
-    
-    if (scalar $view_config->altered || ($image_config && $image_config->is_altered)) {
-      my $saved_config = $saveds{$view_config->component};
-      push @revert, [ sprintf('
-        <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
-        $view_config->component,
-        $saved_config ?
-          $hub->url({ type => 'UserData', action => 'ModifyConfig', function => 'activate', record_id => $saved_config->{'saved'}[0]{'value'}, __clear => 1 }) :
-          $hub->url('Config', { action => $view_config->component, function => undef, reset => 'all', __clear => 1 })
-      ), ' (' . $view_config->title . ')' ];
-      
-      if ($saved_config) {
-        $manage ||= sprintf '<a class="modal_link config" rel="modal_user_data" href="%s">View saved configurations</a>', $hub->url({ type => 'UserData', action => 'ManageConfigs', function => undef, __clear => 1 });
-      }
-    }
+  return $self->hub->get_permanent_url($url, $options);
+}
+
+sub _get_components {
+  ## @private
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $configuration = $self->configuration;
+  my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function));
+  my %components    = @{$node ? $node->get_data('components') : ()};
+  my %required      = map { $_ => 1 } grep $_, @_;
+
+  # remove the components that are not required
+  if (keys %required) {
+    delete $components{$_} for grep !$required{$_}, keys %components;
   }
-  
-  if (scalar @revert) {
-    my $tracks = join(', ', @altered);
-    $session->add_data(
-      type     => 'message',
-      function => '_info',
-      code     => 'configuration',
-      order    => 101,
-      message  => sprintf('
-        <p>The URL you just used has changed the %s this page%s. You may want to:</p>
-        <p class="tool_buttons" style="width:225px">
-          %s
-          %s
-        </p>
-      ',
-      $tracks ? "following tracks: $tracks<br /> on" : 'configuration for', 
-      $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
-    );
+
+  # instantiate all components
+  for (keys %components) {
+    $components{$_} = dynamic_require($components{$_})->new($hub, undef, undef, $_);
   }
-  
-  $session->store;
-  
-  return $url;
+
+  return \%components;
 }
 
 1;

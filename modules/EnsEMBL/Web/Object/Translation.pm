@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Object::Translation;
 
 ### NAME: EnsEMBL::Web::Object::Translation
 ### Wrapper around a Bio::EnsEMBL::Translation object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 ### Required functionality now moved to Object::Transcript
@@ -311,8 +310,7 @@ sub history {
 
 =head2 vega_projection
 
- Arg[1]         : EnsEMBL::Web::Proxy::Object
- Arg[2]         : Alternative assembly name
+ Arg[1]         : Alternative assembly name
  Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
  Description : map an object to an alternative (vega) assembly
  Return type : arrayref

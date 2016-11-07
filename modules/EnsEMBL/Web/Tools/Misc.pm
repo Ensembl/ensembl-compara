@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Tools::Misc;
 
 ## Just a bunch of useful tools
 use strict;
-
-use EnsEMBL::Web::RegObj;
 
 use base qw(Exporter);
 
@@ -53,7 +52,7 @@ sub champion(&@) {
 
 sub style_by_filesize {
   my $filesize     = shift || 0;
-  my $max_filesize = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->MAX_HIGHLIGHT_FILESIZE || MAX_HIGHLIGHT_FILESIZE;
+  my $max_filesize = MAX_HIGHLIGHT_FILESIZE;
   return $filesize > $max_filesize ? 'density_line' : 'highlight_lharrow';
 }
 

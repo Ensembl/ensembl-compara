@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -111,7 +112,12 @@ sub feature_content {
     if ($_->{'extra'}) {
       foreach my $extra (@{$_->{'extra'}||[]}) {
         next unless $extra->{'name'};
-        $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
+        if ($extra->{'value'} =~ /<a href/) {
+          $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
+        }
+        else {
+          $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
+        }
       }
     }
 

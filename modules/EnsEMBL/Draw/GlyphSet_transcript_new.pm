@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -132,7 +133,7 @@ sub _prepare_expanded {
       next if $target and $t->{'stable_id'} ne $target;
       next unless @{$t->{'exons'}};
       # set highlights
-      if(!defined $target and $this_db) {
+      if(!$target and $this_db) {
         if($t->{'stable_id'} eq $selected_trans) {
           $t->{'highlight'} = 'highlight2';
         } elsif($g->{'stable_id'} eq $selected_gene) {

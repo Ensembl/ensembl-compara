@@ -20,7 +20,8 @@ Run 'ctrl_script/move_server --help' for usage details.
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,10 +61,9 @@ BEGIN {
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 };
 
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::SpeciesDefs;
 
-my $hub = new EnsEMBL::Web::Hub;
-my $SD = $hub->species_defs;
+my $SD = EnsEMBL::Web::SpeciesDefs->new;
 
 if($SD->ENSEMBL_CTRLLOG && open(LOG, ">>$SD->ENSEMBL_CTRLLOG")) {
   print LOG sprintf "%s [005] moving server logs\n", strftime("%Y-%m-%d %H:%M:%S", localtime);

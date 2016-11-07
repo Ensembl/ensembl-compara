@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,7 +74,7 @@ sub init {
   
   $self->init_species_list($hub);
   
-  foreach (@{$builder->ordered_objects}) {
+  foreach (@{$hub->ordered_objects}) {
     my $o = $builder->object($_);
     push @data, { type => $_, action => $o->default_action, caption => $o->short_caption('global'), dropdown => !!($self->{'history'}{lc $_} || $self->{'bookmarks'}{lc $_} || $_ eq 'Location') } if $o;
   }
@@ -104,8 +105,15 @@ sub init_species_list {
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
     map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
+    grep !$species_defs->get_config($_, 'IS_STRAIN_OF'), 
     $species_defs->valid_species
   ];
+
+  #adding species strain (Mouse strains) to the list above
+  foreach ($species_defs->valid_species) {
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( $self->{'species_list'}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
+  }
+  @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   
   my $favourites = $hub->get_favourite_species;
   

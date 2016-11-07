@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,7 +43,7 @@ sub create {
  <Tags>Ensembl genome browser %s %%s</Tags>
  <Image width="16" height="16" type="image/png">%s%%s</Image>
  <Url type="text/html"
-      template="%s/%%s/psychic?q={searchTerms};site=%%s"/>
+      template="%s/%%s/Psychic?q={searchTerms};site=%%s"/>
 </OpenSearchDescription>
 ', 
   $sd->ENSEMBL_SITE_NAME_SHORT,

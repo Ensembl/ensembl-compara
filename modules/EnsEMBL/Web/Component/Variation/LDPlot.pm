@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +35,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object('variation');
   my $vf_id  = $hub->param('vf'); 
 
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
@@ -58,8 +59,9 @@ sub content {
   }
   
   ## set path information for LD calculations
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH    = $hub->species_defs->ENSEMBL_TMP_TMP;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE     = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::VCF_BINARY_FILE = $hub->species_defs->ENSEMBL_LD_VCF_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH        = $hub->species_defs->ENSEMBL_TMP_TMP;
 
   my $seq_region = $v->{'Chr'};
   my $seq_type   = $v->{'type'};
@@ -99,6 +101,11 @@ sub content {
 
   my $image = $self->new_image($containers_and_configs, $object->highlights);
   
+  ## Add parameters needed by export
+  foreach ($hub->param) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if ($_ =~ /^pop(\d+|name)$/); 
+  }
+
   return if $self->_export_image($image);
   
   $image->{'panel_number'} = 'top';

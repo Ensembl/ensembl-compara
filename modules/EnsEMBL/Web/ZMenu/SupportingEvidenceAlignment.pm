@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@ sub content {
 
   my $hit_length = $hub->param('hit_length');
   my $hit_url    = $hub->get_ExtURL_link($link_name, $hit_db, $link_name);
-  my $tsid       = $hub->param('t');
+  my $tsid       = $hub->param('t_version') ? $hub->param('t').".".$hub->param('t_version') : $hub->param('t');
   my $esid       = $hub->param('exon');
 
   $self->caption("$hit_name ($hit_db)");

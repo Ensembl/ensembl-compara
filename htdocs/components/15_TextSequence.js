@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +24,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   init: function () {
     var panel = this;
-
     this.base();
     
     if (!Ensembl.browser.ie) {
@@ -45,7 +45,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
   },
-  
+
   updateKey: function(el) {
     var $mydata = $('.sequence_key_json',el);
     var mydata = JSON.parse($mydata.html()||false);
@@ -73,7 +73,23 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     if (!this.elLk.keyBox) {
       this.elLk.keyBox = this.el.find('._adornment_key').first();
     }
-    this.elLk.keyBox.keepOnPage({marginTop: 10}).keepOnPage('trigger');
+    if (!this.elLk.keyBoxToggler) {
+      this.elLk.keyBoxToggler = $('<div class="toggler"><span class="open">&#9660;</span><span>&#9650;</span></div>');
+    }
+    if (!this.elLk.keyBoxToggler.parent().length) {
+      this.elLk.keyBoxToggler.appendTo(this.elLk.keyBox).off('.textsequence').on('click.textsequence', function() {
+        $(this).parent().removeClass('was_collapsed').toggleClass('collapsed', 100);
+      });
+    }
+    this.elLk.keyBox.keepOnPage({
+      marginTop: 10,
+      onreset: function() {
+        $(this).removeClass('fixed').filter('.collapsed').removeClass('collapsed').addClass('was_collapsed');
+      },
+      onfix: function() {
+        $(this).addClass('fixed').filter('.was_collapsed').removeClass('was_collapsed').addClass('collapsed');
+      }
+    }).keepOnPage('trigger');
   },
 
   initPopups: function (el) {
@@ -90,5 +106,31 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     }
 
     this.base(url, el, params, newContent, attrs);
+  },
+
+  // This is the client side replica of EnsEMBL::Web::Component::TextSequence::chunked_content()
+  showFullTextSequence: function() {
+    var panel = this;
+    var i   = 1;
+    var j   = panel.params.chunkLength;
+    var end = (parseInt (panel.params.totalLength / j)) * j; // Find the final position covered by regular chunking - we will add the remainer once we get past this point.
+    var url = '';
+    var html = '';
+      // The display is split into a managable number of sub slices, which will be processed in parallel by requests
+      while (j <= panel.params.totalLength) {
+        // Replace slice start and end w.r.t different chunks 
+        url = panel.params.updateURL;
+        url = url.replace(/subslice_start=(\d+);/, 'subslice_start=' + i + ';');
+        url = url.replace(/subslice_end=(\d+);/, 'subslice_end=' + j + ';');
+        url = url.replace(/follow=0/,'');
+        url += ";follow=1";
+        html += '<div class="ajax"><input type="hidden" class="ajax_load" value="'+ url +'" /></div>';
+
+        if (j == panel.params.totalLength) break;
+        i  = j + 1;
+        j += panel.params.chunkLength;
+        if (j > end) j  = panel.params.totalLength;
+      }
+    return html;
   }
 });

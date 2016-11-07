@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +51,16 @@ sub content {
   
   $self->{'icon'}     = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-  
+ 
+  my $icon_name;
+  my $strain_of = $species_defs->IS_STRAIN_OF; 
+  if ($species_defs->IS_STRAIN_OF) {
+    $icon_name = $strain_of.'_strain';
+  }
+  else {
+    $icon_name = $hub->species;
+  }
+ 
   return sprintf('
     <div class="column-wrapper">  
       <div class="box-left">
@@ -67,7 +77,7 @@ sub content {
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     %s',
-    $img_url, $hub->species, $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'},
+    $img_url, $icon_name, $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'},
     $common_name =~ /\./ ? "<h1>$display_name</h1>" : "<h1>$common_name</h1><p>$display_name</p>",
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
@@ -163,10 +173,49 @@ sub assembly_text {
     
     $hub->url({ type => 'UserData', action => 'SelectFile', __clear => 1 }), sprintf($self->{'icon'}, 'page-user'), $species_defs->ENSEMBL_SITETYPE
   );
-  
+ 
+  my $strains = $species_defs->ALL_STRAINS;
+
   ## Insert dropdown list of other assemblies
   if (my $assembly_dropdown = $self->assembly_dropdown) {
-    $html .= '<h3 class="light top-margin">Other assemblies</h3>'.$assembly_dropdown;
+    my $ref_text = $strains ? 'reference' : '';
+    $html .= sprintf '<h3 class="light top-margin">Other %s assemblies</h3>%s', $ref_text, $assembly_dropdown;
+  }
+
+  ## Insert link to strains page 
+  if ($strains) {
+    $html .= sprintf '<h3 class="light top-margin">Other strains</h3><p>This species has data on %s additional strains. <a href="%s">View list of strains</a></p>', 
+                            scalar @$strains,
+                            $hub->url({'action' => 'Strains'}), 
+  }
+  
+  ## Also look for strains on closely-related species
+  my $related_taxon = $species_defs->RELATED_TAXON;
+  if ($related_taxon) {
+
+    ## Loop through all species, looking for others in this taxon
+    my @related_species;
+    foreach $_ ($species_defs->valid_species) {
+      next if $_ eq $self->hub->species; ## Skip if current species
+      next unless $species_defs->get_config($_, 'ALL_STRAINS'); ## Skip if it doesn't have strains
+      next if $species_defs->get_config($_, 'SPECIES_STRAIN'); ## Skip if it _is_ a strain
+      ## Finally, check taxonomy
+      my $taxonomy = $species_defs->get_config($_, 'TAXONOMY');
+      next unless ($taxonomy && ref $taxonomy eq 'ARRAY'); 
+      next unless grep { $_ eq $related_taxon } @$taxonomy;
+      push @related_species, $_;
+    }
+  
+    if (scalar @related_species) {
+      $html .= '<h3 class="light top-margin">Related strains</h3><p>Strain data is now available on the following closely-related species:</p><ul>';
+      foreach (@related_species) {
+        $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
+                  $hub->url({'species' => $_, 'action' => 'Strains'}), 
+                  $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+                  $species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+      }
+      $html .= '</ul>';
+    }
   }
 
   return $html;
@@ -313,14 +362,14 @@ sub variation_text {
     ';
   }
 
-  my $new_vep = $species_defs->ENSEMBL_VEP_ENABLED;
-  $html .= sprintf(
-    qq(<p><a href="%s" class="%snodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>),
-    $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)}),
-    $new_vep ? '' : 'modal_link ',
-    'tool',
-    $self->img_url
-  );
+  if ($species_defs->ENSEMBL_VEP_ENABLED) {
+    $html .= sprintf(
+      qq(<p><a href="%s" class="nodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>),
+      $hub->url({'__clear' => 1, qw(type Tools action VEP)}),
+      'tool',
+      $self->img_url
+    );
+  }
 
   return $html;
 }

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,11 +36,12 @@ sub add_head {
   my $page = $self->page;
   
   $page->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::Element::Title
-    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
-    links      EnsEMBL::Web::Document::Element::Links
-    meta       EnsEMBL::Web::Document::Element::Meta
-    prefetch   EnsEMBL::Web::Document::Element::Prefetch
+    title           EnsEMBL::Web::Document::Element::Title
+    stylesheet      EnsEMBL::Web::Document::Element::Stylesheet
+    links           EnsEMBL::Web::Document::Element::Links
+    meta            EnsEMBL::Web::Document::Element::Meta
+    prefetch        EnsEMBL::Web::Document::Element::Prefetch
+    head_javascript EnsEMBL::Web::Document::Element::HeadJavascript
   ));
 }
 
@@ -63,6 +65,7 @@ sub add_body {
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+    tmp_message      EnsEMBL::Web::Document::Element::TmpMessage
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }
@@ -83,8 +86,6 @@ sub render {
 
 sub render_masthead {
   my ($self, $elements) = @_;
-  my $hub = $self->hub;
-  my $page = $self->page;
 
   ## MASTHEAD & GLOBAL NAVIGATION
   return qq(
@@ -152,7 +153,7 @@ sub render_footer {
   my $page = $self->page;
 
   my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
-  $HTML .= qq(
+  return qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
@@ -187,6 +188,7 @@ sub render_page_end {
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
     $elements->{'modal'}
+    $elements->{'tmp_message'}
     $elements->{'body_javascript'}
   );
   

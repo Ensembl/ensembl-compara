@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,13 +57,11 @@ sub create_component {
   $class   .= '::'.$hub->param('component');
 
   if ($self->dynamic_use($class)) {
-    my $builder = EnsEMBL::Web::Builder->new({
-                      hub           => $hub,
-                      object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
-    });
-    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
-    $hub->set_builder($builder);
+    my $builder     = $hub->controller->builder;
+    my $object_type = ucfirst($hub->param('data_type'));
+    $builder->create_object($object_type);
     $component = $class->new($hub, $builder);
+    $component->object($builder->object($object_type));
   }
   if (!$component) {
     warn "!!! Could not create component $class";

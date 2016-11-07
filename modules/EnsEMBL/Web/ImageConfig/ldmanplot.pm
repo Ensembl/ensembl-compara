@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,8 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::ldmanplot;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub _menus {
   return (qw(
@@ -36,29 +38,34 @@ sub _menus {
   ));
 }
 
-sub init {
-  my $self    = shift;
+sub init_cacheable {
+  ## @override
+  my $self = shift;
+
+  $self->SUPER::init_cacheable(@_);
+
   my $colours = $self->species_defs->colour('variation');
-    
+
   $self->set_parameters({
-    label_width => 100,
-    colours     => $colours,  # colour maps
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
+    label_width     => 100,
+    colours         => $colours,  # colour maps
   });
-  
+
   $self->create_menus($self->_menus);
-  
+
   $self->load_tracks;
- 
+
   $self->add_tracks('other',
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar', description => 'Shows the scalebar'                             }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'f', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
   );
-  
+
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
- 
+
   $self->modify_configs(
     ['simple', 'misc_feature'],
     { display => 'off', menu => 'no'}
@@ -68,7 +75,7 @@ sub init {
     ['simple_otherfeatures_human_1kg_hapmap_phase_2'],
     {'display' => 'tiling', menu => 'yes'}
   );
- 
+
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal',  strand => 'r' }
@@ -77,7 +84,7 @@ sub init {
 
 sub init_slice {
   my ($self, $parameters) = @_;
-  
+
   $self->set_parameters({
     %$parameters,
     _userdatatype_ID   => 30,

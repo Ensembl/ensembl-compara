@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,27 +158,35 @@ dd { margin-bottom: 1em; }
 div.error,
 div.warning,
 div.info,
+div.sidebar,
 div.hint            { margin: 0 0 1em; }
+
+div.sidebar         { float: right; }
 
 div.error h3,
 div.warning h3,
 div.info h3,
+div.sidebar h3,
 div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 1em; }
 div.error h4,
 div.error h3,
-div.warning h3      { color: [[PAGE_BG]] !important; }
-div.warning h3      { background-color: [[WARNING_BG]]; }
-div.info h3         { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
-div.hint h3         { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
+div.warning > h3    { color: [[PAGE_BG]] !important; }
+div.warning > h3    { background-color: [[WARNING_BG]]; }
+div.info > h3,
+div.sidebar > h3    { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
+div.hint > h3       { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
 
 div.error > div,
 div.warning > div,
 div.info > div,
+div.sidebar > div,
 div.hint > div      { border: 1px solid [[ERROR_BG]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
 div.warning div     { border-color: [[WARNING_BG]]; }
 div.info > div,
+div.sidebar > div,
 div.hint > div      { border-color: [[INFO_BG]]; }
 .info div,
+.sidebar div,
 .hint div           { border: none; }
 
 div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
@@ -186,6 +195,8 @@ div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
 .message-pad        { padding: 1em 1em 0; }
 
 div.filter-error    { margin: 1em 1em 0; }
+
+.box-highlight      { background-color: #55aa55; font-weight: bold; border-radius: 4px; color: [[PAGE_BG]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }

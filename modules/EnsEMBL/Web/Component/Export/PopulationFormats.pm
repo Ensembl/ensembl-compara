@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +36,7 @@ sub content {
     output   => 'gen_var'
   };
   
-  my $view_config = $hub->get_viewconfig('VariationTable', 'Transcript');
+  my $view_config = $hub->get_viewconfig({component => 'VariationTable', type => 'Transcript', cache => 1});
 
   foreach ($view_config->options) {
     my $option = $view_config->get($_);

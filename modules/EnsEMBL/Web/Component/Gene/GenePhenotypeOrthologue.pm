@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,7 +57,7 @@ sub content {
   
   my @rows;
 
-  foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
+  foreach my $species (map $hub->species_defs->production_name_mapping($_), sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next unless $hub->species_defs->get_config($species, 'databases')->{'DATABASE_VARIATION'};
 
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);
@@ -115,6 +116,9 @@ sub content {
           if ($source =~ /^goa$/i) {
             my $attribs = $pf->get_all_attributes;
             $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          } elsif($source_uc =~ /MGI/) {
+            my $marker_accession_id = $pf->marker_accession_id;
+            $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $marker_accession_id, TAX => $tax});
           }
           else {
             $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});

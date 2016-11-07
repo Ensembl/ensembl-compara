@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,7 +62,7 @@ sub content {
     $node->{_sub_leaves_count} = scalar(@$members);
     my $link_gene = $members->[0];
     foreach my $g (@$members) {
-      $link_gene = $g if (lc $g->genome_db->name) eq (lc $hub->species);
+      $link_gene = $g if (lc $hub->species_defs->production_name_mapping($g->genome_db->name)) eq (lc $hub->species);
     }
     $node->{_sub_reference_gene} = $link_gene->gene_member;
   }
@@ -121,8 +122,6 @@ sub content {
     order => 13
   }); 
   
-  my $action = 'Web/ComparaTree' . ($cdb =~ /pan/ ? '/pan_compara' : '');
-
   if (not $is_supertree) {
 
   # Expand all nodes
@@ -137,11 +136,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 8,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => '#'
     });
   }
 
@@ -157,11 +152,7 @@ sub content {
       link_class    => 'update_panel',
       order         => 10,
       update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-      link          => $hub->url('Component', {
-        type     => $hub->type,
-        action   => $action,
-        collapse => $collapse
-      })
+      link          => '#'
     });
   }
   
@@ -183,7 +174,7 @@ sub content {
         label => 'Switch to that tree',
         order => 11,
         link  => $hub->url({
-          species  => $link_gene->genome_db->name,
+          species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
           type     => 'Gene',
           action   => 'Compara_Tree',
           __clear  => 1,
@@ -214,11 +205,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 11,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => '#'
       }); 
     }
   } else {
@@ -301,11 +288,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 7,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => '#'
       });
     } else {
       my $collapse = join ',', $node_id, keys %collapsed_ids;
@@ -317,11 +300,7 @@ sub content {
         link_class    => 'update_panel',
         order         => 9,
         update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
-        link          => $hub->url('Component', {
-          type     => $hub->type,
-          action   => $action,
-          collapse => $collapse
-        })
+        link          => '#'
       });
     }
     
@@ -334,14 +313,12 @@ sub content {
         
         next if $gene eq $hub->param('g');
         
-        # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
-        # There should be a way of retrieving this name correctly instead.
         if ($s == 0) {
-          $url_params->{'species'} = ucfirst $_->genome_db->name;
+          $url_params->{'species'} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{'g'} = $gene;
         } 
         else {
-          $url_params->{"s$s"} = ucfirst $_->genome_db->name;
+          $url_params->{"s$s"} = $hub->species_defs->production_name_mapping($_->genome_db->name);
           $url_params->{"g$s"} = $gene;
         }
         $s++;
@@ -387,64 +364,68 @@ sub content {
       order       => 15,
     }); 
 
-    # Get wasabi files if found in session store
-    my $gt_id               = $node->tree->stable_id;
-    my $wasabi_session_key  = $gt_id . "_" . $node_id;
-    my $wasabi_session_data = $hub->session->get_data(type=>'tree_files', code => 'wasabi');
+    # FIXME - Quick hack to hide Wasabi for all strains trees. This should be removed once we have the HAL ready
+    if ($hub->referer->{ENSEMBL_ACTION} ne 'Strain_Compara_Tree') {
 
-    my ($alignment_file, $tree_file, $link);
-    if ($wasabi_session_data->{$wasabi_session_key}) {
-      $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
+      # Get wasabi files if found in session store
+      my $gt_id               = $node->tree->stable_id;
+      my $wasabi_session_key  = $gt_id . "_" . $node_id;
+      my $wasabi_session_data = $hub->session->get_data(type=>'tree_files', code => 'wasabi');
 
-      # Create wasabi url to load from their end
-      $link = sprintf (
-                        '/wasabi/wasabi.htm?tree=%s',
-                        uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
-                      );
-    }
-    else {
-      my $rest_url = $hub->species_defs->ENSEMBL_REST_URL;
+      my ($alignment_file, $tree_file, $link);
+      if ($wasabi_session_data->{$wasabi_session_key}) {
+        $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
 
-      # Fall back to file generation if REST fails.
-      # To make it work for e! archives
-      $ua->timeout(10);
-
-      my $is_success = head($rest_url);
-      if ($is_success) {
-        $rest_url .= sprintf('/genetree/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s',
-                     $gt_id,
-                     $node_id);
-
-        if ($hub->wasabi_status) {
-          $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
-            'URL' => uri_escape($rest_url)
-          });
-        }
-      }
-      else {
-        my $filegen_url = $hub->url('Json', {
-                            type => 'GeneTree', 
-                            action => 'fetch_wasabi',
-                            node => $node_id, 
-                            gt => $gt_id, 
-                            treetype => 'json'
-                          });
-
+        # Create wasabi url to load from their end
         $link = sprintf (
-                          '/wasabi/wasabi.htm?filegen_url=%s',
-                          uri_escape($filegen_url)
+                          '/wasabi/wasabi.htm?tree=%s',
+                          uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
                         );
       }
-    }
+      else {
+        my $rest_url = $hub->species_defs->ENSEMBL_REST_URL;
 
-    # Wasabi Tree Link
-    $self->add_entry({
-      type       => 'View sub-tree',
-      label      => $link ? 'View in Wasabi' : 'Not available' ,
-      link_class => 'popup',
-      order      => 16,
-      link       => $link || ''
-    });
+        # Fall back to file generation if REST fails.
+        # To make it work for e! archives
+        $ua->timeout(10);
+
+        my $is_success = head($rest_url);
+        if ($is_success) {
+          $rest_url .= sprintf('/genetree/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s',
+                       $gt_id,
+                       $node_id);
+
+          if ($hub->wasabi_status) {
+            $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
+              'URL' => uri_escape($rest_url)
+            });
+          }
+        }
+        else {
+          my $filegen_url = $hub->url('Json', {
+                              type => 'GeneTree', 
+                              action => 'fetch_wasabi',
+                              node => $node_id, 
+                              gt => $gt_id, 
+                              treetype => 'json'
+                            });
+
+          $link = sprintf (
+                            '/wasabi/wasabi.htm?filegen_url=%s',
+                            uri_escape($filegen_url)
+                          );
+        }
+      }
+
+      # Wasabi Tree Link
+      $self->add_entry({
+        type       => 'View sub-tree',
+        label      => $link ? 'Wasabi viewer' : 'Not available' ,
+        link_class => 'popup',
+        order      => 16,
+        link       => $link || ''
+      });
+    }
   }
 }
 

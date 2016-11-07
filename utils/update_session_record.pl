@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,11 +33,11 @@ BEGIN {
   
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
-  require EnsEMBL::Web::Hub;
+  require EnsEMBL::Web::SpeciesDefs;
 }
 
 my $time  = Time::HiRes::time;
-my $sd    = EnsEMBL::Web::Hub->new->species_defs;
+my $sd    = EnsEMBL::Web::SpeciesDefs->new;
 my $db    = $sd->session_db;
 
 my $dsn = sprintf(

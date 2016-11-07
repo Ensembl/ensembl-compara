@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +40,7 @@ sub render_compact {
 sub render_signal {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Graph']);
+  $self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
 
@@ -46,6 +48,7 @@ sub render_signal_feature {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
   $self->{'my_config'}->set('extra_height',12);
+  $self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
 
@@ -95,7 +98,6 @@ sub draw_aggregate {
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
-              'is_multi'  => $cell_line eq 'MultiCell' ? 1 : 0,
               };
 
   my $data    = $self->data_by_cell_line($cell_line);
@@ -214,6 +216,7 @@ sub get_features {
   my ($self, $dataset, $args) = @_;
 
   my $data = [];
+  my $legend = {};
 
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
     my $subtrack = {'metadata' => {},
@@ -226,6 +229,7 @@ sub get_features {
 
     my $colour        = $args->{'colours'}{$feature_name};
     $subtrack->{'metadata'}{'colour'} = $colour;
+    $legend->{$feature_name} = $colour;
 
     my $label         = $feature_name;
     my $cell_line     = join(':',@temp);
@@ -234,7 +238,7 @@ sub get_features {
 
     if ($args->{'feature_type'} eq 'block_features') {
       $subtrack->{'metadata'}{'feature_height'} = 8;
-      my $features      = $dataset->{$f_set};
+      my $features = $dataset->{$f_set};
       foreach my $f (@$features) {
         ## Create motif features
         my $structure = [];
@@ -261,7 +265,7 @@ sub get_features {
       my $bins                    = $self->bins;
       my $url                     = $dataset->{$f_set};
       my $wiggle                  = $self->get_data($bins, $url);
-      $subtrack->{'features'}     = $wiggle->[0]{'features'}{1};
+      $subtrack->{'features'}     = $wiggle->[0]{'features'};
 
       ## Don't override values that we've already set!
       while (my($k, $v) = each (%{$wiggle->[0]{'metadata'}||{}})) {
@@ -270,11 +274,22 @@ sub get_features {
     }
     push @$data, $subtrack;
   }
+  
+  ## Add colours to legend
+  if (keys %$legend) {
+    my $legend_colours = $self->{'legend'}{'fg_multi_wiggle_legend'}{'colours'} || {};
+    $legend_colours->{$_} = $legend->{$_} for keys %$legend;
+    $self->{'legend'}{'fg_multi_wiggle_legend'} = { priority => 1030, 
+                                                    legend => [], 
+                                                    colours => $legend_colours };
+  }
+
   return $data; 
 }
 
 sub get_colours {
   my $self      = shift;
+  return unless $self->data_by_cell_line;
   my $config    = $self->{'config'};
   my $colourmap = $config->colourmap;
   my %ratio     = ( 1 => 0.6, 2 => 0.4, 3 => 0.2, 4 => 0 );
@@ -331,14 +346,12 @@ sub _sublegend_links {
   my $self = shift;
  
   my $hub = $self->{'config'}->hub;
-  my $cell_type_url = $hub->url('Component', {
-            action   => 'Web',
-            function    => 'CellTypeSelector/ajax',
+  my $cell_type_url = $hub->url('MultiSelector', {
+            action   => 'CellTypeSelector',
             image_config => $self->{'config'}->type,
   });
-  my $evidence_url = $hub->url('Component', {
-            action => 'Web',
-            function => 'EvidenceSelector/ajax',
+  my $evidence_url = $hub->url('MultiSelector', {
+            action => 'EvidenceSelector',
             image_config => $self->{'config'}->type,
   });
 

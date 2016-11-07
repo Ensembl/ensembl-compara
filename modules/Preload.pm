@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Preload;
 use strict;
 use warnings;
@@ -12,12 +31,49 @@ use warnings;
 use EnsEMBL::Root;
 use EnsEMBL::Web::Utils::DynamicLoader;
 
+our $REALSTDERR;
+sub preload_capture_stderr {
+  open($REALSTDERR,'>&STDERR');
+  close STDERR;
+  open(STDERR,">>$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log");
+}
+
+sub preload_release_stderr {
+  open(STDERR,'>&',$REALSTDERR);
+  close $REALSTDERR;
+}
+
 sub load {
-  EnsEMBL::Web::Utils::DynamicLoader::dynamic_use($_[0],1);
-  EnsEMBL::Root->dynamic_use($_[0]);
+  preload_capture_stderr;
+  eval {
+    EnsEMBL::Web::Utils::DynamicLoader::dynamic_use($_[0],1);
+  };
+  preload_release_stderr;
+}
+
+our $MOANED = 0;
+sub moan {
+  return if $MOANED;
+  if(-s "$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log") {
+    $MOANED = 1;
+    warn <<"EOF";
+
+===
+Some modules failed to preload. They will probably fail when they are
+used "for real" by this website. For details see
+$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log
+This is a probably not a problem with preload: it just identified a
+problem with other modules, earlier than otherwise would have happened.
+This does not in itself stop the site starting but you might want to
+take a look, as advance notice about what pages may be broken here.
+===
+
+EOF
+  }
 }
 
 sub import {
+  $MOANED = 1 if -e "$SiteDefs::ENSEMBL_LOGDIR/preload-errors.log";
   load("Bio::AlignIO",1);
   load("Bio::EnsEMBL::AltAlleleGroup",1);
   load("Bio::EnsEMBL::CDS",1);
@@ -1620,7 +1676,7 @@ sub import {
   load("EnsEMBL::Web::ViewConfig::PopulationGraphs::Variation",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::FeatureDetails",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Other",1);
-  load("EnsEMBL::Web::ViewConfig::Regulation::Page",1);
+  load("EnsEMBL::Web::ViewConfig::RegulationPage",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Summary",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::SummaryButtons",1);
   load("EnsEMBL::Web::ViewConfig::Regulation::Urgent",1);
@@ -1781,6 +1837,7 @@ sub import {
   load("Tabix",1);
   load("TabixIterator",1);
   load("Tie::StdHash",1);
+  moan;
 }
 
 1;

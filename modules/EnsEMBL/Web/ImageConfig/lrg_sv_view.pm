@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,14 +20,21 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::lrg_sv_view;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    opt_lines => 1, # draw registry lines
+    sortable_tracks   => 'drag',  # allow the user to reorder tracks
+    storable          => 0,
+    image_resizeable  => 1,
+    opt_lines         => 1, # draw registry lines
   });
 
   $self->create_menus(qw(
@@ -47,7 +55,7 @@ sub init {
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
   );
- 
+
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs',  'contig', { display => 'normal', strand => 'r' }]
   );
@@ -74,8 +82,8 @@ sub init {
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
     { display => 'off' }
   );
-  
-  $self->modify_configs(   
+
+  $self->modify_configs(
     [ 'transcript_core_ensembl', 'transcript_core_sg' ],
     { display => 'transcript_label' }
   );
@@ -84,8 +92,8 @@ sub init {
     [ 'transcript_otherfeatures_refseq_human_import', 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
-  
-  
+
+
   # structural variations
   $self->modify_configs(
     ['variation_feature_structural_larger'],
@@ -101,9 +109,7 @@ sub init {
     [ 'somatic_sv_feature' ],
     { display => 'gene_nolabel', depth => 50 }
   );
-  
-  $self->storable     = 0;
-  $self->image_resize = 1;
+
 }
 
 1;

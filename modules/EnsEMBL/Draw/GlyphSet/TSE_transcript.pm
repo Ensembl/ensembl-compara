@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +33,7 @@ sub render_normal {
   my $self              = shift;
   my $config            = $self->{'config'};
   my $h                 = 8; # Increasing this increases glyph height
-  my $pix_per_bp        = $config->transform->{'scalex'};
+  my $pix_per_bp        = $config->transform_object->scalex;
   my $length            = $config->container_width;
   my $trans_obj         = $self->cache('trans_object');
   my $coding_start      = $trans_obj->{'coding_start'};

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,7 +56,7 @@ sub content {
   my $self            = shift;
   my $img_url         = $self->img_url;
   my $species         = $self->species;
-  my $search_url      = sprintf '%s%s/psychic', $self->home_url, $species || 'Multi';
+  my $search_url      = $self->hub->url('Psychic', {'species' => $species || 'Multi', 'type' => '', 'action' => '', 'function' => '', '__clear' => 1});
   my $options         = $self->search_options;
   my %options_hash    = @$options;
   my $search_code     = lc $self->default_search_code;

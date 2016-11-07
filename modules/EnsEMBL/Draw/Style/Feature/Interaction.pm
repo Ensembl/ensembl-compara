@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -142,7 +143,7 @@ sub draw_join {
 
   my $image_width = $self->image_config->container_width;
   my $length      = $self->track_config->get('slice_length');
-  my $pix_per_bp  = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp  = $self->image_config->transform_object->scalex;
 
   my ($arc_start, $arc_end);
   my $direction       = $feature->{'direction'};

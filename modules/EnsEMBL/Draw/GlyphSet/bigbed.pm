@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +31,6 @@ use EnsEMBL::Web::IOWrapper::Indexed;
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
-
-sub render_signal {
-  my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
-  $self->{'my_config'}->set('height', 60);
-  $self->_render_aggregate;
-}
 
 # Overridden in some regulation tracks, as it's not always this simple
 sub my_url { return $_[0]->my_config('url'); }
@@ -68,13 +62,16 @@ sub get_data {
     ## Don't try and scale if we're just doing a zmenu!
     my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
+                    'action'          => $self->{'my_config'}->get('zmenu_action'), 
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
+                    'drawn_strand'    => $self->strand,
                     'strand_to_omit'  => $strand_to_omit,
                     'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                    'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
                     };
 
     ## Also set a default gradient in case we need it
@@ -103,6 +100,9 @@ sub get_data {
     my $style = $self->my_config('style') || $self->my_config('display') || '';
     ## Parse the file, filtering on the current slice
     $metadata->{'skip_overlap'} = ($style eq 'compact');
+
+    $self->extra_metadata($metadata);
+
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
 
@@ -119,7 +119,9 @@ sub get_data {
 
   return $data;
 }
-  
+ 
+sub extra_metadata {}
+ 
 sub render_as_alignment_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('depth', 20);
@@ -138,6 +140,13 @@ sub render_compact {
   $self->{'my_config'}->set('depth', 0);
   $self->{'my_config'}->set('no_join', 1);
   $self->draw_features;
+}
+
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
 }
 
 sub render_as_transcript_nolabel {

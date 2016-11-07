@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,14 +39,15 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object || $self->hub->core_object('location');
   
-  return if $hub->param('show_bottom_panel') eq 'no';
+  return if $self->param('show_bottom_panel') eq 'no';
   
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
   my $image_width     = $self->image_width;
-  my $primary_slice   = $object->slice;
+  my $padding         = $hub->create_padded_region();
+  my $primary_slice   = $object->slice->expand($padding->{flank5}, $padding->{flank3});
   my $primary_species = $hub->species;
   my $primary_strand  = $primary_slice->strand;
   my $slices          = $object->multi_locations;
@@ -54,9 +56,9 @@ sub content {
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), LASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch'), LASTZ_RAW => $hub->param('opt_pairwise_raw') };
+  my $methods         = { BLASTZ_NET => $self->param('opt_pairwise_blastz'), LASTZ_NET => $self->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat'), LASTZ_PATCH => $self->param('opt_pairwise_lpatch'), LASTZ_RAW => $self->param('opt_pairwise_raw') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $join_genes      = $hub->param('opt_join_genes_bottom') eq 'on';
+  my $join_genes      = $self->param('opt_join_genes_bottom') eq 'on';
 
   my $compara_db      = $join_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
@@ -64,7 +66,7 @@ sub content {
   my @images;
 
   foreach (@$slices) {
-    my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
+    my $image_config   = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_$i", species => $_->{'species'}});
     my $highlight_gene = $hub->param('g' . ($i - 1));
     
     $image_config->set_parameters({
@@ -106,7 +108,7 @@ sub content {
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
         if ($join_alignments || $join_genes) {
-          $primary_image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
+          $primary_image_config = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_1_$i", species => $primary_species});
           
           $primary_image_config->set_parameters({
             container_width => $primary_slice->length,
@@ -144,7 +146,7 @@ sub content {
   my $image = $self->new_image(\@images);
   $image->{'export_params'} = [];
   foreach ($hub->param) {
-    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if ($_ =~ /^(r|s)\d/ || $_ =~ /^opt/);
+    push @{$image->{'export_params'}}, [$_, $self->param($_)] if ($_ =~ /^(r|s)\d/ || $_ =~ /^opt/);
   } 
   
   return if $self->_export_image($image);

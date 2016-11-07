@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,72 +20,64 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Variation::FlankingSequence;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Constants;
+use parent qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
-use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
-
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  $self->SUPER::init;
-  
-  $self->set_defaults({
-    flank_size      => 400,
-    snp_display     => 'on',
-    select_sequence => 'both',
+
+  $self->SUPER::init_cacheable(@_);
+
+  $self->set_default_options({
+    'flank_size'      => 400,
+    'snp_display'     => 'on',
+    'select_sequence' => 'both',
   });
 
-  $self->title = 'Flanking sequence';
+  $self->title('Flanking sequence');
 }
 
 sub field_order {
-  my $self = shift;
-  my @order = qw(flank_size select_sequence);
-  push @order, $self->variation_fields;
-  return @order;
+  ## Abstract method implementation
+  return qw(flank_size select_sequence), $_[0]->variation_fields;
 }
 
 sub form_fields {
-  my $self            = shift;
-  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
-  my $fields = {};
-  
-  $markup_options->{'flank_size'} = {
-    type   => 'DropDown',
-    select =>, 'select',
-    label  => 'Length of reference flanking sequence to display',
-    name   => 'flank_size',
-    values => [
-      { value => '100',  caption => '100bp'  },
-      { value => '200',  caption => '200bp'  },
-      { value => '300',  caption => '300bp'  },
-      { value => '400',  caption => '400bp'  },
-      { value => '500',  caption => '500bp'  },
-      { value => '1000', caption => '1000bp' },
-    ]
-  };  
+  ## Abstract method implementation
+  my $self    = shift;
+  my $markup  = $self->get_markup_options({'snp_display_label' => 'Show variants in flanking sequence', 'no_snp_link' => 1});
+  my $fields  = {};
 
-  $markup_options->{'select_sequence'} = {
-    type   => 'DropDown', 
-    select => 'select',
-    name   => 'select_sequence',
-    label  => 'Sequence selection',
-    values => [
-      { value => 'both', caption => "Upstream and downstream sequences"   },
-      { value => 'up',   caption => "Upstream sequence only (5')"   },
-      { value => 'down', caption => "Downstream sequence only (3')" },
+  $markup->{'flank_size'} = {
+    'type'    => 'DropDown',
+    'select'  =>, 'select',
+    'label'   => 'Length of reference flanking sequence to display',
+    'name'    => 'flank_size',
+    'values'  => [
+      { 'value' => '100',  'caption' => '100bp'  },
+      { 'value' => '200',  'caption' => '200bp'  },
+      { 'value' => '300',  'caption' => '300bp'  },
+      { 'value' => '400',  'caption' => '400bp'  },
+      { 'value' => '500',  'caption' => '500bp'  },
+      { 'value' => '1000', 'caption' => '1000bp' },
     ]
   };
-  
-  $self->add_variation_options($markup_options, 
-                                {'label' => 'Show variants in flanking sequence',
-                                 'snp_link' => 'no'}
-                              ); 
-  
-  foreach ($self->field_order) {
-    $fields->{$_} = $markup_options->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+
+  $markup->{'select_sequence'} = {
+    'type'    => 'DropDown',
+    'select'  => 'select',
+    'name'    => 'select_sequence',
+    'label'   => 'Sequence selection',
+    'values'  => [
+      { 'value' => 'both', 'caption' => "Upstream and downstream sequences" },
+      { 'value' => 'up',   'caption' => "Upstream sequence only (5')"       },
+      { 'value' => 'down', 'caption' => "Downstream sequence only (3')"     },
+    ]
+  };
+
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

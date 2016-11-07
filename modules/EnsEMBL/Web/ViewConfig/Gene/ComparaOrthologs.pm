@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,34 +20,43 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::ComparaOrthologs;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
-  my $self = shift;
-  $self->set_defaults({ map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species });
-  
-  $self->code  = 'Gene::HomologAlignment';
-  $self->title = 'Homologs';
+sub _new {
+  ## @override
+  my $self = shift->SUPER::_new(@_);
+
+  $self->{'code'} = 'Gene::HomologAlignment';
+
+  return $self;
 }
 
-sub form {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->add_fieldset('Selected species');
-  
-  my $species_defs = $self->species_defs;
-  my %species      = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
-  
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $_,
-      name  => 'species_' . lc $species{$_},
-      value => 'yes',
-      raw   => 1
-    });
+  foreach ($self->species_defs->valid_species) {
+    # complicated if statement which basically show/hide strain or main species depending on the view you are (when you are on a main species, do not show strain species and when you are on a strain species or strain view from main species, show only strain species)          
+    next if(($self->hub->action !~ /Strain_/ && $self->hub->species_defs->get_config($_,'IS_STRAIN_OF')) || (($self->hub->action =~ /Strain_/  || $self->hub->species_defs->IS_STRAIN_OF) && !$self->hub->species_defs->get_config($_, 'RELATED_TAXON')));
+    $self->set_default_options({ 'species_' . lc($_) => 'yes' });    
   }
+
+  $self->title('Homologs');
+}
+
+sub field_order { } # no default fields
+sub form_fields { } # no default fields
+
+sub init_form {
+  ## @override
+  ## Fields are added according to species
+  my $self  = shift;
+  my $form  = $self->SUPER::init_form(@_);
+
+  $form->add_species_fieldset;
+
+  return $form;
 }
 
 1;

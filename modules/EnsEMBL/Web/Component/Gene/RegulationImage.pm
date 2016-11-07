@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +44,7 @@ sub content {
 
   ## Turn gene display on....
   my $key = $wuc->get_track_key( 'transcript', $object );
-  $wuc->modify_configs( [$key], {qw(display transcript)} );
+  $wuc->modify_configs( [$key], {qw(display collapsed_label)} );
 
   $wuc->{'data_by_cell_line'} = $self->new_object('Slice', $extended_slice, $object->__data)->get_cell_line_data($wuc) if keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
 

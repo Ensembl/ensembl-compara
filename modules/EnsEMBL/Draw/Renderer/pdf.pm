@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -274,7 +275,31 @@ sub render_Arc {
 }
 
 sub render_Circle {
-#  die "Not implemented in pdf yet!";
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $colour         = $glyph->{'colour'};
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+	my($x,$y) = $self->XY($cx, $cy);
+
+  $canvas->{'g'}->ellipse(
+    $self->{sf} * ($x - $glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($y + $glyph->{'pixelheight'}/2),
+    $self->{sf} * $glyph->{'pixelwidth'}/2,
+    $self->{sf} * $glyph->{'pixelheight'}/2,
+  );
+
+  if ($glyph->{'filled'}) {
+    $self->fillcolor($colour);
+    $self->fill;
+  }
+  else {
+    $self->{'canvas'}{'g'}->linewidth(1.0);
+    $self->strokecolor($colour);
+    $self->stroke;
+    $self->{'canvas'}{'g'}->linewidth(0.5);
+  }
 }
 
 sub render_Ellipse {

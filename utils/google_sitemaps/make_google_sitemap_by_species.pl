@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,10 +58,10 @@ BEGIN {
   unshift @INC, "$Bin/../..";
   require SiteDefs;
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
-  require EnsEMBL::Web::Hub;  
+  require EnsEMBL::Web::DBHub;
 }
 
-my $hub = new EnsEMBL::Web::Hub;
+my $hub = EnsEMBL::Web::DBHub->new;
 my $sd = $hub->species_defs;
 my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
 my $ouput_dir = 'sitemaps'; 

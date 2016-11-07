@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +24,8 @@ package EnsEMBL::Web::Tools::FailOver::SNPedia;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::File::Utils::URL qw(file_exists);
+
 use base qw(EnsEMBL::Web::Tools::FailOver);
 
 sub new {
@@ -44,18 +47,8 @@ sub attempt {
   my ($self,$endpoint,$payload,$tryhard) = @_;
   my $check_url = $self->{'check_url'};
   return 0 unless defined $check_url;
-  my $ua = LWP::UserAgent->new;
-  my $proxy = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
-  $ua->proxy('http',$proxy) if $proxy;
-  $ua->timeout(2);
-  my $response = $ua->get($check_url);
 
-  if($response->is_success) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
+  return file_exists($check_url);
 }
 
 1;

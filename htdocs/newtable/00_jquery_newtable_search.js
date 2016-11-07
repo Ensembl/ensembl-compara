@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  */
 
 (function($) {
-  $.fn.new_table_search = function(config,data,widgets) {
+  $.fn.new_table_search = function(config,data,widgets,callw) {
 
     function identity_fn(x) { return x; }
 
@@ -25,9 +26,7 @@
         var cc = colconf[key];
         if(cleaner[key]===undefined) { continue; }
         if(!row[i]) { continue; }
-        if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-          continue;
-        }
+        if(callw('unshowable',cc)._any) { continue; }
         var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
         if(val===undefined) { return false; }
@@ -70,12 +69,18 @@
         $box.on("propertychange change keyup paste input",function() {
           change_event($table);
         });
+        /* Default value? */
+        var value = $table.data('view').search;
+        if(value) { $box.val(value); }
+        $table.on('view-updated',function() {
+          var value = $table.data('view').search;
+          if(value) { $box.val(value); }
+        });
       },
       position: data.position,
       pipe: function() {
         return [
           function(need,got) {
-            if(!got) { return null; }
             var orig_search = need.search;
             var search = orig_search;
             var search_was_defined = need.hasOwnProperty('search');

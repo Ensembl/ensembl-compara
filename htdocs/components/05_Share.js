@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +77,10 @@ Ensembl.Share = {
             panel.elLk.share.find('.fbutton').addClass('bottom-margin');
             panel.elLk.shareSpinner.before('<p class="copy">Copy this link:</p><input class="url" type="text" value="' + json.url + '" />');
           }
-        } else if (json.share) {
+        } else if (json.confirmShare) {
           panel.elLk.shareSpinner.before(
             '<p>This ' + panel.shareOptions.type + ' is displaying some custom tracks.<br />Select which of these you\'d like to share:</p><ul>' +
-            $.map(json.share, function (f) { return '<li><label>' + f[0] + '</label><input class="file" type="checkbox" value="' + f[1] + '" /></li>'; }).join('') +
+            $.map(json.confirmShare, function (f) { return '<li><label>' + f[0] + '</label><input class="file" type="checkbox" value="' + f[1] + '" /></li>'; }).join('') +
             '</ul><input type="button" class="go fbutton" value="Accept" /><input type="button" class="cancel fbutton" value="Cancel" />'
           );
           

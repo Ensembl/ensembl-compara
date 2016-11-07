@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +70,7 @@ div.config_wrapper div.config ul.config_menu li.r .strand           { background
 div.config_wrapper div.config ul.config_menu li.external:before     { background: url(/i/track-external.gif) no-repeat; width: 48px; height: 100%; margin: 2px 6px 0 24px; float: left; content: '\0000a0'; }
 div.config_wrapper div.config ul.config_menu li.user:before         { background-image: url(/i/track-user.gif); }
 div.config_wrapper div.config ul.popup_menu                         { background: [[TINT_BG]]; position: absolute; display: none; margin: 10px 0 0 10px; padding: 0; z-index: 3000; border: 1px solid; cursor: pointer; }
-div.config_wrapper div.config ul.popup_menu li                      { background-color: [[TINT_BG]]!important; color: #000; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; }
+div.config_wrapper div.config ul.popup_menu li                      { background-color: [[TINT_BG]]!important; color: #000; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; white-space: nowrap; }
 div.config_wrapper div.config ul.popup_menu li.header               { background: [[BUTTON_BG]]!important; color: #FFF; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[PAGE_TEXT]]; height: auto; line-height: 16px; }
 div.config_wrapper div.config ul.popup_menu li.header img           { position: absolute; top: -10px; right: -10px; border: 0; padding: 0; height: 20px; width: 20px; margin: 0; }
 div.config_wrapper div.config ul.popup_menu li.subset img           { height: 16px; width: 16px; padding: 3px; margin-right: 3px; }
@@ -138,6 +139,8 @@ div.config_wrapper .config_menu .interaction_label       { background-image: url
 div.config_wrapper .config_menu .line                    { background-image: url(/i/render/line.gif); }
 div.config_wrapper .config_menu .misalign                { background-image: url(/i/render/misalign.gif); }
 div.config_wrapper .config_menu .off                     { background-image: url(/i/render/off.gif); }
+div.config_wrapper .config_menu .pvalue                  { background-image: url(/i/render/pvalue.png); }
+div.config_wrapper .config_menu .beta                    { background-image: url(/i/render/beta.png); }
 div.config_wrapper .config_menu .stack                   { background-image: url(/i/render/stack.gif); }
 div.config_wrapper .config_menu .transcript_label_coding { background-image: url(/i/render/transcript_label_coding.gif); }
 div.config_wrapper .config_menu .transcript_gencode_basic{  background-image: url(/i/render/transcript_gencode_basic.gif); }

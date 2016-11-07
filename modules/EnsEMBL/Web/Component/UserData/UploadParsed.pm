@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,33 +55,21 @@ sub content_ajax {
   my $code    = $hub->param('code');
   return unless $type && $code;
 
-  my ($data, $record);
+  my $data;
   if ($hub->user) {
-    my $plural = $type.'s';
-    foreach ($hub->user->$plural) {
-      if ($_->code eq $code) {
-        $record = $_;
-        $data   = {
-                  'code'    => $_->code,
-                  'name'    => $_->name,
-                  'format'  => $_->format,
-                  'species' => $_->species,
-                  };
-        last;
-      }
-    }
+    $data = $hub->user->get_record_data({type => $type, code => $code});
   }
 
   ## Can't find a user record - check session
-  unless ($data) {
-    $data = $hub->session->get_data(type => $type, code => $code);
+  unless (keys %{$data || {}}) {
+    $data = $hub->session->get_record_data({type => $type, code => $code});
   }
 
-  return unless $data;
-  
+  return unless keys %$data;
+
   my $format  = $data->{'format'};
   my $html;
-  
+
   unless ($format eq 'TRACKHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) { ## Don't give parsing message if this is a hub and we can't show it!
     if ($type eq 'url') {
       $html .= '<p>We cannot parse remote files to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
@@ -99,25 +88,27 @@ sub content_ajax {
         
         if ($nearest) {
 
-          if ($hub->user) {
-            $record->nearest($nearest);
-            $record->description($description) if $description;
-            $record->save;
-          }
-          else {
-            $data->{'nearest'}      = $nearest;
-            $data->{'description'}  = $description if $description;
-            $session->set_data(%$data);
-          }
+          $data->{'nearest'}      = $nearest;
+          $data->{'description'}  = $description if $description;
+          $session->set_record_data($data);
    
           if ($hub->param('count')) { 
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
           }
 
+          my $contigviewbottom = join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'});
+          my $location_view = ($hub->referer->{ENSEMBL_TYPE} eq 'Location' && $hub->referer->{ENSEMBL_ACTION} eq 'View') ? 1 : 0;
+
           $html .= sprintf('
-                <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
+                <br>
+                <p><strong>Go to%s:</strong></p>
+                <ul>
+                  <li>%s region with data: <a href="%s;contigviewbottom=%s">%s</a></li>
+                  <li>Current region: <a href="%s;contigviewbottom=%s">%s</a></li>
+                </ul>
                 <p class="space-below">or</p>',
-                $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
+                !$location_view ? ' Location view' : '',
+                $hub->referer->{'params'}{'r'} ? 'Nearest' : 'First',
                 $hub->url({
                   species  => $data->{'species'},
                   type     => 'Location',
@@ -126,8 +117,18 @@ sub content_ajax {
                   r        => $nearest,
                   __clear => 1
                 }),
-                join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
-                $nearest
+                $contigviewbottom,
+                $nearest,
+                $hub->url({
+                  species  => $data->{'species'},
+                  type     => 'Location',
+                  action   => 'View',
+                  function => undef,
+                  r        => $hub->param('r'),
+                  __clear => 1
+                }),
+                $contigviewbottom,
+                $hub->param('r')
               );
         }
         elsif ($count) {
@@ -159,7 +160,7 @@ sub content_ajax {
     }
   }
 
-  $session->configure_user_data($type, $data);
+  $hub->configure_user_data($type, $data);
 
   $html .= '<p>Close this window to return to current page</p>';
 

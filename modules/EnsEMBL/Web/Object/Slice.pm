@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +22,6 @@ package EnsEMBL::Web::Object::Slice;
 ### NAME: EnsEMBL::Web::Object::Slice
 ### Wrapper around a Bio::EnsEMBL::Slice object  
 
-### PLUGGABLE: Yes, using Proxy::Object 
-
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 
@@ -34,7 +33,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
-use EnsEMBL::Web::Tree;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -115,7 +114,7 @@ sub getFakeMungedVariationFeatures {
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }
   my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);
@@ -260,7 +259,7 @@ sub filter_munged_snps {
     if ($needsource) {
       @filtered_snps =
  # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        grep { $sources->{$_->[2]->source->name} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
         @filtered_snps;
     }
  
@@ -344,7 +343,7 @@ sub get_cell_line_data_closure {
 }
 
 sub get_cell_line_data {
-  my ($self, $image_config) = @_;
+  my ($self, $image_config, $filter) = @_;
   
   # First work out which tracks have been turned on in image_config
   my %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
@@ -354,88 +353,88 @@ sub get_cell_line_data {
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
     my $ic_cell_line = $cell_line;
-    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+    clean_id($ic_cell_line);
 
     foreach my $set (@sets) {
-      my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+      if ($image_config) {
+        my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
 
-      next unless $node;
+        next unless $node;
       
-      my $display = $node->get('display');
+        my $display = $node->get('display');
       
-      $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
+        $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
       
-      foreach ($node->nodes) {
-        my $feature_name = $_->data->{'name'};
+        foreach ($node->nodes) {
+          my $feature_name = $_->data->{'name'};
         
-        $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
-        $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
+          $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
+          $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
+        }
+      }
+      else {
+        $data->{$cell_line}{$set} = {};
       }
     }
   }
-  
-  return $self->get_data($data);
+ 
+  return $self->get_data($data, $filter);
 }
 
 sub get_data {
-  my ($self, $data) = @_;
-  my $hub                  = $self->hub;
-  my $dataset_adaptor      = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-  my $associated_data_only = $hub->param('opt_associated_data_only') eq 'yes' ? 1 : undef; # If on regulation page do we show all data or just used to build reg feature?
-  my $reg_object           = $associated_data_only ? $hub->core_object('regulation') : undef;
-  my $count                = 0;
-  my @result_sets;
+  my ($self, $data, $filter) = @_;
+  return $data unless scalar keys %$data;
+  $filter ||= {};
+  my $is_image = keys %$filter ? 0 : 1;
+
+  my $hub                 = $self->hub;
+  my $dataset_adaptor     = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
+  my $featureset_adaptor  = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
+  my $annotated_fsets     = $featureset_adaptor->fetch_all_by_feature_class('annotated');
+
+  my $count               = 0;
   my %feature_sets_on;
 
-  return $data unless scalar keys %$data;
+  foreach my $afs (@{$annotated_fsets||[]}) {
 
-  foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_feature_class('regulatory')}) {
-    my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);
-    my $cell_line     = $regf_data_set->cell_type->name;
+    my $ftype       = $afs->feature_type;
+    my $ftype_name  = $ftype->name;
 
+    my $epigenome   = $afs->epigenome;
+    my $cell_line   = $epigenome->display_label;
+    next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
+    next if $filter->{'cells_only'};
     next unless exists $data->{$cell_line};
 
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $feature_type_name     = $reg_attr_fset->feature_type->name;
-      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
-      my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-
-      $count++;
-      my $key = "$unique_feature_set_id:$count";
+    $count++;
+    my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
       
-      next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
-      
-      my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
+    my $set = $ftype->evidence_type_label =~ /DNAse|TFBS/ ? 'core' : 'non_core';
+    next if ($is_image && !$data->{$cell_line}{$set}{'on'}{$ftype_name});
 
-      $feature_sets_on{$feature_type_name} = 1;
-     
-      if(grep { $display_style eq $_ }
-          qw(compact tiling_feature signal_feature)) {
-        my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
-        
-        if ($reg_object && scalar @block_features) {
-          my $obj = $reg_object->Obj;
-          @block_features = grep $obj->has_attribute($_->dbID, 'annotated'), @block_features
-        }
-       
-        $data->{$cell_line}{$focus_flag}{'block_features'}{$key} = \@block_features if scalar @block_features;
-      }
-      if(grep { $display_style eq $_ }
-            qw(tiling tiling_feature signal signal_feature)) {
-        my $reg_attr_dset = $dataset_adaptor->fetch_by_product_FeatureSet($reg_attr_fset); 
-        my $sset          = $reg_attr_dset->get_displayable_supporting_sets('result');
-        
-        if (scalar @$sset) {
-          # There should only be one
-          throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-        
-          my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
-          my $path = $sset->[0]->dbfile_path;
-          $path = "$file_path/$path" unless $path =~ /^$file_path/;
-          push @result_sets, $sset->[0];
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = $path;
-        }
-      }
+    my $display_style = $is_image ? $data->{$cell_line}{$set}{'renderer'} : '';
+
+    $feature_sets_on{$ftype_name} = 1;
+    
+    if ($filter->{'block_features'}
+        || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
+      my $key = $unique_id.':'.$count;
+      my $afa = $hub->get_adaptor('get_AnnotatedFeatureAdaptor', 'funcgen');
+      my $block_features = $afa->fetch_all_by_Slice_FeatureSets($self->Obj, [$afs]);
+
+      $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features if scalar @$block_features;
+    }
+
+    ## Get path to bigWig file
+    if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
+      my $dataset = $dataset_adaptor->fetch_by_product_FeatureSet($afs);
+      my $ssets   = $dataset->get_supporting_sets('result');
+      next if scalar @$ssets != 1;
+      my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
+      $file_path .= $ssets->[0]->dbfile_path;
+      my $key = $unique_id.':'.$ssets->[0]->dbID;
+
+      $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
     }
   }
 

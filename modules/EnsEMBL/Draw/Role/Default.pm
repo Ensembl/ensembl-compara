@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,6 +72,11 @@ sub draw_features {
     my $metadata  = $_->{'metadata'} || {};
     next unless scalar @{$features||[]};
     $skipped = 0;
+
+    ## Do any required post-processing of features
+    if ($self->can('post_process')) {
+      $features = $self->post_process($features);
+    }
 
     ## Set alternative colour (used by some styles)
     if ($metadata->{'color'} && !$metadata->{'altColor'}) {

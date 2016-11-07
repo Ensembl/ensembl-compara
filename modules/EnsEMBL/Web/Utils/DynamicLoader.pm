@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +22,7 @@ package EnsEMBL::Web::Utils::DynamicLoader;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(ModuleNotFound DynamicLoaderException);
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(dynamic_require dynamic_require_fallback dynamic_use dynamic_use_fallback);
@@ -38,7 +39,14 @@ sub dynamic_require {
 
   if (my $error_message = _dynamic_require($classname)) {
     return 0 if $no_exception;
-    throw exception('DynamicLoaderException', $error_message);
+
+    my $display_message = "Module '$classname' could not be loaded: $error_message";
+
+    if ($error_message =~ /^Can't locate/) {
+      throw ModuleNotFound($display_message);
+    } else {
+      throw DynamicLoaderException($display_message);
+    }
   }
 
   return $classname;
@@ -85,7 +93,7 @@ sub _dynamic_require {
   unless (exists $_INC{$classname}) { # if not already tried
     eval "require $classname";
     if ($@) {
-      $_INC{$classname} = "Module '$classname' could not be loaded: $@";
+      $_INC{$classname} = $@;
       $@ = undef; # otherwise this will get printed to logs afterwards if we warn an empty string
     } else {
       $_INC{$classname} = 0;

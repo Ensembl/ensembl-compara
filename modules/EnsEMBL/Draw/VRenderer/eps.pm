@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,7 +93,7 @@ warn "DEPRECATED MODULE - will be removed in release 81.";
     $self->{'colours'}{$id}=1;
   }
 
-  my $bgcolour = $config->bgcolor();
+  my $bgcolour = $config->get_parameter('bgcolor');
   $canvas .= qq(_$bgcolour 0 0 $im_width $im_height r fi\n);
   $self->{'colours'}{$bgcolour}=1;
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +36,14 @@ sub content {
   if ($click_data) {
     @features = @{EnsEMBL::Draw::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
+  }
+  elsif (!$svf) {
+    my $adaptor   = $hub->database($db)->get_StructuralVariationAdaptor;
+    my @sv_names  = split ',', $hub->param('sv');
+
+    for (0..$#sv_names) {
+      push @features, @{$adaptor->fetch_by_name($sv_names[$_])->get_all_StructuralVariationFeatures};
+    }
   }
   
   @features = $hub->database($db)->get_StructuralVariationFeatureAdaptor->fetch_by_dbID($svf) if $svf && !scalar @features;
@@ -107,7 +116,7 @@ sub feature_content {
   @allele_types = sort @allele_types;
   
   $self->caption($class eq 'CNV_PROBE' ? 'CNV probe: ' : 'Structural variation: ' . $sv_id);
-  
+
   # Display link to SV page only for the non private data
   if ($hub->param('vdb') eq 'variation') {
     $self->add_entry({
@@ -122,12 +131,12 @@ sub feature_content {
   else {
     my $source = $feature->source_name;
     if ($source eq 'LOVD') {
-      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
-      # my $tmp_end = ($start>$end) ? $start+1 : $end;
-      # my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
-      # $self->add_entry({
-      #   label_html => $external_url
-      # });
+      # http://varcache.lovd.nl/redirect/hg38.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+       my $tmp_end = ($start>$end) ? $start+1 : $end;
+       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
+       $self->add_entry({
+         label_html => $external_url
+       });
     }
     elsif ($source =~ /DECIPHER/i) {
       my $sv_samples = $variation->get_all_StructuralVariationSamples; 

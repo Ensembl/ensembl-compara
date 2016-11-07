@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,22 +23,27 @@ use strict;
 
 use URI::Escape qw(uri_escape);
 
+use JSON qw(from_json);
+
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my $function = $hub->function;
-  
-  $hub->get_viewconfig('Export', $function, 'cache')->update_from_input;
-  $hub->session->store;  
-  
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $function  = $hub->function;
+  my %settings  = map { my $val = $hub->param($_); ($_ => $val) } $hub->param;
+
+  $settings{'view_config'} = from_json($settings{'view_config'} || "{}");
+
+  $hub->get_viewconfig({component => 'Export', type => $function, cache => 1})->update_from_input(\%settings);
+  $hub->session->store;
+
   my $url    = $hub->url({ action => 'Formats', function => $function });
   my $params = $self->get_formats;
-  
+
   $self->ajax_redirect($url, $params);
 }
 

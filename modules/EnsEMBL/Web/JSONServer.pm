@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,10 +38,11 @@ sub object {
   my $self    = shift;
   my $builder = $self->controller->builder;
   my $type    = $self->object_type;
-  if (!$builder->all_objects->{$type}) {
+
+  if (!$builder->object($type)) {
     $builder->create_objects($type);
   }
-  return $builder->all_objects->{$type};
+  return $builder->object($type) ||  $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
 }
 
 sub object_type :Abstract {

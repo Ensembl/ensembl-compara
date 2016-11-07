@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +60,7 @@ span.sf  { background-color: [[SEQ_FRAMESHIFT]] }       /* Frameshift */
 span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
 
 pre.text_sequence   { margin: 0 0 16px; float: left; }
+.text_sequence_mobile { word-wrap: break-word; font-family: monospace; font-size: 14px; }
 pre.exon_sequence   { margin: 0; float: none; }
 pre a.seq_info      { text-decoration: none; color: [[PAGE_TEXT]]; }
 div.sequence_key    { margin: 0 0 16px; }

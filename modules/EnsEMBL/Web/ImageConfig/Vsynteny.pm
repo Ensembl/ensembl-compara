@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,14 +20,19 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::Vsynteny;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig::Vertical);
+use parent qw(EnsEMBL::Web::ImageConfig::Vertical);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    toolbars        => {'top' => 1, 'bottom' => 1},
+    storable        => 0,
+    bottom_toolbar  => 1,
     label           => 'above',
     band_labels     => 'off',
     image_height    => 500,
@@ -43,7 +49,11 @@ sub init {
 
   $self->create_menus('synteny');
   $self->add_tracks('synteny', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
-  $self->storable = 0;
+}
+
+sub init_non_cacheable {
+  ## @override
+  ## Nothing non cacheable
 }
 
 1;

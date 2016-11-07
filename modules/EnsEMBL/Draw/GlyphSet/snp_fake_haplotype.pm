@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,7 +85,7 @@ sub _init {
   my @res = $self->get_text_width( 0, 'X|X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my $w  = $res[2];
   my $th = $res[3];
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $pix_per_bp   = $Config->transform_object->scalex;
 
   my $track_height = $th + 4;
 

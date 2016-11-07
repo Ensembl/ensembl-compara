@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +45,7 @@ sub content {
   
   my $hub         = $self->hub;
   my $function    = $hub->function;  
-  my $adaptor     = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  my $adaptor     = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   my %clusters    = $hub->species_defs->multiX('ONTOLOGIES');
   my $terms_found = 0;
   my $label       = 'Ontology';
@@ -129,11 +130,11 @@ sub process_data {
       my $url        = $hub->url({
         species     => $species,
         type        => 'Gene',
-        action      => $type eq 'translation' ? 'Ontology' : 'Summary',
+        action      => $type eq 'translation' ? 'Ontologies/'.$hub->function : 'Summary',
         $param_type => $gene,
         __clear     => 1,
       });
-      
+
       $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     

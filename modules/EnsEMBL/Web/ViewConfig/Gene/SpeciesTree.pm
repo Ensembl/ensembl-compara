@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,39 +20,48 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::SpeciesTree;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
-  my $self = shift;
-  
-  my $defaults = {
-    collapsability => 'gene',
-  };
-     
-  $self->set_defaults($defaults);
-  $self->add_image_config('speciestreeview');
-  $self->code  = join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};  
-  $self->title = 'Species Tree';
+sub _new {
+  ## @override
+  ## TODO - get rid of referer
+  my $self = shift->SUPER::_new(@_);
+
+  $self->{'function'} = $self->hub->referer->{'ENSEMBL_FUNCTION'};
+  $self->{'code'}     = join '::', grep $_, 'Gene::SpeciesTree', $self->{'function'};
+
+  return $self;
 }
 
-sub form {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->add_fieldset('Display options');
-  
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'collapsability',
-    label  => 'Viewing options for tree image',
-    values => [ 
-      { value => 'all',  caption => 'View full species tree' },
-      { value => 'part', caption => 'View minimal species tree' }
+
+  $self->set_default_options({ 'collapsability' => 'gene' });
+  $self->image_config_type('speciestreeview');
+  $self->title('Species Tree');
+}
+
+sub field_order {
+  ## Abstract method implementation
+  return 'collapsability';
+}
+
+sub form_fields {
+  ## Abstract method implementation
+  return { 'collapsability' => {
+    'type'    => 'DropDown',
+    'name'    => 'collapsability',
+    'label'   => 'Viewing options for tree image',
+    'values'  => [
+      { 'value' => 'all',  'caption' => 'View full species tree'    },
+      { 'value' => 'part', 'caption' => 'View minimal species tree' }
     ]
-  });    
+  }};
 }
 
 1;

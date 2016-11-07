@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,17 +40,20 @@ sub content {
   return unless $hub->param('pop1');
   
   my $slice = $object->slice;
-  
-  if ($slice->length >= 100000) {
+ 
+  my $limit = 75; #100
+ 
+  if ($slice->length >= ($limit * 1000)) {
     return $self->_error(
       'Region too large', 
-      '<p>The region you have selected is too large to display linkage data, a maximum region of 100kb is allowed. Please change the region using the navigation controls above.<p>'
+      "<p>The region you have selected is too large to display linkage data; a maximum region of ${limit}kb is allowed. Please change the region using the navigation controls above.<p>"
     );
   }
   
   ## set path information for LD calculations
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH    = $hub->species_defs->ENSEMBL_TMP_TMP;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE     = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::VCF_BINARY_FILE = $hub->species_defs->ENSEMBL_LD_VCF_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH        = $hub->species_defs->ENSEMBL_TMP_TMP;
   
   my $image_config = $hub->get_imageconfig('ldview');
   my $parameters   = { 
@@ -64,7 +68,7 @@ sub content {
   
   # Do images for each population
   foreach my $pop_name (sort { $a cmp $b } map { $object->pop_name_from_id($_) || () } @{$object->current_pop_id}) {
-    my $population_image_config = $hub->get_imageconfig('ldview', $pop_name);
+    my $population_image_config = $hub->get_imageconfig({type => 'ldview', cache_code => $pop_name});
     $population_image_config->init_population($parameters, $pop_name);
     push @$containers_and_configs, $slice, $population_image_config;
   }

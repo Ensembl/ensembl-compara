@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,10 +42,8 @@ sub features {
   }; 
   my $probe_feature_adaptor = $fg_db->get_ProbeFeatureAdaptor();
 
-  $self->timer_push( 'Preped'); 
   my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
   my $T = $probe_feature_adaptor->fetch_all_by_Slice_array_vendor( $slice, $array_name, $vendor_name );
-  $self->timer_push( 'Retrieved oligos', undef, 'fetch' );
   return ( $self->my_config('array') => [$T] );
 }
 

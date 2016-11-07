@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::Query::Generic::GlyphSet;
 
 use strict;
@@ -247,6 +266,56 @@ sub fixup_slice {
   }
 }
 
+sub fixup_regulatory_feature {
+  my ($self,$key,$sk,$tk) = @_;
+
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    $data->{$key} = $data->{$key}->stable_id if $data->{$key};
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    if($data->{$key}) {
+      $data->{$key} = $ad->regulatoryfeature_by_stableid($data->{$sk},$data->{$tk},$data->{$key});
+    }
+  }
+}
+
+sub fixup_epigenome {
+  my ($self,$key,$sk,$tk) = @_;
+
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    $data->{$key} = $data->{$key}->name if $data->{$key};
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    if($data->{$key}) {
+      $data->{$key} = $ad->epigenome_by_stableid($data->{$sk},$data->{$tk},$data->{$key});
+    }
+  }
+}
+
+sub fixup_loci {
+  my ($self,$key,$fk) = @_;
+
+  if($self->phase eq 'post_generate') {
+    my $args = $self->args;
+    my $data = $self->data;
+    my $offset = $args->{$fk}->slice->start-1;
+    foreach my $d (@$data) {
+      $d->{$key} += $offset;
+    }
+  } elsif($self->phase eq 'post_process') {
+    my $args = $self->args;
+    my $data = $self->data;
+    my $offset = $args->{$fk}->slice->start-1;
+    foreach my $d (@$data) {
+      $d->{$key} -= $offset;
+    }
+  }
+}
+
 sub _split_slice {
   my ($self,$slice,$rsize) = @_;
 
@@ -281,7 +350,7 @@ sub fixup_config {
 }
 
 sub loop_genome {
-  my ($self,$args) = @_;
+  my ($self,$args,$subpart) = @_;
 
   my $top = $self->source('Adaptors')->
               slice_adaptor($args->{'species'})->fetch_all('toplevel');
@@ -291,8 +360,28 @@ sub loop_genome {
     $out{'slice'} = $c->name;
     $out{'__name'} = $c->name;
     push @out,\%out;
-  } 
+  }
+  $self->get_defaults($args->{'species'},'core','MultiBottom');
   return \@out;
+}
+
+sub get_defaults {
+  my ($self,$species,$type,$view,$tables) = @_;
+
+  my $sd = $self->source('SpeciesDefs');
+  $tables ||= $sd->all_tables($species,$type);
+  my %out;
+  foreach my $table (@$tables) {
+    my $ti = $sd->table_info($species,$type,$table);
+    next unless $ti->{'analyses'};
+    foreach my $an (keys %{$ti->{'analyses'}}) {
+      next unless $ti->{'analyses'}{$an}{'disp'};
+      my $def = $ti->{'analyses'}{$an}{'web'}{'default'};
+      next unless $def and $def->{$view};
+      $out{$an} = $def->{$view};
+    }
+  }
+  return \%out;
 }
 
 1;

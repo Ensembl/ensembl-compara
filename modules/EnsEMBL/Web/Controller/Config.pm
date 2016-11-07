@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,67 +19,68 @@ limitations under the License.
 
 package EnsEMBL::Web::Controller::Config;
 
-### Prints the configuration modal dialog.
+### Prints the configuration modal dialog and accepts config change request when the same dialog form us submitted
 
 use strict;
+use warnings;
 
-use Encode qw(decode_utf8);
+use JSON;
 
-use base qw(EnsEMBL::Web::Controller::Modal);
+use EnsEMBL::Web::Exceptions qw(WebException);
 
-sub page_type { return 'Configurator'; }
+use parent qw(EnsEMBL::Web::Controller::Modal);
 
 sub init {
-  my $self = shift;
-  
-  $self->SUPER::init unless $self->update_configuration; # config has updated and redirect is occurring
+  ## @override
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $r     = $self->r;
+
+  # submit request returns just json - no need to re-send the entire form HTML again
+  if ($hub->param('submit')) {
+    my $updated = $self->update_configuration;
+
+    $r->content_type('text/plain');
+    $r->print(to_json($updated ? {'updated' => 1} : {}));
+
+  } else {
+
+    # id reset request, reset before showing the configs form
+    $self->update_configuration if $hub->param('reset');
+
+    # render the form
+    $self->SUPER::init(@_);
+  }
+}
+
+sub page_type {
+  ## @override
+  return 'Configurator';
+}
+
+sub _create_objects {
+  ## @override
 }
 
 sub update_configuration {
-  ### Checks to see if the page's view config or image config has been changed
-  ### If it has, returns 1 to force a redirect to the updated page
-  
-  my $self = shift;
-  my $hub  = $self->hub;
-  
-  return unless $hub->param('submit') || $hub->param('reset');
-  
-  my $r            = $self->r;
-  my $session      = $hub->session;
-  my $view_config  = $hub->get_viewconfig($hub->action);
-  my $code         = $view_config->code;
-  my $image_config = $view_config->image_config;  
-  my $updated      = $view_config->update_from_input;
-  my $existing_config;
-  
-  $session->store;
-  
-  if ($hub->param('save_as')) {
-    my %params = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
-    $params{'record_type_ids'} = $params{'record_type'} eq 'group' ? [ $hub->param('group') ] : $params{'record_type'} eq 'session' ? $session->create_session_id : $hub->user ? $hub->user->id : undef;
-    $existing_config = $self->save_config($code, $image_config, %params);
+  ## Handles the request to make changes to the configs (when the config modal form is submitted)
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $view_config = $hub->get_viewconfig($hub->action);
+  my $updated;
+
+  throw WebException('ViewConfig missing') unless $view_config;
+
+  my $params = { map { my $val = $hub->param($_); ($_ => $val) } $hub->param }; # update_from_input doesn't expect multiple values for a single param
+
+  $params->{$_} = from_json($params->{$_} || '{}') for qw(image_config view_config);
+
+  if ($view_config->update_from_input($params)) {
+    $hub->store_records_if_needed;
+    $updated = 1;
   }
-  
-  if ($hub->param('submit')) {
-    if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
-      my $json = {};
-      
-      if ($updated || $hub->param('reload')) {
-        $json = $updated if ref $updated eq 'HASH';
-        $json->{'updated'}  = 1;
-      }
-      
-      $json->{'existingConfig'} = $existing_config if $existing_config;
-      
-      $r->content_type('text/plain');
-      
-      print $self->jsonify($json || {});
-    } else {
-      $hub->redirect; # refreshes the page
-    }
-    
-    return 1;
-  }
+
+  return $updated;
 }
 
 1;

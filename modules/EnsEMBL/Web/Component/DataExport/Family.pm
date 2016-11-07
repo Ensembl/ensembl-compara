@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +32,7 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $view_config  = $self->view_config;
 
   my $settings = {'Hidden' => ['align','fm']};
 

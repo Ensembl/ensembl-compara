@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,17 +20,13 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::GeneTree::ComparaTree;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Gene::ComparaTree);
+use parent qw(EnsEMBL::Web::ViewConfig::Gene::ComparaTree);
 
-sub form { 
-  my $self = shift;
-  
-  $self->SUPER::form;
-  
-  my $fieldset = $self->get_fieldset(0);
-  
-  $_->remove for grep scalar @{$_->get_elements_by_name('collapsability')}, @{$fieldset->fields};
+sub field_order {
+  ## @override
+  return grep { $_ ne 'collapsability' } $_[0]->field_order;
 }
 
 1;

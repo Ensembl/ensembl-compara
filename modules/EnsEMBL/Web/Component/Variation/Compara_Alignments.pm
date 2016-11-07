@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,69 +23,65 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 
+use EnsEMBL::Web::TextSequence::View::VariationComparaAlignments;
+
 sub get_sequence_data {
   my ($self, $slices, $config) = @_;
-  my (@sequence, @markup, @temp_slices);
+  my (@sequence, @markup);
   
   $self->set_variation_filter($config);
-  
+
+  $slices->[0]{'main_slice'} = 1;
+
+  # XXX
+  $_->{'use_aux'} = 1 for @$slices;
+
+  $self->view->set_annotations($config);
+  $self->view->prepare_ropes($config,$slices);
+
+  my @out; 
+  my @seqs  = @{$self->view->root_sequences};
   foreach my $sl (@$slices) {
+    my $seq2 = shift @seqs;
     my $mk            = {};
     my $slice         = $sl->{'slice'};
-    my $name          = $sl->{'name'};
     my $seq           = uc $slice->seq(1);
     my @variation_seq = map ' ', 1..length $seq;
     
     $config->{'length'} ||= $slice->length;
     
-    $self->set_alignments($config, $sl, $mk, $seq) if $config->{'align'};
     $self->set_variations($config, $sl, $mk, \@variation_seq);
     
-    foreach (@{$config->{'focus_position'} || []}) {
-      $mk->{'variants'}{$_}{'align'} = 1;
-      delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
-    }
-    
-    if (!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
-      push @temp_slices, {};
+    my $seq3 = $seq2->relation('aux');
+    if(!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
       push @markup,      {};
-      push @sequence,    [ map {{ letter => $_ }} @variation_seq ];
+      $seq3->legacy([ map {{ letter => $_ }} @variation_seq ]);
+      push @out,$seq3;
+    } elsif($seq3) {
+      $seq3->hidden(1);
     }
     
-    push @temp_slices, $sl;
     push @markup,      $mk;
-    push @sequence,    [ map {{ letter => $_ }} split '', $seq ];
-    
-    $config->{'ref_slice_seq'} ||= $sequence[-1];
+
+    $config->{'ref_slice_seq'} ||= [split '',$seq];
+    $self->view->annotate($config,$sl,$mk,$seq,$seq2);
+    push @out,$seq2;
+ 
   }
   
   $config->{'display_width'} = $config->{'length'};
-  $config->{'slices'}        = \@temp_slices;
   
-  return (\@sequence, \@markup);
+  return (\@out, \@markup);
 }
 
-sub markup_conservation {
-  my $self = shift;
-  my ($sequence, $config) = @_;
-  
-  my $difference = 0;
-  
-  for my $i (0..scalar(@$sequence)-1) {
-    next unless keys %{$config->{'slices'}->[$i]};
-    next if $config->{'slices'}->[$i]->{'no_alignment'};
-    
-    my $seq = $sequence->[$i];
-    
-    for (0..$config->{'length'}-1) {
-      next if $seq->[$_]->{'letter'} eq $config->{'ref_slice_seq'}->[$_]->{'letter'};
-      
-      $seq->[$_]->{'class'} .= 'dif ';
-      $difference = 1;
-    }
+sub set_focus_variant {
+  my ($self,$config,$sl,$mk,$seq) = @_;
+
+  foreach (@{$config->{'focus_position'} || []}) {
+    $mk->{'variants'}{$_}{'align'} = 1;
+    # XXX naughty messing with other's markup
+    delete $mk->{'variants'}{$_}{'href'} unless $config->{'ref_slice_seq'}; # delete link on the focus variation on the primary species, since we're already looking at it
   }
-  
-  $config->{'key'}->{'difference'} = 1 if $difference;
 }
 
 sub content {  
@@ -93,9 +90,6 @@ sub content {
   my $object       = $self->object;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
-  my $width        = 20;
-  my %mappings     = %{$object->variation_feature_mapping}; 
-  my $v            = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$hub->param('vf')};
   
   return $self->_info('Unable to draw SNP neighbourhood', $object->not_unique_location) if $object->not_unique_location;
   
@@ -109,19 +103,15 @@ sub content {
     ambiguity            => 0,
   };
   my $html;
-  
-  my $seq_type   = $v->{'type'}; 
-  my $seq_region = $v->{'Chr'};
-  my $start      = $v->{'start'} - ($width/2);  
-  my $end        = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
-  my $slice      = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-  my $align      = $hub->param('align');
-  my $alert      = $self->check_for_align_problems({
-                                'align'   => $align,
-                                'species' => $species,
-                                'slice'   => $slice,
-                                'ignore'  => 'ancestral_sequences',
-                                });
+ 
+  my $slice = $self->_get_slice($object);   
+  my $align = $hub->param('align');
+  my $alert = $self->check_for_align_problems({
+                                                'align'   => $align,
+                                                'species' => $species,
+                                                'slice'   => $slice,
+                                                'ignore'  => 'ancestral_sequences',
+                                              });
   
   $html .= $alert if $alert;
  
@@ -181,18 +171,54 @@ sub content {
     );
   } 
 
-  $html .= $self->content_sub_slice($slice, \@aligned_slices, $defaults);
-
+  my ($seq,$config) = $self->_get_sequence($slice,\@aligned_slices,$defaults);
+  $html .= $self->build_sequence($seq,$config,1);
   $html .= $self->_info('Notes', $info) if $info;
 
   return $html;
 }
 
+sub _get_slice {
+  my ($self, $object) = @_;
+  my $hub = $self->hub;
+  
+  my %mappings    = %{$object->variation_feature_mapping}; 
+  my $v           = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$self->param('vf')};
+
+  my $width       = 20;
+  my $seq_type    = $v->{'type'}; 
+  my $seq_region  = $v->{'Chr'};
+  my $start       = $v->{'start'} - ($width/2);  
+  my $end         = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
+
+  return $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+}
+
 sub get_export_data {
-## Get data for export
+## Get data for export in most formats
   my $self = shift;
   ## Fetch explicitly, as we're probably coming from a DataExport URL
   return $self->hub->core_object('Location');
+}
+
+sub initialize_export_new {
+  ## Get data for RTF export
+  my $self = shift;
+
+  ## Get the correct slice
+  my $object = $self->hub->core_object('Variation');
+  my $slice  = $self->_get_slice($object);
+
+  return $self->SUPER::initialize_export_new($slice);
+}
+
+
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::VariationComparaAlignments->new(
+    $self->hub
+  );
 }
 
 1;

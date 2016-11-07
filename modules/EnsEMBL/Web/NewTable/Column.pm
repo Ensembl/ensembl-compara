@@ -1,6 +1,7 @@
 =head1 sLICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,6 +38,7 @@ sub new {
     key => $key,
     type => $type,
     label => $key,
+    decoration => {},
     conf => {
       width => "100u",
       primary => 0,
@@ -74,9 +76,14 @@ sub null { return 0; }
 sub key { return $_[0]->{'key'}; }
 
 sub decorate {
-  my ($self,$type) = @_;
+  my ($self,$type,$prio) = @_;
 
-  $self->{'conf'}{'decorate'} = $type;
+  $prio ||= 50;
+  $self->{'decoration'}{$type} = $prio;
+  $self->{'conf'}{'decorate'} = [
+    sort { $self->{'decoration'}{$a} <=> $self->{'decoration'}{$b} }
+    keys %{$self->{'decoration'}}
+  ];
 }
 
 sub set_type {
@@ -84,6 +91,13 @@ sub set_type {
 
   $self->{'conf'}{'type'} ||= {};
   $self->{'conf'}{'type'}{$key} = $value;
+}
+
+sub set_heading {
+  my ($self,$key,$value) = @_;
+
+  $self->{'conf'}{'heading'} ||= {};
+  $self->{'conf'}{'heading'}{$key} = $value;
 }
 
 sub set_helptip {

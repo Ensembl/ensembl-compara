@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,33 +20,46 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::ViewTop;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->set_defaults({
-    show_panel => 'yes',
-    flanking   => 0,
+
+  $self->set_default_options({
+    'show_panel'  => 'yes',
+    'flanking'    => 0,
   });
-  
-  $self->add_image_config('contigviewtop');
-  $self->title = 'Overview Image';
+
+  $self->image_config_type('contigviewtop');
+  $self->title('Overview Image');
 }
 
-sub form {
+sub field_order {
+  ## Abstract method implementation
+  return qw(flanking show_panel);
+}
+
+sub form_fields {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->add_form_element({
-    type     => 'NonNegInt', 
-    required => 'yes',
-    label    => 'Flanking region',
-    name     => 'flanking',
-    notes    => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
-   });
-   
-  $self->add_form_element({ type => 'YesNo', name => 'show_panel', select => 'select', label => 'Show panel' });
+
+  return {
+    'flanking'    => {
+      'type'        => 'NonNegInt',
+      'required'    => 'yes',
+      'label'       => 'Flanking region',
+      'name'        => 'flanking',
+      'notes'       => sprintf('Ignored if 0 or region is larger than %sMb', $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1),
+    },
+    'show_panel'  => {
+      'type'        => 'YesNo',
+      'name'        => 'show_panel',
+      'label'       => 'Show panel'
+    }
+  };
 }
 
 1;

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,6 +57,7 @@ use List::Util qw(min max);
 
 use EnsEMBL::Draw::Utils::Bump qw(bump);
 use EnsEMBL::Draw::Utils::Text;
+use EnsEMBL::Draw::Utils::ColourMap;
 use EnsEMBL::Draw::Utils::LocalCache;
 
 use EnsEMBL::Draw::Glyph::Arc;
@@ -93,9 +95,12 @@ sub new {
 
   my $cache = $config->{'image_config'}->hub->cache || new EnsEMBL::Draw::Utils::LocalCache;
 
+  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+
   my $self = {
               'data'    => $data,
               'cache'   => $cache,
+              'colourmap' => $colourmap,
               'glyphs'  => [],
               %$config
               };
@@ -113,6 +118,11 @@ sub new {
                             }; 
 
   return $self;
+}
+
+sub colourmap {
+  my $self = shift;
+  return $self->{'colourmap'};
 }
 
 sub create_glyphs {
@@ -252,9 +262,7 @@ sub get_text_info {
   my ($self, $text) = @_;
   $text ||= 'X';
   my @info = EnsEMBL::Draw::Utils::Text::get_text_info($self->cache, $self->image_config, 0, $text, '', font => $self->{'font_name'}, ptsize => $self->{'font_size'});
-  ## Pad the text on the right side by 10 pixels so it doesn't 
-  ## run into the next one and compromise readability
-  return {'width' => $info[2] + 10, 'height' => $info[3]};
+  return {'width' => $info[2], 'height' => $info[3]};
 }
 
 sub draw_subtitle {
@@ -290,10 +298,18 @@ sub draw_subtitle {
 sub make_readable {
 ### Darken pale text colours so that they can be read on a pale background
   my ($self, $colour) = @_;
-  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+  my $colourmap = $self->colourmap;
   my @rgb = $colourmap->rgb_by_name($colour);
   @rgb = $colourmap->hivis(2, @rgb);
   return join(',', @rgb);
+}
+
+sub make_contrasting {
+### Make text white on dark colours, black on lighter ones
+  my ($self, $colour) = @_;
+  my $colourmap = $self->colourmap;
+  my $contrast = $colourmap->contrast($colour);
+  return $contrast;
 }
 
 sub centre_text {

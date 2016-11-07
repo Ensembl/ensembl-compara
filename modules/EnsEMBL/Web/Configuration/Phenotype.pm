@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,15 +41,15 @@ sub tree_cache_key {
 sub populate_tree {
   my $self = shift;
   my $hub  = $self->hub;
-  
-  $self->create_node('All', 'List of Phenotypes', [qw(all_phenotypes EnsEMBL::Web::Component::Phenotype::All )] );
-
   my $avail = ($self->object && $self->object->phenotype_id) ? 1 : 0;
   my $title = $self->object ? $self->object->long_caption : '';
   $self->create_node('Locations', "Locations on genome",
-    [qw(locations EnsEMBL::Web::Component::Phenotype::Locations )],
+    [qw( locations EnsEMBL::Web::Component::Phenotype::Locations
+         ontolterm EnsEMBL::Web::Component::Phenotype::OntologyTerm 
+       )],
     { 'availability' => $avail, 'concise' => $title },
   );
+
 
 }
 

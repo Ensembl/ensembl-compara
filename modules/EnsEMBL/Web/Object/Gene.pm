@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Object::Gene;
 
 ### NAME: EnsEMBL::Web::Object::Gene
 ### Wrapper around a Bio::EnsEMBL::Gene object
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
@@ -48,7 +47,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
-
+    
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
@@ -58,11 +57,14 @@ sub availability {
           type => $self->get_db,
           gene => $self->Obj,
         })->[0];
+
       $availability->{'has_gxa'} = $self->gxa_check;
       $availability->{'logged_in'} = $self->user;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
+    $availability->{'not_strain'} = $self->species_defs->IS_STRAIN_OF ? 0 : 1; #availability to check if species is a strain or not, it has to be this way round (used in Gene Configuration to disable main compara view on strain species)
+ 
     $self->{'_availability'} = $availability;
   }
 
@@ -80,7 +82,10 @@ sub counts {
   my ($self, $member, $pan_member) = @_;
 
   return {} unless $self->Obj->isa('Bio::EnsEMBL::Gene');
-  return $self->availability->{'counts'};
+  if(!$self->{'_availability'}) { # Check before calling subroutine to avoid recursive calls in overriding sub in EG.
+    return $self->availability->{'counts'};
+  }
+  return $self->{'_availability'}->{'counts'};
 }
 
 =head2 get_go_list
@@ -101,7 +106,7 @@ sub get_go_list {
   my $dbname_to_match = shift || join '|', @$ontologies;
   my $ancestor=shift;
   my $gene = $self->gene;
-  my $goadaptor = $self->hub->get_databases('go')->{'go'};
+  my $goadaptor = $self->hub->database('go');
 
   my @goxrefs = @{$gene->get_all_DBLinks};
   my @my_transcripts= @{$self->Obj->get_all_Transcripts};
@@ -330,7 +335,7 @@ sub count_go {
     if($go_name) {
       $go_name =~ s/,$//g;
 
-      my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+      my $goadaptor = $self->hub->database('go')->dbc;
 
       my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
 
@@ -812,8 +817,8 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id) = @$homology;
-        
+        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ) = @$homology;
+
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
         
@@ -833,7 +838,12 @@ sub get_homology_matches {
           gene_tree_node_id   => $gene_tree_node_id,
           dbID                => $homology_id,
           order               => $order,
-          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $homologue->$_, qw(dnafrag_start dnafrag_end dnafrag_strand))
+          goc_score           => $goc_score,
+          goc_threshold       => $goc_threshold,
+          wgac                => $wgac,
+          wga_threshold       => $wga_threshold,
+          highconfidence      => $highconfidence,
+          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $self->thousandify($homologue->$_), qw(dnafrag_start dnafrag_end dnafrag_strand))
         };
         
         $order++;
@@ -860,8 +870,6 @@ sub get_homologies {
   my %homologues;
 
   return unless $database;
-  
-  $self->timer_push('starting to fetch', 6);
 
   my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
@@ -869,9 +877,6 @@ sub get_homologies {
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
-  #warn ">>> @$homologies_array";
-
-  $self->timer_push('fetched', 6);
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
@@ -890,9 +895,7 @@ sub get_homologies {
       $node = $node->children->[0];
     }
   }
-  
-  $self->timer_push('classification', 6);
-  
+
   my $ok_homologies = [];
   foreach my $homology (@$homologies_array) {
     push @$ok_homologies, $homology if $homology->description =~ /$homology_description/;
@@ -909,7 +912,7 @@ sub fetch_homology_species_hash {
   my %homologues;
 
   foreach my $homology (@$homologies) {
-    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
+    my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold);
     
     foreach my $member (@{$homology->get_all_Members}) {
       my $gene_member = $member->gene_member;
@@ -921,18 +924,21 @@ sub fetch_homology_species_hash {
         $genome_db_name = $member->genome_db->name;
         $target_member  = $gene_member;
         $dnds_ratio     = $homology->dnds_ratio; 
-      }
+        $goc_score      = $homology->goc_score;
+        $goc_threshold  = $homology->method_link_species_set->get_value_for_tag('goc_quality_threshold');        
+        $wgac           = $homology->wga_coverage;
+        $wga_threshold  = $homology->method_link_species_set->get_value_for_tag('wga_quality_threshold');
+        $highconfidence = $homology->is_high_confidence;
+      }      
     }
-    
+
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
   }
-  
-  $self->timer_push('homologies hacked', 6);
-  
-  @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;
-  
+
+  @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
+
   return \%homologues;
 }
 
@@ -977,13 +983,14 @@ sub get_compara_Member {
 }
 
 sub get_GeneTree {
-  my $self       = shift;
-  my $compara_db = shift || 'compara';
-  my $whole_tree = shift;
-  my $clusterset_id = $self->hub->param('clusterset_id') || 'default';
-  my $cache_key  = sprintf('_protein_tree_%s_%s', $compara_db, $clusterset_id);
+  my $self        = shift;
+  my $compara_db  = shift || 'compara';
+  my $whole_tree  = shift;
+  my $strain_tree = shift;
+  my $clusterset_id = $strain_tree || $self->hub->param('clusterset_id') || 'default';
+  my $cache_key  = sprintf('_protein_tree_%s_%s_%s', $compara_db, $clusterset_id, $strain_tree);
 
-  if (!$self->{$cache_key}) {
+  if (!$self->{$cache_key}) {  
     my $member  = $self->get_compara_Member($compara_db)           || return;
     my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
     my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id)->[0];
@@ -1032,8 +1039,9 @@ sub get_gene_slices {
 
 # Function to call compara API to get the species Tree
 sub get_SpeciesTree {
-  my $self       = shift;  
-  my $compara_db = shift || 'compara';
+  my $self        = shift;  
+  my $compara_db  = shift || 'compara';
+  my $strain_tree = shift;
 
   my $hub            = $self->hub;  
   my $collapsability = $hub->param('collapsability');
@@ -1045,7 +1053,7 @@ sub get_SpeciesTree {
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();
     
     my $member   = $self->get_compara_Member($compara_db)           || return;        
-    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
+    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member, $strain_tree) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree) || return;		   
     
     $cafeTree->multifurcate_tree();
@@ -1203,7 +1211,7 @@ sub store_TransformedSNPS {
 
   if ($have_so_terms) {
     # tva needs an ontology term adaptor to fetch by SO term
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   
     $method .= '_SO_terms';
 
@@ -1218,7 +1226,7 @@ sub store_TransformedSNPS {
 
   my $tvs;
   if (!$have_so_terms && $included_so ) {
-    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
     $tvs = $tva->fetch_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$included_so,1) ;
   } else {
     $tvs = $tva->$method($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,0, $included_so) ;
@@ -1270,7 +1278,7 @@ sub store_ConsequenceCounts {
     $included_so = $self->get_included_so_terms;
   }
 
-  $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  $tva->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
   my %conscounts;
 
@@ -1557,7 +1565,7 @@ sub get_extended_reg_region_slice {
 
   ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
   ## extends more than this use the values returned from this
-  my $extension = 250*1000;
+  my $extension = 1000*1000;
   my $start = $self->Obj->start;
   my $end   = $self->Obj->end;
 
@@ -1577,7 +1585,12 @@ sub get_extended_reg_region_slice {
     $new_end = $gr_end - $end;
   }
 
+  if($start-$new_start<1) { $new_start = $start-1; }
+  if($end+$new_end>$self->Obj->seq_region_length) {
+    $new_end = $self->Obj->seq_region_length-$end;
+  }
   my $extended_slice =  $object_slice->expand($new_start, $new_end);
+
   return $extended_slice;
 }
 
@@ -1673,7 +1686,7 @@ sub get_rnaseq_tracks {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^(Export|Sequence|TranscriptComparison|Compara_Alignments|Compara_Tree|SpeciesTree|Compara_Ortholog|Compara_Paralog|Family)$/ ? 0 : $self->availability->{'gene'};
+  return $self->action =~ /^(Export|Sequence|TranscriptComparison|Compara_Alignments|Strain_Compara_Tree|Compara_Tree|SpeciesTree|Compara_Ortholog|Strain_Compara_Ortholog|Compara_Paralog|Strain_Compara_Paralog|Family)$/ ? 0 : $self->availability->{'gene'};
 }
 
 1;

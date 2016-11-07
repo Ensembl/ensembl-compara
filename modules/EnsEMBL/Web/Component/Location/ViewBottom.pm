@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,13 +90,12 @@ sub _add_object_track {
       my $default = $node->data->{'display'};
       
       if ($current eq 'off' && $default eq 'off') {
-        my $flag = $session->get_data(type => 'auto_add', code => lc $key);
+        my $flag = $session->get_record_data({type => 'auto_add', code => lc $key})->{'flag'};
         
-        if (!$flag->{'data'}) { # haven't done this before
+        if (!$flag) { # haven't done this before
           $image_config->update_track_renderer(lc $key, 'transcript_label');
-          $session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
+          $session->set_record_data({type => 'auto_add' , code => lc $key, data => 1}); 
           $session->store;
-          
           $extra = $self->_info('Information', '<p>The track containing the highlighted gene has been added to your display.</p>');
         }
       }

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,30 +23,36 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
 use base qw(EnsEMBL::Web::ViewConfig);
 
 # TODO: Support other track hub dimensions as filters?
+# TODO - fix json key since it's moved to ViewConfigForm now
 
-sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
+sub _new {
+  ## @override
+  ## TODO - re-bless existing view config instead of copying keys
+  my $self  = shift->SUPER::_new(@_);
+  my $hub   = $self->hub;
+  my $code  = $hub->type.'::'.$hub->function;
 
-sub init {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $code        = join '::', $hub->type, $hub->function;
   my $module_name = "EnsEMBL::Web::ViewConfig::$code";
-  my $view_config = $module_name->new($self->type, $self->component, $hub) if $self->dynamic_use($module_name);
-  
-  $self->{$_}                = $view_config->{$_} for keys %$view_config;
-  $self->code                = $code;
-  $self->matrix_image_config = $hub->get_imageconfig($self->image_config);
-  $self->image_config        = $self->has_images = undef unless $hub->param('submit') || $hub->param('reset');
+  my $view_config = $module_name->new($hub, $hub->type, $self->component) if dynamic_require($module_name, 1);
+
+  $self->{$_}     = $view_config->{$_} for keys %$view_config;
+  $self->{'code'} = $code;
+
+  return $self;
 }
 
-sub form {
+sub init_cacheable {};
+
+sub init_form {
   my $self          = shift;
   my $hub           = $self->hub;
-  my $img_url       = $self->img_url;
-  my $image_config  = $self->matrix_image_config;
+  my $img_url       = $self->species_defs->img_url;
+  my $image_config  = $hub->get_imageconfig($self->image_config_type);
   my $user_settings = $image_config->get_user_settings;
   my $tree          = $image_config->tree;
   my $menu          = $hub->param('menu');
@@ -54,14 +61,16 @@ sub form {
   my @matrix_rows   = sort { $a->{'group_order'} <=> $b->{'group_order'} || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
-  
+
+  $self->{'json'} = $self->form->{'json'} ||= {};
+
   foreach (@{$menu_node->child_nodes}) {
     my $x = $_->data->{'label_x'};
-    
+
     if ($x) {
       my $renderers     = $_->data->{'renderers'};
       my %renderer_hash = @$renderers;
-      
+
       push @columns, {
         name      => $_->id,
         display   => $_->get('display'),
@@ -69,23 +78,23 @@ sub form {
         renderers => $renderers,
         column_order => $_->data->{'column_order'},
       };
-      
+
       $cells{$x} = { map { $_->data->{'name'} => $_ } $_->nodes };
       $renderer_counts{$_}++ for keys %renderer_hash;
     } else {
       push @{$features{$_->data->{'option_key'}}}, $_;
     }
   }
-  
+
   @columns = sort { $a->{'column_order'} <=> $b->{'column_order'} } @columns;
 
   %renderer_counts = reverse %renderer_counts;
-  
+
   my $width = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
   my (@rows, $rows_html, @headers_html, $last_group, %gaps, $track_style_header, $k, $v, $renderer_html);
-  
+
   $self->{'panel_type'} = 'ConfigMatrix';
-  
+
   my $select_all_col = qq(
     <div class="select_all_column floating_popup">
       Select features for %s<br />
@@ -94,7 +103,7 @@ sub form {
       <div><input type="radio" name="%s" class="none">None</input></div>
     </div>
   );
-  
+
   my $select_all_row = qq(
     <div class="select_all_row_wrapper">
       <div class="select_all_row floating_popup">
@@ -104,22 +113,22 @@ sub form {
       </div>
     </div>
   );
-  
+
   my @renderer_template = (
     qq(<ul class="popup_menu"><li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>),
     qq(<li class="%s">%s</li>),
     '</ul>'
   );
-  
+
   if (scalar keys %renderer_counts != 1) {
     $renderer_html .= sprintf $renderer_template[1], @$_ for [ 'off', 'Off' ], [ 'all_on', 'On' ];
   } else {
-    my $renderers      = $self->deepcopy($columns[0]{'renderers'});
-       $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @$renderers, 0, 2;
+    my @renderers      = @{$columns[0]{'renderers'}};
+       $renderer_html .= sprintf $renderer_template[1], $k, $v, while ($k, $v) = splice @renderers, 0, 2;
   }
-  
+
   $headers_html[1] = "$renderer_template[0]$renderer_html$renderer_template[2]";
-  
+
   foreach (@matrix_rows) {
     my $id       = $_->{'id'};
     my $y        = $_->{'y'} || $id;
@@ -128,51 +137,51 @@ sub form {
     (my $class   = lc $group) =~ s/[^\w-]/_/g;
     my @row      = ("$y_class $class", { tag => 'th', class => 'first', html => sprintf("$y$select_all_row", $y) });
     my $exists;
-    
+
     foreach (@columns) {
       my $x            = $_->{'x'};
       (my $x_class     = lc $x) =~ s/[^\w-]/_/g;
       my $cell         = { tag => 'td' };
       my $col_renderer = $_->{'display'};
-      
+
       if (exists $cells{$x}{$id}) {
         my $node          = $cells{$x}{$id};
         my $node_id       = $node->id;
         my $cell_features = exists $features{$node_id} && ref $features{$node_id} eq 'ARRAY' ? $features{$node_id} : undef;
-        
+
         $cell->{'title'}  = "$x:$y";
         $cell->{'class'}  = "opt $x_class $y_class";
         $cell->{'class'} .= ' on'      if $node->get('display')    eq 'on';
         $cell->{'class'} .= ' default' if $node->data->{'display'} eq 'on';
-        
+
         if ($cell_features) {
           # TODO: renderers. Currently assuming that subtrack renderers match parent renderers.
-          my @renderers = @{$self->deepcopy($_->{'renderers'})};
+          my @renderers = @{$_->{'renderers'}};
           my $total     = scalar @$cell_features;
           my $on        = 0;
           my ($subtracks, $select_all);
-          
+
           unshift @renderers, 'default', 'Default';
-          
+
           foreach my $feature (@$cell_features) {
             my $feature_id = $feature->id;
             my $display    = $user_settings->{$feature_id}{'display'} || 'default';
             my $renderer   = $user_settings->{$feature_id}{'display'} || $col_renderer;
             my $li_class   = $renderer eq 'off' ? '' : ' on';
             my $popup_menu;
-            
+
             for (my $i = 0; $i < scalar @renderers; $i += 2) {
               $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq(<div class="$col_renderer"></div>) : '') . $renderers[$i + 1];
             }
-            
+
             $subtracks .= sprintf(
               qq(<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]<div class="$col_renderer"></div></li>),
               $feature->data->{'source_name'}
             );
-            
+
             $on++ if $renderer ne 'off';
             $select_all ||= "$renderer_template[0]$popup_menu$renderer_template[2]";
-            
+
             $self->{'json'}{'defaultRenderers'}{"$x:$id"}++ if $display eq 'default';
             push @{$self->{'json'}{'trackIds'}}, $feature_id;
             push @{$self->{'json'}{'tracks'}}, {
@@ -180,7 +189,7 @@ sub form {
               renderer => $display,
             };
           }
-          
+
           $self->{'json'}{'defaultRenderers'}{"$x:$id"} ||= 0;
           $self->{'json'}{'cellTracks'}{"$x:$id"}         = sprintf('
             <div class="subtracks info_popup">
@@ -191,44 +200,44 @@ sub form {
             $total > 1 ? qq(<div class="select_all config_menu">$select_all<strong class="menu_option">Enable/disable all $cell->{'title'}</strong></div>) : '',
             $subtracks
           );
-          
+
           $cell->{'html'}   = qq(<p><span class="off">0</span><span class="on">$on</span>$total</p>$cell->{'html'});
           $cell->{'class'} .= ' st';
-          
+
           $track_style_header ||= 'Default';
         } else {
           $cell->{'html'} = '<p></p>';
         }
-        
+
         $exists = 1;
       }
-      
+
       push @row, $cell;
     }
-    
+
     next unless $exists;
-    
+
     if ($group ne $last_group) {
       # No versions of IE are capable of correctly drawing borders when there is an interaction between colspan on a cell and border-collapse, so we must draw empty cells instead of using colspan
       push @rows, [ 'gap' . ($group ? '' : ' empty'), { tag => 'th', html => $group, class => 'first' }, map { tag => 'th' }, @columns ];
       $gaps{$#rows} = 1;
       $last_group   = $group;
-      
+
       push @filters, [ $class, $group ];
     }
-    
+
     push @rows, \@row;
   }
-  
+
   my $cols           = scalar @{$rows[0]} - 1;
   my $tutorial_col   = $cols > 5 ? 6 : $cols;
   my ($tutorial_row) = sort { $a <=> $b } 5, scalar(grep { $_->[0] !~ /gap/ } @rows) - 1;
   my $wrapper_class  = scalar @rows - $tutorial_row < 3 ? ' short' : '';
-  
+
   $tutorial_row++ for grep { $_ < $tutorial_row } sort { $a <=> $b } keys %gaps;
-  
+
   $track_style_header ||= 'Track';
-  
+
   my %help      = $hub->species_defs->multiX('ENSEMBL_HELP');
   my %tutorials = (
     row       => 'Hover to select or deselect cells in the row',
@@ -239,21 +248,21 @@ sub form {
     all_track => 'Click to change all track styles at once',
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
-  
+
   $tutorials{$_} = qq(<b class="tutorial $_"><span class="close"></span>$tutorials{$_}</b>) for keys %tutorials;
-  
+
   if ($tutorial_row < 3) {
     my $margin = $tutorial_row == 0 ? 70 : 60;
     $tutorials{'row'} =~ s/row">/row" style="margin-top:${margin}px">/;
   }
-  
+
   $rows[$tutorial_row][1]{'html'}                  = "$tutorials{'row'}$rows[$tutorial_row][1]{'html'}";
   $rows[$tutorial_row - 1][$tutorial_col]{'html'} .= $tutorials{'drag'};
-  
+
   foreach (@rows) {
     my $row_class = shift @$_;
     my $row_html;
-    
+
     foreach (@$_) {
       $row_html .= sprintf('<%s%s%s>%s</%s>',
         $_->{'tag'},
@@ -263,12 +272,12 @@ sub form {
         $_->{'tag'}
       );
     }
-    
+
     $rows_html .= qq(<tr class="$row_class">$row_html</tr>);
   }
-  
+
   my $c = 0;
-  
+
   foreach (@columns) {
     my $x           = $_->{'x'};
     (my $x_class    = lc $x) =~ s/[^\w-]/_/g;
@@ -279,15 +288,15 @@ sub form {
     my $popup_menu  = $renderer_template[0];
        $popup_menu .= sprintf $renderer_template[1], $k, $v while ($k, $v) = splice @{$_->{'renderers'}}, 0, 2;
        $popup_menu .= $renderer_template[2];
-    
+
     $headers_html[0] .= sprintf(
       qq(<th class="$x_class"><p>$x</p>$select_all_col%s</th>),
       $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'col'} : ''
     );
-    
+
     # FIXME: don't double up class with id
     $headers_html[2] .= sprintf qq(<th id="$name" class="$x_class $name $display track%s">%s</th>), $display eq 'off' ? '' : ' on', $c++ ? '' : $tutorials{'style'};
-    
+
     push @{$self->{'json'}{'trackIds'}}, $name;
     push @{$self->{'json'}{'tracks'}}, {
       id              => $name,
@@ -297,13 +306,13 @@ sub form {
       popup           => $popup_menu,
     };
   }
-  
+
   my $html = sprintf(qq(
     <h1>$matrix_data->{'section'}</h1>
     <div class="toggle_tutorial"></div>
     $tutorials{'video'}
     <div class="header_wrapper">
-      <h2>%s</h2> 
+      <h2>%s</h2>
       %s
     </div>
     <div class="filter_wrapper">
@@ -354,8 +363,8 @@ sub form {
     $matrix_data->{'axes'} ? qq(<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>) : '',
     @headers_html
   );
-  
-  $self->get_form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });
+
+  $self->form->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });
 }
 
 1;

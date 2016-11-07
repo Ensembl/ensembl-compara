@@ -1,5 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +35,12 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
     // initialise details links
     this.el.find('a.details-link').on('click', function(e) {
       panel.renderHaplotypePanel(this.rel);
+    });
+
+    // init zmenus
+    this.el.find('a.zmenu').on('click', function(e) {
+      e.preventDefault();
+      Ensembl.EventManager.trigger('makeZMenu', $(this).text().replace(/\W/g, '_'), { event: e, area: { link: $(this) }});
     });
 
     // if we've landed on a page with a hash in the URL
@@ -224,43 +231,65 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
 
       var rows = [];
 
-      for(var j in popStruct[superPop]) {
-        var subPop = popStruct[superPop][j];
+      // has sub pops?
+      if(popStruct[superPop].length > 0) {
 
-        var row = '';
+        for(var j in popStruct[superPop]) {
+          var subPop = popStruct[superPop][j];
 
-        var count = haplotype.population_counts.hasOwnProperty(subPop)      ? haplotype.population_counts[subPop]      : 0;
-        var freq  = haplotype.population_frequencies.hasOwnProperty(subPop) ? haplotype.population_frequencies[subPop] : 0;
+          var row = '';
 
-        if(!count) continue;
+          var count = haplotype.population_counts.hasOwnProperty(subPop)      ? haplotype.population_counts[subPop]      : 0;
+          var freq  = haplotype.population_frequencies.hasOwnProperty(subPop) ? haplotype.population_frequencies[subPop] : 0;
 
-        if(first) {
-          first = 0;
+          if(!count) continue;
+
+          if(first) {
+            first = 0;
+          }
+          else {
+            row = row + '<tr>';
+          }
+
+          row = row + '<td><span class="ht _ht" title="' + descs[subPop] + '">' + panel.shortName(subPop) + '</span></td><td>';
+
+          // render frequency as a block
+          row = row + '<nobr><div style="width:' + (maxWidth + 100) + 'px; float: left;">';
+          row = row + '<div style="width:' + Math.round(freq * maxWidth) + 'px; background-color: #8b9bc1; float: left; display: inline; height: 1em;"></div>';
+          row = row + '<div style="width:' + Math.round((1 - freq) * maxWidth) + 'px; background-color:lightgrey; float: left; display: inline; height: 1em;"></div>';
+          row = row + '&nbsp;' + freq.toPrecision(3) + ' (' + count + ')</div></nobr>';
+
+          row = row + '</td></tr>';
+
+          rows.push(row);
+        }
+
+        html = html + '<tr><td rowspan="' + (rows.length > 0 ? rows.length : 1) + '"><b><span class="ht _ht" title="' + descs[superPop] + '">' + panel.shortName(superPop) + '</span></b></td>';
+
+        if(rows.length) {
+          html = html + rows.join("");
         }
         else {
-          row = row + '<tr>';
+          html = html + '<td colspan="2"><span style="font-style: italic; color: grey;">No data</span></td></tr>';
         }
+      }
 
-        row = row + '<td><span class="ht _ht" title="' + descs[subPop] + '">' + panel.shortName(subPop) + '</span></td><td>';
+      // data for this pop only
+      else {
+        html = html + '<tr>';
+        html = html + '<td>N/A</td>';
+        html = html + '<td><span class="ht _ht" title="' + descs[superPop] + '">' + panel.shortName(superPop) + '</span></td>';
+
+        var count = haplotype.population_counts.hasOwnProperty(superPop)      ? haplotype.population_counts[superPop]      : 0;
+        var freq  = haplotype.population_frequencies.hasOwnProperty(superPop) ? haplotype.population_frequencies[superPop] : 0;
 
         // render frequency as a block
-        row = row + '<nobr><div style="width:' + (maxWidth + 100) + 'px; float: left;">';
-        row = row + '<div style="width:' + Math.round(freq * maxWidth) + 'px; background-color: #8b9bc1; float: left; display: inline; height: 1em;"></div>';
-        row = row + '<div style="width:' + Math.round((1 - freq) * maxWidth) + 'px; background-color:lightgrey; float: left; display: inline; height: 1em;"></div>';
-        row = row + '&nbsp;' + freq.toPrecision(3) + ' (' + count + ')</div></nobr>';
+        html = html + '<td><nobr><div style="width:' + (maxWidth + 100) + 'px; float: left;">';
+        html = html + '<div style="width:' + Math.round(freq * maxWidth) + 'px; background-color: #8b9bc1; float: left; display: inline; height: 1em;"></div>';
+        html = html + '<div style="width:' + Math.round((1 - freq) * maxWidth) + 'px; background-color:lightgrey; float: left; display: inline; height: 1em;"></div>';
+        html = html + '&nbsp;' + freq.toPrecision(3) + ' (' + count + ')</div></nobr>';
 
-        row = row + '</td></tr>';
-
-        rows.push(row);
-      }
-
-      html = html + '<tr><td rowspan="' + (rows.length > 0 ? rows.length : 1) + '"><b><span class="ht _ht" title="' + descs[superPop] + '">' + panel.shortName(superPop) + '</span></b></td>';
-
-      if(rows.length) {
-        html = html + rows.join("");
-      }
-      else {
-        html = html + '<td colspan="2"><span style="font-style: italic; color: grey;">No data</span></td></tr>';
+        html = html + '</td></tr>';
       }
     }
 
@@ -299,13 +328,13 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
 
         var str1 =  $.grep(
           Object.keys(sampleHash[a]),
-          function(p) { return p.match(/ALL/) },
+          function(p) { return p.match(/ALL/i) },
           1
         ).map(panel.shortName).sort(function(c, d) {return levels[c] < levels[d]}).join('');
 
         var str2 =  $.grep(
           Object.keys(sampleHash[b]),
-          function(p) { return p.match(/ALL/) },
+          function(p) { return p.match(/ALL/i) },
           1
         ).map(panel.shortName).sort(function(c, d) {return levels[c] < levels[d]}).join('');
 
@@ -322,7 +351,7 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
         '<tr class="bg' + (bgI + 1) + '"><td>' + panel.shortName(sample) + '</td><td>' +
         $.grep(
           Object.keys(sampleHash[sample]),
-          function(p) { return p.match(/ALL/) },
+          function(p) { return p.match(/ALL/i) },
           1
         ).sort(
           function(a, b) {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,18 +33,23 @@ use parent qw(EnsEMBL::Web::IOWrapper);
 sub validate {
   ### Wrapper around the parser's validation method
   ### We have to do extra for BED because it has alternative columns
-  my $self = shift;
-  my ($valid, $format, $col_count) = $self->parser->validate($self->hub->param('format'));
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $format  = $self->hub->param('format');
+  my $valid = $self->parser->validate($format);
 
   if ($valid) {
+    my $format_name = $self->parser->format->name;
+    $format = $format_name if $format_name;
     $self->{'format'}       = $format;
-    $self->{'column_count'} = $col_count;
+    $self->{'column_count'} = $self->parser->get_column_count;
     ## Update session record accordingly
-    my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
-    if ($record) {
-      $record->{'format'}       = $format;
-      $record->{'column_count'} = $col_count;
-      $self->hub->session->set_data(%$record);
+    my $record = $session->get_record_data({'type' => 'upload', 'code' => $self->file->code});
+    if (keys %$record) {
+      $record->{'format'}       = $self->{'format'};
+      $record->{'column_count'} = $self->{'column_count'};
+      $session->set_record_data($record);
     }
   }
 
@@ -74,8 +80,8 @@ sub create_hash {
 
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
-  my $start         = $feature_start - $slice->start;
-  my $end           = $feature_end - $slice->start;
+  my $start         = $feature_start - $slice->start +1;
+  my $end           = $feature_end - $slice->start +1;
   return if $end < 0 || $start > $slice->length;
 
 
@@ -96,13 +102,16 @@ sub create_hash {
   my $id = $self->parser->can('get_id') ? $self->parser->get_id
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
 
+  my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   my $href = $self->href({
-                        'id'          => $id,
-                        'url'         => $metadata->{'url'},
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        'strand'      => $strand,
+                        'action'        => $metadata->{'action'},
+                        'id'            => $id,
+                        'url'           => $metadata->{'url'},
+                        'seq_region'    => $seqname,
+                        'start'         => $feature_start,
+                        'end'           => $feature_end,
+                        'strand'        => $drawn_strand,
+                        'zmenu_extras'  => $metadata->{'zmenu_extras'},
                         }) unless $metadata->{'omit_feature_links'};
 
   ## Don't set start and end yet, as drawing code and zmenu want
@@ -116,25 +125,26 @@ sub create_hash {
     'href'          => $href,
   };
 
+  ## We may need to deal with BigBed or bigGenePred AutoSQL fields
+  my $column_map = $self->parser->{'column_map'} || {};
+
   if ($metadata->{'display'} eq 'text') {
     ## Want the real coordinates, not relative to the slice
     $feature->{'start'} = $feature_start;
     $feature->{'end'}   = $feature_end;
     ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
-    my $column_map      = $self->parser->{'column_map'};
-    if ($column_map) {
+    if (keys %$column_map) {
       $feature->{'extra'} = [];
-      ## Skip standard columns used in zmenus
+      ## Synonyms for standard columns used in zmenus
       my %skipped = (
                     'chrom'       => 1,
                     'chromStart'  => 1,
                     'chromEnd'    => 1,
-                    'score'       => 1,
                     );
       my %lookup = reverse %$column_map;
       for (sort {$a <=> $b} keys %lookup) {
         my $field   = $lookup{$_};
-        next if $skipped{$field};
+        next if ($feature->{$field} || $skipped{$field});
         my $method  = "get_$field";
         my $value   = $self->parser->$method;
         ## Prettify common array values
@@ -163,52 +173,66 @@ sub create_hash {
   else {
     $feature->{'start'}         = $start;
     $feature->{'end'}           = $end;
-    $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
+    $feature->{'structure'}     = $self->create_structure($feature_start, $feature_end, $slice->start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
+    if ($column_map->{'name2'}) {
+      $feature->{'gene'}          = $self->parser->get_name2;
+    }
   }
   return $feature;
 }
 
 sub create_structure {
-  my ($self, $feature_start, $slice_start) = @_;
+  my ($self, $feature_start, $feature_end, $slice_start) = @_;
 
-  if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
-          || !$self->parser->get_blockStarts) {
-    return undef; 
-  } 
+  my $thick_start   = $self->parser->get_thickStart;
+  my $thick_end     = $self->parser->get_thickEnd;
+  my $block_count   = $self->parser->get_blockCount;
+
+  return unless ($block_count || ($thick_start && $thick_end));
 
   my $structure = [];
 
-  my @block_starts  = @{$self->parser->get_blockStarts};
-  my @block_lengths = @{$self->parser->get_blockSizes};
-  my $thick_start   = $self->parser->get_thickStart;
-  my $thick_end     = $self->parser->get_thickEnd;
+  ## First, create the blocks
+  if ($self->parser->get_blockCount) {
+    my @block_starts  = @{$self->parser->get_blockStarts};
+    my @block_lengths = @{$self->parser->get_blockSizes};
 
+    foreach(0..($self->parser->get_blockCount - 1)) {
+      my $start   = shift @block_starts;
+      ## Adjust to be relative to slice
+      my $offset  = $feature_start - $slice_start;
+      $start      = $start + $offset;
+      my $length  = shift @block_lengths;
+      my $end     = $start + $length;
+
+      push @$structure, {'start' => $start, 'end' => $end};
+    }
+  }
+  else {
+    ## Single-block feature
+    $structure = [{'start' => $feature_start - $slice_start, 'end' => $feature_end - $slice_start}];
+  }
+  
   ## Fix for non-intuitive configuration of non-coding transcripts
   if ($thick_start == $thick_end) {
     $thick_start  = 0;
     $thick_end    = 0;
   }
   else {
-    ## Adjust to make relative to slice (and compensate for BED coords)
-    $thick_start -= ($slice_start - 1);
+    ## Adjust to make relative to slice 
+    $thick_start -= $slice_start;
     $thick_end   -= $slice_start;
   }
 
-  ## Does this feature have _any_ coding sequence?
+  ## Does this feature have any coding sequence?
   my $has_coding = $thick_start || $thick_end ? 1 : 0;
 
-  foreach(0..($self->parser->get_blockCount - 1)) {
-    my $start   = shift @block_starts;
-    ## Adjust to be relative to slice and compensate for BED format
-    my $offset  = $feature_start - $slice_start;
-    $start      = $start + $offset + 1;
-    my $length  = shift @block_lengths;
-    my $end     = $start + $length - 1;
+  foreach my $block (@$structure) {
+    my $start = $block->{'start'};
+    my $end   = $block->{'end'};
 
-    my $block = {'start' => $start, 'end' => $end};
-    
     if (!$has_coding) {
       $block->{'non_coding'} = 1; 
     }
@@ -230,7 +254,6 @@ sub create_structure {
         }
       }
     }
-    push @$structure, $block;
   }
 
   return $structure;

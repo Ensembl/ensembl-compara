@@ -1,7 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +36,7 @@ sub content {
   my $object             = $self->object;
   my $variation          = $object->Obj;
   my $vf                 = $hub->param('vf');
-  my $rs_id              = $hub->param('v');
+  my $var_id             = $hub->param('v');
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $avail              = $object->availability;  
@@ -49,18 +50,19 @@ sub content {
   my @str_array = $self->feature_summary($avail);
   
   my $summary_table = $self->new_twocol(    
-    $self->variation_source,
+    $self->most_severe_consequence($variation_features),
     $self->alleles($feature_slice),
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
-    $self->most_severe_consequence($variation_features),
     $self->evidence_status,
     $self->clinical_significance,
-    $self->synonyms,
     $self->hgvs,
+    $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
+    $self->synonyms,
     $self->sets,
+    $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $rs_id && $self->snpedia($rs_id) : ()
+    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -83,11 +85,11 @@ sub feature_summary {
   
   push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
-                      $avail->{has_transcripts}, 
-                      $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
-                  ) if($avail->{has_transcripts});
+                      $avail->{has_uniq_transcripts}, 
+                      $avail->{has_uniq_transcripts} eq "1" ? "transcript" : "transcripts"
+                  ) if($avail->{has_uniq_transcripts});
   push @str_array, sprintf('%s<a class="dynamic-link" href="%s">%s %s</a>',
-                      $avail->{has_transcripts} ? '' : 'overlaps ',
+                      $avail->{has_uniq_transcripts} ? '' : 'overlaps ',
                       $transcript_url,
                       $avail->{has_regfeats},
                       $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"
@@ -209,6 +211,9 @@ sub variation_source {
   if ($source =~ /dbSNP/) {
     $sname       = 'DBSNP';
     $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+  } elsif ($source =~ /ClinVar/i) {
+    $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
+    $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
@@ -313,17 +318,23 @@ sub synonyms {
     my @ids = @{$synonyms->{$db}};
     my @urls;
 
-    next if ($db =~ /Affy|Illumina|HGVbase|TSC/);
+    next if ($db =~ /(Affy|Illumina|HGVbase|TSC|dbSNP\sHGVS)/i);
 
     if ($db =~ /dbsnp rs/i) { # Glovar stuff
       @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
     }
+    elsif ($db =~ /dbsnp hgvs/i) {
+      @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
+    }    
     elsif ($db =~ /dbsnp/i) {
       foreach (@ids) {
         next if /^ss/; # don't display SSIDs - these are useless
         push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
       }
       next unless @urls;
+    }
+    elsif ($db =~ /clinvar/i) {
+      @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
     }
     elsif ($db =~ /Uniprot/) {
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
@@ -371,21 +382,22 @@ sub synonyms {
 
 sub alleles {
   my ($self, $feature_slice) = @_;
-  my $object     = $self->object;
-  my $variation  = $object->Obj;
-  my $alleles    = $object->alleles;
-  my @l_alleles  = split '/', $alleles;
-  my $c_alleles  = scalar @l_alleles;
-  my $alt_string = $c_alleles > 2 ? 's' : '';
-  my $ancestor   = $object->ancestor;
-     $ancestor   = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
-  my $ambiguity  = $variation->ambig_code;
-     $ambiguity  = 'not available' if $object->source =~ /HGMD/;
-     $ambiguity  = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
-  my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
-     $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
-  my $maf        = $variation->minor_allele;
-     $maf        = qq{<span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
+  my $object      = $self->object;
+  my $variation   = $object->Obj;
+  my $alleles     = $object->alleles;
+  my @l_alleles   = split '/', $alleles;
+  my $c_alleles   = scalar @l_alleles;
+  my $alt_string  = $c_alleles > 2 ? 's' : '';
+  my $ancestor    = $object->ancestor;
+     $ancestor    = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
+  my $ambiguity   = $variation->ambig_code;
+     $ambiguity   = 'not available' if $object->source =~ /HGMD/;
+     $ambiguity   = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+  my $freq        = sprintf '%.2f', $variation->minor_allele_frequency;
+     $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
+  my $maf_helptip = $self->helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
+  my $maf         = $variation->minor_allele;
+     $maf         = sprintf(qq{<span class="_ht ht">%s</span>: <strong>%s</strong> (%s)},$maf_helptip,$freq,$maf) if $maf;
   my $html;
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
 
@@ -400,8 +412,7 @@ sub alleles {
       $extra_allele_info .= qq{<span>$ambiguity</span>};
     }
     if ($maf) {
-      $extra_allele_info .= $self->text_separator;
-      $extra_allele_info .= qq{<span>$maf</span>};
+      $extra_allele_info .= $self->text_separator.$maf;
     }
   }
 
@@ -438,6 +449,7 @@ sub alleles {
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
+    $alleles =~ s/\//<span style="color:black">\/<\/span>/g;
     $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$extra_allele_info};
   }
 
@@ -543,16 +555,25 @@ sub evidence_status {
                           '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="%s/val/evidence_%s.png" title="%s"/>',
                            $self->img_url, $evidence, $evidence_label
                         );
-    my $url_type = 'Population';
-       $url_type = 'Citations' if ($evidence =~ /cited/i);
-       $url_type = 'Phenotype' if ($evidence =~ /phenotype/i);
+    my $url;
 
-    my $url = $hub->url({
+    if($evidence =~ /exac/i) {
+      $url = $hub->get_ExtURL('EXAC', $object->name) 
+    }
+    else {
+
+      my $url_type = 'Population';
+         $url_type = 'Citations' if ($evidence =~ /cited/i);
+         $url_type = 'Phenotype' if ($evidence =~ /phenotype/i);
+
+      $url = $hub->url({
          type   => 'Variation',
          action => $url_type,
          v      => $object->name,
          vf     => $hub->param('vf')
        });
+    }
+
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
@@ -609,12 +630,59 @@ sub hgvs {
   my $count     = 0;
   my $total     = scalar keys %$hgvs_urls;
   my $html;
- 
+
+  my $syn_source = 'dbSNP HGVS';
+
+  my $refseq_hgvs = $object->Obj->get_all_synonyms($syn_source);
+  my $has_list = 0;
+
   # Loop over and format the URLs
   foreach my $allele (keys %$hgvs_urls) {
-    $html  .= sprintf '<p>%s</p>', join('<br />', $total > 1 ? "<b>Variant allele $allele</b>" : (), @{$hgvs_urls->{$allele}});
+    if ($total > 1) {
+      $html .= qq{<p style="font-weight:bold">Variant allele $allele</p>};
+    }
+
+    if (scalar @{$hgvs_urls->{$allele}} > 1 | scalar @{$refseq_hgvs} > 1) {
+      $html .= "<ul><li>";
+      $html .= join('</li><li>', @{$hgvs_urls->{$allele}});
+      $html .= "</li></ul>";
+      $has_list = 1;
+    }
+    else {
+      $html  .= join(', ', @{$hgvs_urls->{$allele}});
+    }
     $count += scalar @{$hgvs_urls->{$allele}};
   }
+
+  $count += scalar @{$refseq_hgvs};
+
+  if (scalar(@$refseq_hgvs)) {
+    if ($has_list) {
+      # Create div + floated lists to html
+      $html = sprintf(qq{
+          <div>
+            <div style="float:left;margin-right:15px"><h4>%s:</h4>%s</div>
+            <div style="float:left"><h4>%s:</h4><ul><li>%s</li></ul></div>
+            <div style="clear:both"></div>
+          </div>
+        },
+        'Ensembl HGVS',
+        $html,
+        $syn_source,
+        join('</li><li>', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs)
+      );
+    }
+    else {
+      # Display refseq HGVS
+      $html .= ', ' if ($html);
+      $html .= join(', ', sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @$refseq_hgvs);
+    }
+  }
+
+  if (!$has_list and $html) {
+    $html = "<p>$html</p>";
+  }
+
 
   # Wrap the html
   if ($count > 1) {
@@ -629,8 +697,9 @@ sub hgvs {
     ];
   } elsif ($count == 1) {
     return ['HGVS name', $html];
+  } else {
+    return ();
   }
-
   return ['HGVS name', 'None'];
 }
 
@@ -700,14 +769,14 @@ sub most_severe_consequence {
 
       if (scalar(@$overlapping_features) != 0) {
         $consequence_link = sprintf(qq{
-          <div class="text-float-left">%s<a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+          <div class="text-float-left">%s<a href="%s" title="'Genes and regulation' page">See all predicted consequences</a></div>
         }, $self->text_separator(1), $url);
       }
 
       # Line display
       my $html = sprintf(qq{
          <div>
-           <div class="text-float-left">%s</div>%s
+           <div class="text-float-left bold">%s</div>%s
            <div class="clear"></div>
          </div>},
          $html_consequence, $consequence_link
@@ -717,6 +786,48 @@ sub most_severe_consequence {
     }
   }
   return ();
+}
+
+## if an insertion/ deletion is described at its most 3' location 
+## possible, is it co-located with other variants?
+sub three_prime_co_located{
+  my $self  = shift;
+
+ my $shifted_co_located = $self->object->get_three_prime_co_located();
+
+  return undef unless defined $shifted_co_located;
+
+  my $count;
+  my @scl;
+
+  foreach my $scl (@{$shifted_co_located}){
+    next if ($scl eq '');
+    my $link      = $self->hub->url({ action => 'Explore', v => $scl });
+    my $variation = qq{<a href="$link">$scl</a>};
+    $count++;
+    push @scl, $variation;
+  }
+
+  if ($count > 3) {
+    my $show = $self->hub->get_cookie_value('toggle_shifted_co_located') eq 'open';
+  
+    return [
+      'Variants with equivalent alleles',
+      sprintf('<p>This variant has <strong>%s</strong> variants with equivalent alleles - <a title="Click to show variants" rel="shifted_co_located" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="shifted_co_located twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+        $count,
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
+        $show ? '' : 'display:none',
+        join('', map "<li>$_</li>", @scl)
+      )
+    ];
+  }
+  else {
+
+    my $html = join ', ', @scl;
+    my $s = ($count > 1) ? 's' : '';
+    return ($count && $count > 0)  ? ["Variant$s with equivalent alleles", $html] : ();
+  }
 }
 
 sub text_separator {
@@ -730,11 +841,11 @@ sub text_separator {
 
 # Fetch SNPedia information from snpedia.com
 sub snpedia {
-  my ($self, $rs_id) = @_;
+  my ($self, $var_id) = @_;
   my $hub = $self->hub;
   my $cache = $hub->cache;
   my $desc;
-  my $key = $rs_id . "_SNPEDIA_DESC";
+  my $key = $var_id . "_SNPEDIA_DESC";
 
   if($cache) {
     # Get from memcached
@@ -755,13 +866,13 @@ sub snpedia {
   else {
     # Fetch from snpedia
     my $object = $self->object;
-    my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
+    my $snpedia_wiki_results = $object->get_snpedia_data($var_id);
     if (!$snpedia_wiki_results->{'pageid'}) {
       $cache && $cache->set($key, 'no_entry', 60*60*24*7);
       return ();
     }
     
-    my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
+    my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $var_id });
     if ($#{$snpedia_wiki_results->{desc}} < 0) {
       $snpedia_wiki_results->{desc}[0] = 'Description not available ' . $snpedia_search_link;
     }

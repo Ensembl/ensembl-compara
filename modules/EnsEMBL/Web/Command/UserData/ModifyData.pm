@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +31,7 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $func    = $hub->function;
+  my $func    = 'md_'.$hub->function;
   my $object  = $self->object;
   my $rtn     = $object->$func();
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,7 +81,7 @@ sub get_sequence {
           @seqs = {
             'id'          => $object->stable_id,
             'sequence'    => $object->seq->seq,
-            'description' => sprintf('%s %s Transcript %s', $object->display_id, $sitetype, $object->seqname),
+            'description' => sprintf('%s %s Transcript %s', $object->version ? $object->display_id . "." . $object->version : $object->display_id, $sitetype, $object->seqname),
             'length'      => $object->length
           };
         }

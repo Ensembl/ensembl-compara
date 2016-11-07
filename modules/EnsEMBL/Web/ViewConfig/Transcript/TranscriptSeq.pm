@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,42 +20,42 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
+use parent qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
-  $self->set_defaults({
-    exons          => 'on',
-    exons_case     => 'off',
-    codons         => 'on',
-    utr            => 'on',
-    coding_seq     => 'on',
-    translation    => 'on',
-    rna            => 'off',
-    snp_display    => 'on',
-    line_numbering => 'on',
+
+  $self->set_default_options({
+    'exons'          => 'on',
+    'exons_case'     => 'off',
+    'codons'         => 'on',
+    'utr'            => 'on',
+    'coding_seq'     => 'on',
+    'translation'    => 'on',
+    'rna'            => 'off',
+    'snp_display'    => 'on',
+    'line_numbering' => 'on',
   });
-  
-  $self->title = 'cDNA sequence';
-  $self->SUPER::init;
+
+  $self->title('cDNA sequence');
+  $self->SUPER::init_cacheable(@_);
 }
 
 sub field_order {
-  my $self = shift;
-  my @order = qw(exons exons_case codons utr coding_seq translation rna);
-  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  push @order, qw(line_numbering);
-  return @order;
+  ## Abstract method implementation
+  return qw(exons exons_case codons utr coding_seq translation rna), $_[0]->variation_fields, qw(line_numbering);
 }
 
 sub form_fields {
-  my $self = shift;
-  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
-  my $fields = {};
+  ## Abstract method implementation
+  my $self    = shift;
+  my $markup  = $self->get_markup_options({'no_snp_link' => 1});
+  my $fields  = {};
 
-  my @extra = (
+  my @extra   = (
     ['codons',      'codons'],
     ['utr',         'UTR'],
     ['coding_seq',  'coding sequence'],
@@ -62,29 +63,22 @@ sub form_fields {
     ['rna',         'RNA features'],
   );
 
-  foreach (@extra) {
+  for (@extra) {
     my ($name, $label) = @$_;
-    $markup_options->{$name} = {
-                                type  => 'Checkbox', 
-                                name  => $name,
-                                value => 'on',       
-                                label => "Show $label",         
-     };
+    $markup->{$name} = {
+      'type'  => 'Checkbox',
+      'name'  => $name,
+      'value' => 'on',
+      'label' => "Show $label",
+    };
   }
 
-  ## Switch line-numbering to a checkbox as it doesn't have multiple options
-  $markup_options->{'line_numbering'}{'type'} = 'Checkbox';
-  $markup_options->{'line_numbering'}{'value'} = 'sequence';
-  delete $markup_options->{'line_numbering'}{'values'};
+  # Switch line-numbering to a checkbox as it doesn't have multiple options
+  $markup->{'line_numbering'}{'type'}   = 'Checkbox';
+  $markup->{'line_numbering'}{'value'}  = 'sequence';
+  delete $markup->{'line_numbering'}{'values'};
 
-  my $var_options = { populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' };
-
-  $self->add_variation_options($markup_options, $var_options) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-
-  foreach ($self->field_order) {
-    $fields->{$_} = $markup_options->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

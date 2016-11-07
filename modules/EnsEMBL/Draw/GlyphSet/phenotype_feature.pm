@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +54,21 @@ sub features {
   if (!$self->cache($id)) {
     my $slice    = $self->{'container'};
     my $type     = $self->my_config('type');
-    my $features = [grep {$_->{_phenotype_id}} @{$slice->get_all_PhenotypeFeatures($type)}];
+    my $study_name = $self->my_config('study_name');
+    my $var_db     = $self->my_config('db') || 'variation';
+    my $pf_adaptor = $self->{'config'}->hub->get_adaptor('get_PhenotypeFeatureAdaptor', $var_db);
+    my $features;
+
+    if ($study_name) {
+      my $study_obj = $self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name);
+      $features = $pf_adaptor->fetch_all_by_Slice_Study($slice, $study_obj, undef)    ;
+    }
+    elsif($type) {
+      $features = [grep {$_->{_phenotype_id}} @{$pf_adaptor->fetch_all_by_Slice_type($slice, $type)}];
+    }
+    else {
+      $features = [grep {$_->{_phenotype_id}} @{$pf_adaptor->fetch_all_by_Slice($slice)}];
+    }
     
     $self->cache($id, $features);
   }
@@ -118,14 +133,14 @@ sub href {
     my $params = {
       'type'      => $type,
       'action'    => 'Phenotype',
-      'ph'        => $hub->param('ph'),
+      'ph'        => $hub->param('ph') || undef,
       $id_param   => $f->object_id,
       __clear     => 1
     };
-  
+
     $link = $hub->url($params);
   }
-  
+
   return $link;
 }
 

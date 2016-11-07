@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 use strict;
 use warnings;
 
@@ -29,10 +48,10 @@ sub activity_save_orient {
 
   $config->filter_saved($orient);
 
-  my %args    = ( type => 'newtable', code => $config->class );
+  my %args    = ( type => 'Newtable', code => $config->class );
 
   # Sequence check
-  my %data_in = %{$session->get_data(%args) || {}};
+  my %data_in = %{$session->get_record_data(\%args)};
   my $old_seq = $data_in{'seq'}||-1;
   my $new_seq = $hub->param('seq')||0;
 
@@ -45,23 +64,18 @@ sub activity_save_orient {
   };
   warn "$@\n" if $@;
 
-  $session->purge_data(%args);
-  $session->set_data(%args, %data) if scalar keys %data;
+  $session->set_record_data({%args, %data}) if scalar keys %data;
+
+  return {};
 }
 
-sub extend_config {
-  my ($self,$hub,$config) = @_;
+sub activity_load_orient {
+  my ($self,$config) = @_;
 
-  my $session = $hub->session;
-  
-  my %args    = ( type => 'newtable', code => $self->class );
-  my %data    = %{$session->get_data(%args) || {}};
-
-  $config->{'saved_orient'} = {};
-  eval {
-    $config->{'saved_orient'} = JSON->new->decode(((\%data||{})->{'orient'})||"{}");
-  };
-  warn "$@\n" if $@;
+  my $hub = $self->hub;
+  my %args    = ( type => 'Newtable', code => $config->class );
+  my $out = $hub->session->get_record_data(\%args);
+  return { orient => JSON->new->decode($out->{'orient'})||{} };
 }
 
 1;

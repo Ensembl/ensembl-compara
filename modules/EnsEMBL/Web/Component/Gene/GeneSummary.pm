@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,14 +58,22 @@ sub content {
   if (scalar @CCDS) {
     my %temp = map { $_->display_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
-    $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
+    my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
+    my $sp_name   = $species_defs->DISPLAY_NAME; 
+    ## FIXME Hack for e86 mouse strains
+    if ($species_defs->STRAIN_COLLECTION && $species_defs->SPECIES_STRAIN !~ /reference/) {
+      $template = 'This gene is similar to a CCDS gene on %s: %s';
+      (my $bio_name = $species_defs->SPECIES_SCIENTIFIC_NAME) =~ s/ /_/;
+      $sp_name  = sprintf '%s %s', $species_defs->get_config($bio_name, 'DISPLAY_NAME'), $species_defs->get_config($bio_name, 'ASSEMBLY_VERSION');
+    }
+    $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
   # add Uniprot info
   if (scalar @Uniprot) {
     my %temp = map { $_->primary_id, 1 } @Uniprot;
     @Uniprot = sort keys %temp;
-    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following UniProtKB identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   ## add RefSeq match info where appropriate

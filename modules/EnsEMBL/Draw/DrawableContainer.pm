@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,7 +48,7 @@ sub new {
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
   my $sortable_tracks = $primary_config->get_parameter('sortable_tracks') eq 'drag';
-  my $show_labels     = $primary_config->get_parameter('show_labels')    || 'yes';
+  my $no_labels       = $primary_config->get_parameter('no_labels');
   my $label_width     = $primary_config->get_parameter('label_width')    || 100;
   my $margin          = $primary_config->get_parameter('margin')         || 5;
   my $padding         = $primary_config->get_parameter('padding')        || 0;
@@ -55,7 +56,7 @@ sub new {
   my $image_width     = $primary_config->get_parameter('image_width')    || 700;
   my $colours         = $primary_config->species_defs->colour('classes') || {};
   my $label_start     = $margin;
-  my $panel_start     = $label_start + ($show_labels  eq 'yes' ? $label_width  + $margin : 0) + ($sortable_tracks ? 10 : 0);
+  my $panel_start     = $label_start + ($no_labels ? 0 : $label_width + $margin) + ($sortable_tracks ? 10 : 0);
   my $panel_width     = $image_width - $panel_start - $margin;
   my $yoffset         = $margin;
   my $iteration       = 0;
@@ -84,11 +85,13 @@ sub new {
        $w = $container->length if !$w && $container->can('length');
        
     my $x_scale = $w ? $panel_width /$w : 1; 
-    
-    $config->{'transform'}->{'scalex'}         = $x_scale; ## set scaling factor for base-pairs -> pixels
-    $config->{'transform'}->{'absolutescalex'} = 1;
-    $config->{'transform'}->{'translatex'}     = $panel_start; ## because our label starts are < 0, translate everything back onto canvas
-    
+
+    my $transform_obj = $config->transform_object;
+
+    $transform_obj->scalex($x_scale); ## set scaling factor for base-pairs -> pixels
+    $transform_obj->absolutescalex(1);
+    $transform_obj->translatex($panel_start); ## because our label starts are < 0, translate everything back onto canvas
+
     $config->set_parameters({
       panel_width        => $panel_width,
       image_end          => ($panel_width + $margin + $padding) / $x_scale, # the right edge of the image, used to find labels which would be drawn too far to the right, and bring them back inside
@@ -208,9 +211,6 @@ sub new {
         ## don't waste any more time on this row if there's nothing in it
         if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
           warn $@ if $@;
-        
-          $self->timer_push('track finished', 3);
-          $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
           next;
         }
       }
@@ -231,8 +231,8 @@ sub new {
         my $text = $glyphset->label_text;
         $glyphset->recast_label(
             $label_width-$img_width,$glyphset->max_label_rows,
-            $text,$config->{'_font_face'} || 'arial',
-            $config->{'_font_size'} || 100,
+            $text, $config->font_face || 'arial',
+            $config->font_size || 100,
             $colours->{lc $glyphset->{'my_config'}->get('_class')}
                       {'default'} || 'black'
         );
@@ -260,8 +260,6 @@ sub new {
       }
 
       ## go ahead and do all the database work
-      $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
-
       my $next_section_col = 0;
       foreach my $glyphset (@glyphsets) {
         ## load everything from the database
@@ -295,8 +293,8 @@ sub new {
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
-      
-        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height;
+
+        $transform_obj->translatey(-$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
@@ -396,7 +394,7 @@ sub new {
         }
 
         ## set up the "bumping button" label for this strip
-        if ($glyphset->label && $show_labels eq 'yes') {
+        if ($glyphset->label && !$no_labels) {
           my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
 
           my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
@@ -430,8 +428,10 @@ sub new {
           my $band_min = $glyphset->miny + $glyphset->section_height;
           my $band_max = $glyphset->maxy;
           my $fashionable_gap = 4;
+          my $label_width = $self->{'config'}->get_parameter('label_width');
+          my $x = - ($label_width + 9);
           $glyphset->push($glyphset->Rect({
-            x => -122,
+            x => $x,
             y => $band_min + $fashionable_gap,
             width => 2,
             height => $band_max-$band_min - 2 * $fashionable_gap,
@@ -446,11 +446,7 @@ sub new {
       
         ## translate the top of the next row to the bottom of this one
         $yoffset += $glyphset->height + $trackspacing;
-        $self->timer_push('track finished', 3);
-        $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }
-    
-      $self->timer_push('End of creating glyphs for ' . ref($config), 1);
     
       push @{$self->{'glyphsets'}}, @glyphsets;
     
@@ -459,8 +455,6 @@ sub new {
       $config->{'panel_width'} = undef;
     }
   }
-
-  $self->timer_push('DrawableContainer->new: End GlyphSets');
 
   return $self;
 }
@@ -491,16 +485,10 @@ sub _init {
     'highlights'    => $highlights || [],
     'strandedness'  => $strandedness || 0,
     '__extra_block_spacing__'    => 0,
-    'timer'         => $Contents->[0][1]->species_defs->timer
   };
   
   bless( $self, $class );
   return $self;
-}
-
-sub timer_push {
-  my( $self, $tag, $dep ) = @_;
-  $self->{'timer'}->push( $tag, $dep, 'draw' );
 }
 
 ## render does clever drawing things
@@ -519,7 +507,6 @@ sub render {
     $extra
   );
   my $canvas = $renderer->canvas();
-  $self->timer_push("DrawableContainer->render ending $type",1);
   return $canvas;
 }
 

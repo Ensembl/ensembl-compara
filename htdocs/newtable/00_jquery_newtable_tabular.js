@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,33 +41,13 @@
     });
   }
 
-  function new_th(key,cc) {
-    var text = cc.label || cc.title || key;
-    var attrs = {};
-    var classes = [];
-    attrs['data-key'] = key || '';
-    if(cc.sort)  { classes.push('sorting'); }
-    if(cc.help) {
-      var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
-      text = $('<div/>').append(help).html();
-    }
-    var attr_str = "";
-    $.each(attrs,function(k,v) {
-      attr_str += ' '+k+'="'+v+'"';
-    });
-    if(classes.length) {
-      attr_str += ' class="'+classes.join(' ')+'"';
-    }
-    return "<th "+attr_str+">"+text+"</th>";
-  }
-
-  function fix_widths($table,config,orient) {
+  function fix_widths($table,config,orient,callw) {
     var totals = { u: 0, px: 0 };
     var widths = [];
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
       var m = cc.width.match(/^(\d+)(.*)$/);
-      if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
+      if(callw('unshowable',cc)._any) { return; }
       if(orient.off_columns && orient.off_columns[key]) { return; }
       widths.push([m[1],m[2]]);
       if(m[2] == 'u' || m[2] == 'px') {
@@ -82,7 +63,7 @@
     var k = 0;
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
-      if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
+      if(callw('unshowable',cc)._any) { return; }
       var $th = $head.eq(j++);
       if(orient.off_columns && orient.off_columns[key]) {
         $th.css('width','0px').addClass('invisible');
@@ -93,17 +74,9 @@
     });
   }
 
-  function new_header($table,config) {
+  function new_header($table,config,widgets,callw) {
     var columns = [];
-
-    $.each(config.columns,function(i,key) {
-      var cc = config.colconf[key];
-      // TODO to plugin
-      if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-        return;
-      }
-      columns.push(new_th(key,cc));
-    });
+    callw('columns',config,columns);
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
  
@@ -198,7 +171,7 @@
     $.lazy('refresh');
   }
 
-  function retreat_rows($table,config,orient,grid,rev_series) {
+  function retreat_rows($table,config,orient,grid,rev_series,callw) {
     var last_table = Math.floor(grid.length/rows_per_subtable);
     $('.subtable',$table).each(function(i) {
       if(i>last_table || grid.length===0) {
@@ -209,7 +182,7 @@
           $(this).remove();
         } else {
           reset_sub($(this));
-          remarkup_sub($table,$(this),config,grid,rev_series,i,orient,i*rows_per_subtable,tail_rows);
+          remarkup_sub($table,$(this),config,grid,rev_series,i,orient,i*rows_per_subtable,tail_rows,callw);
           apply_html($table,i);
         }
       }
@@ -222,16 +195,14 @@
     $subtable.data('markup',[]);
   }
 
-  function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient,mstart,mrows) {
+  function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient,mstart,mrows,callw) {
     // show which columns?
     var shown = [];
     var off = orient.off_columns || {};
     var i,j;
     for(i=0;i<config.columns.length;i++) {
       var cc = config.colconf[config.columns[i]];
-      if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-        continue;
-      }
+      if(callw('unshowable',cc)._any) { continue; }
       if(off[config.columns[i]]) { continue; } 
       shown.push(rev_series[config.columns[i]]);
     }
@@ -252,13 +223,13 @@
     $subtable.data('xxx',table_num);
   }
 
-  function remarkup($table,config,grid,rev_series,start,rows,orient) {
+  function remarkup($table,config,grid,rev_series,start,rows,orient,callw) {
     var subtabs = [];
     var tab_a = Math.floor(start/rows_per_subtable);
     var tab_b = Math.floor((start+rows-1)/rows_per_subtable);
     for(var j=tab_a;j<=tab_b;j++) {
       var $subtable = $('.subtable',$table).eq(j);
-      remarkup_sub($table,$subtable,config,grid,rev_series,j,orient,start,rows);
+      remarkup_sub($table,$subtable,config,grid,rev_series,j,orient,start,rows,callw);
       subtabs.push(j);
     }
     return subtabs;
@@ -348,12 +319,28 @@
     setTimeout(function() { eager(); },3000);
   }
 
-  $.fn.new_table_tabular = function(config,data) {
+  $.fn.new_table_tabular = function(config,data,widgets,callw) {
     return {
-      layout: function($table) {
-        var header = new_header($table,config);
+      layout: function($table,widgets) {
+        var header = new_header($table,config,widgets,callw);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div><div class="newtable_tabular"></div><div class="new_table_loading"><div>more rows loading</div></div>';
       },
+
+      layout_th: function(key,cc) {
+        var text = cc.label || cc.title || key;
+        var attrs = {};
+        var classes = [];
+        attrs['data-key'] = key || '';
+        var $th = $('<th><div/></th>');
+        var html = callw('decorate_heading',cc,$th,text)._last;
+        if(html===undefined) { html = text; }
+        var attr_str = "";
+        $('div',$th).html(html);
+        $.each(attrs,function(k,v) { $th.attr(k,v); });
+        $.each(classes,function(i,v) { $th.addClass(v); });
+        return $('<div/>').append($th).html();
+      },
+
       go: function($table,$el) {
         $('th',$table).click(function(e) {
           add_sort($table,config,$(this).data('key'),!e.shiftKey);
@@ -363,12 +350,12 @@
       },
       add_data: function($table,grid,series,start,num,orient) {
         var $subtables = $('.subtable',$table);
-        fix_widths($table,config,orient);
+        fix_widths($table,config,orient,callw);
         header_fix($table,orient);
         extend_rows($table,start+num);
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
-        var subtabs = remarkup($table,config,grid,rev_series,start,num,orient);
+        var subtabs = remarkup($table,config,grid,rev_series,start,num,orient,callw);
         var d = $.Deferred().resolve(subtabs);
         var has_reset = false;
         loop(d,function(i,v) {
@@ -389,7 +376,7 @@
         }
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
-        retreat_rows($table,config,orient,grid,rev_series);
+        retreat_rows($table,config,orient,grid,rev_series,callw);
       }
     };
   }; 

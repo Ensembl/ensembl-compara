@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +31,13 @@ use EnsEMBL::Web::Controller;
 my $DBH_SESSION; # package database handle for persistence
 my $DBH_USER;
 
-sub new {
+sub new { die ('ConfigAdaptor not in use');
   my ($class, $hub) = @_;
   my $species_defs  = $hub->species_defs;
   my $user          = $hub->user;
   my $self          = {
     hub        => $hub,
-    session_id => $hub->session->create_session_id,
+    session_id => $hub->session->session_id,
     user_id    => $user ? $user->id : undef,
     group_ids  => [ $user ? map($_->group_id, $user->get_groups) : (), @{$species_defs->ENSEMBL_DEFAULT_USER_GROUPS || []} ], 
     servername => $species_defs->ENSEMBL_SERVERNAME,
@@ -60,7 +61,7 @@ sub version      { return $_[0]{'version'};    }
 sub cache_tags   { return $_[0]{'cache_tags'}; }
 sub group_ids    { return $_[0]{'group_ids'};  }
 sub admin_groups { return $_[0]{'admin_groups'} ||= { map { $_->group_id => $_ } $_[0]->hub->user->find_admin_groups }; }
-sub session_id   { return $_[0]{'session_id'}   ||= $_[0]->hub->session->create_session_id; }
+sub session_id   { return $_[0]{'session_id'}   ||= $_[0]->hub->session->session_id; }
 
 sub dbh {
   my $self = shift;

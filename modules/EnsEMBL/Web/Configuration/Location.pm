@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@ sub init {
   $self->SUPER::init;
   
   if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
-    my $multi_species = $hub->session->get_data(type => 'multi_species', code => 'multi_species');
+    my $multi_species = $hub->session->get_record_data({type => 'multi_species', code => 'multi_species'});
     $self->tree->get_node('Multi')->set('url', $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} })) if $multi_species && $multi_species->{$hub->species};
   }
 }
@@ -83,6 +84,16 @@ sub populate_tree {
     )],
     { 'availability' => 'database:compara' }
   );
+
+  $align_menu->append($self->create_node('Synteny', 'Synteny',
+    [qw(
+      summary  EnsEMBL::Web::Component::Location::Summary
+      image    EnsEMBL::Web::Component::Location::SyntenyImage
+      homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
+      matches  EnsEMBL::Web::Component::Location::SyntenyMatches
+    )],
+    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny' }
+  ));
   
   $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image)', 
     [qw(
@@ -116,16 +127,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Region Comparison' }
   ));
   
-  $align_menu->append($self->create_node('Synteny', 'Synteny',
-    [qw(
-      summary  EnsEMBL::Web::Component::Location::Summary
-      image    EnsEMBL::Web::Component::Location::SyntenyImage
-      homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
-      matches  EnsEMBL::Web::Component::Location::SyntenyMatches
-    )],
-    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny' }
-  ));
-  
+
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
@@ -136,6 +138,15 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
+ 
+  $variation_menu->append($self->create_node('Strain', 'Strain table',
+    [qw(
+      botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
+      strain  EnsEMBL::Web::Component::Location::StrainTable
+    )],
+    { 'availability' => 'slice has_strains', implausibility => 'strainpop' }
+  ));
+
   $variation_menu->append($self->create_node('LD', 'Linkage Data',
     [qw(
       summary EnsEMBL::Web::Component::Location::Summary

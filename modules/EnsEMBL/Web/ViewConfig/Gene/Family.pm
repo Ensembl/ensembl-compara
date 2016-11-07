@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,53 +20,59 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Gene::Family;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub _new {
+  ## @override
+  my $self = shift->SUPER::_new(@_);
+
+  $self->{'code'} = 'Gene::Family';
+
+  return $self;
+}
+
+sub init_cacheable {
+  ## Abstract method implementation
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
-  $self->set_defaults({
+  $self->set_default_options({
     map({ 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species),
     map({ 'opt_'     . lc($_) => 'yes' } keys %formats)
   });
-  
-  $self->code  = 'Gene::Family';
-  $self->title = 'Ensembl protein families';
+
+  $self->title('Ensembl protein families');
 }
 
-sub form {
-  my $self         = shift;
-  my %formats      = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
-  my $species_defs = $self->species_defs;
-  my %species      = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
-  
-  $self->add_fieldset('Selected species');
-  
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $_,
-      name  => 'species_' . lc $species{$_},
-      value => 'yes',
-      raw   => 1
+sub field_order { } # no default fields
+sub form_fields { } # no default fields
+
+sub init_form {
+  ## @override
+  ## Fields are added according to species and formats
+  my $self          = shift;
+  my $form          = $self->SUPER::init_form(@_);
+  my %formats       = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
+
+  # Select species fieldset
+  $form->add_species_fieldset;
+
+  # Selected databases fieldset
+  for (sort keys %formats) {
+    $form->add_form_element({
+      'fieldset'  => 'Selected databases',
+      'type'      => 'checkbox',
+      'label'     => $formats{$_}{'name'},
+      'name'      => 'opt_' . lc $_,
+      'value'     => 'yes',
     });
   }
-  
-  $self->add_fieldset('Selected databases');
-  
-  foreach(sort keys %formats) {
-    $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $formats{$_}{'name'},
-      name  => 'opt_' . lc $_,
-      value => 'yes', 
-      raw   => 1
-    });
-  }
+
+  return $form;
 }
 
 1;

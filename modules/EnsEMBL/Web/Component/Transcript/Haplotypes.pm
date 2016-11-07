@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,10 +56,26 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  my $c = $object->get_haplotypes;
-  return unless $c;
-  
   my $html = '';
+
+  # filter?
+  my $filter;
+  if($self->param('filter_enabled') eq 'on') {
+    
+    # warn user filtering is enabled
+    $html .= $self->_info(
+      'Variant frequency filtering enabled',
+      'Haplotypes may not be representative of true observed sequences '.
+      'as variants with frequency less than '.
+      $self->hub->param('filter_frequency').
+      ' have been filtered out'
+    );
+    
+    $filter = {frequency => {frequency => $self->hub->param('filter_frequency')}};
+  }
+  
+  my $c = $object->get_haplotypes($filter);
+  return unless $c;
   
   # tell JS what panel type this is
   $html .= '<input type="hidden" class="panel_type" value="TranscriptHaplotypes" />';
@@ -95,7 +112,7 @@ sub content {
   );
   my $other_type = $type eq 'protein' ? 'cds' : 'protein';
 
-  $table->add_columns(
+  my @cols = (
     {
       key   => 'haplotype',
       title => $titles{$type}.' haplotype',
@@ -116,6 +133,15 @@ sub content {
     },
     @pop_cols,
   );
+
+  push @cols, {
+    key   => 'variants',
+    title => 'Variants',
+    sort  => 'html_numeric',
+    help  => 'Variants that contribute to this haplotype\'s difference(s) to the reference',
+  } if $self->param('show_variants') eq 'on';
+
+  $table->add_columns(@cols);
   
   my @rows;
   my $count = 0;
@@ -179,14 +205,23 @@ sub short_population_name {
 sub population_structure {
   my $self = shift;
   my $pop_objs = shift;
+  my $low_level_only = shift;
   
   if(!exists($self->{_population_structure})) {
     my %pop_struct;
     foreach my $pop(@$pop_objs) {
-      next if $pop->name =~ /:ALL$/;
+      my $pop_name = $pop->name;
+      next if $pop_name =~ /:ALL$/ || $pop_name =~ /^_/;
       my $subs = $pop->get_all_sub_Populations();
-      next unless $subs && scalar @$subs;
-      @{$pop_struct{$pop->name}} = map {$_->name} @$subs;
+
+      if($low_level_only) {
+        next if $subs && scalar @$subs;
+        $pop_struct{$pop_name} = [];
+      }
+      else {
+        next unless $subs && scalar @$subs;
+        @{$pop_struct{$pop_name}} = map {$_->name} @$subs;
+      }
     }
     
     $self->{_population_structure} = \%pop_struct;
@@ -200,7 +235,7 @@ sub render_haplotype_row {
   my $ht = shift;
   
   my $pop_objs    = $self->object->population_objects;
-  my $pop_struct  = $self->object->population_structure($pop_objs);
+  my $pop_struct  = $self->population_structure($pop_objs);
   my %pop_descs   = map {$_->name => $_->description} @$pop_objs;
 
   my $flags = $ht->can('get_all_flags') ? $ht->get_all_flags() : [];
@@ -212,6 +247,8 @@ sub render_haplotype_row {
     'deleterious_sift_or_polyphen' => 2,
     'indel' => 3,
     'stop_change' => 4,
+    'resolved_frameshift' => 1,
+    'frameshift' => 4,
   );
   $score += $scores{$_} || 1 for @$flags;
 
@@ -227,18 +264,38 @@ sub render_haplotype_row {
     flags     => $flags_html,
     freq      => sprintf("%.3g (%i)", $ht->frequency, $ht->count),
   };
+
+  $row->{variants} = join(", ", map {$self->render_var_link($_)} @{$ht->get_all_VariationFeatures}) if $self->param('show_variants') eq 'on';
   
   # add per-population frequencies
   my $pop_freqs = $ht->get_all_population_frequencies;
   my $pop_counts = $ht->get_all_population_counts;
   
-  foreach my $pop(keys %$pop_counts) {
+  foreach my $pop(keys %$pop_struct) {
     my $short_pop = $self->short_population_name($pop);
     
-    $row->{$short_pop} = sprintf("%.3g (%i)", $pop_freqs->{$pop}, $pop_counts->{$pop});
+    $row->{$short_pop} = sprintf("%.3g (%i)", $pop_freqs->{$pop} || 0, $pop_counts->{$pop} || 0);
   }
   
   return $row;
+}
+
+sub render_var_link {
+  my $self = shift;
+  my $vf = shift;
+
+  my $hub = $self->hub;
+
+  my ($var, $vf_id) = ($vf->variation_name, $vf->dbID);
+
+  my $zmenu_url = $hub->url({
+    type    => 'ZMenu',
+    action  => 'Variation',
+    v       => $var,
+    vf      => $vf_id,
+  });
+
+  return sprintf('<a class="zmenu" href="%s">%s</a>', $zmenu_url, $var);
 }
 
 sub render_haplotype_name {

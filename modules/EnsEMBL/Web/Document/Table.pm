@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@ use Scalar::Util qw(looks_like_number);
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Web::Attributes;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -52,7 +54,7 @@ sub new {
   return $self;
 }
 
-sub session    :lvalue { $_[0]{'session'};    }
+sub hub :AccessorMutator;
 sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
 sub filename   :lvalue { $_[0]{'filename'};   }
@@ -317,10 +319,10 @@ sub data_table_config {
   
   my $i              = 0;
   my %columns        = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
-  my $session_data   = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
-  my $sorting        = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}{'sorting'}        || [];
+  my $record_data    = $code && $self->hub ? $self->hub->session->get_record_data({type => 'data_table', code => $code}) : {};
+  my $sorting        = $record_data->{'sorting'} ?        from_json($record_data->{'sorting'})        : $self->{'options'}{'sorting'}        || [];
   my $hidden_cols    = [ keys %{{ map { $_ => 1 } @{$self->{'options'}{'hidden_columns'} || []}, map { $_->{'hidden'} ? $columns{$_->{'key'}} : () } @{$self->{'columns'}} }} ];
-  my $hidden         = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $hidden_cols;
+  my $hidden         = $record_data->{'hidden_columns'} ? from_json($record_data->{'hidden_columns'}) : $hidden_cols;
   my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @$hidden_cols }) : '';
   my $config         = sprintf '<input type="hidden" name="code" value="%s" />', encode_entities($code);
   my $sort           = [];

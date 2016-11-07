@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::Attributes;
 
 ### Attributes for modifying default behaviour of subroutines
-### For any attribute is added to a subroutine, the corresponding method from this package gets called with following arguments:
+### For any attribute added to a subroutine, the corresponding method from this package gets called with following arguments:
 ###  - The package that contains the actual method
 ###  - Coderef to the actual method
 ###  - GLOB for the actual method
@@ -31,25 +32,24 @@ use warnings;
 
 use EnsEMBL::Web::Exceptions;
 
-sub Accessor {
-  ## Attribute to declare an accessor method
-  ## If default subroutine returns a key name, then this attribute modifies it to set/get value of that key provided object is a blessed hash
-  ## @param Key name to be accessed
+sub AccessorMutator {
+  ## Attribute to declare a method that can act as an accessor and a mutator (read and write)
+  ## @param Key name to access or mutate the value (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {
     my $object  = shift;
-    $object->{$key} = shift if @_;
-    return $object->{$key};
+    $object->{$key // $method} = shift if @_;
+    return $object->{$key // $method};
   }
 }
 
-sub Getter {
-  ## Attribute to declare a getter method
-  ## @param Key name to get value for
+sub Accessor {
+  ## Attribute to declare a accessor method (readonly)
+  ## @param Key name to get value for (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {
     my $object = shift;
-    return $object->{$key};
+    return $object->{$key // $method};
   }
 }
 
@@ -64,15 +64,25 @@ sub Abstract {
   };
 }
 
+sub Cacheable {
+  ## Attribute to declare a method that should cache its output in a key and return the cached value in further calls
+  ## @param Key name where the cached return value should be saved (defaults to method name)
+  my ($package, $code, $glob, $method, $key) = @_;
+  *{$glob} = sub {
+    my $object = shift;
+    $object->{$key // $method} = $code->($object, @_) unless exists $object->{$key // $method};
+    return $object->{$key // $method};
+  };
+}
+
 sub Deprecated {
   ## Attribute to declare a method to have been deprecated
   ## It modifies the code to print a warning to stderr before calling the actual method
   ## @param Message that needs to be printed as deprecated warning (optional - defaults to a simple message)
   my ($package, $code, $glob, $method, $message) = @_;
   *{$glob} = sub {
-    my @caller  = caller(1);
-    $message  ||= sprintf 'Call to deprecated method %s::%s.', $package, $method;
-    warn sprintf "%s (Called at: %s:%s)\n", $message, $caller[1], $caller[2];
+    my @caller = caller(0);
+#    warn sprintf "Call to deprecated method %s::%s: %s at %s:%s\n", $package, $method, $message || '', $caller[1], $caller[2];
     goto &$code;
   };
 }

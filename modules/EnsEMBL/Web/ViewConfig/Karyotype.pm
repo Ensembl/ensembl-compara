@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,43 +22,44 @@ package EnsEMBL::Web::ViewConfig::Karyotype;
 ### Base for all Karyotype based view configs
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  
-  $self->set_defaults({
-    chr_length => 300,
-    h_padding  => 4,
-    h_spacing  => 6,
-    v_spacing  => 10,
-    rows       => scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES} >= 26 ? 2 : 1,
+
+  $self->set_default_options({
+    'chr_length'  => 300,
+    'h_padding'   => 4,
+    'h_spacing'   => 6,
+    'v_spacing'   => 10,
+    'rows'        => scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES} >= 26 ? 2 : 1,
   });
 }
 
-sub form {
-  my $self = shift;
+sub field_order {
+  ## Abstract method implementation
+  return qw(rows chr_length);
+}
 
-  $self->add_form_element({
-    type    => 'DropDown',
-    name    => 'rows',
-    label   => 'Number of rows of chromosomes',
-    select  => 'select',
-    values  => [
-      { caption => 1, value => 1 },
-      { caption => 2, value => 2 },
-      { caption => 3, value => 3 },
-      { caption => 4, value => 4 },
-    ],
-  });
-
-  $self->add_form_element({
-    type     => 'PosInt',
-    name     => 'chr_length',
-    label    => 'Height of the longest chromosome (pixels)',
-    required => 'yes',
-  });
+sub form_fields {
+  ## Abstract method implementation
+  return {
+    'rows' => {
+      'type'    => 'dropdown',
+      'name'    => 'rows',
+      'label'   => 'Number of rows of chromosomes',
+      'values'  => [ qw(1 2 3 4) ],
+    },
+    'chr_length' => {
+      'type'      => 'posint',
+      'name'      => 'chr_length',
+      'label'     => 'Height of the longest chromosome (pixels)',
+      'required'  => 1,
+    }
+  };
 }
 
 1;

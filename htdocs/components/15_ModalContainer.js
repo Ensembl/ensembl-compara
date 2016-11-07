@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +107,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.getContent(el.href || (tab.length ? tab[0].href : ''), rel.join('-'));
     
     tab = null;
-    
+    // Add class to stop page scroll on modal open
+    $("body").addClass("modal-open");
     return true;
   },
   
@@ -121,6 +123,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     } else if ($('.modal_reload', this.el).length) {
       this.setPageReload(false, true, true);
     }
+    // Remove class to enable page scroll on modal close
+    $("body").removeClass("modal-open");
   },
   
   showOverlay: function (el) {
@@ -255,7 +259,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       },
       error: function (e) {
          if (e.status !== 0) {
-          contentEl.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request failed to load.</p></div></div>');
+          contentEl.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request failed to load.</p><pre></pre></div></div>').find('pre').text(e.responseText);
         }
       },
       complete: function () {

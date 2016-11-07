@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -471,7 +472,7 @@ sub render_transcripts {
       
       # shift the composite container by however much we're bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !$target;
       $self->push($composite);
     }
   }
@@ -676,7 +677,7 @@ sub render_alignslice_transcript {
       
       # shift the composite container by however much we've bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !$target;
       $self->push($composite);
       
       if ($target) {
@@ -1028,7 +1029,7 @@ sub render_genes {
   # Now we need to add the label track, followed by the legend
   if ($flag) {
     my $gl_flag = $self->get_parameter('opt_gene_labels');
-       $gl_flag = 1 unless defined $gl_flag;
+       $gl_flag = 1 if $gl_flag eq '';
        $gl_flag = shift if @_;
        $gl_flag = 0 if $label_threshold * 1001 < $length;
     

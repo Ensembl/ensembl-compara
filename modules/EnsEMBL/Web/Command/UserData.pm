@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ use Digest::MD5 qw(md5_hex);
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::ImageConfig;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -37,12 +39,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $format, $renderer) = @_;
+  my ($self, $method, $format, $renderer, $size_limit) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer);
+  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer, 'size_limit' => $size_limit || 0);
 
   ## Validate format
   my $iow;
@@ -58,12 +60,12 @@ sub upload {
 
   if ($error) {
     $params->{'restart'} = 1;
-    $hub->session->add_data(
+    $hub->session->set_record_data({
       type     => 'message',
       code     => 'userdata_error',
       message  => "There was a problem uploading your data: $error.<br />Please try again.",
       function => '_error'
-    );
+    });
   } else {
     ## Get description from file and save to session
     my $description = $iow->get_metadata_value('description');
@@ -76,9 +78,9 @@ sub upload {
         }
       }
       else {
-        my $data = $hub->session->get_data('type' => 'upload', 'code' => $file->code);
-        $data->{'description'} = $description;
-        $hub->session->set_data(%$data);
+        my $data = $hub->session->get_record_data({'type' => 'upload', 'code' => $file->code});
+        $data->{'description'} = $description if keys %$data;
+        $hub->session->set_record_data($data);
       }
     }
 
@@ -92,62 +94,16 @@ sub upload {
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
+
     # Store last uploaded userdata to highlight on pageload
-    $hub->session->add_data(
+    $hub->session->set_record_data({
       type => 'userdata_upload_code',
+      code => $file->code,
       upload_code => $file->code
-    );
-  } 
+    });
+  }
  
   return $params;
-}
-
-sub check_attachment {
-  my ($self, $url) = @_;
-  my $hub = $self->hub;
-  my $species_defs = $hub->species_defs;
-
-  my $already_attached = 0;
-  my ($redirect, $params, $menu);
-
-  ## Check for pre-configured hubs
-  my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_TRACKHUB_SOURCES||{}};
-  while (my($k, $v) = each (%preconfigured)) {
-    my $hub_info = $species_defs->get_config($hub->species, $k);
-    if ($hub_info->{'url'} eq $url) {
-      $already_attached = 'preconfig';
-      ## Probably a submenu, so get full id
-      my $menu_tree = EnsEMBL::Web::ImageConfig::menus({});
-      my $menu_settings = $menu_tree->{$v};
-      if (ref($menu_settings) eq 'ARRAY') {
-        $menu = $menu_settings->[1].'-'.$v;
-      }
-      else {
-        $menu = $v;
-      }
-      last;
-    }
-  }
-
-  ## Check user's own data
-  unless ($already_attached) {
-    my @attachments = $hub->session->get_data('type' => 'url');
-    foreach (@attachments) {
-      if ($_->{'url'} eq $url) {
-        $already_attached = 'user';
-        ($menu = $_->{'name'}) =~ s/ /_/;
-        last;
-      }
-    }
-  }
-
-  if ($already_attached) {
-    $redirect = 'RemoteFeedback';
-    $params = {'format' => 'TRACKHUB', 'reattach' => $already_attached};
-    $params->{'menu'} = $menu if $menu;
-  }
-
-  return ($redirect, $params);
 }
 
 sub attach {
@@ -166,12 +122,12 @@ sub attach {
   if ($error) {
     $redirect = 'SelectFile';
 
-    $hub->session->add_data(
+    $hub->session->set_record_data({
                         type     => 'message',
                         code     => 'AttachURL',
                         message  => $error,
                         function => '_error'
-                      );
+                      });
   } 
   else {
     ## This next bit is a hack - we need to implement userdata configuration properly! 
@@ -215,9 +171,9 @@ sub attach {
         }
 
         my $t_code = join('_', md5_hex($name . $current_species . $assembly . $url), 
-                                  $hub->session->create_session_id); 
+                                  $hub->session->session_id); 
         unless ($is_old) {
-          my $data = $hub->session->add_data(
+          my $data = $hub->session->set_record_data({
                                         type        => 'url',
                                         code        => $t_code,
                                         url         => $url,
@@ -228,16 +184,17 @@ sub attach {
                                         assembly    => $assembly,
                                         timestamp   => time,
                                         %$options,
-                                        );
+                                        });
 
-          $hub->session->configure_user_data('url', $data);
+          $hub->configure_user_data('url', $data);
 
           $code = $data->{'code'};
           # Store last uploaded userdata to highlight on pageload
-          $hub->session->add_data(
+          $hub->session->set_record_data({
             type => 'userdata_upload_code',
+            code => $code,
             upload_code => $code
-          );    
+          });
           $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
         }
       }

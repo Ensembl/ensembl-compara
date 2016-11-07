@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,10 +60,10 @@ sub content {
     });
     
     $self->add_entry({
-      label    => 'Export Protein',
-      link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'peptide', _format => 'Text' }),
-      external => 1,
-      position => 8
+      label       => 'Export Protein',
+      link        => $hub->url('DataExport', { type => 'Protein', action => '', component => 'ProteinSeq', data_type => 'Transcript', t => $trans_id }),
+      link_class  => 'modal_link',
+      position    => 8
     });
   }
 
@@ -72,9 +73,9 @@ sub content {
   });
   
   $self->add_entry({
-    label    => 'Export cDNA',
-    link     => $hub->url({ type => 'Export', action => 'Output', function => 'Transcript', t => $trans_id, output => 'fasta', param => 'cdna', _format => 'Text' }),
-    external => 1
+    label       => 'Export cDNA',
+    link        => $hub->url('DataExport', { type => 'Transcript', action => '', component => 'TranscriptSeq', data_type => 'Transcript', t => $trans_id }),
+    link_class  => 'modal_link'
   });
 }
 

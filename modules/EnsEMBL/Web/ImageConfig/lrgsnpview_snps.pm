@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,32 +20,36 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::lrgsnpview_snps;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
-  my ($self) = @_;  
+sub init_cacheable {
+  ## @override
+  my ($self) = @_;
+
+  $self->SUPER::init_cacheable(@_);
 
   $self->set_parameters({
     title       => 'SNPs',
-    show_labels => 'no',   # show track names on left-hand side
+    no_labels   => 1,
     label_width => 100,     # width of labels on left-hand side
     bgcolor     => 'background1',
     bgcolour1   => 'background3',
     bgcolour2   => 'background1',
   });
-  
+
   $self->create_menus(
     other => 'Decorations',
   );
-  
+
   $self->add_tracks('other',
     [ 'snp_fake',             '', 'snp_fake',             { display => 'on',  strand => 'f', colours => $self->species_defs->colour('variation'), tag => 2 }],
     [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', caption => 'Variant Legend' }],
     [ 'snp_fake_haplotype',   '', 'snp_fake_haplotype',   { display => 'off', strand => 'r', colours => $self->species_defs->colour('haplotype') }],
-    [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->species_defs->colour('haplotype'), caption => 'Haplotype legend', src => 'all' }],      
+    [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->species_defs->colour('haplotype'), caption => 'Haplotype legend', src => 'all' }],
   );
- 
+
   $self->load_tracks;
 }
 

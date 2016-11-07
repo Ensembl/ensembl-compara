@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,29 +39,29 @@ sub content {
   ### Options for gene sequence output
   my $self  = shift;
   my $hub   = $self->hub;
-
+  my $default_selected = 'pdf'; # pdf/journal/poster/...
   my $html = '<h1>Image download</h1>';
 
   my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'ImageOutput',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
-  my $intro_fieldset = $form->add_fieldset();
+  my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
 
+  my $intro_fieldset = $form->add_fieldset();
   $intro_fieldset->add_field({
                         'type'  => 'String',
                         'name'  => 'filename',
                         'label' => 'File name',
-                        'value' => $self->default_file_name,
+                        'value' => $self->default_file_name($radio_info->{$default_selected}->{format}),
                         });
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
-  my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
   my $formats     = [];
 
   foreach (sort {$radio_info->{$a}{'order'} <=> $radio_info->{$b}{'order'}} keys %$radio_info) {
     my $info_icon = $radio_info->{$_}{'info'} 
-                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="<p>%s</p>%s" />', 
-                                    $radio_info->{$_}{'label'}, $radio_info->{$_}{'info'} 
+                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="%s" />',
+                                    encode_entities(qq(<p>$radio_info->{$_}{'label'}</p>$radio_info->{$_}{'info'}))
                       : '';
     my $caption = sprintf('<b>%s</b> - %s%s', 
                             $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'}, $info_icon);
@@ -72,7 +73,7 @@ sub content {
                 'type'    => 'Radiolist',
                 'name'    => 'format',
                 'values'  => $formats,
-                'value'   => 'journal',
+                'value'   => $default_selected,
                 );
   $fieldset->add_field(\%params);
 
@@ -134,15 +135,17 @@ sub content {
 
 sub default_file_name {
   my $self  = shift;
+  my $ext = shift || '';
   my $hub   = $self->hub;
   my $name  = $hub->species_defs->SPECIES_COMMON_NAME;
 
   my $type = $hub->param('data_type');
+  my $action = $hub->param('data_action');
 
   if ($type eq 'Location') {
     ## Replace hyphens and colons, because they aren't export-friendly
-    (my $location = $hub->param('r')) =~ s/:|-/_/g;
-    $name .= "_$location";
+    my $suffix = $action eq 'Genome' ? 'genome' : ($hub->param('r') || '' =~ s/:|-/_/gr);
+    $name .= "_$suffix";
   }
   elsif ($type eq 'Gene') {
     my $data_object = $hub->param('g') ? $hub->core_object('gene') : undef;
@@ -153,7 +156,7 @@ sub default_file_name {
       $name .= $disp_id || $stable_id;
     }
   }
-  return $name.'.png';
+  return $name . ($ext ? ".$ext" : '');
 }
 
 1;

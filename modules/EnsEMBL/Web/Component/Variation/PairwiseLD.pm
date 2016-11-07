@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,8 +91,9 @@ sub content_results {
   $second_variant_name =~ s/\s+$//;
 
   # set path information for LD calculations
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $species_defs->ENSEMBL_TMP_TMP;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE     = $species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::VCF_BINARY_FILE = $species_defs->ENSEMBL_LD_VCF_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH        = $species_defs->ENSEMBL_TMP_TMP;
 
   my $ldfca = $variant->adaptor->db->get_LDFeatureContainerAdaptor;
   my $va = $variant->adaptor->db->get_VariationAdaptor;

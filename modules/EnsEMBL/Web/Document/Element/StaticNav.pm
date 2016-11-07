@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,8 +40,8 @@ sub content {
   (my $pathstring = $here) =~ s/^\///; ## Remove leading slash
   my @path        = split '/', $pathstring;
   my $img_url     = $self->img_url;
-  my $config      = $self->hub->session->get_data(type => 'nav', code => 'static') || {};
-  (my $dir        = $here) =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/;                                 ## Strip filename from current location - we just want directory
+  my $config      = $self->hub->session->get_record_data({type => 'nav', code => 'static'});
+  my $dir         = $here =~ s/^\/(.+\/)*(.+)\.(.+)$/$1/r;                                 ## Strip filename from current location - we just want directory
   my $this_tree   = $dir eq 'info/' ? $tree : $self->walk_tree($tree, $dir, \@path, 1);    ## Recurse into tree until you find current location
   my @pages       = map { ref $this_tree->{$_} eq 'HASH' ? $_ : () } keys %$this_tree;
   my @page_order  = sort {
@@ -133,7 +134,7 @@ sub content {
   ## SEARCH -------------------------------------------
   
   if ($ENV{'HTTP_USER_AGENT'} !~ /Sanger Search Bot/) {
-    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/psychic';
+    my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/Psychic';
     my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
     my $form                = EnsEMBL::Web::Form->new({ action => $search_url, method => 'get', skip_validation => 1, class => [ 'search-form', 'clear' ] });
     

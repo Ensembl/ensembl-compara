@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@ sub content {
   my $self = shift;
   my $hub  = $self->hub;
   
-  return if $hub->param('show_top_panel') eq 'no';
+  return if $self->param('show_top_panel') eq 'no';
   
   my $threshold       = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width     = $self->image_width;
@@ -47,13 +48,13 @@ sub content {
   my $i               = 1;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $compara_db      = EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database;
-  my $join_genes      = $hub->param('opt_join_genes_top') eq 'on';
+  my $join_genes      = $self->param('opt_join_genes_top') eq 'on';
   my @images;
   
   foreach (@$slices) {
     my $highlight_gene    = $hub->param('g' . ($i - 1));
     my $slice             = $_->{'slice'};
-    my $image_config      = $hub->get_imageconfig('MultiTop', "contigviewtop_$i", $_->{'species'});
+    my $image_config      = $hub->get_imageconfig({type => 'MultiTop', cache_code => "contigviewtop_$i", species => $_->{'species'}});
     my $annotation_status = $image_config->get_node('annotation_status');
     
     if ($slice->length <= $threshold) {

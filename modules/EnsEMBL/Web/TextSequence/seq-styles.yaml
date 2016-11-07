@@ -1,0 +1,209 @@
+- type: background
+  key: SEQ_CONSERVATION
+  class: con
+  text: Conserved regions
+  source: sequence_markup
+  section: other
+  name: conservation
+  message: Conserved regions are where >50&#37; of bases in alignments match
+
+- type: background
+  key: SEQ_DIFFERENCE
+  class: dif
+  text: Differs from primary species
+  source: sequence_markup
+  section: other
+  name: difference
+
+- key: SEQ_RESEQEUNCING
+  source: sequence_markup
+  name: res
+
+- key: SEQ_EXON0
+  class: e0
+  text:
+    exons_case: ALTERNATING EXONS
+    _else: Alternating exons
+  source: sequence_markup
+  section: exons
+  name: exon0
+
+- key: SEQ_EXON1
+  class:
+    exons_case: el
+    _else: e1
+  text:
+    exons_case: alternating exons
+    _else: Alternating exons
+  source: sequence_markup
+  section: exons
+  name: exon1
+
+- key: SEQ_EXON2
+  class: e2
+  text: Residue overlap splice site
+  source: sequence_markup
+  section: exons
+  name: exon2
+
+- key: SEQ_EXON2
+  class: e2
+  text: All exons
+  source: sequence_markup
+  section: exons
+  name: compara
+
+- key: SEQ_EXONUTR
+  source: sequence_markup
+  class: eu
+
+- key: SEQ_EXONFLANK
+  source: sequence_markup
+  class: ef
+
+- type: background
+  key: SEQ_EXONOTHER
+  class: eo
+  text: <<exon_type>> exons
+  source: sequence_markup
+  section: exons
+  name: other
+
+- key: SEQ_EXONGENE
+  class: eg
+  text: <<gene_name>> <<gene_exon_type>>
+  source: sequence_markup
+  section: exons
+  name: gene
+  css:
+    font-weight: bold
+
+- key: SEQ_INTRON
+  source: sequence_markup
+  name: ei
+
+- type: background
+  key: SEQ_CODONC0
+  text: Alternating codons
+  source: sequence_markup
+  section: codons
+  name: c0
+
+- type: background
+  key: SEQ_CODONC1
+  text: Alternating codons
+  source: sequence_markup
+  section: codons
+  name: c1
+
+- type: background
+  key: SEQ_CODONUTR
+  class: cu
+  text: UTR
+  source: sequence_markup
+  section: other
+  name: utr
+
+- type: background
+  key: SEQ_CODON
+  text: START/STOP codons
+  source: sequence_markup
+  section: codons
+  name: co
+
+- key: SEQ_AMINOACID
+  source: sequence_markup
+  name: aa
+
+- type: both
+  key: SEQ_REGION_CHANGE
+  class: end
+  text: Start/end of aligned region
+  source: sequence_markup
+  section: other
+  name: align_change
+
+- source: sequence_markup
+  name: bold
+  css:
+    font-weight: bold
+
+- key: SEQ_EXON0
+  source: sequence_markup
+  name: el
+  css:
+    text-transform: lowercase
+
+- kind: all
+  source: variation
+  type: both
+  colour: name
+  section: variants
+  css:
+    text-decoration: underline
+
+- name: failed
+  section: variants
+  title: Suspect variants which failed our quality control checks
+
+- source: sequence_markup
+  key: SEQ_MAIN_SNP
+  name: var
+  css:
+    background-color: "#ffffff"
+    font-weight: bold
+    text-decoration: underline
+
+- source: sequence_markup
+  name: focus
+  type: both
+  section:
+    focus_variant: variants
+  key: SEQ_FOCUS
+  text: Focus variant
+  title: The Focus variant corresponds to the current variant<<example>>
+  legend-css:
+    text-decoration: underline
+    font-weight: bold
+  config: focus_variant
+
+- name: population_filter
+  message: >
+    Displaying variants for <<population_filter>> with a minimum
+    frequency of <<min_frequency>>
+  section: message
+
+- name: consequence_filter
+  message: Variants are filtered by consequence type
+  section: message
+
+- name: alignment_numbering
+  message: >
+    For secondary species we display the coordinates of the first and
+    the last mapped (i.e A,T,G,C or N) basepairs of each line
+  section: message
+
+- name: resequencing
+  message:
+    match_display:
+      - >
+        <code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to
+        reference sequence (no read coverage data available)
+      - >
+        <code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to
+        reference sequence (genotype or read coverage data available)
+    _else:
+      - >
+        <code>acgt&nbsp;</code>Implicit sequence (no read coverage
+        data available)
+      - >
+        <code>ACGT&nbsp;</code>Confirmed sequence (genotype or read
+        coverage data available)
+  section: message
+
+- name: resequencing
+  message: >
+    <code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage
+    at this position
+  section: message
+

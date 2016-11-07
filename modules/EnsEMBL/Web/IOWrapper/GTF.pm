@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,20 +39,25 @@ sub build_feature {
   my $type          = $self->parser->get_type;
   my $strand        = $self->parser->get_strand || 0;
 
-  if ($transcript_id) { ## Feature is part of a transcript!
-    if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
-      push @{$data->{$track_key}{'transcripts'}{$transcript_id}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+  if ($transcript_id && $type ne 'transcript') { ## Feature is part of a transcript!
+    if ($data->{$track_key}{'transcript_parts'}{$transcript_id}) {
+      push @{$data->{$track_key}{'transcript_parts'}{$transcript_id}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'transcripts'}{$transcript_id} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+      $data->{$track_key}{'transcript_parts'}{$transcript_id} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
     }
   }
   else { ## Single feature - add to track as normal
-    if ($data->{$track_key}{'features'}) {
-      push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+    if ($type eq 'transcript' && $transcript_id) {
+      $data->{$track_key}{'transcripts'}{$transcript_id} = $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+      if ($data->{$track_key}{'features'}) {
+        push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+      }
+      else {
+        $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+      }
     }
   }
 }
@@ -59,33 +65,16 @@ sub build_feature {
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
-  #use Data::Dumper;
-  #warn Dumper($data);
   
   while (my ($track_key, $content) = each (%$data)) {
-    next unless $content->{'transcripts'};
-    while (my ($transcript_id, $segments) = each (%{$content->{'transcripts'}})) {
+    while (my ($transcript_id, $segments) = each (%{$content->{'transcript_parts'}})) {
 
       my $no_of_segments = scalar(@{$segments||[]});
       next unless $no_of_segments;
 
-      my ($hashref, %transcript);
-
-      ## Is this a transcript plus exons, or just exons?
-      my $no_separate_transcript = 0;
-      if ($segments->[0]{'type'} eq 'transcript') {
-        my $hashref = shift @$segments;
-      }
-      else {
-        $no_separate_transcript = 1;
-        $hashref = $segments->[0];
-      }
-      %transcript = %$hashref;
-
+      my %transcript = %{$data->{$track_key}{'transcripts'}{$transcript_id} || $segments->[0]};
       $transcript{'label'}    ||= $transcript{'transcript_name'} || $transcript{'transcript_id'};
       $transcript{'structure'}  = [];
-
-      ## Now turn exons into internal structure
 
       ## Sort elements: by start then by reverse name, 
       ## so we get UTRs before their corresponding exons/CDS
@@ -93,8 +82,9 @@ sub post_process {
                                     $a->{'start'} <=> $b->{'start'}
                                     || lc($b->{'type'}) cmp lc($a->{'type'})
                                   } @$segments;
-      my $args = {'seen' => {}, 'no_separate_transcript' => $no_separate_transcript};   
+      my $args = {'seen' => {}, 'no_separate_transcript' => 1};   
       
+      ## Now turn exons into internal structure
       foreach (@ordered_segments) {
         ($args, %transcript) = $self->add_to_transcript($_, $args, %transcript);
       }
@@ -105,17 +95,22 @@ sub post_process {
       else {
         $data->{$track_key}{'features'} = [\%transcript]; 
       }
+
+      delete $data->{$track_key}{'transcripts'}{$transcript_id};
     }
+
+    ## Now add any lone transcripts (with no exons) to the feature array
+    $data->{$track_key}{'features'} ||= [];
+    push $data->{$track_key}{'features'}, values %{$data->{$track_key}{'transcripts'}||{}};
+
     ## Transcripts will be out of order, owing to being stored in hash
     ## Sort by start coordinate, then reverse length (i.e. longest first)
-    foreach my $s ('1', '-1') {
-      my @sorted_features = sort {
+    my @sorted_features = sort {
                                   $a->{'seq_region'} cmp $b->{'seq_region'}
                                   || $a->{'start'} <=> $b->{'start'}
                                   || $b->{'end'} <=> $a->{'end'}
-                                  } @{$data->{$track_key}{'features'}{$s}||[]};
-      $data->{$track_key}{'features'}{$s} = \@sorted_features;
-    }
+                                  } @{$data->{$track_key}{'features'}||[]};
+    $data->{$track_key}{'features'} = \@sorted_features;
   }
 }
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,8 +39,8 @@ sub content {
   my $hub   = $self->hub;
 
   ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
-  my $settings = $viewconfig->form_fields;
+  my $view_config  = $self->view_config;
+  my $settings = $view_config->form_fields;
 
   ## Configure sequence options - check if the transcript 
   ## has translations and/or UTRs
@@ -64,8 +65,16 @@ sub content {
                           'selectall' => 'on',
   };
 
+  $settings->{'variants_as_n'} = {
+    type  => 'CheckBox',
+    label => 'Replace ambiguous bases with N',
+    name  => 'variants_as_n',
+    value => 'on',
+    no_user => 1,
+  };
+
   ## Options per format
-  my $fields_by_format = $self->configure_fields($viewconfig);
+  my $fields_by_format = $self->configure_fields($view_config);
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
@@ -81,11 +90,12 @@ sub configure_fasta {
 }
 
 sub configure_fields {
-  my ($self, $viewconfig) = @_;
-  my @field_order = $viewconfig->field_order;
+  my ($self, $view_config) = @_;
+  my @field_order = $view_config->field_order;
 
+  my @extra_export_fields = qw(variants_as_n);
   return {
-          'RTF'   => [@field_order],
+          'RTF'   => [@field_order,@extra_export_fields],
           'FASTA' => ['extra'],
   };
 }

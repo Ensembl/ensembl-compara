@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -815,8 +816,6 @@ sub fetch_homology_species_hash {
 
   return {} unless $database;
 
-  $self->timer_push( 'starting to fetch' , 6 );
-
   my $query_member = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
   return {} unless defined $query_member ;
@@ -825,8 +824,6 @@ sub fetch_homology_species_hash {
 #  It is faster to get all the Homologues and discard undesired entries
 #  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member);
-
-  $self->timer_push( 'fetched' , 6 );
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
@@ -844,8 +841,6 @@ sub fetch_homology_species_hash {
       $node = $node->children->[0];
     }
   }
-
-  $self->timer_push( 'classification' , 6 );
 
   foreach my $homology (@$homologies_array) {
     next unless $homology->description =~ /$homology_description/;
@@ -869,8 +864,6 @@ sub fetch_homology_species_hash {
     # There should be a way of retrieving this name correctly instead.
     push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
   }
-
-  $self->timer_push('homologies hacked', 6);
 
   @{$homologues{$_}} = sort { $classification{$a->[2]} <=> $classification{$b->[2]} } @{$homologues{$_}} for keys %homologues;
 
@@ -1081,8 +1074,7 @@ sub reg_features {
 
 =head2 vega_projection
 
- Arg[1]       : EnsEMBL::Web::Proxy::Object
- Arg[2]       : Alternative assembly name
+ Arg[1]       : Alternative assembly name
  Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
  Description : map an object to an alternative (vega) assembly
  Return type : arrayref

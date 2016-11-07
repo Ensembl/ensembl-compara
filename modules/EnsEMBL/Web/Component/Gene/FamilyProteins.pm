@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -202,7 +203,7 @@ sub get_export_data {
 ## Get data for export
   my $self    = shift;
   ## Need to explicitly create Family, as it's not a standard core object
-  $self->hub->{'_builder'}->create_objects('Family', 'lazy');
+  $self->hub->builder->create_object('Family');
   my $family = $self->hub->core_object('family');
   if ($family) {
     return $family->Obj->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);

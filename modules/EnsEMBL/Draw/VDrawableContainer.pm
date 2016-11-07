@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +40,7 @@ sub new {
     $container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
     
     my @chromosomes = ($container->{'chr'});
-    my @configs     = $config->get_tracks;
+    my @configs     = @{$config->get_tracks};
     my $scalex      = $config->get_parameter('image_height') / $config->get_parameter('container_width');
     my $pos         = 100000;
     my $tmp         = {};
@@ -51,12 +52,15 @@ sub new {
       @chromosomes = reverse @chromosomes if $container->{'format'} && $container->{'format'} eq 'pdf'; # reverse the order for drawing
       $flag        = 1;
     }
-   
-    $config->texthelper->{'_scalex'}           = $scalex;
-    $config->{'transform'}->{'scalex'}         = $scalex;
-    $config->{'transform'}->{'absolutescalex'} = 1;
-    $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
-    
+
+    $config->texthelper->scalex($scalex);
+
+    my $transform_obj = $config->transform_object;
+
+    $transform_obj->scalex($scalex);
+    $transform_obj->absolutescalex(1);
+    $transform_obj->translatex($transform_obj->translatex + $config->get_parameter('top_margin'));
+
     foreach my $chr (@chromosomes) {
       $container->{'chr'} = $chr;
       
@@ -166,7 +170,7 @@ sub new {
 
     my $translateX = shift @min;
     
-    $config->{'transform'}->{'translatex'} -= $translateX * $scalex;
+    $transform_obj->translatex($transform_obj->translatex - $translateX * $scalex);
     
     my $xoffset   = -$translateX * $scalex;
     my $row_index = 0;
@@ -180,7 +184,7 @@ sub new {
         $xoffset  += $config->image_width - $translateX * $scalex;
         
         ## Shift down - and then close up gap!
-        $config->{'transform'}->{'translatex'} += $config->image_width - $translateX * $scalex;
+        $transform_obj->translatex($transform_obj->translatex + $config->image_width - $translateX * $scalex);
       }
       
       $config->set_parameter('max_width', $xoffset + $config->get_parameter('image_width'));
@@ -245,7 +249,7 @@ sub new {
       }
       
       ########## remove any whitespace at the top of this row
-      $config->{'transform'}->{'translatey'} = -$glyphset->miny + $spacing/2 + $yoffset;
+      $transform_obj->translatey(-$glyphset->miny + $spacing/2 + $yoffset);
       $glyphset->transform;
       
       ########## translate the top of the next row to the bottom of this one
@@ -255,9 +259,7 @@ sub new {
     
     $self->{'glyphsets'} = \@glyphsets;
   }
-  
-  $self->timer_push("DrawableContainer->new: End GlyphSets");
-  
+
   return $self;
 }
 
@@ -289,18 +291,12 @@ sub _init {
     spacing                 => $spacing      || $contents->[0][1]->get_parameter('spacing') || 0,
     strandedness            => $strandedness || 0,
     __extra_block_spacing__ => 0,
-    timer                   => $contents->[0][1]->species_defs->timer
   };
 
   $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
 
   bless $self, $class;
   return $self;
-}
-
-sub timer_push {
-  my ($self, $tag, $dep) = @_;
-  $self->{'timer'}->push($tag, $dep, 'draw');
 }
 
 ########## render does clever drawing things

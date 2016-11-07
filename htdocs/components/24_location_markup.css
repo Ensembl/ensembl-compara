@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +39,27 @@
 .navbar.narrow2 div.image_nav    { position: static; padding: 8px 0 0 35px; clear: both; }
 
 .navbar a.go-button {
-  position: relative; line-height: 20px; vertical-align: top; padding: 2px 8px; margin-left: 2px;
-  font-size: 10px; font-weight: bold; color: [[BUTTON_TEXT]]; background-color: [[BUTTON_BG]]; border: 1px solid [[BUTTON_TEXT]]; cursor: pointer;
-  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]]; -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]]; box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+  position: relative;
+  line-height: 20px;
+  vertical-align: top;
+  padding: 2px 8px;
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: [[BUTTON_TEXT]];
+  background-color: [[BUTTON_BG]];
+  border: 1px solid [[BUTTON_TEXT]];
+  cursor: pointer;
+  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+  box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
 }
 .navbar a.go-button:hover { 
   background-color: [[BUTTON_BG_HOVER]];
-  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]]; -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]]; box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
+  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
+  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
+  box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
 }
 
 .navbar .relocate a.go-button           { top: 2px; padding: 4px 8px; }

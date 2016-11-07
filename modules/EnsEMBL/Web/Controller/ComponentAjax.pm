@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,49 +20,41 @@ limitations under the License.
 package EnsEMBL::Web::Controller::ComponentAjax;
 
 use strict;
+use warnings;
 
-use Apache2::RequestUtil;
-use HTML::Entities  qw(decode_entities);
-use JSON            qw(from_json);
-use URI::Escape     qw(uri_unescape);
+use JSON;
 
-use EnsEMBL::Web::ViewConfig::Regulation::Page;
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::NewTable::Callback;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-use base qw(EnsEMBL::Web::Controller::Component);
+use parent qw(EnsEMBL::Web::Controller::Component);
 
 sub render_page {
-  my ($self) = @_;
+  ## @override
+  my $self  = shift;
+  my $func  = $self->hub->param('source') || '';
+     $func  =~ s/\W//g;
+     $func  = "ajax_$func";
 
-  my $func = $self->hub->param('source');
-  $func =~ s/\W//g;
-  $func = "ajax_$func";
-  my $module_name = $self->hub->function;
-  my $type = $self->hub->type;
-  my $pkg = "EnsEMBL::Web::Component::${type}::${module_name}";
-  $self->dynamic_use($pkg);
-  my $renderer = undef;
-  my $component = $pkg->new($self->hub,$self->builder,$renderer);
-  $self->$func($component) if $self->can($func);
+  my $res;
+
+  try {
+    $res = $self->$func(dynamic_require($self->component)->new($self->hub, $self->builder, undef)) if $self->can($func);
+  } catch {
+    $res = { 'failed' => $_->message };
+  };
+
+  printf to_json($res || {});
 }
 
 sub ajax_enstab {
-  my ($self,$component) = @_;
+  my ($self, $component) = @_;
 
-  my $hub = $self->hub;
-  my $data;
-  eval {
-    my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
-    my $out = $callback->go();
-    $out = $self->jsonify($out) if ref($out);
-    print $out;
-  };
-  if($@) {
-    warn $@;
-    print $self->jsonify({ failed => $@ });
-  }
+  my $callback  = EnsEMBL::Web::NewTable::Callback->new($self->hub, $component);
+  my $out       = $callback->go();
+
+  return $out if ref $out;
 }
 
 1;

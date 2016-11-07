@@ -1,6 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -141,6 +142,7 @@ sub _init {
     
     foreach my $tag (@tags) {
       if ($tag->{'style'} =~ /^(left-snp|delta|box)$/) {
+        ## Migrated to new drawing code - can probably be removed  
         $tag_start = $start - 1 - 4 / $pix_per_bp;
         $tag_end   = $start - 1 + 4 / $pix_per_bp;
       } elsif ($tag->{'style'} =~ /^(underline|fg_ends|label)$/) {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,15 +23,13 @@ package EnsEMBL::Web::Document::Element::Configurator;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
-use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Attributes;
 
 use base qw(EnsEMBL::Web::Document::Element::Content);
 
-sub tree    :lvalue { $_[0]->{'tree'};    }
-sub active  :lvalue { $_[0]->{'active'};  }
-sub caption :lvalue { $_[0]->{'caption'}; }
+sub tree    :AccessorMutator;
+sub active  :AccessorMutator;
+sub caption :AccessorMutator;
 
 sub content {
   my $self = shift;
@@ -57,15 +56,13 @@ sub init {
   my $self       = shift;
   my $controller = shift;
   my $navigation = $controller->page->navigation;
-  
+
   $self->init_config($controller);
   
   $navigation->tree($self->tree);
   $navigation->active($self->active);
   $navigation->caption($self->caption);
   $navigation->configuration(1);
-  
-  $self->{'panel_type'} ||= 'Configurator';
 }
 
 sub init_config {
@@ -74,17 +71,17 @@ sub init_config {
   my $action      = $hub->action;
   my $view_config = $hub->get_viewconfig($action);
   my $img_url     = $self->img_url;
-  
+
   return unless $view_config;
-  
+
   my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
-  my $image_config = $view_config->image_config ? $hub->get_imageconfig($view_config->image_config, 'configurator', $hub->species) : undef;
+  my $image_config = $view_config->image_config_type ? $hub->get_imageconfig({type => $view_config->image_config_type, cache_code => 'configurator', species => $hub->species}) : undef;
   my ($search_box, $species_select);
   
   $view_config->build_form($controller->object, $image_config);
   
   if ($image_config) {
-    if ($image_config->multi_species) {
+    if ($image_config->get_parameter('multi_species')) {
 
       my @sp = @{$image_config->species_list};
 
@@ -108,36 +105,37 @@ sub init_config {
     
     $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" name="configuration_search_text" /></div>};
     
-    $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
+    $self->active($image_config->get_parameter('active_menu') || 'active_tracks');
   }
   
-  if (!$view_config->tree->get_node($self->active)) {
-    my @nodes     = @{$view_config->tree->child_nodes};
-    $self->active = undef;
+  if (!$self->active || !$view_config->tree->get_node($self->active)) {
+    my @nodes     = @{$view_config->tree->root->child_nodes};
+    $self->active(undef);
     
     while (!$self->active && scalar @nodes) {
       my $node      = shift @nodes;
-      $self->active = $node->id if $node->data->{'class'};
+      $self->active($node->id) if $node->data->{'class'};
     }
   }
   
-  my $form = $view_config->get_form;
+  my $form = $view_config->form;
   
-  if ($hub->param('partial')) {
-    $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
-    $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
+  if ($hub->param('matrix')) {
+    $panel->{'content'} = $form->render;
   } else {
     $form->add_hidden({ name => 'component', value => $action, class => 'component' });
-    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config));
+    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config_type));
   }
-  
+
+  $self->{'panel_type'} = $form->js_panel;
+
   $self->add_panel($panel);
   
-  $self->tree    = $view_config->tree;
-  $self->caption = 'Configure view';
+  $self->tree($view_config->tree);
+  $self->caption('Configure view');
   
-  $self->{'json'} = $view_config->{'json'} || {};
-  
+  $self->{'json'} = $view_config->form->{'json'} || {}; #TODO - respect encapsulation
+
   $self->add_image_config_notes($controller) if $image_config;
 }
 
@@ -174,7 +172,7 @@ sub add_image_config_notes {
   $self->add_panel($panel);
 }
 
-sub save_as {
+sub save_as { return '';
   my ($self, $user, $view_config, $image_config) = @_;
   my $hub    = $self->hub;
   my $data   = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });

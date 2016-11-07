@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Object::Location;
 
 ### NAME: EnsEMBL::Web::Object::Location
 ### Wrapper around a Bio::EnsEMBL::Slice object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
@@ -86,6 +85,26 @@ sub availability {
   }
   
   return $self->{'_availability'};
+}
+
+sub has_strainpop {
+  my ($self) = @_;
+
+  my $hub = $self->hub;
+  my $pop_adaptor = $hub->species_defs->databases->{'DATABASE_VARIATION'} ? $hub->get_adaptor('get_PopulationAdaptor','variation') : undef;
+  my $pop = $pop_adaptor && $pop_adaptor->fetch_by_name('Mouse Genomes Project');
+  return defined $pop;
+}
+
+sub implausibility {
+  my ($self) = @_;
+
+  if(!$self->{'_implausibility'}) {
+    my $implausibility = {};
+    $implausibility->{'strainpop'} = !$self->has_strainpop;
+    $self->{'_implausibility'} = $implausibility;
+  }
+  return $self->{'_implausibility'};
 }
 
 our $MEMD = EnsEMBL::Web::Cache->new;
@@ -1217,8 +1236,9 @@ sub ld_for_slice {
 
   my ($self, $pop_obj, $width) = @_;
   ## set path information for LD calculations
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE     = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::VCF_BINARY_FILE = $self->species_defs->ENSEMBL_LD_VCF_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH        = $self->species_defs->ENSEMBL_TMP_TMP;
 
   my ($seq_region, $start, $end, $seq_type ) = ($self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_type);
   $width = $self->param('w') || $end - $start unless $width;
@@ -1372,8 +1392,9 @@ sub get_ld_values {
   my ($populations, $snp) = @_;
   
   ## set path information for LD calculations
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
-  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE     = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::VCF_BINARY_FILE = $self->species_defs->ENSEMBL_LD_VCF_FILE;
+  $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH        = $self->species_defs->ENSEMBL_TMP_TMP;
   
   my %ld_values;
   my $display_zoom = $self->round_bp($self->seq_region_end - $self->seq_region_start);
@@ -1620,6 +1641,18 @@ sub sorted_marker_features {
     $a->[1] <=> $b->[1] || 
     $a->[2] <=> $b->[2] 
   } map [ $_->seq_region_name, $_->start, $_->end, $_ ], @marker_features;
+}
+
+## Allele/genotype colours
+sub get_allele_genotype_colours {
+  my $self = shift;
+
+  my %colours = ('A' => '<span style="color:green">A</span>',
+                 'C' => '<span style="color:blue">C</span>',
+                 'G' => '<span style="color:#ff9000">G</span>',
+                 'T' => '<span style="color:red">T</span>'
+                );
+  return \%colours;
 }
 
 1;

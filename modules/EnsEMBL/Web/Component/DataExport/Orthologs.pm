@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +38,7 @@ sub content {
   my $hub   = $self->hub;
 
   ## Note - these options aren't available on the page, so they
-  ## don't belong in the viewconfig
+  ## don't belong in the view_config
   my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my %seq_element     = %{$markup_options->{'seq_type'}};
   my %align_element   = %seq_element;

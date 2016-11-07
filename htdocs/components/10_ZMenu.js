@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +181,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populate: function (link, extra) {
-    var menu    = this.title.split('; ');
+    var menu    = this.title.toString().split('; ');
     var caption = menu.shift();
     
     this.buildMenu(menu, caption, link, extra, true);
@@ -261,7 +262,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     if (url && url.match('/ZMenu/')) {
       $.extend($.ajax({
         url:      url,
-        data:     this.coords.clickStart ? { click_chr: this.coords.clickChr || Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd } : {},
+        data:     this.coords.clickStart ? { click_chr: this.coords.clickChr || Ensembl.location.name, click_start: this.coords.clickStart, click_end: this.coords.clickEnd, click_y: this.coords.clickY } : {},
         dataType: this.crossOrigin ? 'jsonp' : 'json',
         context:  this,
         success:  $.proxy(this.buildMenuAjax,  this),
@@ -626,7 +627,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.el.scrollTop(0).draggable($.extend({
         handle:       '.header:not(.subheader)',
         containment:  'document'
-      }, navigator.userAgent.match(/webkit/i) ? {} : {
+      }, Ensembl.browser.webkit ? {} : {
         start:        function() { $(this).css({'margin-top': -1 * $(window).scrollTop() }); },
         stop:         function() { $(this).css({'top': parseInt($(this).css('top')) + parseInt($(this).css('margin-top')), 'margin-top': 0 }); }
       }));

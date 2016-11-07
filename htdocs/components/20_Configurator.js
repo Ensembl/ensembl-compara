@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,11 +87,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.viewConfig         = {};
     this.subPanels          = [];
     this.searchCache        = [];
-    
-    // Move user data to below the multi entries (active tracks, favourites, search)
-    this.elLk.links.filter('.move_to_top').insertAfter(this.elLk.links.has('[rel=multi]').last()).removeClass('move_to_top');
-    this.elLk.configDivs.filter('.move_to_top').insertBefore(this.elLk.configDivs.first()).removeClass('move_to_top');
-    
+
     for (type in this.params.tracksByType) {
       group = this.params.tracksByType[type];
       i     = group.length;

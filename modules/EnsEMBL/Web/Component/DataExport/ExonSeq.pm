@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,10 +39,11 @@ sub configure_fasta {
 }
 
 sub configure_fields {
-  my ($self, $viewconfig) = @_;
-  my @field_order = $viewconfig->field_order;
+  my ($self, $view_config) = @_;
+  my @field_order = $view_config->field_order;
+
   return {
-    'RTF'   => ['extra', @field_order],
+    'RTF'   => ['extra', @field_order,'variants_as_n'],
     'FASTA' => [qw(extra flanking)],
   };
 }

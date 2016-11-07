@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +19,13 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::Messages::Other;
 
-### Module to output info messages from session, etc
+### Module to output info messages saved in session records
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Component::Messages);
+use parent qw(EnsEMBL::Web::Component::Messages);
 
-sub content {
-  my $self = shift;
-  
-  return $self->SUPER::content('_info', '_hint'); 
-}
+sub priority { qw(_info _hint) }
 
 1;

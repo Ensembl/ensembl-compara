@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,31 +24,25 @@ package EnsEMBL::Web::Document::HTML::DidYouKnow;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Hub;
-
-use base qw(EnsEMBL::Web::Document::HTML);
+use parent qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-  my $self           = shift;
-  my $hub            = EnsEMBL::Web::Hub->new;
-  my $sd             = $hub->species_defs;
-  my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
-  my $img_url        = $sd->img_url;
-  my $sitename       = $sd->ENSEMBL_SITETYPE;
-  my $html           = ''; 
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $sd    = $hub->species_defs;
+  my $html  = ''; 
 
-  return if $SiteDefs::ENSEMBL_SKIP_RSS;
+  return if $sd->ENSEMBL_SKIP_RSS || ($sd->ENSEMBL_SUBTYPE && $sd->ENSEMBL_SUBTYPE eq 'Archive');
 
-  my $rss_path = $hub->species_defs->DATAFILE_BASE_PATH.'/web/blog/minifeed';
-  my $rss_url = $sd->ENSEMBL_TIPS_RSS;
+  my $rss_path  = $sd->ENSEMBL_TMP_DIR.'/web/blog/minifeed';
+  my $rss_url   = $sd->ENSEMBL_TIPS_RSS;
+  my $got       = 0;
+  my $tips      = {};
 
   my %categories = (
                     'new' => 'New!',
                     'did-you-know' => 'Did you know...?', 
                     );
-
-  my $got = 0;
-  my $tips = {};
 
   foreach my $cat (keys %categories) {
     (my $cat_url = $rss_url) =~ s/feed\/$/category\/$cat\/feed\//;
@@ -58,23 +53,23 @@ sub render {
     $got += @{$tips->{$cat}} if $tips->{$cat};
   }
 
-  if ($got) { 
+  if ($got) {
     $html .= '<ul class="bxslider">';
 
-    ## We want all the news plus some random tips
     my $limit = 5;
+    my @tips_to_show = map {[$categories{'new'}, $_->{'content'}]} @{$tips->{'new'}||[]};
 
-    my @tips_to_show = map {[$categories{'new'}, $_->{'content'}]} @{$tips->{'new'}};
-
-    # On a mirror installation we probably don't have or want an ENSEMBL_TIPS_RSS setting, and                                                                                                                         
-    # so don't want to return an empty 'did-you-know' class html div, so return here.                                                                                                                                  
-    return unless @tips_to_show;
-  
     ## Random did-you-knows
     my $to_add = $limit - scalar(@tips_to_show);
-    srand;
 
+    # On a mirror installation we probably don't have or want an ENSEMBL_TIPS_RSS setting, and
+    # so don't want to return an empty 'did-you-know' class html div, so return here.                                            
+    return unless (scalar(@tips_to_show) + $to_add);
+
+    ## Add some random did-you-knows
+    srand;
     for (my $i = 0; $i < $to_add; $i++) {
+      last unless scalar(@{$tips->{'did-you-know'}});
       my $j = int(rand (scalar(@{$tips->{'did-you-know'}}) - 1));
       push @tips_to_show, [$categories{'did-you-know'}, $tips->{'did-you-know'}[$j]{'content'}];
       splice @{$tips->{'did-you-know'}}, $j, 1;

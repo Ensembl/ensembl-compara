@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,17 +84,18 @@ sub init {
   
   foreach (@$components) {
     my $component = $_->[0];
+    my $type      = $_->[1];
     
     next if $done{$component};
     
-    my $view_config = $hub->get_viewconfig(@$_);
+    my $view_config = $hub->get_viewconfig({component => $component, type => $type});
 
     if ($view_config) {
       $self->add_entry({
         id      => "config_$component",
         caption => 'Configure ' . (scalar @$components > 1 ? $view_config->title : '' || 'Page'),
         url     => $hub->url('Config', {
-          type      => $_->[1],
+          type      => $type,
           action    => $component,
           function  => undef
         })

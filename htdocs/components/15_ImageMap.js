@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -466,9 +467,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
         var associated_li = panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack'))
         associated_li.addClass('hover');
-        if(associated_li.hasClass('_new_userdata')) {
-          panel.removeUserDataHighlight();
-        }
       },
       mouseleave: function () {
         panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack')).removeClass('hover');
@@ -481,24 +479,37 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if ($(this).hasClass('pinned')) {
           return;
         }
-        // show label
-        $(this).find('.hover_label').toggle();
-        e.stopPropagation && e.stopPropagation();
+        // show/hide hover label
+        $(this).find('.hover_label')
+               .toggle().off()
+               .click(function(e){
+                  if (e.target.nodeName !== "A" || $(e.target).hasClass('config')) {
+                    e.stopPropagation();
+                  }
+               });
+
+       $(document).off('.hoverMenuRemove').on('click.hoverMenuRemove', function(e) {
+          if ($(e.target).is('._label_layer')) {
+            return;
+          }
+          $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
+          $(this).off('.hoverMenuRemove');
+        });
+
       }
-    }).find('.close')
+    })
+    .find('.close')
       .on ({
         click: function(e) {
           $(this).parent().hide();
           // Remove pinned class
           $(this).siblings('._hl_pin').removeClass('on')
                  .closest('._label_layer').removeClass('pinned');
-          e.stopPropagation && e.stopPropagation();
+          e.stopPropagation(); // aviod triggering click on parent _label_layer
+          $(document).off('.hoverMenuRemove');
         }
-      });
+      }).externalLinks();
 
-    $(document).on('click', function(e) {
-      $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
-    });
 
     // apply css positions to the hover layers
     this.positionLayers();
@@ -605,49 +616,55 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   highlightLastUploadedUserDataTrack: function() {
     var panel = this;
+    var tracks = [];
+
+    this.elLk.boundaries.find('li._new_userdata.usertrack_highlight').on('mouseover', function() {
+      panel.removeUserDataHighlight();
+    })
+
+    // Traverse li to find adjacent tracks to add group border
     var count = 0;
-    var adjacent_tracks = [];
     this.elLk.boundaries.children().each(function (i) {
       var li  = $(this);
       if ($(this).hasClass('_new_userdata')) {
-        adjacent_tracks.push(li);
+        tracks.push(li);
         count++;
       }
       else {
-        // If there are more than one tracks adjacent to each other
-        if(count > 1 && adjacent_tracks.length > 1) {
-          $(adjacent_tracks).each(function(i, li_element) {
-            // Top track
-            if (i == 0) {
-              $(li_element).addClass('usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right');
-            }
-            // Middle tracks
-            else if (i !== adjacent_tracks.length - 1 ) {
-              $(li_element).addClass('usertrack_highlight_border_left usertrack_highlight_border_right');
-            }
-            // Bottom track
-            else {
-              $(li_element).addClass('usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
-            }
-
-            $(li_element).on('mouseenter', function() {
-              panel.removeUserDataHighlight();
-            })
-          })
-        }
-        else {
-          // Single tracks
-          adjacent_tracks.length == 1 &&
-            $(adjacent_tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right')
-                                 .on('mouseenter', function() {
-                                    panel.removeUserDataHighlight();
-                                 })
-        }
         // Reset array so that you get a new set of tracks
-        adjacent_tracks = [];
-        count = 0;
+        panel.addHighlightClasses(tracks);
+        tracks = [];
+        count++;
       }
+      // In case last li track is a _new_userdata (which misses the else part above)
+      (tracks.length && panel.elLk.boundaries.children().length === count) && panel.addHighlightClasses(tracks)
     });
+
+  },
+
+  addHighlightClasses: function(tracks) {
+    // If there are more than one tracks adjacent to each other
+    if(tracks.length > 1) {
+      $(tracks).each(function(i, li_element) {
+        // Top track
+        if (i == 0) {
+          $(li_element).addClass('usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right');
+        }
+        // Middle tracks
+        else if (i !== tracks.length - 1 ) {
+          $(li_element).addClass('usertrack_highlight_border_left usertrack_highlight_border_right');
+        }
+        // Bottom track
+        else {
+          $(li_element).addClass('usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
+        }
+      })
+    }
+    else {
+      // Single tracks
+      tracks.length == 1 &&
+        $(tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
+    }
 
   },
 
@@ -1148,6 +1165,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         coords.clickChr   = range.chr;
         coords.clickStart = Math.max(Math.floor(location - fuzziness), range.start);
         coords.clickEnd   = fuzziness > 1 ? Math.min(Math.ceil(location + fuzziness), range.end) : Math.max(coords.clickStart,Math.floor(location));
+
+        coords.clickY     = area.a.coords[3] - coords.y;
         
         id += '_multi';
       }

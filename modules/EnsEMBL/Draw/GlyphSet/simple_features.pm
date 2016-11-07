@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,11 +23,14 @@ package EnsEMBL::Draw::GlyphSet::simple_features;
 
 use strict;
 
-use EnsEMBL::Draw::Style::Feature;
-
 use parent qw(EnsEMBL::Draw::GlyphSet::Simple);
 
-sub features { 
+sub init {
+  my $self = shift;
+  $self->{'my_config'}->set('bumped', 1);
+}
+
+sub get_data { 
   my $self    = shift;
   my $call    = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
   my $db_type = $self->my_config('db');
@@ -34,12 +38,12 @@ sub features {
 
   my $colours = $self->{'my_config'}->get('colours');
   my $default_colour = 'red';
-  my $data = [];
+  my $features = [];
   
   foreach my $f (@feature_objects) {
     my ($start, $end) = $self->ok_feature($f);
     next unless $start;
-    push @$data, {
+    push @$features, {
                   'start'         => $start,
                   'end'           => $end,
                   'colour'        => $colours->{$f->analysis->logic_name}{'default'}
@@ -53,26 +57,7 @@ sub features {
                   };
   }
 
-  return $data;
-}
-
-sub render_labels {
-  my $self = shift;
-  $self->{'my_config'}->set('show_labels', 1);
-  $self->render_normal;
-}
-
-sub render_normal {
-  my $self = shift;
-
-  my $features = $self->get_features;
-  return unless scalar @$features;
-
-  $self->{'my_config'}->set('bumped', 1);
-
-  my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature->new($config, [{'features' => $features}]);
-  $self->push($style->create_glyphs);
+  return [{'features' => $features}];
 }
 
 sub title {

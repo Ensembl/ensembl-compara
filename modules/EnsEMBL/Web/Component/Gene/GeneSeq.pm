@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +23,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
+use EnsEMBL::Web::TextSequence::View::GeneSeq;
+
 sub _init { $_[0]->SUPER::_init(500); }
 
 sub get_object {
@@ -30,7 +33,7 @@ sub get_object {
   return $hub->param('lrg') ? $hub->core_object('LRG') : $hub->core_object('gene');
 }
 
-sub initialize {
+sub initialize_new {
   my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
@@ -46,6 +49,7 @@ sub initialize {
     sub_slice_start => $start,
     sub_slice_end   => $end,
     ambiguity       => 1,
+    variants_as_n   => scalar $self->param('variants_as_n'),
   };
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
@@ -55,16 +59,11 @@ sub initialize {
   
   $config->{'exon_features'} = $object->Obj->get_all_Exons;
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
-  $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
+  $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
+  $self->view->markup($sequence,$markup,$config);
 
-  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-  if($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'} ne 'off';
-  }
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'} ne 'off';
-  
   return ($sequence, $config);
 }
 
@@ -85,20 +84,7 @@ sub content {
     $html .= '<div class="_adornment_key adornment-key"></div>';
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
-  
-  $html .= $self->_info('Sequence markup', qq{
-    <p>
-      $site_type has a number of sequence markup pages on the site. You can view the exon/intron structure
-      of individual transcripts by selecting the transcript name in the table above, then clicking
-      Exons in the left hand menu. Alternatively you can see the sequence of the transcript along with its
-      protein translation and variation features by selecting the transcript followed by Sequence &gt; cDNA.
-    </p>
-    <p>
-      This view and the transcript based sequence views are configurable by clicking on the "Configure this page"
-      link in the left hand menu
-    </p>
-  });
-  
+
   return $html;
 }
 
@@ -108,23 +94,29 @@ sub content_sub_slice {
   my $start  = $hub->param('subslice_start');
   my $end    = $hub->param('subslice_end');
   my $length = $hub->param('length');
+  my $follow = $hub->param('follow');
   
+  $self->view->output($self->view->output->subslicer);
   $slice ||= $self->object->slice;
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
  
   my $adorn = $hub->param('adorn') || 'none'; 
-  my ($sequence, $config) = $self->initialize($slice, $start, $end,$adorn);
-  
+  my ($sequence, $config) = $self->initialize_new($slice, $start, $end,$adorn);
+
+  my $template;
+  $template = $self->describe_filter($config) unless $follow;
   if ($end && $end == $length) {
-    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
+    $template .= '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
+    $template .= sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
-    $config->{'html_template'} = '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
+    $template .= '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
   }
   
-  $config->{'html_template'} .= '<p class="invisible">.</p>';
-  return $self->build_sequence($sequence, $config,1);
+  $template .= '<p class="invisible">.</p>';
+  $self->view->output->template($template);
+
+  return $self->build_sequence($sequence,$config,1);
 }
 
 sub export_options { return {'action' => 'GeneSeq'}; }
@@ -145,23 +137,12 @@ sub initialize_export {
   return $self->initialize($gene->slice);
 }
 
-sub get_key {
-  my ($self, $config,$k,$new) = @_;
-  
-  my $exon_type;
-     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
-     $exon_type = ucfirst $exon_type;
-  
-  my $key = {
-    exons => {
-      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
-      other   => { class => 'eo', text => "$exon_type exons in this region" },
-      compara => { class => 'e2', text => "$exon_type exons in this region" }
-    }
-  };
-  
-  return $self->SUPER::get_key($config, $key,$new);
+sub make_view {
+  my ($self) = @_;
+
+  return EnsEMBL::Web::TextSequence::View::GeneSeq->new(
+    $self->hub
+  );
 }
 
 1;

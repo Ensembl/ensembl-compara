@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,14 +30,14 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
   require EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-  require EnsEMBL::Web::Hub;  
+  require EnsEMBL::Web::DBHub;
 }
 
 my $nodelete = 0;
 GetOptions ('nodelete' => \$nodelete);
 
-my $hub = new EnsEMBL::Web::Hub;
-my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
+my $hub = EnsEMBL::Web::DBHub->new;
+my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
 my $sd  = $hub->species_defs;
 my $sth;
 

@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,12 +48,12 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBHub;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 print "\n\n";
 
-my $hub = new EnsEMBL::Web::Hub;
+my $hub = EnsEMBL::Web::DBHub->new;
 my $sd  = $hub->species_defs;
 
 # Check database to see if this release is included already, then
@@ -113,22 +114,25 @@ foreach my $sp (@db_spp) {
 
 # get a list of valid (configured) species
 my @species = $sd->valid_species();
-my ($record, $result, $species_id);
+my ($result, $species_id);
 
 SPECIES: foreach my $sp (sort @species) {
 
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
-    my $record = {
-      'name'          => $sd->get_config($sp, 'SPECIES_URL'),
-      'common_name'   => $sd->get_config($sp, 'SPECIES_COMMON_NAME'),
-      'code'          => $sd->get_config($sp, 'SPECIES_CODE'),
-    };
     $sql = 'INSERT INTO species SET code = ?, name = ?, common_name = ?, vega = ?, online = ?';
     @args = ($sd->get_config($sp, 'SPECIES_CODE'), $sd->get_config($sp, 'SPECIES_URL'),
               $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     $sth = $adaptor->db->prepare($sql);
     $sth->execute(@args) unless $DEBUG;
+    ## Get ID back
+    $sql = 'SELECT species_id FROM species WHERE name = ?';
+    @args = ($sd->get_config($sp, 'SPECIES_URL'));
+    $sth = $adaptor->db->prepare($sql);
+    $sth->execute(@args) unless $DEBUG;
+    while (my @data = $sth->fetchrow_array()) {
+      $species_id = $data[0];
+    }
     print "Adding new species $sp to database, with ID $species_id\n";
   }
   else {
@@ -159,17 +163,19 @@ SPECIES: foreach my $sp (sort @species) {
       while (my @data = $sth->fetchrow_array()) {
         my $old_version   = $data[0];
         my $old_name      = $data[1];
-        my $is_different  = 0;
-        if ($old_version ne $a_version) {
-          print "!!! Old assembly version was $old_version; new version is $a_version\n";
-          $is_different = 1;
-        }
-        if ($old_name ne $a_name) {
-          print "!!! Old assembly name was $old_name; new nome is $a_name\n";
-          $is_different = 1;
-        }
-        if ($is_different) {
-          print "If this is not correct, please manually patch the core and ensembl_archive databases after this script has run\n";
+        if ($old_version) {
+          my $is_different  = 0;
+          if ($old_version ne $a_version) {
+            print "!!! Old assembly version was $old_version; new version is $a_version\n";
+            $is_different = 1;
+          }
+          if ($old_name ne $a_name) {
+            print "!!! Old assembly name was $old_name; new nome is $a_name\n";
+            $is_different = 1;
+          }
+          if ($is_different) {
+            print "If this is not correct, please manually patch the core and ensembl_archive databases after this script has run\n";
+          }
         }
       }
 

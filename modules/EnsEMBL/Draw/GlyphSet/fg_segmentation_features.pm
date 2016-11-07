@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +23,8 @@ package EnsEMBL::Draw::GlyphSet::fg_segmentation_features;
 ### track of colour blocks)
 
 use strict;
+
+use EnsEMBL::Web::File::Utils::IO qw(file_exists);
 
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
@@ -53,12 +56,12 @@ sub _feature_set {
   return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
   my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
   my $fsa       = $fgh->get_FeatureSetAdaptor();
-  my $cta       = $fgh->get_CellTypeAdaptor;
-  return undef unless $fsa and $cta;
-  my $cell_line = $self->my_config('cell_line');
+  my $ega       = $fgh->get_EpigenomeAdaptor;
+  return undef unless $fsa and $ega;
+  my $cell_line = $self->my_config('section');
   return undef unless $cell_line;
-  my $ctype = $cta->fetch_by_name($cell_line);
-  my $fsets = $fsa->fetch_all_displayable_by_type('segmentation', $ctype);
+  my $epi   = $ega->fetch_by_name($cell_line);
+  my $fsets = $fsa->fetch_all_displayable_by_type('segmentation', $epi);
   return undef unless $fsets and @$fsets;
   return $fsets->[0];
 }
@@ -75,9 +78,11 @@ sub fetch_features_from_db {
   my $slice     = $self->{'container'};
   my $features = $fset->get_Features_by_Slice($slice);
   my @dff;
+  my $legend_entries = [];
   foreach my $f (@$features) {
     my $colour_key = $self->colour_key($f);
     my $colour = $self->my_colour($colour_key) || '#e1e1e1';
+    push @$legend_entries, [$colour_key, $colour];
     my $text = $self->my_colour($colour_key,'text');
     push @dff,{
       colour => $colour,
@@ -89,9 +94,10 @@ sub fetch_features_from_db {
       label => $text,
     };
   }
+  $self->{'legend'}{'fg_segmentation_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
 
   return [{
-    features => { '-1' => \@dff },
+    features => \@dff,
     metadata => {
       force_strand => '-1',
       default_strand => 1,
@@ -103,35 +109,60 @@ sub fetch_features_from_db {
 
 sub _result_set {
   my ($self) = @_;
-
-  my $slice   = $self->{'container'};
-  my $db_type = $self->my_config('db_type') || 'funcgen';
-  return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
-  my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
-  return undef unless $fgh;
-  my $cell_line = $self->my_config('celltype');
-  return undef unless $cell_line;
-  my $cta = $fgh->get_CellTypeAdaptor;
-  my $ct = $cta->fetch_by_dbID($cell_line);
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rsets = $rsa->fetch_all_by_CellType($ct);
-  my @segs = grep { $_->feature_class eq 'segmentation' } @$rsets;
-  return undef unless @segs;
-  return $segs[0];
+  return undef;
 }
 
 sub fetch_features_from_file {
   my ($self,$fgh) = @_;
 
-  my $rs = $self->_result_set();
-  return undef unless $rs;
-  my $bigbed_file = $rs->dbfile_path;
+  my $slice   = $self->{'container'};
+  my $db_type = $self->my_config('db_type') || 'funcgen';
+  return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
+
+  my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
+  return undef unless $fgh;
+
+  my $seg_name = $self->my_config('seg_name');
+  return undef unless $seg_name;
+
+  my $sfa = $fgh->get_SegmentationFileAdaptor;
+  my $seg = $sfa->fetch_by_name($seg_name);
+  return undef unless $seg;
+
+  ## Set zmenu options before we parse the file
+  $self->{'my_config'}->set('zmenu_action', 'SegFeature');
+  $self->{'my_config'}->set('zmenu_extras', {
+                                              'celltype'  => $self->my_config('section'),
+                                              'seg_name'  => $self->my_config('seg_name'),
+                                            });
+
+  my $bigbed_file = $seg->file;
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
                            lc $self->species,
                            $self->species_defs->ASSEMBLY_VERSION);
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   $bigbed_file =~ s/\s//g;
+=pod
+  my $check = file_exists($bigbed_file, {'nice' => 1});
+  if ($check->{'error'}) {
+    $self->no_file(555);
+    return [];
+  }
+=cut
+
   my $out = $self->SUPER::get_data($bigbed_file);
+
+  ## Create legend
+  my $legend_entries = [];
+  foreach (@$out) {
+    foreach my $f (@{$_->{'features'}||[]}) {
+      $f->{'label'} =~ /_(\w+)_/;
+      my $colour_key = $1;
+      push @$legend_entries, [$colour_key, $f->{'colour'}];
+    }
+  }
+  $self->{'legend'}{'fg_segmentation_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
+
   return $out;
 }
 
@@ -141,7 +172,8 @@ sub bg_link {
 
   my $rs = $self->_result_set();
   my $fs = $self->_feature_set();
-  if($rs) {
+
+  if ($rs) {
     return $self->_url({
       action   => 'SegFeature',
       ftype    => 'Regulation',
@@ -152,7 +184,7 @@ sub bg_link {
       width    => $self->{'container'}->length,
       celldbid => $self->my_config('celltype'),
     });
-  } elsif($fs) {
+  } elsif ($fs) {
     return $self->_url({
       action   => 'SegFeature',
       ftype    => 'Regulation',
@@ -193,6 +225,32 @@ sub colour_key {
   }
   return lc $type;
 }
+
+=pod
+sub colour_key {
+  my ($self, $f) = @_;
+  my $type = $f->feature_type->name;
+
+  my $lookup = $self->colour_key_lookup;
+
+  my $match = grep { $type =~ /$_/ } keys %$lookup;
+  return $match ? lc $lookup->{$match} : 'default';
+}
+
+sub colour_key_lookup {
+  return {
+    'Repressed'       => 'repressed',
+    'low activity'    => 'repressed', 
+    'CTCF'            => 'ctcf',
+    'Enhancer'        => 'enhancer',
+    'Flank'           => 'promoter_flanking',
+    'TSS'             => 'promoter',
+    'Transcribed'     => 'region',
+    'Weak'            => 'weak',
+    'Heterochromatin' => 'heterochromatin',       
+  };
+} 
+=cut
 
 sub render {
   my ($self) = @_;

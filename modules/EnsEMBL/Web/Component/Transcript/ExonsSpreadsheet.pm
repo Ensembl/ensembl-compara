@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +23,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet;
+
 sub initialize {
   my ($self, $export) = @_;
   my $hub        = $self->hub;
@@ -38,36 +41,37 @@ sub initialize {
   my $vc = $self->view_config($type);
   
   my $config = {
-    exons_only    => $hub->param('exons_only') || $vc->get('exons_only'),
-    display_width => $hub->param('display_width') || $vc->get('display_width'),
-    sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') || $vc->get('fullseq'),     # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display') || $vc->get('snp_display'),
-    number        => $hub->param('line_numbering') || $vc->get('line_numbering'),
+    exons_only    => (scalar $self->param('exons_only'))||'off',
+    display_width => scalar $self->param('display_width'),
+    sscon         => scalar $self->param('sscon'),     # no of bp to show either side of a splice site
+    flanking      => scalar $self->param('flanking'),  # no of bp up/down stream of transcript
+    full_seq      => scalar $self->param('fullseq'),   # flag to display full sequence (introns and exons)
+    snp_display   => scalar $self->param('snp_display'),
+    number        => scalar $self->param('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
-    export        => $export
+    export        => $export,
+    variants_as_n   => scalar $self->param('variants_as_n'),
   };
   
-  $config->{'end_number'}  = $config->{'number'};
   $config->{'last_number'} = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
   $config->{'snp_display'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   if ($config->{'snp_display'} ne 'off') {
-    my @consequence = $hub->param('consequence_filter');
-    my $filter      = $hub->param('population_filter');
+    my @consequence = $self->param('consequence_filter');
+    my $filter      = $self->param('population_filter');
     
     if ($filter && $filter ne 'off') {
       $config->{'population'}    = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
-      $config->{'min_frequency'} = $hub->param('min_frequency');
+      $config->{'min_frequency'} = $self->param('min_frequency');
     }
     
     $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
-    $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
-    $config->{'hide_rare_snps'}     = $hub->param('hide_rare_snps');
+    $config->{'hide_long_snps'}     = $self->param('hide_long_snps') eq 'yes';
+    $config->{'hide_rare_snps'}     = $self->param('hide_rare_snps');
     delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
+    $config->{'hidden_sources'}     = [$self->param('hidden_sources')];
   }
   
   # Get flanking sequence
@@ -136,6 +140,7 @@ sub initialize {
 sub content {
   my $self = shift;
   my ($data, $config) = $self->initialize;
+  my $html = $self->describe_filter($config);
   my $table = $self->new_table([
       { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
       { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
@@ -150,7 +155,8 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
+  $html .= sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
+  return $html;
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
@@ -159,7 +165,6 @@ sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
   my ($data, $config) = $self->initialize(1);
-  $config->{'v_space'} = "\n";
   return ($data, $config, 1);
 }
 
@@ -305,28 +310,39 @@ sub get_flanking_sequence_data {
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
 
-  my $adorn = $self->hub->param('adorn') || 'none';
+  my $hub = $self->hub;
+
+  my $adorn = $hub->param('adorn') || 'none';
 
   return if $adorn eq 'none';
 
-  my $object = $self->object || $self->hub->core_object('transcript');
-  my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
+  my $object = $self->object || $hub->core_object('transcript');
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $variation_features    = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
   my @transcript_variations;
-  my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
+  my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
   if($config->{'hide_rare_snps'}) {
     @transcript_variations = grep {
       !$self->too_rare_snp($_->variation_feature,$config)
     } @transcript_variations;
   }
-  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  if($config->{'hidden_sources'}) {
+    @transcript_variations = grep {
+      !$self->hidden_source($_->variation_feature,$config)
+    } @transcript_variations;
+  }
+  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
-    my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-
-    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+    my $consequence = @{$transcript_variation->consequence_type}->[0];
+    my %cf = %{$config->{'consequence_filter'}||{}};
+    delete $cf{'off'} if exists $cf{'off'};
+    if(%cf) {
+      $consequence = lc [ grep $cf{$_}, @{$transcript_variation->consequence_type} ]->[0];
+      next if !$consequence;
+    }
 
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
@@ -353,11 +369,14 @@ sub add_variations {
       
       push @{$href{$_}{'v'}},  $name;
       push @{$href{$_}{'vf'}}, $vf->dbID;
+      if($config->{'variants_as_n'}) {
+        $sequence->[$_]{'letter'} = 'N';
+      }
     }
   }
   
   $sequence->[$_]{'class'} .= " $class{$_}"              for keys %class;
-  $sequence->[$_]{'href'}   = $self->hub->url($href{$_}) for keys %href;
+  $sequence->[$_]{'href'}   = $hub->url($href{$_}) for keys %href;
 }
 
 sub add_line_numbers {
@@ -401,30 +420,34 @@ sub add_line_numbers {
       
       $start  = $end;
       $offset = $skip = 0;
+      $config->{'padding'}{'number'} = length $start if length $start > $config->{'padding'}{'number'};
+      $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
       
       last if ($strand == 1 && $end >= $length) || ($strand == -1 && $start && $start <= $length);
     }
   }
   
+  $config->{'padding'}{'number'} = length $end if length $end > $config->{'padding'}{'number'};
   $config->{'last_number'} = $end;
+}
+
+sub make_view {
+  my ($self) = @_;
+
+  my $view = EnsEMBL::Web::TextSequence::View::ExonsSpreadsheet->new(
+    $self->hub,
+  );
+  $view->output($view->output->subslicer);
+  return $view;
 }
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
+  $self->view->reset;
+  $self->view->new_sequence;
+  $self->view->sequences->[0]->legacy($sequence);
+  $self->view->output->template('<pre class="text_sequence exon_sequence">%s</pre>');
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
-}
-
-sub get_key {
-  return shift->SUPER::get_key($_[0], {
-    'exons/Introns' => {
-      exon0    => { class => 'e0', text => 'Non-coding exon'     },
-      exon1    => { class => 'e1', text => 'Translated sequence' },
-      intron   => { class => 'ei', text => 'Intron sequence'     },
-      utr      => { class => 'eu', text => 'UTR'                 },
-      flanking => { class => 'ef', text => 'Flanking sequence'   },
-    }
-  }, $_[2]);
 }
 
 1;

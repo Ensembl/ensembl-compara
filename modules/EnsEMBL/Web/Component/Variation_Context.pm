@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -263,7 +264,7 @@ sub constrained_element_table {
   
   if ($mlssa && $cea) {
     foreach my $mlss (@{$mlssa->fetch_all_by_method_link_type('GERP_CONSTRAINED_ELEMENT')}) {
-      my $level = ucfirst $mlss->species_set_obj->get_tagvalue('name');
+      my $level = ucfirst $mlss->species_set->name;
       
       foreach my $ce (@{$cea->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice)}) {
         my $loc_string = $slice_region_name . ':' . ($slice_start + $ce->start - 1) . '-' . ($slice_start + $ce->end - 1);

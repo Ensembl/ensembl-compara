@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +22,6 @@ package EnsEMBL::Web::Document::HTML;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file/;
 use LWP::UserAgent;
@@ -33,13 +33,14 @@ sub new {
   my ($class, $hub) = @_;
 
   return bless {
-    _hub      => $hub || EnsEMBL::Web::Hub->new,
+    _hub      => $hub,
     _renderer => undef,
   }, $class;
 }
 
 sub renderer      :lvalue { $_[0]->{'_renderer'}; }
 sub hub           { return $_[0]->{'_hub'}; }
+sub dom           { return $_[0]->{'_dom'} ||= EnsEMBL::Web::DOM->new; }
 
 sub printf        { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print         { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
@@ -168,6 +169,13 @@ sub get_rss_feed {
     warn "!!! COULD NOT GET RSS FEED from $rss_url: ".$response->code.' ('.$response->message.')';
   }
   return $items;
+}
+
+sub ajax_url {
+  ## Create a url that can reach render_ajax method of this module via an ajax reqest
+  my ($self, $params) = @_;
+
+ return $self->hub->url('Ajax', {%{$params || {}}, 'type' => 'html_doc', 'module' => [ split /::/, ref $self ]->[-1]});
 }
 
 sub _process_xml {

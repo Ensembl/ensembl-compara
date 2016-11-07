@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,27 +73,22 @@ sub AUTOLOAD {
 
 #########
 # apply a transformation.
-# pass in a hashref containing keys
-#  - translatex
-#  - translatey
-#  - scalex
-#  - scaley
-#
+# pass in an EnsEMBL::Draw::Utils::Transform object
 sub transform {
-  my ($self, $transform_ref) = @_;
+  my ($self, $transform_obj) = @_;
 
-  my $scalex     = $transform_ref->{'scalex'} || 1;
-  my $scaley     = $transform_ref->{'scaley'} || 1;
+  my $scalex     = $transform_obj->scalex;
+  my $scaley     = $transform_obj->scaley;
   my $scalewidth = $scalex;
-  my $translatex = $transform_ref->{'translatex'};
-  my $translatey = $transform_ref->{'translatey'};
+  my $translatex = $transform_obj->translatex;
+  my $translatey = $transform_obj->translatey;
 
   #########
   # override transformation if we've set x/y to be absolute (pixel) coords
   #
-  if($self->{'absolutex'})     { $scalex     = $transform_ref->{'absolutescalex'}; }
-  if($self->{'absolutewidth'}) { $scalewidth = $transform_ref->{'absolutescalex'}; }
-  if($self->{'absoltey'})      { $scaley     = $transform_ref->{'absolutescaley'}; }
+  if($self->{'absolutex'})     { $scalex     = $transform_obj->absolutescalex; }
+  if($self->{'absolutewidth'}) { $scalewidth = $transform_obj->absolutescalex; }
+  if($self->{'absoltey'})      { $scaley     = $transform_obj->absolutescaley; }
 
   #########
   # copy the real coords & sizes if we don't have them already

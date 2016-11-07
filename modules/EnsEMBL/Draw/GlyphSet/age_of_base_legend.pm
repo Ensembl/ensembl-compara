@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +29,7 @@ sub _init {
   my $self     = shift;
 
   ## Hide if accompanying track is off
-  my $node = $self->{'config'}{'_tree'}->get_node('age_of_base');
+  my $node = $self->{'config'}->get_node('age_of_base');
   return if (!$node || $node->get('display') eq 'off');
 
   $self->init_legend(2);

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,19 +52,32 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
+  ## Redirect strains to the strain page for the parent species as long as we're not on the parent species
+  if ($self->hub->action ne 'Strains' && $species_defs->STRAIN_COLLECTION && $species_defs->SPECIES_STRAIN !~ /reference/) {
+    my $url = $self->hub->url({'species' => $species_defs->STRAIN_COLLECTION, 'action' => 'Strains'});
+    $self->hub->redirect($url);
+  }
+
   my $index = $self->create_node('Index', '', [qw(homepage EnsEMBL::Web::Component::Info::HomePage)], {});
 
   $self->create_node('Annotation', '',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]
   );
 
-  $index->append($self->create_subnode('Error', 'Unknown error',
+  my $has_strains = $species_defs->ALL_STRAINS;
+  if ($has_strains) {
+    $self->create_node('Strains', '',
+      [qw(blurb EnsEMBL::Web::Component::Info::Strains)]
+    );
+  }
+
+  $index->append_child($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { no_menu_entry => 1, }
   ));
   
   foreach (keys %error_messages) {
-    $index->append($self->create_subnode("Error/$_", "Error $_",
+    $index->append_child($self->create_subnode("Error/$_", "Error $_",
       [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
       { no_menu_entry => 1 }
     ));
@@ -92,77 +106,9 @@ sub populate_tree {
     { 'availability' => 'database:rnaseq' }
   );
 
-  my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
-  
-  $stats_menu->append($self->create_node('StatsTable', 'Assembly and Genebuild',
-    [qw(stats EnsEMBL::Web::Component::Info::SpeciesStats)]
-  ));
-  
-  $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
-    [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
-  ));
   $self->create_node('WhatsNew', '',
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );
-
-  ## SAMPLE DATA
-  my $sample_data  = $species_defs->SAMPLE_DATA;
-  my $species_path = $species_defs->species_path($self->species);
-  
-  if ($sample_data && keys %$sample_data) {
-    my $data_menu       = $self->create_submenu('Data', 'Sample entry points');
-    my $karyotype_url   = $sample_data->{'KARYOTYPE_PARAM'} ? "$species_path/Location/Genome?r=$sample_data->{'KARYOTYPE_PARAM'}" : "$species_path/Location/Genome?r=$sample_data->{'LOCATION_PARAM'}";
-    my $location_url    = "$species_path/Location/View?r=$sample_data->{'LOCATION_PARAM'}";
-    my $gene_url        = "$species_path/Gene/Summary?g=$sample_data->{'GENE_PARAM'}";
-    my $transcript_url  = "$species_path/Transcript/Summary?t=$sample_data->{'TRANSCRIPT_PARAM'}";
-    my $karyotype_text  = scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? 'Karyotype' : 'Karyotype (not available)';
-    my $location_text   = $sample_data->{'LOCATION_TEXT'}   || 'not available';
-    my $gene_text       = $sample_data->{'GENE_TEXT'}       || 'not available';
-    my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'} || 'not available';
-    
-    $data_menu->append($self->create_node('Karyotype', $karyotype_text, [],
-      { availability => scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []}, url => $karyotype_url }
-    ));
-
-    $data_menu->append($self->create_node('Location', "Location ($location_text)", [],
-      { url => $location_url, raw => 1 }
-    ));
-    
-    $data_menu->append($self->create_node('Gene', "Gene ($gene_text)", [],
-      { url => $gene_url, raw => 1 }
-    ));
-    
-    $data_menu->append( $self->create_node('Transcript', "Transcript ($transcript_text)", [],
-      { url => $transcript_url, raw => 1 }
-    ));
-    
-    if ($sample_data->{'VARIATION_PARAM'}) {
-      my $variation_url  = "$species_path/Variation/Explore?v=$sample_data->{'VARIATION_PARAM'}";
-      my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
-      
-      $data_menu->append($self->create_node('Variation', "Variation ($variation_text)", [],
-        { url => $variation_url, raw => 1 }
-      ));
-    }
-
-    if ($sample_data->{'PHENOTYPE_PARAM'}) {
-      my $phenotype_url  = "$species_path/Phenotype/Locations?ph=$sample_data->{'PHENOTYPE_PARAM'}";
-      my $phenotype_text = $sample_data->{'PHENOTYPE_TEXT'} || 'not available';
-      
-      $data_menu->append($self->create_node('Phenotype', "Phenotype ($phenotype_text)", [],
-        { url => $phenotype_url, raw => 1 }
-      ));
-    }
-
-    if ($sample_data->{'REGULATION_PARAM'}){
-      my $regulation_url  = "$species_path/Regulation/Summary?fdb=funcgen;rf=$sample_data->{'REGULATION_PARAM'}";
-      my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
-
-      $data_menu->append($self->create_node('Regulation', "Regulation ($regulation_text)", [],
-        { url => $regulation_url, raw => 1 }
-      ));
-    }  
-  }
 
   ## Generic node for including arbitrary HTML files about a species
   $self->create_node('Content', '',

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,15 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::Controller::Doxygen;
 
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
-
-use base qw(EnsEMBL::Web::Controller::SSI);
-
-sub content {
-  my $self = shift;
-  return $self->{'content'} ||= file_get_contents($self->r->filename);
-}
+use parent qw(EnsEMBL::Web::Controller::SSI);
 
 sub render_page {
   my $self     = shift;

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -152,7 +153,7 @@ sub mc_add_set {
   }
   
   my $set_id = $hub->config_adaptor->create_set(
-    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->create_session_id : $user ? $user->id : undef,
+    record_type_id => $params{'record_type'} eq 'session' ? $hub->session->session_id : $user ? $user->id : undef,
     config_keys    => \@config_keys,
     %params
   );

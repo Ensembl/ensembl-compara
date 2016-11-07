@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,16 +25,16 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  $self->code = $self->type . '::ExternalData';
-  $self->title = 'External Data';
+  $self->code($self->type . '::ExternalData');
+  $self->title('External Data');
 }
 
-sub form {
+sub init_form {
   my $self    = shift;
   my $hub     = $self->hub;
   my $view    = $hub->type . '/ExternalData';
-  
-  $self->get_form->force_reload_on_submit if $hub->param('reset');
+
+  $self->form->force_reload_on_submit if $hub->param('reset');
 }
 
 1;

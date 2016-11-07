@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +69,6 @@ sub get_data {
                                 priority => $self->my_config('priority'),
                                 marker_id => $self->my_config('marker_id')
                   });
-  ## No need to de-strand since it's unstranded data
   return [{'features' => $features}];
 }
 

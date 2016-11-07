@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,16 +23,25 @@ use strict;
 use warnings;
 
 use List::Util qw(first);
-use EnsEMBL::Web::Hub;
 
-sub new {
-  my $hub           = EnsEMBL::Web::Hub->new;
-  my $species_defs  = $hub->species_defs;
-  my $filename      = $ENV{'QUERY_STRING'} || '';
+use parent qw(EnsEMBL::Web::Controller);
+
+sub process {
+  my $self          = shift;
+  my $r             = $self->r;
+  my $species_defs  = $self->species_defs;
+  my $filename      = $self->query;
   my $file          = $filename ? first { $filename eq $_->url_path } map { @{$_->files} } @{$species_defs->ENSEMBL_JSCSS_FILES->{'css'} || []} : undef;
+  my $content       = $filename ? $file ? $file->get_contents($species_defs, 'css') : "/* ERROR: file $filename is not present in the document root */\n" : "/* ERROR: No file name provided */\n";
 
-  $_[1]->content_type('text/css');
-  print $filename ? $file ? $file->get_contents($species_defs, 'css') : "/* ERROR: file $filename is not present in the document root */\n" : "/* ERROR: No file name provided */\n";
+  # don't pollute logs with CSS requests
+  $r->subprocess_env('LOG_REQUEST_IGNORE', 1);
+
+  # set correct headers
+  $r->content_type('text/css');
+  $r->headers_out->set('Content-Length', length $content);
+
+  $r->print($content);
 }
 
 1;

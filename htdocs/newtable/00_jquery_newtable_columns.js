@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
  */
 
 (function($) {
-  $.fn.new_table_columns = function(config,data) {
+  $.fn.new_table_columns = function(config,data,widgets,callw) {
 
     function update_ticks($table,$popup) {
       var view = $table.data('view');
@@ -48,9 +49,7 @@
                   '<ul class="floating_popup">';
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
-          if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
-            return;
-          }
+          if(callw('unshowable',cc)._any) { return; }
           var label = cc.label || key;
           out += '<li><input type="checkbox" data-key="'+key+'">'+
                  '<span>'+label+'</span></li>';

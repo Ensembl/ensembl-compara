@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,15 +35,21 @@ sub content {
   my $hub           = $self->hub;
   my $availability  = $self->object->availability;
   my $location      = $hub->url({ type => 'Location',  action => 'Compara' });
+  my $strain_url    = ($self->is_strain) ? "Strain_" : "";
+  my $strain_avail  = ($self->is_strain) ? "strain_" : "";
+
+  my $ortho_image = $strain_avail ? 'strain_ortho.gif' : 'compara_ortho.gif';
+  my $para_image  = $strain_avail ? 'strain_para.gif' : 'compara_para.gif';
 
   my $buttons       = [
     { title => 'Genomic alignments', img => '80/compara_align.gif', url => $availability->{'has_alignments'} ? $hub->url({ action => 'Compara_Alignments' }) : '' },
-    { title => 'Gene tree',          img => '80/compara_tree.gif',  url => $availability->{'has_gene_tree'}  ? $hub->url({ action => 'Compara_Tree'       }) : '' },
-    { title => 'Orthologues',        img => '80/compara_ortho.gif', url => $availability->{'has_orthologs'}  ? $hub->url({ action => 'Compara_Ortholog'   }) : '' },
-    { title => 'Paralogues',         img => '80/compara_para.gif',  url => $availability->{'has_paralogs'}   ? $hub->url({ action => 'Compara_Paralog'    }) : '' },
+    { title => 'Gene tree',          img => '80/compara_tree.gif',  url => $availability->{'has_'.$strain_avail.'gene_tree'}  ? $hub->url({ action => $strain_url.'Compara_Tree'       }) : '' },
+    { title => 'Orthologues',        img => '80/'.$ortho_image, url => $availability->{'has_'.$strain_avail.'orthologs'}  ? $hub->url({ action => $strain_url.'Compara_Ortholog'   }) : '' },
+    { title => 'Paralogues',         img => '80/'.$para_image,  url => $availability->{'has_'.$strain_avail.'paralogs'}   ? $hub->url({ action => $strain_url.'Compara_Paralog'    }) : '' },
     { title => 'Families',           img => '80/compara_fam.gif',   url => $availability->{'family'}         ? $hub->url({ action => 'Family'             }) : '' },
   ];
-
+  
+  @$buttons  = grep { $_->{title} !~ /^Families$|^Genomic alignments$/ } @$buttons if($self->is_strain); #remove the one we dont show for strains species
   my $html  = $self->button_portal($buttons, 'portal-small');
      $html .= qq{<p>More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$location">Location</a> page for this gene.</p>};
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -308,7 +309,7 @@ sub format_table {
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       if ($pop_info->{Size}) {
-        $pop_row{'detail'} = $self->ajax_add($self->ajax_url(undef, { function => 'SampleGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
+        $pop_row{'detail'} = $self->ajax_add($hub->url('Component', { action => 'Sample', function => 'sample',  pop => $pop_id, update_panel => 1 }), $pop_id);
         $has_pop_with_samples  = 1;
       }
       

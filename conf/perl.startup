@@ -2,7 +2,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,10 +54,6 @@ use LoadPlugins;
 
 use EnsEMBL::Web::Tools::DHTMLmerge;
 use EnsEMBL::Web::SpeciesDefs;
-
-# EnsEMBL::Web::Registry must be used here in order to uncover any use errors in dependant modules.
-# If it is not used here, the only error you will see is 'Global symbol "$ENSEMBL_WEB_REGISTRY" requires explicit package name' from some plugin module
-use EnsEMBL::Web::Registry;
 
 my $conf = EnsEMBL::Web::SpeciesDefs->new;
 
@@ -222,8 +219,6 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
  Database Host:      %s
 
- Session database:   %s on %s:%s
-
  ORM Databases:      %s
 
  External address:   %s/
@@ -257,13 +252,11 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->DATABASE_HOST,
 
-  (map { my $db = $_; map $db->{$_}, qw(NAME HOST PORT) } $conf->multidb->{'DATABASE_SESSION'}),
-
   (keys %$orm_connections ? join("\n                     ", map { sprintf '%-15s %s on %s:%s', "$_:", $orm_connections->{$_}->database, $orm_connections->{$_}->host, $orm_connections->{$_}->port } keys %$orm_connections) : 'None'),
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
-  $conf->MOBILE_URL,
+  $conf->MOBILE_URL ? $conf->MOBILE_URL : "",
 
   $conf->LUCENE_ENDPOINT,
 

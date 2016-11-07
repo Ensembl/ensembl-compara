@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,13 +40,13 @@ sub content {
 
   #configure two Vega tracks in one
   my $config = $self->hub->get_imageconfig('Vkaryotype');
-  if ($config->get_node('Vannotation_status_left') & $config->get_node('Vannotation_status_right')) {
+  if ($config->get_node('Vannotation_status_left') && $config->get_node('Vannotation_status_right')) {
     $config->get_node('Vannotation_status_left')->set('display', $config->get_node('Vannotation_status_right')->get('display'));
   }
 
   ## Get features from URL to draw (if any)
   if ($id) {
-    my $object = $self->builder->create_objects('Feature', 'lazy');
+    my $object = $self->builder->create_object('Feature');
     if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }
@@ -139,7 +140,7 @@ sub _render_features {
 
           #add extra description only for GO (gene ontologies) which is determined by param gotype in url
           if($go) {
-            my $adaptor = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+            my $adaptor = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
             my $go_hash = $adaptor->fetch_by_accession($id);
             my $go_name = $go_hash->{name};
             $go_link    = $hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
@@ -344,6 +345,8 @@ sub _render_features {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
+  ## Omit button from, e.g. Phenotype/Locations
+  return unless $hub->type eq 'Location';
   my @buttons;
 
   my $params = {
@@ -422,7 +425,7 @@ sub _configure_Gene_table {
     #add extra description only for GO (gene ontologies) which is determined by param gotype in url
     my $go = $self->hub->param('gotype');
     if ( $go ) {
-      my $adaptor = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+      my $adaptor = $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
       my $go_hash = $adaptor->fetch_by_accession($id);
       my $go_name = $go_hash->{name};
       $go_link    = $self->hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
@@ -581,7 +584,7 @@ sub _location_link {
             action  => 'View',
             r       => $coords, 
             h       => $f->{'label'},
-            ph      => $self->hub->param('ph'),
+            ph      => $self->hub->param('ph') || undef,
             __clear => 1
           }),
           $region, $f->{'start'}, $f->{'end'},
@@ -601,7 +604,7 @@ sub _names_link {
     'action'    => 'Summary',
     $obj_param  => $name,
     'r'         => $coords, 
-    'ph'        => $self->hub->param('ph'),
+    'ph'        => $self->hub->param('ph') || undef,
     __clear     => 1
   };
 

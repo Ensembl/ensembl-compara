@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +173,7 @@
     return "<"+otag+">"+text+"</"+ctag+">";
   }
 
-  function prepare_adorn_span(text,ref,seq,xxx) {
+  function prepare_adorn_span(text,ref,seq) {
     text = fix_letters(text,ref,seq);
     var groups = make_groups(seq,text.length);
     var pos = 0;
@@ -221,6 +222,11 @@
     if(!any) {  
       data['Basic Annotation'] = -1;
     }
+    // Remove old "loading" data
+    $.each(data,function(dn,dv) {
+      if(dv==-1) { delete data[dn]; }
+    });
+    // Add new "loading" data
     $.each(loading,function(i,load) {
       if(!data[load]) { data[load] = -1; }
     });
@@ -281,7 +287,7 @@
     if(!data) {
       data = $.parseJSON($('.adornment-data',outer).text());
     }
-    add_legend($outer,null,data.loading||data.provisional.loading);
+    add_legend($outer,null,data.expect||data.provisional.expect);
     var d;
     if(data.url) {
       d = $.Deferred().resolve(data.provisional);
@@ -312,7 +318,7 @@
                 fl[k] = [fl_el,$.parseJSON(f).v];
               }
             });
-            return [el,el.text(),data.ref,values,key,fl];
+            return [el,el.text(),data.ref,values,fl];
           } else {
             return undefined;
           }
@@ -320,8 +326,8 @@
       },1000,'a');
     });
     d = loop(d,function(i,task) {
-      var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
-      return [task[0],out,task[5]];
+      var out = prepare_adorn_span(task[1],task[2],task[3]);
+      return [task[0],out,task[4]];
     },1000,'b');
     d = loop(d,function(i,change) {
       change[0].html(change[1]);
@@ -333,7 +339,7 @@
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
       add_legend($outer,data.legend||data.provisional.legend,
-                        data.loading||data.provisional.loading);
+                        data.expect||data.provisional.expect);
     });
     if(data.url) {
       d = d.then(function() {

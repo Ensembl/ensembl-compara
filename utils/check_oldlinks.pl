@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +53,7 @@ my $hub     = new EnsEMBL::Web::Hub;
 my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
 my (@object_types, %old_links);
 
-while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_SCRIPT})) {
+while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_CONTROLLER_MAP})) {
   push @object_types, $k if $v eq 'Page' && $k ne 'Tools' && $k ne 'Search';
 } 
 

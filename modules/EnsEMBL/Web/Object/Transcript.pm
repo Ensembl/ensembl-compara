@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Object::Transcript;
 
 ### NAME: EnsEMBL::Web::Object::Transcript
 ### Wrapper around a Bio::EnsEMBL::Transcript object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
@@ -351,12 +350,14 @@ sub caption {
   my $subhead;
 
   my( $disp_id ) = $self->display_xref;
+  my $version    = $self->version ? ".".$self->version : "";
+
   if( $disp_id && $disp_id ne $self->stable_id ) {
     $heading .= $disp_id;
-    $subhead = $self->stable_id;
+    $subhead = $self->stable_id.$version;
   }
   else {
-    $heading .= $self->stable_id;
+    $heading .= $self->stable_id.$version;
   }
 
   return [$heading, $subhead];
@@ -1402,12 +1403,10 @@ sub get_alignment {
   my $command;
   if ($seq_type eq 'DNA') {
     $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln';
-    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
     `$command`;
     
     unless (open(OUT, "<$out_file")) {
       $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
-      warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS ;
       `$command`;
     }
     
@@ -1416,7 +1415,6 @@ sub get_alignment {
     }
   } elsif ($seq_type eq 'PEP') {
     $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
-    warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS;
     `$command`;
 
     unless (open(OUT, "<$out_file")) {
@@ -1549,6 +1547,7 @@ sub transcript_variation_to_variation_feature {
 
 sub get_haplotypes {
   my $self = shift;
+  my $filter = shift;
 
   my $vdb = $self->Obj->adaptor->db->get_db_adaptor('variation');
 
@@ -1564,7 +1563,7 @@ sub get_haplotypes {
   }
 
   my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
-  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj); };
+  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj, $filter); };
   return $haplotypes;
 }
 

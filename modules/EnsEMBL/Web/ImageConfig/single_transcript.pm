@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +20,21 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::single_transcript;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
-    show_labels => 'no'
+    no_labels => 1,
+    storable  => 0,
   });
-  
+
   $self->create_menus('transcript', 'prediction', 'other');
 
   $self->add_tracks('other',
@@ -42,9 +48,6 @@ sub init {
     [ 'transcript', 'prediction' ],
     { display => 'off', height => 32, non_coding_scale => 0.5 }
   );
-  
-  $self->storable = 0;
 }
 
 1;
-

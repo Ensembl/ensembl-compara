@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +37,7 @@ sub render {
   my $species_defs        = $hub->species_defs;
   my $page_species        = $hub->species || 'Multi';
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
-  my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/psychic";
+  my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/Psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
   $is_help              ||= $hub->type eq 'Help';
   my $is_home_page        = !$is_help && $page_species eq 'Multi';
@@ -84,7 +85,7 @@ sub render {
 
   # species dropdown
   if ($page_species eq 'Multi' && !$is_help) {
-    my %species      = map { $species_defs->get_config($_, 'DISPLAY_NAME') => $_ } @{$species_defs->ENSEMBL_DATASETS};
+    my %species      = map { $species_defs->get_config($_, 'DISPLAY_NAME') => $_ } grep { !$species_defs->get_config($_,'IS_STRAIN_OF') } @{$species_defs->ENSEMBL_DATASETS};
     my %common_names = reverse %species;
 
     $field->add_element({

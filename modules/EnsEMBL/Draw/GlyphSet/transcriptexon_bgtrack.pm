@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,7 +39,7 @@ sub _init {
   my $colour        = $self->my_config ('colours'); #Config->get('transcriptexon_bgtrack','col' );
 
   my $fontname      = "Tiny";    
-  my $pix_per_bp    = $Config->transform->{'scalex'};
+  my $pix_per_bp    = $Config->transform_object->scalex;
  # my $bitmap_length = $Config->image_width(); #int($Config->container_width() * $pix_per_bp);
   my $bitmap_length = int($Config->container_width() * $pix_per_bp);
 

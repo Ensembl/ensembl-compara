@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,7 +83,6 @@ sub hub                { return $_[0]->{'hub'};        }
 sub species_defs       { return $_[0]{'species_defs'}; }
 sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print              { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
-sub timer_push         { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
 
 sub set_doc_type {
   my ($self, $type, $version) = @_;
@@ -134,8 +134,7 @@ sub ajax_redirect {
       print qq({"redirectURL":"$url", "redirectType":"$redirect_type", "modalTab":"$modal_tab"});
     }
   } else {
-    $r->headers_out->set('Location' => $url);
-    $r->status(Apache2::Const::REDIRECT);
+    $self->hub->redirect($url);
   }
 }
 
@@ -233,15 +232,16 @@ sub initialize {
   my $self   = shift;
 
   ## Set up HTML template if needed by "real" pages, i.e. not JSON
-  if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) {
+  # if ($self->{'format'} eq 'HTML' && !$self->renderer->{'_modal_dialog_'}) { FIXME - ENSWEB-2781
+  if (($self->{'format'} eq 'HTML' || $self->{'format'} eq 'search_bot') && !$self->renderer->{'_modal_dialog_'}) {
     my $template_name   = $self->hub->template;
     if (!$template_name) {
       my @namespace   = split('::', ref $self);
-      $template_name  = 'Legacy::'.$namespace[-1];
+      my $type        = $namespace[-1];
+      $template_name  = $type eq 'Dynamic' ? 'Legacy' : "Legacy::$type";
     }
 
     my $template_class  = 'EnsEMBL::Web::Template::'.$template_name;
-    #warn "... USING TEMPLATE $template_class";
 
     if ($self->dynamic_use($template_class)) {
       my $template = $template_class->new({'page' => $self});
@@ -270,6 +270,7 @@ sub initialize_search_bot {
 sub _init {
   my $self = shift;
   
+  my %shared;
   foreach my $entry (@{$self->head_order}, @{$self->body_order}) {
     my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::Element::Content' ]
     
@@ -279,11 +280,11 @@ sub _init {
     
     eval { 
       $module = $classname->new({
-        timer    => $self->{'timer'},
         input    => $self->{'input'},
         format   => $self->{'format'},
         hub      => $self->hub,
-        renderer => $self->renderer
+        renderer => $self->renderer,
+        shared   => \%shared,
       });
     };
     
@@ -474,6 +475,9 @@ sub html_template {
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   $self->add_body_attr('data-pace',$SiteDefs::PACED_MULTI||8);
+
+  $self->modify_page_settings;
+
   my $body_attrs = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
 
   my $html_tag = join '',   $self->doc_type, $self->html_tag;
@@ -487,6 +491,11 @@ sub html_template {
 <body $body_attrs>
 );
 
+  # FIXME - ENSWEB-2781
+  if ($self->{'format'} eq 'search_bot') {
+    $elements->{$_} = '' for grep { !m/content|title/ } keys %$elements;
+  }
+
   ## CONTENTS OF BODY TAG DETERMINED BY TEMPLATE MODULE
   my $template = $self->template;
   $HTML .= $template->render($elements);
@@ -496,7 +505,9 @@ sub html_template {
 </body>
 </html>
 );
-
+  return $HTML;
 }
+
+sub modify_page_settings {}
 
 1;

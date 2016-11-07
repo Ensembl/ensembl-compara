@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +45,7 @@ sub json_fetch_wasabi {
 
   # Wasabi key for session
   my $wasabi_session_key  = $gt_id . "_" . $node_id;
-  my $wasabi_session_data = $hub->session->get_data(type => 'tree_files', code => 'wasabi') ;
+  my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
 
   # Return data if found in session store
   if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
@@ -69,17 +70,13 @@ sub json_fetch_wasabi {
     $files = create_newick($self, $node);
   }
 
-  # Remove old data
-  $hub->session->purge_data(
-    type => 'tree_files',
-    code => 'wasabi');
-
   # Store new data into session
-  $hub->session->add_data(
-    type => 'tree_files',
-    code => 'wasabi',
-    $wasabi_session_key => $files
-  );
+  if (! keys %$wasabi_session_data) {
+    $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
+  }
+  $wasabi_session_data->{$wasabi_session_key} = $files;
+
+  $hub->session->set_record_data($wasabi_session_data);
 
   return $files;
 }
@@ -103,12 +100,11 @@ sub create_json {
   my $file_handle = EnsEMBL::Web::File::User->new(hub => $self->hub, name => $filename, extension => 'json');
 
   my $json = my $hash = Bio::EnsEMBL::Compara::Utils::GeneTreeHash->convert (
-    $tree, 
+    $tree->tree, 
     -no_sequences => 0, 
     -aligned => 1, 
     -species_common_name => 0, 
-    -exon_boundaries => 0, 
-    -full_tax_info => 0
+    -exon_boundaries => 0
   );
 
   $file_handle->write_line(to_json($json));

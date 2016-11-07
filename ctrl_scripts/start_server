@@ -2,7 +2,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,6 +38,7 @@ my $apache_define = $SiteDefs::APACHE_DEFINE;
 my $apache_dir    = $SiteDefs::APACHE_DIR;
 my $apache_bin    = $SiteDefs::APACHE_BIN;
 my $apache_conf   = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
+my $log_dir       = $SiteDefs::ENSEMBL_LOGDIR;
 
 my ($help, $rmconfig, $flush, $verbose, @defines);
 
@@ -67,6 +69,9 @@ if ($help) {
 
 warn_line();
 warn_string('start_server: Starting server');
+
+# Remove preload log
+unlink("$log_dir/preload-errors.log");
 
 # Create directory for packed files if it doesn't exist
 if (! -e "$conf_dir/packed") {
@@ -112,6 +117,8 @@ if ($memcached) {
 }
 
 warn_line();
+
+# Remove preload log file
 
 my ($before_start, $after_start) = before_after_hooks('start');
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,12 +47,12 @@ sub process {
   $url_params->{'action'} = 'ManageData';
 
   if ($hub_info->{'error'}) {
-    $hub->session->add_data(
+    $hub->session->set_record_data({
       type     => 'message',
       code     => 'trackhub_refresh_error',
       message  => "Sorry, we were unable to refresh your trackhub at this time. Please check the hub site and try again later.", 
       function => '_error'
-    );
+    });
   }
 
   return $self->ajax_redirect($self->hub->url($url_params));

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -398,7 +399,7 @@ sub init_legend { # begin (or reset)
   # Set up a separating line
   $self->push($self->Rect({
     x             => 0,
-    y             => 12,
+    y             => 0,
     width         => $im_width,
     height        => 0,
     colour        => 'grey50',

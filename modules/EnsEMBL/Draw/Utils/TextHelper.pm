@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,10 +24,10 @@ use strict;
 # stinky GD helper object for fonts
 #
 sub new {
-    my ($class, $transform_ref) = @_;
+    my ($class, $transform) = @_;
     my $this = {
-	'_scalex' => $$transform_ref{'scalex'} || 1,
-	'_scaley' => $$transform_ref{'scaley'} || 1,
+	'_scalex' => $transform->{'scalex'},
+	'_scaley' => $transform->{'scaley'},
 	'Tiny' => {
 		'width'  => 5,
 		'height' => 8,

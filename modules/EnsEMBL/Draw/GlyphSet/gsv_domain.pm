@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +50,7 @@ sub _init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my @res = $self->get_text_width( 0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize );
   my $th = $res[3];
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};  
+  my $pix_per_bp = $self->{'config'}->transform_object->scalex;
   
   #my $bitmap_length = $Config->image_width(); 
    my $bitmap_length = int($Config->container_width() * $pix_per_bp); 

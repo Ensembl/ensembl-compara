@@ -1,6 +1,7 @@
 #! /usr/bin/env perl
 
-# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 # limitations under the License.
 
 use strict;
+
 package indexXMLDumper;
 
 my $ENSEMBL_ROOT;
@@ -37,10 +39,13 @@ use Getopt::Long;
 use POSIX qw(strftime);
 use HTML::Strip;
 use Digest::MD5 qw(md5_hex);
+use Fcntl;
+use DB_File;
+use SDBM_File;
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
@@ -50,6 +55,7 @@ GetOptions('species=s'        => \$species_list,
            'debug'            => \$debug,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
+           'check_xml'        => \$check_xml,
 	   'help'             => \$help,
          );
 
@@ -219,10 +225,12 @@ foreach my $index (@indexes) {
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
+#    next unless ($species =~ /^Mus/);
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
+    $conf->{'dbs'}{'DATABASE_GO'}      = 'ensembl_ontology_'.$SD->ENSEMBL_VERSION;
     my $core = $dbs{'DATABASE_CORE'};
     $conf->{'core_details'}            = $core;
 
@@ -253,7 +261,14 @@ foreach my $index (@indexes) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
-      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');
+      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');;
+      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($SD->get_config($species,'STRAIN_COLLECTION'));
+      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($SD->get_config($species,'SPECIES_SCIENTIFIC_NAME'));
+      $conf->{'strain_details'}{'strain_name'}        = ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) . ' ' . $SD->get_config($species,'SPECIES_STRAIN');
+      $conf->{'strain_details'}{'reference_strain'} = 1;
+      if ( ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) && ucfirst($SD->get_config($species,'SPECIES_COMMON_NAME')) ne  ucfirst($SD->get_config($species,'STRAIN_COLLECTION'))) {
+        $conf->{'strain_details'}{'reference_strain'} = 0;
+      }
     }
 
     if ($create_elevate) {
@@ -580,15 +595,17 @@ sub dumpVariation {
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
 
   my $sth;
-  my ($all_hgvs_names,$hgvs_sth);
-  if ($dbspecies ne 'Homo_sapiens') {
+  my ($hgvs_sth);
+  my $all_hgvs_names = on_disk_set('all_hgvs_names');
+  if ($dbspecies ne 'omo_sapiens') {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     $sth = $conf->{'variation_dbh'}->prepare(qq(
     SELECT variation_id, hgvs_name
        FROM variation_hgvs));
     $sth->execute;
+    print LOG "    Got HGVS data ".&date_and_mem()."\n";
     while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
-      $all_hgvs_names->{$variation_id}{$hgvs_name}++;
+      set_add($all_hgvs_names,$variation_id,$hgvs_name);
     }
   }
   else {
@@ -598,13 +615,13 @@ sub dumpVariation {
   }
 
   print LOG "    Preparing to get HGNC data ".&date_and_mem()."\n";
-  my $all_hgnc_names;
+  my $all_hgnc_names = on_disk_set('all_hgnc_names');
   $sth = $conf->{'variation_dbh'}->prepare(qq(
      SELECT variation_id, gene_name
        FROM variation_genename));
   $sth->execute;
   while ( my ($variation_id,$hgnc_name) = $sth->fetchrow_array ) {
-    $all_hgnc_names->{$variation_id}{$hgnc_name}++;
+    set_add($all_hgnc_names,$variation_id,$hgnc_name);
   }
 
   print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
@@ -656,6 +673,24 @@ sub dumpVariation {
    )};
   print LOG "     Retrieved extra SNP info ".&date_and_mem()."\n";
 
+  print LOG "    Preparing to phenotype ontologies ".&date_and_mem()."\n";
+  my $ont_db  = $conf->{'dbs'}{'DATABASE_GO'};
+  my $phenotype_ontologies = {};
+  my $sql = qq(
+     SELECT pf.object_id, term.name as phen_ontology, poa.accession, synonym.name as synonym
+       FROM $ont_db.term term, $ont_db.synonym synonym, phenotype_ontology_accession poa, phenotype_feature pf
+      WHERE pf.type ='Variation'
+        AND pf.phenotype_id = poa.phenotype_id
+        AND term.accession = poa.accession
+        AND synonym.term_id = term.term_id);
+  $sth = $conf->{'variation_dbh'}->prepare($sql);
+  $sth->execute;
+  while ( my ($id,$ont,$accession,$syn) = $sth->fetchrow_array ) {
+     $phenotype_ontologies->{$id}{$ont}{'accession'} = $accession;
+     push @{$phenotype_ontologies->{$id}{$ont}{'syns'}}, $syn;
+   }
+  print LOG "     Retrieved phenotype ontologies ".&date_and_mem()."\n";
+
   my $quick_links;
   my $locations = {};
   if ($do_private) {
@@ -676,9 +711,10 @@ sub dumpVariation {
     $quick_links = 'all:0';
   }
 
-  my ($ssid_sth, $stmt,$ssid_hash);
+  my $ssid_hash = on_disk_set('ssid');
+  my ($ssid_sth, $stmt);
   # the human database is so big that that dumping in one go runs out of memory even with 128Gb!
-  if ($dbspecies ne 'Homo_sapiens') {
+  if ($dbspecies ne 'omo_sapiens') {
     print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
@@ -689,7 +725,13 @@ sub dumpVariation {
     print LOG "     ...executed SQL, now retrieving data ".&date_and_mem()."\n";
 
     # Get a hashref of the results with the variation_id as key
-    $ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
+    #$ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
+    while ( my ($variation_id,$ssids) = $ssid_sth->fetchrow_array ) {
+      foreach my $ssid (split(/,/,$ssids)) {
+        set_add($ssid_hash,$variation_id,$ssid);
+      }
+    }
+
     print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
   }
   else {
@@ -749,7 +791,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $somatic_var        = $row->[3];
       my $ssids;
       if ($ssid_hash) {
-        $ssids = $ssid_hash->{$variation_id}{'ssid'};
+        $ssids = [ set_get($ssid_hash,$variation_id) ];
       }
       else {
         #comment out these three lines if time constraints mean you need to generate indices without extra allele info
@@ -770,7 +812,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
           print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
           return 0;
         }
-        $ssids = $res->[0];
+        $ssids = [ split(/,/,$res->[0]) ];
       }
       my %synonyms;
       my $syn_c = 0;
@@ -779,18 +821,17 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
         $synonyms{$sname} = $sources->{$source_id};
         $syn_c++;
       }
-      foreach my $ssid_syn (split /,/,$ssids) {
+      foreach my $ssid_syn (@$ssids) {
         unless (exists $synonyms{$ssid_syn}) {
           $synonyms{$ssid_syn} = 'dbSNP';
           $syn_c++;
           $new_syn_c++;
         }
       }
-      my (@syns, %genes, @phenotypes, @studies, @hgvs_names);
+      my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
       foreach my $syn (keys %synonyms) {
         push @syns, $syn;
       }
-
       my $somatic_mutation = $somatic_var;
       my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variant';
       my $snp_source       = $sources->{ $source_id };
@@ -807,11 +848,11 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
         push @phenotypes, $x->[5] if $x->[5];
         push @studies,    split ';', $x->[2];
       }
-
+      # ok
       my $hgvs_names;
       if ($all_hgvs_names) {
         if ($all_hgvs_names->{$variation_id}) {
-          foreach my $hgvs_name (keys %{$all_hgvs_names->{$variation_id}}) {
+          foreach my $hgvs_name (set_get($all_hgvs_names,$variation_id)) {
             push @hgvs_names, $hgvs_name;
           }
         }
@@ -822,24 +863,44 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
           push  @hgvs_names, $hgvs_name;
         }
       }
+      if ($phenotype_ontologies->{$variation_name}) {
+        while (my ($ontology_name, $values) = each %{$phenotype_ontologies->{$variation_name}}) {
+          push @ontologies, $ontology_name;
+          $phen_ont{'names'}{$ontology_name}++;
+          $phen_ont{'accession'} = $values->{'accession'};
+          foreach my $syn (@{$values->{'syns'}}){
+            $phen_ont{'synonyms'}{$syn}++;
+          }
+        }
+      }
+      # ok
       if ($all_hgnc_names->{$variation_id}) {
-        foreach my $hgnc_name (keys %{$all_hgnc_names->{$variation_id}}) {
+        foreach my $hgnc_name (set_get($all_hgnc_names,$variation_id)) {
           $genes{$hgnc_name}++;
         }
       }
-      my $loc = $locations->{$variation_id}[0];
-      my $gwas_studies = join ', ', keys %{$gwas_variations->{$variation_name}};
-      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s",
+      # ok
+      my $loc;
+      if(exists $locations->{$variation_id}) {
+        $loc = $locations->{$variation_id}[0];
+      }
+      # bad
+      my $gwas_studies;
+      if(exists $gwas_variations->{$variation_name}) {
+        $gwas_studies = join ', ', keys %{$gwas_variations->{$variation_name}};
+      }
+      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s%s",
                        @phenotypes   ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
+                       @ontologies   ? ' Phenotype ontologies: '. (join ', ', @ontologies)         . '.' : '',
                        %genes          ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
                        @hgvs_names   ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
                        $gwas_studies ? " GWAS studies: $gwas_studies"                              . '.' : '',
                        $failed_desc  ? " $failed_desc."                                                  : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter ), $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter ), $fh);
       }
     }
   }
@@ -854,11 +915,14 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
   %snp_extra    = undef;
   $ssid_hash = undef;
 
+  off_disk('all_hgvs_names',$all_hgvs_names);
+  off_disk('all_hgnc_names',$all_hgnc_names);
+  off_disk('ssid',$ssid_hash);
   return $c;
 }
 
 sub VariationLine {
-  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $hgvs_names, $type, $source, $loc, $quick_links, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $genes, $phenotypes, $ontologies, $studys, $hgvs_names, $type, $source, $loc, $quick_links, $desc, $counter ) = @_;
   my $url = sprintf(qq(%s/Variation/Summary?v=%s),
                     $species,
                     $name);
@@ -869,6 +933,7 @@ sub VariationLine {
                     $loc);
   }
   $species =~ s/_/ /;
+  $desc = &clean($desc,'phenotype description');
   my $xml = qq(
 <doc>
   <field name="id">$name</field>
@@ -881,23 +946,46 @@ sub VariationLine {
     $xml .= qq(
   <field name="synonym">$_</field>);
   }
-  foreach (keys %$genes) {
+  if (%$ontologies){
+    my $acc = $ontologies->{'accession'};
     $xml .= qq(
-  <field name="assoc_gene">$_</field>);
+  <field name="ont_acc">$acc</field>);
+    foreach my $name (keys %{$ontologies->{'names'}}) {
+      my $name = clean($name,'ontology_name');
+      $xml .= qq(
+  <field name="ont_name">$name</field>);
+    }
+    foreach my $syn (keys %{$ontologies->{'synonyms'}}) {
+      $syn = clean($syn,'ontology_synonym');
+      $xml .= qq(
+  <field name="ont_syn">$syn</field>);
+    }
   }
-  foreach (@$phenotypes) {
+  foreach (@$studys ) {
     $xml .= qq(
-  <field name="phenotype">$_</field>);
+  <field name="study">$_</field>);
   }
   foreach my $hgvs_name (@$hgvs_names) {
     $hgvs_name = &clean($hgvs_name,'hgvs_name');
     $xml .= qq(
   <field name="hgvs_name">$hgvs_name</field>);
   }
-  foreach (@$studys ) {
-    $xml .= qq(
-  <field name="study">$_</field>);
-  }
+
+## These records are in the description so no need to be in as seperate fields as well. Leaving commented out though
+## in case we do need to raise the priority of these records
+#  foreach (keys %$genes) {
+#    $xml .= qq(
+#  <field name="assoc_gene">$_</field>);
+#  }
+#  foreach (@$phenotypes) {
+#    $xml .= qq(
+#  <field name="phenotype">$_</field>);
+#  }
+#  foreach my $hgvs_name (@$hgvs_names) {
+#    $hgvs_name = &clean($hgvs_name,'hgvs_name');
+#    $xml .= qq(
+#  <field name="hgvs_name">$hgvs_name</field>);
+#  }
   $xml .= qq(
   <field name="variation_source">$source</field>);
   $xml .= &common_fields($species,$type,'variation');
@@ -1117,23 +1205,35 @@ sub dumpGenomicAlignment {
     header($fh);
 
     foreach my $table ( keys %tables ) {
+      my $disp_sth = $conf->{'dbh'}->prepare(qq(
+        select ad.analysis_id, ad.web_data
+          from $dbname.analysis_description ad
+        where ad.displayable = 1
+      ));
+      $disp_sth->execute();
+      my @disp_ids;
+      while(my ($id,$webdata) = $disp_sth->fetchrow_array) {
+        my $wd = eval($webdata);
+        next if $wd->{$table}{'do_not_display'}; 
+        push @disp_ids,$id;
+      }
+      next unless @disp_ids;
+      my $disp_ids = join(',',@disp_ids);
       my $source = $tables{ $table }[0];
       $source .= ";db=$db" unless $db eq 'core';
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
-        "select ad.display_label, a.logic_name, ad.displayable, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
+        "select ad.display_label, a.logic_name, t.hit_name, edb.db_name, count(*) as hits
                 from (($dbname.analysis as a, $dbname.$table as t) left join
                      $dbname.analysis_description ad on a.analysis_id = ad.analysis_id) 
            left join $dbname.external_db edb on t.external_db_id = edb.external_db_id
                where a.analysis_id = t.analysis_id
+                 and ad.analysis_id in ($disp_ids)
                  and ad.displayable = 1
                group by ad.display_label, t.hit_name");
       $sth->execute();
       my $c = 0;
-      while( my( $label, $logic_name, $displayable, $hid, $webdata, $db_name, $count  ) = $sth->fetchrow_array ) {
-        my $wd = eval($webdata);
-        next if $wd->{$table}{'do_not_display'};
-        next unless $displayable;
+      while( my( $label, $logic_name, $hid, $db_name, $count  ) = $sth->fetchrow_array ) {
         $c++;
         $label ||= '';
         my $desc = "$label $hid hits the genome in $count locations.";
@@ -1414,6 +1514,7 @@ sub dumpDomain {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
+  my $common_name = $conf->{'species_common_name'};
   my $file = $conf->{'directory'}."/${dbname}_Domain.xml";
   my $start_time = time;
   my $db = 'core';
@@ -1421,6 +1522,21 @@ sub dumpDomain {
   open( $fh, ">$file" ) or die "Can't open $file: $!";
   print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header($fh);
+
+  my $gene_counts = $conf->{'dbh'}->selectall_hashref(qq(
+     select x.dbprimary_acc, count(*) as c
+      from xref x,
+                 (select x.dbprimary_acc, g.stable_id
+                   from xref as x, interpro as i, protein_feature pf, translation tl, transcript t, gene g
+                  where x.dbprimary_acc = i.interpro_ac
+                    and i.id = pf.hit_name
+                    and pf.translation_id = tl.translation_id
+                    and tl.transcript_id = t.transcript_id
+                    and t.gene_id = g.gene_id
+               group by x.dbprimary_acc, g.stable_id
+               order by x.dbprimary_acc, g.stable_id) as y
+      where x.dbprimary_acc = y.dbprimary_acc
+   group by x.dbprimary_acc),'dbprimary_acc');
 
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
@@ -1442,9 +1558,12 @@ sub dumpDomain {
     }
     else {
       if ($old_acc) {
-        $description = "Interpro domain $old_acc [$old_desc] has";
+        my $gene_c = $gene_counts->{$old_acc}{'c'};
+        my $gene_text = $gene_c > 1 ? 'genes' : 'gene';
+        $description = "Interpro domain $old_acc [$old_desc] is found in $gene_c $gene_text in $common_name and has";
         &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $fh);
       }
+
       $IDS      = [ $id ];
       $old_acc  = $acc;
       $old_desc = $desc;
@@ -1462,8 +1581,9 @@ sub DomainLine {
                     $species,
                     $acc);
   $species =~ s/_/ /;
-  my $ids = join ',', @$IDS;
-  my $description = &clean($desc)." $count associated external database identifiers: $ids";
+  my $ids = join ', ', @$IDS;
+  my $identifier_text = $count > 1 ? 'records' : 'record';
+  my $description = &clean($desc)." $count $identifier_text from signature databases: $ids";
   my $xml = qq(
 <doc>
   <field name="id">$acc</field>
@@ -1502,10 +1622,15 @@ sub dumpGeneTree {
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
     header($fh);
-    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT NULL));
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(
+        SELECT gtr.stable_id
+          FROM gene_tree_root gtr
+         WHERE gtr.clusterset_id = "default"
+           AND gtr.tree_type = "tree"
+           AND gtr.stable_id IS NOT NULL));
     $sth->execute();
-    while( my( $gt_id) = $sth->fetchrow_array()) {
-      &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species), $fh);
+    while( my( $gt_id,$mlss_name) = $sth->fetchrow_array()) {
+      &p( GeneTreeLine($dbspecies,$gt_id,$mlss_name,$counter,$multi_species), $fh);
     }
     my $c = footer( $counter->(), $fh);
   }
@@ -1521,28 +1646,30 @@ sub dumpGeneTree {
   header($fh);
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
   my $sql = qq(
-        SELECT gtr.stable_id, gm.stable_id
+        SELECT gtr.stable_id, gm.stable_id, mlss.name
          FROM gene_tree_root gtr
          JOIN gene_tree_node USING (root_id)
          JOIN seq_member sm USING (seq_member_id)
          JOIN gene_member gm ON sm.gene_member_id = gm.gene_member_id
          JOIN genome_db gdb ON gm.genome_db_id = gdb.genome_db_id
+         JOIN method_link_species_set mlss ON gtr.method_link_species_set_id = mlss.method_link_species_set_id
         WHERE clusterset_id = "default"
           AND tree_type = "tree"
           AND gdb.name = '$dbspecies');
   my $sth =  $conf->{'dbh_compara'}->prepare($sql);
   $sth->execute;
-  while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
+  while (my ($gt_id, $gid, $mlss_name) = $sth->fetchrow_array() ) {
     next unless $gt_id;
     my $name = $gene_names->{$gid};
-    &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species,$gid,$name), $fh);
+    &p( GeneTreeLine($dbspecies,$gt_id,$mlss_name,$counter,$multi_species,$gid,$name), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
 sub GeneTreeLine {
-  my($species,$gt_id,$counter,$ms,$gid,$name) = @_;
+  my($species,$gt_id,$mlss_name,$counter,$ms,$gid,$name) = @_;
   my ($url,$xml,$desc);
+  my $is_strain = ($mlss_name =~ /^default/) ? 0 : 1;
   $xml = qq(
 <doc>
   <field name="id">$gt_id</field>);
@@ -1573,7 +1700,8 @@ sub GeneTreeLine {
   <field name="description">$desc</field>);
     }
     $xml .= &common_fields($species,'GeneTree','core');
-    $url = sprintf(qq($species/Gene/Compara_Tree?g=%s),$gid);
+    my $url_root = $is_strain ? 'Strain_Compara_Tree' : 'Compara_Tree';
+    $url = sprintf(qq($species/Gene/%s?g=%s),$url_root,$gid);
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
@@ -2113,25 +2241,29 @@ sub dumpGene {
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
           $external_db_desc =~ s/ $//;
-          $desc .= " record with a description of $external_db_desc)";
+          $desc .= " record; description: $external_db_desc')";
           $search_term .= " $external_db_desc";
         }
         else {
           $desc .= ')'; 
         }
+        my $ext_syns;
         if ($external_synonyms->{$xref_id}) {
           my $syn_c = keys(%{$external_synonyms->{$xref_id}});
           $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
-          }
+            $ext_syns->{$syn}++,
+          };
+
         }
-        $desc .= " is associated with $type $stable_id";
+        $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
           desc        => $desc,
+          external_syns => $ext_syns,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
@@ -2237,6 +2369,7 @@ sub dumpGene {
                        $old->{'xrefs'},
                        $old->{'synonyms'},
                        '',
+                       '',
                        $gene_locations->{$old_gsi},
                        $has_patches,
                        $db,
@@ -2306,6 +2439,7 @@ sub dumpGene {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'synonyms'},
+                        '',
                         '',
                         $gene_locations->{$old_gsi},
                         $has_patches,
@@ -2420,6 +2554,22 @@ sub dumpTranscript {
     foreach (@$es) {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
+
+    #get protein_feature domains
+    my $protein_domains = {};
+    my $sql = qq(
+       SELECT t.transcript_id, x.dbprimary_acc, i.id
+         FROM xref x, interpro i, protein_feature pf, translation tl, transcript t
+        WHERE x.dbprimary_acc = i.interpro_ac
+          AND i.id = pf.hit_name
+          AND pf.translation_id = tl.translation_id
+          AND tl.transcript_id = t.transcript_id);
+    my $sth = $conf->{'dbh'}->prepare($sql);
+    $sth->execute();
+    while (my ($tsi,$hit,$syn) = $sth->fetchrow_array()) {
+      $protein_domains->{$tsi}{$hit}{$syn}++;
+    }
+
     my %xrefs = ();
     my @xrefs_to_skip = qw(GO goslim_goa);
     foreach my $type( qw(Transcript Translation) ) {
@@ -2443,25 +2593,28 @@ sub dumpTranscript {
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
           $external_db_desc =~ s/ $//;
-          $desc .= " record with a description of $external_db_desc)";
+          $desc .= " record; description: $external_db_desc)";
           $search_term .= " $external_db_desc";
         }
         else {
           $desc .= ')'; 
         }
+        my $ext_syns;
         if ($external_synonyms->{$xref_id}) {
           my $syn_c = keys(%{$external_synonyms->{$xref_id}});
           $desc .= $syn_c > 1 ? ', with synonyms of' : ', with a synonym of';
           foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
             $search_term .= " $syn";
             $desc .= " $syn,";
-          }
+            $ext_syns->{$syn}++,
+           }
         }
-        $desc .= " is associated with $type $stable_id";
+        $desc .= " is an external reference matched to $type $stable_id";
         push @{$xrefs{$type}{$stable_id}},{
           id          => $external_db_label,
           search_term => $search_term,
           desc        => $desc,
+          external_syns => $ext_syns,
         };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
@@ -2536,7 +2689,7 @@ sub dumpTranscript {
        WHERE t.gene_id = g.gene_id),
      'transcript_id');
 
-    my $sql = qq(
+    $sql = qq(
       SELECT t.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version,
             (SELECT sra.value
                 FROM $dbname.seq_region_attrib sra, $dbname.attrib_type at
@@ -2562,7 +2715,6 @@ sub dumpTranscript {
        ORDER by t.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute();
-
 
     my $old;
     my $c = 0;
@@ -2592,6 +2744,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
+                        $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
                         $db,
@@ -2614,6 +2767,8 @@ sub dumpTranscript {
           'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
+          'domains'   => $protein_domains->{$tid},
+
         };
 
         $old->{'exons'}  = $exons{$tid};
@@ -2674,6 +2829,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
+                        $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
                         $db,
@@ -2692,7 +2848,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $has_patches, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $domains, $feat_loc, $has_patches, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2764,18 +2920,53 @@ sub GeneTransLine {
   <field name="_hr">$se_desc</field>);
     }
   }
+  #protein domains
+  if ( ($type eq 'Transcript') && $domains) {
+    my %ids;
+    foreach my $interpro (keys %$domains) {
+      my $c = keys(%{$domains->{$interpro}});
+      my $desc = "Interpro domain $interpro with $c records from signature databases (";
+      foreach my $syn (keys %{$domains->{$interpro}}) {
+        next if $ids{$syn};
+        $ids{$syn}++;
+        $syn = &clean($syn);
+        $desc .= "$syn, ";
+        $xml .= qq(
+  <field name="prot_domain">$syn</field>);
+      }
+      $desc = substr $desc,0,-2;
+      my $translid = (keys %{$tlsids})[0];
+      $desc .= ") is found on Translation $translid";
+      $xml .= qq(
+  <field name="_hr">$desc</field>);
+      unless ($ids{$interpro}) {
+        $ids{$interpro}++;
+        $interpro = &clean($interpro);
+        $xml .= qq(
+  <field name="prot_domain">$interpro</field>);
+      }
+    }
+  }
 
- foreach my $xref (@$xrefs) {
+  my $ext_syns;
+  foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
-    my $xref_id     = $xref->{'id'};
+    my $id          = $xref->{'id'};
     my $desc        = $xref->{'desc'};
 
-    #remove any duplicates
-    next if $seen_labels{$xref_id};
-    $seen_labels{$xref_id}++;
+    if ($xref->{'external_syns'}) {
+      foreach (keys %{$xref->{'external_syns'}}){
+        $ext_syns->{$_}++;
+      }
+    }
 
-    #remove any records where the hit is an Ensembl stable ID
-    next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
+    #remove any duplicates
+    next if $seen_labels{$id};
+    $seen_labels{$id}++;
+
+    #remove any records where the hit is an Ensembl stable ID or matches the display_xref
+    next if ($id eq $sid) || ( grep {$_ eq $id} keys(%$tsids), keys(%$tlsids));
+    next if $id eq $disp_xref;
 
     $search_term = &clean($search_term);
     $labels{$search_term}++;
@@ -2787,6 +2978,10 @@ sub GeneTransLine {
   my $xrefs = join ' ', keys %labels;
     $xml .= qq(
   <field name="xrefs">$xrefs</field>);
+  foreach my $syn (keys %$ext_syns){
+    $xml .= qq(
+  <field name="name_synonym">$syn"</field>);
+  } 
   my %seen_syns;
   foreach my $syn (@$synonyms) {
     next if $seen_syns{$syn};
@@ -2960,15 +3155,22 @@ sub dumpRegulatoryFeature {
   my $ftype = 'RegulatoryFeature';
   my $params;
 
-  my $d = $conf->{'dbh'}->selectall_arrayref(
-    "select rf.stable_id, sr.name, (rf.seq_region_start - rf.bound_start_length), (rf.seq_region_end + rf.bound_end_length), ft.name
-       from $dbname.regulatory_feature rf, $dbname.seq_region sr, $dbname.coord_system cs,
-            $dbname.feature_type ft, $dbname.feature_set fs
-      where fs.name='RegulatoryFeatures:MultiCell' and fs.feature_set_id=rf.feature_set_id and
-            rf.feature_type_id=ft.feature_type_id and rf.seq_region_id=sr.seq_region_id and
-            sr.coord_system_id=cs.coord_system_id and cs.is_current=1
-   group by rf.regulatory_feature_id"
-  );
+  my $d = $conf->{'dbh'}->selectall_arrayref("
+    select 
+      rf.stable_id, 
+      sr.name, 
+      (rf.seq_region_start - rf.bound_start_length), 
+      (rf.seq_region_end + rf.bound_end_length), 
+      ft.name
+    from 
+      $dbname.regulatory_feature rf
+      join $dbname.seq_region sr using (seq_region_id)
+      join $dbname.coord_system cs using (coord_system_id)
+      join $dbname.feature_type ft using (feature_type_id)
+    where
+      cs.is_current=1
+      and sr.schema_build=cs.schema_build
+   ");
 
   foreach my $row ( @$d ) {
     my $desc = qq($row->[4] regulatory feature);
@@ -2980,22 +3182,25 @@ sub dumpRegulatoryFeature {
   }
 
 ## External Features...
-  my $e = $conf->{'dbh'}->selectall_arrayref(
- "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id), ft.description, ft.class, fs.name
-    from  $dbname.feature_type ft, $dbname.external_feature ef, $dbname.feature_set fs, $dbname.seq_region sr,
-          $dbname.coord_system cs,$dbname.status s, $dbname.status_name sn
-    where ft.feature_type_id=ef.feature_type_id
-      and fs.feature_set_id=ef.feature_set_id
-      and fs.type='external'
-      and ef.seq_region_id=sr.seq_region_id
-      and sr.coord_system_id=cs.coord_system_id
-      and cs.is_current=1
-      and s.table_name='feature_set'
-      and s.table_id=fs.feature_set_id
-      and s.status_name_id=sn.status_name_id
-      and sn.name='MART_DISPLAYABLE'
- group by ef.display_label"
-  );
+  my $e = $conf->{'dbh'}->selectall_arrayref("
+    select 
+      ef.display_label, 
+      group_concat(distinct ft.name), 
+      count(distinct ef.external_feature_id), 
+      ft.description, 
+      ft.class, 
+      fs.name
+    from  
+      $dbname.external_feature ef
+      join $dbname.feature_type ft using (feature_type_id)
+      join $dbname.feature_set fs using (feature_set_id)
+      join $dbname.seq_region sr using (seq_region_id)
+      join $dbname.coord_system cs using (coord_system_id)
+    where
+      cs.is_current = 1
+    group by 
+      ef.display_label
+ ");
 
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name ) = @$f;
@@ -3011,15 +3216,26 @@ sub dumpRegulatoryFeature {
 
 ## Tarbase features
   my $e = $conf->{'dbh'}->selectall_arrayref(
-  "select mrf.display_label, group_concat(distinct ft.name), group_concat(distinct mrf.accession), count(distinct mrf.mirna_target_feature_id),
-          ft.description, ft.class, fs.name
-     from $dbname.feature_type ft, $dbname.mirna_target_feature mrf, $dbname.feature_set fs, $dbname.seq_region sr, $dbname.coord_system cs
-    where ft.feature_type_id = mrf.feature_type_id
-      and fs.feature_set_id = mrf.feature_set_id
-      and mrf.seq_region_id = sr.seq_region_id
-      and sr.coord_system_id = cs.coord_system_id
-          and cs.is_current = 1
- group by mrf.display_label"
+  "
+  select 
+    mrf.display_label, 
+    group_concat(distinct ft.name), 
+    group_concat(distinct mrf.accession), 
+    count(distinct mrf.mirna_target_feature_id),
+    ft.description, 
+    ft.class, 
+    fs.name
+  from 
+    $dbname.mirna_target_feature mrf
+    join $dbname.feature_type ft using (feature_type_id)
+    join $dbname.feature_set fs using (feature_set_id)
+    join $dbname.seq_region sr using (seq_region_id)
+    join $dbname.coord_system cs using (coord_system_id)
+  where
+    cs.is_current = 1
+  group by 
+    mrf.display_label
+ "
 );
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $accs, $count, $f_desc, $f_class, $fs_name) = @$f;
@@ -3144,6 +3360,44 @@ sub LRGLine {
 
 #######################################################################
 
+sub on_disk_set {
+  my ($name) = @_;
+
+  my %var;
+  tie(%var,'DB_File',"$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
+  return \%var;
+}
+
+
+my $SYNC_COUNT = 0;
+sub set_add {
+  my ($var,$k,$v) = @_;
+
+  return unless defined $var;
+  $var->{$k}.="\t$v";
+  $SYNC_COUNT++;
+  unless($SYNC_COUNT%1000000) {
+    warn "Added $SYNC_COUNT\n";
+  }
+}
+
+sub set_get {
+  my ($var,$k) = @_;
+
+  return () unless defined $var;
+  return grep { $_ } split("\t",$var->{$k});
+} 
+
+sub off_disk {
+  my ($name,$var) = @_;
+
+  return unless defined $var;
+  untie %$var;
+  unlink "$name.$$.db";
+}
+
+#######################################################################
+
 #XML encode those non-standard characters in gene names and descriptions (order of regexps is important)
 sub clean {
   my ($text,$field) = @_;
@@ -3188,16 +3442,46 @@ sub footer {
 }
 
 sub common_fields {
-  my ($species,$feature_type,$db) = @_;
-  my $species_name = $species eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my ($species_latin_name,$feature_type,$db) = @_;
+  my $species_common_name = $species_latin_name eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
+  my $parent_common = $conf->{'strain_details'}{'parent_common_name'};
+  my ($parent_latin, $strain);
+
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-  if ($species) {
-    $xml .= qq(
-  <field name="species">$species_name</field>
-  <field name="species_name">$species</field>);
+
+  if ($species_common_name eq 'CrossSpecies') {
+    $xml.= qq(
+  <field name="species">$species_common_name</field>
+  <field name="species_name">$species_latin_name</field>
+  <field name="reference_strain">1</field>);
   }
+  else {
+    #for the front end we need the species details to be that of the parent, and the strain to be that of the species.
+    if ($parent_common) {
+      $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
+      $strain = $conf->{'strain_details'}{'strain_name'};
+      $species_latin_name = $parent_latin;
+      $species_common_name = $parent_common;
+    }
+
+    if ($species_latin_name) {
+      $xml .= qq(
+  <field name="species">$species_common_name</field>
+  <field name="species_name">$species_latin_name</field>);
+    }
+    my $ref_strain = $conf->{'strain_details'}{'reference_strain'};
+    if ($ref_strain) {
+      $xml .= qq(
+  <field name="reference_strain">$ref_strain</field>);
+    }
+    if ($strain) {
+      $xml .= qq(
+  <field name="strain">$strain</field>);
+    }
+  }
+
   if ($db) {
     $xml .= qq(
   <field name="database_type">$db</field>);
@@ -3208,11 +3492,13 @@ sub common_fields {
 sub p {
   my ($str, $fh, $no_parse) = @_;
   return unless $str;
-  unless ($no_parse) {
-    eval { $parser->parse($str); };
-    if ($@) {
-      print LOG "\n\nWARNING XML - Error in XML, please fix and rerun:\nError is $@\n";
-      exit;
+  if ($check_xml ) {
+    unless ($no_parse) {
+      eval { $parser->parse($str); };
+      if ($@) {
+        print LOG "\n\nWARNING XML - Error in XML, please fix and rerun:\nError is $@\n";
+        exit;
+      }
     }
   }
   $str .= "\n";

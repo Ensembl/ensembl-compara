@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,10 +19,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Hub;
 
-### NAME: EnsEMBL::Web::Hub 
 ### A centralised object giving access to data connections and the web environment 
-
-### DESCRIPTION:
+### Hub can only when created during a web request - ie. needs to have an apache request object
 ### Hub uses the Flyweight design pattern to create a single object that is 
 ### passed around between all other objects that require data connectivity.
 ### The Hub stores information about the current web page and its environment, 
@@ -32,290 +31,275 @@ use strict;
 
 use Carp;
 use CGI;
-use URI::Escape qw(uri_escape uri_unescape);
+use URI::Escape qw(uri_escape);
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::DBSQL::DBConnection;
-use EnsEMBL::Web::DBSQL::ConfigAdaptor;
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(WebException);
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Session;
-use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
+use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
+use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::Tools::FailOver::Wasabi;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-use base qw(EnsEMBL::Web::Root);
+use parent qw(EnsEMBL::Web::DBHub);
 
-sub new {
-  my ($class, $args) = @_;
+sub viewconfig      :Accessor; # Store viewconfig for the current component being rendered (FIXME - this is done to that param method can return viewconfig param value - causes lots of problems)
+sub type            :Accessor;
+sub action          :Accessor;
+sub function        :Accessor;
+sub sub_function    :Accessor;
+sub controller_name :Accessor;
+sub r               :Accessor;
+sub controller      :Accessor;
+sub session         :Accessor;
+sub user            :Accessor;
+sub factorytype     :Accessor;
+sub builder         :Accessor;
+sub factory         :Accessor;
+sub cache           :Accessor;
+sub components      :Accessor;
+sub input           :Accessor;
+sub cookies         :Accessor;
+sub core_params     :Accessor;
 
-  my $type         = $args->{'type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
-  my $species      = $args->{'species'}      || $ENV{'ENSEMBL_SPECIES'};
-  my $input        = $args->{'input'}        || CGI->new;
-  my $species_defs = $args->{'species_defs'} || EnsEMBL::Web::SpeciesDefs->new;
-  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
-  my $cookies      = $args->{'apache_handle'} ? EnsEMBL::Web::Cookie->fetch($args->{'apache_handle'}) : {};
+sub template        :AccessorMutator;
 
-  $species_defs->{'timer'} = $args->{'timer'};
-  
-  my $self = {
-    _input         => $input,
-    _species       => $species,    
-    _species_defs  => $species_defs, 
-    _factorytype   => $factorytype,
-    _type          => $type,
-    _action        => $args->{'action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
-    _function      => $args->{'function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
-    _script        => $args->{'script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
-    _cache         => $args->{'cache'}         || EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000),
-    _ext_url       => $args->{'ext_url'}       || EnsEMBL::Web::ExtURL->new($species, $species_defs),
-    _problem       => $args->{'problem'}       || {},
-    _user_details  => $args->{'user_details'}  || 1,
-    _object_types  => $args->{'object_types'}  || {},
-    _apache_handle => $args->{'apache_handle'} || undef,
-    _user          => $args->{'user'}          || undef,
-    _timer         => $args->{'timer'}         || undef,
-    _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
-    _cookies       => $cookies,
-    _ext_indexers  => {},
-    _builder       => undef,
-    _core_params   => {},
-    _core_params   => {},
-    _species_info  => {},
-    _components    => [],
-    _req_cache     => {},
-  };
-
-  bless $self, $class;
-
-  $self->query_store_setup;  
-  $self->init_session($args->{'session_cookie'});
-  $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
-  
-  $self->set_core_params;
-  
-  return $self;
-}
-
-sub init_session {
-  my ($self, $cookie) = @_;
-
-  $self->session = EnsEMBL::Web::Session->new($self, $cookie);
-}
-
-# Accessor functionality
-sub species     :lvalue { $_[0]{'_species'};     }
-sub script      :lvalue { $_[0]{'_script'};      }
-sub type        :lvalue { $_[0]{'_type'};        }
-sub action      :lvalue { $_[0]{'_action'};      }
-sub function    :lvalue { $_[0]{'_function'};    }
-sub builder     :lvalue { $_[0]{'_builder'};     }
-sub factorytype :lvalue { $_[0]{'_factorytype'}; }
-sub session     :lvalue { $_[0]{'_session'};     }
-sub cache       :lvalue { $_[0]{'_cache'};       }
-sub user        :lvalue { $_[0]{'_user'};        }
-sub timer       :lvalue { $_[0]{'_timer'};       }
-sub template    :lvalue { $_[0]{'_template'};    }
-sub components  :lvalue { $_[0]{'_components'};  }
-sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
-
-sub input          { return $_[0]{'_input'};          }
-sub cookies        { return $_[0]{'_cookies'};        }
-sub databases      { return $_[0]{'_databases'};      }
-sub object_types   { return $_[0]{'_object_types'};   }
-sub core_params    { return $_[0]{'_core_params'};    }
-sub apache_handle  { return $_[0]{'_apache_handle'};  }
-sub ExtURL         { return $_[0]{'_ext_url'};        }
-sub user_details   { return $_[0]{'_user_details'};   }
-sub species_defs   { return $_[0]{'_species_defs'};   }
-sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::ConfigAdaptor->new($_[0]); }
-
-sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
-sub referer           { return $_[0]{'referer'}   ||= $_[0]->parse_referer;                                  }
-sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs);      }
-sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
+sub referer           { return shift->controller->referer; }
+sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs); }
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
 sub table_info        { return shift->species_defs->table_info(@_);         }
-sub get_databases     { return shift->databases->get_databases(@_);         }
-sub databases_species { return shift->databases->get_databases_species(@_); }
 sub delete_param      { shift->input->delete(@_); }
 
-sub users_available         { return 0; } # overridden in users plugin
-sub users_plugin_available  { return 0; } # overridden in users plugin
 
-sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
-sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
-sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
-sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
-sub clear_problem_type { delete $_[0]{'_problem'}{$_[1]}; }
-sub clear_problems     { $_[0]{'_problem'} = {}; }
+sub users_available         { 0 } # overridden in user plugin
+sub users_plugin_available  { 0 } # overridden in user plugin
 
-sub is_mobile_request  { }; #this is implemented in the mobile plugin
+sub object_types    { return $_[0]{'_object_types'} ||= { map { $_->[0] => $_->[1] } @{$_[0]->controller->object_params || []} }; }
+sub ordered_objects { return $_[0]{'_ordered_objs'} ||= [ map $_->[0], @{$_[0]->controller->object_params || []} ]; }
 
+sub new {
+  ## @constructor
+  ## @param Controller object
+  my ($class, $controller) = @_;
 
-## Cookie methods
+  my $self = $class->SUPER::new($controller->species, $controller->species_defs);
+
+  $self->{'controller'}       = $controller;
+  $self->{'r'}                = $controller->r;
+  $self->{'type'}             = $ENV{'ENSEMBL_TYPE'}      = $controller->type;
+  $self->{'action'}           = $ENV{'ENSEMBL_ACTION'}    = $controller->action;
+  $self->{'function'}         = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
+  $self->{'controller_name'}  = $ENV{'ENSEMBL_SCRIPT'}    = [ split '::', ref($controller) ]->[-1];
+  $self->{'components'}       = [];
+
+  $self->init_cookies;
+  $self->init_cache;
+  $self->init_input;
+  $self->query_store_setup;
+  $self->set_core_params;
+  $self->init_session;
+  $self->init_user;
+
+  # apply the factorytype hack for Location - TODO move this Factory::Location (use decorator pattern)
+  my $factorytype   = $self->{'type'} eq 'Location' && $self->{'action'} =~ /^Multi(Ideogram.*|Top|Bottom)?$/ ? 'MultipleLocation' : undef;
+     $factorytype ||= $self->input->param('factorytype') || $self->{'type'};
+  $self->{'factorytype'} = $factorytype;
+
+  return $self;
+}
+
+sub init_cookies {
+  ## Initialises cookies from request header
+  my $self = shift;
+  $self->{'cookies'} = EnsEMBL::Web::Cookie->new_from_header($self->r);
+}
+
+sub init_cache {
+  ## Initialises cache object
+  my $self = shift;
+  $self->{'cache'} = EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000);
+}
+
+sub init_input {
+  ## Initialise CGI input
+  my $self  = shift;
+  my $input = CGI->new;
+
+  $self->{'input'}  = $input;
+  $CGI::POST_MAX    = $self->controller->upload_size_limit; # Set max upload size
+}
+
+sub init_session {
+  ## Initialises a session object for the current request
+  my $self = shift;
+  $self->{'session'} = EnsEMBL::Web::Session->new($self);
+}
+
+sub init_user {
+  ## Initialise user - to be implemented in user plugin
+  $_[0]->{'user'} = undef;
+}
+
+sub session_id {
+  ## Gets session id of the current session
+  ## @return Integer session id
+  return shift->session->session_id;
+}
+
+sub web_proxy {
+  ## Gets the http and https proxy address
+  return shift->species_defs->ENSEMBL_WWW_PROXY || '';
+}
+
+sub image_width {
+  ## Gets image width or sets it for subsequent requests by setting a cookie
+  ## @param Width in pixels (if setting)
+  ## @return Width in pixels
+  my ($self, $width) = @_;
+
+  if ($width) {
+    $self->{'image_width'} = $width;
+    $self->set_cookie('ENSEMBL_WIDTH', $width);
+  }
+
+  return $self->{'image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
+}
+
 sub get_cookie_value {
-  my $self    = shift;
-  my $cookie  = $self->get_cookie(@_);
+  ## Gets value of a cookie
+  ## @param Cookie name
+  ## @param Flag kept on if cookie is encrypted
+  ## @return Cookie value, possibly an empty string if cookie doesn't exist
+  my ($self, $name) = splice @_, 0, 2;
+  my $cookie  = $self->cookies->{$name} ? $self->get_cookie($name, @_) : undef; # don't create a new cookie
+
   return $cookie ? $cookie->value : '';
 }
 
 sub get_cookie {
+  ## Gets a cookie object (or creates a new one if one doesn't exist)
+  ## @param Cookie name
+  ## @param Flag kept on if cookie is encrypted
+  ## @return Cookie object (possible newly created)
   my ($self, $name, $is_encrypted) = @_;
-  my $cookies = $self->cookies;
-  $cookies->{$name} = EnsEMBL::Web::Cookie->retrieve($self->apache_handle, {'name' => $name, 'encrypted' => $is_encrypted}) unless $cookies->{$name} && $cookies->{$name}->encrypted eq ($is_encrypted || 0);
-  return $cookies->{$name};
+  my $cookie = $self->cookies->{$name} ||= EnsEMBL::Web::Cookie->new($self->r, {'name' => $name});
+
+  $cookie->encrypted($is_encrypted || 0);
+
+  return $cookie;
 }
 
 sub set_cookie {
-  my ($self, $name, $value, $is_encrypted) = @_;
-  return $self->cookies->{$name} = EnsEMBL::Web::Cookie->bake($self->apache_handle, {'name' => $name, 'value' => $value, 'encrypted' => $is_encrypted});
+  ## Sets a cookie with the given param
+  ## @param Cookie name (OR hashref with keys as accepted by EnsEMBL::Web::Cookie constructor)
+  ## @param Cookie value (if first argument was cookie name)
+  ## @return Cookie object
+  my ($self, $name, $value) = @_;
+
+  my $params  = ref $name ? $name : { 'name' => $name, 'value' => $value };
+  my $cookie  = $self->get_cookie(delete $params->{'name'}, delete $params->{'encrypted'});
+
+  return $cookie->bake($params);
 }
 
 sub clear_cookie {
+  ## Clears a cookie with the given name
+  ## @param Cookie name
+  ## @return Cookie object or undef if no cookie was present with that name
   my ($self, $name) = @_;
-  EnsEMBL::Web::Cookie->clear($self->apache_handle, {'name' => $name});
-  return $self->cookies->{$name} = undef;
+
+  my $cookie = delete $self->cookies->{'name'};
+
+  return $cookie ? $cookie->clear : undef;
 }
 
-sub new_cookie {
-  ## Creates a new EnsEMBL::Web::Cookie object
-  ## @param Hashref as accepted by EnsEMBL::Web::Cookie->new
-  ## @return EnsEMBL::Web::Cookie
-  my ($self, $params) = @_;
-  return EnsEMBL::Web::Cookie->new($self->apache_handle, $params);
-}
-
-sub problem {
+sub add_components {
   my $self = shift;
-  push @{$self->{'_problem'}{$_[0]}}, EnsEMBL::Web::Problem->new(@_) if @_;
-  return $self->{'_problem'};
+  push @{$self->{'components'}}, @_;
 }
 
-sub get_adaptor {
-  my ($self, $method, $db, $species) = @_;
-  
-  $db      ||= 'core';
-  $species ||= $self->species;
-  
-  my $adaptor;
-  eval { $adaptor = $self->database($db, $species)->$method(); };
-
-  if ($@) {
-    warn $@;
-    $self->problem('fatal', "Sorry, can't retrieve required information.", $@);
-  }
-  
-  return $adaptor;
-}
-
-sub database {
+sub extURL {
+  ## Gets ExtURL object
   my $self = shift;
-
-  if ($_[0] =~ /compara/) {
-    return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
-  } else {
-    return $self->databases->get_DBAdaptor(@_);
-  }
+  $self->{'extURL'} ||= EnsEMBL::Web::ExtURL->new($self->species, $self->species_defs),
 }
 
-# Gets the database name used to create the object
 sub get_db {
+  # Gets the database name used to create the object
   my $self = shift;
   my $db = $self->param('db') || 'core';
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 sub set_builder {
+  ## Sets the builder to generate objects for the request
   my ($self,$builder) = @_;
-
-  $self->{'_builder'} = $builder;
-  $self->{'_core_params'} = $self->core_params;
-  $self->{'_core_params'}{'db'} ||= 'core';
+  $self->{'builder'} = $builder;
 }
 
 sub core_object {
+  ## Gets the core Object for the request
+  ## @return EnsEMBL::Web::Object subclass (or undef if no object is found)
   my $self = shift;
   my $name = shift;
 
-  if($name eq 'parameters') {
-    return $self->{'_core_params'};
+  if($name eq 'parameters') { ## TODO - replace the usage with core_params method
+    return $self->{'core_params'};
   }
-  return $self->{'_builder'} ? $self->{'_builder'}->object(ucfirst $name) : undef;
-}
-
-sub core_param { 
-  my $self = shift;
-  my $name = shift;
-  return unless $name;
-  $self->{'_core_params'}->{$name} = shift if @_;
-  return $self->{'_core_params'}->{$name};
+  return $self->{'builder'} ? $self->{'builder'}->object(ucfirst $name) : undef;
 }
 
 sub set_core_params {
-  ### Initialises core parameter hash from CGI parameters
+  ## Initialises core parameter hash from CGI parameters
+  my $self        = shift;
+  my $core_params = {'db' => 'core'};
 
-  my $self = shift;
-  my $core_params = { db => 'core' };
-
-  foreach (@{$self->species_defs->core_params}) {
+  for (@{$self->species_defs->core_params}) {
     my @param = $self->param($_);
     $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param if scalar @param;
   }
 
-  $self->{'_core_params'} = $core_params;
+  $self->{'core_params'} = $core_params;
 }
 
-sub delete_core_param {
-## Sometimes we really don't want to pass a core parameter
+sub core_param {
+  ## Gets/sets value of a given core param
+  ## @param Param name
+  ## @param Param value (if setting)
+  my $self  = shift;
+  my $name  = shift;
+
+  return unless $name;
+
+  $self->{'core_params'}{$name} = shift if @_;
+
+  return $self->{'core_params'}{$name};
+}
+
+sub delete_core_param { # TODO - replace the usage with __clear on hub->url
+  ## Deletes a core param with given name
+  ## @param Param name
   my ($self, $name) = @_;
   return unless $name;
-  delete $self->{'_core_params'}{$name};
-}
-
-# Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
-sub data_species {
-  my $self    = shift;
-  my $species = $self->species;
-  $species    = $self->species_defs->ENSEMBL_PRIMARY_SPECIES if !$species || $species eq 'common';
-  return $species;
-}
-
-# TODO: Needs moving to viewconfig so we don't have to work it out each time
-sub otherspecies {
-  my $self         = shift;
-
-  return $self->param('otherspecies') if $self->param('otherspecies');
-  return $self->param('species') if $self->param('species');
-
-  my $species_defs = $self->species_defs;
-  my $species      = $self->species;
-  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
-  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-
-  return $primary_sp if  ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
-
-  return $secondary_sp if  ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
-
-  my @has_synteny  = grep { $_ ne $species } sort keys %{$synteny{$species}};
-  return $has_synteny[0];
+  delete $self->{'core_params'}{$name};
 }
 
 sub get_species_info {
@@ -323,6 +307,8 @@ sub get_species_info {
   ## @param URL name for a species (String) (optional)
   ## @return Hashref with keys: key, name, common, scientific and group for single species, OR hashref of hashrefs for { species url name => { species info } .. }
   my ($self, $species) = @_;
+
+  $self->{'_species_info'} ||= {};
 
   unless ($self->{'_species_info_loaded'} || $species && $self->{'_species_info'}{$species}) {
 
@@ -338,7 +324,9 @@ sub get_species_info {
         'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
-        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP')
+        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
+        'strain'            => $species_defs->get_config($_, 'SPECIES_STRAIN') || '',
+        'strain_collection' => $species_defs->get_config($_, 'STRAIN_COLLECTION') || '',
       } unless exists $self->{'_species_info'}{$_};
     }
 
@@ -348,72 +336,16 @@ sub get_species_info {
   return $species ? $self->{'_species_info'}{$species} : $self->{'_species_info'};
 }
 
-sub order_species_by_clade {
-### Read the site-wide configuration variables TAXON_LABEL and TAXON_ORDER
-### and sort all the SpeciesTreeNode objects given in $species
-### @param  : arrayref of SpeciesTreeNode objects
-### @return : arrayref of SpeciesTreeNode objects
-
-  my ($self, $species) = @_;
-
-  my $species_defs  = $self->species_defs;
-  my $species_info  = $self->get_species_info;
-  my $labels        = $species_defs->TAXON_LABEL; ## sort out labels
-
-  my (@group_order, %label_check);
-  foreach my $taxon (@{$species_defs->TAXON_ORDER || []}) {
-    my $label = $labels->{$taxon} || $taxon;
-    push @group_order, $label unless $label_check{$label}++;
-  }
-
-  my %stn_by_name = ();
-  foreach my $stn (@$species) {
-    $stn_by_name{$stn->genome_db->name} = $stn;
-  };
-
-  ## Sort species into desired groups
-  my %phylo_tree;
-
-  foreach (keys %$species_info) {
-    my $group = $species_info->{$_}->{'group'};
-    my $group_name = $group ? $labels->{$group} || $group : 'no_group';
-    push @{$phylo_tree{$group_name}}, $_;
-  }
-
-  my @final_sets;
-
-  my $favourites    = $self->get_favourite_species;
-  if (scalar @$favourites) {
-    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{lc $_})} @$favourites]];
-  }
-
-  ## Output in taxonomic groups, ordered by common name
-  foreach my $group_name (@group_order) {
-    my $species_list = $phylo_tree{$group_name};
-
-    if ($species_list && ref $species_list eq 'ARRAY' && scalar @$species_list) {
-      my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
-      my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
-      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{lc $_})} @sorted_by_common]];
-    }
-  }
-
-  return \@final_sets;
+sub current_url {
+  ## Gets the current url
+  ## @return Relative url (String)
+  return $_[0]->url(undef, undef, 1);
 }
-
-# Does an ordinary redirect
-sub redirect {
-  my ($self, $url) = @_;
-  $url = $self->url($url) if $url && ref $url;
-  $self->input->redirect($url || $self->current_url);
-}
-
-sub current_url { return $_[0]->url(undef, undef, 1); }
 
 sub url {
   ## Gets the current or modified url
   ## If no argument provided, gets the current url after removing unwanted params, and sorting remaining ones
-  ## @param Extra string that goes in the url path just after Species name and before type (optional)
+  ## @param Controller name that goes in the url path just after Species name and before type (optional)
   ## @param Hashref of new params that will be added, or will override the existing params in the current url - can have following keys:
   ##  - species, type, action, funtion: Overrides the existing corresponding values in the url path
   ##  - __species, __action, __type, __function: Will add 'species', 'action', 'type', 'function' GET param to the url (since these keys are reserved)
@@ -422,20 +354,31 @@ sub url {
   ## @param Flag if on, returns url as an arrayref [url path, hashref of name-value pair of GET params] - off by default
   ## @param Flag if on, adds existing GET params to the new given GET params - off by default
   ## @return URL string or ArrayRef of path and params
-  my $self   = shift;
-  my $extra  = $_[0] && !ref $_[0] ? shift : undef;
-  my $params = shift || {};
-  my ($flag, $all_params) = @_;
+  my $self          = shift;
+  my $controller    = $_[0] && !ref $_[0] ? shift : undef;
+  my $params        = shift || {};
+  my $flag          = shift;
+  my $all_params    = shift;
 
-  Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
+  ## Check for illegal characters in the species name, in case
+  ## someone has used a common name with weird stuff in it 
+  ## (e.g. mouse strain names with slashes)
+  my $illegal = '\/|\?|=';
+  if ($params->{'species'} && $params->{'species'} =~ /$illegal/) {
+    warn sprintf '######## ILLEGAL SPECIES NAME %s IN URL ########', $params->{'species'};
+    ## Stripping these characters might still produce a 404,
+    ## but at least it won't be horribly broken
+    $params->{'species'} =~ s/$illegal/_/g;
+  }
 
-  my $species = exists $params->{'species'}  ? $params->{'species'}  : $self->species;
-  my $type    = exists $params->{'type'}     ? $params->{'type'}     : $self->type;
-  my $action  = exists $params->{'action'}   ? $params->{'action'}   : $self->action;
-  my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $self->action ? $self->function : undef;
-  my $c_pars  = $self->core_params;
+  my $species       = exists $params->{'species'}       ? $params->{'species'}      : $self->species;
+  my $type          = exists $params->{'type'}          ? $params->{'type'}         : $self->type;
+  my $action        = exists $params->{'action'}        ? $params->{'action'}       : $self->action;
+  my $function      = exists $params->{'function'}      ? $params->{'function'}     : $action eq $self->action ? $self->function : undef;
+  my $sub_function  = exists $params->{'sub_function'}  ? $params->{'sub_function'} : $action eq $self->action && $function eq $self->function ? $self->{'sub_function'} : undef;
+  my $c_pars        = $self->core_params;
   my %pars;
-  
+
   if ($all_params) {
     my $input   = $self->input;
     my $is_post = $input->request_method eq 'POST';
@@ -458,7 +401,7 @@ sub url {
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
   delete $pars{'v'}  if $params->{'vf'};
   delete $pars{'time'};
-  delete $pars{'expand'};
+  delete $pars{'_'};
 
   # add the requested GET params to the query string
   foreach (keys %$params) {
@@ -474,7 +417,18 @@ sub url {
     }
   }
 
-  my $url = join '/', map $_ || (), $self->species_defs->species_path($species), $extra, $type, $action, $fn;
+  ## Remove version numbers if exporting
+  my $page_action = $controller || $action;
+  if ($page_action =~ /[Data|Image]Export/) {
+    while (my ($k, $v) = each (%pars)) {
+      if ($k =~ /[g|t]\d?/) { # g, t, t1, t2, etc
+        $v =~ s/\.\d+$//;
+        $pars{$k} = $v;
+      }
+    }
+  }
+
+  my $url = join '/', grep $_, $self->species_defs->species_path($species), $controller, $type, $action, $function, $sub_function;
   
   return [ $url, \%pars ] if $flag;
 
@@ -493,7 +447,48 @@ sub url {
   return $url;
 }
 
+sub get_permanent_url {
+  ## Get the permanent url for the current or given url
+  ## @param URL (string or hashref as expected by self->url method) (optional - takes current url as default)
+  ## @param Hashref with following keys:
+  ##  - ignore_archive Flag will on will not create a archive permalink
+  ##  - allow_redirect Flag if on will not add params that prevent mirror/mobile redirect
+  my ($self, $url, $options) = @_;
+
+  $options ||= {};
+
+  my $sd = $self->species_defs;
+
+  # if url hashref provided
+  $url  ||= $self->current_url;
+  $url    = $self->url($url) if ref $url;
+
+  # remove time, redirect and mobileredirect params
+  $url =~ s/(\;|\&)*(time|redirect|mobileredirect)=[^\;\&]+(\;|\&)*/$1 && $3 ? q(;) : q()/eg;
+  $url =~ s/\;$//;
+
+  # add params to prevent redirect
+  $url .= ($url =~ /\?/ ? ';' : '?').'redirect=no;mobileredirect=no' unless $options->{'allow_redirect'};
+
+  return sprintf '%s/%s',
+    ($options->{'ignore_archive'} ? $sd->ENSEMBL_BASE_URL : $self->_get_permanent_url_base) =~ s/\/*$//r,
+    $url =~ s/^\/*//r;
+}
+
+sub _get_permanent_url_base {
+  ## @private
+  ## Get base url for permanent link
+  my $self  = shift;
+  my $sd    = $self->species_defs;
+
+  return lc($sd->ARCHIVE_BASE_DOMAIN
+    ? sprintf('%s://%s.%s', $sd->ENSEMBL_PROTOCOL, $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
+    : $sd->ENSEMBL_BASE_URL
+  );
+}
+
 sub param {
+  # @status - being changed to not deal with viewconfig params (only CGI params)
   my $self = shift;
   
   if (@_) {
@@ -501,10 +496,25 @@ sub param {
     return wantarray ? @T : $T[0] if @T;
     
     my $view_config = $self->viewconfig;
-    
+
     if ($view_config) {
+
+      my @caller;
+      my $i = 0;
+      while (1) {
+        my @c = caller($i++);
+        last if $c[3] !~ /::param$/;
+        @caller = @c;
+      }
+
+      if (@_ > 1) {
+        warn sprintf "ERROR: Setting view_config from hub at %s line %s\n", $caller[1], $caller[2];
+      }
       $view_config->set(@_) if @_ > 1;
       my @val = $view_config->get(@_);
+
+      #warn sprintf "DEPRECATED: If trying to get Component's ViewConfig specific param, use param method on component at %s line %s\n", $caller[1], $caller[2] if @val;
+
       return wantarray ? @val : $val[0];
     }
     
@@ -520,11 +530,6 @@ sub param {
   }
 }
 
-sub input_param  {
-  my $self = shift;
-  return _sanitize($self->param(@_));
-}
-
 sub multi_params {
   my $self = shift;
   my $realign = shift;
@@ -536,77 +541,6 @@ sub multi_params {
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
-}
-
-sub parse_referer {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  my $servername   = $species_defs->ENSEMBL_SERVERNAME;
-  my $server       = $species_defs->ENSEMBL_SERVER;
-  my $uri          = $ENV{'HTTP_REFERER'};
-     $uri          =~ s/^(https?:\/\/.*?)?\///i;
-     $uri          =~ s/[;&]$//;
-     
-  my ($url, $query_string) = split /\?/, $uri;
-
-  my $info = { absolute_url => $ENV{'HTTP_REFERER'} };
-  my @path = split /\//, $url;
-  
-  unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
-
-  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/ && $ENV{'HTTP_REFERER'} !~ /$SiteDefs::MOBILE_URL/ && $ENV{'HTTP_REFERER'} !~ m!/Tools/!) {
-    $info->{'external'} = 1;
-  } else {
-    $info->{'external'} = 0;
-    $info->{'uri'}      = "/$uri";
-  }
-
-  my @pairs  = split /[&;]/, $query_string;
-  my $params = {};
-
-  foreach (@pairs) {
-    my ($param, $value) = split '=', $_, 2;
-
-    next unless defined $param;
-
-    $value = '' unless defined $value;
-    $param = uri_unescape($param);
-    $value = uri_unescape($value);
-
-    push @{$params->{$param}}, $value unless $param eq 'time'; # don't copy time
-  }
-  $info->{'params'} = $params;
-
-  ## Local dynamic page
-  if ($species_defs->OBJECT_TO_SCRIPT->{$path[1]} && !$info->{'external'}) {
-    my ($species, $type, $action, $function) = @path;
-    $info->{'ENSEMBL_SPECIES'}  = $species;
-    $info->{'ENSEMBL_TYPE'}     = $type;
-    $info->{'ENSEMBL_ACTION'}   = $action;
-    $info->{'ENSEMBL_FUNCTION'} = $function;
-  }
-
-  if ($species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_REFERER) {
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-    warn "\n";
-    warn "  SPECIES:  $info->{'species'}\n";
-    warn "  TYPE:     $info->{'type'}\n";
-    warn "  ACTION:   $info->{'action'}\n";
-    warn "  FUNCTION: $info->{'function'}\n";
-    warn "  QS:       $query_string\n";
-
-    foreach my $param (sort keys %$params) {
-      warn sprintf '%20s = %s\n', $param, $_ for sort @{$params->{$param}};
-    }
-
-    warn "\n";
-    warn "  URI:      $uri\n";
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-  }
- 
-  return $info;
 }
 
 sub filename {
@@ -651,7 +585,7 @@ sub _sanitize {
 
 sub get_ExtURL {
   my $self = shift;
-  my $new_url = $self->ExtURL || return;
+  my $new_url = $self->extURL || return;
   return $new_url->get_url(@_);
 }
 
@@ -675,7 +609,7 @@ sub get_ext_seq {
 
   $external_db  ||= 'DEFAULT';
   $params       ||= {};
-  my $indexers    = $self->{'_ext_indexers'};
+  my $indexers    = $self->{'_ext_indexers'} ||= {};
 
   unless (exists $indexers->{'databases'}{$external_db}) {
     my ($indexer, $exe);
@@ -687,8 +621,8 @@ sub get_ext_seq {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     } else {
-      $indexer = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'DBFETCH';
-      $exe     = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
+      $indexer = $self->species_defs->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->species_defs->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'DBFETCH';
+      $exe     = $self->species_defs->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
     }
     if ($exe) {
       my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
@@ -736,64 +670,59 @@ sub glossary_lookup {
   return $self->{'_glossary_lookup'};
 }
 
-# VIEW / IMAGE CONFIGS
-
 sub get_viewconfig {
-  ### Create a new EnsEMBL::Web::ViewConfig object for the component and type passed.
-  ### Stores the ViewConfig as $self->viewconfig if a third argument of "cache" is passed.
+  ## Gets the ViewConfig object for the given component and type
+  ## @param Component name or hashref with keys below:
+  ##  - component Name of the component
+  ##  - type      (Optional) Object type - take default as hub->type
+  ##  - cache     (Optional) Flag kept on if it's the main viewconfig for the current request and thus should be safe to cache it in hub
+  ## TODO - fix this 'cache' thing - it's only needed because 'param' method needs to know the current viewconfig
+  ## @return An instance of EnsEMBL::Web::ViewConfig sub-class
+  my ($self, $params) = @_;
 
-  my $self       = shift;
-  my $component  = shift;
-  my $type       = shift || $self->type;
-  my $cache      = shift eq 'cache';
-  my $session    = $self->session;
-  my $cache_code = "${type}::$component";
-  
-  return undef unless $session;
-  
-  my $view_config = $session->view_configs->{$cache_code};
-  
-  if (!$view_config) {
+  $params = { 'component' => $params } unless ref $params;
+
+  my $component   = $params->{'component'}  || '';
+  my $type        = $params->{'type'}       || $self->type;
+  my $cache_code  = "${type}::$component";
+
+  $self->{'_view_configs'} ||= {};
+
+  if (!exists $self->{'_view_configs'}{$cache_code}) {
+
     my $module_name = $self->get_module_names('ViewConfig', $type, $component);
-    
-    return unless $module_name;
-    
-    $view_config = $module_name->new($type, $component, $self);
-    
-    $session->apply_to_view_config($view_config, $cache_code); # $view_config->code and $cache_code can be different
+
+    $self->{'_view_configs'}{$cache_code} = $module_name ? $module_name->new($self, $type, $component) : undef;
   }
-  
-  $self->viewconfig = $view_config if $cache;
-  
-  return $view_config;
+
+  # if it's the main one
+  $self->{'viewconfig'} = $self->{'_view_configs'}{$cache_code} if $params->{'cache'};
+
+  return $self->{'_view_configs'}{$cache_code};
 }
 
 sub get_imageconfig {
-  ### Returns an EnsEMBL::Web::ImageConfig object
-  ### If passed one parameter then it loads the data (and doesn't cache it)
-  ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
-  ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
-  
-  my $self       = shift;
-  my $type       = shift;
-  my $cache_code = shift || $type;
-  my $species    = shift;
-  my $session    = $self->session;
-  
-  return undef unless $session;
-  return $session->image_configs->{$cache_code} if $session->image_configs->{$cache_code};
-  
-  my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
-  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species, $cache_code) : undef;
-  
-  if ($image_config) {
-    $session->apply_to_image_config($image_config, $cache_code);
-    $image_config->initialize;
-  } else {
-    $self->dynamic_use_failure($module_name);
+  ## Gets the ImageConfig object for the given type
+  ## @param Type of the image config required (string) OR Hashref with following keys:
+  ##  - type        Type of the image config required
+  ##  - cache_code  (optional) Cache code to retrieve/save the config in cache (takes type as the cache code if not present)
+  ##  - species     (optional) Species for the image config
+  ## @return An instance of EnsEMBL::Web::ImageConfig sub-class
+  my ($self, $params) = @_;
+
+  $params = { 'type' => $params } unless ref $params;
+
+  my $type        = $params->{'type'};
+  my $species     = $params->{'species'}    || $self->species;
+  my $cache_code  = $params->{'cache_code'} || $type;
+
+  $self->{'_image_configs'} ||= {};
+
+  if (!exists $self->{'_image_configs'}{$cache_code}) {
+    $self->{'_image_configs'}{$cache_code} = dynamic_require("EnsEMBL::Web::ImageConfig::$type")->new($self, $species, $type, $cache_code);
   }
-  
-  return $image_config;
+
+  return $self->{'_image_configs'}{$cache_code};
 }
 
 sub fetch_userdata_by_id {
@@ -839,24 +768,6 @@ sub get_favourite_species {
   return \@favourites;
 }
 
-# The request cache explicitly and deliberately has the lifetime of a
-# request. You can therefore use keys which are only guraranteed unique
-# for a request. This cache is designed for communicating data which we
-# are pretty sure will be useful later but which is at a very different
-# part of the call tree. For example, features on stranded pairs of tracks.
-
-sub req_cache_set {
-  my ($self,$key,$value) = @_;
-
-  $self->{'_req_cache'}{$key} = $value;
-}
-
-sub req_cache_get {
-  my ($self,$key) = @_;
-
-  return $self->{'_req_cache'}{$key};
-}
-
 sub _source_url {
   my ($url,$type,$params) = @_;
 
@@ -900,9 +811,14 @@ sub snpedia_status {
   my $self = shift;
 
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
-  my $out      = $failover->get_cached;
-
-  return $out;
+  my $out;
+  eval {$out = $failover->get_cached};
+  if ($@) {
+    warn "SNPEDIA failure";
+  }
+  else {
+    return $out;
+  }
 }
 
 # Query Store stuff
@@ -919,7 +835,7 @@ sub query_store_setup {
   } else {
     $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
   }
-  $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
+  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
@@ -944,5 +860,206 @@ sub wasabi_status {
 
   return $out;
 }
+
+sub create_padded_region {
+  my $self = shift;
+  my ($seq_region_name, $s, $e, $strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
+  my $padded = {};
+  # Adding flanking region to 5' and 3' ends
+  $padded->{flank5} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK5_PERC) : 0;
+  $padded->{flank3} = ($s && $e) ? int(($e - $s) * $SiteDefs::FLANK3_PERC) : 0;
+
+  $padded->{r} = sprintf '%s:%s-%s', 
+          $seq_region_name, 
+          $s - $padded->{flank5},
+          $e + $padded->{flank3};
+  return $padded;
+}
+
+sub configure_user_data {
+  my ($self, @track_data) = @_;
+  my $species = $self->species;
+
+  foreach my $view_config (map { $self->get_viewconfig({'component' => $_->[0], 'type' => $_->[1]}) || () } @{$self->components}) {
+    my $ic_code = $view_config->image_config_type;
+
+    next unless $ic_code;
+
+    my $image_config = $self->get_imageconfig({type => $ic_code, cache_code => $ic_code . time});
+    my $vertical     = $image_config->orientation eq 'vertical';
+
+    while (@track_data) {
+      my ($track_type, $track) = (shift @track_data, shift @track_data);
+      next unless $track->{'species'} eq $species;
+
+      my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
+
+      if (scalar @nodes) {
+        foreach (@nodes) {
+          my $renderers = $_->get_data('renderers');
+          my %valid     = @$renderers;
+          if ($vertical) {
+            $_->set_user_setting('ftype', $track->{'ftype'});
+            $_->set_user_setting('display', $track->{'style'} || style_by_filesize($track->{'filesize'}));
+          } else {
+            my $default_display = $_->get_data('default_display') || 'normal';
+            $_->set_user_setting('display', $valid{$default_display} ? $default_display : $renderers->[2]);
+          }
+          $image_config->altered($_->data->{'name'} || $_->data->{'coption'});
+        }
+
+        $image_config->{'code'} = $ic_code;
+        $view_config->altered(1);
+      }
+    }
+  }
+}
+
+sub store_records_if_needed {
+  ## Commits the record db transaction it has been initiated
+  my $self    = shift;
+  my $session = $self->session;
+
+  $session->store_records if $session;
+}
+
+sub new_for_test {
+  ## @constructor
+  ## Creates a new hub object for a non-web environment (for unit testing)
+  my ($class, $args) = @_;
+
+  my $self = $class->SUPER::new($args->{'species'}, $args->{'species_defs'});
+
+  # Arguments passed by a unit test
+  $self->{'type'}             = $ENV{'ENSEMBL_TYPE'}      = $args->{'type'};
+  $self->{'action'}           = $ENV{'ENSEMBL_ACTION'}    = $args->{'action'};
+  $self->{'function'}         = $ENV{'ENSEMBL_FUNCTION'}  = $args->{'function'}; 
+  $self->{'controller_name'}  = $ENV{'ENSEMBL_SCRIPT'}    = $args->{'controller_name'} || $args->{'script'};
+  $self->{'components'}       = [];
+  $self->{'cookies'}          = {};
+
+  return $self;
+}
+
+################                  ################
+################ Deprecated stuff ################
+################                  ################
+
+sub apache_handle   :Deprecated('Use hub->r') { return shift->r; }
+sub script          :Deprecated('Use hub->controller_name') { return shift->controller_name; }
+sub ExtURL          :Deprecated('Use hub->extURL') { return shift->extURL; }
+sub config_adaptor  :Deprecated('Not in use anymore') {  }
+sub input_param     :Deprecated('Use param method') { my $self = shift; return _sanitize($self->param(@_)); }
+
+
+# will be removed
+sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}||{}}; }
+sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
+sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
+sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
+sub clear_problem_type { delete $_[0]{'_problem'}{$_[1]}; }
+sub clear_problems     { $_[0]{'_problem'} = {}; }
+sub problem {
+  my $self = shift;
+  push @{$self->{'_problem'}{$_[0]}}, EnsEMBL::Web::Problem->new(@_) if @_;
+  return $self->{'_problem'};
+}
+
+sub data_species { # TODO - move to Object::UserData where it belongs
+  # Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
+  my $self    = shift;
+  my $species = $self->species;
+  $species    = $self->species_defs->ENSEMBL_PRIMARY_SPECIES if $species eq 'Multi';
+  return $species;
+}
+
+# TODO: Needs moving to viewconfig so we don't have to work it out each time
+sub otherspecies {
+  my $self         = shift;
+
+  return $self->param('otherspecies') if $self->param('otherspecies');
+  return $self->param('species') if $self->param('species');
+
+  my $species_defs = $self->species_defs;
+  my $species      = $self->species;
+  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
+  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+
+  return $primary_sp if  ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
+
+  return $secondary_sp if  ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
+
+  my @has_synteny  = grep { $_ ne $species } sort keys %{$synteny{$species}};
+  return $has_synteny[0];
+}
+
+sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Compara::GeneTrees
+### Read the site-wide configuration variables TAXON_LABEL and TAXON_ORDER
+### and sort all the SpeciesTreeNode objects given in $species
+### @param  : arrayref of SpeciesTreeNode objects
+### @return : arrayref of SpeciesTreeNode objects
+
+  my ($self, $species) = @_;
+
+  my $species_defs  = $self->species_defs;
+  my $species_info  = $self->get_species_info;
+  my $labels        = $species_defs->TAXON_LABEL; ## sort out labels
+
+  my (@group_order, %label_check);
+  foreach my $taxon (@{$species_defs->TAXON_ORDER || []}) {
+    my $label = $labels->{$taxon} || $taxon;
+    push @group_order, $label unless $label_check{$label}++;
+  }
+
+  my %stn_by_name = ();
+  foreach my $stn (@$species) {
+    $stn_by_name{$stn->genome_db->name} = $stn;
+  };
+
+  ## Sort species into desired groups
+  my %phylo_tree;
+
+  foreach (keys %$species_info) {
+    my $group = $species_info->{$_}->{'group'};
+    my $group_name = $group ? $labels->{$group} || $group : 'no_group';
+    push @{$phylo_tree{$group_name}}, $_;
+  }
+
+  my @final_sets;
+
+  my $favourites    = $self->get_favourite_species;
+  if (scalar @$favourites) {
+    my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @$favourites;
+    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+  }
+
+  ## Output in taxonomic groups, ordered by common name
+  foreach my $group_name (@group_order) {
+      next unless exists $phylo_tree{$group_name};
+      my $species_list = $phylo_tree{$group_name};
+      my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
+      my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
+      my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @sorted_by_common;
+      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+  }
+
+  return \@final_sets;
+}
+
+sub redirect { # TODO - move to Controller (do hub->store_records_if_needed inside Controller->redirect)
+  ## Does an http redirect
+  ## Since it actually throws a RedirectionRequired exception, code that follows this call will not get executed
+  ## @param URL to redirect to
+  ## @param Flag kept on if it's a permanent redirect
+  my ($self, $url, $permanent) = @_;
+
+  $url = $self->url($url) if $url && ref $url;
+
+  $self->store_records_if_needed;
+
+  $self->controller->redirect($url || $self->current_url, $permanent);
+}
+
 
 1;

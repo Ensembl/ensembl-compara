@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,16 +30,14 @@ sub _add_nav_entries {
 
   my $config = $self->hub->param('config');
   if(grep { $config eq $_ } @zmenu_links) {
-    my $cell_type_url = $self->hub->url('Component', {
+    my $cell_type_url = $self->hub->url('MultiSelector', {
       type => 'Regulation',
-      action   => 'Web',
-      function    => 'CellTypeSelector/ajax',
+      action   => 'CellTypeSelector',
       image_config => $config,
     });
-    my $evidence_url = $self->hub->url('Component', {
+    my $evidence_url = $self->hub->url('MultiSelector', {
       type => 'Regulation',
-      action => 'Web',
-      function => 'EvidenceSelector/ajax',
+      action => 'EvidenceSelector',
       image_config => $config,
     });
     $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });

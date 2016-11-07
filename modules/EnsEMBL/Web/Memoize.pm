@@ -1,3 +1,22 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package EnsEMBL::Web::Memoize;
 
 use strict;
@@ -14,19 +33,24 @@ my %SPECIAL_TYPES = (
 );
 
 sub _build_argument {
-  my ($args) = @_;
+  my ($args,$impossible,$path) = @_;
 
+  $path ||= [];
   if(ref($args) eq 'ARRAY') {
-    return [ map { _build_argument($_) } @$args ];
+    return [ map { _build_argument($_,$impossible,[@$path,$_]) } @$args ];
   } elsif(ref($args) eq 'HASH') {
-    return { map { $_ => _build_argument($args->{$_}) } keys %$args };
+    return { map { $_ => _build_argument($args->{$_},$impossible,[@$path,$_]) } keys %$args };
   } elsif(ref($args)) {
     if($args->can('memo_argument')) {
-      return _build_argument($args->memo_argument);
+      return _build_argument($args->memo_argument,$impossible,[@$path,'_magic']);
     } elsif($SPECIAL_TYPES{ref($args)}) {
       return $SPECIAL_TYPES{ref($args)}->($args);
     } else {
-      die "Unknown blessed object, cannot memoize: $args [".ref($args)."]\n";
+      if(defined $impossible) {
+        $$impossible = 1;
+        return undef;
+      }
+      die "Unknown blessed object, cannot memoize: $args [".ref($args)."] at ".join(", ",@$path)."\n";
     }
   } else {
     return $args;
@@ -139,21 +163,25 @@ sub _memoized {
   my ($name,$fn,$args) = @_;
 
   return $fn->(@$args) unless $SiteDefs::MEMOIZE_ENABLED;
+  my $impossible = 0;
   my $tag = {
     call => $name,
-    arguments => _build_argument($args),
+    arguments => _build_argument($args,\$impossible),
     machine => $SiteDefs::ENSEMBL_BASE_URL,
     version => $SiteDefs::ENSEMBL_VERSION,
     boottime => [stat("${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started")]->[9],
   };
-  my $hex = hexkey($tag);
-  my $base = filebase($hex);
-  my ($found,$value) = _get_cached($base);
-  warn "CACHE $name : hit=$found\n" if $SiteDefs::MEMOIZE_DEBUG;
-  return $value if $found;
+  my $base;
+  unless($impossible) {
+    my $hex = hexkey($tag);
+    $base = filebase($hex);
+    my ($found,$value) = _get_cached($base);
+    warn "CACHE $name : hit=$found\n" if $SiteDefs::MEMOIZE_DEBUG;
+    return $value if $found;
+  }
   my $out = $fn->(@$args);
-  _set_cached($base,$out);
-  if($SiteDefs::MEMOIZE_DEBUG) {
+  _set_cached($base,$out) if $base;
+  if(!$impossible and $SiteDefs::MEMOIZE_DEBUG) {
     open(FN,'>',"$base.key") || return;
     print FN JSON->new->encode($tag);
     close FN;

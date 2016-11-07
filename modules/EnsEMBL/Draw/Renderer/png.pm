@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +34,7 @@ sub init_canvas {
   $self->{'ttf_path'}   ||= '/usr/local/share/fonts/ttfonts/';
 
   $self->canvas($canvas);
-  my $bgcolor = $self->colour($config->bgcolor);
+  my $bgcolor = $self->colour($config->get_parameter('bgcolor'));
   $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_width, $self->{sf} * $im_height, $bgcolor );
 }
 

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -362,6 +363,7 @@ sub _init {
     if ($f->{label}) {
       $label_colour = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? 'Grey' : $label_colour;      
       # Draw the label      
+
       my $txt = $self->Text
           ({
             'text'       => $f->{label},
@@ -740,12 +742,12 @@ sub features {
   }
   
    if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && $tree->genome_db) {
-     $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs     
+     $f->{'_species'} = $self->species_defs->production_name_mapping($tree->genome_db->name); # This will be used in URLs
      
      #adding extra space after the n members so as to align the species name
      my $n_members = $tree->n_members;
      $n_members = $n_members < 10 ? (sprintf '%-8s', $n_members) : (sprintf '%-7s', $n_members);
-          
+
      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'};      
      $f->{'label'} = $f->{'_display_id'} = $n_members."$f->{'_species_label'}";
    }
@@ -753,7 +755,7 @@ sub features {
   # Process alignment
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     if ($tree->genome_db) {
-      $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs
+      $f->{'_species'} = $self->species_defs->production_name_mapping($tree->genome_db->name); # This will be used in URLs
 
       # This will be used for display
       $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'DISPLAY_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
@@ -788,7 +790,7 @@ sub features {
       
       if ($show_exons) {
         my $ref_genetree = $tree->tree;
-        $ref_genetree = $ref_genetree->alternative_trees->{default} if $ref_genetree->clusterset_id ne 'default';
+        $ref_genetree = $ref_genetree->alternative_trees->{default} if $ref_genetree->ref_root_id;
         unless ($ref_genetree->{_exon_boundaries_hash}) {
           my $gtos_adaptor = $tree->adaptor->db->get_GeneTreeObjectStoreAdaptor;
           my $json_string = $gtos_adaptor->fetch_by_GeneTree_and_label($ref_genetree, 'exon_boundaries');
@@ -824,11 +826,11 @@ sub features {
     if ($cigar_line =~ /M/) {
       $f->{'_cigar_line'} = $cigar_line;
     }
-    $f->{'label'} = $self->species_defs->get_config(ucfirst($name), 'SPECIES_COMMON_NAME');
+    $f->{'label'} = $self->species_defs->get_config($self->species_defs->production_name_mapping($name), 'SPECIES_COMMON_NAME');
     if ($low_coverage_species && $low_coverage_species->{$genomic_align->genome_db->dbID}) {
      $f->{'_gat'}{'colour'} = 'brown';
     }
-    $f->{'_species'} =  ucfirst $name; # This will be used in URLs;
+    $f->{'_species'} =  $self->species_defs->production_name_mapping($name); # This will be used in URLs;
   } else { # Internal node
     $f->{'_name'} = $tree->name;
   }

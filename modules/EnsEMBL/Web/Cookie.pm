@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,114 +19,178 @@ limitations under the License.
 
 package EnsEMBL::Web::Cookie;
 
-### Class inherited from actual CGI cookie, to make it easy to access/modify cookie information for all scenarios, including encrypted cookies in Ensembl
-### All the methods in CGI::Cookie that actually construct a CGI::Cookie object have been overridden to accept apache handle as first argument
+### Ensembl specific cookie class to make it easy to access/modify cookie information for all scenarios, including encrypted cookies
 
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Exceptions;
+use URI::Escape qw(uri_escape uri_unescape);
+
 use EnsEMBL::Web::Attributes;
+use EnsEMBL::Web::Exceptions qw(WebException);
 use EnsEMBL::Web::Utils::Encryption qw(encrypt_value decrypt_value);
 
-use base qw(CGI::Cookie);
+sub name      :AccessorMutator; ## Name of the cookie
+sub domain    :AccessorMutator; ## Domain name for the cookie - defaults to current domain (including any sub domains if any)
+sub expires   :AccessorMutator; ## Expiry for the cookie
+sub path      :AccessorMutator; ## Path for the cookie - defaults to '/'
+sub httponly  :AccessorMutator; ## Flag to tell if this cookie can only be accessed via HTTP, ie. JS can't read it
+sub retrieved :Accessor;        ## Returns true if the cookie has been retrieved from http headers
 
 sub new {
-  ## @overrides
   ## @constructor
-  ## Wrapper to the parent constructor, accepting parameters without a prefixed hyphen, and few extra parameters.
-  ## @param Apache handle for setting and reading cookies
+  ## @param Apache2::RequestRec for sending the cookie header
   ## @param Hashref with following keys
-  ##  - name
+  ##  - name (required)
   ##  - value
   ##  - domain
   ##  - expires
   ##  - path
   ##  - httponly
-  ##  - env
   ##  - encrypted
-  ## Overrides the CGI::Cookie constructor to make it mandatory to pass apache handle in arguments to the constructor
-  my ($class, $apache_handle, $params) = @_;
+  my ($class, $r, $params) = @_;
 
-  throw exception('CookieException', 'Apache Handle needs to be provided to set or access cookies.')    unless ref $apache_handle && UNIVERSAL::isa($apache_handle, 'Apache2::RequestRec');
-  throw exception('CookieException', 'Can not create or read a cookie without being provided a name.')  unless $params->{'name'};
+  throw WebException('Apache2::RequestRec object is needed to set or access cookies.')  unless ref $r && UNIVERSAL::isa($r, 'Apache2::RequestRec');
+  throw WebException('Can not create or read a cookie without having a name.')          unless $params->{'name'};
 
-  my $self = $class->SUPER::new('-name' => $params->{'name'}, '-value' => $params->{'value'} || 0);
+  my $self = bless { '_r' => $r }, $class;
 
-  $self->_init($apache_handle, $params);
-  $self->value($params->{'value'} || 0) if $self->encrypted; # set encrypted value if 'encrypted' flag is on
+  for (qw(name domain expires path httponly encrypted)) {
+    $self->{$_} = $params->{$_} if exists $params->{$_};
+  }
+
+  $self->value($params->{'value'}) if exists $params->{'value'};
+
+  return bless $self, $class;
+}
+
+sub new_from_header {
+  ## @constructor
+  ## @param Apache2::RequestRec for reading the cookie header
+  ## @return (scalar context) Hashref of cookies with name as keys and corresponding EnsEMBL::Web::Cookie object as value
+  ## @return (list context) List of all the EnsEMBL::Web::Cookie objects created
+  ## @note If a cookie is encrypted, it's returned as it is without decrypted value (call $cookie->encryption(1) before getting the value to decrypted it)
+  my ($class, $r) = @_;
+
+  throw WebException('Apache2::RequestRec object is needed to set or access cookies.') unless ref $r && UNIVERSAL::isa($r, 'Apache2::RequestRec');
+
+  my $cookie_header = _parse_cookie_header($r);
+  my $cookies       = {};
+
+  for (keys %$cookie_header) {
+    $cookies->{$_} = $class->new($r, {'name' => $_});
+    $cookies->{$_}{'_real_value'} = $cookie_header->{$_}; # save the raw value as retrieved from header in the '_real_value' key
+    $cookies->{$_}{'retrieved'}   = 1;
+  }
+
+  return wantarray ? values %$cookies : $cookies;
+}
+
+sub retrieve {
+  ## Retrieves value of the cookie from Cookie header
+  ## @return The cookie object itself
+  my $self = shift;
+
+  # remove any existing value
+  delete $self->{'value'};
+  delete $self->{'_real_value'};
+
+  my $cookie_header = _parse_cookie_header($self->{'_r'});
+
+  # save the real value only if cookie found in headers
+  my $name = $self->name;
+  if (exists $cookie_header->{$name}) {
+    $self->{'_real_value'}  = $cookie_header->{$name};
+    $self->{'retrieved'}    = 1;
+  }
 
   return $self;
 }
 
-sub apache_handle {
-  ## @accessor
-  my $self = shift;
-  $self->{'_ens_apache_handle'} = shift if @_;
-  return $self->{'_ens_apache_handle'};
-}
-
 sub value {
-  ## @overrides
-  ## Sets/Gets the value considering encryption if any
-  my $self    = shift;
-  my $caller  = caller;
+  ## @accessor
+  ## @param (Optional) New value to set
+  my $self = shift;
 
-  return $self->SUPER::value(@_) if $caller eq 'CGI::Cookie'; # Don't override for CGI::Cookie's usage
+  # if setting the value
+  $self->{'value'} = shift if @_;
 
-  if (@_) {
-    my $value = $self->{'_ens_value'} = shift;
-    $self->SUPER::value($self->encrypted ? encrypt_value($value) : $value);
-    if (my $env = $self->env) {
-      $self->apache_handle->subprocess_env->{$env} = $value;
-      $ENV{$env} = $value;
+  # if raw value from headers is known but 'value' key is not set yet
+  if ($self->{'_real_value'} && !exists $self->{'value'}) {
+
+    # if it's an encrypted cookie, save the decrypted value in 'value' key
+    if ($self->{'encrypted'}) {
+
+      my ($value, $flag) = decrypt_value($self->{'_real_value'});
+
+      if ($flag eq 'expired') {
+        $self->clear; # clear the existing cookie from the browser
+
+      } elsif ($flag eq 'refresh') {
+        $self->bake($value); # encrypt the value, embed the new expiry time in it and then send it again to the browser
+
+      } else { # $flag eq 'ok'
+        $self->{'value'} = $value;
+      }
+
+    # if it isn't encrypted, 'value' key is same as raw '_real_value'
+    } else {
+      $self->{'value'} = $self->{'_real_value'};
     }
   }
-  return exists $self->{'_ens_value'} ? $self->{'_ens_value'} : ($self->{'_ens_value'} = $self->SUPER::value);
-}
 
-sub get_value :Deprecated("Please use 'value' instead of 'get_value'") {
-  ## @return Value of the cookie
-  ## DEPRECATED: For backward compatibility only
-  return shift->value;
+  return $self->{'value'};
 }
 
 sub encrypted {
   ## @accessor
+  ## @param (Optional) Flag to turn on/off the encryption
   my $self = shift;
-  $self->{'_ens_encrypted'} = shift if @_;
-  return $self->{'_ens_encrypted'} ? 1 : 0;
-}
 
-sub expires {
-  ## @accessor
-  my $self = shift;
-  return $self->SUPER::expires($_[0] && $_[0] ne 'now' ? $_[0] : 'Thu, 31-Dec-2037 23:59:59 GMT') if @_;
-  return $self->SUPER::expires;
-}
+  if (@_) {
+    $self->{'encrypted'} = shift;
 
-sub env {
-  ## @accessor
-  my $self = shift;
-  $self->{'_ens_env'} = shift if @_;
-  return $self->{'_ens_env'};
+    # '_real_value' stays the same as it was retrieved from (or sent to) the header,
+    # but 'value' will get affected since it is subject to encryption
+    delete $self->{'value'} if exists $self->{'_real_value'};
+  }
+
+  return $self->{'encrypted'};
 }
 
 sub bake {
-  ## @overrides We do baking in our own oven
-  ## @static    If called on the class, it instantiates an object with given params and then sends the cookie to browser
-  ## @nonstatic If called on the object, it sends the cookie header to browser
-  ## Sends an actual cookie to the browser corresponding to this object
-  ## @param  (Optional - required only if calling on the class) Apache handle as required by the constructor
-  ## @param  (Optional - required only if calling on the class) Hashref as required by the constructor
-  ## @param  (Optional - required only if value being changed) New value for the cookie
-  ## @return this cookie object itself
-  my $self = ref $_[0] ? shift : shift->new(splice @_, 0, 2);
+  ## Sends a Set-Cookie header to the browser corresponding to this object
+  ## @param (optional) New string value for the cookie OR a hasref with following keys if changing any existing values
+  ##  - value
+  ##  - domain
+  ##  - expires
+  ##  - path
+  ##  - httponly
+  ##  - encrypted
+  ## @return The cookie object itself
+  my $self  = shift;
+  my $r     = $self->{'_r'};
 
-  $self->value(shift) if @_;
+  # set parameters if needed
+  if (@_) {
+    my $params = shift // '';
+    $params = {'value' => $params} unless ref $params;
 
-  my $r   = $self->apache_handle;
-  my $str = $self->as_string;
+    $self->encrypted($params->{'encrypted'} || 0) if exists $params->{'encrypted'};
+
+    for (qw(domain expires path httponly value)) {
+      $self->$_($params->{$_}) if exists $params->{$_};
+    }
+  }
+
+  # get the value after any decryption
+  my $value = $self->value;
+
+  # if encryption is on, encrypt the cookie again to embedd the new expiry time in the value
+  $self->{'_real_value'} = $self->{'encrypted'} ? encrypt_value($value) : $value;
+
+  # String representation
+  my $str = $self->_to_string;
 
   $r->headers_out->add('Set-cookie' => $str);
   $r->err_headers_out->add('Set-cookie' => $str);
@@ -134,85 +199,115 @@ sub bake {
 }
 
 sub clear {
-  ## @static    If called on the class, it instantiates an object with given params and then clears the actual cookie
-  ## @nonstatic Clears the given cookie
   ## Clears a cookie by setting its expiry time to past
-  ## @note This method can be called on the object or on the class (If called on the class, it instantiates an object with given params and then sends the cookie to browser)
-  ## @params (Optional - required only if calling on the class) As required by the constructor
-  ## @return this cookie object itself
-  my $self = ref $_[0] ? shift : shift->new(splice @_, 0, 2);
-  $self->expires('now');
-  return $self->bake(0);
+  ## @return The cookie object itself
+  my $self = shift;
+  $self->value('');
+  $self->expires('Mon, 01-Jan-2001 00:00:01 GMT');
+  return $self->bake();
 }
 
-sub retrieve {
-  ## Retrieves cookie(s) from apache cookie header
-  ## @static
-  ## @param  Apache Handle
-  ## @param  (Optional) Cookie string if cookie saved externally
-  ## @params Hashref as required by the constructor (list of hashrefs, one for each cookie for retrieving multiple cookies)
-  ## @return the cookie object(s) (a list of cookie objects while retrieving multiple cookies)
-  my ($class, $apache_handle) = splice @_, 0, 2;
-
-  my $cookies = $class->parse($apache_handle, ref $_[0] ? '' : shift);
-  my @cookies;
-
-  for (@_) {
-    my $cookie = $cookies->{$_->{'name'}} || undef;
-    if ($cookie) {
-      $cookie->_init($apache_handle, $_, 1) if keys %$_;
-      if ($cookie->encrypted) {
-        my ($value, $flag) = decrypt_value($cookie->value);
-        $cookie->value($value);
-        $cookie->clear if $flag eq 'expired';  ## Remove the cookie
-        $cookie->bake  if $flag eq 'refresh';  ## Refresh the cookie
-      }
-    }
-    push @cookies, $cookie;
-  }
-
-  return wantarray ? @cookies : $cookies[0];
-}
-
-sub parse {
-  ## @overrides
-  ## @static
-  ## Parses a cookie string to a hash of cookie name and cookie object as key-value pairs
-  ## @param Apache handle
-  ## @param Raw cookie string
-  ## @return In list context, hash of keys as cookie names and values as corresponding EnsEMBL::Web::Cookie objects, hashref of the same in case of scalar context
-  my ($class, $apache_handle, $cookie_string) = @_;
-
-  my $cookies = CGI::Cookie->parse($cookie_string || $apache_handle->headers_in->{'Cookie'});
-
-  for (keys %$cookies) {
-    $cookies->{$_} = bless $cookies->{$_}, $class;
-    $cookies->{$_}->_init($apache_handle, {}, 1);
-  }
-
-  return wantarray ? %$cookies : $cookies;
-}
-
-sub fetch {
-  ## @overrides
-  ## @static
-  ## Retrieves all the cookies from header
-  ## @note This does not decrypt value of any encrypted cookie (for an encrypted cookie, use retrieve method)
-  ## @param Apache handle
-  ## @return In list context, returns a hash of name => web cookie object for all the retrieved cookies, hashref in case of scalar context
-  return shift->parse(shift);
-}
-
-sub _init {
+sub _parse_cookie_header {
   ## @private
-  my ($self, $apache_handle, $params, $retrieving) = @_;
-  $self->httponly(1)                    if $params->{'httponly'} || $params->{'encrypted'};
-  $self->encrypted(1)                   if $params->{'encrypted'};
-  $self->env($params->{'env'})          if $params->{'env'};
-  $self->expires($params->{'expires'})  unless $retrieving;
-  $self->domain($params->{'domain'} || $SiteDefs::ENSEMBL_COOKIEHOST);
-  $self->path($params->{'path'}     || '/');
-  $self->apache_handle($apache_handle);
+  my $r = shift;
+
+  my $cookie_string = ($r->headers_in->{'Cookie'} || '') =~ s/^\s+|\s+$//gr;
+  my $cookies       = {};
+
+  for (grep $_, split /\s*[;,]\s*/, $cookie_string) { # each key-value pair
+
+    my ($key, $val) = split '=', $_, 2;
+
+    next unless defined $val;
+
+    $cookies->{uri_unescape($key)} = uri_unescape($val);
+  }
+
+  return $cookies;
+}
+
+sub _to_string {
+  ## @private
+  my $self = shift;
+
+  my $name      = uri_escape($self->{'name'});
+  my $value     = uri_escape($self->{'_real_value'} // ''); # since this is called by 'bake', '_real_value' should be set
+  my $domain    = $self->{'domain'} || $SiteDefs::ENSEMBL_COOKIEHOST;
+  my $path      = $self->{'path'} || '/';
+  my $expires   = exists $self->{'expires'} ? _expires($self->{'expires'}) : 'Thu, 31-Dec-2037 23:59:59 GMT';
+  my $httponly  = $self->{'httponly'} || $self->{'encrypted'};
+
+  my @str;
+
+  push @str, sprintf('%s=%s', $name, $value);
+  push @str, sprintf('domain=%s', $domain)    if $domain;
+  push @str, sprintf('path=%s', $path)        if $path;
+  push @str, sprintf('expires=%s', $expires)  if $expires;
+  push @str, 'HttpOnly'                       if $httponly;
+
+  return join '; ', @str;
+}
+
+###### Utility methods copied from CGI/Util.pm ######
+
+# This internal routine creates date strings suitable for use in
+# cookies and HTTP headers.  (They differ, unfortunately.)
+# Thanks to Mark Fisher for this.
+sub _expires {
+  my($time,$format) = @_;
+  $format ||= 'http';
+
+  my(@MON)=qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
+  my(@WDAY) = qw/Sun Mon Tue Wed Thu Fri Sat/;
+
+  # pass through preformatted dates for the sake of expire_calc()
+  $time = _expire_calc($time);
+  return $time unless $time =~ /^\d+$/;
+
+  # make HTTP/cookie date string from GMT'ed time
+  # (cookies use '-' as date separator, HTTP uses ' ')
+  my($sc) = ' ';
+  $sc = '-' if $format eq "cookie";
+  my($sec,$min,$hour,$mday,$mon,$year,$wday) = gmtime($time);
+  $year += 1900;
+  return sprintf("%s, %02d$sc%s$sc%04d %02d:%02d:%02d GMT",
+                 $WDAY[$wday],$mday,$MON[$mon],$year,$hour,$min,$sec);
+}
+
+# This internal routine creates an expires time exactly some number of
+# hours from the current time.  It incorporates modifications from 
+# Mark Fisher.
+sub _expire_calc {
+  my($time) = @_;
+  my(%mult) = ('s'=>1,
+               'm'=>60,
+               'h'=>60*60,
+               'd'=>60*60*24,
+               'M'=>60*60*24*30,
+               'y'=>60*60*24*365);
+  # format for time can be in any of the forms...
+  # "now" -- expire immediately
+  # "+180s" -- in 180 seconds
+  # "+2m" -- in 2 minutes
+  # "+12h" -- in 12 hours
+  # "+1d"  -- in 1 day
+  # "+3M"  -- in 3 months
+  # "+2y"  -- in 2 years
+  # "-3m"  -- 3 minutes ago(!)
+  # If you don't supply one of these forms, we assume you are
+  # specifying the date yourself
+  my($offset);
+  if (!$time || (lc($time) eq 'now')) {
+    $offset = 0;
+  } elsif ($time=~/^\d+/) {
+    return $time;
+  } elsif ($time=~/^([+-]?(?:\d+|\d*\.\d*))([smhdMy])/) {
+    $offset = ($mult{$2} || 1)*$1;
+  } else {
+    return $time;
+  }
+  my $cur_time = time; 
+  return ($cur_time+$offset);
 }
 
 1;

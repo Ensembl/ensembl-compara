@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,54 +20,42 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Transcript::ProteinSeq;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
+use parent qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
-sub init {
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
-  $self->set_defaults({
-    exons       => 'on',
-    exons_case  => 'off',
-    snp_display => 'off',
-    number      => 'off'
+
+  $self->SUPER::init_cacheable;
+
+  $self->set_default_options({
+    'exons'       => 'on',
+    'exons_case'  => 'off',
+    'snp_display' => 'off',
+    'number'      => 'off'
   });
 
-  $self->title = 'Protein Sequence';
-  $self->SUPER::init;
+  $self->title('Protein Sequence');
 }
 
 sub field_order {
-  my $self = shift;
-  my @order = qw(display_width exons exons_case);
-  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  push @order, 'number';
-  return @order;
+  ## Abstract method implementation
+  return qw(display_width exons exons_case), $_[0]->variation_fields, qw(number);
 }
 
 sub form_fields {
-  my $self = shift;
-  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
-  my $fields = {};
+  ## Abstract method implementation
+  my $self    = shift;
+  my $markup  = $self->get_markup_options({'no_snp_link' => 1});
+  my $fields  = {};
 
-  $markup_options->{'display_width'}{'label'} = 'Number of amino acids per row';
-  $markup_options->{'display_width'}{'values'} = [
-            map {{ value => $_, caption => "$_ aa" }} map 10*$_, 3..20
-  ];
-  
-  $markup_options->{'number'} = {
-                                  'type'  => 'Checkbox',
-                                  'name'  => 'number',
-                                  'label' => 'Number residues', 
-                                  'value' => 'on',
-  };
+  $markup->{'display_width'}{'label'}   = 'Number of amino acids per row';
+  $markup->{'display_width'}{'values'}  = [ map {{ 'value' => $_, 'caption' => "$_ aa" }} map 10*$_, 3..20 ];
+  $markup->{'number'}                   = { 'type'  => 'Checkbox', 'name'  => 'number', 'label' => 'Number residues', 'value' => 'on' };
 
-  $self->add_variation_options($markup_options, { populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-
-  foreach ($self->field_order) {
-    $fields->{$_} = $markup_options->{$_};
-    $fields->{$_}{'value'} = $self->get($_);
-  }
+  $fields->{$_} = $markup->{$_} for $self->field_order;
 
   return $fields;
 }

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -96,12 +97,12 @@ sub height {
 }
 
 sub transform {
-  my ($this, $transform_ref) = @_;
+  my ($this, $transform_obj) = @_;
 
-  my $scalex     = $$transform_ref{'scalex'};
-  my $scaley     = $$transform_ref{'scaley'};
-  my $translatex = $$transform_ref{'translatex'};
-  my $translatey = $$transform_ref{'translatey'};
+  my $scalex     = $transform_obj->scalex;
+  my $scaley     = $transform_obj->scaley;
+  my $translatex = $transform_obj->translatex;
+  my $translatey = $transform_obj->translatey;
 
   #########
   # apply transformation
@@ -113,11 +114,11 @@ sub transform {
   # override transformation if we've set x/y to be absolute (pixel) coords
   #
   if(defined $this->absolutex()) {
-    $scalex     = $$transform_ref{'absolutescalex'};
+    $scalex     = $transform_obj->absolutescalex;
   }
 
   if(defined $this->absolutey()) {
-    $scaley     = $$transform_ref{'absolutescaley'};
+    $scaley     = $transform_obj->absolutescaley;
   }
 
   #########

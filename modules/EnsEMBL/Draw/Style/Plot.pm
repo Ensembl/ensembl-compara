@@ -1,5 +1,6 @@
 =head1 LICENSE
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -59,32 +60,58 @@ sub create_glyphs {
   }
 
   ## Single line? Build into singleton set.
-  $data = [ $data ] if ref $data->[0] ne 'ARRAY';
+  $data = [{'features' => $data}] if ref $data->[0] ne 'HASH';
 
   # Draw plots
-  $self->draw_plots($height, $data, $plot_diameter);
-
-}
-
-sub draw_plots {
-  my ($self, $height, $features, $focus_variant, $diam) = @_;
-
-  foreach my $feature (@$features) {
-    $self->draw_plot($height, $feature, $diam);
+  my $options = {
+                'diameter'  => $track_config->get('plot_diameter') || 6,
+                'filled'    => $track_config->get('filled') || 0,
+                'height'    => $height,
+                };
+  foreach my $track (@$data) {
+    $self->draw_plots($track, $options);
   }
   return @{$self->glyphs||[]};
 }
 
-sub draw_plot {
-  my ($self, $height, $feature, $diam) = @_;
+sub draw_plots {
+  my ($self, $track, $options) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
-  my $radius = $diam/2;
+  my $metadata  = $track->{'metadata'} || {};
+  my $features  = $track->{'features'} || [];
+
+  ## Convert wiggle array to feature hash if necessary
+  my $wiggle = (defined $features->[0] && ref $features->[0] eq 'HASH') ? 0 : 1;
+  my $bin_x = 0;
+
+  foreach my $feature (@{$track->{'features'}||[]}) {
+    if ($wiggle) {
+      if (defined $feature) {
+        $feature = {
+                    start   => $bin_x,
+                    score   => $feature,
+                    colour  => $metadata->{'colour'},
+                    };
+      }
+      $bin_x += $metadata->{'unit'};      
+    }
+    $self->draw_plot($feature, $options);
+  }
+}
+
+sub draw_plot {
+  my ($self, $feature, $options) = @_;
+
+  my $pix_per_bp  = $self->{'pix_per_bp'};
+  my $diam    = $options->{'diameter'};
+  my $radius  = $diam/2;
+  my $filled  = $options->{'filled'};
+  my $height  = $options->{'height'};
 
   my $score  = $feature->{'score'};
   my $start  = $feature->{'start'};
-  my $end    = $feature->{'end'};
   my $colour = $feature->{'colour'};
+  my $offset = $radius/$pix_per_bp;
 
   my $y = $self->get_y($height,$score) + $radius;
      $y = $height if ($y > $height);
@@ -95,7 +122,7 @@ sub draw_plot {
     diameter      => $diam,
     colour        => $colour,
     absolutewidth => 1,
-    filled        => 1,
+    filled        => $filled,
   });
 
   # Invisible rectangle with a link to the ZMenu
@@ -109,19 +136,19 @@ sub draw_plot {
 }
 
 sub _draw_score {
-  my ($self, $y, $score) = @_;
+  my ($self, $y, $score, $label) = @_;
 
-  my $pix_per_bp = $self->image_config->transform->{'scalex'};
+  my $pix_per_bp = $self->image_config->transform_object->scalex;
 
-  my $text = ($score == 0) ? $score : sprintf('%.2f', $score);
-  my $text_info   = $self->get_text_info($text);
+  $label //= ($score == 0) ? $score : sprintf('%.2f', $score);
+  my $text_info   = $self->get_text_info($label);
   my $text_width  = $text_info->{'width'};
   my $text_height = $text_info->{'height'};
   my $twidth      = $text_width / $pix_per_bp;
   my $colour      = 'blue'; #$parameters->{'axis_colour'} || $self->my_colour('axis')  || 'blue';
 
   push @{$self->glyphs}, $self->Text({
-    text          => $text,
+    text          => $label,
     height        => $text_height,
     width         => $text_width,
     textwidth     => $text_width,

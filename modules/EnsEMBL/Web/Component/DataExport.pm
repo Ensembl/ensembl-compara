@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,11 +28,33 @@ package EnsEMBL::Web::Component::DataExport;
 
 use strict;
 
+use EnsEMBL::Web::Attributes;
+
 use base qw(EnsEMBL::Web::Component);
 
-sub id {
-  my $id = shift->SUPER::id(@_);
-  return "DataExport_$id";
+sub export_options :Abstract;
+
+sub new {
+  ## @override
+  ## Change id to avoid clash with the underlying component
+  my $self = shift->SUPER::new(@_);
+  $self->id('DataExport_'.$self->id);
+  return $self;
+}
+
+sub viewconfig {
+  ## @override
+  ## Gets view config of the related component
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $type      = $hub->param('data_type');
+  my $component = $hub->param('component');
+
+  return $hub->get_viewconfig({
+    'component' => $component,
+    'type'      => $type,
+    'cache'     => 1
+  });
 }
 
 sub create_form {
@@ -45,12 +68,19 @@ sub create_form {
   my ($self, $settings, $fields_by_format, $tutorial) = @_;
   my $hub  = $self->hub;
 
+  # get user specified values for url/viewconfig
+  for (keys %$settings) {
+    next unless ref $settings->{$_} eq 'HASH';
+    next if $settings->{'no_user'};
+    $settings->{$_}{'value'} = $self->param($_);
+  }
+
   my $format_label = {
     'RTF'   => 'RTF (Word-compatible)',
     'FASTA' => 'FASTA',
   };
 
-  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post'});
+  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'bgcolour'});
 
   ## Generic fields
   my $fieldset = $form->add_fieldset;
@@ -125,18 +155,15 @@ sub create_form {
     { 'name'    => 'compression', 'value'   => '' }
   ]);
 
-  my $buttons = $fieldset->add_element([
-    { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
-    { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
-    { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
-  ]);
-
-  my $div = $self->dom->create_element('div', {
-    class => 'export_buttons_div',
-    children => $buttons
+  $fieldset->add_field({
+    'field_class' => 'export_buttons_div',
+    'inline'      => 1,
+    'elements'    => [
+      { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
+      { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
+      { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
+    ]
   });
-
-  $fieldset->append_child($div);
 
   ## Hidden fields needed to fetch and process data
   $fieldset->add_hidden([
@@ -214,7 +241,7 @@ sub create_form {
         else {
           if ($field_info{'type'} =~ /Checkbox|CheckBox/) {
             $field_info{'selected'} = 1 if $field_info{'value'} eq 'on';
-            $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+            $field_info{'value'} = 'on' if ($field_info{'value'}||'off') eq 'off'; ## stupid checkboxes are stupid
           }
           $params = \%field_info;
         }

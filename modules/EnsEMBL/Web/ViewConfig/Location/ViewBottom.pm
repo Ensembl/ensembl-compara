@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,13 +20,19 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::ViewBottom;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  $self->title = 'Region Image';
-  $self->add_image_config('contigviewbottom');
+
+  $self->title('Region Image');
+  $self->image_config_type('contigviewbottom');
 }
+
+sub form_fields { } # No default fields
+sub field_order { } # No default fields
 
 1;

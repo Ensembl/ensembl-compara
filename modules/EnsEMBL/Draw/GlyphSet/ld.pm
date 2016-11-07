@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +51,7 @@ sub _init {
   my $yoffset         = 0;
   my $offset          = $self->{'container'}->start - 1;
   my $colours         = $self->my_config( 'colours');
-  my $height_ppb      = $Config->transform()->{'scalex'};
+  my $height_ppb      = $Config->transform_object->scalex;
   my @colour_gradient = $Config->colourmap->build_linear_gradient( 41,'mistyrose', 'pink', 'indianred2', 'red' );
   my $length      = int(($self->{'container'}->length -1)/1000 + 0.5);
 

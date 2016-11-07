@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,137 +20,92 @@ limitations under the License.
 package EnsEMBL::Web::Apache::SpeciesHandler;
 
 use strict;
+use warnings;
 
 use Apache2::Const qw(:common :http :methods);
 
-use SiteDefs;
-
-use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-our $MEMD = EnsEMBL::Web::Cache->new;
+sub get_controller {
+  ## Gets the required controller package name needed for the request and modifies the passed path array to remove any segments related to the Controller
+  ## @param Species name
+  ## @param Arrayref of path segments
+  ## @param URI query part
+  ## @return Package name for controller (string) if controller is found for the request, undef otherwise
+  my ($species, $path_segments, $query) = @_;
 
-sub handler_species {
-  my ($r, $cookies, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
-  
-  my $redirect_if_different = 1;
-  my @path_segments         = @$raw_path_segments;
-  my ($plugin, $type, $action, $function);
-  
-  s/\W//g for @path_segments; # clean up dodgy characters
-  
-  # Parse the initial path segments, looking for valid ENSEMBL_TYPE values
-  my $seg    = shift @path_segments;
-  my $script = $SiteDefs::OBJECT_TO_SCRIPT->{$seg};
-  
-  if ($seg eq 'Component' || $seg eq 'ComponentAjax' || $seg eq 'ZMenu' || $seg eq 'Config' || $seg eq 'Json' || $seg eq 'Download') {
-    $type   = shift @path_segments if $SiteDefs::OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu' || $seg eq 'Json' || $seg eq 'Download';
-    $plugin = shift @path_segments if $seg eq 'Component';
-  } else {
-    $type = $seg;
-  }
-  
-  $action   = shift @path_segments;
-  $function = shift @path_segments;
- 
-  $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
+  # extract Controller if it's present among the ones allowed to be passed via URL
+  my %allowed     = map { $_ => 1} @{$SiteDefs::ALLOWED_URL_CONTROLLERS};
+  my $controller  = @$path_segments && $allowed{$path_segments->[0]} ? shift @$path_segments : undef;
 
-  if ($flag && $script) {
-    $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/;
-    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action =~ s/__/::/gr if $script eq 'Component';  
-    $redirect_if_different = 0;
-  } else {
-    $script = $seg;
-  }
-  
-  return undef unless $script;
-  
-  # Mess with the environment
-  $ENV{'ENSEMBL_TYPE'}     = $type;
-  $ENV{'ENSEMBL_ACTION'}   = $action;
-  $ENV{'ENSEMBL_FUNCTION'} = $function;
-  $ENV{'ENSEMBL_SPECIES'}  = $species;
-  $ENV{'ENSEMBL_SCRIPT'}   = $script;
- 
-  my $path_info = join '/', @path_segments;
-  
-  unshift @$raw_path_segments, '', $species;
-  
-  my $newfile = join '/', @$raw_path_segments;
-  
-  # Path is changed: HTTP_TEMPORARY_REDIRECT
-  if (!$flag || ($redirect_if_different && $newfile ne $file)) {
-    $r->uri($newfile);
-    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
-    $r->child_terminate;
-    
-    return HTTP_TEMPORARY_REDIRECT;
-  }
-  
-  my $redirect = get_redirect($script, $type, $action);
-  
-  if ($redirect) {
-    ($type, $action, $function) = split($redirect);
-    $ENV{'ENSEMBL_TYPE'}      = $type;
-    $ENV{'ENSEMBL_ACTION'}    = $action if $action;
-    $ENV{'ENSEMBL_FUNCTION'}  = $function if $function;
+  # if not, get controller from OBJECT_TO_CONTROLLER_MAP
+  $controller ||= $SiteDefs::OBJECT_TO_CONTROLLER_MAP->{$path_segments->[0]} if @$path_segments && $path_segments->[0];
 
-    $newfile = join '/', '', $species, $redirect;
-    warn "OLD LINK REDIRECT: $script $newfile" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
-    
-    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
-    $r->child_terminate;
-    
-    return HTTP_TEMPORARY_REDIRECT;
+  return $controller && "EnsEMBL::Web::Controller::$controller";
+}
+
+sub get_redirect_uri {
+  ## Gets a new URI if redirect needs to be performed for the given species and URI path
+  ## @param Species name
+  ## @param Arrayref of path segments
+  ## @param URI query part
+  ## @return URI string if http redirect is required, undef otherwise
+  my ($species, $path_segments, $query) = @_;
+
+  # old species home page redirect
+  return $species eq 'Multi' ? '/index.html' : "/$species/Info/Index" if !@$path_segments || $path_segments->[0] eq 'index.html';
+
+  # other old redirects
+  if (my $redirect = get_redirect($path_segments->[0])) {
+    $redirect = join('?', join('/', '', $species, $redirect), $query || ());
+
+    warn "OLD LINK REDIRECT: $path_segments->[0] $redirect\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+
+    return $redirect;
   }
- 
-  my $controller = "EnsEMBL::Web::Controller::$script";  
-  
-  eval "use $controller";
-  
-  if (!$@) {
-    $controller->new($r, $cookies);
-    return OK;
-  }
-  
-  # Search the perl directories for a script to run if it wasn't one of the functions from EnsEMBL::Web::Magic
-  my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
-  
-  if (!$to_execute) {
-    my @dirs;
-    
-    foreach (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_PERL_DIRS) {
-      push @dirs, "$_/%s";
-      push @dirs, "$_/multi"   if -d "$_/multi"   && -r "$_/multi";
-      push @dirs, "$_/private" if -d "$_/private" && -r "$_/private";
-      push @dirs, "$_/default" if -d "$_/default" && -r "$_/default";
-      push @dirs, "$_/common"  if -d "$_/common"  && -r "$_/common";
-    }
-    
-    foreach my $dir (reverse @dirs) {
-      my $filename = sprintf($dir, $species) . "/$script";
-      
-      next unless -r $filename;
-      
-      $to_execute = $filename;
-    }
-    
-    $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
-  }
-  
-  if ($to_execute && -e $to_execute) {
-    $ENV{'PATH_INFO'} = "/$path_info" if $path_info;
-    
-    eval 'do $to_execute;';
-    
-    if ($@) {
-      warn $@;
-    } else {
-      return OK;
-    }
-  }
-  
+
   return undef;
+}
+
+sub handler {
+  ## Actual handler called by EnsEMBL::Web::Apache::Handlers
+  ## @param Apache2::RequestRec request object
+  ## @param SpeciesDefs object
+  ## @return One of the Apache2::Const constants or undef in case this handler can not handle this request
+  my ($r, $species_defs) = @_;
+
+  my $species         = $r->subprocess_env('ENSEMBL_SPECIES');
+  my $path            = $r->subprocess_env('ENSEMBL_PATH');
+  my $query           = $r->subprocess_env('ENSEMBL_QUERY');
+  my @path_segments   = grep $_, split '/', $path;
+
+  # handle redirects
+  if (my $redirect = get_redirect_uri($species, \@path_segments, $query)) {
+    $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT', $redirect);
+    return;
+  }
+
+  # get controller
+  my $controller = get_controller($species, \@path_segments, $query);
+
+  # let the next handler handle it if the URL does not map to any Controller
+  return unless $controller;
+
+  try {
+    $controller = dynamic_require($controller)->new($r, $species_defs, {
+      'species'       => $species,
+      'path_segments' => \@path_segments,
+      'query'         => $query
+    });
+    $controller->process;
+
+  } catch {
+    throw $_ unless ref $controller && $_->handle($controller);
+  };
+
+  return OK;
 }
 
 1;

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,15 +34,15 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub; 
   my $object       = $self->object || $self->hub->core_object('regulation'); 
-  my $highlight    = $hub->param('opt_highlight');
-  my $context      = $hub->param('context') || 200;
+  my $highlight    = $self->param('opt_highlight');
+  my $context      = $self->param('context') || 200;
   my $image_width  = $self->image_width     || 800;
   my $slice        = $object->get_bound_context_slice($context);
      $slice        = $slice->invert if $slice->strand < 1;
   my $slice_length = $slice->length;
 
   # First configure top part of image - displays tracks that are not cell-line related
-  my $image_config = $hub->get_imageconfig('regulation_view', 'top');
+  my $image_config = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'top'});
   
   $image_config->set_parameters({
     container_width => $slice_length,
@@ -53,7 +54,7 @@ sub content {
   my @containers_and_configs = ($slice, $image_config);
 
   # Next add cell line tracks
-  my $image_config_cell_line = $hub->get_imageconfig('regulation_view', 'cell_line');
+  my $image_config_cell_line = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'cell_line'});
   
   $image_config_cell_line->set_parameters({
     container_width => $slice_length,
@@ -62,12 +63,12 @@ sub content {
     opt_highlight   => $highlight,
   });
 
-  $image_config_cell_line->{'data_by_cell_line'} = $self->new_object('Slice', $slice, $object->__data)->get_cell_line_data($image_config_cell_line); 
+  $image_config_cell_line->{'data_by_cell_line'} = $image_config->{'data_by_cell_line'} = $self->new_object('Slice', $slice, $object->__data)->get_cell_line_data($image_config_cell_line);
   
   push @containers_and_configs, $slice, $image_config_cell_line;
 
   # Add config to draw legends and bottom ruler
-  my $image_config_bottom = $hub->get_imageconfig('regulation_view', 'bottom');
+  my $image_config_bottom = $hub->get_imageconfig({type => 'regulation_view', cache_code => 'bottom'});
   
   $image_config_bottom->set_parameters({
     container_width => $slice_length,

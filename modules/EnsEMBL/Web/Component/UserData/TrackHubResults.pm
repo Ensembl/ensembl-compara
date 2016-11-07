@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ no warnings "uninitialized";
 use POSIX qw(ceil);
 
 use EnsEMBL::Web::REST;
-use EnsEMBL::Web::Command::UserData;
+use EnsEMBL::Web::Utils::UserData qw(check_attachment);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -54,10 +55,14 @@ sub content {
   return unless $rest;
 
   my $post_content = {};
-  my @query_params = qw(assembly type query);
+  my @query_params = qw(assembly query);
   foreach (@query_params) {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
   }
+  ## We have to rename this param within the webcode as it
+  ## conflicts with one of ours
+  $post_content->{'type'} = $hub->param('data_type');
+
   ## Registry uses species names without spaces
   my $search_species = $hub->param('species') || $hub->param('search_species');
   if ($search_species) {
@@ -95,14 +100,32 @@ sub content {
     my $search_url = $hub->url({
                                 'type'      => 'UserData', 
                                 'action'    => 'TrackHubSearch',
-                                'datatype'  => $hub->param('datatype') || '',
+                                'data_type' => $hub->param('data_type') || '',
                                 'query'     => $hub->param('query') || '',
                                 });
-    $html .= sprintf('<p>Found %s track hub%s for this assembly - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
-    my $registry = $hub->species_defs->TRACKHUB_REGISTRY_URL; 
 
+    $html .= '<div class="column-wrapper">';
+
+    ## Sidebar box with helpful hints
+    my $registry = $hub->species_defs->TRACKHUB_REGISTRY_URL; 
     my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
-    $html .= $self->info_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
+    $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
+
+    ## Reminder of search terms
+    $html .= sprintf '<p><b>Searched %s %s', $post_content->{'species'}, $post_content->{'assembly'};
+    my @search_extras;
+    if ($post_content->{'type'}) {
+      push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
+    }
+    if ($post_content->{'query'}) {
+      push @search_extras, '"'.$post_content->{'query'}.'"';
+    }
+    if (@search_extras) {
+      $html .= ' for '.join(' AND ', @search_extras);
+    }
+    $html .= '</b></p>';
+    $html .= sprintf('<p>Found %s track hub%s - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
+    $html .= '</div>';
 
     if ($count > 0) {
 
@@ -124,7 +147,7 @@ sub content {
         (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
 
         ## Is this hub already attached?
-        my ($ignore, $params) = EnsEMBL::Web::Command::UserData::check_attachment($self, $_->{'hub'}{'url'});
+        my ($ignore, $params) = check_attachment($hub, $_->{'hub'}{'url'});
         my $button;
         if ($params->{'reattach'}) {
           my $label;
@@ -204,6 +227,9 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
+      ## Change type parameter back to something safe before using
+      $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
+      delete $args->{'url_params'}{'type'};
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }

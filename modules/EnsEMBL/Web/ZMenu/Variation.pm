@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,18 +29,17 @@ sub content {
   my $self       = shift;
   my $hub        = $self->hub;
   my $vf         = $hub->param('vf');
-  my $db         = $hub->param('vdb');
+  my $db         = $hub->param('vdb') || 'variation';
   my $click_data = $self->click_data;
   my $i          = 0;
   my @features;
-  
+
+  my $vf_adaptor = $hub->database($db)->get_VariationFeatureAdaptor;
+
   if ($click_data) {
     @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->{'dbID'} eq $vf, @features;
-    my $adaptor         = $hub->database($db)->get_VariationFeatureAdaptor;
-    @features = map { $adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
-    
-
+    @features = map { $vf_adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
   } elsif (!$vf) {
     my $adaptor         = $hub->database($db)->get_VariationAdaptor;
     my @variation_names = split ',', $hub->param('v');
@@ -51,7 +51,7 @@ sub content {
     }
   }
   
-  @features = $hub->database($db)->get_VariationFeatureAdaptor->fetch_by_dbID($vf) unless scalar @features;
+  @features = $vf_adaptor->fetch_by_dbID($vf) unless scalar @features;
   
   $self->{'feature_count'} = scalar @features;
   
@@ -133,14 +133,15 @@ sub feature_content {
     )
   ];
 
-  push @entries, [ 'LRG location',   $lrg_bp              ] if $lrg_bp;
-  push @entries, [ 'Alleles',        $alleles             ];
-  push @entries, [ 'Ambiguity code', $feature->ambig_code ];
-  push @entries, [ 'Global MAF',     $gmaf                ] if defined $gmaf;
-  push @entries, [ 'Consequence',    $consequence_label   ];
-  push @entries, [ $source_label,    $sources             ];
-  push @entries, [ 'LD r2',          $ld_r2               ] if defined $ld_r2;
-  push @entries, [ 'LD D prime',     $ld_d_prime          ] if defined $ld_d_prime;
+  push @entries, [ 'LRG location',   $lrg_bp                       ] if $lrg_bp;
+  push @entries, [ 'Alleles',        $alleles                      ];
+  push @entries, [ 'Ambiguity code', $feature->ambig_code          ];
+  push @entries, [ 'Global MAF',     $gmaf                         ] if defined $gmaf;
+  push @entries, [ 'Consequence',    $consequence_label            ];
+  push @entries, [ $source_label,    $sources                      ];
+  push @entries, [ 'Description',    $feature->source->description ] if ($db ne 'variation');
+  push @entries, [ 'LD r2',          $ld_r2                        ] if defined $ld_r2;
+  push @entries, [ 'LD D prime',     $ld_d_prime                   ] if defined $ld_d_prime;
  
   if ($transcript_id) {
     foreach (@{$feature->get_all_TranscriptVariations}) {
@@ -155,7 +156,7 @@ sub feature_content {
     }  
   }
   
-  $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $name);
+  $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variant', $name);
 
   if ($db eq 'variation') {
     $self->add_entry({
@@ -171,12 +172,20 @@ sub feature_content {
 
   } else {
     if ($source eq 'LOVD') {
-      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
-      # my $tmp_chr_end = ($chr_start>$chr_end) ? $chr_start+1 : $chr_end;
-      # my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$chr:$chr_start\_$tmp_chr_end($name)" });
-      # $self->add_entry({
-      #   label_html => $external_url
-      # });
+      # http://varcache.lovd.nl/redirect/hg38.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+       my $tmp_chr_end = ($chr_start>$chr_end) ? $chr_start+1 : $chr_end;
+       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$chr:$chr_start\_$tmp_chr_end($name)" });
+       $self->add_entry({
+         label_html => $external_url
+       });
+    }
+    elsif ($source =~ /DECIPHER/i) {
+      # https://decipher.sanger.ac.uk/browser#q/20:62037542-62103993
+      my ($id,$chr,$start,$end) = split('_',$name);
+      my $external_url = $hub->get_ExtURL_link("View in $source (GRCh37)", 'DECIPHER_BROWSER', { ID => "$chr:$start-$end" });
+      $self->add_entry({
+        label_html => $external_url
+      });
     }
     else {
       my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
@@ -198,11 +207,13 @@ sub feature_content {
   } elsif ($snp_fake || $hub->type eq 'Variation') {
     my $evidences = $feature->get_all_evidence_values || [];
     my $evidence_label = 'Evidence'.(scalar @$evidences > 1 ? 's' : ''); 
-    $self->add_entry({
-      type     => $evidence_label,
-      label    => join(', ', @{$evidences}) || '-',
-      position => (scalar @entries)+1 # Above "Source"
-    });
+    if (scalar @$evidences) {
+      $self->add_entry({
+        type     => $evidence_label,
+        label    => join(', ', @{$evidences}) || '-',
+        position => (scalar @entries)+1 # Above "Source"
+      });
+    }
   }
   
   if (defined $p_value) {
@@ -256,17 +267,28 @@ sub feature_content {
     });
   }
 
-  if (scalar @{$hub->database($db)->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || []}) {
-    $self->add_entry({
-      label_html => 'Phenotype data',
-      link       => $hub->url({
-        type   => 'Variation',
-        action => 'Phenotype',
-        v      => $name,
-        vf     => $dbID,
-        source => $source
-      }),
-    });
+  my $pfs = $hub->database($db)->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || [];
+  if (scalar @{$pfs}) {
+    # Display associated phenotype for private database
+    if ($hub->param('vdb') ne 'variation') {
+      my $phenotypes = join(', ', map { $_->phenotype->description } @$pfs);
+      $self->add_entry({
+        type  => 'Phenotype'.(scalar @$pfs > 1 ? 's' : ''),
+        label => $phenotypes,
+      });
+    }
+    else {
+      $self->add_entry({
+        label_html => 'Phenotype data',
+        link       => $hub->url({
+            type   => 'Variation',
+            action => 'Phenotype',
+            v      => $name,
+            vf     => $dbID,
+            source => $source
+          }),
+      });
+    }
   }
 }
 

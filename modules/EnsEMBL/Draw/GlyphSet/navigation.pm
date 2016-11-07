@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -100,20 +101,21 @@ sub render {
 sub render_highlighting {
   my $self = shift;
   
+  my $label_width = $self->{'config'}->get_parameter('label_width');
   my $compara = $self->get_parameter('compara'); 
   my ($y, $tag1, $tag2) = $self->strand > 0 ? (0, 0, 0.9) : (12, 0.9, 0);
   
   my $line = $self->Line({
-    x             => -120,
+    x             => -($label_width) - 11,
     y             => $y,
-    width         => 120,
+    width         => $label_width + 20,
     height        => 0,
     absolutex     => 1,
     absolutewidth => 1,
     absolutey     => 1
   });
   
- $self->join_tag($line, 'bracket', 0, 0, 'black');
+  $self->join_tag($line, 'bracket', 0, 0, 'black');
 
   if ($compara eq 'primary') {
     $self->join_tag($line, 'bracket2', $tag1, 0, 'rosybrown1', 'fill', -40);

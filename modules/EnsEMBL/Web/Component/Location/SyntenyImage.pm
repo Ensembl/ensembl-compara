@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,6 +84,8 @@ sub content {
   $image->image_type = 'syntenyview';
   $image->image_name = "$species-$chr-$other";
   $image->set_button('drag', 'title' => 'Click or drag to change region');
+
+  $image->{'export_params'} = [['otherspecies', $other]];
 
   my $chr_form = $self->chromosome_form('Vsynteny');
 

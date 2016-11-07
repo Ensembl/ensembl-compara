@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +20,15 @@ limitations under the License.
 package EnsEMBL::Draw::GlyphSet::_variation;
 
 ### Draws a SNP track
+
+###################################################
+##                DEPRECATED                     ##
+###################################################
+
+## THIS MODULE HAS BEEN SUPERCEDED BY GlyphSet::variation
+
+## Please change your code to use that module instead
+
 
 use strict;
 
@@ -50,6 +60,9 @@ sub render_labels {
 
 sub _init {
   my $self = shift;
+  warn '########## DEPRECATED GLYPHSET _variation ##############';
+  warn 'This glyphset will be removed in release 88. Please alter your code to use GlyphSet::variation instead.';
+
   $self->{'my_config'}->set('no_label', 1) unless $self->{'show_labels'};
   return $self->SUPER::_init(@_);
 }
@@ -82,6 +95,9 @@ sub features {
     });
     if (!scalar(@$features_list)) {
       my $track_name = $self->my_config('name'); 
+      # Remove the "All" terms
+      $track_name =~ s/^All\s//gi;
+      $track_name =~ s/\s-\sAll\s-\s/ /gi;
       $self->errorTrack("No $track_name data for this region");
       return [];
     }

@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,26 +61,23 @@ Ensembl.LayoutManager.extend({
     }).on('click', 'a[rel="external"]', function () { 
       this.target = '_blank';
     }).on('click', 'a.update_panel', function () {
-      var panelId = this.rel;
-      var url     = Ensembl.updateURL({ update_panel: 1 }, this.href);
- 
-      if (Ensembl.PanelManager.panels[panelId] && this.href.split('?')[0].match(Ensembl.PanelManager.panels[panelId].params.updateURL.split('?')[0])) {
+      var panelId     = this.rel;
+      var linkedPanel = Ensembl.PanelManager.panels[panelId];
+
+      if (linkedPanel) {
         var params = {};
-        
-        if (!$('.update_url', this).add($(this).siblings('.update_url')).each(function () { params[this.name] = this.value; }).length) {
-          params = undefined;
+        if ($(this).find('.update_url').each(function () { params[this.name] = this.value; }).length) {
+          Ensembl.updateURL(params);
         }
-        
-        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, url, null, { updateURL: this.href }, params);
+
+        params['update_panel'] = 1;
+
+        Ensembl.EventManager.triggerSpecific('updatePanel', panelId, Ensembl.updateURL(params, linkedPanel.params.updateURL));
+
       } else {
-        $.ajax({
-          url: url,
-          success: function () {
-            Ensembl.EventManager.triggerSpecific('updatePanel', panelId);
-          }
-        });
+        console.log('Missing panel: ' + panelId);
       }
-      
+
       return false;
     }).on('submit', 'form.update_panel', function (e) {
       var params    = $(this).serializeArray();
@@ -132,8 +130,7 @@ Ensembl.LayoutManager.extend({
           if (Ensembl.dynamicWidth) {
             Ensembl.setWidth(undefined, true);
           }
-          
-          Ensembl.cookie.set('WINDOW_WIDTH', $(window).width());	
+
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {
@@ -146,8 +143,8 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
-    this.showMobileMessage();
     this.showCookieMessage();
+    this.showTemporaryMessage();
     this.showMirrorMessage();
   },
   
@@ -269,15 +266,19 @@ Ensembl.LayoutManager.extend({
       if (redirectBackLink.prop('hostname') != window.location.hostname) { // this will filter any invalid urls
 
         redirectBackLink.html('Click here to go back to <b>' + redirectBackLink.prop('hostname') + '</b>');
+        var messageDiv = $(['<div class="redirect-message hidden">',
+                              '<p class="msg">You have been redirected to your nearest mirror. ',
+                              '<span class="_redirect_link"></span>',
+                            '</p>',
+                            '<span class="close">x</span>',
+                            '</div>']
+                            .join(''))
+                            .find('span._redirect_link').append(redirectBackLink).end()
+                            .appendTo($('body')).fadeIn();
 
-        var paddingDiv = $('<div class="redirect-message-padding hidden"></div>');
-        var messageDiv = $('<div class="redirect-message hidden"><p>You have been redirected to your nearest mirror. <span></span> <button>Close</button></p></div>')
-                            .find('span').append(redirectBackLink).end()
-                            .appendTo($('body').prepend(paddingDiv.slideDown())).slideDown();
-
-        messageDiv.find('button').on('click', { divs: paddingDiv.add(messageDiv) }, function(e) {
+        messageDiv.find('.close').on('click', { divs: messageDiv }, function(e) {
           e.preventDefault();
-          e.data.divs.slideUp();
+          e.data.divs.fadeOut(200);
         });
 
         paddingDiv = messageDiv = redirectBackLink = null;
@@ -290,22 +291,50 @@ Ensembl.LayoutManager.extend({
 
     if (!cookiesAccepted) {
       $(['<div class="cookie-message hidden">',
-        '<div></div>',
-        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.</p>',
-        '<p><button>Don\'t show this again</button></p>',
-        '<p>Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</p>',
+          '<p class="msg">We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.',
+            '<span class="more-info"> Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</span>',
+          '</p>',
+          '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
+          '<span class="close">x</span>',
         '</div>'
       ].join(''))
-        .appendTo(document.body).show().find('button,div').on('click', function (e) {
+        .appendTo(document.body).show().find('span.close').on('click', function (e) {
           Ensembl.cookie.set('cookies_ok', 'yes');
           $(this).parents('div').first().fadeOut(200);
-      }).filter('div').helptip({content:"Don't show this again"});
+      });
       return true;
     }
 
     return false;
   },
 
-  showMobileMessage: function() { }
+  showTemporaryMessage: function() {
+    var messageSeen = Ensembl.cookie.get('tmp_message_ok');
+    var messageDiv  = $('#tmp_message').remove();
+    var message     = messageDiv.children('div').text();
+    var messageMD5  = messageDiv.children('input[name=md5]').val();
+    var messageCol  = messageDiv.children('input[name=colour]').val();
+    var expiryHours = parseInt(messageDiv.children('input[name=expiry]').val()) || 24;
+    var position    = (messageDiv.children('input[name=position]').val() || '').split(/\s+/);
+
+    if (message && (!messageSeen || messageSeen !== messageMD5)) {
+      $(['<div class="tmp-message hidden ' + $.makeArray($.map($.merge([messageCol], position), function(v) { return v ? 'tm-' + v : null; })).join(' ') + '">',
+        '<div>' + message + '</div>',
+        '<p><button>Close</button></p>',
+        '</div>'
+      ].join(''))
+        .appendTo(document.body).show().find('button').on('click', {
+          cookieValue: messageMD5,
+          cookieExpiry: new Date(new Date().getTime() + expiryHours * 60 * 60 * 1000).toUTCString()
+        }, function (e) {
+          e.preventDefault();
+          Ensembl.cookie.set('tmp_message_ok', e.data.cookieValue, e.data.cookieExpiry);
+          $(this).parents('div').first().fadeOut(200);
+      });
+      return true;
+    }
+
+    return false;
+  }
 
 });

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,8 +52,6 @@ sub content {
   $image_config->cache('object',       $translation);
   $image_config->cache('image_snps',   $transcript->variation_data);
   $image_config->cache('image_splice', $transcript->peptide_splice_sites);
-
-  $image_config->tree->dump('Tree', '[[caption]]') if $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
   my $image = $self->new_image($peptide, $image_config, []);
   

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +29,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self    = shift;
-  my $hub     = EnsEMBL::Web::Hub->new;
+  my $hub     = $self->hub;
   my $sd      = $hub->species_defs;
   my $sp      = $sd->ENSEMBL_PRIMARY_SPECIES;
   my $img_url = $sd->img_url;
@@ -50,16 +51,17 @@ sub render {
   my $tools_limit = '50MB';
 
   ## VEP
-  my $new_vep  = $sd->ENSEMBL_VEP_ENABLED;
-  my $vep_link = $hub->url({'species' => $sp, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  $table->add_row({
-    'name'  => sprintf('<a href="%s" class="%snodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link,  $new_vep ? '' : 'modal_link ', $img_url),
-    'desc'  => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
-    'limit' => $tools_limit.'*',
-    'tool'  => sprintf('<a href="%s" class="%snodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vep_link, $new_vep ? '' : 'modal_link ', $img_url),
-    'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/archive/release/%s.zip" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
-    'docs'  => sprintf('<a href="/info/docs/tools/vep/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
-  });
+  if ($sd->ENSEMBL_VEP_ENABLED) {
+    my $vep_link = $hub->url({'species' => $sp, 'type' => 'Tools', 'action' =>  'VEP'});
+    $table->add_row({
+      'name'  => sprintf('<a href="%s" class="nodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link, $img_url),
+      'desc'  => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
+      'limit' => $tools_limit.'*',
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vep_link, $img_url),
+      'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/archive/release/%s.zip" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
+      'docs'  => sprintf('<a href="/info/docs/tools/vep/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+    });
+  }
 
   ## BLAST
   if ($sd->ENSEMBL_BLAST_ENABLED) {
@@ -71,6 +73,19 @@ sub render {
       'limit' => $tools_limit,
       'code'  => '',
       'docs'  => sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/Blast'}}), $img_url)
+    });
+  }
+
+  ## File chameleon
+  if ($sd->ENSEMBL_FC_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
+      'desc'  => "Convert Ensembl files for use with other analysis tools",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => sprintf('<a href="https://github.com/FAANG/faang-format-transcriber" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'docs'  =>  sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/FileChameleon'}}), $img_url),
     });
   }
 
@@ -100,19 +115,6 @@ sub render {
     });
   }
 
-  ## File chameleon
-  if ($sd->ENSEMBL_FC_ENABLED) {
-    my $link = $hub->url({'species' => $sp, qw(type Tools action FileChameleon)});
-    $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">File Chameleon</a></b>', $link),
-      'desc'  => "Convert Ensembl files for use with other analysis tools",
-      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
-      'limit' => $tools_limit,
-      'code'  => '',
-      'docs'  => '',
-    });
-  }
-
   ## Allele frequency
   if ($sd->ENSEMBL_AF_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action AlleleFrequency)});
@@ -120,15 +122,59 @@ sub render {
       'name'  => sprintf('<b><a class="nodeco" href="%s">Allele frequency calculator</a></b>', $link),
       'desc'  => "This tool calculates population-wide allele frequency for sites within the chromosomal region defined from a VCF file and populations defined in a sample panel file.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
-      'limit' => $tools_limit,
+      'limit' => '',
       'code'  => '',
       'docs'  => sprintf('<a href="/info/docs/tools/allelefrequency/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
   }
 
-  $html .= $table->render;
+  ## VCF to PED
+  if ($sd->ENSEMBL_VP_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action VcftoPed)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">VCF to PED converter</a></b>', $link),
+      'desc'  => "Parse a vcf file to create a linkage pedigree file (ped) and a marker information file, which together may be loaded into ld visualization tools like Haploview.",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => sprintf('<a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/vcf_to_ped_converter/version_1.1/vcf_to_ped_convert.pl" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'docs'  => sprintf('<a href="/info/docs/tools/vcftoped/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
+    });
+  }
 
-  $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to install our Perl API, below, to run the script).';
+  ## Data Slicer
+  if ($sd->ENSEMBL_DS_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action DataSlicer)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">Data Slicer</a></b>', $link),
+      'desc'  => "Get a subset of data from a BAM or VCF file.",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'docs'  => sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/DataSlicer'}}), $img_url),
+    });
+  }
+
+  ## Variation Pattern finder
+  if ($sd->ENSEMBL_VPF_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action VariationPattern)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">Variation Pattern Finder</a></b>', $link),
+      'desc'  => "Identify variation patterns in a chromosomal region of interest for different individuals. Only variations with functional significance such non-synonymous coding, splice site will be reported by the tool.",
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => sprintf('<a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/variation_pattern_finder/version_1.0" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'docs'  => sprintf('<a href="/info/docs/tools/variationpattern/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
+    });
+  }
+
+
+  if ($table->has_rows) {
+    $html .= $table->render;
+    $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to install our Perl API, below, to run the script).';
+
+  }
+  else {
+    $html .= '<p><b>No tools are available on this site. Please visit <a href="http://www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
+  }
 
   ## Table of other tools
 

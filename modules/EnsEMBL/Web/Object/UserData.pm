@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +21,6 @@ package EnsEMBL::Web::Object::UserData;
 
 ### NAME: EnsEMBL::Web::Object::UserData
 ### Object for accessing data uploaded by the user
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 
@@ -51,7 +50,6 @@ use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
 use EnsEMBL::Web::File::Utils::FileSystem qw/create_path copy_files/;
@@ -86,37 +84,40 @@ sub availability {
   return $hash;
 }
 
-############### CUSTOM DATA MANAGEMENT #########################
+sub get_userdata_records {
+  ## Gets session and user record objects for upload and url type
+  ## @return List of hashrefs
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $user    = $hub->user;
+  my @records = map $_->get_records_data({'type' => [qw(upload url)]}), grep $_, $session, $user;
 
-sub rename_session_record {
+  return \@records;
+}
+
+############### methods reached directly by url mapping via ModifyData command #########################
+
+sub md_rename_session_record {
   my $self = shift;
   my $hub  = $self->hub;
   my $name = $hub->param('value');
 
-  $hub->session->set_data(type => $hub->param('source'), code => $hub->param('code'), name => $name) if $name;
+  $hub->session->set_record_data({type => $hub->param('source'), code => $hub->param('code'), name => $name}) if $name;
   return 1;
 }
 
-sub rename_user_record {
+sub md_rename_user_record {
   my $self  = shift;
   my $hub   = $self->hub;
   my $user  = $hub->user;
   my $name  = $hub->param('value');
 
-  if ($name) {
-    my ($id, $checksum) = split '-', $hub->param('id');
-    my $record = $user->get_record($id);
-
-    if ($checksum eq md5_hex($record->code)) {
-      $record->name($name);
-      $record->save(user => $user->rose_object);
-    }
-  }
-
+  $user->set_record_data({type => $hub->param('source'), code => $hub->param('code'), name => $name}) if $user && $name;
   return 1;
 }
 
-sub save_upload {
+sub md_save_upload {
 ## Move an uploaded file to a persistent directory
   my $self = shift;
   my $hub  = $self->hub;
@@ -148,7 +149,7 @@ sub save_upload {
   return undef;
 }
 
-sub save_remote {
+sub md_save_remote {
 ## Move the session record for an attached file to the user record
   my $self = shift;
   my $hub  = $self->hub;
@@ -163,7 +164,7 @@ sub save_remote {
   return undef;
 }
 
-sub delete_upload {
+sub md_delete_upload {
 ### Delete file and session/user record for an uploaded file
   my ($self, @args) = @_;
   my $hub  = $self->hub;
@@ -180,14 +181,14 @@ sub delete_upload {
   return undef;
 }
 
-sub delete_remote {
+sub md_delete_remote {
 ### Delete record for an attached file
   my ($self, @args) = @_;
   $self->_delete_record('url', @args);
   return undef;
 }
 
-sub mass_update {
+sub md_mass_update {
 ### Catchall method for enable/disable/delete buttons
   my $self = shift;
   if ($self->hub->param('enable_button')) {
@@ -201,6 +202,8 @@ sub mass_update {
   }
 }
 
+######## 
+
 sub delete_files {
   my $self = shift;
   my @files = $self->hub->param('files');
@@ -208,10 +211,10 @@ sub delete_files {
   foreach (@files) {
     my ($source, $code, $id) = split('_', $_);
     if ($source eq 'upload') {
-      #$self->delete_upload($source, $code, $id);
+      #$self->md_delete_upload($source, $code, $id);
     }
     else {
-      #$self->delete_remote($source, $code, $id);
+      #$self->md_delete_remote($source, $code, $id);
     }
   }
 }
@@ -259,6 +262,9 @@ sub _move_to_user {
     ($new_path = $old_path) =~ s/session_(\d+)/user_$user_id/;
     $new_path =~ s/temporary/persistent/;
     $data->{'file'} = $new_path if $new_path;
+    ## Make a note of where the file was saved, since it can't currently
+    ## be shown on other sites such as mirrors or archives
+    $data->{'site'} = $hub->species_defs->ENSEMBL_SERVERNAME;
     $record = $user->add_to_uploads($data);
   }
   else {
@@ -277,58 +283,20 @@ sub _move_to_user {
 
 sub _delete_record {
   my ($self, $type, $source, $code, $id) = @_;
-  my $hub       = $self->hub;
 
-  my $source  ||= $hub->param('source');
-  my $code    ||= $hub->param('code');
-  my $id      ||= $hub->param('id');
+  my $hub   = $self->hub;
+  my $file  = '';
+  $code   ||= $hub->param('code');
 
-  my $user        = $hub->user;
-  my $session     = $hub->session;
-  my $session_id  = $session->session_id;
-  my ($file, $track_name);
+  foreach my $record_manager (grep $_, $hub->user, $hub->session) {
+    my $data = $record_manager->get_record_data({'type' => $type, 'code' => $code});
 
-  if ($user && $id) {
-    my $checksum;
-    ($id, $checksum) = split '-', $id;
-    
-    my $record = $user->get_record($id);
-    
-    if ($record) {
-      my $check = $record->data->{'code'};
-      
-      if ($checksum eq md5_hex($check)) {
-        ## Capture path to file so we can delete it
-        if ($type eq 'upload') {
-          $file = $record->data->{'file'};
-        }
-        ## Now delete record
-        $track_name = "${source}_$check";
-        $code       = $check;
-        $record->delete;
-      }
+    if (keys %$data) {
+      $file = $data->{'shared'} ? undef : $data->{'file'};
+      $record_manager->delete_records({'type' => $type, 'code' => $code}); # delete record
+      last;
     }
-  } else {
-    $track_name = $type.'_'.$code;
-    my $temp_data = $session->get_data(type => $type, code => $code);
-
-    if ($type eq 'upload') {
-      $file = $temp_data->{'file'};
-    }
-
-    if ($temp_data->{'format'} eq 'TRACKHUB' && $self->hub->cache) {
-      # delete cached hub
-      my $url = $temp_data->{'url'};
-      my $key = 'trackhub_'.md5_hex($url);
-      $self->hub->cache->delete($key);
-    }
-    $session->purge_data(type => $type, code => $code);
   }
-  
-  # Remove all shared data with this code and source
-  EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all if $code =~ /_$session_id$/;
-  
-  $self->update_configs([ $track_name ]) if $track_name;
 
   return $type eq 'url' ? undef : $file;
 }

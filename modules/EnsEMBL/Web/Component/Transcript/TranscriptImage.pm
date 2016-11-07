@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,8 +64,6 @@ sub content {
 
   $image_config->set_parameter('single_Transcript' => $transcript->stable_id);
   $image_config->set_parameter('single_Gene'       => $object->gene->stable_id) if $object->gene;
-
-  $image_config->tree->dump('Tree', '[[caption]]') if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
   my $image = $self->new_image($slice, $image_config, []);
   

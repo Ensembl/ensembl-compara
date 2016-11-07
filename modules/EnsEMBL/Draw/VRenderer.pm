@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +28,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use EnsEMBL::Draw::Utils::Transform;
+
 sub new {
   my ($class, $config, $container, $glyphsets_ref) = @_;
 
@@ -36,7 +39,8 @@ sub new {
     'colourmap' => $config->colourmap,
     'config'    => $config,
     'container' => $container,
-    'sf'        => $config->get_parameter('sf') || 1
+    'sf'        => $config->get_parameter('sf') || 1,
+    'transform' => EnsEMBL::Draw::Utils::Transform->new
   };
   
   bless($self, $class);

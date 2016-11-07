@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -220,10 +221,9 @@ sub upload {
         my $user    = $hub->user;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
-        my $format  = $self->get_format || $hub->param('format');
+        my $format  = $self->get_format || lc $hub->param('format');
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
-        $inputs{'format'}    = $format if $format;
         my $species = $hub->param('species') || $hub->species;
 
         ## Extra renderers for fancy formats
@@ -253,6 +253,7 @@ sub upload {
                       no_attach => $no_attach,
                       timestamp => time,
                       assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
+                      site      => $hub->species_defs->ENSEMBL_SERVERNAME,
                       %inputs
                      };
 
@@ -261,10 +262,10 @@ sub upload {
           $data = $user->add_to_uploads($record);
         }
         else {
-          $data = $session->add_data(%$record);
+          $data = $session->set_record_data($record);
         }
 
-        $session->configure_user_data('upload', $data);
+        $hub->configure_user_data('upload', $data);
         ## Store the session code so we can access it later
         $self->{'code'} = $code;
       }

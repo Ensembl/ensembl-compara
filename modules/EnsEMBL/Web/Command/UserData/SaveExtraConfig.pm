@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,9 +33,12 @@ sub process {
   my $redirect = $hub->species_path($hub->data_species) . '/UserData/RemoteFeedback';
   my $param    = {};
 
-  my $data = $session->get_data(type => 'url', code => $hub->param('code'));
+  my $data = $session->get_record_data({type => 'url', code => $hub->param('code')});
+
+  $data->{'type'} = 'url';
+  $data->{'code'} = $hub->param('code');
   $data->{'colour'} = $hub->param('colour');
-  $session->set_data(%$data);
+  $session->set_record_data($data);
 
   $self->ajax_redirect($redirect, $param);  
 }

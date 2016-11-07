@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +34,10 @@ sub populate_tree {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  
-  $self->create_node('Summary', 'Summary',
+  my $strain       = $species_defs->RELATED_TAXON; # species that are in a compara strain tree
+  my $collapse     = $species_defs->IS_STRAIN_OF ? 0 : 1; # check if species is a strain
+
+  my $summary_menu = $self->create_node('Summary', 'Summary',
     [qw(
       gene_summary  EnsEMBL::Web::Component::Gene::GeneSummary
       navbar        EnsEMBL::Web::Component::ViewNav
@@ -43,28 +46,23 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
 
-  $self->create_node('Splice', 'Splice variants',
+  $summary_menu->append($self->create_node('Splice', 'Splice variants',
     [qw( image EnsEMBL::Web::Component::Gene::SpliceImage )],
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
-  );
+  ));
 
-  $self->create_node('TranscriptComparison', 'Transcript comparison',
+  $summary_menu->append($self->create_node('TranscriptComparison', 'Transcript comparison',
     [qw(
       select EnsEMBL::Web::Component::Gene::TranscriptComparisonSelector
       seq    EnsEMBL::Web::Component::Gene::TranscriptComparison
     )],
     { 'availability' => 'gene multiple_transcripts not_rnaseq' }
-  );
+  ));
 
-  $self->create_node('Evidence', 'Supporting evidence',
-    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
-    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
-  );
-
-  $self->create_node('Alleles', 'Gene alleles',
+  $summary_menu->append($self->create_node('Alleles', 'Gene alleles',
                      [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
                      { 'availability' => 'core has_alt_alleles', 'concise' => 'Gene Alleles' }
-                   );
+                   ));
 
   my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
@@ -78,20 +76,108 @@ sub populate_tree {
    { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
-  $self->create_node('Matches', 'External references',
-    [qw( 
-      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
-    )],
-    { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
+  my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
+    [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
+    {'availability' => 'gene database:compara core not_strain'}
   );
-
-  $self->create_node('Regulation', 'Regulation',
+  
+  $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
     [qw(
-      regulation EnsEMBL::Web::Component::Gene::RegulationImage
-      features   EnsEMBL::Web::Component::Gene::RegulationTable
+      selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
+      alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
     )],
-    { 'availability' => 'regulation not_patch not_rnaseq' }
+    { 'availability' => 'gene database:compara core has_alignments' }
+  ));
+  
+  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
+    [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
+    { 'availability' => 'gene database:compara core has_gene_tree not_strain' }
+  ));
+  
+  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
+      [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
+      { 'availability' => 'gene database:compara core has_species_tree not_strain' }
+    ));
+    
+  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
+    [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
+    { 'availability' => 'gene database:compara core has_orthologs not_strain', 'concise' => 'Orthologues' }
   );
+  
+  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue alignment',
+    [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
+    { 'availability'  => 'gene database:compara core has_orthologs not_strain', 'no_menu_entry' => 1 }
+  ));
+  
+  $compara_menu->append($ol_node);
+  
+  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
+    [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
+    { 'availability' => 'gene database:compara core has_paralogs not_strain', 'concise' => 'Paralogues' }
+  );
+  
+  $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue alignment',
+    [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
+    { 'availability' => 'gene database:compara core has_paralogs not_strain', 'no_menu_entry' => 1 }
+  ));
+  
+  $compara_menu->append($pl_node);
+  
+  my $fam_node = $self->create_node('Family', 'Ensembl protein families',
+    [qw( family EnsEMBL::Web::Component::Gene::Family )],
+    { 'availability' => 'family not_strain', 'concise' => 'Ensembl protein families' }
+  );
+  
+  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
+    [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
+    { 'availability'  => 'family not_strain', 'no_menu_entry' => 1 }
+  ));
+
+  $fam_node->append($self->create_subnode('Family/Alignments', 'Multiple alignments in this family',
+    [qw( jalview EnsEMBL::Web::Component::Gene::FamilyAlignments )],
+    { 'availability'  => 'family database:compara core not_strain', 'no_menu_entry' => 1 }
+  ));
+  
+  $compara_menu->append($fam_node);
+  
+  # Compara menu for strain (strain menu available on main species but collapse, main menu not available/grey out/collapse on strain page)
+  # The node key (Strain_) is used by Component.pm to determine if it is a strain link on the main species page, so be CAREFUL when changing this  
+  if($strain || $species_defs->IS_STRAIN_OF) {  
+    my $strain_compara_menu = $self->create_node('Strain_Compara', 'Strains',
+      [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
+      {'availability' => 'gene database:compara core', 'closed' => $collapse }
+    );
+
+    $strain_compara_menu->append($self->create_node('Strain_Compara_Tree', 'Gene tree',
+      [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
+      { 'availability' => 'gene database:compara core has_strain_gene_tree' }
+    ));
+
+    my $strain_ol_node = $self->create_node('Strain_Compara_Ortholog', 'Orthologues',
+      [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
+      { 'availability' => 'gene database:compara core has_strain_orthologs', 'concise' => 'Orthologues' }
+    );
+
+    $strain_ol_node->append($self->create_subnode('Strain_Compara_Ortholog/Alignment', 'Orthologue alignment',
+      [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
+      { 'availability'  => 'gene database:compara core has_strain_orthologs', 'no_menu_entry' => 1 }
+    ));
+
+    $strain_compara_menu->append($strain_ol_node);
+    
+    my $strain_pl_node = $self->create_node('Strain_Compara_Paralog', 'Paralogues',
+      [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
+      { 'availability' => 'gene database:compara core has_strain_paralogs', 'concise' => 'Paralogues' }
+    );
+    
+    $strain_pl_node->append($self->create_subnode('Strain_Compara_Paralog/Alignment', 'Paralogue alignment',
+      [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
+      { 'availability' => 'gene database:compara core has_strain_paralogs', 'no_menu_entry' => 1 }
+    ));
+    
+    $strain_compara_menu->append($strain_pl_node);  
+    $compara_menu->append($strain_compara_menu);  
+  }  
 
   # get all ontologies mapped to this species
   my $go_menu = $self->create_submenu('Ontologies', 'Ontologies');
@@ -112,72 +198,8 @@ sub populate_tree {
       $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2 }));
     }
   }
-    
-  my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
-    [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
-    {'availability' => 'gene database:compara core'}
-  );
-  
-  $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
-    [qw(
-      selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
-      alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
-    )],
-    { 'availability' => 'gene database:compara core has_alignments' }
-  ));
-  
-  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
-    [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
-  ));
-  
-  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
-      [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
-      { 'availability' => 'gene database:compara core has_species_tree' }
-    ));
-    
-  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
-    [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
-    { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
-  );
-  
-  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue alignment',
-    [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
-  ));
-  
-  $compara_menu->append($ol_node);
-  
-  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
-    [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
-  );
-  
-  $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue alignment',
-    [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability' => 'gene database:compara core has_paralogs', 'no_menu_entry' => 1 }
-  ));
-  
-  $compara_menu->append($pl_node);
-  
-  my $fam_node = $self->create_node('Family', 'Ensembl protein families',
-    [qw( family EnsEMBL::Web::Component::Gene::Family )],
-    { 'availability' => 'family', 'concise' => 'Ensembl protein families' }
-  );
-  
-  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
-    [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
-    { 'availability'  => 'family', 'no_menu_entry' => 1 }
-  ));
 
-  $fam_node->append($self->create_subnode('Family/Alignments', 'Multiple alignments in this family',
-    [qw( jalview EnsEMBL::Web::Component::Gene::FamilyAlignments )],
-    { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }
-  ));
-  
-  $compara_menu->append($fam_node);
-  
-	$self->create_node('Phenotype',  'Phenotype',
+  $self->create_node('Phenotype',  'Phenotypes',
     [qw(
       phenotype EnsEMBL::Web::Component::Gene::GenePhenotype
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
@@ -198,7 +220,7 @@ sub populate_tree {
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
-	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variants',
+  $var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variants',
     [qw(
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable
@@ -206,14 +228,38 @@ sub populate_tree {
     { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
-  my $ext_menu = $self->create_submenu('ExternalData', 'External data');
-  $ext_menu->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
+  $self->create_node('ExpressionAtlas', 'Gene expression',
     [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
     { 'availability'  => 'gene has_gxa' }
-  ));
-  
+  );
+
+  $self->create_node('Regulation', 'Regulation',
+    [qw(
+      regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features   EnsEMBL::Web::Component::Gene::RegulationTable
+    )],
+    { 'availability' => 'regulation not_patch not_rnaseq' }
+  );
+
+  $self->create_node('Matches', 'External references',
+    [qw( 
+      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
+    )],
+    { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
+  );
+
+  $self->create_node('Evidence', 'Supporting evidence',
+    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
+    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
+  );
+
+  $self->create_node('Evidence', 'Supporting evidence',
+    [qw( evidence EnsEMBL::Web::Component::Gene::SupportingEvidence )],
+    { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
+  );
+
   my $history_menu = $self->create_submenu('History', 'ID History');
-  
+
   $history_menu->append($self->create_node('Idhistory', 'Gene history',
     [qw(
       display    EnsEMBL::Web::Component::Gene::HistoryReport
@@ -227,6 +273,8 @@ sub populate_tree {
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
+
+
 }
 
 1;

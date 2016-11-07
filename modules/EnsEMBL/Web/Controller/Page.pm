@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,33 +23,36 @@ package EnsEMBL::Web::Controller::Page;
 ### Deals with Command modules if required.
 
 use strict;
+use warnings;
 
 use URI::Escape qw(uri_unescape);
 
-use base qw(EnsEMBL::Web::Controller);
+use parent qw(EnsEMBL::Web::Controller);
 
-sub request   { return 'page'; }
-sub cacheable { return 1;      }
+sub request {
+  return 'page';
+}
 
 sub init {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $request = $self->request;
-  
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  # Clear already existing cache if required
   $self->clear_cached_content;
-  
-  my $cached = $self->get_cached_content($request); # Page retrieved from cache
-  
+
+  # Try to retrieve content from cache
+  my $cached = $self->get_cached_content;
+
   if (!$cached) {
-    my $redirect = $self->builder->create_objects($hub->factorytype, $request) eq 'redirect'; # Build objects before checking configuration - they are needed by Configuration.pm
-    $self->configure;                                                                         # Set hub->components before checking configuration
-    return if $self->update_configuration_from_url || $redirect;                              # Redirect if a configuration has been updated or object parameters have changed
+    $self->builder->create_objects;
+    $self->configure;
+    $self->update_configuration_for_request;
   }
-  
+
   $self->update_user_history if $hub->user;
-  
+
   return if $cached;
-  
+
   $self->page->initialize; # Adds the components to be rendered to the page module
   $self->render_page;
 }
@@ -57,41 +61,58 @@ sub render_page {
   my $self = shift;
   my $hub  = $self->hub;
   
-  # Set cookies for toggleable content, then delete the param so it doesn't appear on any links in the page
-  foreach (grep /^toggle_.+/, $hub->param) {
-    $hub->set_cookie($_, $hub->param($_));
-    $hub->delete_param($_);
-  }
-  
   $self->SUPER::render_page if $self->access_ok && !$self->process_command;
 }
 
-sub update_configuration_from_url {
-  ### Checks for shared data and updated config settings from the URL parameters
-  ### If either exist, returns 1 to force a redirect to the updated page
-  ### This function is only called during main page (EnsEMBL::Web::Magic::stuff) requests
-  
-  my $self       = shift;
-  my $r          = $self->r;
-  my $input      = $self->input;
-  my $hub        = $self->hub;
-  my $session    = $hub->session;
-  my @share_ref  = $input->param('share_ref');
-  my @components = @{$self->configuration->get_configurable_components};
-  my $new_url;
-  
-  if (@share_ref) {
-    $session->receive_shared_data(@share_ref); # This should push a message onto the message queue
-    $input->delete('share_ref');
-    $new_url = 1;
+sub update_configuration_for_request {
+  ## Checks for shared data and updates config settings from the URL and POST parameters
+  ## TODO - handle share userdata via url - did not work in 84 either
+  my $self        = shift;
+  my $r           = $self->r;
+  my $input       = $self->input;
+  my $hub         = $self->hub;
+  my $core_params = $hub->core_params;
+  my @components  = @{$self->configuration->get_configurable_components};
+
+  my $do_redirect = 0;
+
+  # Go through each view config and get a list of required params
+  my @view_config = map $hub->get_viewconfig({'type' => $components[$_][1], 'component' => $components[$_][0]}), 0..$#components;
+  my %url_params  = map { $_ => 1 } map $_->config_url_params, @view_config;
+  my %inp_params;
+
+  # Get all the required params from the url and delete the one in the url
+  for (keys %url_params) {
+    my @vals = $input->param($_);
+    if (@vals) {
+      $input->delete($_);
+      $url_params{$_} = scalar @vals > 1 ? \@vals : $vals[0];
+    } else {
+      delete $url_params{$_}; # delete the params not present in the url
+    }
   }
-  $hub->get_viewconfig(@{$components[$_]})->update_from_input($r, $_ == $#components) for 0..$#components;
-  $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
-  
-  if ($new_url) {
+
+  # Get all the non-core GET/POST params to pass them to the update_for_input method
+  for ($input->param) {
+    next if $core_params->{$_};
+    my @vals = $input->param($_);
+    $inp_params{$_} = scalar @vals > 1 ? \@vals : $vals[0];
+  }
+
+  # now update all the view configs accordingly
+  for (@view_config) {
+    if (keys %inp_params) {
+      $_->update_from_input({ %inp_params }); # avoid passing reference to the original hash to prevent manipulation
+    }
+    if (keys %url_params) {
+      $_->update_from_url({ %url_params });
+      $do_redirect++;
+    }
+  }
+
+  if ($do_redirect) {
     $input->param('time', time); # Add time to cache-bust the browser
-    $input->redirect(join '?', $r->uri, uri_unescape($input->query_string)); # If something has changed then we redirect to the new page  
-    return 1;
+    $hub->redirect(join('?', $r->uri, uri_unescape($input->query_string)));
   }
 }
 

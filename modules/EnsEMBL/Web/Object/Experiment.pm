@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,7 +60,7 @@ sub new {
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
           my $cell_type_adaptor = $funcgen_db_adaptor->get_CellTypeAdaptor;
-          push @{$constraints->{'cell_types'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+          push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
         } elsif ($filter eq 'evidence_type') {
           $constraints->{'evidence_types'} = $value;
         } elsif ($filter eq 'project') {
@@ -91,8 +92,8 @@ sub new {
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
     my $source_info       = $experiment->source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
-    my $cell_type         = $feature_set->cell_type;
-    my $cell_type_name    = $cell_type->name;
+    my $epigenome         = $feature_set->epigenome;
+    my $epigenome_name    = $epigenome->name;
     my $feature_type      = $feature_set->feature_type;
     my $evidence_label    = $feature_type->evidence_type_label;
 
@@ -104,13 +105,13 @@ sub new {
       'feature_set_name'    => $feature_set->name,
       'feature_type_name'   => $feature_type->name,
       'evidence_label'      => $evidence_label,
-      'cell_type_name'      => $cell_type_name,
-      'efo_id'              => $cell_type->efo_id,
+      'cell_type_name'      => $epigenome_name,
+      'efo_id'              => $epigenome->ontology_accession,
       'xref_genes'          => [ map $_->primary_id, @{$feature_type->get_all_Gene_DBEntries} ],
       'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
     };
 
-    $cell_type_name and $grouped_feature_sets->{'Cell/Tissue'}{$cell_type_name}{'filtered'}++;
+    $epigenome_name and $grouped_feature_sets->{'Cell/Tissue'}{$epigenome_name}{'filtered'}++;
     $evidence_label and $grouped_feature_sets->{'Evidence type'}{$evidence_label}{'filtered'}++;
     $project_name   and $grouped_feature_sets->{'Project'}{$project_name}{'filtered'}++;
   }

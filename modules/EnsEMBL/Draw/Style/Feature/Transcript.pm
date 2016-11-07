@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,39 +25,60 @@ use parent qw(EnsEMBL::Draw::Style::Feature::Structured);
 
 sub draw_join {
   my ($self, %params) = @_;
-  $params{'colour'} = $params{'join_colour'};
-  delete $params{'join_colour'};
+
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
-  push @{$self->glyphs}, $self->Intron(\%params);
+
+  ## Draw the join as a horizontal line or a "hat"?
+  if ($self->track_config->get('collapsed')) {
+    $params{'y'} += $params{'height'}/2;
+    $params{'height'} = 0;
+    push @{$self->glyphs}, $self->Line(\%params);
+  }
+  else {
+    push @{$self->glyphs}, $self->Intron(\%params);
+  }
 }
 
 sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
-  my $block_width = $params{'width'};
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  #warn Dumper($structure);
+
+  ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
+  my $start = $structure->{'start'};
+  $start    = 1 if $start < 0;
+  my $end   = $structure->{'end'};
+  my $edge = $self->image_config->container_width;
+  $end      = $edge if $end > $edge;  
+  ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
+  ## not with respect to biology, because it makes the logic a lot simpler
+  my $coding_start  = $structure->{'utr_5'} || $start;
+  my $coding_end    = $structure->{'utr_3'} || $end;
+  my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
-  elsif ($structure->{'utr_5'}) {
-    my $colour        = $params{'colour'};
-    $params{'width'}  = $structure->{'utr_5'};
-    $self->draw_noncoding_block(%params);
-    $params{'x'}     += $structure->{'utr_5'};
-    $params{'width'}  = $block_width - $structure->{'utr_5'};
-    $params{'colour'} = $colour;
+  elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+    if (defined($structure->{'utr_5'})) {
+      $params{'width'}  = $structure->{'utr_5'} - $start;
+      $self->draw_noncoding_block(%params);
+    }
+
+    $params{'x'} = $coding_start;
+    $params{'width'} = $coding_width; 
     $self->draw_coding_block(%params);
-  }
-  elsif ($structure->{'utr_3'}) {
-    $params{'width'} = $structure->{'utr_3'};
-    $self->draw_coding_block(%params);
-    $params{'x'}    += $structure->{'utr_3'};
-    $params{'width'} = $block_width - $structure->{'utr_3'};
-    $self->draw_noncoding_block(%params);
+
+    if (defined($structure->{'utr_3'})) {
+      $params{'x'}     = $structure->{'utr_3'};
+      $params{'width'} = $end - $structure->{'utr_3'};
+      $self->draw_noncoding_block(%params);
+    }
   }
   else {
     $self->draw_coding_block(%params);
@@ -76,17 +98,26 @@ sub draw_coding_block {
 
 sub draw_noncoding_block {
   my ($self, %params) = @_;
-  $params{'bordercolour'} = $params{'colour'};
-  delete $params{'colour'};
   $params{'height'} = $params{'height'} - 2;
   $params{'y'} += 1;
   delete $params{'structure'};
+
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
-  push @{$self->glyphs}, $self->Rect(\%params);
+
+  if ($self->track_config->get('collapsed')) {
+    $params{'y'} += $params{'height'}/2;
+    $params{'height'} = 0;
+    push @{$self->glyphs}, $self->Line(\%params);
+  }
+  else {
+    $params{'bordercolour'} = $params{'colour'};
+    delete $params{'colour'};
+    push @{$self->glyphs}, $self->Rect(\%params);
+  }
 }
 
 

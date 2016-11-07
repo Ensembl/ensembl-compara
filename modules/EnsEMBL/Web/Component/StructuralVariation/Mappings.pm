@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -189,6 +190,7 @@ sub gene_transcript_table {
         });
       }
       
+      $trans_name .= ".".$t->version if($t->version); #transcript version
       foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
         my $type = $self->render_consequence_type($tsva);
         

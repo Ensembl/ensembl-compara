@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,7 +109,7 @@ sub transcript_table {
   my $seq_region_end   = $object->seq_region_end;
 
   my $location_html = sprintf(
-    '<a href="%s" class="constant mobile-nolink">%s: %s-%s</a> %s.',
+    '<a href="%s" class="constant mobile-nolink dynamic-link">%s: %s-%s</a> %s.',
     $hub->url({
       type   => 'Location',
       action => 'View',
@@ -193,6 +194,7 @@ sub transcript_table {
   my $transc_table;
 
   if ($gene) {
+    my $version     = $object->version ? ".".$object->version : "";
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
@@ -276,6 +278,7 @@ sub transcript_table {
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
+      my $version           = $_->version ? ".".$_->version : "";
       my $tsi               = $_->stable_id;
       my $protein           = '';
       my $translation_id    = '';
@@ -345,7 +348,7 @@ sub transcript_table {
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
-        transcript  => sprintf('<a href="%s">%s</a>', $url, $tsi),
+        transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
@@ -831,9 +834,85 @@ sub check_for_align_problems {
   my $object = $self->object || $self->hub->core_object(lc($self->hub->param('data_type')));
 
   my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @messages, $object->check_for_missing_species($args);
+  push @messages, $self->check_for_missing_species($args);
 
   return $self->show_warnings(\@messages);
+}
+
+sub check_for_missing_species {
+  ## Check what species are not present in the alignment
+  my ($self, $args) = @_;
+
+  my (@skipped, @missing, $title, $warnings, %aligned_species, $missing_hash);
+
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $species       = $args->{species};
+  my $align         = $args->{align};
+  my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+  my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+  my $species_info  = $hub->get_species_info;
+  my $slice         = $args->{slice} || $self->object->slice;
+  $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
+
+  if(defined $slice) {
+    $args->{slice}   = $slice;
+    my ($slices)     = $self->object->get_slices($args);
+    %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  }
+
+  foreach (keys %{$align_details->{'species'}}) {
+    next if $_ eq $species;
+
+    if ($align_details->{'class'} !~ /pairwise/
+        && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
+      push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
+    }
+    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
+      my $sp_prod = $hub->species_defs->production_name_mapping($_);
+
+      my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
+              'strains' : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
+      push @missing, $_;
+    }
+  }
+  warn Data::Dumper::Dumper $missing_hash;
+  if (scalar @skipped) {
+    $title = 'hidden';
+    $warnings .= sprintf(
+                             '<p>The following %d species in the alignment are not shown - use "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             scalar @skipped,
+                             join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
+                            );
+  }
+
+  if (scalar @skipped && scalar @missing) {
+    $title .= ' and ';
+  }
+
+  my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
+  my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
+  my $multi_check = $ancestral ? 2 : 1;
+  if (scalar @missing) {
+    $title .= ' species';
+    if ($align_details->{'class'} =~ /pairwise/) {
+      $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
+    } elsif ($not_missing == $multi_check) {
+      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
+    } else {
+      my $str = '';
+      $str = $missing_hash->{strains} ? @{$missing_hash->{strains}} . ' strain' : '';
+      $str .= $missing_hash->{strains} && @{$missing_hash->{strains}} > 1 ? 's' : '';
+      $str .= $missing_hash->{species} ? ' and ' . @{$missing_hash->{species}} . ' species' : '';
+
+      $warnings .= sprintf('<p>The following %s have no alignment in this region:<ul><li>%s</li></ul></p>',
+                                 $str,
+                                 join "</li>\n<li>", sort map $species_defs->species_label($species_defs->production_name_mapping($_)), @missing
+                            );
+    }
+  }
+  return $warnings ? ({'severity' => 'info', 'title' => $title, 'message' => $warnings}) : ();
 }
 
 sub show_warnings {
@@ -1471,14 +1550,38 @@ sub button_portal {
 
 sub vep_icon {
   my ($self, $inner_html) = @_;
+  my $hub         = $self->hub;
+  return '' unless $hub->species_defs->ENSEMBL_VEP_ENABLED;
 
   $inner_html   ||= 'Test your own variants with the <span>Variant Effect Predictor</span>';
-  my $hub         = $self->hub;
-  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
-  my $vep_link    = $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  my $link_class  = $new_vep ? '' : ' modal_link';
+  my $vep_link    = $hub->url({'__clear' => 1, qw(type Tools action VEP)});
 
-  return qq(<a class="vep-icon$link_class" href="$vep_link">$inner_html</a>);
+  return qq(<a class="vep-icon" href="$vep_link">$inner_html</a>);
+}
+
+sub display_items_list {
+  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
+
+  my $html = "";
+  my $count = scalar(@{$url_data});
+  if ($count > 5) {
+    $html = sprintf(qq{
+        <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
+        <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
+      },
+      $title,
+      $div_id,
+      ($no_count_label) ? $label : "$count $label",
+      $div_id,
+      join(",", sort(@{$export_data})),
+      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
+    );
+  }
+  else {
+    $html = join(", ", sort(@{$url_data}));
+  }
+
+  return $html;
 }
 
 1;

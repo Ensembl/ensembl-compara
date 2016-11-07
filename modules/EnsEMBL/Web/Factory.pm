@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -87,6 +88,7 @@ sub DataObjects {
   
   if (@_) {
     foreach (@_) {
+      next unless $_;
       push @{$self->__data->{'_dataObjects'}{$_->__objecttype}||=[]},$_;
     }
     $self->__data->{'_dataObjectFirst'} ||= $_[0];
@@ -190,6 +192,7 @@ sub _known_feature {
       
       $hub->problem('redirect', $url);
     } else {
+      $name = encode_entities($name);
       $hub->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database.")) if $type eq $hub->type;
       $hub->delete_param($var)
         ## hack for ENSWEB-1706 - do not delete 'g' param since it might contain comma separated multiple gene ids

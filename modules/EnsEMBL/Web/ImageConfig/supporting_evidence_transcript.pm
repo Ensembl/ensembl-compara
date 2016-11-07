@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,8 +20,9 @@ limitations under the License.
 package EnsEMBL::Web::ImageConfig::supporting_evidence_transcript;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ImageConfig);
+use parent qw(EnsEMBL::Web::ImageConfig);
 
 sub cache_key {
   my $self  = shift;
@@ -35,12 +37,15 @@ sub cache_key {
   );
 }
 
-sub init {
+sub init_cacheable {
   my $self  = shift;
   my $hub   = $self->hub;
   my $sd    = $hub->species_defs;
 
+  $self->SUPER::init_cacheable(@_);
+
   $self->set_parameters({
+    sortable_tracks => 'drag',  # allow the user to reorder tracks
     label_width      => 115,
     opt_empty_tracks => 0,
   });

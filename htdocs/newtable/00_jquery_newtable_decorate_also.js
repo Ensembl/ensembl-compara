@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +40,7 @@
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "also") {
+      if(cc.decorate && $.inArray("also",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
       }
     });

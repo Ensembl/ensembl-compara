@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,10 +46,8 @@ sub init_canvas {
   $self->{'ttf_path'} = $ST->{'GRAPHIC_TTF_PATH'} if $ST && $ST->{'GRAPHIC_TTF_PATH'};
 
   $self->canvas($canvas);
-  my $bgcolor = $self->colour($config->bgcolor);
+  my $bgcolor = $self->colour($config->get_parameter('bgcolor'));
   $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_height, $self->{sf} * $im_width, $bgcolor );
-
-  $self->{'config'}->species_defs->timer_push( "CANVAS INIT", 1, 'draw' );
 }
 
 1;

@@ -1,6 +1,7 @@
 ﻿=head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,7 +82,7 @@ sub matches_to_html {
   
 
   foreach my $transcript (@{$self->object->Obj->get_all_Transcripts}) {
-    my $url = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Transcript', action => 'Summary', function => undef, t => $transcript->stable_id }), $transcript->stable_id;
+    my $url = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Transcript', action => 'Summary', function => undef, t => $transcript->stable_id }), $transcript->version ? $transcript->stable_id.".".$transcript->version : $transcript->stable_id;
     my $row = { 'transcriptid' => $url };
     $columns_with_data{'transcriptid'} = 1;
 
@@ -137,22 +138,16 @@ sub format_column_header {
 sub get_matches_by_transcript {
   my $self          = shift;
   my $transcript    = shift;
-  my @dbtypes         = @_;
-  my %allowed_types = map { $_ => 1 } @dbtypes;
-  my $db_links;
-  my @return_links;
+  my @dbtypes       = @_;
+  my @db_links;
 
-  eval {
-    $db_links = $transcript->get_all_DBLinks;
-  };
-
-  foreach (@$db_links) {
-    if (defined $allowed_types{$_->type}) {
-      $_->{'transcript'} = $transcript;
-      push @return_links, $_;
-    }
+  foreach (@dbtypes) {
+    push @db_links, @{ $transcript->get_all_DBLinks(undef, $_) };
   }
-  return @return_links;
+
+  $_->{'transcript'} = $transcript for @db_links;
+  
+  return @db_links;
 }
 
 sub get_similarity_links_hash {

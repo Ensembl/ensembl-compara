@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,13 +20,21 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Regulation::FeatureSummary;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use parent qw(EnsEMBL::Web::ViewConfig::RegulationPage);
 
-sub init {
+sub init_cacheable {
+  ## Abstract method implementation
   my $self = shift;
-  $self->add_image_config('reg_summary');
-  $self->title = 'Feature Context';
+
+  $self->image_config_type('reg_summary');
+  $self->title('Feature Context');
+}
+
+sub field_order {
+  ## Abstract method implementation
+  ## No fields
 }
 
 1;

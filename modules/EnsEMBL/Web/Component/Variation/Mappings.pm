@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -118,7 +119,7 @@ sub content {
   # create a regfeat table as well
   my @reg_columns = (
     { key => 'rf',       title => 'Regulatory feature',     sort => 'html'                             },
-    { key => 'cell_type',title => 'Cell type',              sort => 'string'                           },
+    { key => 'cell_type',title => 'Active in cell lines',   sort => 'string'                           },
     { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
@@ -270,11 +271,12 @@ sub content {
       my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
       my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
       my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
+      my $trans_display      = $trans->version ? "$trans_name.".$trans->version : $trans_name;
 
       my $row = {
         allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
         trans_pos => $trans_length_label . $cdna_overlap,
         cds_pos   => $cds_length_label . $cds_overlap,
@@ -290,7 +292,8 @@ sub content {
       $flag = 1;
     }
     
-    
+    next unless $hub->database('regulation');
+        
     ## Reg feats ##
     # reset allele string if recalculating for HGMD
     $vf_obj->allele_string('A/C/G/T') if $hub->param('recalculate');
@@ -301,7 +304,7 @@ sub content {
       next unless $rfv->regulatory_feature;
 
       my $rf_stable_id = $rfv->regulatory_feature->stable_id;
-      my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
+      my $rf = $rfa->fetch_by_stable_id($rf_stable_id);
        
       # create a URL
       my $url = $hub->url({
@@ -315,32 +318,36 @@ sub content {
       my $rfv_cons   = $rfv->most_severe_OverlapConsequence;
       my $rfv_colour = ($rfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $rfv_cons->SO_term}->{'default'}) : undef;
 
-      for my $rf (@$rfs) {
-        my $regulation_overlap = $self->_overlap_glyph($rf->seq_region_start, $rf->seq_region_end, $vf_obj->seq_region_start, $vf_obj->seq_region_end , $rf, 'Regulatory feature', 1, $rfv_colour);
-        my $var_pos_start = $var_start - $rf->seq_region_start + 1;
-        my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
-        my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
+      my $regulation_overlap = $self->_overlap_glyph($rf->seq_region_start, $rf->seq_region_end, $vf_obj->seq_region_start, $vf_obj->seq_region_end , $rf, 'Regulatory feature', 1, $rfv_colour);
+      my $var_pos_start = $var_start - $rf->seq_region_start + 1;
+      my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
+      my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
  
-        my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
+      my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
 
-        for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-          my $type = $self->render_consequence_type($rfva);
+      for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+        my $type = $self->render_consequence_type($rfva);
 
-          my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
+        my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
 
-          my $row = {
+        my $row = {
             rf        => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-            cell_type => $rf->cell_type->name,
             ftype     => $rf->feature_type->so_name,
             allele    => $r_allele,
             type      => $type || '-',
             coverage  => $reg_length_label.$regulation_overlap
-          };
-            
-          $reg_table->add_row($row);
-          $flag = 1;
-        } # end rfva loop
-      } # end rf loop
+        };
+
+        my @epigenomes = @{$rf->get_epigenomes_by_activity('ACTIVE')||[]};
+        my $epi_string = scalar @epigenomes 
+                          ? join ', ', map { $_->name} @epigenomes 
+                          : 'Not active in any cell lines';
+
+        $row->{'cell_type'} = $epi_string;
+
+        $reg_table->add_row($row);
+        $flag = 1;
+      } # end rfva loop
     } # end rfv loop
     
     ## Motif feats ##
@@ -450,10 +457,52 @@ sub render_tables {
   my ($self, $table, $reg_table, $motif_table) = @_;
 
   my $table_html =  ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
+                    $self->_render_eqtl_table.
                     ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
                     ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
                     
   return $table_html;
+}
+
+sub _render_eqtl_table {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $eqtl_table_html = '';
+
+  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL)) {
+    # empty table for eQTLs - get populated by JS via REST
+    my @eqtl_columns  = (
+      { key => 'gene',    title => 'Gene',                        sort => 'html'    },
+      { key => 'p_val',   title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
+      { key => 'tissue',  title => 'Tissue',                      sort => 'html'    },
+    );
+
+    # add dummy rows to get pagination working
+    my %dummy_row   = map { $_->{'key'} => 0 } @eqtl_columns;
+    my @dummy_rows  = map {{ %dummy_row }} 0..10;
+
+    # create table
+    my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
+      data_table => 1, sorting => [ 'p_val desc' ], data_table_config => {
+        iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+      }
+    });
+
+    $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
+      <input type="hidden" class="panel_type" value="EQTLTable">
+      <input type="hidden" name="eqtl_rest_endpoint" class="js_param" value="%s">
+      <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
+      <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
+      </div>',
+      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json', $rest_url, lc $hub->species, $hub->param('v')),
+      $hub->url({'type' => 'Gene', 'action' => 'Regulation', 'g' => '{{geneId}}', 'r' => undef}),
+      $eqtl_table->render
+    );
+  }
+
+  return $eqtl_table_html;
 }
 
 # Mapping_table
@@ -462,12 +511,14 @@ sub render_tables {
 # Description : Returns $start-$end if they are defined, else 'n/a'
 # Returns  string
 sub _sort_start_end {
-  my ($self, $start, $end) = @_;
+  my ($self, $start, $end, $length) = @_;
   
   if ($start || $end) { 
     if ($start == $end) {
       return $start;
     } else {
+      $end   = $length if ($length && $length < $end);
+      $start = $length if ($length && $length < $start);
       return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {
@@ -686,7 +737,7 @@ sub detail_panel {
     }
     
     my $a_label = (length($allele) > 50) ? substr($allele,0,50).'...' : $allele;
-    $html .= $self->toggleable_table("Consequence detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html .= $self->toggleable_table("Consequence detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   }
   
   return $html;
@@ -988,10 +1039,14 @@ sub _overlap_glyph {
     $f_s = 0;
   }
 
-  return '' unless $v_s <= $f_e && $v_e >= $f_s;
+  return '' unless $v_s <= $f_e && $v_e >= $f_s && ($v_s || $v_e);
 
   my $f_length = ($f_e > $f_s) ? $f_e - $f_s + 1 : $f_s - $f_e + 1;
+ 
+  $v_s = 1 if (!$v_s);
+  $v_e = $f_length if ($f_length == ($v_e - 1));
   my $var_pos  = ($v_s == $v_e) ? $v_s : "$v_s-$v_e";
+     $var_pos  = 1 if ((!$var_pos || $var_pos eq '') && ($v_s || $v_e));
 
   my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $colour);
   $html .= $glyph if ($glyph);
@@ -1013,7 +1068,7 @@ sub _overlap_glyph_label {
     $end   = 1 if (!$end);
   }
 
-  my $pos   = $self->_sort_start_end($start, $end);
+  my $pos   = $self->_sort_start_end($start, $end, $length);
   my $range = ($pos ne '-') ? qq{<span class="small"> (out of $length)</span>} : '';
      $range = "<br />$range" if (length($pos) > 6);
 

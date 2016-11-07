@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,8 +43,7 @@ sub get_json {
 sub label_classes {
   return {
     'Configure this page' => 'config',
-    'Manage your data'    => 'data',
-    'Add your data'       => 'data',
+    'Custom tracks'       => 'data',
     'Export data'         => 'export',
     'Share this page'     => 'share',
   };
@@ -82,10 +82,12 @@ sub init {
   my @components = @{$hub->components};
   my $session    = $hub->session;
   my $user       = $hub->user;
-  my $has_data   = $self->_has_data;
   my $view_config;
-     $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
-  
+  while (!$view_config && scalar @components) {
+    my ($component, $type) = @{shift @components};
+    $view_config = $hub->get_viewconfig({component => $component, type => $type});
+  }
+
   if ($view_config) {
     my $component = $view_config->component;
     
@@ -97,6 +99,7 @@ sub init {
         type      => $view_config->type,
         action    => $component,
         function  => undef,
+        strain    => $hub->action =~ /Strain_/ ?  1 : 0, #once we have a better check for strain view, we can remove this dirty check
       })
     });
   } else {
@@ -109,22 +112,23 @@ sub init {
   }
   
   $self->add_entry({
-    caption => $has_data ? 'Manage your data' : 'Add your data',
+    caption => 'Custom tracks',
     class   => 'modal_link',
     rel     => 'modal_user_data',
     url     => $hub->url({
       time    => time,
       type    => 'UserData',
-      action  => $has_data ? 'ManageData' : 'SelectFile',
+      action  => 'ManageData',
       __clear => 1
     })
   });
  
   if ($object && $object->can_export) {
+    my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
     $self->add_entry({
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $self->export_url($hub)
+      url     => $self->export_url($hub).$strain_param
     });
   } else {
     $self->add_entry({
@@ -163,14 +167,6 @@ sub export_url {
   }
   
   return $hub->url({ type => 'Export', action => $export, function => $type });
-}
-
-sub _has_data {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $session = $hub->session;
-
-  return !!grep $session->get_data(type => $_), qw(upload url);
 }
 
 1;

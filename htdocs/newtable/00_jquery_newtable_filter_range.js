@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +200,9 @@
     if(km && km['*']) {
       var end_left = km['*'].endpoint_left;
       var end_right = km['*'].endpoint_right;
+      if(km['*'].slider_class) {
+        $main.addClass(km['*'].slider_class);
+      }
     }
     if(!end_left) { end_left = ''; }
     if(!end_right) { end_right = ''; }

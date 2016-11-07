@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,9 +17,11 @@ limitations under the License.
 
 =cut
 
-
 package EnsEMBL::Web::ViewConfig::LRG::TranscriptSeq;
 
-use base qw(EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq);
+use strict;
+use warnings;
+
+use parent qw(EnsEMBL::Web::ViewConfig::Transcript::TranscriptSeq);
 
 1;

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,6 +71,17 @@ our %script_mapping = (
 ## Add new views here, and for renamed views, create links both ways (for fast lookup)
  
 our %archive_mapping = (
+                        'Info/Index'                              => { 'initial_release' => 51 },
+                        'Info/Error'                              => { 'initial_release' => 51 },
+                        'Info/Error_400'                          => { 'initial_release' => 51 },
+                        'Info/Error_401'                          => { 'initial_release' => 51 },
+                        'Info/Error_403'                          => { 'initial_release' => 51 },
+                        'Info/Error_404'                          => { 'initial_release' => 51 },
+                        'Info/Annotation'                         => { 'initial_release' => 51 },
+                        'Info/WhatsNew'                           => { 'initial_release' => 51 },
+                        'Info/Content'                            => { 'initial_release' => 51 },
+                        'Info/Expression'                         => { 'initial_release' => 77 },
+
                         'Location/Genome'                         => { 'initial_release' => 51 },                         
                         'Location/Chromosome'                     => { 'initial_release' => 51 },                         
                         'Location/Overview'                       => { 'initial_release' => 51 },                         
@@ -144,6 +156,7 @@ our %archive_mapping = (
                         'Transcript/Ontology/Image'               => { 'initial_release' => 60 },
                         'Transcript/Variation_Transcript/Table'   => { 'initial_release' => 68 },
                         'Transcript/Variation_Transcript/Image'   => { 'initial_release' => 68 },
+                        'Transcript/Haplotypes'                   => { 'initial_release' => 84 },
 
                         'Family/Details'                          => { 'initial_release' => 75 },
 

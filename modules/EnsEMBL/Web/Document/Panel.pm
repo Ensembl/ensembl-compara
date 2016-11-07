@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +51,6 @@ sub status            { return $_[0]->{'status'}; }
 sub code              { return $_[0]->{'code'};   }
 sub print             { shift->renderer->print(@_);  }
 sub printf            { shift->renderer->printf(@_); }
-sub timer_push        { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 3 + $_[2]); }
 sub _is_ajax_request  { return $_[0]->renderer->can('r') && $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 sub ajax_is_available { return 1; }
 
@@ -326,7 +326,7 @@ sub content {
   return $self->{'raw'} if exists $self->{'raw'};
   
   my $hub        = $self->hub;
-  my $status     = $hub ? $hub->param($self->{'status'}) : undef;
+  my $status     = $hub && $self->{'status'} ? $hub->param($self->{'status'}) : undef;
   my $content    = sprintf '%s<p class="invisible">.</p>', $status ne 'off' ? sprintf('<div class="content">%s</div>', $self->component_content) : '';
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
   
@@ -376,22 +376,25 @@ sub component_content {
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
   my $table_count  = 0;
   
-  foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
-    my ($module_name, $content_function) = split /\//, $entry;
+  for (map [$_, $self->{'components'}{$_} || []], $self->components) {
+    my ($code, $entry) = @$_;
+    next unless @$entry;
+    my ($module_name, $content_function) = split /\//, $entry->[0];
+    next unless $module_name;
     my $component;
     
     ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($hub, $builder, $self->renderer);
+        $component = $module_name->new($hub, $builder, $self->renderer, $code);
       };
       
       if ($@) {
-        $html .= $self->component_failure($@, $entry, $module_name);
+        $html .= $self->component_failure($@, $entry->[0], $module_name);
         next;
       }
     } else {
-      $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
+      $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry->[0], $module_name);
       next;
     }
 
@@ -434,7 +437,7 @@ sub component_content {
       };
       
       if ($@) {
-        $html .= $self->component_failure($@, $entry, $module_name);
+        $html .= $self->component_failure($@, $entry->[0], $module_name);
       } elsif ($content) {
         if ($ajax_request) {
           my $id         = $component->id;

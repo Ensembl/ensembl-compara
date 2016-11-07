@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,6 +31,8 @@ use Bio::EnsEMBL::Compara::Graph::HomologyPhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
+
+use EnsEMBL::Web::TextSequence::Output::RTF;
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::Constants;
@@ -67,6 +70,7 @@ sub process {
   $compression = $hub->param('compression');
   $download_type = $hub->param('download_type');
   $name = $hub->param('name');
+  my $component;
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -75,8 +79,13 @@ sub process {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
   
     ## Create the component we need to get data from 
-    my $component;
     ($component, $error) = $self->object->create_component;
+
+    # Override the options saved in viewconfig by the one selected by the user in the form (these settings are not saved to session since we don't call session->store afterwards)
+    my $view_config = $hub->param('data_type') ? $hub->get_viewconfig({component => $component->id, type => $hub->param('data_type'), cache => 1}) : undef;
+    for ($view_config ? $view_config->field_order : ()) {
+      $view_config->set($_, $hub->param(sprintf '%s_%s', $_, $format) || 'off');
+    }
 
     $file = EnsEMBL::Web::File::User->new(
       hub => $hub, 
@@ -155,7 +164,7 @@ sub process {
       push @core_params, $species;
     } 
     foreach (@core_params) {
-      my @values = $hub->param($_);
+      my @values = $component->param($_);
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
   }
@@ -182,196 +191,49 @@ sub write_rtf {
   my ($self, $component) = @_;
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
-  my ($sequence, $config, $block_mode) = $component->initialize_export; 
-  return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
-  ## Configure RTF display
-  my @colours        = (undef);  
-  my $class_to_style = $self->_class_to_style;
-  my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
-  my $c              = 1;
-  my $i              = 0;
-  my $j              = 0;
-  my $previous_j     = undef;
-  my $sp             = 0;
-  my $newline        = 1;
-  my @output;
-
-  foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
-    my $rtf_style = {};
-
-    $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1         
-      if $class_to_style->{$class}[1]{'color'};    
-    $rtf_style->{'\chshdng0\chcbpat'.$c.'\cb'.$c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 
-      if $class_to_style->{$class}[1]{'background-color'};
-    $rtf_style->{'\b'}              = 1
-      if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
-    $rtf_style->{'\ul'}             = 1
-      if $class_to_style->{$class}[1]{'text-decoration'} eq 'underline';
-
-    $class_to_style->{$class}[1] = $rtf_style;
-
-    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
-  }
-
-  foreach my $lines (@$sequence) {
-    next unless @$lines;
-    my ($section, $class, $previous_class, $count, %stash);
-
-    $lines->[-1]{'end'} = 1;
-
-    ## Output each line of sequence letters
-    my $num;
-    my $is_alignment = $self->hub->param('align');
-    foreach my $seq (@$lines) {
-      if ($seq->{'class'}) {
-        $class = $seq->{'class'};
-
-        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
-          $class .= " $1";
-        }
-      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
-        $class = $1;
-      } else {
-        $class = '';
-      }
-
-      $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
-
-      ## RTF has no equivalent of text-transform, so we must manually alter the text
-      if ($class =~ /\b(el)\b/) {
-        $seq->{'letter'} = lc($seq->{'letter'});
-      }
-
-      ## Add species name at beginning of each line if this is an alignment
-      ## (on pages, this is done by build_sequence, but that adds HTML)
-      my $sp_string;
-      if ($config->{'comparison'} && !scalar($output[$i][$j])) {
-    
-        if (scalar keys %{$config->{'padded_species'}}) {
-          $sp_string = $config->{'padded_species'}{$config->{'seq_order'}[$i]} || $config->{'display_species'};
-        } else {
-          $sp_string = $config->{'display_species'};
-        }
-
-        $sp_string .= '  ';
-        push @{$output[$i][$j]}, [ undef, $sp_string ];
-      }
-
-      $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
-
-      if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style->{$_}[1]}, split ' ', $previous_class;
-
-        $section .= $seq->{'letter'} if $seq->{'end'};
-
-        if ($config->{'number'} && 
-              (!scalar @{$output[$i][$j]||[]} 
-                  || ($is_alignment && (!defined($previous_j) || $j != $previous_j)))) {
-          $num = scalar @{$output[$i][$j]|| []} > 1 ? $num : shift @{$config->{'line_numbers'}{$i}};
-          my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
-          my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
-
-          push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf '%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}" ];
-        }
-        $previous_j     = $j;
-
-        push @{$output[$i][$j]}, [ \$style, $section ];
-
-        if ($count == $config->{'display_width'}) {
-          $count = 0;
-          $j++;
-        }
-        
-        $section = '';
-      }
-
-      $section       .= $seq->{'letter'};
-      $previous_class = $class;
-      $count++;
-    }
-
-    $i++;
-    $j = 0;
-    $previous_j = undef;
-  }
-
-  ### Write information to RTF file
+  # XXX hack
+  my ($sequence, $config, $block_mode);
   my $string;
-  my $rtf  = RTF::Writer->new_to_string(\$string);
+  if($component->can('initialize_export_new')) {
+    ($sequence, $config, $block_mode) = $component->initialize_export_new;
+    return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
-  $rtf->prolog(
-    fonts  => [ 'Courier New' ],
-    colors => \@colours,
-  );
+    my $view = $component->view;
+    $view->output(EnsEMBL::Web::TextSequence::Output::RTF->new);
 
-  ## Each paragraph is font size 24 (12pt), plus
-  ## we explicitly set font to default (0) for Mac compatibility
-  if ($block_mode) {
-    foreach my $block (@output) {
-      $rtf->paragraph(\'\fs24\f0', $_)      for @$block;
-      $rtf->paragraph(\'\fs24\f0', $spacer) if $spacer;
-    }
+    $view->width($config->{'display_width'});
+    $view->transfer_data_new($config);
+    my $rtflist = $view->output->build_output($config,$config->{'line_numbers'},@{$view->sequences}>1,0);
+
+    my $rtf = RTF::Writer->new_to_string(\$string);
+    $rtf->prolog(
+      fonts  => [ 'Courier New' ],
+      colors => $view->output->c2s->colours,
+    );
+    $rtflist->emit($rtf);
+    $rtf->close;
   } else {
-    for my $i (0..$#{$output[0]}) {
-      $rtf->paragraph(\'\fs20\f0', $_->[$i]) for @output;
-      $rtf->paragraph(\'\fs24\f0', $spacer)  if $spacer;
-    }
-  }
- 
-  $rtf->close;
+    ($sequence, $config, $block_mode) = $component->initialize_export;
+    return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
+    my $view = $component->view;
+    $view->output(EnsEMBL::Web::TextSequence::Output::RTF->new);
+
+    $view->width($config->{'display_width'});
+    $view->transfer_data($sequence,$config);
+    my $rtflist = $view->output->build_output($config,$config->{'line_numbers'},@{$view->sequences}>1,0);
+
+    my $rtf = RTF::Writer->new_to_string(\$string);
+    $rtf->prolog(
+      fonts  => [ 'Courier New' ],
+      colors => $view->output->c2s->colours,
+    );
+    $rtflist->emit($rtf);
+    $rtf->close;
+  }
   my $result = $self->write_line($string);
   return $result->{'error'} || undef;
-}
-
-sub _class_to_style {
-  my $self = shift;
-
-  if (!$self->{'class_to_style'}) {
-    my $hub          = $self->hub;
-    my $colourmap    = $hub->colourmap;
-    my $species_defs = $hub->species_defs;
-    my $styles       = $species_defs->colour('sequence_markup');
-    my $var_styles   = $species_defs->colour('variation');
-    my $i            = 1;
-
-    my %class_to_style = (
-      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
-      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
-      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQUENCING'}{'default'}" } ],
-      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}" } ],
-      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}{'default'}" } ],
-      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}{'default'}" } ],
-      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}{'default'}" } ],
-      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}{'default'}" } ],
-      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}{'default'}" } ],
-      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}{'default'}", 'font-weight' => 'bold' } ],
-      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}{'default'}" } ],
-      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}{'default'}" } ],
-      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}{'default'}" } ],
-      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
-      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
-      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ],
-      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
-
-    );
-
-    foreach (keys %$var_styles) {
-      my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
-
-      $style->{'color'} = $colourmap->hex_by_name($var_styles->{$_}{'label'}) if $var_styles->{$_}{'label'};
-
-      $class_to_style{$_} = [ $i++, $style ];
-    }
-
-    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}{'default'}", 'background-color' => '#FFFFFF', 'font-weight' => 'bold', 'text-decoration' => 'underline' } ];
-
-    $self->{'class_to_style'} = \%class_to_style;
-  }
-
-  return $self->{'class_to_style'};
 }
 
 sub write_fasta {

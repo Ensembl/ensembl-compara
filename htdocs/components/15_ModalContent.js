@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +120,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       },
       error: function (e) {
         if (e.status !== 0) {
-          this.displayErrorMessage();
+          this.displayErrorMessage(e.responseText);
         }
       }
     });
@@ -152,7 +153,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       },
       error: function (e) {
         if (e.status !== 0) {
-          this.displayErrorMessage();
+          this.displayErrorMessage(e.responseText);
         }
       }
     });
@@ -225,7 +226,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
 
   displayErrorMessage: function (message) {
-    message = message || 'Sorry, the page request failed to load.';
-    this.elLk.content.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>' + message + '</p></div></div>');
+    this.elLk.content.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>Sorry, the page request failed to load.</p><pre></pre></div></div>').find('pre').text(message || '');
   }
 });

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,43 +20,99 @@ limitations under the License.
 package EnsEMBL::Web::Apache::SSI;
 
 use strict;
+use warnings;
 
-use Apache2::Const qw(:common :methods :http);
-use Compress::Zlib;
+use Apache2::Const qw(:common :http :methods);
+use File::Spec;
 
-use EnsEMBL::Web::Controller::Doxygen;
-use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-#############################################################
-# Mod_perl request handler all /htdocs pages
-#############################################################
+sub map_to_file {
+  ## Finds out the file that maps to a url and saves it as ENSEMBL_FILENAME entry in subprocess_env
+  ## @param Apache2::RequestRec request object
+  ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found ENSEMBL_FILENAME is not set)
+  my $r     = shift;
+  my $path  = $r->subprocess_env('ENSEMBL_PATH');
+  my $match = get_htdocs_path($path);
+
+  # we don't have any file corresponding to the path
+  return unless $match;
+
+  # if path corresponds to a folder, redirect to it's index.html page
+  return "$path/index.html" if $match->{'dir'};
+
+  # file found, save it in subprocess_env
+  $r->subprocess_env('ENSEMBL_FILENAME', $match->{'file'});
+
+  return undef;
+}
+
+sub get_htdocs_path {
+  ## Gets a filesystem path corresponding to the given url path
+  ## @param URL path string
+  ## @return Hashref with corresponding path saved against key 'dir' or 'file' accordingly
+  my $path = shift;
+
+  if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to file with .html extension or without extension (possibly a folder)
+
+    my @path_seg = grep { $_ ne '' } split '/', $path;
+
+    foreach my $dir (@SiteDefs::ENSEMBL_HTDOCS_DIRS) {
+
+      my $filename = File::Spec->catfile($dir, @path_seg);
+
+      return { 'dir'  => $filename } if -d $filename;
+      return { 'file' => $filename } if -r $filename;
+    }
+  }
+}
+
+sub get_controller {
+  ## Gets the controller class name that should server the given file
+  ## @param Absolute path of the file to be served
+  ## @return Package name of the required controller
+  my $filename = shift;
+  return $filename =~ /\/Doxygen\// ? 'EnsEMBL::Web::Controller::Doxygen' : 'EnsEMBL::Web::Controller::SSI';
+}
+
 sub handler {
-  my ($r, $cookies) = @_;
-  my $i = 0;
-  ## First of all check that we should be doing something with the page...
-  
-  if (-e $r->filename && -r $r->filename && ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/)) {
-    return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
+  ## Actual handler called by EnsEMBL::Web::Apache::Handlers for .html files (optionally with 'server side includes')
+  ## @param Apache2::RequestRec request object
+  ## @param SpeciesDefs object
+  ## @return One of the Apache2::Const constants or undef in case this handler can not handle this request
+  my ($r, $species_defs) = @_;
+
+  # Populate ENSEMBL_FILENAME or perform redirect if static file location is changed
+  if (my $redirect = map_to_file($r)) {
+    $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT', $redirect);
+    return;
   }
 
-  $r->err_headers_out->{'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::SSI'};
-  $r->custom_response(SERVER_ERROR, '/Crash');
+  # get target filename
+  my $filename = $r->subprocess_env('ENSEMBL_FILENAME');
 
-  return DECLINED if $r->content_type ne 'text/html';
+  # we can't do anything with SSI handler if no file is mapped to the URL
+  return unless $filename;
 
-  my $rc = $r->discard_request_body;
-  
-  return $rc unless $rc == OK;
-  
-  if ($r->method_number == M_INVALID) {
+  # html files can only be requested via GET
+  if ($r->method_number != M_GET) {
     $r->log->error('Invalid method in request ', $r->the_request);
-    return HTTP_NOT_IMPLEMENTED;
+    return HTTP_METHOD_NOT_ALLOWED;
   }
-   
-  return DECLINED                if $r->method_number == M_OPTIONS;
-  return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
-  return DECLINED                if -d $r->filename;
-  return EnsEMBL::Web::Controller::SSI->new($r, $cookies)->status;
+
+  # get appropriate controller to serve this request
+  my $controller = get_controller($filename);
+
+  try {
+    $controller = dynamic_require($controller)->new($r, $species_defs, {'filename' => $filename});
+    $controller->process;
+
+  } catch {
+    throw $_ unless ref $controller && $_->handle($controller);
+  };
+
+  return OK;
 }
 
 1;

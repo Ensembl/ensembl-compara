@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,8 +58,8 @@ sub content {
   my @features;
 
   foreach (@{$tracks||[]}) {
-    push @features, @{$_->{'features'}{1}||[]};
-    push @features, @{$_->{'features'}{-1}||[]};
+    push @features, @{$_->{'features'}||[]};
+    push @features, @{$_->{'features'}||[]};
   }
 
   $self->{'feature_count'} = scalar @features;

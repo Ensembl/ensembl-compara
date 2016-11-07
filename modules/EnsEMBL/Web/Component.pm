@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +42,7 @@ use List::MoreUtils qw(uniq);
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::TwoCol;
@@ -49,18 +51,18 @@ use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
-use EnsEMBL::Web::RegObj;
 
 sub new {
-  my $class = shift;
-  my $hub   = shift;
-  my $id    = [split /::/, $class]->[-1];
-  
+  my ($class, $hub, $builder, $renderer, $key) = @_;
+
+  my $id = [split /::/, $class]->[-1];
+
   my $self = {
     hub           => $hub,
-    builder       => shift,
-    renderer      => shift,
+    builder       => $builder,
+    renderer      => $renderer,
     id            => $id,
+    component_key => $key,
     object        => undef,
     cacheable     => 0,
     mcacheable    => 1,
@@ -71,17 +73,23 @@ sub new {
     html_format   => undef,
   };
   
-  if ($hub) { 
-    $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache');
+  bless $self, $class;
+
+  if ($hub) {
+    $self->{'viewconfig'}{$hub->type} = $hub->get_viewconfig({
+      'component' => $id,
+      'type'      => $self->viewconfig_type || $hub->type,
+      'cache'     => 1
+    });
     $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   }
-  
-  bless $self, $class;
   
   $self->_init;
   
   return $self;
 }
+
+sub viewconfig_type { return undef; }
 
 sub buttons {
   ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle, disabled, group, nav_image)
@@ -92,48 +100,75 @@ sub button_style {
   return {};
 }
 
+sub param {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $hub_vc = delete $hub->{'viewconfig'}; # TMP - while viewconfig is 'cached' in hub's viewconfig key for the current component
+
+  if (@_) {
+    my @vals = $hub->param(@_);
+    $hub->{'viewconfig'} = $hub_vc; # TMP - just putting it back
+    return wantarray ? @vals : $vals[0] if @vals;
+
+    if (my $view_config = $self->viewconfig) {
+      if (@_ > 1) {
+        my @caller = caller;
+        #warn sprintf "DEPRECATED: To set view_config param, use view_config->set method at %s line %s.\n", $caller[1], $caller[2];
+        $view_config->set(@_);
+      }
+      my @val = $view_config->get(@_);
+      return wantarray ? @val : $val[0];
+    }
+
+    return wantarray ? () : undef;
+
+  } else {
+    my @params = $hub->param;
+    $hub->{'viewconfig'} = $hub_vc; # TMP - just putting it back
+
+    my $view_config = $self->viewconfig;
+
+    push @params, $view_config->options if $view_config;
+    my %params = map { $_, 1 } @params; # Remove duplicates
+
+    return keys %params;
+  }
+}
+
 #################### ACCESSORS ###############################
 
-sub id {
-  ## @accessor
-  ## @return String (last element of package namespace)
-  my ($self, $id) = @_;
-  $self->{'id'} = $id if @_>1;
-  return $self->{'id'};
-}
+sub component_key :AccessorMutator;
+sub id            :AccessorMutator;
+sub cacheable     :AccessorMutator;
+sub mcacheable    :AccessorMutator; ## temporary method only (hr5)
+sub ajaxable      :AccessorMutator;
+sub configurable  :AccessorMutator;
+sub has_image     :AccessorMutator;
+sub builder       :Accessor;
+sub hub           :Accessor;
+sub renderer      :Accessor;
 
-sub builder {
-  ## @getter
-  ## @return EnsEMBL::Web::Builder
-  my $self = shift;
-  return $self->{'builder'};
-}
-
-sub hub {
-  ## @getter
-  ## @return EnsEMBL::Web::Hub
-  my $self = shift;
-  return $self->{'hub'};
-}
-
-sub renderer {
-  ## @getter
-  ## @return EnsEMBL::Web::Renderer
-  my $self = shift;
-  return $self->{'renderer'};
-}
-
-sub view_config { 
+sub viewconfig {
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
   my ($self, $type) = @_;
-  unless ($self->{'view_config'}) {
-    $self->{'view_config'} = $self->hub->get_viewconfig($self->id, $type);
+
+  my $hub = $self->hub;
+
+  $type ||= $hub->type;
+
+  unless ($self->{'viewconfig'}{$type}) {
+    $self->{'viewconfig'}{$type} = $hub->get_viewconfig({
+      'component' => $self->id,
+      'type'      => $type,
+      'cache'     => $type eq $hub->type
+    });
   }
-  return $self->{'view_config'};
+  return $self->{'viewconfig'}{$type};
 }
 
-sub dom { 
+sub dom {
   ## @getter
   ## @return EnsEMBL::Web::DOM
   my $self = shift;
@@ -145,52 +180,11 @@ sub dom {
 
 sub object {
   ## @accessor
-  ## Included for backwards compatibility
+  ## @param EnsEMBL::Web::Object subclass instance if setting
   ## @return EnsEMBL::Web::Object::[type]
   my $self = shift;
   $self->{'object'} = shift if @_;
-  return $self->builder ? $self->builder->object : $self->{'object'};
-}
-
-sub cacheable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'cacheable'} = shift if @_;
-  return $self->{'cacheable'};
-}
-
-sub mcacheable {
-  ## temporary method only - will be replaced in 77 (hr5) - use cacheable method instead
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'mcacheable'} = shift if @_;
-  return $self->{'mcacheable'};
-}
-
-sub ajaxable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'ajaxable'} = shift if @_;
-  return $self->{'ajaxable'};
-}
-
-sub configurable {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'configurable'} = shift if @_;
-  return $self->{'configurable'};
-}
-
-sub has_image {
-  ## @accessor
-  ## @return Boolean
-  my $self = shift;
-  $self->{'has_image'} = shift if @_;
-  return $self->{'has_image'};
+  return $self->{'object'} || $self->builder && $self->builder->object;
 }
 
 sub format {
@@ -289,7 +283,8 @@ sub content_buttons {
     );
   }
   # Create the blue-rectangle buttons
-  my $blue_html = '';
+  my $blue_html = '';  
+
   foreach my $g (@groups) {
     my $group = '';
     my $all_disabled = 1;
@@ -304,7 +299,7 @@ sub content_buttons {
         $group .= sprintf('<div class="%s">%s</div>',
             join(' ',@classes), $b->{'caption'});
       }
-      else {
+      else {      
         $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
             $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
       }
@@ -325,13 +320,14 @@ sub content_buttons {
   $nav_html = qq(
     <div class="component-navs nav_buttons $class">$nav_html</div>
   ) if $nav_html;
+
   return $nav_html.$blue_html;
 }
 
 sub set_cache_params {
   my $self        = shift;
   my $hub         = $self->hub;  
-  my $view_config = $self->view_config;
+  my $view_config = $self->viewconfig;
   my $key;
   
   # FIXME: check cacheable flag
@@ -341,7 +337,7 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= "::$width";
   }
   
-  $hub->get_imageconfig($view_config->image_config) if $view_config && $view_config->image_config; # sets user_data cache tag
+  $hub->get_imageconfig($view_config->image_config_type) if $view_config && $view_config->image_config_type; # sets user_data cache tag
   
   $key = $self->set_cache_key;
   
@@ -475,8 +471,16 @@ sub hint_panel {
   return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id);
 }
 
+sub sidebar_panel {
+  ## Similar to an info panel, but smaller and floats right rather than filling the page
+  ## @params Heading, description text, width of the box (defaults to 50%)
+  my ($self, $caption, $desc, $width) = @_;
+  $width ||= '50%';
+  return $self->_info_panel('sidebar', $caption, $desc, $width);
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
-sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub caption     { return undef; }
 sub header      { return undef; }
 sub _init       { return; }
@@ -525,6 +529,9 @@ sub _info_panel {
   );
 }
 
+#the action check is wrong but for now will do, the reason for the action check is when you have both strain and main species menu on one page (maybe pass a key inside the configuration node and create a new hub->strain (set to the new key value) when the view is accessed)
+sub is_strain   { return $_[0]->hub->species_defs->IS_STRAIN_OF  || $_[0]->hub->action =~ /strain_/i ? 1 : 0; } 
+
 sub config_msg {
   my $self = shift;
   my $url  = $self->hub->url({
@@ -539,15 +546,14 @@ sub config_msg {
 }
 
 sub ajax_url {
-  my $self     = shift;
-  my $function = shift;
-  my $params   = shift || {};
-  my $extra    = shift || 'Component';
-  my (undef, $plugin, undef, $type, @module) = split '::', ref $self;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $function    = shift;
+     $function    = join "/", grep $_, $hub->function, $function && $self->can("content_$function") ? $function : '', $self->component_key;
+  my $params      = shift || {};
+  my $controller  = shift || 'Component';
 
-  my $module   = sprintf '%s%s', join('__', @module), $function && $self->can("content_$function") ? "/$function" : '';
-
-  return $self->hub->url($extra, { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
+  return $self->hub->url($controller, { function => $function, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
@@ -572,7 +578,7 @@ sub modal_form {
   $params->{'current'}  = $hub->action;
   $params->{'name'}     = $name;
   $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation enctype);
-  $params->{'enctype'}  = 'multipart/form-data' if !$self->renderer->{'_modal_dialog_'};
+  $params->{'enctype'}  = 'multipart/form-data' if !$self->renderer->{'_modal_dialog_'} && ($params->{'method'} || '') =~ /post/i;
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
@@ -592,7 +598,7 @@ sub new_image {
   my %formats     = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
-  my $config_type = $self->view_config ? $self->view_config->image_config : undef;
+  my $config_type = $self->viewconfig ? $self->viewconfig->image_config_type : undef;
   my (@image_configs, $image_config);
 
   if (ref $_[0] eq 'ARRAY') {
@@ -614,9 +620,9 @@ sub new_image {
     $image_config->set_parameter('text_export', $export) if $formats{$export}{'extn'} eq 'txt';
   }
   
-  $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
+  $_->set_parameter('component', $id) for grep $_->type eq $config_type, @image_configs;
  
-  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self->id, \@image_configs);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self, \@image_configs);
   $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -626,7 +632,7 @@ sub new_vimage {
   my $self  = shift;
   my @image_config = $_[1];
   
-  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, \@image_config);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self, \@image_config);
   $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -634,7 +640,7 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;
@@ -648,7 +654,7 @@ sub new_table {
   my $options  = $_[2];
   $self->{'_table_count'}++ if $options->{'exportable'};
   
-  $table->session    = $hub->session;
+  $table->hub($hub);
   $table->format     = $self->format;
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
@@ -816,10 +822,12 @@ sub trim_large_string {
       <div class="toggle_div">
         <span class="%s">%s</span>
         <span class="cell_detail">%s</span>
-        <span class="toggle_img"/>
+        <span class="toggle_img"></span>
       </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
 }
+
+sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
 
 1;

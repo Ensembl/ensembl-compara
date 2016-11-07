@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +30,7 @@ sub draw_feature {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
   my ($self, $feature, $position) = @_;
+#  warn "\n\n>>> DRAWING FEATURE ".$feature->{'label'}; 
 
   ## In case we're trying to draw a feature with no internal structure,
   ## revert to parent method, which is much simpler!
@@ -52,6 +54,7 @@ sub draw_feature {
                   y            => $position->{'y'},
                   height       => $position->{'height'},
                   strand       => $feature->{'strand'},
+                  colour       => $colour,
                   href         => $feature->{'href'},
                   title        => $feature->{'title'},
                   absolutey    => 1,
@@ -67,7 +70,7 @@ sub draw_feature {
     ## Draw a join between this block and the previous one unless they're contiguous
     if ($join && keys %previous && ($_->{'start'} - $previous{'end'}) > 1) {
       my %params        = %defaults;
-      $params{'join_colour'}  = $join_colour;
+      $params{'colour'} = $join_colour unless $track_config->get('collapsed');
 
       my $start         = $previous{'x'} + $previous{'width'};
       $start            = 0 if $start < 0;
@@ -115,13 +118,12 @@ sub draw_join {
   my $alpha = $self->track_config->get('alpha');
 
   if ($alpha) {
-    $params{'colour'} = $params{'join_colour'};
     $params{'alpha'}  = $alpha;
   }
   else {
-    $params{'bordercolour'} = $params{'join_colour'};
+    $params{'bordercolour'} = $params{'colour'};
+    delete $params{'colour'};
   }
-  delete $params{'join_colour'};
   push @{$self->glyphs}, $self->Rect(\%params);
 }
 

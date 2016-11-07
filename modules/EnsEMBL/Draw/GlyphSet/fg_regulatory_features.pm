@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,16 +50,25 @@ sub features {
 sub fetch_features {
   my ($self, $db) = @_;
   my $cell_line = $self->my_config('cell_line');  
-  my $fsa       = $db->get_FeatureSetAdaptor; 
+  my $rfa       = $db->get_RegulatoryFeatureAdaptor; 
   
-  if (!$fsa) {
-    warn ("Cannot get get adaptors: $fsa");
+  if (!$rfa) {
+    warn ("Cannot get get adaptors: $rfa");
     return [];
   }
   
-  my $config        = $self->{'config'};
-  my ($feature_set) = grep $_->cell_type->name =~ /\Q$cell_line\E/, @{$fsa->fetch_all_displayable_by_type('regulatory')};
-  my $reg_feats     = $feature_set ? $feature_set->get_Features_by_Slice($self->{'container'}) : [];
+  my $config      = $self->{'config'};
+
+  my $fsets;
+  if ($cell_line) {
+    my $fsa = $db->get_FeatureSetAdaptor;
+    $fsets  = $fsa->fetch_by_name($cell_line);
+    my $ega = $db->get_EpigenomeAdaptor;
+    my $epi = $ega->fetch_by_name($cell_line);
+    $self->{'my_config'}->set('epigenome', $epi);
+  }
+  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
+
   my $rf_url        = $config->hub->param('rf');
   my $counter       = 0;
   
@@ -74,16 +84,24 @@ sub fetch_features {
     }
   }
 
-  if (scalar @$reg_feats) {
-    my $legend_entries = [];
+  if (scalar @{$reg_feats||[]}) {
+    my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
+    my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
     foreach (@$reg_feats) {
-      my $key = $self->colour_key($_);
-      push $legend_entries, $key;
-      push $legend_entries, 'promoter_flanking';
+      my ($key, $is_activity) = $self->colour_key($_);
+      if ($is_activity) {
+        push @$activities, $key;
+      }
+      else {
+        push @$legend_entries, $key;
+      }
     }
-    if(grep { $_ eq 'promoter' } @$legend_entries) {
-    }
-    $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };	
+    push @$legend_entries, 'promoter_flanking' if scalar @$legend_entries;
+
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $legend_entries;
+    $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
   }
 
   return $reg_feats;
@@ -108,35 +126,51 @@ sub colour_key {
   } else  {
     $type = 'Unclassified';
   }
-  if($f->can('activity')) {
-    my $activity = $f->activity;
-    # case 0: handled by pattern code
-    # case 1: correct
-    if($activity == 4) {
-      $type = 'na';
-    } elsif($activity == 2) {
-      $type = 'poised';
-    } elsif($activity == 3) {
-      $type = 'repressed';
+
+  my $is_activity = 0;
+  my $config      = $self->{'config'};
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  if ($epigenome) {
+    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+    if ($regact) {
+      my $activity  = $regact->activity;
+      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
+        $type = $activity;
+        $is_activity = 1;
+      }
     }
   }
-  return lc $type;
+
+  return (lc $type, $is_activity);
 }
 
 sub tag {
   my ($self, $f) = @_;
-  my $colour_key = $self->colour_key($f);
+
+  my $hub = $self->{'config'}{'hub'};
+
+  my ($colour_key) = $self->colour_key($f);
   my $colour     = $self->my_colour($colour_key);
   my $flank_colour = $colour;
-  if($colour_key eq 'promoter') {
+  if ($colour_key eq 'promoter') {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
-  my @loci       = @{$f->get_underlying_structure};
-  my $bound_end  = pop @loci;
-  my $end        = pop @loci;
-  my ($bound_start, $start, @mf_loci) = @loci;
+  my $epigenome = $self->{'my_config'}->get('epigenome')||'';
+
   my @result;
- 
+  my $loci = [ map { $_->{'locus'} }
+     @{$hub->get_query('GlyphSet::RFUnderlying')->go($self,{
+      species => $self->{'config'}{'species'},
+      type => 'funcgen',
+      epigenome => $epigenome,
+      feature => $f,
+    })}
+  ];
+
+  return if $@ || !$loci || !scalar(@$loci);
+  my $bound_end  = pop @$loci;
+  my $end        = pop @$loci;
+  my ($bound_start, $start, @mf_loci) = @$loci;
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
     push @result, {
@@ -162,45 +196,8 @@ sub tag {
       class  => 'group'
     };
   }
-  
-  return @result;
-}
 
-sub render_tag {
-  my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
-  
-  if ($tag->{'style'} eq 'fg_ends') {
-    my $f_start = $tag->{'start'} || $start;
-    my $f_end   = $tag->{'end'}   || $end;
-       $f_start = 1             if $f_start < 1;
-       $f_end   = $slice_length if $f_end   > $slice_length;
-       
-    $composite->push($self->Rect({
-      x         => $f_start - 1,
-      y         => $height / 2,
-      width     => $f_end - $f_start + 1,
-      height    => 0,
-      colour    => $tag->{'colour'},
-      absolutey => 1,
-      zindex    => 0
-    }), $self->Rect({
-      x       => $f_start - 1,
-      y       => 0,
-      width   => 0,
-      height  => $height,
-      colour  => $tag->{'colour'},
-      zindex => 1
-    }), $self->Rect({
-      x      => $f_end,
-      y      => 0,
-      width  => 0,
-      height => $height,
-      colour => $tag->{'colour'},
-      zindex => 1
-    }));
-  }
-  
-  return;
+  return @result;
 }
 
 sub highlight {
@@ -234,7 +231,8 @@ sub href {
 
 sub title {
   my ($self, $f) = @_;
-  return sprintf 'Regulatory Feature: %s; Type: %s; Location: Chr %s:%s-%s', $f->stable_id, ucfirst $self->colour_key($f), $f->seq_region_name, $f->start, $f->end;
+  my ($colour_key) = $self->colour_key($f);
+  return sprintf 'Regulatory Feature: %s; Type: %s; Location: Chr %s:%s-%s', $f->stable_id, ucfirst $colour_key, $f->seq_region_name, $f->start, $f->end;
 }
 
 sub export_feature {
@@ -249,21 +247,29 @@ sub export_feature {
 
 sub pattern {
   my ($self,$f) = @_;
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  return undef unless $epigenome;
 
-  return undef unless $f->can('activity');
-  my $act = $f->activity;
-  return ['hatch_really_thick','grey90',0] if $act==0;
-  return ['hatch_really_thick','white',0] if $act==4;
+  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
+  if ($regact) {
+    my $act     = $regact->activity;
+    return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
+    return ['hatch_really_thick','white',0] if $act eq 'NA';
+  }
   return undef;
 }
 
 sub feature_label {
   my ($self,$f) = @_;
+  my $epigenome = $self->{'my_config'}->get('epigenome');
+  return undef unless $epigenome;
 
-  return undef unless $f->can('activity');
-  my $act = $f->activity;
-  return "{grey30}inactive in this cell line" if $act==0;
-  return "{grey30}N/A" if $act==4;
+  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
+  if ($regact) {
+    my $act     = $regact->activity;
+    return "{grey30}inactive in this cell line" if $act eq 'INACTIVE';
+    return "{grey30}N/A" if $act eq 'NA';
+  }
   return undef;
 }
 

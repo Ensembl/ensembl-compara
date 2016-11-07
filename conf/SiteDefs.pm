@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 84;
-our $ARCHIVE_VERSION           = 'Mar2016';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'March 2016';
+our $ENSEMBL_VERSION           = 86;
+our $ARCHIVE_VERSION           = 'Oct2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'Oct 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -132,6 +132,11 @@ foreach my $k (sort { $APRIO{$a} <=> $APRIO{$b} } keys %ALIST) {
   }
 }
 
+# % 5' and 3' flanking region for images
+# Currently used for region comparison and location view
+our $FLANK5_PERC = 0.02;
+our $FLANK3_PERC = 0.02;
+
 # Needed for parsing BAM files
 our ($UDC_CACHEDIR, $HTTP_PROXY);
 
@@ -153,6 +158,7 @@ our $ENSEMBL_PROTOCOL          = 'http';
 our $ENSEMBL_MAIL_COMMAND      = '/usr/bin/Mail -s';               # Mail command
 our $ENSEMBL_MAIL_ERRORS       = '0';                              # Do we want to email errors?
 our $ENSEMBL_ERRORS_TO         = 'webmaster&#064;mydomain.org';    # ...and to whom?
+our $ENSEMBL_REST_URL          = 'http://rest.mydomain.org';       # url to your REST service
 
 our $ENSEMBL_SITETYPE          = 'Ensembl';
 our $ENSEMBL_USER              = getpwuid($>); # Auto-set web serveruser
@@ -164,6 +170,7 @@ our $ENSEMBL_DEBUG_JS            = 0; # change these to 1 to prevent js minifica
 our $ENSEMBL_DEBUG_CSS           = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_IMAGES        = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_NOCACHE       = 0; # disable even in-run caches
+our $ENSEMBL_BOOK_DEBUG          = 0; # change this to 1,2 or 3 to get required level of EnsEMBL::Web::Query debug info
 our $ENSEMBL_SKIP_RSS            = 0; # set to 1 in sandboxes to avoid overloading blog
 
 our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
@@ -171,6 +178,8 @@ our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
 our $ENSEMBL_MART_ENABLED      = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
+
+our $UPLOAD_SIZELIMIT_WITHOUT_INDEX = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 
 # ENSEMBL_API_VERBOSITY: 
 #    0 OFF NOTHING NONE
@@ -199,6 +208,8 @@ our $ENSEMBL_DEBUG_FLAG_NAMES     = [qw(
   WIZARD_MESSAGES
   VERBOSE_STARTUP
 )];
+
+our $ENSEMBL_SPECIES_SELECT_DIVISION = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" };
 
 my $i = 0;
 
@@ -311,18 +322,10 @@ our $ENSEMBL_CONFIG_BUILD        = 0; # Build config on server startup? Setting 
 our $ENSEMBL_LONGPROCESS_MINTIME = 10;
 our $APACHE_DEFINE               = undef; # command line arguments for httpd command
 
-## ALLOWABLE DATA OBJECTS
-our $OBJECT_TO_SCRIPT = {
-  Config              => 'Config',
-  Component           => 'Component',
-  ZMenu               => 'ZMenu',
-  psychic             => 'Psychic',
-  Ajax                => 'Ajax',
-  Share               => 'Share',
-  Export              => 'Export',
-  DataExport          => 'DataExport',
-  ImageExport         => 'ImageExport',
-
+###############################################################################
+## Configurations to map URLs to appropriate Controllers and data Objects
+###############################################################################
+our $OBJECT_TO_CONTROLLER_MAP = {
   Gene                => 'Page',
   Transcript          => 'Page',
   Location            => 'Page',
@@ -335,16 +338,27 @@ our $OBJECT_TO_SCRIPT = {
   LRG                 => 'Page',
   Phenotype           => 'Page',
   Experiment          => 'Page',
-
   Info                => 'Page',
   Search              => 'Page',
-  
   UserConfig          => 'Modal',
   UserData            => 'Modal',
-  Help                => 'Modal',  
-
-  CSS                 => 'CSS',
+  Help                => 'Modal',
 };
+our $ALLOWED_URL_CONTROLLERS = [qw(Ajax Component ComponentAjax Config CSS DataExport Download Export ImageExport Json MultiSelector Psychic Share ZMenu)];
+our $OBJECT_PARAMS = [
+  [ 'Phenotype'           => 'ph'  ],
+  [ 'Location'            => 'r'   ],
+  [ 'Gene'                => 'g'   ],
+  [ 'Transcript'          => 't'   ],
+  [ 'Variation'           => 'v'   ],
+  [ 'StructuralVariation' => 'sv'  ],
+  [ 'Regulation'          => 'rf'  ],
+  [ 'Experiment'          => 'ex'  ],
+  [ 'Marker'              => 'm'   ],
+  [ 'LRG'                 => 'lrg' ],
+  [ 'GeneTree'            => 'gt'  ],
+  [ 'Family'              => 'fm'  ],
+];
 
 ## Set log directory and files
 our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };
@@ -359,6 +373,9 @@ our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 
 our $ENSEMBL_BOOK_DIR      = defer { "$ENSEMBL_WEBROOT/conf/book" };
 our $ENSEMBL_BOOK_DISABLE  = 0;
+
+## File location for the temporary message for the website
+our $ENSEMBL_TMP_MESSAGE_FILE = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };
 
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################
@@ -623,7 +640,8 @@ Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 LICENSE
                                                                                 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

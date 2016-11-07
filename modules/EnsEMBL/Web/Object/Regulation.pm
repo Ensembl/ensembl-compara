@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,20 +20,13 @@ limitations under the License.
 package EnsEMBL::Web::Object::Regulation;
 
 ### NAME: EnsEMBL::Web::Object::Regulation
-### Wrapper around a Bio::EnsEMBL::Funcgen::RegulatoryFeature object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
-
-### STATUS: At Risk
-### Contains a lot of functionality not directly related to
-### manipulation of the underlying API object 
-
-### DESCRIPTION
-
+### Wrapper around a Bio::EnsEMBL::Funcgen::RegulatoryFeature object
 
 use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
+use EnsEMBL::Web::Object::Slice;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -45,7 +39,7 @@ sub short_caption {
 sub caption {
   my $self    = shift;
   my $caption = 'Regulatory Feature: '. $self->Obj->stable_id;
-  return $caption;    
+  return $caption;
 }
 
 sub default_action { return 'Summary'; }
@@ -61,7 +55,7 @@ sub counts {
   my $self = shift;
   my $obj  = $self->Obj;
   return {} unless $obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
-  return {};  
+  return {};
 }
 
 sub _adaptor {
@@ -82,18 +76,20 @@ sub seq_region_name   { my $self = shift; return $self->Obj->slice->seq_region_n
 sub seq_region_start  { my $self = shift; return $self->Obj->start;                     }
 sub seq_region_end    { my $self = shift; return $self->Obj->end;                       }
 sub seq_region_strand { my $self = shift; return $self->Obj->strand;                    }
-sub feature_set       { my $self = shift; return $self->Obj->feature_set;               }   
+sub feature_set       { my $self = shift; return $self->Obj->feature_set;               }
 sub feature_type      { my $self = shift; return $self->Obj->feature_type;              }
-sub slice             { my $self = shift; return $self->Obj->slice;                     }           
+sub slice             { my $self = shift; return $self->Obj->slice;                     }
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
-sub has_evidence {
-  my ($self) = @_;
+sub activity {
+  my ($self, $epigenome) = @_;
+  return unless $epigenome;
 
-  # Can be simple accessor for 76, but avoid breaking master
-  return $self->Obj->activity if $self->Obj->can('activity');
+  my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
+  return $regact->activity if $regact;
   return undef;
 }
+
 sub cell_type_count {
   my ($self) = @_;
 
@@ -101,10 +97,15 @@ sub cell_type_count {
   return $self->Obj->cell_type_count if $self->Obj->can('cell_type_count');
   return 0;
 }
-
+#fetch_all_by_stable_id is depracted
 sub fetch_all_objs {
   my $self = shift;
   return $self->_adaptor->fetch_all_by_stable_ID($self->stable_id);
+}
+
+sub fetch_by_stable_id {
+  my $self = shift;
+  return $self->_adaptor->fetch_by_stable_id($self->stable_id);
 }
 
 sub fetch_all_objs_by_slice {
@@ -112,24 +113,25 @@ sub fetch_all_objs_by_slice {
   my $reg_feature_adaptor = $self->_adaptor;
   my $objects_on_slice    = $reg_feature_adaptor->fetch_all_by_Slice($slice);
   my @all_objects;
-  
+
   foreach my $rf (@$objects_on_slice) {
     push @all_objects, $_ for @{$reg_feature_adaptor->fetch_all_by_stable_ID($rf->stable_id)};
-  }  
+  }
 
   return \@all_objects;
 }
 
-sub get_attribute_list {
+sub get_evidence_list {
   my $self = shift;
-  my @attrib_feats = @{$self->Obj->regulatory_attributes('annotated')};
-  return '-' unless @attrib_feats; 
-  
+  my $epigenome = shift;
+  my @attrib_feats = @{$self->Obj->regulatory_evidence('annotated', $epigenome)||[]};
+  return '-' unless @attrib_feats;
+
   my @temp = map $_->feature_type->name, @attrib_feats;
   my $c    = 1;
   my %att_label;
-  
-  foreach my $k (@temp) { 
+
+  foreach my $k (@temp) {
     if (exists  $att_label{$k}) {
       my $old = $att_label{$k};
       $old++;
@@ -138,14 +140,14 @@ sub get_attribute_list {
       $att_label{$k} = $c;
     }
   }
-  
+
   my $attrib_list;
-  
+
   foreach my $k (keys %att_label) {
     my $v = $att_label{$k};
     $attrib_list .= "$k($v), ";
   }
-  
+
   $attrib_list =~ s/\,\s$//;
 
   return $attrib_list;
@@ -153,7 +155,8 @@ sub get_attribute_list {
 
 sub get_motif_features {
   my $self = shift;
-  my @motif_features = @{$self->Obj->regulatory_attributes('motif')};
+  my $cell_line = shift;
+  my @motif_features = @{$self->Obj->regulatory_evidence('motif', $cell_line)||[]};
   my %motifs;
   foreach my $mf (@motif_features){
 
@@ -170,7 +173,7 @@ sub get_motif_features {
     if(@other_ftnames){
       $other_names_txt = ' ('.join(' ', @other_ftnames).')';
     }
-    
+
     $motifs{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
   }
 
@@ -183,13 +186,13 @@ sub get_fg_db {
 }
 
 sub get_feature_sets {
-  my $self                = shift;  
+  my $self                = shift;
   my $fg_db               = $self->get_fg_db;
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
   my $spp                 = $self->species;
   my @fsets;
   my @sources;
-  
+
   if ($spp eq 'Homo_sapiens') {
     @sources = ('RegulatoryFeatures', 'miRanda miRNA targets', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set');
   } elsif ($spp eq 'Mus_musculus') {
@@ -199,13 +202,13 @@ sub get_feature_sets {
   }
 
   push @fsets, $feature_set_adaptor->fetch_by_name($_) for @sources;
-  
+
   return \@fsets;
 }
 
 sub get_location_url {
   my $self = shift;
-  
+
   return $self->hub->url({
     type   => 'Location',
     action => 'View',
@@ -217,7 +220,7 @@ sub get_location_url {
 
 sub get_bound_location_url {
   my $self = shift;
-  
+
   return $self->hub->url({
     type   => 'Location',
     action => 'View',
@@ -229,7 +232,7 @@ sub get_bound_location_url {
 
 sub get_summary_page_url {
   my $self = shift;
-  
+
   return $self->hub->url({
     type   => 'Regulation',
     action => 'Summary',
@@ -258,29 +261,27 @@ sub show_signal {
 sub get_seq {
   my ($self, $strand) = @_;
   $self->Obj->{'strand'} = $strand;
-  return $self->Obj->seq; 
+  return $self->Obj->seq;
 }
 
 sub get_bound_context_slice {
   my $self           = shift;
-  my $padding        = shift || 1000; 
+  my $padding        = shift || 1000;
   my $slice          = $self->Obj->feature_Slice;
 
   # Need to take into account bounds on feature in all cell_lines
   my $bound_start = $self->bound_start;
   my $bound_end = $self->bound_end;
   my $reg_feature_adaptor = $self->get_fg_db->get_RegulatoryFeatureAdaptor;
-  my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($self->stable_id);
-  foreach my $rf (@$reg_objs) {
-    if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; } 
-    if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
-  }
+  my $rf                  = $reg_feature_adaptor->fetch_by_stable_id($self->stable_id);
+  if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; }
+  if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
 
   my $offset_start   = $bound_start -$padding;
   my $offset_end     = $bound_end + $padding;
   my $padding_start  = $slice->start - $offset_start;
   my $padding_end    = $offset_end - $slice->end;
-  my $expanded_slice = $slice->expand($padding_start, $padding_end); 
+  my $expanded_slice = $slice->expand($padding_start, $padding_end);
 
   return $expanded_slice;
 }
@@ -315,75 +316,43 @@ sub bound_location_string {
 }
 
 sub get_evidence_data {
-  my ($self, $slice,$filter) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
-  my %data;
-
-  my %cells;
+  my ($self, $slice, $filter) = @_;
   $filter ||= {};
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
-    my $multicell     = $regf_fset->cell_type->name eq 'MultiCell' ? 'MultiCell' : '';
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $cell_type             = $reg_attr_fset->cell_type->name;
-      $cells{$cell_type} = 1 unless $cell_type eq 'MultiCell';
-      next if $filter->{'cell'} and !grep { $_ eq $cell_type } @{$filter->{'cell'}};
-      next if $filter->{'cells_only'};
-      my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
-      my @sset          = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+  $filter->{'block_features'} = 1;
 
-      throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @sset > 1; # There should only be one
-      
-      my $feature_type          = $reg_attr_fset->feature_type->name;
-      my $block_features        = $reg_attr_fset->get_Features_by_Slice($slice);
-      my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-      my $key                   = $multicell || $cell_type;
-      my $unique_feature_set_id = join ':', $key, $feature_type, $multicell ? $cell_type : ();
-      
-      $data{$key}{$set}{'block_features'}{$unique_feature_set_id} = $block_features if scalar @$block_features;
-    }
-  }
-  
-  return { data => \%data, cells => [ keys %cells ] };
+  my $slice_object = EnsEMBL::Web::Object::Slice->new({'_hub' => $self->hub, '_object' => $slice});
+
+  my $data = $slice_object->get_cell_line_data(undef, $filter);
+
+  return { data => $data, cells => [ keys %$data ] };
 }
 
-sub all_cell_types {
+sub all_epigenomes {
   my ($self) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
+  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
+}
 
-  my %cells;
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_feature_class('regulatory')}) {
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $cell_name = $reg_attr_fset->cell_type->name;
-      next if $cell_name eq 'MultiCell';
-      $cells{$cell_name} = 1;
-    }
-  }
-  return [ sort keys %cells ];
+sub regbuild_epigenomes {
+  my ($self) = @_;
+  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
 }
 
 ################ Calls for Feature in Detail view ###########################
 
 sub get_focus_set_block_features {
-  my ($self, $slice) = @_;
-  
-  return unless $self->hub->param('opt_focus') eq 'yes';
-  
+  my ($self, $slice, $opt_focus) = @_;
+
+  return unless $opt_focus eq 'yes';
+
   my (%data, %colours);
-  
-  foreach (@{$self->Obj->get_focus_attributes}) { 
-    next if $_->isa('Bio::EnsEMBL::Funcgen::MotifFeature');
-    my $unique_feature_set_id      = $_->feature_set->cell_type->name . ':' . $_->feature_set->feature_type->name;
-    $data{$unique_feature_set_id} = $_->feature_set->get_Features_by_Slice($slice); 
-    $colours{$_->feature_set->feature_type->name} = 1;
-  }
-  
+
+#  foreach (@{$self->Obj->get_focus_attributes}) {
+#    next if $_->isa('Bio::EnsEMBL::Funcgen::MotifFeature');
+#    my $unique_feature_set_id      = $_->feature_set->cell_type->name . ':' . $_->feature_set->feature_type->name;
+#    $data{$unique_feature_set_id} = $_->feature_set->get_Features_by_Slice($slice);
+#    $colours{$_->feature_set->feature_type->name} = 1;
+#  }
+
   return (\%data, \%colours);
 }
 

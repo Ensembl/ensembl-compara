@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,12 +51,12 @@ sub content {
 
   ## Can't find a user record - check session
   unless ($upload) { 
-    $upload = $hub->session->get_data(code => $code);
+    $upload = $hub->session->get_record_data({code => $code});
   }
 
   my $html;
 
-  if ($upload) {
+  if (keys %$upload) {
     my $format  = $upload->{'format'} || $hub->param('format');
     my $species = $upload->{'species'} ? $hub->species_defs->get_config($upload->{'species'}, 'SPECIES_SCIENTIFIC_NAME') : '';
     

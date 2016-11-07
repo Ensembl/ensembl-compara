@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,6 +49,7 @@ sub new {
 sub counts            { return {};        }
 sub _counts           { return {};        } # Implemented in plugins
 sub availability      { return {};        }
+sub implausibility    { return {};        }
 sub can_export        { return 0;         }
 sub default_action    { return 'Summary'; }
 sub __data            { return $_[0]{'data'};                  }
@@ -70,7 +72,6 @@ sub param             { return shift->hub->param(@_);             }
 sub user              { return shift->hub->user(@_);              }
 sub database          { return shift->hub->database(@_);          }
 sub get_adaptor       { return shift->hub->get_adaptor(@_);       }
-sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
@@ -317,76 +318,10 @@ sub check_for_align_in_database {
       }
     }
     else {
-      push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the box above.</p>'};
+      push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the above.</p>'};
     }
 
     return @messages;
-}
-
-sub check_for_missing_species {
-  ## Check what species are not present in the alignment
-  my ($self, $args) = @_;
-
-  my (@skipped, @missing, $title, $warnings, %aligned_species);
-
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-  my $species       = $args->{species};
-  my $align         = $args->{align};
-  my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
-  my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
-
-  my $slice         = $args->{slice} || $self->slice;
-  $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
-
-  if(defined $slice) {
-    $args->{slice}   = $slice;
-    my ($slices)     = $self->get_slices($args);
-    %aligned_species = map { $_->{'name'} => 1 } @$slices;
-  }
-
-  foreach (keys %{$align_details->{'species'}}) {
-    next if $_ eq $species;
-
-    if ($align_details->{'class'} !~ /pairwise/
-        && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-      push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
-    }
-    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
-      push @missing, $_;
-    }
-  }
-  if (scalar @skipped) {
-    $title = 'hidden';
-    $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown - use "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
-                             scalar @skipped,
-                             join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
-                            );
-  }
-
-  if (scalar @skipped && scalar @missing) {
-    $title .= ' and ';
-  }
-
-  my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
-  my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
-  my $multi_check = $ancestral ? 2 : 1;
-
-  if (scalar @missing) {
-    $title .= ' species';
-    if ($align_details->{'class'} =~ /pairwise/) {
-      $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
-    } elsif ($not_missing == $multi_check) {
-      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
-    } else {
-      $warnings .= sprintf('<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
-                                 scalar @missing,
-                                 join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
-                            );
-    }
-  }
-  return $warnings ? ({'severity' => 'info', 'title' => $title, 'message' => $warnings}) : ();
 }
 
 sub get_slices {
@@ -403,6 +338,7 @@ sub get_slices {
   my $counter = 0;
   foreach (@slices) {
     next unless $_;
+
     my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $args->{species};
 
     my $cigar_line = $_->can('get_cigar_line') ? $_->get_cigar_line : "";
@@ -413,7 +349,7 @@ sub get_slices {
       slice             => $_,
       underlying_slices => $underlying_slices && $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [ $_ ],
       name              => $name,
-      display_name      => $self->get_slice_display_name($name, $_),
+      display_name      => $self->get_slice_display_name($self->hub->species_defs->production_name_mapping($name), $_),
       cigar_line        => $cigar_line,
     };
     if ($name eq 'Ancestral_sequences') {

@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -164,7 +165,7 @@ sub _init {
   } 
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
     my $GL_FLAG = $self->get_parameter(  'opt_gene_labels' );
-       $GL_FLAG = 1 unless defined($GL_FLAG);
+       $GL_FLAG = 1 if $GL_FLAG eq '';
        $GL_FLAG = shift if @_;
        $GL_FLAG = 0 if ( $self->my_config( 'label_threshold' ) || 50e3 )*1001 < $vc->length;
     if( $GL_FLAG ) {
@@ -322,7 +323,7 @@ sub old_init {
   } 
   if($FLAG) { ## NOW WE NEED TO ADD THE LABELS_TRACK.... FOLLOWED BY THE LEGEND
     my $GL_FLAG = $self->get_parameter(  'opt_gene_labels' );
-       $GL_FLAG = 1 unless defined($GL_FLAG);
+       $GL_FLAG = 1 if $GL_FLAG eq '';
        $GL_FLAG = shift if @_;
        $GL_FLAG = 0 if ( $self->my_config( 'label_threshold' ) || 50e3 )*1001 < $vc->length;
     if( $GL_FLAG ) {

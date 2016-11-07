@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,8 +28,12 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 use EnsEMBL::Web::REST;
 use POSIX qw(floor ceil);
+use List::Util qw(min max);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+
+# Note that the value of y-scale and the calculation of value must match
+# or you will get the wrong ZMenus appearing.
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 
@@ -48,14 +53,63 @@ sub _init {
   # Track height
   my $height = $self->my_config('height') || 80;
 
-  # Horinzontal line mark
-  my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || 0.8;
+  # p-value or beta
+  my $display = $self->{'display'};
+  my ($statistic,$key);
+  if($display eq 'beta') {
+    $key = 'value';
+    $statistic = 'beta';
+  } else {
+    $statistic = 'p-value';
+    $key = 'minus_log10_p_value';
+  }
+
+  # Get data
+  my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
+  my ($data,$error) = $rest->fetch_via_ini($self->species,'gtex',{
+    stableid => $self->{'config'}->hub->param('g'),
+    tissue => $self->{'my_config'}->get('tissue'),
+  });
+  if($error) {
+    my $msg = $data->[0];
+    warn "REST failed: $msg\n";
+    return $self->errorTrack(sprintf("Data source failed: %s",$msg));
+  }
+
+  # Legends
+  foreach my $f (@$data) {
+    my $conseq = $f->{'display_consequence'};
+    my $colour = $self->my_colour($conseq);
+    $self->{'legend'}{'variation_legend'}{lc $conseq} ||= $colour if $conseq;
+  }
+
+  my ($y_scale,$y_off);
+  if($display eq 'beta') {
+    $self->{'my_config'}->set('min_score_label','-1');
+    $self->{'my_config'}->set('max_score_label',"1");
+    $self->{'my_config'}->set('h_mark',0.5);
+    $self->{'my_config'}->set('h_mark_label',"0");
+    $y_scale = 2;
+    $y_off = 0.5;
+  } else {
+    $y_scale = int(max(0,map { $_->{$key} } @$data))+1;
+    $y_off = 0;
+    $self->{'my_config'}->set('min_score_label','1');
+    $self->{'my_config'}->set('max_score_label',"<10^-$y_scale");
+  }
 
   # Track configuration
   $self->{'my_config'}->set('height', $height);
-  $self->{'my_config'}->set('h_mark', $h_mark);
   $self->{'my_config'}->set('baseline_zero', 1);
-
+  $self->push($self->Rect({
+    x => 0,
+    y => -4,
+    width => $self->{'config'}->container_width,
+    height => $height+8,
+    absolutey => 1,
+    href => $self->bg_link($y_scale),
+    class => 'group'
+  }));
   # Left-hand side labels
   # Shift down the lhs label to between the axes unless the subtitle is within the track
   $self->{'label_y_offset'} = ($height)/2 + $self->subtitle_height;
@@ -64,29 +118,19 @@ sub _init {
   my $features = [];
 
   my $slice = $self->{'container'};
-  my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
-  my $data = $rest->fetch_via_ini('Homo_sapiens','gtex',{
-    stableid => $self->{'config'}->hub->param('g'),
-    tissue => $self->{'my_config'}->get('tissue'),
-  });
-  my $vdba = $slice->adaptor->db->get_db_adaptor('variation');
-  my $va = $vdba->get_VariationAdaptor;
   foreach my $f (@$data) {
-    my $v = $va->fetch_by_name($f->{'snp'});
-    next unless $v;
-    foreach my $vf (@{$v->get_all_VariationFeatures()||[]}) {
-      my $start = $vf->start - $slice->start+1;
-      my $end = $vf->end - $slice->start+1;
-      next if $start < 1 or $end > $slice->length;
-      push @$features,{
-        start => $start,
-        end => $end,
-        label => $vf->name,
-        colour => $self->my_colour($vf->display_consequence),
-        href => '#',
-        score => -log($f->{'value'})/log(10)
-      };
-    }
+    next unless $statistic eq $f->{'statistic'};
+    my $start = $f->{'seq_region_start'} - $slice->start+1;
+    my $end = $f->{'seq_region_end'} - $slice->start+1;
+    next if $start < 1 or $end > $slice->length;
+    my $value = max($f->{$key}/$y_scale+$y_off,0);
+    push @$features,{
+      start => $start,
+      end => $end,
+      label => $f->{'snp'},
+      colour => $self->my_colour($f->{'display_consequence'}),
+      score => $value,
+    };
   }
 
   if (!scalar(@$features)) {
@@ -96,7 +140,7 @@ sub _init {
     $self->errorTrack("No $track_name data for this region");
   }
   else {
-    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $features);
+    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, [{'features' => $features}]);
     $self->push($style->create_glyphs);
   }
 }
@@ -118,21 +162,22 @@ sub title {
   return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ". $f->ambig_code;
 }
 
-sub href {
-  my ($self, $f, $value) = @_;
-  
-  my $key = $self->_key();
+sub href { return undef; }
+
+sub bg_link {
+  my ($self,$y_scale) = @_;
 
   return $self->_url({
-    species  => $self->species,
-    type     => 'Variation',
-    v        => $f->variation_name,
-    vf       => $f->dbID,
-    vdb      => $self->my_config('db'),
-    snp_fake => 1,
-    config   => $self->{'config'}{'type'},
-    track    => $self->type,
-    $key     => $value
+    action => 'GTEX',
+    ftype  => 'Regulation',
+    sp  => ucfirst $self->species,
+    scalex => $self->scalex,
+    width => $self->{'container'}->length,
+    g => $self->{'config'}->hub->param('g'),
+    tissue => $self->{'my_config'}->get('tissue'),
+    height => $self->{'my_config'}->get('height'),
+    y_scale => $y_scale,
+    renderer => $self->{'display'},
   });
 }
 

@@ -1,5 +1,6 @@
 /*
- * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [2016] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +23,6 @@ Ensembl.extend({
   initialize: function () {
     var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
-    var bodyClass   = $('body')[0].className.split(' ');
     var modalOpen   = window.location.hash.match(/(modal_.+)/);    
     
     if (!window.name) {
@@ -31,7 +31,6 @@ Ensembl.extend({
 
     this.setSpecies();
 
-    this.browser            = {};
     this.locationURL        = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex     = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch      = new RegExp(/[#?;&]r=([^;&]+)/);
@@ -47,12 +46,23 @@ Ensembl.extend({
     this.markedLocation     = this.getMarkedLocation();
     this.lastMarkedLocation = false;
 
-    for (var i in bodyClass) {
-      if (bodyClass[i]) {
-        this.browser[bodyClass[i]] = true;
+    this.browser = (function(ua) {
+      var b = {};
+      if (ua.match(/webkit/i)) {
+        b.webkit = true;
+        if (ua.match(/chrome/i)) {
+          b.chrome = true;
+        } else if (ua.match(/safari/i)) {
+          b.safari = true;
+        }
+      } else if (ua.match(/firefox/)) {
+        b.firefox = true;
+      } else if (ua.match(/msie/i)) {
+        b.ie = true;
       }
-    }
-    
+      return b;
+    })(navigator.userAgent || '');
+
     if (this.dynamicWidth && !window.name.match(/^popup_/)) {
       var width = this.imageWidth();
       
@@ -61,9 +71,7 @@ Ensembl.extend({
         this.cookie.set('ENSEMBL_WIDTH', width);
       }
     }
-    
-    this.cookie.set('WINDOW_WIDTH', $(window).width());
-    
+
     if (hints) {
       $.each(hints.split(/:/), function () {
         Ensembl.hideHints[this] = 1;
@@ -111,8 +119,8 @@ Ensembl.extend({
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
         '; expires=',
-        ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970' : expiry ? expiry : 'Tue, 19 Jan 2038'),
-        ' 00:00:00 GMT; path=/'
+        ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970 00:00:00 GMT' : expiry ? expiry : 'Tue, 19 Jan 2038 00:00:00 GMT'),
+        '; path=/'
       ].join('');
       document.cookie = cookie;
       
@@ -383,6 +391,42 @@ Ensembl.extend({
     }
     
     return x1 + x2;
+  },
+
+  populateTemplate : function(template, data) {
+    var regexp  = /\{\{[\.\w]+\}\}/g;
+    var matches = [];
+
+    var match;
+    while ((match = regexp.exec(template)) != null) {
+      matches.push({str: match[0], index: match.index});
+    }
+
+    var output = [];
+    for (var i = matches.length - 1; i >= 0; i--) {
+      var match = matches[i].str.replace(/\{|\}/g, '');
+      try {
+        var replacement = (function(pointer, keys) {
+          while (keys.length) {
+            var key = keys.shift();
+            if (key in pointer) {
+              pointer = pointer[key];
+            } else {
+              throw Error("Missing key '" + key + "'");
+            }
+          }
+          return pointer;
+        })(data, match.split('.'));
+      } catch (ex) {
+        throw Error("Ensembl.populateTemplate could not parse '" + match + "': " + ex.message);
+      }
+
+      output.unshift(template.substring(matches[i].index + matches[i].str.length));
+      output.unshift(replacement);
+      template = template.substr(0, matches[i].index);
+    }
+    output.unshift(template);
+    return output.join('');
   }
 });
 

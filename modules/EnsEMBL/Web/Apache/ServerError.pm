@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,34 +18,65 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Web::Apache::ServerError;
-     
-use strict;
 
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Document::Panel;
+use strict;
+use warnings;
+
+use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
+sub get_template {
+  my $r       = shift;
+  my $request = $r->headers_in->get('X-Requested-With') || '';
+
+ return $request eq 'XMLHttpRequest' ? 'EnsEMBL::Web::Template::AjaxError' : 'EnsEMBL::Web::Template::Error';
+}
 
 sub handler {
-  my $r          = shift;
-  my $controller = EnsEMBL::Web::Controller->new($r, { page_type => 'Static', renderer_type => 'Apache' });
-  my $page       = $controller->page;
-  my $admin      = $controller->species_defs->ENSEMBL_HELPDESK_EMAIL;
-  
-  $page->initialize;
-  $page->title->set('500: Internal Server Error');
-  
-  $page->content->add_panel(EnsEMBL::Web::Document::Panel->new(
-    raw => qq{
-      <div class="error left-margin right-margin">
-        <h3>Internal Server Error</h3>
-        <div class="message-pad">
-          <p>Sorry, an error occurred while the Ensembl server was processing your request</p>
-          <p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to $admin</p>
-        </div>
-      </div>
+  ## Handles 500 errors (via /Crash) and internal exceptions (called by EnsEMBL::Web::Apache::Handlers)
+  ## @param Apache2::RequestRec request object
+  ## @param EnsEMBL::Web::SpeciesDefs object (only when called by EnsEMBL::Web::Apache::Handlers)
+  ## @param EnsEMBL::Web::Exception object (only when called by EnsEMBL::Web::Apache::Handlers)
+  my ($r, $species_defs, $exception) = @_;
+
+  my ($content, $content_type);
+
+  my $heading = '500 Server Error';
+  my $message = 'An unknown error has occurred';
+  my $stack   = '';
+
+  try {
+
+    if ($exception) {
+      $heading  = sprintf 'Server Exception: %s', $exception->type;
+      $message  = $exception->message(1);
+      $stack    = $exception->stack_trace;
+      warn $exception;
     }
-  ));
-  
-  $controller->render_page;
+
+    my $template = dynamic_require(get_template($r))->new({
+      'species_defs'  => $species_defs,
+      'heading'       => $heading,
+      'message'       => $message,
+      'content'       => $stack,
+      'helpdesk'      => 1,
+      'back_button'   => 1
+    });
+
+    $content_type = $template->content_type;
+    $content      = $template->render;
+
+  } catch {
+    warn $_;
+    $content_type = 'text/plain; charset=utf-8';
+    $content      = "$heading\n\n$message\n\n$stack";
+  };
+
+  $r->status(Apache2::Const::SERVER_ERROR);
+  $r->content_type($content_type) if $content_type;
+  $r->print($content);
+
+  return undef;
 }
 
 1;

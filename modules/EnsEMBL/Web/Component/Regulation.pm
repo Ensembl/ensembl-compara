@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,21 +25,21 @@ use base qw(EnsEMBL::Web::Component::Shared);
 
 sub shown_cells {
   my ($self,$image_config) = @_;
-
   my $hub = $self->hub;
+
   my %shown_cells;
-  my $image_config = $hub->get_imageconfig($image_config);
+  my $ic = $hub->get_imageconfig($image_config);
+
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
+    my $menu = $ic->get_node($type);
     next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(core_|non_core_)?(.*)$/;
       my $cell=$3;
-      next if $cell eq 'MultiCell';
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  my $ev = $self->all_evidences->{'all'};
+  my $ev = $self->all_evidences($image_config)->{'all'};
   my %partials;
   foreach my $ex (values %$ev) {
     next unless $ex->{'on'};
@@ -51,12 +52,13 @@ sub shown_cells {
 }
 
 sub all_evidences {
-  my ($self) = @_;
+  my ($self, $image_config) = @_;
+  $image_config ||= 'regulation_view';
 
   my $hub = $self->hub;
   my $mode = 4;
   my %evidences;
-  my $image_config = $hub->get_imageconfig('regulation_view');
+  my $image_config = $hub->get_imageconfig($image_config);
   foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
@@ -173,20 +175,19 @@ sub nav_buttons {
 sub cell_line_button {
   my ($self,$image_config) = @_;
 
-  my ($shown_cells,$partials) = $self->shown_cells($image_config);
-  my $cell_m = scalar @$shown_cells;
-  my $object = $self->object || $self->hub->core_object('regulation');
-  my $cell_n = scalar @{$object->all_cell_types};
+  my ($shown_cells, $partials) = $self->shown_cells($image_config);
+  my $shown_count = scalar @$shown_cells;
+  my $object      = $self->object || $self->hub->core_object('regulation');
+  my $total_count = scalar @{$object->regbuild_epigenomes};
 
-  my $url = $self->hub->url('Component', {
-    action   => 'Web',
-    function    => 'CellTypeSelector/ajax',
+  my $url = $self->hub->url('MultiSelector', {
+    action   => 'CellTypeSelector',
     image_config => $image_config,
   });
 
-  my $cell_p = scalar(@$partials);
-  my $count = "showing ".($cell_m-$cell_p)."/$cell_n";
-  $count .= " and $cell_p partially" if $cell_p;
+  my $partial_count = scalar(@$partials);
+  my $count = "showing ".($shown_count - $partial_count)."/$total_count";
+  $count   .= " and $partial_count partially" if $partial_count;
 
   push @{$self->{'buttons'}||=[]},{
     url => $url,
@@ -203,9 +204,8 @@ sub evidence_button {
 
   my $n = keys %$ev;
   my $m = grep { $_->{'on'} } values %$ev;
-  my $url = $self->hub->url('Component', {
-    action => 'Web',
-    function => 'EvidenceSelector/ajax',
+  my $url = $self->hub->url('MultiSelector', {
+    action => 'EvidenceSelector',
   });
   
   push @{$self->{'buttons'}||=[]},{
@@ -260,8 +260,12 @@ sub advanced_button {
   my @components = @{$hub->components};
 
   my $view_config;
-  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components;
+  while (!$view_config && scalar @components) {
+    my ($component, $type) =  @{shift @components};
+    $view_config = $hub->get_viewconfig({component => $component, type => $type});
+  }
   return unless $view_config;
+
   my $url     = $self->hub->url('Config', {
     type      => $view_config->type,
     action    => $view_config->component,

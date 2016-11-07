@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -89,7 +91,7 @@ sub get_message {
   elsif ($reattach) {
     $message = $messages{'hub_'.$reattach}{'message'};
     ## Internally configured hub
-    if ($reattach == 'preconfig') {
+    if ($reattach eq 'preconfig') {
       $trackhub_ok = 0;
       my $link = $hub->url({'type' => 'Config', 'action' => 'Location', 'function' => 'ViewBottom'});
       my $menu = $hub->param('menu') || '';
@@ -101,8 +103,10 @@ sub get_message {
     $message = $messages{'hub_ok'}{'message'};
   }
 
+  ## We should only reach this step if the trackhub has a mixture of available species/assemblies 
+  ## and unavailable ones, and therefore we want to warn the user before proceeding
   if ($trackhub_ok) {
-    (my $menu_name = $hub->param('name')) =~ s/ /_/g;
+    my $menu_id     = clean_id($hub->param('name'));
     my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
     my $current_loc = $hub->referer->{'params'}->{'r'}[0];
@@ -113,7 +117,7 @@ sub get_message {
                           function  => undef,
                           r         => $current_loc || $default_loc,
               });
-    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_name);
+    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_id);
   }
 
   if ($try_archive) {

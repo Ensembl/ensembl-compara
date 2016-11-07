@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,17 +69,17 @@ sub _init {
   # Shift down the lhs label to between the axes unless the subtitle is within the track
   $self->{'label_y_offset'} = ($height)/2 + $self->subtitle_height;
 
-  my $config   = $self->track_style_config;
-  my $features = $self->fetch_features();
+  my $config  = $self->track_style_config;
+  my $data    = $self->fetch_features();
 
-  if (!scalar(@$features)) {
+  if (!scalar(@$data)) {
     $self->{'my_config'}->set('height', $self->subtitle_height);
     $self->{'label_y_offset'} = 0;
     my $track_name = $self->my_config('caption');
     $self->errorTrack("No $track_name data for this region");
   }
   else {
-    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $features);
+    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $data);
     $self->push($style->create_glyphs);
   }
 }
@@ -94,18 +95,18 @@ sub features {
   my $config       = $self->{'config'};
   my $max_length   = $self->my_config('threshold') || 1000;
   my $slice_length = $self->{'container'}->length;
-  my $features_list = []; 
+  my $tracks = []; 
 
   if ($slice_length > $max_length * 1010) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
   } else {
-    $features_list = $self->fetch_features() || [];
-    if (!scalar(@$features_list)) {
+    $tracks = $self->fetch_features() || [];
+    if (!scalar(@$tracks)) {
       my $track_name = $self->my_config('caption'); 
       $self->errorTrack("No $track_name data for this region");
     }
   }
-  return $features_list;
+  return $tracks;
 }
 
 sub fetch_features {
@@ -187,7 +188,7 @@ sub fetch_features {
 
   $self->{'legend'}{'variation_legend'}{$_->display_consequence} ||= $self->get_colour($_) for @snps;
 
-  return \@snps_data;
+  return [{'features' => \@snps_data}];
 }
 
 sub title {

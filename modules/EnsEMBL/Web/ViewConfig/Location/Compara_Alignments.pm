@@ -1,6 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,22 +20,28 @@ limitations under the License.
 package EnsEMBL::Web::ViewConfig::Location::Compara_Alignments;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
+use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
 
-sub init { 
+sub init_cacheable {
+  ## @override
   my $self = shift;
-  
-  $self->SUPER::init;
-  
-  $self->set_defaults({
-    flank5_display => 0,
-    flank3_display => 0,
-    strand         => 1
-  });
-  
-  $self->{'no_flanking'}   = 1;
-  $self->{'strand_option'} = 1;
+
+  $self->SUPER::init_cacheable(@_);
+
+  $self->set_default_options({'strand' => 1});
+}
+
+sub field_order {
+  ## @override
+  my @order = shift->SUPER::field_order(@_);
+
+  # add strand
+  splice @order, 1, 0, 'strand';
+
+  # remove flank display
+  return grep !m/flank(3|5)_display/, @order;
 }
 
 1;
