@@ -246,7 +246,7 @@ sub format_gallery {
 
   my $page_header = sprintf('<h1>%s views for %s data</h1>', scalar keys %page_count, $hub->param('data_type'));
 
-  my $toc_string = sprintf('<div class="gallery-toc center">%s</div>', join(' ', @toc));
+  my $toc_string = sprintf('<div id="gallery-toc" class="center">%s</div>', join(' ', @toc));
 
   return qq(
             <div class="gallery js_panel" id="site-gallery">
