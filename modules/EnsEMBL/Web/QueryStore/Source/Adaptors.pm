@@ -115,8 +115,6 @@ sub transcript_by_stableid {
   return $self->transcript_adaptor($species,$type)->fetch_by_stable_id($id);
 }
 
-<<<<<<< HEAD
-=======
 sub regulatoryfeature_by_stableid {
   my ($self,$species,$type,$id) = @_;
 
@@ -128,7 +126,6 @@ sub epigenome_by_stableid {
 
   return $self->epigenome_adaptor($species,$type)->fetch_by_name($id);
 }
->>>>>>> master
 
 sub compara_member {
   my ($self,$id) = @_;
