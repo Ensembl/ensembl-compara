@@ -143,7 +143,7 @@ sub new {
   $self->{adaptor} = undef;
   $self->{coord_system} = $coord_system;
   $self->genome_db($genome_db) if (defined($genome_db));
-  $self->{seq_region_name} = (eval{$genome_db->name} or "FakeAlignSlice");
+  $self->{seq_region_name} = ($requesting_slice ? $requesting_slice->seq_region_name : "FakeAlignSlice");
   $self->{display_Slice_name} = $self->{seq_region_name};
   $self->{display_Slice_name} =~ s/ /_/g;
   $self->{seq_region_length} = $length;
