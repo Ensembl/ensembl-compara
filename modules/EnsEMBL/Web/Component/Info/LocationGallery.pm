@@ -22,7 +22,7 @@ package EnsEMBL::Web::Component::Info::LocationGallery;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Info);
+use base qw(EnsEMBL::Web::Component::Info::Gallery);
 
 sub _init {
   my $self = shift;
@@ -33,17 +33,115 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
+
+  my $layout = [
+                  {
+                    'title' => 'Locations',
+                    'pages' => ['Whole Genome', 'Chromosome Summary', 'Region overview', 'Region in Detail', 'Synteny', 'Alignments (image)', 'Alignments (text)', 'Region Comparison', 'Linkage Data'],
+                    'icon'  => 'karyotype.png',
+                  },
+                ];
+
+  return $self->format_gallery('Location', $layout, $self->_get_pages);
+}
+
+
+sub _get_pages {
+  ## Define these in a separate method to make content method cleaner
+  my $self = shift;
+  my $hub = $self->hub;
   my $r = $hub->param('r');
 
-  return "<p>Sorry, this page has not been implemented yet.</p>";
+  my $builder   = EnsEMBL::Web::Builder->new($hub);
+  my $factory   = $builder->create_factory('Location');
+  my $object    = $factory->object;
 
-  ## Define set of pages
+  if (!$object) {
+    return $self->warning_panel('Invalid coordinates', 'Sorry, those coordinates could not be found. Please try again.');
+  }
+  else {
+    
+    my $no_chromosomes = scalar @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]} ? 0 : 1;
 
-  ## Create groups for processing
-  my @previews = (
-                  );
+    return {
+            'Whole genome' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'Genome',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_genome',
+                                  'caption'   => 'View the entire karyotype for this species',
+                                  'disabled'  => $no_chromosomes,
+                                },
+            'Chromosome summary' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'Chromosome',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_chromosome',
+                                  'caption'   => '',
+                                },
+            'Region overview' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'Overview',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_overview',
+                                  'caption'   => '',
+                                },
+            'Region in Detail' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'View',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_view',
+                                  'caption'   => '',
+                                },
+            'Synteny' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'Synteny',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_synteny',
+                                  'caption'   => '',
+                                },
+            'Alignments (image)' => {
+                                  'link_to'   => {'type'      => 'Location',
+                                                  'action'    => 'Compara_Alignments',
+                                                  'function'  => 'Image',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_alignimage',
+                                  'caption'   => '',
+                                },
+            'Alignments (text)' => {
+                                  'link_to'   => {'type'      => 'Location',
+                                                  'action'    => 'Compara_Alignments',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_aligntext',
+                                  'caption'   => '',
+                                },
+            'Region comparison' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'Multi',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_comparison',
+                                  'caption'   => '',
+                                },
+            'Linkage data' => {
+                                  'link_to'   => {'type'    => 'Location',
+                                                  'action'  => 'HighLD',
+                                                  'r'      => $r,
+                                                 },
+                                  'img'       => 'location_ld',
+                                  'caption'   => '',
+                                },
 
-  #return $self->format_gallery('Gene', @previews);
+            };
+  }
+
 }
 
 1;

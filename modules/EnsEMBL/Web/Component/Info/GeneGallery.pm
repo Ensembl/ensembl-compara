@@ -22,7 +22,7 @@ package EnsEMBL::Web::Component::Info::GeneGallery;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Info);
+use base qw(EnsEMBL::Web::Component::Info::Gallery);
 
 sub _init {
   my $self = shift;
@@ -33,17 +33,42 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
+
+  my $layout = [
+                ];
+
+  return $self->format_gallery('Gene', $layout, $self->_get_pages);
+}
+
+sub _get_pages {
+  ## Define these in a separate method to make content method cleaner
+  my $self = shift;
+  my $hub = $self->hub;
   my $g = $hub->param('g');
 
-  return "<p>Sorry, this page has not been implemented yet.</p>";
+  my $builder   = EnsEMBL::Web::Builder->new($hub);
+  my $factory   = $builder->create_factory('Gene');
+  my $object    = $factory->object;
 
-  ## Define set of pages
+  if (!$object) {
+    return $self->warning_panel('Invalid identifier', 'Sorry, that identifier could not be found. Please try again.');
+  }
+  else {
 
-  ## Create groups for processing
-  my @previews = (
-                  );
 
-  #return $self->format_gallery('Gene', @previews);
+    return {
+            'Gene Summary' => {
+                                  'link_to'   => {'type'    => 'Gene',
+                                                  'action'  => 'Summary',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'gene_summary',
+                                  'caption'   => '',
+                                },
+
+            };
+  }
+
 }
 
 1;
