@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,15 +26,13 @@ Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 This pipeline is using eHive's parameter-stack mechanism, i.e. the jobs
 inherit the parameters of their parents.
 The pipeline should be configured exclusively from the command line, with the
---alignment_db/ptree_db and possibly -pairwise_mlss_id/ortholog_mlss_id parameters. If the latter is
-skipped, the pipeline will use all the pairwise alignments/orthologs found on the server.
-The pipeline automatically finds the alignments/orthologs that are missing syntenies and
+--alignment_db and possibly -pairwise_mlss_id parameters. If the latter is
+skipped, the pipeline will use all the pairwise alignments found on the server.
+The pipeline automatically finds the alignments that are missing syntenies and
 compute these (incl. the stats)
 The analysis "compute_synteny_start" can be seeded multiple times.
 Extra parameters like "level", "orient", "minSize1", etc, should also be given
 at the command-line level, and not in this file.
-
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
 
 =head1 CONTACT
 
@@ -46,7 +44,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf_update;
 
 use strict;
 use warnings;
@@ -61,14 +59,9 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
             
-#            'host'          => 'compara5',      # Where to host the pipeline database
-
-#	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-#            'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
-
             'host'          => 'compara4',      # Where to host the pipeline database
 
-            'master_db' => 'mysql://ensro@compara4/wa2_compara_master_86',
+	    'master_db' => 'mysql://ensro@compara4/wa2_compara_master_86',
             'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
             # Connection to the alignment database must be given

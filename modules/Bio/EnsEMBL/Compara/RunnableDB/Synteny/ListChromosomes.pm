@@ -57,7 +57,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes;
 
 use strict;
 use warnings;
-
+use Data::Dumper;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -78,9 +78,9 @@ sub fetch_input {
 
     # Get the GenomeDB entry
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly( $self->param_required('species_name') )
-        or die "Could not find the species named '".$self->param('species_name')."' in the database\n";
-
     # All the reference dnafrags
+        or die "Could not find the species named '".$self->param('species_name')."' in the database\n";
+ #   
     my $all_dnafrags = [];
     if (scalar(@{$self->param('default_coord_system_names')})) {
         # Either from a predefined list of coord_system_name
@@ -99,6 +99,7 @@ sub fetch_input {
     }
 
     # All the karyotype-level slices
+    print Dumper($genome_db->db_adaptor());
     my $all_karyo_slices = $genome_db->db_adaptor->get_SliceAdaptor->fetch_all_karyotype();
     my %karyo_slice_names = map {$_->seq_region_name => 1} @$all_karyo_slices;
 
