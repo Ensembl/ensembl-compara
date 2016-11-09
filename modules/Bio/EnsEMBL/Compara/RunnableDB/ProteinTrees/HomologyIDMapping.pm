@@ -146,8 +146,8 @@ sub _write_empty_mapping {
 sub write_output {
 	my $self = shift;
 
-	print "INSERTING";
-	print Dumper $self->param('homology_mapping');
+	print "INSERTING" if $self->debug;
+	print Dumper $self->param('homology_mapping') if $self->debug;
         bulk_insert($self->compara_dba->dbc, 'homology_id_mapping', $self->param('homology_mapping'), ['mlss_id', 'prev_release_homology_id', 'curr_release_homology_id'], 'INSERT IGNORE');
 }
 
