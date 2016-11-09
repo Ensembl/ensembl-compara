@@ -24,7 +24,7 @@ use strict;
 
 use EnsEMBL::Web::REST;
 
-use base qw(EnsEMBL::Web::Component::Info);
+use base qw(EnsEMBL::Web::Component::Info::Gallery);
 
 sub _init {
   my $self = shift;
