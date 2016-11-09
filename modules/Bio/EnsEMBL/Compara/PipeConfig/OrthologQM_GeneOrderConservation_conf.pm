@@ -73,7 +73,7 @@ sub default_options {
         'goc_threshold' => undef,
         'prev_rel_db'  => undef,
         'reuse_goc'     => undef,
-        'goc_capacity'   => 300,
+        'goc_capacity'   => 200,
     };
 }
 
@@ -94,9 +94,9 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-        '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '16Gb_job'      => {'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
+        '1Gb_job'      => {'LSF' => '-C0 -M1000 -q production-rh7 -R"select[mem>1000]  rusage[mem=1000]"' },
+        '2Gb_job'      => {'LSF' => '-C0 -M2000 -q production-rh7 -R"select[mem>2000]  rusage[mem=2000]"' },
+        '16Gb_job'      => {'LSF' => '-C0 -M16000 -q production-rh7 -R"select[mem>16000]  rusage[mem=16000]"' },
     };
 }
 
@@ -111,7 +111,7 @@ sub pipeline_analyses {
                     ),
                 'A->1' => {
                     'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') }, 
-                    },
+		},
             },
         },
 
@@ -137,7 +137,7 @@ sub pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
-    ];
+	];
 }
 
 1;

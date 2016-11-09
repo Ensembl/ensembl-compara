@@ -58,6 +58,7 @@ sub pipeline_analyses_goc {
             },
             -rc_name => '2Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
+            -analysis_capacity => 50,
         },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
@@ -66,7 +67,8 @@ sub pipeline_analyses_goc {
                 2   =>  ['check_ortholog_neighbors'],
             },
             -rc_name => '2Gb_job',
-            -hive_capacity  => 300,
+            -hive_capacity  => 100,
+            -analysis_capacity => 50,
             
         },
 
@@ -78,6 +80,7 @@ sub pipeline_analyses_goc {
                3 => [ '?table_name=ortholog_goc_metric' ],
             },
             -hive_capacity  => 50,
+            -analysis_capacity => 90,
             -batch_size     => 50,
         },
 
@@ -101,6 +104,7 @@ sub pipeline_analyses_goc {
             },
             -rc_name => '16Gb_job',
             -hive_capacity  => 50,
+            -analysis_capacity => 50,
         },
 
         {
