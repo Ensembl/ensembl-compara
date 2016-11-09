@@ -26,8 +26,8 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
         $(this).on({ mouseover: function () { $(this).addClass('zoom');    } });
         $(this).on({ mouseout:  function () { $(this).removeClass('zoom'); } });
         $(this).on({ click:     function () { 
-                                              // Reveal hidden div with form
                                               var popup = $(this).next();
+                                              // Reveal hidden div with form
                                               popup.removeClass('hide'); 
                                               /* Move form to the right, because trying to
                                               align it with static CSS is too much hassle! */
@@ -36,6 +36,8 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
                                                 popup.css('right', offset+'px');
                                               }
                                             } });
+        // First child is the (x) button on the corner of the div
+        $(this).next().children(":first").on({ click: function() { $(this).parent().addClass('hide'); } });
       }
     );
 

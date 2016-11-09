@@ -207,4 +207,7 @@ p.preview-caption   { display:inline-block; margin: 8px 0; width: 620px; }
 div.popup-form      { z-index:1000; background-color:[[PAGE_BG]];
                       position: relative; 
                       padding: 20px; border:1px solid [[PANEL_BORDER]]; }
+div.popup-form span.close { background: url("/i/close.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0); 
+                            cursor: pointer; height: 20px; position: absolute; 
+                            right: -10px; top: -10px; width: 20px; }
 
