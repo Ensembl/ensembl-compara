@@ -88,8 +88,7 @@ sub param_defaults {
 
 sub fetch_input {
   my $self = shift;
-#  $self->debug(1);
-  my $ortholog_hashref = $self->param_required('ortholog_info_hashref');
+#  $self->debug(3);
   print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
   my $mlss_id = $self->param_required('goc_mlss_id');
   $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
@@ -97,8 +96,9 @@ sub fetch_input {
 
   my $ref_species_dbid = $self->param('ref_species_dbid');
   $self->param('mlss_check', 0); # will be use to check if the mlss exist the reuse db ortherwise the goc for this mlss will be recalculated
-
-  if ($self->param('reuse_goc') ) {
+  #this variables name was change to 'goc_reuse_db' as it was getting mixed up with another variable. The old name was left here to make it compatible with older runs of the runnable.
+#  $self->param('goc_reuse_db') = $self->param('previous_rel_db')? $self->param('previous_rel_db') : $self->param('goc_reuse_db'); 
+  if ($self->param('previous_rel_db') ) {
     $self->param('previous_compara_dba' , Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('previous_rel_db')) );
     my $q = "SELECT mlss_id, prev_release_mlss_id FROM homology_id_mapping where mlss_id = $mlss_id limit 1";
     my $mlssID = $self->compara_dba->dbc->db_handle->selectrow_arrayref($q);
