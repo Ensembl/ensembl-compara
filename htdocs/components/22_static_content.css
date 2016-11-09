@@ -205,6 +205,6 @@ div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; cursor:
 div.gallery-preview img.disabled { opacity: 0.3; filter: alpha(opacity=30); } 
 p.preview-caption   { display:inline-block; margin: 8px 0; width: 620px; }
 div.popup-form      { z-index:1000; background-color:[[PAGE_BG]];
-                      position: relative; left:-50px; 
+                      position: relative; 
                       padding: 20px; border:1px solid [[PANEL_BORDER]]; }
 

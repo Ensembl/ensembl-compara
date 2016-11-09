@@ -25,7 +25,17 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
       function() {
         $(this).on({ mouseover: function () { $(this).addClass('zoom');    } });
         $(this).on({ mouseout:  function () { $(this).removeClass('zoom'); } });
-        $(this).on({ click:     function () { $(this).next().removeClass('hide'); } });
+        $(this).on({ click:     function () { 
+                                              // Reveal hidden div with form
+                                              var popup = $(this).next();
+                                              popup.removeClass('hide'); 
+                                              /* Move form to the right, because trying to
+                                              align it with static CSS is too much hassle! */
+                                              var offset = popup.width() - 225;
+                                              if (offset > 0) {
+                                                popup.css('right', offset+'px');
+                                              }
+                                            } });
       }
     );
 
