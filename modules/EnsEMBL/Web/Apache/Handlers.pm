@@ -376,7 +376,7 @@ sub handler {
   my $path_seg  = [ grep { $_ ne '' } split '/', $path ];
 
   # other species-like path segments
-  if (!$species && grep /$path_seg->[0]/, qw(Multi common)) {
+  if (!$species && grep $_ eq $path_seg->[0], qw(Multi common)) {
     $species = shift @$path_seg;
   }
 
