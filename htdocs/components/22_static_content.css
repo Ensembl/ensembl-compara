@@ -200,8 +200,11 @@ div.gallery-preview .page-preview { position: absolute; top: 4px; left: 620px; }
 div.gallery-preview .page-preview img { width:150px; height:100px; 
                       border: 1px solid [[PANEL_BORDER]]; 
                       z-index: 1; position: absolute; top: 0; left: 0; }
-div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; 
+div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; cursor: pointer;
                                               z-index:10; top: -50px; left: -75px; }
 div.gallery-preview img.disabled { opacity: 0.3; filter: alpha(opacity=30); } 
-p.preview-caption { display:inline-block; margin: 8px 0; width: 620px; }
+p.preview-caption   { display:inline-block; margin: 8px 0; width: 620px; }
+div.popup-form      { z-index:1000; background-color:[[PAGE_BG]];
+                      position: relative; left:-50px; 
+                      padding: 20px; border:1px solid [[PANEL_BORDER]]; }
 

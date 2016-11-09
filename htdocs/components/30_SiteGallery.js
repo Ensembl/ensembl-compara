@@ -19,18 +19,19 @@ Ensembl.Panel.SiteGallery = Ensembl.Panel.Content.extend({
   init: function () {
     this.base.apply(this, arguments);
 
-    this.fixMenu();
+    this.stickyMenu();
 
     this.el.find(".embiggen").each( 
       function() {
         $(this).on({ mouseover: function () { $(this).addClass('zoom');    } });
         $(this).on({ mouseout:  function () { $(this).removeClass('zoom'); } });
+        $(this).on({ click:     function () { $(this).next().removeClass('hide'); } });
       }
     );
 
   },
 
-  fixMenu: function() {
+  stickyMenu: function() {
     if (!this.elLk.menuBar) {
       this.elLk.menuBar = this.el.find('#gallery-toc');
     }
