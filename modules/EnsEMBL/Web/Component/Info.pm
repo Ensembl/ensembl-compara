@@ -152,7 +152,7 @@ sub format_gallery {
       my ($description, $img_disabled, $img_title, $next_action);
       my $action_class = '';
       my $link_class = '';
-      my $img_link;
+      my ($img_link, $multi_form);
 
       if ($page->{'disabled'}) {
         ## Disable views that are invalid for this feature
@@ -172,7 +172,7 @@ sub format_gallery {
         my $link_to = $page->{'link_to'};
         my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
 
-        my $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
+        $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
         while (my($k, $v) = each (%{$hub->core_params})) {
           $v ||= $link_to->{$k};
           if ($v) {
@@ -203,6 +203,10 @@ sub format_gallery {
       elsif ($img_link) {
         $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" class="embiggen" /></a>', 
                           $img_link, $link_class, $page->{'img'};
+      }
+      elsif ($multi_form) {
+        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a><div class="popup_form hide">%s</div>', 
+                          $page->{'img'}, $multi_form->render;
       }
       else {
         $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a>', 
