@@ -83,10 +83,10 @@ sub _get_pages {
 
   ## Get consequences of this variant
   my $rest = EnsEMBL::Web::REST->new($hub);
-  my $endpoint = sprintf '/vep/%s/id/%s', $hub->species, $v;
+  my $endpoint = sprintf 'vep/%s/id/%s', $hub->species, $v;
   my $vep_output = $rest->fetch($endpoint); 
   my $consequences = {};
-  unless (ref($vep_output) eq 'HASH' && $vep_output->{'error'}) {
+  if (ref($vep_output) eq 'ARRAY') {
     foreach (@$vep_output) {
       foreach my $c (@{$_->{'transcript_consequences'}||[]}) {
         (my $description = $c->{'consequence_terms'}[0]) =~ s/_/ /g;
@@ -162,7 +162,8 @@ sub _get_pages {
                             'values'  => [{'value' => '', 'caption' => '-- Select transcript --'}],
                             };
         while (my($id, $info) = each (%transcripts)) {
-          my $string = sprintf '%s (%s, consequence: %s)', $id, $info->{'biotype'}, $consequences->{$id};
+          my $string = sprintf '%s (%s%s)', $id, $info->{'biotype'}, 
+                          $consequences->{$id} ? ', consequences: '.$consequences->{$id} : '';
           push @{$multi_transcript->{'values'}}, {'value' => $id, 'caption' => $string};
         }
       }
