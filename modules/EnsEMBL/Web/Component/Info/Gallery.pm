@@ -96,7 +96,7 @@ sub format_gallery {
 
       my $label = $self->hub->param('default') ? 'label_1' : 'label_2';
 
-      my ($description, $img_disabled, $img_title, $next_action);
+      my ($img_disabled, $img_title, $next_action);
       my $action_class  = '';
       my $link_class    = '';
       my $title_class   = '';
@@ -116,12 +116,14 @@ sub format_gallery {
         my $multi_type = $page->{'multi'}{'type'};
         ## Disable links on views that can't be mapped to a single feature/location
         my $data_param  = $page->{'multi'}{'param'};
-        $description = sprintf('%s</p><p><b>This %s maps to multiple %s</b>', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
 
         my $link_to = $page->{'link_to'};
         my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
 
         $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
+        
+        my $header = sprintf('<p><b>This %s maps to multiple %s</b></p>', $data_type->{$type}{'term'}, lc($multi_type).'s');
+
         while (my($k, $v) = each (%{$hub->core_params})) {
           $v ||= $link_to->{$k};
           if ($v) {
@@ -129,16 +131,15 @@ sub format_gallery {
           }
         }
 
-        my $field          = $multi_form->add_field({
+        my $field = $multi_form->add_field({
                                         'type'    => 'Dropdown',
                                         'name'    => $data_param,
                                         'values'  => $page->{'multi'}{'values'},
                                         });
         $field->add_element({'type' => 'submit', 'value' => 'Show me'}, 1);
-        $next_action = $multi_form->render;
+        $next_action = $header.$multi_form->render;
       }
       else {
-        $description  = $page->{'caption'};
         $action_class = ' class = "button"';
         $next_action  = sprintf '<a href="%s">Show me</a>', $url;
         $img_link     = $url;
@@ -155,7 +156,7 @@ sub format_gallery {
       }
       elsif ($multi_form) {
         $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a><div class="popup_form hide">%s</div>', 
-                          $page->{'img'}, $multi_form->render;
+                          $page->{'img'}, $next_action;
       }
       else {
         $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a>', 
@@ -163,7 +164,7 @@ sub format_gallery {
       }
 
       $previews .= sprintf($entry_template, $image, $title_class, $_, 
-                            $description, $action_class, $next_action);
+                            $page->{'caption'}, $action_class, $next_action);
 
     }
 
