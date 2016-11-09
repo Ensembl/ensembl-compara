@@ -49,6 +49,7 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 sub pipeline_analyses_goc {
     my ($self) = @_;
     return [
+
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
             -flow_into => {
@@ -60,7 +61,7 @@ sub pipeline_analyses_goc {
         },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs_alt_NOV8',
             -flow_into  =>  {
                 2   =>  ['check_ortholog_neighbors'],
             },

@@ -93,7 +93,9 @@ sub default_options {
         #'rel_suffix'            => 'b',
 
         # names of species we don't want to reuse this time
-        'do_not_reuse_list'     => [ ],
+        'do_not_reuse_list'     => ['monodelphis_domestica', 'oreochromis_niloticus', 'ornithorhynchus_anatinus', 'lepisosteus_oculatus', 'anolis_carolinensis',
+        'astyanax_mexicanus', 'ficedula_albicollis' ,'canis_familiaris', 'dasypus_novemcinctus','mustela_putorius_furo', 'Ovis_aries', 'Papio_anubis', 'rattus_norvegicus',
+         ],
 
         # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
@@ -360,6 +362,7 @@ sub default_options {
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'reuse_goc'                     => undef,
+        'do_homology_id_mapping'                 => 1,
         # affects 'group_genomes_under_taxa'
 
     };
@@ -489,6 +492,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
         'reuse_goc'                     => $self->o('reuse_goc'),
+        'do_homology_id_mapping'                 => $self->o('do_homology_id_mapping'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
         'all_blast_params'          => $self->o('all_blast_params'),
 
@@ -3249,7 +3253,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => WHEN(
-                    '((#reuse_goc#) and (#prev_rel_db#))' => 'id_map_mlss_factory',
+                    '((#do_homology_id_mapping#) and (#prev_rel_db#))' => 'id_map_mlss_factory',
                 ),
                 'A->1' => ['goc_group_genomes_under_taxa'],
                 '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],

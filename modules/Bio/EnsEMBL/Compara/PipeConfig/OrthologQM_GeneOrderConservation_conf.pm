@@ -37,7 +37,7 @@ limitations under the License.
 
 
     Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -previous_rel_db <> -compara_db <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -prev_rel_db <> -compara_db <>
 
 =cut
 
@@ -71,7 +71,7 @@ sub default_options {
         'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
         'goc_threshold' => undef,
-        'previous_rel_db'  => undef,
+        'prev_rel_db'  => undef,
         'reuse_goc'     => undef,
         'goc_capacity'   => 300,
     };
@@ -84,7 +84,7 @@ sub pipeline_wide_parameters {
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
-        'previous_rel_db'  => $self->o('previous_rel_db'),
+        'prev_rel_db'  => $self->o('prev_rel_db'),
         'reuse_goc'     => $self->o('reuse_goc'),
         'goc_capacity'   => $self->o('goc_capacity'),
     };
@@ -107,13 +107,35 @@ sub pipeline_analyses {
         {   -logic_name => 'goc_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                1 => {
+                '1->A' => WHEN( '#reuse_goc#' => 'copy_prev_goc_score_table',
+                    ),
+                'A->1' => {
                     'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') }, 
                     },
             },
         },
 
+        {   -logic_name => 'copy_prev_goc_score_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#prev_rel_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'        => 'sed "s/CREATE TABLE #table#/CREATE TABLE prev_rel_goc_metrics/"',
+                'table'         => 'ortholog_goc_metric',
+            },
+            -flow_into  =>  ['copy_prev_gene_member_table'],
+        },
         
+        {   -logic_name => 'copy_prev_gene_member_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#prev_rel_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'        => 'sed "s/CREATE TABLE #table#/CREATE TABLE prev_rel_gene_member_table/"',
+                'table'         => 'gene_member',
+            },
+        },
+
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
     ];
 }
