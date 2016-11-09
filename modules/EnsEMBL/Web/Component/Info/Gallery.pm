@@ -155,7 +155,7 @@ sub format_gallery {
                           $img_link, $link_class, $page->{'img'};
       }
       elsif ($multi_form) {
-        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /></a><div class="popup_form hide">%s</div>', 
+        $image = sprintf '<img src="/i/gallery/%s.png" class="embiggen" /><div class="popup-form hide">%s</div>', 
                           $page->{'img'}, $next_action;
       }
       else {
