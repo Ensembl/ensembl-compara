@@ -73,9 +73,15 @@ sub fetch_input {
     my $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($mlss->url);
     my @chrom_list = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_seqs_in_genome( $hal_adaptor->hal_filehandle, $species_map->{ $genome_db->dbID } );
 
+    my $existing_synonyms = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID} || {};
+
     my @names;
     my $n_missing = 0;
     foreach my $chr_name (@chrom_list) {
+        if ($existing_synonyms->{$chr_name}) {
+            push @names, { 'name' => $existing_synonyms->{$chr_name}, 'synonym' => $chr_name } if $existing_synonyms->{$chr_name} ne $chr_name;
+            next;
+        }
         my $d = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_synonym($genome_db, $chr_name);
         if ($d) {
             push @names, { 'name' => $d->name, 'synonym' => $chr_name } if $d->name ne $chr_name;
