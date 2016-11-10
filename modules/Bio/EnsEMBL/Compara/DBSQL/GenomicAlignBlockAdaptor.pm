@@ -1289,7 +1289,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $min_ga_len  = $min_gab_len/4;
     # my ($min_gab_len, $min_ga_len) = (20, 5);
 
-    if ( $num_targets > 1 ){ # multiple sequence alignment
+    if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
       my %hal_species_map = reverse %species_map;
       my @hal_targets = map { $species_map{ $_->dbID } } @$targets_gdb;
       shift @hal_targets unless ( defined $hal_targets[0] );
