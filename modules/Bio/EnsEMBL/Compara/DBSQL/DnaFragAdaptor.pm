@@ -246,6 +246,14 @@ sub fetch_by_Slice {
 
 sub fetch_by_GenomeDB_and_synonym {
     my ($self, $genome_db, $synonym) = @_;
+
+    # To save a trip to the database
+    if (exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}
+            and exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym}) {
+        my $name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} || $synonym;
+        return $self->fetch_by_GenomeDB_and_name($genome_db, $name);
+    }
+
     my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor;
     my $slice = $slice_adaptor->fetch_by_region(undef, $synonym);
     if ( defined $slice ) {
@@ -253,8 +261,9 @@ sub fetch_by_GenomeDB_and_synonym {
         $d->{'_slice'} = $slice if $d;
         return $d;
     }
-    my $name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} || $synonym;
-    return $self->fetch_by_GenomeDB_and_name($genome_db, $name);
+
+    # We hope that the synonym is in fact the name we used for the DnaFrag
+    return $self->fetch_by_GenomeDB_and_name($genome_db, $synonym);
 }
 
 
