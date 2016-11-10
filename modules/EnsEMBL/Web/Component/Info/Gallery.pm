@@ -39,15 +39,11 @@ our $data_type = {
                                   'label_2' => 'or choose another Variant',
                                   },
                   'Location'  => {'param'   => 'r',
-                                  'term'    => 'location',
+                                  'term'    => 'region',
                                   'label_1' => 'Choose Coordinates',
                                   'label_2' => 'or choose different coordinates'
                                   },
                   };
-
-our $header_info = { 
-  'Variation' => {'param' => 'v', 'term' => 'variant'},
-};
 
 sub format_gallery {
   my ($self, $type, $layout, $all_pages) = @_; 
@@ -105,7 +101,7 @@ sub format_gallery {
       if ($page->{'disabled'}) {
         ## Disable views that are invalid for this feature
         $img_disabled = 1;
-        $next_action = sprintf 'Sorry, this view is not available for this %s', lc($header_info->{$type}{'term'});
+        $next_action = sprintf 'Sorry, this view is not available for this %s', lc($data_type->{$type}{'term'});
         if ($page->{'message'}) {
           $next_action .= ': '.$page->{'message'};
         }
@@ -198,18 +194,37 @@ sub gene_name {
 sub _sub_header {
   my ($self, $title) = @_;
   my $hub  = $self->hub;
-  my $html;
 
-  my $text  = ($hub->param('default') && $hub->param('default') eq 'yes') 
-                ? 'example' : 'your chosen';
   my $type  = $hub->param('data_type');
-  my $param = $hub->param($header_info->{$type}{'param'});
-  my $term  = $header_info->{$type}{'term'};
+  my $param = $data_type->{$type}{'param'};
+  my $value = $hub->param($param);
+  warn ">>> PARAM $param = $value";
+  my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
 
-  $html .= sprintf('<h2 id="%s" class="space-above">%s for %s %s: %s</h2>', lc($title), $title,
-                                                          $text, $term, $param);
+  my $form  = $self->new_form({'id' => lc($title), 'method' => 'get'});
 
-  return $html;
+  $form->add_hidden({
+                    'name'  => 'data_type',
+                    'value' => $type,
+                    });
+
+  $form->add_field({
+                    'inline'    => 1,
+                    'label'     => $label,
+                    'elements'  => [
+                          {
+                            'type'    => 'String',
+                            'name'  => $param,
+                            'value' => $value,
+                            },
+                           {
+                            'type'  => 'Submit',
+                            'value' => 'Update',
+                            },
+                      ],
+                    });
+
+  return $form->render;
 }
 
 
