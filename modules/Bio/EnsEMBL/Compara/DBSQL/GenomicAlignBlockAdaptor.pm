@@ -1253,17 +1253,22 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
     unless (defined $mlss->{'_hal_species_name_mapping'}) {
       my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
-      unless ( defined $map_tag ) {
+      if ($map_tag) {
+        Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($mlss);
+      } else {
         # check if there is an alternate mlss mapping to use
         my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss');
         if ( defined $alt_mlss_id ) {
-            $map_tag = $mlss->adaptor->fetch_by_dbID($alt_mlss_id)->get_value_for_tag('HAL_mapping');
+            my $alt_mlss = $mlss->adaptor->fetch_by_dbID($alt_mlss_id);
+            $map_tag = $alt_mlss->get_value_for_tag('HAL_mapping');
+            Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($alt_mlss);
         } else {
             my $msg = "Please define a mapping between genome_db_id and the species names from the HAL file. Example SQL:\n\n";
             $msg .= "INSERT INTO method_link_species_set_tag VALUES (<mlss_id>, \"HAL_mapping\", '{ 1 => \"hal_species1\", 22 => \"hal_species7\" }')\n\n";
             die $msg;
         }
       }
+
       my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
       ### HACK e86 ###
       $species_map->{174} = 'SPRET_EiJ';
@@ -1285,7 +1290,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file);
     }
     my $hal_fh = $mlss->{'_hal_adaptor'}->hal_filehandle;
-    my $hal_seq_reg = $self->_hal_name_for_dnafrag($dnafrag, $mlss);
+    my $hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id }->{ $dnafrag->name } || $dnafrag->name;
 
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
@@ -1443,7 +1448,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
           my @blocks;
           if ( $target_dnafrag ){
-              my $t_hal_seq_reg = $self->_hal_name_for_dnafrag($target_dnafrag, $mlss);
+              my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
               @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
           }
           else {
@@ -1618,42 +1623,6 @@ sub _split_genomic_aligns {
     }
 
     return \@split_blocks;
-}
-
-sub _hal_name_for_dnafrag {
-    my ( $self, $dnafrag, $mlss ) = @_;
-
-    my $genome_db_id = $dnafrag->genome_db_id;
-    my $seq_reg = $dnafrag->name;
-
-    if (exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}
-        and exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}->{$seq_reg}) {
-        return $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{$genome_db_id}->{$seq_reg} || $seq_reg;
-    }
-
-    # first check if there are overriding synonyms in the mlss_tag table
-    my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
-    if ( defined $alt_syn_tag ) {
-        my %alt_synonyms = %{ eval $alt_syn_tag };
-        return $alt_synonyms{$genome_db_id}->{$seq_reg} if ( defined $alt_synonyms{$genome_db_id}->{$seq_reg} );
-    }
-
-    # next, check if an alt_hal_mlss has been defined
-    my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss');
-    if ( defined $alt_mlss_id ) {
-        $alt_syn_tag = $mlss->adaptor->fetch_by_dbID($alt_mlss_id)->get_value_for_tag('alt_synonyms');
-        my %alt_synonyms = %{ eval $alt_syn_tag };
-        return $alt_synonyms{$genome_db_id}->{$seq_reg} if ( defined $alt_synonyms{$genome_db_id}->{$seq_reg} );
-    }
-
-    my @external_dbs = ( 'UCSC', 'GenBank', 'INSDC' );
-
-    my @syns;
-    for my $ex_db ( @external_dbs ){
-        @syns = @{ $dnafrag->slice->get_all_synonyms($ex_db) };
-        return $syns[0]->name if ( defined $syns[0] );
-    }
-    return $seq_reg;
 }
 
 

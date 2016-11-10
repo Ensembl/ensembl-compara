@@ -1077,4 +1077,23 @@ our $e2u_mappings = {
     155 => {reverse %$u2e_mapping_rat},
 };
 
+sub load_mapping_from_mlss {
+    my ($mlss) = @_;
+
+    return if $mlss->{'_chromosome_mapping_loaded'};
+
+    my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
+    my $alt_synonyms = eval $alt_syn_tag;
+    foreach my $genome_db_id (keys %$alt_synonyms) {
+        $e2u_mappings->{$genome_db_id} = {} unless exists $e2u_mappings->{$genome_db_id};
+        $u2e_mappings->{$genome_db_id} = {} unless exists $u2e_mappings->{$genome_db_id};
+        foreach my $dnafrag_name (keys %{$alt_synonyms->{$genome_db_id}}) {
+            my $alt_name = $alt_synonyms->{$genome_db_id}->{$dnafrag_name};
+            $e2u_mappings->{$genome_db_id}->{ $dnafrag_name } = $alt_name;
+            $u2e_mappings->{$genome_db_id}->{ $alt_name } = $dnafrag_name;
+        }
+    }
+    $mlss->{'_chromosome_mapping_loaded'} = 1;
+}
+
 1;
