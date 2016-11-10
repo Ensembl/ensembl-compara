@@ -63,7 +63,8 @@ sub import {
 
     # We don't want to plugin any of the packages that don't start
     # with EnsEMBL::Web::, EnsEMBL::Draw or Bio::
-    return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/'
+    return unless substr($filename, 0, 12) eq 'ORM/EnsEMBL/'
+                    || substr($filename, 0, 12) eq 'EnsEMBL/Web/'
                     || substr($filename, 0, 13) eq 'EnsEMBL/Draw/'
                     || substr($filename, 0, 4) eq 'Bio/'
                     || substr($filename, 0, 7) eq 'Preload'
