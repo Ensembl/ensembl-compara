@@ -337,7 +337,7 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
 }
 
 // pass querySpecies as a comma-seperated string
-void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd) {
+void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGaps) {
     //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
 
     //printf("%s\n", "MSA 1");
@@ -417,7 +417,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     size_t size;
     FILE *stream = open_memstream (&bp, &size);
     // print MAF to buffer
-    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, 0, &errStr );
+    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGaps, 0, &errStr );
     fclose (stream);
 
     // Inline::C stuff: Build a return array with the maf output

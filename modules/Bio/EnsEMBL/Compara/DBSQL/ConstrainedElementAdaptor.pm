@@ -185,6 +185,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             
             my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
             my $dnafrag = $dnafrag_adp->fetch_by_Slice($this_slice);
+            next unless $dnafrag; # Some contigs may not be mapped to any top-level regions
             my $sql = qq{
 		WHERE
 		method_link_species_set_id = ?

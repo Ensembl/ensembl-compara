@@ -1246,12 +1246,14 @@ sub _load_DnaFrags {
 sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
+    my $max_ref_gaps = 50;
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
 
-    my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
-    unless ( defined $map_tag ) {
+    unless (defined $mlss->{'_hal_species_name_mapping'}) {
+      my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
+      unless ( defined $map_tag ) {
         # check if there is an alternate mlss mapping to use
         my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss');
         if ( defined $alt_mlss_id ) {
@@ -1261,16 +1263,20 @@ sub _get_GenomicAlignBlocks_from_HAL {
             $msg .= "INSERT INTO method_link_species_set_tag VALUES (<mlss_id>, \"HAL_mapping\", '{ 1 => \"hal_species1\", 22 => \"hal_species7\" }')\n\n";
             die $msg;
         }
+      }
+      my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
+      ### HACK e86 ###
+      $species_map->{174} = 'SPRET_EiJ';
+      ################
+      my %hal_species_map = reverse %$species_map;
+      $mlss->{'_hal_species_name_mapping'} = $species_map;
+      $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
     }
 
     require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
 
-    my %species_map = %{ eval $map_tag }; # read species name mapping hash from mlss_tag
-    my $ref = $species_map{ $ref_gdb->dbID };
+    my $ref = $mlss->{'_hal_species_name_mapping'}->{ $ref_gdb->dbID };
 
-    ### HACK e86 ###
-    $species_map{174} = 'SPRET_EiJ';
-    ################
 
     unless ($mlss->{'_hal_adaptor'}) {
         my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
@@ -1284,14 +1290,17 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
     my ($gab_id_count, $ga_id_count)  = (0, 0);
-    my ($min_gab_len, $min_ga_len)    = (20, 5);
+    my $min_gab_len = int(abs($end-$start)/1000);
+    my $min_ga_len  = $min_gab_len/4;
+    # my ($min_gab_len, $min_ga_len) = (20, 5);
 
-    if ( $num_targets > 1 ){ # multiple sequence alignment
-      my %hal_species_map = reverse %species_map;
-      my @hal_targets = map { $species_map{ $_->dbID } } @$targets_gdb;
+    if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
+      my @hal_targets = map { $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @$targets_gdb;
       shift @hal_targets unless ( defined $hal_targets[0] );
       my $targets_str = join(',', @hal_targets);
-      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end );
+      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gaps );
+
+      # Experimental - please keep
       # my $maf_file_str = encode("utf8", $maf_file);
       # print "$maf_file_str\n\n";
 
@@ -1340,7 +1349,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
-          my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $hal_species_map{$species_id} );
+          my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($this_gdb, $chr);
           unless ( defined $this_dnafrag ) {
             next;
@@ -1422,7 +1431,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
       foreach my $target_gdb (@$targets_gdb) {
           my $nonref_slice_adaptor = $target_gdb->db_adaptor->get_SliceAdaptor;
-          my $target = $species_map{ $target_gdb->dbID };
+          my $target = $mlss->{'_hal_species_name_mapping'}->{ $target_gdb->dbID };
 
           # print "hal_file is $hal_file\n";
           # print "ref is $ref\n";
