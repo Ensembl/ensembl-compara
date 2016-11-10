@@ -71,7 +71,6 @@ use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
@@ -247,24 +246,13 @@ sub fetch_by_Slice {
 sub fetch_by_GenomeDB_and_synonym {
     my ($self, $genome_db, $synonym) = @_;
 
-    $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID} = {} unless exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID};
-
-    # To save a trip to the database
-    if (exists $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym}) {
-        my $name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} || $synonym;
-        return $self->fetch_by_GenomeDB_and_name($genome_db, $name);
-    }
-
     my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor;
     my $slice = $slice_adaptor->fetch_by_region(undef, $synonym);
     if ( defined $slice ) {
-        # Record the synonym to speed up further calls
-        $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} = $slice->seq_region_name;
         my $d = $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
         $d->{'_slice'} = $slice if $d;
         return $d;
     }
-    $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID}->{$synonym} = undef;
 
     # We hope that the synonym is in fact the name we used for the DnaFrag
     return $self->fetch_by_GenomeDB_and_name($genome_db, $synonym);

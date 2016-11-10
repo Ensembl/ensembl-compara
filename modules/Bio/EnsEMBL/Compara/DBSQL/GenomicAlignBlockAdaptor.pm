@@ -1355,7 +1355,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # find dnafrag for the region
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
-          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($this_gdb, $chr);
+          my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID }->{$chr} || $chr;
+          my $this_dnafrag = $self->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
           unless ( defined $this_dnafrag ) {
             next;
           }
@@ -1473,7 +1474,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
-              my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_synonym($target_gdb, @$entry[0]);
+              my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $target_gdb->dbID }->{ @$entry[0] } || @$entry[0];
+              my $target_dnafrag = $self->fetch_by_GenomeDB_and_name($target_gdb, $df_name);
               next unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
