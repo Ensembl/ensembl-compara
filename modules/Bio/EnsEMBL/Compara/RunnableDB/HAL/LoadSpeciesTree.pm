@@ -21,11 +21,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::HAL::SpeciesTree
+Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree
 
 =cut
 
-package Bio::EnsEMBL::Compara::HAL::SpeciesTree;
+package Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree;
 
 use strict;
 use warnings;
