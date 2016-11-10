@@ -133,7 +133,7 @@ sub copy_data_with_foreign_keys_by_constraint {
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
     die "A table name must be given" unless $table_name;
-    my $fk_rules = _load_foreign_keys($from_dbc, $to_dbc, $foreign_keys_dbc);
+    my $fk_rules = _load_foreign_keys($foreign_keys_dbc, $to_dbc, $from_dbc);
     _memoized_insert($from_dbc, $to_dbc, $table_name, $where_field, $where_value, $fk_rules, $expand_tables);
 }
 
