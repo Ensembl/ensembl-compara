@@ -74,13 +74,20 @@ sub fetch_input {
     my @chrom_list = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_seqs_in_genome( $hal_adaptor->hal_filehandle, $species_map->{ $genome_db->dbID } );
 
     my @names;
+    my $n_missing = 0;
     foreach my $chr_name (@chrom_list) {
         my $d = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_synonym($genome_db, $chr_name);
         if ($d) {
-            push @names, { 'name' => $d->name, 'synonym' => $chr_name };
+            push @names, { 'name' => $d->name, 'synonym' => $chr_name } if $d->name ne $chr_name;
         } else {
-            die "Cannot find a DnaFrag for '$chr_name'\n";
+            $n_missing++;
+            $self->warning("Cannot find a DnaFrag for '$chr_name'\n");
         }
+    }
+
+    # We don't have the MT chromosome, so we allow 1 missing DnaFrag
+    if ($n_missing > 1) {
+        die "Too many DnaFrags could not be found !";
     }
 
     $self->dataflow_output_id(\@names, 2);
