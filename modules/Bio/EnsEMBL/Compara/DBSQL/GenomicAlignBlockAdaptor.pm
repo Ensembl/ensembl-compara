@@ -1247,6 +1247,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
     my $max_ref_gaps = 50;
+    my ( $dnafrag_found, $dnafrag_not_found ) = ( 0, 0 );
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
@@ -1340,10 +1341,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # find dnafrag for the region
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
+
           my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID }->{$chr} || $chr;
-          my $this_dnafrag = $self->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
-          unless ( defined $this_dnafrag ) {
+          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
+          if ( !defined $this_dnafrag ) {
+            $dnafrag_not_found++;
+            print $this_gdb->name . ", $df_name\n";
             next;
+          } else {
+            $dnafrag_found++;
           }
           # when fetching by slice, input slice will be set as $dnafrag->slice, complete with start and end positions
           # this can mess up subslicing down the line - reset it and it will be pulled fresh from the db
@@ -1454,7 +1460,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
   		        my $target_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($target_aln_seq);
 
               my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $target_gdb->dbID }->{ @$entry[0] } || @$entry[0];
-              my $target_dnafrag = $self->fetch_by_GenomeDB_and_name($target_gdb, $df_name);
+              my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $df_name);
               next unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
@@ -1508,6 +1514,9 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
     }
+
+    print " !! $dnafrag_not_found dnafrags not found ($dnafrag_found found)\n";
+    print " !! Found " . scalar(@gabs) . " blocks\n\n";
 
     return \@gabs;
 }
