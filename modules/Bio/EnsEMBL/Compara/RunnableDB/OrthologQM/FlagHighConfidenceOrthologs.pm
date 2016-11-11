@@ -136,7 +136,7 @@ sub write_output {
         $self->_write_distribution($mlss, 'goc', $thresholds->[0], $sql_goc_distribution);
     }
     if ($high_confidence_condition =~ /wga_coverage/) {
-        my $sql_wga_distribution = "SELECT FLOOR(wga_coverage/25)*25, COUNT(*) FROM homology WHERE $homology_filter GROUP BY FLOOR(wga_coverage)";
+        my $sql_wga_distribution = "SELECT FLOOR(wga_coverage/25)*25, COUNT(*) FROM homology WHERE $homology_filter GROUP BY FLOOR(wga_coverage/25)";
         $self->_write_distribution($mlss, 'wga', $thresholds->[1], $sql_wga_distribution);
     }
 }
