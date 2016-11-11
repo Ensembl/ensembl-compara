@@ -115,6 +115,9 @@ sub feature_content {
         if ($extra->{'value'} =~ /<a href/) {
           $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
         }
+        elsif ($extra->{'name'} =~ /^url$/i) {
+          $self->add_entry({'type' => 'Link', 'label_html' => sprintf('<a href="%s">%s</a>', $extra->{'value'}, $extra->{'value'})});
+        }
         else {
           $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
         }
