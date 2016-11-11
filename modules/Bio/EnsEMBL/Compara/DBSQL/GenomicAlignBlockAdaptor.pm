@@ -1278,7 +1278,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
     }
 
-    require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
+    require Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
 
     my $ref = $mlss->{'_hal_species_name_mapping'}->{ $ref_gdb->dbID };
 
@@ -1287,10 +1287,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
         throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
 
-        $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($hal_file);
+        $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
     }
-    my $hal_fh = $mlss->{'_hal_adaptor'}->hal_filehandle;
+    my $hal_adaptor = $mlss->{'_hal_adaptor'};
+    my $hal_fh = $hal_adaptor->hal_filehandle;
     my $hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id }->{ $dnafrag->name } || $dnafrag->name;
+
 
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
@@ -1303,26 +1305,9 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my @hal_targets = map { $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @$targets_gdb;
       shift @hal_targets unless ( defined $hal_targets[0] );
       my $targets_str = join(',', @hal_targets);
-      my $maf_file_str = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gaps );
 
-      # Experimental - please keep
-      # my $maf_file_str = encode("utf8", $maf_file);
-      # print "$maf_file_str\n\n";
-
-      # \cJ is a special control character synonymous to \n - remove it
-      # to prevent unintended newlines
-      # $maf_file_str =~ s/[^A-Za-z0-9_.+-]//g;
-
-      #my $maf_info = $self->_parse_maf( $maf_file_str );
-      #exit;
-
-      # $string =~ s/(.)/sprintf("%x",ord($1))/eg;
-      # print $string;
-      # print "\n\n";
-
-      # open(OUT, '>', "mmus.copy.maf");
-      # print OUT $maf_file_str;
-      # close OUT;
+      my $max_ref_gap = 50;
+      my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 
       unless ( $maf_file_str =~ m/[A-Za-z]/ ){
         print "MAF is empty!!\n";
@@ -1447,16 +1432,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "start is $start\n";
           # print "end is $end\n";
 
-          my @blocks;
-          if ( $target_dnafrag ){
-              my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
-              @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
-          }
-          else {
-              @blocks = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
-          }
+          my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
+          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
           
-          foreach my $entry (@blocks) {
+          foreach my $entry (@$blocks) {
   	        if (defined $entry) {
               next if (@$entry[3] < $min_gab_len ); # skip blocks shorter than 20bp
 
