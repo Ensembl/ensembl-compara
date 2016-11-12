@@ -400,7 +400,7 @@ sub toString {
 sub print_homology {    ## DEPRECATED
   my $self = shift;
   
-  deprecate('$homology->print_homology() is deprecated and will be removed in e86. Use $homology->toString() instead.');
+  deprecate('$homology->print_homology() is deprecated and will be removed in e88. Use $homology->toString() instead.');
   printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->taxonomy_level);
   foreach my $member (@{$self->gene_list}) {
     printf("%s(%d)\t", $member->stable_id, $member->dbID);

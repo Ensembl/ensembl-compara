@@ -621,7 +621,7 @@ sub _reverse_score {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$conservation_score->_print() is deprecated and will be removed in e86. Use $conservation_score->toString() instead.');
+  deprecate('$conservation_score->_print() is deprecated and will be removed in e88. Use $conservation_score->toString() instead.');
 
 #  my $verbose = verbose;
 #  verbose(0);

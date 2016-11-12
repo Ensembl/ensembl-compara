@@ -1475,7 +1475,7 @@ sub get_GenomicAlignTree {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e86. Use $genomic_align_block->toString() instead.');
+  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e88. Use $genomic_align_block->toString() instead.');
 
   $FILEH ||= \*STDOUT;
   print $FILEH

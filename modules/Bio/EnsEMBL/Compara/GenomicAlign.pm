@@ -1044,7 +1044,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align->_print() is deprecated and will be removed in e86. Use $genomic_align->toString() instead.');
+  deprecate('$genomic_align->_print() is deprecated and will be removed in e88. Use $genomic_align->toString() instead.');
 
   my $verbose = verbose;
   verbose(0);

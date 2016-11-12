@@ -1,6 +1,6 @@
 # Deprecated methods scheduled for deletion
 
-## Methods removed in favour of toString() in Ensembl 86
+## Methods removed in favour of toString() in Ensembl 88
 
 * `Member::print_member()`
 * `Homology::print_homology()`
