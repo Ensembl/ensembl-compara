@@ -81,7 +81,7 @@ subtest "Test fetch methods", sub {
           LEFT JOIN genome_db gdb on (m2.genome_db_id = gdb.genome_db_id)
         WHERE hm1.member_id = ".$member->dbID." and gdb.name = 'Rattus norvegicus'");
 
-    my $homology = $ha->fetch_all_by_Member_paired_species($member,"Rattus norvegicus")->[0];
+    my $homology = $ha->fetch_all_by_Member($member, -TARGET_SPECIES=>"Rattus norvegicus")->[0];
     
     ok( $homology );
     ok( $homology->dbID, $homology_id );

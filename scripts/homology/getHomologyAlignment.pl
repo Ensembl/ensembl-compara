@@ -78,7 +78,7 @@ my $member;
 $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($self->{'gene_stable_id'});
 #print $member->toString(), "\n" if($member);
 
-my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Member_paired_species($member, $self->{'species'})};
+my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Member($member, -TARGET_SPECIES => $self->{'species'})};
 #print $homology->toString(), "\n" if($homology);
 
 my $queryMA;

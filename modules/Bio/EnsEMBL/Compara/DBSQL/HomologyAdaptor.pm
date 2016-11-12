@@ -196,23 +196,6 @@ sub _find_target_mlsss {
 
 }
 
-=head2 fetch_all_by_Member_paired_species
-
-  Description: DEPRECATED: Will be removed in e86. Use $self->fetch_all_by_Member($member, -TARGET_SPECIES => $species) instead (possibly with -METHOD_LINK_TYPE)
-
-=cut
-
-sub fetch_all_by_Member_paired_species {  ## DEPRECATED
-  my ($self, $member, $species, $method_link_types) = @_;
-
-  deprecate("fetch_all_by_Member_paired_species() is deprecated and will be removed in e86. Use fetch_all_by_Member(\$member, -TARGET_SPECIES => \$species) instead (possibly with -METHOD_LINK_TYPE)");
-
-  my $target_gdbs = $self->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [$species]);
-  my $target_mlss = $self->_find_target_mlsss($member->genome_db, $target_gdbs, $method_link_types);
-
-  return $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $target_mlss);
-}
-
 
 =head2 fetch_by_Member_Member
 
@@ -324,33 +307,6 @@ sub fetch_all_by_tree_node_id {
   $self->bind_param_generic_fetch($tree_node_id, SQL_INTEGER);
 
   return $self->generic_fetch($constraint);
-}
-
-
-
-=head2 fetch_all_by_genome_pair
-
-  Description: DEPRECATED: Will be removed in e86. Use fetch_all_by_MethodLinkSpeciesSet() with the explicit MethodLinkSpeciesSet object that describes the homologies you want to retrieve
-
-=cut
-
-sub fetch_all_by_genome_pair {  ## DEPRECATED
-    my ($self, $genome_db_id1, $genome_db_id2) = @_;
-
-    deprecate("fetch_all_by_genome_pair() is deprecated and will be removed in e86. Use fetch_all_by_MethodLinkSpeciesSet() with the explicit MethodLinkSpeciesSet object that describes the homologies you want to retrieve");
-    my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-    my @all_mlss;
-    if ($genome_db_id1 == $genome_db_id2) {
-        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1]);
-        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
-    } else {
-        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
-        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1, $genome_db_id2]);
-    }
-
-    my $constraint = "h.method_link_species_set_id IN (". join (",", (map {$_ ? $_->dbID : -1} @all_mlss)) . ")";
-
-    return $self->generic_fetch($constraint);
 }
 
 
