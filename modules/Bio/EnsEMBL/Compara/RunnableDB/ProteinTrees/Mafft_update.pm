@@ -52,7 +52,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::MemberSet;
+
 use base ( 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA' );
 
 sub param_defaults {
@@ -114,8 +118,6 @@ sub get_msa_command_line {
     #--------------------------------------------------------------------------------------------------------------
     my $new_seq_file = $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . "_new_seq.fasta";
 
-    my $new_seq = Bio::SeqIO->new( -file => ">" . $new_seq_file, -format => 'fasta' );
-
     my %members_2_b_updated;
     my %members_2_b_added;
     if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
@@ -129,13 +131,14 @@ sub get_msa_command_line {
 	@members_2_b_updated{keys %members_2_b_added} = values %members_2_b_added;
 
 	print "members to update:\n" if ( $self->debug );
+    my @members_to_print;
     foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
         my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
         my $seq_member = $seq_member_adaptor->fetch_by_stable_id($updated_member_stable_id);
         print "$updated_member_stable_id|".$seq_member->seq_member_id."|".$seq_member->sequence_id."\n" if ( $self->debug );
-        my $bioseq = $seq_member->bioseq(-ID_TYPE => 'SEQUENCE_ID');
-        $new_seq->write_seq($bioseq);
+        push @members_to_print, $seq_member;
     }
+    Bio::EnsEMBL::Compara::MemberSet->new(-MEMBERS => \@members_to_print)->print_sequences_to_file($new_seq_file, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE_ID');
 
 
     #--------------------------------------------------------------------------------------------------------------
