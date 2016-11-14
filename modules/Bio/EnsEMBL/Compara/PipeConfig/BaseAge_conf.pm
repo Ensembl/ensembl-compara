@@ -75,6 +75,8 @@ sub default_options {
             'anc_name'   => 'ancestral_sequences',
             #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
             'anc_dbname' => 'cc21_mammals_ancestral_core_86',
+            'anc_user'  => 'ensro',
+            'anc_port'  => 3306,
 
             #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara1',
@@ -200,6 +202,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
             -parameters => {
                 'anc_host'      => $self->o('anc_host'),
+                'anc_port'      => $self->o('anc_port'),
+                'anc_user'      => $self->o('anc_user'),
                 'anc_dbname'    => $self->o('anc_dbname'),
                            },
             #                -input_ids => [ { } ],
