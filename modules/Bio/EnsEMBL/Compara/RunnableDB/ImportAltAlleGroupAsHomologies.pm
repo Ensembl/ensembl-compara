@@ -45,6 +45,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
+use Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -54,7 +55,6 @@ sub param_defaults {
         'dry_run'       => 0,
         'method_type'   => 'ENSEMBL_PROJECTIONS',
         'mafft_exe'     => '/bin/mafft',
-        'tag_split_genes' => 0,
     };
 }
 
@@ -74,6 +74,8 @@ sub fetch_input {
     $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
 
     $self->param('mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->param('method_type'), [$self->param('genome_db')]));
+
+    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers::_load_biotype_groups($self, $self->param_required('production_db_url'));
 }
 
 
@@ -88,7 +90,8 @@ sub fetch_or_store_gene {
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member ", $gene_member->toString(), "\n";}
     } else {
-        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'), -biotype_group => 'lnoncoding'); # hardcoded until this runnable has access to the production db
+        my $biotype_group = $self->param('biotype_groups')->{$gene->biotype};
+        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'), -biotype_group => $biotype_group);
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         if ($self->debug) {print "NEW: $gene_member ", $gene_member->toString(), "\n";}
     }

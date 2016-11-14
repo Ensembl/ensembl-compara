@@ -532,16 +532,4 @@ sub _protein_description {
 }
 
 
-sub _load_biotype_groups {
-    my ($self, $production_db_url) = @_;
-
-    my $gene_biotype_sql = q{SELECT name, biotype_group FROM biotype WHERE is_current=1 AND is_dumped = 1 AND object_type = "gene" AND FIND_IN_SET('core', db_type)};
-
-    my $production_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $production_db_url);
-    my %biotype_groups = map {$_->[0] => $_->[1]} @{ $production_dbc->db_handle->selectall_arrayref($gene_biotype_sql) };
-    $self->param('biotype_groups', \%biotype_groups);
-    $production_dbc->disconnect_if_idle();
-}
-
-
 1;

@@ -199,11 +199,12 @@ sub store_ncrna_gene {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
+            my $biotype_group = $self->param('biotype_groups')->{$gene->biotype};
             $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
                                                                             -dnafrag => $dnafrag,
                                                                             -genome_db => $self->param('genome_db'),
-                                                                            -biotype_group => 'snoncoding', # hardcoded until this runnable has access to the production db
+                                                                            -biotype_group => $biotype_group,
                                                                            );
             print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
 
@@ -283,6 +284,17 @@ sub _ncrna_description {
                       " Acc:"       . $acc;
     print STDERR " Description... $description\n" if ($self->debug);
     return $description;
+}
+
+sub _load_biotype_groups {
+    my ($self, $production_db_url) = @_;
+
+    my $gene_biotype_sql = q{SELECT name, biotype_group FROM biotype WHERE is_current=1 AND is_dumped = 1 AND object_type = "gene" AND FIND_IN_SET('core', db_type)};
+
+    my $production_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $production_db_url);
+    my %biotype_groups = map {$_->[0] => $_->[1]} @{ $production_dbc->db_handle->selectall_arrayref($gene_biotype_sql) };
+    $self->param('biotype_groups', \%biotype_groups);
+    $production_dbc->disconnect_if_idle();
 }
 
 1;
