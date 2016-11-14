@@ -51,8 +51,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
