@@ -35,7 +35,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object || $self->hub->core_object('regulation'); 
-  my $Configs;
+  my ($html, $Configs);
 
   my $context      = $self->param( 'context' ) || 200; 
   my $object_slice = $object->get_bound_context_slice($context);
@@ -49,24 +49,40 @@ sub content {
     'opt_highlight'     => $self->param('opt_highlight') || 0,
   });
 
-  my $focus_set_blocks = $object->get_focus_set_block_features($object_slice, $self->param('opt_focus'));
-  if ($focus_set_blocks ) {
-    $wuc->{'focus'}->{'data'}->{'block_features'} = $focus_set_blocks;
-  }
-
-  if ($self->param('opt_focus') eq 'yes'){ 
-    my ($focus_set_blocks, $colours) = $object->get_focus_set_block_features($object_slice);
-    $wuc->{'data_by_cell_line'}{'MultiCell'}{'core'}{'block_features'} = $focus_set_blocks;
-    $wuc->{'data_by_cell_line'}{'colours'} = $colours; 
-  }
-
   my $image    = $self->new_image( $object_slice, $wuc,[$object->stable_id] );
       $image->imagemap           = 'yes';
       $image->{'panel_number'} = 'top';
       $image->set_button( 'drag', 'title' => 'Drag to select region' );
   return if $self->_export_image( $image );
 
-  return $image->render;
+  $html .= $image->render;
+
+  ## Now that we have so many cell lines, it's quicker to show activity in a table
+  $html .= '<h3>Epigenomic activity</h3>';
+  my $table = $self->new_table;
+  my @rows;
+
+  $table->add_columns(
+                      {'key' => 'epigenome',  'title' => 'Epigenome', 'width' => '50%'},
+                      {'key' => 'activity',   'title' => 'Activity',  'width' => '50%'},
+                      );
+
+  foreach (@{$object->all_epigenomes}) {
+    my ($name, $id) = split(':', $_);
+    push @rows, {
+                'epigenome' => $name,
+                'activity'  => $object->activity($name) || '-',
+                };
+  }
+
+  if (scalar @rows) {
+    $table->add_rows(@rows);
+    $html .= $table->render;
+  }
+  else {
+    $html .= '<p>No epigenomic data available for this feature.</p>';
+  }
+  return $html;
 }
 
 1;
