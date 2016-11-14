@@ -106,7 +106,6 @@ sub default_options {
         'mafft_threads'           => 8,
         'lomafft_gigs'            => 4,
         'himafft_gigs'            => 64,
-        'dbresource'              => 'my' . $self->o('host'),    # will work for compara1..compara5, but will have to be set manually otherwise
         'blast_capacity'          => 5000,                       # work both as hive_capacity and resource-level throttle
         'mafft_capacity'          => 400,
         'cons_capacity'           => 100,

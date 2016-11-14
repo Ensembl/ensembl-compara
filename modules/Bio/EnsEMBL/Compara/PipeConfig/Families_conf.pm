@@ -170,6 +170,8 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
+        # Note that these descriptions include "database tokens" which are only provided by Sanger Systems
+
         'urgent'       => { 'LSF' => '-q yesterday' },
         'RegBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').'000 -q normal -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 360' ]  },
         'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
