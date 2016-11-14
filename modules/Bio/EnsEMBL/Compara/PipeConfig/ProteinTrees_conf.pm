@@ -1149,6 +1149,7 @@ sub core_pipeline_analyses {
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
                 'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
+                'production_db_url'             => $self->o('production_db_url'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '4Gb_job',

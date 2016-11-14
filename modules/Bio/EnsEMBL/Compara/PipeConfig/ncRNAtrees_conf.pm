@@ -338,6 +338,9 @@ sub pipeline_analyses {
 
         {   -logic_name        => 'load_members',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
+            -parameters        => {
+                'production_db_url' => $self->o('production_db_url'),
+            },
             -analysis_capacity => 10,
             -rc_name           => '1Gb_job',
             -flow_into         => [ 'hc_members_per_genome' ],

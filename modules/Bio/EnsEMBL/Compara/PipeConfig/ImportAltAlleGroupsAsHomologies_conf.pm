@@ -47,6 +47,9 @@ sub default_options {
 
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
+        # Production database (for the biotypes)
+        'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
+
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
         'update_capacity'                           => '5',
@@ -121,6 +124,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
             -parameters => {
                 'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
+                'production_db_url' => $self->o('production_db_url'),
             },
              -flow_into => {
                            -1 => [ 'import_altalleles_as_homologies_himem' ],  # MEMLIMIT

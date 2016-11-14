@@ -133,6 +133,7 @@ sub default_options {
             # Other parameters
             'raxml_number_of_cores' => 4,
             'epo_db'                => 'mysql://ensro@compara1/epolc_mammals',
+            'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
 
             # connection parameters
 
