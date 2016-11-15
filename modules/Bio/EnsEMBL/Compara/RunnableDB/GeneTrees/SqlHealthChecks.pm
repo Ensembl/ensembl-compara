@@ -343,7 +343,7 @@ our $config = {
         tests => [
             {
                 description => 'All the internal tree nodes should have a node_type and species tree information',
-                query => 'SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type IS NULL OR species_tree_node_id IS NULL)',
+                query => 'SELECT gtn.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn USING (root_id) LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type IS NULL OR (species_tree_node_id IS NULL AND clusterset_id NOT LIKE "ftga%" AND clusterset_id NOT LIKE "ml_it%" AND clusterset_id != "pg_it_phyml" AND clusterset_id NOT LIKE "ss_it%"))',
             },
             {
                 description => 'Leaves should not have attributes',
