@@ -174,8 +174,10 @@ sub get_homologies {
   my $homologies;
   my $ok_homologies = [];
   my $action        = $hub->param('data_action') || $hub->action;
-  my $homology_method_link = $action =~ /Compara_Ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
-
+  my $homology_method_link = 'ENSEMBL_PARALOGUES';
+  if ( $action =~ /Compara_Ortholog/ ) { $homology_method_link='ENSEMBL_ORTHOLOGUES'; }
+  elsif ( $action =~ /Compara_Homoeolog/ ) { $homology_method_link='ENSEMBL_HOMOEOLOGUES'; }
+  
   eval {
     $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);
   };
