@@ -82,6 +82,7 @@ our @EXPORT_OK;
 
 
 use Data::Dumper;
+use File::Temp qw/tempfile/;
 
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 
@@ -373,9 +374,8 @@ sub copy_data_in_text_mode {
             return $total_rows;
         }
 
-        my $time = time(); 
-        my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
-        open(my $fh, '>', $filename) or die "could not open the file '$filename' for writing";
+        #my $time = time();
+        my ($fh, $filename) = tempfile();
         print $fh join("\t", map {_escape($_)} @$first_row), "\n";
         my $nrows = 1;
         while(my $this_row = $sth->fetchrow_arrayref) {
