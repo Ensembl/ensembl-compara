@@ -72,12 +72,13 @@ sub content {
 
   ## Filter on current assembly
   if ($post_content->{'species'} && !$post_content->{'assembly'}) {
-    ## Give preference to the GCA accession id, as it is unique
-    #my $assembly = $sd->get_config($hub->param('species'), 'ASSEMBLY_ACCESSION') 
-    #                || $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
-    ## FIXME: DON'T USE GCA ACCESSION, AS IT'S PATCH-SPECIFIC IN SOME SPECIES
-    ## WHICH MEANS THE SEARCH MAY PRODUCE NO RESULTS 
-    $post_content->{'assembly'} = $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
+    ## Default to using GCA accession unless we have something else
+    ## configured in the ini file, e.g. for patched species or those 
+    ## without an accession
+    my $assembly_param = $sd->get_config($hub->param('species'), 'THR_ASSEMBLY_PARAM') 
+                            || 'ASSEMBLY_ACCESSION';
+    my $key            = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'assembly';
+    $post_content->{$key} = $sd->get_config($hub->param('species'), $assembly_param);
   }
 
   ## Pagination
