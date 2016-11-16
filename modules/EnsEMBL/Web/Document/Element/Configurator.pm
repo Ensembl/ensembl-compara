@@ -124,10 +124,7 @@ sub init_config {
     'name'        => 'config_selector',
     'value'       => '',
     'label'       => 'Select from available configurations',
-    'values'      => [
-      { 'value' => 'default', 'caption' => 'Default' },
-      { 'value' => 'current', 'caption' => 'Current unsaved'},
-      { 'value' => 'public',  'caption' => 'Select from publically available configs...'} ]
+    'values'      => []
   });
   $top_form->add_hidden([{
     'name'      => 'config_selector_url',
