@@ -134,6 +134,10 @@ sub init_config {
     'name'      => 'config_save_url',
     'value'     => $hub->url('Config', {function => 'save_config', '__clear' => 1}),
     'class'     => 'js_param'
+  }, {
+    'name'      => 'config_apply_url',
+    'value'     => $hub->url('Config', {function => 'apply_config', '__clear' => 1}),
+    'class'     => 'js_param'
   }]);
 
   if (!$self->active || !$view_config->tree->get_node($self->active)) {
