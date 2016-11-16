@@ -49,6 +49,7 @@ use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
+use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
@@ -368,6 +369,56 @@ sub update_configs {
       $user->set_favourite_tracks($favourites->{'tracks'}) if $user;
     }
   }
+}
+
+######## TRACK HUB REGISTRY SEARCHES ##############
+
+sub thr_fetch {
+  my ($self, $endpoint) = @_;
+
+  ## REST call
+  my $registry = $self->hub->species_defs->TRACKHUB_REGISTRY_URL;
+  my $rest = EnsEMBL::Web::REST->new($self->hub, $registry);
+  return unless $rest;
+
+  return $rest->fetch($endpoint);
+}
+
+sub thr_search {
+  my ($self, $url_params) = @_;
+  my $hub = $self->hub;
+
+  ## REST call
+  my $registry = $hub->species_defs->TRACKHUB_REGISTRY_URL;
+  my $rest = EnsEMBL::Web::REST->new($hub, $registry);
+  return unless $rest;
+
+  my ($result, $error);
+  my $endpoint = 'api/search';
+  my $post_content = {'query' => $hub->param('query')};
+
+  ## Registry uses species names without spaces
+  my $search_species = $hub->param('species') || $hub->param('search_species') || $hub->species;
+  if ($search_species) {
+    (my $species = $search_species) =~ s/_/ /;
+    $post_content->{'species'} = $species;
+  }
+
+  ## We have to rename this param within the webcode as it
+  ## conflicts with one of ours
+  $post_content->{'type'} = $hub->param('data_type');
+
+  ## Search by either assembly or accession, depending on config
+  my $assembly_param    = $hub->species_defs->get_config($hub->param('species'), 'THR_ASSEMBLY_PARAM')
+                            || 'ASSEMBLY_ACCESSION';
+  my $key               = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'assembly';
+  $post_content->{$key} = $hub->species_defs->get_config($hub->param('species'), $assembly_param);
+
+  my $args = {'method' => 'post', 'content' => $post_content};
+  $args->{'url_params'} = $url_params if $url_params;
+
+  my ($result, $error) =  $rest->fetch($endpoint, $args);
+  return ($result, $post_content, $error);
 }
 
 1;

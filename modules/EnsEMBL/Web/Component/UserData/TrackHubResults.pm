@@ -50,47 +50,12 @@ sub content {
   my $registry        = $sd->TRACKHUB_REGISTRY_URL;
   my $html;
 
-  ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $registry);
-  return unless $rest;
-
-  my $post_content = {};
-  my @query_params = qw(assembly query);
-  foreach (@query_params) {
-    $post_content->{$_} = $hub->param($_) if $hub->param($_);
-  }
-  ## We have to rename this param within the webcode as it
-  ## conflicts with one of ours
-  $post_content->{'type'} = $hub->param('data_type');
-
-  ## Registry uses species names without spaces
-  my $search_species = $hub->param('species') || $hub->param('search_species');
-  if ($search_species) {
-    (my $species = $search_species) =~ s/_/ /;
-    $post_content->{'species'} = $species;
-  }
-
-  ## Filter on current assembly
-  if ($post_content->{'species'} && !$post_content->{'assembly'}) {
-    ## Default to using GCA accession unless we have something else
-    ## configured in the ini file, e.g. for patched species or those 
-    ## without an accession
-    my $assembly_param = $sd->get_config($hub->param('species'), 'THR_ASSEMBLY_PARAM') 
-                            || 'ASSEMBLY_ACCESSION';
-    my $key            = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'assembly';
-    $post_content->{$key} = $sd->get_config($hub->param('species'), $assembly_param);
-  }
-
   ## Pagination
   my $entries_per_page  = 5;
   my $current_page      = $hub->param('page') || 1;
-
-  my $endpoint = 'api/search';
-
-  my $args = {'method' => 'post', 'content' => $post_content, 
-              'url_params' => {'page' => $current_page, 'entries_per_page' => $entries_per_page}};
+  my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page};
   
-  my ($result, $error) = $rest->fetch($endpoint, $args);
+  my ($result, $post_content, $error) = $self->object->thr_search($url_params);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
@@ -130,15 +95,17 @@ sub content {
 
     if ($count > 0) {
 
+      ## We want to pass the underscored version in the URL
+      (my $search_species = $post_content->{'species'}) =~ s/ /_/g;;
+      delete $post_content->{'species'};
+      $post_content->{'search_species'} = $search_species;
+
       my $pagination_params = {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
                                 'entries_per_page'  => $entries_per_page,
                                 'url_params'        => $post_content
                               };
-      ## We want to pass the underscored version in the URL
-      delete $pagination_params->{'url_params'}{'species'};
-      $pagination_params->{'url_params'}{'search_species'} = $search_species;
 
       if ($count > $entries_per_page) {
         $html .= $self->_show_pagination($pagination_params);

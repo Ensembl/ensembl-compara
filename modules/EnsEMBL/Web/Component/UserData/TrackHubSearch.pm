@@ -46,16 +46,10 @@ sub content {
   my $sd              = $hub->species_defs;
   my $html;
 
-  ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $sd->TRACKHUB_REGISTRY_URL);
-  return unless $rest;
-
   ## Compare species available on registry with valid species for this site
   my %local_species = map {$_ => 1} $sd->valid_species;
 
-  my $endpoint = 'api/info/assemblies';
-  
-  my ($rest_species, $error) = $rest->fetch($endpoint);
+  my ($rest_species, $error) = $self->object->thr_fetch('api/info/assemblies');
 
   if ($error) {
     $html = $self->warning_panel('Oops!', 'Sorry, we are unable to fetch data from the Track Hub Registry at the moment. You may wish to <a href="http://www.trackhubregistry.org/" rel="external">visit the registry</a> directly to search for a hub.');
@@ -63,13 +57,16 @@ sub content {
   else {
     my $ok_species   = {};
 
-    foreach (keys %{$rest_species||[]}) {
+    foreach (sort keys %{$rest_species||[]}) {
       (my $species = $_) =~ s/ /_/;
       if ($local_species{$species}) {
-        my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
-        if (grep $gca, @{$rest_species->{$_}||[]}) {
-          $ok_species->{$species} = $_;
-        }
+        #my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
+        #if (grep {$_ eq $gca} @{$rest_species->{$_}||[]}) {
+        #  $ok_species->{$species} = $_;
+        #}
+        # FIXME: Don't check assembly, because the current endpoint only returns GCA,
+        # which doesn't work for patched species or those without an accession
+        $ok_species->{$species} = $_;
       }
     }
 
@@ -113,9 +110,15 @@ sub content {
         });
       }
       else {
-        ## Is this species available in the registry?
-        if ($ok_species->{$current_species}) {
+        ## Is this species and assembly available in the registry?
+        my $ok_assembly = 0;
 
+        if ($ok_species->{$current_species}) {
+          my ($result, $post_content, $error) = $self->object->thr_search;
+          $ok_assembly = 1 unless $error;
+        }
+
+        if ($ok_assembly) {
           ## Only display current species and assembly
           $fieldset->add_field({
                               'type'    => 'noedit',
@@ -144,7 +147,7 @@ sub content {
 
     if ($message) {
       $html .= $message;
-      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $sd->TRACKHUB_REGISTRY_UR);
     }
     else {
       ## Add remaining fields
