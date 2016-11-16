@@ -36,6 +36,19 @@ sub init {
   my $hub   = $self->hub;
   my $r     = $self->r;
 
+  # if function provided, call the mapping function and return json
+  if (my $function = $hub->function) {
+    my $response = {};
+
+    if (my $sub = $self->can('json_'.$function)) {
+      $response = $sub->($self);
+    }
+
+    $r->content_type('text/plain');
+    $r->print(to_json($response));
+    return;
+  }
+
   # submit request returns just json - no need to re-send the entire form HTML again
   if ($hub->param('submit')) {
     my $updated = $self->update_configuration;
@@ -53,6 +66,16 @@ sub init {
   }
 }
 
+sub view_config {
+  ## Get the required view config according to the url 'action' parameters
+  my $hub         = shift->hub;
+  my $view_config = $hub->get_viewconfig($hub->action);
+
+  throw WebException('ViewConfig missing') unless $view_config;
+
+  return $view_config;
+}
+
 sub page_type {
   ## @override
   return 'Configurator';
@@ -66,10 +89,8 @@ sub update_configuration {
   ## Handles the request to make changes to the configs (when the config modal form is submitted)
   my $self        = shift;
   my $hub         = $self->hub;
-  my $view_config = $hub->get_viewconfig($hub->action);
+  my $view_config = $self->view_config;
   my $updated;
-
-  throw WebException('ViewConfig missing') unless $view_config;
 
   my $params = { map { my $val = $hub->param($_); ($_ => $val) } $hub->param }; # update_from_input doesn't expect multiple values for a single param
 
@@ -81,6 +102,45 @@ sub update_configuration {
   }
 
   return $updated;
+}
+
+sub json_apply_config {
+  ## Applies a selected configuration as current configuration
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $view_config = $self->view_config;
+  my $config_name = $hub->param('apply');
+  my ($config)    = map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code, 'code' => $config_name}), grep $_, $hub->session, $hub->user;
+  my $updated     = 0;
+
+  $updated = 1;#$view_config->update_from_existing($config) if $config;
+
+  return { 'updated' => $updated || 0 };
+}
+
+sub json_list_configs {
+  ## Gets a list of all the saved configurations for the current user/session for the current viewconfig
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $view_config = $self->view_config;
+
+  return {
+    'configs' => [
+      map {name => $_->{'name'}, value => $_->{'code'}},
+      map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code}),
+      grep $_, $hub->session, $hub->user
+    ],
+    'selected' => 'current'
+  };
+}
+
+sub json_save_config {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $view_config = $self->view_config;
+  my $config      = from_json($hub->param('config') || '{}');
+
+  ## TODO
 }
 
 1;
