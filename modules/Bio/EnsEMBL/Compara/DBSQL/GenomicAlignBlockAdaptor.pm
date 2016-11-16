@@ -1247,7 +1247,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
     my $max_ref_gaps = 50;
-    my ( $dnafrag_found, $dnafrag_not_found ) = ( 0, 0 );
 
     my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
@@ -1344,13 +1343,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
           my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID }->{$chr} || $chr;
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
-          if ( !defined $this_dnafrag ) {
-            $dnafrag_not_found++;
-            print $this_gdb->name . ", $df_name\n";
-            next;
-          } else {
-            $dnafrag_found++;
-          }
+          next if ( !defined $this_dnafrag );
           # when fetching by slice, input slice will be set as $dnafrag->slice, complete with start and end positions
           # this can mess up subslicing down the line - reset it and it will be pulled fresh from the db
           $this_dnafrag->{'_slice'} = undef; 
@@ -1515,9 +1508,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
       }
     }
 
-    print " !! $dnafrag_not_found dnafrags not found ($dnafrag_found found)\n";
-    print " !! Found " . scalar(@gabs) . " blocks\n\n";
-
     return \@gabs;
 }
 
@@ -1629,11 +1619,23 @@ sub _parse_maf {
       my %this_seq;
       my @spl = split( /\s+/, $line );
       $this_seq{display_id} = $spl[1];
-      $this_seq{start}      = $spl[2];
+      # $this_seq{start}      = $spl[2];
       $this_seq{length}     = $spl[3];
-      $this_seq{strand}     = ($spl[4] eq '+') ? 1 : -1;
-      $this_seq{end}        = $spl[2] + $spl[3];
+      # $this_seq{strand}     = ($spl[4] eq '+') ? 1 : -1;
+      # $this_seq{end}        = $spl[2] + $spl[3];
       $this_seq{seq}        = $spl[6];
+      $this_seq{region_len} = $spl[5];
+
+      if ( $spl[4] eq '+' ) { # forward strand
+          $this_seq{strand} = 1;
+          $this_seq{start}  = $spl[2] + 1;
+          $this_seq{end}    = $spl[2] + 1 + $spl[3];
+      } else { # reverse strand
+          $this_seq{strand} = -1;
+          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3];
+          $this_seq{end}    = $spl[5] - $spl[2] - 1;
+      }
+
       push( @{ $blocks[-1] }, \%this_seq );
     }
   }

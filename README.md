@@ -34,7 +34,7 @@ If working with HAL files, additional setup is required. First, install progress
 
 Now, we need to set up the Compara API:
 
-	cd ensembl-compara/modules/xs/HALXS
+	cd ensembl-compara/xs/HALXS
 	perl Makefile.PL
 	make
 
