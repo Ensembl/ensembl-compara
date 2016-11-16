@@ -137,7 +137,7 @@ sub content {
           $form->add_hidden({'name' => 'assembly_name', 'value' => $sd->ASSEMBLY_VERSION});
         }
         else {
-          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species.</p>';
+          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species and assembly.</p>';
         }
       }
     }
