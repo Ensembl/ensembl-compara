@@ -849,31 +849,24 @@ sub _summarise_funcgen_db {
 
   ## Methylation tracks - now in files
   my $m_aref = $dbh->selectall_arrayref(qq(
-        select 
-          eff.name, 
-          a.description, 
-          epigenome.name, 
-          g.name 
-        from external_feature_file eff 
-          join analysis_description a on (a.analysis_id = eff.analysis_id) 
-          join feature_type ft using (feature_type_id) 
-          join epigenome using (epigenome_id) 
-          join experiment using (experiment_id) 
-          join experimental_group g using (experimental_group_id) 
-        where ft.name = '5mC';
+    select
+      external_feature_file.name,
+      analysis_description.description
+    from
+      external_feature_file
+      join analysis_description using (analysis_id)
+      join feature_type ft using (feature_type_id)
+    where ft.name = '5mC';
     )
   );
 
   foreach (@$m_aref) {
-    my ($name, $description, $epigenome, $group) = @$_;
+    my ($name, $description, $epigenome) = @$_;
 
-    my $id   = sprintf('%s_%s', $epigenome, $group);
-    my $desc = "$epigenome cell line: $description";
-    $desc .= " ($group group)." if $group;
     $self->db_details($db_name)->{'tables'}{'methylation'}{$name} = {
-                                                                    name        => $name,
-                                                                    description => $desc,
-                                                                  };
+      name        => $name,
+      description => $description,
+    };
   }
 
   ## New CRISPR tracks
