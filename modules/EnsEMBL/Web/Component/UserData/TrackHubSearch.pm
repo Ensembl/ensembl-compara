@@ -57,16 +57,18 @@ sub content {
   else {
     my $ok_species   = {};
 
-    foreach (sort keys %{$rest_species||[]}) {
-      (my $species = $_) =~ s/ /_/;
+    foreach my $sp (sort keys %{$rest_species||[]}) {
+      (my $species = $sp) =~ s/ /_/;
       if ($local_species{$species}) {
-        #my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
-        #if (grep {$_ eq $gca} @{$rest_species->{$_}||[]}) {
-        #  $ok_species->{$species} = $_;
-        #}
-        # FIXME: Don't check assembly, because the current endpoint only returns GCA,
-        # which doesn't work for patched species or those without an accession
-        $ok_species->{$species} = $_;
+        my $assembly_param  = $hub->species_defs->get_config($species, 'THR_ASSEMBLY_PARAM')
+                                  || 'ASSEMBLY_ACCESSION';
+        my $assembly        = $hub->species_defs->get_config($species, $assembly_param);
+        my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+        my @assembly_ids;
+        push @assembly_ids, $_->{$key} for @{$rest_species->{$sp}};
+        if (grep {$_ eq $assembly} @assembly_ids) {
+          $ok_species->{$species} = $_;
+        }
       }
     }
 
@@ -111,14 +113,8 @@ sub content {
       }
       else {
         ## Is this species and assembly available in the registry?
-        my $ok_assembly = 0;
-
         if ($ok_species->{$current_species}) {
-          my ($result, $post_content, $error) = $self->object->thr_search;
-          $ok_assembly = 1 unless $error;
-        }
 
-        if ($ok_assembly) {
           ## Only display current species and assembly
           $fieldset->add_field({
                               'type'    => 'noedit',
