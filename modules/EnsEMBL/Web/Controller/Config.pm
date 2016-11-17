@@ -110,12 +110,28 @@ sub json_apply_config {
   my $hub         = $self->hub;
   my $view_config = $self->view_config;
   my $config_name = $hub->param('apply');
-  my ($config)    = map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code, 'code' => $config_name}), grep $_, $hub->session, $hub->user;
   my $updated     = 0;
 
-  $updated = $view_config->copy_from_existing($config) if $config;
+  if ($config_name eq 'default') { # reset configs in this case
 
-  return { 'updated' => $updated || 0 };
+    $view_config->reset_user_settings;
+    $view_config->save_user_settings;
+
+    if (my $image_config = $view_config->image_config) {
+      $image_config->reset_user_settings;
+      $image_config->save_user_settings;
+    }
+
+    $updated = 1;
+
+  } else {
+    my ($config)  = map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code, 'code' => $config_name}), grep $_, $hub->session, $hub->user;
+    $updated      = $config && $view_config->copy_from_existing($config) ? 1 : 0;
+  }
+
+  $hub->store_records_if_needed if $updated;
+
+  return { 'updated' => $updated };
 }
 
 sub json_list_configs {
