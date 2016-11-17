@@ -82,7 +82,7 @@ our @EXPORT_OK;
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table copy_table_in_binary_mode copy_table_in_text_mode)],
+  'table_copy'  => [qw(copy_data copy_table)],
   'insert'      => [qw(bulk_insert)],
   'all'         => [@EXPORT_OK]
 );
