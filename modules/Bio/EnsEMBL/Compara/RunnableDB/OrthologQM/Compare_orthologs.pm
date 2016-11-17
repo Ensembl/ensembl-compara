@@ -52,6 +52,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use List::MoreUtils qw(firstidx);
+#use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Registry;
@@ -160,6 +161,7 @@ sub _insert_all_goc_scores {
 
   my $sql_insert_query = 'INSERT INTO ortholog_goc_metric (method_link_species_set_id,homology_id,gene_member_id,dnafrag_id,goc_score,left1,left2,right1,right2) VALUES ' ;
   my $size_goc_score_arrayref = scalar @{$self->param('all_goc_score_arrayref')};
+  #my @goc_data;
   print "\n\n This is the how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug );
   foreach ( @{$self->param('all_goc_score_arrayref')} ) {
     my $l1 = defined $_->{'left1'} ? $_->{'left1'} : 'NULL';
@@ -172,6 +174,7 @@ sub _insert_all_goc_scores {
               ',' . $_->{'goc_score'} . ',' . $l1 . ',' . $l2 . ',' . $r1 . ',' . $r2 . '),' ;
 
     $sql_insert_query .= $tmp ;
+    #push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}. $_->{'dnafrag_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
   }
 
   my $insert_query = substr($sql_insert_query, 0, -1);
@@ -179,6 +182,7 @@ sub _insert_all_goc_scores {
   my $goc_insert =  $self->compara_dba->dbc->db_handle->prepare($insert_query) or die "Couldn't prepare query: ".$self->compara_dba->dbc->db_handle->errstr;
 
   $goc_insert->execute() or die "Couldn't execute query: ".$self->compara_dba->dbc->db_handle->errstr;
+  #bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2)]);
 }
 
 
