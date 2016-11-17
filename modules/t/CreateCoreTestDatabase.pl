@@ -133,9 +133,7 @@ if($rc != 0) {
 $to_dbc->do("use $destDB");
 
 # populate coord_system table
-my $query = "SELECT * FROM $srcDB.coord_system";
-my $table_name = "coord_system";
-copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query);
+copy_table($from_dbc, $to_dbc, 'coord_system');
 
 #Store available coord_systems
 my %coord_systems;
@@ -185,9 +183,10 @@ foreach my $seq_region (@seq_regions) {
   }
   chop $seq_region_list;
 
-  $query = "SELECT a.* FROM $srcDB.seq_region s JOIN $srcDB.assembly a ON (s.seq_region_id = a.cmp_seq_region_id) WHERE seq_region_id IN ($seq_region_list)";
-
-  copy_data_in_text_mode($from_dbc, $to_dbc, "assembly", $query);
+  # Used to be this query, but I think it can be expressed simpler
+  #my $query = "SELECT a.* FROM $srcDB.seq_region s JOIN $srcDB.assembly a ON (s.seq_region_id = a.cmp_seq_region_id) WHERE seq_region_id IN ($seq_region_list)";
+  $filter = "cmp_seq_region_id IN ($seq_region_list)";
+  copy_table($from_dbc, $to_dbc, "assembly", $filter);
 
   #convert seq_region_name to seq_region_id
   my $sql = "SELECT seq_region_id FROM seq_region WHERE name = \"$seq_region_name\"";
@@ -204,12 +203,11 @@ my ($asm_seq_region_ids,$asm_seq_region_ids_str)  = get_ids($to_dbc,"asm_seq_reg
 my $all_seq_region_ids;
 my ($cmp_seq_region_ids,$cmp_seq_region_ids_str)  = get_ids($to_dbc,"cmp_seq_region_id", "assembly") ;
 
-$query = "SELECT ax.* FROM assembly_exception ax WHERE ax.seq_region_id in ($asm_seq_region_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "assembly_exception", $query);
+my $filter = "seq_region_id in ($asm_seq_region_ids_str)";
+copy_table($from_dbc, $to_dbc, "assembly_exception", $filter);
 
 # populate attrib_type table
-$query = "SELECT * FROM attrib_type";
-copy_data_in_text_mode($from_dbc, $to_dbc, "attrib_type", $query);
+copy_table($from_dbc, $to_dbc, "attrib_type");
 
 # populate seq_region and seq_region_attrib tables
 foreach my $id (@$asm_seq_region_ids) {
@@ -220,32 +218,27 @@ foreach my $id (@$cmp_seq_region_ids) {
 }
 my $all_seq_region_ids_str = join ",", @$all_seq_region_ids;
 
-$query = "SELECT s.* from seq_region s where s.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query);
-
-$query = "SELECT sa.* FROM seq_region_attrib sa WHERE sa.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region_attrib", $query);
-
-# populate dna table
-$query = "SELECT d.* FROM dna d WHERE d.seq_region_id in ($all_seq_region_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "dna", $query);
+$filter = "seq_region_id in ($all_seq_region_ids_str)";
+copy_table($from_dbc, $to_dbc, "seq_region", $filter);
+copy_table($from_dbc, $to_dbc, "seq_region_attrib", $filter);
+copy_table($from_dbc, $to_dbc, "dna", $filter);
 
 # populate repeat_feature and repeat_consensus tables
 # repeat_features are stored at sequence_level
-$query = "SELECT rf.* FROM repeat_feature rf WHERE rf.seq_region_id in ($cmp_seq_region_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_feature", $query);
+$filter = "seq_region_id in ($cmp_seq_region_ids_str)";
+copy_table($from_dbc, $to_dbc, "repeat_feature", $filter);
 
 foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
   my $seq_region_id = $all_seq_region_names->{$seq_region_name};
 
-  $query = "SELECT rf.* FROM repeat_feature rf WHERE rf.seq_region_id=$seq_region_id AND rf.seq_region_start<$seq_region_end AND rf.seq_region_end>$seq_region_start";
-  copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_feature", $query);
+  $filter = "seq_region_id=$seq_region_id AND seq_region_start<$seq_region_end AND seq_region_end>$seq_region_start";
+  copy_table($from_dbc, $to_dbc, "repeat_feature", $filter);
 }
 
 my ($repeat_consensus_ids, $repeat_consensus_ids_str) = get_ids($to_dbc, "repeat_consensus_id", "repeat_feature");
-$query = "SELECT rc.* FROM repeat_consensus rc WHERE rc.repeat_consensus_id in ($repeat_consensus_ids_str)";
-copy_data_in_text_mode($from_dbc, $to_dbc, "repeat_consensus", $query);
+$filter = "repeat_consensus_id in ($repeat_consensus_ids_str)";
+copy_table($from_dbc, $to_dbc, "repeat_consensus", $filter);
 
 
 # populate transcript, transcript_attrib and transcript_stable_id tables
@@ -254,61 +247,45 @@ foreach my $seq_region (@seq_regions) {
   my ($seq_region_name, $seq_region_start, $seq_region_end) = @{$seq_region};
   my $seq_region_id = $all_seq_region_names->{$seq_region_name};
 
-  $query = "SELECT t.* FROM transcript t WHERE t.seq_region_id=$seq_region_id AND t.seq_region_end<$seq_region_end AND t.seq_region_end>$seq_region_start";
-  copy_data_in_text_mode($from_dbc, $to_dbc, "transcript", $query);
+  $filter = "seq_region_id=$seq_region_id AND seq_region_end<$seq_region_end AND seq_region_end>$seq_region_start";
+  copy_table($from_dbc, $to_dbc, "transcript", $filter);
 }
 
 my ($transcript_ids, $transcript_ids_str) = get_ids($to_dbc, "transcript_id", "transcript");
 my ($gene_ids, $gene_ids_str) = get_ids($to_dbc, "gene_id", "transcript");
 
 if ($transcript_ids_str) {
-    $query = "SELECT ta.* FROM transcript_attrib ta WHERE ta.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "transcript_attrib", $query);
-}
-
-# populate translation, translation_attrib and translation_stable_id tables
-if ($transcript_ids_str) {
-    $query = "SELECT tl.* FROM translation tl WHERE tl.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "translation", $query);
+    $filter = "transcript_id in ($transcript_ids_str)";
+    copy_table($from_dbc, $to_dbc, "transcript_attrib", $filter);
+    copy_table($from_dbc, $to_dbc, "translation", $filter);
+    copy_table($from_dbc, $to_dbc, "exon_transcript", $filter);
 }
 
 my ($translation_ids, $translation_ids_str) = get_ids($to_dbc, "translation_id", "translation");
 
 if ($translation_ids_str) {
-    $query = "SELECT tla.* FROM translation_attrib tla WHERE tla.translation_id in ($translation_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "translation_attrib", $query);
-}
-
-# populate exon_transcript, exon and exon_stable_id tables
-if ($transcript_ids_str) {
-    $query = "SELECT et.* FROM exon_transcript et WHERE et.transcript_id in ($transcript_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "exon_transcript", $query);
+    $filter = "translation_id in ($translation_ids_str)";
+    copy_table($from_dbc, $to_dbc, "translation_attrib", $filter);
 }
 
 my ($exon_ids, $exon_ids_str) = get_ids($to_dbc, "exon_id", "exon_transcript");
 
 if ($exon_ids_str) {
-    $query = "SELECT e.* FROM exon e WHERE e.exon_id in ($exon_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "exon", $query);
+    $filter = "exon_id in ($exon_ids_str)";
+    copy_table($from_dbc, $to_dbc, "exon", $filter);
 }
 
 # populate gene, gene_stable_id and alt_allele tables
 if ($gene_ids_str) {
-    $query = "SELECT g.* FROM gene g WHERE g.gene_id in ($gene_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "gene", $query);
-}
-
-if ($gene_ids_str) {
-    $query = "SELECT alt.* FROM alt_allele alt WHERE alt.gene_id in ($gene_ids_str)";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "alt_allele", $query);
+    $filter = "gene_id in ($gene_ids_str)";
+    copy_table($from_dbc, $to_dbc, "gene", $filter);
+    copy_table($from_dbc, $to_dbc, "alt_allele", $filter);
 }
 
 # populate meta and meta_coord table
-$query = "SELECT * FROM meta";
-copy_data_in_text_mode($from_dbc, $to_dbc, "meta", $query);
+copy_table($from_dbc, $to_dbc, "meta");
 
-$query = "SELECT * FROM meta_coord";
-copy_data_in_text_mode($from_dbc, $to_dbc, "meta_coord", $query);
+copy_table($from_dbc, $to_dbc, "meta_coord");
 
 print "Test genome database $destDB created\n";
 
