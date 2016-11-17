@@ -326,6 +326,7 @@ CREATE TABLE homology_id_mapping (
 	prev_release_homology_id  INT UNSIGNED,
 	mlss_id                   INT UNSIGNED NOT NULL,
 	PRIMARY KEY (curr_release_homology_id),
+	UNIQUE KEY (prev_release_homology_id),
 	FOREIGN KEY (mlss_id) REFERENCES method_link_species_set(method_link_species_set_id),
 	INDEX (mlss_id)
 ) ENGINE=InnoDB;
