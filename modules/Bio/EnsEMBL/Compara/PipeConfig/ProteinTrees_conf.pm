@@ -3308,7 +3308,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -flow_into  => {
-                 1 => [ '?table_name=homology_id_mapping' ],
                 -1 => [ 'homology_id_mapping_himem' ],
             },
             -analysis_capacity => 100,
@@ -3316,9 +3315,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
-            -flow_into  => {
-                1 => [ '?table_name=homology_id_mapping' ],
-            },
             -analysis_capacity => 20,
             -rc_name => '1Gb_job',
         },

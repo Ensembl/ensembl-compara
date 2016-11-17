@@ -72,6 +72,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
@@ -118,7 +120,7 @@ sub fetch_input {
 				$prev_mlss_id = defined $prev_homology ? $prev_homology->method_link_species_set_id() : undef;
 			}
 		}
-		push( @homology_mapping, { mlss_id => $mlss_id, prev_release_homology_id => $prev_homology_id, curr_release_homology_id => $curr_homology->dbID } );
+		push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] );
 		
 	}
 	$mlss_obj->store_tag("prev_release_mlss_id",              $prev_mlss_id); #store as an mlss tag
@@ -128,11 +130,9 @@ sub fetch_input {
 sub write_output {
 	my $self = shift;
 
-	print "FLOWING: ";
+	print "INSERTING";
 	print Dumper $self->param('homology_mapping');
-
-	$self->dataflow_output_id( $self->param( 'homology_mapping' ), 1 );
-	$self->compara_dba->dbc->disconnect_if_idle();
+        bulk_insert($self->compara_dba->dbc, 'homology_id_mapping', $self->param('homology_mapping'), ['mlss_id', 'prev_release_homology_id', 'curr_release_homology_id'], 'INSERT IGNORE');
 }
 
 1;
