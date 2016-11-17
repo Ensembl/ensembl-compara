@@ -288,8 +288,7 @@ sub best_guess {
   my $width = $slice->end - $slice->start + 1;
   my $production_species = $self->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   
-  foreach my $method ($seq_region_name && $species eq $self->species ? 'LASTZ_PATCH' : (), qw(BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW LASTZ_RAW BLASTZ_CHAIN)) {
-    my ($seq_region, $cp, $strand);
+  foreach my $method ($seq_region_name && $species eq $self->species ? 'LASTZ_PATCH' : (), qw(BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW LASTZ_RAW BLASTZ_CHAIN CACTUS_HAL_PW)) {    my ($seq_region, $cp, $strand);
     
     eval {
       ($seq_region, $cp, $strand) = $self->dna_align_feature_adaptor->interpolate_best_location($slice, $production_species, $method, $seq_region_name);

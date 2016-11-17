@@ -20,6 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::Location::MultiBottom;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Constants;
@@ -56,7 +57,15 @@ sub content {
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $self->param('opt_pairwise_blastz'), LASTZ_NET => $self->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat'), LASTZ_PATCH => $self->param('opt_pairwise_lpatch'), LASTZ_RAW => $self->param('opt_pairwise_raw') };
+  my $methods         = { 
+                          BLASTZ_NET => $self->param('opt_pairwise_blastz') || '',
+                          LASTZ_NET => $self->param('opt_pairwise_blastz') || '',
+                          TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat') || '',
+                          LASTZ_PATCH => $self->param('opt_pairwise_lpatch') || '',
+                          LASTZ_RAW => $self->param('opt_pairwise_raw') || '',
+                          CACTUS_HAL_PW => $self->param('opt_pairwise_cactus_hal_pw') || ''
+                        };
+
   my $join_alignments = grep $_ ne 'off', values %$methods;
   my $join_genes      = $self->param('opt_join_genes_bottom') eq 'on';
 
@@ -79,7 +88,6 @@ sub content {
       base_url        => $base_url,
       join_types      => $gene_join_types
     });
-
     # allows the 'set as primary' sprite to be shown on an single species view
     if ($image_config->get_parameter('can_set_as_primary') && $i != 1) {
       $image_config->set_parameters({
@@ -93,6 +101,7 @@ sub content {
     
     if ($i == 1) {
       $image_config->multi($methods, $seq_region_name, $i, $max, $slices, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
+
       $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
