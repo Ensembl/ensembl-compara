@@ -65,7 +65,11 @@ sub content {
         my $assembly        = $hub->species_defs->get_config($species, $assembly_param);
         my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
         my @assembly_ids;
-        push @assembly_ids, $_->{$key} for @{$rest_species->{$sp}};
+        foreach my $version (@{$rest_species->{$sp}}) {
+          push @assembly_ids, $version->{$key};
+          ## Also check synonyms - mainly for EG, but doesn't hurt anyway!
+          push @assembly_ids, $version->{'synonyms'};
+        }
         if (grep {$_ eq $assembly} @assembly_ids) {
           $ok_species->{$species} = $_;
         }
