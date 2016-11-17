@@ -151,7 +151,7 @@ sub pipeline_analyses {
                     'CREATE TEMPORARY TABLE temp_member_tree_counts AS
                      SELECT gene_member_id, gene_tree_root.root_id
                      FROM seq_member JOIN gene_tree_node USING (seq_member_id) JOIN gene_tree_root USING(root_id)
-                     WHERE clusterset_id = "default" AND tree_type = "tree" AND method_link_species_set_id = #method_link_species_set_id#',
+                     WHERE clusterset_id = "#collection#" AND tree_type = "tree" AND method_link_species_set_id = #method_link_species_set_id#',
                     'UPDATE gene_member_hom_stats JOIN temp_member_tree_counts USING (gene_member_id)
                      SET gene_trees = 1
                      WHERE collection = "#collection#"',
