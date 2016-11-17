@@ -50,6 +50,9 @@ copying homology_member too when asked to copy homology_member.
   copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'family', 'stable_id', 'ENSFM00730001521062', undef, 1);
   copy_data_with_foreign_keys_by_constraint($source_dbc, $target_dbc, 'gene_tree_root', 'stable_id', 'ENSGT00390000003602', undef, 1);
 
+  # To insert a large number of rows in an optimal manner
+  bulk_insert($self->compara_dba->dbc, 'homology_id_mapping', $self->param('homology_mapping'), ['mlss_id', 'prev_release_homology_id', 'curr_release_homology_id'], 'INSERT IGNORE');
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -73,10 +76,12 @@ our @EXPORT_OK;
     copy_data_in_binary_mode
     copy_data_in_text_mode
     copy_table_in_binary_mode
+    bulk_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
   'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode)],
+  'insert'      => [qw(bulk_insert)],
   'all'         => [@EXPORT_OK]
 );
 
@@ -538,6 +543,45 @@ sub copy_table_in_binary_mode {
 
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
 }
+
+
+=head2 bulk_insert
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dest_dbc
+  Arg[2]      : string $table_name
+  Arg[3]      : arrayref of arrayrefs $data
+  Arg[4]      : (opt) arrayref of strings $col_names (defaults to the column-order at the database level)
+  Arg[5]      : (opt) string $insertion_mode (default: 'INSERT')
+
+  Description : Execute extended INSERT statements (or whatever flavour selected in $insertion_mode)
+                on $dest_dbc to push the data kept in the arrayref $data.  Each arrayref in $data
+                corresponds to a row, in the same order as in $col_names (if provided) or the columns
+                in the table itself.  The method returns the total number of rows inserted
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub bulk_insert {
+    my ($dest_dbc, $table_name, $data, $col_names, $insertion_mode) = @_;
+
+    my $insert_n   = 0;
+    while (@$data) {
+        my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
+        $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
+        $insert_sql .= ' VALUES ';
+        my $first = 1;
+        while (@$data and (length($insert_sql) < 1_000_000)) {
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {defined $_ ? '"'.$_.'"' : 'NULL'} @{shift @$data}) . ')';
+            $first = 0;
+        }
+        $insert_n += $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+    }
+    return $insert_n;
+}
+
 
 1;
  
