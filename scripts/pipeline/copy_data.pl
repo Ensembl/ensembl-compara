@@ -1082,7 +1082,7 @@ sub fix_genomic_align_table {
 
     #copy over only those dnafrags for the genome_db_ids in the mlss.
     my $query = "SELECT dnafrag.* FROM method_link_species_set LEFT JOIN species_set USING (species_set_id) LEFT JOIN dnafrag USING (genome_db_id) WHERE method_link_species_set_id=$mlss_id";
-    copy_data_in_text_mode($to_dbc, $from_dbc, "temp_dnafrag", $query);
+    copy_data($from_dbc, $to_dbc, "temp_dnafrag", $query);
 
     #check that don't have dnafrags in the FROM database that aren't in the
     #TO database - need to exit if there are and reassess the situation!

@@ -325,7 +325,7 @@ sub copy_ancestral_data {
     #Create correct number of spaceholder rows in seq_region table in to_db 
     #
     my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '$name" . "_%'";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
+    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
 
     #
     #Find min and max of new seq_region_ids
@@ -366,7 +366,7 @@ sub copy_ancestral_data {
     $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '$name" . "_%'";
 
     print "copying seq_region in replace mode\n";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, 1);
+    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, 1);
 
     #
     #Copy over the dna with new seq_region_ids
@@ -374,7 +374,7 @@ sub copy_ancestral_data {
     $query = "SELECT new_seq_region_id, sequence FROM tmp_seq_region_mapping JOIN dna USING (seq_region_id) WHERE seq_region_id > 0";
 
     print "copying dna\n";
-    copy_data_in_text_mode($from_dbc, $to_dbc, "dna", $query, "seq_region_id", $min_sr, $max_sr, 1000);
+    copy_data($from_dbc, $to_dbc, "dna", $query, "seq_region_id", $min_sr, $max_sr, 1000);
 
     #
     #Drop temporary table

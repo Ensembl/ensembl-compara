@@ -849,7 +849,7 @@ sub copy_conservation_scores {
     my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
     print "Copying conservation scores for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
-    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip-disable-keys");
     print "ok!\n";
   }
 
