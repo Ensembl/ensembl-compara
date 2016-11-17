@@ -75,13 +75,14 @@ our @EXPORT_OK;
     copy_data
     copy_data_in_binary_mode
     copy_data_in_text_mode
+    copy_table
     copy_table_in_binary_mode
     copy_table_in_text_mode
     bulk_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode copy_table_in_text_mode)],
+  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table copy_table_in_binary_mode copy_table_in_text_mode)],
   'insert'      => [qw(bulk_insert)],
   'all'         => [@EXPORT_OK]
 );
@@ -421,6 +422,7 @@ sub copy_data_in_text_mode {
     return $total_rows;
 }
 
+
 =head2 copy_data_in_binary_mode
 
   Description : A specialized version of copy_data() for tables that have binary
@@ -518,7 +520,7 @@ sub copy_data_in_binary_mode {
 }
 
 
-=head2 copy_table_in_text_mode
+=head2 copy_table
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
@@ -526,13 +528,33 @@ sub copy_data_in_binary_mode {
   Arg[4]      : (opt) string $where_filter
   Arg[5]      : (opt) boolean $replace (default: false)
 
-  Description : Copy the table (either all of it or a subset). This is achieved with mysqlimport,
-                which is a really efficient way of copying data, but cannot easily handle binary
-                columns. This method is thus restricted to tables that are only composed of text
-                and numeric columns.
+  Description : Copy the table (either all of it or a subset).
                 The main optional argument is $where_filter, which allows to select a portion of
                 the table. Note: the filter must be valid on the table alone, and does not support
-                JOINs. If you need the latter, use copy_data_in_text_mode()
+                JOINs. If you need the latter, use copy_data()
+
+=cut
+
+sub copy_table {
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    print "Copying data in table $table_name\n";
+
+    if (_has_binary_column($from_dbc, $table_name)) {
+        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys);
+    } else {
+        return copy_table_in_text_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace);
+    }
+}
+
+
+=head2 copy_table_in_text_mode
+
+  Description : A specialized version of copy_table() for tables that don't have
+                any binary data and can be loaded with mysqlimport.
 
 =cut
 
@@ -546,19 +568,8 @@ sub copy_table_in_text_mode {
 
 =head2 copy_table_in_binary_mode
 
-  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
-  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
-  Arg[3]      : string $table_name
-  Arg[4]      : (opt) string $where_filter
-  Arg[5]      : (opt) boolean $replace (default: false)
-  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
-
-  Description : Copy the table (either all of it or a subset). This is achieved with mysqldump,
-                which is a really efficient way of copying data, but importantly it naturally
-                supports binary columns and funky character encodings.
-                The main optional argument is $where_filter, which allows to select a portion
-                of the table. Note: the filter must be valid on the table alone, and does not
-                support JOINs. If you need the latter, use copy_data_in_binary_mode()
+  Description : A specialized version of copy_table() for tables that have binary
+                data, using mysqldump.
 
 =cut
 
