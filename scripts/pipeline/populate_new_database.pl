@@ -352,31 +352,6 @@ if ($old_dba and !$skip_data) {
 exit(0);
 
 
-=head2 copy_table
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
-  Arg[3]      : string $table_name
-  Description : copy content of table $table_name from database
-                $from_db to database $to_db
-  Returns     :
-  Exceptions  : throw if argument test fails
-
-=cut
-
-sub copy_table {
-  my ($from_dba, $to_dba, $table_name, $constraint, $name) = @_;
-
-  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
-  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
-
-  $name ||= 'all';
-  print "Copying table $table_name ($name) ...\n";
-
-  copy_data_in_text_mode($from_dba->dbc, $to_dba->dbc, $table_name, "SELECT $table_name.* FROM $table_name ".($constraint || ''), undef, undef, undef, 10_000_000);
-}
-
-
 =head2 store_objects
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::ObjectDBAdaptor $object_adaptor
@@ -634,11 +609,11 @@ sub copy_all_dnafrags {
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   foreach my $this_genome_db (@$genome_dbs) {
-    my $constraint = "WHERE genome_db_id = ".($this_genome_db->dbID);
-    my $nrows = copy_table($from_dba, $to_dba, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''), $this_genome_db->name);
+    my $constraint = "genome_db_id = ".($this_genome_db->dbID);
+    my $nrows = copy_table($from_dba, $to_dba, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''));
     if ($MT_only && !$nrows) {
         #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
-        copy_table($from_dba, $to_dba, 'dnafrag', $constraint, $this_genome_db->_get_unique_name);
+        copy_table($from_dba, $to_dba, 'dnafrag', $constraint);
     }
   }
 }
@@ -660,7 +635,7 @@ sub copy_all_mlss_tags {
 
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
-    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "method_link_species_set_id = ".($this_mlss->dbID));
   }
 }
 
@@ -683,10 +658,11 @@ sub copy_all_species_tres {
 
   foreach my $this_mlss (@$mlsss) {
     next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
-    copy_table($from_dba, $to_dba, 'species_tree_root', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node', "JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node_tag', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
-    copy_table($from_dba, $to_dba, 'species_tree_node_attr', "JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
+    copy_table($from_dba, $to_dba, 'species_tree_root', $mlss_filter);
+    copy_data($from_dba, $to_dba, 'species_tree_node', "SELECT species_tree_node.* FROM species_tree_node JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba, $to_dba, 'species_tree_node_tag', "SELECT species_tree_node_tag.* FROM species_tree_node_tag JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba, $to_dba, 'species_tree_node_attr', "SELECT species_tree_node_attr.* FROM species_tree_node_attr JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
   }
 }
 
@@ -724,18 +700,18 @@ sub copy_dna_dna_alignements {
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where);
     print ".";
     $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where);
     print ".";
     $where = "node_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where);
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
@@ -769,7 +745,7 @@ sub copy_ancestor_dnafrag {
 	    ($this_method_link_species_set->dbID * 10**10)." AND dnafrag_id < ".
 	      (($this_method_link_species_set->dbID + 1) * 10**10);
 
-          copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'dnafrag', $where, undef, "skip-disable-keys");
+          copy_table($old_dba->dbc, $new_dba->dbc, 'dnafrag', $where);
 	  print "ok!\n";
       }
   }
@@ -793,8 +769,9 @@ sub copy_synteny_data {
 
   foreach my $this_mlss (@$method_link_species_sets) {
     next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
-    copy_table($old_dba, $new_dba, 'synteny_region', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
-    copy_table($old_dba, $new_dba, 'dnafrag_region', "JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->name);
+    my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
+    copy_table($old_dba, $new_dba, 'synteny_region', $mlss_filter);
+    copy_data($old_dba, $new_dba, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter");
   }
 }
 
@@ -833,7 +810,7 @@ sub copy_constrained_elements {
     my $where = "constrained_element_id >= ".
     ($this_method_link_species_set->dbID * 10**10)." AND constrained_element_id < ".
     (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table_in_binary_mode($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where);
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS");
