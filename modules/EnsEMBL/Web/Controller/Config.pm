@@ -123,6 +123,8 @@ sub json_list_configs {
   my $self        = shift;
   my $hub         = $self->hub;
   my $view_config = $self->view_config;
+  my $settings    = $view_config->get_user_settings;
+  my $current     = keys %$settings ? $settings->{'saved'} || 'current' : 'default';
 
   return {
     'configs' => [
@@ -130,7 +132,7 @@ sub json_list_configs {
       map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code}),
       grep $_, $hub->session, $hub->user
     ],
-    'selected' => 'current'
+    'selected' => $current
   };
 }
 
