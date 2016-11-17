@@ -268,8 +268,7 @@ sub _has_binary_column {
     my $all_rows = $sth->fetchall_arrayref;
     my $binary_mode = 0;
     foreach my $this_col (@$all_rows) {
-        if (($this_col->[5] eq "BINARY") or ($this_col->[5] eq "VARBINARY") or
-            ($this_col->[5] eq "BLOB") or ($this_col->[5] eq "BIT")) {
+        if (($this_col->[5] =~ /BINARY$/) or ($this_col->[5] =~ /BLOB$/) or ($this_col->[5] eq "BIT")) {
             $binary_mode = 1;
             last;
         }
