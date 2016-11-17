@@ -262,6 +262,7 @@ sub _has_binary_column {
     my ($dbc, $table_name) = @_;
 
     assert_ref($dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'dbc');
+    return $dbc->{"_has_binary_column__${table_name}"} if exists $dbc->{"_has_binary_column__${table_name}"};
 
     my $sth = $dbc->db_handle->column_info($dbc->dbname, undef, $table_name, '%');
     $sth->execute;
@@ -273,6 +274,7 @@ sub _has_binary_column {
             last;
         }
     }
+    $dbc->{"_has_binary_column__${table_name}"} = $binary_mode;
     return $binary_mode;
 }
 
