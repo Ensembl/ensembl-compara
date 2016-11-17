@@ -418,7 +418,7 @@ sub get_alignments {
   foreach (grep { /species_$align/ } $hub->param) {
     if ($hub->param($_) eq 'yes') {
       /species_${align}_(.+)/;
-      push @selected_species, $1 unless $1 =~ /$species^/i;
+      push @selected_species, $1 unless $1 =~ /^$species$/i;
     }
   }
   unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
