@@ -491,6 +491,25 @@ sub copy_data_in_binary_mode {
     }
 }
 
+
+=head2 copy_table_in_binary_mode
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
+  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
+  Arg[3]      : string $table_name
+  Arg[4]      : (opt) string $where_filter
+  Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
+
+  Description : Copy the table (either all of it or a subset). This is achieved with mysqldump,
+                which is a really efficient way of copying data, but importantly it naturally
+                supports binary columns and funky character encodings.
+                The main optional argument is $where_filter, which allows to select a portion
+                of the table. Note: the filter must be valid on the table alone, and does not
+                support JOINs. If you need the latter, use copy_data_in_binary_mode()
+
+=cut
+
 sub copy_table_in_binary_mode {
     my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
 
