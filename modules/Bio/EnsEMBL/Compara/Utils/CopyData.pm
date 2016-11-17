@@ -76,11 +76,12 @@ our @EXPORT_OK;
     copy_data_in_binary_mode
     copy_data_in_text_mode
     copy_table_in_binary_mode
+    copy_table_in_text_mode
     bulk_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode)],
+  'table_copy'  => [qw(copy_data copy_data_in_binary_mode copy_data_in_text_mode copy_table_in_binary_mode copy_table_in_text_mode)],
   'insert'      => [qw(bulk_insert)],
   'all'         => [@EXPORT_OK]
 );
@@ -494,6 +495,32 @@ sub copy_data_in_binary_mode {
 
         #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
     }
+}
+
+
+=head2 copy_table_in_text_mode
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
+  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
+  Arg[3]      : string $table_name
+  Arg[4]      : (opt) string $where_filter
+  Arg[5]      : (opt) boolean $replace (default: false)
+
+  Description : Copy the table (either all of it or a subset). This is achieved with mysqlimport,
+                which is a really efficient way of copying data, but cannot easily handle binary
+                columns. This method is thus restricted to tables that are only composed of text
+                and numeric columns.
+                The main optional argument is $where_filter, which allows to select a portion of
+                the table. Note: the filter must be valid on the table alone, and does not support
+                JOINs. If you need the latter, use copy_data_in_text_mode()
+
+=cut
+
+sub copy_table_in_text_mode {
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace) = @_;
+
+    my $query = 'SELECT * FROM '.$table_name.($where_filter ? ' '.$where_filter : '');
+    return copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, undef, undef, undef, undef, undef, $replace);
 }
 
 
