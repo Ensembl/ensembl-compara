@@ -190,6 +190,22 @@ sub receive_shared_settings {
   $self->hub->session->set_record_data(_rm_empty_vals($settings));
 }
 
+sub copy_from_existing {
+  ## Copies settings from an already saved config record
+  ## @param Record data of the existing 'saved_config' record
+  my ($self, $existing_record_data) = @_;
+
+  my $new_settings = $existing_record_data->{$self->config_type};
+
+  $new_settings->{'saved'}  = $existing_record_data->{'code'};
+  $new_settings->{'type'}   = $self->config_type;
+  $new_settings->{'code'}   = $self->code;
+
+  $self->hub->session->set_record_data($new_settings);
+
+  return 1;
+}
+
 sub altered {
   ## Maintains a list of configs that have been altered
   ## @params List of config (name) that has been altered (optional)

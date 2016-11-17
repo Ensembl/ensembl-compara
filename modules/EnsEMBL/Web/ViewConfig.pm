@@ -255,6 +255,23 @@ sub update_from_input {
   return $self->is_altered;
 }
 
+sub copy_from_existing {
+  ## @override
+  ## Update only if the code is matching, and update image config too
+  my ($self, $existing_record_data) = @_;
+
+  if ($self->code eq $existing_record_data->{'view_config_code'}) {
+
+    # update image config too
+    my $image_config  = $self->image_config;
+    $image_config->copy_from_existing($existing_record_data) if $image_config;
+
+    return $self->SUPER::copy_from_existing($existing_record_data);
+  }
+
+  return 0;
+}
+
 sub init_form {
   ## Generic form-building method based on fields provided in form_field and field_order methods
   ## @return ViewConfigForm object

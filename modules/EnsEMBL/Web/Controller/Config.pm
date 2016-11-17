@@ -113,7 +113,7 @@ sub json_apply_config {
   my ($config)    = map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code, 'code' => $config_name}), grep $_, $hub->session, $hub->user;
   my $updated     = 0;
 
-  $updated = 1;#$view_config->update_from_existing($config) if $config;
+  $updated = $view_config->copy_from_existing($config) if $config;
 
   return { 'updated' => $updated || 0 };
 }
