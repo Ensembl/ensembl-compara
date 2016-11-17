@@ -86,6 +86,7 @@ our @EXPORT_OK;
   'all'         => [@EXPORT_OK]
 );
 
+use constant MAX_ROWS_FOR_MYSQLIMPORT => 1_000_000;
 
 use Data::Dumper;
 use File::Temp qw/tempfile/;
@@ -340,7 +341,7 @@ sub copy_data_in_text_mode {
     my $dbname = $to_dbc->dbname;
 
     #Default step size.
-    $step ||= 100000;
+    $step ||= MAX_ROWS_FOR_MYSQLIMPORT;
 
     my ($use_limit, $start);
     if (defined $index_name && defined $min_id && defined $max_id) {
