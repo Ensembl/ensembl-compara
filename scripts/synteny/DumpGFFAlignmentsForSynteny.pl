@@ -128,12 +128,16 @@ unless (defined $seq_region) {
   $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
 }
 
+my %qy_karyotypes = map {$_->seq_region_name => 1} @{$qy_gdb->db_adaptor->get_SliceAdaptor->fetch_all_karyotype()};
+my %tg_karyotypes = map {$_->seq_region_name => 1} @{$tg_gdb->db_adaptor->get_SliceAdaptor->fetch_all_karyotype()};
+
+$qy_gdb->db_adaptor->dbc->disconnect_if_idle;
+$tg_gdb->db_adaptor->dbc->disconnect_if_idle;
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
-  my $qy_slice = $qy_dnafrag->slice;
 
-  next unless ($qy_slice->has_karyotype || $force);
+  next unless ($qy_karyotypes{$qy_dnafrag->name} || $force);
 
   my $seq_region_name = $qy_dnafrag->name;
   open(my $synt_file, ">", "${output_dir}/${seq_region_name}.syten.gff");
@@ -145,8 +149,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
 
   foreach my $tg_dnafrag (@$tg_dnafrags) {
     #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
-    my $tg_slice = $tg_dnafrag->slice;
-    next unless ($tg_slice->has_karyotype || $force);
+    next unless ($tg_karyotypes{$tg_dnafrag->name} || $force);
 
     my $start = 1;
     my $chunk = 5000000;
