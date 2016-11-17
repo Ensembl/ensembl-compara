@@ -246,6 +246,36 @@ sub clear_copy_data_cache {
 }
 
 
+=head2 _has_binary_column
+
+  Example     : _has_binary_column($dbc, 'genomic_align_block');
+  Description : Tells whether the table has a binary column
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _has_binary_column {
+    my ($dbc, $table_name) = @_;
+
+    assert_ref($dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'dbc');
+
+    my $sth = $dbc->db_handle->column_info($dbc->dbname, undef, $table_name, '%');
+    $sth->execute;
+    my $all_rows = $sth->fetchall_arrayref;
+    my $binary_mode = 0;
+    foreach my $this_col (@$all_rows) {
+        if (($this_col->[5] eq "BINARY") or ($this_col->[5] eq "VARBINARY") or
+            ($this_col->[5] eq "BLOB") or ($this_col->[5] eq "BIT")) {
+            $binary_mode = 1;
+            last;
+        }
+    }
+    return $binary_mode;
+}
+
 
 =head2 copy_data
 
@@ -276,17 +306,6 @@ sub copy_data {
 
     print "Copying data in table $table_name\n";
 
-    my $sth = $from_dbc->db_handle->column_info($from_dbc->dbname, undef, $table_name, '%');
-    $sth->execute;
-    my $all_rows = $sth->fetchall_arrayref;
-    my $binary_mode = 0;
-    foreach my $this_col (@$all_rows) {
-        if (($this_col->[5] eq "BINARY") or ($this_col->[5] eq "VARBINARY") or
-            ($this_col->[5] eq "BLOB") or ($this_col->[5] eq "BIT")) {
-            $binary_mode = 1;
-            last;
-        }
-    }
     die "Keys must be disabled in order to be reenabled\n" if $reenable_keys and not $disable_keys;
 
     #When merging the patches, there are so few items to be added, we have no need to disable the keys
@@ -295,7 +314,7 @@ sub copy_data {
         #but takes far too long to ENABLE again
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
-    if ($binary_mode) {
+    if (_has_binary_column($from_dbc, $table_name)) {
         copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
     } else {
         copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
