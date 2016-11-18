@@ -22,6 +22,9 @@ package EnsEMBL::Web::Component::Regulation::FeatureDetails;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use EnsEMBL::Draw::Utils::ColourMap;
+
 use base qw(EnsEMBL::Web::Component::Regulation);
 
 
@@ -58,25 +61,49 @@ sub content {
   $html .= $image->render;
 
   ## Now that we have so many cell lines, it's quicker to show activity in a table
-  $html .= '<h3>Epigenomic activity</h3>';
-  my $table = $self->new_table;
-  my @rows;
+  $html .= '<h3>Cell types by regulatory feature activity</h3>';
 
-  $table->add_columns(
-                      {'key' => 'epigenome',  'title' => 'Epigenome', 'width' => '50%'},
-                      {'key' => 'activity',   'title' => 'Activity',  'width' => '50%'},
-                      );
+  ## We want one column per activity type, so get the data first
+  my $data  = {};; 
+  my $total = 0; 
+  my $colours   = $self->hub->species_defs->colour('fg_regulatory_features');
+  my $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
 
-  foreach (@{$object->all_epigenomes}) {
+  foreach (@{$object->regbuild_epigenomes}) {
     my ($name, $id) = split(':', $_);
-    push @rows, {
-                'epigenome' => $name,
-                'activity'  => $object->activity($name) || '-',
-                };
+    my $activity = $object->activity($name) || 'UNKNOWN';
+    $activity = ucfirst(lc($activity));
+    my $colour_key = $activity;
+    if ($activity eq 'Active') {
+      $colour_key = $object->feature_type->name;
+    }
+    my $bg_colour = lc $colours->{lc($colour_key)}{'default'};
+    ## Note - hex_by_name includes the hash symbol at the beginning
+    my $contrast  = $bg_colour ? $colourmap->hex_by_name($colourmap->contrast($bg_colour)) : '#000000';
+    if ($data->{$activity}) {
+      $data->{$activity}{'colour'}    = $contrast;
+      $data->{$activity}{'bg_colour'} = $bg_colour;
+      push @{$data->{$activity}{'entries'}}, $name;
+    }
+    else {
+      $data->{$activity} = {'entries' => [$name], 'colour' => $contrast, 'bg_colour' => $bg_colour};
+    }
+    $total++;
   }
 
-  if (scalar @rows) {
-    $table->add_rows(@rows);
+  my $col_width = int(100 / scalar keys %$data);
+  my (@columns, $row);
+  while (my($activity, $info) = each(%$data)) {
+    my $title = sprintf '%s (%s/%s)', $activity, scalar @{$info->{'entries'}}, $total;
+    push @columns, {'key' => $activity, 'title' => $title, 'width' => $col_width, 
+                    'style' => sprintf 'color:%s;background-color:#%s', $info->{'colour'}, $info->{'bg_colour'}};
+    $row->{$activity} = join('<br/>', @{$info->{'entries'}});
+  }
+
+  if (scalar @columns) {
+    my $table = $self->new_table;
+    $table->add_columns(@columns);
+    $table->add_row($row);
     $html .= $table->render;
   }
   else {
