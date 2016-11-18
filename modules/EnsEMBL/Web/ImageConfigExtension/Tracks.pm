@@ -164,6 +164,9 @@ sub _add_matrix {
   my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
+  use Data::Dumper; 
+  $Data::Dumper::Maxdepth = 2;
+  warn Dumper($matrix);
   my $caption      = $data->{'caption'};
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
@@ -223,7 +226,7 @@ sub _add_matrix {
       $node->set_data('menu', 'no');
       $node->set_data('caption', "$column - $_->{'row'}");
       $node->set_data('group', $_->{'group'}) if $_->{'group'};
-      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
+      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, row_order => $_->{'row_order'}, column => $column };
     }
   }
 

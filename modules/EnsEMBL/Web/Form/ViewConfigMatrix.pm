@@ -47,7 +47,11 @@ sub build {
   my $menu          = $hub->param('menu');
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->get_data('matrix');
-  my @matrix_rows   = sort { ($a->{'group_order'} || 0) <=> ($b->{'group_order'} || 0) || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
+  my @matrix_rows   = sort { ($a->{'group_order'} || 0) <=> ($b->{'group_order'} || 0) 
+                              || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') 
+                              || ($a->{'row_order'} || 1000) <=> ($b->{'row_order'} || 1000)
+                              || lc $a->{'id'} cmp lc $b->{'id'} } 
+                                            values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
 
