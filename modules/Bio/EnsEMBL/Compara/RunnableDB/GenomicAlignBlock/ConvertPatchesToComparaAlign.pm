@@ -236,7 +236,7 @@ foreach my $ref_name(keys %aligned_patch){
                 *arr = \$aligned_patch{$ref_name}{$patch_name};
 		foreach my $gab(@{ $arr }){
                         my @num = split(/[MD]/, $gab->{ref_aln_bases});
-                        my $align_len = sum0(@num);
+                        my $align_len = sum(0,@num);
 			$gab->{ref_aln_bases}=~s/M1D/MD/g;
 			$gab->{patch_aln_bases}=~s/M1D/MD/g;
 			$gab->{ref_aln_bases}=~s/M0D/M/g; # just in case (should never be used)
