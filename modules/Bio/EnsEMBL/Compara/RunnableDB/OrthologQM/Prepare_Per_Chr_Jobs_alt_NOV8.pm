@@ -37,7 +37,7 @@ limitations under the License.
 =head1 DESCRIPTION
   Takes as input an hash of reference and non reference species DBIDs and  dnafrag DBIDs as keys and the list of homolog DBIDs as values.
   Unpacks the hash into seperate hashes each containing a single dnafrag DBID as the key to a list of ordered homologs.
-  if the reuse_goc arguement is set to 1 and prev_rel_db argument is set,
+  if the reuse_goc arguement is set to 1 and reuse_db argument is set,
    theis runnable will reuse goc scores from the prev db and only calculate goc scores for new homologs and the 2 homologies closest to them on each side.
 
     Example run
@@ -72,7 +72,7 @@ sub param_defaults {
 #    'ref_species_dbid'    => 122,
 #    'non_ref_species_dbid'    => 144,
 #    'reuse_goc'   => 0,
-#    'prev_rel_db'  =>  'mysql://ensadmin:ensembl@compara2/mp14_protein_trees_85',
+#    'reuse_db'  =>  'mysql://ensadmin:ensembl@compara2/mp14_protein_trees_85',
 #    'compara_db'  => 'mysql://ensadmin:ensembl@compara5/cc21_protein_trees_no_reuse_86',
 #    'goc_mlss_id'  => '50062',
     };
@@ -88,7 +88,7 @@ sub param_defaults {
 
 sub fetch_input {
   my $self = shift;
-#  $self->debug(3);
+  $self->debug(4);
   print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
   my $mlss_id = $self->param_required('goc_mlss_id');
   $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
@@ -99,15 +99,12 @@ sub fetch_input {
   #this variables name was change to 'goc_reuse_db' as it was getting mixed up with another variable. The old name was left here to make it compatible with older runs of the runnable.
 
   if ($self->param('reuse_goc') ) {
-    my $q = "SELECT mlss_id, prev_release_mlss_id FROM homology_id_mapping where mlss_id = $mlss_id limit 1";
-    my $mlssID = $self->compara_dba->dbc->db_handle->selectrow_arrayref($q);
-    print "curr_release_mlss_id   :  $mlssID->[0]   , and , prev_release_mlss_id :  $mlssID->[1] \n" if ( $self->debug >3 );
-    my $prev_release_mlss_id = $mlssID->[1];
+    my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
+    my $prev_release_mlss_id = $mlss->get_tagvalue('prev_release_mlss_id');
+    print "\n\n  curr_release_mlss_id   :  $mlss_id  , and , prev_release_mlss_id :  $prev_release_mlss_id\n\n" if ( $self->debug >3 );
 
     if (defined $prev_release_mlss_id) {
       $self->param('mlss_check', 1);
-
-      my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
 
   #preload all gene members to make quering the homologs faster later on
       my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -128,8 +125,8 @@ sub fetch_input {
       $self->param('homologyID_map', \%homologyID_map);
     
     #now we will query the ortholog_goc_metric table uploaded from from the previous db using the prev mlss id that maps to the new mlss id
-      my $sql = "select homology_id, goc_score, left1, left2, right1, right2 from prev_rel_goc_metrics ogm
-              join prev_rel_gene_member_table gm using (gene_member_id) where gm.genome_db_id = $ref_species_dbid and method_link_species_set_id = $prev_release_mlss_id";
+      my $sql = "select homology_id, goc_score, left1, left2, right1, right2 from prev_rel_goc_metric ogm
+              join prev_rel_gene_member gm using (gene_member_id) where gm.genome_db_id = $ref_species_dbid and method_link_species_set_id = $prev_release_mlss_id";
       my $prev_goc_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, "homology_id");
       print Dumper($prev_goc_hashref) if ( $self->debug >5 );
       $self->param('prev_goc_hashref', $prev_goc_hashref);
@@ -141,10 +138,12 @@ sub run {
   my $self = shift;
   print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >3);
   if ($self->param('mlss_check')) {
+    print "\nreuseeeeeeeeeeeeccccc      \n\n";
     $self->_reusable_species();
     $self->_insert_goc_scores();
   }
   else {
+    print "\nnonnnnnnnnnn       reuseeeeeeeeeeeeccccc      \n\n";
     $self->_non_reusable_species();
   }
 

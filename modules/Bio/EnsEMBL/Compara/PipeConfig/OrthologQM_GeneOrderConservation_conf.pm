@@ -37,7 +37,7 @@ limitations under the License.
 
 
     Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -prev_rel_db <> -compara_db <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -reuse_db <> -compara_db <>
 
 =cut
 
@@ -71,8 +71,9 @@ sub default_options {
         'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
         'goc_threshold' => undef,
-        'prev_rel_db'  => undef,
+        'reuse_db'  => undef,
         'reuse_goc'     => undef,
+	'calculate_goc_distribution' => undef,
         'goc_capacity'   => 200,
     };
 }
@@ -84,8 +85,9 @@ sub pipeline_wide_parameters {
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
-        'prev_rel_db'  => $self->o('prev_rel_db'),
+        'reuse_db'  => $self->o('reuse_db'),
         'reuse_goc'     => $self->o('reuse_goc'),
+	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
     };
 }
@@ -94,6 +96,8 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        'default'      => {'LSF' => '-q production-rh7'},
+        'urgent'       => {'LSF' => '-q production-rh7'},
         '1Gb_job'      => {'LSF' => '-C0 -M1000 -q production-rh7 -R"select[mem>1000]  rusage[mem=1000]"' },
         '2Gb_job'      => {'LSF' => '-C0 -M2000 -q production-rh7 -R"select[mem>2000]  rusage[mem=2000]"' },
         '16Gb_job'      => {'LSF' => '-C0 -M16000 -q production-rh7 -R"select[mem>16000]  rusage[mem=16000]"' },
@@ -104,35 +108,49 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'goc_entry_point',
+        {   -logic_name => 'goc_reuse_backbone',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -input_ids  => [ { } ],
             -flow_into  => {
-                '1->A' => WHEN( '#reuse_goc#' => 'copy_prev_goc_score_table',
-                    ),
-                'A->1' => {
-                    'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') }, 
-		},
+                '1->A' => WHEN( '#reuse_goc#' => ['copy_prev_goc_score_table' , 'copy_prev_gene_member_table']),
+
+                'A->1' => ['goc_backbone'], 
             },
         },
 
         {   -logic_name => 'copy_prev_goc_score_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => '#prev_rel_db#',
+                'src_db_conn'   => '#reuse_db#',
+                'dest_db_conn'  =>  '#compara_db#',
                 'mode'          => 'overwrite',
-                'filter_cmd'        => 'sed "s/CREATE TABLE #table#/CREATE TABLE prev_rel_goc_metrics/"',
                 'table'         => 'ortholog_goc_metric',
+                'renamed_table' => 'prev_rel_goc_metric',
             },
-            -flow_into  =>  ['copy_prev_gene_member_table'],
         },
         
         {   -logic_name => 'copy_prev_gene_member_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => '#prev_rel_db#',
+                'src_db_conn'   => '#reuse_db#',
+                'dest_db_conn'  =>  '#compara_db#',
                 'mode'          => 'overwrite',
-                'filter_cmd'        => 'sed "s/CREATE TABLE #table#/CREATE TABLE prev_rel_gene_member_table/"',
                 'table'         => 'gene_member',
+                'renamed_table' => 'prev_rel_gene_member'
+            },
+        },
+
+        {   -logic_name => 'goc_backbone',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#goc_mlss_id#' => 'goc_entry_point'),
+        },
+
+        {   -logic_name => 'goc_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => {
+                    'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') },
+                    },
             },
         },
 

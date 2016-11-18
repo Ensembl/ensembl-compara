@@ -88,7 +88,7 @@ sub param_defaults {
 
 sub fetch_input {
   my $self = shift;
-#  $self->debug(3);
+  $self->debug(4);
   print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
   my $mlss_id = $self->param_required('goc_mlss_id');
   $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
@@ -97,18 +97,14 @@ sub fetch_input {
   my $ref_species_dbid = $self->param('ref_species_dbid');
   $self->param('mlss_check', 0); # will be use to check if the mlss exist the reuse db ortherwise the goc for this mlss will be recalculated
   #this variables name was change to 'goc_reuse_db' as it was getting mixed up with another variable. The old name was left here to make it compatible with older runs of the runnable.
-#  $self->param('goc_reuse_db') = $self->param('previous_rel_db')? $self->param('previous_rel_db') : $self->param('goc_reuse_db'); 
-  if ($self->param('previous_rel_db') ) {
-    $self->param('previous_compara_dba' , Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('previous_rel_db')) );
-    my $q = "SELECT mlss_id, prev_release_mlss_id FROM homology_id_mapping where mlss_id = $mlss_id limit 1";
-    my $mlssID = $self->compara_dba->dbc->db_handle->selectrow_arrayref($q);
-    print "curr_release_mlss_id   :  $mlssID->[0]   , and , prev_release_mlss_id :  $mlssID->[1] \n" if ( $self->debug >3 );
-    my $prev_release_mlss_id = $mlssID->[1];
+
+  if ($self->param('reuse_goc') ) {
+    my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
+    my $prev_release_mlss_id = $mlss->get_tagvalue('prev_release_mlss_id');
+    print "\n\n  curr_release_mlss_id   :  $mlss_id  , and , prev_release_mlss_id :  $prev_release_mlss_id\n\n" if ( $self->debug >3 );
 
     if (defined $prev_release_mlss_id) {
       $self->param('mlss_check', 1);
-
-      my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
 
   #preload all gene members to make quering the homologs faster later on
       my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -128,13 +124,12 @@ sub fetch_input {
       my %homologyID_map = map { $_->[0] => $_->[1] } @{$hID_map} ;
       $self->param('homologyID_map', \%homologyID_map);
     
-    #now we will query the ortholog_goc_metric table from the previous db using the prev mlss id that maps to the new mlss id
-      my $sql = "select homology_id, goc_score, left1, left2, right1, right2 from ortholog_goc_metric ogm
-              join gene_member gm using (gene_member_id) where gm.genome_db_id = $ref_species_dbid and method_link_species_set_id = $prev_release_mlss_id";
-      my $prev_goc_hashref = $self->param('previous_compara_dba')->dbc->db_handle->selectall_hashref($sql, "homology_id");
+    #now we will query the ortholog_goc_metric table uploaded from from the previous db using the prev mlss id that maps to the new mlss id
+      my $sql = "select homology_id, goc_score, left1, left2, right1, right2 from prev_rel_goc_metric ogm
+              join prev_rel_gene_member gm using (gene_member_id) where gm.genome_db_id = $ref_species_dbid and method_link_species_set_id = $prev_release_mlss_id";
+      my $prev_goc_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, "homology_id");
       print Dumper($prev_goc_hashref) if ( $self->debug >5 );
       $self->param('prev_goc_hashref', $prev_goc_hashref);
-      $self->param('previous_compara_dba')->dbc->disconnect_if_idle();
     }
   }
 }
@@ -142,7 +137,7 @@ sub fetch_input {
 sub run {
   my $self = shift;
   print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >3);
-  if ($self->param('reuse_goc') and $self->param('mlss_check')) {
+  if ($self->param('mlss_check')) {
     $self->_reusable_species();
     $self->_insert_goc_scores();
   }
@@ -159,26 +154,22 @@ sub _reusable_species {
   my @goc_score_array;
   $self->param('goc_score_arrayref', \@goc_score_array);
   my $ortholog_hashref = $self->param_required('ortholog_info_hashref');
-  print "ortholog_info_hashref \n" if ( $self->debug > 3);
-  print Dumper($ortholog_hashref) if ( $self->debug > 3);
-
   my $count_homologs = 0;
   my $count_recal_homologs = 0;
   my $count_new_homologs =0;
+
   while (my ($ref_dnafragID, $chr_orth_hashref) = each(%$ortholog_hashref) ) {
-    print "chr_orth_hashref  \n" if ( $self->debug > 3);
-    print Dumper($chr_orth_hashref) if ( $self->debug > 3);
     my $orth_sorted = $self->_order_chr_homologs($chr_orth_hashref); # will contain the orthologs ordered by the dnafrag start position #sorting the orthologs by dnafrag start position
     for (my $homolog_index = 0; $homolog_index < scalar @{$orth_sorted}; $homolog_index++ ) {
       $count_homologs ++;
       my $curr_homology_id = $orth_sorted->[$homolog_index];
       my $prev_homology_id = $self->param('homologyID_map')->{$curr_homology_id};
-      print "\n curr_homology_id ----> $curr_homology_id   \n prev_homology_id --------> $prev_homology_id \n" if ( $self->debug > 1);
+
 
       if ( defined $prev_homology_id) {
         my $curr_homology_obj = $self->param('preloaded_homologs')->{$curr_homology_id};
         my $curr_ref_gmem_dbID = $curr_homology_obj->get_all_GeneMembers($self->param('ref_species_dbid'))->[0]->dbID;
-        print "\n curr_homology_id ----> $curr_homology_id can be reuseddddd  \n curr_ref_gmem_dbID --------> $curr_ref_gmem_dbID \n\n" if ( $self->debug > 1);
+
         #now we will query the prev_goc_hashref gotten from the previous db using the prev homology id that maps to the new homology id
         my $homology_goc_score = $self->param('prev_goc_hashref')->{$prev_homology_id};
 
@@ -210,7 +201,6 @@ sub _reusable_species {
         $homology_goc_score->{'homology_id'} = $curr_homology_id;
         $homology_goc_score->{'dnafrag_id'} = $ref_dnafragID;
         $homology_goc_score->{'method_link_species_set_id'} = $self->param_required('goc_mlss_id');
-        print Dumper($homology_goc_score) if ( $self->debug > 1);
         push (@{$self->param('goc_score_arrayref')}, $homology_goc_score) ;
       }
       else {
@@ -361,7 +351,6 @@ sub _insert_goc_scores {
   }
 
   my $insert_query = substr($sql_insert_query, 0, -1);
-  print "\n this is the concatenated insert after clean up :    $insert_query   \n\n" if ( $self->debug >1);
   my $goc_insert =  $self->compara_dba->dbc->db_handle->prepare($insert_query) or die "Couldn't prepare query: ".$self->compara_dba->dbc->db_handle->errstr;
 
   $goc_insert->execute() or die "Couldn't execute query: ".$self->compara_dba->dbc->db_handle->errstr;
@@ -376,7 +365,6 @@ sub _non_reusable_species {
     my $orth_sorted = $self->_order_chr_homologs($chr_orth_hashref); # will contain the orthologs ordered by the dnafrag start position #sorting the orthologs by dnafrag start position
     my $chr_job = {};
     $chr_job->{$ref_dnafragID} = $orth_sorted;
-    print Dumper($chr_job) if ( $self->debug > 3);
     $self->dataflow_output_id( {'chr_job' => $chr_job, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid') }, 2 );
   }
 }
@@ -386,8 +374,6 @@ sub _order_chr_homologs {
   my $self = shift;
   print "\n Starting ------  _order_chr_homologs \n" if ( $self->debug );
   my ($unsorted_chr_orth_hashref) = @_;
-  print "unsorted_chr_orth_hashref \n"  if ( $self->debug );
-  print Dumper($unsorted_chr_orth_hashref) if ( $self->debug );
   my @sorted_orth;
 
   foreach my $name (sort { ($unsorted_chr_orth_hashref->{$a} <=> $unsorted_chr_orth_hashref->{$b}) || ($a <=> $b) } keys %$unsorted_chr_orth_hashref ) {

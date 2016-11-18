@@ -362,7 +362,8 @@ sub default_options {
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'reuse_goc'                     => undef,
-        'do_homology_id_mapping'                 => 1,
+        'calculate_goc_distribution'    => 1,
+        'do_homology_id_mapping'                 => 0,
         # affects 'group_genomes_under_taxa'
 
     };
@@ -492,7 +493,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
         'reuse_goc'                     => $self->o('reuse_goc'),
-        'do_homology_id_mapping'                 => $self->o('do_homology_id_mapping'),
+        'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
+        'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
         'all_blast_params'          => $self->o('all_blast_params'),
 
@@ -3253,9 +3255,9 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => WHEN(
-                    '((#do_homology_id_mapping#) and (#prev_rel_db#))' => 'id_map_mlss_factory',
+                    '((#do_homology_id_mapping#) and (#reuse_db#))' => 'id_map_mlss_factory',
                 ),
-                'A->1' => ['goc_group_genomes_under_taxa'],
+                'A->1' => ['goc_backbone'],
                 '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],
             },
         },
@@ -3342,6 +3344,36 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
+
+        {   -logic_name => 'goc_backbone',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN( '#reuse_goc#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
+                'A->1' => ['goc_group_genomes_under_taxa'],
+            },
+        },
+
+        {   -logic_name => 'copy_prev_goc_score_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'mode'          => 'overwrite',
+                'table'         => 'ortholog_goc_metric',
+                'renamed_table' => 'prev_rel_goc_metric',
+            },
+        },
+        
+        {   -logic_name => 'copy_prev_gene_member_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'mode'          => 'overwrite',
+                'table'         => 'gene_member',
+                'renamed_table' => 'prev_rel_gene_member'
+            },
+        },
+
+
 
         {   -logic_name => 'goc_group_genomes_under_taxa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',

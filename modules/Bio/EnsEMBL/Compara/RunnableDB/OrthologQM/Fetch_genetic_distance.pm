@@ -118,14 +118,8 @@ sub _get_genetic_dist {
     my $lca_node = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
     my $genetic_dist =$lca_node->taxon->get_value_for_tag('ensembl timetree mya');
-<<<<<<< HEAD
     $genetic_dist = $genetic_dist ? $genetic_dist : 101; 
-    print "¢¢¢¢∞∞∞¢¢#∞∞##§#§#§§##§#∞##  $genetic_dist \n\n" if ( $self->debug >3 );
-=======
-    $genetic_dist = $genetic_dist ? $genetic_dist : 101;
-    print $lca_node->taxon->dbID() if ( $self->debug >3 );
-    print "\n\n¢¢¢¢∞∞∞¢¢#∞∞##§#§#§§##§#∞##  $genetic_dist \n\n" if ( $self->debug >3 );
->>>>>>> Merged wasiu branch conflict
+    print "\n\n  GENETIC DISTANCE :  $genetic_dist \n\n" if ( $self->debug >3 );
     return $genetic_dist;
 } ## end sub _get_genetic_dist
 

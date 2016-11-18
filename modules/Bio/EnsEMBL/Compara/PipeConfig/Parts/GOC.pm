@@ -99,8 +99,10 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_max_orth_percent',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                1 => WHEN( 'defined #goc_threshold#' => ['get_perc_above_threshold' ] ,
-                    ELSE ['get_genetic_distance' ] ),
+                1 => WHEN( 
+                    '#goc_threshold# and #calculate_goc_distribution#' => ['get_perc_above_threshold' ] ,
+			   '!(#goc_threshold#) and #calculate_goc_distribution#' => ['get_genetic_distance' ], 
+		    ),
             },
             -rc_name => '16Gb_job',
             -hive_capacity  => 50,

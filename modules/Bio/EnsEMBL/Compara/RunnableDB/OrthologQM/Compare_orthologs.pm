@@ -93,12 +93,13 @@ sub fetch_input{
     $self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
     $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
     $self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-
-    my $mlss_id = $self->param_required('goc_mlss_id');
-    $self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
-    my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
-    #preload all gene members to make quering the homologs faster later on
-    my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    
+#get the list of homology ids. 
+    my @keys = keys %{$self->param('chr_job')};
+    my $homologies_dbID_list = $self->param('chr_job')->{$keys[0]};
+    
+#preload all gene members to make quering the homologs faster later on
+    my $homologs = $self->param('homolog_adaptor')->fetch_all_by_dbID_list($homologies_dbID_list);
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologs->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologs);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologs->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
     my $preloaded_homologs_hashref;
