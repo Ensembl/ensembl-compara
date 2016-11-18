@@ -73,7 +73,7 @@ sub default_options {
             'protein_db'    => 'compara_ptrees',
             'ncrna_db'      => 'compara_nctrees',
             'family_db'     => 'compara_families',
-            'projection_db' => 'mysql://ensro@compara5/wa2_homology_projections_'.$self->o('ensembl_release'),
+            'mouse_strains' => 'compara_mouse_strains_homologies',
         },
         # The target database
         'curr_rel_db'   => 'compara_curr',
@@ -88,17 +88,12 @@ sub default_options {
         'exclusive_tables'  => {
             'mapping_session'   => 'master_db',
             'hmm_annot'         => 'family_db',
-            'gene_member'       => 'projection_db',
-            'seq_member'        => 'projection_db',
-            'sequence'          => 'projection_db',
-            'hmm_annot'         => 'family_db',
-            'peptide_align_feature_%' => 'protein_db',  # The purpose of this line is also to tell the Runnable not to complain that the tables don't exist yet in the target database
         },
 
         # In these databases, ignore these tables
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
-            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs ortholog_goc_metric QC_split_genes short_orth_genes long_orth_genes)],
+            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs ortholog_goc_metric peptide_align_feature% QC_split_genes short_orth_genes long_orth_genes seq_member gene_member sequence)],
             'ncrna_db'          => [qw(tmp_job)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         },
