@@ -86,6 +86,15 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'mm14_protein_trees_mouse_86b',
 );
 
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'compara1',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 3306,
+     -species => 'compara_mouse_strains_homologies',
+     -dbname => 'mm14_mouse_strains_homologies_87',
+);
+
 # Individual pipeline database for ncRNAtrees:
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'compara4',
