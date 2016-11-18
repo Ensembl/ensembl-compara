@@ -62,7 +62,7 @@ sub pipeline_analyses_goc {
         },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs_alt_NOV8',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
             -flow_into  =>  {
                 2   =>  ['check_ortholog_neighbors'],
             },
