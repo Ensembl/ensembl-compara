@@ -64,7 +64,7 @@ sub content {
   $html .= '<h3>Cell types by regulatory feature activity</h3>';
 
   ## We want one column per activity type, so get the data first
-  my $data  = {};; 
+  my $data  = {}; 
   my $total = 0; 
   my $colours   = $self->hub->species_defs->colour('fg_regulatory_features');
   my $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
