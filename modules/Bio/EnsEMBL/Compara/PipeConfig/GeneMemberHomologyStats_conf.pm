@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf
-    seed_pipeline.pl -url ${EHIVE_URL} -logic_name find_collection_species_set_id -input_id '{"collection" => "collection_name", "db_conn" => "mysql://ensro@comparaX/hom_db"}'
+    seed_pipeline.pl -url ${EHIVE_URL} -logic_name find_collection_species_set_id -input_id '{"collection" => "collection_name", "db_conn" => "mysql://ensro\@comparaX/hom_db"}'
 
 =head1 DESCRIPTION
 
