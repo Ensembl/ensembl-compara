@@ -164,9 +164,6 @@ sub _add_matrix {
   my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
-  use Data::Dumper; 
-  $Data::Dumper::Maxdepth = 2;
-  warn Dumper($matrix);
   my $caption      = $data->{'caption'};
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
