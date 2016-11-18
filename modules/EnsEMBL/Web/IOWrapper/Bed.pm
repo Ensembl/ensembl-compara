@@ -99,8 +99,8 @@ sub create_hash {
                         };
   my $colour = $self->set_colour($colour_params);
 
-  my $id = $self->parser->can('get_id') ? $self->parser->get_id
-            : $self->parser->can('get_name') ? $self->parser->get_name : undef;
+  my $label = $self->parser->can('get_name') ? $self->parser->get_name : '';
+  my $id    = $self->parser->get_id || $label;
 
   my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   my $href = $self->href({
@@ -120,7 +120,7 @@ sub create_hash {
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
-    'label'         => $self->parser->get_name,
+    'label'         => $label,
     'colour'        => $colour,
     'href'          => $href,
   };
