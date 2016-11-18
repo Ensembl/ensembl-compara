@@ -55,7 +55,7 @@ sub content {
 
     my $data = $glyphset->get_data;
     foreach my $track (@$data) {
-      next unless $track->{'features'};
+      next unless (scalar @{$track->{'features'}||[]});
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
         foreach (@{$track->{'features'}||[]}) {
