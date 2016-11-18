@@ -45,6 +45,12 @@ sub default_options {
 
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
+        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+
+        #Pipeline capacities:
+        'import_altalleles_as_homologies_capacity'  => '300',
+        'update_capacity'                           => '5',
+
     };
 }
 
@@ -62,8 +68,10 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-        'patch_import'  => { 'LSF' => '-C0 -M250 -R"select[mem>250] rusage[mem=250]"' },
+        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'default_w_reg' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
     };
 }
 
@@ -76,6 +84,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
             -input_ids  => [ {
                     'compara_db' => $self->o('compara_db'),
+                    'db_conn'    => '#compara_db#',
                 } ],
             -parameters => {
                 'range_index'   => 5,
@@ -97,25 +106,41 @@ sub pipeline_analyses {
             -parameters => {
                 'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_dbID', '#genome_db_id#'], 'db_adaptor', 'get_AltAlleleGroupAdaptor', 'fetch_all' ],
                 'column_names2getters'  => { 'alt_allele_group_id' => 'dbID' },
+                'reg_conf'  => $self->o('reg_conf'),
             },
             -flow_into => {
                 '2->A' => [ 'import_altalleles_as_homologies' ],
                 'A->1' => [ 'update_member_display_labels' ],
             },
+            -rc_name    => 'default_w_reg',
         },
 
 
         {   -logic_name => 'import_altalleles_as_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
+            -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
             -parameters => {
                 'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
             },
+             -flow_into => {
+                           -1 => [ 'import_altalleles_as_homologies_himem' ],  # MEMLIMIT
+                           },
             -rc_name    => 'patch_import',
+        },
+
+        {   -logic_name => 'import_altalleles_as_homologies_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
+            -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
+            -parameters => {
+                'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
+            },
+            -rc_name    => 'patch_import_himem',
         },
 
         {
             -logic_name => 'update_member_display_labels',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -analysis_capacity => $self->o('update_capacity'),
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
@@ -130,6 +155,7 @@ sub pipeline_analyses {
         {
             -logic_name => 'update_seq_member_display_labels',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -analysis_capacity => $self->o('update_capacity'),
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
@@ -144,6 +170,7 @@ sub pipeline_analyses {
         {
             -logic_name => 'update_member_descriptions',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -analysis_capacity => $self->o('update_capacity'),
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
