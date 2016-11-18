@@ -244,6 +244,9 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
+        #Record all the errors then die after all the values were checked, reporting the list of errors:
+        my %error_list;
+
         unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
             if ($self->param('die_if_unknown_table')) {
                 die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
@@ -320,7 +323,9 @@ sub run {
                         $sth->execute;
                         while (my $cols = $sth->fetchrow_arrayref()) {
                             my $value = join(",", map {$_ // '<NULL>'} @$cols);
-                            die sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value}) if exists $all_values{$value};
+                            push(@error_list, sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value})) if exists $all_values{$value};
+                            my @tok = split(/\,/,$value);
+                            $error_list{$tok[0]} = 1 if exists $all_values{$value};
                             $all_values{$value} = $db;
                         }
                     }
@@ -332,6 +337,9 @@ sub run {
             print " -INFO- ranges of the key '$key' are fine\n" if $self->debug;
             $merge{$table} = [grep {$table_size->{$_}->{$table}} @{ $all_tables->{$table} }];
 
+        }
+        if (%error_list){
+            die "Errors: \n" . join("\n", keys(%error_list)) . "\n";
         }
     }
     $self->param('copy', \%copy);
