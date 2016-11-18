@@ -83,7 +83,24 @@ sub default_options {
         'range_label',  => undef,       # A name for the range
         'range_filter', => undef,       # An SQL boolean expression to filter homology_id
 
-        'capacity'    => 5,             # how many mlss_ids can be processed in parallel
+        # ------- GRCh37
+        #'range_label',  => "protein",       # A name for the range
+        #'range_filter', => "homology_id < 100000000",       # An SQL boolean expression to filter homology_id
+
+        #'range_label',  => "ncrna",       # A name for the range
+        #'range_filter', => "homology_id > 100000000",       # An SQL boolean expression to filter homology_id
+        # ------- GRCh37
+
+        # ------- e87
+        #'range_label',  => "protein",       # A name for the range
+        #'range_filter', => "(homology_id < 100000000 OR (homology_id BETWEEN 300000000 AND 400000000))",       # An SQL boolean expression to filter homology_id
+
+        #'range_label',  => "ncrna",       # A name for the range
+        #'range_filter', => "((homology_id BETWEEN 100000000 AND 200000000) OR (homology_id BETWEEN 400000000 AND 500000000))",       # An SQL boolean expression to filter homology_id
+        # ------- e87
+
+
+        'capacity'    => 20,             # how many mlss_ids can be processed in parallel
         'batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
