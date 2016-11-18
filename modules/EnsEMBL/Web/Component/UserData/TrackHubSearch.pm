@@ -68,7 +68,7 @@ sub content {
         foreach my $version (@{$rest_species->{$sp}}) {
           push @assembly_ids, $version->{$key};
           ## Also check synonyms - mainly for EG, but doesn't hurt anyway!
-          push @assembly_ids, $version->{'synonyms'};
+          push @assembly_ids, @{$version->{'synonyms'}||[]};
         }
         if (grep {$_ eq $assembly} @assembly_ids) {
           $ok_species->{$species} = $_;
