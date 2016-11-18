@@ -69,12 +69,12 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 # # Individual pipeline database for ProteinTrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara5',
+     -host => 'compara4',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 3306,
      -species => 'compara_ptrees',
-     -dbname => 'cc21_protein_trees_no_reuse_86',
+     -dbname => 'wa2_protein_trees_87',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -97,12 +97,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # Individual pipeline database for ncRNAtrees:
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara4',
+     -host => 'compara1',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 3306,
      -species => 'compara_nctrees',
-     -dbname => 'mp14_compara_nctrees_86',
+     -dbname => 'mp14_compara_nctrees_87',
  );
 
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -121,7 +121,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 3306,
      -species => 'compara_families',
-     -dbname => 'mp14_ensembl_families_86',
+     -dbname => 'cc21_ensembl_families_87',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
@@ -311,7 +311,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'wa2_ensembl_compara_85',
+    -dbname => 'cc21_ensembl_compara_86',
 );
 
 # current release database on one of Compara servers:
@@ -321,7 +321,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
-    -dbname => 'cc21_ensembl_compara_86',
+    -dbname => 'mp14_ensembl_compara_87',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -331,7 +331,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_prev',
-    -dbname => 'wa2_ensembl_ancestral_85',
+    -dbname => 'cc21_ensembl_ancestral_86',
 );
 
 # current ancestral database on one of Compara servers:
@@ -341,7 +341,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_curr',
-    -dbname => 'cc21_ensembl_ancestral_86',
+    -dbname => 'mp14_ensembl_ancestral_87',
 );
 
 # ensembl production (maintained by production team):
