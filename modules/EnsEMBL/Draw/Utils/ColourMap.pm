@@ -156,7 +156,13 @@ sub tint_by_hex {
 
 sub brightness {
     my ($self, $name) = @_;
-    my ($r, $g, $b) = $self->rgb_by_name( $name );
+    my ($r, $g, $b);
+    if ($name =~ /^#?([0-9a-f]{6})$/) { #Hex
+      ($r, $g, $b) = $self->rgb_by_hex( $name );
+    }
+    else {
+      ($r, $g, $b) = $self->rgb_by_name( $name );
+    }
     return (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
 }
 
