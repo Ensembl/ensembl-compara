@@ -406,22 +406,28 @@ sub transcript_table {
 
   $table->add_row('Location', $location_html);
 
-  if(@proj_attrib) {
+  if(@proj_attrib && $self->hub->species_defs->IS_STRAIN_OF) {
     (my $ref_gene = $proj_attrib[0]->value) =~ s/\.\d+$//;
     
-    #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
-    my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1); 
-    my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
-    my $gene = $ga->fetch_by_stable_id($ref_gene);
-    my $ref_gene_name = $gene->display_xref->display_id;
+    if($ref_gene) {
+      #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
+      my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1); 
+      my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
+      my $gene = $ga->fetch_by_stable_id($ref_gene);
+      my $ref_gene_name = $gene->display_xref->display_id;
 
-    my $ref_url  = $hub->url({
-      species => $species,
-      type    => 'Gene',
-      action  => 'Summary',
-      g       => $ref_gene
-    });
-    $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+      my $ref_url  = $hub->url({
+        species => $species,
+        type    => 'Gene',
+        action  => 'Summary',
+        g       => $ref_gene
+      });
+    
+      $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+    } else {
+      $table->add_row('Reference strain equivalent',"None");
+    }
+
   }
   $table->add_row( $page_type eq 'gene' ? 'About this gene' : 'About this transcript',$about_count) if $about_count;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
