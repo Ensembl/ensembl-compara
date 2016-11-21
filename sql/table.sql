@@ -1597,8 +1597,7 @@ CREATE TABLE gene_tree_node_attr (
 @desc  This table contains gene quality information from the geneset_QC pipeline
 @colour   #1E90FF
 
-@column gene_member_id           Internal unique ID
-@column stable_id                EnsEMBL stable ID
+@column gene_member_stable_id    EnsEMBL stable ID
 @column genome_db_id             Internal unique ID for this table
 @column seq_member_id            canonical seq_member_id
 @column n_species                -n_species
