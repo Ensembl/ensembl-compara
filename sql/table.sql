@@ -584,7 +584,7 @@ CREATE TABLE synteny_region (
 
 /**
 @table dnafrag
-@desc  This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the @link genomic_align_block table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index <name> has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key <name> is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
+@desc  This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the @link genomic_align_block table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index &lt;name&gt; has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key &lt;name&gt; is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
 @colour #FF8500
 
 @example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 150 refers to Human genome in this example) which is 107349540 nucleotides long.
@@ -733,10 +733,8 @@ CREATE TABLE genomic_align_tree (
 /**
 @table genomic_align
 @desc  This table contains the coordinates and all the information needed to rebuild genomic alignments. Every entry corresponds to one of the aligned sequences. It also contains an external key to the @link method_link_species_set which refers to the software and set of species used for getting the corresponding alignment. The aligned sequence is defined by an external reference to the @link dnafrag table, the starting and ending position within this dnafrag, the strand and a cigar_line.<br />
-The original aligned sequence is not stored but it can be retrieved using the <b>cigar_line</b> field and the original sequence. The cigar line defines the sequence of matches/mismatches and deletions (or gaps). For example, this cigar line <b>2MD3M2D2M</b> will mean that the alignment contains 2 matches/mismatches, 1 deletion (number 1 is omitted in order to save some space), 3 matches/mismatches, 2 deletions and 2 matches/mismatches. If the original sequence is:<br />
-<ul><li>Original sequence: AACGCTT</li></ul>
-
-The aligned sequence will be:<br />
+The original aligned sequence is not stored but it can be retrieved using the <b>cigar_line</b> field and the original sequence. The cigar line defines the sequence of matches/mismatches and deletions (or gaps). For example, this cigar line <b>2MD3M2D2M</b> will mean that the alignment contains 2 matches/mismatches, 1 deletion (number 1 is omitted in order to save some space), 3 matches/mismatches, 2 deletions and 2 matches/mismatches.
+If the original sequence is <code>AACGCTT</code>, the aligned sequence will be:<br />
     <table>
       <caption>cigar line: 2MD3M2D2M</caption>
       <thead><tr>
@@ -1969,8 +1967,8 @@ CREATE TABLE homology_member (
 @column mapping_session_id    Internal unique ID
 @column type                  Type of stable_ids that were mapped during this session
 @column when_mapped           Normally, we use the date of creation of the mapping file being loaded. This prevents the date from chaging even if we accidentally remove the entry and have to re-load it.
-@column rel_from              rel.number from which the stable_ids were mapped during this session. rel_from < rel_to
-@column rel_to                rel.number to which the stable_ids were mapped during this session. rel_from < rel_to
+@column rel_from              rel.number from which the stable_ids were mapped during this session. rel_from &lt; rel_to
+@column rel_to                rel.number to which the stable_ids were mapped during this session. rel_from &lt; rel_to
 @column prefix                Prefix
 */
 
