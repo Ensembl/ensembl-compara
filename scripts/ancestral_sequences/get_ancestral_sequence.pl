@@ -115,7 +115,7 @@ The name of the species set of the alignment (default: "primates")
 
 =item B<[--dir directory_name]>
 
-Where to dump all the files. Defaults to "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}"
+Where to dump all the files. Defaults to "${species_production_name}_ancestor_${species_assembly}"
 
 =item B<[--debug]>
 
@@ -253,7 +253,7 @@ if ( $debug ) {
 }
 
 if (!$dir) {
-    $dir = "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}";
+    $dir = "${species_production_name}_ancestor_${species_assembly}";
 }
 
 system("mkdir -p $dir");
