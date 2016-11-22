@@ -24,6 +24,8 @@ use strict;
 use List::Util qw(min max);
 use List::MoreUtils qw(natatime);
 
+use EnsEMBL::Draw::Style::Feature::Transcript;
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub minmax { return max(min($_[0],$_[2]),$_[1]); }
@@ -214,10 +216,48 @@ sub _label_height {
 }
 
 sub draw_collapsed_genes {
-  my ($self,$length,$labels,$strand,$genes) = @_;
-
-  my $strand_flag = $self->my_config('strand');
+  my ($self, $length, $labels, $strand, $genes) = @_;
   return unless @$genes;
+
+  $self->{'my_config'}->set('collapsed', 1);
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+
+  ## Filter by strand
+  my $stranded_genes = [];
+  my $strand_flag = $self->my_config('strand');
+  foreach my $g (@$genes) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    $self->_create_exon_structure($g);
+    push @$stranded_genes, $g;
+  }
+  my $data = [{'features' => $stranded_genes}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
+
+sub _create_exon_structure {
+  my ($self, $g) = @_;
+  my $structure = [];
+
+  foreach my $e (@{$g->{'exons'}}) {
+    push @$structure, {'start' => $e->{'start'}, 'end' => $e->{'end'}};
+  }
+  $g->{'structure'} = $structure;
+  return 1;
+}
+
+sub _old_collapsed_gene_method {
+  my ($self, $length, $labels, $strand, $genes) = @_;
+  my $strand_flag = $self->my_config('strand');
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
   $self->mr_bump($genes,$labels,$length,$bstrand,2);
   my %used_colours;
