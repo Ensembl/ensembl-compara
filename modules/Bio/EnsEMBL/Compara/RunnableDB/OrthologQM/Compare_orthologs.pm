@@ -74,7 +74,7 @@ sub param_defaults {
 #    "chr_job" => {13200473 => [70578,153474,171749,153125,225827,40769]},
 #    "non_ref_species_dbid" => 144,
 #    "ref_species_dbid" => 122,
-#    'compara_db'  => 'mysql://ensadmin:ensembl@compara5/cc21_protein_trees_no_reuse_86',
+#    'compara_db'  => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara5/cc21_protein_trees_no_reuse_86',
 #    'goc_mlss_id'  => '50062',
     }
 }

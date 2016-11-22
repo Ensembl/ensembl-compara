@@ -48,7 +48,6 @@ sub param_defaults {
         'perc_id_thresh'    => 30,
         'perc_cov_thresh'   => 60,
         'mlss_id'           => '51265',
-        'compara_db'        => 'mysql://ensadmin:ensembl@compara5/wa2_ensembl_compara_85' ,
         'condition'         => '($goc && $wga) || $is_tree_compliant',
  
     };

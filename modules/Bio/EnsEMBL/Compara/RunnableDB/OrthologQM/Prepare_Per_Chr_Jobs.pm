@@ -72,8 +72,8 @@ sub param_defaults {
 #    'ref_species_dbid'    => 122,
 #    'non_ref_species_dbid'    => 144,
 #    'reuse_goc'   => 0,
-#    'previous_rel_db'  =>  'mysql://ensadmin:ensembl@compara2/mp14_protein_trees_85',
-#    'compara_db'  => 'mysql://ensadmin:ensembl@compara5/cc21_protein_trees_no_reuse_86',
+#    'previous_rel_db'  =>  'mysql://ensro@compara2/mp14_protein_trees_85',
+#    'compara_db'  => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara5/cc21_protein_trees_no_reuse_86',
 #    'goc_mlss_id'  => '50062',
     };
 }
