@@ -70,14 +70,13 @@ body.static #widemain { margin-left: 0; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
 
 /* New separate species header */
-#masthead div.spbar_holder                { position: absolute; top: 50px; clear: both; }
-#masthead div.spbar_holder h1             { color:#fff; margin-top:16px; }
-#masthead div.spbar_holder h1 a.toggle    { background: none; }
-#masthead div.spbar_holder h1 img         { float: left; vertical-align:middle; 
-                                            height: 48px; width: 48px; margin: -16px 12px 0 12px;
-                                            border: 1px solid [[MH_BORDER]];
-                                            border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
-#masthead div.spbar_holder h1 span.dropdown { font-size: 60%; }
+#masthead div.spbar_holder                  { position: absolute; top: 70px; clear: both; }
+#masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin-top:16px; }
+#masthead div.spbar_holder .header img      { float: left; vertical-align:middle; 
+                                              height: 48px; width: 48px; margin: -16px 8px 0 8px;
+                                              border: 1px solid [[MH_BORDER]];
+                                              border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
+#masthead div.spbar_holder span.dropdown a.toggle { background: none; }
 
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }

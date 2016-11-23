@@ -29,30 +29,46 @@ use base qw(EnsEMBL::Web::Document::Element);
 
 sub init {
   my $self          = shift;
-  my $controller    = shift;
-  my $builder       = $controller->builder;
-  my $object        = $controller->object;
-  my $configuration = $controller->configuration;
-  my $hub           = $controller->hub;
-  my $type          = $hub->type;
-  my $species_defs  = $hub->species_defs;  
-  my @data;
+  $self->init_species_list($self->hub);
+}
 
-  my @data          = ($species_defs->valid_species($hub->species) ? {
-    class    => 'species',
-    type     => 'Info',
-    action   => 'Index',
-    caption  => sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_SHORT_NAME),
-    dropdown => 1
-  } : {
-    class    => 'species',
-    caption  => 'Species',
-    disabled => 1,
-    dropdown => 1
-  });
-  
-  $self->init_species_list($hub);
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
 
+  ## User-friendly species name and assembly
+  my ($species, $assembly, $quality);
+  my $collection = $hub->species_defs->STRAIN_COLLECTION;
+  if ($collection) {
+    $species  = ucfirst($collection);
+    $assembly = $hub->species_defs->SPECIES_STRAIN;
+    if ($assembly !~ /reference/) {
+      $assembly = 'strain '.$assembly;
+    }
+  }
+  else {
+    $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
+    $assembly = $hub->species_defs->ASSEMBLY_NAME;
+  }
+
+  ## Optional quality flag
+  if ($hub->species_defs->GENEBUILD_METHOD ne 'full_genebuild') {
+    (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
+    my $genebuild_url = '';
+    $quality = sprintf '<a href="%s"><img src="/i/16/rev/flag.png"/> %s</a>', $genebuild_url, ucfirst $text;
+  }
+
+  ## Species selector
+  my $arrow     = sprintf '<span class="dropdown"><a class="toggle" href="#" rel="species">&#9660;</a></span>';
+  my $dropdown  = $self->species_list;
+
+  ## Species header
+  my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
+
+  my $content = sprintf '<span class="header"><a href="%s"><img src="/i/species/48/%s.png">%s: %s</a></span> %s%s %s', 
+                          $home_url, $hub->species, $species, $assembly, $arrow, $quality, $dropdown;
+ 
+  return $content;
 }
 
 sub init_species_list {
@@ -75,25 +91,6 @@ sub init_species_list {
   my $favourites = $hub->get_favourite_species;
   
   $self->{'favourite_species'} = [ map {[ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]} @$favourites ] if scalar @$favourites;
-}
-
-sub content {
-  my $self  = shift;
-  my $hub   = $self->hub;
-
-  ## Species selector
-  my $arrow     = sprintf '<span class="dropdown"><a class="toggle" href="#" rel="species">&#9660;</a></span>';
-  my $dropdown  = $self->species_list;
-
-  ## Species header
-  my $assembly  = $hub->species_defs->ASSEMBLY_NAME;
-  my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
-
-  my $content = sprintf '<h1><a href="%s"><img src="/i/species/48/%s.png">%s: %s</a> %s</h1>%s', 
-                          $home_url, $hub->species, $hub->species_defs->SPECIES_COMMON_NAME, 
-                          $assembly, $arrow, $dropdown;
- 
-  return $content;
 }
 
 sub species_list {
