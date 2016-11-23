@@ -59,21 +59,8 @@ sub init {
   my $hub           = $controller->hub;
   my $type          = $hub->type;
   my $species_defs  = $hub->species_defs;  
-  my @data          = ($species_defs->valid_species($hub->species) ? {
-    class    => 'species',
-    type     => 'Info',
-    action   => 'Index',
-    caption  => sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_SHORT_NAME),
-    dropdown => 1
-  } : {
-    class    => 'species',
-    caption  => 'Species',
-    disabled => 1,
-    dropdown => 1
-  });
-  
-  $self->init_species_list($hub);
-  
+  my @data;
+
   foreach (@{$hub->ordered_objects}) {
     my $o = $builder->object($_);
     push @data, { type => $_, action => $o->default_action, caption => $o->short_caption('global'), dropdown => !!($self->{'history'}{lc $_} || $self->{'bookmarks'}{lc $_} || $_ eq 'Location') } if $o;
@@ -96,28 +83,6 @@ sub init {
       disabled => $row->{'disabled'}
     });
   }
-}
-
-sub init_species_list {
-  my ($self, $hub) = @_;
-  my $species_defs = $hub->species_defs;
-  
-  $self->{'species_list'} = [ 
-    sort { $a->[1] cmp $b->[1] } 
-    map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
-    grep !$species_defs->get_config($_, 'IS_STRAIN_OF'), 
-    $species_defs->valid_species
-  ];
-
-  #adding species strain (Mouse strains) to the list above
-  foreach ($species_defs->valid_species) {
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( $self->{'species_list'}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
-  }
-  @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
-  
-  my $favourites = $hub->get_favourite_species;
-  
-  $self->{'favourite_species'} = [ map {[ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]} @$favourites ] if scalar @$favourites;
 }
 
 sub content {
@@ -162,49 +127,9 @@ sub content {
   
   $content  = $short_tabs . $long_tabs;
   $content  = qq{<ul class="tabs">$content</ul>} if $content;
-  $content .= $self->species_list                if $self->{'species_list'};
   $content .= join '', values %{$self->dropdown} if $history;
   
   return $content;
-}
-
-sub species_list {
-  my $self      = shift;
-  my $total     = scalar @{$self->{'species_list'}};
-  my $remainder = $total % 3;
-  my $third     = int($total / 3) - 1;
-  my ($all_species, $fav_species);
-  
-  if ($self->{'favourite_species'}) {
-    $fav_species .= qq{<li><a class="constant" href="$_->[0]">$_->[1]</a></li>} for @{$self->{'favourite_species'}};
-    $fav_species  = qq{<h4>Favourite species</h4><ul>$fav_species</ul><div style="clear: both;padding:1px 0;background:none"></div>};
-  }
-  
-  # Ok, this is slightly mental. Basically, we're building a 3 column structure with floated <li>'s.
-  # Because they are floated, if they were printed alphabetically, this would result in a menu with was alphabetised left to right, i.e.
-  # A B C
-  # D E F
-  # G H I
-  # Because the list is longer than it is wide, it is much easier to find what you want if alphabetised top to bottom, i.e.
-  # A D G
-  # B E H
-  # C F I
-  # The code below achieves that goal
-  my @ends = ( $third + !!($remainder && $remainder--) );
-  push @ends, $ends[0] + 1 + $third + !!($remainder && $remainder--);
-  
-  my @output_order;
-  push @{$output_order[0]}, $self->{'species_list'}->[$_] for 0..$ends[0];
-  push @{$output_order[1]}, $self->{'species_list'}->[$_] for $ends[0]+1..$ends[1];
-  push @{$output_order[2]}, $self->{'species_list'}->[$_] for $ends[1]+1..$total-1;
-  
-  for my $i (0..$#{$output_order[0]}) {
-    for my $j (0..2) {
-      $all_species .= sprintf '<li>%s</li>', $output_order[$j][$i] ? qq{<a class="constant" href="$output_order[$j][$i][0]">$output_order[$j][$i][1]</a>} : '&nbsp;';
-    }
-  }
-
-  return sprintf '<div class="dropdown species">%s<h4>%s</h4><ul>%s</ul></div>', $fav_species, $fav_species ? 'All species' : 'Select a species', $all_species;  
 }
 
 sub dropdown {

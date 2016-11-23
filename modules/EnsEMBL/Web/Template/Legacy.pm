@@ -54,6 +54,7 @@ sub add_body {
     account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
+    species_bar      EnsEMBL::Web::Document::Element::SpeciesBar
     tabs             EnsEMBL::Web::Document::Element::Tabs
     navigation       EnsEMBL::Web::Document::Element::Navigation
     tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
@@ -108,6 +109,7 @@ sub render_content {
   my $page = $self->page;
 
   ## LOCAL NAVIGATION & MAIN CONTENT
+  my $sp_bar      = $elements->{'species_bar'} ? qq(<div class="spbar_holder">$elements->{'species_bar'}</div>) : '';
   my $tabs        = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
 
   my $icons       = $page->icon_bar if $page->can('icon_bar');  
@@ -131,6 +133,7 @@ sub render_content {
   }
 
   return qq(
+        $sp_bar
         $tabs
         $icons
       </div>
