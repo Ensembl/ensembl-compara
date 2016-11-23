@@ -82,15 +82,16 @@ sub content {
   my $hub   = $self->hub;
 
   ## Species selector
-  my $dropdown  = sprintf '<span class="dropdown"><a class="toggle" href="#" rel="species">&#9660;</a></span>';
+  my $arrow     = sprintf '<span class="dropdown"><a class="toggle" href="#" rel="species">&#9660;</a></span>';
+  my $dropdown  = $self->species_list;
 
   ## Species header
-  my $assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $assembly  = $hub->species_defs->ASSEMBLY_NAME;
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
-  my $content = sprintf '<h1><a href="%s"><img src="/i/species/48/%s.png">%s: %s</a> %s</h1>', 
+  my $content = sprintf '<h1><a href="%s"><img src="/i/species/48/%s.png">%s: %s</a> %s</h1>%s', 
                           $home_url, $hub->species, $hub->species_defs->SPECIES_COMMON_NAME, 
-                          $assembly, $dropdown;
+                          $assembly, $arrow, $dropdown;
  
   return $content;
 }
