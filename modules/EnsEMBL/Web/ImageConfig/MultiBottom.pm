@@ -130,48 +130,52 @@ sub multi {
     }
   }
 
-  if ($pos == 1) {
-    @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
-  } elsif ($pos == $total) {
-    @strands = qw(f);   # Last species - show alignments on forward strand.
-  } elsif ($pos == 2) {
-    @strands = qw(r);   # First species where $total > 2
-  } else {
-    @strands = qw(r f); # Secondary species in the middle of the image
-  }
+  if (scalar keys %alignments) {
 
-  # Double up for non primary species in the middle of the image
-  $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
+    if ($pos == 1) {
+      @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
+    } elsif ($pos == $total) {
+      @strands = qw(f);   # Last species - show alignments on forward strand.
+    } elsif ($pos == 2) {
+      @strands = qw(r);   # First species where $total > 2
+    } else {
+      @strands = qw(r f); # Secondary species in the middle of the image
+    }
 
-  my $decorations = $self->get_node('decorations');
+    # Double up for non primary species in the middle of the image
+    $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
 
-  foreach (sort keys %alignments) {
-    my $strand = shift @strands;
+    my $decorations = $self->get_node('decorations');
 
-    foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
-      my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
+    foreach (sort keys %alignments) {
+      my $strand = shift @strands;
 
-      $decorations->before(
-        $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
-          glyphset                   => '_alignment_pairwise',
-          colourset                  => 'pairwise',
-          name                       => $align->{'name'},
-          species                    => [split '--', $other_species]->[0],
-          strand                     => $strand,
-          display                    => $methods->{$align->{'type'}},
-          db                         => $align->{'db'},
-          type                       => $align->{'type'},
-          ori                        => $align->{'ori'},
-          method_link_species_set_id => $align->{'id'},
-          target                     => $align->{'target_name'},
-          join                       => 1,
-          menu                       => 'no',
-          slice_summary              => $slice_summary,
-          flip_vertical              => 1,
-        })
-      );
+      foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
+        my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
+
+        $decorations->before(
+          $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
+            glyphset                   => '_alignment_pairwise',
+            colourset                  => 'pairwise',
+            name                       => $align->{'name'},
+            species                    => [split '--', $other_species]->[0],
+            strand                     => $strand,
+            display                    => $methods->{$align->{'type'}},
+            db                         => $align->{'db'},
+            type                       => $align->{'type'},
+            ori                        => $align->{'ori'},
+            method_link_species_set_id => $align->{'id'},
+            target                     => $align->{'target_name'},
+            join                       => 1,
+            menu                       => 'no',
+            slice_summary              => $slice_summary,
+            flip_vertical              => 1,
+          })
+        );
+      }
     }
   }
+
   $self->add_tracks('information',
     [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'variation_legend', 'Variant Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
