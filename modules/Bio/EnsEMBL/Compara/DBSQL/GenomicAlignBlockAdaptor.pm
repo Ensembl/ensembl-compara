@@ -132,6 +132,7 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
 
 use Data::Dumper;
+$Data::Dumper::Maxdepth=3;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -1279,7 +1280,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     }
 
     require Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
-
+    # warn Dumper([map {$_->species}, @{Bio::EnsEMBL::Registry::get_all_DBAdaptors(undef, "core")}]);
     my $ref = $mlss->{'_hal_species_name_mapping'}->{ $ref_gdb->dbID };
 
 
@@ -1291,7 +1292,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
     }
     my $hal_adaptor = $mlss->{'_hal_adaptor'};
     my $hal_fh = $hal_adaptor->hal_filehandle;
-    my $hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id }->{ $dnafrag->name } || $dnafrag->name;
+    my $e2u_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id };
+    my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $dnafrag->name;
 
 
     my $num_targets  = scalar @$targets_gdb;
@@ -1307,12 +1309,11 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my $targets_str = join(',', @hal_targets);
 
       my $max_ref_gap = 50;
+      # warn "\n$targets_str | $ref | $hal_seq_reg:\n";
       my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 
-      unless ( $maf_file_str =~ m/[A-Za-z]/ ){
-        print "MAF is empty!!\n";
-        return [];
-      }
+      # check if MAF is empty
+      return [] unless ( $maf_file_str =~ m/[A-Za-z]/ );
 
       # use open ':encoding(iso-8859-7)';
       open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
@@ -1338,10 +1339,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my (@genomic_align_array, $ref_genomic_align);
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
-          my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
+          my ( $species_id, $chr, $end ) = split(/\./, $seq->{display_id});
+          $chr = join('.', ($chr, $end)) if ( defined $end );
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
 
-          my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID }->{$chr} || $chr;
+          my $u2e_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID };
+          my $df_name = $u2e_mappings->{$chr} || $chr;
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
           next if ( !defined $this_dnafrag );
           # when fetching by slice, input slice will be set as $dnafrag->slice, complete with start and end positions
@@ -1411,7 +1414,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
         } else {
             push(@gabs, $gab);
         }
-
       }
       close MAF;
     }
