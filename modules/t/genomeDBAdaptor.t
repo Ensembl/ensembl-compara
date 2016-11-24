@@ -113,10 +113,11 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_name_assembly" , sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_taxon_id", sub {
+subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_all_by_taxon_id", sub {
 
-    my $genome_db = $genome_db_adaptor->fetch_by_taxon_id($taxon_id);
-    is($genome_db->dbID, $genome_db_id, "Fetching by taxon_id");
+    my $genome_dbs = $genome_db_adaptor->fetch_all_by_taxon_id($taxon_id);
+    is(scalar(@$genome_dbs), 1, 'Got 1 GenomeDB');
+    is($genome_dbs->[0]->dbID, $genome_db_id, "Fetching by taxon_id");
 
     done_testing();
 };
