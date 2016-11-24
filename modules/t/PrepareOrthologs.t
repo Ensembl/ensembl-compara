@@ -113,11 +113,6 @@ standaloneJob(
 			$exp_dataflow_2, # expected data flowed out
 			2 # dataflow branch
 		], # end event
-		[
-			'DATAFLOW',
-			$exp_dataflow_1,
-			1
-		],
 	]
 );
 
