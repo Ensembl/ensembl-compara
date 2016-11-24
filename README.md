@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=master)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/87)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=release/87&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=release/87)
 
 [travis]: https://travis-ci.org/Ensembl/ensembl-compara
 [coveralls]: https://coveralls.io/r/Ensembl/ensembl-compara
