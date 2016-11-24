@@ -253,7 +253,10 @@ sub content {
         } else {
           $id_info = qq{<p class="space-below">$orthologue->{'display_id'}&nbsp;&nbsp;<a href="$link_url">($stable_id)</a></p>};
         }
+      } else {
+ 	$id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>};	
       }
+ 
       $id_info .= qq{<p class="space-below">$region_link</p><p class="space-below">$alignment_link</p>};
 
       ##Location - split into elements to reduce horizonal space
