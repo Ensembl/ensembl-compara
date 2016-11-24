@@ -54,6 +54,20 @@ my $exp_dataflow = [
 	}
 ];
 
+my $exp_dataflow2 = [
+          {
+            'genome_db_id' => '87'
+          },
+          {
+            'genome_db_id' => '111'
+          },
+          {
+            'genome_db_id' => '112'
+          },
+          {
+            'genome_db_id' => '142'
+          }
+        ];
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection', # module
@@ -62,11 +76,21 @@ standaloneJob(
 		'compara_db' => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
+		[
+			'DATAFLOW',
+			$exp_dataflow2,
+			2
+		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			{ 'genome_db_pairs' => $exp_dataflow}, # expected data flowed out
+			1 # dataflow branch
 		], # end event
+		[
+			'DATAFLOW',
+			{ 'aln_mlss_ids' => undef },
+			3
+		],
 	]
 );
 
@@ -78,11 +102,21 @@ standaloneJob(
 		'compara_db'     => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
+		[
+			'DATAFLOW',
+			$exp_dataflow2,
+			2
+		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			{ 'genome_db_pairs' => $exp_dataflow}, # expected data flowed out
+			1 # dataflow branch
 		], # end event
+		[
+			'DATAFLOW',
+			{ 'aln_mlss_ids' => undef },
+			3
+		],
 	]
 );
 
@@ -113,17 +147,28 @@ standaloneJob(
 		'compara_db'     => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
+		[
+			'DATAFLOW',
+			$exp_dataflow2,
+			2
+		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			{ 'genome_db_pairs' => $exp_dataflow}, # expected data flowed out
+			1 # dataflow branch
 		], # end event
+		[
+			'DATAFLOW',
+			{ 'aln_mlss_ids' => undef },
+			3
+		],
 	]
 );
 
 
 # Test pair of species #
 $exp_dataflow = [ { 'species1_id' => '87', 'species2_id' => '111' } ];
+$exp_dataflow2 = [ { 'genome_db_id' => '87' }, { 'genome_db_id' => '111' } ];
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection', # module
@@ -133,11 +178,21 @@ standaloneJob(
 		'compara_db' => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
+		[
+			'DATAFLOW',
+			$exp_dataflow2,
+			2
+		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			{ 'genome_db_pairs' => $exp_dataflow}, # expected data flowed out
+			1 # dataflow branch
 		], # end event
+		[
+			'DATAFLOW',
+			{ 'aln_mlss_ids' => undef },
+			3
+		],
 	]
 );
 
