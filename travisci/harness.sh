@@ -32,19 +32,20 @@ fi
 
 echo "Running ensembl-compara test suite using $PERL5LIB"
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${COMPARA_SCRIPTS[@]}"
-PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${CORE_SCRIPTS[@]}"
-
 rt1=$?
+PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${CORE_SCRIPTS[@]}"
+rt2=$?
 
 if [[ "$TRAVIS_PERL_VERSION" < "5.14" ]]; then
   echo "Skipping ensembl-rest test suite"
+  rt3=0
 else
   echo "Running ensembl-rest test suite using $PERL5LIB"
   PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${REST_SCRIPTS[@]}"
+  rt3=$?
 fi
 
-rt=$?
-if [[ ($rt1 -eq 0) && ($rt -eq 0) ]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) ]]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls
