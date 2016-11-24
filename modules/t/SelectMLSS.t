@@ -44,6 +44,10 @@ standaloneJob(
 			"Found LASTZ alignment. mlss_id = 634"
 		],
 		[
+			'WARNING',
+			"Found 2 alignments between meleagris_gallopavo and gallus_gallus"
+		],
+		[
 			'DATAFLOW',
 			{ mlss => [647, 634] },
 			1
@@ -76,6 +80,10 @@ standaloneJob(
 			"Found LASTZ alignment. mlss_id = 719"
 		],
 		[
+			'WARNING',
+			"Found 1 alignments between homo_sapiens and gallus_gallus"
+		],
+		[
 			'DATAFLOW',
 			{ mlss => [719] },
 			1
@@ -90,7 +98,7 @@ standaloneJob(
 
 # Test species set with EPO aln #
 $exp_dataflow = {
-	'aln_mlss_ids' => [647, 634],
+	'aln_mlss_ids' => [647],
 	'species1_id' => '112',
 	'species2_id' => '142'
 };
@@ -100,13 +108,13 @@ standaloneJob(
 	{ # input param hash
 		'species1_id'    => '112',
 		'species2_id'    => '142',
-		'species_set_id' => '35399',
+                'aln_mlss_ids'   => ['647'],
 		'compara_db'     => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[
 			'DATAFLOW',
-			{ mlss => [647, 634] },
+			{ mlss => [647] },
 			1
 		],
 		[ # start event
@@ -118,3 +126,4 @@ standaloneJob(
 );
 
 done_testing();
+
