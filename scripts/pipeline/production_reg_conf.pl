@@ -29,7 +29,6 @@ use warnings;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
@@ -345,7 +344,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 # ensembl production (maintained by production team):
-Bio::EnsEMBL::Production::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'ens-staging',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
