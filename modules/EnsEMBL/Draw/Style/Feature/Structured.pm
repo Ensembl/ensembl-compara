@@ -30,6 +30,7 @@ sub draw_feature {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
   my ($self, $feature, $position) = @_;
+#  warn "\n\n>>> DRAWING FEATURE ".$feature->{'label'}; 
 
   ## In case we're trying to draw a feature with no internal structure,
   ## revert to parent method, which is much simpler!

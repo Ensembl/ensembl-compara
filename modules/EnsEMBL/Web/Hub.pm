@@ -361,6 +361,17 @@ sub url {
   my $flag          = shift;
   my $all_params    = shift;
 
+  ## Check for illegal characters in the species name, in case
+  ## someone has used a common name with weird stuff in it 
+  ## (e.g. mouse strain names with slashes)
+  my $illegal = '\/|\?|=';
+  if ($params->{'species'} && $params->{'species'} =~ /$illegal/) {
+    warn sprintf '######## ILLEGAL SPECIES NAME %s IN URL ########', $params->{'species'};
+    ## Stripping these characters might still produce a 404,
+    ## but at least it won't be horribly broken
+    $params->{'species'} =~ s/$illegal/_/g;
+  }
+
   my $species       = exists $params->{'species'}       ? $params->{'species'}      : $self->species;
   my $type          = exists $params->{'type'}          ? $params->{'type'}         : $self->type;
   my $action        = exists $params->{'action'}        ? $params->{'action'}       : $self->action;

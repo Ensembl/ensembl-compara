@@ -46,26 +46,39 @@ sub draw_join {
 sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
-  my $block_width = $params{'width'};
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  #warn Dumper($structure);
+
+  ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
+  my $start = $structure->{'start'};
+  $start    = 1 if $start < 0;
+  my $end   = $structure->{'end'};
+  my $edge = $self->image_config->container_width;
+  $end      = $edge if $end > $edge;  
+  ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
+  ## not with respect to biology, because it makes the logic a lot simpler
+  my $coding_start  = $structure->{'utr_5'} || $start;
+  my $coding_end    = $structure->{'utr_3'} || $end;
+  my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
-  elsif ($structure->{'utr_5'}) {
-    my $colour        = $params{'colour'};
-    $params{'width'}  = $structure->{'utr_5'};
-    $self->draw_noncoding_block(%params);
-    $params{'x'}     += $structure->{'utr_5'};
-    $params{'width'}  = $block_width - $structure->{'utr_5'};
-    $params{'colour'} = $colour;
+  elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+    if (defined($structure->{'utr_5'})) {
+      $params{'width'}  = $structure->{'utr_5'} - $start;
+      $self->draw_noncoding_block(%params);
+    }
+
+    $params{'x'} = $coding_start;
+    $params{'width'} = $coding_width; 
     $self->draw_coding_block(%params);
-  }
-  elsif ($structure->{'utr_3'}) {
-    $params{'width'} = $structure->{'utr_3'};
-    $self->draw_coding_block(%params);
-    $params{'x'}    += $structure->{'utr_3'};
-    $params{'width'} = $block_width - $structure->{'utr_3'};
-    $self->draw_noncoding_block(%params);
+
+    if (defined($structure->{'utr_3'})) {
+      $params{'x'}     = $structure->{'utr_3'};
+      $params{'width'} = $end - $structure->{'utr_3'};
+      $self->draw_noncoding_block(%params);
+    }
   }
   else {
     $self->draw_coding_block(%params);

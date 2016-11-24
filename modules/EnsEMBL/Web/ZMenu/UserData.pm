@@ -55,7 +55,7 @@ sub content {
 
     my $data = $glyphset->get_data;
     foreach my $track (@$data) {
-      next unless $track->{'features'};
+      next unless (scalar @{$track->{'features'}||[]});
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
         foreach (@{$track->{'features'}||[]}) {
@@ -114,6 +114,9 @@ sub feature_content {
         next unless $extra->{'name'};
         if ($extra->{'value'} =~ /<a href/) {
           $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
+        }
+        elsif ($extra->{'name'} =~ /^url$/i) {
+          $self->add_entry({'type' => 'Link', 'label_html' => sprintf('<a href="%s">%s</a>', $extra->{'value'}, $extra->{'value'})});
         }
         else {
           $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});

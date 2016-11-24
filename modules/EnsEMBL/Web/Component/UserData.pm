@@ -124,11 +124,11 @@ sub userdata_form {
     'label'         => 'Species',
     'elements'      => [{
       'type'          => 'noedit',
-      'name'          => 'species_display',
       'value'         => $sd->species_label($current_species),
-      'no_input'      => 1, 
+      'no_input'      => 1,
+      'is_html'       => 1,
     },
-     {
+    {
       'type'          => 'noedit',
       'value'         => 'Assembly: '. $sd->get_config($current_species, 'ASSEMBLY_VERSION'),
       'no_input'      => 1,

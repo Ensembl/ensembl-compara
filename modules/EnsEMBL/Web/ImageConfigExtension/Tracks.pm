@@ -223,7 +223,7 @@ sub _add_matrix {
       $node->set_data('menu', 'no');
       $node->set_data('caption', "$column - $_->{'row'}");
       $node->set_data('group', $_->{'group'}) if $_->{'group'};
-      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
+      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, row_order => $_->{'row_order'}, column => $column };
     }
   }
 

@@ -26,152 +26,239 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Data::Dumper;
-
 use parent qw(EnsEMBL::Web::IOWrapper::GXF);
 
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
-  #warn '>>> ORIGINAL DATA '.Dumper($data);
   $self->{'ok_features'} = [];
 
   while (my ($track_key, $content) = each (%$data)) {
-    ## Build a tree of features - use an array, because IDs may not be unique
-    my $tree = [];
+    ## Build a tree of features - note that IDs don't have to be unique, so we use a hash of arrays
+    my $tree = {};
+    my %seen_gene;
+
     foreach my $f (@{$content->{'features'}||[]}) {
+      ## Dereference the feature, because children can have duplicate parents 
+      ## and we don't want attributes such as UTRs bleeding over to siblings
+      my %new_f = %$f;
       if (scalar @{$f->{'parents'}||[]}) {
-        $self->_add_to_parent($tree, $f, $_) for @{$f->{'parents'}};
+        foreach (@{$f->{'parents'}}) {
+          $self->_add_to_parents($tree, $_, %new_f);
+          ## Make a note of parent gene for later
+          if ($f->{'type'} eq 'transcript' || $f->{'type'} =~ /rna/i) {
+            $seen_gene{$_}++;
+          }
+        }
       }
       else {
-        push @$tree, $f;
+        push @{$tree->{$f->{'id'}}}, \%new_f;
       }
     }
-    #warn ">>> TREE ".Dumper($tree);
 
     ## Convert tree into structured features
-    foreach my $f (@$tree) {
-      $f->{'href'} = $self->href($f->{'href_params'});
-      $self->{'stored_features'}{$f->{'id'}} = $f;
-      if ($f->{'children'}) {
-        $self->_structured_feature($f);
+    while (my ($id, $features) = each (%$tree)) {
+      foreach my $f (@$features) {
+        $f->{'href'} = $self->href($f->{'href_params'});
+        push @{$self->{'stored_features'}{$f->{'id'}}}, $f;
+        if ($f->{'children'}) {
+          $self->_structured_feature($f);
+        }
       }
     }
-    #warn ">>> STORED ".Dumper($self->{'stored_features'});
 
     ## Finally, add all structured features to the list
-    foreach my $f (values %{$self->{'stored_features'}}) {
-      $f->{'start'} = $f->{'min_start'} unless $f->{'start'};
-      $f->{'end'}   = $f->{'max_end'} unless $f->{'end'};
-      push @{$self->{'ok_features'}}, $self->_drawable_feature($f);
+    while (my ($id, $stored_features) = each ( %{$self->{'stored_features'}})) {
+      foreach my $f (@{$stored_features||[]}) {
+        next if ($f->{'type'} eq 'gene' && ($seen_gene{$f->{'id'}} || $seen_gene{$f->{'name'}}));
+        $f->{'start'} = $f->{'min_start'} unless $f->{'start'};
+        $f->{'end'}   = $f->{'max_end'} unless $f->{'end'};
+        push @{$self->{'ok_features'}}, $self->_drawable_feature($f);
+      }
     }
-
-    $content->{'features'} = $self->{'ok_features'};
+    $content->{'features'}  = $self->{'ok_features'}; 
   }
-  #warn '################# PROCESSED DATA '.Dumper($data);
 }
 
 sub _structured_feature {
   my ($self, $f) = @_;
 
-  if (scalar @{$f->{'children'}||[]}) {
-    foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
-      ## Transcript or similar
-      if (scalar @{$child->{'children'}||[]}) {
-        $self->{'stored_features'}{$child->{'id'}} = $child;
+  foreach my $k (keys %{$f->{'children'}||{}}) {
+    foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}{$k}||[]}) {
+      if (keys %{$child->{'children'}||{}}) {
+        ## Transcript or similar
+        push @{$self->{'stored_features'}{$child->{'id'}}}, $child;
+        $self->_build_transcript($child);
       }
       my $child_href_params       = $child->{'href_params'};
       $child->{'href'}            = $self->href($child_href_params);
-      $self->_structured_feature($child);
-    }
-    ## Add a dummy exon to the end if the transcript extends beyond the end of the slice
-    if (scalar @{$f->{'structure'}||[]} && $f->{'end'} > $f->{'structure'}[-1]{'end'}) {
-      push @{$f->{'structure'}}, {'start' => $self->{'slice_length'} + 1, 'end' => $f->{'end'}};
-    }
-  }
-  else {
-    ## Exon, intron, CDS, etc
-    foreach my $parent (@{$f->{'parents'}}) {
-      my $transcript = $self->{'stored_features'}{$parent} || {};
-      $self->_add_to_transcript($transcript, $f);  
-      $self->{'stored_features'}{$parent} = $transcript;
+      ## Add a dummy exon to the start and/or end if the transcript extends beyond the end of the slice
+      if (scalar @{$child->{'structure'}||[]}) {
+        if ($child->{'end'} > $child->{'structure'}[-1]{'end'}) {
+          push @{$child->{'structure'}}, {'start' => $self->{'slice_length'} + 1, 'end' => $child->{'end'}};
+        }
+        if ($child->{'start'} < $child->{'structure'}[0]{'start'}) {
+          unshift @{$child->{'structure'}}, {'start' => $child->{'start'}, 'end' => -1};
+        }
+      }
     }
   }
 } 
 
-sub _add_to_transcript {
-  my ($self, $transcript, $f) = @_;
+sub _build_transcript {
+  my ($self, $transcript) = @_;
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
+  #warn "\n\n@@@ BUILDING TRANSCRIPT ".$transcript->{'id'};
 
-  my $type    = $f->{'type'};
-  my $start   = $f->{'start'};
-  my $end     = $f->{'end'};
-  my $strand  = $f->{'strand'};
-
-  ## Add a dummy exon if the transcript starts before the beginning of the slice
-  if (!$transcript->{'structure'} && $transcript->{'start'} < 0 && $start >= 0) {
-    push @{$transcript->{'structure'}}, {'start' => $transcript->{'start'}, 'end' => -1};
+  ## Separate child features by type
+  my $children_by_type;
+  while (my ($id, $children) = each(%{$transcript->{'children'}})) {
+    foreach (@{$children||[]}) {
+      push @{$children_by_type->{lc($_->{'type'})}}, $_;
+    }
   }
 
-  ## Store max and min coordinates in case we don't have a 'real' parent in the file  
-  $transcript->{'min_start'}  = $start if (!$transcript->{'min_start'} || $transcript->{'min_start'} > $start);
-  $transcript->{'max_end'}    = $end if (!$transcript->{'max_end'} || $transcript->{'max_end'} > $end);
+  my @exons = sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'exon'}};
+  my $true_exons = 1;
 
-  ## Because the children are sorted, we can walk along the transcript to set coding regions
-  if ($type =~ /UTR/) {
-    ## Starts and ends are by coordinates, not transcript direction
-    ## 5' UTR
-    if ($start == $transcript->{'start'} && $strand == 1) {
-      push @{$transcript->{'structure'}}, {'start' => $start, 'utr_5' => $end};
-      $transcript->{'in_cds'} = 1;
-    }
-    elsif ($end == $transcript->{'end'} && $strand == -1) {
-      $transcript->{'structure'}[-1]{'utr_5'} = $start;
-      $transcript->{'structure'}[-1]{'end'} = $end;
-      $transcript->{'in_cds'} = 0;
-    }
-    ## 3' UTR
-    elsif ($start == $transcript->{'start'} && $strand == -1) {
-      push @{$transcript->{'structure'}}, {'start' => $start, 'utr_3' => $end};
-      $transcript->{'in_cds'} = 1;
-    }
-    elsif ($end == $transcript->{'end'} && $strand == 1) {
-      $transcript->{'structure'}[-1]{'utr_3'} = $start;
-      $transcript->{'structure'}[-1]{'end'} = $end;
-      $transcript->{'in_cds'} = 0;
-    } 
+  unless (scalar @exons) {
+    ## Add CDS as initial exons
+    @exons = sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'cds'}};
+    $true_exons = 0;
   }
-  elsif ($type eq 'CDS') {
-    $transcript->{'in_cds'} = 1;
-    ## Was this CDS listed after the corresponding exon?
-    my $previous_exon = scalar @{$transcript->{'structure'}||[]} ? $transcript->{'structure'}[-1] : undef;
-    if ($previous_exon && $start >= $previous_exon->{'start'} && $start < $previous_exon->{'end'}) {
-      $previous_exon->{'non_coding'} = 0;
-      if ($start > $previous_exon->{'start'} && !$previous_exon->{'utr_5'} && !$previous_exon->{'utr_3'}) {
-        ## Divide the previous exon at the UTR point, if we don't have one already
-        my ($utr, $val);
-        if ($strand == 1) {
-          $utr = 'utr_5';
-          $val = $start;
+
+  ## Now work out where the UTRs are
+
+  ## Start by looking for UTRs in the data file
+  if ($true_exons) {
+    my %utr_lookup = ('three_prime_utr' => 'utr_3', 'five_prime_utr' => 'utr_5');
+    ## Mark the UTR points in the relevant exons
+    my $utrs_done = 0;
+    foreach my $key (keys %utr_lookup) {
+      next unless $children_by_type->{$key};
+      ## Assume that if at least one UTR is defined, we're OK - because the alternative
+      ## is that the data is just a mess!
+      $utrs_done = 1;
+      foreach my $utr (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{$key}}) {
+        foreach my $exon (@exons) {
+          ## Does this UTR match an exon?
+          if ($utr->{'start'} >= $exon->{'start'} && $utr->{'end'} <= $exon->{'end'}) {     
+            if ($utr->{'start'} == $exon->{'start'} && $utr->{'end'} == $exon->{'end'}) {
+              ## Exact match == non-coding exon
+              $exon->{'non_coding'} = 1;
+            }
+            elsif ($utr->{'end'} < $exon->{'end'}) {
+              $exon->{$utr_lookup{$key}} = $utr->{'end'};
+            }
+            elsif ($utr->{'start'} > $exon->{'start'}) {
+              $exon->{$utr_lookup{$key}} = $utr->{'start'};
+            }
+          }
         }
-        else {
-          $utr = 'utr_3';
-          $val = $end;
+      }
+    }
+    ## We have exons but no explicit UTRs, so we need to use the CDS to create them
+    if (!$utrs_done && scalar @{$children_by_type->{'cds'}||[]}) {
+      foreach my $exon (@exons) {
+        #warn sprintf '>>> EXON %s - %s', $exon->{'start'}, $exon->{'end'};
+        my $match = 0;
+        foreach my $cds (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'cds'}}) {
+          ## Skip non-matching CDS
+          next if ($cds->{'start'} > $exon->{'end'} || $cds->{'end'} < $exon->{'start'});;
+          #warn sprintf '>>> CDS %s - %s', $cds->{'start'}, $cds->{'end'};
+          $match = 1;
+          if ($cds->{'start'} > $exon->{'start'}) {
+            $exon->{'utr_5'} = $cds->{'start'};
+            #warn "... SET UTR 5";
+          }
+          ## NOTE: Don't make this an elsif, as a CDS can lie wholely within one exon
+          if ($cds->{'end'} < $exon->{'end'}) {
+            $exon->{'utr_3'} = $cds->{'end'};
+            #warn "... SET UTR 3";
+          }
+          ## Ignore multiple CDSs for an exon for now, as we can't draw them
+          last;
         }
-        $previous_exon->{$utr} = $val;
+        unless ($match) {
+          $exon->{'non_coding'} = 1;
+          #warn "... NON-CODING";
+        }
       }
     }
   }
-  elsif ($type eq 'exon') {
-    my $exon = {'start' => $start, 'end' => $end};
+  else {
+    ## No exons, so we have to add the UTRs to the CDS to make exons, so ordering is crucial!
+    if ($transcript->{'strand'} == 1) {
+      ## Add 5-prime UTRs to start in reverse order
+      my $count = 0;
+      foreach my $utr (sort {$b->{'start'} <=> $b->{'start'}} @{$children_by_type->{'five_prime_utr'}}) {
+        my $first_exon = $exons[0];
+        if ($count == 0 && ($first_exon->{'start'} - $utr->{'end'} < 2)) {
+          ## Adjacent, so glue them together
+          $first_exon->{'start'} = $utr->{'start'};
+          $first_exon->{'utr_5'} = $utr->{'end'};
+        }
+        else {
+          $utr->{'non_coding'} = 1;
+          unshift @exons, $utr;
+        }
+        $count++;
+      }
 
-    ## Non-coding exon
-    if ($transcript->{'type'} eq 'transcript' && !$transcript->{'in_cds'}) {
-      $exon->{'non_coding'} = 1;
-    } 
-
-    push @{$transcript->{'structure'}}, $exon;
+      ## Then add 3-prime UTRs in order
+      $count = 0;
+      foreach my $utr (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'three_prime_utr'}}) {
+        my $last_exon = $exons[-1];
+        if ($count == 0 && ($utr->{'start'} - $last_exon->{'end'} < 2)) {
+          ## Adjacent, so glue them together
+          $last_exon->{'end'} = $utr->{'end'};
+          $last_exon->{'utr_3'} = $utr->{'start'};
+        }
+        else {
+          $utr->{'non_coding'} = 1;
+          push @exons, $utr;
+        }
+        $count++;
+      }
+       
+    }
+    else {
+      ## Negative strand, so add 3-prime UTRs to start in reverse order
+      my $count = 0;
+      foreach my $utr (sort {$b->{'start'} <=> $b->{'start'}} @{$children_by_type->{'three_prime_utr'}}) {
+        my $first_exon = $exons[0];
+        if ($count == 0 && ($first_exon->{'start'} - $utr->{'end'} < 2)) {
+          ## Adjacent, so glue them together
+          $first_exon->{'start'} = $utr->{'start'};
+          $first_exon->{'utr_3'} = $utr->{'end'};
+        }
+        else {
+          $utr->{'non_coding'} = 1;
+          unshift @exons, $utr;
+        }
+        $count++;
+      }
+      ## Then add 5-prime UTRs in order
+      $count = 0;
+      foreach my $utr (sort {$a->{'start'} <=> $b->{'start'}} @{$children_by_type->{'five_prime_utr'}}) {
+        my $last_exon = $exons[-1];
+        if ($count == 0 && ($utr->{'start'} - $last_exon->{'end'} < 2)) {
+          ## Adjacent, so glue them together
+          $last_exon->{'end'} = $utr->{'end'};
+          $last_exon->{'utr_5'} = $utr->{'start'};
+        }
+        else {
+          $utr->{'non_coding'} = 1;
+          push @exons, $utr;
+        }
+        $count++;
+      }
+    }
   }
-
+  $transcript->{'structure'} = \@exons;
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 2;
+  #warn Dumper($transcript->{'structure'});
+  delete $transcript->{'children'};
 }
 
 sub _drawable_feature {
@@ -196,16 +283,28 @@ sub _drawable_feature {
           };
 }
 
-sub _add_to_parent {
-### Recurse into feature tree
-  my ($self, $node, $feature, $parent) = @_;
-  foreach my $child (@$node) {
-    ## Is this a child of the current level?
-    if ($child->{'id'} eq $parent) {
-      push @{$child->{'children'}}, $feature;
+sub _add_to_parents {
+  my ($self, $tree, $parent, %feature) = @_;
+
+  ## Don't recurse automatically, as this results in unnecessary loops
+  my $found = 0;
+  while (my($id, $node) = each (%$tree)) {
+    foreach my $branch (@$node) {
+      if ($branch->{'id'} eq $parent) {
+        $found = 1;
+        push @{$branch->{'children'}{$feature{'id'}}}, \%feature;
+        last;
+      }
     }
-    elsif ($child->{'children'}) {
-      $self->_add_to_parent($child->{'children'}, $feature, $parent);
+  }
+
+  ## OK, now recurse
+  unless ($found) {
+    while (my($id, $node) = each (%$tree)) {
+      foreach my $branch (@$node) {
+        next unless $branch->{'children'};
+        $self->_add_to_parents($branch->{'children'}, $parent, %feature);
+      }
     }
   }
   return;

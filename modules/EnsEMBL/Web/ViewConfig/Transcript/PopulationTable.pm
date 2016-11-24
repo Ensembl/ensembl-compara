@@ -35,7 +35,7 @@ sub init_cacheable {
 sub field_order {
   ## @override
   my $self = shift;
-  return $self->SUPER::form_fields(@_), 'data_grouping';
+  return $self->SUPER::field_order(@_), 'data_grouping';
 }
 
 sub form_fields {
@@ -53,6 +53,8 @@ sub form_fields {
       { 'value' => 'by_variant',  'caption' => 'By variation ID and position' },
     ]
   };
+
+  return $fields;
 }
 
 1;

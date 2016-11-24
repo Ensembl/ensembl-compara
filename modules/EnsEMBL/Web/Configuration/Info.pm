@@ -83,13 +83,6 @@ sub populate_tree {
     ));
   }
 
-  $self->create_node('Expression', 'Gene Expression',
-    [qw(
-      rnaseq_table  EnsEMBL::Web::Component::Info::ExpressionTable
-    )],
-    { 'availability' => 'database:rnaseq' }
-  );
-
   $self->create_node('WhatsNew', '',
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );

@@ -47,7 +47,11 @@ sub build {
   my $menu          = $hub->param('menu');
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->get_data('matrix');
-  my @matrix_rows   = sort { ($a->{'group_order'} || 0) <=> ($b->{'group_order'} || 0) || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') || lc $a->{'id'} cmp lc $b->{'id'} } values %{$matrix_data->{'rows'}};
+  my @matrix_rows   = sort { ($a->{'group_order'} || 0) <=> ($b->{'group_order'} || 0) 
+                              || lc ($a->{'group'} || 'zzzzz') cmp lc ($b->{'group'} || 'zzzzz') 
+                              || ($a->{'row_order'} || 1000) <=> ($b->{'row_order'} || 1000)
+                              || lc $a->{'id'} cmp lc $b->{'id'} } 
+                                            values %{$matrix_data->{'rows'}};
   my @filters       = ([ '', 'All classes' ]);
   my (@columns, %renderer_counts, %cells, %features);
 
@@ -92,7 +96,7 @@ sub build {
     </div>
   );
 
-  my $select_all_row = qq(
+  my $select_all_row = qq(%s
     <div class="select_all_row_wrapper">
       <div class="select_all_row floating_popup">
         Select all<br />
@@ -123,7 +127,7 @@ sub build {
     my $group    = $_->{'group'} || '';
     (my $y_class = lc $y)     =~ s/[^\w-]/_/g;
     (my $class   = lc $group) =~ s/[^\w-]/_/g;
-    my @row      = ("$y_class $class", { tag => 'th', class => 'first', html => sprintf("$y$select_all_row", $y) });
+    my @row      = ("$y_class $class", { tag => 'th', class => 'first', html => sprintf("$select_all_row", $y, $y) });
     my $exists;
 
     foreach (@columns) {
@@ -263,6 +267,7 @@ sub build {
 
     $rows_html .= qq(<tr class="$row_class">$row_html</tr>);
   }
+  warn ">>> HTML $rows_html";
 
   my $c = 0;
 
@@ -337,6 +342,16 @@ sub build {
               %s
             </tr>
           </thead>
+    ),
+    encode_entities($matrix_data->{'header'}),
+    $matrix_data->{'description'} ? qq(<div class="sprite info_icon help" title="Click for more information">&nbsp;</div><div class="desc">$matrix_data->{'description'}</div>) : '',
+    scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq(<option value="$_->[0]">$_->[1]</option>), @filters) : '',
+    $matrix_data->{'axes'} ? qq(<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>) : '',
+    @headers_html
+  );
+
+  ## Don't include rows in sprintf, as they may contain percent characters
+  $html .= qq(
           <tbody>
             $rows_html
           </tbody>
@@ -344,12 +359,6 @@ sub build {
       </div>
       <div class="no_results">No results found</div>
     </div>
-    ),
-    encode_entities($matrix_data->{'header'}),
-    $matrix_data->{'description'} ? qq(<div class="sprite info_icon help" title="Click for more information">&nbsp;</div><div class="desc">$matrix_data->{'description'}</div>) : '',
-    scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq(<option value="$_->[0]">$_->[1]</option>), @filters) : '',
-    $matrix_data->{'axes'} ? qq(<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>) : '',
-    @headers_html
   );
 
   $self->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix', id => $menu });

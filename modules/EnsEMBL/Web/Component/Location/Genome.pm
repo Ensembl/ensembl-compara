@@ -110,11 +110,12 @@ sub _render_features {
       'DnaAlignFeature'     => 'Sequence Feature',
       'ProteinAlignFeature' => 'Protein Feature',
     };
-    my ($xref_type, $xref_name);
+    my ($xref_type, $xref_name, $xref_desc);
     while (my ($type, $feature_set) = each (%$features)) {    
       if ($type eq 'Xref') {
         my $sample = $feature_set->[0][0];
         $xref_type = $sample->{'label'};
+        $xref_desc = $sample->{'desc'};
         $xref_name = $sample->{'extname'};
         $xref_name =~ s/ \[#\]//;
         $xref_name =~ s/^ //;
@@ -155,7 +156,10 @@ sub _render_features {
             unless ($assoc_name) {
               $assoc_name = $xref_type.' ';
               $assoc_name .= $go_link ? $go_link : $id;
-              $assoc_name .= " ($xref_name)" if $xref_name;
+              if (!$xref_desc && $xref_name && $xref_name ne $id) {
+                $xref_desc = $xref_name;
+              }
+              $assoc_name .= " ($xref_desc)" if $xref_desc;
             }
           }
 
@@ -345,6 +349,8 @@ sub _render_features {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
+  ## Omit button from, e.g. Phenotype/Locations
+  return unless $hub->type eq 'Location';
   my @buttons;
 
   my $params = {

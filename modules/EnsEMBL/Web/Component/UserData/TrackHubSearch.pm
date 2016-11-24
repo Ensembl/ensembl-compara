@@ -46,16 +46,10 @@ sub content {
   my $sd              = $hub->species_defs;
   my $html;
 
-  ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $sd->TRACKHUB_REGISTRY_URL);
-  return unless $rest;
-
   ## Compare species available on registry with valid species for this site
   my %local_species = map {$_ => 1} $sd->valid_species;
 
-  my $endpoint = 'api/info/assemblies';
-  
-  my ($rest_species, $error) = $rest->fetch($endpoint);
+  my ($rest_species, $error) = $self->object->thr_fetch('api/info/assemblies');
 
   if ($error) {
     $html = $self->warning_panel('Oops!', 'Sorry, we are unable to fetch data from the Track Hub Registry at the moment. You may wish to <a href="http://www.trackhubregistry.org/" rel="external">visit the registry</a> directly to search for a hub.');
@@ -63,11 +57,20 @@ sub content {
   else {
     my $ok_species   = {};
 
-    foreach (keys %{$rest_species||[]}) {
-      (my $species = $_) =~ s/ /_/;
+    foreach my $sp (sort keys %{$rest_species||[]}) {
+      (my $species = $sp) =~ s/ /_/;
       if ($local_species{$species}) {
-        my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
-        if (grep $gca, @{$rest_species->{$_}||[]}) {
+        my $assembly_param  = $hub->species_defs->get_config($species, 'THR_ASSEMBLY_PARAM')
+                                  || 'ASSEMBLY_ACCESSION';
+        my $assembly        = $hub->species_defs->get_config($species, $assembly_param);
+        my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+        my @assembly_ids;
+        foreach my $version (@{$rest_species->{$sp}}) {
+          push @assembly_ids, $version->{$key};
+          ## Also check synonyms - mainly for EG, but doesn't hurt anyway!
+          push @assembly_ids, @{$version->{'synonyms'}||[]};
+        }
+        if (grep {$_ eq $assembly} @assembly_ids) {
           $ok_species->{$species} = $_;
         }
       }
@@ -113,7 +116,7 @@ sub content {
         });
       }
       else {
-        ## Is this species available in the registry?
+        ## Is this species and assembly available in the registry?
         if ($ok_species->{$current_species}) {
 
           ## Only display current species and assembly
@@ -134,7 +137,7 @@ sub content {
           $form->add_hidden({'name' => 'assembly_name', 'value' => $sd->ASSEMBLY_VERSION});
         }
         else {
-          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species.</p>';
+          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species and assembly.</p>';
         }
       }
     }
@@ -144,7 +147,7 @@ sub content {
 
     if ($message) {
       $html .= $message;
-      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $sd->TRACKHUB_REGISTRY_UR);
     }
     else {
       ## Add remaining fields

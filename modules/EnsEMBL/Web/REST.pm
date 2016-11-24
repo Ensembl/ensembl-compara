@@ -79,7 +79,7 @@ sub fetch {
   my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $delimiter = $args->{url_params}->{_delimiter} || ';';
   delete $args->{'url_params'}->{'_delimiter'};
-  if ($args->{'url_params'}) {
+  if (keys %{$args->{'url_params'}||{}}) {
     $url .= '?';
     while (my($k, $v) = each (%{$args->{'url_params'}||{}})) {
       $url .= sprintf('%s=%s%s', $k, $v, $delimiter);
