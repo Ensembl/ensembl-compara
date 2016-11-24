@@ -108,7 +108,7 @@ sub write_output {
 
 		$count++;
         my $sequence = $prot_seq->{$prot_id}->{'seq_obj'};
-        my $display_name = $prot_seq->{$prot_id}->{'display_name'} if ($prot_seq->{$prot_id}->{'display_name'});
+        my $display_name = $prot_seq->{$prot_id}->{'display_name'};
 
 		print "sequence $count: name ", $prot_id, "\n" if ($self->debug > 1);
 		print "sequence $count: description ", $sequence->desc, "\n" if ($self->debug > 1);
