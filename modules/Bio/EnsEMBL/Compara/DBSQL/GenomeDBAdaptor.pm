@@ -220,7 +220,7 @@ sub fetch_by_registry_name {
 sub fetch_by_Slice {
   my ($self, $slice) = @_;
 
-  assert_ref($slice, 'Bio::EnsEMBL::Slice');
+  assert_ref($slice, 'Bio::EnsEMBL::Slice', 'slice');
   unless ($slice->adaptor) {
     throw("[$slice] must have an adaptor");
   }
