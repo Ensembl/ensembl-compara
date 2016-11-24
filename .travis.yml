@@ -27,22 +27,8 @@ before_install:
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch master --depth 1 https://github.com/samtools/tabix.git
-    - cd tabix
-    - make
-    - cd perl
-    - perl Makefile.PL
-    - make && make install
-    - cd ../../
     - git clone --branch master --depth 1 https://github.com/samtools/htslib.git
-    - cd htslib
-    - make
-    - export HTSLIB_DIR=$(pwd -P)
-    - cd ../
     - git clone --branch master --depth 1 https://github.com/Ensembl/Bio-HTS
-    - cd Bio-HTS
-    - perl Build.PL --htslib $HTSLIB_DIR
-    - ./Build
-    - cd ../
 
 
 install:
@@ -53,6 +39,20 @@ install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
+    - cd tabix
+    - make
+    - cd perl
+    - perl Makefile.PL
+    - make && make install
+    - cd ../../
+    - cd htslib
+    - make
+    - export HTSLIB_DIR=$(pwd -P)
+    - cd ../
+    - cd Bio-HTS
+    - perl Build.PL --htslib $HTSLIB_DIR
+    - ./Build
+    - cd ../
 
 script: "./travisci/harness.sh"
 
