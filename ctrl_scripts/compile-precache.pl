@@ -63,7 +63,7 @@ foreach my $c (@candidates) {
   $cand->cache_open;
   $cache->addgood($cand,\%versions,\%seen,\%lengths);
   $cand->cache_close;
-  #$cand->remove;
+  $cand->remove;
 }
 
 sub size {

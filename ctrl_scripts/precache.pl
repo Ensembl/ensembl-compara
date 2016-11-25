@@ -146,6 +146,7 @@ if($mode eq 'start') {
 }
 
 if($mode eq 'start') {
+  warn $SiteDefs::ENSEMBL_BOOK_DIR;
   open(SPEC,'>',"$SiteDefs::ENSEMBL_BOOK_DIR/spec") or die;
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
