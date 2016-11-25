@@ -20,8 +20,8 @@ use Text::Wrap;
 $Text::Wrap::columns = 75;
 
 our $ENSEMBL_VERSION           = 87;
-our $ARCHIVE_VERSION           = 'Nov2016';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'Nov 2016';
+our $ARCHIVE_VERSION           = 'Dec2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'Dec 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
