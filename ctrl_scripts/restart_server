@@ -101,7 +101,7 @@ for (@$before_restart) {
 }
 
 # stop and start the server
-system("perl $Bin/stop_server $stop_args $argv")   == 0 or exit;
+system("perl $Bin/stop_server -b $stop_args $argv")   == 0 or exit;
 system("perl $Bin/start_server $start_args $argv") == 0 or exit;
 warn "Restart OK.\n";
 
