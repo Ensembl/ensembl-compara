@@ -21,7 +21,7 @@ package EnsEMBL::Web::JSONServer::GeneAlignment;
 
 use strict;
 use warnings;
-use EnsEMBL::Web::File::Dynamic;
+use EnsEMBL::Web::File;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
@@ -91,13 +91,13 @@ sub generate_alignment {
   my $outcount = 0;
   return unless $count;
   
-  my $file = EnsEMBL::Web::File::Dynamic->new(
-                                              hub             => $self->hub,
-                                              extension       => 'fa',
-                                              input_drivers   => ['IO'],
-                                              output_drivers  => ['IO'],
-                                              base_dir        => 'image',
-                                              );
+  my $file = EnsEMBL::Web::File->new(
+                                      hub             => $self->hub,
+                                      extension       => 'fa',
+                                      input_drivers   => ['IO'],
+                                      output_drivers  => ['IO'],
+                                      base_dir        => 'image',
+                                    );
 
   foreach my $member (@$refs) {
     my $align;
