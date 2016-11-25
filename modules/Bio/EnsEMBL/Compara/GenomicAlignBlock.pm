@@ -168,9 +168,6 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use Data::Dumper;
-#$Data::Dumper::Pad = '<br>';
-
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
@@ -1395,7 +1392,7 @@ sub get_GenomicAlignTree {
 
     #Check if a GenomicAlignTree object already exists and return
     my $genomic_align_tree;
-    unless ( $self->method_link_species_set->method->type eq 'CACTUS_HAL'  ) {
+    unless ( $self->method_link_species_set->method->type =~ /CACTUS_HAL/  ) {
       eval {
           my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
           $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
@@ -1406,11 +1403,11 @@ sub get_GenomicAlignTree {
     #Create lookup of names to GenomicAlign objects
     my $leaf_names;
     my $genomic_aligns = $self->get_all_GenomicAligns();
-    foreach my $genomic_align (@$genomic_aligns) {
 
+    foreach my $genomic_align (@$genomic_aligns) {
         #Throw if duplicates are found (and no GenomicAlignTree has been found)
         if (defined  $leaf_names->{$genomic_align->genome_db->name}) {
-            throw ("Duplicate found for species " . $leaf_names->{$genomic_align->genome_db->name});
+            throw ("Duplicate found for species " . $genomic_align->genome_db->name);
         }
         $leaf_names->{$genomic_align->genome_db->name} = $genomic_align;
     }
@@ -1523,17 +1520,47 @@ sub _print {    ## DEPRECATED
 
 sub toString {
     my $self = shift;
-    my $str = 'GenomicAlignBlock';
-    if ($self->original_dbID) {
-        $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
-    } else {
-        $str .= sprintf(' dbID=%s', $self->dbID);
+
+    my $str = "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
+      dbID = " . ($self->dbID or "-undef-") . "
+      adaptor = " . ($self->adaptor or "-undef-") . "
+      method_link_species_set = " . ($self->method_link_species_set or "-undef-") . "
+      method_link_species_set_id = " . ($self->method_link_species_set_id or "-undef-") . "
+      genomic_aligns = " . (scalar(@{$self->genomic_align_array}) or "-undef-") . "
+      score = " . ($self->score or "-undef-") . "
+      length = " . ($self->length or "-undef-") . "
+      alignments: \n";
+
+    foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
+        my $species_name = $this_genomic_align->genome_db->name;
+        my $slice = $this_genomic_align->dnafrag->slice;
+
+        $slice = $slice->sub_Slice(
+                  $this_genomic_align->dnafrag_start,
+                  $this_genomic_align->dnafrag_end,
+                  $this_genomic_align->dnafrag_strand
+              );
+
+        if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
+          $str .= "    * " . $this_genomic_align->genome_db->name . " " . ($slice?$slice->name:"--error--") . "\n";
+        } else {
+          $str .= "    - " . $this_genomic_align->genome_db->name . " " . ($slice?$slice->name:"--error--") . "\n";
+        }
     }
-    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
-    $str .= ' score='.$self->score if defined $self->score;
-    $str .= ' length='.$self->length if defined $self->length;
-    $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
+
     return $str;
+    # my $self = shift;
+    # my $str = 'GenomicAlignBlock';
+    # if ($self->original_dbID) {
+    #     $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
+    # } else {
+    #     $str .= sprintf(' dbID=%s', $self->dbID);
+    # }
+    # $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    # $str .= ' score='.$self->score if defined $self->score;
+    # $str .= ' length='.$self->length if defined $self->length;
+    # $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
+    # return $str;
 }
 
 

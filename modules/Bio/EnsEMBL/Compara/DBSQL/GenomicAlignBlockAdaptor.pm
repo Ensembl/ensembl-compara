@@ -130,9 +130,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
-
-use Data::Dumper;
-$Data::Dumper::Maxdepth=3;
+use List::Util qw( max );
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -1313,7 +1311,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 
       # check if MAF is empty
-      return [] unless ( $maf_file_str =~ m/[A-Za-z]/ );
+      unless ( $maf_file_str =~ m/[A-Za-z]/ ){
+            warn "!! MAF is empty !!\n";
+            return [];
+      }
 
       # use open ':encoding(iso-8859-7)';
       open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
@@ -1387,6 +1388,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           $genomic_align->cigar_line($this_cigar);
           $genomic_align->aligned_sequence( $seq->{seq} );
           $genomic_align->genomic_align_block( $gab );
+          $genomic_align->method_link_species_set($mlss);
           $genomic_align->dbID( $id_base + $ga_id_count );
           push( @genomic_align_array, $genomic_align );
           $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
@@ -1401,16 +1403,23 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
         # check for duplicate species
         if ( $duplicates_found ) {
-            my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
-            my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
+            ## e87 HACK ##
+            my $resolved_gab = $self->_resolve_duplicates( $gab, $min_gab_len );
+            push( @gabs, $resolved_gab );
+            $gab_id_count++;
+            ##############
 
-            foreach my $this_gab ( @$split_gabs ) {
-                $this_gab->adaptor($gab_adaptor);
-                $this_gab->dbID($id_base + $gab_id_count);
+            # my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
+            # warn "Split into " . scalar( @$split_gabs ) . " blocks!!\n";
+            # my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
 
-                push( @gabs, $this_gab );
-                $gab_id_count++;
-            }
+            # foreach my $this_gab ( @$split_gabs ) {
+            #     $this_gab->adaptor($gab_adaptor);
+            #     $this_gab->dbID($id_base + $gab_id_count);
+
+            #     push( @gabs, $this_gab );
+            #     $gab_id_count++;
+            # }
         } else {
             push(@gabs, $gab);
         }
@@ -1513,6 +1522,68 @@ sub _get_GenomicAlignBlocks_from_HAL {
     return \@gabs;
 }
 
+### !! e87 HACK ###
+ # discard the smaller duplicated alignments for now
+
+sub _resolve_duplicates {
+    my ( $self, $gab, $min_gab_len ) = @_;
+    my @ga_array = @{ $gab->genomic_align_array };
+
+    # # detect which species are duplicated
+    # my %species_counts;
+    # for my $this_species ( map { $_->genome_db->name } @ga_array ) {
+    #     $species_counts{$this_species}++;
+    # }
+    # my @duplicate_species = grep { $species_counts{$_} > 1 } keys %species_counts;
+    # warn Dumper { duplicate_species => \@duplicate_species };
+
+    # split genomic_aligns by species
+    # take note of species order   
+    my (%sort_gas, @species_order);
+    for my $ga ( @ga_array ) {
+        my $sp_name = $ga->genome_db->name;
+        push( @species_order, $sp_name ) unless ( defined $sort_gas{$sp_name} );
+        push( @{ $sort_gas{$sp_name} }, $ga );
+    }
+
+    my %resolved_ga_for_species;
+    for my $species ( keys %sort_gas ) {
+        # if it's a duplicate, keep the longer alignment
+        # if not, always keep it
+        if ( scalar( @{ $sort_gas{$species} } ) > 1 ) {
+            $resolved_ga_for_species{$species} = $self->_longer_alignment( $sort_gas{$species} );
+        } else {
+            $resolved_ga_for_species{$species} = $sort_gas{$species}->[0];
+        }
+    }
+
+    my @resolved_genomic_aligns = map { $resolved_ga_for_species{$_} } @species_order;
+
+    # my @ga_strings = map { $_->toString } @resolved_genomic_aligns;
+    # warn Dumper { resolved_genomic_aligns => \@ga_strings };
+
+    $gab->genomic_align_array( \@resolved_genomic_aligns );
+
+    # warn $gab->toString;
+
+    return $gab;
+}
+
+sub _longer_alignment {
+    my ( $self, $ga_array ) = @_;
+
+    my %size;
+    for my $g ( @$ga_array ) {
+        my $seq = $g->aligned_sequence;
+        $seq =~ s/-+//g;
+        $size{length($seq)} = $g;
+    }
+
+    my $max_len = max keys %size;
+    return $size{ $max_len };
+}
+##################################
+
 sub _split_genomic_aligns {
     my ( $self, $gab, $min_gab_len ) = @_;
     my @ga_array = @{ $gab->genomic_align_array };
@@ -1576,6 +1647,7 @@ sub _split_genomic_aligns {
             my $block2 = $gab->restrict_between_alignment_positions($split_pos+1, $aln_length, 1 );
             push( @split_blocks, $block2 );
         }
+        return \@split_blocks;
     } else { # keep main block, but remove offending duplications
         # find duplicated species
         my %counts;
@@ -1602,9 +1674,8 @@ sub _split_genomic_aligns {
             }
         }
         $gab->genomic_align_array( \@pruned_ga_array );
+        return [$gab];
     }
-
-    return \@split_blocks;
 }
 
 
