@@ -21,7 +21,7 @@ package EnsEMBL::Web::JSONServer::GeneTree;
 
 use strict;
 use warnings;
-use EnsEMBL::Web::File::Dynamic;
+use EnsEMBL::Web::File;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
@@ -156,8 +156,8 @@ sub create_newick {
                 'output_drivers'  => ['IO'],
               );
 
-  my $file_fa = EnsEMBL::Web::File::Dynamic->new(extension => 'fa', %args);
-  my $file_nh = EnsEMBL::Web::File::Dynamic->new(extension => 'nh', %args);
+  my $file_fa = EnsEMBL::Web::File->new(extension => 'fa', %args);
+  my $file_nh = EnsEMBL::Web::File->new(extension => 'nh', %args);
 
   my $format  = 'fasta';
   my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
