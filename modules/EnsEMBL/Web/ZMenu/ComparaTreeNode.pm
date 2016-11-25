@@ -379,7 +379,7 @@ sub content {
         # Create wasabi url to load from their end
         $link = sprintf (
                           '/wasabi/wasabi.htm?tree=%s',
-                          uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
+                          uri_escape($object->species_defs->ENSEMBL_BASE_URL . $tree_file)
                         );
       }
       else {
