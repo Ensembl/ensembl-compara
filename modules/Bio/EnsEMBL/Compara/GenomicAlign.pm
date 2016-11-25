@@ -1108,14 +1108,32 @@ sub _print {    ## DEPRECATED
 
 sub toString {
     my $self = shift;
-    my $str = 'GenomicAlign';
-    if ($self->original_dbID) {
-        $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
-    } else {
-        $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
-    }
-    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
-    $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
+    # my $str = 'GenomicAlign';
+    # if ($self->original_dbID) {
+    #     $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
+    # } else {
+    #     $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
+    # }
+    # $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    # $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
+    # return $str;
+
+    my $str = "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
+        dbID = ".($self->dbID or "-undef-")."
+        adaptor = ".($self->adaptor or "-undef-")."
+        genomic_align_block = ".($self->genomic_align_block or "-undef-")."
+        genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
+        method_link_species_set = ".($self->method_link_species_set or "-undef-")."
+        method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
+        dnafrag_start = ".($self->dnafrag_start or "-undef-")."
+        dnafrag_end = ".($self->dnafrag_end or "-undef-")."
+        dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
+        dnafrag_name = ".($self->dnafrag->name)."
+        genome_db_name = ".($self->dnafrag->genome_db->name)."
+        cigar_line = ".($self->cigar_line or "-undef-")."
+        visible = ".($self->visible or "-undef-")."
+        original_sequence = ".($self->original_sequence or "-undef-")."
+        aligned_sequence = ".($self->aligned_sequence or "-undef-")."\n";
     return $str;
 }
 
