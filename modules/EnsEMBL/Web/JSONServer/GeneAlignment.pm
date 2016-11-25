@@ -52,15 +52,14 @@ sub json_fetch_wasabi {
   push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
   push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
-  # Wasabi key for session
-  my $wasabi_session_key  = join ('_', ($g_id, $family_id, $type));
-  my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
+  # # Wasabi key for session
+  # my $wasabi_session_key  = join ('_', ($g_id, $family_id, $type));
+  # my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
 
-  # Return data if found in session store
-  if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
-    warn Data::Dumper::Dumper ['loading from session data'];
-    return $wasabi_session_data->{$wasabi_session_key};
-  }
+  # # Return data if found in session store
+  # if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
+  #   return $wasabi_session_data->{$wasabi_session_key};
+  # }
 
   my $file = {};
   #  If not in session then create files for wasabi
@@ -71,13 +70,13 @@ sub json_fetch_wasabi {
     $file = $self->generate_alignment($type, \@all_pep_members);
   }
 
-  # Store new data into session
-  if (! keys %$wasabi_session_data) {
-    $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
-  }
-  $wasabi_session_data->{$wasabi_session_key} = $file;
+  # # Store new data into session
+  # if (! keys %$wasabi_session_data) {
+  #   $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
+  # }
+  # $wasabi_session_data->{$wasabi_session_key} = $file;
 
-  $hub->session->set_record_data($wasabi_session_data);
+  # $hub->session->set_record_data($wasabi_session_data);
 
   return $file;
 }
