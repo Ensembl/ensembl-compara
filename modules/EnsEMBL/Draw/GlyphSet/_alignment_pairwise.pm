@@ -98,16 +98,17 @@ sub calc_cigar_glyphs {
 # Common rectangle-drawing routine
 sub draw_rect {
   my ($self,$params,$start,$length,$colour) = @_;
+  unless ($colour && $colour eq 'transparent') {
+    $colour = $params->{$colour || 'feature_colour'};
+  }
 
   my $out = $self->Rect({
     x      => $start,
     y      => $params->{'y'} || 0,
     width  => $length,
     height => $params->{'h'},
+    colour => $colour,
   });
-  unless($colour eq 'transparent') {
-    $out->{'colour'} = $params->{$colour || 'feature_colour'};
-  }
   return $out;
 }
 
@@ -184,7 +185,7 @@ my @rainbow = qw(red orange yellow green cyan blue purple);
 sub draw_joins {
   my ($self,$joins) = @_;
 
-  my $part = ($self->strand == 1) || 0; 
+  my $part = ($self->strand == 1) || 0;
   my @shapes = (
     [[0,0],[0,1],[1,1],[1,0]], # circuit makes quadrilateral,
     [[0,0],[0,1],[1,0],[1,1]], # but zigzag makes cross
@@ -198,7 +199,7 @@ sub draw_joins {
       $colour = $rainbow[rand()*7] if($debug_rainbow);
       $self->join_tag($joins->{$tag}{'box'},$tag,{
         x => $s->[1],
-        y => !$s->[0], # y start at bottom edge of upper block & vice versa
+        y => !$s->[0] || 0, # y start at bottom edge of upper block & vice versa
         z => $self->my_colour($feature_key, 'join_z') || 100,
         col => $colour,
         style => 'fill'
@@ -646,7 +647,6 @@ sub render_text {
       $out .= join("\t",@row)."\r\n";
     }
   } 
-  warn $out;
   return $out; 
 }
 
