@@ -43,14 +43,14 @@ sub json_fetch_wasabi {
   my $gt_id   = $hub->param('gt');
   my $node_id = $hub->param('node');
 
-  # Wasabi key for session
-  my $wasabi_session_key  = $gt_id . "_" . $node_id;
-  my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
+  # # Wasabi key for session
+  # my $wasabi_session_key  = $gt_id . "_" . $node_id;
+  # my $wasabi_session_data = $hub->session->get_record_data({type => 'tree_files', code => 'wasabi'}) ;
 
-  # Return data if found in session store
-  if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
-    # return $wasabi_session_data->{$wasabi_session_key};
-  }
+  # # Return data if found in session store
+  # if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
+  #   return $wasabi_session_data->{$wasabi_session_key};
+  # }
 
   #  If not in session then create files for wasabi
   my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->create_component($cdb);
@@ -70,13 +70,13 @@ sub json_fetch_wasabi {
     $files = create_newick($self, $node);
   }
 
-  # Store new data into session
-  if (! keys %$wasabi_session_data) {
-    $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
-  }
-  $wasabi_session_data->{$wasabi_session_key} = $files;
+  # # Store new data into session
+  # if (! keys %$wasabi_session_data) {
+  #   $wasabi_session_data = {type => 'tree_files', code => 'wasabi'};
+  # }
+  # $wasabi_session_data->{$wasabi_session_key} = $files;
 
-  $hub->session->set_record_data($wasabi_session_data);
+  # $hub->session->set_record_data($wasabi_session_data);
 
   return $files;
 }
