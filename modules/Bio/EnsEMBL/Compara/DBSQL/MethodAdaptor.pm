@@ -180,16 +180,13 @@ sub store {
     }
     if (my $other_method = $self->_synchronise($method)) {
 
-        #if ( ($other_method->class ne $method->class) && ($method->class ne "") ) {
-        if ($other_method->class ne $method->class) {
-            my $sql = 'UPDATE method_link SET class = ? WHERE method_link_id = ?';
-            my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
-
-            my $return_code = $sth->execute( $method->class(), $method->dbID() )
-                or die "Could not store ".$method->toString."\n";
-
-            $sth->finish();
-        }
+        $self->generic_update('method_link',
+            {
+                'type'              => $method->type,
+                'class'             => $method->class,
+            }, {
+                'method_link_id'    => $method->dbID,
+            } );
 
         $self->_id_cache->remove($method->dbID);
 

@@ -472,9 +472,21 @@ sub update {
         $reference_dba->get_GenomeDBAdaptor->update( $gdb );
     }
 
-    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, genome_component=?, locator=?, first_release=?, last_release=? WHERE genome_db_id=?';
-    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->genome_component, $gdb->locator, $gdb->first_release, $gdb->last_release, $gdb->dbID );
+    $self->generic_update('genome_db',
+        {
+                'name'              => $gdb->name,
+                'assembly'          => $gdb->assembly,
+                'genebuild'         => $gdb->genebuild,
+                #'has_karyotype'     => $gdb->has_karyotype,
+                #'is_high_coverage'  => $gdb->is_high_coverage,
+                'taxon_id'          => $gdb->taxon_id,
+                'genome_component'  => $gdb->genome_component,
+                'locator'           => $gdb->locator,
+                'first_release'     => $gdb->first_release,
+                'last_release'      => $gdb->last_release,
+        }, {
+            'genome_db_id' => $gdb->dbID()
+        } );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
     $self->_id_cache->put($gdb->dbID, $gdb);

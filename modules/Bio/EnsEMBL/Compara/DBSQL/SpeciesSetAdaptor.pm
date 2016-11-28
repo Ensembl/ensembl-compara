@@ -178,8 +178,15 @@ sub store {
 sub update_header {
     my ($self, $species_set) = @_;
 
-    my $update_sql = 'UPDATE species_set_header SET name = ?, size = ?, first_release = ?, last_release = ? WHERE species_set_id = ?';
-    $self->db->dbc->do( $update_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release, $species_set->dbID ) or die "Could not perform '$update_sql'\n";
+    $self->generic_update('species_set_header',
+        {
+            'name'          => $species_set->name,
+            'size'          => $species_set->size,
+            'first_release' => $species_set->first_release,
+            'last_release'  => $species_set->last_release,
+        }, {
+            'species_set_id'=> $species_set->dbID,
+        } );
 }
 
 
