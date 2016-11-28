@@ -541,10 +541,7 @@ sub store_if_needed {
 sub update {
   my ($self,$dnafrag) = @_;
 
-  my $current_verbose_level = verbose();
-  verbose(0);
   my $existing_dnafrag = $self->fetch_by_GenomeDB_and_name($dnafrag->genome_db, $dnafrag->name);
-  verbose($current_verbose_level);
 
   if (!$existing_dnafrag) {
     return $self->store($dnafrag);
