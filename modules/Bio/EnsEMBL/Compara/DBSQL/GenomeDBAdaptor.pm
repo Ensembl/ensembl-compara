@@ -428,13 +428,20 @@ sub store {
     if($self->_synchronise($gdb)) {
         return $self->update($gdb);
     } else {
-        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, is_high_coverage, taxon_id, genome_component, locator, first_release, last_release) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->is_high_coverage, $gdb->taxon_id, $gdb->genome_component, $gdb->locator, $gdb->first_release, $gdb->last_release )
-            or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
-
-        $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
-        $sth->finish();
+        my $dbID = $self->generic_insert('genome_db', {
+                'genome_db_id'      => $gdb->dbID,
+                'name'              => $gdb->name,
+                'assembly'          => $gdb->assembly,
+                'genebuild'         => $gdb->genebuild,
+                'has_karyotype'     => $gdb->has_karyotype,
+                'is_high_coverage'  => $gdb->is_high_coverage,
+                'taxon_id'          => $gdb->taxon_id,
+                'genome_component'  => $gdb->genome_component,
+                'locator'           => $gdb->locator,
+                'first_release'     => $gdb->first_release,
+                'last_release'      => $gdb->last_release,
+            }, 'genome_db_id');
+        $self->attach($gdb, $dbID);
     }
 
     #make sure the id_cache has been fully populated

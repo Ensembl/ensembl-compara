@@ -195,14 +195,12 @@ sub store {
 
     } else {
 
-        my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
-        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
-
-        my $return_code = $sth->execute( $method->dbID(), $method->type(), $method->class() )
-            or die "Could not store ".$method->toString."\n";
-
-        $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
-        $sth->finish();
+        my $dbID = $self->generic_insert('method_link', {
+                'method_link_id'    => $method->dbID,
+                'type'              => $method->type,
+                'class'             => $method->class,
+            }, 'method_link_id');
+        $self->attach($method, $dbID);
     }
     
     $self->_id_cache->put($method->dbID, $method);

@@ -464,5 +464,38 @@ sub _unique_attributes {
     return ();
 }
 
+
+sub generic_insert {
+    my ($self, $table, $col_to_values, $last_insert_id_column) = @_;
+
+    my $dbID;
+
+    if ($last_insert_id_column) {
+        if (defined ($dbID = $col_to_values->{$last_insert_id_column})) {
+            # dbID provided, so nothing to return
+            $last_insert_id_column = undef;
+        } else {
+            # dbID not provided, let's skip the column to make clear we want an AUTO_INCREMENT
+            delete $col_to_values->{$last_insert_id_column};
+        }
+    }
+
+    my @columns = keys %$col_to_values;
+    my @values = map {$col_to_values->{$_}} @columns;
+    my $sql = sprintf('INSERT INTO %s (%s) VALUES (%s)', $table, join(', ', @columns), join(', ', map {'?'} @columns));
+    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
+    $sth->execute(map {$col_to_values->{$_}} @columns)
+        or die sprintf("Could not store (%s)\n", join(', ', map {$_.'='.($col_to_values->{$_} // '<NULL>')} @columns));
+
+    # This assumes that the first field is the auto_increment column
+    if ($last_insert_id_column) {
+        $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, $table, $last_insert_id_column)
+                    or die "Failed to obtain a dbID from the $table table\n";
+    }
+    $sth->finish();
+    return $dbID;
+}
+
+
 1;
 

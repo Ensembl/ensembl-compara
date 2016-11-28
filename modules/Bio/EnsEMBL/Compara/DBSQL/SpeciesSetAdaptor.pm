@@ -138,21 +138,14 @@ sub store {
         $self->update_header($species_set);
 
     } else {
-        if($dbID) { # dbID is set in the object, but may refer to an object with different contents
-
-            my $set_id_sql = 'INSERT INTO species_set_header (species_set_id, name, size, first_release, last_release) VALUES (?,?,?,?,?)';
-            $self->db->dbc->do( $set_id_sql, undef, $dbID, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$set_id_sql'\n";
-
-        } else { # grab a new species_set_id by using AUTO_INCREMENT:
-
-            my $grab_id_sql = 'INSERT INTO species_set_header (name, size, first_release, last_release) VALUES (?,?,?,?)';
-            $self->db->dbc->do( $grab_id_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$grab_id_sql'\n";
-
-            $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set_header', 'species_set_id');
-            if (not $dbID) {
-                die "Failed to obtain a species_set_id for the species_set being stored\n";
-            }
-        }
+        my $dbID = $self->generic_insert('species_set_header', {
+                'species_set_id'=> $species_set->dbID,
+                'name'          => $species_set->name,
+                'size'          => $species_set->size,
+                'first_release' => $species_set->first_release,
+                'last_release'  => $species_set->last_release,
+            }, 'species_set_id');
+        $self->attach($species_set, $dbID);
 
             # Add the data into the DB
         my $sql = "INSERT INTO species_set (species_set_id, genome_db_id) VALUES (?, ?)";
@@ -165,7 +158,7 @@ sub store {
         $self->_id_cache->put($dbID, $species_set);
     }
 
-    $self->attach( $species_set, $dbID );
+    $self->attach( $species_set, $species_set->dbID );
     $self->sync_tags_to_database( $species_set );
 
     return $species_set;
