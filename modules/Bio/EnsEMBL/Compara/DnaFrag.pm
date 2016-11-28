@@ -193,13 +193,14 @@ sub new {
 sub new_from_Slice {
     my ($class, $slice, $genome_db) = @_;
 
-    return $class->new(
-        -NAME => $slice->seq_region_name(),
-        -LENGTH => $slice->seq_region_length(),
-        -COORD_SYSTEM_NAME => $slice->coord_system_name(),
-        -IS_REFERENCE => $slice->is_reference(),
-        -GENOME_DB => $genome_db,
-    );
+    return $class->new_fast( {
+        'name' => $slice->seq_region_name(),
+        'length' => $slice->seq_region_length(),
+        'coord_system_name' => $slice->coord_system_name(),
+        'is_reference' => $slice->is_reference(),
+        'genome_db' => $genome_db,
+        'genome_db_id' => $genome_db->dbID,
+    } );
 }
 
 
