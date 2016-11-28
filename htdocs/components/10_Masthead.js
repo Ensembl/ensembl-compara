@@ -149,6 +149,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       css.left = tab.offset().left;
       
       if (!tab.hasClass('species')) {
+        alert(tab);
         css.width = tabWidth > dropdownWidth ? tabWidth - (dropdownWidth - dropdown.width()) : 'auto';
       }
       

@@ -59,7 +59,7 @@ sub content {
   }
 
   ## Species selector
-  my $arrow     = sprintf '<span class="dropdown"><a class="toggle" href="#" rel="species">&#9660;</a></span>';
+  my $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
   my $dropdown  = $self->species_list;
 
   ## Species header
