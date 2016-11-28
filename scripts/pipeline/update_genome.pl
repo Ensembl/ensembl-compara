@@ -337,10 +337,10 @@ sub update_genome_db {
     );
 
     if (!defined($genome_db->name)) {
-      throw "Cannot find species.production_name in meta table for $species.\n";
+      throw "Cannot find species.production_name in meta table for ".($species_dba->locator).".\n";
     }
     if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $species.\n".
+      throw "Cannot find species.taxonomy_id in meta table for ".($species_dba->locator).".\n".
           "   You can use the --taxon_id option";
     }
     print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
