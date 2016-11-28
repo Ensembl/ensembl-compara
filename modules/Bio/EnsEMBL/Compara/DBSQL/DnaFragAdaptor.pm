@@ -126,16 +126,14 @@ sub fetch_by_GenomeDB_and_name {
   my $dnafrag; # Returned value
   
   my $genome_db_id;
-  if ($genome_db =~ /^\d+$/) {
+  if ($genome_db and ($genome_db =~ /^\d+$/)) {
     $genome_db_id = $genome_db;
-  } elsif ($genome_db && ref $genome_db && 
-      $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
+  } else {
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     $genome_db_id = $genome_db->dbID;
     if (!$genome_db_id) {
       throw("[$genome_db] does not have a dbID");
     }
-  } else {
-    throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
   }
 
 
