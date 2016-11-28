@@ -78,6 +78,32 @@ sub _ids_string {
 # store* methods #
 ##################
 
+sub _synchronise {
+    my ($self, $species_set) = @_;
+
+    assert_ref($species_set, 'Bio::EnsEMBL::Compara::SpeciesSet', 'argument to _synchronise');
+
+    my $dbID        = $species_set->dbID;
+    my $genome_dbs  = $species_set->genome_dbs;
+
+    if ( my $stored_ss = $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
+        my $stored_dbID = $stored_ss->dbID;
+        if($dbID and $dbID!=$stored_dbID) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
+        } else {
+            $self->attach($species_set, $stored_dbID);
+            return $stored_ss;
+        }
+    } else {
+        if($dbID and $self->fetch_by_dbID( $dbID )) {
+            die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data\n", join("/", map {$_->dbID} @$genome_dbs ));
+        } else {
+            return undef;   # not found, safe to insert
+        }
+    }
+}
+
+
 =head2 store
 
   Arg [1]     : Bio::EnsEMBL::Compara::SpeciesSet object
@@ -108,23 +134,11 @@ sub store {
         }
     }
 
-    my $dbID = $species_set->dbID;
-        # Could we have a species_set in the DB with the given contents already?
-    if ( my $stored_ss = $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
-        my $stored_dbID = $stored_ss->dbID;
-        if($dbID and $dbID!=$stored_dbID) {
-            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
-        } else {
-            $dbID = $stored_dbID;
-            $self->update_header($species_set);
-        }
+    if($self->_synchronise($species_set)) {
+        $self->update_header($species_set);
+
     } else {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
-
-            if($self->fetch_by_dbID( $dbID )) {
-                # FIXME: should we update the table instead ?
-                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data\n", join("/", map {$_->dbID} @$genome_dbs ));
-            }
 
             my $set_id_sql = 'INSERT INTO species_set_header (species_set_id, name, size, first_release, last_release) VALUES (?,?,?,?,?)';
             $self->db->dbc->do( $set_id_sql, undef, $dbID, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$set_id_sql'\n";
