@@ -522,39 +522,24 @@ sub store_if_needed {
 
 =head2 update
 
- Title   : update
- Usage   : $self->update($dnafrag)
- Function: look for this dnafrag in the database, using the genome_db_id,
-           the coordinate_system_name and the name of the
-           Bio::EnsEMBL::Compara::DnaFrag object. If there is already an
-           entry in the database for this dnafrag, it does do anything. If
-           the length is different, it updates it. If there is not any entry
-           for this, it stores it.
- Example :
- Returns : int $dnafrag->dbID
- Args    : Bio::EnsEMBL::Compara::DnaFrag object
- Status  : Stable
+  Example     : $adaptor->update();
+  Description : Updates the DnaFrag in the database, i.e. update all the columns for the given dnafrag_id
+  Returntype  : None
+  Exceptions  : None
+  Caller      : general
 
 =cut
 
-
 sub update {
-  my ($self,$dnafrag) = @_;
+    my ($self, $dnafrag) = @_;
 
-  my $existing_dnafrag = $self->fetch_by_GenomeDB_and_name($dnafrag->genome_db, $dnafrag->name);
-
-  if (!$existing_dnafrag) {
-    return $self->store($dnafrag);
-  }
-
-  if ($existing_dnafrag->length != $dnafrag->length or $existing_dnafrag->is_reference != $dnafrag->is_reference) {
-    my $sql = "UPDATE dnafrag SET length = ?, is_reference = ? WHERE dnafrag_id = ?";
-    my $sth = $self->prepare($sql);
-    $sth->execute($dnafrag->length, $dnafrag->is_reference, $existing_dnafrag->dbID);
-  }
-  $dnafrag->dbID($existing_dnafrag->dbID);
- 
-  return $dnafrag->dbID;
+    return $self->generic_update('dnafrag',
+        {
+            'length'                => $dnafrag->length,
+            'is_reference'          => $dnafrag->is_reference,
+        }, {
+            'dnafrag_id'            => $dnafrag->dbID()
+        } );
 }
 
 1;

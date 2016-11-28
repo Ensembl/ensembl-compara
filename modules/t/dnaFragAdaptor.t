@@ -234,9 +234,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
     is($dnafrags->[0]->length, 12345, "updated length");
 
     #New dnafrag
+    $new_dnafrag->genome_db;    # Load the GenomeDB as long as we have an adaptor
     $new_dnafrag->{adaptor} = undef;
     $new_dnafrag->name("Z");
-    $dnafrag_adaptor->update($new_dnafrag);
+    $dnafrag_adaptor->store($new_dnafrag);
     $dnafrags = $dnafrag_adaptor->fetch_all();
     is(@$dnafrags, 2, "Fetching all after update to store new dnafrag");
 
