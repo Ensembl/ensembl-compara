@@ -148,12 +148,11 @@ sub store {
         $self->attach($species_set, $dbID);
 
             # Add the data into the DB
-        my $sql = "INSERT INTO species_set (species_set_id, genome_db_id) VALUES (?, ?)";
-        my $sth = $self->prepare($sql);
-        foreach my $genome_db (@$genome_dbs) {
-            $sth->execute($dbID, $genome_db->dbID);
-        }
-        $sth->finish();
+        $self->generic_multiple_insert(
+            'species_set',
+            ['species_set_id', 'genome_db_id'],
+            [map {[$dbID, $_->dbID]} @$genome_dbs]
+        );
 
         $self->_id_cache->put($dbID, $species_set);
     }

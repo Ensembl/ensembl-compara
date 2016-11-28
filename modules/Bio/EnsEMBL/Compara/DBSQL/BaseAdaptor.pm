@@ -496,6 +496,17 @@ sub generic_insert {
     return $dbID;
 }
 
+sub generic_multiple_insert {
+    my ($self, $table, $columns, $input_data) = @_;
+
+    my $sql = sprintf('INSERT INTO %s (%s) VALUES (%s)', $table, join(', ', @$columns), join(', ', map {'?'} @$columns));
+    my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
+    my $fetch_callback = (ref($input_data) eq 'ARRAY') ? sub {shift @$input_data} : $input_data;
+    $sth->execute_for_fetch( $fetch_callback )
+        or die sprintf("Could not store values as (%s)\n", join(', ', @$columns));
+    $sth->finish();
+}
+
 
 1;
 
