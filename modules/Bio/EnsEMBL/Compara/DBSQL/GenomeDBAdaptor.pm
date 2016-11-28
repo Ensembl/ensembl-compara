@@ -598,41 +598,31 @@ sub _unique_attributes {
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
-    my @genome_db_list = ();
 
-    my ($dbid, $name, $assembly, $taxon_id, $genebuild, $has_karyotype, $is_high_coverage, $genome_component, $locator, $first_release, $last_release);
-    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$genebuild, \$has_karyotype, \$is_high_coverage, \$genome_component, \$locator, \$first_release, \$last_release);
-    while ($sth->fetch()) {
+    my $genome_db_list = $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::GenomeDB', [
+            'dbID',
+            'name',
+            'assembly',
+            '_taxon_id',
+            'genebuild',
+            'has_karyotype',
+            'is_high_coverage',
+            '_genome_component',
+            'locator',
+            '_first_release',
+            '_last_release',
+        ] );
 
-        my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
-            'adaptor'   => $self,           # field name in sync with Bio::EnsEMBL::Storable
-            'dbID'      => $dbid,           # field name in sync with Bio::EnsEMBL::Storable
-            'name'      => $name,
-            'assembly'  => $assembly,
-            'genebuild' => $genebuild,
-            'has_karyotype' => $has_karyotype,
-            'is_high_coverage' => $is_high_coverage,
-            '_taxon_id' => $taxon_id,
-            '_genome_component'  => $genome_component,
-            'locator'   => $locator,
-            '_first_release' => $first_release,
-            '_last_release' => $last_release,
-        } );
-
+    # Here, we need to connect the genome_dbs to the Registry and to one another (polyploid genomes)
+    my %gdb_per_key = map {$_->_get_unique_key => $_} (grep {not $_->genome_component} @$genome_db_list);
+    foreach my $gdb (@$genome_db_list) {
         $gdb->sync_with_registry();
-
-        push @genome_db_list, $gdb;
-    }
-
-    # Here, we need to connect the genome_dbs for polyploid genomes
-    my %gdb_per_key = map {$_->_get_unique_key => $_} (grep {not $_->genome_component} @genome_db_list);
-    foreach my $gdb (@genome_db_list) {
         next unless $gdb->genome_component;
         my $key = $gdb->_get_unique_key;
         $gdb_per_key{$key}->component_genome_dbs($gdb->genome_component, $gdb) if $gdb_per_key{$key};
     }
 
-    return \@genome_db_list;
+    return $genome_db_list;
 }
 
 ############################################################

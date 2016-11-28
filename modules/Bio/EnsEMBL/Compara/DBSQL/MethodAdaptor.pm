@@ -107,18 +107,11 @@ sub _unique_attributes {
 sub _objs_from_sth {
     my ($self, $sth) = @_;
 
-    my @methods = ();
-
-    while ( my ($dbID, $type, $class) = $sth->fetchrow() ) {
-        push @methods, Bio::EnsEMBL::Compara::Method->new_fast( {
-            dbID    => $dbID,
-            adaptor => $self,
-            _type   => $type,
-            _class  => $class,
-        } );
-    }
-
-    return \@methods;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Method', [
+            'dbID',
+            '_type',
+            '_class',
+        ] );
 }
 
 

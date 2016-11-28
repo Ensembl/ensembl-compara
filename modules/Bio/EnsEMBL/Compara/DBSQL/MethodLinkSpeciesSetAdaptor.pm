@@ -241,48 +241,36 @@ sub delete {
 sub _objs_from_sth {
     my ($self, $sth) = @_;
 
-    my @mlss_list = ();
-
-    my $method_adaptor = $self->db->get_MethodAdaptor;
-    my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
-
     my $method_hash = $self->db->get_MethodAdaptor()->_id_cache;
     my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache;
 
-    my ($dbID, $method_link_id, $species_set_id, $name, $source, $url, $first_release, $last_release);
-    $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url, \$first_release, \$last_release);
-    while ($sth->fetch()) {
-
-            my $method          = $method_hash->get($method_link_id);
-            my $species_set = $species_set_hash->get($species_set_id);
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', [
+            'dbID',
+            undef,
+            undef,
+            'name',
+            'source',
+            'url',
+            '_first_release',
+            '_last_release',
+        ], sub {
+            my $a           = shift;
+            my $method      = $method_hash->get($a->[1]);
+            my $species_set = $species_set_hash->get($a->[2]);
 
             if (!$method) {
-                warning("MethodLinkSpeciesSet with dbID=$dbID is missing method_link entry with dbID=$method_link_id, so it will not be fetched");
+                warning("MethodLinkSpeciesSet with dbID=$a->[0] is missing method_link entry with dbID=$a->[1], so it will not be fetched");
             }
             if (!$species_set) {
-                warning("MethodLinkSpeciesSet with dbID=$dbID is missing species_set(_header) entry with dbID=$species_set_id, so it will not be fetched");
+                warning("MethodLinkSpeciesSet with dbID=$a->[0] is missing species_set(_header) entry with dbID=$a->[2], so it will not be fetched");
             }
 
-            if($method and $species_set) {
-                my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
-                    adaptor            => $self,
-                    dbID               => $dbID,
-                    
+            return {
                     method             => $method,
                     species_set        => $species_set,
-
-                    name               => $name,
-                    source             => $source,
-                    url                => $url,
-
-                    _first_release     => $first_release,
-                    _last_release      => $last_release,
-                } );
-                push @mlss_list, $mlss;
             }
-    }
-    $sth->finish();
-    return \@mlss_list;
+
+        });
 }
 
 sub _tables {

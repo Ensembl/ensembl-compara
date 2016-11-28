@@ -181,6 +181,25 @@ sub generic_fetch {
 }
 
 
+sub generic_objs_from_sth {
+    my ($self, $sth, $class, $field_names, $callback) = @_;
+
+    my @objs;
+    my @cols = $self->_columns;
+    my @ind  = 0..(scalar(@cols)-1);
+
+    while ( my @vals = $sth->fetchrow() ) {
+        my $obj = $class->new_fast( {
+                'adaptor' => $self,
+                (map {$field_names->[$_] => $vals[$_]} grep {$field_names->[$_]} @ind),
+                $callback ? (%{ $callback->(\@vals) }) : (),
+            } );
+        push @objs, $obj;
+    }
+    return \@objs;
+}
+
+
 =head2 mysql_server_prepare
 
   Arg[1]      : Boolean (opt)
