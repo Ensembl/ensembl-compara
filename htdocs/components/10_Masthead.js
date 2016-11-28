@@ -33,10 +33,11 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.base();
     
-    var tabsHolder = $('.tabs_holder', this.el);
-    var tabs       = $('.tabs', tabsHolder);
-    var tools      = $('.tools_holder', this.el);
-    var logo       = $('.logo_holder', this.el);   
+    var tabsHolder  = $('.tabs_holder', this.el);
+    var tabs        = $('.tabs', tabsHolder);
+    var spbarHolder = $('.spbar_holder', this.el);
+    var tools       = $('.tools_holder', this.el);
+    var logo        = $('.logo_holder', this.el);   
     
     this.elLk.allTabs    = $('li', tabs);
     this.elLk.shortTabs  = $('li.short_tab', tabs);
@@ -92,6 +93,19 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       
       dropdown = null;
       
+      return false;
+    });
+   
+    // New species bar 
+    this.elLk.sppDropdown = $('div.dropdown', spbarHolder).on('click', function () {
+      $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
+    });
+    this.elLk.sppToggle = $('a.toggle', spbarHolder).on('click', function () {
+      var dropdown = panel.elLk.sppDropdown;
+      panel.dropdownPosition(dropdown, $(this));
+      dropdown.not(':visible').css('zIndex', ++Ensembl.PanelManager.zIndex).end().toggle(); 
+      $(this).html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
+      dropdown = null;
       return false;
     });
     
