@@ -30,6 +30,18 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 use constant ID_CHUNK_SIZE => 500;
 
+
+=head2 attach
+
+  Example     : $self->attach($object, $dbID);
+  Description : Simple method that attaches the object to this adaptor, and sets the dbID at the same time.
+  Returntype  : Integer. The new dbID of the object
+  Exceptions  : none
+  Caller      : Adaptors (usually whilst fetching objects)
+  Status      : Stable
+
+=cut
+
 sub attach {
     my ($self, $object, $dbID) = @_;
 
