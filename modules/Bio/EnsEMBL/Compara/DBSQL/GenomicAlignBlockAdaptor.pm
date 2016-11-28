@@ -1356,7 +1356,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id});
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
           my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID }->{$chr} || $chr;
-          my $this_dnafrag = $self->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
+          my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
           unless ( defined $this_dnafrag ) {
             next;
           }
