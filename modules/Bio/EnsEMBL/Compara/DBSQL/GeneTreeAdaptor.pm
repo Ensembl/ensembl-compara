@@ -486,31 +486,23 @@ sub _columns {
 }
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
-  my @tree_list = ();
+    my ($self, $sth) = @_;
 
-  while(my $rowhash = $sth->fetchrow_hashref) {
-    my $tree = Bio::EnsEMBL::Compara::GeneTree->new_fast({
-        adaptor                     => $self,
-        _root_id                    => $rowhash->{root_id},
-        _tree_type                  => $rowhash->{tree_type},
-        _member_type                => $rowhash->{member_type},
-        _clusterset_id              => $rowhash->{clusterset_id},
-        _gene_align_id              => $rowhash->{gene_align_id},
-        _method_link_species_set_id => $rowhash->{method_link_species_set_id},
-        _species_tree_root_id       => $rowhash->{species_tree_root_id},
-        _stable_id                  => $rowhash->{stable_id},
-        _version                    => $rowhash->{version},
-        _ref_root_id                => $rowhash->{ref_root_id},
-        _parent_id                  => $rowhash->{parent_id},
-        _seq_type                   => $rowhash->{seq_type},
-        _aln_length                 => $rowhash->{aln_length},
-        _aln_method                 => $rowhash->{aln_method},
-    });
-    push @tree_list, $tree;
-  }
-
-  return \@tree_list;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::GeneTree', [
+            '_root_id',
+            '_tree_type',
+            '_member_type',
+            '_clusterset_id',
+            '_gene_align_id',
+            '_method_link_species_set_id',
+            '_species_tree_root_id',
+            '_stable_id',
+            '_version',
+            '_ref_root_id',
+            '_seq_type',
+            '_aln_length',
+            '_aln_method',
+        ] );
 }
 
 

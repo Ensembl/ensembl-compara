@@ -178,19 +178,19 @@ sub _columns {
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
-    my $hmm_list = [];
 
-    while (my $rowhash = $sth->fetchrow_hashref) {
-        my $hmm = Bio::EnsEMBL::Compara::HMMProfile->new_fast({
-            _model_id   => $rowhash->{model_id},
-            _name       => $rowhash->{name},
-            _type       => $rowhash->{type},
-            _profile    => Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($rowhash->{compressed_profile}),
-            _consensus  => $rowhash->{consensus},
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::HMMProfile', [
+            '_model_id',
+            '_name',
+            '_type',
+            undef,
+            '_consensus',
+        ], sub {
+            my $a = shift;
+            return {
+                '_profile'  => Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($a->[3]),
+            };
         });
-        push @$hmm_list, $hmm;
-    }
-    return $hmm_list;
 }
 
 

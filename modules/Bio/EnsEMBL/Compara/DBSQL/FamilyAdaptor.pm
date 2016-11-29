@@ -243,27 +243,16 @@ sub _columns {
 }
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
+    my ($self, $sth) = @_;
   
-  my ($family_id, $stable_id, $version, $method_link_species_set_id, $description, $description_score);
-
-  $sth->bind_columns(\$family_id, \$stable_id, \$version, \$method_link_species_set_id, \$description, \$description_score);
-
-  my @families = ();
-  
-  while ($sth->fetch()) {
-    push @families, Bio::EnsEMBL::Compara::Family->new_fast({
-            'adaptor'                       => $self,
-            'dbID'                          => $family_id,
-            '_stable_id'                    => $stable_id,
-            '_version'                      => $version,
-            '_description'                  => $description,
-            '_description_score'            => $description_score,
-            '_method_link_species_set_id'   => $method_link_species_set_id,
-       });
-  }
-  
-  return \@families;  
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Family', [
+            'dbID',
+            '_stable_id',
+            '_version',
+            '_method_link_species_set_id',
+            '_description',
+            '_description_score',
+        ] );
 }
 
 

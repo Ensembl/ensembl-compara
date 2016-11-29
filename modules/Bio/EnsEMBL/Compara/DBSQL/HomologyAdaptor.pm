@@ -549,40 +549,29 @@ sub _columns {
 }
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
+    my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $is_tree_compliant, $goc_score, $wga_coverage, $high, $dn, $ds, $n, $s, $lnl,
-      $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
-
-  $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$is_tree_compliant, \$goc_score, \$wga_coverage, \$high, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
-
-  my @homologies = ();
-  
-  while ($sth->fetch()) {
-    push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast({
-            'adaptor'                       => $self,
-            'dbID'                          => $homology_id,
-            '_description'                  => $description,
-            '_is_tree_compliant'            => $is_tree_compliant,
-            '_method_link_species_set_id'   => $method_link_species_set_id,
-            '_dn'                           => $dn,
-            '_ds'                           => $ds,
-            '_n'                            => $n,
-            '_s'                            => $s,
-            '_lnl'                          => $lnl,
-            '_this_one_first'               => $self->{'_this_one_first'},
-            '_species_tree_node_id'         => $species_tree_node_id,
-            '_gene_tree_node_id'            => $gene_tree_node_id,
-            '_gene_tree_root_id'            => $gene_tree_root_id,
-            '_goc_score'                    => $goc_score,
-            '_wga_coverage'                 => $wga_coverage,
-            '_is_high_confidence'           => $high,
-       });
-  }
-  
-  return \@homologies;  
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Homology', [
+            'dbID',
+            '_method_link_species_set_id',
+            '_description',
+            '_is_tree_compliant',
+            '_goc_score',
+            '_wga_coverage',
+            '_is_high_confidence',
+            '_dn',
+            '_ds',
+            '_n',
+            '_s',
+            '_lnl',
+            '_species_tree_node_id',
+            '_gene_tree_node_id',
+            '_gene_tree_root_id',
+        ], sub {
+            return {
+                '_this_one_first'   => $self->{'_this_one_first'},
+            };
+        });
 }
 
 #

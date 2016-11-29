@@ -475,48 +475,35 @@ sub _columns {
 }
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
-
-  my @pafs = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $paf = Bio::EnsEMBL::Compara::PeptideAlignFeature->new();
-
-    $paf->dbID($row_hashref->{'peptide_align_feature_id'});
-    $paf->adaptor($self);
-    $paf->qstart($row_hashref->{'qstart'});
-    $paf->qend($row_hashref->{'qend'});
-    $paf->hstart($row_hashref->{'hstart'});
-    $paf->hend($row_hashref->{'hend'});
-    $paf->score($row_hashref->{'score'});
-    $paf->evalue($row_hashref->{'evalue'});
-    $paf->alignment_length($row_hashref->{'align_length'});
-    $paf->identical_matches($row_hashref->{'identical_matches'});
-    $paf->perc_ident($row_hashref->{'perc_ident'});
-    $paf->positive_matches($row_hashref->{'positive_matches'});
-    $paf->perc_pos($row_hashref->{'perc_pos'});
-    $paf->hit_rank($row_hashref->{'hit_rank'});
-    $paf->cigar_line($row_hashref->{'cigar_line'});
-    $paf->rhit_dbID($row_hashref->{'pafid2'});
+    my ($self, $sth) = @_;
 
     my $memberDBA = $self->db->get_SeqMemberAdaptor;
-    if($row_hashref->{'qmember_id'} and $memberDBA) {
-      $paf->query_member($memberDBA->fetch_by_dbID($row_hashref->{'qmember_id'}));
-    }
-    if($row_hashref->{'hmember_id'} and $memberDBA) {
-      $paf->hit_member($memberDBA->fetch_by_dbID($row_hashref->{'hmember_id'}));
-    }
-  
-    #print $paf->toString(), "\n";
-    
-    push @pafs, $paf;
-  }
-  $sth->finish;
-
-  return \@pafs;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::PeptideAlignFeature', [
+            'dbID',
+            '_query_member_id',
+            '_hit_member_id',
+            '_qstart',
+            '_qend',
+            '_hstart',
+            '_hend',
+            '_score',
+            '_evalue',
+            '_alignment_length',
+            '_identical_matches',
+            '_perc_ident',
+            '_positive_matches',
+            '_perc_pos',
+            '_hit_rank',
+            '_cigar_line',
+        ], sub {
+            my $a = shift;
+            return {
+                ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),
+                ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),
+                ($a->[16] ? ('_rhit_dbID'   => $a->[16]) : ()),
+            };
+        });
 }
-
 
 sub _get_all_genome_db_ids {
     my $self = shift;

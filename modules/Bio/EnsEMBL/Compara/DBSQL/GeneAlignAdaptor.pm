@@ -77,25 +77,14 @@ sub _columns {
 }
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
-  
-  my ($gene_align_id, $seq_type, $aln_method, $aln_length);
+    my ($self, $sth) = @_;
 
-  $sth->bind_columns(\$gene_align_id, \$seq_type, \$aln_method, \$aln_length);
-
-  my @alignments = ();
-  
-  while ($sth->fetch()) {
-    push @alignments, Bio::EnsEMBL::Compara::AlignedMemberSet->new_fast({
-            'adaptor'           => $self,
-            'dbID'              => $gene_align_id,
-            '_aln_method'       => $aln_method,
-            '_aln_length'       => $aln_length,
-            '_seq_type'         => $seq_type,
-       });
-  }
-  
-  return \@alignments;  
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::AlignedMemberSet', [
+            'dbID',
+            '_seq_type',
+            '_aln_method',
+            '_aln_length',
+        ] );
 }
 
 #
