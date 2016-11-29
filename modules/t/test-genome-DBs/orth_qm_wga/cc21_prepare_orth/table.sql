@@ -673,4 +673,4 @@ CREATE TABLE `exon_boundaries` (
     `dnafrag_end`      INT NOT NULL,
     `seq_member_id`    INT NOT NULL,
     INDEX (`gene_member_id`)  
-) ENGINE=InnoDB ;
+) ENGINE=MyISAM;
