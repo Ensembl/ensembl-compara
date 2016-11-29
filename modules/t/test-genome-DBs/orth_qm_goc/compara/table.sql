@@ -231,19 +231,19 @@ CREATE TABLE `gene_tree_root_attr` (
   `aln_after_filter_length` int(10) unsigned DEFAULT NULL,
   `aln_length` int(10) unsigned DEFAULT NULL,
   `aln_num_residues` int(10) unsigned DEFAULT NULL,
-  `aln_percent_identity` float(5,5) DEFAULT NULL,
+  `aln_percent_identity` float DEFAULT NULL,
   `best_fit_model_family` varchar(10) DEFAULT NULL,
   `best_fit_model_parameter` varchar(5) DEFAULT NULL,
   `gene_count` int(10) unsigned DEFAULT NULL,
-  `k_score` float(5,5) DEFAULT NULL,
+  `k_score` float DEFAULT NULL,
   `k_score_rank` int(10) unsigned DEFAULT NULL,
   `mcoffee_scores_gene_align_id` int(10) unsigned DEFAULT NULL,
   `aln_n_removed_columns` int(10) unsigned DEFAULT NULL,
   `aln_num_of_patterns` int(10) unsigned DEFAULT NULL,
-  `aln_shrinking_factor` float(2,2) DEFAULT NULL,
+  `aln_shrinking_factor` float DEFAULT NULL,
   `spec_count` int(10) unsigned DEFAULT NULL,
   `tree_max_branch` float DEFAULT NULL,
-  `tree_max_length` float(5,5) DEFAULT NULL,
+  `tree_max_length` float DEFAULT NULL,
   `tree_num_dup_nodes` int(10) unsigned DEFAULT NULL,
   `tree_num_leaves` int(10) unsigned DEFAULT NULL,
   `tree_num_spec_nodes` int(10) unsigned DEFAULT NULL,
@@ -260,7 +260,8 @@ CREATE TABLE `gene_tree_root_tag` (
   `tag` varchar(50) NOT NULL,
   `value` mediumtext NOT NULL,
   KEY `root_id_tag` (`root_id`,`tag`),
-  KEY `root_id` (`root_id`)
+  KEY `root_id` (`root_id`),
+  KEY `tag` (`tag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `genome_db` (
