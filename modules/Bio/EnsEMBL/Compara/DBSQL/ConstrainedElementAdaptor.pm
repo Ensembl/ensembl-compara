@@ -192,7 +192,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 		AND
 		dnafrag_id = ? 
 	    };
-            my (@these_constrained_elements, $lower_bound);
+            my ($lower_bound);
 
             if(defined($this_slice->start) && defined($this_slice->end) && 
                ($this_slice->start <= $this_slice->end)) {
@@ -208,10 +208,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 			};
 	}
             
-            $self->_fetch_all_ConstrainedElements($sql, \@these_constrained_elements,
+            my $these_constrained_elements = $self->_fetch_all_ConstrainedElements($sql,
                                                   $mlss_obj->dbID, $dnafrag->dbID, $this_slice->start, $this_slice->end, $lower_bound, $this_slice, $offset);
 
-            push @$constrained_elements, @these_constrained_elements;
+            push @$constrained_elements, @$these_constrained_elements;
         }
 
 	return $constrained_elements;
@@ -261,15 +261,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 		AND
 		dnafrag_start >= ?
 	};
-	$self->_fetch_all_ConstrainedElements($sql, \@constrained_elements, 
+	return $self->_fetch_all_ConstrainedElements($sql,
 			$mlss_obj->dbID, $dnafrag_obj->dbID, $dnafrag_start, $dnafrag_end, $lower_bound);
-	return \@constrained_elements;
 }
 
 
 sub _fetch_all_ConstrainedElements {#used when getting constrained elements by slice or dnafrag
 	my ($self) = shift;
-	my ($sql, $constrained_elements, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice, $offset) = @_;
+	my ($sql, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice, $offset) = @_;
 
         $offset = 0 unless (defined $offset);
 	$sql = qq{
@@ -283,6 +282,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
        		FROM
        		constrained_element} . $sql;
 
+	my @constrained_elements;
 	my $sth = $self->prepare($sql);
 	$sth->execute($mlss_id, $dnafrag_id, $start, $end, $lower_bound);
 	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value);
@@ -302,8 +302,9 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'reference_dnafrag_id' => $dnafrag_id,
 			}
 		);
-		push(@$constrained_elements, $constrained_element);
+		push(@constrained_elements, $constrained_element);
 	}
+       return \@constrained_elements;
 }	
 
 =head2 fetch_all_by_dbID_list
@@ -328,8 +329,7 @@ sub fetch_all_by_dbID_list {
 		WHERE
 		ce.constrained_element_id = ?
 	};
-	$self->_fetch_all_ConstrainedElements_by_dbID($sql, \@constrained_elements, $constrained_element_ids);
-	return \@constrained_elements;
+	return $self->_fetch_all_ConstrainedElements_by_dbID($sql, $constrained_element_ids);
 }
 
 =head2 fetch_by_dbID
@@ -351,7 +351,7 @@ sub fetch_by_dbID {
 
 sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained elements by constrained_element_id
 	my ($self) = shift;
-	my ($sql, $constrained_elements, $dbIDs) = @_;
+	my ($sql, $dbIDs) = @_;
         
 	$sql = qq{
        		SELECT
@@ -377,6 +377,7 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 		gdb.genome_db_id = df.genome_db_id} . $sql;
 
 	my $sth = $self->prepare($sql);
+	my @constrained_elements;
 	foreach my $constrained_element_id (@{ $dbIDs }) {
 		my (%general_attributes, @alignment_segments);
 		$sth->execute( $constrained_element_id );
@@ -400,8 +401,9 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 				'p_value' => $general_attributes{p_value},
 			}
 		);
-		push(@$constrained_elements, $constrained_element) if @alignment_segments;
+		push(@constrained_elements, $constrained_element) if @alignment_segments;
 	}
+	return \@constrained_elements;
 }
 
 sub count_by_mlss_id {
