@@ -193,6 +193,26 @@ sub generic_fetch {
 }
 
 
+=head2 generic_objs_from_sth
+
+  Arg [1]     : $sth Statement handle
+  Arg [2]     : String $class. The package name of the new objects to build
+  Arg [3]     : Arrayref of strings $field_names. How each column is named in the
+                object hash (use undef to skip a column)
+  Arg [4]     : (opt) $callback. Callback method to provide additional fields
+  Example     : my $generic_objs_from_sth = $object_name->generic_objs_from_sth();
+  Description : Generic method that can fulfill the role of _objs_from_sth().
+                It will iterate over each row of the resultset, call new_fast() to
+                build a new object and map each column to an internal field.
+                $callback can be used to provide additional fields or to transform
+                some (first set them to undef in $field_names)
+  Returntype  : Arrayref of objects
+  Exceptions  : none
+  Caller      : Adaptors (usually in _objs_from_sth() of fetch*)
+  Status      : Stable
+
+=cut
+
 sub generic_objs_from_sth {
     my ($self, $sth, $class, $field_names, $callback) = @_;
 
@@ -426,6 +446,23 @@ sub _uncached_fetch_all_by_id_list {
 }
 
 
+=head2 _synchronise
+
+  Arg [1]     : $obj. The object to check in the database
+  Example     : my $exist_obj = $self->_synchronise($test_obj);
+  Description : Check in the database whether there is already an object with the
+                same properties. The test is performed against the columns defined
+                in _unique_attributes() and the dbID column. The function will die
+                if there is already an object with either of these conditions:
+                 - same dbID (when $obj has a dbID) but different data
+                 - same data but different dbID (when $obj has a dbID)
+  Returntype  : Object instance or undef
+  Exceptions  : Dies if there is a collision
+  Caller      : Adaptors only
+  Status      : Stable
+
+=cut
+
 sub _synchronise {
     my ($self, $object) = @_;
 
@@ -474,10 +511,43 @@ sub _synchronise {
 }
 
 
+=head2 _unique_attributes
+
+  Description : Returns a list of attributes that can uniquely identify an object
+                for this adaptor.
+  Returntype  : List of attribute names
+  Exceptions  : none
+  Caller      : _synchronise()
+  Status      : Stable
+
+=cut
+
 sub _unique_attributes {
     return ();
 }
 
+
+=head2 generic_insert
+
+  Arg [1]     : String $table. Tha name of the table
+  Arg [2]     : Hashref $col_to_values. Mapping between the column names and the values to insert
+  Arg [3]     : (opt) String $last_insert_id_column. Name of the column to retrieve an AUTO_INCREMENT from
+  Example     : my $dbID = $self->generic_insert('method_link', {
+                        'method_link_id'    => $method->dbID,
+                        'type'              => $method->type,
+                        'class'             => $method->class,
+                    }, 'method_link_id');
+                $self->attach($method, $dbID);
+  Description : Generic method to insert a row into a table. It automatically writes an
+                INSERT statement with the correct list of columns, number of placeholders;
+                then executes it and queries the value of $last_insert_id_column.
+  Returntype  : Integer. Value of the $last_insert_id_column (if requested)
+                This may be a copy of what has been provided in $col_to_values;
+  Exceptions  : none
+  Caller      : Adaptors (usually store())
+  Status      : Stable
+
+=cut
 
 sub generic_insert {
     my ($self, $table, $col_to_values, $last_insert_id_column) = @_;
@@ -510,6 +580,32 @@ sub generic_insert {
     return $dbID;
 }
 
+
+=head2 generic_multiple_insert
+
+  Arg [1]     : String $table. Tha name of the table
+  Arg [2]     : Arrayref $columns. Name of the columns to populate
+  Arg [3]     : Arrayref of the values (row by row) and ordered as in $columns
+  Example     : $self->generic_multiple_insert(
+                    'species_set',
+                    ['species_set_id', 'genome_db_id'],
+                    [map {[$dbID, $_->dbID]} @$genome_dbs]
+                );
+  Description : Generic method to insert many rows into a table. It automatically writes an
+                INSERT statement with the correct list of columns, number of placeholders;
+                then executes it at once with execute_array().
+                NOTE: The function empties $input_data, so provide a copy if you need the data
+                In theory, execute_array() is supposed to be able to call INSERT with multiple
+                rows at once, making it similarly efficient as SQL statements from mysqldump,
+                but I haven't seen that in my benchmark. Not sure DBD::mysql supports that.
+                If you require performance, have a look at Utils::CopyData
+  Returntype  : none
+  Exceptions  : none
+  Caller      : Adaptors (usually store())
+  Status      : Stable
+
+=cut
+
 sub generic_multiple_insert {
     my ($self, $table, $columns, $input_data) = @_;
 
@@ -521,6 +617,28 @@ sub generic_multiple_insert {
     $sth->finish();
 }
 
+
+=head2 generic_update
+
+  Arg [1]     : String $table. Tha name of the table
+  Arg [2]     : Hashref $col_to_values_update. Mapping between the column names and the values to update
+  Arg [3]     : Hashref $col_to_values_where. Mapping between the column names and the values for the WHERE clause
+  Example     : $self->generic_update('method_link',
+                    {
+                        'type'              => $method->type,
+                        'class'             => $method->class,
+                    }, {
+                        'method_link_id'    => $method->dbID,
+                    } );
+  Description : Generic method to update a row in a table. It automatically writes an UPDATE
+                statement with the correct list of columns and number of placeholders on both
+                the SET and WHERE clauses; then executes it.
+  Returntype  : Number of rows affected (as return by execute())
+  Exceptions  : none
+  Caller      : Adaptors (usually store())
+  Status      : Stable
+
+=cut
 
 sub generic_update {
     my ($self, $table, $col_to_values_update, $col_to_values_where) = @_;
