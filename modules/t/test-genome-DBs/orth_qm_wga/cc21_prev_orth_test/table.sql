@@ -20,38 +20,6 @@ CREATE TABLE `CAFE_species_gene` (
   KEY `node_id` (`node_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `CAFE_tree` (
-  `root_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `species_tree` mediumtext NOT NULL,
-  `lambdas` varchar(100) DEFAULT NULL,
-  `p_value_lim` double(5,4) DEFAULT NULL,
-  PRIMARY KEY (`root_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `CAFE_tree_attr` (
-  `node_id` int(10) unsigned NOT NULL,
-  `fam_id` int(10) unsigned NOT NULL,
-  `taxon_id` int(10) unsigned DEFAULT NULL,
-  `n_members` int(4) unsigned NOT NULL,
-  `p_value` double(5,4) DEFAULT NULL,
-  `avg_pvalue` double(5,4) DEFAULT NULL,
-  UNIQUE KEY `node_id` (`node_id`,`fam_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `CAFE_tree_node` (
-  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned NOT NULL,
-  `root_id` int(10) unsigned NOT NULL,
-  `left_index` int(10) NOT NULL,
-  `right_index` int(10) NOT NULL,
-  `distance_to_parent` double DEFAULT '1',
-  PRIMARY KEY (`node_id`),
-  KEY `parent_id` (`parent_id`),
-  KEY `root_id` (`root_id`,`left_index`),
-  KEY `root_id_2` (`root_id`,`right_index`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `conservation_score` (
   `genomic_align_block_id` bigint(20) unsigned NOT NULL,
   `window_size` smallint(5) unsigned NOT NULL,
@@ -431,44 +399,6 @@ CREATE TABLE `mapping_session` (
   UNIQUE KEY `type` (`type`,`rel_from`,`rel_to`,`prefix`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `member` (
-  `member_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `stable_id` varchar(128) NOT NULL,
-  `version` int(10) DEFAULT '0',
-  `source_name` enum('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
-  `taxon_id` int(10) unsigned NOT NULL,
-  `genome_db_id` int(10) unsigned DEFAULT NULL,
-  `sequence_id` int(10) unsigned DEFAULT NULL,
-  `gene_member_id` int(10) unsigned DEFAULT NULL,
-  `canonical_member_id` int(10) unsigned DEFAULT NULL,
-  `description` text,
-  `chr_name` char(40) DEFAULT NULL,
-  `chr_start` int(10) DEFAULT NULL,
-  `chr_end` int(10) DEFAULT NULL,
-  `chr_strand` tinyint(1) NOT NULL,
-  `display_label` varchar(128) DEFAULT NULL,
-  PRIMARY KEY (`member_id`),
-  UNIQUE KEY `source_stable_id` (`stable_id`,`source_name`),
-  KEY `taxon_id` (`taxon_id`),
-  KEY `stable_id` (`stable_id`),
-  KEY `source_name` (`source_name`),
-  KEY `sequence_id` (`sequence_id`),
-  KEY `gene_member_id` (`gene_member_id`),
-  KEY `gdb_name_start_end` (`genome_db_id`,`chr_name`,`chr_start`,`chr_end`),
-  KEY `canonical_member_id` (`canonical_member_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
-
-CREATE TABLE `member_production_counts` (
-  `stable_id` varchar(128) NOT NULL,
-  `families` tinyint(1) unsigned DEFAULT '0',
-  `gene_trees` tinyint(1) unsigned DEFAULT '0',
-  `gene_gain_loss_trees` tinyint(1) unsigned DEFAULT '0',
-  `orthologues` int(10) unsigned DEFAULT '0',
-  `paralogues` int(10) unsigned DEFAULT '0',
-  `homoeologues` int(10) unsigned DEFAULT '0',
-  KEY `stable_id` (`stable_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `member_xref` (
   `gene_member_id` int(10) unsigned NOT NULL,
   `dbprimary_acc` varchar(10) NOT NULL,
@@ -720,21 +650,6 @@ CREATE TABLE `stable_id_history` (
   `version_to` int(10) unsigned DEFAULT NULL,
   `contribution` float DEFAULT NULL,
   PRIMARY KEY (`mapping_session_id`,`stable_id_from`,`stable_id_to`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `subset` (
-  `subset_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `description` varchar(255) DEFAULT NULL,
-  `dump_loc` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`subset_id`),
-  UNIQUE KEY `description` (`description`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `subset_member` (
-  `subset_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`subset_id`,`member_id`),
-  KEY `member_id` (`member_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `synteny_region` (
