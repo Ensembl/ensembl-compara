@@ -1,4 +1,4 @@
-87	59729	taeniopygia_guttata	taeGut3.2.4	2008-08-Ensembl	1	1	\N		53	\N
-111	28377	anolis_carolinensis	AnoCar2.0	2010-09-Ensembl	1	1	\N		61	\N
-112	9103	meleagris_gallopavo	UMD2	2010-09-Ensembl	1	1	\N		61	\N
-142	9031	gallus_gallus	Galgal4	2011-12-Ensembl	1	1	\N		71	\N
+87	59729	taeniopygia_guttata	taeGut3.2.4	2008-08-Ensembl	1	1	\N	\N	\N		53	\N
+111	28377	anolis_carolinensis	AnoCar2.0	2010-09-Ensembl	1	1	\N	\N	\N		61	\N
+112	9103	meleagris_gallopavo	UMD2	2010-09-Ensembl	1	1	\N	\N	\N		61	\N
+142	9031	gallus_gallus	Galgal4	2011-12-Ensembl	1	1	\N	\N	\N		71	\N
