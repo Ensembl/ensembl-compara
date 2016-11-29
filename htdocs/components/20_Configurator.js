@@ -196,7 +196,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var change  = $('#' + id);
 
       panel.hide();
-
       if (!change.length || !change.children().length || change.data('reload')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
@@ -823,22 +822,25 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         diff = true;
       }
     });
-    
+
     this.elLk.tracks.each(function () {
       var track   = $(this).data('track');
-      var favourite = !panel.imageConfig[track.id].favourite &&  track.fav ? 1 : // Making a track a favourite
-                       panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
-                       false;
-      
-      if (panel.imageConfig[track.id].renderer !== track.renderer) {
-        imageConfig[track.id] = { renderer: track.renderer };
-        diff = true;
-      }
-      
-      if (favourite !== false) {
-        imageConfig[track.id] = imageConfig[track.id] || {};
-        imageConfig[track.id].favourite = favourite;
-        diff = true;
+
+      if (track) {
+        var favourite = !panel.imageConfig[track.id].favourite &&  track.fav ? 1 : // Making a track a favourite
+                         panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
+                         false;
+        
+        if (panel.imageConfig[track.id].renderer !== track.renderer) {
+          imageConfig[track.id] = { renderer: track.renderer };
+          diff = true;
+        }
+        
+        if (favourite !== false) {
+          imageConfig[track.id] = imageConfig[track.id] || {};
+          imageConfig[track.id].favourite = favourite;
+          diff = true;
+        }
       }
     });
     
@@ -1212,7 +1214,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
 
   // Called when track order or configs are reset on the image
   externalReset: function() {
-    this.el.empty();
+    this.el.empty().removeClass('active');
   },
   
   destructor: function () {

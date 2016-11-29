@@ -174,7 +174,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         url: this.href,
         type: 'post',
         success: function() {
-          Ensembl.EventManager.triggerSpecific('resetConfig', 'modal_config_' + this.id.toLowerCase());
+          Ensembl.EventManager.trigger('resetConfig');
           Ensembl.EventManager.trigger('resetMessage');
           this.getContent();
         },
