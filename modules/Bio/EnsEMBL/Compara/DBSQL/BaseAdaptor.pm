@@ -198,9 +198,11 @@ sub generic_objs_from_sth {
 
     my @objs;
     my @cols = $self->_columns;
+    my @vals = map {undef} @cols;
     my @ind  = 0..(scalar(@cols)-1);
 
-    while ( my @vals = $sth->fetchrow() ) {
+    $sth->bind_columns(\(@vals));
+    while ( $sth->fetch() ) {
         my $obj = $class->new_fast( {
                 'adaptor' => $self,
                 (map {$field_names->[$_] => $vals[$_]} grep {$field_names->[$_]} @ind),
