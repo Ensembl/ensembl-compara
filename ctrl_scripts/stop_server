@@ -31,11 +31,12 @@ BEGIN {
 
 my $PID = $SiteDefs::ENSEMBL_PIDFILE;
 
-my ($help, $delay);
+my ($help, $delay,$bounce);
 
 &GetOptions(
   "d|delay=i" => \$delay,
-  "h|help"    => \$help
+  "h|help"    => \$help,
+  "b|bounce"    => \$bounce,
 );
 
 if ($help) {
@@ -46,6 +47,7 @@ if ($help) {
   Options:
     -d N, --delay N : wait N seconds after stop \(to allow proper shutdown\)
     -h, --help      : print this help message
+    -b, --bounce    : internal use only. (Set by restart)
 };
 
   exit;
@@ -104,6 +106,7 @@ eval {
   } else {
     warn "Invalid PID: $pid\nSTOP failed.\n";
   }
+  unlink $PID unless $bounce;
 };
 
 warn $@ if $@;

@@ -366,7 +366,7 @@ sub add_label {
                 x         => $position->{'x'},
                 y         => $position->{'y'},
                 height    => $position->{'height'},
-                width     => $position->{'width'},
+                width     => $position->{'text_width'} / $self->{'pix_per_bp'},
                 textwidth => $position->{'text_width'},
                 text      => $text,
                 colour    => $colour,

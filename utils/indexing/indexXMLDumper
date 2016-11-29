@@ -2955,8 +2955,9 @@ sub GeneTransLine {
     my $desc        = $xref->{'desc'};
 
     if ($xref->{'external_syns'}) {
-      foreach (keys %{$xref->{'external_syns'}}){
-        $ext_syns->{$_}++;
+      foreach my $syn (keys %{$xref->{'external_syns'}}){
+        $syn = &clean($syn);
+        $ext_syns->{$syn}++;
       }
     }
 

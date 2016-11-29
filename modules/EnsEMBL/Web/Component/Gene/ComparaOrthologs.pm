@@ -67,8 +67,13 @@ sub content {
   
   delete $not_seen{ucfirst($species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME'))}; #deleting current species
   
-  #do not show non-strain species on strain view
-  if ($self->is_strain && !$species_defs->get_config($_, 'RELATED_TAXON')) { delete $not_seen{$_} for (keys %not_seen); }
+  for (keys %not_seen) {
+    #do not show non-strain species on strain view
+    if ($self->is_strain && !$species_defs->get_config($species_defs->production_name_mapping($_), 'RELATED_TAXON')) { delete $not_seen{$_}; }
+
+    #do not show strain species on main species view
+    if(!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($_), 'IS_STRAIN_OF')) { delete $not_seen{$_}; }
+  }
   
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
@@ -248,7 +253,10 @@ sub content {
         } else {
           $id_info = qq{<p class="space-below">$orthologue->{'display_id'}&nbsp;&nbsp;<a href="$link_url">($stable_id)</a></p>};
         }
+      } else {
+ 	$id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>};	
       }
+ 
       $id_info .= qq{<p class="space-below">$region_link</p><p class="space-below">$alignment_link</p>};
 
       ##Location - split into elements to reduce horizonal space

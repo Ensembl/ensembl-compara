@@ -1,3 +1,4 @@
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -376,7 +377,7 @@ sub handler {
   my $path_seg  = [ grep { $_ ne '' } split '/', $path ];
 
   # other species-like path segments
-  if (!$species && grep /$path_seg->[0]/, qw(Multi common)) {
+  if (!$species && $path_seg->[0] && grep $_ eq $path_seg->[0], qw(Multi common)) {
     $species = shift @$path_seg;
   }
 

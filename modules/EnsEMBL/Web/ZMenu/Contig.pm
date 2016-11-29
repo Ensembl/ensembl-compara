@@ -33,7 +33,7 @@ sub content {
   my $slice_type      = $slice->coord_system_name;
   my $top_level_slice = $slice->project('toplevel')->[0]->to_Slice;
   my $action          = $slice->length > $threshold ? 'Overview' : 'View';
-  
+
   $self->caption($slice_name);
   
   $self->add_entry({
@@ -41,10 +41,11 @@ sub content {
     link  => $hub->url({ 
       type   => 'Location', 
       action => $action, 
-      region => $slice_name 
+      region => $slice_name,
+      r => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
     })
   });
-  
+
   $self->add_entry({
     label      => "Export $slice_type sequence/features",
     link_class => 'modal_link',
@@ -55,7 +56,7 @@ sub content {
       r        => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
     })
   });
-  
+
   foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all || []}) {
     next if $cs->name eq $slice_type;  # don't show the slice coord system twice
     next if $cs->name eq 'chromosome'; # don't allow breaking of site by exporting all chromosome features
@@ -77,7 +78,9 @@ sub content {
       link  => $hub->url({
         type   => 'Location', 
         action => $action, 
-        region => $new_slice_name
+        region => $new_slice_name,
+        r => sprintf '%s:%s-%s', map $new_slice->$_, qw(seq_region_name start end)
+
       })
     });
 

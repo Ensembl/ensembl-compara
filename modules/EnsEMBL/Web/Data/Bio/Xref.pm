@@ -56,6 +56,7 @@ sub convert_to_drawing_parameters {
       $name     =~ s/^ //;
       push @$results, {
         'label'    => $xref->db_display_name,
+        'desc'     => $xref->description, 
         'xref_id'  => [ $xref->primary_id ],
         'extname'  => $xref->display_id,  
         'start'    => $g->start,

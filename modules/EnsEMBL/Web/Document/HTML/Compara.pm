@@ -189,11 +189,11 @@ sub mlss_data {
           foreach my $nonref_db (@non_ref_genome_dbs) {
             my $nonref_name = $self->hub->species_defs->production_name_mapping($nonref_db->name);
             $species->{$nonref_name}++;
-            $data->{$ref_name}{$nonref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
+            $data->{$ref_name}{$nonref_name} = [$method, $mlss->dbID];
           }
         } else {
             # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
-            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
+            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID];
         }
       }
     }
@@ -301,17 +301,12 @@ sub draw_stepped_table {
       else {
         $cbg = $j % 2 ? 'bg3' : 'bg4';
       }
-      my ($method, $mlss_id, $with_extra_info) = @{$data->{$other_species}{$species}||[]};
+      my ($method, $mlss_id) = @{$data->{$other_species}{$species}||[]};
       my $content = '-';
 
       if ($mlss_id) {
-        if (not $with_extra_info) {
-          $content = '<b>YES</b>';
-        }
-        else {
           my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
           $content = sprintf('<a href="%s">YES</a>', $url);
-        }
       }
       $html .= sprintf '<td class="center %s" style="padding:2px;vertical-align:middle">%s</td>', $cbg, $content;
       $j++;

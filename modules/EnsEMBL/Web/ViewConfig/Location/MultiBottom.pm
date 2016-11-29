@@ -52,6 +52,7 @@ sub extra_tabs {
     $hub->url('MultiSelector', {
       action   => 'MultiSpeciesSelector',
       multiselect => 1,
+      referer_action => $hub->action,
       %{$hub->multi_params}
     })
   ];

@@ -85,6 +85,12 @@ sub activity {
   my ($self, $epigenome) = @_;
   return unless $epigenome;
 
+  if (ref $epigenome ne 'Bio::EnsEMBL::Funcgen::Epigenome') {
+    my $db      = $self->hub->database('funcgen');
+    my $adaptor = $db->get_adaptor('Epigenome');
+    $epigenome  = $adaptor->fetch_by_name($epigenome);
+  }
+
   my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
   return $regact->activity if $regact;
   return undef;
