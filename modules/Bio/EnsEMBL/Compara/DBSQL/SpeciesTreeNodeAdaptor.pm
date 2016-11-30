@@ -116,34 +116,30 @@ sub store_node {
 
         my $node_id;
         if ($count_current_rows) {
-            my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
-            $sth1->execute();
-            $node_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_tree_node', 'node_id');
-            $sth1->finish();
+            $node_id = $self->generic_insert('species_tree_node', {}, 'node_id');
 
         } else {
             ## if table is empty then $node_id should be mlss_id * 1000
             $node_id = $mlss_id * 1000;
-            my $sth3 = $self->prepare("INSERT INTO species_tree_node (node_id) VALUES (?)");
-            $sth3->execute($node_id);
-            $sth3->finish();
+            $self->generic_insert('species_tree_node', {'node_id' => $node_id});
         }
 
         $node->node_id( $node_id );
     }
 
-    my $parent_id = $node->parent ? $node->parent->node_id : undef;
-    my $root_id = $node->root->node_id;
-
-    my $node_name = $node->node_name || $node->name;
-    my ($taxon_id, $genome_db_id);
-
-    $taxon_id = $node->taxon_id;
-    $genome_db_id = $node->genome_db_id;
-
-    my $sth = $self->prepare("UPDATE species_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, taxon_id=?, genome_db_id=?, node_name=? WHERE node_id=?");
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $taxon_id, $genome_db_id, $node_name, $node->node_id);
-    $sth->finish;
+    $self->generic_update('species_tree_node',
+        {
+            'parent_id'             => $node->parent ? $node->parent->node_id : undef,
+            'root_id'               => $node->root->node_id,
+            'left_index'            => $node->left_index,
+            'right_index'           => $node->right_index,
+            'distance_to_parent'    => $node->distance_to_parent,
+            'taxon_id'              => $node->taxon_id,
+            'genome_db_id'          => $node->genome_db_id,
+            'node_name'             => $node->node_name,
+        }, {
+            'node_id'               => $node->node_id,
+        } );
 
     return $node->node_id;
 }
