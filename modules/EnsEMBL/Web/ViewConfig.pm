@@ -29,6 +29,7 @@ use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
 use EnsEMBL::Web::Form::ViewConfigMatrix;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use parent qw(EnsEMBL::Web::Config);
 
@@ -183,7 +184,7 @@ sub config_url_params {
   my $self          = shift;
   my $image_config  = $self->image_config;
 
-  return qw(config plus_signal), $image_config ? $image_config->config_url_params : ();
+  return qw(config share_config plus_signal), $image_config ? $image_config->config_url_params : ();
 }
 
 sub update_from_url {
@@ -215,6 +216,21 @@ sub update_from_url {
         'code'      => 'configuration',
         'message'   => 'Your configuration has changed for this page',
       });
+    }
+  }
+
+  # if shared config is present in the url
+  if (my $shared_config = $params->{'share_config'}) {
+
+    if (($shared_config = $hub->get_saved_config($shared_config)) && $shared_config->{'view_config_code'} eq $self->code) {
+
+      $shared_config->{'type'} = 'saved_config';
+      $shared_config->{'code'} = random_string(32);
+      $shared_config->{'name'} = "$shared_config->{'name'} (copy)";
+
+      ($hub->user || $hub->session)->set_record_data({%{$shared_config}}); # set_record_data removes code and type key, so passing a copy of the hash here
+
+      return $self->copy_from_existing($shared_config);
     }
   }
 
