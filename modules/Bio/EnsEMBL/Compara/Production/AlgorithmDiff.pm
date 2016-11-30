@@ -2,6 +2,7 @@
 # The original is committed at Algorithm::DiffOld.
 # Adaptations by Anton Enright (EMBL-EBI)
 #
+# no critic (RequireApache2Licence)
 
 package Bio::EnsEMBL::Compara::Production::AlgorithmDiff;
 use strict;
