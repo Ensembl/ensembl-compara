@@ -27,6 +27,7 @@ use warnings;
 use JSON;
 
 use EnsEMBL::Web::Exceptions qw(WebException);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use parent qw(EnsEMBL::Web::Controller::Modal);
 
@@ -153,12 +154,54 @@ sub json_list_configs {
 }
 
 sub json_save_config {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $view_config = $self->view_config;
-  my $config      = from_json($hub->param('config') || '{}');
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $updated = 0;
 
-  ## TODO
+  try {
+    my $config            = from_json($hub->param('config') || '{}');
+    my $record_owner      = $hub->user || $session; # if user is logged in, save the configs against user id, otherwise against the session
+    my %ignore_keys       = map { $_ => 1 } ('saved', @{$record_owner->record_column_names});
+    my $view_config       = $self->view_config;
+    my $image_config      = $view_config->image_config;
+    my $saved_configs     = {
+      'type'                => 'saved_config',
+      'view_config_code'    => $view_config->code,
+      'code'                => delete $config->{'configId'} || random_string(32),
+      'name'                => delete $config->{'configName'} || 'Autosaved',
+    };
+
+    # update if any new changes have been made by the user before saving it (image config gets updated while updating the view configs)
+    $view_config->update_from_input($config);
+
+    # save the required keys from image config and view config
+    foreach my $config_type (qw(view_config image_config)) {
+      my $conf      = $config_type eq 'view_config' ? $view_config : $image_config;
+      my $settings  = $conf ? $conf->get_user_settings_to_save : undef;
+
+      foreach my $key (grep !$ignore_keys{$_}, keys %{$settings || {}}) {
+        $saved_configs->{$config_type}{$key} = $settings->{$key};
+      }
+
+      # add 'saved' key to data
+      if ($settings) {
+        $settings->{'saved_from'} = $saved_configs->{'code'};
+        $conf->save_user_settings;
+      }
+    }
+
+    $record_owner->set_record_data($saved_configs);
+
+    $hub->store_records_if_needed;
+
+    $updated = 1;
+
+  } catch {
+    warn $_;
+  };
+
+  return {'updated' => $updated};
 }
 
 1;
