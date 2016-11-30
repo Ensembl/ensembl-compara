@@ -119,12 +119,18 @@ sub init_config {
 
   # Add config selector dropdown at the top
   $top_form->add_field({
-    'field_class' => '_config_dropdown hidden',
-    'type'        => 'dropdown',
-    'name'        => 'config_selector',
-    'value'       => '',
-    'label'       => 'Select from available configurations',
-    'values'      => []
+    'field_class'   => '_config_dropdown config_dropdown hidden',
+    'label'         => 'Select from available configurations',
+    'elements'      => [{
+      'type'          => 'dropdown',
+      'name'          => 'config_selector',
+    }, {
+      'type'          => 'string',
+      'value'         => 'Enter configuration name'
+    }, {
+      'type'          => 'submit',
+      'value'         => 'Save',
+    }]
   });
   $top_form->add_hidden([{
     'name'      => 'config_selector_url',
