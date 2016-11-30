@@ -93,3 +93,21 @@ body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
 body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
 body.ie6  .config_manager table td .ellipsis       { display: none; }
 body.ie7  .config_manager table td img.toggle      { top: 4px; } 
+
+
+/* new manage configs panel */
+
+table.manage-configs span {
+  display: inline-block;
+  height: 16px;
+  width: 16px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+table.manage-configs td span.edit { background-image: url(/i/16/pencil.png); visibility: hidden; }
+table.manage-configs td:hover span.edit { visibility: visible; }
+
+table.manage-configs span.save    { background-image: url(/i/16/save.png);  }
+table.manage-configs span.share   { background-image: url(/i/16/share.png); }
+table.manage-configs span.delete  { background-image: url(/i/16/trash.png); }
