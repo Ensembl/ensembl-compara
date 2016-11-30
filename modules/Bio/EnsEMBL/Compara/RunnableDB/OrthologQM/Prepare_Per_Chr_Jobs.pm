@@ -390,7 +390,7 @@ sub _order_chr_homologs {
   print Dumper($unsorted_chr_orth_hashref) if ( $self->debug );
   my @sorted_orth;
 
-  foreach my $name (sort { $unsorted_chr_orth_hashref->{$a} <=> $unsorted_chr_orth_hashref->{$b} } keys %$unsorted_chr_orth_hashref ) {
+  foreach my $name (sort { ($unsorted_chr_orth_hashref->{$a} <=> $unsorted_chr_orth_hashref->{$b}) || ($a <=> $b) } keys %$unsorted_chr_orth_hashref ) {
     printf "%-8s %s \n", $name, $unsorted_chr_orth_hashref->{$name} if ( $self->debug >3);
     push @sorted_orth, $name;
 
