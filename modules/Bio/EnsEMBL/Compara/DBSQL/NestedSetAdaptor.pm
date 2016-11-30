@@ -349,6 +349,18 @@ sub fetch_first_shared_ancestor_indexed {
 # STORE methods
 ###########################
 
+sub store_nodes_rec {
+    my $self = shift;
+    my $node = shift;
+
+    $self->store_node($node, @_);
+    for my $node(@{$node->children()}) {
+        $self->store_nodes_rec($node, @_);
+    }
+    return $node->node_id;
+}
+
+
 sub update {
   my ($self, $node) = @_;
 

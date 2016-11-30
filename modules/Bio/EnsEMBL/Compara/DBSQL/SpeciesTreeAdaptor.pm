@@ -105,14 +105,8 @@ sub store {
     my $species_tree_node_adaptor = $self->db->get_SpeciesTreeNodeAdaptor();
 
     # Store the nodes
-    my $root_id = $species_tree_node_adaptor->store($tree->root, $mlss_id);
+    my $root_id = $species_tree_node_adaptor->store_nodes_rec($tree->root, $mlss_id);
     $tree->{'_root_id'} = $root_id;
-
-    # Store the rest of the nodes
-    # for my $child (@{$tree->root->get_all_nodes}) {
-    #     print "ROOT_ID FOR NODE IS: ", $child->root->node_id, "\n";
-    #     $species_tree_node_adaptor->store($child);
-    # }
 
     # Store the tree in the header table
     # method_link_species_set_id must be set to its real value to honour the foreign key

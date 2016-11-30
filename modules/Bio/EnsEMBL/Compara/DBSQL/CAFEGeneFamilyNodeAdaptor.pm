@@ -55,16 +55,6 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamilyNode;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor');
 
-sub store {
-    my ($self, $node, $cafe_gene_family_id) = @_;
-
-    # $self->SUPER::store_node($node, $mlss_id);
-    $self->store_node($node, $cafe_gene_family_id);
-    for my $node(@{$node->children()}) {
-        $self->store($node, $cafe_gene_family_id)
-    }
-    return $node->node_id;
-}
 
 sub store_node {
     my ($self, $node, $cafe_gene_family_id) = @_;

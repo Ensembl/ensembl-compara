@@ -102,18 +102,6 @@ sub new_from_NestedSet {
 }
 
 
-## TODO: This is very similar to GeneTreeNodeAdaptor's store_nodes_rec, maybe we can
-## abstract out this code in NestedSetAdaptor
-sub store {
-    my ($self, $node, $mlss_id) = @_;
-
-    $self->store_node($node, $mlss_id);
-    for my $node(@{$node->children()}) {
-        $self->store($node, $mlss_id); ## We don't need to include here mlss_id since this is never the root node
-    }
-    return $node->node_id;
-}
-
 ## TODO: This is very similar to GeneTreeNodeAdaptor's store_node, maybe we can
 ## abstract out this code in NestedSetAdaptor
 sub store_node {

@@ -487,7 +487,7 @@ sub add_matching_predictions {
     #which are stored in the node_id value, copy to seq_member_id
     # We won't do the store until the end, otherwise it will affect the main loop
     print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);
-    $self->param('treenode_adaptor')->store($node);
+    $self->param('treenode_adaptor')->store_node($node);
   }
 
   #calc residue count total

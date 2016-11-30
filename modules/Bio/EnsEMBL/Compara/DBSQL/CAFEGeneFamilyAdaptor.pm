@@ -90,7 +90,7 @@ sub store {
     $sth->finish;
 
     my $cafe_gene_family_node_adaptor = $self->db->get_CAFEGeneFamilyNodeAdaptor();
-    $cafe_gene_family_node_adaptor->store($tree->root, $cafe_gene_family_id);
+    $cafe_gene_family_node_adaptor->store_nodes_rec($tree->root, $cafe_gene_family_id);
 
     return $cafe_gene_family_id;
 }
