@@ -137,11 +137,14 @@ sub json_apply_config {
 
 sub json_list_configs {
   ## Gets a list of all the saved configurations for the current user/session for the current viewconfig
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $view_config = $self->view_config;
-  my $settings    = $view_config->get_user_settings;
-  my $current     = keys %$settings ? $settings->{'saved'} || 'current' : 'default';
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $view_config   = $self->view_config;
+  my $vc_settings   = $view_config->get_user_settings;
+  my $image_config  = $view_config->image_config;
+  my $ic_settings   = $image_config ? $image_config->get_user_settings : {};
+  my $current       = keys %$vc_settings ? $vc_settings->{'saved'} || 'current' : 'default';
+     $current       = !keys %$ic_settings || $ic_settings->{'saved'} && $ic_settings->{'saved'} eq $current && $current || 'current';
 
   return {
     'configs' => [
