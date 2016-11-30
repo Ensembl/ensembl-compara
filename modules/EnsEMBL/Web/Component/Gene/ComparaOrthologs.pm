@@ -188,6 +188,7 @@ sub content {
       my $region_link = ($link_url =~ /^\// 
         && $cdb eq 'compara'
         && $availability->{'has_pairwise_alignments'}
+        && !$self->is_strain
       ) ?
         sprintf('<a href="%s">Compare Regions</a>&nbsp;('.$orthologue->{'location'}.')',
         $hub->url({
