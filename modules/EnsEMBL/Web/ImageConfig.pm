@@ -432,9 +432,6 @@ sub save_user_settings {
   # Save track order
   $record_data->{'track_order'}{$self->species} = $self->{'track_order'};
 
-  # Remove any link to earlier saved setting
-  delete $record_data->{'saved'};
-
   return $self->SUPER::save_user_settings(@_);
 }
 

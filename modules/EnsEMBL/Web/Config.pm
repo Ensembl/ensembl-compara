@@ -153,6 +153,13 @@ sub save_user_settings {
   $settings->{'type'} = $self->config_type;
   $settings->{'code'} = $self->code;
 
+  # Remove any link to earlier saved setting
+  if ($settings->{'saved_from'}) { # saved_from key is not saved in the database, but is only set temporarily in the settings if settings are being saved
+    $settings->{'saved'} = delete $settings->{'saved_from'};
+  } else {
+    delete $settings->{'saved'};
+  }
+
   $hub->session->set_record_data(_rm_empty_vals($settings));
 
   return 1;
