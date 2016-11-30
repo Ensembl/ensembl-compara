@@ -35,7 +35,7 @@ sub content {
   my $hub      = $self->hub;
   my %mappings = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my $v;
-  
+
   if (keys %mappings == 1) {
     ($v) = values %mappings;
   } elsif (!$hub->param('svf')){
@@ -53,6 +53,8 @@ sub content {
     );
   }
   
+  my $svf_id = $hub->param('svf');
+
   my $max_display_length = $object->max_display_length;
   my $feature_length = $v->{end} - $v->{start} + 1;
   if ($feature_length > $max_display_length) {
@@ -63,7 +65,7 @@ sub content {
        db     => 'core',
        r      => $v->{Chr}.':'.$v->{start}.'-'.$v->{end},
        sv     => $hub->param('sv'),
-       svf    => $hub->param('svf'),
+       svf    => $svf_id,
        cytoview => 'variation_feature_structural_smaller=compact,variation_feature_structural_larger=gene_nolabel'
     });
     my $region_detail_url = $hub->url({
@@ -72,7 +74,7 @@ sub content {
        db     => 'core',
        r      => $v->{Chr}.':'.$v->{start}.'-'.$max_display_end,
        sv     => $hub->param('sv'),
-       svf    => $hub->param('svf'),
+       svf    => $svf_id,
        contigviewbottom => 'variation_feature_structural_smaller=gene_nolabel,variation_feature_structural_larger=gene_nolabel'
     });
     my $warning_header = sprintf('The structural variant is too long for this display (more than %sbp)',$self->thousandify($max_display_length));
@@ -95,22 +97,17 @@ sub content {
     return $self->_warning( $warning_header, $warning_content.$warning_content_end );
   }
 
-  # get SVFs for all SSVs
-  my @svfs = grep {
-    $v->{start} == $_->seq_region_start &&
-    $v->{end} == $_->seq_region_end &&
-    $v->{Chr} == $_->seq_region_name
-  } map {@{$_->get_all_StructuralVariationFeatures}}
-  @{$object->Obj->get_all_SupportingStructuralVariants};
- 
+  # Get the corresponding StructuralVariationFeature object instance
+  my ($svf_obj)  = grep {$_->dbID eq $svf_id} @{$self->object->get_structural_variation_features};
+
   return
-    '<h2>Gene and Transcript consequences</h2>'.$self->gene_transcript_table(\@svfs).
-    '<h2>Regulatory consequences</h2>'.$self->regfeat_table(\@svfs);
+    '<h2>Gene and Transcript consequences</h2>'.$self->gene_transcript_table($svf_obj).
+    '<h2>Regulatory consequences</h2>'.$self->regfeat_table($svf_obj);
 }
 
 sub gene_transcript_table {
   my $self = shift;
-  my $svfs = shift;
+  my $svf  = shift;
   
   my $hub = $self->hub;
   
@@ -128,86 +125,83 @@ sub gene_transcript_table {
   
   my $rows = [];
   my $ga = $hub->get_adaptor('get_GeneAdaptor');
-  
-  foreach my $svf(@$svfs) {
-    foreach my $tsv(@{$svf->get_all_TranscriptStructuralVariations}) {
+
+  foreach my $tsv (@{$svf->get_all_TranscriptStructuralVariations}) {  
+    my $t = $tsv->transcript;
+    my $g = $ga->fetch_by_transcript_stable_id($t->stable_id);
       
-      my $t = $tsv->transcript;
-      my $g = $ga->fetch_by_transcript_stable_id($t->stable_id);
+    my $gene_name  = $g ? $g->stable_id : '';
+    my $trans_name = $t->stable_id;
+    my $trans_type = '<b>biotype: </b>' . $t->biotype;
+    my @entries    = grep $_->database eq 'HGNC', @{$g->get_all_DBEntries};
+    my $gene_hgnc  = scalar @entries ? '<b>HGNC: </b>' . $entries[0]->display_id : '';
+    my $strand     = $t->strand;
+    my $exon       = $tsv->exon_number;
+    $exon         =~ s/\// of /;
+    my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
+      $self->object->get_class_colour($svf->class_SO_term),
+      $svf->var_class
+    );
       
-      my $gene_name  = $g ? $g->stable_id : '';
-      my $trans_name = $t->stable_id;
-      my $trans_type = '<b>biotype: </b>' . $t->biotype;
-      my @entries    = grep $_->database eq 'HGNC', @{$g->get_all_DBEntries};
-      my $gene_hgnc  = scalar @entries ? '<b>HGNC: </b>' . $entries[0]->display_id : '';
-      my $strand     = $t->strand;
-      my $exon       = $tsv->exon_number;
-      $exon         =~ s/\// of /;
-      my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
-        $self->object->get_class_colour($svf->class_SO_term),
-        $svf->var_class
+    my ($gene_url, $transcript_url);
+      
+    # Create links to non-LRG genes and transcripts
+    if ($trans_name !~ m/^LRG/) {
+      $gene_url = $hub->url({
+        type   => 'Gene',
+        action => 'Summary',
+        db     => 'core',
+        r      => undef,
+        g      => $gene_name,
+      });
+      
+      $transcript_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Summary',
+        db     => 'core',
+        r      => undef,
+        t      => $trans_name,
+      });
+    } else {
+      $gene_url = $hub->url({
+        type     => 'LRG',
+        action   => 'Summary',
+        function => 'Table',
+        db       => 'core',
+        r        => undef,
+        lrg      => $gene_name,
+        __clear  => 1
+      });
+    
+      $transcript_url = $hub->url({
+        type     => 'LRG',
+        action   => 'Summary',
+        function => 'Table',
+        db       => 'core',
+        r        => undef,
+        lrg      => $gene_name,
+        lrgt     => $trans_name,
+        __clear  => 1
+      });
+    }
+      
+    $trans_name .= ".".$t->version if($t->version); #transcript version
+    foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
+      my $type = $self->render_consequence_type($tsva);
+      
+      my %row = (
+        gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
+        trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr><br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+        allele    => $allele,
+        type      => $type,
+        trans_pos => $self->_sort_start_end($tsv->cdna_start,        $tsv->cdna_end),
+        cds_pos   => $self->_sort_start_end($tsv->cds_start,         $tsv->cds_end),
+        prot_pos  => $self->_sort_start_end($tsv->translation_start, $tsv->translation_end),
+        exons     => $exon || '-',
+        coverage  => $self->_coverage_glyph($t, $svf),
       );
-      
-      my ($gene_url, $transcript_url);
-      
-      # Create links to non-LRG genes and transcripts
-      if ($trans_name !~ m/^LRG/) {
-        $gene_url = $hub->url({
-          type   => 'Gene',
-          action => 'Summary',
-          db     => 'core',
-          r      => undef,
-          g      => $gene_name,
-        });
-      
-        $transcript_url = $hub->url({
-          type   => 'Transcript',
-          action => 'Summary',
-          db     => 'core',
-          r      => undef,
-          t      => $trans_name,
-        });
-      } else {
-        $gene_url = $hub->url({
-          type     => 'LRG',
-          action   => 'Summary',
-          function => 'Table',
-          db       => 'core',
-          r        => undef,
-          lrg      => $gene_name,
-          __clear  => 1
-        });
-      
-        $transcript_url = $hub->url({
-          type     => 'LRG',
-          action   => 'Summary',
-          function => 'Table',
-          db       => 'core',
-          r        => undef,
-          lrg      => $gene_name,
-          lrgt     => $trans_name,
-          __clear  => 1
-        });
-      }
-      
-      $trans_name .= ".".$t->version if($t->version); #transcript version
-      foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
-        my $type = $self->render_consequence_type($tsva);
         
-        my %row = (
-          gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-          trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr><br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
-          allele    => $allele,
-          type      => $type,
-          trans_pos => $self->_sort_start_end($tsv->cdna_start,        $tsv->cdna_end),
-          cds_pos   => $self->_sort_start_end($tsv->cds_start,         $tsv->cds_end),
-          prot_pos  => $self->_sort_start_end($tsv->translation_start, $tsv->translation_end),
-          exons     => $exon || '-',
-          coverage  => $self->_coverage_glyph($t, $svf),
-        );
-        
-        push @$rows, \%row;
-      }
+      push @$rows, \%row;
     }
   }
 
@@ -216,7 +210,7 @@ sub gene_transcript_table {
 
 sub regfeat_table {
   my $self = shift;
-  my $svfs = shift;
+  my $svf  = shift;
   
   my $hub = $self->hub;
   
@@ -230,85 +224,78 @@ sub regfeat_table {
   
   my $rows = [];
   
-  foreach my $svf(@$svfs) {
-    foreach my $rsv(@{$svf->get_all_RegulatoryFeatureStructuralVariations}) {
+  foreach my $rsv(@{$svf->get_all_RegulatoryFeatureStructuralVariations}) {
+    
+    my $rf     = $rsv->feature->stable_id;
+    my $ftype  = 'Regulatory feature';
+    my $allele = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
+                         $self->object->get_class_colour($svf->class_SO_term),
+                         $svf->var_class);
       
-      my $rf        = $rsv->feature->stable_id;
-      my $ftype     = 'Regulatory feature';
-      my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
-        $self->object->get_class_colour($svf->class_SO_term),
-        $svf->var_class
+    # create a URL
+    my $url = $hub->url({
+      type   => 'Regulation',
+      action => 'Summary',
+      rf     => $rsv->feature->stable_id,
+      fdb    => 'funcgen',
+    });
+     
+    foreach my $rsva(@{$rsv->get_all_StructuralVariationOverlapAlleles}) {
+      my $type = $self->render_consequence_type($rsva);
+      my %row = (
+        rf       => sprintf('<a href="%s">%s</a>', $url, $rf),
+        ftype    => $ftype,
+        allele   => $allele,
+        type     => $type,
+        coverage => $self->_coverage_glyph($rsv->feature, $svf),
       );
-      
-      # create a URL
-      my $url = $hub->url({
-        type   => 'Regulation',
-        action => 'Summary',
-        rf     => $rsv->feature->stable_id,
-        fdb    => 'funcgen',
-      });
-      
-      foreach my $rsva(@{$rsv->get_all_StructuralVariationOverlapAlleles}) {
-        my $type = $self->render_consequence_type($rsva);
-
-        my %row = (
-          rf       => sprintf('<a href="%s">%s</a>', $url, $rf),
-          ftype    => $ftype,
-          allele   => $allele,
-          type     => $type,
-          coverage => $self->_coverage_glyph($rsv->feature, $svf),
-        );
         
-        push @$rows, \%row;
-      }
+      push @$rows, \%row;
     }
   }
-  
+
   
   my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
   
-  foreach my $svf(@$svfs) {
-    foreach my $msv(@{$svf->get_all_MotifFeatureStructuralVariations}) {
+  foreach my $msv(@{$svf->get_all_MotifFeatureStructuralVariations}) {
       
-      my $mf = $msv->feature;
-      
-      # check that the motif has a binding matrix, if not there's not 
-      # much we can do so don't return anything
-      next unless defined $mf->binding_matrix;
-      my $matrix = $mf->display_label;
-      
-      # get the corresponding regfeat
-      my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
+    my $mf = $msv->feature;
+    
+    # check that the motif has a binding matrix, if not there's not 
+    # much we can do so don't return anything
+    next unless defined $mf->binding_matrix;
+    my $matrix = $mf->display_label;
+    
+    # get the corresponding regfeat
+    my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
   
-      next unless $rf;
+    next unless $rf;
   
-      # create a URL
-      my $url = $hub->url({
-        type   => 'Regulation',
-        action => 'Summary',
-        rf     => $rf->stable_id,
-        fdb    => 'funcgen',
-      });
+    # create a URL
+    my $url = $hub->url({
+      type   => 'Regulation',
+      action => 'Summary',
+      rf     => $rf->stable_id,
+      fdb    => 'funcgen',
+    });
       
-      my $ftype     = 'Motif feature';
-      my $allele    = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
-        $self->object->get_class_colour($svf->class_SO_term),
-        $svf->structural_variation->var_class
+    my $ftype  = 'Motif feature';
+    my $allele = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
+                         $self->object->get_class_colour($svf->class_SO_term),
+                         $svf->structural_variation->var_class);
+      
+    foreach my $msva(@{$msv->get_all_StructuralVariationOverlapAlleles}) {
+      my $type = $self->render_consequence_type($msva);
+      
+      my %row = (
+        rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
+        ftype    => $ftype,
+        allele   => $allele,
+        type     => $type,
+        coverage => $self->_coverage_glyph($mf, $svf),
       );
-      
-      foreach my $msva(@{$msv->get_all_StructuralVariationOverlapAlleles}) {
-        my $type = $self->render_consequence_type($msva);
         
-        my %row = (
-          rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-          ftype    => $ftype,
-          allele   => $allele,
-          type     => $type,
-          coverage => $self->_coverage_glyph($mf, $svf),
-        );
-        
-        push @$rows, \%row;
-      }
+      push @$rows, \%row;
     }
   }
   
