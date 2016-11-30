@@ -67,7 +67,7 @@ sub run {
 
 	my ($combined_coverage, @qual_summary, %scores);
 	if ( defined $exon_ranges ){
-		foreach my $aln_mlss ( keys %{ $aln_ranges } ){
+		foreach my $aln_mlss ( sort keys %{ $aln_ranges } ){
 			foreach my $gdb_id ( sort {$a <=> $b} keys %{ $orth_ranges } ){
 				$combined_coverage = $self->_combined_coverage( $orth_ranges->{$gdb_id}, $aln_ranges->{$aln_mlss}->{$gdb_id}, $exon_ranges->{$gdb_id} );
 				push( @qual_summary, 
