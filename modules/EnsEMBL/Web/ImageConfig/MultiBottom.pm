@@ -122,14 +122,13 @@ sub multi {
       }
 
       next unless $align{'order'};
-
       $align{'db'} = lc substr $db, 9;
       push @{$alignments{$align{'order'}}}, \%align;
       $self->set_parameter('homologue', $align{'homologue'});
     }
   }
 
-  %alignments = %{$self->select_alignment_based_on_priority(\%alignments)};
+  %alignments = %{$self->select_alignment_based_on_hierarchy(\%alignments)};
 
   if ($pos == 1) {
     @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
@@ -187,24 +186,33 @@ sub multi {
   );
 }
 
-sub select_alignment_based_on_priority {
+sub select_alignment_based_on_hierarchy {
   my $self = shift;
   my $alignments = shift || {};
-  my @priority = ('LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH');
+  my $hierarchy = $self->hub->species_defs->ENSEMBL_ALIGNMENTS_HIERARCHY;
 
   my $prioritised_alignments = {};
-  foreach my $prio (@priority) {
-    $prioritised_alignments = {};
-    my $re = qr /$prio/i;
-    foreach my $order (keys %$alignments) {
+  my $hash_flag = {};
+  foreach my $order (keys %$alignments) {
+    for (my $i=0; $i<=$#$hierarchy; $i++) {
+      my $method = $hierarchy->[$i];
+      my $re = qr /$method/i;
       foreach my $align (@{$alignments->{$order}}) {
-        if ($align->{type} =~ $re) {
+        if ($align->{type} =~ $re && !$hash_flag->{$align->{'species_set_id'}}) {
           push @{$prioritised_alignments->{$order}}, $align;
+          $hash_flag->{$align->{'species_set_id'}} = 1;
+          last;
+        }
+
+        if (!$hash_flag->{$align->{'species_set_id'}} && $i == $#$hierarchy) {
+          push @{$prioritised_alignments->{$order}}, $align;
+          $hash_flag->{$align->{'species_set_id'}} = 1;
+          last;
         }
       }
     }
-    return $prioritised_alignments if (scalar keys %$prioritised_alignments);
   }
+  return $prioritised_alignments || $alignments;
 }
 
 sub join_genes {
