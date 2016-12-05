@@ -1340,8 +1340,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my (@genomic_align_array, $ref_genomic_align);
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
-          my ( $species_id, $chr, $end ) = split(/\./, $seq->{display_id});
-          $chr = join('.', ($chr, $end)) if ( defined $end );
+          my ( $species_id, $chr ) = split(/\./, $seq->{display_id}, 2);
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
 
           my $u2e_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID };
