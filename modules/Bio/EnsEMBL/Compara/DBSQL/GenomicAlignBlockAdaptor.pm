@@ -1308,7 +1308,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
       my $max_ref_gap = 50;
       # warn "\n$targets_str | $ref | $hal_seq_reg:\n";
-      my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
+      my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start-1, $end, $max_ref_gap );
 
       # check if MAF is empty
       unless ( $maf_file_str =~ m/[A-Za-z]/ ){
