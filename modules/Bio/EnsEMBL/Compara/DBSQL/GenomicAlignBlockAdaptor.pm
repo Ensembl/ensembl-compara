@@ -1701,7 +1701,7 @@ sub _parse_maf {
       if ( $spl[4] eq '+' ) { # forward strand
           $this_seq{strand} = 1;
           $this_seq{start}  = $spl[2] + 1;
-          $this_seq{end}    = $spl[2] + 1 + $spl[3];
+          $this_seq{end}    = $spl[2] + $spl[3];
       } else { # reverse strand
           $this_seq{strand} = -1;
           $this_seq{start}  = $spl[5] - $spl[2] - $spl[3];
