@@ -22,6 +22,10 @@ package EnsEMBL::Web::ImageConfig::contigviewbottom;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
+use URI::Escape qw(uri_unescape);
+use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::Command::UserData::AddFile;
 
 use parent qw(EnsEMBL::Web::ImageConfig);
@@ -54,7 +58,13 @@ sub update_from_url {
   my $session         = $hub->session;
   my $species         = $self->species;
   my $species_defs    = $self->species_defs;
-  my @values          = split(/,/, grep($_, delete $params->{'attach'}, delete $params->{$self->type}) || ''); # delete params to avoid doing it again when calling SUPER method
+
+  my $attach = !!$params->{'attach'};
+  my @values = split(/,/, $params->{'attach'}); 
+  push @values, split(/,/, $params->{$self->type}); 
+  # delete params to avoid doing it again when calling SUPER method
+  delete $params->{$self->type};
+  delete $params->{'attach'};
 
   # if param name is 'trackhub'
   push @values, $params->{'trackhub'} || ();
@@ -66,7 +76,7 @@ sub update_from_url {
 
   foreach my $v (@values) {
     my $format = $params->{'format'};
-    my ($url, $renderer, $attach);
+    my ($url, $renderer);
 
     if ($v =~ /^url/) {
       $v =~ s/^url://;
@@ -74,7 +84,7 @@ sub update_from_url {
       ($url, $renderer) = split /=/, $v;
     }
 
-    if ($attach || $params->{'attach'}) {
+    if ($attach) {
       ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
       ## as well as new 'attach=http...' parameter
       my $p = uri_unescape($url);
