@@ -266,10 +266,10 @@ sub _move_to_user {
     ## Make a note of where the file was saved, since it can't currently
     ## be shown on other sites such as mirrors or archives
     $data->{'site'} = $hub->species_defs->ENSEMBL_SERVERNAME;
-    $record = $user->add_to_uploads($data);
+    $record = $user->_add_to_records('upload', $data);
   }
   else {
-    $record = $user->add_to_urls($data);
+    $record = $user->_add_to_records('url', $data);
   }
   
   if ($record) {

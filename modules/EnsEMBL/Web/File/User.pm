@@ -259,7 +259,7 @@ sub upload {
 
         my $data;
         if ($user) {
-          $data = $user->add_to_uploads($record);
+          $data = $user->_add_to_records('upload', $record);
         }
         else {
           $data = $session->set_record_data($record);
