@@ -90,7 +90,7 @@ void _get_pairwise_blocks(int fileHandle, char *querySpecies, char *targetSpecie
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
     // Last parameter (0 or 1) controls the inclusion of overlapping blocks
-    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 1, NULL, &errStr);
+    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_NO_DUPS, 1, NULL, &errStr);
     
     // To enable the snake track
     /*struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_AND_TARGET_DUPS, 1, NULL, &errStr);*/
@@ -158,7 +158,7 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
     // Last parameter (0 or 1) controls the inclusion of overlapping blocks
-    struct hal_block_results_t *results = halGetBlocksInTargetRange_filterByChrom(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 1, queryChrom, NULL, &errStr);
+    struct hal_block_results_t *results = halGetBlocksInTargetRange_filterByChrom(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_NO_DUPS, 1, queryChrom, NULL, &errStr);
     
     // To enable the snake track
     /*struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_AND_TARGET_DUPS, 1, NULL, &errStr);*/
@@ -304,8 +304,8 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     
     //SV *maf = newSVpv(bp, strlen(bp));
     SV *maf = newSVpvn(bp, size);
-
     Inline_Stack_Push(maf);
+
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
     free(bp);
