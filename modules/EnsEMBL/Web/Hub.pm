@@ -265,7 +265,12 @@ sub core_object {
   if($name eq 'parameters') { ## TODO - replace the usage with core_params method
     return $self->{'core_params'};
   }
-  return $self->{'builder'} ? $self->{'builder'}->object(ucfirst $name) : undef;
+
+  my $object;
+  if ($self->{'builder'}) {
+    $object = $self->{'builder'}->object(ucfirst $name) || $self->{'builder'}->create_object(ucfirst $name);
+  }
+  return $object;
 }
 
 sub set_core_params {
