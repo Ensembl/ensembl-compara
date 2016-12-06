@@ -157,6 +157,7 @@ sub json_list_configs {
 }
 
 sub json_save_config {
+  ## Saves currentl view_config and image_config as a saved_config
   my $self    = shift;
   my $hub     = $self->hub;
   my $session = $hub->session;
@@ -205,6 +206,80 @@ sub json_save_config {
   };
 
   return {'updated' => $updated};
+}
+
+sub json_save_desc {
+  ## Updates description of a saved_config record
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $code  = $hub->param('code');
+  my $desc  = $hub->param('desc');
+
+  my ($config, $record_owner) = $self->_get_saved_config($code);
+  my $updated = 0;
+
+  if ($config) {
+    $config->{'desc'} = $desc;
+    $record_owner->set_record_data($config);
+    $hub->store_records_if_needed;
+    $updated = 1;
+  }
+
+  return {'updated' => $updated};
+}
+
+sub json_move_config {
+  ## Moves a saved_config record from session to user
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $code    = $hub->param('code');
+  my $user    = $hub->user;
+  my $updated = 0;
+
+  my ($config, $record_owner) = $self->_get_saved_config($code);
+
+  if ($config && $user && $record_owner->record_type eq 'session') {
+    delete $config->{$_} for qw(record_id record_type created_at created_by modified_at modified_by);
+    $user->set_record_data($config);
+    $record_owner->set_record_data({'type' => 'saved_config', 'code' => $code});
+    $hub->store_records_if_needed;
+    $updated = 1;
+  }
+
+  return {'updated' => $updated};
+}
+
+sub json_delete_config {
+  ## Moves a saved_config record from session to user
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $code    = $hub->param('code');
+  my $updated = 0;
+
+  my ($config, $record_owner) = $self->_get_saved_config($code);
+
+  if ($config) {
+    $record_owner->set_record_data({'type' => 'saved_config', 'code' => $code});
+    $hub->store_records_if_needed;
+    $updated = 1;
+  }
+
+  return {'updated' => $updated};
+}
+
+sub _get_saved_config {
+  my ($self, $code) = @_;
+
+  my $hub = $self->hub;
+
+  my ($config, $record_owner);
+
+  for (grep $_, $hub->session, $hub->user) {
+    $config       = $_->get_record_data({'type' => 'saved_config', 'code' => $code});
+    $record_owner = $_ and last if keys %$config;
+  }
+
+  return $record_owner ? ($config, $record_owner) : ();
 }
 
 1;
