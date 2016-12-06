@@ -44,6 +44,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('updateSavedConfig',   this, this.updateSavedConfig);
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
     Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
+    Ensembl.EventManager.register('refreshConfigList',   this, this.refreshConfigList);
   },
   
   init: function () {
