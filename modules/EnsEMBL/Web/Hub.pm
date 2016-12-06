@@ -268,6 +268,17 @@ sub core_object {
 
   my $object;
   if ($self->{'builder'}) {
+    $object = $self->{'builder'}->object(ucfirst $name); 
+  }
+  return $object;
+}
+
+sub create_object {
+  my $self = shift;
+  my $name = shift;
+
+  my $object;
+  if ($self->{'builder'}) {
     $object = $self->{'builder'}->object(ucfirst $name) || $self->{'builder'}->create_object(ucfirst $name);
   }
   return $object;

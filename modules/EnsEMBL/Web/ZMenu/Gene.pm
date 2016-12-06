@@ -41,7 +41,7 @@ sub content {
 sub _content {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $object      = $self->object || $hub->core_object('gene');
+  my $object      = $self->object || $hub->core_object('gene') || $hub->create_object('gene');
   return unless $object;
   my @xref        = $object->display_xref;
   my $gene_desc   = $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r;
