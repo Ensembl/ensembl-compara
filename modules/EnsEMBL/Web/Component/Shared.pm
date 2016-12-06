@@ -898,10 +898,10 @@ sub check_for_missing_species {
       my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
               'strains' : 'species';
       push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
-      push @missing, $_;
+      push @missing, $species_defs->production_name_mapping($_);
     }
   }
-  warn Data::Dumper::Dumper $missing_hash;
+
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
@@ -932,7 +932,7 @@ sub check_for_missing_species {
 
       $warnings .= sprintf('<p>The following %s have no alignment in this region:<ul><li>%s</li></ul></p>',
                                  $str,
-                                 join "</li>\n<li>", sort map $species_defs->species_label($species_defs->production_name_mapping($_)), @missing
+                                 join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
                             );
     }
   }

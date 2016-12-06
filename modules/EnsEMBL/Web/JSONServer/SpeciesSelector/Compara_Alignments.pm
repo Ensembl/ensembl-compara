@@ -61,12 +61,15 @@ sub json_fetch_species {
   }
 
   my $dynatree_multiple = {};
-  $dynatree_multiple->{key} = 'Multiple';
-  $dynatree_multiple->{title} = 'Multiple';
-  $dynatree_multiple->{isFolder} = 1;
-  $dynatree_multiple->{isInternalNode} = "true";
-  $dynatree_multiple->{unselectable} = "true";
-  push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
+
+  if ($#$species_hash_multiple >= 0) {
+    $dynatree_multiple->{key} = 'Multiple';
+    $dynatree_multiple->{title} = 'Multiple';
+    $dynatree_multiple->{isFolder} = 1;
+    $dynatree_multiple->{isInternalNode} = "true";
+    $dynatree_multiple->{unselectable} = "true";
+    push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
+  }
 
   my $dynatree_root = {};
   $dynatree_root->{key} = 'All Alignments';
@@ -82,32 +85,42 @@ sub json_fetch_species {
   my $all_species = {};
   if ($hub->type ne 'Variation') {
     
+    my $available_alignments = {};
     foreach my $align_id (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
       foreach (keys %{$alignments->{$align_id}->{'species'}}) {
         $_ = $hub->species_defs->production_name_mapping($_);
-        if ($alignments->{$align_id}->{'species'}->{$species} && $_ ne $species) {
+        if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
+          # Creating a new hash with species_set_id as the key to handle available multiple alignment methods for each species.
+          # and thus return one based on hierarchy of available alignments [ENSWEB-3343]
+          $available_alignments->{$align_id} = $alignments->{$align_id};
+        }
+      }
+    }
 
-          my $common_name = $species_info->{$_}->{common} || '';
-          my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
+    # Select alignments based on available alignments hierarchy
+    my $final_alignments = $self->object->filter_alignments_by_method($available_alignments);
 
-          my $t = {};
-          $t->{scientific} = $_;
-          $t->{key} = $_;
-          $t->{common} = $species_info->{$_}->{common};
-          $t->{value} = $align_id;
-          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
-            $all_species->{$species_info->{$_}->{strain_collection}} = $t;
-          }
-          else {
-            $species_hash_pairwise->{$_} = $t;
-            $all_species->{$_} = $t;
-          }
+    foreach my $align_id (keys %$final_alignments) {
+      foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
+        my $common_name = $species_info->{$_}->{common} || '';
+        my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
+
+        my $t = {};
+        $t->{scientific} = $_;
+        $t->{key} = $_;
+        $t->{common} = $species_info->{$_}->{common};
+        $t->{value} = $align_id;
+        if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
+          push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
+          $all_species->{$species_info->{$_}->{strain_collection}} = $t;
+        }
+        else {
+          $species_hash_pairwise->{$_} = $t;
+          $all_species->{$_} = $t;
         }
       }
     }
   }
-
   my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
   my $division_json = from_json(file_get_contents($file));
   my $json = {};

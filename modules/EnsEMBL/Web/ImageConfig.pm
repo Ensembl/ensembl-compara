@@ -587,6 +587,7 @@ sub menus {
     pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
     multiple_align      => [ 'Multiple alignments',        'compara' ],
     conservation        => [ 'Conservation regions',       'compara' ],
+    pairwise_cactus_hal_pw => [ 'Progressive cactus pairwise','compara' ],
     synteny             => 'Synteny',
 
     # Other features

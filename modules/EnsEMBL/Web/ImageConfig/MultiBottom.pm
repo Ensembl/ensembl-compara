@@ -88,19 +88,20 @@ sub init_cacheable {
 
 sub multi {
   my ($self, $methods, $chr, $pos, $total,$all_slices, @slices) = @_;
-  my $sp              = $self->{'species'};
+  my $sp              = ucfirst $self->hub->species_defs->get_config($self->{'species'}, 'SPECIES_PRODUCTION_NAME');
   my $multi_hash      = $self->species_defs->multi_hash;
   my $primary_species = $self->hub->species;
   my $p               = $pos == $total && $total > 2 ? 2 : 1;
   my ($i, %alignments, @strands);
-
   my $slice_summary = join(' ',map {
     join(':',$_->[0],$_->[1]->seq_region_name,$_->[1]->start,$_->[1]->end)
   } map { [$_->{'species'},$_->{'slice'}] } @$all_slices);
+
   foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
-    next unless exists $multi_hash->{$db};
+    next unless exists $multi_hash->{$db}; 
 
     foreach (values %{$multi_hash->{$db}{'ALIGNMENTS'}}, @{$multi_hash->{$db}{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$sp}{$chr} || []}) {
+
       next unless $methods->{$_->{'type'}};
       next unless $_->{'class'} =~ /pairwise_alignment/;
       next unless $_->{'species'}{$sp} || $_->{'species'}{"$sp--$chr"};
@@ -108,29 +109,28 @@ sub multi {
       my %align = %$_; # Make a copy for modification
 
       $i = $p;
-
       foreach (@slices) {
-        if ($align{'species'}{$_->{'species'} eq $sp ? $_->{'species_check'} : $_->{'species'}} && !($_->{'species_check'} eq $primary_species && $sp eq $primary_species)) {
+        my $species = ucfirst $self->hub->species_defs->get_config($_->{species}, 'SPECIES_PRODUCTION_NAME');
+
+        if ($align{'species'}{$species eq $sp ? $_->{'species_check'} : $species} && !($_->{'species_check'} eq $primary_species && $sp eq $primary_species)) {
           $align{'order'} = $i;
           $align{'ori'}   = $_->{'strand'};
           $align{'gene'}  = $_->{'g'};
           last;
         }
-
         $i++;
       }
 
       next unless $align{'order'};
-
       $align{'db'} = lc substr $db, 9;
-
       push @{$alignments{$align{'order'}}}, \%align;
-
       $self->set_parameter('homologue', $align{'homologue'});
     }
   }
 
   if (scalar keys %alignments) {
+
+    %alignments = %{$self->select_alignment_based_on_hierarchy(\%alignments)};
 
     if ($pos == 1) {
       @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
@@ -187,6 +187,35 @@ sub multi {
     [ 'gene_legend', 'variation_legend','fg_regulatory_features_legend', 'fg_methylation_legend', 'structural_variation_legend' ],
     { accumulate => 'yes' }
   );
+}
+
+sub select_alignment_based_on_hierarchy {
+  my $self = shift;
+  my $alignments = shift || {};
+  my $hierarchy = $self->hub->species_defs->ENSEMBL_ALIGNMENTS_HIERARCHY;
+
+  my $prioritised_alignments = {};
+  my $hash_flag = {};
+  foreach my $order (keys %$alignments) {
+    for (my $i=0; $i<=$#$hierarchy; $i++) {
+      my $method = $hierarchy->[$i];
+      my $re = qr /$method/i;
+      foreach my $align (@{$alignments->{$order}}) {
+        if ($align->{type} =~ $re && !$hash_flag->{$align->{'species_set_id'}}) {
+          push @{$prioritised_alignments->{$order}}, $align;
+          $hash_flag->{$align->{'species_set_id'}} = 1;
+          last;
+        }
+
+        if (!$hash_flag->{$align->{'species_set_id'}} && $i == $#$hierarchy) {
+          push @{$prioritised_alignments->{$order}}, $align;
+          $hash_flag->{$align->{'species_set_id'}} = 1;
+          last;
+        }
+      }
+    }
+  }
+  return $prioritised_alignments || $alignments;
 }
 
 sub join_genes {
