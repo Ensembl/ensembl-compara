@@ -1339,7 +1339,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
 
         // public configs
-        this.elLk.configSelector.append('<option value="public">Select from publically available configurations...</option>');
+        // this.elLk.configSelector.append('<option value="public">Select from publically available configurations...</option>');
 
         // selected config
         this.elLk.configSelector.data('selected', json.selected).find('option[value=' + json.selected + ']').triggerHandler('select', true);
@@ -1405,8 +1405,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
   },
 
-  openPublicConfigs: function() {
-    console.log('opening public configs');
+  openPublicConfigs: function() { // TODO
   },
 
   setConfig: function(configName) {
