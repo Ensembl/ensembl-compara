@@ -71,10 +71,10 @@ sub more { $_[0]->{'more'} = $_[1] if @_>1; return $_[0]->{'more'}; }
 sub final_wrapper { return $_[1]; }
 sub format_letters { return $_[1]; }
 
-sub format_line {
-  my ($self,$layout,$data,$num,$config,$vskip) = @_;
+sub prepare_line {
+  my ($self,$data,$num,$config,$vskip) = @_;
 
-  $layout->render({
+  return {
     # values
     pre => $data->{'pre'},
     label => $num->{'label'},
@@ -89,7 +89,7 @@ sub format_line {
     number => ($config->{'number'}||'off') ne 'off',
     vskip => $vskip,
     principal => $data->{'principal'},
-  });
+  };
 }
 
 sub goahead_line { return 1; }
@@ -100,8 +100,8 @@ sub format_lines {
   my $view = $self->view;
   my $ropes = [grep { !$_->hidden } @{$view->sequences}];
 
+  my @lines;
   my $html = "";
- 
   if($view->interleaved) {
     # Interleaved sequences
     # We truncate to the length of the first sequence. This is a bug,
@@ -116,7 +116,7 @@ sub format_lines {
         my $ro = $rope->output->lines;
         my $num = shift @{$line_numbers->{$y}};
         next unless $self->goahead_line($ro->[$x]);
-        $self->format_line($layout,$ro->[$x],$num,$config,$multi && $y == $#$ropes);
+        push @lines,$self->prepare_line($ro->[$x],$num,$config,$multi && $y == $#$ropes);
         $y++;
       }
     }
@@ -129,12 +129,14 @@ sub format_lines {
       my $lines = $ro->lines;
       foreach my $x (@$lines) {
         my $num = shift @{$line_numbers->{$y}};
-        $self->format_line($layout,$x,$num,$config,$multi && $i == $#$lines);
+        push @lines,$self->prepare_line($x,$num,$config,$multi && $i == $#$lines);
         $i++;
       }
       $y++;
     }
   }
+  $layout->prepare($_) for(@lines);
+  $layout->render($_) for(@lines);
 
   return $layout;
 }
