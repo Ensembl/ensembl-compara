@@ -392,8 +392,8 @@ sub content {
 
         my $is_success = head($rest_url);
         if ($is_success) {
-          $rest_url .= sprintf('/genetree/%s/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s&%s',
-                        $is_strain ? 'member' : '',
+          $rest_url .= sprintf('/genetree/%sid/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s&%s',
+                        $is_strain ? 'member/' : '',
                         $gt_id,
                         $node_id,
                         $is_strain ? 'clusterset_id=murinae' : '');
