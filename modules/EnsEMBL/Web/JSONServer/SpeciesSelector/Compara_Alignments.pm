@@ -102,6 +102,7 @@ sub json_fetch_species {
 
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
+        $_ = $hub->species_defs->production_name_mapping($_);
         my $common_name = $species_info->{$_}->{common} || '';
         my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
 
@@ -110,6 +111,7 @@ sub json_fetch_species {
         $t->{key} = $_;
         $t->{common} = $species_info->{$_}->{common};
         $t->{value} = $align_id;
+
         if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
           push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
           $all_species->{$species_info->{$_}->{strain_collection}} = $t;
@@ -121,6 +123,7 @@ sub json_fetch_species {
       }
     }
   }
+
   my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
   my $division_json = from_json(file_get_contents($file));
   my $json = {};
