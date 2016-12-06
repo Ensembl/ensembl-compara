@@ -199,7 +199,7 @@ sub feature_content {
     });
   }
   
-  if ($vstatus && scalar @$vstatus && $vstatus->[0]) {
+  if ($vstatus && ref $vstatus eq 'ARRAY' && $vstatus->[0]) {
     $self->add_entry({
       type  => 'Validation',
       label => join(',', @$vstatus),
