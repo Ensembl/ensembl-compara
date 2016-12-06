@@ -57,16 +57,10 @@ sub new {
 
 sub view { return $_[0]->{'view'}; }
 
-sub make_sequence { # For IoC: override me if you want to
-  my ($self) = @_;
-
-  return EnsEMBL::Web::TextSequence::Sequence->new($self);
-}
-
 sub new_sequence {
   my ($self,$position) = @_;
 
-  my $seq = $self->make_sequence();
+  my $seq = $self->view->make_sequence($self);
   if(($position||'') eq 'top') {
     unshift @{$self->{'sequences'}},$seq;
   } else {

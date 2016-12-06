@@ -55,6 +55,15 @@ sub new {
   return $self;
 }
 
+# XXX should probably be in SequenceSet, but for that we need custom
+# SequenceSets.
+sub make_sequence { # For IoC: override me if you want to
+  my ($self,$set) = @_;
+
+  return EnsEMBL::Web::TextSequence::Sequence->new($set);
+}
+
+
 # XXX deprecate
 sub reset {
   my ($self) = @_;
@@ -99,12 +108,6 @@ sub set_annotations {
 }
 
 sub set_markup {}
-
-sub make_sequence { # For IoC: override me if you want to
-  my ($self) = @_;
-
-  return $self->{'sequenceset'}->make_sequence;
-}
 
 sub new_sequence {
   my ($self,$position) = @_;
