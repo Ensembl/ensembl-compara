@@ -59,7 +59,7 @@ Ensembl.Panel.ManageConfigs = Ensembl.Panel.ModalContent.extend({
         break;
         case 'share':
           if (Ensembl.isLoggedInUser && data.account) {
-            alert(window.location.href.replace(/(\&|\;)time=[^\;\&]+/, '') + ';share_config=' + data.name + '/' + data.code);
+            e.data.panel.showShareURL(e, window.location.href.replace(/(\&|\;)time=[^\;\&]+/, '') + ';share_config=' + data.name + '/' + data.code);
           }
         break;
       }
@@ -134,6 +134,10 @@ Ensembl.Panel.ManageConfigs = Ensembl.Panel.ModalContent.extend({
       url: this.params['delete_config_url'],
       data: {code: code}
     });
+  },
+
+  showShareURL: function(e, link) { // TODO - improve it to use a popup div and not alert box
+    alert(link);
   },
 
   _ajax: function(params) {

@@ -179,7 +179,7 @@ sub json_save_config {
     };
 
     # update if any new changes have been made by the user before saving it (image config gets updated while updating the view configs)
-    $view_config->update_from_input($config);
+    $view_config->update_from_input({'image_config' => delete $config->{'imageConfig'}, 'view_config' => delete $config->{'viewConfig'}});
 
     # save the required keys from image config and view config
     foreach my $config_type (qw(view_config image_config)) {
