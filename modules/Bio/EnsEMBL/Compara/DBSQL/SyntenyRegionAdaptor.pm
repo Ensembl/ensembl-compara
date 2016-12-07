@@ -250,7 +250,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     $self->bind_param_generic_fetch($end, SQL_INTEGER);
   }
 
-  return $self->generic_fetch($join, $constraint);
+  return $self->generic_fetch($constraint, $join);
 }
 
 
