@@ -622,6 +622,12 @@ sub render {
   $html .= $self->tailnote;
   
   if ($self->{'image_configs'}[0]) {
+    if (my $component = $self->component) {
+      if (my $view_config = $component->viewconfig) {
+        $html .= sprintf q(<input type="hidden" class="view_config" value="%s" />), $view_config->code;
+      }
+    }
+
     $html .= qq(<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />);
     $html .= '<span class="hidden drop_upload"></span>' if $self->{'image_configs'}[0]->get_node('user_data');
   }

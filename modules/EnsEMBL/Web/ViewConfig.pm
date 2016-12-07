@@ -237,7 +237,6 @@ sub update_from_url {
 
       # create and save a new config if it doesn't exist already
       if (!$existing_config) {
-        warn "Creating new";
         $shared_config->{'type'} = 'saved_config';
         $shared_config->{'code'} = random_string(32);
         $shared_config->{'name'} = "$shared_config->{'name'} (copy)";

@@ -148,7 +148,7 @@ sub json_list_configs {
                       map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code}),
                       grep $_, $hub->session, $hub->user;
 
-  my $current       = keys %$vc_settings ? $vc_settings->{'saved'} || 'current' : 'default'; # FIXME - viewconfig stays in the db with 'saved' key when config's reset
+  my $current       = keys %$vc_settings ? $vc_settings->{'saved'} || 'current' : 'default';
      $current       = $ic_settings->{'saved'} && $ic_settings->{'saved'} eq $current && $current || 'current' if keys %$ic_settings;
      $current       = 'current' if $current ne 'current' && $current ne 'default' && !grep $_->{'value'} eq $current, @configs;
 
