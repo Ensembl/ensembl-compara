@@ -45,7 +45,7 @@ Ensembl.Panel.ManageConfigs = Ensembl.Panel.ModalContent.extend({
 
       switch (this.className) {
         case 'save':
-          if (!data.account) {
+          if (Ensembl.isLoggedInUser && !data.account) {
             e.data.panel.moveConfig(data.code);
           }
         break;
@@ -71,7 +71,7 @@ Ensembl.Panel.ManageConfigs = Ensembl.Panel.ModalContent.extend({
     el.helptip({content : (function(el, data) {
 
       switch (el.prop('className')) {
-        case 'save':    return data.account ? 'Already saved' : 'Save to account';
+        case 'save':    return Ensembl.isLoggedInUser ? data.account ? 'Already saved' : 'Save to account' : 'Please login to save configuration to your user account';
         case 'edit':    return 'Edit description';
         case 'delete':  return 'Delete configuration';
         case 'share':   return Ensembl.isLoggedInUser ? data.account ? 'Share configuration' : 'Please save this configuration before sharing it.' : 'Please login and save this configuration before sharing it.';
