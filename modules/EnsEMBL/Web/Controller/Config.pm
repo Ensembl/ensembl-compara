@@ -194,6 +194,7 @@ sub json_save_config {
       if ($settings) {
         $settings->{'saved_from'} = $saved_configs->{'code'};
         delete $settings->{'copy'};
+        delete $settings->{'record_id'};
         $conf->save_user_settings;
       }
     }
