@@ -116,53 +116,17 @@ package Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
 
 use strict;
 use warnings;
+
+use DBI qw(:sql_types);
+
 use Data::Dumper;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::SyntenyRegion;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
-
-=head2 fetch_by_dbID
-
-  Arg  1     : int $synteny_region_id
-  Example    : my $this_synteny_region = $synteny_region_adaptor->
-                  fetch_by_dbID($synteny_region_id)
-  Description: Fetches the corresponding Bio::EnsEMBL::Compara::SyntenyRegion
-               object.
-  Returntype : Bio::EnsEMBL::Compara::SyntenyRegion object
-  Exception  : Thrown if the argument is not defined
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub fetch_by_dbID {
-   my ($self,$dbID) = @_;
-
-   if( !defined $dbID ) {
-     throw("fetch_by_dbID with no dbID!");
-   }
-
-   my $sth = $self->prepare("select synteny_region_id, method_link_species_set_id from synteny_region where synteny_region_id = $dbID");
-   $sth->execute;
-   my ($synteny_region_id, $method_link_species_set_id) = $sth->fetchrow_array();
-
-   my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
-   $sr->adaptor($self);
-   $sr->dbID($synteny_region_id);
-   $sr->method_link_species_set_id($method_link_species_set_id);
-
-   my $dfra = $self->db->get_DnaFragRegionAdaptor;
-   my $dfrs = $dfra->fetch_all_by_synteny_region_id($dbID);
-   $sr->regions($dfrs);
-   # while (my $dfr = shift @{$dfrs}) {
-   #   $sr->add_child($dfr);
-   # }
-   return $sr;
-}
 
 =head2 store
 
@@ -184,16 +148,11 @@ sub store {
 
    assert_ref($sr, 'Bio::EnsEMBL::Compara::SyntenyRegion', 'sr');
 
-   if ($sr->dbID) {
-    my $sth = $self->prepare("INSERT INTO synteny_region (synteny_region_id,method_link_species_set_id) VALUES (?,?)");
-    $sth->execute($sr->dbID, $sr->method_link_species_set_id);
-   } else {
-    my $sth = $self->prepare("INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)");
-    $sth->execute($sr->method_link_species_set_id);
-    my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
-    $sr->dbID($synteny_region_id);
-   }
-   $sr->adaptor($self);
+   my $dbID = $self->generic_insert('synteny_region', {
+           'synteny_region_id' => $sr->dbID,
+           'method_link_species_set_id' => $sr->method_link_species_set_id,
+       }, 'synteny_region_id');
+   $self->attach($sr, $dbID);
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
    foreach my $dfr (@{$sr->regions}) {
@@ -278,37 +237,20 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
   assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
-  my $sql = "select sr.synteny_region_id from synteny_region sr, dnafrag_region dfr where sr.method_link_species_set_id = ? and sr.synteny_region_id=dfr.synteny_region_id and dfr.dnafrag_id = ?";
+  my $join = [[['dnafrag_region', 'dfr'], 'sr.synteny_region_id=dfr.synteny_region_id']];
+  my $constraint = '(dfr.dnafrag_id = ?)';
+  $self->bind_param_generic_fetch($dnafrag->dbID, SQL_INTEGER);
   
   if (defined $start) {
-    $sql .= " and dfr.dnafrag_end >= $start";
+    $constraint .= ' AND (dfr.dnafrag_end >= ?)';
+    $self->bind_param_generic_fetch($start, SQL_INTEGER);
   }
   if (defined $end) {
-    $sql .= " and dfr.dnafrag_start <= $end";
+    $constraint .= ' AND (dfr.dnafrag_start <= ?)';
+    $self->bind_param_generic_fetch($end, SQL_INTEGER);
   }
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($mlss->dbID, $dnafrag->dbID);
-
-  my $synteny_region_id;
-  $sth->bind_columns(\$synteny_region_id);
-  my @srs;
-  while ($sth->fetch) {
-    my $sr = Bio::EnsEMBL::Compara::SyntenyRegion->new();
-    $sr->dbID($synteny_region_id);
-    $sr->method_link_species_set_id($mlss->dbID);
-
-    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
-    $sr->regions($dfrs);
-    # while (my $dfr = shift @{$dfrs}) {
-    #   $sr->add_child($dfr);
-    # }
-
-    push @srs, $sr;
-  }
-
-  return \@srs;
+  return $self->generic_fetch($join, $constraint);
 }
 
 
@@ -331,30 +273,10 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
 
-  my $sql = "select sr.synteny_region_id from synteny_region sr where sr.method_link_species_set_id = ?";
+  my $constraint = 'method_link_species_set_id = ?';
+  $self->bind_param_generic_fetch($mlss->dbID, SQL_INTEGER);
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($mlss->dbID);
-
-  my $synteny_region_id;
-  $sth->bind_columns(\$synteny_region_id);
-  my @srs;
-  while ($sth->fetch) {
-    my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
-    $sr->dbID($synteny_region_id);
-    $sr->method_link_species_set_id($mlss->dbID);
-
-    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-    my $dfrs = $dfra->fetch_all_by_synteny_region_id($synteny_region_id);
-    $sr->regions($dfrs);
-    # while (my $dfr = shift @{$dfrs}) {
-    #   $sr->add_child($dfr);
-    # }
-
-    push @srs, $sr;
-  }
-
-  return \@srs;
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -371,11 +293,38 @@ sub count_by_mlss_id {
 }
 
 
+#
+# Virtual methods from BaseAdaptor
+####################################
+
+sub _tables {
+
+    return (['synteny_region', 'sr'])
+}
+
+sub _columns {
+
+    return qw(
+        sr.synteny_region_id
+        sr.method_link_species_set_id
+    );
+}
+
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+
+    my $dfra = $self->db->get_DnaFragRegionAdaptor;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::SyntenyRegion', [
+            'dbID',
+            '_method_link_species_set_id',
+        ], sub {
+            my $a = shift;
+            return {
+                'regions' => $dfra->fetch_all_by_synteny_region_id($a->[0]),
+            }
+        } );
+}
+
+
 1;
-
-
-
-
-
-
 
