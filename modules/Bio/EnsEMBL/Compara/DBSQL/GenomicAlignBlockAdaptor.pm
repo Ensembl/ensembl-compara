@@ -1421,7 +1421,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
             push(@gabs, $gab);
         }
       }
-      close MAF;
       undef $maf_file_str;
     }
 
