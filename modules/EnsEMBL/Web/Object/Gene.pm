@@ -151,9 +151,11 @@ sub get_go_list {
             $info_text =~ s/Quick_Go://;
             $label = "(QuickGO:$pid)";
           }
-          my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
-          $ext_url = "$did $ext_url" if $vega_go_xref;
-          push @$sources, $ext_url;
+          if ($vega_go_xref) {
+            my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
+            $ext_url = "$did $ext_url" if $vega_go_xref;
+            push @$sources, $ext_url;
+          }
         }
       }
 
