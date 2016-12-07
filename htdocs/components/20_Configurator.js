@@ -1395,6 +1395,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       success: function(json) {
         if (json.updated) {
           this.refreshConfigList();
+          Ensembl.EventManager.trigger('queuePageReload', this.component, false, true);
         } else {
           this.showError('Error: Configuration settings could not be saved.');
         }
