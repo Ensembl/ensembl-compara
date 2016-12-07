@@ -1313,18 +1313,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
             return [];
       }
 
-      open( my $maf_in, '<', \$maf_file_str) or die "Can't open MAF file in memory";
-      # my $maf_info = $self->_parse_maf( $maf_in );
+      # use open ':encoding(iso-8859-7)';
+      open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
+      my @maf_lines = <MAF>;
+      my $maf_info = $self->_parse_maf( \@maf_lines );
       
-      # for my $aln_block ( @$maf_info ) {
-
-      my $alignio = Bio::AlignIO->new(-fh => $maf_in, -format => 'maf');
-
-      while(my $aln = $alignio->next_aln()){
+      for my $aln_block ( @$maf_info ) {
         my $duplicates_found = 0;
         my %species_found;
-        # my $block_len = $aln_block->[0]->{length};
-        my $block_len = $aln->length;
+        my $block_len = $aln_block->[0]->{length};
 
         next if ( $block_len <= $min_gab_len );
 
@@ -1339,8 +1336,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
         my $ga_adaptor = $mlss->adaptor->db->get_GenomicAlignAdaptor;
         my (@genomic_align_array, $ref_genomic_align);
-        # foreach my $seq (@$aln_block) {
-        foreach my $seq ($aln->each_seq) {
+        foreach my $seq (@$aln_block) {
           # find dnafrag for the region
           my ( $species_id, $chr ) = split(/\./, $seq->{display_id}, 2);
 
@@ -1354,13 +1350,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # this can mess up subslicing down the line - reset it and it will be pulled fresh from the db
           $this_dnafrag->{'_slice'} = undef; 
 
-          if ( $this_dnafrag->length < $seq->end ) {
+          if ( $this_dnafrag->length < $seq->{end} ) {
             $self->warning('Ommitting ' . $this_gdb->name . ' from GenomicAlignBlock. Alignment position does not fall within the length of the chromosome');
             next;
           }
 
           # check length of genomic align meets threshold
-          next if ( abs( $seq->start - $seq->end ) + 1 < $min_ga_len );
+          next if ( abs( $seq->{start} - $seq->{end} ) + 1 < $min_ga_len );
 
           if ( !$duplicates_found ){
             my $species_name = $this_dnafrag->genome_db->name;
@@ -1373,26 +1369,22 @@ sub _get_GenomicAlignBlocks_from_HAL {
           
 
           # create cigar line
-          my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq);
-
-          my ($this_start, $this_end);
-          if ( $seq->strand == 1 ) { ( $this_start, $this_end ) = ( $seq->start, $seq->end ); }
-          else                     { ( $this_start, $this_end ) = ( $seq->end, $seq->start ); }
+          my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->{seq});
 
           my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
             -genomic_align_block => $gab,
-            -aligned_sequence => $seq->seq, 
+            -aligned_sequence => $seq->{seq},
             -dnafrag => $this_dnafrag, 
-            -dnafrag_start => $this_start,
-            -dnafrag_end => $this_end,
-            -dnafrag_strand => $seq->strand,
+            -dnafrag_start => $seq->{start},
+            -dnafrag_end => $seq->{end},
+            -dnafrag_strand => $seq->{strand},
             -cigar_line => $this_cigar, 
             -dbID => $id_base + $ga_id_count,
             -visible => 1,
             -adaptor => $ga_adaptor,
           );
           $genomic_align->cigar_line($this_cigar);
-          $genomic_align->aligned_sequence( $seq->seq );
+          $genomic_align->aligned_sequence( $seq->{seq} );
           $genomic_align->genomic_align_block( $gab );
           $genomic_align->method_link_species_set($mlss);
           $genomic_align->dbID( $id_base + $ga_id_count );
@@ -1409,22 +1401,22 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
         # check for duplicate species
         if ( $duplicates_found ) {
-            # ## e87 HACK ##
-            # my $resolved_gab = $self->_resolve_duplicates( $gab, $min_gab_len );
-            # push( @gabs, $resolved_gab );
-            # $gab_id_count++;
-            # ##############
+            ## e87 HACK ##
+            my $resolved_gab = $self->_resolve_duplicates( $gab, $min_gab_len );
+            push( @gabs, $resolved_gab );
+            $gab_id_count++;
+            ##############
 
-            my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
-            my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
+            # my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
+            # my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
 
-            foreach my $this_gab ( @$split_gabs ) {
-                $this_gab->adaptor($gab_adaptor);
-                $this_gab->dbID($id_base + $gab_id_count);
+            # foreach my $this_gab ( @$split_gabs ) {
+            #     $this_gab->adaptor($gab_adaptor);
+            #     $this_gab->dbID($id_base + $gab_id_count);
 
-                push( @gabs, $this_gab );
-                $gab_id_count++;
-            }
+            #     push( @gabs, $this_gab );
+            #     $gab_id_count++;
+            # }
         } else {
             push(@gabs, $gab);
         }
@@ -1647,11 +1639,11 @@ sub _split_genomic_aligns {
 
 
 sub _parse_maf {
-  my ($self, $maf_fh) = @_;
+  my ($self, $maf_lines) = @_;
 
   my @blocks;
   my $x = 0;
-  while (my $line = <$maf_fh> ) {
+  for my $line ( @$maf_lines ) {
     chomp $line;
     push( @blocks, [] ) if ( $line =~ m/^a/ );
 
