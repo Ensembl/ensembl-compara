@@ -2156,7 +2156,7 @@ sub project {
           ## HAL FIX ##
           # forces mapper to take a guess if no Mapper::Coordinates are found
           if ( $force ) { 
-              $new_end = $new_start + $this_slice->length;
+              $new_end = $new_start + $new_slice->length;
           } else {
               next;
           }

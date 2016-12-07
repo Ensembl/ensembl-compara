@@ -1,121 +1,7 @@
-=head1 LICENSE
-
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
-
-package Bio::EnsEMBL::Compara::HAL::HALAdaptor;
-
-use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use Bio::EnsEMBL::Registry;
-
-# if ( eval {require SiteDefs} ){
-#     #warn(">>>>>>" . $SiteDefs::PROGRESSIVE_CACTUS_DIR);
-#     use Inline C => Config =>
-#              LIBS => "-L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hdf5/lib -L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib -L$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
-#              MYEXTLIB => ["$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halChain.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLod.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLiftover.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halLib.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/lib/halMaf.a", "$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/sonLib/lib/sonLib.a"],
-#              INC => "-I$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/chain/inc/ -I$SiteDefs::PROGRESSIVE_CACTUS_DIR/submodules/hal/maf/inc/";
-
-# } else {
-    die "The environment variable 'PROGRESSIVE_CACTUS_DIR' must be defined to a valid installation of Cactus.\n" unless defined $ENV{'PROGRESSIVE_CACTUS_DIR'};
-    use Inline C => Config =>
-             LIBS => "-L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hdf5/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib -L$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib   -lstdc++ -lhdf5 -lhdf5_cpp",
-             MYEXTLIB => ["$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halChain.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLod.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLiftover.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halLib.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/lib/halMaf.a", "$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/sonLib/lib/sonLib.a"],
-             INC => "-I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/chain/inc/ -I$ENV{'PROGRESSIVE_CACTUS_DIR'}/submodules/hal/maf/inc/";
-
-# }
-
-=head2 new
-
-  Arg [1]    : list of args to super class constructor
-  Example    : $ga_a = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new("/tmp/test.hal");
-  Description: Creates a new HALAdaptor from an lod.txt file or hal file.
-  Returntype : none
-  Exceptions : none
-
-=cut
-
-sub new {
-    my($class, $path, $use_hal_genomes) = @_;
-    my $self = {};
-    bless $self, $class;
-    $self->{'path'} = $path;
-    $self->{'hal_fd'} = _open_hal($self->path);
-    if (defined $use_hal_genomes && $use_hal_genomes) {
-        $self->{'use_hal_genomes'} = 1;
-    } else {
-        $self->{'use_hal_genomes'} = 0;
-    }
-
-    return $self;
-}
-
-sub path {
-    my $self = shift;
-    return $self->{'path'};
-}
-
-sub hal_filehandle {
-    my $self = shift;
-    return $self->{'hal_fd'};
-}
-
-sub genome_name_from_species_and_assembly {
-    my ($self, $species_name, $assembly_name) = @_;
-    foreach my $genome (_get_genome_names($self->{'hal_fd'})) {
-        my $genome_metadata = _get_genome_metadata($self->{'hal_fd'}, $genome);
-        if ((exists $genome_metadata->{'ensembl_species'} && $genome_metadata->{'ensembl_species'} eq $species_name) &&
-            (exists $genome_metadata->{'ensembl_assembly'} && $genome_metadata->{'ensembl_assembly'} eq $assembly_name)) {
-            return $genome;
-        }
-    }
-    die "Could not find genome with metadata indicating it corresponds to ensembl species='".$species_name."', ensembl_assembly='".$assembly_name."'"
-}
-
-sub genome_metadata {
-    my ($self, $genome) = @_;
-    return _get_genome_metadata($self->{'hal_fd'}, $genome);
-}
-
-sub ensembl_genomes {
-    my $self = shift;
-    my @ensembl_genomes = grep { exists($self->genome_metadata($_)->{'ensembl_species'}) && exists($self->genome_metadata($_)->{'ensembl_assembly'}) } $self->genomes();
-    return @ensembl_genomes;
-}
-
-sub genomes {
-    my $self = shift;
-    return _get_genome_names($self->{'hal_fd'});
-}
-
-
-1;
-
-use Inline C => <<'END_OF_C_CODE';
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include "INLINE.h"
 
 // HAL C -> perl interface, to be used with Inline::C.
 // NB: all of the following functions must be compiled into the *same*
@@ -204,7 +90,7 @@ void _get_pairwise_blocks(int fileHandle, char *querySpecies, char *targetSpecie
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
     // Last parameter (0 or 1) controls the inclusion of overlapping blocks
-    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 1, NULL, &errStr);
+    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_NO_DUPS, 1, NULL, &errStr);
     
     // To enable the snake track
     /*struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_AND_TARGET_DUPS, 1, NULL, &errStr);*/
@@ -272,7 +158,7 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
     // Last parameter (0 or 1) controls the inclusion of overlapping blocks
-    struct hal_block_results_t *results = halGetBlocksInTargetRange_filterByChrom(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 1, queryChrom, NULL, &errStr);
+    struct hal_block_results_t *results = halGetBlocksInTargetRange_filterByChrom(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_NO_DUPS, 1, queryChrom, NULL, &errStr);
     
     // To enable the snake track
     /*struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_AND_TARGET_DUPS, 1, NULL, &errStr);*/
@@ -333,35 +219,40 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
 }
 
 // pass querySpecies as a comma-seperated string
-void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGaps) {
+void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGap) {
     //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
+    Inline_Stack_Vars;
+    Inline_Stack_Reset;
+
+    // open memory file buffer
+    char *bp;
+    size_t size;
+    FILE *stream;
+    stream = open_memstream (&bp, &size);
 
     //printf("%s\n", "MSA 1");
 
-    /*
     // create a hal_species_t struct for querySpecies
-    struct hal_species_t* head = NULL;
-    struct hal_species_t* prev = NULL;
-    struct hal_species_t* cur  = NULL;
+    // struct hal_species_t* head = NULL;
+    // struct hal_species_t* prev = NULL;
+    // struct hal_species_t* cur  = NULL;
 
-    char *str_copy = strdup(querySpecies);
-    char *str_copy_ptr = str_copy;
-    char *token;
-    while ((token = strsep(&str_copy_ptr, ","))) {
-        cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
-        cur->name = strdup(token);
-        cur->next = NULL;
-        if ( head == NULL ){ //struct start
-            head = cur;
-        }
-        else {
-            prev->next = cur;
-        }
-        prev = cur;
-    }
-    struct hal_species_t* query_species = head;
-    free(str_copy);
-    */
+    // char *str_copy = strdup(querySpecies);
+    // char *str_copy_ptr = str_copy;
+    // char *token;
+    // while ((token = strsep(&str_copy_ptr, ","))) {
+    //     cur = (struct hal_species_t*) calloc(1, sizeof(struct hal_species_t));
+    //     cur->name = strdup(token);
+    //     cur->next = NULL;
+    //     if ( head == NULL ){ //struct start
+    //         head = cur;
+    //     }
+    //     else {
+    //         prev->next = cur;
+    //     }
+    //     prev = cur;
+    // }
+    // free(str_copy);
 
     // only way seems to be to fetch all and split structure into 2
     struct hal_species_t *hal_genomes = halGetSpecies(halfileHandle, NULL);
@@ -406,26 +297,134 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
     prev_o->next = NULL;
     prev_q->next = NULL;
 
-    char *errStr = NULL;
-
-    // open memory file buffer
-    char *bp;
-    size_t size;
-    FILE *stream = open_memstream (&bp, &size);
     // print MAF to buffer
-    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGaps, 0, &errStr );
+    char *errStr = NULL;
+    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, 0, &errStr );
     fclose (stream);
-
-    // Inline::C stuff: Build a return array with the maf output
-    Inline_Stack_Vars;
-    Inline_Stack_Reset;
+    
+    //SV *maf = newSVpv(bp, strlen(bp));
     SV *maf = newSVpvn(bp, size);
     Inline_Stack_Push(maf);
-    Inline_Stack_Done;
 
-    // Free the memory
     halFreeSpeciesList(other_species);
     halFreeSpeciesList(query_species);
     free(bp);
+    Inline_Stack_Done;
 }
-END_OF_C_CODE
+
+MODULE = HALXS  PACKAGE = HALXS  
+
+PROTOTYPES: DISABLE
+
+void
+hello()
+CODE:
+    printf("Hello, world!\n");
+
+int
+_open_hal (halFilePath)
+	char *	halFilePath
+
+SV *
+_get_genome_metadata (hal_fd, genomeName)
+	int	hal_fd
+	const char *	genomeName
+
+void
+_get_genome_names (hal_fd)
+	int	hal_fd
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _get_genome_names(hal_fd);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
+void
+_get_seqs_in_genome (fileHandle, genomeName)
+	int	fileHandle
+	const char *	genomeName
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _get_seqs_in_genome(fileHandle, genomeName);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
+void
+_get_pairwise_blocks (fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd)
+	int	fileHandle
+	char *	querySpecies
+	char *	targetSpecies
+	char *	targetChrom
+	int	targetStart
+	int	targetEnd
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _get_pairwise_blocks(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
+void
+_get_pairwise_blocks_filtered (fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, queryChrom)
+	int	fileHandle
+	char *	querySpecies
+	char *	targetSpecies
+	char *	targetChrom
+	int	targetStart
+	int	targetEnd
+	char *	queryChrom
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _get_pairwise_blocks_filtered(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, queryChrom);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
+void
+_get_multiple_aln_blocks (halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap)
+	int	halfileHandle
+	char *	querySpecies
+	char *	targetSpecies
+	char *	targetChrom
+	int	targetStart
+	int	targetEnd
+    int maxRefGap
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _get_multiple_aln_blocks(halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
