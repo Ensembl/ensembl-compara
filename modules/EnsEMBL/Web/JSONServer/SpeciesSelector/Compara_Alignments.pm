@@ -48,20 +48,17 @@ sub json_fetch_species {
   my $species_hash_multiple = ();
 
   # Order by number of species (name is in the form "6 primates EPO")
-  if(!$sd->IS_STRAIN_OF) {
-    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-      (my $name = $row->{'name'}) =~ s/_/ /g;
-      my $t = {};
-      $t->{key} = encode_entities($name);
-      $t->{title} = encode_entities($name);
-      $t->{value} = $row->{'id'};
-      $t->{searchable} = 1;
-      push @{$species_hash_multiple}, $t;
-    }
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+    (my $name = $row->{'name'}) =~ s/_/ /g;
+    my $t = {};
+    $t->{key} = encode_entities($name);
+    $t->{title} = encode_entities($name);
+    $t->{value} = $row->{'id'};
+    $t->{searchable} = 1;
+    push @{$species_hash_multiple}, $t;
   }
 
   my $dynatree_multiple = {};
-
 
   my $dynatree_root = {};
   $dynatree_root->{key} = 'All Alignments';
@@ -102,23 +99,26 @@ sub json_fetch_species {
 
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
-        $_ = $hub->species_defs->production_name_mapping($_);
-        my $common_name = $species_info->{$_}->{common} || '';
-        my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
+        if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
 
-        my $t = {};
-        $t->{scientific} = $_;
-        $t->{key} = $_;
-        $t->{common} = $species_info->{$_}->{common};
-        $t->{value} = $align_id;
+          $_ = $hub->species_defs->production_name_mapping($_);
+          my $common_name = $species_info->{$_}->{common} || '';
+          my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
 
-        if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-          push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
-          $all_species->{$species_info->{$_}->{strain_collection}} = $t;
-        }
-        else {
-          $species_hash_pairwise->{$_} = $t;
-          $all_species->{$_} = $t;
+          my $t = {};
+          $t->{scientific} = $_;
+          $t->{key} = $_;
+          $t->{common} = $species_info->{$_}->{common};
+          $t->{value} = $align_id;
+
+          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
+            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
+            $all_species->{$species_info->{$_}->{strain_collection}} = $t;
+          }
+          else {
+            $species_hash_pairwise->{$_} = $t;
+            $all_species->{$_} = $t;
+          }
         }
       }
     }
