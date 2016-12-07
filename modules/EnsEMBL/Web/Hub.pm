@@ -92,6 +92,7 @@ sub delete_param      { shift->input->delete(@_); }
 
 sub users_available         { 0 } # overridden in user plugin
 sub users_plugin_available  { 0 } # overridden in user plugin
+sub get_shared_config       { 0 } # overridden in user plugin
 
 sub object_types    { return $_[0]{'_object_types'} ||= { map { $_->[0] => $_->[1] } @{$_[0]->controller->object_params || []} }; }
 sub ordered_objects { return $_[0]{'_ordered_objs'} ||= [ map $_->[0], @{$_[0]->controller->object_params || []} ]; }
