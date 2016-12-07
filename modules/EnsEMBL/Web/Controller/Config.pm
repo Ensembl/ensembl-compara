@@ -143,15 +143,17 @@ sub json_list_configs {
   my $vc_settings   = $view_config->get_user_settings;
   my $image_config  = $view_config->image_config;
   my $ic_settings   = $image_config ? $image_config->get_user_settings : {};
+
+  my @configs       = map {name => $_->{'name'}, value => $_->{'code'}},
+                      map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code}),
+                      grep $_, $hub->session, $hub->user;
+
   my $current       = keys %$vc_settings ? $vc_settings->{'saved'} || 'current' : 'default';
      $current       = !keys %$ic_settings || $ic_settings->{'saved'} && $ic_settings->{'saved'} eq $current && $current || 'current';
+     $current       = 'current' if $current ne 'current' && $current ne 'default' && !grep $_->{'value'} eq $current, @configs;
 
   return {
-    'configs' => [
-      map {name => $_->{'name'}, value => $_->{'code'}},
-      map $_->get_records_data({'type' => 'saved_config', 'view_config_code' => $view_config->code}),
-      grep $_, $hub->session, $hub->user
-    ],
+    'configs' => \@configs,
     'selected' => $current
   };
 }
