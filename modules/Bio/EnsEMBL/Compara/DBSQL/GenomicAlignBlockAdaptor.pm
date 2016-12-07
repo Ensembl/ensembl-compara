@@ -1318,7 +1318,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       
       # for my $aln_block ( @$maf_info ) {
 
-      my $alignio = Bio::AlignIO->new(-fh => $maf_in, -format => 'maf');
+      my $alignio = Bio::AlignIO->new(-fh => $maf_in, -format => 'maf', -alphabet => 'dna');
 
       while(my $aln = $alignio->next_aln()){
         my $duplicates_found = 0;
