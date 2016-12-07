@@ -27,9 +27,10 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet::V_density);
 
 sub _init {
-  my $self = shift;
-  my $rtn  = $self->build_tracks;
-  return $self->{'text_export'} && $self->can('render_text') ? $rtn : undef;
+  my $self  = shift;
+  my $data  = $self->get_data;
+  my $set   = $data->[0] || {};
+  return $self->build_tracks($set);
 }
 
 1;

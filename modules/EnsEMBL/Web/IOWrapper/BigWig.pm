@@ -36,13 +36,38 @@ sub create_hash { return EnsEMBL::Web::IOWrapper::Wig::create_hash(@_); }
 sub create_structure { return EnsEMBL::Web::IOWrapper::Wig::create_structure(@_); }
 
 sub create_tracks {
-  my ($self, $slice, $metadata) = @_;
+  my ($self, $slice, $metadata, $whole_chromosome) = @_;
   my $data = [];
 
   ## For speed, our track consists of an array of values, not an array of feature hashes
+  my $strand    = $metadata->{'default_strand'} || 1;
+
+  if ($whole_chromosome) {
+    my $bins      = $metadata->{'bins'};
+
+    my $chr_name  = $slice ? $slice->seq_region_name : undef;
+    my $raw_data  = $self->parser->fetch_scores_by_chromosome([$chr_name], $bins);
+
+    while (my($chr, $scores) = each(%$raw_data)) {
+      my $name = $metadata->{'name'} || 'data';
+      $data->[0]{$chr}{$name} = {
+                                  'scores' => $scores,
+                                  'colour' => $metadata->{'colour'},
+                                  'sort'   => 0,
+                                };
+    }
+  }
+  else {
+    $data = $self->_create_track($slice, $metadata);
+  }
+  return $data;
+}
+
+sub _create_track {
+  my ($self, $slice, $metadata) = @_;
+
   my $parser    = $self->parser;
   my $bins      = $metadata->{'bins'};
-  my $strand    = $metadata->{'default_strand'} || 1;
   my $features  = [];
   my $values    = [];
 

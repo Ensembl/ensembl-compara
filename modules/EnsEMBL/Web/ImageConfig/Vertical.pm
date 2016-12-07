@@ -21,6 +21,7 @@ package EnsEMBL::Web::ImageConfig::Vertical;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
@@ -51,7 +52,7 @@ sub load_user_tracks {
     my $format = $_->get_data('format');
 
     # except bigwig, remove all tracks with big remote formats
-    if ($remote_formats{lc $format} || (lc $format eq 'vcf' && $_->get_data('url'))) {
+    if (($remote_formats{lc $format} && lc $format ne 'bigwig') || (lc $format eq 'vcf' && $_->get_data('url'))) {
       $_->remove;
     } else {
       my ($strand, $renderers) = $self->_user_track_settings($format);
@@ -107,10 +108,11 @@ sub load_user_track_data {
   my $species_defs = $hub->species_defs;
   my $bins         = 150;
   my $bin_size     = int(($self->container_width || 0) / $bins);
-  my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
+  my $colours      = [qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey)];
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
 
   my $menu = $self->get_node('user_data');
+  my $i    = 0;
 
   foreach my $track ($menu ? @{$menu->get_all_nodes} : ()) {
     my $display = $track->get('display');
@@ -120,52 +122,42 @@ sub load_user_track_data {
     next if ($format eq 'bigbed' || $format eq 'bam' || $format eq 'cram');
 
     my $logic_name = $track->get('logic_name');
-    my $colour     = \@colours;
     my ($max1, $max2);
 
-    unshift @$colour, 'black' if $display eq 'density_graph';
+    unshift @$colours, 'black' if ($i == 0 && $display eq 'density_graph');
 
-    if ($logic_name) {
-      $feature_adaptor ||= $hub->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
-      $slice_adaptor   ||= $hub->get_adaptor('get_SliceAdaptor');
+    my $colour = $colours->[$i];
 
-      ($data{$track->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
+    if (lc $track->get('format') eq 'bigwig' && $track->get('url')) {
+      ## Just configure label and colour - we now get the data itself in the glyphset, where it belongs
+      my $track_data = $track->{'data'};
+      my $short_name = $track_data->{'caption'};
+      my $track_name = $track_data->{'name'} || $short_name;
+      $short_name = substr($short_name, 0, 17).'...' if length($short_name) > 20;
+      $track->set('label', $short_name);
+      $track->set('colour', $colour);
     }
     else {
-      ## Create a wrapper around the appropriate parser
-      if (lc $track->get('format') eq 'bigwig' && $track->get('url')) {
-        my $track_data = $track->{'data'};
-        my $short_name = $track_data->{'caption'};
-        my $track_name = $track_data->{'name'} || $short_name;
-        $short_name = substr($short_name, 0, 17).'...' if length($short_name) > 20;
-        $track->set('label', $short_name);
-        my $args      = {'options' => {'hub' => $hub}};
+      ## Get the file contents
+      my %args = (
+                  'hub'     => $hub,
+                  'format'  => $track->get('format'),
+                  'file'    => $track->get('file'),
+                  );
 
-        my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($track->get('url'), 'BigWig', $args);
-
-        ($data{$track->id}, $max1, $max2) = $self->get_bigwig_features($iow->parser, $track_name, $chromosomes, $bins, $track_data->{'colour'});
-      }
-      else {
-        ## Get the file contents
-        my %args = (
-                    'hub'     => $hub,
-                    'format'  => $track->get('format'),
-                    'file'    => $track->get('file'),
-                    );
-
-        my $file  = EnsEMBL::Web::File::User->new(%args);
-        my $iow = EnsEMBL::Web::IOWrapper::open($file,
+      my $file  = EnsEMBL::Web::File::User->new(%args);
+      my $iow = EnsEMBL::Web::IOWrapper::open($file,
                                              'hub'         => $hub,
                                              'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-        $bins = 0 if $display !~ /^density/;
-        ($data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
-      }
+      $bins = 0 if $display !~ /^density/;
+      ($data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
     }
 
     $max_value = $max1 if $max1 && $max1 > $max_value;
     $max_mean = $max2 if $max2 && $max2 > $max_mean;
+    $i++;
   }
 
   if ($max_value) {
