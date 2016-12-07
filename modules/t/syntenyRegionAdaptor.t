@@ -79,6 +79,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor fetch_all_by_Me
 
     my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
     my $synteny_region = new Bio::EnsEMBL::Compara::SyntenyRegion(-dbID => $synteny_region_id,
+                                                                  -adaptor => $synteny_region_adaptor,
                                                                   -method_link_species_set_id => $method_link_species_set_id,
                                                                   -regions  => $regions);
 

@@ -316,7 +316,7 @@ sub _objs_from_sth {
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
     return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::SyntenyRegion', [
             'dbID',
-            '_method_link_species_set_id',
+            'method_link_species_set_id',
         ], sub {
             my $a = shift;
             return {
