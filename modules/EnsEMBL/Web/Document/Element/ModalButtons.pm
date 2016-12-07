@@ -49,7 +49,7 @@ sub init {
 
     $self->add_entry({
       caption => 'Manage configurations',
-      class   => 'modal_link',
+      class   => 'modal_link config-manage',
       rel     => 'modal_user_data',
       url     => $hub->url({
         type    => 'UserData',
