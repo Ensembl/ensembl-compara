@@ -1,4 +1,3 @@
-# Intended to mimic the registry or compara_db objects for providing compara adaptors.
 =head1 LICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -15,9 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -27,9 +23,16 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
+
+    Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor
+
 =cut
 
 package Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
 
 BEGIN {
     use File::Spec;
@@ -38,9 +41,6 @@ BEGIN {
     unshift @INC, "$volume$directory/blib/arch"; # path to built .so file
 }
 
-use strict;
-use warnings;
-no warnings 'uninitialized';
 use Bio::EnsEMBL::Registry;
 use ExtUtils::testlib;
 use HALXS;
