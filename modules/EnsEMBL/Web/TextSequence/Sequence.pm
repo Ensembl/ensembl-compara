@@ -33,10 +33,8 @@ use EnsEMBL::Web::TextSequence::RopeOutput;
 # sequences.
 
 sub new {
-  my ($proto,$set) = @_;
+  my ($proto,$view,$set) = @_;
 
-  use Carp qw(cluck);
-  cluck(39);
   my $class = ref($proto) || $proto;
   my $self = {
     set => $set,
