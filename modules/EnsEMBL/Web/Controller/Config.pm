@@ -190,9 +190,10 @@ sub json_save_config {
         $saved_configs->{$config_type}{$key} = $settings->{$key};
       }
 
-      # add 'saved' key to data
+      # add 'saved' key to data and delete any 'copy' key (since we have made a change, copy is not valid)
       if ($settings) {
         $settings->{'saved_from'} = $saved_configs->{'code'};
+        delete $settings->{'copy'};
         $conf->save_user_settings;
       }
     }

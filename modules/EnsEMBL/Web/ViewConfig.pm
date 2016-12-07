@@ -220,17 +220,33 @@ sub update_from_url {
   }
 
   # if shared config is present in the url
-  if (my $shared_config = $params->{'share_config'}) {
+  if (my $shared_config_code = $params->{'share_config'}) {
 
-    if (($shared_config = $hub->get_saved_config($shared_config)) && $shared_config->{'view_config_code'} eq $self->code) {
+    ($shared_config_code) = grep $_, reverse split "/", $shared_config_code; # remove name
 
-      $shared_config->{'type'} = 'saved_config';
-      $shared_config->{'code'} = random_string(32);
-      $shared_config->{'name'} = "$shared_config->{'name'} (copy)";
+    my $shared_config = $hub->get_saved_config($shared_config_code);
 
-      ($hub->user || $hub->session)->set_record_data({%{$shared_config}}); # set_record_data removes code and type key, so passing a copy of the hash here
+    if ($shared_config && $shared_config->{'view_config_code'} eq $self->code) {
 
-      return $self->copy_from_existing($shared_config);
+      # check if a copy of config already exists
+      my $existing_config;
+      for (grep $_, $hub->session, $hub->user) {
+        ($existing_config) = $_->get_records_data({'type' => 'saved_config', 'copy' => $shared_config_code});
+        last if $existing_config;
+      }
+
+      # create and save a new config if it doesn't exist already
+      if (!$existing_config) {
+        warn "Creating new";
+        $shared_config->{'type'} = 'saved_config';
+        $shared_config->{'code'} = random_string(32);
+        $shared_config->{'name'} = "$shared_config->{'name'} (copy)";
+        $shared_config->{'copy'} = $shared_config_code;
+
+        ($hub->user || $hub->session)->set_record_data({%{$shared_config}}); # set_record_data removes code and type key, so passing a copy of the hash here
+      }
+
+      return $self->copy_from_existing($existing_config || $shared_config);
     }
   }
 
