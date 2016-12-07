@@ -135,7 +135,7 @@ sub fetch_all_by_synteny_region_id {
   Example    : $dnafrag_region_adaptor->store($dnafrag_region)
   Description: Stores the corresponding Bio::EnsEMBL::Compara::DnaFragRegion
                in the database.
-  Returntype : int
+  Returntype : none
   Exception  : Thrown if the argument is not defined
   Caller     : Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor
   Status     : At risk
@@ -152,8 +152,6 @@ sub store {
    
    $sth->execute($dfr->synteny_region_id, $dfr->dnafrag_id, $dfr->dnafrag_start, $dfr->dnafrag_end, $dfr->dnafrag_strand);
    $dfr->adaptor($self);
-   
-   return 1;
 }
 
 1;
