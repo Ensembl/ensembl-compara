@@ -17,6 +17,27 @@ the Ensembl website: http://www.ensembl.org/info/docs/api/compara/
 See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/HEAD/CONTRIBUTING.md)
 for the guidelines on user contributions
 
+## Installation
+
+If working with HAL files, additional setup is required. First, install progressiveCactus:
+
+	git clone git://github.com/glennhickey/progressiveCactus.git
+	cd progressiveCactus
+	git pull
+	git submodule update --init
+	cd submodules/hal/
+	git checkout master
+	git pull
+	cd ../../
+	make
+	export PROGRESSIVE_CACTUS_DIR=$PWD
+
+Now, we need to set up the Compara API:
+
+	cd ensembl-compara/xs/HALXS
+	perl Makefile.PL
+	make
+
 ## Contact us
 
 Please email comments or questions to the public Ensembl developers list at
