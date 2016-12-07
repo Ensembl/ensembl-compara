@@ -82,16 +82,7 @@ sub populate_tree {
   $self->create_node('FviewRedirect', '', [], { command => 'EnsEMBL::Web::Command::UserData::FviewRedirect'}); 
   
   ## Configuration management
-  my $config_menu = $self->create_submenu('Configurations', 'Manage Configurations');
-
-  $config_menu->append($self->create_node('ManageConfigs',           'Configurations for this page', [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs)]));
-  $config_menu->append($self->create_node('ManageConfigs/All',       'All configurations',           [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs/all)]));
-  $config_menu->append($self->create_node('ManageConfigs/Update',    '',                             [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs/update)]));
-  $config_menu->append($self->create_node('ManageConfigSets',        'Configuration sets',           [qw(manage_sets   EnsEMBL::Web::Component::UserData::ManageConfigSets)]));
-  $config_menu->append($self->create_node('ManageConfigSets/Update', '',                             [qw(manage_sets   EnsEMBL::Web::Component::UserData::ManageConfigSets/update)]));
-  
-  $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
- 
+  my $config_menu = $self->create_node('ManageConfigs', 'Manage Configurations', [qw(manage_config EnsEMBL::Web::Component::UserData::ManageConfigs)]);
 }
 
 1;
