@@ -114,6 +114,8 @@ sub content {
                               'name'    => 'species_display',
                               'value'   => $sd->species_label($current_species, 1),
         });
+        ## Used for display only, not in search
+        $form->add_hidden({'name' => 'common_name', 'value' => $sd->SPECIES_COMMON_NAME});
         $fieldset->add_field({
                               'type'    => 'noedit',
                               'label'   => 'Assembly',
