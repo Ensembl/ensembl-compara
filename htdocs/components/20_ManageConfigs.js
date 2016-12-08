@@ -136,8 +136,18 @@ Ensembl.Panel.ManageConfigs = Ensembl.Panel.ModalContent.extend({
     });
   },
 
-  showShareURL: function(e, link) { // TODO - improve it to use a popup div and not alert box
-    alert(link);
+  showShareURL: function(e, link) {
+    e.stopPropagation();
+    if (!this.elLk.shareURLHolder) {
+      this.elLk.shareURLHolder = $('<div class="manage-config-copy-url"><p>Copy this link:</p><input type="string" /></div>').appendTo(document.body);
+    }
+    this.elLk.shareURLHolder.show().css({left: e.clientX, top: e.clientY}).on('click', function(e) { e.stopPropagation(); }).find('input').val(link).selectRange(0, link.length);
+    $(document).off('.hideShareURL').on('click.hideShareURL', {popup: this.elLk.shareURLHolder}, function(e) {
+      if (e.which === 1) {
+        e.data.popup.hide();
+        $(document).off('.hideShareURL');
+      }
+    });
   },
 
   _ajax: function(params) {

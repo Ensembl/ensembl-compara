@@ -123,3 +123,6 @@ table.manage-configs tr.user-config span.share:hover,
 table.manage-configs span.delete:hover { background-position: 0 34px; } /* icon becomes blue when hovered */
 
 table.manage-configs tr.user-config span.save { background-position: 0 16px; cursor: default; } /* disable save icon for already user saved config */
+
+div.manage-config-copy-url { position: fixed; background: #fff; width: 300px; margin-left: -150px; padding: 12px; z-index: 9999; border: [[PANEL_TEXT]] solid 1px; }
+div.manage-config-copy-url input { width: 100%; box-sizing: border-box; }
