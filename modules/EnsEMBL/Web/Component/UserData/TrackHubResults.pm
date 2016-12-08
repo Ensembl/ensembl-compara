@@ -95,11 +95,6 @@ sub content {
 
     if ($count > 0) {
 
-      ## We want to pass the underscored version in the URL
-      (my $search_species = $post_content->{'species'}) =~ s/ /_/g;;
-      delete $post_content->{'species'};
-      $post_content->{'search_species'} = $search_species;
-
       my $pagination_params = {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
@@ -195,6 +190,16 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
+      ## Reassemble assembly parameter
+      my ($key, $assembly);
+      foreach ('assembly', 'accession') {
+        if ($args->{'url_params'}{$_}) {
+          $key = $_;
+          $assembly = $args->{'url_params'}{$_};
+        }
+        delete $args->{'url_params'}{$_};
+      }
+      $args->{'url_params'}{'assembly'} = $key.':'.$assembly;
       ## Change type parameter back to something safe before using
       $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
       delete $args->{'url_params'}{'type'};

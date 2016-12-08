@@ -397,22 +397,13 @@ sub thr_search {
   my $endpoint = 'api/search';
   my $post_content = {'query' => $hub->param('query')};
 
-  ## Registry uses species names without spaces
-  my $search_species = $hub->param('species') || $hub->param('search_species') || $hub->species;
-  if ($search_species) {
-    (my $species = $search_species) =~ s/_/ /;
-    $post_content->{'species'} = $species;
-  }
-
   ## We have to rename this param within the webcode as it
   ## conflicts with one of ours
   $post_content->{'type'} = $hub->param('data_type');
 
   ## Search by either assembly or accession, depending on config
-  my $assembly_param    = $hub->species_defs->get_config($search_species, 'THR_ASSEMBLY_PARAM')
-                            || 'ASSEMBLY_ACCESSION';
-  my $key               = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'assembly';
-  $post_content->{$key} = $hub->species_defs->get_config($search_species, $assembly_param);
+  $hub->param('assembly') =~ /^([a-z]+):(.+)/;
+  $post_content->{$1} = $2;
 
   my $args = {'method' => 'post', 'content' => $post_content};
   $args->{'url_params'} = $url_params if $url_params;
