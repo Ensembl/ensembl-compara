@@ -78,7 +78,8 @@ sub content {
     $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     ## Reminder of search terms
-    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $post_content->{'assembly'};
+    my $assembly_name = $post_content->{'assembly'} || $post_content->{'accession'};
+    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $assembly_name;
     my @search_extras;
     if ($post_content->{'type'}) {
       push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
