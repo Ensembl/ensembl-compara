@@ -60,7 +60,7 @@ sub new {
 sub make_sequence { # For IoC: override me if you want to
   my ($self,$set) = @_;
 
-  return EnsEMBL::Web::TextSequence::Sequence->new($set);
+  return EnsEMBL::Web::TextSequence::Sequence->new($self,$set);
 }
 
 

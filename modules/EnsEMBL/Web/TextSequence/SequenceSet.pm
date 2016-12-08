@@ -61,8 +61,11 @@ sub new_sequence {
   my ($self,$position) = @_;
 
   my $seq = $self->view->make_sequence($self);
-  if(($position||'') eq 'top') {
+  $position ||= '';
+  if($position eq 'top') {
     unshift @{$self->{'sequences'}},$seq;
+  } elsif($position eq 'nowhere') {
+    # nothing
   } else {
     push @{$self->{'sequences'}},$seq;
   }
