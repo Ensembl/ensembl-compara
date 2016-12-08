@@ -178,8 +178,6 @@ sub _get_ok_species {
   my $hub = $self->hub;
   my $ok_species;
 
-  ## Are we expecting to be able to match species names exactly? (Faster!)
-  my $exact_match = $self->hub->species_defs->multi_val('THR_HAS_SAME_NAMES');
   foreach my $species (@{$local_species||[]}) {
     my $sci_name        = $hub->species_defs->get_config($species, 'SPECIES_SCIENTIFIC_NAME');
     my $assembly_param  = $hub->species_defs->get_config($species, 'THR_ASSEMBLY_PARAM')
@@ -195,8 +193,8 @@ sub _get_ok_species {
         $ok_species->{$species} = {'assembly_param' => $key, 'assembly' => $assembly};
       }
     }
-    elsif (!$exact_match) {
-      ## We're not expecting to guarantee an exact match, so try everything else
+    else {
+      ## No exact match, so try everything else
       while (my ($sp_name, $info) = each (%$thr_species)) {
         my $found = 0;
         ($found, $key) = $self->_find_assembly($info, $assembly_param, $key, $assembly);;
