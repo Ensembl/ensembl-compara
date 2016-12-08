@@ -228,11 +228,15 @@ sub update_from_url {
 
     if ($shared_config && $shared_config->{'view_config_code'} eq $self->code) {
 
+      # check if share config belongs to the logged in user itself
+      my ($existing_config) = $hub->user->get_records_data({'type' => 'saved_config', 'code' => $shared_config_code});
+
       # check if a copy of config already exists
-      my $existing_config;
-      for (grep $_, $hub->session, $hub->user) {
-        ($existing_config) = $_->get_records_data({'type' => 'saved_config', 'copy' => $shared_config_code});
-        last if $existing_config;
+      if (!$existing_config) {
+        for (grep $_, $hub->session, $hub->user) {
+          ($existing_config) = $_->get_records_data({'type' => 'saved_config', 'copy' => $shared_config_code}) unless $existing_config;
+          last if $existing_config;
+        }
       }
 
       # create and save a new config if it doesn't exist already
