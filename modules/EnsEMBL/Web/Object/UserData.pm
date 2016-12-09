@@ -395,21 +395,89 @@ sub thr_search {
 
   my ($result, $error);
   my $endpoint = 'api/search';
-  my $post_content = {'query' => $hub->param('query')};
+  my $post_content = {'query' => $hub->param('query'), 'species' => $hub->param('species')};
 
   ## We have to rename this param within the webcode as it
   ## conflicts with one of ours
   $post_content->{'type'} = $hub->param('data_type');
 
   ## Search by either assembly or accession, depending on config
-  $hub->param('assembly') =~ /^([a-z]+):(.+)/;
-  $post_content->{$1} = $2;
+  my $key = $hub->param('assembly_key');
+  $key = 'assembly' if $key eq 'name';
+  $post_content->{$key} = $hub->param('assembly_id');
 
   my $args = {'method' => 'post', 'content' => $post_content};
   $args->{'url_params'} = $url_params if $url_params;
 
   my ($result, $error) =  $rest->fetch($endpoint, $args);
   return ($result, $post_content, $error);
+}
+
+sub thr_ok_species {
+### Check a roster of species against the ones in the THR
+  my ($self, $thr_species, $current_species) = @_;
+  my $hub = $self->hub;
+  my $ok_species;
+
+  my $sci_name        = $hub->species_defs->get_config($current_species, 'SPECIES_SCIENTIFIC_NAME');
+  my $assembly_param  = $hub->species_defs->get_config($current_species, 'THR_ASSEMBLY_PARAM')
+                            || 'ASSEMBLY_ACCESSION';
+  my $assembly        = $hub->species_defs->get_config($current_species, $assembly_param);
+  my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+
+  if ($thr_species->{$sci_name}) {
+    ## Check that we have the right assembly
+    my $found = 0;
+    ($found, $key) = $self->_find_assembly($thr_species->{$sci_name}, $assembly_param, $key, $assembly);
+    if ($found) {
+      $ok_species = {'thr_name' => $sci_name, 'assembly_key' => $key, 'assembly_id' => $assembly};
+    }
+  }
+  else {
+    ## No exact match, so try everything else
+    while (my ($sp_name, $info) = each (%$thr_species)) {
+      my $found = 0;
+      ($found, $key) = $self->_find_assembly($info, $assembly_param, $key, $assembly);;
+      if ($found) {
+        $ok_species = {'thr_name' => $sp_name, 'assembly_key' => $key, 'assembly_id' => $assembly};
+        last;
+      }
+    }
+  }
+  return $ok_species;
+}
+
+sub _find_assembly {
+  my ($self, $info, $assembly_param, $key, $assembly) = @_;
+  my $found = 0;
+
+  if ($assembly_param eq 'ASSEMBLY_ACCESSION') {
+    foreach (@$info) {
+      if ($_->{'accession'} eq $assembly) {
+        $found = 1;
+        last;
+      }
+    }
+  }
+  else {
+    ## Check name and synonyms
+    foreach (@$info) {
+      if ($_->{'name'} eq $assembly) {
+        $found = 1;
+      }
+      else {
+        foreach (@{$_->{'synonyms'}||[]}) {
+          if ($_ eq $assembly) {
+            $found = 1;
+            $key = 'synonyms';
+            last;
+          }
+        }
+      }
+      last if $found;
+    }
+  }
+  return ($found, $key);
 }
 
 1;
