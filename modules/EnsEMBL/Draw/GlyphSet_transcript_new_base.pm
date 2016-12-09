@@ -219,9 +219,16 @@ sub draw_collapsed_genes {
   my ($self, $length, $labels, $strand, $genes) = @_;
   return unless @$genes;
 
+  $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('collapsed', 1);
   $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('show_labels', 1) if $labels;
+  $self->{'my_config'}->set('moat', 2);
+
+  ## Set bumping strand
+  my $strand_flag = $self->my_config('strand');
+  my $bstrand = ($length, $strand_flag eq 'b') ? $strand : undef;
+  $self->{'my_config'}->set('bstrand', $bstrand);
 
   ## Filter by strand
   my $stranded_genes = [];

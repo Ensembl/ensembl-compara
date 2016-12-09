@@ -122,7 +122,7 @@ sub create_glyphs {
         $label_height = max($label_height, $text_info->{'height'});
       }
     }
-    mr_bump($self,\@features);
+    mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
 
     my $typical_label_height;
     $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
