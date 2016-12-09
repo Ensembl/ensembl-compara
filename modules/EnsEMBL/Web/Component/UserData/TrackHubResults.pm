@@ -110,8 +110,7 @@ sub content {
       }
 
       foreach (@{$result->{'items'}}) {
-        (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
-
+        my $species       = $hub->species;
         ## Is this hub already attached?
         my ($ignore, $params) = check_attachment($hub, $_->{'hub'}{'url'});
         my $button;
@@ -123,7 +122,6 @@ sub content {
           else {
             $label = 'Hub already attached';
           }
-          my $species       = $hub->species;
           my $location      = $hub->param('r');
           unless ($location) {
             my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
@@ -191,6 +189,8 @@ sub _pagination {
   ## Change type parameter back to something safe before using
   $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
   delete $args->{'url_params'}{'type'};
+  $args->{'url_params'}{'search_species'} = $args->{'url_params'}{'species'};
+  delete $args->{'url_params'}{'species'};
 
   for (my $page = 1; $page <= $no_of_pages; $page++) {
     my ($classes, $link);
