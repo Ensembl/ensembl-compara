@@ -54,6 +54,8 @@ no warnings 'uninitialized';
 use POSIX qw(ceil);
 use List::Util qw(max);
 
+use EnsEMBL::Draw::Utils::Bump qw(mr_bump);
+
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
@@ -120,7 +122,7 @@ sub create_glyphs {
         $label_height = max($label_height, $text_info->{'height'});
       }
     }
-    EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
+    mr_bump($self,\@features);
 
     my $typical_label_height;
     $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
