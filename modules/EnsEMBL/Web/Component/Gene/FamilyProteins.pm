@@ -143,6 +143,16 @@ sub content_ensembl {
   my $table     = $self->new_twocol;
   my $stable_id = $family->stable_id;
   my $desc      = $family->description;
+
+  if ($stable_id =~ /^(PTHR[0-9]*)/) {
+    # the above regexp captures Panther identifiers like PTHR11289_SF0
+    # but discard the sub-family because these may not be present in the
+    # current Panther release
+    $stable_id = sprintf '<a href="%s">%s</a>', $hub->get_ExtURL('PANTHERDB', $1) , $stable_id;
+  } elsif ($stable_id =~ /^MF_/) {
+    $stable_id = sprintf '<a href="%s">%s</a>', $hub->get_ExtURL('HAPMAP', $stable_id) , $stable_id;
+  }
+
   $table->add_row("$sitename Family ID",   $stable_id);
   $table->add_row('Description'        , $desc);
   $html .= $table->render;
