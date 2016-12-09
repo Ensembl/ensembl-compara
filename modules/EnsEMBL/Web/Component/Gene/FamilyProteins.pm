@@ -149,6 +149,8 @@ sub content_ensembl {
     # but discard the sub-family because these may not be present in the
     # current Panther release
     $stable_id = sprintf '<a href="%s">%s</a>', $hub->get_ExtURL('PANTHERDB', $1) , $stable_id;
+  } elsif ($stable_id =~ /^MF_/) {
+    $stable_id = sprintf '<a href="%s">%s</a>', $hub->get_ExtURL('HAPMAP', $stable_id) , $stable_id;
   }
 
   $table->add_row("$sitename Family ID",   $stable_id);
