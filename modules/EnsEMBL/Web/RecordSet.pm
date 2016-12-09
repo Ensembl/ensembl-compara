@@ -58,6 +58,8 @@ sub save {
 
 sub delete {
   ## Deletes all the records in the set
+  ## @note This should only be called via RecordManager->delete_records. If not, then RecordManager->has_changes(1) should be
+  ##       called after calling this, otherwise the it may not commit the MySQL transaction.
   my ($self, $args) = @_;
 
   return 0 unless $self->count;

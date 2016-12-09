@@ -302,7 +302,7 @@ sub _recordset_class {
 
 sub DESTROY {
   # just rollback if no changes were stored permanently
-  warn sprintf "%s: Data not saved - doing a rollback on transaction\n", ref $_[0];
+  warn sprintf "%s: Data not saved - doing a rollback on transaction\n", ref $_[0] if $_[0]->{'_db'};
   $_[0]->{'_db'}->rollback if $_[0]->{'_db'};
 }
 
