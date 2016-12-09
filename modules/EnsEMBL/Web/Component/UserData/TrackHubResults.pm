@@ -55,7 +55,7 @@ sub content {
   my $current_page      = $hub->param('page') || 1;
   my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page};
   
-  my ($result, $post_content, $error) = $self->object->thr_search($url_params);
+  my ($result, $error) = $self->object->thr_search($url_params);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
@@ -80,11 +80,11 @@ sub content {
     ## Reminder of search terms
     $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $hub->param('assembly_display');
     my @search_extras;
-    if ($post_content->{'type'}) {
-      push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
+    if ($hub->param('type')) {
+      push @search_extras, '"'.ucfirst($hub->param('type')).'"';
     }
-    if ($post_content->{'query'}) {
-      push @search_extras, '"'.$post_content->{'query'}.'"';
+    if ($hub->param('query')) {
+      push @search_extras, '"'.$hub->param('query').'"';
     }
     if (@search_extras) {
       $html .= ' for '.join(' AND ', @search_extras);
@@ -100,7 +100,6 @@ sub content {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
                                 'entries_per_page'  => $entries_per_page,
-                                'url_params'        => $post_content
                               };
 
       ## Generate the HTML once, because we delete parameters when creating it
@@ -176,21 +175,9 @@ sub _pagination {
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
   
   ## Set parameters that don't change 
-  my ($key, $assembly);
-  foreach ('assembly', 'accession') {
-    if ($args->{'url_params'}{$_}) {
-      $key = $_;
-      $assembly = $args->{'url_params'}{$_};
-    }
-    delete $args->{'url_params'}{$_};
+  foreach (qw(assembly_key assembly_id data_type thr_species)) {
+    $args->{'url_params'}{$_} = $self->hub->param($_);
   }
-  $args->{'url_params'}{'assembly_key'} = $key;
-  $args->{'url_params'}{'assembly_id'}  = $assembly;
-  ## Change type parameter back to something safe before using
-  $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
-  delete $args->{'url_params'}{'type'};
-  $args->{'url_params'}{'search_species'} = $args->{'url_params'}{'species'};
-  delete $args->{'url_params'}{'species'};
 
   for (my $page = 1; $page <= $no_of_pages; $page++) {
     my ($classes, $link);
