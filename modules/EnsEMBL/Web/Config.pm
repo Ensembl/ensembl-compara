@@ -153,6 +153,13 @@ sub save_user_settings {
   $settings->{'type'} = $self->config_type;
   $settings->{'code'} = $self->code;
 
+  # Remove any link to earlier saved setting
+  if ($settings->{'saved_from'}) { # saved_from key is not saved in the database, but is only set temporarily in the settings if settings are being saved
+    $settings->{'saved'} = delete $settings->{'saved_from'};
+  } else {
+    delete $settings->{'saved'};
+  }
+
   $hub->session->set_record_data(_rm_empty_vals($settings));
 
   return 1;
@@ -188,6 +195,22 @@ sub receive_shared_settings {
   $settings->{'type'} = $self->config_type;
 
   $self->hub->session->set_record_data(_rm_empty_vals($settings));
+}
+
+sub copy_from_existing {
+  ## Copies settings from an already saved config record
+  ## @param Record data of the existing 'saved_config' record
+  my ($self, $existing_record_data) = @_;
+
+  my $new_settings = $existing_record_data->{$self->config_type};
+
+  $new_settings->{'saved'}  = $existing_record_data->{'code'};
+  $new_settings->{'type'}   = $self->config_type;
+  $new_settings->{'code'}   = $self->code;
+
+  $self->hub->session->set_record_data($new_settings);
+
+  return 1;
 }
 
 sub altered {

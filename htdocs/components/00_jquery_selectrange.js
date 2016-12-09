@@ -18,14 +18,19 @@
 (function ($) {
   $.fn.selectRange = function(start, end) {
     return this.filter(':visible').each(function() {
+
+      var _start = typeof start === 'function' ? start.call(this) : start;
+      var _end = typeof end === 'function' ? end.call(this) : end;
+
       if (this.setSelectionRange) {
         this.focus();
-        this.setSelectionRange(start, end);
+        this.setSelectionRange(_start, _end);
+
       } else if (this.createTextRange) {
         var range = this.createTextRange();
         range.collapse(true);
-        range.moveEnd('character', end);
-        range.moveStart('character', start);
+        range.moveEnd('character', _end);
+        range.moveStart('character', _start);
         range.select();
       }
     }).end();

@@ -92,6 +92,7 @@ sub delete_param      { shift->input->delete(@_); }
 
 sub users_available         { 0 } # overridden in user plugin
 sub users_plugin_available  { 0 } # overridden in user plugin
+sub get_shared_config       { 0 } # overridden in user plugin
 
 sub object_types    { return $_[0]{'_object_types'} ||= { map { $_->[0] => $_->[1] } @{$_[0]->controller->object_params || []} }; }
 sub ordered_objects { return $_[0]{'_ordered_objs'} ||= [ map $_->[0], @{$_[0]->controller->object_params || []} ]; }
@@ -265,7 +266,23 @@ sub core_object {
   if($name eq 'parameters') { ## TODO - replace the usage with core_params method
     return $self->{'core_params'};
   }
-  return $self->{'builder'} ? $self->{'builder'}->object(ucfirst $name) : undef;
+
+  my $object;
+  if ($self->{'builder'}) {
+    $object = $self->{'builder'}->object(ucfirst $name); 
+  }
+  return $object;
+}
+
+sub create_object {
+  my $self = shift;
+  my $name = shift;
+
+  my $object;
+  if ($self->{'builder'}) {
+    $object = $self->{'builder'}->object(ucfirst $name) || $self->{'builder'}->create_object(ucfirst $name);
+  }
+  return $object;
 }
 
 sub set_core_params {

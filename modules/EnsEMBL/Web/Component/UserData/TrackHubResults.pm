@@ -78,7 +78,7 @@ sub content {
     $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     ## Reminder of search terms
-    $html .= sprintf '<p><b>Searched %s %s', $post_content->{'species'}, $post_content->{'assembly'};
+    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $hub->param('assembly_display');
     my @search_extras;
     if ($post_content->{'type'}) {
       push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
@@ -95,11 +95,7 @@ sub content {
 
     if ($count > 0) {
 
-      ## We want to pass the underscored version in the URL
-      (my $search_species = $post_content->{'species'}) =~ s/ /_/g;;
-      delete $post_content->{'species'};
-      $post_content->{'search_species'} = $search_species;
-
+      my $pagination;
       my $pagination_params = {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
@@ -107,8 +103,10 @@ sub content {
                                 'url_params'        => $post_content
                               };
 
+      ## Generate the HTML once, because we delete parameters when creating it
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $pagination = $self->_pagination($pagination_params);
+        $html .= $pagination;
       }
 
       foreach (@{$result->{'items'}}) {
@@ -163,7 +161,7 @@ sub content {
       }
       
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $html .= $pagination;
       }
 
     }
@@ -172,12 +170,28 @@ sub content {
 
 }
 
-sub _show_pagination {
+sub _pagination {
   my ($self, $args) = @_;
 
   my $no_of_pages = ceil($args->{'total_entries'}/$args->{'entries_per_page'});
 
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
+  
+  ## Set parameters that don't change 
+  my ($key, $assembly);
+  foreach ('assembly', 'accession') {
+    if ($args->{'url_params'}{$_}) {
+      $key = $_;
+      $assembly = $args->{'url_params'}{$_};
+    }
+    delete $args->{'url_params'}{$_};
+  }
+  $args->{'url_params'}{'assembly_key'} = $key;
+  $args->{'url_params'}{'assembly_id'}  = $assembly;
+  ## Change type parameter back to something safe before using
+  $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
+  delete $args->{'url_params'}{'type'};
+
   for (my $page = 1; $page <= $no_of_pages; $page++) {
     my ($classes, $link);
     if ($page == $args->{'current_page'}) {
@@ -195,9 +209,6 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
-      ## Change type parameter back to something safe before using
-      $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
-      delete $args->{'url_params'}{'type'};
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }

@@ -44,6 +44,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('updateSavedConfig',   this, this.updateSavedConfig);
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
     Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
+    Ensembl.EventManager.register('refreshConfigList',   this, this.refreshConfigList);
   },
   
   init: function () {
@@ -51,6 +52,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var track, type, group, i, j;
     
     this.base();
+
+    // move search to lhs
+    this.el.find('.configuration_search').prependTo(this.el.closest('.modal_content').find('.modal_nav').first());
+
 
     this.elLk.form              = $('form.configuration', this.el);
     this.elLk.headers           = $('h1', this.el);
@@ -76,7 +81,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.saveAsSubmit      = $('.fbutton', this.elLk.saveAs);
     this.elLk.popup             = $();
     this.elLk.help              = $();
-    
+
+    // new config sets stuff
+    this.elLk.configForm        = this.el.find('._config_settings');
+    this.elLk.configDropdown    = this.elLk.configForm.find('._config_dropdown');
+    this.elLk.configSelector    = this.elLk.configDropdown.find('select');
+    this.elLk.configSaveAsLink  = $('<a href="#" class="small left-margin"></a>').insertAfter(this.elLk.configSelector).hide().on('click', {panel: this}, function(e) { e.preventDefault(); e.data.panel.configSave(true); });
+    this.elLk.configSaveLink    = $('<a href="#" class="small left-margin"></a>').insertAfter(this.elLk.configSelector).hide().on('click', {panel: this}, function(e) { e.preventDefault(); e.data.panel.configSave(); });
+    this.elLk.configSaveInput   = this.elLk.configDropdown.find('div:has(input)').hide();
+
     this.component          = $('input.component', this.elLk.form).val();
     this.sortable           = !!this.elLk.trackOrder.length;
     this.lastQuery          = false;
@@ -196,7 +209,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var change  = $('#' + id);
 
       panel.hide();
-
       if (!change.length || !change.children().length || change.data('reload')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
@@ -212,7 +224,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       change = null;
     });
     
-    $('.save_configuration', this.el).on('click', function () {
+    $('.save_configuration', this.el).on('click', function (e) { // TODO - remove
+
+      e.preventDefault();
+      return;
+
+
       panel.elLk.saveAsInputs.each(function () {
         var el = $(this);
         
@@ -270,6 +287,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.getContent();
     this.el.externalLinks();
+    this.initConfigList();
   },
 
   initFromHash: function() {
@@ -417,6 +435,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     tracks = null;
+
+    this.configSettingChanged();
   },
   
   addTracks: function (type) {
@@ -823,22 +843,25 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         diff = true;
       }
     });
-    
+
     this.elLk.tracks.each(function () {
       var track   = $(this).data('track');
-      var favourite = !panel.imageConfig[track.id].favourite &&  track.fav ? 1 : // Making a track a favourite
-                       panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
-                       false;
-      
-      if (panel.imageConfig[track.id].renderer !== track.renderer) {
-        imageConfig[track.id] = { renderer: track.renderer };
-        diff = true;
-      }
-      
-      if (favourite !== false) {
-        imageConfig[track.id] = imageConfig[track.id] || {};
-        imageConfig[track.id].favourite = favourite;
-        diff = true;
+
+      if (track) {
+        var favourite = !panel.imageConfig[track.id].favourite &&  track.fav ? 1 : // Making a track a favourite
+                         panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
+                         false;
+        
+        if (panel.imageConfig[track.id].renderer !== track.renderer) {
+          imageConfig[track.id] = { renderer: track.renderer };
+          diff = true;
+        }
+        
+        if (favourite !== false) {
+          imageConfig[track.id] = imageConfig[track.id] || {};
+          imageConfig[track.id].favourite = favourite;
+          diff = true;
+        }
       }
     });
     
@@ -862,9 +885,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     if (diff === true || typeof saveAs !== 'undefined') {
+
+      if (saveAs === true) {
+        return { imageConfig: imageConfig, viewConfig: viewConfig };
+      }
+
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
-      
+
       this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
       
       return diff;
@@ -1212,9 +1240,205 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
 
   // Called when track order or configs are reset on the image
   externalReset: function() {
-    this.el.empty();
+    this.el.empty().removeClass('active');
   },
-  
+
+  // new save configurations stuff
+  initConfigList: function() {
+    this.elLk.configSelector.off().on('change', {panel: this}, function(e) {
+
+      var selector = $(this);
+      var selected = selector.val();
+
+      if (selected === 'current') {
+        return;
+      }
+
+      if (selector.find('option[value=current]').prop('disabled') || window.confirm('Your current configuration is unsaved and will be lost if you continue.')) {
+        if (selected === 'public') {
+          e.data.panel.openPublicConfigs();
+        } else {
+          selector.data('selected', selected);
+          e.data.panel.setConfig(selected);
+          return;
+        }
+      }
+
+      selector.find('option[value=' + selector.data('selected') + ']').prop('selected', true);
+    });
+
+    this.elLk.configSaveInput.last().append('<a class="left-margin" href="#">Cancel</a>').find('a').on('click', {panel: this}, function(e) {
+      e.preventDefault();
+      e.data.panel.elLk.configSaveInput.find('input').trigger('reset').end().hide();
+      e.data.panel.elLk.configSelector.parent().show();
+    }).end().end().first().find('input').on('keydown mousedown', function() { // clear the default value with the first keydown/mousedown
+      if (this.value === this.defaultValue) {
+        this.value = '';
+      }
+    });
+
+    this.elLk.configForm.on('submit', {panel: this, input: this.elLk.configSaveInput.find('input[type=text]')[0] }, function(e) {
+      e.preventDefault();
+      if (e.data.input.value === e.data.input.defaultValue) {
+        $(e.data.input).selectRange(0, e.data.input.defaultValue.length);
+      } else {
+        e.data.panel.configSave(true, e.data.input.value);
+      }
+    });
+
+    this.refreshConfigList();
+  },
+
+  refreshConfigList: function() {
+    this.elLk.configDropdown.removeClass('hidden').css('opacity', 0.5);
+    this.elLk.configSelector.parent().show();
+    this.elLk.configSaveLink.add(this.elLk.configSaveAsLink).hide();
+    this.elLk.configSaveInput.hide();
+
+    $.ajax({
+      url: this.params['config_selector_url'],
+      dataType: 'json',
+      context: this,
+      success: function(json) {
+
+        // reset selector
+        this.elLk.configSelector.empty().prop('disabled', false);
+
+        // add default option
+        this.elLk.configSelector.append('<option value="default">Default</option>');
+
+        // current unsaved
+        this.elLk.configSelector.append($('<option value="current">Current unsaved</option>').prop('disabled', json.selected !== 'current')
+          .on('select', {link: this.elLk.configSaveAsLink, selector: this.elLk.configSelector}, function(e) {
+            e.data.selector.data('selected', 'current');
+            this.disabled = false;
+            this.selected = true;
+            e.data.link.html('Save current configuration').show();
+          })
+          .on('unselect', {link: this.elLk.configSaveAsLink, selector: this.elLk.configSelector, persistent: json.selected === 'current'}, function(e) {
+            var prev = e.data.selector.data('selected');
+            e.data.selector.find('option[value=' + prev + ']').prop('selected', true);
+            if (!e.data.persistent) {
+              e.data.link.hide();
+              this.disabled = true;
+            }
+          })
+        );
+
+        // saved configs
+        if (json.configs && json.configs.length) {
+
+          this.elLk.configSelector.append($('<optgroup label="Saved configurations">').append($.map(json.configs, function(option) {
+            return $('<option value="' + option.value + '">' + option.name + '</option>');
+          })).find('option').on('select', {links: [this.elLk.configSaveLink, this.elLk.configSaveAsLink]}, function(e, initial) {
+            if (!initial) {
+              e.data.links[0].html('Save existing').show();
+              e.data.links[1].html('Create new').show();
+            }
+            this.selected = true;
+          }).on('unselect', {links: this.elLk.configSaveLink.add(this.elLk.configSaveAsLink)}, function(e, initial) {
+            e.data.links.hide();
+          }).end());
+        }
+
+        // public configs
+        // this.elLk.configSelector.append('<option value="public">Select from publically available configurations...</option>');
+
+        // selected config
+        this.elLk.configSelector.data('selected', json.selected).find('option[value=' + json.selected + ']').triggerHandler('select', true);
+
+      },
+      error: function() {
+        this.elLk.configSelector.empty().append('<option>Error</option>').prop('disabled', true);
+      },
+      complete: function() {
+        this.elLk.configDropdown.css('opacity', 1);
+      }
+    });
+  },
+
+  configSettingChanged: function() {
+    var changes = this.updateConfiguration(true, true);
+
+    // trigger select/unselect on selected option accordingly
+    this.elLk.configSelector.find(this.elLk.configSelector.val() === 'default' ? 'option[value=current]' : ':selected').trigger($.isEmptyObject(changes.imageConfig) && $.isEmptyObject(changes.viewConfig) ? 'unselect' : 'select');
+  },
+
+  configSave: function(isNew, configName) {
+    var changes = this.updateConfiguration(true, true);
+
+    if ($.isEmptyObject(changes.imageConfig) && $.isEmptyObject(changes.viewConfig) && this.elLk.configSelector.data('selected') !== 'current') {
+      return;
+    }
+
+    if (isNew) {
+      if (!configName) {
+        this.elLk.configSaveInput.show().first().find('input').val(function() { return this.defaultValue; }).selectRange(0, function() { return this.defaultValue.length; });
+        this.elLk.configSelector.parent().hide();
+        return;
+      } else {
+        changes.configName = configName;
+      }
+    } else {
+      changes.configId    = this.elLk.configSelector.val();
+      changes.configName  = this.elLk.configSelector.find('option:selected').html();
+    }
+
+    this.elLk.configSelector.empty().append('<option>Applying...</option>').prop('disabled', true);
+
+    $.ajax({
+      url: this.params['config_save_url'],
+      dataType: 'json',
+      method: 'post',
+      context: this,
+      data: {config: JSON.stringify(changes)},
+      success: function(json) {
+        if (json.updated) {
+          this.refreshConfigList();
+          Ensembl.EventManager.trigger('queuePageReload', this.component, false, true);
+        } else {
+          this.showError('Error: Configuration settings could not be saved.');
+        }
+      },
+      error: function() {
+        this.showError('Error: Configuration settings could not be saved.');
+      },
+      complete: function() {
+        this.elLk.configSelector.prop('disabled', false);
+      }
+    });
+  },
+
+  openPublicConfigs: function() { // TODO
+  },
+
+  setConfig: function(configName) {
+
+    $.ajax({
+      url: this.params['config_apply_url'],
+      dataType: 'json',
+      context: this,
+      data: {apply: configName},
+      success: function(json) {
+        if (json.updated) {
+          this.elLk.configSelector.empty().append('<option>Applying...</option>').prop('disabled', true);
+          this.elLk.configSaveLink.add(this.elLk.configSaveAsLink).remove();
+          Ensembl.redirect();
+        }
+        else {
+          this.showError('Error: Configuration settings could not be applied.');
+        }
+      },
+      error: function() {
+        this.showError('Error: Configuration settings could not be applied.');
+      }
+    });
+  },
+
+  showError: function(message) {
+    alert(message);
+  },
+
   destructor: function () {
     this.imageConfig = this.searchCache = this.tracks = null;
     this.base.apply(this, arguments);

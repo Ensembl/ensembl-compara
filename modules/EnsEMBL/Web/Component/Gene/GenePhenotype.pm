@@ -105,7 +105,6 @@ sub gene_phenotypes {
              }),
         );
         # display one row for phenotype associated with male and female strain
-        my $pf_id = $pf->id;
         my $key = join("\t", ($phen, $strain_name, $allele_symbol));
         $features->{$key}->{source} = $source;
         push @{$features->{$key}->{gender}}, $strain_gender;

@@ -456,8 +456,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
 
       if (this.multi === false && !this.align) {
-        var no_bases  =  ' (' + (end - start + 1) + ' bp)';
-        menu.unshift('<a class="_location_mark loc-icon-a" href="' +  '"><span class="loc-icon loc-mark"></span>Mark region' + no_bases + '</a>');
+        menu.unshift('<a class="_location_mark loc-icon-a" href="' + Ensembl.updateURL({mr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span class="loc-icon loc-mark"></span>Mark region (' + (end - start + 1) + ' bp)</a>');
       }
 
     } else { // Point select

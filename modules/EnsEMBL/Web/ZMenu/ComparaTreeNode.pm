@@ -368,7 +368,8 @@ sub content {
     if ($hub->referer->{ENSEMBL_ACTION} ne 'Strain_Compara_Tree') {
 
       # Get wasabi files if found in session store
-      my $gt_id               = $node->tree->stable_id;
+      my $is_strain = $hub->species_defs->IS_STRAIN_OF ? 1 : 0;
+      my $gt_id               = $is_strain ? $gene->stable_id : $node->tree->stable_id;
       my $wasabi_session_key  = $gt_id . "_" . $node_id;
       my $wasabi_session_data = $hub->session->get_data(type=>'tree_files', code => 'wasabi');
 
@@ -379,7 +380,7 @@ sub content {
         # Create wasabi url to load from their end
         $link = sprintf (
                           '/wasabi/wasabi.htm?tree=%s',
-                          uri_escape($hub->species_defs->ENSEMBL_PROTOCOL . '://' . $hub->species_defs->ENSEMBL_SERVERNAME . $tree_file)
+                          uri_escape($object->species_defs->ENSEMBL_BASE_URL . $tree_file)
                         );
       }
       else {
@@ -391,9 +392,11 @@ sub content {
 
         my $is_success = head($rest_url);
         if ($is_success) {
-          $rest_url .= sprintf('/genetree/id/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s',
-                       $gt_id,
-                       $node_id);
+          $rest_url .= sprintf('/genetree/%sid/%s?content-type=text/javascript&aligned=1&subtree_node_id=%s&%s',
+                        $is_strain ? 'member/' : '',
+                        $gt_id,
+                        $node_id,
+                        $is_strain ? 'clusterset_id=murinae' : '');
 
           if ($hub->wasabi_status) {
             $link = $hub->get_ExtURL('WASABI_ENSEMBL', {

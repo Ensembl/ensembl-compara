@@ -276,6 +276,7 @@ sub fixup_regulatory_feature {
     my $data = $self->data;
     my $ad = $self->source('Adaptors');
     if($data->{$key}) {
+      my $old = $data->{$key};
       $data->{$key} = $ad->regulatoryfeature_by_stableid($data->{$sk},$data->{$tk},$data->{$key});
     }
   }
@@ -299,15 +300,16 @@ sub fixup_epigenome {
 sub fixup_loci {
   my ($self,$key,$fk) = @_;
 
+  my $args = $self->args;
   if($self->phase eq 'post_generate') {
-    my $args = $self->args;
+    return unless defined $args->{$fk};
     my $data = $self->data;
     my $offset = $args->{$fk}->slice->start-1;
     foreach my $d (@$data) {
       $d->{$key} += $offset;
     }
   } elsif($self->phase eq 'post_process') {
-    my $args = $self->args;
+    return unless defined $args->{$fk};
     my $data = $self->data;
     my $offset = $args->{$fk}->slice->start-1;
     foreach my $d (@$data) {
@@ -362,6 +364,24 @@ sub loop_genome {
     push @out,\%out;
   }
   $self->get_defaults($args->{'species'},'core','MultiBottom');
+  return \@out;
+}
+
+sub loop_regulatoryfeature {
+  my ($self,$args,$subpart) = @_;
+
+  my @out;
+  my $rfa = $self->source('Adaptors')->
+              regulatory_feature_adaptor($args->{'species'},$args->{'type'});
+  my $all = $rfa->fetch_all;
+  foreach my $r (@$all) {
+    next if ($subpart->{'feature'}||$r->stable_id) ne $r->stable_id;
+    next unless $r->stable_id;
+    my %out = %$args;
+    $out{'feature'} = $r->stable_id;
+    $out{'__name'} = $r->stable_id;
+    push @out,\%out;
+  }
   return \@out;
 }
 

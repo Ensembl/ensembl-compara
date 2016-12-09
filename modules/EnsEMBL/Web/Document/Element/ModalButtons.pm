@@ -48,18 +48,8 @@ sub init {
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->get_parameter('multi_species') && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
 
     $self->add_entry({
-      caption => 'Save configuration as...',
-      class   => 'save_configuration',
-      url     => $hub->url({
-        type    => 'UserData',
-        action  => 'SaveConfig',
-        __clear => 1 
-      })
-    });
-    
-    $self->add_entry({
-      caption => 'Load configuration',
-      class   => 'modal_link',
+      caption => 'Manage configurations',
+      class   => 'modal_link config-manage',
       rel     => 'modal_user_data',
       url     => $hub->url({
         type    => 'UserData',
@@ -67,7 +57,7 @@ sub init {
         __clear => 1 
       })
     });
-    
+
     $self->add_entry({
       caption => 'Reset configuration',
       class   => 'modal_link',

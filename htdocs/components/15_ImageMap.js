@@ -59,6 +59,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base();
     
     this.imageConfig        = $('input.image_config', this.el).val();
+    this.viewConfig         = $('input.view_config', this.el).val();
     this.lastImage          = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
     this.hashChangeReload   = this.lastImage || $('.hash_change_reload', this.el).length;
     this.zMenus             = {};
@@ -174,12 +175,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         url: this.href,
         type: 'post',
         success: function() {
-          Ensembl.EventManager.triggerSpecific('resetConfig', 'modal_config_' + this.id.toLowerCase());
+          Ensembl.EventManager.trigger('resetConfig');
           Ensembl.EventManager.trigger('resetMessage');
           this.getContent();
         },
         data: {
-          image_config: panel.imageConfig
+          image_config: panel.imageConfig,
+          view_config: panel.viewConfig
         }
       });
     });

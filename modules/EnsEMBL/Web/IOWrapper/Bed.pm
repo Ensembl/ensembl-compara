@@ -174,7 +174,6 @@ sub create_hash {
     $feature->{'start'}         = $start;
     $feature->{'end'}           = $end;
     $feature->{'structure'}     = $self->create_structure($feature_start, $feature_end, $slice->start);
-    my $struct = $feature->{'structure'};
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
     if ($column_map->{'name2'}) {
@@ -247,7 +246,7 @@ sub create_structure {
           $block->{'non_coding'} = 1; 
         }
         elsif ($has_utr5) {
-          $block->{'utr_5'} = $thick_start - $start;
+          $block->{'utr_5'} = $thick_start;
         }
       }
       elsif ($thick_end && $thick_end < $end) { ## 3' UTR
@@ -255,7 +254,7 @@ sub create_structure {
           $block->{'non_coding'} = 1; 
         }
         elsif ($has_utr3) {
-          $block->{'utr_3'} = $thick_end - $start;
+          $block->{'utr_3'} = $thick_end; 
         }
       }
     }

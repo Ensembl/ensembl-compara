@@ -27,6 +27,13 @@ our $VERSION = 1;
 
 sub precache {
   return {
+    'rfunder-all' => {
+      loop => ['species','regulatoryfeature'],
+      args => {
+        epigenome => '',
+        type => 'funcgen'
+      }
+    }
   };
 }
 
@@ -42,6 +49,7 @@ sub fixup {
 sub get {
   my ($self,$args) = @_;
 
+  return [] unless defined $args->{'feature'};
   my $out = $args->{'feature'}->get_underlying_structure($args->{'epigenome'});
   return [ map { +{ locus => $_ } } @{$out} ];
 }

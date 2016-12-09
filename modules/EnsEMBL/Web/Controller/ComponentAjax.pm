@@ -44,8 +44,9 @@ sub render_page {
   } catch {
     $res = { 'failed' => $_->message };
   };
-
-  printf to_json($res || {});
+  # May actually be a string (CSV), not JSON
+  $res = to_json($res) if ref $res;
+  print $res;
 }
 
 sub ajax_enstab {
@@ -54,7 +55,7 @@ sub ajax_enstab {
   my $callback  = EnsEMBL::Web::NewTable::Callback->new($self->hub, $component);
   my $out       = $callback->go();
 
-  return $out if ref $out;
+  return $out;
 }
 
 1;

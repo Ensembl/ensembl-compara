@@ -280,7 +280,7 @@ sub get_alt_allele_link {
 sub count_alignments {
   my $self       = shift;
   my $cdb        = shift || 'DATABASE_COMPARA';
-  my $species    = $self->species;
+  my $species    = ucfirst($self->species_defs->get_config($self->species,"SPECIES_PRODUCTION_NAME"));
   my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
   my $c          = { all => 0, pairwise => 0, multi => 0 };
 
