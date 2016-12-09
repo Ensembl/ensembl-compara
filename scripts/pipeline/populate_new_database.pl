@@ -307,9 +307,9 @@ if($only_show_intentions) {
 update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
-copy_table($master_dba, $new_dba, "ncbi_taxa_node");
-copy_table($master_dba, $new_dba, "ncbi_taxa_name");
-copy_table($master_dba, $new_dba, "method_link");
+copy_table($master_dba->dbc, $new_dba->dbc, "ncbi_taxa_node");
+copy_table($master_dba->dbc, $new_dba->dbc, "ncbi_taxa_name");
+copy_table($master_dba->dbc, $new_dba->dbc, "method_link");
 
 ## Store all the genome_dbs in the new DB
 store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
@@ -330,7 +330,7 @@ copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $MT_only);
 
 if ($old_dba and !$skip_data) {
 ## Copy all the stable ID mapping entries
-  copy_table($old_dba, $new_dba, "stable_id_history");
+  copy_table($old_dba->dbc, $new_dba->dbc, "stable_id_history");
 ## Copy all the MethodLinkSpeciesSetTags for MethodLinkSpeciesSets
   copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy all the SpecieTree entries
@@ -610,10 +610,10 @@ sub copy_all_dnafrags {
 
   foreach my $this_genome_db (@$genome_dbs) {
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
-    my $nrows = copy_table($from_dba, $to_dba, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''));
+    my $nrows = copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($MT_only ? ' AND name = "MT"' : ''));
     if ($MT_only && !$nrows) {
         #If getting just MT fails, get all the dnafrags to catch cases where the mitochondrion is not called MT
-        copy_table($from_dba, $to_dba, 'dnafrag', $constraint);
+        copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint);
     }
   }
 }
@@ -635,7 +635,7 @@ sub copy_all_mlss_tags {
 
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
-    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "method_link_species_set_id = ".($this_mlss->dbID));
+    copy_table($from_dba->dbc, $to_dba->dbc, 'method_link_species_set_tag', "method_link_species_set_id = ".($this_mlss->dbID));
   }
 }
 
@@ -659,10 +659,10 @@ sub copy_all_species_tres {
   foreach my $this_mlss (@$mlsss) {
     next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
-    copy_table($from_dba, $to_dba, 'species_tree_root', $mlss_filter);
-    copy_data($from_dba, $to_dba, 'species_tree_node', "SELECT species_tree_node.* FROM species_tree_node JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
-    copy_data($from_dba, $to_dba, 'species_tree_node_tag', "SELECT species_tree_node_tag.* FROM species_tree_node_tag JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
-    copy_data($from_dba, $to_dba, 'species_tree_node_attr', "SELECT species_tree_node_attr.* FROM species_tree_node_attr JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_table($from_dba->dbc, $to_dba->dbc, 'species_tree_root', $mlss_filter);
+    copy_data($from_dba->dbc, $to_dba, 'species_tree_node', "SELECT species_tree_node.* FROM species_tree_node JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba->dbc, $to_dba, 'species_tree_node_tag', "SELECT species_tree_node_tag.* FROM species_tree_node_tag JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba->dbc, $to_dba, 'species_tree_node_attr', "SELECT species_tree_node_attr.* FROM species_tree_node_attr JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
   }
 }
 
@@ -770,8 +770,8 @@ sub copy_synteny_data {
   foreach my $this_mlss (@$method_link_species_sets) {
     next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
-    copy_table($old_dba, $new_dba, 'synteny_region', $mlss_filter);
-    copy_data($old_dba, $new_dba, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'synteny_region', $mlss_filter);
+    copy_data($old_dba->dbc, $new_dba->dbc, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter");
   }
 }
 
