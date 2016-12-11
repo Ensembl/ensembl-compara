@@ -94,8 +94,8 @@ our %PLAIN_TEXT_DESCRIPTIONS = (
       homoeolog_one2many        => '1-to-many homoeologues',
       homoeolog_many2many       => 'many-to-many homoeologues',
 
-      within_species_paralog    => 'Paralogues (same species)',
-      other_paralog             => 'Ancient paralogues (same species)',
+      within_species_paralog    => 'Paralogues',
+      other_paralog             => 'Ancient paralogues',
       between_species_paralog   => 'Paralogues (different species)',
 
       gene_split                => 'Split genes',
