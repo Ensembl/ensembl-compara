@@ -380,7 +380,6 @@ sub collapsed_nodes {
   my $action                 = shift;
   my $highlight_genome_db_id = shift;
   my $highlight_gene         = shift;
-  return unless $node;
   
   die "Need a GeneTreeNode, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode');
   die "Need an GeneTreeMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
@@ -390,6 +389,7 @@ sub collapsed_nodes {
   
   # View current gene
   if ($action eq 'gene') {
+    return unless $node;
     $collapsed_nodes{$_->node_id} = $_ for @{$node->get_all_adjacent_subtrees};
     
     if ($highlight_gene) {
@@ -405,6 +405,7 @@ sub collapsed_nodes {
       }
     }
   } elsif ($action eq 'paralogs') { # View all paralogs
+    return unless $node;
     my $gdb_id = $node->genome_db_id;
     
     foreach my $leaf (@{$tree->get_all_leaves}) {
@@ -427,7 +428,7 @@ sub collapsed_nodes {
     }
   } elsif ($action =~ /rank_(\w+)/) {
     my $asked_rank = $1;
-    my @rank_order = qw(subspecies species subgenus genus subfamily family superfamily parvorder infraorder suborder order superorder infraclass subclass class superclass subphylum phylum superphylum subkingdom kingdom);
+    my @rank_order = qw(subspecies species subgenus genus subfamily family superfamily parvorder infraorder suborder order superorder infraclass subclass class superclass subphylum phylum superphylum subkingdom kingdom superkingdom);
     my %rank_pos = map {$rank_order[$_] => $_} 0..(scalar(@rank_order)-1);
     my @nodes_to_check = ($tree);
     while (@nodes_to_check) {
@@ -449,6 +450,7 @@ sub collapsed_nodes {
       } else {
         $this_rank = $rank_pos{$this_rank};
       }
+      $this_rank = scalar(@rank_order) unless defined $this_rank;
       if ($this_rank <= $rank_pos{$asked_rank}) {
         $collapsed_nodes{$internal_node->node_id} = $internal_node;
       } else {
