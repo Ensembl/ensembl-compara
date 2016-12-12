@@ -124,7 +124,7 @@ sub create_glyphs {
     }
     mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
 
-    my $typical_label_height;
+    my ($typical_label_height, $label_lines);
     $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
     ## SECOND LOOP - draw features
     foreach my $feature (@features) {
@@ -158,9 +158,11 @@ sub create_glyphs {
       }
 
       my $labels_height   = $label_row * $label_height;
+      ## Is it a multi-line label?
+      $label_lines = split("\n", $feature->{'label'});
       ## Only "ordinary" bumping requires adding the label to the feature height
-      my $add_labels      = ($bumped && $bumped eq '1') ? $labels_height : 0;
-      my $y               = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
+      my $space_for_labels  = ($bumped && $bumped eq '1') ? $labels_height * $label_lines : 0;
+      my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $space_for_labels;
 
       my $position  = {
                       'y'           => $y,
@@ -173,8 +175,8 @@ sub create_glyphs {
       $self->draw_feature($feature, $position);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
-      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
-    
+      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $space_for_labels);
+
       ## Optional label(s)
       my $font_size     = $self->{'font_size'};
 
