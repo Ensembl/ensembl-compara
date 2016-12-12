@@ -38,6 +38,13 @@ sub draw_join {
     $params{'height'} = 0;
     push @{$self->glyphs}, $self->Line(\%params);
   }
+  elsif ($params{'x'} == 0 || ($params{'x'} + $params{'width'} >= $self->image_config->container_width)) {
+    ## Join goes off edge of image, so draw a horizontal dotted line
+    $params{'y'} += $params{'height'}/2;
+    $params{'height'} = 0;
+    $params{'dotted'} = 1;
+    push @{$self->glyphs}, $self->Line(\%params);
+  }
   else {
     push @{$self->glyphs}, $self->Intron(\%params);
   }
