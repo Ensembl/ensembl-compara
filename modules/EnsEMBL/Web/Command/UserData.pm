@@ -70,18 +70,17 @@ sub upload {
     ## Get description from file and save to session
     my $description = $iow->get_metadata_value('description');
     if ($description) {
-      if ($hub->user) {
-        my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
-        if ($record) {
-          $record->data->{'description'} = $description;
-          $record->save('user' => $hub->user);
-        }
+
+      my ($record_owner, $data);
+      for (grep $_, $hub->user, $hub->session) {
+        $data = $_->get_record_data({'type' => 'upload', 'code' => $file->code});
+        $record_owner = $_ and last if keys %$data;
       }
-      else {
-        my $data = $hub->session->get_record_data({'type' => 'upload', 'code' => $file->code});
-        $data->{'description'} = $description if keys %$data;
-        $hub->session->set_record_data($data);
-      }
+
+      $data = {'type' => 'upload', 'code' => $file->code} unless keys %{$data || {}};
+      $data->{'description'} = $description;
+
+      ($record_owner || $hub->user || $hub->session)->set_record_data($data);
     }
 
     ## Look for the nearest feature
