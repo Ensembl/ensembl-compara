@@ -68,8 +68,45 @@ sub minmax { return max(min($_[0],$_[2]),$_[1]); }
 #   }]
 
 ##########################################################
-# UTILITIES USED IN ALL STYLES                           #
+# UTILITIES USED IN MULTIPLE STYLES                      #
 ##########################################################
+
+sub _set_bump_strand {
+  my ($self, $length, $strand) = @_;
+
+  my $strand_flag = $self->my_config('strand');
+  my $bstrand = ($length, $strand_flag eq 'b') ? $strand : undef;
+  $self->{'my_config'}->set('bstrand', $bstrand);
+}
+
+
+sub _create_exon_structure {
+  my ($self, $f) = @_;
+  my $structure = [];
+
+  foreach my $e (@{$f->{'exons'}}) {
+    warn Dumper($e);
+    my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
+    if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
+      ## Use direction of drawing, not direction of transcript
+      my ($coding_start, $coding_end) = $e->{'strand'} == -1  
+                                        ? ($e->{'coding_end'}, $e->{'coding_start'}) 
+                                        : ($e->{'coding_start'}, $e->{'coding_end'});
+      if ($coding_start > 0) {
+        $exon->{'utr_5'} = $e->{'start'} + $coding_start;
+      }
+      if ($coding_end < ($e->{'end'} - $e->{'start'})) {
+        $exon->{'utr_3'} = $e->{'end'} - $coding_end;
+      }
+    }
+    else {
+      $exon->{'non_coding'} = 1;
+    }
+    push @$structure, $exon;
+  }
+  $f->{'structure'} = $structure;
+  return 1;
+}
 
 # joining genes (compara views)
 
@@ -127,6 +164,8 @@ sub _make_legend {
   };
 }
 
+######## LEGACY METHODS ############
+
 # labels
 
 sub text_details {
@@ -177,6 +216,8 @@ sub _label_height {
   return $rows * $self->text_details('X_g')->{'height'};
 }
 
+######### END LEGACY METHODS
+
 sub draw_collapsed_genes {
   my ($self, $length, $labels, $strand, $genes) = @_;
   return unless @$genes;
@@ -187,10 +228,7 @@ sub draw_collapsed_genes {
   $self->{'my_config'}->set('show_labels', 1) if $labels;
   $self->{'my_config'}->set('moat', 2);
 
-  ## Set bumping strand
-  my $strand_flag = $self->my_config('strand');
-  my $bstrand = ($length, $strand_flag eq 'b') ? $strand : undef;
-  $self->{'my_config'}->set('bstrand', $bstrand);
+  $self->_set_bump_strand($length, $strand);
 
   ## Filter by strand
   my $stranded_genes = [];
@@ -214,17 +252,6 @@ sub draw_collapsed_genes {
   return 0;
 }
 
-
-sub _create_exon_structure {
-  my ($self, $g) = @_;
-  my $structure = [];
-
-  foreach my $e (@{$g->{'exons'}}) {
-    push @$structure, {'start' => $e->{'start'}, 'end' => $e->{'end'}};
-  }
-  $g->{'structure'} = $structure;
-  return 1;
-}
 
 #########################################################
 # USED IN EXPANDED STYLE                                #
@@ -357,9 +384,44 @@ sub _draw_grey_arrow {
 }
 
 sub draw_expanded_transcripts {
-  my ($self,$length,$draw_labels,$strand,$tdraw) = @_;
+  my ($self, $length, $labels, $strand, $transcripts) = @_;
 
-  return unless @$tdraw;
+  return unless @{$transcripts||{}};
+
+  my $target = $self->get_parameter('single_Transcript');
+  my $h = $self->my_config('height') || ($target ? 30 : 8);
+  $self->{'my_config'}->set('height', $h);
+  $self->{'my_config'}->set('bumped', 1);
+  my $v = $labels ? 20 : 30;
+  $self->{'my_config'}->set('vspacing', $v);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+
+  $self->_set_bump_strand($length, $strand);
+
+  ## Filter by strand
+  my $stranded = [];
+  my $strand_flag = $self->my_config('strand'); 
+  foreach my $t (@$transcripts) {
+    next if $strand != $t->{'strand'} and $strand_flag eq 'b';
+    warn "@@@ TRANSCRIPT ".$t->{'label'};
+    $t->{'colour'} = $self->my_colour($t->{'colour_key'});
+    $self->_create_exon_structure($t);
+    push @$stranded, $t;
+  }
+  my $data = [{'features' => $stranded}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  $self->_make_legend($transcripts, $self->my_config('name'));
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
+=pod
   my $strand_flag = $self->my_config('strand');
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
   $self->mr_bump($tdraw,$draw_labels,$length,$bstrand,2);
@@ -393,106 +455,38 @@ sub draw_expanded_transcripts {
   }
   $self->_make_legend($tdraw,$self->type);
 }
-
-########################################################
-# USED IN "rect" STYLE                                 #
-########################################################
-    
-sub _draw_rect_gene {
-  my ($self,$g,$length) = @_;
-
-  my $pix_per_bp = $self->scalex;
-
-  my $start = minmax($g->{'start'},1,$length);
-  my $end = minmax($g->{'end'},1,$length);
-  return if $end < 1 or $start > $length;
-
-  my @rects;
-  my $rect = $self->Rect({
-    x => $start-1,
-    y => 0,
-    width => $end-$start+1,
-    height => 4,
-    colour => $self->my_colour($g->{'colour_key'}),
-    absolutey => 1,
-    href => $g->{'href'},
-    title => $g->{'title'},
-  });
-  push @rects,$rect;
-  $self->push($rect);
-  if($g->{'highlight'}) {
-    my $halo = $self->Rect({
-      x         => ($start-1) - 1/$pix_per_bp,
-      y         => -1,
-      width     => ($end-$start+1) + 2/$pix_per_bp,
-      height    => 6,
-      colour    => $g->{'highlight'},
-      absolutey => 1
-    });
-    $self->unshift($halo);
-    push @rects,$halo;
-  }
-  $self->_draw_join($rect,$_) for(@{$g->{'joins'}||[]});
-  return \@rects;
-}
-
-sub _draw_bookend {
-  my ($self,$composite,$g) = @_;
-
-  my $pix_per_bp = $self->scalex;
-  $composite->push(
-    $self->Rect({
-      x         => $g->{'_bstart'}+8,
-      y         => 4,
-      width     => 0,
-      height    => 4,
-      colour    => $self->my_colour($g->{'colour_key'}),
-      absolutey => 1
-    }),
-    $self->Rect({
-      x         => $g->{'_bstart'}+8,
-      y         => 8,
-      width     => 3/$pix_per_bp,
-      height    => 0,
-      colour    => $self->my_colour($g->{'colour_key'}),
-      absolutey => 1
-    })
-  );
-}
+=cut
 
 sub draw_rect_genes {
-  my ($self,$ggdraw,$length,$draw_labels,$strand) = @_;
+  my ($self, $genes, $length, $labels, $strand) = @_;
 
+  return unless @$genes;
+
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('height', 4);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+
+  $self->_set_bump_strand($length, $strand);
+
+  ## Filter by strand
+  my $stranded_genes = [];
   my $strand_flag = $self->my_config('strand');
-  my $pix_per_bp = $self->scalex;
-  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  my $rects_rows = $self->mr_bump($ggdraw,0,$length,$bstrand,2);
-  foreach my $g (@$ggdraw) {
+  foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    my $rects = $self->_draw_rect_gene($g,$length);
-    $_->y($_->y + (6*$g->{'_bump'})) for @$rects;
-  } 
-  if($draw_labels) {
-    $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
-    $self->mr_bump($ggdraw,2,$length,$bstrand,2); # Try again
-
-    foreach my $g (@$ggdraw) {
-      next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-      my $composite = $self->Composite({
-        y => 0,
-        x => $g->{'_bstart'},
-        width => $g->{'_lwidth'},
-        absolutey => 1,
-        colour => $g->{'highlight'},
-      });
-      $self->_add_label($composite,$g);
-      $composite->x($composite->x+8/$pix_per_bp);
-      $self->_draw_bookend($composite,$g);
-      $composite->y($g->{'_lheight'}*$g->{'_bump'}+($rects_rows*6));
-      $self->push($composite);
-    }
+    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    push @$stranded_genes, $g;
   }
-  $self->_make_legend($ggdraw,$self->type);
+  my $data = [{'features' => $stranded_genes}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  $self->_make_legend($genes,$self->my_config('name'));
+
+  ## Everything went OK, so no error to return
+  return 0;
 }
 
 1;
