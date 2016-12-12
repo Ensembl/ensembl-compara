@@ -167,10 +167,12 @@ sub md_save_remote {
 
 sub md_delete_upload {
 ### Delete file and session/user record for an uploaded file
-  my ($self, @args) = @_;
-  my $hub  = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-  my $rel_path = $self->_delete_record('upload', @args);
+  my ($source, $code, $id) = @_ ? @_ : ($hub->param('source'), reverse split('-', $hub->param('id') || ''));
+
+  my $rel_path = $self->_delete_record('upload', $source, $code, $id);
   if ($rel_path) {
     ## Also remove file
     my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
@@ -184,8 +186,12 @@ sub md_delete_upload {
 
 sub md_delete_remote {
 ### Delete record for an attached file
-  my ($self, @args) = @_;
-  $self->_delete_record('url', @args);
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my ($source, $code, $id) = @_ ? @_ : ($hub->param('source'), reverse split('-', $hub->param('id') || ''));
+
+  $self->_delete_record('url', $source, $code, $id);
   return undef;
 }
 
@@ -292,7 +298,7 @@ sub _delete_record {
   foreach my $record_manager (grep $_, $hub->user, $hub->session) {
     my $data = $record_manager->get_record_data({'type' => $type, 'code' => $code});
 
-    if (keys %$data) {
+    if (keys %$data && $data->{'record_id'} == $id) {
       $file = $data->{'shared'} ? undef : $data->{'file'};
       $record_manager->delete_records({'type' => $type, 'code' => $code}); # delete record
       last;
