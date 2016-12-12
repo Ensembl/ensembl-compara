@@ -126,9 +126,13 @@ sub draw_expanded_transcripts {
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   $self->{'my_config'}->set('height', $h);
   $self->{'my_config'}->set('bumped', 1);
-  my $v = $labels ? 20 : 30;
-  $self->{'my_config'}->set('vspacing', $v);
-  $self->{'my_config'}->set('show_labels', 1) if $labels;
+  if ($labels) {
+    $self->{'my_config'}->set('show_labels', 1);
+  }
+  else {
+    ## Artificial spacing to mimic layout with labels
+    $self->{'my_config'}->set('vspacing', 30);
+  }
 
   $self->_set_bump_strand($length, $strand);
 
