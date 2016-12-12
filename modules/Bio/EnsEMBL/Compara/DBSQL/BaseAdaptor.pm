@@ -647,7 +647,7 @@ sub generic_update {
     my @columns_where = keys %$col_to_values_where;
     my $sql = sprintf('UPDATE %s SET %s WHERE %s', $table, join(', ', map {$_.'=?'} @columns_update), join(' AND ', map {$_.'=?'} @columns_where));
     my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-    my $rc = $sth->execute(map {$col_to_values_update->{$_}} @columns_update, map {$col_to_values_where->{$_}} @columns_where);
+    my $rc = $sth->execute((map {$col_to_values_update->{$_}} @columns_update), (map {$col_to_values_where->{$_}} @columns_where));
     $sth->finish;
     return $rc;
 }
