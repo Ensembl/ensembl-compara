@@ -158,6 +158,7 @@ sub default_options {
         'fasttree_mp_exe'           => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
+        'hmm_library_basedir'      => '/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -280,6 +281,7 @@ sub resource_classes {
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          '512Gb_job'     => {'LSF' => '-q production-rh6 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
 
+         '8Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"' },
          '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
          '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
