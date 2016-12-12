@@ -169,44 +169,6 @@ sub _add_label {
 }
 
 
-#############################################################
-# USED IN "COLLAPSED" STYLE                                 #
-#############################################################
-
-sub _draw_collapsed_gene_base {
-  my ($self,$composite2,$length,$gene) = @_;    
-
-  my $start = minmax($gene->{'start'},1,$length);
-  my $end   = minmax($gene->{'end'},1,$length);
-  return if $end < 1 or $start > $length;
-
-  $composite2->push($self->Rect({
-    x         => $start, 
-    y         => 4,
-    width     => $end - $start + 1,
-    height    => 0.4, 
-    colour    => $self->my_colour($gene->{'colour_key'}), 
-    absolutey => 1
-  }));
-}
-
-sub _draw_collapsed_exon {
-  my ($self,$composite2,$length,$gene,$exon) = @_;
-
-  my $s = minmax($exon->{'start'},1,$length);
-  my $e = minmax($exon->{'end'},1,$length);
-  return if $e < 1 or $s > $length;
-
-  $composite2->push($self->Rect({
-    x         => $s - 1,
-    y         => 0,
-    width     => $e - $s + 1,
-    height    => 8,
-    colour    => $self->my_colour($gene->{'colour_key'}),
-    absolutey => 1
-  }));
-}
-
 sub _label_height {
   my ($self,$obj) = @_;
 
@@ -246,6 +208,8 @@ sub draw_collapsed_genes {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
 
+  $self->_make_legend($genes,$self->my_config('name'));
+
   ## Everything went OK, so no error to return
   return 0;
 }
@@ -260,41 +224,6 @@ sub _create_exon_structure {
   }
   $g->{'structure'} = $structure;
   return 1;
-}
-
-sub _old_collapsed_gene_method {
-  my ($self, $length, $labels, $strand, $genes) = @_;
-  my $strand_flag = $self->my_config('strand');
-  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  $self->mr_bump($genes,$labels,$length,$bstrand,2);
-  my %used_colours;
-  my $bump_height = 10 + max(map { $self->_label_height($_) } @$genes);
-  foreach my $g (@$genes) {
-    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    my $composite = $self->Composite({
-      y      => 0,
-      height => 8,
-      title  => $g->{'title'},
-      href   => $g->{'href'},
-    });
-      
-    $self->_draw_collapsed_gene_base($composite,$length,$g);
-    foreach my $e (@{$g->{'exons'}}) {
-      $self->_draw_collapsed_exon($composite,$length,$g,$e);
-    }
-    foreach my $j (@{$g->{'joins'}||[]}) {
-      $self->_draw_join($composite,$j);
-    }
-  
-    # shift the composite container by however much we're bumped
-    $self->_add_label($composite,$g) if $labels;
-
-    # bump
-    $composite->colour($g->{'highlight'}) if $g->{'highlight'};
-    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
-    $self->push($composite);
-  }
-  $self->_make_legend($genes,$self->my_config('name'));
 }
 
 #########################################################
