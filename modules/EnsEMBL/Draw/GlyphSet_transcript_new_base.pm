@@ -67,6 +67,126 @@ sub minmax { return max(min($_[0],$_[2]),$_[1]); }
 #     coding_start,coding_end => internal offset to coding part of exon
 #   }]
 
+
+# joining genes (compara views)
+
+sub _draw_join {
+  my ($self,$target,$j) = @_;
+  
+  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
+  $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+  if($j->{'legend'}) {
+    $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
+      $j->{'colour'};
+  }
+}
+
+
+sub draw_collapsed_genes {
+  my ($self, $length, $labels, $strand, $genes) = @_;
+  return unless @$genes;
+
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('collapsed', 1);
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+  $self->{'my_config'}->set('moat', 2);
+
+  $self->_set_bump_strand($length, $strand);
+
+  ## Filter by strand
+  my $stranded_genes = [];
+  my $strand_flag = $self->my_config('strand');
+  foreach my $g (@$genes) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    $self->_create_exon_structure($g);
+    push @$stranded_genes, $g;
+  }
+  my $data = [{'features' => $stranded_genes}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  $self->_make_legend($genes,$self->my_config('name'));
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
+
+sub draw_expanded_transcripts {
+  my ($self, $length, $labels, $strand, $transcripts) = @_;
+
+  return unless @{$transcripts||{}};
+
+  my $target = $self->get_parameter('single_Transcript');
+  my $h = $self->my_config('height') || ($target ? 30 : 8);
+  $self->{'my_config'}->set('height', $h);
+  $self->{'my_config'}->set('bumped', 1);
+  my $v = $labels ? 20 : 30;
+  $self->{'my_config'}->set('vspacing', $v);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+
+  $self->_set_bump_strand($length, $strand);
+
+  ## Filter by strand
+  my $stranded = [];
+  my $strand_flag = $self->my_config('strand'); 
+  foreach my $t (@$transcripts) {
+    next if $strand != $t->{'strand'} and $strand_flag eq 'b';
+    $t->{'colour'} = $self->my_colour($t->{'colour_key'});
+    $self->_create_exon_structure($t);
+    push @$stranded, $t;
+  }
+  my $data = [{'features' => $stranded}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  $self->_make_legend($transcripts, $self->my_config('name'));
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
+sub draw_rect_genes {
+  my ($self, $genes, $length, $labels, $strand) = @_;
+
+  return unless @$genes;
+
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('height', 4);
+  $self->{'my_config'}->set('show_labels', 1) if $labels;
+
+  $self->_set_bump_strand($length, $strand);
+
+  ## Filter by strand
+  my $stranded_genes = [];
+  my $strand_flag = $self->my_config('strand');
+  foreach my $g (@$genes) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    push @$stranded_genes, $g;
+  }
+  my $data = [{'features' => $stranded_genes}];
+
+  my %config    = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Feature';
+  my $style = $style_class->new(\%config, $data);
+  $self->push($style->create_glyphs);
+
+  $self->_make_legend($genes,$self->my_config('name'));
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
+
 ##########################################################
 # UTILITIES USED IN MULTIPLE STYLES                      #
 ##########################################################
@@ -85,7 +205,6 @@ sub _create_exon_structure {
   my $structure = [];
 
   foreach my $e (@{$f->{'exons'}}) {
-    warn Dumper($e);
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
       ## Use direction of drawing, not direction of transcript
@@ -106,19 +225,6 @@ sub _create_exon_structure {
   }
   $f->{'structure'} = $structure;
   return 1;
-}
-
-# joining genes (compara views)
-
-sub _draw_join {
-  my ($self,$target,$j) = @_;
-  
-  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
-  $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-  if($j->{'legend'}) {
-    $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
-      $j->{'colour'};
-  }
 }
 
 # legends 
@@ -163,330 +269,4 @@ sub _make_legend {
     legend   => \@legend
   };
 }
-
-######## LEGACY METHODS ############
-
-# labels
-
-sub text_details {
-  my ($self,$text) = @_;
-  
-  my $pix_per_bp = $self->scalex;
-  $text ||= 'Xg';
-  my %font_details = $self->get_font_details('outertext', 1);
-  my @details = $self->get_text_width(0,$text,$text,%font_details);
-  return {
-    %font_details,
-    height => $details[3] + 1,
-    width => $details[2]/$pix_per_bp
-  };
-}
-
-sub _add_label {
-  my ($self,$composite,$g) = @_;
-
-  return unless $g->{'label'};
-  
-  my $y            = $composite->height;
-  my $yo = $y;
-
-  foreach my $line (split("\n",$g->{'label'})) {
-    my $text_details = $self->text_details($line);
-    $composite->push($self->Text({
-      x         => $g->{'_bstart'},
-      y         => $y,
-      halign    => 'left',
-      colour    => $self->my_colour($g->{'colour_key'}),
-      text      => $line,
-      absolutey => 1,
-      %$text_details
-    }));
-    $y += $text_details->{'height'};
-  }
- 
-  return $y-$yo;
-}
-
-
-sub _label_height {
-  my ($self,$obj) = @_;
-
-  return 0 unless $obj->{'label'};
-  my $rows = (scalar split("\n",$obj->{'label'},-1));
-  return $rows * $self->text_details('X_g')->{'height'};
-}
-
-######### END LEGACY METHODS
-
-sub draw_collapsed_genes {
-  my ($self, $length, $labels, $strand, $genes) = @_;
-  return unless @$genes;
-
-  $self->{'my_config'}->set('bumped', 1);
-  $self->{'my_config'}->set('collapsed', 1);
-  $self->{'my_config'}->set('height', 8);
-  $self->{'my_config'}->set('show_labels', 1) if $labels;
-  $self->{'my_config'}->set('moat', 2);
-
-  $self->_set_bump_strand($length, $strand);
-
-  ## Filter by strand
-  my $stranded_genes = [];
-  my $strand_flag = $self->my_config('strand');
-  foreach my $g (@$genes) {
-    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
-    $self->_create_exon_structure($g);
-    push @$stranded_genes, $g;
-  }
-  my $data = [{'features' => $stranded_genes}];
-
-  my %config    = %{$self->track_style_config};
-  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
-  my $style = $style_class->new(\%config, $data);
-  $self->push($style->create_glyphs);
-
-  $self->_make_legend($genes,$self->my_config('name'));
-
-  ## Everything went OK, so no error to return
-  return 0;
-}
-
-
-#########################################################
-# USED IN EXPANDED STYLE                                #
-#########################################################
-
-sub _draw_expanded_exon {
-  my ($self,$composite2,$t,$h,$e,$length) = @_;
- 
-  return unless $e->{'start'} or $e->{'end'}; 
-  my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
-  my $non_coding_start  = ($h - $non_coding_height) / 2;
-  my $colour    = $self->my_colour($t->{'colour_key'});
-  my $box_start = minmax($e->{'start'},1,$length);
-  my $box_end   = minmax($e->{'end'},1,$length);
-  return if $box_end < 1 or $box_start > $length;
-  $composite2->push($self->Rect({
-    x            => $box_start - 1 ,
-    y            => $non_coding_start,
-    width        => $box_end - $box_start + 1,
-    height       => $non_coding_height,
-    bordercolour => $colour,
-    absolutey    => 1,
-  }));
-  if(exists $e->{'coding_start'}) {
-    my $fill_start = minmax($e->{'start'} + $e->{'coding_start'},1,$length);
-    my $fill_end   = minmax($e->{'end'} - $e->{'coding_end'},1,$length);
-    unless($fill_end < 1 or $fill_start > $length) {
-      if ($fill_end >= $fill_start) {
-        $composite2->push($self->Rect({
-          x         => $fill_start - 1,
-          y         => 0,
-          width     => $fill_end - $fill_start + 1,
-          height    => $h,
-          colour    => $colour,
-          absolutey => 1,
-        }));
-      }
-    }
-  }
-}
-
-sub _draw_introns {
-  my ($self,$composite2,$t,$h,$length,$strand) = @_;
-
-  my $colour = $self->my_colour($t->{'colour_key'});
-  my ($exon_stageleft,$exon_stageright) = (0,0);
-  my @introns;
-  foreach my $e (@{$t->{'exons'}}) {
-    next unless $e->{'start'} or $e->{'end'}; 
-    if($e->{'start'} > $length) { $exon_stageright = 1; }
-    elsif($e->{'end'} <= 0) { $exon_stageleft = 1; }
-    else { push @introns,$e; }
-  }
-  # add off-screen endpoints, duplicate, pair up
-  unshift @introns,{end => 0,dotted => 1} if $exon_stageleft;
-  push @introns,{start => $length, dotted => 1} if $exon_stageright;
-  @introns = map { ($_,$_) } @introns;
-  my $in_it = natatime(2,@introns[1..$#introns-1]);
-  while(my @pair = $in_it->()) {
-    my $intron_start = minmax($pair[0]->{'end'}+1,0,$length);
-    my $intron_end = minmax($pair[1]->{'start'}-1,0,$length);
-    next if $intron_end < 1 or $intron_start > $length;
-    my $dotted = ($pair[0]->{'dotted'} || $pair[1]->{'dotted'});
-    if($dotted) {
-      $composite2->push($self->Line({
-        x         => $intron_start - 1,
-        y         => int($h/2),
-        width     => $intron_end - $intron_start + 1,
-        height    => 0,
-        colour    => $colour,
-        absolutey => 1,
-        strand    => $strand,
-        dotted => 1,
-      }));
-    } else {
-      $composite2->push($self->Intron({
-        x         => $intron_start - 1,
-        y         => 0,
-        width     => $intron_end - $intron_start + 1,
-        height    => $h,
-        colour    => $colour,
-        absolutey => 1,
-        strand    => $strand,
-      }));
-    }
-  }
-}
-
-sub _draw_expanded_transcript {
-  my ($self,$composite2,$t,$h,$length,$strand) = @_;
-
-  foreach my $j (@{$t->{'joins'}||[]}) {
-    $self->_draw_join($composite2,$j);
-  }
-  foreach my $e (@{$t->{'exons'}||[]}) {
-    next if $e->{'start'} > $length or $e->{'end'} <= 0;
-    $self->_draw_expanded_exon($composite2,$t,$h,$e,$length);
-  }
-  $self->_draw_introns($composite2,$t,$h,$length,$strand);
-}
-
-# Probably not used anywhere any more?
-sub _draw_grey_arrow {
-  my ($self,$strand,$length,$h,$colour) = @_;
-
-  my $pix_per_bp = $self->scalex;
-  my ($ay,$ao,$am); 
-  if ($strand) {
-    ($ay,$ao,$am) = (-4,$length,-1);
-  } else {
-    ($ay,$ao,$am) = ($h+4,0,1);
-  }
-  $self->push($self->Line({
-    x         => 0,
-    y         => $ay,
-    width     => $length,
-    height    => 0,
-    absolutey => 1,
-    colour    => $colour
-  }));
-  $self->push($self->Poly({
-    absolutey => 1,
-    colour    => $colour,
-    points    => [ 
-      $ao+$am*4/$pix_per_bp, $ay-2*$am,
-      $ao, $ay,
-      $ao+$am*4/$pix_per_bp, $ay+2*$am,
-    ]
-  }));
-}
-
-sub draw_expanded_transcripts {
-  my ($self, $length, $labels, $strand, $transcripts) = @_;
-
-  return unless @{$transcripts||{}};
-
-  my $target = $self->get_parameter('single_Transcript');
-  my $h = $self->my_config('height') || ($target ? 30 : 8);
-  $self->{'my_config'}->set('height', $h);
-  $self->{'my_config'}->set('bumped', 1);
-  my $v = $labels ? 20 : 30;
-  $self->{'my_config'}->set('vspacing', $v);
-  $self->{'my_config'}->set('show_labels', 1) if $labels;
-
-  $self->_set_bump_strand($length, $strand);
-
-  ## Filter by strand
-  my $stranded = [];
-  my $strand_flag = $self->my_config('strand'); 
-  foreach my $t (@$transcripts) {
-    next if $strand != $t->{'strand'} and $strand_flag eq 'b';
-    warn "@@@ TRANSCRIPT ".$t->{'label'};
-    $t->{'colour'} = $self->my_colour($t->{'colour_key'});
-    $self->_create_exon_structure($t);
-    push @$stranded, $t;
-  }
-  my $data = [{'features' => $stranded}];
-
-  my %config    = %{$self->track_style_config};
-  my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
-  my $style = $style_class->new(\%config, $data);
-  $self->push($style->create_glyphs);
-
-  $self->_make_legend($transcripts, $self->my_config('name'));
-
-  ## Everything went OK, so no error to return
-  return 0;
-}
-
-=pod
-  my $strand_flag = $self->my_config('strand');
-  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  $self->mr_bump($tdraw,$draw_labels,$length,$bstrand,2);
-  my $target = $self->get_parameter('single_Transcript');
-  my $h = $self->my_config('height') || ($target ? 30 : 8);
-  my $bump_height = 10 + max(map { $self->_label_height($_) } @$tdraw);
-  foreach my $td (@$tdraw) { 
-    next if $strand != $td->{'strand'} and $strand_flag eq 'b';
-    next if $td->{'start'} > $length or $td->{'end'} < 1;
-    my $composite = $self->Composite({
-      y      => 0,
-      height => $h,
-      title  => $td->{'title'},
-      href   => $td->{'href'},
-      class  => 'group',
-    });
-
-    $self->_draw_expanded_transcript($composite,$td,$h,$length,$strand);
-    
-    $self->_add_label($composite,$td) if $draw_labels;
-    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
-
-    $composite->colour($td->{'highlight'}) if $td->{'highlight'};
-    if ($target) {
-      # check the strand of one of the transcript's exons
-      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
-      my $colour = $self->my_colour($td->{'colour_key'});
-      $self->_draw_grey_arrow($estrand,$length,$h,$colour);
-    }
-    $self->push($composite);
-  }
-  $self->_make_legend($tdraw,$self->type);
-}
-=cut
-
-sub draw_rect_genes {
-  my ($self, $genes, $length, $labels, $strand) = @_;
-
-  return unless @$genes;
-
-  $self->{'my_config'}->set('bumped', 1);
-  $self->{'my_config'}->set('height', 4);
-  $self->{'my_config'}->set('show_labels', 1) if $labels;
-
-  $self->_set_bump_strand($length, $strand);
-
-  ## Filter by strand
-  my $stranded_genes = [];
-  my $strand_flag = $self->my_config('strand');
-  foreach my $g (@$genes) {
-    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    $g->{'colour'} = $self->my_colour($g->{'colour_key'});
-    push @$stranded_genes, $g;
-  }
-  my $data = [{'features' => $stranded_genes}];
-
-  my %config    = %{$self->track_style_config};
-  my $style_class = 'EnsEMBL::Draw::Style::Feature';
-  my $style = $style_class->new(\%config, $data);
-  $self->push($style->create_glyphs);
-
-  $self->_make_legend($genes,$self->my_config('name'));
-
-  ## Everything went OK, so no error to return
-  return 0;
-}
-
 1;
