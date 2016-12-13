@@ -212,9 +212,7 @@ sub _create_exon_structure {
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
       ## Use direction of drawing, not direction of transcript
-      my ($coding_start, $coding_end) = $e->{'strand'} == -1  
-                                        ? ($e->{'coding_end'}, $e->{'coding_start'}) 
-                                        : ($e->{'coding_start'}, $e->{'coding_end'});
+      my ($coding_start, $coding_end) = ($e->{'coding_start'}, $e->{'coding_end'});
       if ($coding_start > 0) {
         $exon->{'utr_5'} = $e->{'start'} + $coding_start;
       }
