@@ -882,8 +882,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   sortUpdate: function(e, ui) {
 
-    var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
-    var track = ui.item.prop('className').replace(' ', '.');
+    var prev  = $.trim((ui.item.prev().prop('className') || '')).replace(' ', '.');
+    var track = $.trim(ui.item.prop('className')).replace(' ', '.');
 
     Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
 
