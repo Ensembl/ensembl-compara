@@ -221,7 +221,7 @@ sub table_row {
 
   if ($user_record) {
     $assembly = $record_data->{'assembly'} || 'Unknown';
-    $url_params{'id'} = join '-', $record_data->{'id'}, md5_hex($record_data->{'code'});
+    $url_params{'id'} = join '-', $record_data->{'record_id'}, $record_data->{'code'};
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } else {
     $assembly = $record_data->{'assembly'} || 'Unknown';
