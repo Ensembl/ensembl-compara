@@ -289,6 +289,7 @@ sub ajax_table_export {
     $str =~ s/^\s+//;
     $str =~ s/\s+$//g;
     $str = $self->strip_HTML(decode_entities($str));
+    $str =~ s/\xA0/ /g;        # Replace non-breakable spaces
     $str =~ s/"/""/g;
     $str =~ s/\0/","/g;
     return $str;
