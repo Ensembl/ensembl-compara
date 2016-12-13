@@ -128,7 +128,7 @@ sub ajax_track_order {
   my $track         = $hub->param('track');
   my $prev_track    = $hub->param('prev');
 
-  if ($image_config && $track && $prev_track && $image_config->update_track_order([$track, $prev_track])) {
+  if ($image_config && $track && $image_config->update_track_order([$track, $prev_track])) {
     $image_config->save_user_settings;
   }
 }
