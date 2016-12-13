@@ -240,12 +240,12 @@ sub _set_error_message {
 ## Add a message to session
   my ($self, $text) = @_;
   my $hub = $self->hub;
-  $hub->session->set_data(
+  $hub->session->set_record_data({
       type     => 'message',
       code     => 'user_not_logged_in',
       message  => "Please log in (or create a user account) if you wish to save this $text.",
       function => '_error'
-  );
+  });
 }
 
 sub _move_to_user {
@@ -257,10 +257,12 @@ sub _move_to_user {
   my $session = $hub->session;
   my %args    = ('type' => $type, 'code' => $hub->param('code'));
 
-  my $data = $session->get_data(%args);
+  my $data = $session->get_record_data(\%args);
+  my $record_id = delete $data->{'record_id'}; # otherwise it will try to update the record with the given id, which may belong to another user (and will throw an exception)
   my ($old_path, $new_path);
 
-  my $record;
+  return unless $record_id;
+
   if ($type eq 'upload') {
     ## Work out where we're going to copy the file to, because we need to save this
     ## in the new user record
@@ -272,14 +274,11 @@ sub _move_to_user {
     ## Make a note of where the file was saved, since it can't currently
     ## be shown on other sites such as mirrors or archives
     $data->{'site'} = $hub->species_defs->ENSEMBL_SERVERNAME;
-    $record = $user->_add_to_records('upload', $data);
   }
-  else {
-    $record = $user->_add_to_records('url', $data);
-  }
-  
-  if ($record) {
-    $session->purge_data(%args);
+  my $new_record_data = $user->set_record_data($data);
+
+  if (keys %$new_record_data) {
+    $session->set_record_data(\%args); # this will remove the session record
     if ($type eq 'upload') {
       return ($old_path, $new_path); 
     }
@@ -360,19 +359,17 @@ sub update_configs {
   
   if ($updated) {
     my $user       = $hub->user;
-    my $favourites = $session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    my $favourites = $session->get_record_data({type => 'favourite_tracks', code => 'favourite_tracks'});
     
     if (grep delete $favourites->{'tracks'}{$_}, @$old_tracks) {
       $favourites->{'tracks'}{$_} = 1 for @$new_tracks;
-      
-      if (scalar keys %{$favourites->{'tracks'}}) {
-        $session->set_data(%$favourites);
-      } else {
-        delete $favourites->{'tracks'};
-        $session->purge_data(%$favourites);
-      }
-      
-      $user->set_favourite_tracks($favourites->{'tracks'}) if $user;
+
+      delete $favourites->{'tracks'} unless keys %{$favourites->{'tracks'}};
+
+      $session->set_record_data($favourites);
+
+      delete $favourites->{'record_id'};
+      $user->set_record_data($favourites) if $user;
     }
   }
 }
