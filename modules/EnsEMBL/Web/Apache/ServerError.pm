@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub get_template {
@@ -48,9 +49,11 @@ sub handler {
   try {
 
     if ($exception) {
-      $heading  = sprintf 'Server Exception: %s', $exception->type;
-      $message  = $exception->message(1);
-      $stack    = $exception->stack_trace;
+      my $error_id  = random_string(8);
+      $heading      = sprintf 'Server Exception: %s', $exception->type;
+      $message      = sprintf(q(There was a problem with our website. Please report this issue to %s, quoting error reference '%s'.), $species_defs->ENSEMBL_HELPDESK_EMAIL, $error_id);
+
+      warn "ERROR: $error_id (Server Exception)\n";
       warn $exception;
     }
 
@@ -58,7 +61,6 @@ sub handler {
       'species_defs'  => $species_defs,
       'heading'       => $heading,
       'message'       => $message,
-      'content'       => $stack,
       'helpdesk'      => 1,
       'back_button'   => 1
     });
