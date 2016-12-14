@@ -244,7 +244,7 @@ sub _objs_from_sth {
     my $method_hash = $self->db->get_MethodAdaptor()->_id_cache;
     my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache;
 
-    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', [
+    my $mlsss = $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', [
             'dbID',
             undef,
             undef,
@@ -271,6 +271,7 @@ sub _objs_from_sth {
             }
 
         });
+    return [grep {$_->{method} && $_->{species_set}} @$mlsss];
 }
 
 sub _tables {
