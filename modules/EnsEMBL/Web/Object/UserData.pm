@@ -464,12 +464,12 @@ sub _find_assembly {
   else {
     ## Check name and synonyms
     foreach (@$info) {
-      if ($_->{'name'} eq $assembly) {
+      if (lc($_->{'name'}) eq lc($assembly)) {
         $found = 1;
       }
       else {
         foreach (@{$_->{'synonyms'}||[]}) {
-          if ($_ eq $assembly) {
+          if (lc($_) eq lc($assembly)) {
             $found = 1;
             $key = 'synonyms';
             last;
