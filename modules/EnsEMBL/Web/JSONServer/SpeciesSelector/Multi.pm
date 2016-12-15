@@ -41,7 +41,7 @@ sub json_fetch_species {
   my $species_defs    = $hub->species_defs;
   my $params          = $hub->multi_params; 
   my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
-  my $primary_species = $hub->species;
+  my $primary_species = $species_defs->IS_STRAIN_OF ? ucfirst $species_defs->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
   my $species_label   = $species_defs->species_label($primary_species, 1);
   my %shown           = map { $params->{"s$_"} => $_ } grep s/^s(\d+)$/$1/, keys %$params; # get species (and parameters) already shown on the page
   my $object          = $self->object;
@@ -106,8 +106,8 @@ sub json_fetch_species {
           $tmp->{key} = $_;
           $tmp->{common} = $species_info->{$_}->{common};
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
-            $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
+            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
+            # $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
           }
           else {
             $final_hash->{species_info}->{$_} = $tmp;

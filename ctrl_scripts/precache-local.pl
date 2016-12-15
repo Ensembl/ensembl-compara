@@ -48,7 +48,7 @@ $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
 
 my $ndone=0;
-foreach my $i (0..$#$jobs) {
+foreach my $i (reverse (0..$#$jobs)) {
   $forker->schedule(
     run_on_start => sub {
       qx($Bin/precache.pl --mode=index --index=$i);

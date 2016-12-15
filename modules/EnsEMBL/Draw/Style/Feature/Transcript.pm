@@ -51,7 +51,7 @@ sub draw_block {
 
   ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
   my $start = $structure->{'start'};
-  $start    = 1 if $start < 0;
+  $start    = 0 if $start < 0;
   my $end   = $structure->{'end'};
   my $edge = $self->image_config->container_width;
   $end      = $edge if $end > $edge;  

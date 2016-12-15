@@ -23,8 +23,8 @@ div.score_bad     { background: red;    }
 div.score_neutral { background: blue;   }
 
 /* Population genotypes */
-div.allele_short     { float:left;width:105px; }
-div.allele_long      { float:left;width:120px; }
+div.allele_short     { float:left;width:110px; }
+div.allele_long      { float:left;width:125px; }
 div.genotype_short   { float:left;width:125px; }
 div.genotype_long    { float:left;width:140px; }
 div.allele_padding   { padding-right:6px; }

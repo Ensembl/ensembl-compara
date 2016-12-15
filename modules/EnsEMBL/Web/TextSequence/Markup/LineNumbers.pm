@@ -18,7 +18,7 @@ sub markup {
     
     if (!$slice && !$sl->{'seq'}) {
       @numbering = ({});
-    } elsif ($config->{'line_numbering'} eq 'slice') {
+    } elsif ($slice && $config->{'line_numbering'} eq 'slice') {
       my $start_pos = 0;
     
       if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {

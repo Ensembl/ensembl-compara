@@ -77,7 +77,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
     if (not $page) {
 
       $html .= q{<p>Overall Summary</p>};
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #181 #F00)]);
 	   my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
 	   $html .= sprintf(qq{<table class="ss">
       <tr>
@@ -86,7 +86,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       <tr>
         <td $cell_style>Internal nodes (ancestral taxa)</td>
         <td $cell_style>Node types</td>
-        <td $cell_style><span style="color: #fc0">Speciations</span></td>
+        <td $cell_style><span style="color: #c90">Speciations</span></td>
         <td $cell_style><span style="color: #909">Duplications</span></td>
         <td $cell_style><span style="color: #69f">Dubious nodes</span></td>
         <td $cell_style>%s</td>
@@ -101,7 +101,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       </tr>
       <tr>
         <td $cell_style>Species-specific duplications</td>
-        <td $cell_style><span style="color: #fc0">Single-copy genes</span></td>
+        <td $cell_style><span style="color: #c90">Single-copy genes</span></td>
         <td $cell_style><span style="color: #909">Multi-copy genes</span></td>
         <td $cell_style><span </span></td>
         <td $cell_style>%s</td>
@@ -118,7 +118,7 @@ This page provides a summary of the <a href="/info/genome/compara/ncRNA_methods.
       my $n_group = scalar(@$ordered_species)-1;
       $html .= q{<h2>Gene tree coverage (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #181 #F00)]);
       for (0..$n_group) {
         my $set = $ordered_species->[$_];
         $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
@@ -152,7 +152,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
     if (not $page) {
 
       $html .= q{<p>Overall Summary</p>};
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #181 #F00)]);
       my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
       $html .= sprintf(qq{<table class="ss">
       <tr>
@@ -161,7 +161,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       <tr>
         <td $cell_style>Internal nodes (ancestral taxa)</td>
         <td $cell_style>Node types</td>
-        <td $cell_style><span style="color: #fc0">Speciations</span></td>
+        <td $cell_style><span style="color: #c90">Speciations</span></td>
         <td $cell_style><span style="color: #909">Duplications</span></td>
         <td $cell_style><span style="color: #69f">Dubious nodes</span></td>
         <td $cell_style><span </span></td>
@@ -178,8 +178,8 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       </tr>
       <tr>
         <td $cell_style>Gene QC</td>
-        <td $cell_style><span style="color: #fc0">Validated genes</span></td>
-        <td $cell_style><span style="color: #8c2">Short genes</span></td>
+        <td $cell_style><span style="color: #c90">Validated genes</span></td>
+        <td $cell_style><span style="color: #181">Short genes</span></td>
         <td $cell_style><span style="color: #F00">Long genes</span></td>
         <td $cell_style><span style="color: #69f">Split genes</span></td>
         <td $cell_style>%s</td>
@@ -196,7 +196,7 @@ This page provides a summary of the <a href="/info/genome/compara/homology_metho
       my $n_group = scalar(@$ordered_species)-1;
       $html .= q{<h2>Gene tree coverage and Gene QC (per species)</h2>};
       $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
-      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #8c2 #F00)]);
+      $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2 #181 #F00)]);
       for (0..$n_group) {
         my $set = $ordered_species->[$_];
         $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
@@ -267,8 +267,8 @@ sub get_html_for_gene_tree_coverage {
   $name =~ s/ /_/g;
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',                         width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
-      { key => 'nb_genes',                        width => '6%',  align => 'center', sort => 'numeric', style => 'color: #ca4', title => '# Genes', },
-      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'numeric', style => 'color: #fc0', title => '# Genes in a tree', },
+      { key => 'nb_genes',                        width => '6%',  align => 'center', sort => 'numeric', title => '# Genes', },
+      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'numeric', style => 'color: #fc0; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black', title => '# Genes in a tree', },
       { key => 'nb_orphan_genes',                 width => '9%',  align => 'center', sort => 'numeric', style => 'color: #a22', title => '# Orphaned genes', },
       { key => 'nb_genes_in_tree_single_species', width => '10%', align => 'center', sort => 'numeric', style => 'color: #25a', title => "# Genes in a single-species tree", },
       { key => 'nb_genes_in_tree_multi_species',  width => '10%', align => 'center', sort => 'numeric', style => 'color: #8a2', title => '# Genes in a multi-species tree', },
@@ -280,7 +280,7 @@ sub get_html_for_gene_tree_coverage {
     { key => 'nb_split_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#69f', title => '# Split genes', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
-    { key => 'nb_short_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#8c2', title => '# short genes', },
+    { key => 'nb_short_genes',                  width => '8%', align => 'center', sort => 'numeric', style => 'color:#181', title => '# short genes', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
     { key => 'nb_long_genes',                   width => '8%', align => 'center', sort => 'numeric', style => 'color:#F00', title => '# Long genes',  },
@@ -419,7 +419,7 @@ sub get_html_for_node_statistics {
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',               width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
       { key => 'nb_nodes',              width => '7%',  align => 'center', sort => 'numeric', title => '# Nodes', },
-      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'numeric', style => 'color: #ca4', title => '# speciation nodes', },
+      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'numeric', style => 'color: #fc0; text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black', title => '# speciation nodes', },
       { key => 'nb_dup_nodes',          width => '12%', align => 'center', sort => 'numeric', style => 'color: #909', title => '# duplication nodes', },
       { key => 'nb_dubious_nodes',      width => '11%', align => 'center', sort => 'numeric', style => 'color: #69f', title => '# dubious nodes', },
       { key => 'piechart',              width => '7%', align => 'center', sort => 'none',    title => 'Node types', },

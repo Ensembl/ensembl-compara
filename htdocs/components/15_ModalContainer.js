@@ -96,10 +96,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         rel     = (rel || '').split('-');
     var tab     = rel[0] ? this.elLk.tabs.children('a.' + rel[0]) : [];
     
-    if (tab.length) {
-      rel[0] = tab.data('panels').filter('.active').attr('id');
-    }
-    
     this.elLk.caption.html(caption).show();
     this.elLk.menu.hide();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
@@ -174,9 +170,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     } else {
       hash = (url.match(/#(.+)$/) || [])[1];
     }
-    
     id = id || (hash ? this.activePanel : 'modal_default');
-    
     var contentEl = this.elLk.content.filter('#' + id);
     
     this.elLk.content.hide();
@@ -189,6 +183,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     if (reload) {
       contentEl.empty();
+      Ensembl.EventManager.trigger('resetConfig');
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id, hash);
       this.changeTab(this.elLk.content.filter('#' + id).data('tab'));

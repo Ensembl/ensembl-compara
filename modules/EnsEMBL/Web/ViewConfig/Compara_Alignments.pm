@@ -76,7 +76,7 @@ sub init_form_non_cacheable {
       my $sp            = $row->{'species'};
       my @name          = split '_', $row->{'name'};
       my $n             = shift @name;
-      $sp->{$_}         = $species_defs->species_label($_) for keys %$sp;
+      $sp->{$_}         = $species_defs->species_label($species_defs->production_name_mapping($_)) for keys %$sp;
       my $fieldset_name = join ' ', $n, map lc, @name;
 
       foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {

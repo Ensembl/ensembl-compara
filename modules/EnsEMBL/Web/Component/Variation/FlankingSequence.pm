@@ -73,13 +73,13 @@ sub initialize {
     
     if ($_ eq 'var') {
       my $seq = [ map {{ letter => $_, class => 'var ' }} split '', $variation_string ];
-      $seq2 = $self->view->make_sequence(0);
+      $seq2 = $self->view->new_sequence('nowhere');
       $seq2->legacy($seq);
     } else {
       my $slice  = $slices{$_};
       my $markup = {};
       my $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
-      $seq2 = $self->view->make_sequence(0);
+      $seq2 = $self->view->new_sequence('nowhere');
       $seq2->legacy($seq);
  
       if ($config->{'snp_display'} eq 'on') {

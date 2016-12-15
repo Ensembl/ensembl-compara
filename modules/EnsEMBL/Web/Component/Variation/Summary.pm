@@ -256,7 +256,7 @@ sub co_located {
   my $slice;
   if ($feature_slice->start > $feature_slice->end) { # Insertion
     my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor', 'core');
-    $slice = $slice_adaptor->fetch_by_region( $feature_slice->coord_system_name, $feature_slice->chr_name,
+    $slice = $slice_adaptor->fetch_by_region( $feature_slice->coord_system_name, $feature_slice->seq_region_name,
                                               $feature_slice->end, $feature_slice->start, $feature_slice->strand );
   }
   else {

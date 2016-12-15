@@ -58,6 +58,7 @@
 .tool_buttons .list         { background-image: url(/i/16/rev/list.png);          }
 .tool_buttons .share        { background-image: url(/i/16/rev/share.png);         }
 .tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }
+.tool_buttons .config-manage{ background-image: url(/i/16/rev/setting-load.png);  }
 .tool_buttons .config-reset { background-image: url(/i/16/rev/setting-reset.png); }
 .tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   }
 .tool_buttons .cell-line    { background-image: url(/i/16/rev/lab.png); }

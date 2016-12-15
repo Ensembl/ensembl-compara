@@ -56,6 +56,7 @@
         $.get(filegen_url, function(data) {
           var path = JSON.parse(data);
           path.tree && dataset.push(path.tree);
+          path.alignment && dataset.push(path.alignment)
           initTree(dataset);
         });
       }

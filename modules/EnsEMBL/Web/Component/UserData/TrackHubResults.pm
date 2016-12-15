@@ -55,7 +55,7 @@ sub content {
   my $current_page      = $hub->param('page') || 1;
   my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page};
   
-  my ($result, $post_content, $error) = $self->object->thr_search($url_params);
+  my ($result, $error) = $self->object->thr_search($url_params);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
@@ -78,13 +78,13 @@ sub content {
     $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     ## Reminder of search terms
-    $html .= sprintf '<p><b>Searched %s %s', $post_content->{'species'}, $post_content->{'assembly'};
+    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $hub->param('assembly_display');
     my @search_extras;
-    if ($post_content->{'type'}) {
-      push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
+    if ($hub->param('type')) {
+      push @search_extras, '"'.ucfirst($hub->param('type')).'"';
     }
-    if ($post_content->{'query'}) {
-      push @search_extras, '"'.$post_content->{'query'}.'"';
+    if ($hub->param('query')) {
+      push @search_extras, '"'.$hub->param('query').'"';
     }
     if (@search_extras) {
       $html .= ' for '.join(' AND ', @search_extras);
@@ -95,25 +95,21 @@ sub content {
 
     if ($count > 0) {
 
-      ## We want to pass the underscored version in the URL
-      (my $search_species = $post_content->{'species'}) =~ s/ /_/g;;
-      delete $post_content->{'species'};
-      $post_content->{'search_species'} = $search_species;
-
+      my $pagination;
       my $pagination_params = {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
                                 'entries_per_page'  => $entries_per_page,
-                                'url_params'        => $post_content
                               };
 
+      ## Generate the HTML once, because we delete parameters when creating it
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $pagination = $self->_pagination($pagination_params);
+        $html .= $pagination;
       }
 
       foreach (@{$result->{'items'}}) {
-        (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
-
+        my $species       = $hub->species;
         ## Is this hub already attached?
         my ($ignore, $params) = check_attachment($hub, $_->{'hub'}{'url'});
         my $button;
@@ -125,7 +121,6 @@ sub content {
           else {
             $label = 'Hub already attached';
           }
-          my $species       = $hub->species;
           my $location      = $hub->param('r');
           unless ($location) {
             my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
@@ -163,7 +158,7 @@ sub content {
       }
       
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $html .= $pagination;
       }
 
     }
@@ -172,12 +167,18 @@ sub content {
 
 }
 
-sub _show_pagination {
+sub _pagination {
   my ($self, $args) = @_;
 
   my $no_of_pages = ceil($args->{'total_entries'}/$args->{'entries_per_page'});
 
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
+  
+  ## Set parameters that don't change 
+  foreach (qw(assembly_key assembly_id data_type thr_species)) {
+    $args->{'url_params'}{$_} = $self->hub->param($_);
+  }
+
   for (my $page = 1; $page <= $no_of_pages; $page++) {
     my ($classes, $link);
     if ($page == $args->{'current_page'}) {
@@ -195,9 +196,6 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
-      ## Change type parameter back to something safe before using
-      $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
-      delete $args->{'url_params'}{'type'};
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }

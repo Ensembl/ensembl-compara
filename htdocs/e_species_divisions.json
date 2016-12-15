@@ -158,13 +158,13 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Ailuropoda melanoleuca",
-              "key":"Ailuropoda_melanoleuca",
+              "scientific_name":"Mustela putorius furo",
+              "key":"Mustela_putorius_furo",
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Mustela putorius furo",
-              "key":"Mustela_putorius_furo",
+              "scientific_name":"Ailuropoda melanoleuca",
+              "key":"Ailuropoda_melanoleuca",
               "is_leaf":"true"
           }
         ]
@@ -174,16 +174,6 @@
         "display_name":"Ungulates",
         "is_internal_node":"true",
         "child_nodes":[  
-          {
-              "scientific_name":"Equus Caballus",
-              "key":"Equus_Caballus",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Sus scrofa",
-              "key":"Sus_scrofa",
-              "is_leaf":"true"
-          },
           {
               "scientific_name":"Vicugna pacos",
               "key":"Vicugna_pacos",
@@ -195,13 +185,23 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Ovis aries",
-              "key":"Ovis_aries",
+              "scientific_name":"Tursiops truncatus",
+              "key":"Tursiops_truncatus",
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Tursiops truncatus",
-              "key":"Tursiops_truncatus",
+              "scientific_name":"Equus Caballus",
+              "key":"Equus_Caballus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Sus scrofa",
+              "key":"Sus_scrofa",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Ovis aries",
+              "key":"Ovis_aries",
               "is_leaf":"true"
           }
         ]
@@ -212,18 +212,8 @@
         "is_internal_node":"true",
         "child_nodes":[  
           {
-              "scientific_name":"Choloepus hoffmanni",
-              "key":"Choloepus_hoffmanni",
-              "is_leaf":"true"
-          },
-          {
               "scientific_name":"Dasypus novemcinctus",
               "key":"Dasypus_novemcinctus",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Echinops telfairi",
-              "key":"Echinops_telfairi",
               "is_leaf":"true"
           },
           {
@@ -232,18 +222,23 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Procavia capensis",
-              "key":"Procavia_capensis",
-              "is_leaf":"true"
-          },
-          {
               "scientific_name":"Erinaceus europaeus",
               "key":"Erinaceus_europaeus",
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Sorex araneus",
-              "key":"Sorex_araneus",
+              "scientific_name":"Procavia capensis",
+              "key":"Procavia_capensis",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Echinops telfairi",
+              "key":"Echinops_telfairi",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Pteropus vampyrus",
+              "key":"Pteropus_vampyrus",
               "is_leaf":"true"
           },
           {
@@ -252,8 +247,13 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Pteropus vampyrus",
-              "key":"Pteropus_vampyrus",
+              "scientific_name":"Sorex araneus",
+              "key":"Sorex_araneus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Choloepus hoffmanni",
+              "key":"Choloepus_hoffmanni",
               "is_leaf":"true"
           },
           {
@@ -269,16 +269,6 @@
         "is_internal_node":"true",
         "child_nodes":[  
           {
-              "scientific_name":"Sarcophilus harrisii",
-              "key":"Sarcophilus_harrisii",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Macropus eugenii",
-              "key":"Macropus_eugenii",
-              "is_leaf":"true"
-          },
-          {
               "scientific_name":"Monodelphis domestica",
               "key":"Monodelphis_domestica",
               "is_leaf":"true"
@@ -286,6 +276,16 @@
           {
               "scientific_name":"Ornithorhynchus anatinus",
               "key":"Ornithorhynchus_anatinus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Sarcophilus harrisii",
+              "key":"Sarcophilus_harrisii",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Macropus eugenii",
+              "key":"Macropus_eugenii",
               "is_leaf":"true"
           }
         ]
@@ -309,13 +309,13 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Taeniopygia guttata",
-              "key":"Taeniopygia_guttata",
+              "scientific_name":"Gallus gallus",
+              "key":"Gallus_gallus",
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Ficedula albicollis",
-              "key":"Ficedula_albicollis",
+              "scientific_name":"Pelodiscus sinensis",
+              "key":"Pelodiscus_sinensis",
               "is_leaf":"true"
           },
           {
@@ -324,8 +324,8 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Gallus gallus",
-              "key":"Gallus_gallus",
+              "scientific_name":"Ficedula albicollis",
+              "key":"Ficedula_albicollis",
               "is_leaf":"true"
           },
           {
@@ -334,8 +334,8 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Pelodiscus sinensis",
-              "key":"Pelodiscus_sinensis",
+              "scientific_name":"Taeniopygia guttata",
+              "key":"Taeniopygia_guttata",
               "is_leaf":"true"
           }
         ]
@@ -346,8 +346,13 @@
         "is_internal_node":"true",
         "child_nodes":[  
           {
-              "scientific_name":"Lepisosteus oculatus",
-              "key":"Lepisosteus_oculatus",
+              "scientific_name":"Poecilia formosa",
+              "key":"Poecilia_formosa",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Astyanax mexicanus",
+              "key":"Astyanax_mexicanus",
               "is_leaf":"true"
           },
           {
@@ -356,23 +361,13 @@
               "is_leaf":"true"
           },
           {
+              "scientific_name":"Latimeria chalumnae",
+              "key":"Latimeria_chalumnae",
+              "is_leaf":"true"
+          },
+          {
               "scientific_name":"Takifugu rubripes",
               "key":"Takifugu_rubripes",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Tetraodon nigroviridis",
-              "key":"Tetraodon_nigroviridis",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Oreochromis niloticus",
-              "key":"Oreochromis_niloticus",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Gasterosteus aculeatus",
-              "key":"Gasterosteus_aculeatus",
               "is_leaf":"true"
           },
           {
@@ -386,23 +381,28 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Poecilia formosa",
-              "key":"Poecilia_formosa",
+              "scientific_name":"Lepisosteus oculatus",
+              "key":"Lepisosteus_oculatus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Gasterosteus aculeatus",
+              "key":"Gasterosteus_aculeatus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Tetraodon nigroviridis",
+              "key":"Tetraodon_nigroviridis",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Oreochromis niloticus",
+              "key":"Oreochromis_niloticus",
               "is_leaf":"true"
           },
           {
               "scientific_name":"Danio rerio",
               "key":"Danio_rerio",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Astyanax mexicanus",
-              "key":"Astyanax_mexicanus",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Latimeria chalumnae",
-              "key":"Latimeria_chalumnae",
               "is_leaf":"true"
           }
         ]
@@ -413,13 +413,13 @@
         "is_internal_node":"true",
         "child_nodes":[  
           {
-              "scientific_name":"Xenopus tropicalis",
-              "key":"Xenopus_tropicalis",
+              "scientific_name":"Petromyzon marinus",
+              "key":"Petromyzon_marinus",
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Petromyzon marinus",
-              "key":"Petromyzon_marinus",
+              "scientific_name":"Xenopus tropicalis",
+              "key":"Xenopus_tropicalis",
               "is_leaf":"true"
           }
         ]
@@ -438,16 +438,6 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Drosophila melanogaster",
-          "key":"Drosophila_melanogaster",
-          "is_leaf":"true"
-      },
-      {
-          "scientific_name":"Saccharomyces cerevisiae",
-          "key":"Saccharomyces_cerevisiae",
-          "is_leaf":"true"
-      },
-      {
           "scientific_name":"Ciona intestinalis",
           "key":"Ciona_intestinalis",
           "is_leaf":"true"
@@ -455,6 +445,16 @@
       {
           "scientific_name":"Ciona savignyi",
           "key":"Ciona_savignyi",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Drosophila melanogaster",
+          "key":"Drosophila_melanogaster",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Saccharomyces cerevisiae",
+          "key":"Saccharomyces_cerevisiae",
           "is_leaf":"true"
       }
     ]

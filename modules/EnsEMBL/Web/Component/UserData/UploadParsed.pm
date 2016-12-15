@@ -55,14 +55,15 @@ sub content_ajax {
   my $code    = $hub->param('code');
   return unless $type && $code;
 
-  my $data;
-  if ($hub->user) {
+  my ($data, $record_owner);
+  if ($record_owner = $hub->user) {
     $data = $hub->user->get_record_data({type => $type, code => $code});
   }
 
   ## Can't find a user record - check session
   unless (keys %{$data || {}}) {
-    $data = $hub->session->get_record_data({type => $type, code => $code});
+    $data = $session->get_record_data({type => $type, code => $code});
+    $record_owner = $session;
   }
 
   return unless keys %$data;
@@ -90,7 +91,7 @@ sub content_ajax {
 
           $data->{'nearest'}      = $nearest;
           $data->{'description'}  = $description if $description;
-          $session->set_record_data($data);
+          $record_owner->set_record_data($data);
    
           if ($hub->param('count')) { 
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;

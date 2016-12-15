@@ -44,29 +44,21 @@ sub json_fetch_species {
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
   my $species_info = $hub->get_species_info;
   my $extras       = {};
-  my $species = $hub->species;
+  my $species      = $sd->IS_STRAIN_OF ? ucfirst $sd->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
   my $species_hash_multiple = ();
 
   # Order by number of species (name is in the form "6 primates EPO")
-  if(!$sd->IS_STRAIN_OF) {
-    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-      (my $name = $row->{'name'}) =~ s/_/ /g;
-      my $t = {};
-      $t->{key} = encode_entities($name);
-      $t->{title} = encode_entities($name);
-      $t->{value} = $row->{'id'};
-      $t->{searchable} = 1;
-      push @{$species_hash_multiple}, $t;
-    }
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+    (my $name = $row->{'name'}) =~ s/_/ /g;
+    my $t = {};
+    $t->{key} = encode_entities($name);
+    $t->{title} = encode_entities($name);
+    $t->{value} = $row->{'id'};
+    $t->{searchable} = 1;
+    push @{$species_hash_multiple}, $t;
   }
 
   my $dynatree_multiple = {};
-  $dynatree_multiple->{key} = 'Multiple';
-  $dynatree_multiple->{title} = 'Multiple';
-  $dynatree_multiple->{isFolder} = 1;
-  $dynatree_multiple->{isInternalNode} = "true";
-  $dynatree_multiple->{unselectable} = "true";
-  push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
 
   my $dynatree_root = {};
   $dynatree_root->{key} = 'All Alignments';
@@ -75,18 +67,41 @@ sub json_fetch_species {
   $dynatree_root->{is_submenu} = 1;
   $dynatree_root->{isInternalNode} = "true";
   $dynatree_root->{unselectable} = "true";
-  push @{$dynatree_root->{children}}, $dynatree_multiple;
+
+  if ($#$species_hash_multiple >= 0) {
+    $dynatree_multiple->{key} = 'Multiple';
+    $dynatree_multiple->{title} = 'Multiple';
+    $dynatree_multiple->{isFolder} = 1;
+    $dynatree_multiple->{isInternalNode} = "true";
+    $dynatree_multiple->{unselectable} = "true";
+    push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
+    push @{$dynatree_root->{children}}, $dynatree_multiple;
+  }
 
   # For the variation compara view, only allow multi-way alignments
   my $species_hash_pairwise = {};
   my $all_species = {};
+
   if ($hub->type ne 'Variation') {
-    
+    my $available_alignments = {};
     foreach my $align_id (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
       foreach (keys %{$alignments->{$align_id}->{'species'}}) {
-        $_ = $hub->species_defs->production_name_mapping($_);
-        if ($alignments->{$align_id}->{'species'}->{$species} && $_ ne $species) {
+        if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
+          # Creating a new hash with species_set_id as the key to handle available multiple alignment methods for each species.
+          # and thus return one based on hierarchy of available alignments [ENSWEB-3343]
+          $available_alignments->{$align_id} = $alignments->{$align_id};
+        }
+      }
+    }
 
+    # Select alignments based on available alignments hierarchy
+    my $final_alignments = $self->object->filter_alignments_by_method($available_alignments);
+
+    foreach my $align_id (keys %$final_alignments) {
+      foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
+        if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
+
+          $_ = $hub->species_defs->production_name_mapping($_);
           my $common_name = $species_info->{$_}->{common} || '';
           my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
 
@@ -95,6 +110,7 @@ sub json_fetch_species {
           $t->{key} = $_;
           $t->{common} = $species_info->{$_}->{common};
           $t->{value} = $align_id;
+
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
             push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
             $all_species->{$species_info->{$_}->{strain_collection}} = $t;
@@ -126,7 +142,9 @@ sub json_fetch_species {
     push @{$dynatree_pairwise->{children}}, @{$dyna_tree[0]->{children}};
 
     # Push pairwise tree into dynatree root node;
-    push @{$dynatree_root->{children}}, $dynatree_pairwise;
+    if (scalar(@{$dynatree_pairwise->{children}}) > 0) {
+      push @{$dynatree_root->{children}}, $dynatree_pairwise;
+    }
   }
 
   return { json => [$dynatree_root] };

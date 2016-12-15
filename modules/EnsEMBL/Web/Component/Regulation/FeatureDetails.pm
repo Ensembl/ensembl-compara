@@ -70,7 +70,9 @@ sub content {
   my $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
 
   foreach (@{$object->regbuild_epigenomes}) {
-    my ($name, $id) = split(':', $_);
+    my @parts = split(':',$_);
+    my $id = pop @parts;
+    my $name = join(':',@parts);
     my $activity = $object->activity($name) || 'UNKNOWN';
     $activity = ucfirst(lc($activity));
     my $colour_key = $activity;

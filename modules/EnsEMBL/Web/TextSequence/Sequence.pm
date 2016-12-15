@@ -33,7 +33,7 @@ use EnsEMBL::Web::TextSequence::RopeOutput;
 # sequences.
 
 sub new {
-  my ($proto,$set) = @_;
+  my ($proto,$view,$set) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {

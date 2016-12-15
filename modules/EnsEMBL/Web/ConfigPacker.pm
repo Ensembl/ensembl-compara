@@ -1158,7 +1158,7 @@ sub _summarise_compara_db {
     }
   }
 
-  $res_aref = $dbh->selectall_arrayref('SELECT method_link_species_set_id, value FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id" and method_link_id != 22 and method_link_id != 23');
+  $res_aref = $dbh->selectall_arrayref('SELECT method_link_species_set_id, value FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id"');
   
   foreach my $row (@$res_aref) {
     my ($conservation_score_id, $alignment_id) = ($row->[0], $row->[1]);

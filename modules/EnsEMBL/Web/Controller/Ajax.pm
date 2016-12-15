@@ -128,7 +128,7 @@ sub ajax_track_order {
   my $track         = $hub->param('track');
   my $prev_track    = $hub->param('prev');
 
-  if ($image_config && $track && $prev_track && $image_config->update_track_order([$track, $prev_track])) {
+  if ($image_config && $track && $image_config->update_track_order([$track, $prev_track])) {
     $image_config->save_user_settings;
   }
 }
@@ -151,6 +151,15 @@ sub ajax_config_reset {
   ## Resets image config for the selected image
   my $self          = shift;
   my $hub           = $self->hub;
+  my $view_config   = $hub->param('view_config');
+     $view_config   = [ split '::', $view_config ] if $view_config;
+     $view_config   = $hub->get_viewconfig({type => $view_config->[0], component => $view_config->[1]}) if $view_config;
+
+  if ($view_config) {
+    $view_config->reset_user_settings; # does not return positive value if only 'saved' key was present
+    $view_config->save_user_settings;
+  }
+
   my $image_config  = $hub->param('image_config');
      $image_config  = $hub->get_imageconfig($image_config) if $image_config;
 

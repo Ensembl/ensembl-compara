@@ -52,7 +52,7 @@ sub content {
       last;
     }
   }
-  # warn Data::Dumper::Dumper $alignments;
+
   # For the variation compara view, only allow multi-way alignments
   if ($align_label eq '') {
     my %species_hash;
