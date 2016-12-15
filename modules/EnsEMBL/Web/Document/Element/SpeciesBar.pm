@@ -58,18 +58,29 @@ sub content {
     $quality = sprintf '<a href="%s"><img src="/i/16/rev/flag.png"/> %s</a>', $genebuild_url, ucfirst $text;
   }
 
-  ## Species selector
-  my $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
-  my $dropdown  = $self->species_list;
-
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
-  my $thumbnail = $hub->species_defs->EG_DIVISION && $hub->species_defs->EG_DIVISION eq 'bacteria'
-                    ? '' : sprintf('<img src="/i/species/32/%s.png">', $hub->species); 
+  ## Make accommodations for EG bacteria
+  my ($header, $arrow, $dropdown);
+  if ($hub->species_defs->EG_DIVISION && $hub->species_defs->EG_DIVISION eq 'bacteria') {
+    my $full_name = $hub->species_defs->SPECIES_SCIENTIFIC_NAME;
+    ## Bacterial names can include strain and assembly info, so parse it out for nicer display
+    $full_name =~ /([A-Za-z]+)\s([a-z]+)\s([^\(]+)(.*)/;
+    $header = sprintf '<span class="species">%s %s</span> <span class="more">%s %s</span>', $1, $2, $3, $4;
+    ## No dropdown species selector
+    $arrow = '';
+    $dropdown = ''; 
+  }
+  else {
+    $header = sprintf '<img src="/i/species/32/%s.png"><span class="species">%s</span> <span class="more">%s</span>', $hub->species, $species, $assembly;
+    ## Species selector
+    $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
+    $dropdown  = $self->species_list;
+  }
 
-  my $content = sprintf '<span class="header"><a href="%s">%s%s: %s</a></span> %s%s %s', 
-                          $home_url, $thumbnail, $species, $assembly, $arrow, $quality, $dropdown;
+  my $content = sprintf '<span class="header"><a href="%s">%s</a></span> %s%s %s', 
+                          $home_url, $header, $arrow, $quality, $dropdown;
  
   return $content;
 }

@@ -68,12 +68,14 @@ body.static #widemain { margin-left: 0; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 
 /* New separate species header */
-#masthead div.spbar_holder                  { position: absolute; top: 66px; clear: both; }
-#masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin:24px 0 0 8px; }
-#masthead div.spbar_holder .header img      { float: left; vertical-align:middle; 
-                                              height: 32px; width: 32px; margin: -8px 0 0 8px;
-                                              border: 1px solid [[MH_BORDER]];
-                                              border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
+#masthead div.spbar_holder                      { position: absolute; top: 66px; clear: both; }
+#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:#fff; }
+#masthead div.spbar_holder .header span.species { font-size:150%; font-weight:bold; }
+#masthead div.spbar_holder .header span.more    { font-size:120%; }
+#masthead div.spbar_holder .header img          { float: left; vertical-align:middle; 
+                                                  height: 32px; width: 32px; margin: -8px 0 0 8px;
+                                                  border: 1px solid [[MH_BORDER]];
+                                                  border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }
 #masthead div.spbar_holder div.dropdown.species            { width: 505px; }
 #masthead div.spbar_holder div.dropdown.species ul li      { width: 130px; float: left; }
