@@ -78,12 +78,11 @@ sub default_options {
 
       # custom pipeline name, in case you don't like the default one
       'dbowner' => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
-      'division'  => 'wbparasite',
-      'pipeline_name' => 'wbparasite_hom_'.$self->o('ps_release').'_'.$self->o('ensembl_release'),
-
+      'pipeline_name' => 'parasite_hom_'.$ENV{PARASITE_VERSION} . '_' . $ENV{ENSEMBL_VERSION},
+      'division'  => 'parasite',
 
       # dependent parameters: updating 'work_dir' should be enough
-      'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/wormbase/parasite/production/compara/',
+      'base_dir'              =>  $ENV{PARASITE_SCRATCH} . '/compara/',
       # work_dir and exe_dir are defined in the base class
 
       # "Member" parameters:
@@ -93,7 +92,7 @@ sub default_options {
       # clustering parameters:
       
       # tree building parameters:
-      'species_tree_input_file'   =>  '/nfs/panda/ensemblgenomes/wormbase/parasite/config/compara_guide_tree.wbparasite.tre',
+      'species_tree_input_file'   =>  $ENV{PARASITE_CONF} . '/compara_guide_tree.wbparasite.tre',
 
       'use_quick_tree_break'      => 0,
 
@@ -113,49 +112,42 @@ sub default_options {
       
       # hive priority for non-LOCAL health_check analysis:
       
-      # connection parameters to various databases:
       
       # the production database itself (will be created)
       # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
       
       # the master database for synchronization of various ids (use undef if you don't have a master database)
       'master_db' => '',
-      'master_db_is_missing_dnafrags' => 0,      
+      'master_db_is_missing_dnafrags' => 1,      
+
+      exclude_gene_analysis => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
 
       ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
       ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
-      prod_1 => {
-        -host   => 'mysql-ps-prod-1.ebi.ac.uk',
-        -port   => 4450,
-        -user   => 'ensro',
-        -db_version => $self->o('ensembl_release')
-      },
             
-      staging_1 => {
+      'mysql-ps-staging-1' => {
         -host   => 'mysql-ps-staging-1.ebi.ac.uk',
         -port   => 4451,
         -user   => 'ensro',
         -db_version => $self->o('ensembl_release')
       },
 
-      staging_2 => {
+      'mysql-ps-staging-2' => {
         -host   => 'mysql-ps-staging-2.ebi.ac.uk',
         -port   => 4467,
         -user   => 'ensro',
         -db_version => $self->o('ensembl_release')
       },
-
+            
 
       # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
       # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
 
-      'curr_core_sources_locs' => [$self->o('prod_1'), $self->o('staging_1')],
+      'curr_core_sources_locs' => [$self->o("$ENV{PARASITE_STAGING_MYSQL}")],
     
       # Add the database entries for the core databases of the previous release
       'prev_core_sources_locs'   => 0,
-
-      'mapping_db' => 'mysql://ensro@mysql-ps-staging-2.ebi.ac.uk:4467/ensembl_compara_wbparasite_X_X',
-     
+          
     };
 }
 
@@ -165,6 +157,8 @@ sub tweak_analyses {
   my $analyses_by_name = shift;
   
   $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '64Gb_job';
+
 }
 
 
