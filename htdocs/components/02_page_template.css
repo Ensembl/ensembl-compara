@@ -69,9 +69,9 @@ body.static #widemain { margin-left: 0; }
 
 /* New separate species header */
 #masthead div.spbar_holder                  { position: absolute; top: 66px; clear: both; }
-#masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin-top:16px; }
+#masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin:24px 0 0 8px; }
 #masthead div.spbar_holder .header img      { float: left; vertical-align:middle; 
-                                              height: 32px; width: 32px; margin: -8px 8px 0 8px;
+                                              height: 32px; width: 32px; margin: -8px 0 0 8px;
                                               border: 1px solid [[MH_BORDER]];
                                               border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }

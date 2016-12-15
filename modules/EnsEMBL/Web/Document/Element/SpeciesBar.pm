@@ -65,8 +65,11 @@ sub content {
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
-  my $content = sprintf '<span class="header"><a href="%s"><img src="/i/species/32/%s.png">%s: %s</a></span> %s%s %s', 
-                          $home_url, $hub->species, $species, $assembly, $arrow, $quality, $dropdown;
+  my $thumbnail = $hub->species_defs->EG_DIVISION && $hub->species_defs->EG_DIVISION eq 'bacteria'
+                    ? '' : sprintf('<img src="/i/species/32/%s.png">', $hub->species); 
+
+  my $content = sprintf '<span class="header"><a href="%s">%s%s: %s</a></span> %s%s %s', 
+                          $home_url, $thumbnail, $species, $assembly, $arrow, $quality, $dropdown;
  
   return $content;
 }
