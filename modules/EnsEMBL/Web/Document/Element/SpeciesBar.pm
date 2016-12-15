@@ -65,7 +65,7 @@ sub content {
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
-  my $content = sprintf '<span class="header"><a href="%s"><img src="/i/species/48/%s.png">%s: %s</a></span> %s%s %s', 
+  my $content = sprintf '<span class="header"><a href="%s"><img src="/i/species/32/%s.png">%s: %s</a></span> %s%s %s', 
                           $home_url, $hub->species, $species, $assembly, $arrow, $quality, $dropdown;
  
   return $content;

@@ -33,7 +33,7 @@ body.static #widemain { margin-left: 0; }
 
 
 /* Masthead */
-#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 130px; position: relative; }
+#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 120px; position: relative; }
 #masthead div                             { background-color: [[MH_BG]] important; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
@@ -68,10 +68,10 @@ body.static #widemain { margin-left: 0; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 
 /* New separate species header */
-#masthead div.spbar_holder                  { position: absolute; top: 70px; clear: both; }
+#masthead div.spbar_holder                  { position: absolute; top: 66px; clear: both; }
 #masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin-top:16px; }
 #masthead div.spbar_holder .header img      { float: left; vertical-align:middle; 
-                                              height: 48px; width: 48px; margin: -16px 8px 0 8px;
+                                              height: 32px; width: 32px; margin: -8px 8px 0 8px;
                                               border: 1px solid [[MH_BORDER]];
                                               border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }
