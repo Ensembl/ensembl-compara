@@ -33,7 +33,7 @@ body.static #widemain { margin-left: 0; }
 
 
 /* Masthead */
-#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 114px; position: relative; }
+#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
 #masthead div                             { background-color: [[MH_BG]] important; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
@@ -67,16 +67,6 @@ body.static #widemain { margin-left: 0; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 #masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
-
-/* New separate species header */
-#masthead div.spbar_holder                  { position: absolute; top: 70px; clear: both; }
-#masthead div.spbar_holder .header          { font-size:150%; font-weight:bold; color:#fff; margin-top:8px; }
-#masthead div.spbar_holder .header img      { float: left; vertical-align:middle; 
-                                              height: 24px; width: 24px; margin: -8px 8px 0 8px;
-                                              border: 1px solid [[MH_BORDER]];
-                                              border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
-#masthead div.spbar_holder span.dropdown a.toggle { background: none; }
-
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }
