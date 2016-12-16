@@ -119,7 +119,7 @@ sub _init {
       my $colour = $self->my_colour($stain);
       
       if ($stain eq 'acen') {
-        if ($done_1_acen) {
+        if ($done_1_acen or $band->start == 1) {
           CORE::push(@decorations, $self->Poly({
             points    => [ $vc_band_start, $h_offset + $h_wid, $vc_band_end, $h_offset, $vc_band_end, $h_offset + $wid ],
             colour    => $colour,
