@@ -191,10 +191,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       
       return;
     }
-    
+
     contentEl.html('<div class="spinner">Loading Content</div>').show();
-    
-    var params = Ensembl.prepareRequestParams(url);
+
+    // To decodeURIComponent for image exports
+    var decode = url.match(/decodeURL=1/) || 0
+
+    var params = Ensembl.prepareRequestParams(url, decode);
 
     this.xhr = $.ajax({
       url: params.requestURL,
