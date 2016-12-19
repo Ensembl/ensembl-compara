@@ -232,7 +232,7 @@ sub parse_cafe_output {
         print STDERR "pvalue_pairs $pvalue_pairs\n" if ($self->debug);
         my @pvalue_pairs;
         while ($pvalue_pairs =~ /\(([^,(]+),([^,)]+)\)/g) {
-            push @pvalue_pairs, [$1+0,$2+0];
+            push @pvalue_pairs, [$1 eq '-' ? undef : $1+0,$2 eq '-' ? undef : $2+0];
         }
 
         my %pvalue_by_node;
@@ -268,10 +268,10 @@ sub parse_cafe_output {
             print STDERR "Storing node name $node_id\n" if ($self->debug);
 
             $n_members //= 0; ## It may be absent from the orig data (but in the tree)
-            my $pvalue = $pvalue_by_node{$node_id} // 0.5;
+            my $pvalue = $pvalue_by_node{$node_id};
             my $cafe_node = $cafe_nodes_lookup{$node_id} || die "Could not find the node '$node_id'";
 
-            print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
+            print STDERR "Storing N_MEMBERS: $n_members, PVALUE: ".($pvalue//'NULL')."\n" if ($self->debug);
 
                 $cafe_node->n_members($n_members);
                 $cafe_node->pvalue($pvalue);
