@@ -354,6 +354,7 @@ sub tweak_analyses {
     }
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
     $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
+    $analyses_by_name->{'CAFE_analysis'}->{'-parameters'}{'pvalue_lim'} = 1;
 }
 
 1;
