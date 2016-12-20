@@ -89,8 +89,8 @@ sub pipeline_create_commands {
         #Store CodingExon coverage statistics
         $self->db_cmd('CREATE TABLE IF NOT EXISTS statistics (
         method_link_species_set_id  int(10) unsigned NOT NULL,
-        species_name                varchar(40) NOT NULL DEFAULT "",
-        seq_region                  varchar(40) NOT NULL DEFAULT "",
+        genome_db_id                int(10) unsigned NOT NULL,
+        dnafrag_id                  bigint unsigned NOT NULL,
         matches                     INT(10) DEFAULT 0,
         mis_matches                 INT(10) DEFAULT 0,
         ref_insertions              INT(10) DEFAULT 0,
