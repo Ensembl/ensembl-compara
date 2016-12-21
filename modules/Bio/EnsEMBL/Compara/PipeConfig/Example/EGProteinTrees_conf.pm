@@ -318,14 +318,15 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
+
+    ## Here we bump the resource class of some commonly MEMLIMIT
+    ## failing analyses. Are these really EG specific?
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
-    $analyses_by_name->{'raxml_epa_longbranches_himem'}->{'-rc_name'} = '16Gb_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
