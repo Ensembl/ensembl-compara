@@ -22,6 +22,10 @@
 * `MethodLinkSpeciesSet::species_set_obj()`
 * `SequenceAdaptor::fetch_by_dbIDs()`
 
+## Miscellaneous, to be removed in Ensembl 90
+
+* `SeqMemberAdaptor::update_sequence()`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `GenomicAlignTree::genomic_align_array()`
