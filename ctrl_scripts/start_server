@@ -94,7 +94,7 @@ if ($rmconfig) {
 }
 
 # Additional processing for memcached
-if ($memcached) {
+if (keys %{$memcached || {}}) {
 
   # Check memcached servers version
   warn_line();
