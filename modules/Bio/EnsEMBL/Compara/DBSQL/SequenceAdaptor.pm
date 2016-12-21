@@ -157,7 +157,7 @@ sub fetch_other_sequences_by_member_ids_type {
 sub store {
     my ($self, $sequence) = @_;
 
-    return 0 unless($sequence);
+    throw("SequenceAdaptor::store() called without a sequence") unless $sequence;
 
     my $md5sum = md5_hex($sequence);
 
