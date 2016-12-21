@@ -953,7 +953,7 @@ sub core_pipeline_analyses {
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '500Mb_job',
+            -rc_name => '1Gb_job',
             -flow_into => {
                 2 => [ '?table_name=sequence' ],
                 1 => [ 'seq_member_table_reuse' ],
@@ -1145,7 +1145,7 @@ sub core_pipeline_analyses {
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '2Gb_job',
+            -rc_name => '4Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
@@ -1736,6 +1736,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 2 => 'cluster_tagging',
             },
+            -rc_name    => '1Gb_job',
         },
 
 
@@ -1753,6 +1754,7 @@ sub core_pipeline_analyses {
                 ),
                 'A->1' => [ 'hc_global_tree_set' ],
             },
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'alignment_entry_point',
