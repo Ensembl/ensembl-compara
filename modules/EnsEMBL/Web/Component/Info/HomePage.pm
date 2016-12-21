@@ -45,40 +45,20 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $img_url      = $self->img_url;
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
-  my $display_name = $species_defs->SPECIES_SCIENTIFIC_NAME;
-  
-  $self->{'icon'}     = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
+  my $img_url      = $self->img_url;
+
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
- 
-  my $icon_name;
-  my $strain_of = $species_defs->IS_STRAIN_OF; 
-  if ($species_defs->IS_STRAIN_OF) {
-    $icon_name = $strain_of.'_strain';
-  }
-  else {
-    $icon_name = $hub->species;
-  }
- 
+  
   return sprintf('
-    <div class="column-wrapper">  
-      <div class="box-left">
-        <div class="species-badge">
-          <img src="%sspecies/64/%s.png" alt="" title="%s" />
-          %s
-        </div>
-        %s
-      </div>
-      %s
-    </div>
+    <div class="box-left"><div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div></div>
+    %s
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     %s',
-    $img_url, $icon_name, $species_defs->SAMPLE_DATA->{'ENSEMBL_SOUND'},
-    $common_name =~ /\./ ? "<h1>$display_name</h1>" : "<h1>$common_name</h1><p>$display_name</p>",
+    $common_name,
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
     $self->assembly_text,

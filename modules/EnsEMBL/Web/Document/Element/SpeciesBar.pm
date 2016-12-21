@@ -51,12 +51,10 @@ sub content {
     $assembly = $hub->species_defs->ASSEMBLY_NAME;
   }
 
-  ## Optional quality flag
-  if ($hub->species_defs->GENEBUILD_METHOD ne 'full_genebuild') {
-    (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
-    my $genebuild_url = '';
-    $quality = sprintf '<a href="%s"><img src="/i/16/rev/flag.png"/> %s</a>', $genebuild_url, ucfirst $text;
-  }
+  ## Quality flag
+  (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
+  my $genebuild_url = '';
+  my $quality = sprintf '<a href="%s"><img src="/i/16/rev/database.png"/> %s</a>', $genebuild_url, ucfirst $text;
 
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});

@@ -89,10 +89,15 @@ sub render_masthead {
   my ($self, $elements) = @_;
 
   ## MASTHEAD & GLOBAL NAVIGATION
+  my $masthead_class = '';
+  if ($self->hub->species && $self->hub->species !~ /multi|common/i) {
+    $masthead_class = $self->hub->type eq 'Info' ? ' no-tabs' : ' with-tabs';
+  }
+
   return qq(
   <div id="min_width_container">
     <div id="min_width_holder">
-      <div id="masthead" class="js_panel">
+      <div id="masthead" class="js_panel$masthead_class">
         <input type="hidden" class="panel_type" value="Masthead" />
         <div class="logo_holder">$elements->{'logo'}</div>
         <div class="mh print_hide">
