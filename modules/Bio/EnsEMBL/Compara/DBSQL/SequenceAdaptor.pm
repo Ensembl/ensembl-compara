@@ -179,16 +179,17 @@ sub store_no_redundancy {
     # We insert no matter what
     $self->dbc->do('INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
 
-    # And we delete the duplicates (the smallest sequence_id is the reference, i.e first come first served)
-    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
+    # We find the repetitions
+    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ?', undef, $md5sum, $sequence);
+
     die "The sequence disappeared !\n" unless scalar(@$matching_ids);
-    my $seqID = shift @$matching_ids;
+    return $matching_ids->[0] if scalar(@$matching_ids)==1;
 
-    if (scalar(@$matching_ids)) {
-        my $ids_in = $self->generate_in_constraint($matching_ids, 'sequence_id', SQL_INTEGER, 1);
-        $self->dbc->do("DELETE FROM sequence WHERE $ids_in");
-    }
-
+    # And we delete the duplicates (the smallest sequence_id is the reference, i.e first come first served)
+    my @ordered_ids = sort {$a <=> $b} @$matching_ids;
+    my $seqID = shift @ordered_ids;
+    my $ids_in = $self->generate_in_constraint(\@ordered_ids, 'sequence_id', SQL_INTEGER, 1);
+    $self->dbc->do("DELETE FROM sequence WHERE $ids_in");
     return $seqID;
 }
 
