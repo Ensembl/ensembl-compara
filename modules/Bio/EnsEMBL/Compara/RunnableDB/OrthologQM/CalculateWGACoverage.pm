@@ -76,12 +76,14 @@ sub fetch_input {
 	my $dba;
 	if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
 	else { $dba = $self->compara_dba }
+
+        my $do_disconnect = $dba->dbc ne $self->dbc;
 	
 	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
 	my $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
 
-	$self->db->dbc->disconnect_if_idle;
+	$self->db->dbc->disconnect_if_idle if $do_disconnect;
 
 	foreach my $orth ( @orth_batch ) {
 		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
@@ -101,6 +103,7 @@ sub fetch_input {
 
 		if ( scalar( @gblocks ) < 1 ) {
 			$self->warning("No alignment found for homology_id " . $orth->{id});
+                        $self->db->dbc->disconnect_if_idle if $do_disconnect;
 			next;
 			# my $exit_msg = "No alignment found for homology_id " . $orth->{id};
 			# $self->input_job->autoflow(0);
