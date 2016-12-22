@@ -37,7 +37,7 @@ sub mirrors_list {
                   },
     'USWEST'  => {'name'  => 'US West (Amazon AWS)',
                   'url'   => 'http://uswest.ensembl.org',
-                  'blurb' => 'Faster connections from the Pacific Rim',
+                  'blurb' => 'Cloud-based mirror on West Coast of US',
                   'flag'  => 'flag_usa.png',
                   },
     'USEAST'  => {'name'  => 'US East (Amazon AWS)',
