@@ -60,7 +60,6 @@ use warnings;
 use Bio::EnsEMBL::Compara::SeqMember;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
