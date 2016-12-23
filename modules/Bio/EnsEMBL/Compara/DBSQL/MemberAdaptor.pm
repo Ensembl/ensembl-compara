@@ -360,7 +360,7 @@ sub get_source_taxon_count {
 
 sub fetch_all_by_MemberSet {
     my ($self, $set) = @_;
-    assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet');
+    assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet', 'set');
     if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet')) {
         return $self->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($set);
     } else {
