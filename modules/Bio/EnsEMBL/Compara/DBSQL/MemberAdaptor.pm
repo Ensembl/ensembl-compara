@@ -273,8 +273,8 @@ sub fetch_all_by_GenomeDB {
 #TODO fetch_all_by_Slice($slice)
 #TODO fetch_all_by_Locus($locus, -expand_both, -expand_5, -expand_3, -limit
 
-sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
-  my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;
+sub _count_all_by_dnafrag_id_start_end_strand {
+  my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand) = @_;
 
   $self->throw("all args are required")
       unless($dnafrag_start && $dnafrag_end && $dnafrag_strand && defined ($dnafrag_id));
@@ -287,7 +287,7 @@ sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
   $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
   $self->bind_param_generic_fetch($dnafrag_strand, SQL_INTEGER);
 
-  return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
+  return $self->generic_count($constraint);
 }
 
 
