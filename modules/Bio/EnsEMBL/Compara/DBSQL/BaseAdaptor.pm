@@ -155,6 +155,29 @@ sub construct_sql_query {
 }
 
 
+=head2 generic_count
+
+  Arguments  : Same arguments as construct_sql_query()
+  Example    : $n_rows = $a->generic_count($constraint, $join, $final_clause);
+  Description: Performs a database query to count the number of elements
+  Returntype : integer
+  Exceptions : none
+  Caller     : various adaptors' specific couont_ subroutines
+
+=cut
+
+sub generic_count {
+    my $self = shift;
+    my $sql = $self->construct_sql_query(@_);
+    $sql =~ s/^\s*SELECT\s.*\sFROM\s(.*)$/SELECT COUNT(*) FROM $1/i;
+    #warn "$sql\n";
+    my $sth = $self->_bind_params_and_execute($sql);
+    my ($count) = $sth->fetchrow_array();  # Assumes no GROUP BY
+    $sth->finish;
+    return $count;
+}
+
+
 =head2 generic_fetch
 
   Arguments  : Same arguments as construct_sql_query()
@@ -169,6 +192,25 @@ sub construct_sql_query {
 sub generic_fetch {
     my $self = shift;
     my $sql = $self->construct_sql_query(@_);
+    my $sth = $self->_bind_params_and_execute($sql);
+    my $obj_list = $self->_objs_from_sth($sth);
+    $sth->finish;
+    return $obj_list;
+}
+
+
+=head2 _bind_params_and_execute
+
+  Arg[1]     : String $sql. The SQL statement to execute
+  Description: Prepare the statement, bind the parameters from bind_param_generic_fetch() and execute the statement
+  Returntype : Execute statement-handle
+  Exceptions : none
+  Caller     : generic_fetch() and generic_count()
+
+=cut
+
+sub _bind_params_and_execute {
+    my ($self, $sql) = @_;
     my $sth = $self->prepare($sql);
 
     my $bind_parameters = $self->bind_param_generic_fetch();
@@ -186,10 +228,7 @@ sub generic_fetch {
     if ($@) {
         throw("Detected an error whilst executing SQL '${sql}': $@");
     }
-
-    my $obj_list = $self->_objs_from_sth($sth);
-    $sth->finish;
-    return $obj_list;
+    return $sth;
 }
 
 
