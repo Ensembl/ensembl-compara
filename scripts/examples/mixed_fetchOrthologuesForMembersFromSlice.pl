@@ -42,7 +42,7 @@ my $homologyDBA = $comparaDBA->get_HomologyAdaptor;
 # get GenomeDB for human
 my $ratGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("rat");
 
-my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon( 'ENSEMBLPEP', $ratGDB->taxon_id);
+my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($ratGDB, 'ENSEMBLPEP');
 my $rat_dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($ratGDB, 2);
 
 foreach my $pep (@{$members}) {

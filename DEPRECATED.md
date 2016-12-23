@@ -26,6 +26,11 @@
 
 * `SeqMemberAdaptor::update_sequence()`
 
+## Miscellaneous, to be removed in Ensembl 91
+
+* `GeneMemberAdaptor::fetch_all_by_source_taxon()`
+* `SeqMemberAdaptor::fetch_all_by_source_taxon()`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `GenomicAlignTree::genomic_align_array()`
