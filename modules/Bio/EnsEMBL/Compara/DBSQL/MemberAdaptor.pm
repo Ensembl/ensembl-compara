@@ -365,6 +365,28 @@ sub fetch_all_by_Locus {
 }
 
 
+=head2 fetch_all_by_DnaFrag
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Example     : $gene_member_adaptor->fetch_all_by_DnaFrag($chr3_dnafrag);
+  Description : Fetches all the members that are on the given DnaFrag
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Member (or derived classes)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_DnaFrag {
+    my ($self, $dnafrag) = @_;
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
+
+    my $constraint = '(m.dnafrag_id = ?)';
+    $self->bind_param_generic_fetch($dnafrag->dbID, SQL_INTEGER);
+    return $self->generic_fetch($constraint);
+}
+
+
 =head2 get_source_taxon_count
 
   Arg [1]    : string $source_name
