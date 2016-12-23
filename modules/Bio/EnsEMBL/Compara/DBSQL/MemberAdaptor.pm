@@ -270,9 +270,6 @@ sub fetch_all_by_GenomeDB {
 }
 
 
-#TODO fetch_all_by_Slice($slice)
-#TODO fetch_all_by_Locus($locus, -expand_both, -expand_5, -expand_3, -limit
-
 sub _count_all_by_dnafrag_id_start_end_strand {
   my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand) = @_;
 
@@ -291,31 +288,82 @@ sub _count_all_by_dnafrag_id_start_end_strand {
 }
 
 
-=head2 fetch_all_by_dnafrag_id_start_end
+=head2 fetch_all_by_Slice
 
-  Arg [1]    : dnafrag db ID
-  Arg [2]    : int Start - the start position of the region you want
-  Arg [3]    : int End - the end position of the region you want
-  Example    : my $genemembers_arrayref = $memberDBA->fetch_all_by_dnafrag_id_start_end($dnafragID, $start, $end);
-  Description: Returns a arrayref of the list of gene members spanning the given region on the given dnafrag
-  Returntype : Array ref
-  Exceptions : undefined arguments
+  Arg[1]      : Bio::EnsEMBL::Slice $slice
+  Arguments   : See L<fetch_all_by_Locus> for a description of the optional arguments
+  Example     : $gene_member_adaptor->fetch_all_by_Slice($slice, -FULLY_WITHIN => 1);
+  Description : Fetches all the members for the given L<Bio::EnsEMBL::Slice>. Use the parameter
+                FULLY_WITHIN to return the members *overlapping* or *contained* in this slice.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Member (or derived classes)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
 
 =cut
-sub fetch_all_by_dnafrag_id_start_end {
 
-  my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end) = @_;
-    $self->throw("all args are required")
-      unless($dnafrag_start && $dnafrag_end && defined ($dnafrag_id));
-
-  my $constraint = '(m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?)';
-  $self->bind_param_generic_fetch($dnafrag_id, SQL_INTEGER);
-  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
-  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
-  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
-  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
-  return $self->generic_fetch($constraint);
+sub fetch_all_by_Slice {
+    my $self = shift;
+    my $slice = shift;
+    my $dnafrag = $self->db->get_DnaFragAdaptor->fetch_by_Slice($slice);
+    throw "Could not find find a DnaFrag for ".$slice->name unless $dnafrag;
+    my $locus = Bio::EnsEMBL::Compara::Locus->new_fast( {
+            'dnafrag_id'        => $dnafrag->dbID,
+            'dnafrag_start'     => $slice->start,
+            'dnafrag_end'       => $slice->end,
+            'dnafrag_strand'    => $slice->strand,
+        });
+    return $self->fetch_all_by_Locus($locus, @_);
 }
+
+
+=head2 fetch_all_by_Locus
+
+  Arg[1]      : Bio::EnsEMBL::Compara::Locus $locus. An instance of a derived class like GenomicAlign works
+  Arg [-FULLY_WITHIN] (opt) Boolean
+              : By default, the method returns all the members that overlap the Locus. Set this
+                parameter to True to return the members that are fully inside the Locus.
+  Arg [-EXPAND_5] (opt) Integer (default: 0)
+              : Number of base-pairs to extend the given Locus on its 5' end (which is its dnafrag *end* when on the negative strand)
+  Arg [-EXPAND_3] (opt) Integer (default: 0)
+              : Number of base-pairs to extend the given Locus on its 3' end (which is its dnafrag *start* when on the negative strand)
+  Example     : $gene_member_adaptor->fetch_all_by_Locus($genomic_align);
+  Description : Fetches all the members for the given L<Bio::EnsEMBL::Compara::Locus> which is the base
+                class for many objects including L<Bio::EnsEMBL::Compara::GenomicAlign>, L<Bio::EnsEMBL::Compara::DnaFragRegion>
+                and L<Bio::EnsEMBL::Compara::Member>
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Member (or derived classes)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_Locus {
+    my ($self, $locus, @args) = @_;
+    assert_ref($locus, 'Bio::EnsEMBL::Compara::Locus', 'locus');
+
+    my ($fully_within, $expand_5, $expand_3) = rearrange([qw(FULLY_WITHIN EXPAND_5 EXPAND_3)], @args);
+
+    my $start = $locus->dnafrag_start - ($locus->dnafrag_strand > 0 ? $expand_5 : $expand_3);
+    my $end   = $locus->dnafrag_end   + ($locus->dnafrag_strand > 0 ? $expand_3 : $expand_5);
+
+    if ($fully_within) {
+        my $constraint = '(m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?)';
+        $self->bind_param_generic_fetch($locus->dnafrag_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($start, SQL_INTEGER);
+        $self->bind_param_generic_fetch($end, SQL_INTEGER);
+        $self->bind_param_generic_fetch($start, SQL_INTEGER);
+        $self->bind_param_generic_fetch($end, SQL_INTEGER);
+        return $self->generic_fetch($constraint);
+    } else {
+        my $constraint = '(m.dnafrag_id = ?) AND (m.dnafrag_start <= ?) AND (m.dnafrag_end >= ?)';
+        $self->bind_param_generic_fetch($locus->dnafrag_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($end, SQL_INTEGER);
+        $self->bind_param_generic_fetch($start, SQL_INTEGER);
+        return $self->generic_fetch($constraint);
+    }
+}
+
 
 =head2 get_source_taxon_count
 
