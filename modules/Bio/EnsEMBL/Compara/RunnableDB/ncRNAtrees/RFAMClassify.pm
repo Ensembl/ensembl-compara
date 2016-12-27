@@ -176,7 +176,7 @@ sub build_hash_models {
   # We only take the canonical transcripts.
   # Right now, this only affects a few transcripts in Drosophila, but it's safer this way.
   my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
-  my $all_genes_Iterator = $gene_member_adaptor->fetch_all_by_source_Iterator('ENSEMBLGENE');
+  my $all_genes_Iterator = $gene_member_adaptor->generic_fetch_Iterator();
 
   while (my $gene = $all_genes_Iterator->next) {
       my $transc = $gene->get_canonical_SeqMember;
