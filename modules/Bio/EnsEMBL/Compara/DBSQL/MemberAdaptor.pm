@@ -140,17 +140,17 @@ sub fetch_all {
 
 
 sub fetch_all_Iterator {    ## DEPRECATED
-    my ($self, $cache_size) = @_;
+    my ($self, $cache_size) = @_;   # $cache_size is now ignored
     deprecate('MemberAdaptor::fetch_all_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
-    return $self->generic_fetch_Iterator($cache_size,"");
+    return $self->generic_fetch_Iterator();
 }
 
 
 sub fetch_all_by_source_Iterator {  ## DEPRECATED
-    my ($self, $source_name, $cache_size) = @_;
+    my ($self, $source_name, $cache_size) = @_;     # $cache_size is now ignored
     deprecate('MemberAdaptor::fetch_all_by_source_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
     throw("source_name arg is required\n") unless ($source_name);
-    return $self->generic_fetch_Iterator($cache_size, "source_name = '$source_name'");
+    return $self->generic_fetch_Iterator("source_name = '$source_name'");
 }
 
 

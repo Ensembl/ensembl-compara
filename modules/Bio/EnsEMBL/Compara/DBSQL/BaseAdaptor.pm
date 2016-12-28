@@ -375,12 +375,10 @@ sub generic_fetch_one {
 
 =head2 generic_fetch_Iterator
 
-  Arg [1]    : (optional) integer $cache_size
-               The number of dbIDs in each chunk (default: 1000)
   Arg [1]    : (optional) string $constraint
                An SQL query constraint (i.e. part of the WHERE clause)
                e.g. "fm.family_id = $family_id"
-  Example    : $obj = $a->generic_fetch_Iterator(100, 'WHERE taxon_id = 9606');
+  Example    : $obj = $a->generic_fetch_Iterator('WHERE taxon_id = 9606');
   Description: Performs a database fetch and returns an iterator over it
   Returntype : Bio::EnsEMBL::Utils::Iterator
   Exceptions : none
@@ -389,7 +387,7 @@ sub generic_fetch_one {
 =cut
 
 sub generic_fetch_Iterator {
-    my ($self, $cache_size, $constraint) = @_;
+    my ($self, $constraint) = @_;
 
     my ($name, $syn) = @{($self->_tables)[0]};
     # Fetch all the dbIDs
@@ -404,7 +402,6 @@ sub generic_fetch_Iterator {
     $sth->bind_columns(\$id);
 
     my $more_items = 1;
-    $cache_size ||= 1000; ## Default: 1000 members per chunk
     my @cache;
 
     my $closure = sub {
@@ -413,7 +410,7 @@ sub generic_fetch_Iterator {
             my $items_counter = 0;
             while ($sth->fetch) {
                 push @dbIDs, $id;
-                if (++$items_counter == $cache_size) {
+                if (++$items_counter == ID_CHUNK_SIZE) {
                     $more_items = 1;
                     last;
                 }
