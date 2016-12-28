@@ -69,6 +69,10 @@ sub attach {
                records. This is useful to add a required ORDER BY or LIMIT clause
                to the query for example. This argument overrides the return value
                of $self->_final_clause()
+  Arg [4]    : (optional) string $column_clause
+               List of columns (or expressions) to retrieve. Overrides the default
+               built from L<_columns()> and $join. $column_clause must be a valid,
+               complete, clause such as "root_id AS rr, node_id AS nn"
   Example    : $sql = $a->construct_sql_query($constraint, $join);
   Description: Builds a personalized SQL query that can be used to fetch the data.
   Returntype : String
@@ -78,7 +82,7 @@ sub attach {
 =cut
   
 sub construct_sql_query {
-    my ($self, $constraint, $join, $final_clause) = @_;
+    my ($self, $constraint, $join, $final_clause, $column_clause) = @_;
 
     my @tabs = $self->_tables;
     my $columns = join(', ', $self->_columns());
@@ -130,6 +134,9 @@ sub construct_sql_query {
     #construct a nice table string like 'table1 t1, table2 t2'
     my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
+    # Overrides the default
+    $columns = $column_clause if $column_clause;
+
     my $sql  = "SELECT $columns FROM $left_join_prefix ($tablenames) $left_join";
 
     #append a where clause if it was defined
@@ -167,10 +174,8 @@ sub construct_sql_query {
 =cut
 
 sub generic_count {
-    my $self = shift;
-    my $sql = $self->construct_sql_query(@_);
-    $sql =~ s/^\s*SELECT\s.*\sFROM\s(.*)$/SELECT COUNT(*) FROM $1/i;
-    #warn "$sql\n";
+    my ($self, $constraint, $join, $final_clause) = @_;
+    my $sql = $self->construct_sql_query($constraint, $join, $final_clause, 'COUNT(*)');
     my $sth = $self->_bind_params_and_execute($sql);
     my ($count) = $sth->fetchrow_array();  # Assumes no GROUP BY
     $sth->finish;
@@ -190,8 +195,8 @@ sub generic_count {
 =cut
 
 sub generic_fetch {
-    my $self = shift;
-    my $sql = $self->construct_sql_query(@_);
+    my ($self, $constraint, $join, $final_clause) = @_;
+    my $sql = $self->construct_sql_query($constraint, $join, $final_clause);
     my $sth = $self->_bind_params_and_execute($sql);
     my $obj_list = $self->_objs_from_sth($sth);
     $sth->finish;
@@ -375,10 +380,8 @@ sub generic_fetch_one {
 
 =head2 generic_fetch_Iterator
 
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-               e.g. "fm.family_id = $family_id"
-  Example    : $obj = $a->generic_fetch_Iterator('WHERE taxon_id = 9606');
+  Arguments  : Same arguments as construct_sql_query()
+  Example    : $obj = $a->generic_fetch_Iterator('taxon_id = 9606');
   Description: Performs a database fetch and returns an iterator over it
   Returntype : Bio::EnsEMBL::Utils::Iterator
   Exceptions : none
@@ -387,15 +390,12 @@ sub generic_fetch_one {
 =cut
 
 sub generic_fetch_Iterator {
-    my ($self, $constraint) = @_;
+    my ($self, $constraint, $join, $final_clause) = @_;
 
     my ($name, $syn) = @{($self->_tables)[0]};
-    # Fetch all the dbIDs
-    my $sql = "SELECT ${name}_id FROM ${name}";
-    if ($constraint) {
-        $sql .= " WHERE $constraint";
-    }
+    my $sql = $self->construct_sql_query($constraint, $join, $final_clause, $name.'_id');
 
+    # Fetch all the dbIDs
     my $sth = $self->prepare($sql);
     $sth->execute();
     my $id;
@@ -454,7 +454,7 @@ sub split_and_callback {
   Arg[1]      : Arrayref $list_of_values. All the IDs to retrieve
   Arg[2]      : String $column_name - Name of the column in the table the IDs can be found in
   Arg[3]      : Integer $column_sql_type. DBI's "SQL type"
-  Arg[4..n]   : Extra parameters passed to construct_sql_query() (after the where constraint)
+  Arg[4,5]    : Extra parameters passed to generic_fetch() (after the where constraint)
   Example     : $adaptor->generic_fetch_concatenate($stable_ids, 'm.stable_id', SQL_VARCHAR);
   Description : Special version of split_and_callback() that calls generic_fetch() with the
                 The core API already has already such a method - _uncached_fetch_all_by_id_list() -
