@@ -367,12 +367,10 @@ sub store {
 
 
 
-
-# NOTE: this is never called
 sub update_sequence {   ## DEPRECATED
   my ($self, $member) = @_;
 
-  deprecate('SeqMemberAdaptor::update_sequence() is deprecated and will be removed in e90. Contact the Compara team if you need it.');
+  deprecate('SeqMemberAdaptor::update_sequence() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
 
   return 0 unless($member);
   unless($member->dbID) {

@@ -139,48 +139,16 @@ sub fetch_all {
 }
 
 
-=head2 fetch_all_Iterator
-
-  Arg        : (optional) int $cache_size
-  Example    : my $memberIter = $memberAdaptor->fetch_all_Iterator();
-               while (my $member = $memberIter->next) {
-                  #do something with $member
-               }
-  Description: Returns an iterator over all the members in the database
-               This is safer than fetch_all for large databases.
-  Returntype : Bio::EnsEMBL::Utils::Iterator
-  Exceptions : 
-  Caller     : 
-  Status     : Experimental
-
-=cut
-
-sub fetch_all_Iterator {
+sub fetch_all_Iterator {    ## DEPRECATED
     my ($self, $cache_size) = @_;
+    deprecate('MemberAdaptor::fetch_all_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
     return $self->generic_fetch_Iterator($cache_size,"");
 }
 
 
-=head2 fetch_all_by_source_Iterator
-
-  Arg[1]     : string $source_name
-  Arg[2]     : (optional) int $cache_size
-  Example    : my $memberIter = $memberAdaptor->fetch_all_by_source_Iterator("ENSEMBLGENE");
-               while (my $member = $memberIter->next) {
-                  #do something with $member
-               }
-  Description: Returns an iterator over all the members corresponding
-               to a source_name in the database.
-               This is safer than fetch_all_by_source for large databases.
-  Returntype : Bio::EnsEMBL::Utils::Iterator
-  Exceptions : 
-  Caller     : 
-  Status     : Experimental
-
-=cut
-
-sub fetch_all_by_source_Iterator {
+sub fetch_all_by_source_Iterator {  ## DEPRECATED
     my ($self, $source_name, $cache_size) = @_;
+    deprecate('MemberAdaptor::fetch_all_by_source_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
     throw("source_name arg is required\n") unless ($source_name);
     return $self->generic_fetch_Iterator($cache_size, "source_name = '$source_name'");
 }
