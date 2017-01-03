@@ -288,7 +288,9 @@ sub bumped {
 
 sub height {
   my ($self) = @_;
-  return int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+  ## New drawing code calculates its height differently
+  my $h = $self->{'my_config'}->get('total_height');
+  return $h || int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
 }
 
 sub width {
