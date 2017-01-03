@@ -74,7 +74,7 @@ sub create_glyphs {
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
-  my $label_height    = 0;
+  my $font_height     = 0;
   my $total_height    = 0;
 
   ## Strand settings
@@ -90,7 +90,6 @@ sub create_glyphs {
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
-    my $label_height;
 
     ## FIRST LOOP - process features
     foreach my $feature (@features) {
@@ -119,15 +118,16 @@ sub create_glyphs {
         my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
                                          : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
-        $label_height = max($label_height, $text_info->{'height'});
+        $font_height = max($font_height, $text_info->{'height'});
       }
     }
     mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
 
-    my ($typical_label_height, $label_lines);
-    $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
-    ## SECOND LOOP - draw features
-    foreach my $feature (@features) {
+    my ($typical_label, $label_lines);
+    $typical_label = $self->get_text_info($features[0]->{'label'}) if @features;
+
+    ## SECOND LOOP - draw features row by row
+    foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
       my $new_y;
       my $feature_row = 0;
       my $label_row   = 0;
@@ -140,7 +140,7 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $typical_label_height->{'height'};
+      my $feature_height  = $track_config->get('height') || $typical_label->{'height'};
       my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
       if ($feature_width == 0) {
@@ -157,12 +157,13 @@ sub create_glyphs {
         $feature_width      = $drawn_end - $drawn_start + 1; 
       }
 
-      my $labels_height   = $label_row * $label_height;
+      my $labels_y   = $label_row * $font_height;
       ## Is it a multi-line label?
       $label_lines = split("\n", $feature->{'label'});
       ## Only "ordinary" bumping requires adding the label to the feature height
-      my $space_for_labels  = ($bumped && $bumped eq '1') ? $labels_height * $label_lines : 0;
+      my $space_for_labels  = ($bumped && $bumped eq '1') ? $labels_y * $label_lines : 0;
       my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $space_for_labels;
+      #warn ">>> Y = $y";
 
       my $position  = {
                       'y'           => $y,
@@ -197,7 +198,7 @@ sub create_glyphs {
           $new_x = $feature->{'start'} - 1;
           $new_x = 0 if $new_x < 0;
           $new_y = $position->{'y'} + $approx_height;
-          $new_y += $labels_height if ($bumped eq 'labels_only');
+          $new_y += $labels_y if ($bumped eq 'labels_only');
           ## Pad width to match bumped position
           $text_width += 10;
         }
