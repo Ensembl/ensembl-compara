@@ -347,46 +347,10 @@ sub _detect_location_on_platform {
 }
 
 
-=head2 get_common_classification
-
-  Arg [1]    : -none-
-  Example    : my $common_classification = $method_link_species_set->
-                   get_common_classification();
-  Description: This method fetches the taxonimic classifications for all the
-               species included in this
-               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object and
-               returns the common part of them.
-  Returntype : array of strings
-  Exceptions : 
-  Caller     : general
-
-=cut
-
-sub get_common_classification {
+sub get_common_classification { ## DEPRECATED
   my ($self) = @_;
-  my $common_classification;
-
-  my $species_set = $self->species_set();
-
-  foreach my $this_genome_db (@{$species_set->genome_dbs}) {
-    my @classification = split(" ", $this_genome_db->taxon->classification);
-    if (!defined($common_classification)) {
-      @$common_classification = @classification;
-    } else {
-      my $new_common_classification = [];
-      for (my $i = 0; $i <@classification; $i++) {
-        for (my $j = 0; $j<@$common_classification; $j++) {
-          if ($classification[$i] eq $common_classification->[$j]) {
-            push(@$new_common_classification, splice(@$common_classification, $j, 1));
-            last;
-          }
-        }
-      }
-      $common_classification = $new_common_classification;
-    }
-  }
-
-  return $common_classification;
+  deprecate('MethodLinkSpeciesSet::get_common_classification is deprecated and will be removed in e91. Use ->species_set->get_common_classification() instead');
+  return $self->species_set->get_common_classification;
 }
 
 

@@ -22,6 +22,10 @@
 * `MethodLinkSpeciesSet::species_set_obj()`
 * `SequenceAdaptor::fetch_by_dbIDs()`
 
+## Miscellaneous, to be removed in Ensembl 91
+
+* `MethodLinkSpeciesSet::get_common_classification()`
+
 ## \*MemberAdaptor methods, to be removed in Ensembl 91
 
 * `GeneMemberAdaptor::fetch_all_by_source_Iterator()`
