@@ -209,6 +209,7 @@ sub _create_exon_structure {
   my $structure = [];
 
   foreach my $e (@{$f->{'exons'}}) {
+    next unless ($e->{'start'} || $e->{'end'}); 
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
       ## Use direction of drawing, not direction of transcript

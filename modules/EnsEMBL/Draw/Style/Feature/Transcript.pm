@@ -53,8 +53,6 @@ sub draw_join {
 sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
-  #use Data::Dumper; $Data::Dumper::Maxdepth = 1;
-  #warn Dumper($structure);
 
   ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
   my $start = $structure->{'start'};
@@ -94,20 +92,17 @@ sub draw_block {
 
 sub draw_coding_block {
   my ($self, %params) = @_;
-  delete $params{'structure'};
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
+  delete $params{'structure'};
   push @{$self->glyphs}, $self->Rect(\%params);
 }
 
 sub draw_noncoding_block {
   my ($self, %params) = @_;
-  $params{'height'} = $params{'height'} - 2;
-  $params{'y'} += 1;
-  delete $params{'structure'};
 
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
@@ -115,16 +110,18 @@ sub draw_noncoding_block {
     $params{'width'}     += $params{'x'};
   }
 
-  if ($self->track_config->get('collapsed')) {
-    $params{'y'} += $params{'height'}/2;
-    $params{'height'} = 0;
-    push @{$self->glyphs}, $self->Line(\%params);
-  }
-  else {
+  unless ($self->track_config->get('collapsed')) {
+    ## Exons are shown as outlined blocks, except in collapsed view
     $params{'bordercolour'} = $params{'colour'};
     delete $params{'colour'};
-    push @{$self->glyphs}, $self->Rect(\%params);
+    ## Make UTRs smaller than exons
+    if (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+      $params{'height'} = $params{'height'} - 2;
+      $params{'y'} += 1;
+    }
   }
+  delete $params{'structure'};
+  push @{$self->glyphs}, $self->Rect(\%params);
 }
 
 
