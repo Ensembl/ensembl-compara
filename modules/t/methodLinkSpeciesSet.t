@@ -26,9 +26,6 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 my $compara_dba = $multi->get_DBAdaptor( "compara" );
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
@@ -41,8 +38,7 @@ my $species;
 # 
 # Check premises
 # 
-ok(defined($multi) and defined($homo_sapiens) and defined($mus_musculus) and defined($rattus_norvegicus)
-    and defined($compara_dba));
+ok(defined($multi) and defined($compara_dba));
 
 #
 # Test new method
