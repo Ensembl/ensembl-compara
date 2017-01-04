@@ -106,7 +106,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
     $method_link_species_set->url($mlss_url_set);
     is ($method_link_species_set->url, $mlss_url_set);
     
-    my $classification = join(":", map {$_} @{$method_link_species_set->get_common_classification});
+    my $classification = join(":", map {$_} @{$method_link_species_set->species_set->get_common_classification});
     
     is ($classification, $mlss_classification);
 
