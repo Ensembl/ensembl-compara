@@ -180,7 +180,6 @@ sub build_hash_models {
 
   while (my $gene = $all_genes_Iterator->next) {
       my $transc = $gene->get_canonical_SeqMember;
-      my $gene_member_id = $gene->gene_member_id;
       my $gene_description = $gene->description;
       my $transcript_member_id = $transc->seq_member_id;
       my $transcript_description = $transc->description;
