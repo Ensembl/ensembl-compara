@@ -234,15 +234,6 @@ sub render {
     push @{$layers{$top_layer + 2}}, $marked_layer;
   }
 
-  my $track_highlight_info = $self->{'extra'}{'trackHighlightInfo'} || {};
-
-  my $hl_layer = -1;
-  foreach (keys %$track_highlight_info) {
-    if ($track_highlight_info->{$_}->{'hl'}) {
-      push @{$layers{--$hl_layer}}, $self->add_track_highighting_layer($track_highlight_info->{$_}->{'coords'});
-    }
-  }
-
   my %M;
   my $Ta;
 
@@ -270,19 +261,6 @@ sub render {
       $Ta->{$method}[1]++;   
     }
   }
-}
-
-sub add_track_highighting_layer {
-  my ($self, $coords) = @_;
-  return $coords && EnsEMBL::Draw::Glyph::Rect->new({
-    colour      => 'yellow',
-    alpha       => 0.7,
-    pixelx      => $coords->{'x'},
-    # Adding top ruler/scalebar heights
-    pixely      => $coords->{'y'} + 35,
-    pixelwidth  => $coords->{'w'},
-    pixelheight => $coords->{'h'}
-  });
 }
 
 sub add_location_marking_layer {
