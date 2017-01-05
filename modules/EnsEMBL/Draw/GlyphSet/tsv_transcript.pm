@@ -46,7 +46,7 @@ sub render_normal {
   my $length     = $config->container_width;
   my $trans_ref  = $config->{'transcript'};   
   my $transcript = $trans_ref->{'transcript'}; 
-  my $gene       = $self->{'config'}->core_object('gene');
+  my $gene       = $self->{'config'}->core_object('gene')->Obj;
   my @exons      = sort { $a->[0] <=> $b->[0] } @{$trans_ref->{'exons'}};
   
   # If stranded diagram skip if on wrong strand
