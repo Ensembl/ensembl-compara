@@ -57,40 +57,56 @@ sub createObjects {
   # Mapping of supported URL parameters to function calls on GeneAdaptor which should get a Gene for those parameters
   # Ordered by most likely parameter to appear in the URL
   my @params = (
-    [ [qw(g gene           )], [qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id)] ],
-    [ [qw(t transcript     )], [qw(fetch_by_transcript_stable_id fetch_by_translation_stable_id                   )] ],
-    [ [qw(p peptide protein)], [qw(fetch_by_translation_stable_id fetch_by_transcript_stable_id                   )] ],
-    [ [qw(exon             )], [qw(fetch_by_exon_stable_id                                                        )] ],
-    [ [qw(anchor1          )], [qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id)] ],
+    [ [qw(g gene           )], [qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id)],1 ],
+    [ [qw(t transcript     )], [qw(fetch_by_transcript_stable_id fetch_by_translation_stable_id                   )],0 ],
+    [ [qw(p peptide protein)], [qw(fetch_by_translation_stable_id fetch_by_transcript_stable_id                   )],0 ],
+    [ [qw(exon             )], [qw(fetch_by_exon_stable_id                                                        )],0 ],
+    [ [qw(anchor1          )], [qw(fetch_by_stable_id fetch_by_transcript_stable_id fetch_by_translation_stable_id)],0 ],
   );
   
   if (!$gene) {
     my $adaptor = $db_adaptor->get_GeneAdaptor;
     
     # Loop through the parameters and the function calls, trying to find a Gene
+    my $dodgy;
     foreach my $p (@params) {
       foreach (@{$p->[0]}) {
         if ($id = $self->param($_)) {
           (my $t  = $id) =~ s/^(\S+)\.\d*/$1/g;                                  # Strip versions
           (my $t2 = $id) =~ s/^(\S+?)(\d+)(\.\d*)?/$1 . sprintf('%011d', $2)/eg; # Make sure we've got eleven digits
           
-          $param      = $_;
-          $identifier = $id;
-          
+
+          my $proposed;
           foreach my $fetch_call (@{$p->[1]}) {
-            eval { $gene = $adaptor->$fetch_call($id); };
-            last if $gene;
-            eval { $gene = $adaptor->$fetch_call($t2); };
-            last if $gene;
-            eval { $gene = $adaptor->$fetch_call($t);  };
-            last if $gene;
+            eval { $proposed = $adaptor->$fetch_call($id); };
+            last if $proposed;
+            eval { $proposed = $adaptor->$fetch_call($t2); };
+            last if $proposed;
+            eval { $proposed = $adaptor->$fetch_call($t);  };
+            last if $proposed;
           }
-          
+          my $accept = 0;
+          if(!$gene) {
+            $accept = 1;
+          } elsif($proposed and $dodgy) {
+            if($proposed->stable_id eq $gene->stable_id) {
+              warn "Had to disambiguate genes with same stableid\n";
+              $accept = 1;
+            }
+          }
+          if($accept) {
+            # First candidate
+            $gene = $proposed;
+            $param      = $_;
+            $identifier = $id;
+            $dodgy = $p->[2];
+          }
+
           last;
         }
       }
       
-      last if $gene;
+      last if $gene and not $dodgy;
     }
     
     # Check if there is a family parameter
