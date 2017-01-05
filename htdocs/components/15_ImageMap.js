@@ -35,7 +35,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.altKeyDragging     = false;
     this.allowHighlight     = !!(window.location.pathname.match(/\/Location\//));
     this.locationMarkingArea = false;
-    this.trackHighlightInfo  = {};
     
     function resetOffset() {
       delete this.imgOffset;
@@ -93,8 +92,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initSelector();
     this.highlightLastUploadedUserDataTrack();
     this.markLocation(Ensembl.markedLocation);
-    this.initTrackHighlight();
-
+    
     if (!this.vertical) {
       this.makeResizable();
     }
@@ -208,25 +206,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.panningAllowed = true;
       this.setPanning();
     }
-  },
-
-  initTrackHighlight: function() {
-    var panel = this;
-    panel.trackHighlightInfo = {};
-    $('li', this.elLk.boundaries).each(function () {
-      var key = this.className.replace(/_highlight_on|track_highlight|hover/g, '');
-      key = $.trim(key).replace(/\s+/g, '.');
-      panel.trackHighlightInfo[key] = {
-        coords: {
-                  x: $(this).position().left,
-                  y: $(this).position().top,
-                  h: $(this).height(),
-                  w: $(this).width()
-                }
-      }
-
-      panel.trackHighlightInfo[key].hl = ($(this).hasClass('_highlight_on')) ? 1 : 0 ;
-    })
   },
 
   hashChange: function (r) {
@@ -613,7 +592,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       // On highlight icon click toggle highlight
       $(this).find('.hl-icon-highlight').on('click', function(e) {
-        panel.toggleHighlight($(this).data('highlightTrack'));
+        var highlight_class = 'li.' + $(this).data('highlightTrack');
+        var track_element = $($(panel.elLk.boundaries).find(highlight_class));
+        panel.toggleHighlight(track_element);
         // highlight the track highlight icon on all the highlighted tracks (f/r generally)
         $('.hover_label.' + $(this).data('highlightTrack')).find('.hl-icon-highlight').toggleClass('selected');
       });
@@ -631,21 +612,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  toggleHighlight: function(highlight_class) {
-    var panel = this;
-    var track_highlight_class = 'li.' + highlight_class;
-    var track_element = $($(this.elLk.boundaries).find(track_highlight_class));
-
-    $(track_element) && $(track_element).toggleClass('track_highlight _highlight_on');
-    if ($(track_element).hasClass('_highlight_on')) {
-      $(track_element).each(function(i, tr) {
-        panel.trackHighlightInfo[highlight_class].hl = 1
-      })
-    }
-    else {
-      this.trackHighlightInfo[highlight_class].hl = 0;
-    }
-    this.updateExportButton({hl : 1});
+  toggleHighlight: function(element) {
+    $(element) && $(element).toggleClass('track_highlight _highlight_on');
   },
 
   highlightLastUploadedUserDataTrack: function() {
@@ -737,9 +705,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       success: function (json) {
         if (json.updated) {
           this.panel.changeConfiguration(config, this.track, this.update);
-          // Update trackHighlightInfo object and update export button
-          this.panel.initTrackHighlight();
-          this.panel.updateExportButton();
         }
       }
     });
@@ -1554,30 +1519,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.updateExportButton();
   },
 
-  updateExportButton: function(args) {
-    var extra = this.getExtraExportParam(args);
+  updateExportButton: function() {
+    var extra = this.getExtraExportParam();
 
     extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
 
     this.elLk.exportButton.attr('href', function() {
-      return Ensembl.updateURL({extra: extra, decodeURL: 1}, this.href);
+      return Ensembl.updateURL({extra: extra}, this.href);
     });
   },
 
-  getExtraExportParam: function (args) {
+  getExtraExportParam: function () {
     var extra = {};
-
-    var flag = 0;
-    $.each(this.trackHighlightInfo, function(tr_id, hash) {
-      if (hash.hl) {
-        flag = 1;
-        return;
-      }
-    })
-
-    if (flag) {
-      extra.trackHighlightInfo = this.trackHighlightInfo;
-    }
 
     if (!$.isEmptyObject(this.boxCoords)) {
       extra.boxes = this.boxCoords;
@@ -1600,6 +1553,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         delete extra.mark;
       }
     }
+
     return extra;
   },
 
