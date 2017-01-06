@@ -28,8 +28,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 my $reg = "Bio::EnsEMBL::Registry";
 my $species = "Homo sapiens";
 my $seq_region = "17";
-my $seq_region_start = 32020001;
-my $seq_region_end =   32020500;
+my $seq_region_start = 33692982;
+my $seq_region_end =   33693481;
 
 $reg->load_registry_from_db(
       -host => "ensembldb.ensembl.org",
