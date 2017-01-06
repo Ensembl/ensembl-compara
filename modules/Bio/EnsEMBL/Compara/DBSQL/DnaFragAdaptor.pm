@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,14 +74,41 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
+use Bio::EnsEMBL::Utils::Cache;
 use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
+use constant LRU_CACHE_SIZE => 3000;
 
 #
 # Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
 ######################################################################
+
+=head2 new
+
+  Arg [1]    : list of args @args
+               Superclass constructor arguments
+  Example    : none
+  Description: Constructor which just initializes internal cache structures
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
+  Exceptions : none
+  Caller     : implementing subclass constructors
+  Status     : Stable
+
+=cut
+
+sub new {
+    my $caller  = shift;
+    my $class   = ref($caller) || $caller;
+    my $self    = $class->SUPER::new(@_);
+
+    #initialize an LRU cache
+    tie my %cache, 'Bio::EnsEMBL::Utils::Cache', LRU_CACHE_SIZE;
+    $self->{'_lru_cache_gdb_id_name'} = \%cache;
+
+    return $self;
+}
 
 sub ignore_cache_override {
     return 1;
@@ -89,7 +116,7 @@ sub ignore_cache_override {
 
 sub _build_id_cache {
     my $self = shift;
-    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, 3000);
+    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, LRU_CACHE_SIZE);
     $cache->build_cache();
     return $cache;
 }
@@ -136,6 +163,10 @@ sub fetch_by_GenomeDB_and_name {
     }
   }
 
+  my $cache_key = $genome_db_id . '//' . $name;
+  if (my $cached_df = $self->{'_lru_cache_gdb_id_name'}->{$cache_key}) {
+      return $cached_df;
+  }
 
   $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);
@@ -343,6 +374,8 @@ sub _objs_from_sth {
             'is_reference' => $is_reference}
         );
         $self->_id_cache->put($dbID, $this_dnafrag);
+        my $cache_key = $genome_db_id . '//' . $name;
+        $self->{'_lru_cache_gdb_id_name'}->{$cache_key} = $this_dnafrag;
     }
 
     push(@$these_dnafrags, $this_dnafrag);

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016] EMBL-European Bioinformatics Institute
+# Copyright [2016-2017] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 my $reg = "Bio::EnsEMBL::Registry";
 my $species = "Homo sapiens";
 my $seq_region = "17";
-my $seq_region_start = 32020001;
-my $seq_region_end =   32020500;
+my $seq_region_start = 33692982;
+my $seq_region_end =   33693481;
 
 $reg->load_registry_from_db(
       -host => "ensembldb.ensembl.org",
