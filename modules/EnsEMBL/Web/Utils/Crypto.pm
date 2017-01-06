@@ -13,7 +13,7 @@ sub random_key {
   my $data;
   if(open(RANDOM,'<:raw','/dev/urandom')) {
     local $/ = \$bytes;
-    my $data = <RANDOM>;
+    $data = <RANDOM>;
     close RANDOM;
   } else {
     warn "Using weak crypto\n";
