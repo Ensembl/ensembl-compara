@@ -44,6 +44,8 @@ my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modu
 foreach my $f (@source_files) {
     next if $f =~ /modules\/t\/test-genome-DBs\//;
     next if $f =~ /scripts\/synteny\/(apollo|BuildSynteny|SyntenyManifest.txt)/;
+    next if $f =~ /\/blib\//;
+    next if $f =~ /\/HALXS\.c$/;
     next if $f =~ /\.conf\b/;
     next if $f =~ /\.(tmpl|hash|nw|ctl|txt|html)$/;
     has_apache2_licence($f);
