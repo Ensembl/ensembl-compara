@@ -24,6 +24,8 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Component::Help);
 
+use EnsEMBL::Web::Utils::HoneyPot qw(spam_protect_form);
+
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
@@ -100,6 +102,8 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
+
+  spam_protect_form($hub,$form);
 
   $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name([qw(input select textarea)])};
 
