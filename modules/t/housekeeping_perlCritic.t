@@ -51,6 +51,7 @@ Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'
 #Find all files & run
 my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs);
 foreach my $perl (@perl_files) {
+  next if $perl =~ /\/HALAdaptor.pm$/;  # This file is temporarily excluded on e87
   critic_ok($perl);
 }
 
