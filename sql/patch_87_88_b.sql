@@ -20,7 +20,7 @@
 # Description:
 # Name in dnafrag table will be enlarged to VARCHAR(255)
 
-ALTER TABLE dnafrag MODIFY name VARCHAR(255) NOT NULL;
+ALTER TABLE dnafrag MODIFY name VARCHAR(255) DEFAULT '' NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
