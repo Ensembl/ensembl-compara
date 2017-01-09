@@ -604,7 +604,7 @@ CREATE TABLE synteny_region (
 CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(11) DEFAULT 0 NOT NULL,
-  name                        varchar(40) DEFAULT '' NOT NULL,
+  name                        varchar(255) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
   is_reference                tinyint(1) DEFAULT 1 NOT NULL,
@@ -2083,4 +2083,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_87_88_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_87_88_b.sql|dnafrag_name_255');
 
