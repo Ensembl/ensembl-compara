@@ -579,6 +579,7 @@ sub init_label {
   my $class     = random_string(8);
   my $strand_map= { '1' => 'f', '-1' => 'r' };
   my $highlight_class = $node->get('drawing_strand') && $self->strand ? "$track." . $strand_map->{$self->strand} : $track;
+  $self->{'track_highlight_class'} = $highlight_class;
 
   ## Store this where the glyphset can find it later...
   $self->{'hover_label_class'} = $class;
@@ -752,6 +753,7 @@ sub recast_label {
     width => $max_width,
     x => 0,
     y => 0,
+    track     => $self->{'track_highlight_class'} || $self->type,
     class     => $self->label->{'class'},
     alt       => $self->label->{'alt'},
     hover     => $self->label->{'hover'},

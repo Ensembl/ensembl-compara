@@ -146,14 +146,23 @@ sub render {
   $config->image_height($im_height);
   
   my $im_width = $config->image_width;
-  
   # create a fresh canvas
   $self->init_canvas($config, $im_width, $im_height) if $self->can('init_canvas');
   
   my %tags;
   my %layers;
-  
+
+  # Track name to y coordinates map used for full track highlighting on image export
+  my $track_hl_coords = {};
+
   for my $glyphset (@{$self->{'glyphsets'}}) {
+    if ($glyphset->{label} && $glyphset->{label}->{track}) {
+      # Coordinates used for track highlighting
+      $track_hl_coords->{$glyphset->{label}->{track}} = {
+        pixely => $glyphset->{label}->{pixely},
+        height => $glyphset->{label}->{pixelheight}
+      }
+    }
     foreach (keys %{$glyphset->{'tags'}}) {
       if ($tags{$_}) {
         my $COL   = undef;
@@ -234,13 +243,11 @@ sub render {
     push @{$layers{$top_layer + 2}}, $marked_layer;
   }
 
-  my $track_highlight_info = $self->{'extra'}{'trackHighlightInfo'} || {};
+  my $track_highlight_info = $self->{'extra'}{'trackHighlightInfo'} || [];
 
   my $hl_layer = -1;
-  foreach (keys %$track_highlight_info) {
-    if ($track_highlight_info->{$_}->{'hl'}) {
-      push @{$layers{--$hl_layer}}, $self->add_track_highighting_layer($track_highlight_info->{$_}->{'coords'});
-    }
+  foreach (@$track_highlight_info) {
+    push @{$layers{--$hl_layer}}, $self->add_track_highighting_layer($track_hl_coords->{$_}, $im_width);
   }
 
   my %M;
@@ -273,15 +280,14 @@ sub render {
 }
 
 sub add_track_highighting_layer {
-  my ($self, $coords) = @_;
+  my ($self, $coords, $im_width) = @_;
   return $coords && EnsEMBL::Draw::Glyph::Rect->new({
     colour      => 'yellow',
     alpha       => 0.7,
-    pixelx      => $coords->{'x'},
-    # Adding top ruler/scalebar heights
-    pixely      => $coords->{'y'} + 35,
-    pixelwidth  => $coords->{'w'},
-    pixelheight => $coords->{'h'}
+    pixelx      => 0,
+    pixely      => $coords->{'pixely'},
+    pixelwidth  => $im_width,
+    pixelheight => $coords->{'height'}
   });
 }
 

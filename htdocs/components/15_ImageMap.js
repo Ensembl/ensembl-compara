@@ -93,7 +93,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initSelector();
     this.highlightLastUploadedUserDataTrack();
     this.markLocation(Ensembl.markedLocation);
-    this.initTrackHighlight();
 
     if (!this.vertical) {
       this.makeResizable();
@@ -639,11 +638,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $(track_element) && $(track_element).toggleClass('track_highlight _highlight_on');
     if ($(track_element).hasClass('_highlight_on')) {
       $(track_element).each(function(i, tr) {
-        panel.trackHighlightInfo[highlight_class].hl = 1
+        panel.trackHighlightInfo[highlight_class] = 1
       })
     }
     else {
-      this.trackHighlightInfo[highlight_class].hl = 0;
+      panel.trackHighlightInfo[highlight_class] && delete this.trackHighlightInfo[highlight_class];
     }
     this.updateExportButton({hl : 1});
   },
@@ -737,8 +736,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       success: function (json) {
         if (json.updated) {
           this.panel.changeConfiguration(config, this.track, this.update);
-          // Update trackHighlightInfo object and update export button
-          this.panel.initTrackHighlight();
           this.panel.updateExportButton();
         }
       }
@@ -1568,16 +1565,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var extra = {};
 
     var flag = 0;
-    $.each(this.trackHighlightInfo, function(tr_id, hash) {
-      if (hash.hl) {
-        flag = 1;
-        return;
-      }
-    })
-
-    if (flag) {
-      extra.trackHighlightInfo = this.trackHighlightInfo;
-    }
+    extra.trackHighlightInfo = Object.keys(this.trackHighlightInfo);
 
     if (!$.isEmptyObject(this.boxCoords)) {
       extra.boxes = this.boxCoords;
