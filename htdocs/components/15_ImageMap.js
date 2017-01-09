@@ -209,25 +209,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
 
-  initTrackHighlight: function() {
-    var panel = this;
-    panel.trackHighlightInfo = {};
-    $('li', this.elLk.boundaries).each(function () {
-      var key = this.className.replace(/_highlight_on|track_highlight|hover/g, '');
-      key = $.trim(key).replace(/\s+/g, '.');
-      panel.trackHighlightInfo[key] = {
-        coords: {
-                  x: $(this).position().left,
-                  y: $(this).position().top,
-                  h: $(this).height(),
-                  w: $(this).width()
-                }
-      }
-
-      panel.trackHighlightInfo[key].hl = ($(this).hasClass('_highlight_on')) ? 1 : 0 ;
-    })
-  },
-
   hashChange: function (r) {
     var reload = this.hashChangeReload;
     
@@ -638,7 +619,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $(track_element) && $(track_element).toggleClass('track_highlight _highlight_on');
     if ($(track_element).hasClass('_highlight_on')) {
       $(track_element).each(function(i, tr) {
-        panel.trackHighlightInfo[highlight_class] = 1
+        panel.trackHighlightInfo[highlight_class] = {
+          'h': $(this).height()
+        };
       })
     }
     else {
@@ -1565,7 +1548,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var extra = {};
 
     var flag = 0;
-    extra.trackHighlightInfo = Object.keys(this.trackHighlightInfo);
+    extra.trackHighlightInfo = this.trackHighlightInfo;
 
     if (!$.isEmptyObject(this.boxCoords)) {
       extra.boxes = this.boxCoords;
