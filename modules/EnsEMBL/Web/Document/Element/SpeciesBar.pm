@@ -25,6 +25,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip);
+
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub init {
@@ -53,8 +55,8 @@ sub content {
 
   ## Quality flag
   (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
-  my $genebuild_url = '';
-  my $quality = sprintf '<a href="%s"><img src="/i/16/rev/database.png"/> %s</a>', $genebuild_url, ucfirst $text;
+  my $glossary_helptip = glossary_helptip($hub, ucfirst $text);
+  my $quality = sprintf '<img src="/i/16/rev/database.png"/> %s', $glossary_helptip;
 
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
