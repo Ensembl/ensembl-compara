@@ -76,7 +76,7 @@ sub content {
   ## add TSL info
   if ($tsl && ($tsl = $tsl->value)) {
     my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
-    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, get_glossary_entry($self->hub, $key).$self->get_glossary_entry($self->hub, 'TSL'))));
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, get_glossary_entry($hub, $key).get_glossary_entry($hub, 'TSL'))));
   }
 
   # add incomplete CDS info
