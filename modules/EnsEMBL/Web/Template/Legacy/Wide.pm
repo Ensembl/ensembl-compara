@@ -39,7 +39,6 @@ sub add_body {
   $page->add_body_elements(qw(
     logo             EnsEMBL::Web::Document::Element::Logo
     species_bar      EnsEMBL::Web::Document::Element::SpeciesBar
-    tabs             EnsEMBL::Web::Document::Element::Tabs
     account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
