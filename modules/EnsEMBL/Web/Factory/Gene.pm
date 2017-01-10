@@ -90,7 +90,7 @@ sub createObjects {
             $accept = 1;
           } elsif($proposed and $dodgy) {
             if($proposed->stable_id eq $gene->stable_id) {
-              warn "Had to disambiguate genes with same stableid\n";
+              #warn "Had to disambiguate genes with same stableid\n";
               $accept = 1;
             }
           }
