@@ -426,7 +426,7 @@ sub helptip {
 sub glossary_helptip {
   my ($self, $display_html, $entry) = @_;
   warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::helptip instead';
-  return &EnsEMBL::Web::Utils::FormatText::helptip($self->hub, $display_html, $entry);
+  return &EnsEMBL::Web::Utils::FormatText::glossary_helptip($self->hub, $display_html, $entry);
 }
 
 sub get_glossary_entry {
