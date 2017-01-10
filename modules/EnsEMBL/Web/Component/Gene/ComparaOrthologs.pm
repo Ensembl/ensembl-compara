@@ -23,6 +23,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip get_glossary_entry);
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -111,9 +113,9 @@ sub content {
     $columns = [
       { key => 'set',       title => 'Species set',    align => 'left',    width => '26%' },
       { key => 'show',      title => 'Show details',   align => 'center',  width => '10%' },
-      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues<em>'.$self->get_glossary_entry('1-to-1 orthologues').'</em>' },
-      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues<em>'.$self->get_glossary_entry('1-to-many orthologues').'</em>' },
-      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues<em>'.$self->get_glossary_entry('Many-to-many orthologues').'</em>' },
+      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues<em>'.get_glossary_entry($hub, '1-to-1 orthologues').'</em>' },
+      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues<em>'.get_glossary_entry($hub, '1-to-many orthologues').'</em>' },
+      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues<em>'.get_glossary_entry($hub, 'Many-to-many orthologues').'</em>' },
       { key => 'none',      title => 'Without orthologues',        align => 'center',  width => '16%', help => 'Number of species without orthologues' },
     ];
 
@@ -272,7 +274,7 @@ sub content {
  
       my $table_details = {
         'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species_defs->production_name_mapping($species))),
-        'Type'       => $self->html_format ? $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
+        'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},

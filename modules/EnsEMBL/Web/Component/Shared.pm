@@ -24,23 +24,25 @@ package EnsEMBL::Web::Component::Shared;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
-
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::Util      qw(first);
 use List::MoreUtils qw(uniq first_index);
 
+use EnsEMBL::Web::Utils::FormatText qw(helptip get_glossary_entry);
+
+use base qw(EnsEMBL::Web::Component);
+
 sub coltab {
   my ($self, $text, $colour, $title) = @_;
 
-  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, $self->helptip($text, $title));
+  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, helptip($text, $title));
 }
 
 sub colour_biotype {
   my ($self, $text, $transcript, $title) = @_;
 
-  $title ||= $self->get_glossary_entry($text);
+  $title ||= get_glossary_entry($self->hub, $text);
 
   my $colours = $self->hub->species_defs->colour('gene');
   my $key     = $transcript->biotype;
@@ -323,19 +325,19 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, $self->helptip("TSL:$tsl", $self->get_glossary_entry("TSL:$tsl").$self->get_glossary_entry('TSL'));
+          push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL:$tsl").get_glossary_entry($hub, 'TSL'));
         }
       }
 
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          push @flags, $self->helptip('GENCODE basic', $gencode_desc);
+          push @flags, helptip('GENCODE basic', $gencode_desc);
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-          push @flags, $self->helptip("APPRIS$short_code", $self->get_glossary_entry("APPRIS: $key").$self->get_glossary_entry('APPRIS'));
+          push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -443,14 +445,14 @@ sub get_CDS_text {
   my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
   if ($attribs->{'CDS_start_NF'}) {
     if ($attribs->{'CDS_end_NF'}) {
-      return $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
+      return helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
     }
     else {
-      return $self->helptip("CDS 5' incomplete", $trans_5_desc);
+      return helptip("CDS 5' incomplete", $trans_5_desc);
     }
   }
   elsif ($attribs->{'CDS_end_NF'}) {
-    return $self->helptip("CDS 3' incomplete", $trans_3_desc);
+    return helptip("CDS 3' incomplete", $trans_3_desc);
   }
   else {
     return undef;
@@ -647,7 +649,7 @@ sub _add_gene_counts {
   my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
 
   my @order           = qw(coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m pseudogene_cnt transcript);
-  my @suffixes        = (['','~'], ['r',' (incl ~ '.$self->glossary_helptip('readthrough', 'Readthrough').')']);
+  my @suffixes        = (['','~'], ['r',' (incl ~ '.glossary_helptip($self->hub, 'readthrough', 'Readthrough').')']);
   my $glossary_lookup = {
     'coding_cnt'        => 'Protein coding',
     'noncoding_cnt/s'   => 'Small non coding gene',
@@ -684,7 +686,7 @@ sub _add_gene_counts {
     my $class = '';
     $class = 'row-sub' if $d->{'_sub'};
     my $key = $d->{'_name'};
-    $key = $self->glossary_helptip("<b>$d->{'_name'}</b>", $glossary_lookup->{$d->{'_key'}});
+    $key = glossary_helptip($self->hub, "<b>$d->{'_name'}</b>", $glossary_lookup->{$d->{'_key'}});
     $counts->add_row({ name => $key, stat => $value, options => { class => $class }});
   } 
   return "<h3>Gene counts$tail</h3>".$counts->render;
@@ -736,7 +738,7 @@ sub species_stats {
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
   });
-  my $header = $self->glossary_helptip('Golden Path Length', 'Golden path length');
+  my $header = glossary_helptip($self->hub, 'Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
