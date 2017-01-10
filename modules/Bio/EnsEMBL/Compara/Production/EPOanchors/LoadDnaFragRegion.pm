@@ -138,6 +138,7 @@ sub write_output {
 	die "species from enredo file ($genome_dbs_names_from_file) are not the same as the set of species in the database ($genome_db_names_from_db)", $! 
 	unless ( "$genome_dbs_names_from_file" eq "$genome_db_names_from_db" );
 	my (%DNAFRAGS, @synteny_region_ids);
+	my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
 	# populate dnafrag_region table
         $self->dbc->do('TRUNCATE dnafrag_region');
         $self->dbc->do('TRUNCATE synteny_region');
@@ -150,12 +151,9 @@ sub write_output {
 			# we have the dnafrag_name from the file but we need the dnafrag_id from the db
 			# get only the dnafrags used by enredo
 			unless (exists($DNAFRAGS{$species_name}{$dnafrag_name})) {
-				my $dnaf_sth = $self->dbc->prepare("SELECT df.dnafrag_id FROM dnafrag df INNER JOIN genome_db " . 
-					"gdb ON gdb.genome_db_id = df.genome_db_id WHERE gdb.name = ? AND df.name = ?");
-				$dnaf_sth->execute($species_name,$dnafrag_name);
-				while(my $dnafrag_info = $dnaf_sth->fetchrow_arrayref()) {
-					$DNAFRAGS{ $species_name }{ $dnafrag_name } = $dnafrag_info->[0];
-				}
+				my $gdb = $genome_db_adaptor->fetch_by_name_assembly( $species_name );
+				my $df = $dnafrag_adaptor->fetch_by_GenomeDB_and_name( $gdb, $dnafrag_name );
+				$DNAFRAGS{ $species_name }{ $dnafrag_name } = $df->dbID;
 			}
 			$sth1->execute($synteny_region_id,$DNAFRAGS{$species_name}{$dnafrag_name},$start,$end,$strand);		
 		}
