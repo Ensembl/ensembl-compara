@@ -22,7 +22,7 @@ package EnsEMBL::Web::Component::Transcript::TranscriptSummary;
 use strict;
 use HTML::Entities  qw(encode_entities);
 
-use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry glossary_helptip);
+use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry helptip glossary_helptip);
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -76,7 +76,7 @@ sub content {
   ## add TSL info
   if ($tsl && ($tsl = $tsl->value)) {
     my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
-    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, get_glossary_entry($hub, $key).get_glossary_entry($hub, 'TSL'))));
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', helptip($key, get_glossary_entry($hub, $key).get_glossary_entry($hub, 'TSL'))));
   }
 
   # add incomplete CDS info
