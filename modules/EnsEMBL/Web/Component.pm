@@ -43,6 +43,7 @@ use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::Attributes;
+use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry);
 use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::TwoCol;
@@ -417,32 +418,21 @@ sub append_s_to_plural {
 }
 
 sub helptip {
-  ## Returns a dotted underlined element with given text and hover helptip
-  ## @param Display html
-  ## @param Tip html
   my ($self, $display_html, $tip_html) = @_;
-  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
+  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::helptip instead';
+  return &EnsEMBL::Web::Utils::FormatText::helptip($display_html, $tip_html);
 }
 
 sub glossary_helptip {
-  ## Creates a dotted underlined element that has a mouseover glossary helptip (helptip text fetched from glossary table of help db)
-  ## @param Display html
-  ## @param Entry to match the glossary key to fetch help tip html (if not provided, use the display html as glossary key)
   my ($self, $display_html, $entry) = @_;
-
-  $entry  ||= $display_html;
-  $entry    = $self->get_glossary_entry($entry);
-
-  return $self->helptip($display_html, $entry);
+  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::helptip instead';
+  return &EnsEMBL::Web::Utils::FormatText::helptip($self->hub, $display_html, $entry);
 }
 
 sub get_glossary_entry {
-  ## Gets glossary value for a given entry
-  ## @param Entry key to lookup against the glossary
-  ## @return Glossary description (possibly HTML)
   my ($self, $entry) = @_;
-
-  return $self->hub->glossary_lookup->{$entry} // '';
+  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::get_glossary_entry instead';
+  return &EnsEMBL::Web::Utils::FormatText::get_glossary_entry($self->hub, $entry);;
 }
 
 sub error_panel {
