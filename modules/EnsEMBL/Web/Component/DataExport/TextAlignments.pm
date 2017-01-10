@@ -34,7 +34,7 @@ sub content {
   ## Get user's current settings
   my $view_config  = $self->viewconfig;
 
-  my $settings = $view_config->form_fields;
+  my $settings = $view_config->form_fields({'no_snp_link' => 1});
 
   ## Pass species selection to output
   my @species_options;

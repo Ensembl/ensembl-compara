@@ -102,9 +102,9 @@ sub field_order {
 
 sub form_fields {
   ## Abstract method implementation
-  my $self    = shift;
+  my ($self, $options) = @_;
   my $dbs     = $self->species_defs->databases;
-  my $markup  = $self->get_markup_options({'vega_exon' => 1, 'otherfeatures_exon' => 1});
+  my $markup  = $self->get_markup_options({'vega_exon' => 1, 'otherfeatures_exon' => 1, %{$options||{}}});
   my $fields  = {};
 
   $markup->{'conservation_display'} = {
