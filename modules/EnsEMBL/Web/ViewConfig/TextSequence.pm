@@ -94,6 +94,9 @@ sub get_markup_options {
     } else {
       $markup->{'snp_display'}{'type'}  = 'Checkbox';
       $markup->{'snp_display'}{'value'} = 'on';
+      ## Hack for removing "show with links" option without turning SNPs off (e.g. in export)
+      my $values = $self->field_values;
+      $markup->{'snp_display'}{'checked'} = 'checked' if $values->{'snp_display'} eq 'snp_link';
     }
 
     unless($options->{'no_consequence'}) {
