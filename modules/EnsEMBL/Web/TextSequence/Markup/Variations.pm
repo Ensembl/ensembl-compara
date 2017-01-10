@@ -92,7 +92,7 @@ sub markup {
         } @{$variation->{'links'}});
       }
 
-      $seq->[$_]{'new_post'} = $new_post if $new_post and $new_post ne $seq->[$_]{'post'};
+      $seq->[$_]{'new_post'} = $new_post if $new_post and $seq->[$_]{'post'} and $new_post ne $seq->[$_]{'post'};
       $seq->[$_]{'post'} = $new_post;
          
       $config->{'key'}{'variants'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
