@@ -58,7 +58,7 @@ sub content {
   ## Get user's current settings
   my $view_config  = $self->view_config;
 
-  my $settings = $view_config->form_fields;
+  my $settings = $view_config->form_fields({'no_snp_link' => 1});
 
   $settings->{'extra'} = {
                           'type'      => 'Checklist',
