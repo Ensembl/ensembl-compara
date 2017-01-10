@@ -84,7 +84,6 @@ sub glossary_helptip {
 
   $entry  ||= $display_html;
   $entry    = &get_glossary_entry($hub, $entry);
-
   return  &helptip($display_html, $entry);
 }
 
