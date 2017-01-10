@@ -39,19 +39,17 @@ sub content {
   my $hub   = $self->hub;
 
   ## User-friendly species name and assembly
-  my ($species, $assembly, $quality);
+  my $species;
   my $collection = $hub->species_defs->STRAIN_COLLECTION;
   if ($collection) {
-    $species  = ucfirst($collection);
-    $assembly = $hub->species_defs->SPECIES_STRAIN;
-    if ($assembly !~ /reference/) {
-      $assembly = 'strain '.$assembly;
-    }
+    ## FIXME - take out this hack once the meta table is updated
+    (my $strain = $hub->species_defs->SPECIES_STRAIN) =~ s/reference \(|\)//g;
+    $species  = ucfirst($collection).' '.$strain;
   }
   else {
     $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
-    $assembly = $hub->species_defs->ASSEMBLY_NAME;
   }
+  my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
   ## Quality flag
   (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
@@ -73,7 +71,7 @@ sub content {
     $dropdown = ''; 
   }
   else {
-    $header = sprintf '<img src="/i/species/32/%s.png"><span class="species">%s</span> <span class="more">%s</span>', $hub->species, $species, $assembly;
+    $header = sprintf '<img src="/i/species/32/%s.png"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species, $species, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;
