@@ -10,7 +10,7 @@ sub annotate {
 
   my $sequence = $real_sequence->legacy;
   # XXX should have per-rope switchable Annotation
-  if($slice_data->{'type'} eq 'gene') {
+  if($slice_data->{'type'} && $slice_data->{'type'} eq 'gene') {
     # gene rope
     $markup->{'exons'}{$_}{'type'} = ['gene'] for 0..$#$sequence;
     return;
