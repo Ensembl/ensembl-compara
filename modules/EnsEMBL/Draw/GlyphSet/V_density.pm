@@ -201,6 +201,7 @@ sub _line {
   my $old_y = undef;
   for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum       = shift @scores;
+    last if not defined $datum;
     my $max_value   = $T->{'max_value'} || 1;
     my $max_mean    = $T->{'max_mean'} || 1;
     my $scale       = $scale_to_mean ? $T->{'width'} / $max_mean
@@ -265,6 +266,7 @@ sub _histogram {
   my $old_y;
   for(my $x = $T->{'v_offset'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum = shift @data;
+    last if not defined $datum;
     my $new_y = $datum / $T->{'max_value'} * $T->{'width'};
 
     if(defined $old_y) {

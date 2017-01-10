@@ -236,11 +236,13 @@ Ensembl.extend({
     return url;
   },
 
-  prepareRequestParams: function (url) {
+  prepareRequestParams: function (url, decode) {
     var data = {};
     var type;
 
-    if(url.length > 1500){
+    url = decode && decodeURIComponent(url) || url;
+
+    if(url.length > 1500 || decode){
       $.each((url.split(/\?/)[1] || '').split(/&|;/), function(i, param) {
         param = param.split('=');
          if (typeof param[0] !== 'undefined' && !(param[0] in data)) {

@@ -56,6 +56,25 @@ use constant {
   _FLAG_SKIP_REQUIRED_NOTES => '_no_required_notes'
 };
 
+sub add_honeypot {
+  my ($self,$value) = @_;
+
+  push @{$self->{'_honeypots'}||=[]},$value;
+}
+
+sub get_honeypots {
+  my ($self,$form) = @_;
+
+  my @hps;
+  foreach my $child (@{$self->{'_child_nodes'}||[]}) {
+    my $hps = [];
+    $hps = $child->get_honeypots($form) if $child->can('get_honeypots');
+    push @hps,@$hps if $hps;
+  }
+  push @hps,@{$self->{'_honeypots'}} if $self->{'_honeypots'};
+  return \@hps;
+}
+
 sub render {
   ## @overrides
   my $self = shift;
@@ -186,6 +205,7 @@ sub add_field {
       $_->{'type'} = 'text';
       $field_params->{'field_class'} = sprintf('hidden %s', $field_params->{'field_class'} || '');
       $is_honeypot = 1;
+      $self->add_honeypot($_->{'name'});
     }
 
     $_->{'no_asterisk'} ||= $self->has_flag($self->_FLAG_SKIP_REQUIRED_NOTES);

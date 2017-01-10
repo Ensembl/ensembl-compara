@@ -393,7 +393,8 @@ sub alleles {
   my $ambiguity   = $variation->ambig_code;
      $ambiguity   = 'not available' if $object->source =~ /HGMD/;
      $ambiguity   = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
-  my $freq        = sprintf '%.2f', $variation->minor_allele_frequency;
+  my $freq        = $variation->minor_allele_frequency;
+     $freq        = sprintf ('%.2f', $freq) if ($freq != 0);
      $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf_helptip = $self->helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
   my $maf         = $variation->minor_allele;

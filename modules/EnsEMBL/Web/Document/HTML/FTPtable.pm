@@ -90,7 +90,8 @@ sub render {
   my %fave_check = map {$_ => 1} @{$hub->get_favourite_species};
   foreach (@{$hub->get_favourite_species}) {
     push @$all_species, {
-                          'dir'         => lc($_), 
+                          'url'         => $species_defs->get_config($_, 'SPECIES_URL'), 
+                          'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
                           'favourite'   => 1,
@@ -100,7 +101,8 @@ sub render {
   my @other_species;
   foreach ($species_defs->valid_species) {
     push @other_species, {
-                          'dir'         => lc($_), 
+                          'url'         => $species_defs->get_config($_, 'SPECIES_URL'), 
+                          'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
                           'favourite'   => 0,
@@ -110,13 +112,14 @@ sub render {
   push @$all_species, sort {$a->{'common_name'} cmp $b->{'common_name'}} @other_species;
 
   foreach my $sp (@$all_species) {
+    my $sp_url    = $sp->{'url'};
     my $sp_dir    = $sp->{'dir'};
     my $sp_var    = $sp_dir. '_variation';
     my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
 
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
-      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_dir, $sp->{'common_name'}, $sp->{'sci_name'}),
+      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
       cds	  => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},     $rel, $sp_dir),

@@ -577,6 +577,10 @@ sub init_label {
   my $component = $config->get_parameter('component');
   my $hover     = ($text =~m/Legend/)? 0 : $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
+  my $strand_map= { '1' => 'f', '-1' => 'r' };
+  my $highlight_class = $node->get('drawing_strand') && $self->strand ? "$track." . $strand_map->{$self->strand} : $track;
+  $self->{'track_highlight_class'} = $highlight_class;
+
   ## Store this where the glyphset can find it later...
   $self->{'hover_label_class'} = $class;
 
@@ -598,12 +602,12 @@ sub init_label {
         CORE::push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
       }
     }
-    
+
     $config->{'hover_labels'}->{$class} = {
       header    => $name,
       desc      => $desc,
       class     => "$class $track _track_$track",
-      highlight => $track,
+      highlight => $highlight_class,
       component => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
@@ -749,6 +753,7 @@ sub recast_label {
     width => $max_width,
     x => 0,
     y => 0,
+    track     => $self->{'track_highlight_class'} || $self->type,
     class     => $self->label->{'class'},
     alt       => $self->label->{'alt'},
     hover     => $self->label->{'hover'},

@@ -25,9 +25,10 @@ limitations under the License.
 $SiteDefs::ENSEMBL_PLUGINS = [
   'EnsEMBL::Mirror'     => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
   'EnsEMBL::Genoverse'  => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
-# 'EnsEMBL::Lucene'     => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
+# 'EnsEMBL::Solr'       => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/solr',
 # 'EnsEMBL::Users'      => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/users',
   'EnsEMBL::Ensembl'    => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
+  'EnsEMBL::Docs'       => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/docs'
 ];
 
 1;

@@ -295,11 +295,14 @@ sub _delete_record {
   $code   ||= $hub->param('code');
 
   foreach my $record_manager (grep $_, $hub->user, $hub->session) {
-    my $data = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my $data            = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my $record_id       = $data->{'record_id'};
+    my $record_type_id  = $data->{'record_type_id'};
 
-    if (keys %$data && $data->{'record_id'} == $id) {
+    if ($record_id && ($record_id == $id || $record_type_id == $id || $code =~ m/_$record_type_id$/)) { # code column may contain the id suffixed to it
       $file = $data->{'shared'} ? undef : $data->{'file'};
       $record_manager->delete_records({'type' => $type, 'code' => $code}); # delete record
+      $record_manager->delete_records({'type' => 'userdata_upload_code', 'code' => $code}); # delete any linked userdata_upload_code record
       last;
     }
   }
@@ -464,12 +467,12 @@ sub _find_assembly {
   else {
     ## Check name and synonyms
     foreach (@$info) {
-      if ($_->{'name'} eq $assembly) {
+      if (lc($_->{'name'}) eq lc($assembly)) {
         $found = 1;
       }
       else {
         foreach (@{$_->{'synonyms'}||[]}) {
-          if ($_ eq $assembly) {
+          if (lc($_) eq lc($assembly)) {
             $found = 1;
             $key = 'synonyms';
             last;
