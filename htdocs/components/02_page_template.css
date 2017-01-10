@@ -76,7 +76,7 @@ body.static #widemain { margin-left: 0; }
 #masthead div.spbar_holder .header span.more    { font-size:120%; }
 #masthead div.spbar_holder .header img          { float: left; vertical-align:middle; 
                                                   height: 32px; width: 32px; margin: -8px 0 0 8px;
-                                                  border: 1px solid [[MH_BORDER]];
+                                                  border: 2px solid [[MH_BORDER]];
                                                   border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }
 #masthead div.spbar_holder div.dropdown.species            { width: 505px; }
