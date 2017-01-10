@@ -49,6 +49,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     this.elLk.dropdowns  = $('div.dropdown', tabsHolder).on('click', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
+    this.el.find('._ht').helptip();
     
     // Cache the text on the recent location links, to stop hash changes in the URL from duplicating entries in the menu
     this.elLk.dropdowns.filter('.location').find('ul.recent li a').each(function () {
