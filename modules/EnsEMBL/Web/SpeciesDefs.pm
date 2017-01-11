@@ -278,6 +278,14 @@ sub all_colours {
   return $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
 }
 
+sub get_font_path {
+  my $self = shift;
+  my $path = ($self->ENSEMBL_STYLE || {})->{'GRAPHIC_TTF_PATH'};
+     $path = $path ? $path =~ /^\// ? "$path/" : $SiteDefs::ENSEMBL_SERVERROOT."/$path/" : "/usr/local/share/fonts/ttfonts/";
+
+  return $path =~ s/\/+/\//gr;
+}
+
 sub get_config {
   ## Returns the config value for a given species and a given config key
   ### Arguments: species name(string), parameter name (string)

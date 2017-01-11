@@ -138,7 +138,7 @@ sub _get_gd {
 
   return $gd if $gd;
 
-  my $fontpath = $image_config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  my $fontpath = $image_config->species_defs->get_font_path."$font.ttf";
   $gd = GD::Simple->new(400, 400);
 
   eval {

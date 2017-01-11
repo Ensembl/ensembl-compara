@@ -41,10 +41,7 @@ sub init_canvas {
 
   my $canvas = GD::Image->newTrueColor($self->{sf} * $im_height, $self->{sf} * $im_width);
 
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  $self->{'ttf_path'} = "/usr/local/share/fonts/ttfonts/";
-  $self->{'ttf_path'} = $ST->{'GRAPHIC_TTF_PATH'} if $ST && $ST->{'GRAPHIC_TTF_PATH'};
-
+  $self->{'ttf_path'} = $self->{'config'}->species_defs->get_font_path;
   $self->canvas($canvas);
   my $bgcolor = $self->colour($config->get_parameter('bgcolor'));
   $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_height, $self->{sf} * $im_width, $bgcolor );
