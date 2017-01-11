@@ -307,16 +307,16 @@ sub get_config {
                                                   
     return $CONF->{'_storage'}{$var} if exists $CONF->{'_storage'}{$var};
   }
-  
+
   no strict 'refs';
-  my $S = "SiteDefs::$var";
-  
-  return ${$S}  if defined ${$S};
-  return \@{$S} if defined @{$S};
-  
-  warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & 4;
-  
-  return undef;
+
+  # undeclared param
+  return unless grep { $_ eq $var } keys %{'SiteDefs::'};
+
+  my $sym_name = "SiteDefs::$var";
+
+  return ${$sym_name}  if defined ${$sym_name};
+  return \@{$sym_name} if @{$sym_name};
 }
 
 sub set_config {
