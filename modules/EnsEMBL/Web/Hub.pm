@@ -829,13 +829,14 @@ sub snpedia_status {
 
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
   my $out;
-  eval {$out = $failover->get_cached};
-  if ($@) {
+
+  try {
+    $out = $failover->get_cached
+  } catch {
     warn "SNPEDIA failure";
-  }
-  else {
-    return $out;
-  }
+  };
+
+  return $out;
 }
 
 # Query Store stuff
