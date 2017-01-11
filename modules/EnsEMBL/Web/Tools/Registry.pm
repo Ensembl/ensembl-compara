@@ -70,6 +70,11 @@ sub configure {
     next unless ref $self->{'conf'}->{'_storage'}{$species};
     
     Bio::EnsEMBL::Registry->add_alias($species, $sp);
+
+    if ($sp ne 'ancestral_sequences' && $self->{'conf'}->{'_storage'}{$species} && $self->{'conf'}->{'_storage'}{$species}{$species}) {
+      my $prod_name = $self->{'conf'}->{'_storage'}{$species}{$species}{'SPECIES_PRODUCTION_NAME'};
+      Bio::EnsEMBL::Registry->add_alias($species, $prod_name);
+    }
     
     for my $type (keys %{$self->{'conf'}->{'_storage'}{$species}{'databases'}}){
       ## Grab the configuration information from the SpeciesDefs object
