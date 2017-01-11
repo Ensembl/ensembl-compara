@@ -458,9 +458,10 @@ sub cleanupHandler {
   ## This handler gets called immediately after the request has been served (the client went away) and before the request object is destroyed.
   ## Any time consuming logging process should be done in this handler since the request connection has actually been closed by now.
   ## @param Apache2::RequestRec request object
-  my $r = shift;
+  my $r     = shift;
+  my $uuri  = $r->unparsed_uri;
 
-  return OK if $r->unparsed_uri =~ m/^(\*|\/Crash|\/Error)/;
+  return OK if !defined $uuri || $uuri =~ m/^(\*|\/Crash|\/Error)/;
 
   # run any plugged-in code
   request_end_hook($r);
