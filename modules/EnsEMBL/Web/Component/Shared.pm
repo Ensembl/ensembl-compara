@@ -29,7 +29,7 @@ use Text::Wrap      qw(wrap);
 use List::Util      qw(first);
 use List::MoreUtils qw(uniq first_index);
 
-use EnsEMBL::Web::Utils::FormatText qw(helptip get_glossary_entry);
+use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry);
 
 use base qw(EnsEMBL::Web::Component);
 
