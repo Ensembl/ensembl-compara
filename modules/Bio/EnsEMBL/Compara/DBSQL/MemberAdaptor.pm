@@ -360,14 +360,9 @@ sub get_source_taxon_count {
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
-    my @tabs = $self->_tables;
-  my $sth = $self->prepare
-    ("SELECT COUNT(*) FROM $tabs[0][0] WHERE source_name=? AND taxon_id=?");
-  $sth->execute($source_name, $taxon_id);
-  my ($count) = $sth->fetchrow_array();
-  $sth->finish;
-
-  return $count;
+    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
+    return $self->generic_count('source_name=? AND taxon_id=?');
 }
 
 
