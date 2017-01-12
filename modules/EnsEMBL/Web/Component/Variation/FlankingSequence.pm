@@ -25,7 +25,7 @@ use EnsEMBL::Web::TextSequence::View::FlankingSequence;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Variation);
 
-sub initialize {
+sub initialize_new {
   my $self              = shift;
   my $hub               = $self->hub;
   my $object            = $self->object || $hub->core_object('variation');
