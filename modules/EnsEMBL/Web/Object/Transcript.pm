@@ -1395,10 +1395,10 @@ sub get_alignment {
   my $label_width  = '22'; # width of column for e! object label
   my $output_width = 61;   # width of alignment
   my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
-  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
+  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/share/genewise/BLOSUM62.bla %s %s > %s';
 
   my $out_file = time() . int(rand()*100000000) . $$;
-  $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
+  $out_file = $self->species_defs->ENSEMBL_TMP_TMP.'/' . $out_file . '.out';
 
   my $command;
   if ($seq_type eq 'DNA') {
@@ -1414,7 +1414,7 @@ sub get_alignment {
       $self->problem('fatal', "Cannot open alignment file.", $!);
     }
   } elsif ($seq_type eq 'PEP') {
-    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
+    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $out_file;
     `$command`;
 
     unless (open(OUT, "<$out_file")) {
