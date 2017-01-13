@@ -199,14 +199,14 @@ sub new_from_Slice {
     my $codon_table_id;
     $codon_table_id = $attrib->value() if $attrib;
 
-    my %name_to_cellular_component = ( 'MT' => 'MT', 'chrM' => 'MT', 'PT' => 'PT' );
+    my %name_to_cellular_component = ( 'MT' => 'MT', 'CHRM' => 'MT', 'PT' => 'PT' );
     my $cellular_component = 'NUC';
-    if (exists $name_to_cellular_component{$slice->seq_region_name}) {
-        $cellular_component = $name_to_cellular_component{$slice->seq_region_name};
+    if (exists $name_to_cellular_component{uc $slice->seq_region_name}) {
+        $cellular_component = $name_to_cellular_component{uc $slice->seq_region_name};
     } else {
         foreach my $synonym (@{$slice->get_all_synonyms}) {
-            if (exists $name_to_cellular_component{$synonym->name}) {
-                $cellular_component = $name_to_cellular_component{$synonym->name};
+            if (exists $name_to_cellular_component{uc $synonym->name}) {
+                $cellular_component = $name_to_cellular_component{uc $synonym->name};
                 last;
             }
         }
