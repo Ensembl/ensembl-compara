@@ -46,7 +46,9 @@ sub content {
   my $svg_path = $image->render($display_name);
 
   if ($svg_path) {
-    $html .= qq(<div class="component-tools tool_buttons "><a class="iexport" href="$svg_path" target="_blank">Download SVG</a></div>);
+    my @path = split('/', $svg_path);
+    my $filename = $path[-1];
+    $html .= qq(<div class="component-tools tool_buttons "><a class="iexport" href="$svg_path" download="$filename" target="_blank">Download SVG</a></div>);
     $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
   }
   $html .= sprintf '<h4>Key</h4><p><img src="%s/img/r2r_legend.png" /></p>', $self->static_server if $object->availability->{'has_2ndary_cons'};
