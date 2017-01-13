@@ -32,30 +32,6 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub buttons {
-### Custom export button, because this image is SVG, not PNG 
-  my $self = shift;
-  my $hub = $self->hub;
-  my $object       = $self->object;
-  my ($display_name) = $object->display_xref;
-
-  my $filename  = $display_name.'.svg'; 
-  my $date      = date_format(time(), '%y_%m_%d');
-  my $file      = sprintf 'temporary/%s/r2r_%s/%s', $date, $hub->species, $filename;
-
-  my $url = sprintf '/%s/Download/ImageExport?format=svg;filename=%s;file=%s',
-                      lc($hub->species),
-                      $filename, 
-                      $file;
-
-  return {
-      'url'       => $url,
-      'caption'   => 'Download SVG',
-      'class'     => 'iexport',
-    };
-
-}
-
 
 sub content {
   my $self         = shift;
@@ -64,17 +40,17 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $html;
 
-  $html .= sprintf '<h4>Key</h4><p><img src="%s/img/r2r_legend.png" /></p>', $self->static_server if $object->availability->{'has_2ndary_cons'};
-
   my ($display_name) = $object->display_xref;
 
   my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
   my $svg_path = $image->render($display_name);
-  warn ">>> SVG PATH $svg_path";
 
   if ($svg_path) {
+    $html .= qq(<div class="component-tools tool_buttons "><a class="iexport" href="$svg_path" target="_blank">Download SVG</a></div>);
     $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
   }
+  $html .= sprintf '<h4>Key</h4><p><img src="%s/img/r2r_legend.png" /></p>', $self->static_server if $object->availability->{'has_2ndary_cons'};
+
 
   return $html;
 }
