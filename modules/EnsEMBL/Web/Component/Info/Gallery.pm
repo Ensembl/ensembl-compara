@@ -198,7 +198,6 @@ sub _sub_header {
   my $type  = $hub->param('data_type');
   my $param = $data_type->{$type}{'param'};
   my $value = $hub->param($param);
-  warn ">>> PARAM $param = $value";
   my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
 
   my $form  = $self->new_form({'id' => lc($title), 'method' => 'get'});
