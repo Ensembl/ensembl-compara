@@ -42,7 +42,7 @@ sub content {
                 },
                 {
                     'title' => 'Genes',
-                    'pages' => ['Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Gene Tree', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Table of Ontology Terms', 'Supporting Evidence', 'Gene Expression', 'Gene Regulation'],
+                    'pages' => ['Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Table of Ontology Terms', 'Supporting Evidence', 'Gene Expression', 'Gene Regulation'],
                     'icon'  => 'dna.png',
                   },
                   {
@@ -161,7 +161,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_sequence',
-                                  'caption'   => 'DNA sequence of this gene',
+                                  'caption'   => 'DNA sequence of this gene, optionally with variants marked',
                                 },
             'Secondary Structure' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -179,15 +179,23 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_tree',
-                                  'caption'   => 'Tree showing alignments of this gene across many species',
+                                  'caption'   => 'Tree showing homologues of this gene across many species',
+                                },
+            'Gene Tree Alignments' => {
+                                  'link_to'   => {'type'      => 'Gene',
+                                                  'action'    => 'Compara_Tree',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'gene_tree_align',
+                                  'caption'   => "Alignments of this gene's homologues across many species",
                                 },
             'Gene Gain/Loss Tree' => {
                                   'link_to'   => {'type'      => 'Gene',
                                                   'action'    => '',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'gene_',
-                                  'caption'   => '',
+                                  'img'       => 'gene_cafe_tree',
+                                  'caption'   => 'View interactive tree of loss and gain events in a family of genes',
                                 },
             'Summary of Orthologues' => {
                                   'link_to'   => {'type'      => 'Gene',
