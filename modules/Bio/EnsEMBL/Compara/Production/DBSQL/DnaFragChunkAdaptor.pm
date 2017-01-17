@@ -76,7 +76,7 @@ sub store {
               "(dnafrag_id,sequence_id,seq_start,seq_end, dnafrag_chunk_set_id) ".
               "VALUES (?,?,?,?,?)";
 
-  $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence));
+  $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence)) if $dfc->sequence;
 
   #print("$query\n");
   my $sth = $self->prepare($query);
