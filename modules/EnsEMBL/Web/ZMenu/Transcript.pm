@@ -22,6 +22,7 @@ package EnsEMBL::Web::ZMenu::Transcript;
 use strict;
 
 use Bio::EnsEMBL::SubSlicedFeature;
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -192,7 +193,7 @@ sub content {
     my $analysis = $transcript->analysis;
     $self->add_entry({
       type        => 'Source',
-      label_html  => $self->helptip($analysis->display_label, $analysis->description)
+      label_html  => helptip($analysis->display_label, $analysis->description)
     });
   }
   my $alt_allele_link = $object->get_alt_allele_link('Location');

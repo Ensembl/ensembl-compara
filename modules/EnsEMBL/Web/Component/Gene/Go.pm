@@ -25,6 +25,8 @@ package EnsEMBL::Web::Component::Gene::Go;
 
 use strict;
 
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -116,7 +118,7 @@ sub process_data {
     if($hash->{'term'}) {
       $row->{'go'}               = $go_link;
       $row->{'term'}             = $hash->{'term'};
-      $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
+      $row->{'evidence'}         = join ', ', map helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
       $row->{'mapped'}           = $hash->{'mapped'} || '';
       $row->{'source'}           = $hash->{'source'} || '';
       $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $hash->{transcript_id},}).'">'.$hash->{transcript_id}.'</a>';

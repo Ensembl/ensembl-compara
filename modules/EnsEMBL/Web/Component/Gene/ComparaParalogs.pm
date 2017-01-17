@@ -23,6 +23,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip);
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 our %button_set = ('download' => 1, 'view' => 0);
@@ -158,8 +160,8 @@ sub content {
       }
       
       push @rows, {
-        'Type'                => $self->glossary_helptip(ucfirst $paralogue_desc, $lookup->{ucfirst $paralogue_desc}),
-        'Ancestral taxonomy'  => $self->helptip($ancestral_taxonomy, $lca_desc),
+        'Type'                => glossary_helptip($hub, ucfirst $paralogue_desc, $lookup->{ucfirst $paralogue_desc}),
+        'Ancestral taxonomy'  => helptip($ancestral_taxonomy, $lca_desc),
         'identifier'          => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq(<span class="small">$links</span>) : '',
         'Location'            => qq(<a href="$location_link">$paralogue->{'location'}</a>),

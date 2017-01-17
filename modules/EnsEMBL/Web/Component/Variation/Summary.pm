@@ -22,6 +22,8 @@ package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
 
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -396,7 +398,7 @@ sub alleles {
   my $freq        = $variation->minor_allele_frequency;
      $freq        = sprintf ('%.2f', $freq) if ($freq != 0);
      $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
-  my $maf_helptip = $self->helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
+  my $maf_helptip = helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
   my $maf         = $variation->minor_allele;
      $maf         = sprintf(qq{<span class="_ht ht">%s</span>: <strong>%s</strong> (%s)},$maf_helptip,$freq,$maf) if $maf;
   my $html;
