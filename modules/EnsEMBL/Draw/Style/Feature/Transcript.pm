@@ -59,14 +59,14 @@ sub draw_block {
   ## not with respect to biology, because it makes the logic a lot simpler
   my $coding_start  = $structure->{'utr_5'} || $start;
   my $coding_end    = $structure->{'utr_3'} || $end;
-  my $coding_width = $coding_end - $coding_start;
+  my $coding_width = $coding_end - $coding_start + 1;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
   elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
     if (defined($structure->{'utr_5'})) {
-      $params{'width'}  = $structure->{'utr_5'} - $start;
+      $params{'width'}  = $structure->{'utr_5'} - $start + 1;
       $self->draw_noncoding_block(%params);
     }
 
@@ -76,7 +76,7 @@ sub draw_block {
 
     if (defined($structure->{'utr_3'})) {
       $params{'x'}     = $structure->{'utr_3'};
-      $params{'width'} = $end - $structure->{'utr_3'};
+      $params{'width'} = $end - $structure->{'utr_3'} + 1;
       $self->draw_noncoding_block(%params);
     }
   }
