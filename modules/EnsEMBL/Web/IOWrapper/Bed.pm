@@ -80,8 +80,9 @@ sub create_hash {
 
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
-  my $start         = $feature_start - $slice->start +1;
-  my $end           = $feature_end - $slice->start +1;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+
   return if $end < 0 || $start > $slice->length;
 
 
