@@ -459,10 +459,10 @@ sub cleanupHandler {
   return OK if $r->subprocess_env('LOG_REQUEST_IGNORE');
 
   my $start_time  = $r->subprocess_env('LOG_REQUEST_START');
-  my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
+  my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME') || 0;
   my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
 
-  warn sprintf "REQUEST(%s): [served at %s by %s in %sms] %s\n", $r->method_number == M_POST ? 'P' : 'G', time_str($start_time), $$, int(1000*$time_taken) || '0', $uri;
+  warn sprintf "REQUEST(%s): [served at %s by %s in %sms] %s\n", $r->method_number == M_POST ? 'P' : 'G', time_str($start_time), $$, int(1000*$time_taken), $uri;
 
   if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
 
