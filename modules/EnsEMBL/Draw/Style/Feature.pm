@@ -92,9 +92,6 @@ sub create_glyphs {
 
     ## FIRST LOOP - process features
     foreach my $feature (@features) {
-      ## Are we drawing transcripts or just genes?
-      #next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
-      #next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
       my $show_label  = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $overlay     = $track_config->get('overlay_label');
@@ -139,22 +136,15 @@ sub create_glyphs {
 
       ## Work out where to place the feature
       my $feature_height  = $track_config->get('height') || $typical_label_height->{'height'};
-      my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
-      if ($feature_width == 0) {
-        ## Fix for single base-pair features
-        $feature_width = 1;
-      }
-      else {
-        ## Truncate to viewport - but don't alter feature hash because we may need it
-        my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'}
+      ## Truncate to viewport - but don't alter feature hash because we may need it
+      my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'} > -1
                                         ? ($feature->{'start'}, $feature->{'end'})
                                         : ($feature->{'end'}, $feature->{'start'});
-        $drawn_start        = 0 if $drawn_start < 0;
-        $drawn_end          = $slice_width if $drawn_end > $slice_width;
-        $feature_width      = $drawn_end - $drawn_start + 1; 
-      }
-
+      $drawn_start      = 0 if $drawn_start < 0;
+      $drawn_end        = $slice_width if $drawn_end > $slice_width;
+      my $feature_width = $drawn_end - $drawn_start + 1; 
+  
       my $labels_height   = $label_row * $label_height;
       ## Only "ordinary" bumping requires adding the label to the feature height
       my $add_labels      = ($bumped && $bumped eq '1') ? $labels_height : 0;
