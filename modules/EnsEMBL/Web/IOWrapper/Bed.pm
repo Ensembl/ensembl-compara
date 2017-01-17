@@ -202,12 +202,14 @@ sub create_structure {
     my @block_lengths = @{$self->parser->get_blockSizes};
 
     foreach(0..($self->parser->get_blockCount - 1)) {
-      my $start   = shift @block_starts;
+      my $start   = shift @block_starts; 
       ## Adjust to be relative to slice
       my $offset  = $feature_start - $slice_start;
       $start      = $start + $offset;
       my $length  = shift @block_lengths;
-      my $end     = $start + $length;
+      ## Adjust coordinates here to accommodate drawing code without 
+      ## altering zmenu content
+      my $end     = $start + $length - 1;
 
       push @$structure, {'start' => $start, 'end' => $end};
     }
