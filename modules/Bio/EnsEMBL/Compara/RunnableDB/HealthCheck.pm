@@ -422,7 +422,7 @@ sub _run_pairwise_gabs_test {
                   method_link_type => method_link_type for pairwise segment
                   current_genome_db_ids => array of genome_db_ids for current
                   (this) database
-                  max_percentage_diff => the percentage difference between the
+                  max_percent_diff => the percentage difference between the
                   number of genomic_align_blocks in the query and the target
                   databases before being flaged as an error. Default 20.
   Returntype  :
@@ -437,7 +437,7 @@ sub _run_compare_to_previous_db_test {
 
   #print "_run_compare_to_previous_db_test\n";
   
-  my $max_percent_diff = 20;
+  my $max_percent_diff = defined $self->param('max_percent_diff') ? $self->param('max_percent_diff') : 20;
   
   my $previous_mlss_id = $self->param('previous_mlss_id') || $self->param('previous_method_link_species_set_id');
   
@@ -447,7 +447,6 @@ sub _run_compare_to_previous_db_test {
 
   my $method_link_type = $self->param('method_link_type');
   my $current_genome_db_ids = $self->param('current_genome_db_ids');
-  $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
 
   my $ensembl_release = $self->param('ensembl_release');
   my $prev_release;
