@@ -610,7 +610,7 @@ sub init_label {
       highlight => $highlight_class,
       component => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers => \@r,
-      fav       => [ $fav, "$url;$track=favourite_" ],
+      fav       => [ $fav, "$url;updated=0;$track=favourite_" ],
       off       => "$url;$track=off",
       conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
       subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',

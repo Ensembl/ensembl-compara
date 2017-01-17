@@ -286,8 +286,9 @@ sub update_from_input {
     $self->altered($self->reset_user_settings($reset));
 
   } else {
+    my $diff = delete $params->{$self->config_type};
 
-    if (my $diff = delete $params->{$self->config_type}) {
+    if (keys %$diff) {
 
       # update renderers
       foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
@@ -362,7 +363,6 @@ sub update_favourite_tracks {
 
   my $fav_tracks  = $self->_favourite_tracks;
   my $altered     = 0;
-
   foreach my $track_key (keys %$updated_fav) {
     if ($updated_fav->{$track_key}) {
       if (!$fav_tracks->{$track_key}) {
@@ -397,8 +397,7 @@ sub _favourite_tracks {
   my $self = shift;
 
   $self->{'_favourite_tracks'} ||= $self->hub->session->get_record_data({'type' => 'favourite_tracks', 'code' => 'favourite_tracks'});
-
-  return $self->{'_favourite_tracks'}{'tracks'} || {};
+  return $self->{'_favourite_tracks'} || {};
 }
 
 sub is_track_favourite {
@@ -406,7 +405,6 @@ sub is_track_favourite {
   ## @param Track name
   ## @return 0 or 1 accordingly
   my ($self, $track) = @_;
-
   return $self->_favourite_tracks->{$track} ? 1 : 0;
 }
 

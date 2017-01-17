@@ -54,6 +54,9 @@ sub init {
   if ($hub->param('submit')) {
     my $updated = $self->update_configuration;
 
+    if (defined $hub->param('updated')) {
+      $updated = $hub->param('updated');
+    }
     $r->content_type('text/plain');
     $r->print(to_json($updated ? {'updated' => 1} : {}));
 
