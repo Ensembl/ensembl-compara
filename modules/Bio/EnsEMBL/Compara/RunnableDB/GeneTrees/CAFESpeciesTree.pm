@@ -60,7 +60,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'tree_fmt'   => '%{n}%{":"d}',
-            'pvalue_lim' => 0.01,
             'label'      => 'full_species_tree',
             'new_label'  => 'cafe',
            };
@@ -124,7 +123,6 @@ sub run {
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
     my $mlss_id = $self->param('mlss_id');
-    my $pvalue_lim = $self->param('pvalue_lim');
     print STDERR Dumper $species if ($self->debug());
 #    my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
 
