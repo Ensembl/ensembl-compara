@@ -114,4 +114,17 @@ sub default_options {
 	   };
 }
 
+sub resource_classes {
+    my ($self) = @_;
+
+    return {
+            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+            '100Mb'       => { 'LSF' => '-q production-rh7 -C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb'         => { 'LSF' => '-q production-rh7 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'long'        => { 'LSF' => '-q production-rh7 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'crowd'       => { 'LSF' => '-q production-rh7 -C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+            'crowd_himem' => { 'LSF' => '-q production-rh7 -C0 -M6000 -R"select[mem>6000] rusage[mem=6000]"' },
+    };
+}
+
 1;
