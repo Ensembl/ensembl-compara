@@ -53,7 +53,7 @@ sub content {
                 {
                     'title' => 'Comparative Genomics',
                     'pages' => ['Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Aligned Sequence', 'Region Comparison'],
-                    'icon'  => '',
+                    'icon'  => 'compara.png',
                 },
                   {
                     'title' => 'Variants',
