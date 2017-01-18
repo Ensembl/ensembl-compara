@@ -36,25 +36,25 @@ sub content {
 
   my $layout = [
                 {
-                  'title' => 'Location',
-                  'pages' => ['Scrolling Browser', 'Region in Detail', 'Immediate Neighbourhood', 'Aligned Sequence', 'Region Comparison'],
-                  'icon'  => 'karyotype.png',
-                },
-                {
-                    'title' => 'Genes',
-                    'pages' => ['Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Table of Ontology Terms', 'Supporting Evidence', 'Gene Expression', 'Gene Regulation'],
+                    'title' => 'Sequence &amp; Structure',
+                    'pages' => ['Scrolling Browser', 'Region in Detail', 'Immediate Neighbourhood', 'Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Supporting Evidence'],
                     'icon'  => 'dna.png',
                   },
+                {
+                  'title' => 'Function &amp; Regulation',
+                  'pages' => ['Table of Ontology Terms', 'Gene Regulation Image', 'Gene Regulation Table', 'Gene Expression'],
+                  'icon'  => '',
+                },
                   {
-                    'title' => 'Transcripts',
-                    'pages' => ['Transcript Image', 'Transcript Table', 'Transcript Comparison', 'Exons', 'Gene Regulation'],
-                    'icon'  => 'transcripts.png',
-                  },
-                  {
-                    'title' => 'Proteins',
-                    'pages' => ['Protein Summary', 'cDNA Sequence', 'Protein Sequence', 'Variation Protein'],
+                    'title' => 'Transcripts & Proteins',
+                    'pages' => ['Transcript Image', 'Transcript Table', 'Transcript Comparison', 'Exons', 'Protein Summary', 'cDNA Sequence', 'Protein Sequence', 'Variation Protein'],
                     'icon'  => 'protein.png',
                   },
+                {
+                    'title' => 'Comparative Genomics',
+                    'pages' => ['Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Aligned Sequence', 'Region Comparison'],
+                    'icon'  => '',
+                },
                   {
                     'title' => 'Variants',
                     'pages' => ['Variant Table', 'Variant Image', 'Structural Variants'],
@@ -240,19 +240,27 @@ sub _get_pages {
                                 },
             'Gene Expression' => {
                                   'link_to'   => {'type'      => 'Gene',
-                                                  'action'    => '',
+                                                  'action'    => 'ExpressionAtlas',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'gene_',
-                                  'caption'   => '',
+                                  'img'       => 'gene_gxa',
+                                  'caption'   => 'Interactive gene expression heatmap',
                                 },
-            'Gene Regulation' => {
+            'Gene Regulation Image' => {
                                   'link_to'   => {'type'      => 'Gene',
-                                                  'action'    => '',
+                                                  'action'    => 'Regulation',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'gene_',
-                                  'caption'   => '',
+                                  'img'       => 'gene_reg_image',
+                                  'caption'   => 'Gene shown in context of regulatory features',
+                                },
+            'Gene Regulation Table' => {
+                                  'link_to'   => {'type'      => 'Gene',
+                                                  'action'    => 'Regulation',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'gene_reg_table',
+                                  'caption'   => 'Table of regulatory features associated with this gene',
                                 },
             };
   }
