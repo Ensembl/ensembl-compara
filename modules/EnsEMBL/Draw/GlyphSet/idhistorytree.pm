@@ -420,6 +420,11 @@ sub render_normal {
     } 
     push @{$asmbl{$current_r}} , $r;
   }
+  ## A bit hacky, but some of the GRCh37 data is incomplete
+  unless ($current_assembly_seen) {
+    $archive_info{$releases[-1]} = $species_current_assembly;
+  }
+
   my %asmbl_seen;
 
   foreach my $key ( @releases){    
