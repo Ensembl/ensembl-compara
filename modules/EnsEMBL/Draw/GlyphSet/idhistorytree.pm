@@ -423,6 +423,7 @@ sub render_normal {
   ## A bit hacky, but some of the GRCh37 data is incomplete
   unless ($current_assembly_seen) {
     $archive_info{$releases[-1]} = $species_current_assembly;
+    $asmbl{$species_current_assembly} = [$releases[-1]];
   }
 
   my %asmbl_seen;
