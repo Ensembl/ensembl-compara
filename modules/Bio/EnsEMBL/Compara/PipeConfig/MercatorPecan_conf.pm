@@ -75,7 +75,7 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'dbname'                => $ENV{USER}.'_pecan_23way_'.$self->o('rel_with_suffix'),
+	'pipeline_name'         => 'pecan_23way',
         'work_dir'              => '/lustre/scratch110/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
@@ -278,7 +278,6 @@ sub pipeline_analyses {
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'master'         => $self->o('master_db_name'),
-				  'new_db'         => $self->o('dbname'),
 				  'mlss_id'        => $self->o('mlss_id'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
