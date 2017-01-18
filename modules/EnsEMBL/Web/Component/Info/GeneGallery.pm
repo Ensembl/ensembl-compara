@@ -43,7 +43,7 @@ sub content {
                 {
                   'title' => 'Function &amp; Regulation',
                   'pages' => ['Table of Ontology Terms', 'Gene Regulation Image', 'Gene Regulation Table', 'Gene Expression'],
-                  'icon'  => '',
+                  'icon'  => 'regulation.png',
                 },
                   {
                     'title' => 'Transcripts & Proteins',
