@@ -414,7 +414,10 @@ sub render_normal {
     my $current_r = $archive_info{$tempr}; 
     ## Omit assemblies after the current one, to handle data-freeze sites like GRCh37
     $current_assembly_seen = 1 if ($current_r eq $species_current_assembly);
-    $current_r = $species_current_assembly if $current_assembly_seen; 
+    if ($current_assembly_seen) {
+       $archive_info{$r} = $species_current_assembly;
+       $current_r = $species_current_assembly;
+    } 
     push @{$asmbl{$current_r}} , $r;
   }
   my %asmbl_seen;
