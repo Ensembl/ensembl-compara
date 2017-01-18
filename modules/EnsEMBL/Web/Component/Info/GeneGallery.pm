@@ -58,7 +58,7 @@ sub content {
                   {
                     'title' => 'Variants',
                     'pages' => ['Variant Table', 'Variant Image', 'Structural Variants'],
-                    'icon'  => '',
+                    'icon'  => 'variation.png',
                   },
                 ];
 
