@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::Family;
 
 use strict;
 use warnings;
-
+use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -121,5 +121,32 @@ sub _attr_to_copy_list {
     return @sup_attr;
 }
 
+=head2 preload
+
+  Arg [1]     : (optional) Arrayref of strings $species. If given, family members that
+                do not belong to those species are removed from the family
+  Description : Method to load all the family data in one go. This currently
+                includes (if not loaded yet) the seq members, the alignments, and the
+                gene Members.
+  Returntype  : node
+  Example     : $family->preload();
+                $family->preload(-PRUNE_SPECIES => ['human', 'mouse', 'chicken']);
+  Caller      : General
+
+=cut
+
+sub preload {
+    my $self = shift;
+    return unless defined $self->adaptor;
+    return if $self->{_preloaded};
+
+    my ($prune_species, $prune_taxa) =
+        rearrange([qw(PRUNE_SPECIES PRUNE_TAXA)], @_);
+
+
+        # Loads all the gene members in one go
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
+
+}
 
 1;
