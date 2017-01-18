@@ -287,7 +287,7 @@ my $sp_name_cb = sub {
 my $n_members_cb = sub {
     my ($self) = @_;
     my $n_members;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {
         return $self->{tree}->n_members();
     }
     return undef;
@@ -297,7 +297,7 @@ my $n_members_cb = sub {
 my $pvalue_cb = sub {
     my ($self) = @_;
     my $pval;
-    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')) {
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {
         return $self->{tree}->pvalue();
     }
     return undef;
@@ -390,7 +390,6 @@ sub format_newick {
 
 sub _internal_format_newick {
     my ($self, $tree) = @_;
-
     my $newick = "";
     if ($tree->get_child_count()>0) {
         $newick .= "(";
@@ -417,8 +416,8 @@ sub _internal_format_newick {
                 my $itemstr = $self->{callbacks}{$item}->($self, $token);
                 #print STDERR "ITEMSTR:$itemstr\n";exit;
                 if (defined $itemstr) {
-                    #print Dumper($itemstr);
-                    #print Dumper($token);
+          #          print Dumper($itemstr);
+          #          print Dumper($token);
                     my $modifier = {
                         '' => '',
                         'dot' => '.',
