@@ -178,8 +178,9 @@ sub pipeline_analyses {
             -parameters  => 
                 {
                     'alignment_db'      => $self->o('alignment_db'),
-                    pairwise_mlss_id    => $self->o('pairwise_mlss_id'),
-#                    'registry'          => $self->o('registry'),
+                    'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
+                    'registry'          => $self->o('registry'),
+                    'recompute_existing_syntenies' => $self->o('recompute_existing_syntenies'),
                 },
             
             -wait_for   => [ 'copy_table', 'copy_table_factory' ],
