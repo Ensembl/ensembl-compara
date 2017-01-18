@@ -210,7 +210,7 @@ sub render_normal {
     # this version links to a different id      
     my $true = 0;
     my $final_rel = 0;
-    my $first_rel =$last_rel;
+    my $first_rel = $last_rel;
 
     my ($x, $y) = @{ $history_tree->coords_by_ArchiveStableId($a_id) };
     my $id = $a_id->stable_id;
@@ -405,10 +405,16 @@ sub render_normal {
   my $pix_per_bp = $self->{'config'}->transform_object->scalex;
   my $strand = ">";
 
+  my $species_current_assembly = $Config->species_defs->get_config($species, 'ASSEMBLY_VERSION');
+  my $current_assembly_seen;
+
   foreach my $r (@releases){
     my $tempr = $r; 
     if ($tempr =~/\./){ $tempr=~s/\.\d*//; }
     my $current_r = $archive_info{$tempr}; 
+    ## Omit assemblies after the current one, to handle data-freeze sites like GRCh37
+    $current_assembly_seen = 1 if ($current_r eq $species_current_assembly);
+    $current_r = $species_current_assembly if $current_assembly_seen; 
     push @{$asmbl{$current_r}} , $r;
   }
   my %asmbl_seen;
