@@ -578,14 +578,17 @@ sub init_label {
   my $hover     = ($text =~m/Legend/)? 0 : $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
   my $strand_map= { '1' => 'f', '-1' => 'r' };
-  my $highlight_class = $node->get('drawing_strand') && $self->strand ? "$track." . $strand_map->{$self->strand} : $track;
-  $self->{'track_highlight_class'} = $highlight_class;
+  my $strand    = $node->get('drawing_strand') && $self->strand ? $strand_map->{$self->strand} : '';
+  my $highlight_track_uniq_id = $strand ? "$track." . $strand : $track;
+
+  $self->{'track_highlight_class'} = $highlight_track_uniq_id;
 
   ## Store this where the glyphset can find it later...
   $self->{'hover_label_class'} = $class;
 
   if ($hover) {
     my $fav       = $config->is_track_favourite($track);
+    my $hl        = $config->is_track_highlighted($track);
     my @renderers = grep !/default/i, @{$node->get('renderers') || []};
     my $subset    = $node->get('subset');
     my @r;
@@ -604,16 +607,16 @@ sub init_label {
     }
 
     $config->{'hover_labels'}->{$class} = {
-      header    => $name,
-      desc      => $desc,
-      class     => "$class $track _track_$track",
-      highlight => $highlight_class,
-      component => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
-      renderers => \@r,
-      fav       => [ $fav, "$url;updated=0;$track=favourite_" ],
-      off       => "$url;$track=off",
-      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
-      subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
+      header          => $name,
+      desc            => $desc,
+      class           => "$class $track $strand",
+      track_highlight => [ $highlight_track_uniq_id, $hl, "$url;updated=0;$track=highlight_" ],
+      component       => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
+      renderers       => \@r,
+      fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
+      off             => "$url;$track=off",
+      conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
+      subset          => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
  

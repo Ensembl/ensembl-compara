@@ -153,12 +153,15 @@ sub render {
   my %layers;
 
   # Track name to y coordinates map used for full track highlighting on image export
-  my $track_hl_y_coords = {};
+  my $track_hl_coords = {};
 
   for my $glyphset (@{$self->{'glyphsets'}}) {
-    if ($glyphset->{label} && $glyphset->{label}->{track}) {
+    if (scalar @{$glyphset->{'glyphs'}} && $glyphset->{label} && $glyphset->{label}->{track}) {
       # Coordinates used for track highlighting
-      $track_hl_y_coords->{$glyphset->{label}->{track}} = $glyphset->{label}->{pixely};
+      $track_hl_coords->{$glyphset->{label}->{track}} = {
+        pixely => $glyphset->{label}->{pixely},
+        height => $glyphset->height
+      };
     }
     foreach (keys %{$glyphset->{'tags'}}) {
       if ($tags{$_}) {
@@ -240,13 +243,13 @@ sub render {
     push @{$layers{$top_layer + 2}}, $marked_layer;
   }
 
-  my $track_highlight_info = $self->{'extra'}{'trackHighlightInfo'} || {};
+  my $highlightedTracks = $self->{'extra'}{'highlightedTracks'} || [];
 
   my $hl_layer = -1;
 
-  foreach (keys %$track_highlight_info) {
-    if (defined $track_hl_y_coords->{$_}) {
-      push @{$layers{--$hl_layer}}, $self->add_track_highighting_layer($track_hl_y_coords->{$_}, $track_highlight_info->{$_}->{h}, $im_width);
+  foreach (@$highlightedTracks) {
+    if (defined $track_hl_coords->{$_}) {
+      push @{$layers{--$hl_layer}}, $self->add_track_highighting_layer($track_hl_coords->{$_}, $im_width);
     }
   }
 
@@ -280,14 +283,14 @@ sub render {
 }
 
 sub add_track_highighting_layer {
-  my ($self, $y_coord, $height, $im_width) = @_;
+  my ($self, $coords, $im_width) = @_;
   return EnsEMBL::Draw::Glyph::Rect->new({
     colour      => 'yellow',
     alpha       => 0.7,
     pixelx      => 0,
-    pixely      => $y_coord,
+    pixely      => $coords->{pixely},
     pixelwidth  => $im_width,
-    pixelheight => $height
+    pixelheight => $coords->{height}
   });
 }
 

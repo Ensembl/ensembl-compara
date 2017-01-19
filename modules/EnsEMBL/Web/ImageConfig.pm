@@ -289,7 +289,6 @@ sub update_from_input {
     my $diff = delete $params->{$self->config_type};
 
     if (keys %$diff) {
-
       # update renderers
       foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
         $self->altered($self->update_track_renderer($track_key, $diff->{$track_key}{'renderer'}));
@@ -318,6 +317,13 @@ sub update_from_input {
       if (keys %fav) {
         delete $params->{$_};
         $self->altered(1) if $self->update_favourite_tracks(\%fav);
+      }
+
+      # update track highlights
+      my %hl_track = map { $params->{$_} =~ /highlight_(on|off)/ ? ($_ => $1 eq 'on' ? 1 : 0) : () } keys %$params;
+      if (keys %hl_track) {
+        delete $params->{$_};
+        $self->altered(1) if $self->update_track_highlights(\%hl_track);
       }
 
       # update renderers if any param's left
@@ -380,6 +386,32 @@ sub update_favourite_tracks {
   return $altered;
 }
 
+
+sub update_track_highlights {
+  ## Update track highlight list for the user
+  ## @param Hashref with keys as track names and values as 1 or 0 accordingly to set/unset track highlights
+  ## @return 1 if settings changed, 0 otherwise
+  my ($self, $updated_tr_hl) = @_;
+
+  my $hl_tracks  = $self->_highlighted_tracks;
+  my $altered     = 0;
+  foreach my $track_key (keys %$updated_tr_hl) {
+    if ($updated_tr_hl->{$track_key}) {
+      if (!$hl_tracks->{$track_key}) {
+        $hl_tracks->{$track_key} = 1;
+        $altered = 1;
+      }
+    } else {
+      if (exists $hl_tracks->{$track_key}) {
+        delete $hl_tracks->{$track_key};
+        $altered = 1;
+      }
+    }
+  }
+
+  return $altered;
+}
+
 sub update_track_order {
   ## Updates track order for the image
   ## @params Track order changes (array of arrayrefs [ track1, prev_track1 ], [ track2, prev_track2 ], ... )
@@ -400,6 +432,16 @@ sub _favourite_tracks {
   return $self->{'_favourite_tracks'} || {};
 }
 
+sub _highlighted_tracks {
+  ## @private
+  ## Gets a list of tracks highlighted by the user (as saved in session/user record)
+  ## List of highlighted tracks is not specific to one image config - if a track exists in multiple images and is favourited in one, it gets favourited in all
+  my $self = shift;
+
+  $self->{'_track_highlights'} ||= $self->hub->session->get_record_data({'type' => 'track_highlights', 'code' => 'track_highlights'});
+  return $self->{'_track_highlights'} || {};
+}
+
 sub is_track_favourite {
   ## Tells if a given track is marked favourite by the user
   ## @param Track name
@@ -408,18 +450,30 @@ sub is_track_favourite {
   return $self->_favourite_tracks->{$track} ? 1 : 0;
 }
 
+sub is_track_highlighted {
+  ## Tells if a given track is highlighted by the user
+  ## @param Track name
+  ## @return 0 or 1 accordingly
+  my ($self, $track) = @_;
+  return $self->_highlighted_tracks->{$track} ? 1 : 0;
+}
+
 sub save_user_settings {
   ## @override
   ## Before saving record, modify record data according to the changed nodes on tree
   ## Also save favourite tracks record along with main config data record
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $fav_data    = $self->_favourite_tracks;
-  my $user_data   = $self->tree->user_data;
-  my $record_data = $self->get_user_settings;
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $fav_data      = $self->_favourite_tracks;
+  my $track_hl_data = $self->_highlighted_tracks;
+  my $user_data     = $self->tree->user_data;
+  my $record_data   = $self->get_user_settings;
 
   # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
   $hub->session->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
+
+  # Save the track highlight record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
+  $hub->session->set_record_data({ %$track_hl_data, 'type' => 'track_highlights', 'code' => 'track_highlights' });
 
   # Move data for the missing nodes to the main 'nodes' key before saving
   $record_data->{'nodes'} = delete $record_data->{'_missing_nodes'} || {};
