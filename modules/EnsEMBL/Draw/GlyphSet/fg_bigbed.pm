@@ -33,18 +33,6 @@ sub get_data {
   my $slice   = $self->{'container'}; 
   return if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice'); # XXX Seems not to have adaptors?
 
-  my $config  = $self->{'config'};
-
-  if ($slice->length > 200000) {
-    if ($config->{'_sent_bigbed_error_track'}) {
-      return undef;
-    } else {
-      $config->{'_sent_bigbed_error_track'} = 1;
-      $self->{'no_empty_track_message'}  = 1;
-      return $self->errorTrack('BigBed tracks are only viewable on images less than 200kb in size');
-    }
-  }
- 
   my $bigbed_file = $self->get_filename;
   return unless $bigbed_file;
   
