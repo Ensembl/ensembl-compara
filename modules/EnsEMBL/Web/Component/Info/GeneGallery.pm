@@ -37,7 +37,7 @@ sub content {
   my $layout = [
                 {
                     'title' => 'Sequence &amp; Structure',
-                    'pages' => ['Scrolling Browser', 'Region in Detail', 'Immediate Neighbourhood', 'Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Supporting Evidence', 'Gene Identifiers', 'Gene Alleles'],
+                    'pages' => ['Scrolling Browser', 'Region in Detail', 'Immediate Neighbourhood', 'Summary Information', 'Splice Variants', 'Gene Sequence', 'Secondary Structure', 'Supporting Evidence', 'Gene History', 'Gene Identifiers', 'Gene Alleles'],
                     'icon'  => 'dna.png',
                   },
                 {
@@ -57,7 +57,7 @@ sub content {
                 },
                   {
                     'title' => 'Variants',
-                    'pages' => ['Variant Table', 'Variant Image', 'Structural Variants'],
+                    'pages' => ['Variant Table', 'Variant Image', 'Structural Variants Image', 'Structural Variants Table'],
                     'icon'  => 'variation.png',
                   },
                 ];
@@ -262,6 +262,14 @@ sub _get_pages {
                                   'img'       => 'gene_support',
                                   'caption'   => "Table of evidence for this gene's transcripts, from protein, EST and cDNA sources",
                                 },
+            'Gene History' => {
+                                  'link_to'   => {'type'      => 'Gene',
+                                                  'action'    => 'Idhistory',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'gene_history',
+                                  'caption'   => "History of a gene's stable ID",
+                                },
             'Gene Expression' => {
                                   'link_to'   => {'type'      => 'Gene',
                                                   'action'    => 'ExpressionAtlas',
@@ -358,6 +366,39 @@ sub _get_pages {
                                   'img'       => 'trans_',
                                   'caption'   => '',
                                 },
+          'Variant Image' => {
+                                  'link_to'       => {'type'    => 'Gene',
+                                                      'action'  => 'Variation_Gene/Image',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'variation_gene_image',
+                                  'caption'   => 'Image showing all variants in this gene',
+                          },
+          'Variant Table' => {
+                                  'link_to'       => {'type'    => 'Gene',
+                                                      'action'  => 'Variation_Gene/Table',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'variation_gene_table',
+                                  'caption'   => 'Table of all variants in this gene',
+                          },
+          'Structural Variants Image' => {
+                                  'link_to'       => {'type'    => 'Gene',
+                                                      'action'  => 'StructuralVariation_Gene',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'gene_sv_image',
+                                  'caption'   => 'Image showing structural variants in this gene',
+                          },
+          'Structural Variants Table' => {
+                                  'link_to'       => {'type'    => 'Gene',
+                                                      'action'  => 'StructuralVariation_Gene',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'gene_sv_table',
+                                  'caption'   => 'Table of all structural variants in this gene',
+                          },
+
             };
   }
 
