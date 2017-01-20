@@ -821,6 +821,11 @@ sub get_shareable_settings {
   my $record_owners   = {'user' => $hub->user, 'session' => $hub->session};
   my @data_menus      = $self->get_shareable_nodes;
 
+  my $record    = $self->hub->session->record({'type' => 'track_highlights', 'code' => 'track_highlights'});
+  if ($record->count) {
+    $share_settings->{'track_highlights'} = $record->data->raw;
+  }
+
   my (%share_data, %done_record);
 
   foreach my $data_menu (@data_menus) {
