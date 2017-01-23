@@ -252,7 +252,7 @@ sub create_structure {
           $block->{'utr_5'} = $thick_start;
         }
       }
-      elsif ($thick_end && $thick_end < $end) { ## 3' UTR
+      if ($thick_end && $thick_end < $end) { ## 3' UTR
         if ($thick_end < $start) {
           $block->{'non_coding'} = 1; 
         }
