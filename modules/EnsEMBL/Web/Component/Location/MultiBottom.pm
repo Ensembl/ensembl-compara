@@ -67,9 +67,9 @@ sub content {
                         };
 
   my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $join_genes      = $self->param('opt_join_genes_bottom') eq 'on';
+  my $bridge_genes    = $self->param('opt_join_genes_bottom') eq 'on';
 
-  my $compara_db      = $join_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
+  my $compara_db      = $bridge_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;
   my @images;
@@ -102,21 +102,21 @@ sub content {
     if ($i == 1) {
       $image_config->multi($methods, $seq_region_name, $i, $max, $slices, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
 
-      $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
+      $image_config->bridge_genes($i, $max, $slices->[$i]) if $bridge_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
       $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
-      $image_config->join_genes($i, $max, $slices->[0]) if $join_genes;
+      $image_config->bridge_genes($i, $max, $slices->[0]) if $bridge_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       
       push @images, $_->{'slice'}, $image_config;
       
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
-        if ($join_alignments || $join_genes) {
+        if ($join_alignments || $bridge_genes) {
           $primary_image_config = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_1_$i", species => $primary_species});
           
           $primary_image_config->set_parameters({
@@ -138,7 +138,7 @@ sub content {
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
-        $primary_image_config->join_genes(1, $max, map $slices->[$_], $i - 1, $i) if $join_genes;
+        $primary_image_config->bridge_genes(1, $max, map $slices->[$_], $i - 1, $i) if $bridge_genes;
         
         push @images, $primary_slice, $primary_image_config;
       }

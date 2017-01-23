@@ -146,7 +146,7 @@ sub init_input {
   my $input = CGI->new;
 
   $self->{'input'}  = $input;
-  $CGI::POST_MAX    = $self->controller->upload_size_limit; # Set max upload size
+  $CGI::POST_MAX    = $self->controller->upload_size_limit if $self->controller; # Set max upload size
 }
 
 sub init_session {
@@ -405,7 +405,7 @@ sub url {
     $pars{$_} = $input->$method($_) for $input->$method;                # In case of a POST request, ignore the POST params while adding params to the URL,
     $pars{$_} = $input->param($_)   for $is_post ? keys %$c_pars : ();  # except if the param is a core param
 
-  } elsif (!$params->{'__clear'}) { # add the core params only if clear flag is not on
+  } elsif ($c_pars && !$params->{'__clear'}) { # add the core params only if clear flag is not on
     %pars = %$c_pars;
 
     # Remove any unused params
@@ -508,7 +508,8 @@ sub _get_permanent_url_base {
 sub param {
   # @status - being changed to not deal with viewconfig params (only CGI params)
   my $self = shift;
-  
+  return unless $self->input;  
+
   if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
@@ -862,10 +863,9 @@ sub query_store_setup {
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 }
 
-sub get_query {return $_[0]->{'_query_store'}->get($_[1]); }
-
-sub qstore_open { return $_[0]->{'_query_store'}->open; }
-sub qstore_close { return $_[0]->{'_query_store'}->close; }
+sub get_query     { $_[0]->{'_query_store'}->get($_[1]); }
+sub qstore_open   { $_[0]->{'_query_store'}->open; }
+sub qstore_close  { $_[0]->{'_query_store'}->close; }
 
 # check to see if Wasabi site is up or down
 # if $out then site is up
@@ -947,6 +947,8 @@ sub new_for_test {
   my ($class, $args) = @_;
 
   my $self = $class->SUPER::new($args->{'species'}, $args->{'species_defs'});
+  $self->init_input;
+  $self->query_store_setup;
 
   # Arguments passed by a unit test
   $self->{'type'}             = $ENV{'ENSEMBL_TYPE'}      = $args->{'type'};

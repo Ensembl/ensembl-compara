@@ -54,6 +54,8 @@ no warnings 'uninitialized';
 use POSIX qw(ceil);
 use List::Util qw(max);
 
+use EnsEMBL::Draw::Utils::Bump qw(mr_bump);
+
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
@@ -66,13 +68,13 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
   ## Set some track-wide variables
   my $slice_width     = $image_config->container_width;
-  my $bumped          = $track_config->get('bumped');
+  my $bumped          = $track_config->get('bumped') || 0;
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
   my $label_padding   = 10; ## Prevent labels from running into one another
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
-  my $label_height    = 0;
+  my $font_height     = 0;
   my $total_height    = 0;
 
   ## Strand settings
@@ -88,7 +90,6 @@ sub create_glyphs {
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
-    my $label_height;
 
     ## FIRST LOOP - process features
     foreach my $feature (@features) {
@@ -114,15 +115,16 @@ sub create_glyphs {
         my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
                                          : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
-        $label_height = max($label_height, $text_info->{'height'});
+        $font_height = max($font_height, $text_info->{'height'});
       }
     }
-    EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
+    mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
 
-    my $typical_label_height;
-    $typical_label_height = $self->get_text_info($features[0]->{'label'}) if @features;
-    ## SECOND LOOP - draw features
-    foreach my $feature (@features) {
+    my ($typical_label, $label_lines);
+    $typical_label = $self->get_text_info($features[0]->{'label'}) if @features;
+
+    ## SECOND LOOP - draw features row by row
+    foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
       my $new_y;
       my $feature_row = 0;
       my $label_row   = 0;
@@ -147,8 +149,8 @@ sub create_glyphs {
   
       my $labels_height   = $label_row * $label_height;
       ## Only "ordinary" bumping requires adding the label to the feature height
-      my $add_labels      = ($bumped && $bumped eq '1') ? $labels_height : 0;
-      my $y               = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
+      my $space_for_labels  = ($bumped && $bumped eq '1') ? $font_height * $label_lines : 0;
+      my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));
 
       my $position  = {
                       'y'           => $y,
@@ -161,8 +163,8 @@ sub create_glyphs {
       $self->draw_feature($feature, $position);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
-      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
-    
+      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $space_for_labels);
+
       ## Optional label(s)
       my $font_size     = $self->{'font_size'};
 
@@ -183,30 +185,29 @@ sub create_glyphs {
           $new_x = $feature->{'start'} - 1;
           $new_x = 0 if $new_x < 0;
           $new_y = $position->{'y'} + $approx_height;
-          $new_y += $labels_height if ($bumped eq 'labels_only');
+          $new_y += ($label_row * $font_height * $label_lines) if ($bumped && $bumped eq 'labels_only');
+          
           ## Pad width to match bumped position
           $text_width += 10;
         }
 
-        $position = {
-                      'x'           => $new_x,
-                      'y'           => $new_y,
-                      'height'      => $text_info->{'height'},
-                      'width'       => $position->{'width'},
-                      'text_width'  => $text_width, 
-                      'image_width' => $slice_width,
-                      'font_size'   => $font_size,
-                    };
-        $self->add_label($feature, $position);
+        my $label_position = {
+                              'x'           => $new_x,
+                              'y'           => $new_y,
+                              'height'      => $text_height,
+                              'width'       => $position->{'width'},
+                              'text_width'  => $text_width, 
+                              'image_width' => $slice_width,
+                              'font_size'   => $font_size,
+                            };
+        $self->add_label($feature, $label_position);
       }
 
       ## Overlaid labels (on top of feature)
       ## Note that we can have these as well as regular labels, e.g. on variation tracks
-      my $overlay_standard =
-        ($track_config->get('overlay_label') && $feature->{'label'});
-      my $overlay_separate =
-        ($track_config->get('show_overlay') && $feature->{'text_overlay'});
-      if($self->{'pix_per_bp'} > 4 && ($overlay_standard || $overlay_separate)) {
+      my $overlay_standard = ($track_config->get('overlay_label') && $feature->{'label'});
+      my $overlay_separate = ($track_config->get('show_overlay') && $feature->{'text_overlay'});
+      if ($self->{'pix_per_bp'} > 4 && ($overlay_standard || $overlay_separate)) {
         my $label_text;
         my $bp_textwidth;
 
@@ -238,16 +239,16 @@ sub create_glyphs {
           my $new_x = $feature->{'start'} - 1;
           $new_x = 0 if $new_x < 0;
           my $new_y = $position->{'y'} + $approx_height - $text_height;
-          $position = {
-                      'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
-                      'y'           => $new_y,
-                      'height'      => $text_info->{'height'},
-                      'width'       => $feature_width,
-                      'text_width'  => $text_width, 
-                      'image_width' => $slice_width,
-                      'font_size'   => $font_size,
-                    };
-          $self->add_label($feature, $position, 'overlay');
+          my $label_position = {
+                                'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
+                                'y'           => $new_y,
+                                'height'      => $text_info->{'height'},
+                                'width'       => $feature_width,
+                                'text_width'  => $text_width, 
+                                'image_width' => $slice_width,
+                                'font_size'   => $font_size,
+                              };
+          $self->add_label($feature, $label_position, 'overlay');
         }
       }
     }
@@ -363,7 +364,6 @@ sub add_label {
                 font      => $self->{'font_name'},
                 ptsize    => $position->{'font_size'} || $self->{'font_size'},
                 halign    => $halign,
-                valign    => 'center',
                 href      => $feature->{'href'},
                 title     => $feature->{'title'},
                 absolutey => 1,
