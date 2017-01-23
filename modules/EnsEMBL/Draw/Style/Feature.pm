@@ -137,7 +137,7 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $typical_label_height->{'height'};
+      my $feature_height  = $track_config->get('height') || $typical_label->{'height'};
 
       ## Truncate to viewport - but don't alter feature hash because we may need it
       my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'} > -1
@@ -147,7 +147,7 @@ sub create_glyphs {
       $drawn_end        = $slice_width if $drawn_end > $slice_width;
       my $feature_width = $drawn_end - $drawn_start + 1; 
   
-      my $labels_height   = $label_row * $label_height;
+      my $labels_height   = $label_row * $font_height;
       ## Only "ordinary" bumping requires adding the label to the feature height
       my $space_for_labels  = ($bumped && $bumped eq '1') ? $font_height * $label_lines : 0;
       my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));

@@ -72,7 +72,7 @@ sub draw_block {
   elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
     if (defined($structure->{'utr_5'})) {
       $params{'width'}  = $structure->{'utr_5'} - $start + 1;
-      $self->draw_noncoding_block(%params);
+      $self->draw_noncoding_block($composite, %params);
     }
 
     $params{'x'} = $coding_start;
@@ -82,7 +82,7 @@ sub draw_block {
     if (defined($structure->{'utr_3'})) {
       $params{'x'}     = $structure->{'utr_3'};
       $params{'width'} = $end - $structure->{'utr_3'} + 1;
-      $self->draw_noncoding_block(%params);
+      $self->draw_noncoding_block($composite, %params);
     }
   }
   else {
