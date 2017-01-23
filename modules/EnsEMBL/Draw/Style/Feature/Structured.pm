@@ -116,6 +116,12 @@ sub draw_feature {
     $current_x += $width;
     %previous = %params;
   }
+
+  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'bridges'}||[]}) {
+    $self->draw_bridge($composite ,$_);
+  } 
+
   push @{$self->glyphs}, $composite;
 }
 
@@ -136,6 +142,13 @@ sub draw_join {
 sub draw_block {
   my ($self, $composite, %params) = @_;
   $composite->push($self->Rect(\%params));
+}
+
+sub draw_bridge {
+  ## Set up a "join tag" to display mapping between features, e.g. homologues
+  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
+  my ($self, $composite, $bridge) = @_;
+  $self->add_bridge($composite, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
 }
 
 1;

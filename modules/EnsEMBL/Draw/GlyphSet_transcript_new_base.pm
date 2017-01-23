@@ -68,18 +68,6 @@ sub minmax { return max(min($_[0],$_[2]),$_[1]); }
 #   }]
 
 
-# joining genes (compara views)
-
-sub _draw_join {
-  my ($self,$target,$j) = @_;
-  
-  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
-  $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-  if($j->{'legend'}) {
-    $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
-      $j->{'colour'};
-  }
-}
 
 
 sub draw_collapsed_genes {
@@ -102,6 +90,7 @@ sub draw_collapsed_genes {
     $g->{'colour'} = $self->my_colour($g->{'colour_key'});
     $self->_create_exon_structure($g);
     push @$stranded_genes, $g;
+     $self->_add_bridge_to_legend($g);
   }
   my $data = [{'features' => $stranded_genes}];
 
@@ -109,6 +98,8 @@ sub draw_collapsed_genes {
   my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
+  ## Add old-style 'tags' between genes or transcripts
+  $self->_add_bridges($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -144,6 +135,7 @@ sub draw_expanded_transcripts {
     $t->{'colour'} = $self->my_colour($t->{'colour_key'});
     $self->_create_exon_structure($t);
     push @$stranded, $t;
+    $self->_add_bridge_to_legend($t);
   }
   my $data = [{'features' => $stranded}];
 
@@ -151,6 +143,8 @@ sub draw_expanded_transcripts {
   my $style_class = 'EnsEMBL::Draw::Style::Feature::Transcript';
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
+  ## Add old-style 'tags' between genes or transcripts
+  $self->_add_bridges($style);
 
   $self->_make_legend($transcripts, $self->my_config('name'));
 
@@ -176,6 +170,7 @@ sub draw_rect_genes {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     $g->{'colour'} = $self->my_colour($g->{'colour_key'});
     push @$stranded_genes, $g;
+    $self->_add_bridge_to_legend($g);
   }
   my $data = [{'features' => $stranded_genes}];
 
@@ -183,6 +178,8 @@ sub draw_rect_genes {
   my $style_class = 'EnsEMBL::Draw::Style::Feature';
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
+  ## Add old-style 'tags' between genes or transcripts
+  $self->_add_bridges($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -230,6 +227,26 @@ sub _create_exon_structure {
   return 1;
 }
 
+sub _add_bridges {
+  my ($self, $style) = @_;
+  use Data::Dumper;
+  foreach (@{$style->bridges}) {
+    warn Dumper($_);
+    $self->join_tag($_->{'glyph'}, $_->{'tag'}, @{$_->{'params'}||[]});
+  }
+}
+
+sub _add_bridge_to_legend {
+  my ($self, $feature) = @_;
+
+  foreach (@{$feature->{'bridges'}||[]}) {
+    ## Add to legend
+    if ($_->{'legend'}) {
+      $self->{'legend'}{'gene_legend'}{'bridges'}{'legend'}{$_->{'legend'}} = $_->{'colour'};
+    }
+  }
+}
+
 # legends 
 
 sub _use_legend {
@@ -257,6 +274,10 @@ sub _use_legend {
     };
   }
   $used_colours->{$label} = [$colour,$section];
+
+  if ($self->{'legend'}{'gene_legend'}{'bridges'}) {
+    $self->{'legend'}{'gene_legend'}{'bridges'}{'priority'} ||= 1000;
+  }
 }
 
 sub _make_legend {

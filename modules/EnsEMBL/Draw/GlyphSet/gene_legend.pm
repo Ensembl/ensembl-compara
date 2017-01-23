@@ -38,10 +38,10 @@ sub _init {
 
   $self->init_legend();
   my (%sections,%headings,%priorities, @legend_check);
-  
+
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {
-    my $join    = $type eq 'joins';
-    my @colours = $join ? map { $_, $features->{$type}{'legend'}{$_} } sort keys %{$features->{$type}{'legend'}} : @{$features->{$type}{'legend'}};
+    my $bridge  = $type eq 'bridges';
+    my @colours = $bridge ? map { $_, $features->{$type}{'legend'}{$_} } sort keys %{$features->{$type}{'legend'}} : @{$features->{$type}{'legend'}};
   
     $self->newline(1);
 
@@ -59,11 +59,13 @@ sub _init {
         $section = { name => 'Other', key => '_missing' };
       }
       
-      push @{$sections{$section->{'key'}}||=[]},{
-        legend => $legend,
-        colour => $colour,
-        style  => $type eq 'joins' ? 'line' : 'box',
-      };      
+      my $entry = {
+                    legend => $legend,
+                    colour => $colour,
+                    style  => $bridge ? 'line' : 'box',
+                  };
+      $entry->{'height'} = 4 if $bridge;      
+      push @{$sections{$section->{'key'}}||=[]}, $entry;
       $headings{$section->{'key'}} = $section->{'name'};
       $priorities{$section->{'key'}} = $section->{'priority'};
     }

@@ -67,7 +67,7 @@ sub draw_block {
   my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
-    $self->draw_noncoding_block(%params);
+    $self->draw_noncoding_block($composite, %params);
   }
   elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
     if (defined($structure->{'utr_5'})) {
