@@ -24,7 +24,7 @@ package EnsEMBL::Draw::Style::Feature::Transcript;
 use parent qw(EnsEMBL::Draw::Style::Feature::Structured);
 
 sub draw_join {
-  my ($self, %params) = @_;
+  my ($self, $composite, %params) = @_;
 
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
@@ -43,15 +43,15 @@ sub draw_join {
     $params{'y'} += $params{'height'}/2;
     $params{'height'} = 0;
     $params{'dotted'} = 1;
-    push @{$self->glyphs}, $self->Line(\%params);
+    $composite->push($self->Line(\%params));
   }
   else {
-    push @{$self->glyphs}, $self->Intron(\%params);
+    $composite->push($self->Intron(\%params));
   }
 }
 
 sub draw_block {
-  my ($self, %params) = @_;
+  my ($self, $composite, %params) = @_;
   my $structure   = $params{'structure'};
 
   ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
@@ -72,37 +72,37 @@ sub draw_block {
   elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
     if (defined($structure->{'utr_5'})) {
       $params{'width'}  = $structure->{'utr_5'} - $start;
-      $self->draw_noncoding_block(%params);
+      $self->draw_noncoding_block($composite, %params);
     }
 
     $params{'x'} = $coding_start;
     $params{'width'} = $coding_width; 
-    $self->draw_coding_block(%params);
+    $self->draw_coding_block($composite, %params);
 
     if (defined($structure->{'utr_3'})) {
       $params{'x'}     = $structure->{'utr_3'};
       $params{'width'} = $end - $structure->{'utr_3'};
-      $self->draw_noncoding_block(%params);
+      $self->draw_noncoding_block($composite, %params);
     }
   }
   else {
-    $self->draw_coding_block(%params);
+    $self->draw_coding_block($composite, %params);
   }
 }
 
 sub draw_coding_block {
-  my ($self, %params) = @_;
+  my ($self, $composite, %params) = @_;
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
     $params{'x'}          = 0;
     $params{'width'}     += $params{'x'};
   }
   delete $params{'structure'};
-  push @{$self->glyphs}, $self->Rect(\%params);
+  $composite->push($self->Rect(\%params));
 }
 
 sub draw_noncoding_block {
-  my ($self, %params) = @_;
+  my ($self, $composite, %params) = @_;
 
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
@@ -121,7 +121,7 @@ sub draw_noncoding_block {
     }
   }
   delete $params{'structure'};
-  push @{$self->glyphs}, $self->Rect(\%params);
+  $composite->push($self->Rect(\%params));
 }
 
 

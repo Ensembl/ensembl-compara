@@ -50,13 +50,18 @@ sub draw_feature {
   my $track_config  = $self->track_config;
   my $join          = $track_config->get('no_join') ? 0 : 1;
 
+  my $composite = $self->Composite({
+                                      y       => $position->{'y'},
+                                      height  => $position->{'height'},
+                                      title   => $feature->{'title'},
+                                      href    => $feature->{'href'},
+                                  });
+
   my %defaults = (
                   y            => $position->{'y'},
                   height       => $position->{'height'},
                   strand       => $feature->{'strand'},
                   colour       => $colour,
-                  href         => $feature->{'href'},
-                  title        => $feature->{'title'},
                   absolutey    => 1,
                 );
 
@@ -84,7 +89,7 @@ sub draw_feature {
       $params{'width'}  = $width;
       $params{'href'}   = $feature->{'href'};
 
-      $self->draw_join(%params);      
+      $self->draw_join($composite, %params);      
     }
     last if $last_element;
 
@@ -106,15 +111,16 @@ sub draw_feature {
     else {
       $params{'colour'}     = $colour;
       $params{'structure'}  = $_;
-      $self->draw_block(%params);
+      $self->draw_block($composite, %params);
     }
     $current_x += $width;
     %previous = %params;
   }
+  push @{$self->glyphs}, $composite;
 }
 
 sub draw_join {
-  my ($self, %params) = @_;
+  my ($self, $composite, %params) = @_;
   my $alpha = $self->track_config->get('alpha');
 
   if ($alpha) {
@@ -124,12 +130,12 @@ sub draw_join {
     $params{'bordercolour'} = $params{'colour'};
     delete $params{'colour'};
   }
-  push @{$self->glyphs}, $self->Rect(\%params);
+  $composite->push($self->Rect(\%params));
 }
 
 sub draw_block {
-  my ($self, %params) = @_;
-  push @{$self->glyphs}, $self->Rect(\%params);
+  my ($self, $composite, %params) = @_;
+  $composite->push($self->Rect(\%params));
 }
 
 1;
