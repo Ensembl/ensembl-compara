@@ -229,9 +229,7 @@ sub _create_exon_structure {
 
 sub _add_bridges {
   my ($self, $style) = @_;
-  use Data::Dumper;
   foreach (@{$style->bridges}) {
-    warn Dumper($_);
     $self->join_tag($_->{'glyph'}, $_->{'tag'}, @{$_->{'params'}||[]});
   }
 }
