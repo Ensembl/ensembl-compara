@@ -64,7 +64,7 @@ sub _init {
                     colour => $colour,
                     style  => $bridge ? 'line' : 'box',
                   };
-      $entry->{'height'} = 4 if $bridge;      
+      $entry->{'height'} = 2 if $bridge;      
       push @{$sections{$section->{'key'}}||=[]}, $entry;
       $headings{$section->{'key'}} = $section->{'name'};
       $priorities{$section->{'key'}} = $section->{'priority'};
