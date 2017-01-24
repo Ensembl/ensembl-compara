@@ -28,15 +28,17 @@ no warnings 'uninitialized';
 use parent qw(EnsEMBL::Web::Component::Shared);
 
 our $data_type = {
-                  'Gene'      => {'param'   => 'g',
-                                  'term'    => 'gene',
-                                  'label_1' => 'Choose a Gene',
-                                  'label_2' => 'or choose another Gene',
+                  'Gene'      => {'param'     => 'g',
+                                  'term'      => 'gene',
+                                  'relation'  => 'has',
+                                  'label_1'   => 'Choose a Gene',
+                                  'label_2'   => 'or choose another Gene',
                                   },
-                  'Variation' => {'param'   => 'v',
-                                  'term'    => 'variant',
-                                  'label_1' => 'Choose a Variant',
-                                  'label_2' => 'or choose another Variant',
+                  'Variation' => {'param'     => 'v',
+                                  'term'      => 'variant',
+                                  'relation'  => 'maps to',
+                                  'label_1'   => 'Choose a Variant',
+                                  'label_2'   => 'or choose another Variant',
                                   },
                   'Location'  => {'param'   => 'r',
                                   'term'    => 'region',
@@ -118,7 +120,8 @@ sub format_gallery {
 
         $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
         
-        my $header = sprintf('<p><b>This %s maps to multiple %s</b></p>', $data_type->{$type}{'term'}, lc($multi_type).'s');
+        my $relation = $data_type->{$type}{'relation'} || 'has';
+        my $header = sprintf('<p><b>This %s %s multiple %s</b></p>', $data_type->{$type}{'term'}, $relation, lc($multi_type).'s');
 
         while (my($k, $v) = each (%{$hub->core_params})) {
           $v ||= $link_to->{$k};
