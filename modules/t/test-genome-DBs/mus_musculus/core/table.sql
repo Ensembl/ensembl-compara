@@ -736,7 +736,7 @@ CREATE TABLE `repeat_feature` (
 
 CREATE TABLE `seq_region` (
   `seq_region_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) NOT NULL,
+  `name` varchar(255) NOT NULL,
   `coord_system_id` int(10) unsigned NOT NULL,
   `length` int(10) unsigned NOT NULL,
   PRIMARY KEY (`seq_region_id`),

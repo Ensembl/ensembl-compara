@@ -48,11 +48,11 @@ CREATE TABLE `constrained_element` (
 CREATE TABLE `dnafrag` (
   `dnafrag_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `length` int(11) NOT NULL DEFAULT '0',
-  `name` varchar(40) NOT NULL DEFAULT '',
+  `name` varchar(255) NOT NULL DEFAULT '',
   `genome_db_id` int(10) unsigned NOT NULL,
   `coord_system_name` varchar(40) NOT NULL DEFAULT '',
-  `assembly_part` enum('primary','alt_locus','fix_patch','novel_patch') NOT NULL DEFAULT 'primary',
   `cellular_component` enum('NUC','MT','PT') NOT NULL DEFAULT 'NUC',
+  `is_reference` tinyint(1) NOT NULL DEFAULT '1',
   `codon_table_id` tinyint(2) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`dnafrag_id`),
   UNIQUE KEY `name` (`genome_db_id`,`name`)

@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	87
+1	\N	schema_version	88
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -217,3 +217,5 @@
 1773	\N	patch	patch_86_87_a.sql|schema_version
 1774	\N	patch	patch_86_87_b.sql|meta_value_NOT_NULL
 1775	\N	patch	patch_86_87_c.sql|datetime_default_NULL
+1776	\N	patch	patch_87_88_a.sql|schema_version
+1777	\N	patch	patch_87_88_b.sql|seq_region_name_255
