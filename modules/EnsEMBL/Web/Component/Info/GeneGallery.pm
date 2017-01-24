@@ -484,17 +484,20 @@ sub _get_pages {
           'Transcript Variant Image' => {
                                   'link_to'       => {'type'    => 'Transcript',
                                                       'action'  => 'Variation_Transcript/Image',
+                                                      't'       => $sole_trans,
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in an individual transcript',
+                                  'multi'     => $multi_trans,
                           },
           'Transcript Variant Table' => {
                                   'link_to'       => {'type'    => 'Transcript',
                                                       'action'  => 'Variation_Transcript/Table',
-                                                      'g'       => $g,
+                                                      't'       => $sole_trans,
                                                       },
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in an individual transcript',
+                                  'multi'     => $multi_trans,
                           },
           'Variant Image' => {
                                   'link_to'       => {'type'    => 'Gene',
