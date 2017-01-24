@@ -47,7 +47,7 @@ sub content {
                 },
                   {
                     'title' => 'Transcripts & Proteins',
-                    'pages' => ['Transcript Table', 'Transcript Summary', 'Transcript Comparison', 'Transcript Image', 'Exon Sequence', 'Protein Summary', 'Transcript cDNA', 'Protein Sequence', 'Domains and Features', 'Protein Family Alignments', 'Protein Variants'],
+                    'pages' => ['Transcript Table', 'Transcript Summary', 'Transcript Comparison', 'Transcript Image', 'Exon Sequence', 'Protein Summary', 'Transcript cDNA', 'Transcript History', 'Protein Sequence', 'Domains and Features', 'Protein Family Alignments', 'Transcript Identifiers', 'Oligo Probes', 'Protein Variants', 'Protein History'],
                     'icon'  => 'protein.png',
                   },
                 {
@@ -374,21 +374,37 @@ sub _get_pages {
                                   'img'       => 'prot_variants',
                                   'caption'   => "Table of variants found within a transcript's protein",
                                 },
-            '' => {
+            'Transcript Identifiers' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Similarity',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_xref',
+                                  'caption'   => 'Links to external database identifiers that match a transcript of this gene',
                                 },
-            '' => {
+            'Oligo Probes' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Oligos',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_oligo',
+                                  'caption'   => 'List of oligo probes that map to a transcript of this gene',
+                                },
+            'Transcript History' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'Idhistory',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'trans_history',
+                                  'caption'   => "History of the stable ID for one of this gene's transcripts",
+                                },
+            'Protein History' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'Idhistory/Protein',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'prot_history',
+                                  'caption'   => "History of the stable ID for one of this gene's protein products",
                                 },
             'Transcript Haplotypes' => {
                                   'link_to'   => {'type'      => 'Transcript',
