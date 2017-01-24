@@ -90,8 +90,40 @@ sub _get_pages {
                           type    => $object->get_db,
                           gene    => $object->Obj,
                         })->[0];
-    my $not_rna = !$avail->{'has_2ndary'};
-    my $no_transcripts = !$avail->{'has_transcripts'};
+    my $no_transcripts  = !$avail->{'has_transcripts'};
+    my $not_rna         = (!$avail->{'has_2ndary'} && !$avail->{'can_r2r'}); 
+    my $no_tree         = (!$avail->{'has_species_tree'} || !$avail->{'not_strain'});
+
+    my ($sole_trans, $multi_trans, $multi_prot);
+    my $prot_count      = 0;
+    if ($avail->{'multiple_transcripts'}) {
+      $multi_trans = {
+                      'type'    => 'Transcript',
+                      'param'   => 't',
+                      'values'  => [{'value' => '', 'caption' => '-- Select transcript --'}],
+                      };
+      $multi_prot = {
+                      'type'    => 'Protein',
+                      'param'   => 'p',
+                      'values'  => [{'value' => '', 'caption' => '-- Select protein --'}],
+                      };
+    }
+    foreach my $t (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @{$object->Obj->get_all_Transcripts}) {
+      if ($avail->{'multiple_transcripts'}) {
+        my $name = $t->external_name || $t->{'stable_id'};
+        $name .= sprintf ' (%s)', $t->biotype;
+        push @{$multi_trans->{'values'}}, {'value' => $t->stable_id, 'caption' => $name};
+      }
+      else {
+        $sole_trans = $t->stable_id;
+      }
+      if ($t->translation) {
+        $prot_count++;
+        my $id = $t->translation->stable_id;
+        push @{$multi_prot->{'values'}}, {'value' => $id, 'caption' => $id};
+      }
+    }
+    $multi_prot = {} unless $prot_count > 1;
 
     return {
             'Scrolling Browser' => {
@@ -129,6 +161,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'location_align',
                                   'caption'   => 'View the region underlying your gene aligned to that of one or more other species',
+                                  'disabled'  => !$avail->{'has_alignments'},
                                 },
             'Region Comparison' => {
                                   'link_to'   => {'type'      => 'Location',
@@ -162,6 +195,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_alleles',
                                   'caption'   => 'Table of genes that have been annotated on haplotypes and patches as well as on the reference assembly',
+                                  'disabled'  => !$avail->{'has_alt_alleles'},
                                 },
             'Gene Sequence' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -188,6 +222,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_tree',
                                   'caption'   => 'Tree showing homologues of this gene across many species',
+                                  'disabled'  => $no_tree,
                                 },
             'Gene Tree Alignments' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -196,6 +231,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_tree_align',
                                   'caption'   => "Alignments of this gene's homologues across many species",
+                                  'disabled'  => $no_tree,
                                 },
             'Gene Gain/Loss Tree' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -204,6 +240,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_cafe_tree',
                                   'caption'   => 'Interactive tree of loss and gain events in a family of genes',
+                                  'disabled'  => $no_tree,
                                 },
             'Summary of Orthologues' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -236,6 +273,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'protein_family',
                                   'caption'   => "Alignments of protein sequence within a protein family (go to the Protein Family page and click on the 'Wasabi viewer' link)",
+                                  'disabled'  => !$prot_count,
                                 },
             'Gene Family' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -269,6 +307,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_history',
                                   'caption'   => "History of a gene's stable ID",
+                                  'disabled'  => !$avail->{'history'},
                                 },
             'Gene Expression' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -277,6 +316,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_gxa',
                                   'caption'   => 'Interactive gene expression heatmap',
+                                  'disabled'  => !$avail->{'has_gxa'},
                                 },
             'Gene Regulation Image' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -301,6 +341,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_transcomp',
                                   'caption'   => 'Compare the sequence of two or more transcripts of a gene',
+                                  'disabled'  => !$multi_trans,
                                 },
             'Gene Identifiers' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -313,15 +354,16 @@ sub _get_pages {
             'Transcript Summary' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Summary',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_summary',
                                   'caption'   => 'General information about a particular transcript of this gene',
+                                  'multi'     => $multi_trans,
                                 },
             'Transcript Table' => {
                                   'link_to'   => {'type'      => 'Gene',
                                                   'action'    => 'Summary',
-                                                  'g'      => $g,
+                                                  'g'         => $g,
                                                  },
                                   'img'       => 'trans_table',
                                   'caption'   => "Table of information about all transcripts of this gene (click on the 'Show transcript table' button on any gene or transcript page)",
@@ -329,95 +371,109 @@ sub _get_pages {
             'Exon Sequence' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Exons',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_exons',
                                   'caption'   => 'Sequences of individual exons within a transcript',
+                                  'multi'     => $multi_trans,
                                 },
             'Transcript cDNA' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Sequence_cDNA',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_cdna',
                                   'caption'   => 'cDNA sequence of an individual transcript',
+                                  'multi'     => $multi_trans,
                                 },
             'Protein Sequence' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Sequence_Protein',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_protein_seq',
                                   'caption'   => 'Protein sequence of an individual transcript',
+                                  'disabled'  => !$prot_count,
+                                  'multi'     => $multi_prot,
                                 },
             'Protein Summary' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'ProteinSummary',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_protein',
                                   'caption'   => 'Image showing protein domains and variants',
+                                  'disabled'  => !$prot_count,
+                                  'multi'     => $multi_prot,
                                 },
             'Domains and Features' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Domains',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'prot_domains',
                                   'caption'   => 'Table of protein domains and other structural features',
+                                  'multi'     => $multi_prot,
                                 },
             'Protein Variants' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'ProtVariation',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'prot_variants',
                                   'caption'   => "Table of variants found within a transcript's protein",
+                                  'disabled'  => !$prot_count,
+                                  'multi'     => $multi_prot,
                                 },
             'Transcript Identifiers' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Similarity',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_xref',
                                   'caption'   => 'Links to external database identifiers that match a transcript of this gene',
+                                  'multi'     => $multi_trans,
                                 },
             'Oligo Probes' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Oligos',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_oligo',
                                   'caption'   => 'List of oligo probes that map to a transcript of this gene',
+                                  'multi'     => $multi_trans,
                                 },
             'Transcript History' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Idhistory',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_history',
                                   'caption'   => "History of the stable ID for one of this gene's transcripts",
+                                  'multi'     => $multi_trans,
                                 },
             'Protein History' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Idhistory/Protein',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'prot_history',
                                   'caption'   => "History of the stable ID for one of this gene's protein products",
+                                  'disabled'  => !$prot_count,
+                                  'multi'     => $multi_prot,
                                 },
             'Transcript Haplotypes' => {
                                   'link_to'   => {'type'      => 'Transcript',
                                                   'action'    => 'Haplotypes',
-                                                  'g'      => $g,
+                                                  't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_haplotypes',
                                   'caption'   => 'Frequency of protein or CDS haplotypes across major population groups',
+                                  'multi'     => $multi_trans,
                                 },
           'Transcript Variant Image' => {
                                   'link_to'       => {'type'    => 'Transcript',
                                                       'action'  => 'Variation_Transcript/Image',
-                                                      'g'       => $g,
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in an individual transcript',
