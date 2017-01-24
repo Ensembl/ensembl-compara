@@ -57,7 +57,7 @@ sub content {
                 },
                   {
                     'title' => 'Variants',
-                    'pages' => ['Variant Table', 'Variant Image', 'Structural Variants Image', 'Structural Variants Table'],
+                    'pages' => ['Variant Image', 'Variant Table', 'Structural Variant Image', 'Structural Variant Table'],
                     'icon'  => 'variation.png',
                   },
                 ];
@@ -382,7 +382,7 @@ sub _get_pages {
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in this gene',
                           },
-          'Structural Variants Image' => {
+          'Structural Variant Image' => {
                                   'link_to'       => {'type'    => 'Gene',
                                                       'action'  => 'StructuralVariation_Gene',
                                                       'g'       => $g,
@@ -390,7 +390,7 @@ sub _get_pages {
                                   'img'       => 'gene_sv_image',
                                   'caption'   => 'Image showing structural variants in this gene',
                           },
-          'Structural Variants Table' => {
+          'Structural Variant Table' => {
                                   'link_to'       => {'type'    => 'Gene',
                                                       'action'  => 'StructuralVariation_Gene',
                                                       'g'       => $g,
