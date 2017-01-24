@@ -47,7 +47,7 @@ sub content {
                 },
                   {
                     'title' => 'Transcripts & Proteins',
-                    'pages' => ['Transcript Table', 'Transcript Summary', 'Transcript Comparison', 'Transcript Image', 'Exon Sequence', 'Protein Summary', 'Transcript cDNA', 'Protein Sequence', 'Protein Family Alignments', 'Variation Protein'],
+                    'pages' => ['Transcript Table', 'Transcript Summary', 'Transcript Comparison', 'Transcript Image', 'Exon Sequence', 'Protein Summary', 'Transcript cDNA', 'Protein Sequence', 'Domains and Features', 'Protein Family Alignments', 'Protein Variants'],
                     'icon'  => 'protein.png',
                   },
                 {
@@ -57,7 +57,7 @@ sub content {
                 },
                   {
                     'title' => 'Variants',
-                    'pages' => ['Variant Image', 'Variant Table', 'Structural Variant Image', 'Structural Variant Table'],
+                    'pages' => ['Variant Image', 'Variant Table', 'Structural Variant Image', 'Structural Variant Table', 'Transcript Variant Image', 'Transcript Variant Table', 'Transcript Haplotypes', 'Protein Variants', 'Population Comparison Table', 'Population Comparison Image'],
                     'icon'  => 'variation.png',
                   },
                 ];
@@ -342,13 +342,37 @@ sub _get_pages {
                                   'img'       => 'trans_cdna',
                                   'caption'   => 'cDNA sequence of an individual transcript',
                                 },
-            '' => {
+            'Protein Sequence' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Sequence_Protein',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_protein_seq',
+                                  'caption'   => 'Protein sequence of an individual transcript',
+                                },
+            'Protein Summary' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'ProteinSummary',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'trans_protein',
+                                  'caption'   => 'Image showing protein domains and variants',
+                                },
+            'Domains and Features' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'Domains',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'prot_domains',
+                                  'caption'   => 'Table of protein domains and other structural features',
+                                },
+            'Protein Variants' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'ProtVariation',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'prot_variants',
+                                  'caption'   => "Table of variants found within a transcript's protein",
                                 },
             '' => {
                                   'link_to'   => {'type'      => 'Transcript',
@@ -366,6 +390,30 @@ sub _get_pages {
                                   'img'       => 'trans_',
                                   'caption'   => '',
                                 },
+            'Transcript Haplotypes' => {
+                                  'link_to'   => {'type'      => 'Transcript',
+                                                  'action'    => 'Haplotypes',
+                                                  'g'      => $g,
+                                                 },
+                                  'img'       => 'trans_haplotypes',
+                                  'caption'   => 'Frequency of protein or CDS haplotypes across major population groups',
+                                },
+          'Transcript Variant Image' => {
+                                  'link_to'       => {'type'    => 'Transcript',
+                                                      'action'  => 'Variation_Transcript/Image',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'variation_gene_image',
+                                  'caption'   => 'Image showing all variants in an individual transcript',
+                          },
+          'Transcript Variant Table' => {
+                                  'link_to'       => {'type'    => 'Transcript',
+                                                      'action'  => 'Variation_Transcript/Table',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'variation_gene_table',
+                                  'caption'   => 'Table of all variants in an individual transcript',
+                          },
           'Variant Image' => {
                                   'link_to'       => {'type'    => 'Gene',
                                                       'action'  => 'Variation_Gene/Image',
@@ -397,6 +445,22 @@ sub _get_pages {
                                                       },
                                   'img'       => 'gene_sv_table',
                                   'caption'   => 'Table of all structural variants in this gene',
+                          },
+          'Population Comparison Image' => {
+                                  'link_to'       => {'type'    => 'Transcript',
+                                                      'action'  => 'Population/Image',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'population_image',
+                                  'caption'   => 'Image showing variants across different populations',
+                          },
+          'Population Comparison Table' => {
+                                  'link_to'       => {'type'    => 'Transcript',
+                                                      'action'  => 'Population',
+                                                      'g'       => $g,
+                                                      },
+                                  'img'       => 'population_table',
+                                  'caption'   => 'Tables of variants within different populations',
                           },
 
             };
