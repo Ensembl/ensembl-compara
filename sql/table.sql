@@ -611,8 +611,8 @@ CREATE TABLE dnafrag (
   name                        varchar(255) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
-  is_reference                tinyint(1) DEFAULT 1 NOT NULL,
   cellular_component          ENUM('NUC', 'MT', 'PT') DEFAULT 'NUC' NOT NULL,
+  is_reference                tinyint(1) DEFAULT 1 NOT NULL,
   codon_table_id              tinyint(2) unsigned DEFAULT 1 NOT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
