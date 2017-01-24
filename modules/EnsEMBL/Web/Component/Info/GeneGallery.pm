@@ -91,6 +91,7 @@ sub _get_pages {
                           gene    => $object->Obj,
                         })->[0];
     my $no_transcripts  = !$avail->{'has_transcripts'};
+    my $has_gxa         = $object->gxa_check;
     my $has_rna         = ($avail->{'has_2ndary'} && $avail->{'can_r2r'}); 
     my $has_tree        = ($avail->{'has_species_tree'} && !$hub->species_defs->IS_STRAIN_OF);
 
@@ -211,7 +212,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_secondary',
-                                  'caption'   => '',
+                                  'caption'   => 'Secondary structure of this gene',
                                   'disabled'  => !$has_rna,
                                   'message'   => 'Only available for RNA genes'
                                 },
@@ -316,7 +317,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_gxa',
                                   'caption'   => 'Interactive gene expression heatmap',
-                                  'disabled'  => !$avail->{'has_gxa'},
+                                  'disabled'  => !$has_gxa,
                                 },
             'Gene Regulation Image' => {
                                   'link_to'   => {'type'      => 'Gene',
