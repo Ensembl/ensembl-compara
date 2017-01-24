@@ -47,7 +47,7 @@ sub content {
                 },
                   {
                     'title' => 'Transcripts & Proteins',
-                    'pages' => ['Transcript Comparison', 'Transcript Image', 'Transcript Table', 'Exons', 'Protein Summary', 'cDNA Sequence', 'Protein Sequence', 'Protein Family Alignments', 'Variation Protein'],
+                    'pages' => ['Transcript Table', 'Transcript Summary', 'Transcript Comparison', 'Transcript Image', 'Exon Sequence', 'Protein Summary', 'Transcript cDNA', 'Protein Sequence', 'Protein Family Alignments', 'Variation Protein'],
                     'icon'  => 'protein.png',
                   },
                 {
@@ -310,37 +310,37 @@ sub _get_pages {
                                   'img'       => 'gene_xref',
                                   'caption'   => 'Links to external database identifiers that match this gene',
                                 },
-            '' => {
+            'Transcript Summary' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Summary',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_summary',
+                                  'caption'   => 'General information about a particular transcript of this gene',
                                 },
-            '' => {
-                                  'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+            'Transcript Table' => {
+                                  'link_to'   => {'type'      => 'Gene',
+                                                  'action'    => 'Summary',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_table',
+                                  'caption'   => "Table of information about all transcripts of this gene (click on the 'Show transcript table' button on any gene or transcript page)",
                                 },
-            '' => {
+            'Exon Sequence' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Exons',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_exons',
+                                  'caption'   => 'Sequences of individual exons within a transcript',
                                 },
-            '' => {
+            'Transcript cDNA' => {
                                   'link_to'   => {'type'      => 'Transcript',
-                                                  'action'    => '',
+                                                  'action'    => 'Sequence_cDNA',
                                                   'g'      => $g,
                                                  },
-                                  'img'       => 'trans_',
-                                  'caption'   => '',
+                                  'img'       => 'trans_cdna',
+                                  'caption'   => 'cDNA sequence of an individual transcript',
                                 },
             '' => {
                                   'link_to'   => {'type'      => 'Transcript',
