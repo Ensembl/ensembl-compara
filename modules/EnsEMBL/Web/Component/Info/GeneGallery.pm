@@ -91,9 +91,12 @@ sub _get_pages {
                           gene    => $object->Obj,
                         })->[0];
     my $no_transcripts  = !$avail->{'has_transcripts'};
+    my $not_strain      = $hub->species_defs->IS_STRAIN_OF ? 0 : 1;
     my $has_gxa         = $object->gxa_check;
     my $has_rna         = ($avail->{'has_2ndary'} && $avail->{'can_r2r'}); 
-    my $has_tree        = ($avail->{'has_species_tree'} && !$hub->species_defs->IS_STRAIN_OF);
+    my $has_tree        = ($avail->{'has_species_tree'} && $not_strain);
+    my $has_orthologs   = ($avail->{'has_orthologs'} && $not_strain);
+    my $has_paralogs    = ($avail->{'has_paralogs'} && $not_strain);
 
     my ($sole_trans, $multi_trans, $multi_prot);
     my $prot_count      = 0;
@@ -250,6 +253,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_ortho_summary',
                                   'caption'   => 'Table showing numbers of different types of orthologue (1-to-1, 1-to-many, etc) in various taxonomic groups',
+                                  'disabled'  => !$has_orthologs,
+                                  'message'   => 'This gene has no orthologues',
                                 },
             'Table of Orthologues' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -258,6 +263,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_ortho_table',
                                   'caption'   => 'Table of orthologues in other species, with links to gene tree, alignments, etc.',
+                                  'disabled'  => !$has_orthologs,
+                                  'message'   => 'This gene has no orthologues',
                                 },
             'Table of Paralogues' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -266,6 +273,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_para_table',
                                   'caption'   => 'Table of within-species paralogues, with links to alignments of cDNAs and proteins',
+                                  'disabled'  => !$has_paralogs,
+                                  'message'   => 'This gene has no paralogues',
                                 },
             'Protein Family Alignments' => {
                                   'link_to'   => {'type'      => 'Gene',
