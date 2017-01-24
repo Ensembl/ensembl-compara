@@ -91,8 +91,8 @@ sub _get_pages {
                           gene    => $object->Obj,
                         })->[0];
     my $no_transcripts  = !$avail->{'has_transcripts'};
-    my $not_rna         = (!$avail->{'has_2ndary'} && !$avail->{'can_r2r'}); 
-    my $no_tree         = (!$avail->{'has_species_tree'} || !$avail->{'not_strain'});
+    my $has_rna         = ($avail->{'has_2ndary'} && $avail->{'can_r2r'}); 
+    my $has_tree        = ($avail->{'has_species_tree'} && !$hub->species_defs->IS_STRAIN_OF);
 
     my ($sole_trans, $multi_trans, $multi_prot);
     my $prot_count      = 0;
@@ -212,7 +212,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_secondary',
                                   'caption'   => '',
-                                  'disabled'  => $not_rna,
+                                  'disabled'  => !$has_rna,
                                   'message'   => 'Only available for RNA genes'
                                 },
             'Gene Tree' => {
@@ -222,7 +222,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_tree',
                                   'caption'   => 'Tree showing homologues of this gene across many species',
-                                  'disabled'  => $no_tree,
+                                  'disabled'  => !$has_tree,
                                 },
             'Gene Tree Alignments' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -231,7 +231,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_tree_align',
                                   'caption'   => "Alignments of this gene's homologues across many species",
-                                  'disabled'  => $no_tree,
+                                  'disabled'  => !$has_tree,
                                 },
             'Gene Gain/Loss Tree' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -240,7 +240,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_cafe_tree',
                                   'caption'   => 'Interactive tree of loss and gain events in a family of genes',
-                                  'disabled'  => $no_tree,
+                                  'disabled'  => !$has_tree,
                                 },
             'Summary of Orthologues' => {
                                   'link_to'   => {'type'      => 'Gene',
