@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ sub apply {
   }
 }
 
-sub render {
+sub prepare {
   my ($self,$data) = @_;
 
   $data = $_->($self,$data) for(@{$self->{'filters'}});
@@ -131,9 +131,15 @@ sub render {
     my ($self,$data,$f) = @_;
     return unless $f->{'room'};
     my $len = $self->value_length($self->_render_one($f,$data));
-    return unless defined($f->{'width'}) and $len > $f->{'width'};
-    $f->{'width'} = ($f->{'width'}>0?1:-1)*$len; 
+    return unless defined($f->{'width'}) and abs $len > abs $f->{'width'};
+    $f->{'width'} = ($f->{'width'}>0?1:-1)*$len;
   });
+}
+
+sub render {
+  my ($self,$data) = @_;
+
+  $data = $_->($self,$data) for(@{$self->{'filters'}});
   # render
   $self->apply($data,sub {
     my ($self,$data,$f) = @_;

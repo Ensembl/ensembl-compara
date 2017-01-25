@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,32 +74,41 @@ sub init_config {
 
   return unless $view_config;
 
-  my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
-  my $image_config = $view_config->image_config_type ? $hub->get_imageconfig({type => $view_config->image_config_type, cache_code => 'configurator', species => $hub->species}) : undef;
-  my ($search_box, $species_select);
-  
+  my $panel         = $self->new_panel('Configurator', $controller, code => 'configurator');
+  my $image_config  = $view_config->image_config_type ? $hub->get_imageconfig({type => $view_config->image_config_type, cache_code => 'configurator', species => $hub->species}) : undef;
+  my $top_form      = EnsEMBL::Web::Form->new({'class' => [qw(bgcolour _config_settings)], 'action' => '#'});
+  my $search_box;
+
   $view_config->build_form($controller->object, $image_config);
-  
+
   if ($image_config) {
     if ($image_config->get_parameter('multi_species')) {
 
       my @sp = @{$image_config->species_list};
 
       if (@sp) {
-        $species_select = sprintf('<div class="species_select">Species to configure: %s%s</div>',
-          EnsEMBL::Web::Form->new({})->add_field({
-            'type'      => 'dropdown',
-            'name'      => 'species',
-            'class'     => '_stt',
-            'values'    => [ map {
-              'caption'   => $_->[1],
-              'value'     => $hub->url('Config', { 'species' => $_->[0], '__clear' => 1 }),
-              'class'     => "_stt__$_->[0]",
-              'selected'  => $hub->species eq $_->[0] ? 1 : 0
-            }, @{$image_config->species_list} ]
-          })->elements->[0]->render,
-          join('', map { sprintf '<span class="_stt_%s"><img src="%sspecies/48/%1$s.png"></span>', $_->[0], $img_url } @{$image_config->species_list})
-        );
+        my $species_select = $top_form->add_field({
+          'field_class'   => 'species_select',
+          'label'         => 'Species to configure',
+          'inline'        => 1,
+          'elements'      => [{
+            'element_class' => 'species_select_select',
+            'type'          => 'dropdown',
+            'name'          => 'species',
+            'class'         => '_stt',
+            'values'        => [ map {
+              'caption'       => $_->[1],
+              'value'         => $hub->url('Config', { 'species' => $_->[0], '__clear' => 1 }),
+              'class'         => "_stt__$_->[0]",
+              'selected'      => $hub->species eq $_->[0] ? 1 : 0
+            }, @sp ]
+          }, {
+            'type'          => 'noedit',
+            'is_html'       => 1,
+            'no_input'      => 1,
+            'value'         => join('', map sprintf('<span class="_stt_%s"><img class="nosprite" src="%sspecies/48/%1$s.png" alt="" /></span>', $_->[0], $img_url), @sp)
+          }]
+        });
       }
     }
     
@@ -107,7 +116,36 @@ sub init_config {
     
     $self->active($image_config->get_parameter('active_menu') || 'active_tracks');
   }
-  
+
+  # Add config selector dropdown at the top
+  $top_form->add_field({
+    'field_class'   => '_config_dropdown config_dropdown hidden',
+    'label'         => 'Select from available configurations',
+    'elements'      => [{
+      'type'          => 'dropdown',
+      'name'          => 'config_selector',
+    }, {
+      'type'          => 'string',
+      'value'         => 'Enter configuration name'
+    }, {
+      'type'          => 'submit',
+      'value'         => 'Save',
+    }]
+  });
+  $top_form->add_hidden([{
+    'name'      => 'config_selector_url',
+    'value'     => $hub->url('Config', {function => 'list_configs', '__clear' => 1}),
+    'class'     => 'js_param'
+  }, {
+    'name'      => 'config_save_url',
+    'value'     => $hub->url('Config', {function => 'save_config', '__clear' => 1}),
+    'class'     => 'js_param'
+  }, {
+    'name'      => 'config_apply_url',
+    'value'     => $hub->url('Config', {function => 'apply_config', '__clear' => 1}),
+    'class'     => 'js_param'
+  }]);
+
   if (!$self->active || !$view_config->tree->get_node($self->active)) {
     my @nodes     = @{$view_config->tree->root->child_nodes};
     $self->active(undef);
@@ -124,7 +162,7 @@ sub init_config {
     $panel->{'content'} = $form->render;
   } else {
     $form->add_hidden({ name => 'component', value => $action, class => 'component' });
-    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config_type));
+    $panel->set_content($top_form->render . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config_type));
   }
 
   $self->{'panel_type'} = $form->js_panel;

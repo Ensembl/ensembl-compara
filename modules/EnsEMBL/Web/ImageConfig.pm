@@ -587,6 +587,7 @@ sub menus {
     pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
     multiple_align      => [ 'Multiple alignments',        'compara' ],
     conservation        => [ 'Conservation regions',       'compara' ],
+    pairwise_cactus_hal_pw => [ 'Progressive cactus pairwise','compara' ],
     synteny             => 'Synteny',
 
     # Other features
@@ -825,10 +826,12 @@ sub receive_shared_settings {
 sub get_shareable_nodes {
   ## Gets the nodes for user data that can be shared with other users
   ## @return List of nodes that contain user data
-  my $self = shift;
-  my $node = $self->get_node('user_data');
+  my $self  = shift;
+  my @nodes = ($self->get_node('user_data') || ());
 
-  return $node ? $node : ();
+  push @nodes, grep $_->get_data('trackhub_menu'), $self->tree->nodes if $self->get_parameter('can_trackhubs');
+
+  return @nodes;
 }
 
 sub cache {

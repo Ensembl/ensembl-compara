@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -849,31 +849,24 @@ sub _summarise_funcgen_db {
 
   ## Methylation tracks - now in files
   my $m_aref = $dbh->selectall_arrayref(qq(
-        select 
-          eff.name, 
-          a.description, 
-          epigenome.name, 
-          g.name 
-        from external_feature_file eff 
-          join analysis_description a on (a.analysis_id = eff.analysis_id) 
-          join feature_type ft using (feature_type_id) 
-          join epigenome using (epigenome_id) 
-          join experiment using (experiment_id) 
-          join experimental_group g using (experimental_group_id) 
-        where ft.name = '5mC';
+    select
+      external_feature_file.name,
+      analysis_description.description
+    from
+      external_feature_file
+      join analysis_description using (analysis_id)
+      join feature_type ft using (feature_type_id)
+    where ft.name = '5mC';
     )
   );
 
   foreach (@$m_aref) {
-    my ($name, $description, $epigenome, $group) = @$_;
+    my ($name, $description, $epigenome) = @$_;
 
-    my $id   = sprintf('%s_%s', $epigenome, $group);
-    my $desc = "$epigenome cell line: $description";
-    $desc .= " ($group group)." if $group;
     $self->db_details($db_name)->{'tables'}{'methylation'}{$name} = {
-                                                                    name        => $name,
-                                                                    description => $desc,
-                                                                  };
+      name        => $name,
+      description => $description,
+    };
   }
 
   ## New CRISPR tracks
@@ -1165,7 +1158,7 @@ sub _summarise_compara_db {
     }
   }
 
-  $res_aref = $dbh->selectall_arrayref('SELECT method_link_species_set_id, value FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id" and method_link_id != 22 and method_link_id != 23');
+  $res_aref = $dbh->selectall_arrayref('SELECT method_link_species_set_id, value FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id"');
   
   foreach my $row (@$res_aref) {
     my ($conservation_score_id, $alignment_id) = ($row->[0], $row->[1]);

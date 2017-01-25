@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ package EnsEMBL::Web::Component::Variation::Publication;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -107,20 +110,17 @@ sub table_data {
       $has_phen_asso = defined $cit->pmid() ? ($pf_publication{$cit->pmid()} ? 1 : 0) : 0;
       if ($has_phen_asso == 1) {
         $column_flags{'phen_asso'} = 1 if (!$column_flags{'phen_asso'});
-        
+        my $pheno_icon = qq(<a href="$url"><img src="/i/val/var_phenotype_data_small.png" style="border-radius:5px;border:1px solid #000" alt="Phenotype"/></a>); 
         $phenotypes  = qq{This variant has significant associated phenotype(s) in this paper:};
         $phenotypes .= '<ul><li>'.join('</li><li>',sort {$a cmp $b} keys(%{$pf_publication{$cit->pmid}})).'</li></ul>';
-        $phenotypes_helptip = $self->helptip($phenotypes);
+        $phenotypes_helptip = helptip($pheno_icon, $phenotypes);
         $export_phenotypes = join(";",keys(%{$pf_publication{$cit->pmid}}));
       }
     }
 
     my $has_phenotype_html = qq{
       <span class="hidden export">$export_phenotypes</span>
-      <a class="_ht" href="$url">
         $phenotypes_helptip
-        <img src="/i/val/var_phenotype_data_small.png" style="border-radius:5px;border:1px solid #000" alt="Phenotype"/>
-      </a>
     };
 
     my $row = {
@@ -138,13 +138,6 @@ sub table_data {
   } 
 
   return \@data_rows, \%column_flags;
-}
-
-sub helptip {
-  ## Returns a dotted underlined element with given text and hover helptip
-  ## @param Tip html
-  my ($self, $tip_html) = @_;
-  return $tip_html ? sprintf('<span class="_ht_tip hidden">%s</span>', encode_entities($tip_html)) : '';
 }
 
 1;

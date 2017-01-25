@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,10 +36,11 @@ sub init {
   $self->title('Comparison Image');
 
   $self->set_default_options({
-    opt_pairwise_blastz   => 'normal',
-    opt_pairwise_tblat    => 'normal',
-    opt_pairwise_lpatch   => 'normal',
-    opt_join_genes_bottom => 'off',
+    opt_pairwise_blastz        => 'normal',
+    opt_pairwise_tblat         => 'normal',
+    opt_pairwise_lpatch        => 'normal',
+    opt_join_genes_bottom      => 'off',
+    opt_pairwise_cactus_hal_pw => 'compact'
   });
 }
 
@@ -52,6 +53,7 @@ sub extra_tabs {
     $hub->url('MultiSelector', {
       action   => 'MultiSpeciesSelector',
       multiselect => 1,
+      referer_action => $hub->action,
       %{$hub->multi_params}
     })
   ];
@@ -62,7 +64,7 @@ sub init_form {
 
   $self->add_fieldset('Comparative features');
 
-  foreach ([ 'blastz', 'BLASTz/LASTz net pairwise alignments' ], [ 'tblat', 'Translated BLAT net pairwise alignments' ], [ 'lpatch', 'LASTz patch alignments' ]) {
+  foreach ([ 'blastz', 'BLASTz/LASTz net pairwise alignments' ], [ 'tblat', 'Translated BLAT net pairwise alignments' ], [ 'lpatch', 'LASTz patch alignments' ], ['cactus_hal_pw', 'Cactus HAL alignments']) {
     $self->add_form_element({
       type   => 'DropDown',
       select => 'select',

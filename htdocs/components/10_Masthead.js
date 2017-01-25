@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,11 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.base();
     
-    var tabsHolder = $('.tabs_holder', this.el);
-    var tabs       = $('.tabs', tabsHolder);
-    var tools      = $('.tools_holder', this.el);
-    var logo       = $('.logo_holder', this.el);   
+    var tabsHolder  = $('.tabs_holder', this.el);
+    var tabs        = $('.tabs', tabsHolder);
+    var spbarHolder = $('.spbar_holder', this.el);
+    var tools       = $('.tools_holder', this.el);
+    var logo        = $('.logo_holder', this.el);   
     
     this.elLk.allTabs    = $('li', tabs);
     this.elLk.shortTabs  = $('li.short_tab', tabs);
@@ -48,6 +49,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     this.elLk.dropdowns  = $('div.dropdown', tabsHolder).on('click', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
+    this.el.find('._ht').helptip();
     
     // Cache the text on the recent location links, to stop hash changes in the URL from duplicating entries in the menu
     this.elLk.dropdowns.filter('.location').find('ul.recent li a').each(function () {
@@ -94,6 +96,19 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       
       return false;
     });
+   
+    // New species bar 
+    this.elLk.sppDropdown = $('div.dropdown', spbarHolder).on('click', function () {
+      $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
+    });
+    this.elLk.sppToggle = $('a.toggle', spbarHolder).on('click', function () {
+      var dropdown = panel.elLk.sppDropdown;
+      panel.dropdownPosition(dropdown, $(this));
+      dropdown.not(':visible').css('zIndex', ++Ensembl.PanelManager.zIndex).end().toggle(); 
+      $(this).html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
+      dropdown = null;
+      return false;
+    });
     
     this.elLk.toolMore.children('a').on('click', function () {
       $(this).toggleClass('open');
@@ -135,6 +150,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       css.left = tab.offset().left;
       
       if (!tab.hasClass('species')) {
+        alert(tab);
         css.width = tabWidth > dropdownWidth ? tabWidth - (dropdownWidth - dropdown.width()) : 'auto';
       }
       

@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ body.static #widemain { margin-left: 0; }
 
 /* Masthead */
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
+#masthead.no-tabs                         { height: 100px; }
+#masthead.with-tabs                       { height: 120px; }
 #masthead div                             { background-color: [[MH_BG]] important; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
@@ -45,6 +47,7 @@ body.static #widemain { margin-left: 0; }
 #masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
 #masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; margin: 0; }
 #masthead ul.tools li.last                { border: 0; }
+
 #masthead ul.tabs                         { margin: 0; padding: 0; width: 100%; }
 #masthead ul.tabs li                      { background: [[MH_TAB]]; margin: 0 5px 0 2px; padding: 0; border-radius: 10px 10px 0 0; -moz-border-radius: 10px 10px 0 0; -webkit-border-radius: 10px 10px 0 0; }
 #masthead ul.tabs li.active               { background: [[MH_TAB_ACTIVE]] }
@@ -65,8 +68,20 @@ body.static #widemain { margin-left: 0; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
 #masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
-#masthead div.dropdown.species            { width: 505px; }
-#masthead div.dropdown.species ul li      { width: 130px; float: left; }
+
+/* New separate species header */
+#masthead div.spbar_holder                      { position: absolute; top: 66px; clear: both; }
+#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:#fff; }
+#masthead div.spbar_holder .header span.species { font-size:150%; font-weight:bold; }
+#masthead div.spbar_holder .header span.more    { font-size:120%; }
+#masthead div.spbar_holder .header img          { float: left; vertical-align:middle; 
+                                                  height: 32px; width: 32px; margin: -8px 0 0 8px;
+                                                  border: 2px solid [[MH_BORDER]];
+                                                  border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
+#masthead div.spbar_holder span.dropdown a.toggle { background: none; }
+#masthead div.spbar_holder div.dropdown.species            { width: 505px; }
+#masthead div.spbar_holder div.dropdown.species ul li      { width: 130px; float: left; }
+
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }

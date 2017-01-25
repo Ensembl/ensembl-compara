@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,8 +51,7 @@ sub load_user_tracks {
     my $format = $_->get_data('format');
 
     # except bigwig, remove all tracks with big remote formats
-    if (($remote_formats{lc $format} && lc $format ne 'bigwig')
-          || (lc $format eq 'vcf' && $_->get_data('url'))) {
+    if ($remote_formats{lc $format} || (lc $format eq 'vcf' && $_->get_data('url'))) {
       $_->remove;
     } else {
       my ($strand, $renderers) = $self->_user_track_settings($format);

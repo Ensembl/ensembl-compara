@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -105,7 +105,6 @@ sub gene_phenotypes {
              }),
         );
         # display one row for phenotype associated with male and female strain
-        my $pf_id = $pf->id;
         my $key = join("\t", ($phen, $strain_name, $allele_symbol));
         $features->{$key}->{source} = $source;
         push @{$features->{$key}->{gender}}, $strain_gender;

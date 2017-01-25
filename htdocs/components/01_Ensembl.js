@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,11 +236,13 @@ Ensembl.extend({
     return url;
   },
 
-  prepareRequestParams: function (url) {
+  prepareRequestParams: function (url, decode) {
     var data = {};
     var type;
 
-    if(url.length > 1500){
+    url = decode && decodeURIComponent(url) || url;
+
+    if(url.length > 1500 || decode){
       $.each((url.split(/\?/)[1] || '').split(/&|;/), function(i, param) {
         param = param.split('=');
          if (typeof param[0] !== 'undefined' && !(param[0] in data)) {

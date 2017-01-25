@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,6 +55,15 @@ sub new {
   return $self;
 }
 
+# XXX should probably be in SequenceSet, but for that we need custom
+# SequenceSets.
+sub make_sequence { # For IoC: override me if you want to
+  my ($self,$set) = @_;
+
+  return EnsEMBL::Web::TextSequence::Sequence->new($self,$set);
+}
+
+
 # XXX deprecate
 sub reset {
   my ($self) = @_;
@@ -99,12 +108,6 @@ sub set_annotations {
 }
 
 sub set_markup {}
-
-sub make_sequence { # For IoC: override me if you want to
-  my ($self) = @_;
-
-  return $self->{'sequenceset'}->make_sequence;
-}
 
 sub new_sequence {
   my ($self,$position) = @_;

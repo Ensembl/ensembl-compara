@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -110,11 +110,12 @@ sub _render_features {
       'DnaAlignFeature'     => 'Sequence Feature',
       'ProteinAlignFeature' => 'Protein Feature',
     };
-    my ($xref_type, $xref_name);
+    my ($xref_type, $xref_name, $xref_desc);
     while (my ($type, $feature_set) = each (%$features)) {    
       if ($type eq 'Xref') {
         my $sample = $feature_set->[0][0];
         $xref_type = $sample->{'label'};
+        $xref_desc = $sample->{'desc'};
         $xref_name = $sample->{'extname'};
         $xref_name =~ s/ \[#\]//;
         $xref_name =~ s/^ //;
@@ -155,7 +156,10 @@ sub _render_features {
             unless ($assoc_name) {
               $assoc_name = $xref_type.' ';
               $assoc_name .= $go_link ? $go_link : $id;
-              $assoc_name .= " ($xref_name)" if $xref_name;
+              if (!$xref_desc && $xref_name && $xref_name ne $id) {
+                $xref_desc = $xref_name;
+              }
+              $assoc_name .= " ($xref_desc)" if $xref_desc;
             }
           }
 

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,18 +36,14 @@ sub process {
 
   if ($group && $user->is_admin_of($group)) {
     foreach (grep $_, $hub->param('id')) {
-      my ($id, $checksum) = split '-', $_;
-      my $record = $user->get_record($id);
+      my ($id, $code) = split '-', $_;
+      my $record_data = $user->get_record_data({record_id => $id, code => $code});
 
-      next unless $record;
-      next unless $checksum eq md5_hex($record->data->{'code'});
-      
-      my $clone = $record->clone_and_reset;
-      
-      $clone->record_type($group->RECORD_TYPE);
-      $clone->record_type_id($group->group_id);
-      $clone->data->{'cloned_from'} = $record->record_id;
-      $clone->save(user => $user->rose_object);
+      next unless keys %$record_data;
+
+      $record_data->{'cloned_from'} = delete $record_data->{'record_id'};
+
+      $group->set_record_data($record_data);
     }
     
     %url_params = (

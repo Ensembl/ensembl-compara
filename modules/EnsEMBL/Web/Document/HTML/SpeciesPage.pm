@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package EnsEMBL::Web::Document::HTML::SpeciesPage;
 use strict;
 
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -45,6 +46,8 @@ sub render {
   foreach my $sp (@valid_species) {
     next if ($species_defs->get_config($sp, 'STRAIN_COLLECTION') 
               && $species_defs->get_config($sp, 'SPECIES_STRAIN') !~ /reference/);
+    (my $genebuild = $hub->species_defs->get_config($sp, 'GENEBUILD_METHOD')) =~ s/_/ /g;
+    my $genebuild_helptip = glossary_helptip($hub, ucfirst $genebuild);
     my $info    = {
         'dir'         => $sp,
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
@@ -52,6 +55,7 @@ sub render {
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
         'accession'   => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
+        'genebuild'   => $genebuild_helptip,
         'taxon_id'    => $species_defs->get_config($sp, 'TAXONOMY_ID'),
         'variation'   => $species_defs->get_config($sp,'databases')->{'DATABASE_VARIATION'},
         'regulation'  => $species_defs->get_config($sp,'databases')->{'DATABASE_FUNCGEN'},
@@ -144,6 +148,7 @@ sub render {
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
       'accession'   => $info->{'accession'} || '-',
+      'genebuild'   => $info->{'genebuild'} || '-',
       'variation'   => $info->{'variation'} ? 'Y' : '-',
       'regulation'  => $info->{'regulation'} ? 'Y' : '-',
       'pre'         => $pre_link,
@@ -157,6 +162,7 @@ sub render {
           'taxon_id'    => $info->{'taxon_id'},
           'assembly'    => '-',
           'accession'   => '-',
+          'genebuild'   => '-',
           'variation'   => '-',
           'regulation'  => '-',
           'pre'         => sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
@@ -179,6 +185,7 @@ sub table_columns {
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric' },
       { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
+      { key => 'genebuild',   title => 'Genebuild Method', width => '10%', align => 'left' },
       { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
       { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
   ];

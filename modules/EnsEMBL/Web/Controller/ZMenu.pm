@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,10 +27,16 @@ use base qw(EnsEMBL::Web::Controller);
 
 sub init {
   my $self = shift;
-
-  $self->builder->create_objects unless $self->hub->type eq 'Phenotype';
-  
   my $hub    = $self->hub;
+
+  ## If Phenotype, don't create objects, but set builder so we can do it later
+  if ($hub->type eq 'Phenotype') {
+    $hub->set_builder($self->builder);
+  }
+  else { 
+    $self->builder->create_objects;
+  }
+  
   my $object = $self->object;
   my $module = $self->get_module_names('ZMenu', $self->type, $self->action);
   my $menu   = $module->new($hub, $object);

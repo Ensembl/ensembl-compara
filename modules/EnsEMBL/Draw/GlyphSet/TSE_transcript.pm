@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ sub render_normal {
   my $coding_start      = $trans_obj->{'coding_start'};
   my $coding_end        = $trans_obj->{'coding_end'};
   my $transcript        = $trans_obj->{'transcript'};
-  my $colour_key        = $self->colour_key($config->core_object('gene'), $transcript); # need both gene and transcript to get the colour
+  my $colour_key        = $self->colour_key($config->core_object('gene')->Obj, $transcript); # need both gene and transcript to get the colour
   my $colour            = $self->my_colour($colour_key);
   my $strand            = $transcript->strand;
   my $tsi               = $transcript->stable_id;

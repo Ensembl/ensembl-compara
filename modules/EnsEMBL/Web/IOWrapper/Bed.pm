@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,8 +80,9 @@ sub create_hash {
 
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
-  my $start         = $feature_start - $slice->start +1;
-  my $end           = $feature_end - $slice->start +1;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+
   return if $end < 0 || $start > $slice->length;
 
 
@@ -99,8 +100,8 @@ sub create_hash {
                         };
   my $colour = $self->set_colour($colour_params);
 
-  my $id = $self->parser->can('get_id') ? $self->parser->get_id
-            : $self->parser->can('get_name') ? $self->parser->get_name : undef;
+  my $label = $self->parser->can('get_name') ? $self->parser->get_name : '';
+  my $id    = $self->parser->get_id || $label;
 
   my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   my $href = $self->href({
@@ -120,7 +121,7 @@ sub create_hash {
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
-    'label'         => $self->parser->get_name,
+    'label'         => $label,
     'colour'        => $colour,
     'href'          => $href,
   };
@@ -193,6 +194,7 @@ sub create_structure {
   return unless ($block_count || ($thick_start && $thick_end));
 
   my $structure = [];
+  my ($has_utr5, $has_utr3);
 
   ## First, create the blocks
   if ($self->parser->get_blockCount) {
@@ -200,12 +202,14 @@ sub create_structure {
     my @block_lengths = @{$self->parser->get_blockSizes};
 
     foreach(0..($self->parser->get_blockCount - 1)) {
-      my $start   = shift @block_starts;
+      my $start   = shift @block_starts; 
       ## Adjust to be relative to slice
       my $offset  = $feature_start - $slice_start;
       $start      = $start + $offset;
       my $length  = shift @block_lengths;
-      my $end     = $start + $length;
+      ## Adjust coordinates here to accommodate drawing code without 
+      ## altering zmenu content
+      my $end     = $start + $length - 1;
 
       push @$structure, {'start' => $start, 'end' => $end};
     }
@@ -221,6 +225,9 @@ sub create_structure {
     $thick_end    = 0;
   }
   else {
+    ## Do we have any UTR?
+    $has_utr5 = 1 if ($thick_start && $thick_start > $feature_start);
+    $has_utr3 = 1 if ($thick_end && $thick_end < $feature_end);
     ## Adjust to make relative to slice 
     $thick_start -= $slice_start;
     $thick_end   -= $slice_start;
@@ -241,16 +248,16 @@ sub create_structure {
         if ($thick_start > $end) {
           $block->{'non_coding'} = 1; 
         }
-        else {
-          $block->{'utr_5'} = $thick_start - $start;
+        elsif ($has_utr5) {
+          $block->{'utr_5'} = $thick_start;
         }
       }
-      elsif ($thick_end && $thick_end < $end) { ## 3' UTR
+      if ($thick_end && $thick_end < $end) { ## 3' UTR
         if ($thick_end < $start) {
           $block->{'non_coding'} = 1; 
         }
-        else {
-          $block->{'utr_3'} = $thick_end - $start;
+        elsif ($has_utr3) {
+          $block->{'utr_3'} = $thick_end; 
         }
       }
     }

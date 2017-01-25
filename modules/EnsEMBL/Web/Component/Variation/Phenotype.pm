@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -211,7 +212,7 @@ sub table_data {
         }
         $clin_sign_list =~ s/,/, /g;
         $clin_sign  = qq{<div class="_ht nowrap clin_sign">$clin_sign$stars};
-        $clin_sign .= $self->helptip(qq{<b>$clin_sign_list</b><br />Review status: "$clin_status"});
+        $clin_sign .= helptip(qq{<b>$clin_sign_list</b><br />Review status: "$clin_status"});
         $clin_sign .= qq{</div>};
       }
       $column_flags{'clin_sign'} = 1;
@@ -611,13 +612,6 @@ sub check_frequencies {
     }
   }
   return 0;
-}
-
-sub helptip {
-  ## Returns a dotted underlined element with given text and hover helptip
-  ## @param Tip html
-  my ($self, $tip_html) = @_;
-  return $tip_html ? sprintf('<span class="_ht_tip hidden">%s</span>', encode_entities($tip_html)) : '';
 }
 
 sub zmenu_link {

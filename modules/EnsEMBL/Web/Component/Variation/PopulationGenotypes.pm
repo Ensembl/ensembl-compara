@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -414,8 +414,11 @@ sub pop_url {
   elsif ($pop_name =~ /^NextGen/i) {
     $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
   }
+  elsif ($pop_name =~ /^ExAC/i) {
+    $pop_url = $self->hub->get_ExtURL('EXAC_POP');
+  }
   else {
-    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef; 
+    $pop_url = ($pop_dbSNP && $pop_dbSNP->[0] ne '') ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;
   }
   return $pop_url;
 }
@@ -483,7 +486,7 @@ sub generic_group_link {
 
   $title =~ /^(.+)\s*\(\d+\)/;
   my $project_name = ($1) ? $1 : $title;
-  $project_name = ($project_name =~ /project/i) ? "<b>$project_name</b>" : ' ';
+  $project_name = ($project_name =~ /(project|consortium)/i) ? "<b>$project_name</b>" : ' ';
   
   return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations</a></p>', $pop_url, $project_name);
 }

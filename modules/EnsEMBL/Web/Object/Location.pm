@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1653,6 +1653,48 @@ sub get_allele_genotype_colours {
                  'T' => '<span style="color:red">T</span>'
                 );
   return \%colours;
+}
+
+# Return alignments based on hierarchy of methods
+sub filter_alignments_by_method {
+  my $self       = shift;
+  my $alignments = shift || {};
+
+  # Convert hash with species_set_id as the keys
+  my $transform  = shift;
+  my $methods_hierarchy = $self->hub->species_defs->ENSEMBL_ALIGNMENTS_HIERARCHY;
+
+  my $available_alignments = {};
+
+  foreach my $align_id (keys %$alignments) {
+    push @{$available_alignments->{$alignments->{$align_id}{'species_set_id'}}}, $alignments->{$align_id};
+  }
+
+  my $final_alignments = {};
+
+  my $ss_id_hash_flag = {};
+  foreach my $ss_id (keys %$available_alignments) {
+    for (my $i=0; $i<=$#$methods_hierarchy; $i++) {
+      my $method = $methods_hierarchy->[$i];
+      my $re = qr /$method/i;
+      foreach my $alignment (@{$available_alignments->{$ss_id}}) {
+        # If type found and if no previous alignments assigned then proceed
+        if ($alignment->{type} =~ $re && !$ss_id_hash_flag->{$ss_id}) {
+          $final_alignments->{$alignment->{'id'}} = $alignment;
+          $ss_id_hash_flag->{$ss_id} = 1;
+          last;
+        }
+
+        # Assign any alignment that does not match the conditions above.
+        if (!$ss_id_hash_flag->{$alignment->{'species_set_id'}} && $i == $#$methods_hierarchy) {
+          $final_alignments->{$alignment->{'id'}} = $alignment;
+          $ss_id_hash_flag->{$alignment->{'species_set_id'}} = 1;
+          last;
+        }
+      }
+    }
+  }
+  return $final_alignments || $alignments;
 }
 
 1;

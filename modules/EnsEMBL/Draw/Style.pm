@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -98,10 +98,11 @@ sub new {
   my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
 
   my $self = {
-              'data'    => $data,
-              'cache'   => $cache,
-              'colourmap' => $colourmap,
-              'glyphs'  => [],
+              'data'        => $data,
+              'cache'       => $cache,
+              'colourmap'   => $colourmap,
+              'glyphs'      => [],
+              'bridges'     => [],
               %$config
               };
 
@@ -123,6 +124,11 @@ sub new {
 sub colourmap {
   my $self = shift;
   return $self->{'colourmap'};
+}
+
+sub bridges {
+  my $self = shift;
+  return $self->{'bridges'};
 }
 
 sub create_glyphs {
@@ -368,6 +374,11 @@ sub add_messages {
     });
     $y += $self->{'font_size'} + 2;
   }
+}
+
+sub add_bridge {
+  my ($self, $glyph, $tag, @params) = @_;
+  push @{$self->{'bridges'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => \@params};
 }
 
 #### TRIGONOMETRY FOR CIRCULAR GLYPHS

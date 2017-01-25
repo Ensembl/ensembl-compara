@@ -29,6 +29,7 @@ use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
 use EnsEMBL::Web::Form::ViewConfigMatrix;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use parent qw(EnsEMBL::Web::Config);
 
@@ -183,7 +184,7 @@ sub config_url_params {
   my $self          = shift;
   my $image_config  = $self->image_config;
 
-  return qw(config plus_signal), $image_config ? $image_config->config_url_params : ();
+  return qw(config share_config plus_signal), $image_config ? $image_config->config_url_params : ();
 }
 
 sub update_from_url {
@@ -215,6 +216,40 @@ sub update_from_url {
         'code'      => 'configuration',
         'message'   => 'Your configuration has changed for this page',
       });
+    }
+  }
+
+  # if shared config is present in the url
+  if (my $shared_config_code = $params->{'share_config'}) {
+
+    ($shared_config_code) = grep $_, reverse split "/", $shared_config_code; # remove name
+
+    my $shared_config = $hub->get_saved_config($shared_config_code);
+
+    if ($shared_config && $shared_config->{'view_config_code'} eq $self->code) {
+
+      # check if share config belongs to the logged in user itself
+      my ($existing_config) = $hub->user->get_records_data({'type' => 'saved_config', 'code' => $shared_config_code});
+
+      # check if a copy of config already exists
+      if (!$existing_config) {
+        for (grep $_, $hub->session, $hub->user) {
+          ($existing_config) = $_->get_records_data({'type' => 'saved_config', 'copy' => $shared_config_code}) unless $existing_config;
+          last if $existing_config;
+        }
+      }
+
+      # create and save a new config if it doesn't exist already
+      if (!$existing_config) {
+        $shared_config->{'type'} = 'saved_config';
+        $shared_config->{'code'} = random_string(32);
+        $shared_config->{'name'} = "$shared_config->{'name'} (copy)";
+        $shared_config->{'copy'} = $shared_config_code;
+
+        ($hub->user || $hub->session)->set_record_data({%{$shared_config}}); # set_record_data removes code and type key, so passing a copy of the hash here
+      }
+
+      return $self->copy_from_existing($existing_config || $shared_config);
     }
   }
 
@@ -253,6 +288,23 @@ sub update_from_input {
   $self->save_user_settings if $self->is_altered; # update the record table
 
   return $self->is_altered;
+}
+
+sub copy_from_existing {
+  ## @override
+  ## Update only if the code is matching, and update image config too
+  my ($self, $existing_record_data) = @_;
+
+  if ($self->code eq $existing_record_data->{'view_config_code'}) {
+
+    # update image config too
+    my $image_config  = $self->image_config;
+    $image_config->copy_from_existing($existing_record_data) if $image_config;
+
+    return $self->SUPER::copy_from_existing($existing_record_data);
+  }
+
+  return 0;
 }
 
 sub init_form {

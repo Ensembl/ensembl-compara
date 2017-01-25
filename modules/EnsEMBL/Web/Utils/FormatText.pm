@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ package EnsEMBL::Web::Utils::FormatText;
 
 ## Handy methods for formatting strings, dates, etc
 
+use HTML::Entities  qw(encode_entities);
+
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(date_format pretty_date add_links);
+our @EXPORT = our @EXPORT_OK = qw(date_format pretty_date add_links helptip glossary_helptip get_glossary_entry);
 
 sub date_format {
 ### Generic method for formatting a unix timestamp, according to a simple format
@@ -63,5 +65,38 @@ sub add_links {
 
   return $html;
 }
+
+sub helptip {
+  ## Returns a dotted underlined element with given text and hover helptip
+  ## @param Display html
+  ## @param Tip html
+  my ($display_html, $tip_html) = @_;
+  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
+}
+
+sub glossary_helptip {
+  ## Creates a dotted underlined element that has a mouseover glossary helptip (helptip text fetched from glossary table of help db)
+  ## @param EnsEMBL::Web::Hub
+  ## @param Display html
+  ## @param Entry to match the glossary key to fetch help tip html (if not provided, use the display html as glossary key)
+  my ($hub, $display_html, $entry) = @_;
+  return '' unless $hub;
+
+  $entry  ||= $display_html;
+  $entry    = &get_glossary_entry($hub, $entry);
+  return  &helptip($display_html, $entry);
+}
+
+sub get_glossary_entry {
+  ## Gets glossary value for a given entry
+  ## @param EnsEMBL::Web::Hub
+  ## @param Entry key to lookup against the glossary
+  ## @return Glossary description (possibly HTML)
+  my ($hub, $entry) = @_;
+  return '' unless $hub;
+  return $hub->glossary_lookup->{$entry} // '';
+}
+
+
 
 1;

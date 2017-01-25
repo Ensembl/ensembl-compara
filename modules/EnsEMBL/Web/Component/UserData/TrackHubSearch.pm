@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,113 +41,71 @@ sub caption {
 }
 
 sub content {
-  my $self            = shift;
-  my $hub             = $self->hub;
-  my $sd              = $hub->species_defs;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $sd      = $hub->species_defs;
+  my $object  = $self->object;
   my $html;
 
-  ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $sd->TRACKHUB_REGISTRY_URL);
-  return unless $rest;
-
   ## Compare species available on registry with valid species for this site
-  my %local_species = map {$_ => 1} $sd->valid_species;
 
-  my $endpoint = 'api/info/assemblies';
-  
-  my ($rest_species, $error) = $rest->fetch($endpoint);
+  my ($rest_species, $error) = $self->object->thr_fetch('api/info/assemblies');
 
   if ($error) {
     $html = $self->warning_panel('Oops!', 'Sorry, we are unable to fetch data from the Track Hub Registry at the moment. You may wish to <a href="http://www.trackhubregistry.org/" rel="external">visit the registry</a> directly to search for a hub.');
   }
   else {
-    my $ok_species   = {};
+    my $message;
 
-    foreach (keys %{$rest_species||[]}) {
-      (my $species = $_) =~ s/ /_/;
-      if ($local_species{$species}) {
-        my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
-        if (grep $gca, @{$rest_species->{$_}||[]}) {
-          $ok_species->{$species} = $_;
-        }
-      }
+    ## Start creating form, as in most cases we need it
+    my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
+          'class'             => 'bgcolour',
+          'no_button'         => 1
+    });
+    my $fieldset = $form->add_fieldset({'no_required_notes' => 1});
+
+    ## Are we on a species page or not?
+    my $current_species = $hub->species;
+    if ($current_species =~ /multi|common/i) {
+      $message = '<p>Sorry, we do not allow searching for multiple species. Please go to a species-specific page to find and attach track hubs on this website.</p>';
     }
+    else {
+      ## Can we find it in the THR json?
+      my $sci_name    = $sd->SPECIES_SCIENTIFIC_NAME;
+      my $thr_species = $object->thr_ok_species($rest_species, $current_species);
 
-    my ($form, $fieldset, $message);
-
-    ## Do we have usable data?
-    if (keys %$ok_species) {
-      ## Are we on a species page? If not, show all available species
-      my $current_species = $hub->species;
-
-      ## Start creating form, as in most cases we need it
-      $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
-            'class'             => 'bgcolour',
-            'no_button'         => 1
-      });
-      $fieldset = $form->add_fieldset({'no_required_notes' => 1});
-
-      if ($current_species =~ /multi|common/i) {
-        # Create a data structure for species, with display labels and their current assemblies
-        my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
-
-        ## Show dropdown of all available species
+      ## Now display the appropriate content
+      if ($thr_species) {
+        ## We display the values as used on the Ensembl website
         $fieldset->add_field({
-                            'type'          => 'dropdown',
-                            'name'          => 'species',
-                            'label'         => 'Species',
-                            'values'        => \@species,
-                            'value'         => $current_species,
-                            'class'         => '_stt'
-        });
-
-        # Create HTML for showing/hiding assembly names to work with JS
-        my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
-        $fieldset->add_field({
-                            'type'          => 'noedit',
-                            'label'         => 'Assembly',
-                            'name'          => 'assembly_name',
-                            'value'         => $assembly_names,
-                            'no_input'      => 1,
-                            'is_html'       => 1,
-        });
-      }
-      else {
-        ## Is this species available in the registry?
-        if ($ok_species->{$current_species}) {
-
-          ## Only display current species and assembly
-          $fieldset->add_field({
                               'type'    => 'noedit',
                               'label'   => 'Species',
                               'name'    => 'species_display',
                               'value'   => $sd->species_label($current_species, 1),
-          });
-          $form->add_hidden({'name' => 'species', 'value' => $current_species});
-
-          $fieldset->add_field({
+        });
+        $fieldset->add_field({
                               'type'    => 'noedit',
                               'label'   => 'Assembly',
                               'name'    => 'assembly_display',
                               'value'   => $sd->ASSEMBLY_VERSION,
-          });
-          $form->add_hidden({'name' => 'assembly_name', 'value' => $sd->ASSEMBLY_VERSION});
-        }
-        else {
-          $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species.</p>';
-        }
+        });
+        $form->add_hidden({'name' => 'common_name',   'value' => $sd->SPECIES_COMMON_NAME});
+        ## But these are the 'real' values we want to use for the THR search
+        $form->add_hidden({'name' => 'thr_species',   'value' => $thr_species->{'thr_name'}});
+        $form->add_hidden({'name' => 'assembly_id',   'value' => $thr_species->{'assembly_id'}});
+        $form->add_hidden({'name' => 'assembly_key',  'value' => $thr_species->{'assembly_key'}});
       }
-    }
-    else {
-      $message = '<p>Sorry, the Track Hub Registry currently has no species compatible with this website.</p>';
+      else {
+        $message = '<p>Sorry, the Track Hub Registry currently has no trackhubs compatible with this species and assembly.</p>';
+      }
     }
 
     if ($message) {
       $html .= $message;
-      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+      $html .= sprintf('<p>You can search the <a href="%s">Track Hub Registry website</a> for the full range of publicly available data.</p>', $sd->TRACKHUB_REGISTRY_UR);
     }
     else {
-      ## Add remaining fields
+      ## Add remaining fields and show form
       my @data_types = qw(genomics transcriptomics proteomics);
       my $values     = [{'value' => '', 'caption' => '-- all --'}];
       push @$values, {'value' => $_, 'caption' => $_} for @data_types;

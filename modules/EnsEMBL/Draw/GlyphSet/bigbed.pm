@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,11 +104,22 @@ sub get_data {
     $self->extra_metadata($metadata);
 
     $data = $iow->create_tracks($container, $metadata);
-    #use Data::Dumper; warn Dumper($data);
 
     ## Final fallback, in case we didn't set these in the individual parser
     $metadata->{'label_colour'} ||= $colour;
     $metadata->{'join_colour'} ||= $colour;
+
+    ## Can we actually render this many features?
+    my $total;
+    foreach (@$data) {
+      $total += scalar @{$_->{'features'}||[]};
+    }
+
+    if ($total > 5000) {
+      $self->{'data'} = [];
+      $self->{'no_empty_track_message'}  = 1;
+      return $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');
+    }
 
     #use Data::Dumper; warn Dumper($data);
   } else {

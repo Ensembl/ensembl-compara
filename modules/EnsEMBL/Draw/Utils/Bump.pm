@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,9 +34,107 @@ use strict;
 
 use Carp;
 use POSIX qw(floor ceil);
+use List::Util qw(max min);
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(bump bump_row);
+our @EXPORT_OK = qw(mr_bump do_bump text_bounds bump bump_row);
+
+# Fast bumping for new drawing code. This method just sets _bstart and
+# _bend (the start and end co-ordinates for the purposes of bumping)
+# according to the feature start and end and any label start and end.
+# It then delegates to bumping to do_bump. If you want to set these
+# keys yourself, to customise the bumping (ag GlpyhSet_simpler does)
+# then feel free, and just call do_bump. For a description of the new
+# bumping algorithm see do_bump.
+# We deliberately compute label widths even if not displaying them.
+# This helps when, eg, we will later bump labels elsewhere, eg in the
+# gene renderer.
+sub mr_bump {
+  my ($object,$features,$show_label,$max,$strand,$moat) = @_;
+
+  $moat ||= 0;
+  my $pixperbp = $object->{'pix_per_bp'} || $object->scalex;
+  foreach my $f (@$features) {
+    my ($start,$end) = ($f->{'start'},$f->{'start'});
+    $start = $f->{'start'};
+    if($f->{'label'} && !$f->{'_lwidth'}) {
+      my ($width,$height) = text_bounds($object, $f->{'label'});
+      $f->{'_lheight'} = $height;
+      $f->{'_lwidth'} = $width/$pixperbp;
+    }
+    if($show_label<2) { $end = $f->{'end'}; }
+    if($show_label && $f->{'label'}) {
+      $end = max($end,ceil($start+$f->{'_lwidth'}));
+      my $overlap = $end-$max+1;
+      if($overlap>0) {
+        $start -= $overlap;
+        $end -= $overlap;
+      }
+    }
+    $f->{'_bstart'} = max(0,$start-$moat/$pixperbp);
+    $f->{'_bend'} = min($end+$moat/$pixperbp,$max);
+    if($strand and $f->{'strand'} and $strand != $f->{'strand'}) {
+      $f->{'_bskip'} = 1;
+    }
+  }
+  return do_bump($object, $features);
+}
+
+# Bump features according to their [_bstart,_bend], and set the row to a
+# new key _bump in that method. On large regions (in bp terms) this can
+# be orders of magnitude faster than the old algorithm.
+#
+# We can do this efficiently now, without tricks and big data structures
+# because we have all features in-hand, and so can choose the order of
+# applying them. Bumping amounts to an algorithm which attempts to add a
+# range to a list of existing ranges (rows), adding it to the first with
+# which there is no overlap. We sort the additions by start coordinate.
+# For each row, we store the largest end co-ord on that row to-date.
+# We add to the first row where our start is less than that row's end
+# (and then set it to our end).
+# If a row has an end greater than our start as we know it must have
+# been set by a feature with a start less than ours (because of the
+# order of addition), we know there is an overlap, and so this row is
+# not available to us. Conversely, if our start is greater than the
+# current end, we know that all features must be strictly to our left
+# (also because of the order) and so we guarantee no overlap. Therefore
+# this guarantees the minimum correct row.
+sub do_bump {
+  my ($object,$features) = @_;
+
+  my (@bumps,@rows);
+  foreach my $f (sort { $a->{'_bstart'} <=> $b->{'_bstart'} } @$features) {
+    $f->{'_bstart'} = 0 if $f->{'_bstart'} < 0;
+    next if $f->{'_bskip'};
+    my $row = 0;
+    while(($rows[$row]||=-1)>=$f->{'_bstart'}) { $row++; }
+    $rows[$row] = $f->{'_bend'};
+    $f->{'_bump'} = $row;
+  }
+  return scalar @rows;
+}
+
+sub text_bounds {
+  my ($object,$text) = @_;
+
+  my ($w,$h) = (0,0);
+  foreach my $line (split("\n",$text)) {
+    my $info;
+    if($object->can('get_text_info')) {
+      $info = $object->get_text_info($line);
+    } else {
+      my @props = $object->get_text_width(0,"$line ",'',%{$object->text_details});
+      $info = { width  => $props[2],
+                height => $props[3]+4 };
+    }
+    $w = max($w,$info->{'width'});
+    $h += $info->{'height'};
+  }
+  return ($w,$h);
+}
+
+
+################ LEGACY BUMP METHODS - SHOULD BE DEPRECATED? #############################
 
 ## TODO Work out why the heck we have two very slightly different bump methods!
 

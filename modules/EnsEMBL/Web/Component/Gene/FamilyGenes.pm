@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ sub content {
   my $family_id    = $hub->param('family');
   my $spath        = $species_defs->species_path($species);
   my $html         = undef;
+  my $ckey         = $cdb eq 'compara_pan_ensembl' ? '_pan_compara' : '';
 
   if ($family_id) {
     my $families = $object->get_all_families($cdb);
@@ -55,7 +56,8 @@ sub content {
     }
     my @unique_genes = values %seen;
 
-    $html       .= "<h4>Ensembl genes containing proteins in family $family_id</h4>\n";
+    my $url_fam  = $hub->url({ species => 'Multi', type => "Family$ckey", action => 'Details', fm => $family_id, __clear => 1 });
+    $html       .= sprintf qq(<h4>Ensembl genes containing proteins in family <a href="%s">$family_id</a></h4>\n), $url_fam;
 
     ## Karyotype (optional)
     if (@{$species_defs->ENSEMBL_CHROMOSOMES}) {

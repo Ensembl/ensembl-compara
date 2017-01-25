@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Gene::Family;
 ### Displays a list of protein families for this gene
 
 use strict;
+use URI::Escape qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -50,7 +51,7 @@ sub content {
     { key => 'id',          title => 'Family ID',                            width => '20%', align => 'left', sort => 'html'   },
     { key => 'annot',       title => 'Consensus annotation',                 width => '30%', align => 'left', sort => 'string' },
     { key => 'proteins', title => "Other $gene_label proteins in this family", width => '30%', align => 'left', sort => 'html'   },
-    { key => 'jalview',     title => 'Multiple alignments',                  width => '20%', align => 'left', sort => 'none'   }
+    { key => 'wasabi',     title => 'Multiple alignments',                  width => '20%', align => 'left', sort => 'none'   }
   );
 
   foreach my $family_id (sort keys %$families) {
@@ -83,7 +84,7 @@ sub content {
     push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
     push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
-    $row->{'jalview'} = $self->jalview_link($family_id, 'Ensembl', $ensembl_members, $cdb) . $self->jalview_link($family_id, '', \@all_pep_members, $cdb) || 'No alignment has been produced for this family.';
+    $row->{'wasabi'} = $self->wasabi_link($family_id, 'Ensembl', $ensembl_members, $cdb) . $self->wasabi_link($family_id, '', \@all_pep_members, $cdb) || 'No alignment has been produced for this family.';
 
     $table->add_row($row);
   }
@@ -91,13 +92,30 @@ sub content {
   return $table->render;
 }
 
-sub jalview_link {
+sub wasabi_link {
   my ($self, $family, $type, $refs, $cdb) = @_;
+  my $hub = $self->hub;
   my $count = @$refs;
-  (my $ckey = $cdb) =~ s/compara//;
-  my $url   = $self->hub->url({ function => "Alignments$ckey", family => $family });
-  
-  return qq{<p class="space-below">$count $type members of this family <a href="$url">JalView</a></p>};
+
+  # FIXME - Quick hack to hide Wasabi for all strains trees. This should be removed once we have the HAL ready
+  my $link = '';
+  if ($hub->referer->{ENSEMBL_ACTION} ne 'Strain_Compara_Tree') {
+    my $filegen_url = $hub->url('Json', {
+                        type => 'GeneAlignment', 
+                        action => 'fetch_wasabi',
+                        family => $family || '',
+                        _type => $type || ''
+                      });
+
+    $link = sprintf (
+                      '/wasabi/wasabi.htm?filegen_url=%s',
+                      uri_escape($filegen_url)
+                    );
+
+  }
+
+  my $wasabi_link = $link ne '' ? qq { <a href="$link">Wasabi viewer</a> } : '';
+  return qq{<p class="space-below">$count $type members of this family $wasabi_link</p>};
 }
 
 1;

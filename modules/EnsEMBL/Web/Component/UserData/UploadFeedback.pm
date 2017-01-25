@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,25 +33,14 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
+  my $user   = $hub->user;
   my $code   = $hub->param('code');
 
-  my $upload;
-  if ($hub->user) {
-    foreach ($hub->user->uploads) {
-      if ($_->code eq $code) {
-        $upload = {
-                  'name'    => $_->name,
-                  'format'  => $_->format,
-                  'species' => $_->species,
-                  };
-        last;
-      }
-    }
-  }
+  my $upload = $user ? $user->get_record_data({type => 'upload', 'code' => $code}) : {};
 
   ## Can't find a user record - check session
-  unless ($upload) { 
-    $upload = $hub->session->get_record_data({code => $code});
+  unless (keys %$upload) {
+    $upload = $hub->session->get_record_data({type => 'upload', code => $code});
   }
 
   my $html;

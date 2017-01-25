@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ sub feature_content {
     });
   }
   
-  if ($vstatus && scalar @$vstatus && $vstatus->[0]) {
+  if ($vstatus && ref $vstatus eq 'ARRAY' && $vstatus->[0]) {
     $self->add_entry({
       type  => 'Validation',
       label => join(',', @$vstatus),

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::Transcript::TranscriptSummary;
 
 use strict;
 use HTML::Entities  qw(encode_entities);
+
+use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry helptip glossary_helptip);
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -74,7 +76,7 @@ sub content {
   ## add TSL info
   if ($tsl && ($tsl = $tsl->value)) {
     my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
-    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, $self->get_glossary_entry($key).$self->get_glossary_entry('TSL'))));
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', helptip($key, get_glossary_entry($hub, $key).get_glossary_entry($hub, 'TSL'))));
   }
 
   # add incomplete CDS info
@@ -140,12 +142,12 @@ sub content {
   ## add frameshift introns info
   my $frameshift_introns = $object->get_frameshift_introns;
 
-  $table->add_row('Frameshift introns', $self->glossary_helptip('Frameshift introns', 'Frameshift intron') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
+  $table->add_row('Frameshift introns', glossary_helptip($self->hub, 'Frameshift introns', 'Frameshift intron') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
 
 
   ## add trans-spliced transcript info
   my $trans_spliced_transcript_info = $object->get_trans_spliced_transcript_info;
-  $table->add_row('Trans-spliced' , sprintf('This is a %s transcript', $self->helptip('trans-spliced', $trans_spliced_transcript_info->description))) if $trans_spliced_transcript_info;
+  $table->add_row('Trans-spliced' , sprintf('This is a %s transcript', helptip('trans-spliced', $trans_spliced_transcript_info->description))) if $trans_spliced_transcript_info;
 
 
   ## add stop gained/lost variation info

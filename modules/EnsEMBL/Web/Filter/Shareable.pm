@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,11 +43,11 @@ sub catch {
   
   $self->redirect = '/UserData/SelectFile';
   
-  my @temp_uploads = $hub->session->get_data(type => 'upload');
-  my @user_uploads = $user ? $user->uploads : ();
+  my @temp_uploads = $hub->session->get_records_data({type => 'upload'});
+  my @user_uploads = $user ? $user->get_records_data({type => 'upload'}) : ();
 
-  my @temp_urls = $hub->session->get_data(type => 'url');
-  my @user_urls = $user ? $user->urls : ();
+  my @temp_urls = $hub->session->get_records_data({type => 'url'});
+  my @user_urls = $user ? $user->get_records_data({type => 'url'}) : ();
 
   $self->error_code = 'none' unless @temp_uploads || @user_uploads ||
                                     @temp_urls || @user_urls;

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ sub table_row {
 
   if ($user_record) {
     $assembly = $record_data->{'assembly'} || 'Unknown';
-    $url_params{'id'} = join '-', $record_data->{'id'}, md5_hex($record_data->{'code'});
+    $url_params{'id'} = join '-', $record_data->{'record_id'}, $record_data->{'code'};
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } else {
     $assembly = $record_data->{'assembly'} || 'Unknown';

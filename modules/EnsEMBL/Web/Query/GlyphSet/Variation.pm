@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ sub precache {
         species => 'Homo_sapiens',
         id => 'variation_set_1kg_3',
         config => {
-          no_label => 1,
           sets => ['1kg_3'],
           set_name => '1000 Genomes - All - short variants (SNPs and indels)',
         },
@@ -69,9 +68,7 @@ sub precache {
       args => {
         species => 'Mus_musculus',
         id => 'variation_feature_variation',
-        config => {
-          no_label => 1,
-        },
+        config => {},
         var_db => 'variation',
         config_type => 'contigviewbottom',
         type => 'variation_feature_variation',
@@ -82,7 +79,6 @@ sub precache {
       args => {
         'id' => 'variation_set_ph_variants',
         'config' => {
-          'no_label' => 1,
           'sets' => ['ph_variants'],
           'set_name' => 'All phenotype-associated - short variants (SNPs and indels)'
         },

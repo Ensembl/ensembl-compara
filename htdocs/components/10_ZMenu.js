@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.drag) {
       params = this.href.split('|');
-      n      = parseInt(params[1], 10) - 1;
-      
+      n                = parseInt(params[1], 10) - 1;
       this.speciesPath = params[3].replace(/-/, '/');
       this.species     = this.speciesPath.split('/').pop();
       this.chr         = params[4];
@@ -63,12 +62,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.end         = parseInt(params[6], 10);
       this.strand      = parseInt(params[7], 10);
       this.multi       = area.klass.multi ? n : false;
-      
       if (!this.speciesPath.match(/^\//)) {
         this.speciesPath = '/' + this.speciesPath;
       }
     }
-    
+
     area = null;
     
     delete this.areaCoords.a;
@@ -122,7 +120,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // The location parameter that is due to be changed has its value replaced with %s
     this.baseURL = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(r, '$1%s;').replace(/[\?;]$/g, '');
-    
+
     // Add r parameter if it doesn't exist already
     if (!this.baseURL.match(/%s/)) {
       this.baseURL += (this.baseURL.match(/\?/) ? ';' : '?') + 'r=%s';
@@ -378,7 +376,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var scale        = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     var url          = this.baseURL;
     var menu, caption, start, end, tmp, cls;
-    
+
     // Gene, transcript views
     function notLocation() {
       var view = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
@@ -405,7 +403,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       var label  = start ? 'region' : 'location';
           label += panel.species === Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
       
-      menu    = [ '<a href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + '">Jump to best aligned ' + label + '</a>' ];
+      menu    = [ '<a class="loc-icon-a" href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + 
+                  '"><span class="loc-icon loc-change"></span>Jump to best aligned ' + label + '</a>' ];
       caption = 'Alignment: ' + (start ? start + '-' + end : panel.location);
     }
     
@@ -432,13 +431,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         start = this.end + this.start - end;
         end   = this.end + this.start - tmp;
       }
-      
-      if (this.align === true) {
+
+      if (this.align) {
         align();
       } else {
         url     = url.replace(/%s/, this.chr + ':' + start + '-' + end);
         caption = 'Region: ' + this.chr + ':' + start + '-' + end;
-        
         if (!locationView) {
           notLocation();
         } else if (this.multi !== false) {
@@ -457,14 +455,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       }
 
-      if (this.multi === false) {
+      if (this.multi === false && !this.align) {
         menu.unshift('<a class="_location_mark loc-icon-a" href="' + Ensembl.updateURL({mr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span class="loc-icon loc-mark"></span>Mark region (' + (end - start + 1) + ' bp)</a>');
       }
 
     } else { // Point select
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
-      if (this.align === true) {
+      if (this.align) {
         url = this.zoomURL(1/10);
         align();
       } else {
@@ -608,7 +606,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       start = this.start;
     }
     
-    if (this.align === true) {
+    if (this.align) {
       return this.baseURL.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end);
     } else {
       return this.baseURL.replace(/%s/, (this.chr || Ensembl.location.name) + ':' + start + '-' + end);
@@ -652,7 +650,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   showExisting: function (data) {
     this.event  = data.event;
     this.coords = data.coords;
-    
     if (this.group || this.drag || this.event.shiftKey) {
       if (this.elLk.header) {
         this.elLk.header.remove();

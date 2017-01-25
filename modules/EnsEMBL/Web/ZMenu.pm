@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -188,26 +188,6 @@ sub delete_entry_by_type {
       last;
     }
   }
-}
-
-sub helptip {
-  ## Returns a dotted underlined element with given text and hover helptip
-  ## @param Display html
-  ## @param Tip html
-  my ($self, $display_html, $tip_html) = @_;
-  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
-}
-
-sub glossary_helptip {
-  ## Creates a dotted underlined element that has a mouseover glossary helptip (helptip text fetched from glossary table of help db)
-  ## @param Display html
-  ## @param Entry to match the glossary key to fetch help tip html (if not provided, use the display html as glossary key)
-  my ($self, $display_html, $entry) = @_;
-
-  $entry  ||= $display_html;
-  $entry    = $self->hub->glossary_lookup->{$entry} // '';
-
-  return $self->helptip($display_html, $entry);
 }
 
 # Build and print the JSON response

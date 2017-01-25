@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package EnsEMBL::Web::Component::Gene::ComparaParalogs;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+
+use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -158,8 +160,8 @@ sub content {
       }
       
       push @rows, {
-        'Type'                => $self->glossary_helptip(ucfirst $paralogue_desc, $lookup->{ucfirst $paralogue_desc}),
-        'Ancestral taxonomy'  => $self->helptip($ancestral_taxonomy, $lca_desc),
+        'Type'                => glossary_helptip($hub, ucfirst $paralogue_desc, $lookup->{ucfirst $paralogue_desc}),
+        'Ancestral taxonomy'  => helptip($ancestral_taxonomy, $lca_desc),
         'identifier'          => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq(<span class="small">$links</span>) : '',
         'Location'            => qq(<a href="$location_link">$paralogue->{'location'}</a>),

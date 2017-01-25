@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ sub make_layout {
         { key => 'h_space' },
         { key => 'label', width => $config->{'padding'}{'pre_number'},
           room => 1 },
-        { key => 'start', width => max($config->{'padding'}{'number'}||0,6) },
+        { key => 'start', width => max($config->{'padding'}{'number'}||0,6),
+          room => 1 },
         { post => ' ' },
       ]
     },
@@ -68,8 +69,8 @@ sub make_layout {
       then => [
         { post => ' ' },
         { key => 'h_space' },
-        { key => 'label', width => $config->{'padding'}{'pre_number'} },
-        { key => 'end', width => max($config->{'padding'}{'number'}||0,6) },
+        { key => 'label', width => $config->{'padding'}{'pre_number'}, room => 1 },
+        { key => 'end', width => max($config->{'padding'}{'number'}||0,6), room => 1 },
       ]
     },
     { key => ['adid','post'], fmt => '<span class="ad-post-%s">%s</span>' },

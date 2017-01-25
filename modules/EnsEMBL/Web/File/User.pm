@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -257,13 +257,7 @@ sub upload {
                       %inputs
                      };
 
-        my $data;
-        if ($user) {
-          $data = $user->add_to_uploads($record);
-        }
-        else {
-          $data = $session->set_record_data($record);
-        }
+        my $data = ($user || $session)->set_record_data($record);
 
         $hub->configure_user_data('upload', $data);
         ## Store the session code so we can access it later

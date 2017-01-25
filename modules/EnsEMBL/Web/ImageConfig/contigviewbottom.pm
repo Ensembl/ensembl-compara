@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,10 @@ package EnsEMBL::Web::ImageConfig::contigviewbottom;
 
 use strict;
 use warnings;
+
+use Digest::MD5 qw(md5_hex);
+use URI::Escape qw(uri_unescape);
+use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Command::UserData::AddFile;
 
@@ -54,7 +58,13 @@ sub update_from_url {
   my $session         = $hub->session;
   my $species         = $self->species;
   my $species_defs    = $self->species_defs;
-  my @values          = split(/,/, grep($_, delete $params->{'attach'}, delete $params->{$self->type}) || ''); # delete params to avoid doing it again when calling SUPER method
+
+  my $attach = !!$params->{'attach'};
+  my @values = split(/,/, $params->{'attach'}); 
+  push @values, split(/,/, $params->{$self->type}); 
+  # delete params to avoid doing it again when calling SUPER method
+  delete $params->{$self->type};
+  delete $params->{'attach'};
 
   # if param name is 'trackhub'
   push @values, $params->{'trackhub'} || ();
@@ -66,7 +76,7 @@ sub update_from_url {
 
   foreach my $v (@values) {
     my $format = $params->{'format'};
-    my ($url, $renderer, $attach);
+    my ($url, $renderer);
 
     if ($v =~ /^url/) {
       $v =~ s/^url://;
@@ -74,7 +84,7 @@ sub update_from_url {
       ($url, $renderer) = split /=/, $v;
     }
 
-    if ($attach || $params->{'attach'}) {
+    if ($attach) {
       ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
       ## as well as new 'attach=http...' parameter
       my $p = uri_unescape($url);
@@ -377,18 +387,6 @@ sub init_cacheable {
 
   ## Regulatory build track now needs to be turned on explicitly
   $self->modify_configs(['regbuild'], {display => 'compact'});
-}
-
-sub get_shareable_nodes {
-  ## @override
-  ## Can share trackhubs too
-  my $self = shift;
-
-  my @nodes = $self->SUPER::get_shareable_nodes;
-
-  push @nodes, grep $_->get_data('trackhub_menu'), $self->tree->nodes;
-
-  return @nodes;
 }
 
 1;

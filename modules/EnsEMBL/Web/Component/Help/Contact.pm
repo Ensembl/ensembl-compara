@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ use strict;
 use warnings;
 
 use base qw(EnsEMBL::Web::Component::Help);
+
+use EnsEMBL::Web::Utils::HoneyPot qw(spam_protect_form);
 
 sub _init {
   my $self = shift;
@@ -100,6 +102,8 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
+
+  spam_protect_form($hub,$form);
 
   $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name([qw(input select textarea)])};
 

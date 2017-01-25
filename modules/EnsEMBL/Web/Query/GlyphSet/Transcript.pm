@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ sub precache {
         pattern => "[logic_name]",
         label_key => "[biotype]",
         logic_names => ["ccds_import"],
+        shortlabels => '',
       }
     },
     transcript => {
@@ -53,6 +54,7 @@ sub precache {
         },
         label_key => '[biotype]',
         pattern => '[biotype]',
+        shortlabels => '',
       }
     },
     gencode => {
@@ -68,7 +70,8 @@ sub precache {
           proj_havana_ig_gene       proj_ncrna
         )],
         label_key => "[biotype]",
-        only_attrib => "gencode_basic"
+        only_attrib => "gencode_basic",
+        shortlabels => '',
       }
     },
     genscan => {
@@ -78,7 +81,8 @@ sub precache {
         logic_names => ['genscan'],
         label_key => "[display_label]",
         pattern => "genscan",
-        prediction => 1
+        prediction => 1,
+        shortlabels => '',
       }
     },
   };

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -156,7 +156,13 @@ sub tint_by_hex {
 
 sub brightness {
     my ($self, $name) = @_;
-    my ($r, $g, $b) = $self->rgb_by_name( $name );
+    my ($r, $g, $b);
+    if ($name =~ /^#?([0-9a-f]{6})$/) { #Hex
+      ($r, $g, $b) = $self->rgb_by_hex( $name );
+    }
+    else {
+      ($r, $g, $b) = $self->rgb_by_name( $name );
+    }
     return (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
 }
 

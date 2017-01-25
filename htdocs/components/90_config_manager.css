@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,3 +93,36 @@ body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
 body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
 body.ie6  .config_manager table td .ellipsis       { display: none; }
 body.ie7  .config_manager table td img.toggle      { top: 4px; } 
+
+
+/* new manage configs panel */
+
+table.manage-configs span {
+  display: inline-block;
+  height: 16px;
+  width: 16px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+table.manage-configs td div.desc        { display: inline; }
+table.manage-configs td textarea        { float: left; }
+
+table.manage-configs td span.edit       { background-image: url(/i/16/swp/pencil.png); visibility: hidden; }
+table.manage-configs td:hover span.edit { visibility: visible; }
+
+table.manage-configs span.save    { background-image: url(/i/16/swp/save.png);  }
+table.manage-configs span.share   { background-image: url(/i/16/swp/share.png); background-position: 0 16px; cursor: default; } /* share icon stays disabled by default */
+table.manage-configs span.delete  { background-image: url(/i/16/swp/trash.png); }
+
+table.manage-configs tr.user-config span.share { background-position: 0 0; cursor: pointer; } /* share icon only enabled for user saved configs */
+
+table.manage-configs td span.edit:hover,
+table.manage-configs span.save:hover,
+table.manage-configs tr.user-config span.share:hover,
+table.manage-configs span.delete:hover { background-position: 0 34px; } /* icon becomes blue when hovered */
+
+table.manage-configs tr.user-config span.save { background-position: 0 16px; cursor: default; } /* disable save icon for already user saved config */
+
+div.manage-config-copy-url { position: fixed; background: #fff; width: 300px; margin-left: -150px; padding: 12px; z-index: 9999; border: [[PANEL_TEXT]] solid 1px; }
+div.manage-config-copy-url input { width: 100%; box-sizing: border-box; }

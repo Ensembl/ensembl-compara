@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,7 +63,8 @@ sub import {
 
     # We don't want to plugin any of the packages that don't start
     # with EnsEMBL::Web::, EnsEMBL::Draw or Bio::
-    return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/'
+    return unless substr($filename, 0, 12) eq 'ORM/EnsEMBL/'
+                    || substr($filename, 0, 12) eq 'EnsEMBL/Web/'
                     || substr($filename, 0, 13) eq 'EnsEMBL/Draw/'
                     || substr($filename, 0, 4) eq 'Bio/'
                     || substr($filename, 0, 7) eq 'Preload'

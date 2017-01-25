@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -205,28 +205,19 @@ sub short_population_name {
 sub population_structure {
   my $self = shift;
   my $pop_objs = shift;
-  my $low_level_only = shift;
-  
   if(!exists($self->{_population_structure})) {
     my %pop_struct;
     foreach my $pop(@$pop_objs) {
-      my $pop_name = $pop->name;
-      next if $pop_name =~ /:ALL$/ || $pop_name =~ /^_/;
-      my $subs = $pop->get_all_sub_Populations();
-
-      if($low_level_only) {
-        next if $subs && scalar @$subs;
-        $pop_struct{$pop_name} = [];
-      }
-      else {
-        next unless $subs && scalar @$subs;
-        @{$pop_struct{$pop_name}} = map {$_->name} @$subs;
+      next if scalar( @{$pop->get_all_sub_Populations} );
+      my @super_pops = @{$pop->get_all_super_Populations};
+      push @super_pops, $pop unless scalar( @super_pops );
+      foreach my $super_pop( @super_pops ) {
+        $pop_struct{$super_pop->name} ||= [];
+        push @{$pop_struct{$super_pop->name}}, $pop->name;
       }
     }
-    
     $self->{_population_structure} = \%pop_struct;
   }
-  
   return $self->{_population_structure};
 }
 

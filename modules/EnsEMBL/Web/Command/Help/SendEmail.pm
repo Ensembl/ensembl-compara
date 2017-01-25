@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ use warnings;
 
 use EnsEMBL::Web::Mailer::Help;
 
+use EnsEMBL::Web::Utils::HoneyPot qw(is_form_spam);
+
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -44,7 +46,13 @@ sub process {
   } else {
 
     $url              = {qw(type Help action EmailSent result 1)};
-    $url->{'result'}  = EnsEMBL::Web::Mailer::Help->new($hub)->send_help_contact_email unless $hub->param('honeypot_1') || $hub->param('honeypot_2'); # check honeypot fields before sending email
+
+    # Verify honeypots are empty
+    if(is_form_spam($hub)) {
+      warn "caught spam\n";
+    } else {
+      $url->{'result'}  = EnsEMBL::Web::Mailer::Help->new($hub)->send_help_contact_email;
+    }
   }
 
   return $self->ajax_redirect($hub->url($url));

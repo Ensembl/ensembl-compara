@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,46 +50,12 @@ sub content {
   my $registry        = $sd->TRACKHUB_REGISTRY_URL;
   my $html;
 
-  ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $registry);
-  return unless $rest;
-
-  my $post_content = {};
-  my @query_params = qw(assembly query);
-  foreach (@query_params) {
-    $post_content->{$_} = $hub->param($_) if $hub->param($_);
-  }
-  ## We have to rename this param within the webcode as it
-  ## conflicts with one of ours
-  $post_content->{'type'} = $hub->param('data_type');
-
-  ## Registry uses species names without spaces
-  my $search_species = $hub->param('species') || $hub->param('search_species');
-  if ($search_species) {
-    (my $species = $search_species) =~ s/_/ /;
-    $post_content->{'species'} = $species;
-  }
-
-  ## Filter on current assembly
-  if ($post_content->{'species'} && !$post_content->{'assembly'}) {
-    ## Give preference to the GCA accession id, as it is unique
-    #my $assembly = $sd->get_config($hub->param('species'), 'ASSEMBLY_ACCESSION') 
-    #                || $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
-    ## FIXME: DON'T USE GCA ACCESSION, AS IT'S PATCH-SPECIFIC IN SOME SPECIES
-    ## WHICH MEANS THE SEARCH MAY PRODUCE NO RESULTS 
-    $post_content->{'assembly'} = $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
-  }
-
   ## Pagination
   my $entries_per_page  = 5;
   my $current_page      = $hub->param('page') || 1;
-
-  my $endpoint = 'api/search';
-
-  my $args = {'method' => 'post', 'content' => $post_content, 
-              'url_params' => {'page' => $current_page, 'entries_per_page' => $entries_per_page}};
+  my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page};
   
-  my ($result, $error) = $rest->fetch($endpoint, $args);
+  my ($result, $error) = $self->object->thr_search($url_params);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
@@ -112,13 +78,13 @@ sub content {
     $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     ## Reminder of search terms
-    $html .= sprintf '<p><b>Searched %s %s', $post_content->{'species'}, $post_content->{'assembly'};
+    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $hub->param('assembly_display');
     my @search_extras;
-    if ($post_content->{'type'}) {
-      push @search_extras, '"'.ucfirst($post_content->{'type'}).'"';
+    if ($hub->param('type')) {
+      push @search_extras, '"'.ucfirst($hub->param('type')).'"';
     }
-    if ($post_content->{'query'}) {
-      push @search_extras, '"'.$post_content->{'query'}.'"';
+    if ($hub->param('query')) {
+      push @search_extras, '"'.$hub->param('query').'"';
     }
     if (@search_extras) {
       $html .= ' for '.join(' AND ', @search_extras);
@@ -129,23 +95,21 @@ sub content {
 
     if ($count > 0) {
 
+      my $pagination;
       my $pagination_params = {
                                 'current_page'      => $current_page,
                                 'total_entries'     => $count,
                                 'entries_per_page'  => $entries_per_page,
-                                'url_params'        => $post_content
                               };
-      ## We want to pass the underscored version in the URL
-      delete $pagination_params->{'url_params'}{'species'};
-      $pagination_params->{'url_params'}{'search_species'} = $search_species;
 
+      ## Generate the HTML once, because we delete parameters when creating it
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $pagination = $self->_pagination($pagination_params);
+        $html .= $pagination;
       }
 
       foreach (@{$result->{'items'}}) {
-        (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
-
+        my $species       = $hub->species;
         ## Is this hub already attached?
         my ($ignore, $params) = check_attachment($hub, $_->{'hub'}{'url'});
         my $button;
@@ -157,7 +121,6 @@ sub content {
           else {
             $label = 'Hub already attached';
           }
-          my $species       = $hub->species;
           my $location      = $hub->param('r');
           unless ($location) {
             my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
@@ -195,7 +158,7 @@ sub content {
       }
       
       if ($count > $entries_per_page) {
-        $html .= $self->_show_pagination($pagination_params);
+        $html .= $pagination;
       }
 
     }
@@ -204,12 +167,18 @@ sub content {
 
 }
 
-sub _show_pagination {
+sub _pagination {
   my ($self, $args) = @_;
 
   my $no_of_pages = ceil($args->{'total_entries'}/$args->{'entries_per_page'});
 
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
+  
+  ## Set parameters that don't change 
+  foreach (qw(assembly_key assembly_id data_type thr_species)) {
+    $args->{'url_params'}{$_} = $self->hub->param($_);
+  }
+
   for (my $page = 1; $page <= $no_of_pages; $page++) {
     my ($classes, $link);
     if ($page == $args->{'current_page'}) {
@@ -227,9 +196,6 @@ sub _show_pagination {
     }
     if ($link) {
       $args->{'url_params'}{'page'} = $page;
-      ## Change type parameter back to something safe before using
-      $args->{'url_params'}{'data_type'} = $args->{'url_params'}{'type'};
-      delete $args->{'url_params'}{'type'};
       my $url = $self->hub->url($args->{'url_params'});
       $html .= sprintf '<div class="%s"><a href="%s" class="modal_link nodeco">%s</a></div>', $classes, $url, $page;
     }

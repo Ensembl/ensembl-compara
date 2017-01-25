@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.altKeyDragging     = false;
     this.allowHighlight     = !!(window.location.pathname.match(/\/Location\//));
     this.locationMarkingArea = false;
+    this.trackHighlightInfo  = {};
     
     function resetOffset() {
       delete this.imgOffset;
@@ -59,6 +60,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base();
     
     this.imageConfig        = $('input.image_config', this.el).val();
+    this.viewConfig         = $('input.view_config', this.el).val();
     this.lastImage          = Ensembl.images.total > 1 && this.el.parents('.image_panel')[0] === Ensembl.images.last;
     this.hashChangeReload   = this.lastImage || $('.hash_change_reload', this.el).length;
     this.zMenus             = {};
@@ -91,7 +93,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initSelector();
     this.highlightLastUploadedUserDataTrack();
     this.markLocation(Ensembl.markedLocation);
-    
+
     if (!this.vertical) {
       this.makeResizable();
     }
@@ -174,12 +176,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         url: this.href,
         type: 'post',
         success: function() {
-          Ensembl.EventManager.triggerSpecific('resetConfig', 'modal_config_' + this.id.toLowerCase());
+          Ensembl.EventManager.trigger('resetConfig');
           Ensembl.EventManager.trigger('resetMessage');
           this.getContent();
         },
         data: {
-          image_config: panel.imageConfig
+          image_config: panel.imageConfig,
+          view_config: panel.viewConfig
         }
       });
     });
@@ -590,9 +593,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       // On highlight icon click toggle highlight
       $(this).find('.hl-icon-highlight').on('click', function(e) {
-        var highlight_class = 'li.' + $(this).data('highlightTrack');
-        var track_element = $($(panel.elLk.boundaries).find(highlight_class));
-        panel.toggleHighlight(track_element);
+        panel.toggleHighlight($(this).data('highlightTrack'));
         // highlight the track highlight icon on all the highlighted tracks (f/r generally)
         $('.hover_label.' + $(this).data('highlightTrack')).find('.hl-icon-highlight').toggleClass('selected');
       });
@@ -610,8 +611,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  toggleHighlight: function(element) {
-    $(element) && $(element).toggleClass('track_highlight _highlight_on');
+  toggleHighlight: function(highlight_class) {
+    var panel = this;
+    var track_highlight_class = 'li.' + highlight_class;
+    var track_element = $($(this.elLk.boundaries).find(track_highlight_class));
+
+    $(track_element) && $(track_element).toggleClass('track_highlight _highlight_on');
+    if ($(track_element).hasClass('_highlight_on')) {
+      $(track_element).each(function(i, tr) {
+        panel.trackHighlightInfo[highlight_class] = {
+          'h': $(this).height()
+        };
+      })
+    }
+    else {
+      panel.trackHighlightInfo[highlight_class] && delete this.trackHighlightInfo[highlight_class];
+    }
+    this.updateExportButton({hl : 1});
   },
 
   highlightLastUploadedUserDataTrack: function() {
@@ -703,6 +719,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       success: function (json) {
         if (json.updated) {
           this.panel.changeConfiguration(config, this.track, this.update);
+          this.panel.updateExportButton();
         }
       }
     });
@@ -880,8 +897,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   sortUpdate: function(e, ui) {
 
-    var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
-    var track = ui.item.prop('className').replace(' ', '.');
+    var prev  = $.trim((ui.item.prev().prop('className') || '')).replace(' ', '.');
+    var track = $.trim(ui.item.prop('className')).replace(' ', '.');
 
     Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
 
@@ -1517,18 +1534,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.updateExportButton();
   },
 
-  updateExportButton: function() {
-    var extra = this.getExtraExportParam();
+  updateExportButton: function(args) {
+    var extra = this.getExtraExportParam(args);
 
     extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
 
     this.elLk.exportButton.attr('href', function() {
-      return Ensembl.updateURL({extra: extra}, this.href);
+      return Ensembl.updateURL({extra: extra, decodeURL: 1}, this.href);
     });
   },
 
-  getExtraExportParam: function () {
+  getExtraExportParam: function (args) {
     var extra = {};
+
+    var flag = 0;
+    extra.trackHighlightInfo = this.trackHighlightInfo;
 
     if (!$.isEmptyObject(this.boxCoords)) {
       extra.boxes = this.boxCoords;
@@ -1551,7 +1571,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         delete extra.mark;
       }
     }
-
     return extra;
   },
 

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -622,6 +622,12 @@ sub render {
   $html .= $self->tailnote;
   
   if ($self->{'image_configs'}[0]) {
+    if (my $component = $self->component) {
+      if (my $view_config = $component->viewconfig) {
+        $html .= sprintf q(<input type="hidden" class="view_config" value="%s" />), $view_config->code;
+      }
+    }
+
     $html .= qq(<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />);
     $html .= '<span class="hidden drop_upload"></span>' if $self->{'image_configs'}[0]->get_node('user_data');
   }

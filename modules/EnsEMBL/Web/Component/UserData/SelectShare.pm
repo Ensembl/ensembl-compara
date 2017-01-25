@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,12 +70,12 @@ sub content {
   $form->add_element(type => 'SubHeader', value => 'Data to share');
   
   if ($user) {
-    push @values, { name => "Saved upload: $_->{'name'}", value => join('-', $_->id, md5_hex($_->code)) } for $user->get_records('uploads');
-    push @values, { name => "Saved URL: $_->{'name'}",    value => join('-', $_->id, md5_hex($_->code)) } for $user->get_records('urls');
+    push @values, { name => "Saved upload: $_->{'name'}", value => join('-', $_->{record_id}, $_->{code}) } for $user->get_records_data({type => 'upload'});
+    push @values, { name => "Saved URL: $_->{'name'}",    value => join('-', $_->{record_id}, $_->{code}) } for $user->get_records_data({type => 'url'});
   }
   
-  push @values, { name => "Temporary upload: $_->{'name'}", value => $_->{'code'} } for $session->get_data(type => 'upload');
-  push @values, { name => "Temporary URL: $_->{'name'}",    value => $_->{'code'} } for $session->get_data(type => 'url');
+  push @values, { name => "Temporary upload: $_->{'name'}", value => $_->{'code'} } for $session->get_records_data({type => 'upload'});
+  push @values, { name => "Temporary URL: $_->{'name'}",    value => $_->{'code'} } for $session->get_records_data({type => 'url'});
   
   $form->add_element(
     type   => 'MultiSelect',

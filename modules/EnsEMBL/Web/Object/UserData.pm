@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
+use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
@@ -166,10 +167,12 @@ sub md_save_remote {
 
 sub md_delete_upload {
 ### Delete file and session/user record for an uploaded file
-  my ($self, @args) = @_;
-  my $hub  = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-  my $rel_path = $self->_delete_record('upload', @args);
+  my ($source, $code, $id) = @_ ? @_ : ($hub->param('source'), reverse split('-', $hub->param('id') || ''));
+
+  my $rel_path = $self->_delete_record('upload', $source, $code, $id);
   if ($rel_path) {
     ## Also remove file
     my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
@@ -183,8 +186,12 @@ sub md_delete_upload {
 
 sub md_delete_remote {
 ### Delete record for an attached file
-  my ($self, @args) = @_;
-  $self->_delete_record('url', @args);
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my ($source, $code, $id) = @_ ? @_ : ($hub->param('source'), reverse split('-', $hub->param('id') || ''));
+
+  $self->_delete_record('url', $source, $code, $id);
   return undef;
 }
 
@@ -233,12 +240,12 @@ sub _set_error_message {
 ## Add a message to session
   my ($self, $text) = @_;
   my $hub = $self->hub;
-  $hub->session->set_data(
+  $hub->session->set_record_data({
       type     => 'message',
       code     => 'user_not_logged_in',
       message  => "Please log in (or create a user account) if you wish to save this $text.",
       function => '_error'
-  );
+  });
 }
 
 sub _move_to_user {
@@ -250,10 +257,12 @@ sub _move_to_user {
   my $session = $hub->session;
   my %args    = ('type' => $type, 'code' => $hub->param('code'));
 
-  my $data = $session->get_data(%args);
+  my $data = $session->get_record_data(\%args);
+  my $record_id = delete $data->{'record_id'}; # otherwise it will try to update the record with the given id, which may belong to another user (and will throw an exception)
   my ($old_path, $new_path);
 
-  my $record;
+  return unless $record_id;
+
   if ($type eq 'upload') {
     ## Work out where we're going to copy the file to, because we need to save this
     ## in the new user record
@@ -265,14 +274,11 @@ sub _move_to_user {
     ## Make a note of where the file was saved, since it can't currently
     ## be shown on other sites such as mirrors or archives
     $data->{'site'} = $hub->species_defs->ENSEMBL_SERVERNAME;
-    $record = $user->add_to_uploads($data);
   }
-  else {
-    $record = $user->add_to_urls($data);
-  }
-  
-  if ($record) {
-    $session->purge_data(%args);
+  my $new_record_data = $user->set_record_data($data);
+
+  if (keys %$new_record_data) {
+    $session->set_record_data(\%args); # this will remove the session record
     if ($type eq 'upload') {
       return ($old_path, $new_path); 
     }
@@ -289,11 +295,14 @@ sub _delete_record {
   $code   ||= $hub->param('code');
 
   foreach my $record_manager (grep $_, $hub->user, $hub->session) {
-    my $data = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my $data            = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my $record_id       = $data->{'record_id'};
+    my $record_type_id  = $data->{'record_type_id'};
 
-    if (keys %$data) {
+    if ($record_id && ($record_id == $id || $record_type_id == $id || $code =~ m/_$record_type_id$/)) { # code column may contain the id suffixed to it
       $file = $data->{'shared'} ? undef : $data->{'file'};
       $record_manager->delete_records({'type' => $type, 'code' => $code}); # delete record
+      $record_manager->delete_records({'type' => 'userdata_upload_code', 'code' => $code}); # delete any linked userdata_upload_code record
       last;
     }
   }
@@ -353,21 +362,127 @@ sub update_configs {
   
   if ($updated) {
     my $user       = $hub->user;
-    my $favourites = $session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    my $favourites = $session->get_record_data({type => 'favourite_tracks', code => 'favourite_tracks'});
     
     if (grep delete $favourites->{'tracks'}{$_}, @$old_tracks) {
       $favourites->{'tracks'}{$_} = 1 for @$new_tracks;
-      
-      if (scalar keys %{$favourites->{'tracks'}}) {
-        $session->set_data(%$favourites);
-      } else {
-        delete $favourites->{'tracks'};
-        $session->purge_data(%$favourites);
-      }
-      
-      $user->set_favourite_tracks($favourites->{'tracks'}) if $user;
+
+      delete $favourites->{'tracks'} unless keys %{$favourites->{'tracks'}};
+
+      $session->set_record_data($favourites);
+
+      delete $favourites->{'record_id'};
+      $user->set_record_data($favourites) if $user;
     }
   }
+}
+
+######## TRACK HUB REGISTRY SEARCHES ##############
+
+sub thr_fetch {
+  my ($self, $endpoint) = @_;
+
+  ## REST call
+  my $registry = $self->hub->species_defs->TRACKHUB_REGISTRY_URL;
+  my $rest = EnsEMBL::Web::REST->new($self->hub, $registry);
+  return unless $rest;
+
+  return $rest->fetch($endpoint);
+}
+
+sub thr_search {
+  my ($self, $url_params) = @_;
+  my $hub = $self->hub;
+
+  ## REST call
+  my $registry = $hub->species_defs->TRACKHUB_REGISTRY_URL;
+  my $rest = EnsEMBL::Web::REST->new($hub, $registry);
+  return unless $rest;
+
+  my ($result, $error);
+  my $endpoint = 'api/search';
+  my $post_content = {'query' => $hub->param('query')};
+
+  ## We have to rename these params within the webcode as they conflict with ours
+  $post_content->{'type'}     = $hub->param('data_type');
+  $post_content->{'species'}  = $hub->param('thr_species');
+
+  ## Search by either assembly or accession, depending on config
+  my $key = $hub->param('assembly_key');
+  $key = 'assembly' if $key eq 'name';
+  $post_content->{$key} = $hub->param('assembly_id');
+
+  my $args = {'method' => 'post', 'content' => $post_content};
+  $args->{'url_params'} = $url_params if $url_params;
+
+  return $rest->fetch($endpoint, $args);
+}
+
+sub thr_ok_species {
+### Check a roster of species against the ones in the THR
+  my ($self, $thr_species, $current_species) = @_;
+  my $hub = $self->hub;
+  my $ok_species;
+
+  my $sci_name        = $hub->species_defs->get_config($current_species, 'SPECIES_SCIENTIFIC_NAME');
+  my $assembly_param  = $hub->species_defs->get_config($current_species, 'THR_ASSEMBLY_PARAM')
+                            || 'ASSEMBLY_ACCESSION';
+  my $assembly        = $hub->species_defs->get_config($current_species, $assembly_param);
+  my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+
+  if ($thr_species->{$sci_name}) {
+    ## Check that we have the right assembly
+    my $found = 0;
+    ($found, $key) = $self->_find_assembly($thr_species->{$sci_name}, $assembly_param, $key, $assembly);
+    if ($found) {
+      $ok_species = {'thr_name' => $sci_name, 'assembly_key' => $key, 'assembly_id' => $assembly};
+    }
+  }
+  else {
+    ## No exact match, so try everything else
+    while (my ($sp_name, $info) = each (%$thr_species)) {
+      my $found = 0;
+      ($found, $key) = $self->_find_assembly($info, $assembly_param, $key, $assembly);;
+      if ($found) {
+        $ok_species = {'thr_name' => $sp_name, 'assembly_key' => $key, 'assembly_id' => $assembly};
+        last;
+      }
+    }
+  }
+  return $ok_species;
+}
+
+sub _find_assembly {
+  my ($self, $info, $assembly_param, $key, $assembly) = @_;
+  my $found = 0;
+
+  if ($assembly_param eq 'ASSEMBLY_ACCESSION') {
+    foreach (@$info) {
+      if ($_->{'accession'} eq $assembly) {
+        $found = 1;
+        last;
+      }
+    }
+  }
+  else {
+    ## Check name and synonyms
+    foreach (@$info) {
+      if (lc($_->{'name'}) eq lc($assembly)) {
+        $found = 1;
+      }
+      else {
+        foreach (@{$_->{'synonyms'}||[]}) {
+          if (lc($_) eq lc($assembly)) {
+            $found = 1;
+            $key = 'synonyms';
+            last;
+          }
+        }
+      }
+      last if $found;
+    }
+  }
+  return ($found, $key);
 }
 
 1;

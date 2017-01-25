@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,18 +57,15 @@ sub new {
 
 sub view { return $_[0]->{'view'}; }
 
-sub make_sequence { # For IoC: override me if you want to
-  my ($self) = @_;
-
-  return EnsEMBL::Web::TextSequence::Sequence->new($self);
-}
-
 sub new_sequence {
   my ($self,$position) = @_;
 
-  my $seq = $self->make_sequence();
-  if(($position||'') eq 'top') {
+  my $seq = $self->view->make_sequence($self);
+  $position ||= '';
+  if($position eq 'top') {
     unshift @{$self->{'sequences'}},$seq;
+  } elsif($position eq 'nowhere') {
+    # nothing
   } else {
     push @{$self->{'sequences'}},$seq;
   }

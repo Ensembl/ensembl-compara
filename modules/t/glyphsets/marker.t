@@ -50,7 +50,7 @@ my $glyphset = EnsEMBL::Draw::GlyphSet::marker->new({
 my $sample_data = [{'features' => [ 
                             {
                               'label_colour' => '#000000',
-                              'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=RH11719;track=test',
+                              'href' => '/Homo_sapiens/ZMenu/Marker/View?config=Location;m=RH11719;track=test',
                               'colour' => '#000000',
                               'label' => 'RH11719',
                               '_unique' => 'RH11719:323096:323243',
@@ -59,7 +59,7 @@ my $sample_data = [{'features' => [
                             },
                             {
                               'label_colour' => '#000000',
-                              'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=BV209439;track=test',
+                              'href' => '/Homo_sapiens/ZMenu/Marker/View?config=Location;m=BV209439;track=test',
                               'colour' => '#000000',
                               'label' => 'BV209439',
                               '_unique' => 'BV209439:323048:323650',
@@ -68,7 +68,7 @@ my $sample_data = [{'features' => [
                             },
                             {
                               'label_colour' => '#000000',
-                              'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=D17S1992;track=test',
+                              'href' => '/Homo_sapiens/ZMenu/Marker/View?config=Location;m=D17S1992;track=test',
                               'colour' => '#000000',
                               'label' => 'D17S1992',
                               '_unique' => 'D17S1992:323632:323810',
@@ -77,7 +77,7 @@ my $sample_data = [{'features' => [
                             },
                            {
                               'label_colour' => '#000000',
-                              'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=G60155;track=test',
+                              'href' => '/Homo_sapiens/ZMenu/Marker/View?config=Location;m=G60155;track=test',
                               'colour' => '#000000',
                               'label' => 'G60155',
                               '_unique' => 'G60155:322529:322719',
@@ -86,7 +86,7 @@ my $sample_data = [{'features' => [
                             },
                             {
                               'label_colour' => '#000000',
-                              'href' => '/Homo_sapiens/ZMenu/Marker?db=core;m=RH17926;track=test',
+                              'href' => '/Homo_sapiens/ZMenu/Marker/View?config=Location;m=RH17926;track=test',
                               'colour' => '#000000',
                               'label' => 'RH17926',
                               '_unique' => 'RH17926:322529:322671',

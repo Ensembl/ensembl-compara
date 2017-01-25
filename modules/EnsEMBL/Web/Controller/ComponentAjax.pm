@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,8 +44,9 @@ sub render_page {
   } catch {
     $res = { 'failed' => $_->message };
   };
-
-  printf to_json($res || {});
+  # May actually be a string (CSV), not JSON
+  $res = to_json($res) if ref $res;
+  print $res;
 }
 
 sub ajax_enstab {
@@ -54,7 +55,7 @@ sub ajax_enstab {
   my $callback  = EnsEMBL::Web::NewTable::Callback->new($self->hub, $component);
   my $out       = $callback->go();
 
-  return $out if ref $out;
+  return $out;
 }
 
 1;

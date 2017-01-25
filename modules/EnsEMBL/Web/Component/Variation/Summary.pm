@@ -2,7 +2,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ limitations under the License.
 package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
+
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -256,7 +258,7 @@ sub co_located {
   my $slice;
   if ($feature_slice->start > $feature_slice->end) { # Insertion
     my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor', 'core');
-    $slice = $slice_adaptor->fetch_by_region( $feature_slice->coord_system_name, $feature_slice->chr_name,
+    $slice = $slice_adaptor->fetch_by_region( $feature_slice->coord_system_name, $feature_slice->seq_region_name,
                                               $feature_slice->end, $feature_slice->start, $feature_slice->strand );
   }
   else {
@@ -393,9 +395,10 @@ sub alleles {
   my $ambiguity   = $variation->ambig_code;
      $ambiguity   = 'not available' if $object->source =~ /HGMD/;
      $ambiguity   = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
-  my $freq        = sprintf '%.2f', $variation->minor_allele_frequency;
+  my $freq        = $variation->minor_allele_frequency;
+     $freq        = sprintf ('%.2f', $freq) if ($freq != 0);
      $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
-  my $maf_helptip = $self->helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
+  my $maf_helptip = helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
   my $maf         = $variation->minor_allele;
      $maf         = sprintf(qq{<span class="_ht ht">%s</span>: <strong>%s</strong> (%s)},$maf_helptip,$freq,$maf) if $maf;
   my $html;

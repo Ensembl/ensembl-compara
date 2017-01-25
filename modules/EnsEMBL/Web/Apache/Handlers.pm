@@ -1,7 +1,8 @@
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -377,7 +378,7 @@ sub handler {
   my $path_seg  = [ grep { $_ ne '' } split '/', $path ];
 
   # other species-like path segments
-  if (!$species && grep /$path_seg->[0]/, qw(Multi common)) {
+  if (!$species && $path_seg->[0] && grep $_ eq $path_seg->[0], qw(Multi common)) {
     $species = shift @$path_seg;
   }
 
@@ -459,10 +460,10 @@ sub cleanupHandler {
   return OK if $r->subprocess_env('LOG_REQUEST_IGNORE');
 
   my $start_time  = $r->subprocess_env('LOG_REQUEST_START');
-  my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
+  my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME') || 0;
   my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
 
-  warn sprintf "REQUEST(%s): [served at %s by %s in %sms] %s\n", $r->method_number == M_POST ? 'P' : 'G', time_str($start_time), $$, int(1000*$time_taken) || '0', $uri;
+  warn sprintf "REQUEST(%s): [served at %s by %s in %sms] %s\n", $r->method_number == M_POST ? 'P' : 'G', time_str($start_time), $$, int(1000*$time_taken), $uri;
 
   if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
 

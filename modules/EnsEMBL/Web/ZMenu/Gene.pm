@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,21 +27,22 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
+  my $hub    = $self->hub;
   
   if ($self->click_location) {
-    my $hub    = $self->hub;
     my $object = $self->object;
-    
     push @{$self->{'features'}}, @{EnsEMBL::Web::ZMenu::Transcript->new($hub, $self->new_object('Transcript', $_, $object->__data))->{'features'}} for @{$object->Obj->get_all_Transcripts};
   } else {
-    return $self->object ? $self->_content : $self->_multi_genes_content;
+    my @genes = split(/,/, $hub->param('g'));
+    return scalar @genes > 1 ? $self->_multi_genes_content : $self->_content;
   }
 }
 
 sub _content {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $object      = $self->object;
+  my $object      = $self->object || $hub->core_object('gene') || $hub->create_object('gene');
+  return unless $object;
   my @xref        = $object->display_xref;
   my $gene_desc   = $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r;
   

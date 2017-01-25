@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::Location::MultiBottom;
 
 use strict;
+use warnings;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Constants;
@@ -56,11 +57,19 @@ sub content {
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $self->param('opt_pairwise_blastz'), LASTZ_NET => $self->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat'), LASTZ_PATCH => $self->param('opt_pairwise_lpatch'), LASTZ_RAW => $self->param('opt_pairwise_raw') };
-  my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $join_genes      = $self->param('opt_join_genes_bottom') eq 'on';
+  my $methods         = { 
+                          BLASTZ_NET => $self->param('opt_pairwise_blastz') || '',
+                          LASTZ_NET => $self->param('opt_pairwise_blastz') || '',
+                          TRANSLATED_BLAT_NET => $self->param('opt_pairwise_tblat') || '',
+                          LASTZ_PATCH => $self->param('opt_pairwise_lpatch') || '',
+                          LASTZ_RAW => $self->param('opt_pairwise_raw') || '',
+                          CACTUS_HAL_PW => $self->param('opt_pairwise_cactus_hal_pw') || ''
+                        };
 
-  my $compara_db      = $join_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
+  my $join_alignments = grep $_ ne 'off', values %$methods;
+  my $bridge_genes    = $self->param('opt_join_genes_bottom') eq 'on';
+
+  my $compara_db      = $bridge_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;
   my @images;
@@ -79,7 +88,6 @@ sub content {
       base_url        => $base_url,
       join_types      => $gene_join_types
     });
-
     # allows the 'set as primary' sprite to be shown on an single species view
     if ($image_config->get_parameter('can_set_as_primary') && $i != 1) {
       $image_config->set_parameters({
@@ -93,21 +101,22 @@ sub content {
     
     if ($i == 1) {
       $image_config->multi($methods, $seq_region_name, $i, $max, $slices, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
-      $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
+
+      $image_config->bridge_genes($i, $max, $slices->[$i]) if $bridge_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
       $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
-      $image_config->join_genes($i, $max, $slices->[0]) if $join_genes;
+      $image_config->bridge_genes($i, $max, $slices->[0]) if $bridge_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       
       push @images, $_->{'slice'}, $image_config;
       
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
-        if ($join_alignments || $join_genes) {
+        if ($join_alignments || $bridge_genes) {
           $primary_image_config = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_1_$i", species => $primary_species});
           
           $primary_image_config->set_parameters({
@@ -129,7 +138,7 @@ sub content {
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
-        $primary_image_config->join_genes(1, $max, map $slices->[$_], $i - 1, $i) if $join_genes;
+        $primary_image_config->bridge_genes(1, $max, map $slices->[$_], $i - 1, $i) if $bridge_genes;
         
         push @images, $primary_slice, $primary_image_config;
       }

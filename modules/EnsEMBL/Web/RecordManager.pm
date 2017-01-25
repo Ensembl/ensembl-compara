@@ -114,7 +114,7 @@ sub set_record_data {
   my $row = {};
   my $record;
 
-  for (@{$self->_record_column_names}) {
+  for (@{$self->record_column_names}) {
     $row->{$_} = delete $data->{$_} if exists $data->{$_};
   }
 
@@ -211,7 +211,7 @@ sub _get_record_data {
   my ($self, $record) = @_;
 
   my $data = $record->data->raw;
-  $data->{$_} = $record->$_ for @{$self->_record_column_names};
+  $data->{$_} = $record->$_ for @{$self->record_column_names};
 
   return $data;
 }
@@ -224,9 +224,8 @@ sub _save_record {
   return $record->save($args);
 }
 
-sub _record_column_names {
-  ## @private
-  ## Gets column names from the rose db meta object
+sub record_column_names {
+  ## Gets column names from the rose db meta object except the data column
   my $self = shift;
   $self->{'_record_column_names'} ||= [ grep $_ ne 'data', $self->record_rose_manager->object_class->meta->column_names ];
 }
@@ -268,7 +267,7 @@ sub _query_records {
     return 1;
   };
 
-  return $self->{'_record_set'}->filter($filter_callback, $query, { map { $_ => 1 } @{$self->_record_column_names} });
+  return $self->{'_record_set'}->filter($filter_callback, $query, { map { $_ => 1 } @{$self->record_column_names} });
 }
 
 sub _begin_transaction {
@@ -303,7 +302,7 @@ sub _recordset_class {
 
 sub DESTROY {
   # just rollback if no changes were stored permanently
-  warn sprintf "%s: Data not saved - doing a rollback on transaction\n", ref $_[0];
+  warn sprintf "%s: Data not saved - doing a rollback on transaction\n", ref $_[0] if $_[0]->{'_db'};
   $_[0]->{'_db'}->rollback if $_[0]->{'_db'};
 }
 

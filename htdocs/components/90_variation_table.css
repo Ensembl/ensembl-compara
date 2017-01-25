@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ div.score_bad     { background: red;    }
 div.score_neutral { background: blue;   }
 
 /* Population genotypes */
-div.allele_short     { float:left;width:105px; }
-div.allele_long      { float:left;width:120px; }
+div.allele_short     { float:left;width:110px; }
+div.allele_long      { float:left;width:125px; }
 div.genotype_short   { float:left;width:125px; }
 div.genotype_long    { float:left;width:140px; }
 div.allele_padding   { padding-right:6px; }

@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2017] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         rel     = (rel || '').split('-');
     var tab     = rel[0] ? this.elLk.tabs.children('a.' + rel[0]) : [];
     
-    if (tab.length) {
-      rel[0] = tab.data('panels').filter('.active').attr('id');
-    }
-    
     this.elLk.caption.html(caption).show();
     this.elLk.menu.hide();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
@@ -174,9 +170,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     } else {
       hash = (url.match(/#(.+)$/) || [])[1];
     }
-    
     id = id || (hash ? this.activePanel : 'modal_default');
-    
     var contentEl = this.elLk.content.filter('#' + id);
     
     this.elLk.content.hide();
@@ -189,6 +183,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     if (reload) {
       contentEl.empty();
+      Ensembl.EventManager.trigger('resetConfig');
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id, hash);
       this.changeTab(this.elLk.content.filter('#' + id).data('tab'));
@@ -196,10 +191,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       
       return;
     }
-    
+
     contentEl.html('<div class="spinner">Loading Content</div>').show();
-    
-    var params = Ensembl.prepareRequestParams(url);
+
+    // To decodeURIComponent for image exports
+    var decode = url.match(/decodeURL=1/) || 0
+
+    var params = Ensembl.prepareRequestParams(url, decode);
 
     this.xhr = $.ajax({
       url: params.requestURL,

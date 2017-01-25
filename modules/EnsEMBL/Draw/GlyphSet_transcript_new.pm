@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016] EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ sub features { # For genoverse
 sub _prepare_collapsed {
   my ($self,$ggdraw) = @_;
 
-  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $link = $self->get_parameter('compara') ? $self->my_config('bridge') : 0;
   my $this_db = ($self->core('db') eq $self->my_config('db'));
   my $selected_gene = $self->my_config('g') || $self->core('g');
   my $navigation = $self->my_config('navigation') || 'on';
@@ -108,7 +108,7 @@ sub _prepare_collapsed {
       $g->{'highlight'} = 'highlight2';
     }
     if($link and $gene_stable_id) {
-      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
+      $g->{'bridges'} = $self->calculate_collapsed_bridges($gene_stable_id);
     }
   }
 }
@@ -120,12 +120,12 @@ sub _prepare_expanded {
   my $target = $self->get_parameter('single_Transcript');
   my $selected_gene = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t') || $self->core('pt');
-  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $link = $self->get_parameter('compara') ? $self->my_config('bridge') : 0;
   my @ttdraw;
   foreach my $g (@$ggdraw) {
-    my $tjoins;
+    my $tbridges;
     if($link and $g->{'stable_id'}) {
-      $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
+      $tbridges = $self->calculate_expanded_bridges($g->{'stable_id'});
     }
     foreach my $t (@{$g->{'transcripts'}}) {
       next if $coding and $g->{'coding'} and !$t->{'coding'};
@@ -144,14 +144,14 @@ sub _prepare_expanded {
           $self->{'colours'}{'ccds_hi'}) {
         $t->{'highlight'} = $self->my_colour('ccds_hi');
       }
-      # do joins
-      $t->{'joins'} = [];
-      if($tjoins and $tjoins->{$t->{'stable_id'}}) {
-        my @joins = @{$tjoins->{$t->{'stable_id'}}};
+      # do bridges
+      $t->{'bridges'} = [];
+      if($tbridges and $tbridges->{$t->{'stable_id'}}) {
+        my @bridges = @{$tbridges->{$t->{'stable_id'}}};
         if($t->{'translation_stable_id'}) {
-          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
+          push @bridges,@{$tbridges->{$t->{'translation_stable_id'}}||[]};
         }
-        $t->{'joins'} = \@joins;
+        $t->{'bridges'} = \@bridges;
       }
       push @ttdraw,$t;
     } 
@@ -227,7 +227,7 @@ sub render_genes {
   return $self->render_text('gene') if $self->{'text_export'};
   
   my $ggdraw = $self->_get_data;
-  $self->_prepare_collapsed($ggdraw); # For highlights & joins
+  $self->_prepare_collapsed($ggdraw); # For highlights & bridges
   my $label_threshold = $self->my_config('label_threshold') || 50e3;
   my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
   $draw_labels = 0 if $label_threshold * 1001 < $length;
@@ -243,8 +243,8 @@ sub render_genes {
 ######################################################
 
 # Get homologous gene ids for given gene
-sub get_gene_joins {
-  my ($self, $gene, $species, $join_types, $source) = @_;
+sub get_gene_bridges {
+  my ($self, $gene, $species, $bridge_types, $source) = @_;
   
   my $config     = $self->{'config'};
   my $compara_db = $config->hub->database('compara');
@@ -259,7 +259,7 @@ sub get_gene_joins {
   my $method = $config->get_parameter('force_homologue') || $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
   my $func   = $source ? 'get_homologous_peptide_ids_from_gene' : 'get_homologous_gene_ids';
   
-  return $self->$func($species, $join_types, $compara_db->get_HomologyAdaptor, $qy_member, $method ? [ $method ] : undef);
+  return $self->$func($species, $bridge_types, $compara_db->get_HomologyAdaptor, $qy_member, $method ? [ $method ] : undef);
 }
   
 sub get_homologous_gene_ids {
@@ -283,11 +283,11 @@ sub get_homologous_gene_ids {
 
 # Get homologous protein ids for given gene
 sub get_homologous_peptide_ids_from_gene {
-  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
+  my ($self, $species, $bridge_types, $homology_adaptor, $qy_member, $method) = @_;
   my ($stable_id, @homologues, @homologue_genes);
   
   foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
-    my $colour_key = $join_types->{$homology->description};
+    my $colour_key = $bridge_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
     
@@ -311,7 +311,7 @@ sub filter_by_target {
   return $alt_alleles;
 }
 
-sub calculate_collapsed_joins {
+sub calculate_collapsed_bridges {
   my ($self,$gene_stable_id) = @_;
  
   my $hub = $self->{'config'}->hub;
@@ -323,17 +323,17 @@ sub calculate_collapsed_joins {
   my $next_species     = $self->my_config('next_species');
   my $previous_target  = $self->my_config('previous_target');
   my $next_target      = $self->my_config('next_target');
-  my $join_types       = $self->get_parameter('join_types');
-  my $alt_alleles     = $gene->get_all_alt_alleles;
-  my $seq_region_name = $gene->slice->seq_region_name;
+  my $bridge_types     = $self->get_parameter('join_types');
+  my $alt_alleles      = $gene->get_all_alt_alleles;
+  my $seq_region_name  = $gene->slice->seq_region_name;
   my ($target, @gene_tags);
   
-  my @joins;
+  my @bridges;
 
   if ($previous_species) {
-    for ($self->get_gene_joins($gene, $previous_species, $join_types)) {
+    for ($self->get_gene_bridges($gene, $previous_species, $bridge_types)) {
       $target = $previous_target ? ":$seq_region_name:$previous_target" : '';
-      push @joins,{
+      push @bridges,{
         key => "$gene_stable_id:$_->[0]$target",
         colour => $_->[1],
         legend => $_->[2]
@@ -344,9 +344,9 @@ sub calculate_collapsed_joins {
   }
 
   if ($next_species) {
-    for ($self->get_gene_joins($gene, $next_species, $join_types)) {
+    for ($self->get_gene_bridges($gene, $next_species, $bridge_types)) {
       $target = $next_target ? ":$next_target:$seq_region_name" : '';
-      push @joins,{
+      push @bridges,{
         key => "$_->[0]:$gene_stable_id$target",
         colour => $_->[1],
         legend => $_->[2]
@@ -357,16 +357,16 @@ sub calculate_collapsed_joins {
   }
   my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
   for (@gene_tags) {
-    push @joins,{
+    push @bridges,{
       key => $_,
       colour => $alt_alleles_col,
       legend => 'Alternative alleles'
     };
   }
-  return \@joins;
+  return \@bridges;
 }
 
-sub calculate_expanded_joins {
+sub calculate_expanded_bridges {
   my ($self,$gene_stable_id) = @_;
 
   my $hub = $self->{'config'}->hub;
@@ -378,7 +378,7 @@ sub calculate_expanded_joins {
   my $next_species     = $self->my_config('next_species');
   my $previous_target  = $self->my_config('previous_target');
   my $next_target      = $self->my_config('next_target');
-  my $join_types       = $self->get_parameter('join_types');
+  my $bridge_types       = $self->get_parameter('bridge_types');
   my $seq_region_name = $gene->slice->seq_region_name;
   my $alt_alleles = $gene->get_all_alt_alleles;
   my $alltrans    = $gene->get_all_Transcripts; # vega stuff to link alt-alleles on longest transcript
@@ -387,7 +387,7 @@ sub calculate_expanded_joins {
   my @transcripts;
   my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
  
-  my (@joins,%tjoins); 
+  my (@bridges,%tbridges); 
   my $tsid = $long_trans->stable_id;
   
   foreach my $gene (@$alt_alleles) {
@@ -397,18 +397,18 @@ sub calculate_expanded_joins {
   }
   
   if ($previous_species) {
-    my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_joins($gene, $previous_species, $join_types, 'ENSEMBLGENE');
+    my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_bridges($gene, $previous_species, $bridge_types, 'ENSEMBLGENE');
     
     if ($peptide_id) {
       foreach my $h (@$homologues) {
-        push @{$tjoins{$peptide_id}},{
+        push @{$tbridges{$peptide_id}},{
           key => "$h->[0]:$peptide_id",
           colour => $h->[1],
           legend => $h->[2],
         };
       }
       foreach my $h (@$homologue_genes) {
-        push @{$tjoins{$peptide_id}},{
+        push @{$tbridges{$peptide_id}},{
           key => "$gene_stable_id:$h->[0]",
           colour => $h->[1],
           legend => $h->[2],
@@ -418,7 +418,7 @@ sub calculate_expanded_joins {
   
     my $alts = $self->filter_by_target(\@transcripts,$previous_target); 
     foreach my $t (@$alts) {
-      push @joins,{
+      push @bridges,{
         key => join('=',$t->stable_id,$tsid),
         colour => $alt_alleles_col,
         legend => 'Alternative alleles'
@@ -427,17 +427,17 @@ sub calculate_expanded_joins {
   }
   
   if ($next_species) {
-    my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_joins($gene, $next_species, $join_types, 'ENSEMBLGENE');
+    my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_bridges($gene, $next_species, $bridge_types, 'ENSEMBLGENE');
     
     if ($peptide_id) {
       foreach my $h (@$homologues) {
-        push @{$tjoins{$peptide_id}},{
+        push @{$tbridges{$peptide_id}},{
           key => "$peptide_id:$h->[0]",
           colour => $h->[1],
         };
       }
       foreach my $h (@$homologue_genes) {
-        push @{$tjoins{$peptide_id}},{
+        push @{$tbridges{$peptide_id}},{
           key => "$h->[0]:$gene_stable_id",
           colour => $h->[1],
         };
@@ -446,15 +446,15 @@ sub calculate_expanded_joins {
    
     my $alts = $self->filter_by_target(\@transcripts,$next_target);
     foreach my $t (@$alts) {
-      push @joins,{
+      push @bridges,{
         key => join('=',$t->stable_id,$tsid),
         colour => $alt_alleles_col,
         legend => 'Alternative alleles'
       };
     }
   }
-  $tjoins{$tsid} = \@joins;
-  return \%tjoins;
+  $tbridges{$tsid} = \@bridges;
+  return \%tbridges;
 }
 
 sub only_attrib { return undef; }
