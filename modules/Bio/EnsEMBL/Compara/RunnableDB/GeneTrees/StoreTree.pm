@@ -629,6 +629,54 @@ sub call_hcs_all_trees {
     $self->param('gene_tree_id', $ini_gene_tree_id);
 }
 
+sub examl_exe_decision {
+    my $self = shift;
+    my $avx = `grep avx /proc/cpuinfo`;
 
+    if ($avx) {
+        $self->param( 'examl_exe', $self->param('examl_exe_avx') );
+        $avx = "AVX";
+    }
+    else {
+        $self->param( 'examl_exe', $self->param('examl_exe_sse3') );
+        $avx = "SSE3";
+    }
+
+    print "CPU type: $avx\n" if ( $self->debug );
+
+    return;
+
+}
+
+sub raxml_exe_decision {
+    my $self = shift;
+    my $no_cores = shift;
+
+    my $avx = `grep avx /proc/cpuinfo`;
+    if ($avx) {
+        $avx = "AVX";
+        if ( (defined $no_cores) && ($no_cores >= 2) ) {
+            $self->param( 'raxml_exe', $self->param('raxml_pthread_exe_avx') );
+        }
+        else{
+            $self->param( 'raxml_exe', $self->param('raxml_exe_avx') );
+        }    
+    }
+    else {
+        $self->param( 'examl_exe', $self->param('examl_exe_sse3') );
+        $avx = "SSE3";
+        if ( (defined $no_cores) && ($no_cores >= 2) ) {
+            $self->param( 'raxml_exe', $self->param('raxml_pthread_exe_sse3') );
+        }
+        else{
+            $self->param( 'raxml_exe', $self->param('raxml_exe_sse3') );
+        }
+    }
+
+    print "CPU type: $avx\n" if ( $self->debug );
+
+    return;
+
+}
 
 1;
