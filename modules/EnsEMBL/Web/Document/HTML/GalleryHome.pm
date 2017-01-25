@@ -42,6 +42,7 @@ sub render {
 
   if ($error && $error->{'message'}) {
     $html .= '<div style="width:95%" class="warning"><h3>Error</h3><div class="message-pad"><p>'.$error->{'message'}.'</p></div></div>';
+    $self->hub->session->delete_records({'type' => 'message', 'code' => 'gallery'});
   }
 
   $html .= '<div class="js_panel" id="site-gallery-home">
