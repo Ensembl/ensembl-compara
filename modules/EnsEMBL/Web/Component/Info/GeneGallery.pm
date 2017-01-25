@@ -232,7 +232,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_tree',
-                                  'caption'   => 'Tree showing homologues of this gene across many species',
+                                  'caption'   => 'Tree showing homologues of this gene across multiple species',
                                   'disabled'  => !$has_tree,
                                 },
             'Gene Tree Alignments' => {
@@ -241,7 +241,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_tree_align',
-                                  'caption'   => "Alignments of this gene's homologues across many species",
+                                  'caption'   => "Alignments of this gene's homologues across multiple species",
                                   'disabled'  => !$has_tree,
                                 },
             'Gene Gain/Loss Tree' => {
@@ -261,7 +261,7 @@ sub _get_pages {
                                   'img'       => 'gene_ortho_summary',
                                   'caption'   => 'Table showing numbers of different types of orthologue (1-to-1, 1-to-many, etc) in various taxonomic groups',
                                   'disabled'  => !$has_orthologs,
-                                  'message'   => 'This gene has no orthologues',
+                                  'message'   => 'It has no orthologues',
                                 },
             'Table of Orthologues' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -271,7 +271,7 @@ sub _get_pages {
                                   'img'       => 'gene_ortho_table',
                                   'caption'   => 'Table of orthologues in other species, with links to gene tree, alignments, etc.',
                                   'disabled'  => !$has_orthologs,
-                                  'message'   => 'This gene has no orthologues',
+                                  'message'   => 'It has no orthologues',
                                 },
             'Table of Paralogues' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -281,7 +281,7 @@ sub _get_pages {
                                   'img'       => 'gene_para_table',
                                   'caption'   => 'Table of within-species paralogues, with links to alignments of cDNAs and proteins',
                                   'disabled'  => !$has_paralogs,
-                                  'message'   => 'This gene has no paralogues',
+                                  'message'   => 'It has no paralogues',
                                 },
             'Protein Family Alignments' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -359,6 +359,7 @@ sub _get_pages {
                                   'img'       => 'gene_transcomp',
                                   'caption'   => 'Compare the sequence of two or more transcripts of a gene',
                                   'disabled'  => !$multi_trans,
+                                  'message'   => 'It has only one transcript',
                                 },
             'Gene Identifiers' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -439,7 +440,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'prot_variants',
                                   'caption'   => "Table of variants found within a transcript's protein",
-                                  'disabled'  => ($has_variation && !$prot_count),
+                                  'disabled'  => (!$has_variation || !$prot_count),
                                   'multi'     => $multi_prot,
                                 },
             'Transcript Identifiers' => {
@@ -486,6 +487,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'trans_haplotypes',
                                   'caption'   => 'Frequency of protein or CDS haplotypes across major population groups',
+                                  'disabled'  => (!$has_variation || !$prot_count),
                                   'multi'     => $multi_trans,
                                 },
           'Transcript Variant Image' => {
