@@ -61,7 +61,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'pvalue_lim' => 0.5,
+            'pvalue_lim' => 1,
            };
 }
 
