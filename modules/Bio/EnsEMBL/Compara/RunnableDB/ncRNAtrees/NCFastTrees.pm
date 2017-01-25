@@ -47,7 +47,7 @@ $ncfasttree->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This RunnableDB builds fast phylogenetic trees using RAxML-Light and FastTree2. It is useful in cases where the alignments are too big to build the usual RAxML trees in PrepareSecStructModels and SecStructModelTree.
+This RunnableDB builds fast phylogenetic trees using examl and FastTree2. It is useful in cases where the alignments are too big to build the usual examl trees in PrepareSecStructModels and SecStructModelTree.
 
 =head1 INHERITANCE TREE
 
@@ -83,8 +83,8 @@ sub fetch_input {
 
     ## FastTree2 uses all the cores available by default. We want to limit this because we may have already asked for a limited amount of cores in our resource description
     ## To limit this the OMP_NUM_THREADS env variable must be set
-    ## We assume that 'raxml_number_of_cores' param is set to the number of cores specified in the resource description
-    $ENV{'OMP_NUM_THREADS'} = $self->param('raxml_number_of_cores');
+    ## We assume that 'examl_number_of_cores' param is set to the number of cores specified in the resource description
+    $ENV{'OMP_NUM_THREADS'} = $self->param('examl_number_of_cores');
 
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
@@ -114,7 +114,8 @@ sub run {
 
     $self->_run_fasttree;
     $self->_run_parsimonator;
-    $self->_run_raxml_light;
+    $self->_run_parse_examl;
+    $self->_run_examl;
 }
 
 
@@ -180,35 +181,56 @@ sub _run_parsimonator {
     return;
 }
 
-sub _run_raxml_light {
+sub _run_parse_examl {
     my ($self) = @_;
     my $aln_file = $self->param('input_aln');
+    my $worker_temp_directory = $self->worker_temp_directory;
+    my $parse_examl_exe = $self->require_executable('parse_examl_exe');
+
+    my @splited_path = split "/", $aln_file; #we need to use split to get the actual file excluding the path as parse-examl does not like path in the name of the file 
+    my $aln_filename = $splited_path[-1];
+    my $cmd = $parse_examl_exe;
+    $cmd .= " -s $aln_filename";
+    $cmd .= " -m DNA";
+    $cmd .= " -n $aln_filename";
+
+    $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 });
+
+    my $binary_input_aln = $aln_file . ".binary";
+    $self->param('binary_input_aln', $binary_input_aln);
+
+    return;
+}
+
+sub _run_examl {
+    my ($self) = @_;
+    my $aln_file = $self->param('input_aln');
+    my $binary_input_aln = $self->param('binary_input_aln');
     my $parsimony_tree = $self->param('parsimony_tree_file');
     my $worker_temp_directory = $self->worker_temp_directory;
     my $root_id = $self->param('gene_tree')->root_id;
 
-    my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
+    my $examl_tag = $root_id . "." . $self->worker->process_id . ".examl";
+    $self->examl_exe_decision();
+    my $examl_exe = $self->require_executable('examl_exe');
+    my $examl_number_of_cores = $self->param('examl_number_of_cores');
 
-    my $raxmlLight_exe = $self->require_executable('raxmlLight_exe');
-    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
-
-    my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
+    my $tag = defined $self->param('examl') ? $self->param('examl') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
-    my $cmd = $raxmlLight_exe;
-    $cmd .= " -T $raxml_number_of_cores";
-    $cmd .= " -m GTRGAMMA";
-    $cmd .= " -s $aln_file";
+    my $cmd = "mpirun -np " . $examl_number_of_cores . " " . $examl_exe;
+    $cmd .= " -m GAMMA";
+    $cmd .= " -s $binary_input_aln";
     $cmd .= " -t $parsimony_tree";
-    $cmd .= " -n $raxmlight_tag";
+    $cmd .= " -n $examl_tag";
 
     $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 });
 
-    my $raxmlight_output = $worker_temp_directory . "/RAxML_result.${raxmlight_tag}";
-    $self->store_newick_into_nc_tree($tag, $raxmlight_output);
+    my $examl_output = $worker_temp_directory . "/ExaML_result.${examl_tag}";
+    $self->store_newick_into_nc_tree($tag, $examl_output);
 
     # Unlink run files
     my $temp_regexp = $self->worker_temp_directory;
-    unlink <*$raxmlight_tag*>;
+    unlink <*$examl_tag*>;
 
     return
 }
