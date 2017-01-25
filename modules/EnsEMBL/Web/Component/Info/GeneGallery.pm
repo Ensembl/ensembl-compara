@@ -102,6 +102,7 @@ sub _get_pages {
     my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_REGULATION'};
     my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
     my $has_populations = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $has_variation;
+    my $opt_variants    = $has_variation ? ', optionally with variants marked' : '';
 
     my ($sole_trans, $multi_trans, $multi_prot, $proteins);
     my $transcripts = $object->Obj->get_all_Transcripts || [];
@@ -201,6 +202,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_splice',
                                   'caption'   => '',
+                                  'disabled'  => $no_transcripts,
+                                  'message'   => 'No transcripts for this gene',
                                 },
             'Gene Alleles' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -217,7 +220,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_sequence',
-                                  'caption'   => 'DNA sequence of this gene, optionally with variants marked',
+                                  'caption'   => 'DNA sequence of this gene'.$opt_variants, 
                                 },
             'Secondary Structure' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -364,7 +367,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_transcomp',
-                                  'caption'   => 'Compare the sequence of two or more transcripts of a gene',
+                                  'caption'   => 'Compare the sequence of two or more transcripts of a gene'.$opt_variants,
                                   'disabled'  => !$multi_trans,
                                   'message'   => 'It has only one transcript',
                                 },
@@ -399,7 +402,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_exons',
-                                  'caption'   => 'Sequences of individual exons within a transcript',
+                                  'caption'   => 'Sequences of individual exons within a transcript'.$opt_variants,
                                   'multi'     => $multi_trans,
                                 },
             'Transcript cDNA' => {
@@ -408,7 +411,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_cdna',
-                                  'caption'   => 'cDNA sequence of an individual transcript',
+                                  'caption'   => 'cDNA sequence of an individual transcript'.$opt_variants,
                                   'multi'     => $multi_trans,
                                 },
             'Protein Sequence' => {
@@ -417,7 +420,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_protein_seq',
-                                  'caption'   => 'Protein sequence of an individual transcript',
+                                  'caption'   => 'Protein sequence of an individual transcript'.$opt_variants,
                                   'disabled'  => !$prot_count,
                                   'multi'     => $multi_prot,
                                 },
