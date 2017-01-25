@@ -41,15 +41,14 @@ sub render {
   my $error = $hub->session->get_record_data({'type' => 'message', 'code' => 'gallery'});
 
   if ($error && $error->{'message'}) {
-    $html .= sprintf(
-      '<div style="width:95%" class="warning"><h3>Error</h3><div class="message-pad"><p>%s</p></div></div>', $error->{'message'});
+    $html .= '<div style="width:95%" class="warning"><h3>Error</h3><div class="message-pad"><p>'.$error->{'message'}.'</p></div></div>';
   }
 
   $html .= '<div class="js_panel" id="site-gallery-home">
       <input type="hidden" class="panel_type" value="SiteGalleryHome">';
 
   my $form  = EnsEMBL::Web::Form->new({'id' => 'gallery_home', 'action' => $hub->url({qw(species Multi type Info action CheckGallery)}), 'name' => 'gallery_home'});
-  my $default_species = $hub->species_defs->ENSEMBL_PRIMARY_SPECIES || $species->[0]->{'value'};
+  my $default_species = $hub->param('species') || $hub->species_defs->ENSEMBL_PRIMARY_SPECIES || $species->[0]->{'value'};
 
   # species dropdown
   $form->add_field({

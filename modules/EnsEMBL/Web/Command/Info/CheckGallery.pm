@@ -84,18 +84,18 @@ sub process {
   else {
     my $object = $factory->object;
     unless ($object) {
-      $error = sprintf('%s %s could not be found in species %s. Please try again.', $data_type, $id, $common_name);
+      $error = sprintf('%s "%s" could not be found in species %s. Please try again.', $data_type, $id, $common_name);
     }
   }
 
   if ($error) {
-    $hub->session->add_data(
+    $hub->session->set_record_data({
                             'type'      => 'message',
                             'code'      => 'gallery',
                             'function'  => '_warning',
                             'message'   => $error,
-                            );  
-    $self->ajax_redirect('/gallery.html');
+                            });  
+    $self->ajax_redirect("/gallery.html?species=$species");
   }
   else { 
     $self->ajax_redirect($hub->url($url_params));
