@@ -99,6 +99,7 @@ sub _get_pages {
     my $has_tree        = ($avail->{'has_species_tree'} && $not_strain);
     my $has_orthologs   = ($avail->{'has_orthologs'} && $not_strain);
     my $has_paralogs    = ($avail->{'has_paralogs'} && $not_strain);
+    my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_REGULATION'};
     my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
     my $has_populations = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $has_variation;
 
@@ -344,6 +345,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_reg_image',
                                   'caption'   => 'Gene shown in context of regulatory features',
+                                  'disabled'  => !$avail->{'regulation'},
+                                  'message'   => 'This species has no regulatory build',
                                 },
             'Gene Regulation Table' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -352,6 +355,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_reg_table',
                                   'caption'   => 'Table of regulatory features associated with this gene',
+                                  'disabled'  => !$avail->{'regulation'},
+                                  'message'   => 'This species has no regulatory build',
                                 },
             'Transcript Comparison' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -461,6 +466,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'trans_oligo',
                                   'caption'   => 'List of oligo probes that map to a transcript of this gene',
+                                  'disabled'  => !$has_regulation,
+                                  'message'   => 'This species has no regulation database',
                                   'multi'     => $multi_trans,
                                 },
             'Transcript History' => {
