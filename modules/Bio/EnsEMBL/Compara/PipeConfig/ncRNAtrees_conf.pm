@@ -139,6 +139,19 @@ sub pipeline_analyses {
                            -meadow_type       => 'LOCAL',
                           );
 
+    my %raxml_parameters = (
+        'raxml_pthread_exe_sse3'     => $self->o('raxml_pthread_exe_sse3'),
+        'raxml_pthread_exe_avx'      => $self->o('raxml_pthread_exe_avx'),
+        'raxml_exe_sse3'             => $self->o('raxml_exe_sse3'),
+        'raxml_exe_avx'              => $self->o('raxml_exe_avx'),
+    );
+
+    my %examl_parameters = (
+        'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
+        'examl_exe_avx'         => $self->o('examl_exe_avx'),
+        'parse_examl_exe'       => $self->o('parse_examl_exe'),
+    );
+
     my $analyses_full_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_full_species_tree($self);
     my $analyses_binary_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self);
     my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);
@@ -254,7 +267,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                            'registry_dbs'   => [ $self->o('reg1'), $self->o('reg2') ],
+                            'registry_dbs'   => [ $self->o('reg1')],
             },
             -analysis_capacity => 10,
         },
@@ -598,7 +611,7 @@ sub pipeline_analyses {
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
              -analysis_capacity => $self->o('raxml_capacity'),
              -parameters => {
-                             'raxml_exe'             => $self->o('raxml_exe'),
+                             %raxml_parameters,
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
              -flow_into => {
@@ -611,7 +624,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
-                            'raxml_exe'             => $self->o('raxml_exe'),
+                            %raxml_parameters,
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                            },
             -rc_name => '2Gb_ncores_job',
@@ -621,13 +634,12 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
             -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
+                            %raxml_parameters,
                             'mafft_exe'             => $self->o('mafft_exe'),
-                            'raxml_exe'             => $self->o('raxml_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'prank_exe'             => $self->o('prank_exe'),
                            },
             -flow_into => {
-                           -2 => ['genomic_alignment_basement_himem'],
                            -1 => ['genomic_alignment_himem'],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
@@ -640,10 +652,10 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees',
              -analysis_capacity => $self->o('fast_trees_capacity'),
              -parameters => {
+                            %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
-                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
             -flow_into => {
                            -1 => ['fast_trees_himem'],
@@ -655,10 +667,10 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees',
              -analysis_capacity => $self->o('fast_trees_capacity'),
              -parameters => {
+                            %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
-                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
              -rc_name => '32Gb_long_ncores_job',
             },
@@ -668,9 +680,9 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
+                            %raxml_parameters,
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'mafft_exe' => $self->o('mafft_exe'),
-                            'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
                            },
@@ -679,7 +691,6 @@ sub pipeline_analyses {
                         3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                         -1 => [ 'genomic_alignment_hugemem' ],
-                        -2 => [ 'genomic_alignment_basement_himem' ],
                        },
         },
         {
@@ -687,9 +698,9 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
+                            %raxml_parameters,
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'mafft_exe' => $self->o('mafft_exe'),
-                            'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
                            },
@@ -697,26 +708,9 @@ sub pipeline_analyses {
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
-                        -2 => [ 'genomic_alignment_basement_himem' ],
                        },
         },
-        {
-         -logic_name => 'genomic_alignment_basement_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
-         -analysis_capacity => $self->o('genomic_alignment_capacity'),
-            -parameters => {
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
-                            'mafft_exe' => $self->o('mafft_exe'),
-                            'raxml_exe' => $self->o('raxml_exe'),
-                            'prank_exe' => $self->o('prank_exe'),
-                            'inhugemem' => 1,
-                           },
-         -rc_name => '8Gb_basement_ncores_job',
-         -flow_into => {
-                        3 => [ 'fast_trees' ],
-                        2 => [ 'genomic_tree_himem' ],
-                       },
-        },
+
 
             {
              -logic_name => 'genomic_tree',
@@ -801,7 +795,6 @@ sub pipeline_analyses {
                 },
             },
             -flow_into => {
-                1 => [ 'id_map_mlss_factory' ],
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
                 },
