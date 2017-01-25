@@ -84,7 +84,7 @@ sub default_options {
 
     # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
         # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        # 'ensembl_release'       => 68,
+         'ensembl_release'       => 87,
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
@@ -3289,7 +3289,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -flow_into => { 'homology_id_mapping' => INPUT_PLUS(), },
+            -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
         {   -logic_name => 'mlss_factory',
