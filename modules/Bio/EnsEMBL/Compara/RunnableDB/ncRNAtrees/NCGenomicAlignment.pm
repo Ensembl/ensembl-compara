@@ -206,10 +206,12 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_exe = $self->require_executable('raxml_exe');
-
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
+    
+    $self->raxml_exe_decision($raxml_number_of_cores);
+    my $raxml_exe = $self->require_executable('raxml_exe');
+
     my $cmd = $raxml_exe;
     $cmd .= " -p 12345";
     $cmd .= " -T $raxml_number_of_cores";
@@ -273,16 +275,16 @@ sub run_prank {
     my $prank_exe = $self->require_executable('prank_exe');
 
     my $cmd = $prank_exe;
-    # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
-    $cmd .= " -noxml -notree -once -f=Fasta";
+    # /software/ensembl/compara/prank/090707/src/prank -once -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
+    $cmd .= " -once -f=Fasta";
     $cmd .= " -t=$tree_file" if (defined $tree_file);
     $cmd .= " -o=$prank_output";
     $cmd .= " -d=$input_fasta";
     $self->run_command($cmd, { die_on_failure => 1 } );
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
-    print STDERR "Prank output : ${prank_output}.1.fas\n" if ($self->debug);
-    $self->param('prank_output',"${prank_output}.1.fas");
+    print STDERR "Prank output : ${prank_output}.best.fas\n" if ($self->debug);
+    $self->param('prank_output',"${prank_output}.best.fas");
     return;
 }
 
