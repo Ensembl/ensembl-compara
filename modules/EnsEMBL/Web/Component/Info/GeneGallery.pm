@@ -97,37 +97,44 @@ sub _get_pages {
     my $has_tree        = ($avail->{'has_species_tree'} && $not_strain);
     my $has_orthologs   = ($avail->{'has_orthologs'} && $not_strain);
     my $has_paralogs    = ($avail->{'has_paralogs'} && $not_strain);
+    my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
+    my $has_populations = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $has_variation;
 
-    my ($sole_trans, $multi_trans, $multi_prot);
-    my $prot_count      = 0;
-    if ($avail->{'multiple_transcripts'}) {
+    my ($sole_trans, $multi_trans, $multi_prot, $proteins);
+    my $transcripts = $object->Obj->get_all_Transcripts || [];
+
+    if (scalar @$transcripts > 1) {
       $multi_trans = {
                       'type'    => 'Transcript',
                       'param'   => 't',
                       'values'  => [{'value' => '', 'caption' => '-- Select transcript --'}],
                       };
-      $multi_prot = {
-                      'type'    => 'Protein',
-                      'param'   => 'p',
-                      'values'  => [{'value' => '', 'caption' => '-- Select protein --'}],
-                      };
     }
-    foreach my $t (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @{$object->Obj->get_all_Transcripts}) {
+
+    foreach my $t (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       if ($avail->{'multiple_transcripts'}) {
-        my $name = $t->external_name || $t->{'stable_id'};
-        $name .= sprintf ' (%s)', $t->biotype;
+        my $name = sprintf '%s (%s)', $t->external_name || $t->{'stable_id'}, $t->biotype;
         push @{$multi_trans->{'values'}}, {'value' => $t->stable_id, 'caption' => $name};
       }
       else {
         $sole_trans = $t->stable_id;
       }
-      if ($t->translation) {
-        $prot_count++;
-        my $id = $t->translation->stable_id;
-        push @{$multi_prot->{'values'}}, {'value' => $id, 'caption' => $id};
+      $proteins->{$t->stable_id} = $t->translation if $t->translation;
+    }
+    
+    my $prot_count = scalar keys %$proteins;
+    if ($prot_count > 1) {
+      $multi_prot = {
+                      'type'    => 'Protein',
+                      'param'   => 'p',
+                      'values'  => [{'value' => '', 'caption' => '-- Select protein --'}],
+                      };
+      foreach my $id (sort {$proteins->{$b}->length <=> $proteins->{$a}->length} keys %$proteins) { 
+        my $p     = $proteins->{$id};
+        my $text  = sprintf '%s (%s aa)', $p->stable_id, $p->length;
+        push @{$multi_prot->{'values'}}, {'value' => $id, 'caption' => $text};
       }
     }
-    $multi_prot = {} unless $prot_count > 1;
 
     return {
             'Scrolling Browser' => {
@@ -432,7 +439,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'prot_variants',
                                   'caption'   => "Table of variants found within a transcript's protein",
-                                  'disabled'  => !$prot_count,
+                                  'disabled'  => ($has_variation && !$prot_count),
                                   'multi'     => $multi_prot,
                                 },
             'Transcript Identifiers' => {
@@ -488,6 +495,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in an individual transcript',
+                                  'disabled'  => !$has_variation,
                                   'multi'     => $multi_trans,
                           },
           'Transcript Variant Table' => {
@@ -497,6 +505,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in an individual transcript',
+                                  'disabled'  => !$has_variation,
                                   'multi'     => $multi_trans,
                           },
           'Variant Image' => {
@@ -506,6 +515,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in this gene',
+                                  'disabled'  => !$has_variation,
                           },
           'Variant Table' => {
                                   'link_to'       => {'type'    => 'Gene',
@@ -514,6 +524,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in this gene',
+                                  'disabled'  => !$has_variation,
                           },
           'Structural Variant Image' => {
                                   'link_to'       => {'type'    => 'Gene',
@@ -522,6 +533,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'gene_sv_image',
                                   'caption'   => 'Image showing structural variants in this gene',
+                                  'disabled'  => !$avail->{'has_structural_variation'},
                           },
           'Structural Variant Table' => {
                                   'link_to'       => {'type'    => 'Gene',
@@ -530,22 +542,29 @@ sub _get_pages {
                                                       },
                                   'img'       => 'gene_sv_table',
                                   'caption'   => 'Table of all structural variants in this gene',
+                                  'disabled'  => !$avail->{'has_structural_variation'},
                           },
           'Population Comparison Image' => {
                                   'link_to'       => {'type'    => 'Transcript',
                                                       'action'  => 'Population/Image',
-                                                      'g'       => $g,
+                                                      't'       => $sole_trans,
                                                       },
                                   'img'       => 'population_image',
                                   'caption'   => 'Image showing variants across different populations',
+                                  'disabled'  => !$has_populations,
+                                  'message'   => 'This species has no strain populations',
+                                  'multi'     => $multi_trans,
                           },
           'Population Comparison Table' => {
                                   'link_to'       => {'type'    => 'Transcript',
                                                       'action'  => 'Population',
-                                                      'g'       => $g,
+                                                      't'       => $sole_trans,
                                                       },
                                   'img'       => 'population_table',
                                   'caption'   => 'Tables of variants within different populations',
+                                  'disabled'  => !$has_populations,
+                                  'message'   => 'This species has no strain populations',
+                                  'multi'     => $multi_trans,
                           },
 
             };
