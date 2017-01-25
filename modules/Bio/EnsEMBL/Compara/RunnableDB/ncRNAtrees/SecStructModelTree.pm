@@ -98,12 +98,13 @@ sub run {
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
     $self->param('raxml_tag', $raxml_tag);
 
-    my $raxml_exe = $self->require_executable('raxml_exe');
-
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
     my $cores = $self->param('raxml_number_of_cores');
+    $self->raxml_exe_decision($cores);
+    my $raxml_exe = $self->require_executable('raxml_exe');
+
     my $cmd = $raxml_exe;
     $cmd .= " -T $cores";
     $cmd .= " -m GTRGAMMA";
