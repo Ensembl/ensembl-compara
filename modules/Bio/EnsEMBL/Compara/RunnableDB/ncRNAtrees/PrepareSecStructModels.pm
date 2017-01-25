@@ -188,12 +188,11 @@ sub _run_bootstrap_raxml {
     return unless (defined($aln_file));
 
     my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
-
+    my $cores = $self->param('raxml_number_of_cores');
+    $self->raxml_exe_decision($cores);
     my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;
-
-    my $cores = $self->param('raxml_number_of_cores');
 
   my $cmd = $raxml_exe;
   $cmd .= " -p 12345";
