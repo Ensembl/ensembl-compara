@@ -146,6 +146,7 @@ sub parse_newick_into_tree
       elsif ($state == 3) { # optional : and distance
         if($token eq ':') {
           $token = next_token(\@char_array, "[,);");
+          chomp $token;
           $node->distance_to_parent($token);
           if($debug) { print("set distance: $token"); $node->print_node; }
           $token = next_token(\@char_array, ",);"); #move to , or )
