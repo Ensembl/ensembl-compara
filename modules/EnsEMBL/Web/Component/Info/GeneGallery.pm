@@ -548,6 +548,7 @@ sub _get_pages {
                                   'img'       => 'gene_sv_image',
                                   'caption'   => 'Image showing structural variants in this gene',
                                   'disabled'  => !$avail->{'has_structural_variation'},
+                                  'message'   => 'No structural variants for this species',
                           },
           'Structural Variant Table' => {
                                   'link_to'       => {'type'    => 'Gene',
@@ -557,6 +558,7 @@ sub _get_pages {
                                   'img'       => 'gene_sv_table',
                                   'caption'   => 'Table of all structural variants in this gene',
                                   'disabled'  => !$avail->{'has_structural_variation'},
+                                  'message'   => 'No structural variants for this species',
                           },
           'Population Comparison Image' => {
                                   'link_to'       => {'type'    => 'Transcript',
