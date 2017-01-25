@@ -190,7 +190,7 @@ gallery page
 #gallery-toc.stick  { position: fixed; top: 5px; }
 div.gallery-nav     { display:inline-block; padding: 4px; height: 100px; width:15%; 
                       vertical-align:middle; border:1px solid [[TINT_BORDER]]; }
-a.gallery-navlabel  { font-size: 150%; font-weight:bold; }
+.gallery-navlabel   { font-size: 150%; font-weight:bold; }
 
 div.gallery-group   { width: 800px; margin:0 auto; }
 div.gallery-preview { display:block; margin:0 12px 1em 12px; padding: 6px; height: 120px; 
@@ -202,6 +202,8 @@ div.gallery-preview .page-preview img { width:150px; height:100px;
                       z-index: 1; position: absolute; top: 0; left: 0; }
 div.gallery-preview .page-preview img.zoom { width:300px; height: 200px; cursor: pointer;
                                               z-index:10; top: -50px; left: -75px; }
+.gallery-navlabel.disabled,
+div.gallery-nav img.disabled,
 div.gallery-preview img.disabled { opacity: 0.3; filter: alpha(opacity=30); } 
 p.preview-caption   { display:inline-block; margin: 8px 0; width: 620px; }
 div.popup-form      { z-index:1000; background-color:[[PAGE_BG]];

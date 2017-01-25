@@ -62,7 +62,18 @@ sub format_gallery {
     ## Add this group to the navigation bar
     my $title = $group->{'title'};
     my $icon  = $group->{'icon'};
-    push @toc, sprintf('<div class="gallery-nav">
+    if ($group->{'disabled'}) {
+      push @toc, sprintf('<div class="gallery-nav">
+                          <span class="ht _ht">
+                            <span class="_ht_tip hidden">No %s views for this species</span>
+                            <img src="/i/48/%s" class="disabled" /><br />
+                            <span class="notext gallery-navlabel disabled">%s</span>
+                          </span>
+                        </div>', 
+                        lc($title), $icon, $title);
+    }
+    else {
+      push @toc, sprintf('<div class="gallery-nav">
                           <span class="ht _ht">
                             <span class="_ht_tip hidden">Jump to views associated with %s</span>
                             <img src="/i/48/%s" /><br />
@@ -70,6 +81,10 @@ sub format_gallery {
                           </span>
                         </div>', 
                           lc($title), $icon, lc($title), $title);
+    }
+
+    ## No point in showing individual views if whole section is unavailable
+    next if $group->{'disabled'};
 
     $previews .= '<div class="gallery-group">';
     $previews .= $self->_sub_header($title);

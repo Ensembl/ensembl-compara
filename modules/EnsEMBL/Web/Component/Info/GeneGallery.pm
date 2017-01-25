@@ -33,6 +33,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
+  my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
 
   my $layout = [
                 {
@@ -59,6 +60,7 @@ sub content {
                     'title' => 'Variants',
                     'pages' => ['Variant Image', 'Variant Table', 'Structural Variant Image', 'Structural Variant Table', 'Transcript Variant Image', 'Transcript Variant Table', 'Transcript Haplotypes', 'Protein Variants', 'Population Comparison Table', 'Population Comparison Image'],
                     'icon'  => 'variation.png',
+                    'disabled' => !$has_variation,
                   },
                 ];
 
