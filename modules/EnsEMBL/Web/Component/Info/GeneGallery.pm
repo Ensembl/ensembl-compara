@@ -99,7 +99,7 @@ sub _get_pages {
     my $has_tree        = ($avail->{'has_species_tree'} && $not_strain);
     my $has_orthologs   = ($avail->{'has_orthologs'} && $not_strain);
     my $has_paralogs    = ($avail->{'has_paralogs'} && $not_strain);
-    my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_REGULATION'};
+    my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_FUNCGEN'};
     my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
     my $has_populations = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $has_variation;
     my $opt_variants    = $has_variation ? ', optionally with variants marked' : '';
