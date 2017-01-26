@@ -98,7 +98,9 @@ sub default_options {
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
-        'first_n_big_families' => 2,    # these are known to be big, so no point trying in small memory
+        # Thresholds for Mafft resource-classes
+        'max_genes_lowmem_mafft'        =>  8000,
+        'max_genes_singlethread_mafft'  => 50000,
 
         # resource requirements:
         'blast_minibatch_size'    => 25,                         # we want to reach the 1hr average runtime per minibatch
@@ -109,6 +111,7 @@ sub default_options {
         'mafft_threads'           => 8,
         'lomafft_gigs'            => 4,
         'himafft_gigs'            => 64,
+        'humafft_gigs'            => 96,
         'blast_capacity'          => 5000,                       # work both as hive_capacity and resource-level throttle
         'mafft_capacity'          => 400,
         'cons_capacity'           => 100,
@@ -136,9 +139,12 @@ sub resource_classes {
         'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -q production-rh6 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', '-lifespan 1440' ] },
         'BigMcxload' => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -q production-rh6 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"' },
         'BigMcl'     => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -q production-rh6 -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
-        'BigMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('himafft_gigs') . '000  -n ' . $self->o('mafft_threads') . ' -q production-rh6 -R"select[ncpus>=' . $self->o('mafft_threads') . ' && mem>' .  $self->o('himafft_gigs') . '000] rusage[mem=' . $self->o('himafft_gigs') . '000] span[hosts=1]"' },
+        'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q production-rh6' },
+        'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q production-rh6 -R"span[hosts=1]"' },
         'LoMafft' => { 'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"' },
+        '500MegMem' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
         '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' }, 
+        '4GigMem' => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },
         '8GigMem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' }, 
         '16GigMem' => { 'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
     
