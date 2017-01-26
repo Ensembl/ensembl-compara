@@ -137,6 +137,7 @@ sub default_options {
             # Other parameters
             'raxml_number_of_cores' => 4,
             'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/cc21_EPO_low_86',
+            'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
 
             # connection parameters
 

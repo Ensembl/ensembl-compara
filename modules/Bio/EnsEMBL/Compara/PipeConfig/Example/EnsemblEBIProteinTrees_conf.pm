@@ -208,6 +208,8 @@ sub default_options {
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mm14_ensembl_compara_master',
+        # Production database (for the biotypes)
+        'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
 
         # Ensembl-specific databases
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
