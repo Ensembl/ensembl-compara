@@ -56,5 +56,5 @@ matrix:
     - perl: "5.14"
       env: COVERALLS=false
     - perl: "5.24"
-      env: COVERALLS=false
+      env: COVERALLS=true
 
