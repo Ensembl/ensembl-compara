@@ -92,7 +92,6 @@ sub _get_pages {
                           type    => $object->get_db,
                           gene    => $object->Obj,
                         })->[0];
-    my $no_transcripts  = !$avail->{'has_transcripts'};
     my $not_strain      = $hub->species_defs->IS_STRAIN_OF ? 0 : 1;
     my $has_gxa         = $object->gxa_check;
     my $has_rna         = ($avail->{'has_2ndary'} && $avail->{'can_r2r'}); 
@@ -202,8 +201,6 @@ sub _get_pages {
                                                  },
                                   'img'       => 'gene_splice',
                                   'caption'   => '',
-                                  'disabled'  => $no_transcripts,
-                                  'message'   => 'No transcripts for this gene',
                                 },
             'Gene Alleles' => {
                                   'link_to'   => {'type'      => 'Gene',
