@@ -72,26 +72,29 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-treefam-prod',        # where the pipeline database will be created
-        'port'          => '4401',                      # server port
+        'host'          => 'mysql-ens-compara-prod-2.ebi.ac.uk',        # where the pipeline database will be created
+        'port'          => '4522',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
+
+        #Binary source directory
+        'exe_dir'               =>  '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar',
 
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/',
-        'pantherScore_path'   => '/nfs/panda/ensembl/production/mateus/family_pipeline_binaries/pantherScore1.03',
-        'hmmer2_home'         => '/nfs/panda/ensembl/production/mateus/family_pipeline_binaries/hmmer-2.3.2/src/',
+        'hmm_library_basedir' => '/nfs/panda/ensembl/compara/mateus/compara/multi_division_hmm_lib/',
+        'pantherScore_path'   => '/nfs/panda/ensembl/compara/mateus/family_pipeline_binaries/pantherScore1.03',
+        'hmmer2_home'         => $self->o('exe_dir').'/hmmer2/2.3.2/bin/',
 
         # code directories:
-        'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin',
-        'mcl_bin_dir'    => '/nfs/panda/ensembl/production/mateus/family_pipeline_binaries/mcl-14-137/bin',
-        'mafft_root_dir' => '/nfs/panda/ensembl/production/mateus/family_pipeline_binaries/mafft-7.221',
+        'blast_bin_dir'  => $self->o('exe_dir').'/blast-2230/2.2.30/bin/',
+        'mcl_bin_dir'    => $self->o('exe_dir').'/mcl/14-137/bin/',
+        'mafft_root_dir' => $self->o('exe_dir').'/mafft/7.305/',
 
         # data directories:
-        'work_dir'      => '/nfs/panda/ensembl/production/mateus/compara/' . $self->o( 'ENV', 'USER' ) . '/' . $self->o('pipeline_name'),
-        'warehouse_dir' => '/panfs/nobackup/production/ensembl/mateus/families/',            # ToDo: move to a Compara-wide warehouse location
+        'work_dir'      => '/nfs/panda/ensembl/compara/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
+        'warehouse_dir' => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/',
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
@@ -112,10 +115,14 @@ sub default_options {
         'HMMer_classify_capacity' => 1500,
 
         # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
+        'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #release# - 1)expr#',
+
+        # Protein Tree database
+        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-2:4522/mateus_protein_trees_87',
 
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://admin:' . $self->o('password') . '@mysql-treefam-prod:4401/mateus_compara_master', };
+        'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
+
 } ## end sub default_options
 
 sub resource_classes {
