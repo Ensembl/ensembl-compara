@@ -54,6 +54,9 @@ sub default_options {
         'import_altalleles_as_homologies_capacity'  => '300',
         'update_capacity'                           => '5',
 
+        #Software dependencies
+        'mafft_home'            => '/software/ensembl/compara/mafft-7.113/',
+
     };
 }
 
@@ -66,15 +69,25 @@ sub hive_meta_table {
 }
 
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'mafft_home'    => $self->o('mafft_home'),
+    }
+}
+
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        'default_w_reg' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+        'default_w_reg' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
     };
 }
 
@@ -123,7 +136,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
             -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
             -parameters => {
-                'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
                 'production_db_url' => $self->o('production_db_url'),
             },
              -flow_into => {
@@ -135,9 +147,6 @@ sub pipeline_analyses {
         {   -logic_name => 'import_altalleles_as_homologies_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
             -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
-            -parameters => {
-                'mafft_home' => '/software/ensembl/compara/mafft-7.113/',
-            },
             -rc_name    => 'patch_import_himem',
         },
 
