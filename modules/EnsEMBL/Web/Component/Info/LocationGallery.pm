@@ -77,16 +77,17 @@ sub _get_pages {
                                                   'action'  => 'Genome',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_genome',
+                                  'img'       => 'location_karyotype',
                                   'caption'   => 'View the entire karyotype for this species, and add pointers for individual genes',
                                   'disabled'  => $no_chromosomes,
+                                  'message'   => 'This species has not been assembled into chromosomes',
                                 },
             'Assembly Information' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Genome',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_statistics',
+                                  'img'       => 'location_stats',
                                   'caption'   => 'Tables displaying the length of this genome, gene counts, and other statistics'
                                 },
             'Chromosome Image' => {
@@ -102,7 +103,7 @@ sub _get_pages {
                                                   'action'  => 'Chromosome',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_chromosome',
+                                  'img'       => 'location_chrstats',
                                   'caption'   => 'Table displaying the length of this chromosome, gene counts, and other statistics'
                                 },
             'Region Overview' => {
@@ -169,7 +170,7 @@ sub _get_pages {
                                                   'action'    => 'Compara_Alignments',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_aligntree',
+                                  'img'       => 'location_align',
                                   'caption'   => 'View the sequence of your region aligned to that of one or more other species',
                                 },
             'Region Comparison' => {
@@ -177,7 +178,7 @@ sub _get_pages {
                                                   'action'  => 'Multi',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_comparison',
+                                  'img'       => 'location_compare',
                                   'caption'   => '',
                                 },
             'Linkage Data' => {
@@ -185,7 +186,7 @@ sub _get_pages {
                                                   'action'  => 'HighLD',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_ld',
+                                  'img'       => 'variation_ld_image',
                                   'caption'   => 'Show LD values for your region in one or more populations',
                                 },
 
