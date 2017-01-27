@@ -71,8 +71,8 @@ sub _get_pages {
       $no_synteny = 1 unless scalar keys %{$synteny_hash{$hub->species} || {}};
     }
 
-    my $opt_variants = $hub->species_defs->databases->{'DATABASE_VARIATION'} 
-                        ? ', optionally with variants marked' : '';
+    my $has_variation = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
+    my $opt_variants  = $has_variation ? ', optionally with variants marked' : '';
 
     return {
             'Karyotype' => {
@@ -100,6 +100,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'location_chromosome',
                                   'caption'   => 'View gene and variation densities along the entire genome',
+                                  'disabled'  => $no_chromosomes,
+                                  'message'   => 'This species has not been assembled into chromosomes',
                                 },
             'Chromosome Statistics' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -107,7 +109,9 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_chrstats',
-                                  'caption'   => 'Table displaying the length of this chromosome, gene counts, and other statistics'
+                                  'caption'   => 'Table displaying the length of this chromosome, gene counts, and other statistics',
+                                  'disabled'  => $no_chromosomes,
+                                  'message'   => 'This species has not been assembled into chromosomes',
                                 },
             'Region Overview' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -141,6 +145,7 @@ sub _get_pages {
                                   'img'       => 'location_synteny',
                                   'caption'   => 'Display synteny between your chosen region and one other species',
                                   'disabled'  => $no_synteny,
+                                  'message'   => 'No synteny data for this species',
                                 },
             'Synteny Gene Table' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -150,6 +155,7 @@ sub _get_pages {
                                   'img'       => 'location_synteny_genes',
                                   'caption'   => 'Table of homologous genes in the chosen region',
                                   'disabled'  => $no_synteny,
+                                  'message'   => 'No synteny data for this species',
                                 },
             'Alignment Image' => {
                                   'link_to'   => {'type'      => 'Location',
@@ -183,6 +189,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'variation_ld_image',
                                   'caption'   => 'Show LD values for your region in one or more populations',
+                                  'disabled'  => !$has_variation,
+                                  'message'   => 'No variation data for this species',
                                 },
 
             };
