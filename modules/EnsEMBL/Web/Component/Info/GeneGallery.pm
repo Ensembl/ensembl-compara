@@ -33,7 +33,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
-  my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
+  my $variation_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
 
   my $layout = [
                 {
@@ -60,7 +60,7 @@ sub content {
                     'title' => 'Variants',
                     'pages' => ['Variant Image', 'Variant Table', 'Structural Variant Image', 'Structural Variant Table', 'Transcript Variant Image', 'Transcript Variant Table', 'Transcript Haplotypes', 'Protein Variants', 'Population Comparison Table', 'Population Comparison Image'],
                     'icon'  => 'variation.png',
-                    'disabled' => !$has_variation,
+                    'disabled' => !$variation_db,
                   },
                 ];
 
@@ -99,9 +99,9 @@ sub _get_pages {
     my $has_orthologs   = ($avail->{'has_orthologs'} && $not_strain);
     my $has_paralogs    = ($avail->{'has_paralogs'} && $not_strain);
     my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_FUNCGEN'};
-    my $has_variation   = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
-    my $has_populations = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $has_variation;
-    my $opt_variants    = $has_variation ? ', optionally with variants marked' : '';
+    my $variation_db    = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+    my $has_populations = $variation_db->{'#STRAINS'} if $variation_db ? 1 : 0;
+    my $opt_variants    = $variation_db ? ', optionally with variants marked' : '';
 
     my ($sole_trans, $multi_trans, $multi_prot, $proteins);
     my $transcripts = $object->Obj->get_all_Transcripts || [];
@@ -448,7 +448,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'prot_variants',
                                   'caption'   => "Table of variants found within a transcript's protein",
-                                  'disabled'  => (!$has_variation || !$prot_count),
+                                  'disabled'  => (!$variation_db || !$prot_count),
                                   'multi'     => $multi_prot,
                                 },
             'Transcript Identifiers' => {
@@ -497,7 +497,7 @@ sub _get_pages {
                                                  },
                                   'img'       => 'trans_haplotypes',
                                   'caption'   => 'Frequency of protein or CDS haplotypes across major population groups',
-                                  'disabled'  => (!$has_variation || !$prot_count),
+                                  'disabled'  => (!$variation_db || !$prot_count),
                                   'multi'     => $multi_trans,
                                 },
           'Transcript Variant Image' => {
@@ -507,7 +507,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in an individual transcript',
-                                  'disabled'  => !$has_variation,
+                                  'disabled'  => !$variation_db,
                                   'multi'     => $multi_trans,
                           },
           'Transcript Variant Table' => {
@@ -517,7 +517,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in an individual transcript',
-                                  'disabled'  => !$has_variation,
+                                  'disabled'  => !$variation_db,
                                   'multi'     => $multi_trans,
                           },
           'Variant Image' => {
@@ -527,7 +527,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_image',
                                   'caption'   => 'Image showing all variants in this gene',
-                                  'disabled'  => !$has_variation,
+                                  'disabled'  => !$variation_db,
                           },
           'Variant Table' => {
                                   'link_to'       => {'type'    => 'Gene',
@@ -536,7 +536,7 @@ sub _get_pages {
                                                       },
                                   'img'       => 'variation_gene_table',
                                   'caption'   => 'Table of all variants in this gene',
-                                  'disabled'  => !$has_variation,
+                                  'disabled'  => !$variation_db,
                           },
           'Structural Variant Image' => {
                                   'link_to'       => {'type'    => 'Gene',

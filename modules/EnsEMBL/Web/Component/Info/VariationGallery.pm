@@ -229,7 +229,10 @@ sub _get_pages {
       $no_phenotype = 1;
     }
     my $no_gene_or_phen = 1 if ($no_gene && $no_phenotype);
-    my $has_strains = $hub->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
+    my $variation_db    = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+    my $has_strains     = $variation_db->{'#STRAINS'} if $variation_db;
+    my $has_LD          = ($variation_db && $variation_db->{'DEFAULT_LD_POP'}) ? 1 : 0;
+
 
     return {'Region in Detail' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -481,7 +484,8 @@ sub _get_pages {
                                   'img'       => 'variation_ld_image',
                                   'caption'   => 'Linkage disequilibrium plot in a region',
                                   'multi'     => $multi_location,  
-                                  'disabled'  => $no_location,  
+                                  'disabled'  => !$has_LD,  
+                                  'message'   => 'No LD data for this species',
                                 },
           'LD Table' => {
                                   'link_to'     => {'type'    => 'Variation',
@@ -490,6 +494,8 @@ sub _get_pages {
                                                     },
                                   'img'     => 'variation_ld_table',
                                   'caption' => 'Linkage disequilibrium with your variant',
+                                  'disabled'  => !$has_LD,  
+                                  'message'   => 'No LD data for this species',
                                 },
           'LD Manhattan Plot' => {
                                   'link_to'     => {'type'    => 'Variation',
@@ -498,6 +504,8 @@ sub _get_pages {
                                                     },
                                   'img'     => 'variation_ld_manhattan',
                                   'caption' => 'Linkage disequilibrium Manhattan plot around a chosen variant',
+                                  'disabled'  => !$has_LD,  
+                                  'message'   => 'No LD data for this species',
                                 },
           'Resequencing' => {
                                   'link_to'       => {'type'    => 'Location',

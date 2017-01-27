@@ -71,8 +71,9 @@ sub _get_pages {
       $no_synteny = 1 unless scalar keys %{$synteny_hash{$hub->species} || {}};
     }
 
-    my $has_variation = !!$hub->species_defs->databases->{'DATABASE_VARIATION'};
-    my $opt_variants  = $has_variation ? ', optionally with variants marked' : '';
+    my $variation_db  = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+    my $opt_variants  = $variation_db ? ', optionally with variants marked' : '';
+    my $has_LD        = ($variation_db && $variation_db->{'DEFAULT_LD_POP'}) ? 1 : 0;
 
     return {
             'Karyotype' => {
@@ -189,8 +190,8 @@ sub _get_pages {
                                                  },
                                   'img'       => 'variation_ld_image',
                                   'caption'   => 'Show LD values for your region in one or more populations',
-                                  'disabled'  => !$has_variation,
-                                  'message'   => 'No variation data for this species',
+                                  'disabled'  => !$has_LD,
+                                  'message'   => 'No LD data for this species',
                                 },
 
             };
