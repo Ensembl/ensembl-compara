@@ -82,7 +82,7 @@ sub get_redirect_uri {
   }
 
   ## Fix URL for V/SV Explore pages
-  if ($uri =~ m|/Variation/Summary|) {
+  if ($uri =~ m|Variation/Summary|) {
     return $uri =~ s/Summary/Explore/r;
   }
 
