@@ -71,6 +71,9 @@ sub _get_pages {
       $no_synteny = 1 unless scalar keys %{$synteny_hash{$hub->species} || {}};
     }
 
+    my $opt_variants = $hub->species_defs->databases->{'DATABASE_VARIATION'} 
+                        ? ', optionally with variants marked' : '';
+
     return {
             'Karyotype' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -144,7 +147,7 @@ sub _get_pages {
                                                   'action'  => 'Synteny',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_synteny',
+                                  'img'       => 'location_synteny_genes',
                                   'caption'   => 'Table of homologous genes in the chosen region',
                                   'disabled'  => $no_synteny,
                                 },
@@ -154,24 +157,16 @@ sub _get_pages {
                                                   'function'  => 'Image',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_alignimage',
+                                  'img'       => 'location_align',
                                   'caption'   => 'Align your region with one or more species, displaying gaps in the alignment',
-                                },
-            'Alignment Tree' => {
-                                  'link_to'   => {'type'      => 'Location',
-                                                  'action'    => 'Compara_Alignments',
-                                                  'r'      => $r,
-                                                 },
-                                  'img'       => 'location_aligntree',
-                                  'caption'   => 'View a tree of alignment blocks between your region and one or more other species',
                                 },
             'Aligned Sequence' => {
                                   'link_to'   => {'type'      => 'Location',
                                                   'action'    => 'Compara_Alignments',
                                                   'r'      => $r,
                                                  },
-                                  'img'       => 'location_align',
-                                  'caption'   => 'View the sequence of your region aligned to that of one or more other species',
+                                  'img'       => 'location_aligntext',
+                                  'caption'   => 'View the sequence of your region aligned to that of one or more other species'.$opt_variants,
                                 },
             'Region Comparison' => {
                                   'link_to'   => {'type'    => 'Location',
