@@ -154,8 +154,8 @@ sub import {
   load("Bio::EnsEMBL::IO::ColumnBasedParser",1);
   load("Bio::EnsEMBL::IO::Object::ColumnBasedGeneric",1);
   load("Bio::EnsEMBL::IO::Parser::BaseVCF4",1);
-  load("Bio::EnsEMBL::IO::Parser::VCF4Tabix",1);
-  load("Bio::EnsEMBL::IO::TabixParser",1);
+ # load("Bio::EnsEMBL::IO::Parser::VCF4Tabix",1);
+ # load("Bio::EnsEMBL::IO::TabixParser",1);
   load("Bio::EnsEMBL::IO::TextParser",1);
   load("Bio::EnsEMBL::OntologyXref",1);
   load("Bio::EnsEMBL::ProteinFeature",1);
