@@ -37,7 +37,7 @@ sub content {
   my $layout = [
                   {
                     'title' => 'Location',
-                    'pages' => ['Karyotype', 'Assembly information', 'Chromosome image', 'Chromosome statistics', 'Region overview', 'Scrolling browser', 'Region in Detail', 'Synteny image', 'Synteny gene table', 'Alignment image', 'Alignment tree', 'Aligned sequence', 'Region comparison', 'Linkage data'],
+                    'pages' => ['Karyotype', 'Assembly Information', 'Chromosome Image', 'Chromosome Statistics', 'Region Overview', 'Scrolling Browser', 'Region in Detail', 'Synteny Image', 'Synteny Gene Table', 'Alignment Image', 'Alignment Tree', 'Aligned Sequence', 'Region Comparison', 'Linkage Data'],
                     'icon'  => 'karyotype.png',
                     'hide' => 1, ## Only one category, so don't show navigation bar
                   },
@@ -81,7 +81,7 @@ sub _get_pages {
                                   'caption'   => 'View the entire karyotype for this species, and add pointers for individual genes',
                                   'disabled'  => $no_chromosomes,
                                 },
-            'Assembly information' => {
+            'Assembly Information' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Genome',
                                                   'r'      => $r,
@@ -89,7 +89,7 @@ sub _get_pages {
                                   'img'       => 'location_statistics',
                                   'caption'   => 'Tables displaying the length of this genome, gene counts, and other statistics'
                                 },
-            'Chromosome image' => {
+            'Chromosome Image' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Chromosome',
                                                   'r'      => $r,
@@ -97,7 +97,7 @@ sub _get_pages {
                                   'img'       => 'location_chromosome',
                                   'caption'   => 'View gene and variation densities along the entire genome',
                                 },
-            'Chromosome statistics' => {
+            'Chromosome Statistics' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Chromosome',
                                                   'r'      => $r,
@@ -105,7 +105,7 @@ sub _get_pages {
                                   'img'       => 'location_chromosome',
                                   'caption'   => 'Table displaying the length of this chromosome, gene counts, and other statistics'
                                 },
-            'Region overview' => {
+            'Region Overview' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Overview',
                                                   'r'      => $r,
@@ -113,7 +113,7 @@ sub _get_pages {
                                   'img'       => 'location_overview',
                                   'caption'   => 'Show major features on a large region',
                                 },
-            'Scrolling browser' => {
+            'Scrolling Browser' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'View',
                                                   'r'      => $r,
@@ -129,7 +129,7 @@ sub _get_pages {
                                   'img'       => 'location_view',
                                   'caption'   => 'Zoom in on your region of interest and display your own data alongside Ensembl tracks',
                                 },
-            'Synteny image' => {
+            'Synteny Image' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Synteny',
                                                   'r'      => $r,
@@ -138,7 +138,7 @@ sub _get_pages {
                                   'caption'   => 'Display synteny between your chosen region and one other species',
                                   'disabled'  => $no_synteny,
                                 },
-            'Synteny gene table' => {
+            'Synteny Gene Table' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Synteny',
                                                   'r'      => $r,
@@ -147,7 +147,7 @@ sub _get_pages {
                                   'caption'   => 'Table of homologous genes in the chosen region',
                                   'disabled'  => $no_synteny,
                                 },
-            'Alignment image' => {
+            'Alignment Image' => {
                                   'link_to'   => {'type'      => 'Location',
                                                   'action'    => 'Compara_Alignments',
                                                   'function'  => 'Image',
@@ -156,7 +156,7 @@ sub _get_pages {
                                   'img'       => 'location_alignimage',
                                   'caption'   => 'Align your region with one or more species, displaying gaps in the alignment',
                                 },
-            'Alignment tree' => {
+            'Alignment Tree' => {
                                   'link_to'   => {'type'      => 'Location',
                                                   'action'    => 'Compara_Alignments',
                                                   'r'      => $r,
@@ -164,7 +164,7 @@ sub _get_pages {
                                   'img'       => 'location_aligntree',
                                   'caption'   => 'View a tree of alignment blocks between your region and one or more other species',
                                 },
-            'Aligned sequence' => {
+            'Aligned Sequence' => {
                                   'link_to'   => {'type'      => 'Location',
                                                   'action'    => 'Compara_Alignments',
                                                   'r'      => $r,
@@ -172,7 +172,7 @@ sub _get_pages {
                                   'img'       => 'location_aligntree',
                                   'caption'   => 'View the sequence of your region aligned to that of one or more other species',
                                 },
-            'Region comparison' => {
+            'Region Comparison' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'Multi',
                                                   'r'      => $r,
@@ -180,7 +180,7 @@ sub _get_pages {
                                   'img'       => 'location_comparison',
                                   'caption'   => '',
                                 },
-            'Linkage data' => {
+            'Linkage Data' => {
                                   'link_to'   => {'type'    => 'Location',
                                                   'action'  => 'HighLD',
                                                   'r'      => $r,
