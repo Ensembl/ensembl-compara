@@ -49,7 +49,7 @@ sub _init {
       
       #making sure not duplicating legend (issue arised with gencode basic track)
       next if(grep(/^$legend$/, @legend_check));
-      push (\@legend_check, $legend);
+      push @legend_check, $legend;
       
       my $section = undef;
       if(ref($colour) eq 'ARRAY') {

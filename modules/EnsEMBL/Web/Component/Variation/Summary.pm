@@ -889,7 +889,7 @@ sub snpedia {
                       %s
                     </div>
                   ',
-        shift $snpedia_wiki_results->{desc},
+        shift @{$snpedia_wiki_results->{desc}},
         $show ? 'open' : 'closed',        
         $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',

@@ -820,7 +820,7 @@ sub features {
     my $name = $genomic_align->genome_db->name;
 
     #Get the cigar_line for the GenomicAlignGroup (passed in via highlights structure)
-    my $cigar_line = shift $slice_cigar_lines;
+    my $cigar_line = shift @$slice_cigar_lines;
 
     #Only display cigar glyphs if there is an alignment in this region
     if ($cigar_line =~ /M/) {
