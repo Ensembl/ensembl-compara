@@ -53,7 +53,7 @@ sub content {
                   },
                 {
                     'title' => 'Comparative Genomics',
-                    'pages' => ['Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Protein Family Alignments', 'Gene Family', 'Aligned Sequence', 'Region Comparison'],
+                    'pages' => ['Gene Tree', 'Gene Tree Alignments', 'Gene Gain/Loss Tree', 'Summary of Orthologues', 'Table of Orthologues', 'Summary of Paralogues', 'Table of Paralogues', 'Protein Family Alignments', 'Gene Family', 'Alignment Image', 'Region Comparison'],
                     'icon'  => 'compara.png',
                 },
                   {
@@ -167,9 +167,10 @@ sub _get_pages {
                                   'img'       => 'gene_summary_image',
                                   'caption'   => 'View this gene in its genomic location',
                                 },
-            'Aligned Sequence' => {
+            'Alignment Image' => {
                                   'link_to'   => {'type'      => 'Location',
                                                   'action'    => 'Compara_Alignments',
+                                                  'function'  => 'Image',
                                                   'r'      => $r,
                                                   'g'      => $g,
                                                  },
