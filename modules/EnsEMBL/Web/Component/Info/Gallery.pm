@@ -72,6 +72,9 @@ sub format_gallery {
                         </div>', 
                         lc($title), $icon, $title);
     }
+    elsif ($group->{'hide'}) {
+      ## Do nothing
+    }
     else {
       push @toc, sprintf('<div class="gallery-nav">
                           <span class="ht _ht">
@@ -187,7 +190,7 @@ sub format_gallery {
 
   my $page_header = sprintf('<h1>%s views for %s data</h1>', scalar keys %page_count, $hub->param('data_type'));
 
-  my $toc_string = sprintf('<div id="gallery-toc" class="center">%s</div>', join(' ', @toc));
+  my $toc_string = scalar @toc ? sprintf('<div id="gallery-toc" class="center">%s</div>', join(' ', @toc)) : '';
 
   return qq(
             <div class="gallery js_panel" id="site-gallery">

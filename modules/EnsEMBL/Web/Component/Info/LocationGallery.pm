@@ -39,6 +39,7 @@ sub content {
                     'title' => 'Location',
                     'pages' => ['Karyotype', 'Assembly information', 'Chromosome image', 'Chromosome statistics', 'Region overview', 'Scrolling browser', 'Region in Detail', 'Synteny image', 'Synteny gene table', 'Alignment image', 'Alignment tree', 'Aligned sequence', 'Region comparison', 'Linkage data'],
                     'icon'  => 'karyotype.png',
+                    'hide' => 1, ## Only one category, so don't show navigation bar
                   },
                 ];
 
