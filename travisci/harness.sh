@@ -35,7 +35,7 @@ rt1=$?
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${CORE_SCRIPTS[@]}"
 rt2=$?
 
-if [[ "$TRAVIS_PERL_VERSION" < "5.14" ]]; then
+if [[ "$TRAVIS_PERL_VERSION" != "5.14" ]]; then
   echo "Skipping ensembl-rest test suite"
   rt3=0
 else
