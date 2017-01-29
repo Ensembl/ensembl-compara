@@ -222,7 +222,7 @@ sub store {
                               canonical_member_id,
                               taxon_id, genome_db_id, biotype_group, description,
                               dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, display_label)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
   my $insertCount = $sth->execute($member->stable_id,
                   $member->version,
