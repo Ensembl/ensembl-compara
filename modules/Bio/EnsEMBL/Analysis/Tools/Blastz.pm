@@ -66,8 +66,6 @@ use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange); 
 
 
-our @ISA = qw(Bio::EnsEMBL::Root);
-
 sub new {
   my ($class,@args) = @_;
   my $self = bless {}, $class;
