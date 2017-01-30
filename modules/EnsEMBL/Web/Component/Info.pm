@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::Info;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
@@ -75,5 +76,6 @@ sub assembly_dropdown {
 
   return $html;
 }
+
 
 1;

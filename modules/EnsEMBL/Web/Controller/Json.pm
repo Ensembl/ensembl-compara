@@ -83,4 +83,13 @@ sub new {
   return $self;
 }
 
+sub builder {
+  my $self = shift;
+
+  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new({
+    hub               => $self->hub,
+    object_params     => $self->OBJECT_PARAMS
+  });
+}
+
 1;

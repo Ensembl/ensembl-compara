@@ -24,6 +24,7 @@ package EnsEMBL::Web::Apache::Handlers;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use Apache2::Const qw(:common :http :methods);
 use Apache2::SizeLimit;

@@ -108,6 +108,13 @@ sub counts {
 }
 sub count_ega {
   my $self = shift;
+  my @ega_links = @{$self->get_ega_links||[]};
+  my $counts = scalar @ega_links || 0;
+  return $counts;
+}
+
+sub get_ega_links {
+  my $self = shift;
   my @ega_links = @{$self->get_external_data};
 
   my $vf = $self->param('vf');
@@ -118,9 +125,7 @@ sub count_ega {
     my $end   = $vf_object->seq_region_end;
     @ega_links = grep {$_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end} @ega_links;
   }
-
-  my $counts = scalar @ega_links || 0;
-  return $counts;
+  return \@ega_links;
 }
 
 sub count_features {
