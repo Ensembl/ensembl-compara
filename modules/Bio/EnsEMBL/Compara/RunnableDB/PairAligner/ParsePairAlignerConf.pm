@@ -179,7 +179,7 @@ sub write_output {
             print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n" if ($self->debug);
 	}
 
-	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
+	my $mlss = $self->write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
 
 	#Write options and chunks entries to method_link_species_set_tag table
@@ -222,7 +222,7 @@ sub write_output {
 	my ($method_link_id, $method_link_type) = @{$chain_config->{'output_method_link'}};
 	my $ref_genome_db = $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'};
-	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
+	my $mlss = $self->write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$chain_config->{'mlss_id'} = $mlss->dbID;
     }
 
@@ -231,7 +231,7 @@ sub write_output {
 	my $ref_genome_db = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'};
 	
-	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
+	my $mlss = $self->write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$net_config->{'mlss_id'} = $mlss->dbID;
     }
 
@@ -795,7 +795,7 @@ sub find_reference_species {
 #Write new method_link and method_link_species_set entries in database
 #
 sub write_mlss_entry {
-    my ($compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
+    my ($self, $compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
 
     my $ref_name;
     my $name;
@@ -813,6 +813,14 @@ sub write_mlss_entry {
     $name .= " $type (on $ref_name)";
     my $source = "ensembl";
 
+    my $genome_dbs = ($ref_genome_db->dbID == $non_ref_genome_db->dbID) ? [$ref_genome_db] : [$ref_genome_db,$non_ref_genome_db];
+
+    if ($compara_dba->get_MethodAdaptor->fetch_by_type($method_link_type)) {
+        my $existing_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, $genome_dbs);
+        return $existing_mlss if $existing_mlss;
+        die "The MLSS entry for ${method_link_type}x(".join("+", map {$_->name} @$genome_dbs).") does not exist in the master databse." if $self->param('master_db');
+    }
+
     my $method = Bio::EnsEMBL::Compara::Method->new(
         -type               => $method_link_type,
         -dbID               => $method_link_id,
@@ -820,9 +828,7 @@ sub write_mlss_entry {
     );
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
-        -genome_dbs         => ($ref_genome_db->dbID == $non_ref_genome_db->dbID)
-                                        ? [$ref_genome_db]
-                                        : [$ref_genome_db,$non_ref_genome_db]
+        -genome_dbs         => $genome_dbs,
     );
 
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
