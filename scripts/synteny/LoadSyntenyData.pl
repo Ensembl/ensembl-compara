@@ -141,12 +141,7 @@ sub get_slices {
 sub store_dnafrag {
 	my ($chr, $gdb, $slices, $adaptor) = @_;
 	my $slice = $slices->{$chr};
-	my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new(
-		-NAME => $chr,
-		-GENOME_DB => $gdb,
-		-COORD_SYSTEM_NAME => $slice->coord_system()->name(),
-		-LENGTH => $slice->seq_region_length()
-	);
+	my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $gdb);
 	$adaptor->store_if_needed($dnafrag);
 	return $dnafrag;
 }
