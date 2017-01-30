@@ -267,11 +267,17 @@ sub create_chunks
     #if($dnafrag) { print("  already stores as dbID ", $dnafrag->dbID, "\n"); }
     unless($dnafrag) {
       #
+      # try fetching dnafrag for this chromosome
+      #
+      $dnafrag = $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr);
+    }
+    unless($dnafrag) {
+      #
       # create dnafrag for this chromosome
       #
       #print "loading dnafrag for ".$chr->name."...\n";
       $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($chr, $genome_db);
-      $dnafragDBA->store_if_needed($dnafrag);
+      $dnafragDBA->store($dnafrag);
     }
     $dnafrag->{'_slice'} = $chr;
     $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);

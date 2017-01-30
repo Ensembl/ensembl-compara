@@ -141,7 +141,9 @@ sub get_slices {
 sub store_dnafrag {
 	my ($chr, $gdb, $slices, $adaptor) = @_;
 	my $slice = $slices->{$chr};
+	my $existing_dnafrag = $adaptor->fetch_by_GenomeDB_and_name($gdb, $chr);
+	return $existing_dnafrag if $existing_dnafrag;
 	my $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $gdb);
-	$adaptor->store_if_needed($dnafrag);
+	$adaptor->store($dnafrag);
 	return $dnafrag;
 }

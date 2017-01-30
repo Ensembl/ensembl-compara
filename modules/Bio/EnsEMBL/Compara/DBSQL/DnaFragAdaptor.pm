@@ -484,6 +484,9 @@ sub store {
    $dnafrag->adaptor($self);
    $dnafrag->dbID($stored_id);
 
+   my $cache_key = $gid. '//' . $name;
+   $self->{'_lru_cache_gdb_id_name'}->{$cache_key} = $dnafrag;
+
    return $dnafrag->dbID;
 }
 
