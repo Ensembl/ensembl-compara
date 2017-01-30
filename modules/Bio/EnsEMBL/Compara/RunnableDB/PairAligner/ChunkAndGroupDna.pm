@@ -181,6 +181,7 @@ sub create_chunks
   my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
 
   my $chromosomes = [];
+  my $preloaded_dnafrags = {};
 
  $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
@@ -228,6 +229,7 @@ sub create_chunks
   } else {
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
+    $preloaded_dnafrags = { map {$_->name => $_} @{ $dnafragDBA->fetch_all_by_GenomeDB_region($genome_db) } }
   }
  } );
 
@@ -257,7 +259,7 @@ sub create_chunks
       }
     }
 
-    my $dnafrag = $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr->seq_region_name);
+    my $dnafrag = ($preloaded_dnafrags->{$chr->seq_region_name} || $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr->seq_region_name));
 
     next if $self->param('only_cellular_component') && ($dnafrag->cellular_component ne $self->param('only_cellular_component'));
 
