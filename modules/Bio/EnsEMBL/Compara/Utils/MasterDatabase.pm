@@ -78,6 +78,7 @@ use warnings;
 sub update_dnafrags {
     my ($compara_dba, $genome_db, $species_dba) = @_;
 
+    $species_dba //= $genome_db->db_adaptor;
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
     my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
     my $old_dnafrags_by_name;

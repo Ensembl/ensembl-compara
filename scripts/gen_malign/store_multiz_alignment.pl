@@ -109,6 +109,7 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Mapper;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 verbose("OFF");
 
@@ -257,7 +258,7 @@ foreach my $this_species (@species) {
     exit(1);
   }
   if ($load_dnafrags) {
-    store_all_dnafrags($dnafrag_adaptor, $genome_db->{$this_species});
+    Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($dnafrag_adaptor->db, $genome_db->{$this_species});
   }
   push (@$species_set, $genome_db->{$this_species});
 }
@@ -640,32 +641,3 @@ sub map_on_toplevel {
   return ($dnafrag, $dnafrag_start, $dnafrag_end, $dnafrag_strand);
 }
 
-
-=head2 store_all_dnafrags
-
- Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor
- Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
- Example     : store_all_dnafrags($dnafrag_adaptor, $human_genome_db);
- Description : This function stores (if needed) all the dnafrags corresponding
-               to tolevel slices in the corresponding core DB.
- Exception   : none
- Caller      : methodname
-
-=cut
-
-sub store_all_dnafrags {
-  my ($dnafrag_adaptor, $genome_db) = @_;
-
-  my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor;
-
-  my $all_slices = $slice_adaptor->fetch_all('toplevel');
-  foreach my $slice (@$all_slices) {
-    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-            -length => $slice->seq_region_length,
-            -name => $slice->seq_region_name,
-            -genome_db => $genome_db,
-            -coord_system_name => $slice->coord_system->name
-        );
-    $dnafrag_adaptor->store_if_needed($new_dnafrag);
-  }
-}
