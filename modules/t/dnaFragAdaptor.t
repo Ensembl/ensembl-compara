@@ -181,14 +181,16 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_Slice", sub
 };
 
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::is_already_stored", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::_synchronise", sub {
 
-    throws_ok { $dnafrag_adaptor->is_already_stored() } qr/Must have dnafrag object/, 'no argument passed';
-    throws_ok { $dnafrag_adaptor->is_already_stored($dnafrag_id) } qr/the attribute dnafrag produced no type.*Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'invalid dnafrag object';
+    throws_ok { $dnafrag_adaptor->_synchronise() } qr/MSG: The given reference for attribute argument to _synchronise was undef. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'no argument passed';
+    throws_ok { $dnafrag_adaptor->_synchronise($dnafrag_id) } qr/MSG: Asking for the type of the attribute argument to _synchronise produced no type; check it is a reference. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'invalid dnafrag object';
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
-    my $stored_dnafrag_id = $dnafrag_adaptor->is_already_stored($dnafrag);
-    is($stored_dnafrag_id, $dnafrag_id, "already stored");
+    $dnafrag->adaptor(undef);
+    $dnafrag->dbID(undef);
+    $dnafrag_adaptor->_synchronise($dnafrag);
+    is($dnafrag->dbID, $dnafrag_id, "already stored");
 
     my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
                                                          -length => 12345,
@@ -197,7 +199,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::is_already_stor
                                                          -genome_db_id  => $dnafrag->genome_db_id,
                                                          -coord_system_name => "chromosome");
     
-    is($dnafrag_adaptor->is_already_stored($new_dnafrag), 0, 'not stored');
+    is($dnafrag_adaptor->_synchronise($new_dnafrag), undef, 'not stored');
 
     done_testing();
 };

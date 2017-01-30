@@ -31,6 +31,7 @@
 
 * `DnaFrag::isMT()`
 * `DnaFrag::dna_type()`
+* `DnaFragAdaptor::is_already_stored()`
 
 ## \*MemberAdaptor methods, to be removed in Ensembl 91
 

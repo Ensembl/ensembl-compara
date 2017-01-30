@@ -71,7 +71,7 @@ use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
+use Bio::EnsEMBL::Utils::Exception qw( throw warning deprecate );
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::Utils::Cache;
@@ -330,6 +330,20 @@ sub _columns {
           );
 }
 
+
+sub _unique_attributes {
+    return qw(
+        genome_db_id
+        name
+    )
+}
+
+
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::DnaFrag';
+}
+
+
 =head2 _objs_from_sth
 
   Args[1]    : DBI::row_hashref $hashref containing key-value pairs
@@ -473,65 +487,13 @@ sub store {
    return $dnafrag->dbID;
 }
 
-=head2 is_already_stored
 
- Title   : is_already_stored
- Usage   : $self->is_already_stored($dnafrag)
- Function: checks if already stored by querying database
- Example :
- Returns : $dnafrag->dbID if stored and 0 if not stored
- Args    : Bio::EnsEMBL::Compara::DnaFrag object
- Status  : Stable
-
-=cut
-
-sub is_already_stored {
+sub is_already_stored {     ## DEPRECATED
    my ($self,$dnafrag) = @_;
 
-   if( !defined $dnafrag ) {
-       $self->throw("Must have dnafrag object");
-   }
-
-   assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
-
-   if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
-     return $dnafrag->dbID();
-   }
-   
-   my $gdb = $dnafrag->genome_db();
-
-   assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
-
-   if( !defined $gdb->dbID ) {
-       $self->throw("genomedb must be stored (no dbID). Store genomedb first");
-   }
-
-   if( !defined $dnafrag->name ) {
-       $self->throw("dna frag must have a name");
-   }
-   
-   my $name = $dnafrag->name;
-   my $gid =  $gdb->dbID;
-   my $sth = $self->prepare("
-      SELECT dnafrag_id 
-        FROM dnafrag 
-       WHERE name= ?
-         AND genome_db_id= ?
-   ");
-
-   unless ($sth->execute( "$name", $gid )) {
-     $self->throw("Failed execution of a select query");
-   }
-
-   my ($dnafrag_id) = $sth->fetchrow_array();
-
-   if (defined $dnafrag_id) {
-     # $dnafrag already stored
-     $dnafrag->dbID($dnafrag_id);
-     $dnafrag->adaptor( $self );
-     return $dnafrag_id;
-   } 
-  return 0;
+   deprecate('DnaFragAdaptor::is_already_stored() is deprecated and will be removed in e91. Please use _synchronise() instead');
+   $self->_synchronise($dnafrag);
+   return $dnafrag->dbID;
 } 
    
 
@@ -554,7 +516,7 @@ sub store_if_needed {
 
    my ($self,$dnafrag) = @_;
 
-   $self->store($dnafrag) unless($self->is_already_stored($dnafrag));
+   $self->store($dnafrag) unless($self->_synchronise($dnafrag));
    return $dnafrag->dbID;
 }
 
