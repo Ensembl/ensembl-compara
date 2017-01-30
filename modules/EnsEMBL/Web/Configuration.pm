@@ -238,8 +238,12 @@ sub get_configurable_components {
     my $module_name = $self->get_module_names('ViewConfig', $type, $component);
        @components  = ([ $component, $type ]) if $module_name;
   } else {
-    $node ||= $self->get_node($self->get_valid_action($action || $hub->action, $function || $hub->function));
-    
+    if (!$node) {
+      if (my $node_id = $self->get_valid_action($action || $hub->action, $function || $hub->function)) {
+        $node = $self->get_node($node_id);
+      }
+    }
+
     if ($node) {
       my @all_components = reverse @{$node->get_data('components')};
       

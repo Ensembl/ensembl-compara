@@ -1710,8 +1710,9 @@ sub get_rnaseq_tracks {
 
 sub can_export {
   my $self = shift;
-  
-  return $self->action =~ /^(Export|Sequence|TranscriptComparison|Compara_Alignments|Strain_Compara_Tree|Compara_Tree|SpeciesTree|Compara_Ortholog|Strain_Compara_Ortholog|Compara_Paralog|Strain_Compara_Paralog|Family)$/ ? 0 : $self->availability->{'gene'};
+  return 0 unless $self->availability->{'gene'}; 
+  ## Don't export main sequence from compara views
+  return $self->action =~ /TranscriptComparison|Compara|Tree|Family/ ? 0 : 'Download sequence';
 }
 
 1;

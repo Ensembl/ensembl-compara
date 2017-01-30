@@ -1140,7 +1140,7 @@ sub StrucVarLine {
   my ($species, $id, $evidence, $study, $location, $quick_links, $desc, $action, $params, $counter ) = @_;
 # $location, $action and $params contain info for location view, no point in adding it until we can pass this info from StructuralVariation/Summary
 
-  my $url = sprintf(qq(%s/StructuralVariation/Summary?sv=%s),
+  my $url = sprintf(qq(%s/StructuralVariation/Explore?sv=%s),
                     $species,
                     $id);
   if ($do_private) {
