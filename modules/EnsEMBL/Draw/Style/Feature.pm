@@ -148,6 +148,10 @@ sub create_glyphs {
       my $feature_width = $drawn_end - $drawn_start + 1; 
   
       my $labels_height   = $label_row * $font_height;
+
+      ## Is it a multi-line label?
+      $label_lines = split("\n", $feature->{'label'});
+
       ## Only "ordinary" bumping requires adding the label to the feature height
       my $space_for_labels  = ($bumped && $bumped eq '1') ? $font_height * $label_lines : 0;
       my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));
