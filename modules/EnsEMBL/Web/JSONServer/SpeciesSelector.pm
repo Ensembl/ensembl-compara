@@ -132,7 +132,7 @@ sub get_extras_as_dynatree {
       my $icon = '';
       if ($k =~/haplotype/ and $hash->{key} =~/--/) {
         my ($sp, $type) = split('--', $hash->{key});
-        $icon = '/i/species/16/' . $sp . '.png';        
+        $icon = '/i/species/16/' . $sp . '.png';
       }
       else {
         $icon = '/i/species/16/' . $hash->{key} . '.png';        
