@@ -40,30 +40,20 @@ sub get_json {
   return { tools => $self->content };
 } 
 
-sub label_classes {
-  return {
-    'Configure this page' => 'config',
-    'Custom tracks'       => 'data',
-    'Export data'         => 'export',
-    'Share this page'     => 'share',
-  };
-}
-
 sub content {
   my $self = shift;
   my $entries = $self->entries;
   
   return unless scalar @$entries;
   
-  my $classes = $self->label_classes;
   my $html;
 
   foreach (@$entries) {
     if (grep {$_ eq 'disabled'} split ' ', $_->{'class'}) {
-      $html .= qq(<p class="$_->{'class'} $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>);
+      $html .= qq(<p class="$_->{'class'} $_->{'icon'}" title="$_->{'title'}">$_->{'caption'}</p>);
     } else {
       my $rel   = lc $_->{'rel'};
-      my $class = join ' ', map $_ || (), $_->{'class'}, $rel eq 'external' ? 'external' : '', $classes->{$_->{'caption'}};
+      my $class = join ' ', map $_ || (), $_->{'class'}, $rel eq 'external' ? 'external' : '', $_->{'icon'};
       $class    = qq{ class="$class"} if $class;
       $rel      = qq{ rel="$rel"}     if $rel;
 
@@ -93,6 +83,7 @@ sub init {
     
     $self->add_entry({
       caption => 'Configure this page',
+      icon    => 'config',
       class   => 'modal_link',
       rel     => "modal_config_$component",
       url     => $hub->url('Config', {
@@ -105,6 +96,7 @@ sub init {
   } else {
     $self->add_entry({
       caption => 'Configure this page',
+      icon    => 'config',
       class   => 'disabled',
       url     => undef,
       title   => 'There are no options for this page'
@@ -113,6 +105,7 @@ sub init {
   
   $self->add_entry({
     caption => 'Custom tracks',
+    icon    => 'data',
     class   => 'modal_link',
     rel     => 'modal_user_data',
     url     => $hub->url({
@@ -125,14 +118,17 @@ sub init {
  
   if ($object && $object->can_export) {
     my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
+    my $caption = $object->can_export =~ /[a-zA-Z]+/ ? $object->can_export : 'Export data';
     $self->add_entry({
-      caption => 'Export data',
+      caption => $caption,
+      icon    => 'export',
       class   => 'modal_link',
       url     => $self->export_url($hub).$strain_param
     });
   } else {
     $self->add_entry({
       caption => 'Export data',
+      icon    => 'export',
       class   => 'disabled',
       url     => undef,
       title   => 'Generic export has been disabled on this page. Check individual images, tables, etc for download buttons',
@@ -141,6 +137,7 @@ sub init {
   
   $self->add_entry({
     caption => 'Share this page',
+    icon    => 'share',
     url     => $hub->url('Share', {
       __clear => 1,
       create  => 1,
@@ -155,18 +152,23 @@ sub export_url {
   my $type   = $hub->type;
   my $action = $hub->action;
   my $export;
-  
-  if ($type eq 'Location' && $action eq 'LD') {
-    $export = 'LDFormats';
-  } elsif ($type eq 'Transcript' && $action eq 'Population') {
-    $export = 'PopulationFormats';
-  } elsif ($action eq 'Compara_Alignments') {
-    $export = 'Alignments';
-  } else {
-    $export = 'Configure';
+
+  if ($type eq 'Gene') {
+    return $hub->url({ type => 'DataExport', action => 'GeneSeq',
+                       component =>  'GeneSeq', 'data_type' => 'Gene'});
   }
-  
-  return $hub->url({ type => 'Export', action => $export, function => $type });
+  else {  
+    if ($type eq 'Location' && $action eq 'LD') {
+      $export = 'LDFormats';
+    } elsif ($type eq 'Transcript' && $action eq 'Population') {
+      $export = 'PopulationFormats';
+    } elsif ($action eq 'Compara_Alignments') {
+      $export = 'Alignments';
+    } else {
+      $export = 'Configure';
+    }
+    return $hub->url({ type => 'Export', action => $export, function => $type });
+  }
 }
 
 1;
