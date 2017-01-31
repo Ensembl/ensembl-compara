@@ -29,6 +29,7 @@ sub init {
   $self->{'lefthand_menu'}  = 0;
   $self->add_head;
   $self->add_body;
+  $self->page->remove_body_element('species_bar');
 }
 
 1;
