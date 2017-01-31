@@ -132,7 +132,6 @@ sub write_output {
 		my $dnafrag_id = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('target_genome_db_id'), $seq_region_name)->dbID;
 		push(@{ $hits{$self->param('anchor_id')} }, [ $dnafrag_id, $alifrom, $alito, $strand, $score, $evalue ]);
 	}
-#	$anchor_align_adaptor->store_exonerate_hits($records);
 }
 
 

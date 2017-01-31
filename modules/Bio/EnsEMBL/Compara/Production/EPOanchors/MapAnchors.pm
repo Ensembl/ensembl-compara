@@ -148,7 +148,7 @@ while(my $mapping = <$exo_fh>){
 sub process_exonerate_hits {
 	my $self = shift;
 	my($hits, $target2dnafrag, $hit_numbers) = @_;
-	my($records_to_load);
+	my @records_to_load;
 	foreach my $anchor_id (sort keys %{$hits}) {
 		foreach my $targ_dnafrag_info (sort keys %{$hits->{$anchor_id}}) {
 			my $dnafrag_id = $target2dnafrag->{$targ_dnafrag_info};
@@ -156,12 +156,11 @@ sub process_exonerate_hits {
 				my $index = join(":", $anchor_id, $targ_dnafrag_info, $hit_position->[0]);
 				my $number_of_org_hits = keys %{$hit_numbers->{$index}->{anc_orgs}};
 				my $number_of_seq_hits = $hit_numbers->{$index}->{seq_nums};
-				push(@{$records_to_load}, join(":", $self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, 
-							@{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits));
+				push @records_to_load}, [$self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
 			}
 		}
 	}
-	return $records_to_load;
+	return \@records_to_load;
 }
 
 sub merge_overlapping_target_regions { #merge overlapping target regions hit by different seqs in the same anchor
