@@ -50,6 +50,7 @@ sub content {
     $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
   }
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
+  return '' if ($hub->type eq 'GeneTree' || $species =~ /^(multi|common)$/i);
 
   ## Quality flag
   (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
