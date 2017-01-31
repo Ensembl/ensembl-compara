@@ -189,7 +189,7 @@ sub render_normal {
       'colour'    => 'black',
       'text'      => 'Score',
     }));
-    $boxxcoord += 65;
+    $boxxcoord += 75;
   }
 
   ## Define nodes Nodes ##
