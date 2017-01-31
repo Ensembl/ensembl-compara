@@ -278,6 +278,14 @@ sub all_colours {
   return $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
 }
 
+sub get_font_path {
+  my $self = shift;
+  my $path = ($self->ENSEMBL_STYLE || {})->{'GRAPHIC_TTF_PATH'};
+     $path = $path ? $path =~ /^\// ? "$path/" : $SiteDefs::ENSEMBL_SERVERROOT."/$path/" : "/usr/local/share/fonts/ttfonts/";
+
+  return $path =~ s/\/+/\//gr;
+}
+
 sub get_config {
   ## Returns the config value for a given species and a given config key
   ### Arguments: species name(string), parameter name (string)
@@ -299,16 +307,16 @@ sub get_config {
                                                   
     return $CONF->{'_storage'}{$var} if exists $CONF->{'_storage'}{$var};
   }
-  
+
   no strict 'refs';
-  my $S = "SiteDefs::$var";
-  
-  return ${$S}  if defined ${$S};
-  return \@{$S} if defined @{$S};
-  
-  warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & 4;
-  
-  return undef;
+
+  # undeclared param
+  return unless grep { $_ eq $var } keys %{'SiteDefs::'};
+
+  my $sym_name = "SiteDefs::$var";
+
+  return ${$sym_name}  if defined ${$sym_name};
+  return \@{$sym_name} if @{$sym_name};
 }
 
 sub set_config {

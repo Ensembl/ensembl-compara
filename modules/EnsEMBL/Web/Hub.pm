@@ -49,7 +49,6 @@ use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
-use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
@@ -144,8 +143,9 @@ sub init_input {
   my $self  = shift;
   my $input = CGI->new;
 
-  $self->{'input'}  = $input;
-  $CGI::POST_MAX    = $self->controller->upload_size_limit if $self->controller; # Set max upload size
+  $self->{'input'}        = $input;
+  $CGI::POST_MAX          = $self->controller->upload_size_limit if $self->controller; # Set max upload size
+  $CGI::LIST_CONTEXT_WARN = 2; # Hack to stop perl warning about 'param' method being used in list context
 }
 
 sub init_session {
@@ -830,13 +830,14 @@ sub snpedia_status {
 
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
   my $out;
-  eval {$out = $failover->get_cached};
-  if ($@) {
+
+  try {
+    $out = $failover->get_cached
+  } catch {
     warn "SNPEDIA failure";
-  }
-  else {
-    return $out;
-  }
+  };
+
+  return $out;
 }
 
 # Query Store stuff
@@ -844,16 +845,7 @@ sub snpedia_status {
 sub query_store_setup {
   my ($self) = @_;
 
-  my $cache;
-  if($SiteDefs::ENSEMBL_MEMCACHED) {
-     # and EnsEMBL::Web::Cache->can("stats_reset")) { # Hack to detect plugin
-    $cache = EnsEMBL::Web::QueryStore::Cache::Memcached->new(
-      $SiteDefs::ENSEMBL_MEMCACHED
-    );
-  } else {
-    $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
-  }
-  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
+  my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({

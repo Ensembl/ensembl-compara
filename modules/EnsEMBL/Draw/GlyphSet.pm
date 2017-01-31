@@ -881,7 +881,7 @@ sub get_gd {
   
   return $cache{$font_key} if exists $cache{$font_key};
   
-  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  my $fontpath = $self->{'config'}->species_defs->get_font_path."$font.ttf";
   my $gd       = GD::Simple->new(400, 400);
   
   eval {
