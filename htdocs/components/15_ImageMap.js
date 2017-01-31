@@ -45,14 +45,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('mouseUp',                  this, this.dragStop);
     Ensembl.EventManager.register('hashChange',               this, this.hashChange);
     Ensembl.EventManager.register('changeFavourite',          this, this.changeFavourite);
-    Ensembl.EventManager.register('changeHighlightTrackIcon', this, this.changeHighlightTrackIcon);
+    // Ensembl.EventManager.register('changeHighlightTrackIcon', this, this.changeHighlightTrackIcon);
     Ensembl.EventManager.register('imageResize',              this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
     Ensembl.EventManager.register('windowResize',             this, resetOffset);
     Ensembl.EventManager.register('ajaxLoaded',               this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',              this, function () { this.params.updateURL = Ensembl.updateURL({ image_width: false }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages',       this, function () { if (!this.align) { this.highlightAllImages(); } });
     Ensembl.EventManager.register('markLocation',             this, this.markLocation);
-    Ensembl.EventManager.register('toggleHighlight',          this, this.toggleHighlight);
   },
   
   init: function () {
@@ -597,7 +596,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // On highlight icon click toggle highlight
     .find('.hl-icon-highlight').on('click', function(e) {
       e.preventDefault();
-      Ensembl.EventManager.trigger('toggleHighlight', $(this).data('highlightTrack'));
+      panel.toggleHighlight($(this).data('highlightTrack'));
     }).end()
 
     // init config tab, fav icon and close icon
@@ -735,7 +734,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       selected = $link.hasClass('selected') ? 'off' : 'on';
       href.push(update[0] + '=' + update[1] + selected);
       hasFav && Ensembl.EventManager.trigger('changeFavourite', update[0], selected === 'on');
-      Ensembl.EventManager.trigger('changeHighlightTrackIcon', update[0], selected === 'on');
+      this.changeHighlightTrackIcon(update[0], selected === 'on');
     } else {
       $link.parents('._label_layer').addClass('hover_label_spinner');
       imgConf[update[0]] = {'renderer' : update[1]};
@@ -1023,15 +1022,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLabels.filter('.' + trackId).find('a.favourite').toggleClass('selected', on);
   },
 
-  changeHighlightTrackIcon: function (trackIds, on) {
+  changeHighlightTrackIcon: function (trackId, on) {
     var panel = this;
-    if (!Array.isArray(trackIds)) {
-      trackIds = [trackIds];
-    }
-
-    $.each(trackIds, function(i, tr) {  
-      panel.elLk.hoverLabels.filter('.' + tr).find('a.hl-icon-highlight').toggleClass('selected', on);
-    });
+    panel.elLk.hoverLabels.filter('.' + trackId).find('a.hl-icon-highlight').toggleClass('selected', on);
   },
 
   dragStart: function (e) {

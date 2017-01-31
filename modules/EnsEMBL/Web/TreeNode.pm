@@ -116,6 +116,24 @@ sub set_user_setting {
   return 0;
 }
 
+sub delete_user_setting {
+  ## Modifies given key-value from shared user data key node's id
+  ## @return 1 if data is changed, 0 otherwise
+  my ($self, $key) = @_;
+
+  my $node_id   = $self->id;
+  my $user_data = $self->tree->user_data;
+
+  if ($user_data->{$node_id}) {
+    delete $user_data->{$node_id}{$key};
+    delete $user_data->{$node_id} unless scalar %{$user_data->{$node_id}};
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
 sub has_user_settings {
   ## Checks if the node has any user data linked to it
   ## @return 1 if user settings for this node is presetn, 0 otherwise
