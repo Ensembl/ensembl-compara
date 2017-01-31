@@ -81,6 +81,7 @@ sub create_glyphs {
   foreach my $subtrack (@$data) {
     ## Keep track of all the feature heights so we can calculate a correct total height
     my $heights = {};
+    my $label_lines = 1;
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
@@ -120,7 +121,7 @@ sub create_glyphs {
     }
     mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
 
-    my ($typical_label, $label_lines);
+    my $typical_label;
     $typical_label = $self->get_text_info($features[0]->{'label'}) if @features;
 
     ## SECOND LOOP - draw features row by row
