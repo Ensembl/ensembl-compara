@@ -1674,7 +1674,7 @@ sub hgvs_url {
       $p->{'t'}      = $refseq.$version;
     } else { # $type eq c: cDNA position, no $type: special cases where the variation falls in e.g. a pseudogene. Default to transcript
       $p->{'type'}   = 'Transcript';
-      $p->{'action'} = ($hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
+      $p->{'action'} = ($hub->species_defs->databases->{'DATABASE_VARIATION'} && $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
       $p->{'t'}      = $refseq.$version;
     }
   }

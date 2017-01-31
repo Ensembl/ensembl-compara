@@ -993,7 +993,10 @@ sub add_regulation_features {
 
   # Add other bigBed-based tracks
   my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
-  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $db_tables         = {};
+  if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
+    $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  }
   my %file_tracks = ( 'methylation' => {'menu'      => $methylation_menu,
                                         'renderers' => [ qw(off Off compact On) ],
                                         'default'   => 'compact',
@@ -1060,7 +1063,10 @@ sub add_regulation_builds {
     caption     => 'Regulatory Build',
   }));
 
-  my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  my $db_tables     = {};
+  if ( defined $self->database->{'DATABASE_FUNCGEN'} ) {
+    $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  }
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
@@ -1804,7 +1810,7 @@ sub add_somatic_mutations {
 
 
   # Mixed source(s)
-  foreach my $key_1 (keys(%{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}})) {
+  foreach my $key_1 ( ($self->species_defs->databases->{'DATABASE_VARIATION'} && keys(%{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}})) || [] ) {
     if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_1}{'none'}) {
       (my $k = $key_1) =~ s/\W/_/g;
       $somatic->append_child($self->create_track_node("somatic_mutation_$k", "$key_1 somatic variants", {
@@ -1830,7 +1836,7 @@ sub add_somatic_mutations {
     my $tissue_menu = $self->create_menu_node('somatic_mutation_by_tissue', 'Somatic variants by tissue');
 
     ## Add tracks for each tumour site
-    my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
+    my %tumour_sites = ($self->species_defs->databases->{'DATABASE_VARIATION'} && %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}}) || {};
 
     foreach my $description (sort  keys %tumour_sites) {
       next if $description eq 'none';
