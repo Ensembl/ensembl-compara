@@ -286,9 +286,9 @@ sub update_from_input {
     $self->altered($self->reset_user_settings($reset));
 
   } else {
+    my $diff = delete $params->{$self->config_type};
 
-    if (my $diff = delete $params->{$self->config_type}) {
-
+    if (keys %$diff) {
       # update renderers
       foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
         $self->altered($self->update_track_renderer($track_key, $diff->{$track_key}{'renderer'}));
@@ -317,6 +317,13 @@ sub update_from_input {
       if (keys %fav) {
         delete $params->{$_};
         $self->altered(1) if $self->update_favourite_tracks(\%fav);
+      }
+
+      # update track highlights
+      my %hl_track = map { $params->{$_} =~ /highlight_(on|off)/ ? ($_ => $1 eq 'on' ? 1 : 0) : () } keys %$params;
+      if (keys %hl_track) {
+        delete $params->{$_};
+        $self->altered(1) if $self->update_track_highlights(\%hl_track);
       }
 
       # update renderers if any param's left
@@ -362,7 +369,6 @@ sub update_favourite_tracks {
 
   my $fav_tracks  = $self->_favourite_tracks;
   my $altered     = 0;
-
   foreach my $track_key (keys %$updated_fav) {
     if ($updated_fav->{$track_key}) {
       if (!$fav_tracks->{$track_key}) {
@@ -372,6 +378,35 @@ sub update_favourite_tracks {
     } else {
       if (exists $fav_tracks->{$track_key}) {
         delete $fav_tracks->{$track_key};
+        $altered = 1;
+      }
+    }
+  }
+
+  return $altered;
+}
+
+
+sub update_track_highlights {
+  ## Update track highlight list for the user
+  ## @param Hashref with keys as track names and values as 1 or 0 accordingly to set/unset track highlights
+  ## @return 1 if settings changed, 0 otherwise
+  my ($self, $updated_tr_hl) = @_;
+
+  my $user_settings  = $self->get_user_settings;
+  my $altered     = 0;
+  foreach my $track_key (keys %$updated_tr_hl) {
+    my $node = $self->get_node($track_key);
+
+    if ($node && $updated_tr_hl->{$track_key}) {
+      if (!$node->get('track_highlight')) {
+        if ($node->set_user_setting('track_highlight', 1)) {
+          $altered = 1;          
+        }
+      }
+    } else {
+      if ($node) {
+        $node->delete_user_setting('track_highlight');;
         $altered = 1;
       }
     }
@@ -397,8 +432,7 @@ sub _favourite_tracks {
   my $self = shift;
 
   $self->{'_favourite_tracks'} ||= $self->hub->session->get_record_data({'type' => 'favourite_tracks', 'code' => 'favourite_tracks'});
-
-  return $self->{'_favourite_tracks'}{'tracks'} || {};
+  return $self->{'_favourite_tracks'} || {};
 }
 
 sub is_track_favourite {
@@ -406,19 +440,26 @@ sub is_track_favourite {
   ## @param Track name
   ## @return 0 or 1 accordingly
   my ($self, $track) = @_;
-
   return $self->_favourite_tracks->{$track} ? 1 : 0;
+}
+
+sub is_track_highlighted {
+  ## Tells if a given track is highlighted by the user
+  ## @param Track name
+  ## @return 0 or 1 accordingly
+  my ($self, $track) = @_;
+  return $self->get_user_settings->{'nodes'}{$track}{'track_highlight'} ? 1 : 0;
 }
 
 sub save_user_settings {
   ## @override
   ## Before saving record, modify record data according to the changed nodes on tree
   ## Also save favourite tracks record along with main config data record
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $fav_data    = $self->_favourite_tracks;
-  my $user_data   = $self->tree->user_data;
-  my $record_data = $self->get_user_settings;
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $fav_data      = $self->_favourite_tracks;
+  my $user_data     = $self->tree->user_data;
+  my $record_data   = $self->get_user_settings;
 
   # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
   $hub->session->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });

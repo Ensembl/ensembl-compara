@@ -177,6 +177,8 @@ sub _build_imageconfig_form {
 
   $self->{'json'}   = {};
 
+  $self->{favourite_tracks} = $image_config->_favourite_tracks;
+
   # Search results menu
   if ($image_config->has_extra_menu('search_results')) {
     $self->append_child('div', { class => 'config no_search', inner_HTML => 'Sorry, your search did not find any tracks' });
