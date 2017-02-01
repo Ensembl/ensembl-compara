@@ -311,12 +311,13 @@ sub get_config {
   no strict 'refs';
 
   # undeclared param
-  return unless grep { $_ eq $var } keys %{'SiteDefs::'};
+  return undef unless grep { $_ eq $var } keys %{'SiteDefs::'};
 
   my $sym_name = "SiteDefs::$var";
 
   return ${$sym_name}  if defined ${$sym_name};
   return \@{$sym_name} if @{$sym_name};
+  return undef;
 }
 
 sub set_config {
