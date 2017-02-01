@@ -47,6 +47,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
   my $img_url      = $self->img_url;
+  $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
   
