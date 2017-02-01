@@ -124,7 +124,7 @@ sub default_options {
         'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-2:4522/mateus_protein_trees_87',
 
         # Production database (for the biotypes)
-        'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
+        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
 
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
