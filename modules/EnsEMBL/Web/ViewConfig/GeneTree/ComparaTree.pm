@@ -26,7 +26,8 @@ use parent qw(EnsEMBL::Web::ViewConfig::Gene::ComparaTree);
 
 sub field_order {
   ## @override
-  return grep { $_ ne 'collapsability' } $_[0]->field_order;
+  my $self = shift;
+  return grep { $_ ne 'collapsability' } $self->SUPER::field_order;
 }
 
 1;
