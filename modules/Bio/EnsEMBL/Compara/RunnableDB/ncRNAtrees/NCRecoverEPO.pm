@@ -376,6 +376,10 @@ sub run_low_coverage_best_in_alignment {
     my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss, $slice);
     print STDERR scalar(@$genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
     foreach my $genomic_align_block (@$genomic_align_blocks) {
+        if (not defined $genomic_align_block->dbID) {
+            # Happens when the block has been restricted
+            next;
+        }
       $all_seen_gab_ids{$genomic_align_block->dbID}++;
     }
    }
@@ -417,6 +421,8 @@ sub run_low_coverage_best_in_alignment {
     print STDERR scalar(@$low_cov_genomic_align_blocks), " blocks for ", $leaf->stable_id, "\n" if $self->debug;
     my $deleted = 0;
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
+        die unless $max_gabID;
+        die unless $low_cov_genomic_align_block->original_dbID;
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
