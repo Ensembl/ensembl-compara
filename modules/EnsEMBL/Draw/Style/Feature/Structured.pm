@@ -50,8 +50,9 @@ sub draw_feature {
   my $track_config  = $self->track_config;
   my $join          = $track_config->get('no_join') ? 0 : 1;
 
+  ## Need to set y to 0 here, as a composite's components' y-coords are _added_ to this base y
   my $composite = $self->Composite({
-                                      y       => $position->{'y'},
+                                      y       => 0,
                                       height  => $position->{'height'},
                                       title   => $feature->{'title'},
                                       href    => $feature->{'href'},
