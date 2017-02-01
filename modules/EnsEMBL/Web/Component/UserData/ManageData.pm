@@ -167,6 +167,7 @@ sub content {
   }
   else {
     $html .= $trackhub_search;
+    $html .= $self->userdata_form;
   }
 
   return $html;
