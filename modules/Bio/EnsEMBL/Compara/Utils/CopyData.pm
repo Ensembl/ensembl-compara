@@ -604,6 +604,35 @@ sub copy_table_in_binary_mode {
 }
 
 
+=head2 single_insert
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dest_dbc
+  Arg[2]      : string $table_name
+  Arg[3]      : arrayref of values$data
+  Arg[4]      : (opt) arrayref of strings $col_names (defaults to the column-order at the database level)
+  Arg[5]      : (opt) string $insertion_mode (default: 'INSERT')
+
+  Description : Simple method to execute an INSERT statement without having to write it. The values
+                in $data must be in the same order as in $col_names (if provided) or the columns in
+                the table itself.  The method returns the number of rows inserted (0 or 1).
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub single_insert {
+    my ($dest_dbc, $table_name, $data, $col_names, $insertion_mode) = @_;
+
+    my $n_values = scalar(@$data);
+    my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
+    $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
+    $insert_sql .= ' VALUES (' . ('?,'x($n_values-1)) . '?)';
+    return $dest_dbc->do($insert_sql, undef, @$data) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+}
+
+
 =head2 bulk_insert
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dest_dbc

@@ -52,6 +52,7 @@ use warnings;
 
 use List::Util qw(sum);
 
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -244,14 +245,16 @@ foreach my $ref_name(keys %aligned_patch){
 			my $gab_perc_id = int($gab->{gab_perc_num} / $align_len * 100);
 			# the last two fields (group_id and level_id) in the genomic_align_block table are filled using this hack to set the 
 			# group_id = (patch_dnafrag_id + mlss_prefix) and set level_id = 1
-			$self->_insert_into_table("genomic_align_block", ($gab->{genomic_align_block_id} + $mlss_pref), 
-				$mlss_id, 0, $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), 1);
-			$self->_insert_into_table("genomic_align", ($gab->{ref_genomic_align_id} + $mlss_pref), 
+			single_insert($self->compara_dba->dbc, 'genomic_align_block',
+                            [($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, 0, $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), 1]);
+			single_insert($self->compara_dba->dbc, 'genomic_align',
+                            [($gab->{ref_genomic_align_id} + $mlss_pref),
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, $hum_dfs{ $ref_name }, 
-				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, 1, undef);
-			$self->_insert_into_table("genomic_align", ($gab->{patch_genomic_align_id} + $mlss_pref), 
+				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, 1, undef]);
+			single_insert($self->compara_dba->dbc, 'genomic_align',
+                            [($gab->{patch_genomic_align_id} + $mlss_pref),
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, $hum_dfs{ $patch_name }, 
-				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, 1, undef);
+				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, 1, undef]);
 		}
 	}
 }
@@ -259,16 +262,6 @@ foreach my $ref_name(keys %aligned_patch){
     ##### end #####
 
     $self->dataflow_output_id( { method_link_species_set_id => $mlss_id }, 1);
-}
-
-sub _insert_into_table {
-    my $self = shift;
-    my $table_name = shift;
-    my $n_values = scalar(@_);
-    my $sql = "INSERT INTO $table_name VALUES (".("?,"x($n_values-1))."?)";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute(@_);
-    $sth->finish;
 }
 
 1;
