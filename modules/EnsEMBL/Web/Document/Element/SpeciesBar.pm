@@ -37,6 +37,7 @@ sub init {
 sub content {
   my $self  = shift;
   my $hub   = $self->hub;
+  return if ($hub->type eq 'GeneTree' || $hub->type eq 'Tools');
 
   ## User-friendly species name and assembly
   my $species;
@@ -49,8 +50,8 @@ sub content {
   else {
     $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
   }
+  return '' if $species =~ /^(multi|common)$/i;
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
-  return '' if ($hub->type eq 'GeneTree' || $species =~ /^(multi|common)$/i);
 
   ## Quality flag
   (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
