@@ -72,8 +72,8 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-2.ebi.ac.uk',        # where the pipeline database will be created
-        'port'          => '4522',                      # server port
+        'host'          => 'mysql-ens-compara-prod-3.ebi.ac.uk',        # where the pipeline database will be created
+        'port'          => '4523',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
@@ -121,7 +121,7 @@ sub default_options {
         'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #release# - 1)expr#',
 
         # Protein Tree database
-        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-2:4522/mateus_protein_trees_87',
+        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-2:4522/waakanni_protein_trees_88',
 
         # Production database (for the biotypes)
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
