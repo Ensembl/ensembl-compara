@@ -386,9 +386,11 @@ sub fasta {
       peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
       utr3    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr3:$type", $t->three_prime_utr->seq ]] }},
       utr5    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr5:$type", $t->five_prime_utr->seq ]] }},
-      exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
+      exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->stable_id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
       intron  => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id intron " . $intron_id++ . ":$type", $_->seq ]} @{$t->get_all_Introns} ] }}
     };
+
+
     
     foreach (@$trans_objects) {
       my $transcript = $_->Obj;
