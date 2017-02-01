@@ -408,11 +408,12 @@ DynaTreeNode.prototype = {
     }
   },
   /** Return '/id1/id2/id3'. */
-  getKeyPath: function(excludeSelf) {
+  getKeyPath: function(excludeSelf, key) {
     var path = [];
+    key = key || 'title';
     this.visitParents(function(node){
       if(node.parent){
-        path.unshift(node.data.key);
+        path.unshift(node.data[key]);
       }
     }, !excludeSelf);
     return "/" + path.join(this.tree.options.keyPathSeparator);
@@ -1170,7 +1171,8 @@ DynaTreeNode.prototype = {
       var aTag = this.span.getElementsByTagName("a");
       if(aTag[0]){
         // issue 154, 313
-        if(!($.browser.msie && parseInt($.browser.version, 10) < 9)){
+
+        if($.browser && !($.browser.msie && parseInt($.browser.version, 10) < 9)){
           aTag[0].focus();
         }
       }else{

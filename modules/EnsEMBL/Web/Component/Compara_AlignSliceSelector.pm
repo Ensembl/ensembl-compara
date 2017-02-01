@@ -72,13 +72,14 @@ sub content {
 
   my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align, referer_action => $hub->action});
 
-#  my $modal_uri = URI->new(sprintf '/%s/Component/Blast/Web/TaxonSelector/ajax?', $default_species || 'Multi' );
-#  $modal_uri->query_form(align => $align) if $align; 
+  my $compara_config_url  = $hub->url('Config', {type => $hub->type,  action=> 'Compara_AlignSliceBottom'});
 
   ## Get the species in the alignment
   return sprintf(qq{
     <div class="js_panel alignment_selector_form">
       <input type="hidden" class="panel_type" value="ComparaAlignSliceSelector" />
+      <input type="hidden" class="update_component" value="Compara_AlignSliceBottom" />
+      <input type="hidden" class="compara_config_url" value="$compara_config_url">
       <div class="navbar " style="width:%spx; text-align:left">
         <form action="%s" method="get">
           <div class="ss-alignment-container">

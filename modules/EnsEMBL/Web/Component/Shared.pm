@@ -892,7 +892,7 @@ sub check_for_missing_species {
 
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-      push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
+      push @skipped, $species_defs->production_name_mapping($_) unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $sp_prod = $hub->species_defs->production_name_mapping($_);

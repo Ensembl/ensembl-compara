@@ -48,6 +48,7 @@ sub _init {
                               action => $hub->param('referer_action') || '',
                               align => $hub->param('align') ? $hub->param('align') : ''
                             });
+
   $self->{caller}          = $hub->param('referer_action');
   $self->{multiselect}     = $self->param('multiselect');
   $self->{selection_limit} = undef;
@@ -85,6 +86,22 @@ sub content_ajax {
   my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
   push @{$params{defaultKeys}}, @$shown if scalar @$shown;
 
+  
+  my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
+  if ($is_cmp) {
+    my $alignment = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$hub->param('align')};
+    $params{alignLabel} = $alignment->{name};
+    my $sp;
+    my $vc_key;
+    my $vc_val = 0;
+    $params{defaultKeys} = [];
+    foreach (keys %{$alignment->{species}}) {
+      $vc_key = join '_', ('species', $alignment->{id}, lc($_));
+      $vc_val = $hub->get_viewconfig('Compara_AlignSliceBottom')->get($vc_key);
+      push @{$params{defaultKeys}}, $vc_key if $vc_val eq 'yes';
+    }
+  }
+
   return $self->jsonify({
     content   => $self->render_selector,
     panelType => $self->{panel_type},
@@ -121,7 +138,7 @@ sub render_selector {
   }
 
   my $taxon_tree = sprintf qq {
-    <div class="taxon_selector_tree %s">
+    <div class="taxon_selector_tree">
       <div class="content">
         <h2> %s </h2>
         <div class="finder">
@@ -134,7 +151,6 @@ sub render_selector {
       </div>
     </div>
   }, 
-  ($is_cmp) ? 'full-width' : '',
   ($is_cmp) ? 'Alignment Selector' : 'Species Selector';
 
   my $taxon_list = qq {
@@ -165,7 +181,9 @@ sub render_selector {
       <div class="ss-msg"><span></span></div>
     </div>
   },
-  ($self->{caller} eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list,
+  # ($self->{caller} eq 'Compara_Alignments') ? $taxon_tree : $taxon_tree . $taxon_list
+  $taxon_tree . $taxon_list
+
 }
 
 sub render_tip {

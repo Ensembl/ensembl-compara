@@ -49,31 +49,49 @@ sub json_fetch_species {
 
   # Order by number of species (name is in the form "6 primates EPO")
   foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-    (my $name = $row->{'name'}) =~ s/_/ /g;
+    (my $name = $row->{name}) =~ s/ /_/g;
     my $t = {};
-    $t->{key} = encode_entities($name);
-    $t->{title} = encode_entities($name);
-    $t->{value} = $row->{'id'};
+    $t->{key}        = encode_entities($name);
+    $t->{title}      = encode_entities($row->{name});
+    $t->{value}      = $row->{'id'};
     $t->{searchable} = 1;
+    $t->{isFolder}   = 1;
+    $t->{expand}     = 0;
+    $t->{children}   = [];
+
+    foreach (sort keys %{$row->{'species'}}) {
+      my $url_name  = $hub->species_defs->production_name_mapping($_);
+      my $prod_name = $hub->species_defs->get_config($url_name, 'SPECIES_PRODUCTION_NAME');
+
+      next unless $prod_name;
+      $prod_name = encode_entities($prod_name);
+      my $t_child = {};
+      $t_child->{key}        = join '_', ('species', $row->{id}, lc($prod_name));
+      $t_child->{title}      = encode_entities($species_info->{$url_name}->{common});
+      $t_child->{value}      = $row->{id};
+      $t_child->{icon}       = '/i/species/16/' . $url_name . '.png'; 
+      $t_child->{searchable} = 0;
+      push @{$t->{children}}, $t_child;
+    }
     push @{$species_hash_multiple}, $t;
   }
 
   my $dynatree_multiple = {};
 
   my $dynatree_root = {};
-  $dynatree_root->{key} = 'All Alignments';
-  $dynatree_root->{title} = 'All Alignments';
-  $dynatree_root->{isFolder} = 1;
-  $dynatree_root->{is_submenu} = 1;
+  $dynatree_root->{key}            = 'All_Alignments';
+  $dynatree_root->{title}          = 'All Alignments';
+  $dynatree_root->{isFolder}       = 1;
+  $dynatree_root->{is_submenu}     = 1;
   $dynatree_root->{isInternalNode} = "true";
-  $dynatree_root->{unselectable} = "true";
+  $dynatree_root->{unselectable}   = "true";
 
   if ($#$species_hash_multiple >= 0) {
-    $dynatree_multiple->{key} = 'Multiple';
-    $dynatree_multiple->{title} = 'Multiple';
-    $dynatree_multiple->{isFolder} = 1;
+    $dynatree_multiple->{key}            = 'Multiple';
+    $dynatree_multiple->{title}          = 'Multiple';
+    $dynatree_multiple->{isFolder}       = 1;
     $dynatree_multiple->{isInternalNode} = "true";
-    $dynatree_multiple->{unselectable} = "true";
+    $dynatree_multiple->{unselectable}   = "true";
     push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
     push @{$dynatree_root->{children}}, $dynatree_multiple;
   }
