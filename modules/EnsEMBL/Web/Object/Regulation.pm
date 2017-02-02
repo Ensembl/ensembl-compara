@@ -335,12 +335,22 @@ sub get_evidence_data {
 
 sub all_epigenomes {
   my ($self) = @_;
-  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
+  
+  if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'names'}}];
+  }
+
+  return [];
 }
 
 sub regbuild_epigenomes {
   my ($self) = @_;
-  return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+
+  if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+  }
+
+  return [];
 }
 
 ################ Calls for Feature in Detail view ###########################

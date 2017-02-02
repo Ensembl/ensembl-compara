@@ -101,7 +101,8 @@ sub content {
   ];
  
   # add SIFT for supported species
-  if ( $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'}){
+  if ( $hub->species_defs->databases->{'DATABASE_VARIATION'} &&
+       $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'}){
     push @$columns, ({ key => 'sift', title => 'SIFT', width => '8%', align => 'center', sort => 'position_html', help => $glossary->{'SIFT'} });
   }
   if ($hub->species =~ /homo_sapiens/i) {

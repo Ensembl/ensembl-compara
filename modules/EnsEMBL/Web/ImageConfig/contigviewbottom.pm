@@ -314,7 +314,8 @@ sub init_cacheable {
   }
   elsif ($self->hub->database('variation')) {
     my $tracks = [qw(variation_feature_variation)];
-    if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
+    if ($self->species_defs->databases->{'DATABASE_VARIATION'} &&
+        $self->species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
       push @$tracks, 'variation_feature_structural_smaller';
     }
     $self->modify_configs($tracks, {display => 'compact'});

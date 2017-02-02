@@ -44,7 +44,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   
   # check we have a location and LD populations are defined
-  return unless $self->builder->object('Location') && $species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'};
+  return unless $self->builder->object('Location') && $species_defs->databases->{'DATABASE_VARIATION'} && $species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'};
   
   my $selected_pop = $hub->param('pop_id');
   
