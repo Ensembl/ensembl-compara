@@ -405,7 +405,7 @@ sub store_exon_coordinates {
     my $exon_list;
     if    ( $seq_member->source_name =~ "PEP"   ) { $exon_list = $transcript->get_all_translateable_Exons }
     elsif ( $seq_member->source_name =~ "TRANS" ) { $exon_list = $transcript->get_all_Exons }
-
+    return unless scalar(@$exon_list);
     my $scale_factor = $seq_member->source_name =~ /PEP/ ? 3 : 1;
     my @exons;
     my $left_over = $exon_list->[0]->phase > 0 ? -$exon_list->[0]->phase : 0;

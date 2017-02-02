@@ -83,17 +83,17 @@ sub default_options {
 	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
 	    'staging_loc1' => {
-            -host   => 'ens-staging1',
+            -host   => 'ens-staging3',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
-        'staging_loc2' => {
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },  
+        # 'staging_loc2' => {
+        #     -host   => 'ens-staging2',
+        #     -port   => 3306,
+        #     -user   => 'ensro',
+        #     -pass   => '',
+        # },  
 	    'livemirror_loc' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
@@ -102,7 +102,7 @@ sub default_options {
 	        -db_version => 71,
         },
 
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1') ], # $self->o('staging_loc2'), ],
         #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
@@ -328,10 +328,11 @@ sub pipeline_analyses {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'reg_conf'        => $self->o('reg_conf'),
 				  'mlss_id'        => $self->o('mlss_id'),
-                                  'collection'     => $self->o('collection'),
-                                  'master_db'      => $self->o('master_db'),
-                                  'pipeline_db'    => $self->pipeline_url(),
-                                  'only_cellular_component' => $self->o('only_cellular_component'),
+                  'collection'     => $self->o('collection'),
+                  'master_db'      => $self->o('master_db'),
+                  'pipeline_db'    => $self->pipeline_url(),
+                  'only_cellular_component' => $self->o('only_cellular_component'),
+
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
