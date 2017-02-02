@@ -101,7 +101,7 @@ sub _convert_node {
 
   my $p_value_lim = $node->pvalue_lim();
   if ($p_value_lim) {
-    $hash->{p_value_lim} = $p_value_lim;
+    $hash->{p_value_lim} = $p_value_lim+0;
   }
 
   my $is_node_significant = $node->is_node_significant();
