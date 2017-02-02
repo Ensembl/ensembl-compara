@@ -199,29 +199,6 @@ sub pipeline_analyses {
             }],
         },
 
-# <<<<<<< Updated upstream
-# =======
-#         {   -logic_name => 'exon_funnel',
-#             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ExonFunnel',
-#             -flow_into  => {
-#                 '2->B' => [ 'select_mlss' ],
-#                 'B->1' => [ 'prepare_table_copy' ],
-#             }
-#         },
-
-#         {   -logic_name        => 'prepare_exons',
-#             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareExons',
-#             -analysis_capacity => 50,
-#             -batch_size        => 10,
-#             -flow_into         => {
-#                 1 => [ '?table_name=exon_boundaries' ] 
-#             },
-#             -rc_name => '4Gb_job_with_reg_conf',
-#             -analysis_capacity => 50,
-#             #-input_ids => {}
-#         },
-
-# >>>>>>> Stashed changes
         {   -logic_name => 'reset_mlss',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
