@@ -72,12 +72,11 @@ sub fetch_input {
 
 	my %aln_ranges;
 	my @orth_batch = @{ $self->param_required('orth_batch') };
-
-	my $dba;
-	if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
-	else { $dba = $self->compara_dba }
-
-        my $do_disconnect = $dba->dbc ne $self->dbc;
+        
+	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('pipeline_url'));
+	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	# else { $dba = $self->compara_dba }
+	my $do_disconnect = $dba->dbc ne $self->dbc;
 	
 	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;

@@ -656,9 +656,10 @@ sub copy_all_species_tres {
     next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
     copy_table($from_dba->dbc, $to_dba->dbc, 'species_tree_root', $mlss_filter);
-    copy_data($from_dba->dbc, $to_dba, 'species_tree_node', "SELECT species_tree_node.* FROM species_tree_node JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
-    copy_data($from_dba->dbc, $to_dba, 'species_tree_node_tag', "SELECT species_tree_node_tag.* FROM species_tree_node_tag JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
-    copy_data($from_dba->dbc, $to_dba, 'species_tree_node_attr', "SELECT species_tree_node_attr.* FROM species_tree_node_attr JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba->dbc, $to_dba->dbc, 'species_tree_node', "SELECT species_tree_node.* FROM species_tree_node JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba->dbc, $to_dba->dbc, 'species_tree_node_tag', "SELECT species_tree_node_tag.* FROM species_tree_node_tag JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+    copy_data($from_dba->dbc, $to_dba->dbc, 'species_tree_node_attr', "SELECT species_tree_node_attr.* FROM species_tree_node_attr JOIN species_tree_node USING (node_id) JOIN species_tree_root USING (root_id) WHERE $mlss_filter");
+
   }
 }
 

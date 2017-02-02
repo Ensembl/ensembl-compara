@@ -140,17 +140,24 @@ sub fetch_input {
 sub write_output {
 	my $self = shift;
 
+	my ( $species1_id, $species2_id ) = ( $self->param( 'species1_id' ), $self->param( 'species2_id' ) );
+
 	my $dataflow = {
-		'species1_id'  => $self->param( 'species1_id' ),
-		'species2_id'  => $self->param( 'species2_id' ),
+		'species1_id'  => $species1_id,
+		'species2_id'  => $species2_id,
 		'aln_mlss_ids' => $self->param( 'aln_mlss_ids' ),
 	};
+	$self->param('accu_dataflow', $dataflow);
 
-	print "FLOWING #1: ", Dumper { mlss => $self->param('aln_mlss_ids') };
-	print "FLOWING #2: ", Dumper $dataflow;
+	$self->dataflow_output_id( { species => "$species1_id - $species2_id", accu_dataflow => $dataflow }, 2 ); # to accu
 
-	$self->dataflow_output_id( { mlss => $self->param('aln_mlss_ids') }, 1 ); # to write_threshold
-	$self->dataflow_output_id( $dataflow, 2 ); # to prepare_orthologs
+	# print "FLOWING #1: ", Dumper { mlss => $self->param('aln_mlss_ids') };
+	# print "FLOWING #2: ", Dumper $dataflow;
+
+	# $self->dataflow_output_id( { mlss => $self->param('aln_mlss_ids') }, 1 ); # to write_threshold
+	# $self->dataflow_output_id( $dataflow, 2 ); # to prepare_orthologs
+	# $self->dataflow_output_id( {}, 3 );
+
 }
 
 sub _overlap {

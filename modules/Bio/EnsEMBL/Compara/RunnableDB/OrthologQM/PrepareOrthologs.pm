@@ -138,8 +138,8 @@ sub run {
             # may need to add aln_mlss_ids in here!!? 
             # depends next runnable can see the param through the stack..
         } );
-        # $c++;
-        # last if $c >= 100;
+        $c++;
+        last if $c >= 10;
     }
     $self->param( 'orth_info', \@orth_info );
 }
