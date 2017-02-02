@@ -1036,7 +1036,10 @@ return $fg_db;
 sub feature_sets {
   my $self = shift;
 
-  my $available_sets = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'};
+  my $available_sets = [];
+  if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    $available_sets = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'};
+  }
   my $fg_db = $self->get_fg_db; 
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
   my @fsets;

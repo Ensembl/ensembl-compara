@@ -346,7 +346,10 @@ sub get_cell_line_data {
   my ($self, $image_config, $filter) = @_;
   
   # First work out which tracks have been turned on in image_config
-  my %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  my %cell_lines = ();
+  if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  }
   my @sets       = qw(core non_core);  
   my $data;
 

@@ -433,7 +433,7 @@ sub table_columns {
   );  
 
   push @columns, ({ key => 'sift',     title => 'SIFT',     sort => 'position_html', align => 'center', help => $glossary->{'SIFT'} })
-      if defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'};
+      if $self->hub->species_defs->databases->{'DATABASE_VARIATION'} && defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'};
 
   push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
       if $self->hub->species eq 'Homo_sapiens';

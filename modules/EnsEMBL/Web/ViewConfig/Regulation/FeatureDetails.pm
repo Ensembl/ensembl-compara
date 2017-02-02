@@ -27,7 +27,10 @@ use parent qw(EnsEMBL::Web::ViewConfig::RegulationPage);
 sub init_cacheable {
   ## Abstract method implementation
   my $self     = shift;
-  my $analyses = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'feature_type'}{'analyses'} || {};
+  my $analyses = {};
+  if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    $analyses = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'feature_type'}{'analyses'} || {};
+  }
 
   $self->set_default_options({
     'context'   => 200,

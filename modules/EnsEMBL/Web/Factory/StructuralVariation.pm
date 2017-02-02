@@ -61,7 +61,7 @@ sub createObjects {
     $self->param('vdb', 'variation');
     $self->param('sv', $structural_variation->variation_name) unless $self->param('sv'); # For same reason as svf check above;
   } else {
-    my $db_version = $self->species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
+    my $db_version = $self->species_defs->databases->{'DATABASE_VARIATION'} && $self->species_defs->databases->{'DATABASE_VARIATION'}{'dbSNP_VERSION'};
     
     return $self->problem('fatal', "Could not find structural variation $identifier", $self->_help(sprintf(
       'Either %s does not exist in the current Ensembl database, %sor there was a problem retrieving it.',

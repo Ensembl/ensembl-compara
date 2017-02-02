@@ -36,7 +36,10 @@ sub init_cacheable {
   $self->SUPER::init_cacheable(@_);
 
   my @feature_sets  = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
-  my $cell_info     = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'};
+  my $cell_info     = {};
+  if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    $cell_info      = $self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'};
+  }
   my @cell_lines    = grep { $cell_info->{$_} > 0 } sort keys %$cell_info;
 
   s/\:\d*$// for @cell_lines;
