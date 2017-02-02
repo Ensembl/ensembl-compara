@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 =head1 LICENSE
 
@@ -94,7 +94,7 @@ if ($rmconfig) {
 }
 
 # Additional processing for memcached
-if ($memcached) {
+if (keys %{$memcached || {}}) {
 
   # Check memcached servers version
   warn_line();
