@@ -340,29 +340,58 @@ sub fetch_all_by_GenomicAlignBlock {
 =cut
 
 sub fetch_all_by_genomic_align_block_id {
-  my ($self, $incoming_genomic_align_block_id) = @_;
+  my ($self, $incoming_genomic_align_block_id, $species_list) = @_;
   my $genomic_aligns = [];
-
   my $sql = qq{
           SELECT
-              genomic_align_id,
-              genomic_align_block_id,
-              method_link_species_set_id,
-              dnafrag_id,
-              dnafrag_start,
-              dnafrag_end,
-              dnafrag_strand,
-              cigar_line,
-              visible,
-              node_id
-          FROM
-              genomic_align
-          WHERE
-              genomic_align_block_id = ?
+              ga.genomic_align_id,
+              ga.genomic_align_block_id,
+              ga.method_link_species_set_id,
+              ga.dnafrag_id,
+              ga.dnafrag_start,
+              ga.dnafrag_end,
+              ga.dnafrag_strand,
+              ga.cigar_line,
+              ga.visible,
+              ga.node_id
       };
 
+  if ($species_list) {
+    my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
+    my @species_dbIDs;
+    foreach my $species_name (@$species_list) {
+      my $gdb_ID = $genome_db_adaptor->fetch_by_registry_name($species_name)->dbID;
+      push(@species_dbIDs, $gdb_ID);
+    }
+    my $species_dbIDs_str=join(',',@species_dbIDs);
+    $sql .= qq{
+            FROM
+              genomic_align ga 
+            JOIN 
+              dnafrag df 
+            USING
+              (dnafrag_id)
+            WHERE
+              ga.genomic_align_block_id = ? 
+            AND 
+              df.genome_db_id IN ($species_dbIDs_str)
+        };
+  } else {
+    $sql .= qq{
+            FROM
+              genomic_align ga
+          WHERE
+              ga.genomic_align_block_id = ? 
+        };
+  }
+
   my $sth = $self->prepare($sql);
-  $sth->execute($incoming_genomic_align_block_id);
+  if ($species_list) {
+    $sth->execute($incoming_genomic_align_block_id);
+  }
+  else {
+    $sth->execute($incoming_genomic_align_block_id);
+  }
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
       $visible, $node_id);
