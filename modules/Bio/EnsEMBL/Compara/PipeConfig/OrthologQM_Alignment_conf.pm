@@ -108,7 +108,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'compara_db'      => "mysql://ensadmin:$ENV{EHIVE_PASS}\@compara5/mp14_ensembl_compara_87",
+        'compara_db'      => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@compara5/mp14_ensembl_compara_87",
         'master_db'       => "mysql://ensro\@compara1/mm14_ensembl_compara_master",
         'species1'        => undef,
         'species2'        => undef,

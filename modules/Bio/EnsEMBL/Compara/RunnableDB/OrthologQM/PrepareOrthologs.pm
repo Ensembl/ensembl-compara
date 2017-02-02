@@ -140,7 +140,7 @@ sub run {
             # depends next runnable can see the param through the stack..
         } );
         $c++;
-        last if $c >= 10;
+        # last if $c >= 10;
     }
     $self->param( 'orth_info', \@orth_info );
 }

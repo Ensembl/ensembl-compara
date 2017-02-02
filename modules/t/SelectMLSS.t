@@ -1,3 +1,4 @@
+
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2017] EMBL-European Bioinformatics Institute
@@ -37,9 +38,12 @@ my $compara_db = $dbc->url;
 
 # Test pair of species sharing an EPO aln #
 my $exp_dataflow = {
-	'aln_mlss_ids' => [647, 634],
-	'species1_id' => '112',
-	'species2_id' => '142'
+	species => '112 - 142',
+	accu_dataflow => {
+		'aln_mlss_ids' => [647, 634],
+		'species1_id' => '112',
+		'species2_id' => '142'
+	}
 };
 
 standaloneJob(
@@ -62,11 +66,11 @@ standaloneJob(
 			'WARNING',
 			"Found 2 alignments between meleagris_gallopavo and gallus_gallus"
 		],
-		[
-			'DATAFLOW',
-			{ mlss => [647, 634] },
-			1
-		],
+		# [
+		# 	'DATAFLOW',
+		# 	{ mlss => [647, 634] },
+		# 	1
+		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
 			$exp_dataflow, # expected data flowed out
@@ -77,9 +81,12 @@ standaloneJob(
 
 # Test pair of species sharing an LASTZ aln #
 $exp_dataflow = {
-	'aln_mlss_ids' => [719],
-	'species1_id' => '150',
-	'species2_id' => '142'
+	species => '150 - 142',
+	accu_dataflow => {
+		'aln_mlss_ids' => [719],
+		'species1_id' => '150',
+		'species2_id' => '142'
+	}
 };
 
 standaloneJob(
@@ -98,11 +105,11 @@ standaloneJob(
 			'WARNING',
 			"Found 1 alignments between homo_sapiens and gallus_gallus"
 		],
-		[
-			'DATAFLOW',
-			{ mlss => [719] },
-			1
-		],
+		# [
+		# 	'DATAFLOW',
+		# 	{ mlss => [719] },
+		# 	1
+		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
 			$exp_dataflow, # expected data flowed out
@@ -113,9 +120,12 @@ standaloneJob(
 
 # Test species set with EPO aln #
 $exp_dataflow = {
-	'aln_mlss_ids' => [647],
-	'species1_id' => '112',
-	'species2_id' => '142'
+	species => '112 - 142',
+	accu_dataflow => {
+		'aln_mlss_ids' => [647],
+		'species1_id' => '112',
+		'species2_id' => '142'
+	}
 };
 
 standaloneJob(
@@ -127,11 +137,11 @@ standaloneJob(
 		'compara_db'     => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
-		[
-			'DATAFLOW',
-			{ mlss => [647] },
-			1
-		],
+		# [
+		# 	'DATAFLOW',
+		# 	{ mlss => [647] },
+		# 	1
+		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
 			$exp_dataflow, # expected data flowed out
