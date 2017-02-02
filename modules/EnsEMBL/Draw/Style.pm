@@ -285,7 +285,7 @@ sub draw_subtitle {
                           || $self->track_config->get('colour') 
                           || 'slategray';
   my $subtitle_y      = defined($top) ? $top : $self->track_config->get('initial_offset') || 0;
-  $subtitle_y        += defined($self->track_config->get('subtitle_y')) ? $self->track_config->get('subtitle_y') : 8;
+  $subtitle_y        += $self->track_config->get('subtitle_y') if defined($self->track_config->get('subtitle_y'));
   my $height = 8;
 
   push @{$self->glyphs}, 
@@ -299,6 +299,7 @@ sub draw_subtitle {
                   y         => $subtitle_y,
                   halign    => 'left',
                   absolutex => 1,
+                  absolutey => 1,
                 });
   return $height;
 }

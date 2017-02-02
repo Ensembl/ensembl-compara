@@ -32,6 +32,9 @@ use EnsEMBL::Draw::Style::Feature::Variant;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
+## Hack for backwards compatibility
+sub subtitle_height { return 6; }
+
 sub render_normal {
   my $self = shift;
   $self->{'my_config'}->set('bumped', 1);
@@ -64,6 +67,8 @@ sub _render {
   my $self = shift;
   $self->{'my_config'}->set('show_overlay', 1);
   $self->{'my_config'}->set('show_subtitle', 1);
+  ## Add some extra vertical space for indels
+  $self->{'my_config'}->set('extra_height', 8);
 
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};
