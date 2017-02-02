@@ -275,13 +275,15 @@ sub draw_subtitle {
   my ($self, $metadata, $top) = @_;
   $metadata ||= {};
   ## Track name actually gets precedence, which is a bit illogical but whatever...
-  my $subtitle = $metadata->{'name'} || $metadata->{'subtitle'};
+  my $subtitle = $metadata->{'name'} || $metadata->{'subtitle'} 
+                  || $self->track_config->get('subtitle')
+                  || $self->track_config->get('caption');
   return unless $subtitle;
 
   my $subtitle_colour = $metadata->{'colour'} 
                           || $metadata->{'color'} 
                           || $self->track_config->get('colour') 
-                          || 'black';
+                          || 'slategray';
   my $subtitle_y      = defined($top) ? $top : $self->track_config->get('initial_offset') || 0;
   $subtitle_y        += defined($self->track_config->get('subtitle_y')) ? $self->track_config->get('subtitle_y') : 8;
   my $height = 8;

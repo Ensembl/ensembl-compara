@@ -32,8 +32,6 @@ use EnsEMBL::Draw::Style::Feature::Variant;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Simple);
 
-sub supports_subtitles { return 1; }
-
 sub render_normal {
   my $self = shift;
   $self->{'my_config'}->set('bumped', 1);
@@ -65,6 +63,7 @@ sub render_nolabels {
 sub _render {
   my $self = shift;
   $self->{'my_config'}->set('show_overlay', 1);
+  $self->{'my_config'}->set('show_subtitle', 1);
 
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};

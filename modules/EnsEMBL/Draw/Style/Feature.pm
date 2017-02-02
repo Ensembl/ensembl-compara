@@ -81,13 +81,14 @@ sub create_glyphs {
   foreach my $subtrack (@$data) {
     ## Keep track of all the feature heights so we can calculate a correct total height
     my $heights = {};
+    my $subtitle_height = 0;
     my $label_lines = 1;
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
       $self->track_config->set('subtitle_y', 0);
-      my $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
-      $subtrack_start .= $subtitle_height + 2;
+      $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $subtrack_start += $subtitle_height + 2;
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
@@ -168,7 +169,8 @@ sub create_glyphs {
       $self->draw_feature($feature, $position);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
-      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $space_for_labels);
+      $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
+      push @{$heights->{$feature_row}}, ($subtitle_height + $approx_height + $vspacing + $space_for_labels);
 
       ## Optional label(s)
       my $font_size     = $self->{'font_size'};
@@ -273,6 +275,7 @@ sub create_glyphs {
   $self->draw_hidden_bgd($total_height);
   my $track_height = $track_config->get('total_height') || 0;
   $track_config->set('total_height', $track_height + $total_height);
+  warn ">>> TOTAL HEIGHT ".$track_config->get('total_height');
 
   $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};
