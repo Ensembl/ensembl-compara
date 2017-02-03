@@ -227,13 +227,13 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'copy_alignment_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyAlignmentTables',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
             -parameters    => {
                   'program'        => $self->o('populate_new_database_exe'),
                   'reg_conf'       => $self->o('reg_conf'),
                   'master_db'      => $self->o('master_db'),
                   'pipeline_db'    => $self->pipeline_url(),
-                  'alt_aln_db'     => $self->o('alt_aln_db'),
+                  'old_compara_db' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
             },
             -rc_name => '1Gb_job',
         },
