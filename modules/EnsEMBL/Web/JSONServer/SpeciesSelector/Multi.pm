@@ -69,9 +69,16 @@ sub json_fetch_species {
     my $tmp = {};
     $tmp->{scientific} = $s;
     $tmp->{key} = $s;
-    $tmp->{common}      = (grep($target eq $_, @$chromosomes) ? 'Chromosome ' : '') . "$target";
 
-    push (@{$extras->{$sp}->{'haplotypes and patches'}}, $tmp);
+    if (grep($target eq $_, @$chromosomes)) {
+      $tmp->{common} = 'Chromosome ' . "$target";
+      push @{$extras->{$sp}->{'self_alignment'}->{data}}, $tmp;
+      $extras->{$sp}->{'self_alignment'}->{create_folder} = 0;
+    }
+    else {
+      $tmp->{common} = "$target";
+      push @{$extras->{$sp}->{'haplotypes_and_patches'}->{data}}, $tmp;
+    }
   }
 
   foreach (grep !$species{$_}, keys %shown) {

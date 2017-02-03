@@ -43,6 +43,7 @@ sub _init {
   $self->{link_text}       = 'Species selector';
   $self->{finder_prompt}   = 'Start typing the name of a species...';
   $self->{data_url}        = $hub->url('Json', {
+                              %{$hub->multi_params},
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
                               action => $hub->param('referer_action') || '',

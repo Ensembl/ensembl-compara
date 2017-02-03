@@ -200,6 +200,7 @@ sub select_alignment_based_on_hierarchy {
     for (my $i=0; $i<=$#$hierarchy; $i++) {
       my $method = $hierarchy->[$i];
       my $re = qr /$method/i;
+
       foreach my $align (@{$alignments->{$order}}) {
         if ($align->{type} =~ $re && !$hash_flag->{$align->{'species_set_id'}}) {
           push @{$prioritised_alignments->{$order}}, $align;

@@ -130,7 +130,7 @@ sub json_fetch_species {
           $t->{value} = $align_id;
 
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $t;
+            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}->{data}}, $t;
             $all_species->{$species_info->{$_}->{strain_collection}} = $t;
           }
           else {
