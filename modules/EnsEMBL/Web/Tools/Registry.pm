@@ -63,7 +63,7 @@ sub configure {
     STABLE_IDS          => undef,
   );
 
-  for my $species (keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
+  for my $species (sort keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
     (my $sp = $species) =~ s/_/ /g;
     $sp = 'ancestral_sequences' if $sp eq 'MULTI';
     
@@ -76,7 +76,7 @@ sub configure {
       Bio::EnsEMBL::Registry->add_alias($species, $prod_name);
     }
     
-    for my $type (keys %{$self->{'conf'}->{'_storage'}{$species}{'databases'}}){
+    for my $type (sort { $b =~ /CORE/ <=> $a =~ /CORE/ } keys %{$self->{'conf'}->{'_storage'}{$species}{'databases'}}){
       ## Grab the configuration information from the SpeciesDefs object
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{'databases'}{$type};
      
