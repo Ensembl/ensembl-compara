@@ -156,7 +156,7 @@ sub run_HMM_search {
     my $library_path      = $hmmLibrary->libDir();
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
+    my $cmd = "PATH=$blast_bin_dir:$hmmer_path:\$PATH; PERL5LIB=$pantherScore_path/lib:\$PERL5LIB; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
     my $cmd_out = $self->run_command($cmd);
 
     # Detection of failures
