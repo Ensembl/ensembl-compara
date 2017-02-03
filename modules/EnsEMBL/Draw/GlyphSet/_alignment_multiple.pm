@@ -229,7 +229,7 @@ sub element_features {
     -DBID => $id,
     -ADAPTOR => $db->get_adaptor('MethodLinkSpeciesSet'),
     -METHOD => $ml,
-    -SPECIES_SET_OBJ => $ss
+    -SPECIES_SET => $ss
   );
 
   $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice, undef, undef, $restrict) || [];
