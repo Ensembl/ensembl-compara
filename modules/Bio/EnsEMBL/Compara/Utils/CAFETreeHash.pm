@@ -36,7 +36,7 @@ sub _head_node {
   my $hash = {
     type => 'cafe tree',
     rooted => 1,
-    pvalue_avg => $tree->pvalue_avg(),
+    pvalue_avg => $tree->pvalue_avg()+0,
   };
 
   if($tree->can('stable_id')) {

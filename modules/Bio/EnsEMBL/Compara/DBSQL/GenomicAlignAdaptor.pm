@@ -115,29 +115,6 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-=head2 new
-
-  Arg [1]    : list of args to super class constructor
-  Example    : $ga_a = new Bio::EnsEMBL::Compara::GenomicAlignAdaptor($dbobj);
-  Description: Creates a new GenomicAlignAdaptor. This
-               class should be instantiated through the get method on the 
-               DBAdaptor rather than calling this method directly.
-  Returntype : none
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::DBSQL::DBConnection
-  Status     : Stable
-
-=cut
-
-sub new {
-  my $class = shift;
-
-  my $self = $class->SUPER::new(@_);
-
-
-  return $self;
-}
-
 
 =head2 store
 

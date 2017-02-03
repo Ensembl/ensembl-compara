@@ -298,7 +298,7 @@ my $pvalue_cb = sub {
     my ($self) = @_;
     my $pval;
     if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {
-        return $self->{tree}->pvalue();
+        return $self->{tree}->pvalue()+0;
     }
     return undef;
 };
