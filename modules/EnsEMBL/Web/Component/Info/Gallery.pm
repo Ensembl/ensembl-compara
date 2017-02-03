@@ -137,6 +137,7 @@ sub format_gallery {
         my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
 
         $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
+        my $multi_fs = $multi_form->add_fieldset({'no_required_notes' => 1});
         
         my $relation = $data_type->{$type}{'relation'} || 'has';
         my $header = sprintf('<p><b>This %s %s multiple %s</b></p>', $data_type->{$type}{'term'}, $relation, lc($multi_type).'s');
@@ -144,14 +145,15 @@ sub format_gallery {
         while (my($k, $v) = each (%{$hub->core_params})) {
           $v ||= $link_to->{$k};
           if ($v) {
-            $multi_form->add_hidden({'name' => $k, 'value' => $v});
+            $multi_fs->add_hidden({'name' => $k, 'value' => $v});
           }
         }
 
-        my $field = $multi_form->add_field({
+        my $field = $multi_fs->add_field({
                                         'type'    => 'Dropdown',
                                         'name'    => $data_param,
                                         'values'  => $page->{'multi'}{'values'},
+                                        'required'  => 1,
                                         });
         $field->add_element({'type' => 'submit', 'value' => 'Show me'}, 1);
         $next_action = $header.$multi_form->render;
