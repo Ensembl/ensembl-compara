@@ -1064,7 +1064,7 @@ sub add_regulation_builds {
   }));
 
   my $db_tables     = {};
-  if ( defined $self->database->{'DATABASE_FUNCGEN'} ) {
+  if ( defined $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   }
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
