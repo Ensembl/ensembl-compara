@@ -199,6 +199,7 @@ sub store_ncrna_gene {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
+            $self->_load_biotype_groups($self->param_required('production_db_url'));
             my $biotype_group = $self->param('biotype_groups')->{$gene->biotype};
             $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
