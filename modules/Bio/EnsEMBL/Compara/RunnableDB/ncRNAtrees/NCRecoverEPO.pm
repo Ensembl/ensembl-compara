@@ -422,7 +422,6 @@ sub run_low_coverage_best_in_alignment {
     my $deleted = 0;
     foreach my $low_cov_genomic_align_block (@$low_cov_genomic_align_blocks) {
         die unless $max_gabID;
-        die unless $low_cov_genomic_align_block->original_dbID;
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
