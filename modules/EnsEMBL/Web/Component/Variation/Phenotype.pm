@@ -211,8 +211,7 @@ sub table_data {
            $stars .= qq{<img class="review_status" src="/i/val/$star_color\_star.png" alt="$star_color"/>};
         }
         $clin_sign_list =~ s/,/, /g;
-        $clin_sign  = qq{<div class="_ht nowrap clin_sign">$clin_sign$stars};
-        $clin_sign .= helptip(qq{<b>$clin_sign_list</b><br />Review status: "$clin_status"});
+        $clin_sign  = helptip(qq{<div class="_ht nowrap clin_sign">$clin_sign$stars}, qq{<b>$clin_sign_list</b><br />Review status: "$clin_status"});
         $clin_sign .= qq{</div>};
       }
       $column_flags{'clin_sign'} = 1;
