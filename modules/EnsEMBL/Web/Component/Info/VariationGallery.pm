@@ -232,7 +232,7 @@ sub _get_pages {
     my $variation_db    = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     my $has_strains     = $variation_db->{'#STRAINS'} if $variation_db;
     my $has_LD          = ($variation_db && $variation_db->{'DEFAULT_LD_POP'}) ? 1 : 0;
-
+    my $has_papers      = $object->count_citations ? 1 : 0; 
 
     return {'Region in Detail' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -315,8 +315,10 @@ sub _get_pages {
                                                     'action'  => 'Citations',
                                                     'v'      => $v,
                                                     },
-                                  'img'     => 'variation_citations',
-                                  'caption' => 'Papers citing your variant',
+                                  'img'       => 'variation_citations',
+                                  'caption'   => 'Papers citing your variant',
+                                  'disabled'  => !$has_papers,
+                                  'message'   => 'No citations available', 
                                 },
           'Transcript Image' => {
                                   'link_to'     => {'type'    => 'Transcript',
