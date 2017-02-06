@@ -223,7 +223,7 @@ sub _sub_header {
   my $value = $hub->param($param);
   my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
 
-  my $form  = $self->new_form({'id' => lc($title), 'method' => 'get'});
+  my $form  = $self->new_form({'id' => lc($title), 'class' => 'gallery-header',  'method' => 'get'});
 
   $form->add_hidden({
                     'name'  => 'data_type',
@@ -233,6 +233,7 @@ sub _sub_header {
   $form->add_field({
                     'inline'    => 1,
                     'label'     => $label,
+                    'class'     => 'header',
                     'elements'  => [
                           {
                             'type'    => 'String',
