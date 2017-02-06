@@ -82,7 +82,7 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_karyotype',
-                                  'caption'   => 'View the entire karyotype for this species, and add pointers for individual genes',
+                                  'caption'   => 'View the entire karyotype for this species, and add markers to indicate the position of individual genes',
                                   'disabled'  => $no_chromosomes,
                                   'message'   => 'This species has not been assembled into chromosomes',
                                 },
@@ -92,7 +92,7 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_stats',
-                                  'caption'   => 'Tables displaying the length of this genome, gene counts, and other statistics'
+                                  'caption'   => 'Table showing genome size, gene counts and other statistics',
                                 },
             'Chromosome Image' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -110,7 +110,7 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_chrstats',
-                                  'caption'   => 'Table displaying the length of this chromosome, gene counts, and other statistics',
+                                  'caption'   => 'Table showing chromosome size, gene counts and other statistics',
                                   'disabled'  => $no_chromosomes,
                                   'message'   => 'This species has not been assembled into chromosomes',
                                 },
@@ -120,7 +120,7 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_overview',
-                                  'caption'   => 'Show major features on a large region',
+                                  'caption'   => 'View genes and other major features in a large genomic region',
                                 },
             'Scrolling Browser' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -181,7 +181,7 @@ sub _get_pages {
                                                   'r'      => $r,
                                                  },
                                   'img'       => 'location_compare',
-                                  'caption'   => '',
+                                  'caption'   => 'View a genomic region compared to the corresponding region in a species of your choice',
                                 },
             'Linkage Data' => {
                                   'link_to'   => {'type'    => 'Location',

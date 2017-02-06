@@ -1064,7 +1064,7 @@ sub add_regulation_builds {
   }));
 
   my $db_tables     = {};
-  if ( defined $self->database->{'DATABASE_FUNCGEN'} ) {
+  if ( defined $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   }
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
@@ -1836,9 +1836,9 @@ sub add_somatic_mutations {
     my $tissue_menu = $self->create_menu_node('somatic_mutation_by_tissue', 'Somatic variants by tissue');
 
     ## Add tracks for each tumour site
-    my %tumour_sites = ($self->species_defs->databases->{'DATABASE_VARIATION'} && %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}}) || {};
+    my %tumour_sites = ($self->species_defs->databases->{'DATABASE_VARIATION'} && %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2}||{}}) || ();
 
-    foreach my $description (sort  keys %tumour_sites) {
+    foreach my $description (sort keys %tumour_sites) {
       next if $description eq 'none';
 
       my $phenotype_id           = $tumour_sites{$description};

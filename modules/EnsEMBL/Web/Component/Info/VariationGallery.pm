@@ -47,12 +47,12 @@ sub content {
                   },
                   {
                     'title' => 'Genes',
-                    'pages' => ['Gene Sequence', 'Gene Table', 'Gene Image', 'Gene Regulation', 'Citations'],
+                    'pages' => ['Gene Sequence', 'Gene Table', 'Gene Image', 'Genes and Regulation', 'Citations'],
                     'icon'  => 'dna.png',
                   },
                   {
                     'title' => 'Transcripts',
-                    'pages' => ['Transcript Image', 'Transcript Table', 'Transcript Comparison', 'Exons', 'Gene Regulation', 'Citations'],
+                    'pages' => ['Transcript Image', 'Transcript Table', 'Transcript Comparison', 'Exons', 'Genes and Regulation', 'Citations'],
                     'icon'  => 'transcripts.png',
                   },
                   {
@@ -208,8 +208,8 @@ sub _get_pages {
 
     ## Phenotype checking
     my $pfs = $object->get_ega_links;
-    if (scalar($pfs)) {
-      if (scalar($pfs) > 1) {
+    if (scalar(@$pfs)) {
+      if (scalar(@$pfs) > 1) {
         $multi_phenotype = {
                           'type'    => 'Phenotype',
                           'param'   => 'ph',
@@ -250,7 +250,7 @@ sub _get_pages {
                                                   'v'      => $v,
                                                  },
                                   'img'       => 'variation_genomic',
-                                  'caption'   => 'The context of your variant within a 5 kilobase region of the genome',
+                                  'caption'   => 'View 5kb of genomic sequence surrounding your variant of interest',
                                 },
           'Flanking Sequence' => {
                                   'link_to'   => {'type'    => 'Variation',
@@ -266,7 +266,7 @@ sub _get_pages {
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_phylogenetic',
-                                  'caption' => 'Phylogenetic context of your variant, using any of our comparative multiple alignments',
+                                  'caption' => 'Multiple species alignment of the 20bp around your variant',
                                   },
           'Gene Sequence' => {
                                   'link_to'       => {'type'  => 'Gene',
@@ -276,7 +276,7 @@ sub _get_pages {
                                                       'snp_display' => 'on',
                                                       },
                                   'img'       => 'variation_gene_seq',
-                                  'caption'   => 'Sequence of the gene overlapping your variant',
+                                  'caption'   => 'Sequence of the gene in which your variant falls',
                                   'multi'     => $multi_gene,  
                                   'disabled'  => $no_gene,  
                             },
@@ -287,7 +287,7 @@ sub _get_pages {
                                                       'g'       => $g,
                                                       },
                                   'img'       => 'variation_gene_image',
-                                  'caption'   => 'Image showing all variants in the same gene as this one',
+                                  'caption'   => 'Image showing all variants associated with this gene',
                                   'multi'     => $multi_gene,  
                                   'disabled'  => $no_gene,  
                           },
@@ -298,17 +298,17 @@ sub _get_pages {
                                                       'g'       => $g,
                                                       },
                                   'img'       => 'variation_gene_table',
-                                  'caption'   => 'Table of all variants in the same gene as this one',
+                                  'caption'   => 'Table of all variants associated with this gene',
                                   'multi'     => $multi_gene,  
                                   'disabled'  => $no_gene,  
                           },
-          'Gene Regulation' => {
+          'Genes and Regulation' => {
                                   'link_to'     => {'type'    => 'Variation',
                                                     'action'  => 'Mappings',
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_mappings',
-                                  'caption' => 'Tables listing genes and regulatory features around your variant',
+                                  'caption' => 'Table listing genes and regulatory features with which your variant is associated',
                                 },
           'Citations' => {
                                   'link_to'     => {'type'    => 'Variation',
@@ -347,7 +347,7 @@ sub _get_pages {
                                                     'g'       => $g,
                                                     },
                                   'img'     => 'variation_trans_comp',
-                                  'caption' => "Comparison of a gene's transcript sequences, showing variants",
+                                  'caption' => 'Comparison of the transcript sequences of a gene, indicating variant positions',
                                   'multi'     => $multi_gene,  
                                   'disabled'  => $no_gene,  
                                 },
@@ -357,7 +357,7 @@ sub _get_pages {
                                                     'v'      => $v,
                                                     },
                                   'img'     => 'variation_exons',
-                                  'caption' => 'Variants within each exon sequence',
+                                  'caption' => 'Sequences of individual exons of a transcript indicating the positioning of variants',
                                   'multi'     => $multi_transcript,  
                                   'disabled'  => $no_gene,  
                                 },
