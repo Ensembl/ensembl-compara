@@ -83,6 +83,7 @@ sub default_options {
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+        'gene_blacklist_file'           => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
 
     # tree building parameters:
         'use_quick_tree_break'      => 0,
