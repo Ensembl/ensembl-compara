@@ -42,7 +42,7 @@ sub content {
                     'icon'  => 'dna.png',
                   },
                 {
-                  'title' => 'Function &amp; Regulation',
+                  'title' => 'Expression &amp; Regulation',
                   'pages' => ['Table of Ontology Terms', 'Gene Regulation Image', 'Gene Regulation Table', 'Gene Expression'],
                   'icon'  => 'regulation.png',
                 },
@@ -101,7 +101,7 @@ sub _get_pages {
     my $has_regulation  = !!$hub->species_defs->databases->{'DATABASE_FUNCGEN'};
     my $variation_db    = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     my $has_populations = $variation_db->{'#STRAINS'} if $variation_db ? 1 : 0;
-    my $opt_variants    = $variation_db ? ', optionally with variants marked' : '';
+    my $opt_variants    = $variation_db ? ', with optional variant annotation' : '';
 
     my ($sole_trans, $multi_trans, $multi_prot, $proteins);
     my $transcripts = $object->Obj->get_all_Transcripts || [];
@@ -175,7 +175,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'location_align',
-                                  'caption'   => 'View the region underlying your gene aligned to that of one or more other species',
+                                  'caption'   => 'View the region surrounding your gene aligned to that of one or more other species',
                                   'disabled'  => !$avail->{'has_alignments'},
                                 },
             'Region Comparison' => {
@@ -185,7 +185,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'location_compare',
-                                  'caption'   => 'View your gene compared to its homologue in another species',
+                                  'caption'   => ' View your gene compared to its orthologue in a species of your choice',
                                 },
             'Summary Information' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -201,7 +201,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_splice',
-                                  'caption'   => '',
+                                  'caption'   => 'View the alternate transcripts of this gene',
                                 },
             'Gene Alleles' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -226,7 +226,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_secondary',
-                                  'caption'   => 'Secondary structure of this gene',
+                                  'caption'   => 'Secondary structure of the RNA product of this gene',
                                   'disabled'  => !$has_rna,
                                   'message'   => 'Only available for RNA genes'
                                 },
@@ -319,7 +319,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_support',
-                                  'caption'   => "Table of evidence for this gene's transcripts, from protein, EST and cDNA sources",
+                                  'caption'   => "Table of evidence for the annotation of this gene's transcripts, from protein, EST and cDNA sources",
                                 },
             'Gene History' => {
                                   'link_to'   => {'type'      => 'Gene',
@@ -336,7 +336,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_gxa',
-                                  'caption'   => 'Interactive gene expression heatmap',
+                                  'caption'   => 'Interactive heatmap indicating tissue-specific expression patterns of this gene',
                                   'disabled'  => !$has_gxa,
                                 },
             'Gene Regulation Image' => {
@@ -375,7 +375,7 @@ sub _get_pages {
                                                   'g'      => $g,
                                                  },
                                   'img'       => 'gene_xref',
-                                  'caption'   => 'Links to external database identifiers that match this gene',
+                                  'caption'   => 'Links to supporting / corresponding records in external databases',
                                 },
             'Transcript Summary' => {
                                   'link_to'   => {'type'      => 'Transcript',
@@ -428,7 +428,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_protein',
-                                  'caption'   => 'Image showing protein domains and variants',
+                                  'caption'   => "Image representing the domains found within proteins encoded by the gene’s transcripts, along with any coincident variants",
                                   'disabled'  => !$prot_count,
                                   'multi'     => $multi_prot,
                                 },
@@ -447,7 +447,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'prot_variants',
-                                  'caption'   => "Table of variants found within a transcript's protein",
+                                  'caption'   => 'Table of variants associated with the protein of a particular transcript',
                                   'disabled'  => (!$variation_db || !$prot_count),
                                   'multi'     => $multi_prot,
                                 },
@@ -457,7 +457,7 @@ sub _get_pages {
                                                   't'         => $sole_trans,
                                                  },
                                   'img'       => 'trans_xref',
-                                  'caption'   => 'Links to external database identifiers that match a transcript of this gene',
+                                  'caption'   => 'Links to supporting / corresponding records in external databases',
                                   'multi'     => $multi_trans,
                                 },
             'Oligo Probes' => {
