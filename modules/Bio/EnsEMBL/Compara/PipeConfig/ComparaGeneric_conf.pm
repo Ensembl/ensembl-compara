@@ -33,6 +33,8 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'compara_innodb_schema' => 1,
+
+        'ensembl_cellar'        => $self->o('ENV', 'ENSEMBL_SOFTWARE_HOME').'/linuxbrew/Cellar',
     };
 }
 

@@ -78,7 +78,7 @@ sub default_options {
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
         #Binary source directory
-        'exe_dir'               =>  '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar',
+        'exe_dir'               =>  $self->o('ensembl_cellar').'',
 
         # HMM clustering
         #'hmm_clustering'      => 0,

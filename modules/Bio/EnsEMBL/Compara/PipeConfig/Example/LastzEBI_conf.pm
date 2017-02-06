@@ -78,7 +78,7 @@ sub default_options {
 	     },
 
 	    #Location of executables
-	    'pair_aligner_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/lastz',
+	    'pair_aligner_exe' => $self->o('ensembl_cellar').'/lastz/1.02.00/bin/lastz',
 
 	    #
 	    #Default pair_aligner
@@ -106,10 +106,10 @@ sub default_options {
 	    'bed_dir' => $self->o('dump_dir').'/bed_dir', 
 	    'output_dir' => $self->o('dump_dir').'/feature_dumps',
 
-	    'faToNib_exe'  => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/faToNib',
-        'lavToAxt_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/lavToAxt',
-        'axtChain_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/axtChain',
-        'chainNet_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/chainNet',
+	    'faToNib_exe'  => $self->o('ensembl_cellar').'/kent/v335/bin/faToNib',
+        'lavToAxt_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/lavToAxt',
+        'axtChain_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/axtChain',
+        'chainNet_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/chainNet',
 
 	   };
 }

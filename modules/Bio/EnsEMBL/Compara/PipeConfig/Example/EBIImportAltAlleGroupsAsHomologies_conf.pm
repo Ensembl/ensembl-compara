@@ -55,7 +55,7 @@ sub default_options {
         'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
 
         #Software dependencies
-        'mafft_home'            => '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/mafft/7.305/',
+        'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
 
     };
 }
