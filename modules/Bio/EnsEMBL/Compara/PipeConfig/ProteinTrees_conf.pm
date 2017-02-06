@@ -167,7 +167,6 @@ sub default_options {
         'mafft_runtime'             => 7200,
         'raxml_threshold_n_genes' => 500,
         'raxml_threshold_aln_len' => 150,
-        'examl_cores'             => 64,
         'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
@@ -2522,8 +2521,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 8',
-                'examl_cores'           => 8,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2539,8 +2536,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 8',
-                'examl_cores'           => 8,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2552,8 +2547,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 16,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2569,8 +2562,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 16,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2582,8 +2573,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 32,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2599,8 +2588,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 32,
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
@@ -2612,8 +2599,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 64,
                 'cmd_max_runtime'       => '518400',
                 'escape_branch'         => -2,
             },
@@ -2630,8 +2615,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
-                'extra_raxml_args'      => '-T 16',
-                'examl_cores'           => 64,
                 'cmd_max_runtime'       => '518400',
                 'escape_branch'         => -2,
             },
