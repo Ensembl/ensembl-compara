@@ -137,14 +137,14 @@ sub resource_classes {
     return {
         %{ $self->SUPER::resource_classes },    # inherit 'default' from the parent class
 
-        'default'   => { 'LSF' => '-q production-rh7 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'urgent'    => { 'LSF' => '-q production-rh7 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'RegBlast' => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -q production-rh7 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', '-lifespan 360' ] },
-        'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -q production-rh7 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', '-lifespan 1440' ] },
-        'BigMcxload' => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -q production-rh7 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"' },
-        'BigMcl'     => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -q production-rh7 -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
-        'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q production-rh7' },
-        'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q production-rh7 -R"span[hosts=1]"' },
+        'default'   => { 'LSF' => '-M100   -R"select[mem>100]   rusage[mem=100]"' },
+        'urgent'    => { 'LSF' => '-M100   -R"select[mem>100]   rusage[mem=100]"' },
+        'RegBlast' => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', '-lifespan 360' ] },
+        'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', '-lifespan 1440' ] },
+        'BigMcxload' => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"' },
+        'BigMcl'     => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
+        'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000' },
+        'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -R"span[hosts=1]"' },
         'LoMafft' => { 'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"' },
         '500MegMem' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
         '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' }, 

@@ -112,10 +112,10 @@ sub resource_classes {
     my $rc = $self->SUPER::resource_classes();
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-q production-rh7 -C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-	 '1Gb' =>    { 'LSF' => '-q production-rh7 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-	 '1.8Gb' => { 'LSF' => '-q production-rh7 -C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-q production-rh7 -C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+	 '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
