@@ -208,8 +208,8 @@ sub _get_pages {
 
     ## Phenotype checking
     my $pfs = $object->get_ega_links;
-    if (scalar($pfs)) {
-      if (scalar($pfs) > 1) {
+    if (scalar(@$pfs)) {
+      if (scalar(@$pfs) > 1) {
         $multi_phenotype = {
                           'type'    => 'Phenotype',
                           'param'   => 'ph',
