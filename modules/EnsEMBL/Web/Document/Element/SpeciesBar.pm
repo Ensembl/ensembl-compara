@@ -40,16 +40,7 @@ sub content {
   return if ($hub->type eq 'GeneTree' || $hub->type eq 'Tools');
 
   ## User-friendly species name and assembly
-  my $species;
-  my $collection = $hub->species_defs->STRAIN_COLLECTION;
-  if ($collection) {
-    ## FIXME - take out this hack once the meta table is updated
-    (my $strain = $hub->species_defs->SPECIES_STRAIN) =~ s/reference \(|\)//g;
-    $species  = ucfirst($collection).' '.$strain;
-  }
-  else {
-    $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
-  }
+  my $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
   return '' if $species =~ /^(multi|common)$/i;
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
