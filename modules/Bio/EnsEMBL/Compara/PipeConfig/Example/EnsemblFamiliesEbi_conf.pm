@@ -83,7 +83,7 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/nfs/panda/ensembl/compara/mateus/compara/multi_division_hmm_lib/',
+        'hmm_library_basedir' => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
         'pantherScore_path'   => '/nfs/panda/ensembl/compara/mateus/family_pipeline_binaries/pantherScore1.03',
         'hmmer2_home'         => $self->o('exe_dir').'/hmmer2/2.3.2/bin/',
 

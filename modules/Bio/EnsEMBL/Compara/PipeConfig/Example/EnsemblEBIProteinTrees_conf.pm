@@ -140,7 +140,7 @@ sub default_options {
         'getPatterns_exe'           => '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/raxml-get-patterns/1.0/bin/getPatterns',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_library_basedir'   => "/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/",
+        'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
 
