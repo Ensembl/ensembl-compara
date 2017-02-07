@@ -141,7 +141,6 @@ sub default_options {
         'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         'treebest_exe'              => '/software/ensembl/compara/treebest',
         'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
-        'raxml_pthreads_exe'        => '/software/ensembl/compara/raxml/raxmlHPC-PTHREADS-SSE3-8.1.3',
         'examl_exe_avx'             => 'UNDEF',
         'examl_exe_sse3'            => 'UNDEF',
         'parse_examl_exe'           => 'UNDEF',

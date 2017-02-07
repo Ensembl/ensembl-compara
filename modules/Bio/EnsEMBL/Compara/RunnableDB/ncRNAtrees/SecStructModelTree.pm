@@ -102,7 +102,7 @@ sub run {
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
     my $cores = $self->param('raxml_number_of_cores');
-    $self->raxml_exe_decision($cores);
+    $self->raxml_exe_decision();
     my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $cmd = $raxml_exe;

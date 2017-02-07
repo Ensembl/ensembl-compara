@@ -189,7 +189,7 @@ sub _run_bootstrap_raxml {
 
     my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
     my $cores = $self->param('raxml_number_of_cores');
-    $self->raxml_exe_decision($cores);
+    $self->raxml_exe_decision();
     my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;

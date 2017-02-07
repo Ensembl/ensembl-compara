@@ -209,7 +209,7 @@ sub run_RAxML {
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
     
-    $self->raxml_exe_decision($raxml_number_of_cores);
+    $self->raxml_exe_decision();
     my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $cmd = $raxml_exe;

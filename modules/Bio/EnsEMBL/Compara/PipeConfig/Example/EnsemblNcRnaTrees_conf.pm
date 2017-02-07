@@ -108,7 +108,6 @@ sub default_options {
             'cmbuild_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmbuild',
             'cmsearch_exe'          => '/software/ensembl/compara/infernal-1.1.1/src/cmsearch',
             'mafft_exe'             => '/software/ensembl/compara/mafft-7.221/bin/mafft',
-            'raxml_exe'             => '/software/ensembl/compara/raxml/standard-RAxML/raxmlHPC-PTHREADS-SSE3',
             'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
             'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight-PTHREADS',
             'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',

@@ -650,13 +650,14 @@ sub examl_exe_decision {
 
 sub raxml_exe_decision {
     my $self = shift;
-    my $no_cores = shift;
+    my $no_cores = $self->param('raxml_number_of_cores');
 
     my $avx = `grep avx /proc/cpuinfo`;
     if ($avx) {
         $avx = "AVX";
         if ( (defined $no_cores) && ($no_cores >= 2) ) {
             $self->param( 'raxml_exe', $self->param('raxml_pthread_exe_avx') );
+            $self->param( 'extra_raxml_args', ($self->param('extra_raxml_args')//'')." -T $no_cores ");
         }
         else{
             $self->param( 'raxml_exe', $self->param('raxml_exe_avx') );
@@ -667,6 +668,7 @@ sub raxml_exe_decision {
         $avx = "SSE3";
         if ( (defined $no_cores) && ($no_cores >= 2) ) {
             $self->param( 'raxml_exe', $self->param('raxml_pthread_exe_sse3') );
+            $self->param( 'extra_raxml_args', ($self->param('extra_raxml_args')//'')." -T $no_cores ");
         }
         else{
             $self->param( 'raxml_exe', $self->param('raxml_exe_sse3') );

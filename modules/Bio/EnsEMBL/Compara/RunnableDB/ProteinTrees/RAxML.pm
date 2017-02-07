@@ -41,6 +41,7 @@ sub param_defaults {
              %{$self->SUPER::param_defaults},
              'cmd'                        => '#raxml_exe# #extra_raxml_args# -m #best_fit_model# -p 99123746531 -t gene_tree_#gene_tree_id#.nhx -s #alignment_file# -n #gene_tree_id#',
              'extra_raxml_args'           => '',
+             'raxml_number_of_cores'      => 1,
              'runtime_tree_tag'           => 'raxml_runtime',
              'remove_columns'             => 1,
              'run_treebest_sdi'           => 1,
@@ -54,6 +55,7 @@ sub param_defaults {
 
 sub run {
     my $self = shift;
+    $self->raxml_exe_decision();
     my $best_fit_model = $self->set_raxml_model();
     $self->param( 'best_fit_model', $best_fit_model );
     print "best-fit model: " . $self->param('best_fit_model') . "\n" if ( $self->debug );
