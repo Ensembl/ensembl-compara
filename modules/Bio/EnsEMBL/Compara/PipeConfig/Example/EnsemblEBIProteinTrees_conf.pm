@@ -72,7 +72,6 @@ sub default_options {
 
     # dependent parameters: updating 'base_dir' should be enough
         'base_dir'              => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/',
-        'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
