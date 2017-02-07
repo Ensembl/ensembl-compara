@@ -198,7 +198,7 @@ sub default_options {
       -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
       -port   => 4522,
       -user   => 'ensadmin',
-      -pass   => 'password',
+      -pass   => $ENV{ENSADMIN_PSW},
       #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
       #-dbname => 'treefam_10_mammals_baboon',
       #-dbname => 'ckong_protein_trees_compara_homology_protists_topup24',
