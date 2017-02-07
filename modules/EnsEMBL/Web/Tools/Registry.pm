@@ -106,7 +106,7 @@ sub configure {
           ## Create a new "module" object. Stores info - but doesn't create connection yet
           $module->new(%arg, '-group' => $group) if ($self->dynamic_use($module) && $module->can('new'));
         }
-      } elsif ($type !~ /^DATABASE_(SESSION|ACCOUNTS)$/) {
+      } elsif ($type !~ /^DATABASE_(SESSION|ACCOUNTS)$/ && $type !~ /_MART_/) {
         warn "unknown database type $type\n";
       }
     }
