@@ -578,7 +578,7 @@ sub init_label {
   my $track     = $self->type;
   my $node      = $config->get_node($track);
   my $component = $config->get_parameter('component');
-  my $hover     = ($text =~m/Legend/)? 0 : $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $hover     = ($text =~m/Legend/)? 0 : $component && !$hub->param('export') && $node->get('menu') ne 'no' && $track ne 'scalebar';
   my $class     = random_string(8);
   my $strand_map= { '1' => 'f', '-1' => 'r' };
   my $strand    = $node->get('drawing_strand') && $self->strand ? $strand_map->{$self->strand} : '';
@@ -624,6 +624,11 @@ sub init_label {
   }
  
   my $ch = $self->my_config('caption_height') || 0;
+  my $tooltip = sprintf '%s (%s)',
+                $config->species_defs->get_config($config->species, 'SPECIES_COMMON_NAME'),
+                $config->species_defs->get_config($config->species, 'SPECIES_SCIENTIFIC_NAME');
+
+
   $self->label($self->Text({
     text      => $text,
     font      => $font,
@@ -632,13 +637,15 @@ sub init_label {
     absolutey => 1,
     height    => $ch || $res[3],
     class     => "label $class",
-    alt       => $name,
+    alt       => $tooltip,
     hover     => $hover,
   }));
+
   if($img) {
     $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
     my $offset = 0;
     $offset = $1 if $size =~ s/@(-?\d+)$//;
+
     $self->label_img($self->Sprite({
         z             => 1000,
         x             => 0,
@@ -651,7 +658,9 @@ sub init_label {
         absolutey     => 1,
         absolutewidth => 1,
         pixperbp      => 1,
-        alt           => '',
+        href          => '#',
+        class         => 'tooltip',
+        alt           => $tooltip,
     }));
   }
 }

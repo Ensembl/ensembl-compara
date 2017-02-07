@@ -89,8 +89,8 @@ sub content {
       $annotation_status->set('menu', 'no');
     };
     
-    $image_config->get_node('ruler')->set('caption', $_->{'short_name'});
-    $image_config->get_node('ruler')->set('caption_img',"f:24:".$_->{'species'});
+    $image_config->get_node('ruler')->set('caption', $_->{'short_name'} =~ s/^[^\s]+\s+//r);
+    $image_config->get_node('ruler')->set('caption_img',"f:24\@-6:".$_->{'species'});
     $image_config->highlight($highlight_gene) if $highlight_gene;
     
     if ($join_genes) {

@@ -354,22 +354,22 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).toggleClass('drag_select_pointer', !(!area || area.a.klass.label || area.a.klass.drag || area.a.klass.vdrag || area.a.klass.hover));
 
         // Add helptips on navigation controls in multi species view
-        if (area && area.a && area.a.klass.nav) {
+        if (area && area.a && (area.a.klass.nav || area.a.klass.tooltip)) {
           if (tip !== area.a.attrs.alt) {
             tip = area.a.attrs.alt;
             
-            if (!panel.elLk.navHelptip) {
-              panel.elLk.navHelptip = $('<div class="ui-tooltip helptip-bottom"><div class="ui-tooltip-content"></div></div>');
+            if (!panel.elLk.helpTip) {
+              panel.elLk.helpTip = $('<div class="ui-tooltip helptip-bottom"><div class="ui-tooltip-content"></div></div>');
             }
             
-            panel.elLk.navHelptip.children().html(tip).end().appendTo('body').position({
+            panel.elLk.helpTip.children().html(tip).end().appendTo('body').position({
               of: { pageX: panel.imgOffset.left + area.l + 10, pageY: panel.imgOffset.top + area.t - 48, preventDefault: true }, // fake an event
               my: 'center top'
             });
           }
         } else {
-          if (panel.elLk.navHelptip) {
-            panel.elLk.navHelptip.detach().css({ top: 0, left: 0 });
+          if (panel.elLk.helpTip) {
+            panel.elLk.helpTip.detach().css({ top: 0, left: 0 });
           }
         }
       },
@@ -379,8 +379,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         if (e.relatedTarget) {
 
-          if (panel.elLk.navHelptip) {
-            panel.elLk.navHelptip.detach();
+          if (panel.elLk.helpTip) {
+            panel.elLk.helpTip.detach();
           }
 
         }
@@ -1189,7 +1189,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       area = this.getArea(coords);
     }
 
-    if (!area || area.a.klass.label) {
+    if (!area || area.a.klass.label || area.a.klass.tooltip) {
       return;
     }
     
