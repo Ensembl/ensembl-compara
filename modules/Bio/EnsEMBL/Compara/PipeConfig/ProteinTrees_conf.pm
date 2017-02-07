@@ -112,8 +112,7 @@ sub default_options {
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
     # dependent parameters: updating 'base_dir' should be enough
-        # Note that you can omit the trailing / in base_dir
-        #'base_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/',
+        # Note that you can omit the trailing / in base_dir if you want 'pipeline_name' to be added as a suffix
         'work_dir'              => $self->o('base_dir') . $self->o('pipeline_name'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
