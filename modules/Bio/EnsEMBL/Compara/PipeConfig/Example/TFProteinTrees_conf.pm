@@ -59,7 +59,7 @@ use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblEBIProteinTrees_conf');
 
 
 sub default_options {
@@ -69,7 +69,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # User details
-        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
@@ -87,8 +86,6 @@ sub default_options {
         'division'              => 'treefam',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  '/hps/nobackup/production/ensembl'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
-        'exe_dir'               =>  '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -120,38 +117,14 @@ sub default_options {
     # mapping parameters:
 
     # executable locations:
-        'hcluster_exe'              => $self->o('exe_dir').'/hcluster_sg',
-        'mcoffee_home'              => $self->o('exe_dir').'/tcoffee/Version_11.00.8cbe486',
-        'mafft_home'                => $self->o('exe_dir').'/mafft-7.221-without-extensions',
-        'treebest_exe'              => $self->o('exe_dir').'/treebest',
-        'notung_jar'                => $self->o('exe_dir').'/Notung-2.6/Notung-2.6.jar',
-        'quicktree_exe'             => $self->o('exe_dir').'/quicktree',
-        'hmmer2_home'               => $self->o('exe_dir').'/hmmer-2.3.2/',
-        'hmmer3_home'               => $self->o('exe_dir').'/hmmer-3.1b2/',
-        'codeml_exe'                => $self->o('exe_dir').'/paml43/codeml',
-        'ktreedist_exe'             => $self->o('exe_dir').'/Ktreedist_v1/Ktreedist.pl',
-        'blast_bin_dir'             => $self->o('exe_dir').'/ncbi-blast-2.3.0+/bin/',
-        'pantherScore_path'         => $self->o('exe_dir').'/nfs/ensembl/bin/pantherScore1.03/',
-        'trimal_exe'                => $self->o('exe_dir').'/trimal-1.4.1/trimal',
-        'noisy_exe'                 => $self->o('exe_dir').'/noisy',
-        'raxml_exe'                 => $self->o('exe_dir').'/raxmlHPC-SSE3',
-        'raxml_pthreads_exe'        => $self->o('exe_dir').'/raxmlHPC-PTHREADS-SSE3',
-        'raxml_exe_avx'             => $self->o('exe_dir').'/raxmlHPC-AVX',
-        'raxml_pthreads_exe_avx'    => $self->o('exe_dir').'/raxmlHPC-PTHREADS-AVX',
-        'examl_exe_avx'             => $self->o('exe_dir').'/examl-AVX',,
-        'examl_exe_sse3'            => $self->o('exe_dir').'/examl',
-        'parse_examl_exe'           => $self->o('exe_dir').'/parse-examl',
-		'examl_out_dir'				=> '/nfs/panda/ensembl/production/mateus/compara/TreeFam10/examl',
-        'getPatterns_exe'           => $self->o('exe_dir').'/getPatterns',
-        'fasttree_exe'              => $self->o('exe_dir').'/FastTree',
-        'fasttree_mp_exe'           => $self->o('exe_dir').'/FastTreeMP',
-        'prottest_jar'              => $self->o('exe_dir').'/prottest-3.4.2/prottest-3.4.2.jar',
-        'cafe_shell'                => 'UNDEF',
+        # TODO: this one has to be installed in the Cellar
+        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
+        # TODO: should be the same as $self->o('ensembl_cellar').'/fasttree/2.1.8/bin/FastTree' but we need to check the DOUBLE thingy
+        'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
-       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
-       'hmm_library_basedir'     => '/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/',
+       'hmm_library_basedir'     => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
@@ -329,55 +302,6 @@ sub default_options {
         #'use_timetree_times'        => 1,
         'use_timetree_times'        => 0,
     };
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => {'LSF' => '-q production-rh6 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-         '250Mb_job'    => {'LSF' => '-q production-rh6 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-         '512Gb_job'     => {'LSF' => '-q production-rh6 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
-
-         '8Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"' },
-         '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
-
-         '16Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '16Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '256Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"' },
-
-
-         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-
-         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
-         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
-         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-
-         '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
-         '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-         '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
-         '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-
-         '4Gb_job_gpfs'      => {'LSF' => '-q production-rh6 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
-  };
 }
 
 
