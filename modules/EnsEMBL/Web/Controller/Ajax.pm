@@ -65,7 +65,7 @@ sub ajax_autocomplete {
   my $self    = shift;
   my $hub     = $self->hub;
   my $cache   = $hub->cache;
-  my $species = $hub->species;
+  my $species = $hub->param('species') || $hub->species;
   my $query   = $hub->param('q');
   my ($key, $results);
 

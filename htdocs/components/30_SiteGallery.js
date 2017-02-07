@@ -134,7 +134,8 @@ Ensembl.Panel.SiteGalleryHome = Ensembl.Panel.Content.extend({
           url: Ensembl.speciesPath + '/Ajax/autocomplete',
           cache: true,
           data: {
-            q: context.key
+            q: context.key,
+            species: panel.elLk.species.val()
           },
           dataType: 'json',
           context: context,
