@@ -17,11 +17,15 @@
 
 // JavaScript to control enabling, disabling and deleting of userdata files via the ManageData table 
 
-Ensembl.Panel.ManageData = Ensembl.Panel.extend({
+Ensembl.Panel.ConnectData = Ensembl.Panel.extend({
 
   init: function () {
-    var panel = this;
-
+    // Update config tree when a hub is (dis)connected
+    this.el.find(".connect_icon").each( 
+      function () {
+        $(this).on({ mouseover: function () { alert('Icon!'); } });
+      }
+    );
   }
 
 });
