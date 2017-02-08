@@ -93,8 +93,8 @@ sub default_options {
         'mafft_root_dir' => $self->o('exe_dir').'/mafft/7.305/',
 
         # data directories:
-        'work_dir'      => '/nfs/panda/ensembl/compara/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
-        'warehouse_dir' => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/',
+        'work_dir'      => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
+        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/',
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
