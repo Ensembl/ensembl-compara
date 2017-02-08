@@ -61,6 +61,7 @@ sub fetch_input {
     my $curr_file_name = undef;
     my $chunk_id = 0;
 
+    warn "My source is '".$self->param_required('uniprot_input_cmd')."'\n" if $self->debug;
     open(my $in_fh, '-|', $self->param_required('uniprot_input_cmd'));
     while(<$in_fh>) {
         if (/^ID/) {
