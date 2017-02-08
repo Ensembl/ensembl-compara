@@ -118,8 +118,8 @@ sub base_dir_location {
     my $self = shift;
     if (@_) {
         $self->{'_base_dir_location'} = shift;
-    } elsif (!$self->{'_base_dir_location'}) {
-        $self->_detect_location_on_platform;
+    } elsif (!defined $self->{'_base_dir_location'}) {
+        $self->base_dir_location($self->_detect_location_on_platform);
     }
     return $self->{'_base_dir_location'};
 }
@@ -148,6 +148,7 @@ sub _detect_location_on_platform {
     } else {
         die "Cannot establish a default location for files\n";
     }
+    return $data_dir;
 }
 
 
