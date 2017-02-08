@@ -242,6 +242,10 @@ sub regulatory_feature_table {
       }
     }
   }
+
+  if ( !$rows || scalar(@{$rows}) < 1 ) {
+    return '<p>No regulatory features associated with this variant.</p>';
+  }
   
   return $self->toggleable_table('Regulatory features', 'reg', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }
@@ -277,6 +281,10 @@ sub constrained_element_table {
         };
       }
     }
+  }
+
+  if ( !$rows || scalar(@{$rows}) < 1 ) {
+    return '<p>No constrained elements associated with this variant.</p>';
   }
   
   return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
