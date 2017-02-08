@@ -138,7 +138,7 @@ sub resource_classes {
         %{ $self->SUPER::resource_classes },    # inherit 'default' from the parent class
 
         'default'   => { 'LSF' => '-q production-rh7 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'urgent'   => { 'LSF' => '-q production-rh7' },
+        'urgent'    => { 'LSF' => '-q production-rh7 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         'RegBlast' => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -q production-rh7 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', '-lifespan 360' ] },
         'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -q production-rh7 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', '-lifespan 1440' ] },
         'BigMcxload' => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -q production-rh7 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"' },
