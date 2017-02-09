@@ -376,7 +376,7 @@ sub _prepare_exon_sequences {
         my $sequence = $self->sequence;
 
         # List of quadruplets [start, end, sequence_length, left_over]
-        my @exons = @{ $self->adaptor->fetch_exon_boundaries_by_SeqMember($self) };
+        my @exons = @{ $self->adaptor->db->get_SeqMemberAdaptor->fetch_exon_boundaries_by_SeqMember($self) };
         my $scale_factor = $self->source_name =~ /PEP/ ? 3 : 1;
 
         # @exons probably don't match the sequence if there are such edits
