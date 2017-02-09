@@ -139,7 +139,7 @@ sub _include_blog {
   my $items     = $self->read_rss_file($hub, $rss_path, $rss_url, 3); 
   my $html;
 
-  if (scalar(@$items)) {
+  if (scalar(@{$items||[]})) {
     $html .= "<ul>";
     foreach my $item (@$items) {
       my $title = $item->{'title'};
