@@ -698,7 +698,7 @@ sub pipeline_analyses {
         {   -logic_name => 'warehouse_working_directory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'   => 'cp -r #work_dir# #warehouse_dir#',
+                'cmd'   => 'become -- compara_ensembl cp -r #work_dir# #warehouse_dir#',
             },
             -rc_name => 'urgent',
             -flow_into => [ 'notify_pipeline_completed' ],
