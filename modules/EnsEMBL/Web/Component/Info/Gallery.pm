@@ -89,7 +89,7 @@ sub format_gallery {
     ## No point in showing individual views if whole section is unavailable
     next if $group->{'disabled'};
 
-    $previews .= '<div class="gallery-group">';
+    $previews .= sprintf '<div class="gallery-group"><a name="%s" class="anchor-offset"></a>', lc($title);
     $previews .= $self->_sub_header($title);
 
     ## Template for each entry
@@ -223,7 +223,7 @@ sub _sub_header {
   my $value = $hub->param($param);
   my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
 
-  my $form  = $self->new_form({'id' => lc($title), 'class' => 'gallery-header',  'method' => 'get'});
+  my $form  = $self->new_form({'class' => 'gallery-header',  'method' => 'get'});
 
   $form->add_hidden({
                     'name'  => 'data_type',
