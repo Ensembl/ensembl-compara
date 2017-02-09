@@ -77,7 +77,11 @@ sub fetch_input {
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
     $self->param('hmmLibrary', $hmmLibrary);
 
-    $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->get_queries));
+    my $members_to_query = $self->get_queries;
+    unless (scalar(@$members_to_query)) {
+        $self->complete_early('No members to query. They seem to all have an entry in hmm_annot !');
+    }
+    $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $members_to_query));
     $self->param('all_hmm_annots', {});
 }
 
