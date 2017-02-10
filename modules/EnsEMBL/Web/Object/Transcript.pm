@@ -1459,7 +1459,7 @@ sub get_alignment {
   unlink $out_file;
   unlink $int_seq_file;
   unlink $ext_seq_file;
-  $alignment;
+  return $alignment;
 }
 
 ###################################
