@@ -3222,7 +3222,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'homology_stat_entry_point' ],
+                'A->1' => [ 'group_genomes_under_taxa' ],
                 
             },
         },
@@ -3248,7 +3248,7 @@ sub core_pipeline_analyses {
                     '((#do_homology_id_mapping#) and (#reuse_db#))' => 'id_map_mlss_factory',
                 ),
                 'A->1' => ['goc_backbone'],
-                '1'    => ['group_genomes_under_taxa', 'get_species_set', 'homology_stats_factory'],
+                '1'    => ['get_species_set', 'homology_stats_factory'],
             },
         },
 
@@ -3259,7 +3259,8 @@ sub core_pipeline_analyses {
                 'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },
             -flow_into => {
-                2 => [ 'mlss_factory' ],
+                '2->A' => [ 'mlss_factory' ],
+                'A->1' => [ 'homology_stat_entry_point' ],
             },
         },
 
