@@ -128,6 +128,7 @@ sub default_options {
         # An empty string can also be used as the key to define logic_names excluded from *all* species
         'exclude_gene_analysis'     => {},
         'store_ncrna'               => 0,
+
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
 
@@ -479,6 +480,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'ncbi_db'       => $self->o('ncbi_db'),
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
+        'production_db_url'             => $self->o('production_db_url'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -1170,7 +1172,6 @@ sub core_pipeline_analyses {
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
                 'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
-                'production_db_url'             => $self->o('production_db_url'),
                 'store_ncrna'                   => $self->o('store_ncrna'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
