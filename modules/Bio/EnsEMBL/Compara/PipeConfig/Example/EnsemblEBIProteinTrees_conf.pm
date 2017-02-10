@@ -47,7 +47,7 @@ use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EBIProteinTrees_conf');
 
 
 sub default_options {
@@ -57,7 +57,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # User details
-        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
@@ -116,31 +115,6 @@ sub default_options {
         'tf_release'                => '9_69',
         
     # executable locations:
-        'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
-        'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
-        'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
-        'trimal_exe'                => $self->o('ensembl_cellar').'/trimal/1.4.1/bin/trimal',
-        'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
-        'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
-        'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/84/bin/treebest',
-        'raxml_pthread_exe_sse3'    => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3',
-        'raxml_pthread_exe_avx'     => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-AVX',
-        'raxml_exe_sse3'            => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-SSE3',
-        'raxml_exe_avx'             => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-AVX',
-        'examl_exe_avx'             => $self->o('ensembl_cellar').'/examl/3.0.17/bin/examl-AVX',
-        'examl_exe_sse3'            => $self->o('ensembl_cellar').'/examl/3.0.17/bin/examl',
-        'parse_examl_exe'           => $self->o('ensembl_cellar').'/examl/3.0.17/bin/parse-examl',
-        'notung_jar'                => $self->o('ensembl_cellar').'/notung/2.6.0/libexec/Notung-2.6.jar',
-        'quicktree_exe'             => $self->o('ensembl_cellar').'/quicktree/1.1.0/bin/quicktree',
-        'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
-        'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
-        'codeml_exe'                => $self->o('ensembl_cellar').'/paml43/4.3.0/bin/codeml',
-        'ktreedist_exe'             => $self->o('ensembl_cellar').'/ktreedist/1.0.0/bin/Ktreedist.pl',
-        'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
-        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
-        'fasttree_mp_exe'           => 'UNDEF',
-        'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library.
@@ -205,11 +179,6 @@ sub default_options {
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-        # Production database (for the biotypes)
-        'reuse_db'              => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
-        'mapping_db'            => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
-
 
         # Ensembl-specific databases
         'staging_loc' => {                     # general location of half of the current release core databases
@@ -250,6 +219,11 @@ sub default_options {
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://anonymous@mysql-ensembl-mirror.ebi.ac.uk:4240/ensembl_compara_74',
         #'prev_rel_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/mm14_treefam10_snapshot',
+
+        # If 'prev_rel_db' above is not set, you need to set all the dbs individually
+        'reuse_db'              => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy',
+        'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy',
+
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

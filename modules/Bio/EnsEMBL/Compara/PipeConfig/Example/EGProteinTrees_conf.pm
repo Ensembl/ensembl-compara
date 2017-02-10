@@ -64,7 +64,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblEBIProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EBIProteinTrees_conf');
 
 
 sub default_options {
@@ -74,7 +74,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # User details
-        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
