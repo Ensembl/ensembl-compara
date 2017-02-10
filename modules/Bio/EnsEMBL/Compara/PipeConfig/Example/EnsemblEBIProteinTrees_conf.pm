@@ -65,9 +65,13 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
     # custom pipeline name, in case you don't like the default one
+        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
         'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => 'ensembl',
+
+    #default parameters for the geneset qc
+
 
     # dependent parameters: updating 'base_dir' should be enough
         'base_dir'              => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/',
@@ -80,7 +84,7 @@ sub default_options {
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
-        # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+        # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
         'gene_blacklist_file'           => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
 
     # tree building parameters:
@@ -90,30 +94,19 @@ sub default_options {
     # alignment filtering options
 
     # species tree reconciliation
-        # you can define your own species_tree for 'treebest'. It can contain multifurcations
-#        'species_tree_input_file'   => '/homes/muffato/workspace/species_tree/tf10.347.nh',
-        # you can define your own species_tree for 'notung'. It *has* to be binary
-        'binary_species_tree_input_file'   => undef,
 
-# homology_dnds parameters:
+    # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
         # affects 'group_genomes_under_taxa'
         'filter_high_coverage'      => 1,
 
-    #CAFE pipeline
-    'initialise_cafe_pipeline'      => 1,
-
-    # GOC parameters
-        'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
-	'goc_threshold'                 => undef,
-        
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 1,
         # The TreeFam release to map to
         'tf_release'                => '9_69',
-        
+
     # executable locations:
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -155,7 +148,6 @@ sub default_options {
         'ortho_stats_capacity'      => 10,
         'goc_capacity'              => 30,
 	      'genesetQC_capacity'        => 100,
-    # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:
 
@@ -244,10 +236,24 @@ sub default_options {
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
 
+    # CAFE parameters
         # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => 1,
+        'use_timetree_times'        => 1,
 
-        #Use Timetree divergence times for the GeneTree internal nodes
-        'use_timetree_times'        => 0,
+    # GOC parameters
+        'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+
+    # Extra analyses
+        # Export HMMs ?
+        'do_hmm_export'                 => 1,
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'                    => 1,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'             => 1,
+        # Do we need a mapping between homology_ids of this database to another database ?
+        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
+        'do_homology_id_mapping'                 => 1,
     };
 }
 

@@ -98,10 +98,9 @@ sub default_options {
 
     # tree building parameters:
 
+    # alignment filtering options
+
     # species tree reconciliation
-        # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   =>  undef,
-        # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -112,14 +111,6 @@ sub default_options {
         'taxlevels_plants'          => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
         'taxlevels_protists'        => ['Alveolata', 'Amoebozoa', 'Choanoflagellida', 'Cryptophyta', 'Fornicata', 'Haptophyceae', 'Kinetoplastida', 'Rhizaria', 'Rhodophyta', 'Stramenopiles'],
         'taxlevels_vb'              => ['Calyptratae', 'Culicidae'],
-
-    # Gene-order conservation analysis:
-        'goc_taxlevels'             => [],  # this is the default default
-        'goc_taxlevels_fungi'       => [],
-        'goc_taxlevels_metazoa'     => [],
-        'goc_taxlevels_plants'      => [],
-        'goc_taxlevels_protists'    => [],
-        'goc_taxlevels_vb'          => [],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -231,6 +222,22 @@ sub default_options {
         #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
+
+    # CAFE parameters
+
+    # GOC parameters
+        'goc_taxlevels'             => [],  # this is the default default
+        'goc_taxlevels_fungi'       => [],
+        'goc_taxlevels_metazoa'     => [],
+        'goc_taxlevels_plants'      => [],
+        'goc_taxlevels_protists'    => [],
+        'goc_taxlevels_vb'          => [],
+
+    # Extra analyses
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'                    => 0,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'             => 0,
 
     };
 }

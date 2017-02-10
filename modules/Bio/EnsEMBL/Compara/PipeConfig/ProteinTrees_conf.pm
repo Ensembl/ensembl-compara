@@ -93,9 +93,7 @@ sub default_options {
         #'rel_suffix'            => 'b',
 
         # names of species we don't want to reuse this time
-        'do_not_reuse_list'     => ['monodelphis_domestica', 'oreochromis_niloticus', 'ornithorhynchus_anatinus', 'lepisosteus_oculatus', 'anolis_carolinensis',
-        'astyanax_mexicanus', 'ficedula_albicollis' ,'canis_familiaris', 'dasypus_novemcinctus','mustela_putorius_furo', 'Ovis_aries', 'Papio_anubis', 'rattus_norvegicus',
-         ],
+        'do_not_reuse_list'     => [ ],
 
         # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
@@ -146,8 +144,7 @@ sub default_options {
         'outgroups'                     => {},
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
-        # File with gene / peptide names that must be excluded from the
-        # clusters (e.g. know to disturb the trees)
+        # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
         'gene_blacklist_file'           => '/dev/null',
 
     # tree building parameters:
@@ -333,15 +330,16 @@ sub default_options {
         # If all the species can be reused, and if the reuse_level is "clusters" or above, do we really want to copy all the peptide_align_feature / hmm_profile tables ? They can take a lot of space and are not used in the pipeline
         'quick_reuse'   => 1,
 
+    # CAFE parameters
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => undef,
-
-            # Data needed for CAFE
-            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
-            'cafe_struct_tree_str'     => '',  # Not set by default
-            'full_species_tree_label'  => 'default',
-            'per_family_table'         => 1,
-            'cafe_species'             => [],
+        'cafe_lambdas'             => '',  # For now, we don't supply lambdas
+        'cafe_struct_tree_str'     => '',  # Not set by default
+        'full_species_tree_label'  => 'default',
+        'per_family_table'         => 1,
+        'cafe_species'             => [],
+        #Use Timetree divergence times for the GeneTree internal nodes
+        'use_timetree_times'        => 0,
 
     # GOC parameters
         'goc_taxlevels'                 => [],
@@ -350,6 +348,7 @@ sub default_options {
         'goc_reuse_db'                  => $self->o('prev_rel_db'),
         'calculate_goc_distribution'    => 1,
 
+    # Extra analyses
         # Export HMMs ?
         'do_hmm_export'                 => 0,
         # Do we want the Gene QC part to run ?

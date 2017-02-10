@@ -166,6 +166,8 @@ sub default_options {
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 1000,
         'ortho_stats_capacity'      => 10,
+        'goc_capacity'              => 30,
+        'genesetQC_capacity'        => 100,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -287,12 +289,10 @@ sub default_options {
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
 
+    # CAFE parameters
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => undef,
 
-        #Use Timetree divergence times for the GeneTree internal nodes
-        #'use_timetree_times'        => 1,
-        'use_timetree_times'        => 0,
     };
 }
 
