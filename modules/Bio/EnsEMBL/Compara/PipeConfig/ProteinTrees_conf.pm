@@ -349,9 +349,16 @@ sub default_options {
         # Defaults to the global reuse database, but can be set differently
         'goc_reuse_db'                  => $self->o('prev_rel_db'),
         'calculate_goc_distribution'    => 1,
-        'do_homology_id_mapping'                 => 0,
-        # affects 'group_genomes_under_taxa'
 
+        # Export HMMs ?
+        'do_hmm_export'                 => 0,
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'                    => 0,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'             => 0,
+        # Do we need a mapping between homology_ids of this database to another database ?
+        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
+        'do_homology_id_mapping'                 => 0,
     };
 }
 
@@ -1758,17 +1765,25 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into  => [
-                'write_stn_tags',
-                WHEN(
-                    '#do_stable_id_mapping#' => 'stable_id_mapping',
-                    ELSE 'build_HMM_factory',
-                ),
-                WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-                WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
-            ],
+            -flow_into  => {
+                '1->A' => [
+                    'write_stn_tags',
+                    WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
+                    WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
+                ],
+                'A->1' => 'notify_homologies_completed',
+            },
             %hc_analysis_params,
         },
+
+        {   -logic_name => 'notify_homologies_completed',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+            -parameters => {
+                'subject' => "Homologies (".$self->o('pipeline_name').") are ready for hand-over",
+                'text' => "This is an automatic message.\nHomologies for release ".$self->o('pipeline_name')." are done.",
+            },
+        },
+
 
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
@@ -3145,7 +3160,6 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'stable_id_mapping',
             },
-            -flow_into  => [ 'build_HMM_factory' ],
             %hc_analysis_params,
         },
 
@@ -3197,14 +3211,46 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
         },
 
-        {   -logic_name => 'homology_stat_entry_point',
+        {   -logic_name => 'rib_fire_gene_qc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => WHEN(
-                    '((#do_homology_id_mapping#) and (#goc_reuse_db#))' => 'id_map_mlss_factory',
-                ),
-                'A->1' => ['goc_backbone'],
-                '1'    => ['get_species_set', 'homology_stats_factory'],
+                '1->A' => WHEN('#do_gene_qc#' => 'get_species_set'),
+                'A->1' => 'rib_fire_cafe',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_cafe',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
+                'A->1' => 'rib_fire_homology_stats',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_homology_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                'A->1' => 'rib_fire_hmm_build',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_hmm_build',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
+                'A->1' => 'rib_fire_homology_id_mapping',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_homology_id_mapping',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters => {
+                'goc_taxlevels'         => $self->o('goc_taxlevels'),
+            },
+            -flow_into  => {
+                '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
+                'A->1' => 'rib_fire_goc',
             },
         },
 
@@ -3216,7 +3262,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'homology_stat_entry_point' ],
+                'A->1' => [ 'rib_fire_gene_qc' ],
             },
         },
 
@@ -3292,7 +3338,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
 
-        {   -logic_name => 'goc_backbone',
+        {   -logic_name => 'rib_fire_goc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),

@@ -273,6 +273,7 @@ sub tweak_analyses {
     if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'goc_taxlevels_'.$self->o('division')})) {
         if (stringify($self->default_options()->{'goc_taxlevels'}) eq stringify($self->o('goc_taxlevels'))) {
             $analyses_by_name->{'goc_group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
+            $analyses_by_name->{'rib_fire_homology_id_mapping'}->{'-parameters'}->{'goc_taxlevels'} = $tl;
         }
     }
 }
