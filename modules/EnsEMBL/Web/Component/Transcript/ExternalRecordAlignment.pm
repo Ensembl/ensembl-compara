@@ -60,13 +60,13 @@ sub get_data {
   if ($ext_seq->{'sequence'}) {
     my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
     my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
-    my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
 
+    my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type);
 
     $data->{'description'}{'content'} = $seq_type eq 'PEP'
       ? qq(Alignment between external feature $hit_id and translation of transcript $tsi)
       : qq(Alignment between external feature $hit_id and transcript $tsi);
-    $data->{'alignment'}{'content'} = $alignment;
+    $data->{'alignment'}{'content'} = $self->_munge_alignment($alignment, $tsi, $hit_id);
     $data->{'alignment'}{'raw'} = 1;
   }
   else {
@@ -75,6 +75,53 @@ sub get_data {
   }
 
   return $data;
+}
+
+sub _munge_alignment {
+## Fix identifiers that have been truncated by WISE 2.4
+  my ($self, $alignment, $tsi, $hit_id) = @_;
+  return '' unless $alignment;
+
+  my $munged;
+  my $line_count  = 0;
+  my $codon_count = 1;
+  my $col_1_width = length($tsi) > length($hit_id) ? length($tsi) : length($hit_id);
+  $col_1_width   += 2;
+  my $col_2_width = 5;
+  my $col_3_width;
+  my $col_1_pattern = '%-0'.$col_1_width.'s'; 
+  my $col_2_pattern = '%-0'.$col_2_width.'s';
+
+  foreach my $line (split(/\n/, $alignment)) {
+    if ($line =~ /\w+/) {
+      if ($line =~ /^\s+(\w+)/) {
+        ## Just sequence
+        $munged .= (' ' x ($col_1_width + $col_2_width)).$1."\n";
+      }
+      else {
+        ## Identifier plus sequence
+        my ($id, $seq) = split(/\s+/, $line);
+
+        ## Add the correct identifier
+        my $identifier = ($line_count % 3 == 0) ? $tsi : $hit_id;
+        $munged .= sprintf $col_1_pattern, $identifier;
+
+        ## Now add codon number
+        $codon_count += length($seq) if $line_count > 0 && ($line_count % 3 == 0);
+        $munged .= sprintf $col_2_pattern, $codon_count;
+
+        ## Finally add sequence
+        $munged .= $seq."\n"; 
+      }
+      $line_count++; ## Only count lines with content
+    }
+    else {
+      ## blank line
+      $munged .= "\n";
+    }
+  }
+
+  return $munged;
 }
 
 1;
