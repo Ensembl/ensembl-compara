@@ -126,14 +126,6 @@ sub default_options {
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
        'hmm_library_basedir'     => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
-       # List of directories that contain Panther-like databases (with books/ and globals/)
-       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
-
-       # List of MultiHMM files to load (and their names)
-       #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
-       'multihmm_files'          => [],
-
        # Dumps coming from InterPro
        'panther_annotation_file'    => '/dev/null',
        #'panther_annotation_file' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',

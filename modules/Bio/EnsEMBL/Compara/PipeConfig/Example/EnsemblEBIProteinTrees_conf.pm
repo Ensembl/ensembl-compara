@@ -144,15 +144,8 @@ sub default_options {
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
 
     # HMM specific parameters (set to 0 or undef if not in use)
+       # The location of the HMM library.
         'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
-       # List of directories that contain Panther-like databases (with books/ and globals/)
-       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-
-       # List of MultiHMM files to load (and their names)
-
-       # Dumps coming from InterPro
-
-       # A file that holds additional tags we want to add to the HMM clusters (for instance: Best-fit models)
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,

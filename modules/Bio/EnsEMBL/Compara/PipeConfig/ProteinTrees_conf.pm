@@ -227,18 +227,9 @@ sub default_options {
         #'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-       # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
+       # The location of the HMM library.
        #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii',
-        'hmm_library_basedir'       => $self->o('work_dir') . '/hmmlib',
-
-       # List of directories that contain Panther-like databases (with books/ and globals/)
-       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'panther_like_databases'  => [],
-       #'panther_like_databases'  => [ ["/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii", "PANTHER7.2", 1] ],
-
-       # List of MultiHMM files to load (and their names)
-       #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
-       'multihmm_files'          => [],
+        'hmm_library_basedir'       => undef,
 
        # Dumps coming from InterPro
        'panther_annotation_file'    => '/dev/null',
@@ -448,6 +439,15 @@ sub pipeline_create_commands {
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
     die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
 
+
+    # In HMM mode the library must exist
+    if (($self->o('clustering_mode') ne 'blastp') and ($self->o('clustering_mode') ne 'ortholog')) {
+        my $lib = $self->o('hmm_library_basedir');
+        unless ($lib =~ /^#:subst/) {
+            die "'$lib' does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-d "$lib/books") && (-d "$lib/globals") && (-s "$lib/globals/con.Fasta"));
+        }
+    }
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
@@ -457,7 +457,6 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('examl_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
-        #'mkdir -p '.$self->o('hmm_library_basedir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -1229,57 +1228,6 @@ sub core_pipeline_analyses {
             -analysis_capacity => 1,
         },
 
-#--------------------------------------------------------[load the HMM profiles]----------------------------------------------------
-
-        {   -logic_name => 'panther_databases_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'    => $self->o('panther_like_databases'),
-                'column_names' => [ 'cm_file_or_directory', 'type', 'include_subfamilies' ],
-            },
-            -flow_into => {
-                '2->A' => [ 'load_panther_database_models'  ],
-                'A->1' => [ 'multihmm_files_factory' ],
-            },
-        },
-
-        {   -logic_name => 'multihmm_files_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'    => $self->o('multihmm_files'),
-                'column_names' => [ 'cm_file_or_directory', 'type' ],
-            },
-            -flow_into => {
-                '2->A' => [ 'load_multihmm_models'  ],
-                'A->1' => [ 'dump_models' ],
-            },
-        },
-
-        {
-            -logic_name => 'load_panther_database_models',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels',
-            -parameters => {
-                'pantherScore_path'    => $self->o('pantherScore_path'),
-            },
-        },
-
-        {
-            -logic_name => 'load_multihmm_models',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels',
-            -parameters => {
-            },
-         },
-
-            {
-             -logic_name => 'dump_models',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
-             -parameters => {
-                             'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
-                             'pantherScore_path'    => $self->o('pantherScore_path'),
-                            },
-             -flow_into  => [ 'load_InterproAnnotation' ],
-            },
-
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
         {
             -logic_name     => 'load_InterproAnnotation',
@@ -1565,16 +1513,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'test_whether_can_copy_clusters',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters    => {
-                'library_exists'    => '#expr((-d #hmm_library_basedir#."/books") and (-d #hmm_library_basedir#."/globals") and (-s #hmm_library_basedir#."/globals/con.Fasta"))expr#',
-            },
             -flow_into => {
                 '1->A' => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
                     '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
                     '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# eq "ortholog")' => 'ortholog_cluster',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog") and #library_exists#' => 'load_InterproAnnotation',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog") and !#library_exists#' => 'panther_databases_factory',
+                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog")' => 'load_InterproAnnotation',
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
