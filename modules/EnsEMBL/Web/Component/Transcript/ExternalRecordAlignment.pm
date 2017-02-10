@@ -62,11 +62,13 @@ sub get_data {
     my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
 
     my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type);
+    my $method    = $seq_type eq 'PEP' ? '_munge_psw' : '_munge_matcher';
+    my $munged    = $self->$method($alignment, $tsi, $hit_id); 
 
     $data->{'description'}{'content'} = $seq_type eq 'PEP'
       ? qq(Alignment between external feature $hit_id and translation of transcript $tsi)
       : qq(Alignment between external feature $hit_id and transcript $tsi);
-    $data->{'alignment'}{'content'} = $self->_munge_alignment($alignment, $tsi, $hit_id);
+    $data->{'alignment'}{'content'} = $munged;
     $data->{'alignment'}{'raw'} = 1;
   }
   else {
@@ -77,7 +79,7 @@ sub get_data {
   return $data;
 }
 
-sub _munge_alignment {
+sub _munge_psw {
 ## Fix identifiers that have been truncated by WISE 2.4
   my ($self, $alignment, $tsi, $hit_id) = @_;
   return '' unless $alignment;
@@ -118,6 +120,54 @@ sub _munge_alignment {
     else {
       ## blank line
       $munged .= "\n";
+    }
+  }
+
+  return $munged;
+}
+
+sub _munge_matcher {
+## Fix identifiers that have been truncated by 
+  my ($self, $alignment, $tsi, $hit_id) = @_;
+  return '' unless $alignment;
+
+  my $munged;
+  my $line_count    = 0;
+  my $col_1_width   = length($tsi) > length($hit_id) ? length($tsi) : length($hit_id);
+  my $col_1_pattern = '%'.$col_1_width.'s'; 
+  my $padding       = $col_1_width - 6;
+  my $col_2_width;
+
+  foreach my $line (split(/\n/, $alignment)) {
+    if ($line eq '' || $line =~ /^\s+$/) {
+      ## Blank line
+      $munged .= "\n";
+    }
+    elsif ($line =~ /^#/) {
+      ## Comment - need to fix identifiers
+      if ($line =~ /^# ([1|2]): /) {
+        my $number = $1;
+        my $id = $number == 2 ? $hit_id : $tsi;
+        $line = "# $number: $id";
+      }
+      $munged .= $line."\n";
+    }
+    elsif ($line =~ /\:{2}/ || $line !~ /[a-zA-Z]/) {
+      ## Position/alignment row
+      $munged .= (' ' x $padding).$line."\n";   
+    }
+    else {
+      ## Identifier plus sequence
+      $line =~ s/^\s+//;
+      my ($id, $seq) = split(/\s+/, $line);
+
+      ## Add the correct identifier
+      my $identifier = ($line_count % 2 == 0) ? $tsi : $hit_id;
+      $munged .= sprintf $col_1_pattern, $identifier;
+
+      ## Finally add sequence
+      $munged .= " $seq\n"; 
+      $line_count++; ## Only count lines with content
     }
   }
 
