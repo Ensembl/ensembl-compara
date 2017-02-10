@@ -109,8 +109,8 @@ sub build_tracks {
       my $mean = $_;
       if (ref($_) eq 'HASH') {
         $mean = $_->{'mean'};
-        push $mins, $_->{'min'};
-        push $maxs, $_->{'max'};
+        push @$mins, $_->{'min'};
+        push @$maxs, $_->{'max'};
       } 
       ## Use real values for max/min labels
 		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 

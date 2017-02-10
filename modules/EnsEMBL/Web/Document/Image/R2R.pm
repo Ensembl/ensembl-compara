@@ -158,7 +158,7 @@ sub _create_svg {
         my $th_content = "$path/$cons_filename\tskeleton-with-pairbonds\n";
         $th_meta->write($th_content);
       }
-      $self->_run_r2r_and_check("", $th_meta->absolute_read_path, $path, $thumbnail, "");
+      $self->_run_r2r_and_check("--disable-usage-warning", $th_meta->absolute_read_path, $path, $thumbnail, "");
     }
 
     my $plot = $model_name.'.svg';
@@ -189,7 +189,7 @@ sub _create_svg {
         $plot_meta->write($content);
       }
 
-      $self->_run_r2r_and_check("", $plot_meta->absolute_read_path, $path, $plot, "");
+      $self->_run_r2r_and_check("--disable-usage-warning", $plot_meta->absolute_read_path, $path, $plot, "");
     }
 
     return ($th_file->read_url, $plot_file->read_url);
