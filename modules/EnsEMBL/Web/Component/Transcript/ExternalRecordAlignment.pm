@@ -47,6 +47,7 @@ sub get_data {
   my $object    = $self->object;
   my $trans     = $object->Obj;
   my $tsi       = $object->stable_id;
+  my $tsv       = $tsi.'.'.$object->version;
   my $hit_id    = $object->param('sequence');
   my $ext_db    = $object->param('extdb');
   my $data      = {
@@ -63,11 +64,11 @@ sub get_data {
 
     my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type);
     my $method    = $seq_type eq 'PEP' ? '_munge_psw' : '_munge_matcher';
-    my $munged    = $self->$method($alignment, $tsi, $hit_id); 
+    my $munged    = $self->$method($alignment, $tsv, $hit_id); 
 
     $data->{'description'}{'content'} = $seq_type eq 'PEP'
-      ? qq(Alignment between external feature $hit_id and translation of transcript $tsi)
-      : qq(Alignment between external feature $hit_id and transcript $tsi);
+      ? qq(Alignment between external feature $hit_id and translation of transcript $tsv)
+      : qq(Alignment between external feature $hit_id and transcript $tsv);
     $data->{'alignment'}{'content'} = $munged;
     $data->{'alignment'}{'raw'} = 1;
   }
