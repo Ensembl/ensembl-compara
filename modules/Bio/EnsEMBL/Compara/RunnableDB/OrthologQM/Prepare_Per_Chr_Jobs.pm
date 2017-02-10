@@ -37,7 +37,7 @@ limitations under the License.
 =head1 DESCRIPTION
   Takes as input an hash of reference and non reference species DBIDs and  dnafrag DBIDs as keys and the list of homolog DBIDs as values.
   Unpacks the hash into seperate hashes each containing a single dnafrag DBID as the key to a list of ordered homologs.
-  if the reuse_goc arguement is set to 1 and previous_rel_db argument is set,
+  if the goc_reuse_db parameter is set,
    theis runnable will reuse goc scores from the previous db and only calculate goc scores for new homologs and the 2 homologies closest to them on each side.
 
     Example run
@@ -71,8 +71,7 @@ sub param_defaults {
 #    },
 #    'ref_species_dbid'    => 122,
 #    'non_ref_species_dbid'    => 144,
-#    'reuse_goc'   => 0,
-#    'previous_rel_db'  =>  'mysql://ensro@compara2/mp14_protein_trees_85',
+#    'goc_reuse_db'  =>  'mysql://ensro@compara2/mp14_protein_trees_85',
 #    'compara_db'  => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara5/cc21_protein_trees_no_reuse_86',
 #    'goc_mlss_id'  => '50062',
     };
@@ -98,7 +97,7 @@ sub fetch_input {
   $self->param('mlss_check', 0); # will be use to check if the mlss exist the reuse db ortherwise the goc for this mlss will be recalculated
   #this variables name was change to 'goc_reuse_db' as it was getting mixed up with another variable. The old name was left here to make it compatible with older runs of the runnable.
 
-  if ($self->param('reuse_goc') ) {
+  if ($self->param('goc_reuse_db') ) {
     my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
     my $prev_release_mlss_id = $mlss->get_tagvalue('prev_release_mlss_id');
     print "\n\n  curr_release_mlss_id   :  $mlss_id  , and , prev_release_mlss_id :  $prev_release_mlss_id\n\n" if ( $self->debug >3 );

@@ -124,7 +124,6 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => ['Carnivora','Ciona'], #['Euteleostomi','Ciona'],
         'goc_threshold'                 => undef,
-        'reuse_goc'                     => 1,
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,

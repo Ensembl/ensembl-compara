@@ -37,7 +37,7 @@ limitations under the License.
 
 
     Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> -reuse_goc <1/0> -reuse_db <> -compara_db <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> [-goc_reuse_db <>] -compara_db <>
 
 =cut
 
@@ -72,7 +72,7 @@ sub default_options {
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
         'goc_threshold' => undef,
         'reuse_db'  => undef,
-        'reuse_goc'     => undef,
+        'goc_reuse_db'     => undef,
 	'calculate_goc_distribution' => undef,
         'goc_capacity'   => 200,
     };
@@ -85,8 +85,7 @@ sub pipeline_wide_parameters {
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
-        'reuse_db'  => $self->o('reuse_db'),
-        'reuse_goc'     => $self->o('reuse_goc'),
+        'goc_reuse_db'     => $self->o('goc_reuse_db'),
 	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
     };
@@ -112,7 +111,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ { } ],
             -flow_into  => {
-                '1->A' => WHEN( '#reuse_goc#' => ['copy_prev_goc_score_table' , 'copy_prev_gene_member_table']),
+                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table' , 'copy_prev_gene_member_table']),
 
                 'A->1' => ['goc_backbone'], 
             },

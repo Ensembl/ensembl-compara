@@ -343,12 +343,11 @@ sub default_options {
             'per_family_table'         => 1,
             'cafe_species'             => [],
 
-        # Do we want to initialise the Ortholog quality metric part now ?
-#        'initialise_goc_pipeline'  => undef,
-        # Data needed for goc
+    # GOC parameters
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
-        'reuse_goc'                     => undef,
+        # Defaults to the global reuse database, but can be set differently
+        'goc_reuse_db'                  => $self->o('prev_rel_db'),
         'calculate_goc_distribution'    => 1,
         'do_homology_id_mapping'                 => 0,
         # affects 'group_genomes_under_taxa'
@@ -484,7 +483,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
-        'reuse_goc'                     => $self->o('reuse_goc'),
+        'goc_reuse_db'                  => $self->o('goc_reuse_db'),
         'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
         'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
@@ -3202,7 +3201,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => WHEN(
-                    '((#do_homology_id_mapping#) and (#reuse_db#))' => 'id_map_mlss_factory',
+                    '((#do_homology_id_mapping#) and (#goc_reuse_db#))' => 'id_map_mlss_factory',
                 ),
                 'A->1' => ['goc_backbone'],
                 '1'    => ['get_species_set', 'homology_stats_factory'],
@@ -3296,7 +3295,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'goc_backbone',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN( '#reuse_goc#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
+                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
                 'A->1' => ['goc_group_genomes_under_taxa'],
             },
         },
