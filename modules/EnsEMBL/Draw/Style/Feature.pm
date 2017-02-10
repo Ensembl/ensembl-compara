@@ -271,6 +271,11 @@ sub create_glyphs {
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
   }
 
+  ## Check if overall track label (in LH margin) is taller than track itself
+  ## (Use stanaard font size plus padding)
+  my $track_label_height = $track_config->get('track_label_rows') * ($self->{'font_size'} + 6);
+  $total_height = $track_label_height if $track_label_height > $total_height;
+
   $self->draw_hidden_bgd($total_height);
   my $track_height = $track_config->get('total_height') || 0;
   $track_config->set('total_height', $track_height + $total_height);

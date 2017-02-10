@@ -757,6 +757,8 @@ sub recast_label {
     }
     $rows = $good_rows if defined $good_rows;
   }
+  ## Save this so we can use in new drawing code
+  $self->{'my_config'}->set('track_label_rows', scalar @$rows);
 
   my $max_width = max(map { $_->[1] } @$rows);
 
