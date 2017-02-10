@@ -68,12 +68,6 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
-
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
-
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -350,24 +344,6 @@ sub default_options {
         # If all the species can be reused, and if the reuse_level is "clusters" or above, do we really want to copy all the peptide_align_feature / hmm_profile tables ? They can take a lot of space and are not used in the pipeline
         'quick_reuse'   => 1,
 
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
-
-            # Data needed for CAFE
-            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
-            'cafe_struct_tree_str'     => '',  # Not set by default
-            'full_species_tree_label'  => 'default',
-            'per_family_table'         => 1,
-            'cafe_species'             => [],
-
-        # Do we want to initialise the Ortholog quality metric part now ?
-#        'initialise_goc_pipeline'  => undef,
-        # Data needed for goc
-        'goc_taxlevels'                 => [],
-        'goc_threshold'                 => undef,
-        'reuse_goc'                     => undef,
-        # affects 'group_genomes_under_taxa'
-
     };
 }
 
@@ -449,13 +425,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
-        'goc_threshold'                 => $self->o('goc_threshold'),
-        'reuse_goc'                     => $self->o('reuse_goc'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
         'all_blast_params'          => $self->o('all_blast_params'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
-        'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
     };
