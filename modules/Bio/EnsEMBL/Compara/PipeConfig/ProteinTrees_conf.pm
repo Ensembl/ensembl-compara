@@ -635,7 +635,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_5_before_dnds.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_5_after_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'polyploid_move_back_factory' ],
@@ -643,9 +643,22 @@ sub core_pipeline_analyses {
             },
         },
 
-
         {   -logic_name => 'backbone_pipeline_finished',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature_%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_6_pipeline_finished.sql.gz',
+            },
+            -flow_into  => [ 'notify_pipeline_completed' ],
+        },
+
+        {   -logic_name => 'notify_pipeline_completed',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+            -parameters => {
+                'subject' => "Protein-Tree pipeline (".$self->o('pipeline_name').") has completed",
+                'text' => "This is an automatic message.\nProtein-Tree Pipeline for release ".$self->o('pipeline_name')." has completed.",
+            },
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
