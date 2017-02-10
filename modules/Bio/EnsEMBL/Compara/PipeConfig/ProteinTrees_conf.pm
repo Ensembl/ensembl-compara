@@ -627,11 +627,11 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
-                'A->1'  => [ 'backbone_fire_dnds' ],
+                'A->1'  => [ 'backbone_fire_posttree' ],
             },
         },
 
-        {   -logic_name => 'backbone_fire_dnds',
+        {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
