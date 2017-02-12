@@ -331,5 +331,19 @@ sub resource_classes {
     };
 }
 
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    my %overriden_rc_names = (
+        'CAFE_table'                => '24Gb_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
+    $analyses_by_name->{'CAFE_analysis'}->{'-parameters'}{'pvalue_lim'} = 1;
+}
+
+
 1;
 
