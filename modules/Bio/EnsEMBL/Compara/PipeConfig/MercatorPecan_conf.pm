@@ -102,7 +102,6 @@ sub default_options {
     'strict_map'        => 1,
 #    'cutoff_score'     => 100,   #not normally defined
 #    'cutoff_evalue'    => 1e-5, #not normally defined
-    'method_link_type'  => "SYNTENY",
     'maximum_gap'       => 50000,
     'input_dir'         => $self->o('work_dir').'/mercator',
     'all_hits'          => 0,
@@ -589,7 +588,6 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator',
              -parameters => {
 			     'input_dir' => $self->o('input_dir'),
-			     'method_link_type' => $self->o('method_link_type'),
 			    },
              -hive_capacity => 1,
 	     -rc_name => '3.6Gb',
