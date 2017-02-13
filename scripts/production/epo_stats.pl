@@ -76,8 +76,8 @@ for my $m ( @$mlss ){
 		my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");
 		my $genome_length           = $stn->get_tagvalue("genome_length");
 
-		my $genome_cov_perc = sprintf("%.3f", ($genome_bp_coverage/$genome_length) * 100);
-		my $exon_cov_perc   = sprintf("%.3f", ($coding_exon_bp_coverage/$coding_exon_length) * 100);
+		my $genome_cov_perc = $genome_length ? sprintf("%.3f", ($genome_bp_coverage/$genome_length) * 100) : 'N/A';
+		my $exon_cov_perc   = $coding_exon_length ? sprintf("%.3f", ($coding_exon_bp_coverage/$coding_exon_length) * 100) : 'N/A';
 
 		if ( $html ) {
 			$html_output .= '<tr>' . _html_tag_list( [ $g->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
