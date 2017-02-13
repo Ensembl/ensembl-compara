@@ -45,7 +45,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Where dumps are created
-        'export_dir'    => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+        'export_dir'    => '/hps/nobackup/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
 
         # Paths to compara files
         'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
