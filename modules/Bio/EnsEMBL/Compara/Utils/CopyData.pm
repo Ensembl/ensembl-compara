@@ -415,6 +415,11 @@ sub copy_data_in_text_mode {
         #print "start $start end $end $max_id rows $nrows\n";
         #print "FILE $filename\n";
         #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+
+        # Heuristics: it's going to take some time to insert these rows, so
+        # better to disconnect to save resources on the source server
+        $from_dbc->disconnect_if_idle if $nrows >= 100_000;
+
         system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
 
         unlink($filename);
