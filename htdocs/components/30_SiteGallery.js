@@ -77,6 +77,10 @@ Ensembl.Panel.SiteGalleryHome = Ensembl.Panel.Content.extend({
     this.updateIdentifier();
 
     this.elLk.dataType.add(this.elLk.species).on('change', {panel: this}, function(e) { e.data.panel.updateIdentifier() });
+
+    this.geneCache      = {};
+    this.geneIDCache    = {};
+    this.elLk.identifier.on('focus', {panel: this}, function(e) { e.data.panel.autocompleteGene() });
   },
 
   initSelectToToggle: function () {
@@ -102,5 +106,47 @@ Ensembl.Panel.SiteGalleryHome = Ensembl.Panel.Content.extend({
 
     this.elLk.identifier.val((this.params['sample_data'][species] || {})[this.elLk.dataType.filter(':checked').val()] || '');
     this.elLk.form.attr('action', this.formAction.replace('Multi',  species));
+  },
+
+  // autocomplete on the identifier input field
+  autocompleteGene: function () {
+    var panel = this;
+    this.elLk.identifier.autocomplete({
+      minLength: 3,
+      source: function(request, responseCallback) {
+        var context = { // context to be passed to ajax callbacks
+          panel     : panel,
+          term      : request.term,
+          key       : request.term.substr(0, 3).toUpperCase(),
+          callback  : function(str, group) {
+            var regexp = new RegExp('^' + $.ui.autocomplete.escapeRegex(str), 'i');
+            return responseCallback($.map(group, function(val, geneLabel) {
+              return regexp.test(geneLabel) ? val.label : null;
+            }));
+          }
+        }
+
+        if (context.key in panel.geneCache) {
+          return context.callback(request.term, panel.geneCache[context.key]);
+        }
+
+        $.ajax({
+          url: Ensembl.speciesPath + '/Ajax/autocomplete',
+          cache: true,
+          data: {
+            q: context.key,
+            species: panel.elLk.species.val()
+          },
+          dataType: 'json',
+          context: context,
+          success: function (json) {
+            this.panel.geneCache[this.key] = json;
+          },
+          complete: function () {
+            return this.callback(this.term, this.panel.geneCache[this.key]);
+          }
+        });
+      }
+    });
   }
 });

@@ -159,6 +159,8 @@ sub _load_remote_url_tracks {
     my $data = $record->data;
 
     next if $data->{'no_attach'};
+    ## Don't turn off trackhubs that were added before disconnection code
+    next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
 
     my $source_name = $data->{'name'} || $data->{'url'};
 

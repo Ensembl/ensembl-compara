@@ -215,7 +215,6 @@ sub make_table {
   foreach my $sample (@$samples) {
     my $sample_label = $sample->name;
        $sample_label =~ s/^MGP://;
-       $sample_label =~ s!/!!g;
     push (@sample_cols,
     {
       _key    => lc($sample->name).'_strain'  , _type => 'string no_filter no_sort',

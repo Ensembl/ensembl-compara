@@ -65,7 +65,7 @@ sub ajax_autocomplete {
   my $self    = shift;
   my $hub     = $self->hub;
   my $cache   = $hub->cache;
-  my $species = $hub->species;
+  my $species = $hub->param('species') || $hub->species;
   my $query   = $hub->param('q');
   my ($key, $results);
 
@@ -289,6 +289,7 @@ sub ajax_table_export {
     $str =~ s/^\s+//;
     $str =~ s/\s+$//g;
     $str = $self->strip_HTML(decode_entities($str));
+    $str =~ s/\xA0/ /g;        # Replace non-breakable spaces
     $str =~ s/"/""/g;
     $str =~ s/\0/","/g;
     return $str;

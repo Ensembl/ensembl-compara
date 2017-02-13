@@ -1259,6 +1259,11 @@ sub structural_variation_table {
   foreach my $func (@{$functions}) {
     push(@$svfs, @{$svf_adaptor->$func($slice)});
   }
+
+  if ( !$svfs || scalar(@{$svfs}) < 1 ) {
+    my $my_title = lc($title);
+    return "<p>No $my_title associated with this variant.</p>";
+  }
   
   foreach my $svf (@{$svfs}) {
     my $name        = $svf->variation_name;

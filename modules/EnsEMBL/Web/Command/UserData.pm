@@ -172,18 +172,20 @@ sub attach {
         my $t_code = join('_', md5_hex($name . $current_species . $assembly . $url), 
                                   $hub->session->session_id); 
         unless ($is_old) {
-          my $data = $hub->session->set_record_data({
-                                        type        => 'url',
-                                        code        => $t_code,
-                                        url         => $url,
-                                        name        => $name,
-                                        format      => $attachable->name,
-                                        style       => $attachable->trackline,
-                                        species     => $current_species,
-                                        assembly    => $assembly,
-                                        timestamp   => time,
-                                        %$options,
-                                        });
+          my $record = {
+                          type      => 'url',
+                          code      => $t_code,
+                          url       => $url,
+                          name      => $name,
+                          format    => $attachable->name,
+                          style     => $attachable->trackline,
+                          species   => $current_species,
+                          assembly  => $assembly,
+                          timestamp => time,
+                          %$options,
+                        };
+          $record->{'disconnected'} = 0 if lc($attachable->name) eq 'trackhub';
+          my $data = $hub->session->set_record_data($record);
 
           $hub->configure_user_data('url', $data);
 

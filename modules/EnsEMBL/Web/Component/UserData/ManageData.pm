@@ -75,7 +75,7 @@ sub content {
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },
       { key => 'assembly',  title => 'Assembly',      width => '15%',   align => 'left',    sort => 'html'                  },
       { key => 'date',      title => 'Last updated',  width => '20%',   align => 'left',    sort => 'numeric_hidden'        },
-      { key => 'actions',   title => 'Actions',       width => '120px', align => 'center',  sort => 'none'                  },
+      { key => 'actions',   title => 'Actions',       width => '150px', align => 'center',  sort => 'none'                  },
     );
 
     foreach my $record_data (@$records_data) {
@@ -210,6 +210,7 @@ sub table_row {
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
   my $reload       = $self->_no_icon;
+  my $connect      = $self->_no_icon;
   my $name         = qq(<div><strong class="val" title="Click here to rename your data">$record_data->{'name'}</strong>);
   my %url_params   = ( __clear => 1, source => $record_data->{'url'} ? 'url' : 'upload' );
   my ($save, $assembly);
@@ -305,6 +306,16 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
+  if ($record_data->{'format'} eq 'TRACKHUB') {
+    my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
+    ## 'Disabled' class will show 'connect' version of icon in swp sprite
+    my $sprite_class  = $disconnect ? 'sprite' : 'sprite_disabled';
+    my $connect_text  = $disconnect ? 'Disconnect' : 'Reconnect';
+    $connect_text    .= ' this track hub';
+    my $connect_url   = $hub->url({'action' => 'FlipTrackHub', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}});
+    $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
+  }
+
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 
   return {
@@ -315,7 +326,7 @@ sub table_row {
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $record_data->{'timestamp'} || '-', $self->pretty_date($record_data->{'timestamp'}, 'simple_datetime')),
-    actions => join '', grep $_, $config_html, $download, $reload, $save, $share_html, $delete_html,
+    actions => join '', grep $_, $config_html, $download, $connect, $reload, $save, $share_html, $delete_html,
   };
 }
 

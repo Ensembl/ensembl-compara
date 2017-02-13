@@ -91,7 +91,7 @@ sub render_masthead {
   ## MASTHEAD & GLOBAL NAVIGATION
   my $masthead_class = '';
   if ($self->hub->species && $self->hub->species !~ /multi|common/i) {
-    $masthead_class = $self->hub->type eq 'Info' ? ' no-tabs' : ' with-tabs';
+    $masthead_class = $self->hub->type =~ /Info|Search/ ? ' no-tabs' : ' with-tabs';
   }
 
   return qq(

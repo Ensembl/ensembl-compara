@@ -94,9 +94,10 @@ sub content {
            compara => 'secondary'
          });
     }
+
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'} =~ s/^[^\s]+\s+//r);
     $image_config->get_node('scalebar')->set('name', $_->{'short_name'});
-    $image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$_->{'species'});
+    $image_config->get_node('scalebar')->set('caption_img',"f:24\@-6:".$_->{'species'});
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
