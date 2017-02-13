@@ -1215,17 +1215,8 @@ sub core_pipeline_analyses {
             -parameters         => {
                 blacklist_file      => $self->o('gene_blacklist_file'),
             },
-            -flow_into          => [ 'hc_clusters' ],
+            -flow_into          => [ 'create_additional_clustersets' ],
             -rc_name => '500Mb_job',
-        },
-
-        {   -logic_name         => 'hc_clusters',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'global_tree_set',
-            },
-            -flow_into          => [ 'run_qc_tests' ],
-            %hc_analysis_params,
         },
 
         {   -logic_name         => 'create_additional_clustersets',
@@ -1238,36 +1229,6 @@ sub core_pipeline_analyses {
 
 
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
-
-        {   -logic_name => 'run_qc_tests',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'polyploid_genomes' => 0,
-            },
-            -flow_into => {
-                '2->A' => [ 'per_genome_qc' ],
-                '1->A' => [ 'overall_qc' ],
-                'A->1' => [ 'clusterset_backup' ],
-            },
-        },
-
-        {   -logic_name => 'overall_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
-            -parameters => {
-                'reuse_db'  => '#mapping_db#',
-            },
-            -hive_capacity  => $self->o('reuse_capacity'),
-            -rc_name    => '2Gb_job',
-        },
-
-        {   -logic_name => 'per_genome_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
-            -parameters => {
-                'reuse_db'  => '#mapping_db#',
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name    => '4Gb_job',
-        },
 
         {   -logic_name    => 'clusterset_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
