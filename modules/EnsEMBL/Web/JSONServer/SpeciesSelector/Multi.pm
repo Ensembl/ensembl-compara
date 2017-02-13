@@ -113,7 +113,7 @@ sub json_fetch_species {
           $tmp->{key} = $_;
           $tmp->{common} = $species_info->{$_}->{common};
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
+            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}->{data}}, $tmp;
             # $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
           }
           else {
