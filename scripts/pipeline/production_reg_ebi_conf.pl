@@ -141,12 +141,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # current release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara5',
+    -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 3306,
+    -port => 4485,
     -species => 'compara_curr',
-    -dbname => 'mp14_ensembl_compara_87',
+    -dbname => 'ensembl_compara_88',
 );
 
 # previous ancestral database on one of Compara servers:
