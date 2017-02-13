@@ -58,7 +58,7 @@ sub pipeline_analyses_goc {
             },
             -rc_name => '2Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
-            -analysis_capacity => 50,
+            -analysis_capacity => 30,
         },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
