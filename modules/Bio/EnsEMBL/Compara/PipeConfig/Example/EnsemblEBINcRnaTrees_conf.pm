@@ -68,14 +68,10 @@ sub default_options {
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix'       => '87',
             'work_dir'         => '/hps/nobackup/production/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
-
-            'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
-
 
             # tree break
             'treebreak_gene_count'     => 400,
@@ -96,6 +92,7 @@ sub default_options {
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
             'ortho_stats_capacity'            => 10,
+            'homology_dNdS_capacity'          => 10,
 
             # Params for healthchecks;
             'hc_priority'                     => 10,
@@ -136,21 +133,20 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 4,
-            'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/cc21_EPO_low_86',
-            'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
+            'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_EPO_low_mammals_86',
+            'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
 
             # connection parameters
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk:4522',
+            'host' => 'mysql-treefam-prod:4401',
 
 
             'reg1' => {
-                       -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-                       -port   => '4240',
-                       -user   => 'anonymous',
-                       -pass   => '',
+                       -host   => 'mysql-ens-sta-1',
+                       -port   => '4519',
+                       -user   => 'ensro',
                       },
 
             'master_db' => {
@@ -158,7 +154,7 @@ sub default_options {
                             -port   => 4485,
                             -user   => 'ensro',
                             -pass   => '',
-                            -dbname => 'mm14_ensembl_compara_master', # 'mm14_ensembl_compara_master',
+                            -dbname => 'ensembl_compara_master',
                            },
 
            };
