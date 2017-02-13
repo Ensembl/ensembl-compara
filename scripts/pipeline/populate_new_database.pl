@@ -326,6 +326,7 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
 ## Copy all the DnaFrags for the default assemblies
 
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $cellular_component);
+$master_dba->dbc->disconnect_if_idle;
 
 
 if ($old_dba and !$skip_data) {
