@@ -160,7 +160,7 @@ sub _insert_all_goc_scores {
   my $self = shift;
   print "\n Starting ------  _update_ortholog_goc_table \n" if ( $self->debug );
 
-  my $sql_insert_query = 'INSERT INTO ortholog_goc_metric (method_link_species_set_id,homology_id,gene_member_id,dnafrag_id,goc_score,left1,left2,right1,right2) VALUES ' ;
+  my $sql_insert_query = 'REPLACE INTO ortholog_goc_metric (method_link_species_set_id,homology_id,gene_member_id,dnafrag_id,goc_score,left1,left2,right1,right2) VALUES ' ;
   my $size_goc_score_arrayref = scalar @{$self->param('all_goc_score_arrayref')};
   #my @goc_data;
   print "\n\n This is the how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug );
