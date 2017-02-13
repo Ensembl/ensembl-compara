@@ -103,6 +103,9 @@ sub default_options {
         # affects 'group_genomes_under_taxa'
         'filter_high_coverage'      => 1,
 
+    #CAFE pipeline
+    'initialise_cafe_pipeline'      => 1,
+
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
 	'goc_threshold'                 => undef,
@@ -211,6 +214,8 @@ sub default_options {
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mm14_ensembl_compara_master',
         # Production database (for the biotypes)
         'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
+        'reuse_db'              => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
+        'mapping_db'            => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
 
         # Ensembl-specific databases
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
