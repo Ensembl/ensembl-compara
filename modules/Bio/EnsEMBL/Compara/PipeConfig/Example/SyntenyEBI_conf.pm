@@ -53,7 +53,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
         'host'      => 'mysql-ens-compara-prod-1.ebi.ac.uk',
         'port'      => 4485,
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mm14_ensembl_compara_master',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         'work_dir'  => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
     };
 }

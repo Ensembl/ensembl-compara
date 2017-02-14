@@ -77,7 +77,7 @@ sub default_options {
             'host' => 'mysql-ens-compara-prod-1',
             'port' => 4485,
 
-            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mm14_ensembl_compara_master',
+            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 
             'staging_loc' => {
                                -host   => 'mysql-ens-sta-1',
