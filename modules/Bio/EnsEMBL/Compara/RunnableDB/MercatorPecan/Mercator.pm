@@ -95,8 +95,7 @@ sub run
 sub write_output {
   my ($self) = @_;
 
-  my %run_ids2synteny_and_constraints;
-  my $synteny_region_ids = $self->store_synteny(\%run_ids2synteny_and_constraints);
+  my $synteny_region_ids = $self->store_synteny();
   foreach my $sr_id (@{$synteny_region_ids}) {
 
     #Flow into pecan
@@ -109,7 +108,6 @@ sub write_output {
 
 =head2 store_synteny
 
-  Arg[1]      : hashref $run_ids2synteny_and_constraints (unused)
   Example     : $self->store_synteny();
   Description : This method will store the syntenies defined by Mercator
                 into the compara DB. The MethodLinkSpecieSet for these
@@ -123,7 +121,7 @@ sub write_output {
 =cut
 
 sub store_synteny {
-  my ($self, $run_ids2synteny_and_constraints) = @_;
+  my ($self) = @_;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
@@ -161,7 +159,6 @@ sub store_synteny {
     } );
     $sra->store($synteny_region);
     push @{$synteny_region_ids}, $synteny_region->dbID;
-    push @{$run_ids2synteny_and_constraints->{$run_id}}, $synteny_region->dbID;
   }
 
   return $synteny_region_ids;
