@@ -63,7 +63,7 @@ sub get_postread_redirect_uri {
 }
 
 sub get_rewritten_uri {
-  ## Recieves the current URI and returns a new URI in case it has to be rewritten
+  ## Receives the current URI and returns a new URI in case it has to be rewritten
   ## The same request itself is handled according to the rewritten URI instead of making an external redirect request
   ## @param URI string
   ## @return URI string if modified, undef otherwise
@@ -71,7 +71,7 @@ sub get_rewritten_uri {
 }
 
 sub get_redirect_uri {
-  ## Recieves the current URI and returns a new URI in case a PERMANENT external HTTP redirect has to be performed on that
+  ## Receives the current URI and returns a new URI in case a PERMANENT external HTTP redirect has to be performed on that
   ## @param URI string
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
@@ -110,6 +110,11 @@ sub get_redirect_uri {
   if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
     return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);
   }
+
+  ## Redirect to live site if this instance has no Doxygen files
+  if ($uri =~ /Doxygen/ && !(-e $species_defs->ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs'.$uri)) {
+    return 'http://www.ensembl.org/'.$uri;
+  } 
 
   return undef;
 }
