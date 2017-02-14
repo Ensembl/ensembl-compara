@@ -573,11 +573,7 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
 
         {   -logic_name => 'backbone_fire_db_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-            -parameters => {
-                'description'   => 'The version of the Compara schema must match the Core API',
-                'query'         => 'SELECT * FROM meta WHERE meta_key = "schema_version" AND meta_value != '.$self->o('ensembl_release'),
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
             -input_ids  => [ { } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
@@ -805,11 +801,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'check_reuse_db_is_patched',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
             -parameters => {
                 'db_conn'       => '#reuse_db#',
-                'description'   => 'The schema version of the reused database must match the Core API',
-                'query'         => 'SELECT * FROM meta WHERE meta_key = "schema_version" AND meta_value != '.$self->o('ensembl_release'),
             },
         },
 
