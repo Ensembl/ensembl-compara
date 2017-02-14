@@ -128,7 +128,6 @@ sub store_synteny {
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $dfa = $self->compara_dba->get_DnaFragAdaptor;
-  my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
 
   my $mlss_id = $self->param_required('mlss_id');
 
