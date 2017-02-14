@@ -180,6 +180,7 @@ sub fetch_by_GenomeDB_and_name {
   Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
   Arg [4]    : (optional) boolean $is_reference
+  Arg [5]    : (optional) string $cellular_component
   Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
                    fetch_all_by_GenomeDB_region(
                      $human_genome_db, 'chromosome')
@@ -193,7 +194,7 @@ sub fetch_by_GenomeDB_and_name {
 =cut
 
 sub fetch_all_by_GenomeDB_region {
-  my ($self, $genome_db, $coord_system_name, $name, $is_reference) = @_;
+  my ($self, $genome_db, $coord_system_name, $name, $is_reference, $cellular_component) = @_;
 
   assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
@@ -225,6 +226,11 @@ sub fetch_all_by_GenomeDB_region {
   if(defined $is_reference) {
     $sql .= ' AND df.is_reference = ?';
     $self->bind_param_generic_fetch($is_reference, SQL_INTEGER);
+  }
+
+  if(defined $cellular_component) {
+    $sql .= ' AND df.cellular_component = ?';
+    $self->bind_param_generic_fetch($cellular_component, SQL_VARCHAR);
   }
 
   return $self->generic_fetch($sql);

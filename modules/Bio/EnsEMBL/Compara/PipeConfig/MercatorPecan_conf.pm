@@ -503,9 +503,17 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name       => '100Mb',
             -flow_into  => {
-                '2->A'  => [ 'fresh_dump_subset_fasta' ],
+                '2->A'  => [ 'delete_non_nuclear_genes' ],
                 'A->1'  => [ 'blast_species_factory' ],
             },
+        },
+
+        {   -logic_name => 'delete_non_nuclear_genes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => 'DELETE seq_member FROM seq_member JOIN dnafrag USING (dnafrag_id) WHERE cellular_component != "NUC"',
+            },
+            -flow_into  => [ 'fresh_dump_subset_fasta' ],
         },
 
         {   -logic_name => 'fresh_dump_subset_fasta',

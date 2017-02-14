@@ -129,8 +129,21 @@ sub store_synteny {
 
   my $mlss_id = $self->param_required('mlss_id');
 
+  # Now we add new regions for the non-nuclear cellular components
+  my @extra_synteny_groups;
+  my $genome_dbs = $mlssa->fetch_by_dbID($mlss_id)->species_set->genome_dbs;
+  foreach my $cellular_component (qw(MT PT)) {
+      my @regions;
+      foreach my $genome_db (@$genome_dbs) {
+          foreach my $dnafrag (@{ $dfa->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1, $cellular_component) }) {
+              push @regions, [$cellular_component, $dnafrag->genome_db_id, $dnafrag->name.'--1', 1, $dnafrag->length, '+'];
+          }
+      }
+      push @extra_synteny_groups, \@regions if scalar(@regions) > 1;
+  }
+
   my $synteny_region_ids;
-  foreach my $sr (@{$self->param('runnable')->output}) {
+  foreach my $sr (@{$self->param('runnable')->output}, @extra_synteny_groups) {
     my @regions;
     my $run_id;
     foreach my $dfr (@{$sr}) {
