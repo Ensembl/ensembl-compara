@@ -370,8 +370,7 @@ sub _prepare_exon_sequences {
         my $i = 0;
         $self->{_sequence_exon_cased} = join('', map {$i++%2 ? lc($_) : $_} split( /[boj]/, $exon_bounded_seq));
 
-    # If the SeqMember comes from a fasta file there is no Transcript
-    } elsif ($self->source_name =~ /^ENSEMBL/) {
+    } else {
 
         my $sequence = $self->sequence;
 
