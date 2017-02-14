@@ -148,11 +148,12 @@ sub store_synteny {
         $dnafrag_hash{$gdb_id."_".$seq_region_name} = $dnafrag;
       }
       $strand = ($strand eq "+")?1:-1;
-      my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion
-        (-dnafrag_id => $dnafrag->dbID,
-         -dnafrag_start => $start+1, # because half-open coordinate system
-         -dnafrag_end => $end,
-         -dnafrag_strand => $strand);
+      my $dnafrag_region = Bio::EnsEMBL::Compara::DnaFragRegion->new_fast( {
+              'dnafrag_id'      => $dnafrag->dbID,
+              'dnafrag_start'   => $start+1, # because half-open coordinate system
+              'dnafrag_end'     => $end,
+              'dnafrag_strand'  => $strand,
+      } );
       push @regions, $dnafrag_region;
     }
     my $synteny_region = Bio::EnsEMBL::Compara::SyntenyRegion->new_fast( {
