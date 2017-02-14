@@ -135,8 +135,7 @@ sub store_synteny {
   my $synteny_region_ids;
   my %dnafrag_hash;
   foreach my $sr (@{$self->param('runnable')->output}) {
-    my $synteny_region = new Bio::EnsEMBL::Compara::SyntenyRegion
-      (-method_link_species_set_id => $mlss_id);
+    my @regions;
     my $run_id;
     foreach my $dfr (@{$sr}) {
       my ($gdb_id, $seq_region_name, $start, $end, $strand);
@@ -154,10 +153,12 @@ sub store_synteny {
          -dnafrag_start => $start+1, # because half-open coordinate system
          -dnafrag_end => $end,
          -dnafrag_strand => $strand);
-      my $regions = $synteny_region->regions;
-      push @$regions, $dnafrag_region;
-      $synteny_region->regions($regions);
+      push @regions, $dnafrag_region;
     }
+    my $synteny_region = Bio::EnsEMBL::Compara::SyntenyRegion->new_fast( {
+        'method_link_species_set_id' => $mlss_id,
+        'regions' => \@regions,
+    } );
     $sra->store($synteny_region);
     push @{$synteny_region_ids}, $synteny_region->dbID;
     push @{$run_ids2synteny_and_constraints->{$run_id}}, $synteny_region->dbID;
