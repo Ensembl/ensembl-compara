@@ -102,7 +102,7 @@ sub run {
   exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
   exit(1) if (!$self->param('tree_string'));
 
-  my @ortheus_cmd = ('/software/ensembl/compara/OrtheusC/bin/OrtheusC');
+  my @ortheus_cmd = ($self->param('ortheus_c_exe'));
   push @ortheus_cmd, '-a', @{$self->param('fasta_files')};
   push @ortheus_cmd, '-b', $self->param('tree_string');
   push @ortheus_cmd, '-h'; # output leaves only

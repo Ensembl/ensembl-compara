@@ -61,12 +61,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-	return {
-		'mapping_exe' => "/usr/local/ensembl/bin/exonerate-1.0.0",
-	};
-}
-
 
 sub fetch_input {
 	my ($self) = @_;
@@ -95,7 +89,7 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my $program = $self->param('mapping_exe');
+	my $program = $self->param_required('mapping_exe'); # Path to exonerate 1.0.0
 	my $query_file = $self->param('query_file');
 	my $target_file = $self->param('target_file');
 	my $option_st;

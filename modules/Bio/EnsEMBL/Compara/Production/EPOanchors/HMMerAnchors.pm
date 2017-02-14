@@ -63,12 +63,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-	return {
-		'nhmmer'   => '/software/ensembl/compara/hmmer-3.1b1/binaries/nhmmer',
-		'hmmbuild' => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
-	};
-}
 
 sub fetch_input {
 	my ($self) = @_;
@@ -97,7 +91,7 @@ sub fetch_input {
 	close(F);
 	#build the hmm from the stockholm format file
 	my $hmmbuild_outfile = $self->worker_temp_directory . "$genomic_align_block_id.hmm";
-	my $hmmbuild = $self->param('hmmbuild'); 
+	my $hmmbuild = $self->param_required('hmmbuild');
 	my $hmmbuild_command = "$hmmbuild --dna $hmmbuild_outfile $stockholm_file";
 	system($hmmbuild_command);
 	$self->param('query_file', $hmmbuild_outfile);
@@ -105,7 +99,7 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my $nhmmer_command = join(" ", $self->param('nhmmer'), "--noali", $self->param('query_file'), $self->param('target_file') ); 
+	my $nhmmer_command = join(" ", $self->param_required('nhmmer'), "--noali", $self->param('query_file'), $self->param('target_file') );
 	my $exo_fh;
 	open( $exo_fh, "$nhmmer_command |" ) or throw("Error opening nhmmer command: $? $!"); #run nhmmer	
 	$self->param('exo_file', $exo_fh);

@@ -84,6 +84,7 @@ sub default_options {
 	'compara_anchor_db' => 'mysql://ensro@compara3/sf5_TEST_gen_anchors_mammals_cat_100',
 
 	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
+        'ortheus_c_exe' => '/software/ensembl/compara/OrtheusC/bin/OrtheusC',
 	#'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
 	'mapping_method_link_id' => 10000, # dummy value - should not need to change
 	'mapping_method_link_name' => 'MAP_ANCHORS', 
@@ -324,6 +325,7 @@ sub pipeline_analyses {
 		-parameters => {
 				'input_method_link_species_set_id' => '#mapping_mlssid#',
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
+                                'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
                 -flow_into => {
                     -1 => 'trim_anchor_align_himem',
@@ -337,6 +339,7 @@ sub pipeline_analyses {
 		-parameters => {
 				'input_method_link_species_set_id' => '#mapping_mlssid#',
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
+                                'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
 		-hive_capacity => 150,
                 -rc_name => 'mem3500',

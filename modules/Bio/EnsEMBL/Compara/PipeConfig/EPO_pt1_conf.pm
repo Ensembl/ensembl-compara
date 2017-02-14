@@ -138,6 +138,7 @@ sub default_options {
 	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
 	'max_number_of_seqs_per_anchor' => 30, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
         'exonerate' => '/software/ensembl/compara/exonerate/exonerate', # path to exonerate executable
+        'ortheus_c_exe' => '/software/ensembl/compara/OrtheusC/bin/OrtheusC',
      };
 }
 
@@ -342,6 +343,7 @@ return [
  -parameters => {
     'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
+    'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
  -hive_capacity => 100,
  -batch_size    => 10,
@@ -356,6 +358,7 @@ return [
  -parameters => {
     'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
+    'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
  -rc_name => 'mem7500',
  -hive_capacity => 100,
