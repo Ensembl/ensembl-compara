@@ -298,6 +298,7 @@ sub linked_var_table {
     { key => 'r2',        title => 'r<sup>2</sup>',           align => 'left',  sort => 'numeric', help => $glossary->{'r2'} },
     { key => 'd_prime',   title => q{D'},                     align => 'left',  sort => 'numeric', help => $glossary->{"D'"} },
     { key => 'pfs',       title => 'Associated phenotype(s)', align => 'left',  sort => 'html'                               },
+    { key => 'ctype',     title => 'Consequence Type',        align => 'left',  sort => 'html'                               },
     { key => 'genes',     title => 'Located in gene(s)',      align => 'left',  sort => 'html'                               },
     { key => 'pgene',     title => 'Gene phenotype(s)',       align => 'left',  sort => 'html'                               },
   ], [], { data_table => 1 });
@@ -441,6 +442,7 @@ sub linked_var_table {
         distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
         r2          => sprintf("%.3f", $ld->{'r2'}),
         d_prime     => sprintf("%.3f", $ld->{'d_prime'}),
+        ctype       => $self->render_consequence_type($ld_vf,1),
         genes       => $genes     || '-',
         pfs         => $pf_string || '-',
         pgene       => $pgene     || '-',
