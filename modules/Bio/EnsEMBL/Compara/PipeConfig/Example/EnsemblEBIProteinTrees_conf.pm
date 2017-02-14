@@ -107,8 +107,8 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
-	'goc_threshold'                 => undef,
-	'reuse_goc'                     => undef,
+	      'goc_threshold'                 => undef,
+	      'reuse_goc'                     => undef,
         
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -186,7 +186,7 @@ sub default_options {
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
         'goc_capacity'              => 30,
-	    'genesetQC_capacity'        => 100,
+	      'genesetQC_capacity'        => 100,
     # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:
@@ -200,29 +200,36 @@ sub default_options {
       -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
       -port   => 4522,
       -user   => 'ensadmin',
-      -pass   => $ENV{ENSADMIN_PSW},
+      -pass   => $ENV{'ENSADMIN_PSW'},
       #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
       #-dbname => 'treefam_10_mammals_baboon',
       #-dbname => 'ckong_protein_trees_compara_homology_protists_topup24',
-      -dbname => 'waakanni_protein_trees_87',
+      -dbname => 'waakanni_protein_trees_88',
       -driver => 'mysql',
       #-db_version => $self->o('ensembl_release')
     },
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mm14_ensembl_compara_master',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         # Production database (for the biotypes)
-        'production_db_url'     => 'ensro@mysql-ens-sta-1:4519/ensembl_production',
         'reuse_db'              => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
         'mapping_db'            => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy",
+        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+
 
         # Ensembl-specific databases
+        'staging_loc' => {                     # general location of half of the current release core databases
+            -host   => 'mysql-ens-sta-1',
+            -port   => 4519,
+            -user   => 'ensro',
+            -pass   => '',
+        },
+
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 87,
         },
 
         'egmirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
@@ -241,7 +248,7 @@ sub default_options {
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc')],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc')],
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
@@ -282,50 +289,50 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         'default'      => {'LSF' => '-q production-rh7' },
-         '250Mb_job'    => {'LSF' => '-C0 -q production-rh7 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'    => {'LSF' => '-C0 -q production-rh7 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_8c_job'   => {'LSF' => '-C0 -q production-rh7 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8 span[hosts=1]' },
-         '8Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '8Gb_8c_job'   => {'LSF' => '-q production-rh7 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8 span[hosts=1]' },
-         '16Gb_job'     => {'LSF' => '-q production-rh7 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_job'     => {'LSF' => '-q production-rh7 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '64Gb_job'     => {'LSF' => '-q production-rh7 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-         '512Gb_job'     => {'LSF' => '-q production-rh7 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
+         'default'      => {'LSF' => '-q production-rh7 -R"select[gpfs]"' },
+         '250Mb_job'    => {'LSF' => '-C0 -q production-rh7 -M250   -R"select[gpfs&&mem>250]   rusage[mem=250]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -q production-rh7 -M500   -R"select[gpfs&&mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M1000  -R"select[gpfs&&mem>1000]  rusage[mem=1000]"' },
+         '2Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M2000  -R"select[gpfs&&mem>2000]  rusage[mem=2000]"' },
+         '4Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M4000  -R"select[gpfs&&mem>4000]  rusage[mem=4000]"' },
+         '4Gb_8c_job'   => {'LSF' => '-C0 -q production-rh7 -M4000  -R"select[gpfs&&mem>4000]  rusage[mem=4000]"  -n 8 span[hosts=1]' },
+         '8Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"' },
+         '8Gb_8c_job'   => {'LSF' => '-q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"  -n 8 span[hosts=1]' },
+         '16Gb_job'     => {'LSF' => '-q production-rh7 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000]"' },
+         '32Gb_job'     => {'LSF' => '-q production-rh7 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000]"' },
+         '64Gb_job'     => {'LSF' => '-q production-rh7 -M64000 -R"select[gpfs&&mem>64000] rusage[mem=64000]"' },
+         '512Gb_job'     => {'LSF' => '-q production-rh7 -M512000 -R"select[gpfs&&mem>512000] rusage[mem=512000]"' },
 
-         '16Gb_8c_job' => {'LSF' => '-q production-rh7 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_8c_job' => {'LSF' => '-q production-rh7 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '16Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '64Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
+         '16Gb_8c_job' => {'LSF' => '-q production-rh7 -n 8 -C0 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_8c_job' => {'LSF' => '-q production-rh7 -n 8 -C0 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '16Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M16000 -R"select[gpfs&&mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh7 -n 16 -C0 -M64000 -R"select[gpfs&&mem>64000] rusage[mem=64000] span[hosts=1]"' },
 
-        '16Gb_32c_job' => {'LSF' => '-q production-rh7 -n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_32c_job' => {'LSF' => '-q production-rh7 -n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '16Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '256Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"' },
+        '16Gb_32c_job' => {'LSF' => '-q production-rh7 -n 32 -C0 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_32c_job' => {'LSF' => '-q production-rh7 -n 32 -C0 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '16Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '256Gb_64c_job' => {'LSF' => '-q production-rh7 -n 64 -C0 -M256000 -R"select[gpfs&&mem>256000] rusage[mem=256000] span[hosts=1]"' },
 
-         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[gpfs&&mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
-         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
-         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
-         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 -M8000 -R"select[gpfs&&mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 -M8000 -R"select[gpfs&&mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 -M8000 -R"select[gpfs&&mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 -M8000 -R"select[gpfs&&mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
 
-         '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
-         '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-         '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
-         '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
+         '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
+         '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
 
-         'msa'          => {'LSF' => '-C0 -q production-rh7 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         'msa'          => {'LSF' => '-C0 -q production-rh7 -M2000  -R"select[gpfs&&mem>2000]  rusage[mem=2000]"' },
+         'msa_himem'    => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"' },
 
-         'urgent_hcluster'      => {'LSF' => '-C0 -q production-rh7 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         'urgent_hcluster'      => {'LSF' => '-C0 -q production-rh7 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000]"' },
          '4Gb_job_gpfs' => {},
     };
 }

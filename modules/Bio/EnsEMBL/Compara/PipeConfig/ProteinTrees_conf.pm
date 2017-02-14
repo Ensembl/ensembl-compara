@@ -84,7 +84,7 @@ sub default_options {
 
     # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
         # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-         'ensembl_release'       => 87,
+         'ensembl_release'       => 88,
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
@@ -129,7 +129,7 @@ sub default_options {
         # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
         # An empty string can also be used as the key to define logic_names excluded from *all* species
         'exclude_gene_analysis'     => {},
-
+        'store_ncrna'               => 0,
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
 
@@ -462,7 +462,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('examl_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('hmm_library_basedir'),
+        #'mkdir -p '.$self->o('hmm_library_basedir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -1148,6 +1148,7 @@ sub core_pipeline_analyses {
                 'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
                 'production_db_url'             => $self->o('production_db_url'),
+                'store_ncrna'                   => $self->o('store_ncrna'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '4Gb_job',
