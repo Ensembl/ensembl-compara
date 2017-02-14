@@ -26,7 +26,6 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Homology;
 use Exporter;
 
-use EnsEMBL::Web::Cache;
 use base qw(EnsEMBL::Web::Object);
 
 sub create_features {
