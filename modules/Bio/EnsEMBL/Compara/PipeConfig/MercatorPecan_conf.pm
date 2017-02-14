@@ -96,7 +96,7 @@ sub default_options {
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.23amniots.branch_len.nw', 
 
     #master database
-        'master_db_name' => 'mm14_ensembl_compara_master',
+        'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
     # Mercator default parameters
     'strict_map'        => 1,
@@ -145,15 +145,6 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
             -dbname => $ENV{'USER'}.'_pecan_23way_'.$self->o('rel_with_suffix'),
-	    -driver => 'mysql',
-        },
-
-        'master_db' => {                        # the master database for synchronization of various ids
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'mm14_ensembl_compara_master',
 	    -driver => 'mysql',
         },
 
@@ -277,10 +268,9 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
-				  'master'         => $self->o('master_db_name'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
-				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
+				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
                -input_ids => [{}],
 	       -flow_into => {
