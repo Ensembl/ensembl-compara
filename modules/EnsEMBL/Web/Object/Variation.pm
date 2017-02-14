@@ -38,12 +38,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Cache;
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::REST;
 use base qw(EnsEMBL::Web::Object);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -73,9 +70,10 @@ sub availability {
 }
 
 sub counts {
-  my $self = shift;
-  my $obj  = $self->Obj;
-  my $hub  = $self->hub;
+  my $self  = shift;
+  my $obj   = $self->Obj;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
 
@@ -84,7 +82,7 @@ sub counts {
   $key   .= $vf . '::' if $vf;
 
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   unless ($counts) {
     $counts = {};
@@ -100,7 +98,7 @@ sub counts {
     $counts->{'locations'}   = scalar @{$self->get_variation_features};
     ($counts->{'population_freqs'}, $counts->{'populations'}) = @{$self->count_populations};
 
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 

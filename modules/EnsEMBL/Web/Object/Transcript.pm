@@ -32,12 +32,8 @@ use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
-use EnsEMBL::Web::Cache;
-use Data::Dumper;
 use base qw(EnsEMBL::Web::Object);
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -85,18 +81,20 @@ sub availability {
 sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : 'Summary'; }
 
 sub counts {
-  my $self = shift;
-  my $sd = $self->species_defs;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
+  my $sd    = $self->species_defs;
 
   my $key = sprintf(
-    '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
-    $self->species, 
-    $self->hub->core_param('db'), 
-    $self->hub->core_param('t')
+    '::COUNTS::TRANSCRIPT::%s::%s::%s::',
+    $self->species,
+    $hub->core_param('db'),
+    $hub->core_param('t')
   );
   
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   if (!$counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
@@ -111,7 +109,7 @@ sub counts {
       %{$self->_counts}
     };
     
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 
