@@ -112,8 +112,7 @@ my $compara_url;
 my $ucsc_url;
 my $urls;
 my $image_dir = "./"; #location to write image files
-#my $R_prog = "/software/R-2.9.0/bin/R ";
-my $R_prog = "/software/R-3.0.0/bin/R ";
+my $R_prog = "R";  # Whatever is in $PATH
 my $reg = "Bio::EnsEMBL::Registry";
 
 

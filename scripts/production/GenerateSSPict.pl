@@ -55,7 +55,7 @@ use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-my $r2r_exe = "/software/ensembl/compara/R2R-1.0.3/src/r2r";
+my $r2r_exe = $ENV{ENSEMBL_SOFTWARE_HOME}.'/linuxbrew/Cellar/r2r/1.0.4/bin/r2r',
 my $registry_file;
 my $url;
 my $compara_url;
@@ -84,7 +84,7 @@ Options:
     --conf | --registry   [Optional] Path to a configuration file
     --id   | --stable_id             Ensembl gene stable id
     --r2r_exe                        Path to the r2r executable
-                                     [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
+                                     [Defaults to the version 1.0.4 in the linuxbrew cellar]
     --thumbnail           [Optional] If present, only a thumbnail of the family is created
     --help                [Optional] Print this message & exit
 
@@ -204,7 +204,6 @@ sub member_pic {
 
 sub run_r2r_and_check {
     my ($opts, $infile, $outfile, $extra_params) = @_;
-#    my $r2r_exe = "/software/ensembl/compara/R2R-1.0.3/src/r2r";
     die "$r2r_exe doesn't exist\n" unless (-e $r2r_exe);
 
     my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
