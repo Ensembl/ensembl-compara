@@ -1329,7 +1329,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           -length => $block_len,
           -method_link_species_set => $mlss,
           -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
-          -dbID => $id_base + $gab_id_count,
+          # -dbID => $id_base + $gab_id_count,
         );
         $gab->reference_slice_strand( $dnafrag->slice->strand );
         $gab_id_count++;
@@ -1379,7 +1379,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
             -dnafrag_end => $seq->{end},
             -dnafrag_strand => $seq->{strand},
             -cigar_line => $this_cigar, 
-            -dbID => $id_base + $ga_id_count,
+            # -dbID => $id_base + $ga_id_count,
             -visible => 1,
             -adaptor => $ga_adaptor,
           );
@@ -1387,17 +1387,20 @@ sub _get_GenomicAlignBlocks_from_HAL {
           $genomic_align->aligned_sequence( $seq->{seq} );
           $genomic_align->genomic_align_block( $gab );
           $genomic_align->method_link_species_set($mlss);
-          $genomic_align->dbID( $id_base + $ga_id_count );
+          $genomic_align->dbID( join('-', $this_dnafrag->genome_db->dbID, $this_dnafrag->dbID, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end) );
           push( @genomic_align_array, $genomic_align );
           $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
           $ga_id_count++;
         }
 
-        next if ( scalar(@genomic_align_array) < 2 );
+        next if ( scalar(@genomic_align_array) < 2 || !defined $ref_genomic_align );
 
-        $gab->genomic_align_array(\@genomic_align_array);
-        next unless ( defined $ref_genomic_align );
         $gab->reference_genomic_align($ref_genomic_align);
+        $gab->dbID($ref_genomic_align->dbID);
+        foreach my $ga ( @genomic_align_array ) {
+        	$ga->genomic_align_block_id( $gab->dbID );
+        }
+        $gab->genomic_align_array(\@genomic_align_array);
 
         # check for duplicate species
         if ( $duplicates_found ) {
@@ -1450,7 +1453,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -length => @$entry[3],
                   -method_link_species_set => $mlss,
                   -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
-                  -dbID => $id_base + $gab_id_count,
+                  # -dbID => $id_base + $gab_id_count,
               );
               $gab_id_count++;
   		
@@ -1478,14 +1481,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -dnafrag_end => @$entry[2] + @$entry[3],
                   -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                   -cigar_line => $target_cigar,
-                  -dbID => $id_base + $ga_id_count,
+                  # -dbID => $id_base + $ga_id_count,
                   -visible => 1,
                   -adaptor => $ga_adaptor,
   	          );
               $genomic_align->cigar_line($target_cigar);
               $genomic_align->aligned_sequence( $target_aln_seq );
               $genomic_align->genomic_align_block( $gab );
-              $genomic_align->dbID( $id_base + $ga_id_count );
+              # $genomic_align->dbID( $id_base + $ga_id_count );
+              $genomic_align->dbID( join('-', $target_dnafrag->genome_db->dbID, $target_dnafrag->dbID, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end) );
               $ga_id_count+=1;
 
               $dnafrag->{'_slice'} = undef;
@@ -1497,18 +1501,20 @@ sub _get_GenomicAlignBlocks_from_HAL {
                 -dnafrag_end => @$entry[1] + @$entry[3],
                 -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                 -cigar_line => $ref_cigar,
-                -dbID => $id_base + $ga_id_count,
+                # -dbID => $id_base + $ga_id_count,
                 -visible => 1,
                 -adaptor => $ga_adaptor,
   		        );
               $ref_genomic_align->cigar_line($ref_cigar);
               $ref_genomic_align->aligned_sequence( $ref_aln_seq );
               $ref_genomic_align->genomic_align_block( $gab );
-              $ref_genomic_align->dbID( $id_base + $ga_id_count );
+              $ref_genomic_align->dbID( join('-', $dnafrag->genome_db->dbID, $dnafrag->dbID, $ref_genomic_align->dnafrag_start, $ref_genomic_align->dnafrag_end) );
               $ga_id_count++;
+
 
   		      $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
               $gab->reference_genomic_align($ref_genomic_align);
+              $gab->dbID($ref_genomic_align->dbID);
               push(@gabs, $gab);
             }
             last if ( $limit && scalar(@gabs) >= $limit );
