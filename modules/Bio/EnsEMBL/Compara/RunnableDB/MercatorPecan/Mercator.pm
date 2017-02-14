@@ -130,7 +130,6 @@ sub store_synteny {
   my $mlss_id = $self->param_required('mlss_id');
 
   my $synteny_region_ids;
-  my %dnafrag_hash;
   foreach my $sr (@{$self->param('runnable')->output}) {
     my @regions;
     my $run_id;
@@ -139,11 +138,7 @@ sub store_synteny {
       ($run_id, $gdb_id, $seq_region_name, $start, $end, $strand) = @{$dfr};
       next if ($seq_region_name eq 'NA' && $start eq 'NA' && $end eq 'NA' && $strand eq 'NA');
       $seq_region_name =~ s/\-\-\d+$//;
-      my $dnafrag = $dnafrag_hash{$gdb_id."_".$seq_region_name};
-      unless (defined $dnafrag) {
-        $dnafrag = $dfa->fetch_by_GenomeDB_and_name($gdb_id, $seq_region_name);
-        $dnafrag_hash{$gdb_id."_".$seq_region_name} = $dnafrag;
-      }
+      my $dnafrag = $dfa->fetch_by_GenomeDB_and_name($gdb_id, $seq_region_name);
       $strand = ($strand eq "+")?1:-1;
       my $dnafrag_region = Bio::EnsEMBL::Compara::DnaFragRegion->new_fast( {
               'dnafrag_id'      => $dnafrag->dbID,
