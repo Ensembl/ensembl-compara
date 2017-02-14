@@ -46,8 +46,8 @@ sub get_data {
   my $self      = shift;
   my $object    = $self->object;
   my $trans     = $object->Obj;
-  my $tsi       = $object->stable_id;
-  my $tsv       = $tsi.'.'.$object->version;
+  my $tsv       = $object->stable_id.'.'.$object->version;
+  my $psv       = $trans->translation->stable_id.'.'.$trans->translation->version;
   my $hit_id    = $object->param('sequence');
   my $ext_db    = $object->param('extdb');
   my $data      = {
@@ -63,8 +63,8 @@ sub get_data {
     my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
 
     my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type);
-    my $method    = $seq_type eq 'PEP' ? '_munge_psw' : '_munge_matcher';
-    my $munged    = $self->$method($alignment, $tsv, $hit_id); 
+    my $munged    = $seq_type eq 'PEP' ? $self->_munge_psw($alignment, $psv, $hit_id)
+                                       : $self->_munge_matcher($alignment, $tsv, $hit_id);; 
 
     $data->{'description'}{'content'} = $seq_type eq 'PEP'
       ? qq(Alignment between external feature $hit_id and translation of transcript $tsv)
@@ -82,13 +82,13 @@ sub get_data {
 
 sub _munge_psw {
 ## Fix identifiers that have been truncated by WISE 2.4
-  my ($self, $alignment, $tsi, $hit_id) = @_;
+  my ($self, $alignment, $psv, $hit_id) = @_;
   return '' unless $alignment;
 
   my $munged;
   my $line_count  = 0;
   my $codon_count = 1;
-  my $col_1_width = length($tsi) > length($hit_id) ? length($tsi) : length($hit_id);
+  my $col_1_width = length($psv) > length($hit_id) ? length($psv) : length($hit_id);
   $col_1_width   += 2;
   my $col_2_width = 5;
   my $col_3_width;
@@ -106,7 +106,7 @@ sub _munge_psw {
         my ($id, $seq) = split(/\s+/, $line);
 
         ## Add the correct identifier
-        my $identifier = ($line_count % 3 == 0) ? $tsi : $hit_id;
+        my $identifier = ($line_count % 3 == 0) ? $psv : $hit_id;
         $munged .= sprintf $col_1_pattern, $identifier;
 
         ## Now add codon number
@@ -129,12 +129,12 @@ sub _munge_psw {
 
 sub _munge_matcher {
 ## Fix identifiers that have been truncated by 
-  my ($self, $alignment, $tsi, $hit_id) = @_;
+  my ($self, $alignment, $tsv, $hit_id) = @_;
   return '' unless $alignment;
 
   my $munged;
   my $line_count    = 0;
-  my $col_1_width   = length($tsi) > length($hit_id) ? length($tsi) : length($hit_id);
+  my $col_1_width   = length($tsv) > length($hit_id) ? length($tsv) : length($hit_id);
   my $col_1_pattern = '%'.$col_1_width.'s'; 
   my $padding       = $col_1_width - 6;
   my $col_2_width;
@@ -148,7 +148,7 @@ sub _munge_matcher {
       ## Comment - need to fix identifiers
       if ($line =~ /^# ([1|2]): /) {
         my $number = $1;
-        my $id = $number == 2 ? $hit_id : $tsi;
+        my $id = $number == 2 ? $hit_id : $tsv;
         $line = "# $number: $id";
       }
       $munged .= $line."\n";
@@ -163,7 +163,7 @@ sub _munge_matcher {
       my ($id, $seq) = split(/\s+/, $line);
 
       ## Add the correct identifier
-      my $identifier = ($line_count % 2 == 0) ? $tsi : $hit_id;
+      my $identifier = ($line_count % 2 == 0) ? $tsv : $hit_id;
       $munged .= sprintf $col_1_pattern, $identifier;
 
       ## Finally add sequence
