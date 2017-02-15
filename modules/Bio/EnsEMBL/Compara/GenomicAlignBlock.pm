@@ -449,7 +449,7 @@ sub reference_genomic_align_id {
     ## Synchronises reference_genomic_align and reference_genomic_align_id
     if (defined($self->{'reference_genomic_align'}) and
         defined($self->{'reference_genomic_align'}->dbID) and
-        ($self->{'reference_genomic_align'}->dbID != ($self->{'reference_genomic_align_id'} or 0))) {
+        ($self->{'reference_genomic_align'}->dbID ne ($self->{'reference_genomic_align_id'} or 0))) {
         $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
     }
 
