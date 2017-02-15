@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs
+Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ Loads all the core databases and stores the species as GenomeDB objects.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs;
+package Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry;
 
 use strict;
 use warnings;

@@ -752,11 +752,11 @@ sub core_pipeline_analyses {
                 'executable'            => 'mysqlimport',
                 'append'                => [ '#method_link_dump_file#' ],
             },
-            -flow_into      => [ 'load_all_genomedbs' ],
+            -flow_into      => [ 'load_all_genomedbs_from_registry' ],
         },
 
-        {   -logic_name => 'load_all_genomedbs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs',
+        {   -logic_name => 'load_all_genomedbs_from_registry',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry',
             -parameters => {
                 'registry_conf_file'  => $self->o('curr_core_registry'),
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
