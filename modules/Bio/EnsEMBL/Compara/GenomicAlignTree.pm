@@ -787,11 +787,13 @@ sub print {
   }
   print STDERR "  " x $level, $mark,
       "[", $self->node_id, "/", ($self->original_strand?"+":"-"), "] ",
+      $self->genomic_align_group ? (
       $self->genomic_align_group->genome_db->name,":",
       $self->genomic_align_group->dnafrag->name,":",
       $self->genomic_align_group->dnafrag_start,":",
       $self->genomic_align_group->dnafrag_end,":",
       $self->genomic_align_group->dnafrag_strand,":",
+      ) : (),
       " (", ($self->left_node_id?$self->left_node->node_id."/".$self->left_node->root->node_id:"...."),
       " - ",  ($self->right_node_id?$self->right_node->node_id."/".$self->right_node->root->node_id:"...."),")\n";
   foreach my $this_genomic_align (@{$self->get_all_genomic_aligns_for_node}) {
