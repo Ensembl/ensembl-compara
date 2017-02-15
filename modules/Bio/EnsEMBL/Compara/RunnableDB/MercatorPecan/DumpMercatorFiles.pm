@@ -188,8 +188,8 @@ sub get_sql_for_peptide_hits {
   my ($self, $gdb_id1, $gdb_id2) = @_;
   my $sql;
 
-  my $table_name1 = $self->get_table_name_from_dbID($gdb_id1);
-  my $table_name2 = $self->get_table_name_from_dbID($gdb_id2);
+  my $table_name1 = "peptide_align_feature_$gdb_id1";
+  my $table_name2 = "peptide_align_feature_$gdb_id2";
 
   if ($self->param('all_hits')) {
     ## Use all best hits
@@ -210,19 +210,5 @@ sub get_sql_for_peptide_hits {
   return $sql;
 }
 
-
-sub get_table_name_from_dbID {
-  my ($self, $gdb_id) = @_;
-  my $table_name = "peptide_align_feature";
-
-  my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
-  my $gdb = $gdba->fetch_by_dbID($gdb_id);
-  return $table_name if (!$gdb);
-
-  $table_name .= "_" . $gdb_id;
-  $table_name =~ s/ /_/g;
-
-  return $table_name;
-}
 
 1;
