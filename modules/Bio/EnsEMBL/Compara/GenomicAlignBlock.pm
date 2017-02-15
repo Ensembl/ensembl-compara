@@ -1406,10 +1406,10 @@ sub get_GenomicAlignTree {
 
     foreach my $genomic_align (@$genomic_aligns) {
         #Throw if duplicates are found (and no GenomicAlignTree has been found)
-        if (defined  $leaf_names->{$genomic_align->genome_db->name}) {
-            throw ("Duplicate found for species " . $genomic_align->genome_db->name);
+        if (defined  $leaf_names->{$genomic_align->genome_db->dbID}) {
+            throw ("Duplicate found for species " . $genomic_align->genome_db->dbID);
         }
-        $leaf_names->{$genomic_align->genome_db->name} = $genomic_align;
+        $leaf_names->{$genomic_align->genome_db->dbID} = $genomic_align;
     }
 
     #Create a tree as a newick format string
@@ -1420,10 +1420,10 @@ sub get_GenomicAlignTree {
         
         #Create species_tree in newick format. Do not get the branch lengths.
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
-                                                                                              -species_set => $species_set)->newick_format('ncbi_name');
+                                                                                              -species_set => $species_set)->newick_format('ryo', '%{g}');
     } else {
         #Multiple alignment
-        $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format("ncbi_name");
+        $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format('ryo', '%{g}');
     }
 
     #Convert the newick format tree into a GenomicAlignTree object
@@ -1435,16 +1435,12 @@ sub get_GenomicAlignTree {
     #Prune the tree to just contain the species in this GenomicAlignBlock and add GenomicAlignGroup objects on the leaves
     my $all_leaves = $genomic_align_tree->get_all_leaves;
     foreach my $this_leaf (@$all_leaves) {        
-        my $this_leaf_name = lc($this_leaf->name);
-        #Replace spaces with _ (necessary for output from create_species_tree)
-        $this_leaf_name =~ s/ /_/;
-
-        #Set the leaf name to be all lowercase to be consistent with the genome_db name
-	$this_leaf->name($this_leaf_name);
+        my $this_leaf_name = $this_leaf->name;
 
         if ($leaf_names->{$this_leaf_name}) {
             #add GenomicAlignGroup populated with GenomicAlign to leaf
 	    my $this_genomic_align = $leaf_names->{$this_leaf_name};
+            $this_leaf->name($this_genomic_align->genome_db->name);
             my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
             $genomic_align_group->add_GenomicAlign($leaf_names->{$this_leaf_name});
             $this_leaf->genomic_align_group($genomic_align_group);
