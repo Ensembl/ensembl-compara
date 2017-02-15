@@ -292,7 +292,7 @@ sub url {
       my $url = $self->{'url'};
       #warn "<- $url";
       $url =~ s/#base_dir#/$data_dir/;
-      $url =~ s/\/multi\/multi\//\/multi\//;    # temporary hack for e88 production until the database has been updated
+      $url =~ s/\/multi\/+multi\//\/multi\//;    # temporary hack for e88 production until the database has been updated
       #warn "-> $url";
 
       if (-e $url) {
