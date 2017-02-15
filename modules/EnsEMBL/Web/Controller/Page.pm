@@ -27,6 +27,8 @@ use warnings;
 
 use URI::Escape qw(uri_unescape);
 
+use EnsEMBL::Web::Exceptions;
+
 use parent qw(EnsEMBL::Web::Controller);
 
 sub request {
