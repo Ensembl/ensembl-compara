@@ -506,7 +506,7 @@ sub get_all_non_reference_genomic_aligns {
   }
 
   foreach my $this_genomic_align (@$genomic_aligns) {
-    if (($this_genomic_align->dbID or -1) != ($reference_genomic_align_id or -2) and
+    if (($this_genomic_align->dbID or -1) ne ($reference_genomic_align_id or -2) and
         $this_genomic_align != $reference_genomic_align) {
       push(@$all_non_reference_genomic_aligns, $this_genomic_align);
     }
