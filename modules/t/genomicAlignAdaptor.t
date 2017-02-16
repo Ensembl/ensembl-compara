@@ -165,6 +165,12 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::retrieve_all_di
     done_testing();
 };
 
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor count_by_mlss_id($mlss_id1) method" , sub {
+
+    my $c = $genomic_align_adaptor->count_by_mlss_id($mlss_id1);
+    is($c, 728, 'count_by_mlss_id');
+};
+
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
     
     my $orig_genomic_align = $genomic_align_adaptor->fetch_by_dbID($ga_id);
