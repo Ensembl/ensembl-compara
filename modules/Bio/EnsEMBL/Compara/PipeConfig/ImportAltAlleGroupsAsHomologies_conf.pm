@@ -42,19 +42,20 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'host'            => 'compara5',    # where the pipeline database will be created
+        'port'            => 3306,
 
         'pipeline_name'   => 'alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
         # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
+        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
 
         #Software dependencies
-        'mafft_home'            => '/software/ensembl/compara/mafft-7.113/',
+        'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
 
     };
 }
