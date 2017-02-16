@@ -36,7 +36,6 @@ my $genomic_align_block;
 my $all_genomic_aligns;
 my $genomic_align_adaptor = $compara_db->get_GenomicAlignAdaptor();
 my $dnafrag_adaptor = $compara_db->get_DnaFragAdaptor();
-my $genomeDB_adaptor = $compara_db->get_GenomeDBAdaptor();
 
 my $sth;
 my ($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $cg, $visible, $node_id);
