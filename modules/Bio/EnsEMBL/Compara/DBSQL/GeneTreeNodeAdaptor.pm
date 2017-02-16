@@ -272,6 +272,7 @@ sub delete_node {
   if ($node_id && (!$node->{_root_id} || ($node_id == $node->{_root_id}))) {
     $self->dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
+    $self->dbc->do("DELETE FROM gene_tree_object_store WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
   }
 
