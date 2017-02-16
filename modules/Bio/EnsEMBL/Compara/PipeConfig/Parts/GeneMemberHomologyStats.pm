@@ -21,26 +21,24 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats
 
 =head1 DESCRIPTION
 
-The pipeline-part that populates the gene_member_hom_stats table.
+This pipeline-part populates the gene_member_hom_stats table.
 This table can now hold statistics for different collections and once
 instance of the pipeline can be seeded multiple times in order to gather
 statistics for multiple collections.
 
-=head2 USAGE
+=head1 USAGE
 
-=over
+=head2 eHive configuration
 
-=item eHive configuration
+This pipeline assumes the param_stack is turned on. Since we only have
+a handful of resources (trees, families, collections) per database,
+concurrency is not an issue and maximum capacities are not set by default.
 
-This pipeline assumes the param_stack is turned on
+=head2 Seeding
 
-=item Seeding
-
-Each sed job has two arguments: "collection" is the name of the
+Each seed job has two arguments: "collection" is the name of the
 collection species-set, and "clusterset_id" is the name of the
 clusterset_id under which the trees / homologies are stored
-
-=back
 
 =head1 CONTACT
 
