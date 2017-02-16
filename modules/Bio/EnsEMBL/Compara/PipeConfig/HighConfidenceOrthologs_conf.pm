@@ -48,7 +48,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
@@ -79,10 +80,6 @@ sub default_options {
             },
         ],
 
-        # By default the pipeline processes all homologies but you can # restrict this here
-        'range_label',  => undef,       # A name for the range
-        'range_filter', => undef,       # An SQL boolean expression to filter homology_id
-
         # ------- GRCh37
         #'range_label',  => "protein",       # A name for the range
         #'range_filter', => "homology_id < 100000000",       # An SQL boolean expression to filter homology_id
@@ -100,8 +97,8 @@ sub default_options {
         # ------- e87
 
 
-        'capacity'    => 20,             # how many mlss_ids can be processed in parallel
-        'batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
+        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
+        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
 }
@@ -111,33 +108,23 @@ sub default_options {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
-
-        {   -logic_name => 'mlss_id_for_high_confidence_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FindMLSSUnderTaxa',
-            -input_ids  => [
-                {
-                    'compara_db'        => $self->o('compara_db'),
-                    'threshold_levels'  => $self->o('threshold_levels'),
-                }
-            ],
-            -flow_into  => {
-                2   => { 'flag_high_confidence_orthologs' => INPUT_PLUS },
-            },
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [
+        {
+            'compara_db'        => $self->o('compara_db'),
+            'threshold_levels'  => $self->o('threshold_levels'),
+            'range_label'       => 'protein',
+            'range_filter'      => '((homology_id < 100000000) OR (homology_id BETWEEN 300000000 AND 400000000))',
         },
-
-        {   -logic_name    => 'flag_high_confidence_orthologs',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
-            -parameters    => {
-                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
-                'range_label'   => $self->o('range_label'),
-                'range_filter'  => $self->o('range_filter'),
-            },
-            -hive_capacity => $self->o('capacity'),
-            -batch_size    => $self->o('batch_size'),
+        {
+            'compara_db'        => $self->o('compara_db'),
+            'threshold_levels'  => $self->o('threshold_levels'),
+            'range_label'       => 'ncrna',
+            'range_filter'      => '((homology_id BETWEEN 100000000 AND 200000000) OR (homology_id BETWEEN 400000000 AND 500000000))',
         },
-
     ];
+
+    return $pipeline_analyses;
 }
 
 1;
