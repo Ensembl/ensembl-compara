@@ -31,7 +31,7 @@ BEGIN {
 
 # Get some configs from SiteDefs
 my $web_root      = $SiteDefs::ENSEMBL_WEBROOT;
-my $conf_dir      = $SiteDefs::ENSEMBL_SYS_DIR;
+my $conf_dir      = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
 my $conf_file     = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
 my $memcached     = $SiteDefs::ENSEMBL_MEMCACHED;
 my $apache_define = $SiteDefs::APACHE_DEFINE;
