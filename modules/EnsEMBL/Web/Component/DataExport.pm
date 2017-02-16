@@ -72,7 +72,7 @@ sub create_form {
   for (keys %$settings) {
     next unless ref $settings->{$_} eq 'HASH';
     next if $settings->{'no_user'};
-    $settings->{$_}{'value'} = $self->param($_);
+    $settings->{$_}{'value'} = $self->param($_) if defined($self->param($_));
   }
 
   my $format_label = {
