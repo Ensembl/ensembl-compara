@@ -335,11 +335,9 @@ sub fetch_all_by_genomic_align_block_id {
 
   if ($species_list) {
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-    my @species_dbIDs;
-    foreach my $species_name (@$species_list) {
-      my $gdb_ID = $genome_db_adaptor->fetch_by_registry_name($species_name)->dbID;
-      push(@species_dbIDs, $gdb_ID);
-    }
+    my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $species_list);
+    return [] unless @$genome_dbs;
+    my @species_dbIDs = map {$_->dbID} @$genome_dbs;
     my $species_dbIDs_str=join(',',@species_dbIDs);
     $sql .= qq{
             FROM
