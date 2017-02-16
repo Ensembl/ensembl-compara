@@ -26,7 +26,7 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 BEGIN {
-  require "$Bin/include.pl";
+  require "$Bin/helper.pl";
 };
 
 my $PID = $SiteDefs::ENSEMBL_PIDFILE;
