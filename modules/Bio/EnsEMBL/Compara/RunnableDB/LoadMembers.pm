@@ -125,6 +125,10 @@ sub fetch_input {
     }
 
     $self->_load_biotype_groups($self->param_required('production_db_url'));
+
+    my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+    my %all_dnafrags_by_name = map {$_->name => $_} @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db) };
+    $self->param('all_dnafrags_by_name', \%all_dnafrags_by_name);
 }
 
 
@@ -187,6 +191,7 @@ sub loadMembersFromCoreSlices {
   #and then all transcripts in gene to store as members in compara
 
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+  my $all_dnafrags_by_name = $self->param('all_dnafrags_by_name');
   my $gene_adaptor;
 
   foreach my $slice (@$slices) {
@@ -198,7 +203,7 @@ sub loadMembersFromCoreSlices {
 
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
-    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
+    my $dnafrag = $all_dnafrags_by_name->{$slice->seq_region_name};
     unless ($dnafrag) {
         if ($self->param('store_missing_dnafrags')) {
             $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
