@@ -43,7 +43,7 @@ sub default_options {
 
         'host'            => 'compara5',    # where the pipeline database will be created
 
-        'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
+        'pipeline_name'   => 'alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
@@ -52,7 +52,6 @@ sub default_options {
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
-        'update_capacity'                           => '5',
 
         #Software dependencies
         'mafft_home'            => '/software/ensembl/compara/mafft-7.113/',
@@ -84,7 +83,6 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
         'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
         'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
         'default_w_reg' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
@@ -103,7 +101,7 @@ sub pipeline_analyses {
                     'db_conn'    => '#compara_db#',
                 } ],
             -parameters => {
-                'range_index'   => 5,
+                'range_index'   => 7,
             },
             -flow_into => [ 'species_factory' ],
         },
@@ -125,8 +123,7 @@ sub pipeline_analyses {
                 'reg_conf'  => $self->o('reg_conf'),
             },
             -flow_into => {
-                '2->A' => [ 'import_altalleles_as_homologies' ],
-                'A->1' => [ 'update_member_display_labels' ],
+                2 => [ 'import_altalleles_as_homologies' ],
             },
             -rc_name    => 'default_w_reg',
         },
@@ -148,49 +145,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
             -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
             -rc_name    => 'patch_import_himem',
-        },
-
-        {
-            -logic_name => 'update_member_display_labels',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'display_label',
-                'source_name'             => 'ENSEMBLGENE',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -flow_into => [ 'update_seq_member_display_labels' ],
-            -rc_name => '500Mb_job',
-        },
-
-        {
-            -logic_name => 'update_seq_member_display_labels',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'display_label',
-                'source_name'             => 'ENSEMBLPEP',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -flow_into => [ 'update_member_descriptions' ],
-            -rc_name => '500Mb_job',
-        },
-
-        {
-            -logic_name => 'update_member_descriptions',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'description',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -rc_name => '500Mb_job',
         },
 
     ];
