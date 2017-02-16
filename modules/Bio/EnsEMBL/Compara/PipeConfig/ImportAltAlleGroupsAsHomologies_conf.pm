@@ -34,6 +34,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
@@ -41,8 +44,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara5',    # where the pipeline database will be created
-        'port'            => 3306,
+        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
+        'port'            => 4485,
 
         'pipeline_name'   => 'alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
@@ -75,6 +78,7 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'mafft_home'    => $self->o('mafft_home'),
+        'production_db_url' => $self->o('production_db_url'),
     }
 }
 
@@ -93,62 +97,14 @@ sub resource_classes {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
 
-        {   -logic_name => 'offset_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
-            -input_ids  => [ {
-                    'compara_db' => $self->o('compara_db'),
-                    'db_conn'    => '#compara_db#',
-                } ],
-            -parameters => {
-                'range_index'   => 7,
-            },
-            -flow_into => [ 'species_factory' ],
-        },
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies::pipeline_analyses_alt_alleles($self);
 
-        {
-            -logic_name => 'species_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -flow_into => {
-                2   => [ 'altallegroup_factory' ],
-            },
-        },
+    $pipeline_analyses->[0]->{'-input_ids'} = [ {
+            'compara_db' => $self->o('compara_db'),
+        } ];
 
-        {
-            -logic_name => 'altallegroup_factory',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_dbID', '#genome_db_id#'], 'db_adaptor', 'get_AltAlleleGroupAdaptor', 'fetch_all' ],
-                'column_names2getters'  => { 'alt_allele_group_id' => 'dbID' },
-                'reg_conf'  => $self->o('reg_conf'),
-            },
-            -flow_into => {
-                2 => [ 'import_altalleles_as_homologies' ],
-            },
-            -rc_name    => 'default_w_reg',
-        },
-
-
-        {   -logic_name => 'import_altalleles_as_homologies',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
-            -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
-            -parameters => {
-                'production_db_url' => $self->o('production_db_url'),
-            },
-             -flow_into => {
-                           -1 => [ 'import_altalleles_as_homologies_himem' ],  # MEMLIMIT
-                           },
-            -rc_name    => 'patch_import',
-        },
-
-        {   -logic_name => 'import_altalleles_as_homologies_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
-            -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
-            -rc_name    => 'patch_import_himem',
-        },
-
-    ];
+    return $pipeline_analyses;
 }
 
 1;
