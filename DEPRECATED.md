@@ -36,10 +36,8 @@
 ## \*MemberAdaptor methods, to be removed in Ensembl 91
 
 * `GeneMemberAdaptor::fetch_all_by_source_Iterator()`
-* `GeneMemberAdaptor::fetch_all_by_source_taxon()`
 * `GeneMemberAdaptor::fetch_all_Iterator()`
 * `SeqMemberAdaptor::fetch_all_by_source_Iterator()`
-* `SeqMemberAdaptor::fetch_all_by_source_taxon()`
 * `SeqMemberAdaptor::fetch_all_Iterator()`
 * `SeqMemberAdaptor::update_sequence()`
 

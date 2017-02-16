@@ -184,10 +184,22 @@ sub fetch_all_by_source {
 }
 
 
-sub fetch_all_by_source_taxon {     ## DEPRECATED
+=head2 fetch_all_by_source_taxon
+
+  Arg [1]    : string $source_name
+  Arg [2]    : int $taxon_id
+  Example    : my $members = $ma->fetch_all_by_source_taxon(
+                   "Uniprot/SWISSPROT", 9606);
+  Description: Fetches the member corresponding to a source_name and a taxon_id.
+  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions : throws if $source_name or $taxon_id is undef
+  Caller     : 
+
+=cut
+
+sub fetch_all_by_source_taxon {
   my ($self,$source_name,$taxon_id) = @_;
 
-  deprecate('fetch_all_by_source_taxon() is deprecated and will be removed in e91. Please use fetch_all_by_GenomeDB() instead.');
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
