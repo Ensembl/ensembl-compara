@@ -107,9 +107,12 @@ sub new {
     _last_time  => undef,
   }, $class);
 
-  my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
+  my $write_dir = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
+  my $conffile = "$write_dir/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
   
-  $self->{'_filename'} = $conffile;
+  $self->{'_conf_dir'} = $write_dir;
+  $self->{'_filename'}  = $conffile;
+
 
   # TODO - these need to be pulled in dynamically from appropriate modules
   my @params = qw/ph g h r t v sv m db pt rf ex vf svf fdb lrg vdb gt mr/;
@@ -444,7 +447,7 @@ sub _load_in_webtree {
   ### Check for cached value first
   
   my $self            = shift;
-  my $web_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'web_tree.packed');
+  my $web_tree_packed = File::Spec->catfile($self->{'_conf_dir'}, 'packed', 'web_tree.packed');
   my $web_tree        = { _path => '/info/' };
   
   if (-e $web_tree_packed) {
@@ -462,7 +465,7 @@ sub _load_in_species_pages {
   ### Load in the static pages for each species 
   ### Check for cached value first
   my $self = shift;
-  my $spp_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'spp_tree.packed');
+  my $spp_tree_packed = File::Spec->catfile($self->{'_conf_dir'}, 'packed', 'spp_tree.packed');
   my $spp_tree        = { _path => '/' };
   
   if (-e $spp_tree_packed) {
@@ -750,7 +753,8 @@ sub process_ini_files {
   my $type = 'db';
   
   my $msg  = "$species database";
-  my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
+  my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
+  warn ">>> FILE $file";
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
   
