@@ -41,7 +41,7 @@ $reg->load_registry_from_db(
 my $ma = $reg->get_adaptor('Multi', 'Compara', 'GeneMember');
 my $ga = $reg->get_adaptor('Multi', 'Compara', 'GenomeDB');
 
-my $gdb = $ga->fetch_by_name_assembly($species_name);
+my $gdb = $ga->fetch_by_registry_name($species_name);
 my $gene_members = $ma->fetch_all_by_GenomeDB($gdb, 'ENSEMBLGENE');
 
 foreach my $gene_member (@{$gene_members}) {
