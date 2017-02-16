@@ -38,40 +38,19 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGGeneMemberHomologyStats_co
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf');
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
-sub pipeline_wide_parameters {
- my ($self) = @_;
- 
- return {
-   %{$self->SUPER::pipeline_wide_parameters},
-   'db_conn'    => $self->o('curr_rel_db'),
-   'collection' => $self->o('collection'),
- };
-}
+use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf');
 
 sub pipeline_analyses {
   my ($self) = @_;
   
-  my $init_module = {
-    -logic_name        => 'initialise_pipeline',
-    -module            => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-    -input_ids         => [ {} ],
-    -flow_into         => ['find_collection_species_set_id'],
-    -meadow_type       => 'LOCAL',
-  };
-  
-  my $pipeline_analyses = $self->SUPER::pipeline_analyses;
-  
-  foreach my $analysis (@$pipeline_analyses) {
-    if ($analysis->{-logic_name} eq 'stats_gene_trees') {
-      foreach my $sql (@{$analysis->{-parameters}{sql}}) {
-        $sql =~ s/(clusterset_id = )"#collection#"/$1"default"/;
-      }
-    }
-  }
-  
-  unshift @$pipeline_analyses, $init_module;
+  my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self);
+  $pipeline_analyses->[0]->{-input_ids} = [ {
+          'db_conn'         => $self->o('curr_rel_db'),
+          'collection'      => $self->o('collection'),
+          'clusterset_id'   => 'default',
+      } ],
   
   return $pipeline_analyses;
 }
