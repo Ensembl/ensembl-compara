@@ -118,6 +118,12 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_Ge
     $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($gab_id1);
     is(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block_id($gab_id1) should return 2 objects");
     check_all_genomic_aligns($all_genomic_aligns);
+
+    #fetch_all_by_genomic_align_block_id with species_list
+    my $species_name = $all_genomic_aligns->[0]->genome_db->name;
+    $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($gab_id1, [$species_name]);
+    is(scalar(@$all_genomic_aligns), 1, "fetch_all_by_genomic_align_block_id($gab_id1, [$species_name]) should return 1 object");
+    check_all_genomic_aligns($all_genomic_aligns);
     
     #Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_GenomicAlignBlock
     $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
