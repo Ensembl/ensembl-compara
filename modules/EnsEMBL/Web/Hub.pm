@@ -846,7 +846,7 @@ sub query_store_setup {
   my ($self) = @_;
 
   my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-    dir => $SiteDefs::ENSEMBL_BOOK_DIR
+    dir => $SiteDefs::ENSEMBL_PRECACHE_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs),

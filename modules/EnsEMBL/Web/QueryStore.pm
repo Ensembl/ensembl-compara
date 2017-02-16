@@ -71,7 +71,7 @@ sub _try_get_cache {
     cluck("get on closed cache");
   }
   return undef unless $self->{'open'};
-  return undef if $SiteDefs::ENSEMBL_BOOK_DISABLE;
+  return undef if $SiteDefs::ENSEMBL_PRECACHE_DISABLE;
   my $ver = $self->version($class);
   return undef if $ver < 1;
   my $out = $self->{'cache'}->get($class,$ver,{
