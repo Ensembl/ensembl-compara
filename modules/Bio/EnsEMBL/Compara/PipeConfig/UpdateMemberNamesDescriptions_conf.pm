@@ -34,6 +34,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::UpdateMemberNamesDescriptions_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
@@ -41,7 +44,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara5',    # where the pipeline database will be created
+        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
+        'port'            => 4485,
 
         'pipeline_name'   => 'member_description_update_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
@@ -76,64 +80,12 @@ sub resource_classes {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
 
-        {
-            -logic_name => 'species_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -input_ids  => [ {
-                    'compara_db' => $self->o('compara_db'),
-                    'db_conn'    => '#compara_db#',
-                } ],
-            -flow_into => {
-                2   => [ 'update_member_display_labels' ],
-            },
-        },
-
-        {
-            -logic_name => 'update_member_display_labels',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'display_label',
-                'source_name'             => 'ENSEMBLGENE',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -flow_into => [ 'update_seq_member_display_labels' ],
-            -rc_name => '500Mb_job',
-        },
-
-        {
-            -logic_name => 'update_seq_member_display_labels',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'display_label',
-                'source_name'             => 'ENSEMBLPEP',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -flow_into => [ 'update_member_descriptions' ],
-            -rc_name => '500Mb_job',
-        },
-
-        {
-            -logic_name => 'update_member_descriptions',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
-            -analysis_capacity => $self->o('update_capacity'),
-            -parameters => {
-                'die_if_no_core_adaptor'  => 1,
-                'replace'                 => 1,
-                'mode'                    => 'description',
-                'genome_db_ids'           => [ '#genome_db_id#' ],
-            },
-            -rc_name => '500Mb_job',
-        },
-
-    ];
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions::pipeline_analyses_member_names_descriptions($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [ {
+        'compara_db'    => $self->o('compara_db'),
+    } ];
+    return $pipeline_analyses;
 }
 
 1;
