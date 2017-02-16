@@ -66,7 +66,7 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self);
-    $pipeline_analyses->[0]->{-input_ids} = [
+    $pipeline_analyses->[0]->{'-input_ids'} = [
         {
             'db_conn'         => $self->o('compara_db'),
             'collection'      => 'default',
