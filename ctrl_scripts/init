@@ -64,6 +64,14 @@ if ($help) {
   exit;
 }
 
+if (!-e $tmp_dir) {
+  die_string("ENSEMBL_TMP_DIR ($tmp_dir) does not exist. Please create it before running the init script.");
+}
+
+if (!-w $tmp_dir) {
+  die_string("ENSEMBL_TMP_DIR ($tmp_dir) is not writable. Please set appropriate permissions before running the init script.");
+}
+
 foreach my $dir (@write_dirs) {
   my $path = $tmp_dir.'/'.$dir;
   if (-e $path) {
