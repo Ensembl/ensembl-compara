@@ -28,12 +28,9 @@ package EnsEMBL::Web::Component;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Root Exporter);
+use base qw(EnsEMBL::Web::Root);
 
 use Digest::MD5 qw(md5_hex);
-
-our @EXPORT_OK = qw(cache cache_print);
-our @EXPORT    = @EXPORT_OK;
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
@@ -371,12 +368,6 @@ sub set_cache_key {
   }
   
   return $key;
-}
-
-
-sub cache_print {
-  my ($cache, $string_ref) = @_;
-  $cache->print($$string_ref) if $string_ref;
 }
 
 sub html_encode {
