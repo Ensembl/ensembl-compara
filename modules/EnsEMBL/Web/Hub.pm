@@ -135,7 +135,7 @@ sub init_cookies {
 sub init_cache {
   ## Initialises cache object
   my $self = shift;
-  $self->{'cache'} = EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000);
+  $self->{'cache'} = EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000, ens_debug=> 1);
 }
 
 sub init_input {
