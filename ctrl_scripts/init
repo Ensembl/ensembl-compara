@@ -1,0 +1,77 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+
+=head2
+
+  DESCRIPTION:  Script to initialise directories required for files written
+                by the Apache server processes: images, uploads, caches, etc
+                N.B. Run this script as the Apache user, and ensure that the
+                ENSEMBL_TMP_DIR directory is writeable by this user
+
+  USAGE:        Run once when first setting up the server
+
+                ./ctrl-scripts/init
+
+=cut
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+my $tmp_dir = $SiteDefs::ENSEMBL_TMP_DIR;
+
+my @write_dirs = qw(biomart failure_dir img persistent procedure server tmp udcCache);
+
+# command line options
+my ($help);
+
+&GetOptions(
+  "h|help"      => \$help,
+);
+
+if ($help) {
+  print qq(
+  Usage:
+    ctrl_scripts/init
+
+  Options:
+    -h, --help      : print this help message
+  );
+  exit;
+}
+
+foreach my $dir (@write_dirs) {
+  my $path = $tmp_dir.'/'.$dir;
+  if (-e $path) {
+    warn_string("Directory $path already exists - skipping...");
+  }
+  else {
+    warn_string("Creating directory $path...");
+    my $cmd = "mkdir $path; chmod 755 $path";
+    system($cmd) and die_string("Could not create directory $path");
+  } 
+}
