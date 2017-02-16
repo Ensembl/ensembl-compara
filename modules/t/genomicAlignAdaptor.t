@@ -116,7 +116,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_Ge
     
     #fetch_all_by_genomic_align_block_id
     $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_genomic_align_block_id($gab_id1);
-    is(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block($gab_id1) should return 2 objects");
+    is(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block_id($gab_id1) should return 2 objects");
     check_all_genomic_aligns($all_genomic_aligns);
     
     #Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_GenomicAlignBlock
@@ -125,7 +125,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all_by_Ge
                                                                         -adaptor=>$compara_db->get_GenomicAlignBlockAdaptor
                                                                        );
     $all_genomic_aligns = $genomic_align_adaptor->fetch_all_by_GenomicAlignBlock($genomic_align_block);
-    is(scalar(@$all_genomic_aligns), 2, "fetch_all_by_genomic_align_block(\$genomic_aling_block) should return 2 objects");
+    is(scalar(@$all_genomic_aligns), 2, "fetch_all_by_GenomicAlignBlock(\$genomic_aling_block) should return 2 objects");
     check_all_genomic_aligns($all_genomic_aligns);
 
     done_testing();
