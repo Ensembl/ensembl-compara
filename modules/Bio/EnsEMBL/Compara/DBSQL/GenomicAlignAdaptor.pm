@@ -103,17 +103,16 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 
-use vars qw(@ISA);
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Compara::GenomicAlign;
-use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 =head2 store
@@ -218,62 +217,6 @@ sub delete_by_genomic_align_block_id {
 }
 
 
-=head2 fetch_by_dbID
-
-  Arg  1     : integer $dbID
-  Example    : my $genomic_align = $genomic_align_adaptor->fetch_by_dbID(23134);
-  Description: Retrieve the corresponding
-               Bio::EnsEMBL::Compara::GenomicAlign object
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : Returns undef if no matching entry is found in the database.
-  Caller     : object::methodname
-  Status     : Stable
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self, $dbID) = @_;
-  my $genomic_align;
-
-  my $sql = qq{
-          SELECT
-              genomic_align_id,
-              genomic_align_block_id,
-              method_link_species_set_id,
-              dnafrag_id,
-              dnafrag_start,
-              dnafrag_end,
-              dnafrag_strand,
-              cigar_line,
-              visible,
-              node_id
-          FROM
-              genomic_align
-          WHERE
-              genomic_align_id = ?
-      };
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($dbID);
-  my @values = $sth->fetchrow_array();
-  $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-          -dbID => $values[0],
-          -adaptor => $self,
-          -genomic_align_block_id => $values[1],
-          -method_link_species_set_id => $values[2],
-          -dnafrag_id => $values[3],
-          -dnafrag_start => $values[4],
-          -dnafrag_end => $values[5],
-          -dnafrag_strand => $values[6],
-          -cigar_line => $values[7],
-          -visible => $values[8],
-	  -node_id => $values[9],
-      );
-
-  return $genomic_align;
-}
-
-
 =head2 fetch_all_by_GenomicAlignBlock
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock object with a valid dbID
@@ -318,20 +261,6 @@ sub fetch_all_by_GenomicAlignBlock {
 
 sub fetch_all_by_genomic_align_block_id {
   my ($self, $incoming_genomic_align_block_id, $species_list) = @_;
-  my $genomic_aligns = [];
-  my $sql = qq{
-          SELECT
-              ga.genomic_align_id,
-              ga.genomic_align_block_id,
-              ga.method_link_species_set_id,
-              ga.dnafrag_id,
-              ga.dnafrag_start,
-              ga.dnafrag_end,
-              ga.dnafrag_strand,
-              ga.cigar_line,
-              ga.visible,
-              ga.node_id
-      };
 
   if ($species_list) {
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
@@ -339,59 +268,14 @@ sub fetch_all_by_genomic_align_block_id {
     return [] unless @$genome_dbs;
     my @species_dbIDs = map {$_->dbID} @$genome_dbs;
     my $species_dbIDs_str=join(',',@species_dbIDs);
-    $sql .= qq{
-            FROM
-              genomic_align ga 
-            JOIN 
-              dnafrag df 
-            USING
-              (dnafrag_id)
-            WHERE
-              ga.genomic_align_block_id = ? 
-            AND 
-              df.genome_db_id IN ($species_dbIDs_str)
-        };
+    my $join = [[['dnafrag', 'df'], 'ga.dnafrag_id = df.dnafrag_id']];
+    $self->bind_param_generic_fetch($incoming_genomic_align_block_id, SQL_INTEGER);
+    return $self->generic_fetch("genomic_align_block_id = ? AND df.genome_db_id IN ($species_dbIDs_str)", $join);
+
   } else {
-    $sql .= qq{
-            FROM
-              genomic_align ga
-          WHERE
-              ga.genomic_align_block_id = ? 
-        };
+    $self->bind_param_generic_fetch($incoming_genomic_align_block_id, SQL_INTEGER);
+    return $self->generic_fetch('genomic_align_block_id = ?');
   }
-
-  my $sth = $self->prepare($sql);
-  if ($species_list) {
-    $sth->execute($incoming_genomic_align_block_id);
-  }
-  else {
-    $sth->execute($incoming_genomic_align_block_id);
-  }
-  my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
-      $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
-      $visible, $node_id);
-  $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
-      \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
-      \$dnafrag_strand, \$cigar_line, \$visible, \$node_id);
-  my $genomic_align_groups = {};
-  while ($sth->fetchrow_arrayref()) {
-    my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-            -dbID => $genomic_align_id,
-            -adaptor => $self,
-            -genomic_align_block_id => $genomic_align_block_id,
-            -method_link_species_set_id => $method_link_species_set_id,
-            -dnafrag_id => $dnafrag_id,
-            -dnafrag_start => $dnafrag_start,
-            -dnafrag_end => $dnafrag_end,
-            -dnafrag_strand => $dnafrag_strand,
-            -cigar_line => $cigar_line,
-            -visible => $visible,
-	    -node_id => $node_id
-        );
-    push(@$genomic_aligns, $this_genomic_align);
-  }
-
-  return $genomic_aligns;
 }
 
 =head2 fetch_all_by_node_id
@@ -411,52 +295,8 @@ sub fetch_all_by_genomic_align_block_id {
 
 sub fetch_all_by_node_id {
   my ($self, $incoming_node_id) = @_;
-  my $genomic_aligns = [];
-
-  my $sql = qq{
-          SELECT
-              genomic_align_id,
-              genomic_align_block_id,
-              method_link_species_set_id,
-              dnafrag_id,
-              dnafrag_start,
-              dnafrag_end,
-              dnafrag_strand,
-              cigar_line,
-              visible,
-              node_id
-          FROM
-              genomic_align
-          WHERE
-              node_id = ?
-      };
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($incoming_node_id);
-  my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
-      $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
-      $visible, $node_id);
-  $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
-      \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
-      \$dnafrag_strand, \$cigar_line, \$visible, \$node_id);
-  while ($sth->fetchrow_arrayref()) {
-    my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-            -dbID => $genomic_align_id,
-            -adaptor => $self,
-            -genomic_align_block_id => $genomic_align_block_id,
-            -method_link_species_set_id => $method_link_species_set_id,
-            -dnafrag_id => $dnafrag_id,
-            -dnafrag_start => $dnafrag_start,
-            -dnafrag_end => $dnafrag_end,
-            -dnafrag_strand => $dnafrag_strand,
-            -cigar_line => $cigar_line,
-            -visible => $visible,
-	    -node_id => $node_id
-        );
-    push(@$genomic_aligns, $this_genomic_align);
-  }
-
-  return $genomic_aligns;
+  $self->bind_param_generic_fetch($incoming_node_id, SQL_INTEGER);
+  return $self->generic_fetch('node_id = ?');
 }
 
 =head2 retrieve_all_direct_attributes
@@ -476,54 +316,61 @@ sub fetch_all_by_node_id {
 sub retrieve_all_direct_attributes {
   my ($self, $genomic_align) = @_;
 
-  my $sql = qq{
-                SELECT
-                    genomic_align_block_id,
-                    method_link_species_set_id,
-                    dnafrag_id,
-                    dnafrag_start,
-                    dnafrag_end,
-                    dnafrag_strand,
-                    cigar_line,
-                    visible,
-                    node_id
-                FROM
-                    genomic_align
-                WHERE
-                    genomic_align_id = ?
-        };
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($genomic_align->dbID);
-  my ($genomic_align_block_id, $method_link_species_set_id, $dnafrag_id, $dnafrag_start, $dnafrag_end,
-          $dnfrag_strand, $cigar_line, $visible, $node_id) = $sth->fetchrow_array();
-  
-  ## Populate the object
-  $genomic_align->adaptor($self);
-  $genomic_align->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
-  $genomic_align->method_link_species_set_id($method_link_species_set_id) if (defined($method_link_species_set_id));
-  $genomic_align->dnafrag_id($dnafrag_id) if (defined($dnafrag_id));
-  $genomic_align->dnafrag_start($dnafrag_start) if (defined($dnafrag_start));
-  $genomic_align->dnafrag_end($dnafrag_end) if (defined($dnafrag_end));
-  $genomic_align->dnafrag_strand($dnfrag_strand) if (defined($dnfrag_strand));
-  $genomic_align->cigar_line($cigar_line) if (defined($cigar_line));
-  $genomic_align->visible($visible) if (defined($visible));
-  $genomic_align->node_id($node_id) if (defined($node_id));
-
-  return $genomic_align;
+  my $full_ga = $self->fetch_by_dbID($genomic_align->dbID);
+  # NOTE: There is a slight risk that this may replace a node_id with undef
+  return $full_ga->copy($genomic_align);
 }
 
 
 sub count_by_mlss_id {
     my ($self, $mlss_id) = @_;
 
-    my $sql = "SELECT count(*) FROM genomic_align WHERE method_link_species_set_id=?";
-    my $sth = $self->prepare($sql);
-    $sth->execute($mlss_id);
-    my ($count) = $sth->fetchrow_array();
-    $sth->finish();
+    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+    return $self->generic_count('method_link_species_set_id = ?');
+}
 
-    return $count;
+#
+# Virtual methods from BaseAdaptor
+####################################
+
+sub _tables {
+    return (['genomic_align', 'ga'])
+}
+
+sub _columns {
+    return qw(
+        ga.genomic_align_id
+        ga.genomic_align_block_id
+        ga.method_link_species_set_id
+        ga.dnafrag_id
+        ga.dnafrag_start
+        ga.dnafrag_end
+        ga.dnafrag_strand
+        ga.cigar_line
+        ga.visible
+        ga.node_id
+    );
+}
+
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::GenomicAlign', [
+            'dbID',
+            'genomic_align_block_id',
+            'method_link_species_set_id',
+            'dnafrag_id',
+            'dnafrag_start',
+            'dnafrag_end',
+            'dnafrag_strand',
+            'cigar_line',
+            'visible',
+            'node_id',
+        ], sub {
+            return {
+                'cigar_arrayref' => undef,
+            }
+        }
+    );
 }
 
 1;
