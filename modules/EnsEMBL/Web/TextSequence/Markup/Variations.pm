@@ -80,7 +80,6 @@ sub markup {
   my $i   = 0;
   my ($seq, $variation);
   
-  warn "J\n";
   my $class = { 
     snp    => 'sn',
     insert => 'si',
@@ -119,7 +118,6 @@ sub markup {
        
     $i++;
   }
-  warn "K\n";
 }
 
 sub prepare {
