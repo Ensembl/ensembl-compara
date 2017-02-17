@@ -26,8 +26,11 @@ use warnings;
 
   DESCRIPTION:  Script to initialise directories required for files written
                 by the Apache server processes: images, uploads, caches, etc
-                N.B. Run this script as the Apache user, and ensure that the
-                ENSEMBL_TMP_DIR directory is writeable by this user
+                Only needed if your Apache process is run by a user who does
+                not have write permissions on your server
+          
+                N.B. If using, Run this script as the Apache user, and ensure 
+                that the ENSEMBL_TMP_DIR directory is writeable by this user
 
   USAGE:        Run once when first setting up the server
 
@@ -44,7 +47,18 @@ BEGIN {
 
 my $tmp_dir = $SiteDefs::ENSEMBL_TMP_DIR;
 
-my @write_dirs = qw(biomart failure_dir img persistent procedure server tmp udcCache);
+my %write_dirs = (
+                  'biomart'     => '',
+                  'failure_dir' => '',
+                  'img'         => 'ENSEMBL_TMP_DIR_IMG',
+                  'logs'        => '$ENSEMBL_LOGDIR',
+                  'persistent'  => '', 
+                  'precache'    => 'ENSEMBL_PRECACHE_DIR',
+                  'procedure'   => '',
+                  'server'      => 'ENSEMBL_SYS_DIR',
+                  'tmp'         => 'ENSEMBL_TMP_DIR',
+                  'udcCache'    => 'UDC_CACHEDIR',
+                  );
 
 # command line options
 my ($help);
@@ -72,8 +86,18 @@ if (!-w $tmp_dir) {
   die_string("ENSEMBL_TMP_DIR ($tmp_dir) is not writable. Please set appropriate permissions before running the init script.");
 }
 
-foreach my $dir (@write_dirs) {
-  my $path = $tmp_dir.'/'.$dir;
+my $SD = $SiteDefs::;
+
+while (my($key, $conf) = each(%write_dirs)) {
+
+  my $path;
+
+  if ($conf) { ## Directory location is configurable
+    $path = $SD->{$conf};
+  }
+
+  $path ||= $tmp_dir.'/'.$key;
+
   if (-e $path) {
     warn_string("Directory $path already exists - skipping...");
   }
