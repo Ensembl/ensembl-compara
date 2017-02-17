@@ -102,7 +102,7 @@ sub set_annotations {
 
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Sequence->new);
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Alignments->new) if $config->{'align'};
-  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} ne 'off';
+  $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Variations->new([0,2])) if $config->{'snp_display'} && $config->{'snp_display'} ne 'off';
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Exons->new) if ($config->{'exon_display'}||'off') ne 'off';
   $self->add_annotation(EnsEMBL::Web::TextSequence::Annotation::Codons->new) if $config->{'codons_display'};
 }
