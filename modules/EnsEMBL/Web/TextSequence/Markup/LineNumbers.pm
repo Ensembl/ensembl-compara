@@ -144,7 +144,7 @@ sub markup {
 
   $config->{'padding'}{'pre_number'}++ if $config->{'padding'}{'pre_number'}; # Compensate for the : after the label
 
-  $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
+  $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} && $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
 
 1;
