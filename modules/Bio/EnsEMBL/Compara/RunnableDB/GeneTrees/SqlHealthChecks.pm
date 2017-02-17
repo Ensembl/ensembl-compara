@@ -180,7 +180,7 @@ our $config = {
             },
             {
                 description => 'All the seq_members should have a genome_db_id',
-                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id IS NULL',
+                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id IS NULL AND source_name NOT LIKE "Uniprot%"',
             },
         ],
     },
