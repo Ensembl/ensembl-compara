@@ -1612,7 +1612,7 @@ sub add_phenotypes {
 sub add_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
-  my @A = keys $hashref;
+  my @A = keys %$hashref;
 
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
   my $prefix_caption      = 'SV - ';

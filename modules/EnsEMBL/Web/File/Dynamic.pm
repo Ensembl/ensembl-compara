@@ -34,8 +34,12 @@ use parent qw(EnsEMBL::Web::File);
 sub new {
 ### @constructor
   my ($class, %args) = @_;
-  $args{'input_drivers'}  ||= [qw(Memcached IO)];
-  $args{'output_drivers'} ||= [qw(Memcached IO)];
+  my $ok_drivers = ['IO'];
+  if ($args{'hub'} && keys %{$args{'hub'}->species_defs->ENSEMBL_MEMCACHED||{}}) {
+    unshift @$ok_drivers, 'Memcached';
+  }
+  $args{'input_drivers'}  ||= $ok_drivers;
+  $args{'output_drivers'} ||= $ok_drivers;
   $args{'base_dir'} = 'image'; 
   return $class->SUPER::new(%args);
 }

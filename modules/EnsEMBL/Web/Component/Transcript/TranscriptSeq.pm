@@ -250,7 +250,7 @@ sub get {
     $protein_seq->{'seq'}[$pos_start]{'letter'} = $partial[ $pos_start ]  while $pos_start--;
     $protein_seq->{'seq'}[$pos_end]{'letter'}   = $partial[ $pos_end ]    while $pos_end++;
 
-    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end;
+    splice @{$protein_seq->{'seq'}}, -1 * $strip_end if $strip_end;
   }
   
   $config->{'slices'} = [{ vtype => 'main', seq => \@reference_seq, slice => $slice }];

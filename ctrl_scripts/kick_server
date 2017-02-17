@@ -15,11 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-./ctrl_scripts/stop_server
-rm ./conf/config.packed
-
-sleep 2
-
-./ctrl_scripts/start_server
+./ctrl_scripts/restart_server -r
 
 ./ctrl_scripts/taillog

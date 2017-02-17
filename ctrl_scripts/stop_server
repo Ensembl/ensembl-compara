@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 =head1 LICENSE
 
@@ -26,7 +26,7 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 BEGIN {
-  require "$Bin/include.pl";
+  require "$Bin/helper.pl";
 };
 
 my $PID = $SiteDefs::ENSEMBL_PIDFILE;

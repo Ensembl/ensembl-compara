@@ -32,12 +32,8 @@ use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
-use EnsEMBL::Web::Cache;
-use Data::Dumper;
 use base qw(EnsEMBL::Web::Object);
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -85,18 +81,20 @@ sub availability {
 sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : 'Summary'; }
 
 sub counts {
-  my $self = shift;
-  my $sd = $self->species_defs;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
+  my $sd    = $self->species_defs;
 
   my $key = sprintf(
-    '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
-    $self->species, 
-    $self->hub->core_param('db'), 
-    $self->hub->core_param('t')
+    '::COUNTS::TRANSCRIPT::%s::%s::%s::',
+    $self->species,
+    $hub->core_param('db'),
+    $hub->core_param('t')
   );
   
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   if (!$counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
@@ -111,7 +109,7 @@ sub counts {
       %{$self->_counts}
     };
     
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 
@@ -1350,9 +1348,19 @@ sub get_int_seq {
 sub save_seq {
   my $self = shift;
   my $content = shift ;
+
+  ## Truncate FASTA headers to prevent psw from throwing an error message
+  my $safe_content = '';
+  foreach (split('\n', $content)) {
+    if ($_ =~ /$\>/) {
+      $_ = substr($_, 0, 15);
+    }
+    $safe_content .= $_."\n";
+  }
+
   my $seq_file = $self->species_defs->ENSEMBL_TMP_TMP . '/SEQ_' . time() . int(rand()*100000000) . $$;
   open (TMP,">$seq_file") or die("Cannot create working file.$!");
-  print TMP $content;
+  print TMP $safe_content;
   close TMP;
   return ($seq_file)
 }
@@ -1394,27 +1402,22 @@ sub get_alignment {
 
   my $label_width  = '22'; # width of column for e! object label
   my $output_width = 61;   # width of alignment
-  my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
-  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
+  my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s';
+  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/share/genewise/BLOSUM62.bla %s %s > %s';
 
   my $out_file = time() . int(rand()*100000000) . $$;
-  $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
+  $out_file = $self->species_defs->ENSEMBL_TMP_TMP.'/' . $out_file . '.out';
 
   my $command;
   if ($seq_type eq 'DNA') {
-    $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln';
+    $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
     `$command`;
-    
-    unless (open(OUT, "<$out_file")) {
-      $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
-      `$command`;
-    }
     
     unless (open(OUT, "<$out_file")) {
       $self->problem('fatal', "Cannot open alignment file.", $!);
     }
   } elsif ($seq_type eq 'PEP') {
-    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
+    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $out_file;
     `$command`;
 
     unless (open(OUT, "<$out_file")) {
@@ -1449,7 +1452,7 @@ sub get_alignment {
   unlink $out_file;
   unlink $int_seq_file;
   unlink $ext_seq_file;
-  $alignment;
+  return $alignment;
 }
 
 ###################################

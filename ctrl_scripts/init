@@ -1,0 +1,109 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+
+=head2
+
+  DESCRIPTION:  Script to initialise directories required for files written
+                by the Apache server processes: images, uploads, caches, etc
+                Only needed if your Apache process is run by a user who does
+                not have write permissions on your server
+          
+                N.B. If using, Run this script as the Apache user, and ensure 
+                that the ENSEMBL_TMP_DIR directory is writeable by this user
+
+  USAGE:        Run once when first setting up the server
+
+                ./ctrl-scripts/init
+
+=cut
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+my $tmp_dir = $SiteDefs::ENSEMBL_TMP_DIR;
+
+my %write_dirs = (
+                  'biomart'     => '',
+                  'failure_dir' => '',
+                  'img'         => 'ENSEMBL_TMP_DIR_IMG',
+                  'logs'        => '$ENSEMBL_LOGDIR',
+                  'persistent'  => '', 
+                  'precache'    => 'ENSEMBL_PRECACHE_DIR',
+                  'procedure'   => '',
+                  'server'      => 'ENSEMBL_SYS_DIR',
+                  'tmp'         => 'ENSEMBL_TMP_DIR',
+                  'udcCache'    => 'UDC_CACHEDIR',
+                  );
+
+# command line options
+my ($help);
+
+&GetOptions(
+  "h|help"      => \$help,
+);
+
+if ($help) {
+  print qq(
+  Usage:
+    ctrl_scripts/init
+
+  Options:
+    -h, --help      : print this help message
+  );
+  exit;
+}
+
+if (!-e $tmp_dir) {
+  die_string("ENSEMBL_TMP_DIR ($tmp_dir) does not exist. Please create it before running the init script.");
+}
+
+if (!-w $tmp_dir) {
+  die_string("ENSEMBL_TMP_DIR ($tmp_dir) is not writable. Please set appropriate permissions before running the init script.");
+}
+
+my $SD = $SiteDefs::;
+
+while (my($key, $conf) = each(%write_dirs)) {
+
+  my $path;
+
+  if ($conf) { ## Directory location is configurable
+    $path = $SD->{$conf};
+  }
+
+  $path ||= $tmp_dir.'/'.$key;
+
+  if (-e $path) {
+    warn_string("Directory $path already exists - skipping...");
+  }
+  else {
+    warn_string("Creating directory $path...");
+    my $cmd = "mkdir $path; chmod 755 $path";
+    system($cmd) and die_string("Could not create directory $path");
+  } 
+}

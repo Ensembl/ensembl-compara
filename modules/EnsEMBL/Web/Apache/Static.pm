@@ -91,9 +91,25 @@ sub handler {
     my $file = $uri;
     
     return FORBIDDEN if $file =~ /\.\./;
+
+    ## Map URLs for temporary files that are stored outside the htdocs directory
+    my %tmp_paths = (
+                    $SiteDefs::ENSEMBL_TMP_URL      => $SiteDefs::ENSEMBL_TMP_DIR, 
+                    $SiteDefs::ENSEMBL_TMP_URL_IMG  => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
+                    $SiteDefs::ENSEMBL_MINIFIED_URL => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
+                    );
+    my $is_tmp;
     
-    ## Not temporary static files are pluggable:
-    unless ($file =~ s/^$SiteDefs::ENSEMBL_TMP_URL_IMG/$SiteDefs::ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$SiteDefs::ENSEMBL_TMP_URL/$SiteDefs::ENSEMBL_TMP_DIR/g) {
+    while (my($url, $dir) = each(%tmp_paths)) {
+      if ($file =~ /^$url/) {
+        $file =~ s/$url/$dir/;
+        $is_tmp = 1;
+        last;
+      }
+    }
+    
+    ## Non-temporary static files are pluggable:
+    unless ($is_tmp) {
       ## walk through plugins tree and search for the file in all htdocs dirs
       $file = htdoc_dir($file, $r);
     }

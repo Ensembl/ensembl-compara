@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 =head1 LICENSE
 
@@ -26,10 +26,10 @@ use FindBin qw($Bin);
 use Getopt::Long qw(:config no_ignore_case);
 
 BEGIN {
-  require "$Bin/include.pl";
+  require "$Bin/helper.pl";
 };
 
-my $web_root = $SiteDefs::ENSEMBL_WEBROOT;
+my $config_path = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
 
 my ($help, $rmconfig, $delay, $single, $tail, $flush, $verbose, $species, @defines);
 
@@ -70,12 +70,12 @@ if ($species) {
   warn "SPECIES [$species]\n";
 
   if ($species eq 'all') {
-    my $cmd = "rm $web_root/conf/packed/\*";
+    my $cmd = "rm $config_path/packed/\*";
     `$cmd`;
     $rmconfig = 1; # to rebuild config
   } else {
     foreach my $sp (split /,/, $species) {
-      my $f = "$web_root/conf/packed/$sp.db.packed";
+      my $f = "$config_path/packed/$sp.db.packed";
 
       if (-e $f) {
         `rm $f`;

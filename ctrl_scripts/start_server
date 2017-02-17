@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 =head1 LICENSE
 
@@ -26,12 +26,12 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 BEGIN {
-  require "$Bin/include.pl";
+  require "$Bin/helper.pl";
 };
 
 # Get some configs from SiteDefs
 my $web_root      = $SiteDefs::ENSEMBL_WEBROOT;
-my $conf_dir      = $SiteDefs::ENSEMBL_CONF_DIRS[0];
+my $conf_dir      = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
 my $conf_file     = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
 my $memcached     = $SiteDefs::ENSEMBL_MEMCACHED;
 my $apache_define = $SiteDefs::APACHE_DEFINE;
@@ -94,7 +94,7 @@ if ($rmconfig) {
 }
 
 # Additional processing for memcached
-if ($memcached) {
+if (keys %{$memcached || {}}) {
 
   # Check memcached servers version
   warn_line();

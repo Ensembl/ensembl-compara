@@ -50,7 +50,6 @@ use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
 use EnsEMBL::Web::REST;
-use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
 use EnsEMBL::Web::File::Utils::FileSystem qw/create_path copy_files/;

@@ -34,7 +34,7 @@ push @params,@ARGV;
 my $params = join(' ',@params);
   
 qx($Bin/precache.pl --mode=start $params);
-open(SPEC,'<',"$SiteDefs::ENSEMBL_BOOK_DIR/spec") or die;
+open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
 my $jobs;
 { local $/ = undef; $jobs = JSON->new->decode(<SPEC>); }
 close SPEC;

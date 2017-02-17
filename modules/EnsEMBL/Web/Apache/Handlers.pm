@@ -250,6 +250,16 @@ sub get_sub_handlers {
   return @combinations;
 }
 
+sub set_remote_ip {
+  ## Sets the ENSEMBL_REMOTE_ADDR env variable to the possibly most accurate client's address
+  my $r   = shift;
+  my $ip  = $r->subprocess_env('HTTP_X_FORWARDED_FOR') || $r->subprocess_env('HTTP_X_CLUSTER_CLIENT_IP') || $r->subprocess_env('HTTP_CLIENT_IP') || $r->subprocess_env('REMOTE_ADDR') || '';
+
+  ($ip)   = split /\s*\,\s*/, $ip;
+
+  $r->subprocess_env('ENSEMBL_REMOTE_ADDR', $ip);
+}
+
 sub http_redirect {
   ## Perform an http redirect
   ## @param Apache2::RequestRec request object
@@ -304,6 +314,9 @@ sub postReadRequestHandler {
 
   # VOID request to populate %ENV
   $r->subprocess_env;
+
+  # Set possibly most accurate remote IP address
+  set_remote_ip($r);
 
   # Any redirect needs to be performed at this stage?
   if (my $redirect_uri = get_postread_redirect_uri($r)) {
@@ -451,9 +464,10 @@ sub cleanupHandler {
   ## This handler gets called immediately after the request has been served (the client went away) and before the request object is destroyed.
   ## Any time consuming logging process should be done in this handler since the request connection has actually been closed by now.
   ## @param Apache2::RequestRec request object
-  my $r = shift;
+  my $r     = shift;
+  my $uuri  = $r->unparsed_uri;
 
-  return OK if $r->unparsed_uri =~ m/^(\*|\/Crash|\/Error)/;
+  return OK if !defined $uuri || $uuri =~ m/^(\*|\/Crash|\/Error)/;
 
   # run any plugged-in code
   request_end_hook($r);
@@ -478,7 +492,7 @@ sub cleanupHandler {
       "LONG PROCESS: %12s AT: %s  TIME: %s  SIZE: %s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP: %s  UA: %s\n",
       $$, time_str($start_time), $time_taken, $size,
       $$, $uri,
-      $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
+      $$, $r->subprocess_env('ENSEMBL_REMOTE_ADDR') || 'unknown', $r->headers_in->{'User-Agent'} || 'unknown'
     );
   }
 
