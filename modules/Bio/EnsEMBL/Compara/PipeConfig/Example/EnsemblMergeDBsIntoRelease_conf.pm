@@ -59,7 +59,8 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # Where the pipeline database will be created
-        'host'            => 'compara5',
+        'host'            => 'mysql-ens-compara-prod-1',
+        'port'            => 4485,
 
         # Also used to differentiate submitted processes
         'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
@@ -69,14 +70,14 @@ sub default_options {
 
         # All the source databases
         'src_db_aliases'    => {
-            'master_db'     => 'compara_master',
-            'protein_db'    => 'compara_ptrees',
-            'ncrna_db'      => 'compara_nctrees',
-            'family_db'     => 'compara_families',
-            'mouse_strains' => 'compara_mouse_strains_homologies',
+            'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+            'protein_db'    => 'mysql://ensro@mysql-ens-compara-prod-2:4522/waakanni_protein_trees_88',
+            'ncrna_db'      => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_ensembl_ebinc_rna_trees_88',
+            'family_db'     => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_ensembl_families_ebi_88b',
+            'mouse_strains' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mouse_strain_homologies_88',
         },
         # The target database
-        'curr_rel_db'   => 'compara_curr',
+        'curr_rel_db'   => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_88',
 
         # From these databases, only copy these tables
         'only_tables'       => {
@@ -88,13 +89,17 @@ sub default_options {
         'exclusive_tables'  => {
             'mapping_session'   => 'master_db',
             'hmm_annot'         => 'family_db',
+            'gene_member'       => 'mouse_strains',
+            'seq_member'        => 'mouse_strains',
+            'other_member_sequence' => 'mouse_strains',
+            'sequence'          => 'mouse_strains',
+            'exon_boundaries'   => 'mouse_strains',
         },
 
         # In these databases, ignore these tables
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
-            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs ortholog_goc_metric peptide_align_feature% QC_split_genes short_orth_genes long_orth_genes seq_member gene_member sequence)],
-            'ncrna_db'          => [qw(tmp_job)],
+            'protein_db'        => [qw(peptide_align_feature%)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         },
 
