@@ -181,7 +181,7 @@ sub minify {
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
   $title .= ('=' x length $title)."\n\n";
   print LOG $title;
-  my $root = $species_defs->ENSEMBL_DOCROOT.'/'.$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $root = $species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $css = '';
   # Process each file
   my @files;
@@ -284,7 +284,7 @@ sub minify {
       my $hex = $md5->hexdigest;
       my $fn = "$root/$hex.$type";
       rename $tmp2,$fn;
-      my $url = "/minified/$hex.$type";
+      my $url = $species_defs->ENSEMBL_MINIFIED_URL."/$hex.$type";
       $css .= qq(.autosprite-src-$page-$type { background-image: url($url) });
       push @prefetch,$url;
       foreach my $f (@{$files{$type}{$page}}) {
@@ -426,15 +426,14 @@ sub maybe_generate_sprite {
 sub load_config {
   my ($species_defs) = @_;
 
-  my $docroot = $species_defs->ENSEMBL_DOCROOT;
-  my $root = "$docroot/".$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $root = $species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $csses = $species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'};
   my $map;
   foreach my $css (@$csses) {
-    $map = $css->minified_url_path if $css->name eq 'components';
+    $map = $css->minified_filename if $css->name eq 'components';
   }
   $map =~ s/\.css$/.map/;
-  return from_json(file_get_contents("$docroot/$map"));
+  return from_json(file_get_contents("$root/$map"));
 }
 
 sub generate_sprites {
@@ -502,7 +501,6 @@ sub data_url {
 
   return $content if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
   return $content if !kit_complete('not building data URIs');
-  my $root = $species_defs->ENSEMBL_DOCROOT;
   $content =~ s!background-image:\s*url\(([^\)]+)\);?!data_url_convert_try('background-image','','',$species_defs,$1)!ge;
   $content =~ s!list-style-image:\s*url\(([^\)]+)\);?!data_url_convert_try('list-style-image','','',$species_defs,$1)!ge;
   $content =~ s!background:([^;}]*\s*)url\(([^\)]+)\)(\s*[^;}]*);?!data_url_convert_try('background',$1,$3,$species_defs,$2)!ge;
