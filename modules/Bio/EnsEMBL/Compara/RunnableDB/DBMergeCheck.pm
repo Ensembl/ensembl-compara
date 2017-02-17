@@ -323,9 +323,10 @@ sub run {
                         $sth->execute;
                         while (my $cols = $sth->fetchrow_arrayref()) {
                             my $value = join(",", map {$_ // '<NULL>'} @$cols);
-                            push(@error_list, sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value})) if exists $all_values{$value};
-                            my @tok = split(/\,/,$value);
-                            $error_list{$tok[0]} = 1 if exists $all_values{$value};
+                            die sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value}) if exists $all_values{$value};
+                            #push(@error_list, sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value})) if exists $all_values{$value};
+                            #my @tok = split(/\,/,$value);
+                            #$error_list{$tok[0]} = 1 if exists $all_values{$value};
                             $all_values{$value} = $db;
                         }
                     }
