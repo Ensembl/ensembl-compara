@@ -754,7 +754,6 @@ sub process_ini_files {
   
   my $msg  = "$species database";
   my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
-  warn ">>> FILE $file";
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
   
