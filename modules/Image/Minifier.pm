@@ -177,7 +177,7 @@ sub minify {
   return if !kit_complete('not building sprite page');
   my @prefetch;
   my $conf = build_conf();
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot open '$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log'";
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or die "Cannot open $SiteDefs::ENSEMBL_LOGDIR/image-minify.log";
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
   $title .= ('=' x length $title)."\n\n";
   print LOG $title;
@@ -460,7 +460,7 @@ sub find_file {
 sub data_url_convert {
   my ($key,$prefix,$suffix,$sd,$url) = @_;
 
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot write '$SiteDefs::ENSEMBL_LOGDIR/image-minify.log':$!";
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or die "Cannot write '$SiteDefs::ENSEMBL_LOGDIR/image-minify.log':$!";
   $url =~ s/^"(.*)"$/$1/;
   $url =~ s/^'(.*)'$/$1/;
   return undef unless $url =~ m!^/!;
