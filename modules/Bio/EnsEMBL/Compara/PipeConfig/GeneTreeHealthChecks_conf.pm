@@ -191,7 +191,7 @@ sub pipeline_analyses {
         {   -logic_name => 'default_trees_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default"',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id IN ("default","murinae")',
             },
             -flow_into  => {
                 2 => [ 'hc_alignment', 'hc_tree_homologies' ],

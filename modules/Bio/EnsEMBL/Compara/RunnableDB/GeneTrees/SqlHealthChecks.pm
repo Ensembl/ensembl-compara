@@ -310,7 +310,7 @@ our $config = {
         tests => [
             {
                 description => 'Checks that the gene tree is binary (and minimized)',
-                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.node_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != IF(gtn1.node_id!=gtn1.root_id OR clusterset_id="default" OR clusterset_id LIKE "nj%" OR clusterset_id LIKE "phyml%" OR clusterset_id LIKE "rax%" OR clusterset_id LIKE "pg%",2,3)',
+                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.node_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != IF(gtn1.node_id!=gtn1.root_id OR clusterset_id IN ("default","murinae") OR clusterset_id LIKE "nj%" OR clusterset_id LIKE "phyml%" OR clusterset_id LIKE "rax%" OR clusterset_id LIKE "pg%",2,3)',
             },
 
             {
@@ -442,7 +442,7 @@ our $config = {
 
             {
                 description => 'The "gene_count" tags of sub-trees must sum-up to their super-tree\'s gene count',
-                query => 'SELECT gtr1.root_id, COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE tree_type = "supertree" AND clusterset_id = "default" GROUP BY gtr1.root_id HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
+                query => 'SELECT gtr1.root_id, COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE tree_type = "supertree" AND clusterset_id IN ("default","murinae") GROUP BY gtr1.root_id HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
         ],
     },
