@@ -32,7 +32,7 @@ use Digest::MD5 qw(md5_hex);
 use JSON qw(from_json);
 use YAML qw(LoadFile);
 use MIME::Base64;
-use SiteDefs;
+
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use EnsEMBL::Web::Utils::PluginInspector qw(get_all_plugins);
 
