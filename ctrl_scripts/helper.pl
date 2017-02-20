@@ -32,6 +32,8 @@ BEGIN {
 
 use SiteDefs;
 
+unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
+
 sub warn_line {
   warn sprintf "%s\n", '=' x 78;
 }
