@@ -51,12 +51,11 @@ my %write_dirs = (
                   'biomart'     => '',
                   'failure_dir' => '',
                   'img'         => 'ENSEMBL_TMP_DIR_IMG',
-                  'logs'        => '$ENSEMBL_LOGDIR',
+                  'logs'        => 'ENSEMBL_LOGDIR',
                   'persistent'  => '', 
                   'precache'    => 'ENSEMBL_PRECACHE_DIR',
                   'procedure'   => '',
                   'server'      => 'ENSEMBL_SYS_DIR',
-                  'tmp'         => 'ENSEMBL_TMP_DIR',
                   'udcCache'    => 'UDC_CACHEDIR',
                   );
 
@@ -86,14 +85,15 @@ if (!-w $tmp_dir) {
   die_string("ENSEMBL_TMP_DIR ($tmp_dir) is not writable. Please set appropriate permissions before running the init script.");
 }
 
-my $SD = $SiteDefs::;
+foreach my $key (keys %write_dirs) {
 
-while (my($key, $conf) = each(%write_dirs)) {
+  no strict qw(refs);
 
+  my $conf = $write_dirs{$key};
   my $path;
 
   if ($conf) { ## Directory location is configurable
-    $path = $SD->{$conf};
+    $path = ${"SiteDefs::$conf"};
   }
 
   $path ||= $tmp_dir.'/'.$key;
@@ -103,7 +103,7 @@ while (my($key, $conf) = each(%write_dirs)) {
   }
   else {
     warn_string("Creating directory $path...");
-    my $cmd = "mkdir $path; chmod 755 $path";
-    system($cmd) and die_string("Could not create directory $path");
-  } 
+    my $cmd = "mkdir -p $path; chmod 755 $path";
+    system($cmd) and warn_string("Could not create directory $path");
+  }
 }
