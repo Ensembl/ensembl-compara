@@ -1617,8 +1617,11 @@ sub _munge_meta {
     }
 
     ## create lookup hash for species aliases
-    foreach my $alias (@{$meta_hash->{'species.alias'}}) {
+    foreach my $alias (@{$meta_hash->{'species.alias'}||{}}) {
       $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$alias} = $species;
+    }
+    unless ($meta_hash->{'species.alias'}) {
+      warn "Species $species has no aliases in its core database."; 
     }
 
     ## Backwards compatibility
