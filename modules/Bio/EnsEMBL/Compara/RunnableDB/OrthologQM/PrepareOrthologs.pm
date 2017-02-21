@@ -165,6 +165,7 @@ sub write_output {
     }
 
     $self->dataflow_output_id( \@batched_orths, 2 ); # to calculate_coverage
+    $self->dataflow_output_id( $self->param('reuse_dataflow'), 3 ); # to reuse_wga_score
 
     # flow reusable homologies to have their score copied
     # if ( defined $self->param('reusable_homologies') ){
@@ -203,7 +204,7 @@ sub _reusable_homologies {
 
     # next, split the homologies into reusable and non-reusable (new)
     # copy score of reusable homs to new db
-    my ( @reuse, @dont_reuse );
+    my ( @reuse_dataflow, @dont_reuse );
     foreach my $h ( @{ $current_homologs } ) {
         my $h_id = $h->dbID;
         my $homolog_map = $reuse_homologs->{ $h_id };
@@ -213,7 +214,8 @@ sub _reusable_homologies {
             my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
             my $previous_homolog      = $previous_homo_adaptor->fetch_by_dbID( $homolog_map->{prev_release_homology_id} );
             if ( defined $previous_homolog && defined $previous_homolog->wga_coverage ) { # score already exists
-                $current_homo_adaptor->update_wga_coverage( $h_id, $previous_homolog->wga_coverage ); # copy score
+                # $current_homo_adaptor->update_wga_coverage( $h_id, $previous_homolog->wga_coverage ); # copy score
+                push( @reuse_dataflow, { homology_id => $h_id, prev_wga_score => $previous_homolog->wga_coverage } );
             }
             else {
                 push( @dont_reuse, $h );
@@ -223,6 +225,8 @@ sub _reusable_homologies {
             push( @dont_reuse, $h );
         }
     }
+
+    $self->param('reuse_dataflow', \@reuse_dataflow);
 
     # return nonreuable homologies to the pipeline
     return \@dont_reuse;

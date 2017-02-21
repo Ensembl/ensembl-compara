@@ -55,15 +55,17 @@ sub write_output {
 	my $self = shift;
 	my @mlss_ids = @{ $self->param('mlss') };
 
-	my $dba;
-	if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
-	else { $dba = $self->compara_dba }
+	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('pipeline_url'));
+	# my $dba;
+	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	# else { $dba = $self->compara_dba }
 
 	# write threshold to mlss_tag
 	my $mlss_adap = $dba->get_MethodLinkSpeciesSetAdaptor;
 	for my $this_mlss ( @mlss_ids ) {
 		my $mlss = $mlss_adap->fetch_by_dbID( $this_mlss );
-		$mlss->store_tag( 'wga_quality_threshold', $self->_calculate_threshold );
+		$mlss->store_tag( 'wga_quality_threshold', $self->_calculate_threshold ) if defined $mlss;
+		warn "Could not find mlss with dbID $this_mlss\n";
 	}
 }
 

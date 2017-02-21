@@ -44,8 +44,6 @@ sub fetch_input {
 
 	my $mlss_info = $self->param_required('alignment_mlsses');
 
-	warn Dumper $mlss_info;
-
 	my %uniq_mlss;
 	for my $row ( @$mlss_info ) {
 		for my $mlss_id ( @{ $row->{aln_mlss_ids} } ) {
@@ -58,10 +56,14 @@ sub fetch_input {
 
 sub write_output {
 	my $self = shift;
+	my $chunk_size = $self->param_required('copy_chunk_size');
 
 	my @copy_dataflow;
+	my $x = 0;
 	for my $mlss_id ( @{ $self->param('uniq_mlss_list') } ) {
-		push( @copy_dataflow, { mlss_id => $mlss_id } );
+		push( @copy_dataflow, { mlss_id_list => [] } ) if ( $x % $chunk_size == 0 );
+		push( @{ $copy_dataflow[-1]->{mlss_id_list} }, $mlss_id );
+		$x++;
 	}
 
 	$self->dataflow_output_id( { mlss => $self->param('uniq_mlss_list') }, 1 ); # to write_threshold

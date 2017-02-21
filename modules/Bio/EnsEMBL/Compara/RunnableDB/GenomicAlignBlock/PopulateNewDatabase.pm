@@ -63,10 +63,16 @@ sub fetch_input {
     push @cmd, '--new', $self->param('pipeline_db') if $self->param('pipeline_db');
     push @cmd, '--cellular_component', $self->param('cellular_component') if $self->param('cellular_component');
     push @cmd, '--species', $self->param('speciesList') if $self->param('speciesList');
-    push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');
     push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');
-    push @cmd, '--collection', $self->param('collection') if $self->param('collection');
+    push @cmd, '--collection', $self->param('collection') if ( $self->param('collection') && !$self->param('ignore_collection') );
     push @cmd, '--old', $self->param('old_compara_db') if $self->param('old_compara_db');
+
+    # allow for a single mlss_id or multiples as populate_new_database.pl can accept multiple mlsses in the same cmd
+    push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');
+    if ( $self->param('mlss_id_list') ){
+        push @cmd, '--mlss ' . join( ' --mlss ', @{ $self->param('mlss_id_list') } );
+    }
+
     $self->param('cmd', \@cmd);
 }
 
