@@ -124,6 +124,10 @@ sub pipeline_analyses {
             -flow_into      => [ 'compress' ],
         },
 
+        # TODO:
+        # - Need to convert to a bigWig: bedGraphToBigWig in.bedGraph chrom.sizes myBigWig.bw
+        # - Need to add an analysis to download chrom.sizes (like in BaseAge_conf ?)
+
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
