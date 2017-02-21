@@ -204,7 +204,6 @@ sub select_alignment_based_on_hierarchy {
 
       for ($j=0; $j<=$#{$alignments->{$order}}; $j++) {
         $align = $alignments->{$order}->[$j];
-        warn Data::Dumper::Dumper  $align;
         if ($align->{type} =~ $re) {
           push @{$prioritised_alignments->{$order}}, $align;
           last;
