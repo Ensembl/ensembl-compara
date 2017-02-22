@@ -338,7 +338,7 @@ sub copy_ancestral_data {
     #
     #Create temporary table in from_db to store mappings
     #
-    $sth = $from_dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
+    $sth = $from_dbc->prepare("CREATE TEMPORARY TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
 
     $sth->execute();
     $sth->finish;
@@ -366,7 +366,7 @@ sub copy_ancestral_data {
     $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '$name" . "_%'";
 
     print "copying seq_region in replace mode\n";
-    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, 1);
+    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, undef, 1);
 
     #
     #Copy over the dna with new seq_region_ids
