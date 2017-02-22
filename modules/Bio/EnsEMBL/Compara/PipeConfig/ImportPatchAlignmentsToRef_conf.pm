@@ -68,13 +68,13 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # The master database
-        'master_db'             => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
+        'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',
 
         # Production Registry
-        'reg_conf'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 
         # Other scripts needed by the pipeline
         'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
