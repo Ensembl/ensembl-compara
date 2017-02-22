@@ -426,7 +426,7 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
+              -flow_into          => [ 'write_stn_tags', 'homology_stats_factory', 'id_map_mlss_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
               %hc_params,
             },
 
