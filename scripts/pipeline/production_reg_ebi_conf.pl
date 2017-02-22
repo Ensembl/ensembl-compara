@@ -73,12 +73,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'compara1',
+     -host => 'mysql-ens-compara-prod-1',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 3306,
+     -port => 4485,
      -species => 'compara_mouse_strains_homologies',
-     -dbname => 'mm14_mouse_strains_homologies_87',
+     -dbname => 'muffato_mouse_strain_homologies_88',
 );
 
 # Individual pipeline database for ncRNAtrees:
@@ -161,12 +161,12 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 
 # current ancestral database on one of Compara servers:
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'compara5',
+    -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 3306,
+    -port => 4485,
     -species => 'ancestral_curr',
-    -dbname => 'mp14_ensembl_ancestral_87',
+    -dbname => 'mateus_ensembl_ancestral_88',
 );
 
 # ensembl production (maintained by production team):
