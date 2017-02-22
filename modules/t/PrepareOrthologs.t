@@ -85,6 +85,11 @@ standaloneJob(
 			$exp_dataflow, # expected data flowed out
 			2 # dataflow branch
 		], # end event
+		[
+          'DATAFLOW',
+          undef,
+          3
+        ],
 	]
 );
 
@@ -128,6 +133,20 @@ standaloneJob(
 			$exp_dataflow_2, # expected data flowed out
 			2 # dataflow branch
 		], # end event
+		[
+          'DATAFLOW',
+          [
+            {
+              'prev_wga_score' => '100.00',
+              'homology_id' => '102'
+            },
+            {
+              'prev_wga_score' => '100.00',
+              'homology_id' => '103'
+            }
+          ],
+          3
+        ]
 	]
 );
 
