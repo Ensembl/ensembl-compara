@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -58,7 +58,9 @@ sub default_options {
 
         'pipeline_name'   => 'post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+
+        'ensembl_cellar'        => $self->o('ENV', 'ENSEMBL_SOFTWARE_HOME').'/linuxbrew/Cellar',
 
         # The list of collections and clusterset_ids
         'member_stats_config'   => [
@@ -119,10 +121,6 @@ sub default_options {
         'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
 
         # Pipeline graph
-        'do_alt_alleles'        => 1,
-        'do_member_update'      => 1,
-        'do_member_stats'       => 1,
-        'do_high_confidence'    => 1,
     };
 }
 
@@ -143,6 +141,11 @@ sub pipeline_wide_parameters {
         'mafft_home'        => $self->o('mafft_home'),
         'production_db_url' => $self->o('production_db_url'),
         'threshold_levels'  => $self->o('threshold_levels'),
+
+        'do_alt_alleles'        => 1,
+        'do_member_update'      => 1,
+        'do_member_stats'       => 1,
+        'do_high_confidence'    => 1,
     }
 }
 
