@@ -77,7 +77,7 @@ sub default_options {
             'mouse_strains' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mouse_strain_homologies_88',
         },
         # The target database
-        'curr_rel_db'   => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_88',
+        'curr_rel_db'   => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1:4485/ensembl_compara_88",
 
         # From these databases, only copy these tables
         'only_tables'       => {
