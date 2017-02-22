@@ -61,11 +61,11 @@ sub default_options {
 
          # The production database itself (will be created). That's where the ancestral sequences will be
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),
-        'host'          => 'compara5',
+        'host'          => 'mysql-ens-compara-prod-1.ebi.ac.uk:4485',
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_#expr( #ensembl_release# - 1)expr#',
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/mp14_ensembl_ancestral_#expr( #ensembl_release# - 1)expr#',
     };
 }
 
@@ -95,7 +95,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{ $self->SUPER::resource_classes() },
-         'urgent'   => {  'LSF' => '-q yesterday' },
+         'urgent'   => {  'LSF' => '' },
          'more_mem' => {  'LSF' => '-M5000 -R "select[mem>5000] rusage[mem=5000]"' },
     };
 }
@@ -123,9 +123,9 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist' => [ # this table needs to be edited prior to running the pipeline:
                     [ '768' => '#prev_ancestral_db#', ], # 5 teleost fish
-                    [ '825' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_4sauropsids_new4sauranchor_hacked_86_ancestral_core_86', ], # 4 sauropsids
-                    [ '828' => 'mysql://ensadmin:'.$self->o('password').'@compara4/cc21_mammals_ancestral_core_86', ], # 18 eutherian mammals
-                    [ '822' => 'mysql://ensadmin:'.$self->o('password').'@compara4/wa2_primates_ancestral_core_85', ], # 8 primates
+                    #[ '825' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_4sauropsids_new4sauranchor_hacked_86_ancestral_core_86', ], # 4 sauropsids
+                    #[ '828' => 'mysql://ensadmin:'.$self->o('password').'@compara4/cc21_mammals_ancestral_core_86', ], # 18 eutherian mammals
+                    #[ '822' => 'mysql://ensadmin:'.$self->o('password').'@compara4/wa2_primates_ancestral_core_85', ], # 8 primates
                 ],
             },
             -flow_into => {
