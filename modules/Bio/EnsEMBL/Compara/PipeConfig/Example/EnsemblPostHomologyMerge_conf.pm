@@ -116,6 +116,8 @@ sub default_options {
         'update_capacity'                           => 5,
         'high_confidence_capacity'                  => 20,
         'high_confidence_batch_size'                => 10,
+        'high_confidence_capacity'                  => 5,
+        'high_confidence_batch_size'                => 2,
 
         #Software dependencies
         'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
