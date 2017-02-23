@@ -40,7 +40,7 @@ BEGIN {
   @xs_enabled = @{EnsEMBL::Web::Startup::XS::bootstrap_begin()};
 }
 
-$Apache2::SizeLimit::MAX_PROCESS_SIZE = $SiteDefs::MAX_PROCESS_SIZE || 1000000; # Kill httpd over 1000Mb
+$Apache2::SizeLimit::MAX_PROCESS_SIZE = $SiteDefs::ENSEMBL_MAX_PROCESS_SIZE || 1000000; # Kill httpd over 1000Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
 use DBI;
