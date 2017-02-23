@@ -30,7 +30,9 @@ sub create {
   ## @return none
   my $species = shift;
   my $sd      = shift;
-  my $root    = $sd->ENSEMBL_WEBROOT . '/htdocs';
+  warn ">>> ROBOTS.TXT ".$sd->ENSEMBL_ROBOTS_TXT;
+  my $root    = $sd->ENSEMBL_ROBOTS_TXT || $sd->ENSEMBL_WEBROOT.'/htdocs';
+  warn "... ROOT $root";
   my @lines;
 
   warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
