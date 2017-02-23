@@ -160,13 +160,6 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
       close FH;
     }                             
   }
-  
-  # Remove cached image files
-  my @cached_images = map { glob($conf->ENSEMBL_TMP_DIR_CACHE."/$_.*") } 'mapview', 'chromoview';
-  my $icount        = unlink @cached_images;
-  
-  warn "[CONF]    [INFO] Removed $icount cached image files\n" if $icount;
-  warn "[CONF]    [WARN] Some cached image files not removed: $!" unless $icount == @cached_images;
 
   my $extra = '';
   
