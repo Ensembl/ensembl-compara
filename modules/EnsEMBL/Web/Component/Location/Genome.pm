@@ -353,7 +353,7 @@ sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
   ## Omit button from, e.g. Phenotype/Locations
-  return unless $hub->type eq 'Location' && $hub->species_defs->ENSEMBL_CHROMOSOMES;
+  return unless ($hub->type eq 'Location' && @{$hub->species_defs->ENSEMBL_CHROMOSOMES});
   my @buttons;
 
   my $params = {
