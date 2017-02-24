@@ -118,8 +118,6 @@ if (keys %{$memcached || {}}) {
 
 warn_line();
 
-# Remove preload log file
-
 my ($before_start, $after_start) = before_after_hooks('start');
 
 # Build the httpd command string and run all commands

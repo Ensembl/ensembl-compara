@@ -60,7 +60,7 @@ my $conf = EnsEMBL::Web::SpeciesDefs->new;
 # Setup the ORM DB connections before loading files
 my $orm_connections = $conf->register_orm_databases;
 
-if ($conf->ENSEMBL_MART_ENABLED > 0) {
+if ($conf->ENSEMBL_MART_PLUGIN_ENABLED) {
   require 'BioMart/Initializer.pm';
   BioMart::Initialize->import;
   require 'BioMart/AttributeTable.pm';
@@ -169,21 +169,12 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     if (!$@ && EnsEMBL::Web::Cache->new) {
       $extra .= '
  Memcached enabled:  ' . join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []};
-    
-      $extra .= '
-
- Memcached flags:    '. join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'} || []};
     }
   }
 
-  if ($conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
-    my $i = 1;
-    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
-    $extra .= '
+  if ($conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
+    my $i = 0;
 
- Debug flags:        ' . join "\n                     ", map { $T & (($i <<= 1) >> 1) ? ucfirst lc =~ s/_/ /rg : () } @{$conf->ENSEMBL_DEBUG_FLAG_NAMES};
-
-    $i = 0;
     $extra .= '
 
 ==============================================================================

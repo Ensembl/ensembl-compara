@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -300,7 +299,7 @@ sub childInitHandler {
   ## @param APR::Pool object
   ## @param Apache2::ServerRec server object
   ## This handler only adds an entry to the logs
-  warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;
 }
@@ -473,7 +472,7 @@ sub cleanupHandler {
   request_end_hook($r);
 
   # no need to go further if debug flag is off
-  return OK unless $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  return OK unless $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   # if LOG_REQUEST_IGNORE is set true by the code, don't log the request url
   return OK if $r->subprocess_env('LOG_REQUEST_IGNORE');
@@ -506,7 +505,7 @@ sub childExitHandler {
   ## This handler only adds an entry to the logs
   my ($p, $s) = @_;
 
-  warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;
 }

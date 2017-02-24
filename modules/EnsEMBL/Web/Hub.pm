@@ -181,7 +181,7 @@ sub image_width {
     $self->set_cookie('ENSEMBL_WIDTH', $width);
   }
 
-  return $self->{'image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
+  return $self->{'image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || 800;
 }
 
 sub get_cookie_value {
