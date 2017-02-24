@@ -56,6 +56,7 @@ my %write_dirs = (
                   'procedure'   => '',
                   'server'      => 'ENSEMBL_SYS_DIR',
                   'server/logs' => '$ENSEMBL_LOGDIR',
+                  'temporary'   => '',
                   'tmp'         => 'ENSEMBL_TMP_DIR',
                   'udcCache'    => 'UDC_CACHEDIR',
                   );
