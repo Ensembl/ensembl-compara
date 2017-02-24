@@ -94,9 +94,10 @@ sub handler {
 
     ## Map URLs for temporary files that are stored outside the htdocs directory
     my %tmp_paths = (
-                    $SiteDefs::ENSEMBL_TMP_URL      => $SiteDefs::ENSEMBL_TMP_DIR, 
-                    $SiteDefs::ENSEMBL_TMP_URL_IMG  => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
-                    $SiteDefs::ENSEMBL_MINIFIED_URL => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
+                    $SiteDefs::ENSEMBL_TMP_URL        => $SiteDefs::ENSEMBL_TMP_DIR, 
+                    $SiteDefs::ENSEMBL_TMP_URL_IMG    => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
+                    $SiteDefs::ENSEMBL_MINIFIED_URL   => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
+                    $SiteDefs::ENSEMBL_OPENSEARCH_URL => $SiteDefs::ENSEMBL_OPENSEARCH_FILES_PATH,
                     );
     my $is_tmp;
     
