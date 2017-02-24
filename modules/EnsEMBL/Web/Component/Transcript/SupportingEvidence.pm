@@ -347,7 +347,7 @@ sub _content {
         $evidence_ends{$hit_name}{'end'}   = $hit_seq_region_end   if $hit_seq_region_end > $evidence_ends{$hit_name}{'end'};
 
         # ignore duplicate entries
-        next EVI if defined @{$evidence_ends{$hit_name}{'starts_and_ends'}} && grep $_ eq "$hit_seq_region_start:$hit_seq_region_end", @{$evidence_ends{$hit_name}{'starts_and_ends'}};
+        next EVI if @{$evidence_ends{$hit_name}{'starts_and_ends'}||[]} && grep $_ eq "$hit_seq_region_start:$hit_seq_region_end", @{$evidence_ends{$hit_name}{'starts_and_ends'}};
         
         push @{$evidence_ends{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
 
