@@ -80,7 +80,6 @@ our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing
 our $ENSEMBL_ORM_DATABASES            = {};               # Hash to contain DB settings for databases connected via ensembl-orm (Used in SpeciesDefs::register_orm_databases)
 our $ENSEMBL_API_VERBOSITY            = 'WARNING';        # OFF, EXCEPTION, WARNING, DEPRECATE, INFO, ALL
 our $ENSEMBL_SPECIES_SELECT_DIVISION  = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" }; # JSON file used by Species Selector on multiple views
-our $ENSEMBL_DEBUG_NOCACHE            = 0;      # disable even in-run caches
 our $ENSEMBL_SKIP_RSS                 = 0;      # set to 1 in sandboxes to avoid overloading blog
 our $ENSEMBL_EXTERNAL_SEARCHABLE      = 0;      # No external bots allowed by default
 our $PACED_MULTI                      = 6;      # Max simultaneous connections
@@ -96,6 +95,14 @@ our $ENSEMBL_STATIC_SERVER            = '';     # Static server address - if sta
 our $ENSEMBL_DEBUG_JS             = 0; # change these to 1 to prevent js minification
 our $ENSEMBL_DEBUG_CSS            = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_IMAGES         = 0; # change these to 1 to prevent css minification
+###############################################################################
+
+
+###############################################################################
+## Other DEBUG flags
+our $ENSEMBL_DEBUG_VERBOSE_STARTUP  = 0; # Prints extra info at server startup if set true
+our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1; # Shows messages from EnsEMBL::Web::Apache::*
+our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::Web::Cache
 ###############################################################################
 
 
