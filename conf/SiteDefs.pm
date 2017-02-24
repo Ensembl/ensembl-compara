@@ -129,6 +129,7 @@ our $ENSEMBL_ERRORLOG             = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.err
 our $ENSEMBL_CUSTOMLOG            = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.access_log ensembl_extended" };  # Access log file
 our $ENSEMBL_MINIFIED_FILES_PATH  = defer { "$ENSEMBL_SYS_DIR/minified" };                                    # Path for saving the minified files
 our $ENSEMBL_MINIFIED_URL         = '/minified';                                                              # where the server can find the minified JS, CSS, etc
+our $ENSEMBL_OPENSEARCH_URL       = '/opensearch';                                                            # where the server can find opensearch xml files
 our $UDC_CACHEDIR                 = defer { "$ENSEMBL_TMP_DIR/udcCache" };                                    # Directory to cache outgoing UDC requests (required for BAM files)
 our $ENSEMBL_TMP_MESSAGE_FILE     = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };                         # File location for the temporary message for the website
 ###############################################################################
