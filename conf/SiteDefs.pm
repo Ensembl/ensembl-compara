@@ -155,6 +155,12 @@ our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl
 ## External dependencies path
 our $HTSLIB_DIR           = "$ENSEMBL_SERVERROOT/htslib";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
+our $R2R_BIN              = "$ENSEMBL_SERVERROOT/r2r";
+our $HUBCHECK_BIN         = "$ENSEMBL_SERVERROOT/hubCheck";
+our $ENSEMBL_EMBOSS_PATH  = "$ENSEMBL_SERVERROOT/emboss";
+our $ENSEMBL_WISE2_PATH   = "$ENSEMBL_SERVERROOT/genewise";
+our $GRAPHIC_TTF_PATH     = "$ENSEMBL_SERVERROOT/fonts";
+our $ENSEMBL_JAVA         = "java"; # For js/css minification
 ###############################################################################
 
 
