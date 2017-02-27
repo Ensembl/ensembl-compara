@@ -167,7 +167,7 @@ sub format_gallery {
       my $image;
       if ($img_disabled) {
         $image = sprintf '<img src="/i/gallery/%s.png" title="%s" class="disabled"/>', 
-                            $page->{'img'};
+                            $page->{'img'}, $img_title || '';
       }
       elsif ($img_link) {
         $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" class="embiggen" /></a>', 
@@ -221,7 +221,7 @@ sub _sub_header {
   my $type  = $hub->param('data_type');
   my $param = $data_type->{$type}{'param'};
   my $value = $hub->param($param);
-  my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
+  my $label = sprintf '%s displays for', $title;
 
   my $form  = $self->new_form({'class' => 'gallery-header',  'method' => 'get'});
 
