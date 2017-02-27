@@ -421,8 +421,8 @@ sub add_genes {
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 
-  # overwriting Genes comprehensive track description to not be the big concatenation of many description
-  $self->modify_configs(['transcript_core_ensembl'],{ description => 'The <a class="popup" href="/Help/Glossary?id=487">GENCODE Comprehensive</a> set is the gene set for human and mouse' });
+  # overwriting Genes comprehensive track description to not be the big concatenation of many description (only gencode gene track)
+  $self->modify_configs(['transcript_core_ensembl'],{ description => 'The <a class="popup" href="/Help/Glossary?id=487">GENCODE Comprehensive</a> set is the gene set for human and mouse' }) if($self->species_defs->GENCODE_VERSION);
 }
 
 sub add_trans_associated {
