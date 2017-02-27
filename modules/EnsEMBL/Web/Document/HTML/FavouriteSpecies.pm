@@ -146,7 +146,6 @@ sub _species_list {
     $done{$_} = 1;
 
     my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
-    my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
 
     push @list, {
       key         => $_,
@@ -162,20 +161,6 @@ sub _species_list {
       has_alt     => $alt_assembly ? 1 : 0
     };
 
-    if ($alt_assembly) {
-      push @list, {
-        key         => $_,
-        group       => $species->{$_}{'group'},
-        homepage    => sprintf('http://%s%s', $sd->get_config($_, 'SWITCH_ARCHIVE_URL'), $homepage),
-        name        => $species->{$_}{'name'},
-        img         => sprintf('%sspecies/48/%s_%s.png', $img_url, $_, $alt_assembly),
-        common      => $species->{$_}{'common'},
-        assembly    => $alt_assembly,
-        favourite   => $fav{$_} ? 1 : 0,
-        external    => 1,
-        has_alt     => 1,
-      };
-    }
   }
 
   return \@list;
