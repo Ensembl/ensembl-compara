@@ -159,7 +159,6 @@ sub _species_list {
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
       strainspage => $species->{$_}{'strain_collection'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0,
-      has_alt     => $alt_assembly ? 1 : 0
     };
 
     if ($alt_assembly) {
