@@ -83,22 +83,22 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # Individual pipeline database for ncRNAtrees:
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
+     -host => 'mysql-treefam-prod',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
+     -port => 4401,
      -species => 'compara_nctrees',
-     -dbname => 'mp14_compara_nctrees_87',
+     -dbname => 'mateus_ensembl_ebinc_rna_trees_88',
  );
 
 # # Individual pipeline database for Families:
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-2',
+     -host => 'mysql-ens-compara-prod-3',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4522,
+     -port => 4523,
      -species => 'compara_families',
-     -dbname => 'carlac_ensembl_families_87',
+     -dbname => 'muffato_ensembl_families_ebi_88b',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
