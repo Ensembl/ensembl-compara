@@ -110,7 +110,7 @@ sub store {
 
     # Store the tree in the header table
     # method_link_species_set_id must be set to its real value to honour the foreign key
-    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, label) VALUES (?,?,?)');
+    my $sth = $self->prepare('INSERT IGNORE INTO species_tree_root (root_id, method_link_species_set_id, label) VALUES (?,?,?)');
     $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default');
 
     $tree->adaptor($self);
