@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=master)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/88)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=release/88&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=release/88)
 
 [travis]: https://travis-ci.org/Ensembl/ensembl-compara
 [coveralls]: https://coveralls.io/r/Ensembl/ensembl-compara
@@ -26,7 +26,7 @@ If working with HAL files, additional setup is required. First, install progress
 	git pull
 	git submodule update --init
 	cd submodules/hal/
-	git checkout master
+	git checkout release/88
 	git pull
 	cd ../../
 	make
