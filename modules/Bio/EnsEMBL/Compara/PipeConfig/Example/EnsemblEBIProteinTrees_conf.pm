@@ -299,6 +299,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"' },
          '8Gb_8c_job'   => {'LSF' => '-q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"  -n 8 span[hosts=1]' },
          '16Gb_job'     => {'LSF' => '-q production-rh7 -M16000 -R"select[gpfs&&mem>16000] rusage[mem=16000]"' },
+         '24Gb_job'     => {'LSF' => '-q production-rh7 -M24000 -R"select[gpfs&&mem>24000] rusage[mem=24000]"' },
          '32Gb_job'     => {'LSF' => '-q production-rh7 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh7 -M64000 -R"select[gpfs&&mem>64000] rusage[mem=64000]"' },
          '512Gb_job'     => {'LSF' => '-q production-rh7 -M512000 -R"select[gpfs&&mem>512000] rusage[mem=512000]"' },
