@@ -64,14 +64,16 @@ sub default_options {
 
         # The list of collections and clusterset_ids
         'member_stats_config'   => [
-            {
+            INPUT_PLUS({
                 'collection'      => 'default',
                 'clusterset_id'   => 'default',
-            },
-            {
+                'db_conn'         => '#compara_db#',
+            }),
+            INPUT_PLUS({
                 'collection'      => 'murinae',
                 'clusterset_id'   => 'murinae',
-            },
+                'db_conn'         => '#compara_db#',
+            }),
         ],
 
         # ncRNAs don't have GOC, so we don't want to penalize them for that
@@ -183,7 +185,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_member_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN( '#do_member_stats#' => INPUT_PLUS({ 'find_collection_species_set_id' => $self->o('member_stats_config'), 'db_conn' => '#compara_db#' }) ),
+                '1->A' => WHEN( '#do_member_stats#' => { 'find_collection_species_set_id' => $self->o('member_stats_config') } ),
                 'A->1' => ['backbone_member_update'],
             },
         },
