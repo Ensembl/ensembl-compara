@@ -120,10 +120,6 @@ sub draw_expanded_transcripts {
   if ($labels) {
     $self->{'my_config'}->set('show_labels', 1);
   }
-  else {
-    ## Artificial spacing to mimic layout with labels
-    $self->{'my_config'}->set('vspacing', 30);
-  }
 
   $self->_set_bump_strand($length, $strand);
 
