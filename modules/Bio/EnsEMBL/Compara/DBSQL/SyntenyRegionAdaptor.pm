@@ -155,7 +155,7 @@ sub store {
    $self->attach($sr, $dbID);
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-   foreach my $dfr (@{$sr->regions}) {
+   foreach my $dfr (@{$sr->get_all_DnaFragRegions()}) {
      $dfr->synteny_region_id($sr->dbID);
      $dfra->store($dfr);
    }

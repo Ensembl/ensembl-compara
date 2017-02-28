@@ -21,6 +21,7 @@
 
 * `MethodLinkSpeciesSet::species_set_obj()`
 * `SequenceAdaptor::fetch_by_dbIDs()`
+* `SyntenyRegion::regions()`
 
 ## Taxonomy methods, to be removed in Ensembl 91
 

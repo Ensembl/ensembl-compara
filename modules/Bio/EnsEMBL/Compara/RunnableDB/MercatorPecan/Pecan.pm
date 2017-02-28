@@ -602,7 +602,7 @@ sub _load_DnaFragRegions {
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($synteny_region_id);
 
-  my $regions = $sr->regions();
+  my $regions = $sr->get_all_DnaFragRegions();
 
   if (scalar(@$regions) == 1) {
       $self->input_job->autoflow(0);
