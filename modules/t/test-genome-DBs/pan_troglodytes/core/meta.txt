@@ -171,3 +171,4 @@
 712	\N	patch	patch_86_87_c.sql|datetime_default_NULL
 713	\N	patch	patch_87_88_a.sql|schema_version
 714	\N	patch	patch_87_88_b.sql|seq_region_name_255
+715	\N	patch	patch_87_88_c.sql|protein_featue_uniqueness
