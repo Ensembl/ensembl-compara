@@ -57,7 +57,7 @@ sub store {
     #
     #Find unique constrained_element_id by using a temporary table with an auto_increment column
     #
-    my $ce_id_sql = "INSERT INTO constrained_element_production (constrained_element_id) VALUES (\"NULL\")";
+    my $ce_id_sql = "INSERT INTO constrained_element_production () VALUES ()";
     my $ce_id_sth = $self->prepare($ce_id_sql);
 
     my $constrained_element_sql = qq{INSERT INTO constrained_element (
