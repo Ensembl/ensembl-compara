@@ -64,6 +64,14 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+
+        'max_blocks_for_chaining'   => undef,   # If too many blocks, chaining may hang, so we allow here a maximum number of blocks (undef === no filter)
+    };
+}
 
 sub fetch_input {
   my $self = shift;
@@ -136,6 +144,8 @@ sub createAlignmentChainsJobs
 
   my (%qy_dna_hash, %tg_dna_hash);
 
+  my $max_blocks_for_chaining = $self->param('max_blocks_for_chaining');
+
   foreach my $dnafrag_chunk_set (@{$self->param('query_collection')->get_all_DnaFragChunkSets}) {
     my $dna_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks();
 
@@ -158,7 +168,7 @@ sub createAlignmentChainsJobs
   }
   my $count=0;
 
-  my $sql = "select g2.dnafrag_id from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g1.genomic_align_id != g2.genomic_align_id group by g2.dnafrag_id";
+  my $sql = "select g2.dnafrag_id, count(*) from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g1.genomic_align_id != g2.genomic_align_id group by g2.dnafrag_id";
   my $sth = $self->compara_dba->dbc->prepare($sql);
 
   my $reverse_pairs; # used to avoid getting twice the same results for self-comparisons
@@ -166,11 +176,17 @@ sub createAlignmentChainsJobs
     $sth->execute($self->param('method_link_species_set')->dbID, $qy_dnafrag_id);
 
     my $tg_dnafrag_id;
-    $sth->bind_columns(\$tg_dnafrag_id);
+    my $block_count;
+    $sth->bind_columns(\$tg_dnafrag_id, \$block_count);
     while ($sth->fetch()) {
 
       next unless exists $tg_dna_hash{$tg_dnafrag_id};
       next if (defined($reverse_pairs->{$qy_dnafrag_id}->{$tg_dnafrag_id}));
+
+      if ((defined $max_blocks_for_chaining) && ($block_count > $max_blocks_for_chaining)) {
+          die sprintf("There are too many alignment-blocks (%d) between '%s' (%s) and '%s' (%s). Raise the 'max_blocks_for_chaining' if you think it's ok.\n",
+              $block_count, $qy_dna_hash{$qy_dnafrag_id}->name, $self->param('query_collection')->name, $tg_dna_hash{$tg_dnafrag_id}->name, $self->param('target_collection')->name);
+      }
       
       my $input_hash = {};
 

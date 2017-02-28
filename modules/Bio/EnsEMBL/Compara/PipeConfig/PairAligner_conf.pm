@@ -202,7 +202,7 @@ sub default_options {
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'medium',
 
-  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
+  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
     'chain_hive_capacity' => 200,
     'chain_batch_size' => 10,
 
@@ -458,18 +458,9 @@ sub pipeline_analyses {
                 },
  	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
 	       -flow_into => {
-			      1 => [ 'check_not_too_many_blocks' ],
+			      1 => [ 'update_max_alignment_length_before_FD' ],
 			     },
 	    },
-            {   -logic_name => 'check_not_too_many_blocks',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-                -parameters => {
-                    'description'   => q{filter_duplicates / axtChain won't work if there are too many blocks},
-                    'query'         => 'SELECT COUNT(*) AS cnt FROM genomic_align_block WHERE method_link_species_set_id = #method_link_species_set_id# GROUP BY 1+1 HAVING cnt > #max_blocks#',
-                    'max_blocks'    => 10000000,
-                },
-                -flow_into  => [ 'update_max_alignment_length_before_FD' ],
-            },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
@@ -483,7 +474,7 @@ sub pipeline_analyses {
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
  	       -parameters => { },
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD', 'check_not_too_many_blocks' ],
+ 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },

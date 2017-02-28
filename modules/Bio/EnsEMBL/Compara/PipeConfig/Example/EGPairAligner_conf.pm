@@ -212,7 +212,7 @@ sub default_options {
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'loose',
 
-  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
+  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
   	'chain_batch_size' => 5,
   	'chain_hive_capacity' => 50,
 
