@@ -159,7 +159,7 @@ our $R2R_BIN              = "$ENSEMBL_SERVERROOT/r2r";
 our $HUBCHECK_BIN         = "$ENSEMBL_SERVERROOT/hubCheck";
 our $ENSEMBL_EMBOSS_PATH  = "$ENSEMBL_SERVERROOT/emboss";
 our $ENSEMBL_WISE2_PATH   = "$ENSEMBL_SERVERROOT/genewise";
-our $GRAPHIC_TTF_PATH     = "$ENSEMBL_SERVERROOT/fonts";
+our $GRAPHIC_TTF_PATH     = "/etc/fonts";
 our $ENSEMBL_JAVA         = "java"; # For js/css minification
 ###############################################################################
 
