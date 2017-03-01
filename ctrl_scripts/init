@@ -93,7 +93,6 @@ foreach my $key (sort keys %write_dirs) {
 
   my $conf = $write_dirs{$key};
   my $path;
-  my $conf = $write_dirs{$key};
 
   if ($conf) { ## Directory location is configurable
     $path = ${"SiteDefs::$conf"};
