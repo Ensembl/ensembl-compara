@@ -171,9 +171,9 @@ sub content {
       my $dnds_class  = ($orthologue_dnds_ratio ne "n/a" && $orthologue_dnds_ratio >= 1) ? "box-highlight" : "";
       
       # GOC Score, wgac and high confidence
-      my $goc_score  = $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0 ? $orthologue->{'goc_score'} : 'n/a';
-      my $wgac       = $orthologue->{'wgac'} && $orthologue->{'wgac'} >= 0 ? $orthologue->{'wgac'} : 'n/a';
-      my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Y' : $orthologue->{'highconfidence'} eq '0' ? 'N' : 'n/a';
+      my $goc_score  = (defined $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0) ? $orthologue->{'goc_score'} : 'n/a';
+      my $wgac       = (defined $orthologue->{'wgac'} && $orthologue->{'wgac'} >= 0) ? $orthologue->{'wgac'} : 'n/a';
+      my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Yes' : $orthologue->{'highconfidence'} eq '0' ? 'No' : 'n/a';
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
          
