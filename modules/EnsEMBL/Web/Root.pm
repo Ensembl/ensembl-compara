@@ -361,6 +361,7 @@ sub make_directory {
 }
 
 # Creates a temporary file name and makes sure its parent directory exists
+# TODO - check if this is actually used anywhere
 sub temp_file_create {
   my $self = shift;
   

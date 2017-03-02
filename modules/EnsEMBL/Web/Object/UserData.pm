@@ -128,7 +128,7 @@ sub md_save_upload {
     ## Now move file
     if ($old_path && $new_path) {
       ## Create path to new destination
-      my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
+      my $tmp_dir = $hub->species_defs->ENSEMBL_USERDATA_DIR;
       my @path_elements = split('/', $new_path);
       pop @path_elements;
       my $dir = join ('/', @path_elements);
@@ -174,7 +174,7 @@ sub md_delete_upload {
   my $rel_path = $self->_delete_record('upload', $source, $code, $id);
   if ($rel_path) {
     ## Also remove file
-    my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
+    my $tmp_dir = $hub->species_defs->ENSEMBL_USERDATA_DIR;
     my $result = delete_file($tmp_dir.'/'.$rel_path, {'nice' => 1, 'no_exception' => 1});
     if ($result->{'error'}) {
       warn "!!! ERROR ".@{$result->{'error'}};

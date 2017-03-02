@@ -95,7 +95,7 @@ sub content {
 
       ## Data was uploaded on release 84, before we added the site to records
       if (!$record_data->{'site'}) {
-        my $path_to_file = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$record_data->{'file'};
+        my $path_to_file = $hub->species_defs->ENSEMBL_USERDATA_DIR.'/'.$record_data->{'file'};
         unless (-e $path_to_file) {
           $data_elsewhere = 1;
           next;
