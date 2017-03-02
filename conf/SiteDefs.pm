@@ -87,7 +87,7 @@ our $HTTP_PROXY                       = undef;  # Web proxy for outgoing http/ht
 our $ENSEMBL_REGISTRY                 = undef;  # Set this to a valid config file for Bio::EnsEMBL::Registry::load_all() or leave undef
 our $ENSEMBL_SITE_DIR                 = '';     # URL Path if site is served from a sub path i.e www.example.org/$ENSEMBL_SITE_DIR/
 our $ENSEMBL_STATIC_SERVER            = '';     # Static server address - if static content (js/css/images) is served from a different server
-our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; }  # command/subroutine called by `syslog` - check EnsEMBL::Web::Utils::Syslog
+our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subroutine called by `syslog` - check EnsEMBL::Web::Utils::Syslog
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 ###############################################################################
 
