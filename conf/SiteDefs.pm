@@ -133,6 +133,8 @@ our $ENSEMBL_LOGDIR               = defer { "$ENSEMBL_SYS_DIR/logs" };          
 our $ENSEMBL_PIDFILE              = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.httpd.pid" };                    # httpd process id
 our $ENSEMBL_ERRORLOG             = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.error_log" };                    # Error log file
 our $ENSEMBL_CUSTOMLOG            = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.access_log ensembl_extended" };  # Access log file
+our $ENSEMBL_FAILUREDIR           = defer { "$ENSEMBL_TMP_DIR/failure_dir" };                                 # Folder to save status of external resources (Check EnsEMBL::Web::Tools::FailOver)
+our $ENSEMBL_ROBOTS_TXT_DIR       = defer { "$ENSEMBL_SYS_DIR/robots_txt" };                                  # Directory for saving robots.txt file
 our $ENSEMBL_MINIFIED_FILES_PATH  = defer { "$ENSEMBL_SYS_DIR/minified" };                                    # Path for saving minified files
 our $ENSEMBL_OPENSEARCH_PATH      = defer { "$ENSEMBL_SYS_DIR/opensearch" };                                  # Path for saving opensearch files
 our $UDC_CACHEDIR                 = defer { "$ENSEMBL_TMP_DIR/udcCache" };                                    # Directory to cache outgoing UDC requests (required for BAM files)
@@ -174,6 +176,7 @@ our $HUBCHECK_BIN         = "$ENSEMBL_SERVERROOT/hubCheck";
 our $ENSEMBL_EMBOSS_PATH  = "$ENSEMBL_SERVERROOT/emboss";
 our $ENSEMBL_WISE2_PATH   = "$ENSEMBL_SERVERROOT/genewise";
 our $GRAPHIC_TTF_PATH     = "/etc/fonts";
+our $GEOCITY_DAT          = "$ENSEMBL_SERVERROOT/geocity/GeoLiteCity.dat";
 our $ENSEMBL_JAVA         = "java"; # For js/css minification
 ###############################################################################
 
