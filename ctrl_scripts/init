@@ -49,7 +49,8 @@ my $tmp_dir = $SiteDefs::ENSEMBL_TMP_DIR;
 
 my %write_dirs = (
                   'biomart'     => '',
-                  'failure_dir' => '',
+                  'failure_dir' => 'ENSEMBL_FAILUREDIR',
+                  'robots_txt'  => 'ENSEMBL_ROBOTS_TXT_DIR',
                   'img'         => 'ENSEMBL_TMP_DIR_IMG',
                   'persistent'  => '', 
                   'precache'    => 'ENSEMBL_PRECACHE_DIR',
