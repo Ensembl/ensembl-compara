@@ -1022,16 +1022,25 @@ sub dumpPhenotype {
       GROUP BY p.phenotype_id),'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
-    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $fh);
+    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, '', $counter ), $fh);
   }
 
+  my $ont_db  = $conf->{'dbs'}{'DATABASE_GO'};
+  my $phenotype_ont_info = $conf->{'variation_dbh'}->selectall_hashref(qq(
+     SELECT distinct t.accession, t.name
+       FROM $ont_db.term t, phenotype_ontology_accession poa
+      WHERE t.accession = poa.accession),'accession');
+  foreach my $phenotype_ont (keys %$phenotype_ont_info) {
+    &p( PhenLine( $dbspecies, $phenotype_ont_info->{$phenotype_ont}{'name'}, $phenotype_ont, [], 1, $counter ), $fh);
+  }
   return footer( $counter->(), $fh);
 }
 
 sub PhenLine {
-  my ($species, $name, $id, $synonyms, $counter ) = @_;
-  my $url = sprintf(qq(%s/Phenotype/Locations?ph=%s),
+  my ($species, $name, $id, $synonyms, $is_ont, $counter ) = @_;
+  my $url = sprintf(qq(%s/Phenotype/Locations?%s=%s),
                     $species,
+                    $is_ont ? 'oa' : 'ph',
                     $id);
   $species =~ s/_/ /;
   $name = &clean($name,'name');
