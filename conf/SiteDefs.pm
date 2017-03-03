@@ -334,6 +334,8 @@ sub _update_conf {
   ## Updates configs acording to plugins SiteDefs
   my @plugins = reverse @{$ENSEMBL_PLUGINS || []}; # Go on in reverse order so that the first plugin is the most important
 
+  my (%order_validation, $count);
+
   while (my ($dir, $name) = splice @plugins, 0, 2) {
     my $plugin_conf = "${name}::SiteDefs";
 
@@ -348,21 +350,24 @@ sub _update_conf {
       my $message = "Can't locate $dir/conf/SiteDefs.pm in";
       warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:;
     } else {
-      my $func = "${plugin_conf}::update_conf";
 
-      eval "$func()";
+      # create datastructures for validating the rules in the end
+      my $validation = $plugin_conf->can('validation');
+      $order_validation{$name} = $validation ? $validation->() : {};
 
-      if ($@) {
-        my $message = "Undefined subroutine &$func called at ";
+      # Update config according to the plugin
+      my $update_conf = $plugin_conf->can('update_conf');
 
-        if ($@ =~ /$message/) {
-          warn "Function $func not defined in $dir/conf/SiteDefs.pm";
-        } else {
-          warn "Error calling $func in $dir/conf/SiteDefs.pm\n$@";
-        }
+      if ($update_conf) {
+        $update_conf->();
+      } else {
+        warn "Not updating SiteDefs with $plugin_conf: Function update_conf not defined in $dir/conf/SiteDefs.pm\n";
       }
+
       register_deferred_configs();
     }
+
+    $order_validation{$name}{'order'} = ++$count;
 
     unshift @ENSEMBL_PERL_DIRS,     "$dir/perl";
     unshift @ENSEMBL_HTDOCS_DIRS,   "$dir/htdocs";
@@ -370,6 +375,44 @@ sub _update_conf {
     push    @ENSEMBL_CONF_DIRS,     "$dir/conf";
   }
   build_deferred_configs();
+
+  my $current_plugin_type = 'functionality';
+
+  # plugin order validation
+  foreach my $plugin (sort { $order_validation{$a}{'order'} <=> $order_validation{$b}{'order'} } keys %order_validation) {
+
+    # requires
+    foreach my $required (@{$order_validation{$plugin}{'requires'} || []}) {
+      if (!exists $order_validation{$required}) {
+        warn "Plugin Validation Error: Plugin $plugin needs plugin $required to be present.\n";
+      }
+    }
+
+    # after
+    foreach my $after (@{$order_validation{$plugin}{'after'} || []}) {
+      if (exists $order_validation{$after} && $order_validation{$after}{'order'} >= $order_validation{$plugin}{'order'}) {
+        warn "Plugin Validation Error: Plugin $plugin needs to be loaded after plugin $after.\n";
+      }
+    }
+
+    # before
+    foreach my $before (@{$order_validation{$plugin}{'before'} || []}) {
+      if (exists $order_validation{$before} && $order_validation{$before}{'order'} <= $order_validation{$before}{'order'}) {
+        warn "Plugin Validation Error: Plugin $plugin needs to be loaded before plugin $before.\n";
+      }
+    }
+
+    # type
+    if (my $type = $order_validation{$plugin}{'type'}) {
+      if ($type eq 'functionality') {
+        warn "Plugin Validation Error: Plugin $plugin of type 'functionality' being loaded after type 'configuration'.\n" if $current_plugin_type eq 'configuration';
+      } elsif ($type eq 'configuration') {
+        $current_plugin_type = 'configuration';
+      } else {
+        warn "Plugin Validation Error: Plugin $plugin type '$type' is invalid. Should be either 'functionality' or 'configuration'.\n";
+      }
+    }
+  }
 
   push @ENSEMBL_LIB_DIRS, (
     "$ENSEMBL_WEBROOT/modules",
@@ -385,7 +428,7 @@ sub _update_conf {
 }
 
 sub _set_species_aliases {
-  ## Add self refernetial elements to ENSEMBL_SPECIES_ALIASES
+  ## Add self referential elements to ENSEMBL_SPECIES_ALIASES
   ## And one without the _ in...
   $ENSEMBL_DATASETS = [ sort keys %__species_aliases ] unless scalar @$ENSEMBL_DATASETS;
 
