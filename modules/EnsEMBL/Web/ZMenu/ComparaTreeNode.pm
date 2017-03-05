@@ -75,18 +75,16 @@ sub content {
      $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf && not $is_supertree;
 
   my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
-  my $taxon_alias     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
+  my $taxon_alias     = $speciesTreeNode->get_common_name;
   my $caption         = 'Taxon: ';
   
   if (defined $taxon_alias) {
     $caption .= $taxon_alias;
     $caption .= sprintf ' ~%d MYA', $taxon_mya if defined $taxon_mya;
-    $caption .= " ($taxon_name)" if defined $taxon_name;
-  } elsif (defined $taxon_name) {
+    $caption .= " ($taxon_name)";
+  } else {
     $caption .= $taxon_name;
     $caption .= sprintf ' ~%d MYA', $taxon_mya if defined $taxon_mya;
-  } else {
-    $caption .= 'unknown';
   }
   
   $self->caption($caption);
@@ -110,7 +108,7 @@ sub content {
        
     $self->add_entry({
       type  => 'Lost taxa',
-      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_->taxon_id} || $_->node_name }  @$lost_taxa ),
+      label => join(', ', map { $_->get_common_name } @$lost_taxa ),
       order => 5.6
     });
   }
