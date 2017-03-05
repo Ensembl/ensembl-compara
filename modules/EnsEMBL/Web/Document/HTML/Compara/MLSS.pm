@@ -536,6 +536,7 @@ sub render_cactus_multiple {
 
   my $hub     = $self->hub;
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $version = $hub->species_defs->ENSEMBL_VERSION;
   my $html;
   my ($species_order, $info) = $self->mlss_species_info($mlss);
 
@@ -548,6 +549,10 @@ sub render_cactus_multiple {
     $html .= qq{<p>This alignment of $count genomes has been imported from UCSC since release $rel.</p>};
     $html .= $self->error_message('API access', sprintf(
         '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
+    if ($mlss->method->type =~ /CACTUS_HAL/) {
+        $html .= $self->error_message('HAL configuration', sprintf(
+            '<p>HAL alignments require further configuration. See the instructions in our <a href="https://github.com/Ensembl/ensembl-compara/blob/release/%d/README.md">README</a>.</p>', $version), 'info')
+    }
 
     my $table = EnsEMBL::Web::Document::Table->new([
         { key => 'species', title => 'Species',         width => '50%', align => 'left', sort => 'string' },
