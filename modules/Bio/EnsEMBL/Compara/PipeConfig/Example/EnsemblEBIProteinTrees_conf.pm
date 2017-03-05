@@ -328,13 +328,6 @@ sub resource_classes {
          '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
          '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
          '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-
-
-         'msa'          => {'LSF' => '-C0 -q production-rh7 -M2000  -R"select[gpfs&&mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -q production-rh7 -M8000  -R"select[gpfs&&mem>8000]  rusage[mem=8000]"' },
-
-         'urgent_hcluster'      => {'LSF' => '-C0 -q production-rh7 -M32000 -R"select[gpfs&&mem>32000] rusage[mem=32000]"' },
-         '4Gb_job_gpfs' => {},
     };
 }
 
