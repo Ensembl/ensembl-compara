@@ -17,7 +17,16 @@ the Ensembl website: http://www.ensembl.org/info/docs/api/compara/
 See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/HEAD/CONTRIBUTING.md)
 for the guidelines on user contributions
 
-## Installation
+# Installation
+
+## Perl modules
+
+We use a number of Perl modules that are all available on CPAN. We recommend using cpanminus to install these.
+You will need both the [Core API
+dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
+[ours](cpanfile).
+
+## HAL alignments and progressive-Cactus
 
 If working with HAL files, additional setup is required. First, install progressiveCactus:
 
@@ -38,7 +47,16 @@ Now, we need to set up the Compara API:
 	perl Makefile.PL
 	make
 
-## Contact us
+Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
+files to be downloaded from
+(ftp://ftp.ensembl.org/pub/data_files/multi/hal_files/) in order to be fetched with the
+API. The files must have the same name as on the FTP and must be placed
+under `multi/hal_files/` within your directory of choice.
+Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
+the latter.
+
+
+# Contact us
 
 Please email comments or questions to the public Ensembl developers list at
 http://lists.ensembl.org/mailman/listinfo/dev
