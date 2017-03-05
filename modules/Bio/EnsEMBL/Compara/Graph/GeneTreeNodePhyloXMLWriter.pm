@@ -51,7 +51,7 @@ use base qw/Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter/;
 sub _write_tree {
   my ($self, $tree) = @_;
 
-  assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode', 'tree');
   my $w = $self->_writer();
 
   my %attr = (rooted => 'true');

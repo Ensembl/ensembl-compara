@@ -1,62 +1,86 @@
-4	31033	takifugu_rubripes	FUGU4	1	2007-11-Ensembl	
-27	51511	ciona_savignyi	CSAV2.0	1	2006-04-Ensembl	
-31	9544	macaca_mulatta	MMUL_1	1	2006-01-Ensembl	
-33	9371	echinops_telfairi	TENREC	1	2006-01-Ensembl	
-36	69293	gasterosteus_aculeatus	BROADS1	1	2006-06-Ensembl	
-37	8090	oryzias_latipes	MEDAKA1	1	2006-05-Ensembl	
-42	9031	gallus_gallus	WASHUC2	1	2006-08-Ensembl	
-43	9258	ornithorhynchus_anatinus	OANA5	1	2007-01-Ensembl	
-46	13616	monodelphis_domestica	BROADO5	1	2007-02-Ensembl	
-48	37347	tupaia_belangeri	TREESHREW	1	2006-10-Ensembl	
-49	9365	erinaceus_europaeus	HEDGEHOG	1	2006-10-Ensembl	
-55	42254	sorex_araneus	COMMON_SHREW1	1	2007-04-Ensembl	
-58	30608	microcebus_murinus	micMur1	1	2007-07-Ensembl	
-60	9601	pongo_abelii	PPYG2	1	2007-10-Ensembl	
-61	9796	equus_caballus	EquCab2	1	2007-09-Ensembl	
-63	NULL	ancestral_sequences		1		
-65	99883	tetraodon_nigroviridis	TETRAODON8	1	2007-11-Ensembl	
-67	9978	ochotona_princeps	pika	1	2008-01-Ensembl	
-69	10141	cavia_porcellus	cavPor3	1	2008-03-Ensembl	
-78	9358	choloepus_hoffmanni	choHof1	1	2008-11-Ensembl	
-79	9813	procavia_capensis	proCap1	1	2008-11-Ensembl	
-80	9739	tursiops_truncatus	turTru1	1	2008-11-Ensembl	
-82	9478	tarsius_syrichta	tarSyr1	1	2008-11-Ensembl	
-83	10020	dipodomys_ordii	dipOrd1	1	2008-11-Ensembl	
-84	30538	vicugna_pacos	vicPac1	1	2008-11-Ensembl	
-85	132908	pteropus_vampyrus	pteVam1	1	2008-11-Ensembl	
-86	9361	dasypus_novemcinctus	dasNov2	1	2008-11-Ensembl	
-87	59729	taeniopygia_guttata	taeGut3.2.4	1	2008-08-Ensembl	
-90	9606	homo_sapiens	GRCh37	1	2010-07-Ensembl	
-91	9315	macropus_eugenii	Meug_1.0	1	2009-02-Ensembl	
-98	9785	loxodonta_africana	loxAfr3	1	2009-07-Ensembl	
-105	7227	drosophila_melanogaster	BDGP5	1	2012-04-FlyBase	
-108	9986	oryctolagus_cuniculus	oryCun2	1	2009-11-Ensembl	
-109	9646	ailuropoda_melanoleuca	ailMel1	1	2010-01-Ensembl	
-110	7955	danio_rerio	Zv9	1	2010-06-Ensembl	
-111	28377	anolis_carolinensis	AnoCar2.0	1	2010-09-Ensembl	
-112	9103	meleagris_gallopavo	UMD2	1	2010-09-Ensembl	
-115	61853	nomascus_leucogenys	Nleu1.0	1	2010-10-Ensembl	
-116	8364	xenopus_tropicalis	JGI_4.2	1	2010-09-Ensembl	
-117	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
-118	59463	myotis_lucifugus	Myoluc2.0	1	2010-12-Ensembl	
-120	7757	petromyzon_marinus	Pmarinus_7.0	1	2011-02-Ensembl	
-121	9305	sarcophilus_harrisii	DEVIL7.0	1	2011-03-Ensembl	
-122	9913	bos_taurus	UMD3.1	1	2011-04-Ensembl	
-123	9595	gorilla_gorilla	gorGor3.1	1	2009-08-Ensembl	
-124	30611	otolemur_garnettii	OtoGar3	1	2011-06-Ensembl	
-125	9598	pan_troglodytes	CHIMP2.1.4	1	2011-05-Ensembl	
-126	8049	gadus_morhua	gadMor1	1	2010-01-Ensembl	
-127	4932	saccharomyces_cerevisiae	EF4	1	2011-09-SGD	
-128	7719	ciona_intestinalis	KH	1	2011-08-Ensembl	
-129	7897	latimeria_chalumnae	LatCha1	1	2011-09-Ensembl	
-130	8128	oreochromis_niloticus	Orenil1.0	1	2011-05-Ensembl	
-131	43179	ictidomys_tridecemlineatus	spetri2	1	2011-12-Ensembl	
-132	9823	sus_scrofa	Sscrofa10.2	1	2011-09-Ensembl	
-133	6239	caenorhabditis_elegans	WBcel215	1	2012-03-WormBase	
-134	10090	mus_musculus	GRCm38	1	2012-01-Ensembl	
-135	9615	canis_familiaris	CanFam3.1	1	2011-11-Ensembl	
-136	13735	pelodiscus_sinensis	PelSin_1.0	1	2011-11-Ensembl	
-137	8083	xiphophorus_maculatus	Xipmac4.4.2	1	2012-01-Ensembl	
-138	9669	mustela_putorius_furo	MusPutFur1.0	1	2012-04-Ensembl	
-139	9685	felis_catus	Felis_catus_6.2	1	2011-12-Ensembl	
-140	10116	rattus_norvegicus	Rnor_5.0	1	2012-04-Ensembl	
+4	31033	takifugu_rubripes	FUGU4	2007-11-Ensembl	0	1	NULL	NULL	Fugu	NULL	24	NULL
+27	51511	ciona_savignyi	CSAV2.0	2006-04-Ensembl	0	1	NULL	NULL	C.savignyi	NULL	39	NULL
+33	9371	echinops_telfairi	TENREC	2006-01-Ensembl	0	0	NULL	NULL	Lesser hedgehog tenrec	NULL	40	NULL
+36	69293	gasterosteus_aculeatus	BROADS1	2006-06-Ensembl	1	1	NULL	NULL	Stickleback	NULL	40	NULL
+37	8090	oryzias_latipes	MEDAKA1	2006-05-Ensembl	1	1	NULL	NULL	Medaka	NULL	41	NULL
+43	9258	ornithorhynchus_anatinus	OANA5	2007-01-Ensembl	1	1	NULL	NULL	Platypus	NULL	42	NULL
+46	13616	monodelphis_domestica	BROADO5	2007-02-Ensembl	1	1	NULL	NULL	Opossum	NULL	44	NULL
+48	37347	tupaia_belangeri	TREESHREW	2006-10-Ensembl	0	0	NULL	NULL	Tree Shrew	NULL	43	NULL
+49	9365	erinaceus_europaeus	HEDGEHOG	2006-10-Ensembl	0	0	NULL	NULL	Hedgehog	NULL	43	NULL
+55	42254	sorex_araneus	COMMON_SHREW1	2007-04-Ensembl	0	0	NULL	NULL	Shrew	NULL	45	NULL
+60	9601	pongo_abelii	PPYG2	2007-10-Ensembl	1	1	NULL	NULL	Orangutan	NULL	49	NULL
+61	9796	equus_caballus	EquCab2	2007-09-Ensembl	1	1	NULL	NULL	Horse	NULL	49	NULL
+63	NULL	ancestral_sequences			0	0	NULL	NULL	NULL	NULL	49	NULL
+65	99883	tetraodon_nigroviridis	TETRAODON8	2007-11-Ensembl	1	1	NULL	NULL	Tetraodon	NULL	50	NULL
+67	9978	ochotona_princeps	OchPri2.0-Ens	2008-01-Ensembl	0	0	NULL	NULL	Pika	NULL	50	NULL
+69	10141	cavia_porcellus	cavPor3	2008-03-Ensembl	0	1	NULL	NULL	Guinea Pig	NULL	51	NULL
+78	9358	choloepus_hoffmanni	choHof1	2008-11-Ensembl	0	0	NULL	NULL	Sloth	NULL	53	NULL
+79	9813	procavia_capensis	proCap1	2008-11-Ensembl	0	0	NULL	NULL	Hyrax	NULL	53	NULL
+80	9739	tursiops_truncatus	turTru1	2008-11-Ensembl	0	0	NULL	NULL	Dolphin	NULL	53	NULL
+82	1868482	tarsius_syrichta	tarSyr1	2008-11-Ensembl	0	0	NULL	NULL	Tarsier	NULL	53	NULL
+83	10020	dipodomys_ordii	dipOrd1	2008-11-Ensembl	0	0	NULL	NULL	Kangaroo rat	NULL	53	NULL
+84	30538	vicugna_pacos	vicPac1	2008-11-Ensembl	0	0	NULL	NULL	Alpaca	NULL	53	NULL
+85	132908	pteropus_vampyrus	pteVam1	2008-11-Ensembl	0	0	NULL	NULL	Megabat	NULL	53	NULL
+87	59729	taeniopygia_guttata	taeGut3.2.4	2008-08-Ensembl	1	1	NULL	NULL	Zebra Finch	NULL	53	NULL
+91	9315	macropus_eugenii	Meug_1.0	2009-02-Ensembl	0	0	NULL	NULL	Wallaby	NULL	55	NULL
+98	9785	loxodonta_africana	loxAfr3	2009-07-Ensembl	0	1	NULL	NULL	Elephant	NULL	57	NULL
+108	9986	oryctolagus_cuniculus	OryCun2.0	2009-11-Ensembl	1	1	NULL	NULL	Rabbit	NULL	60	NULL
+109	9646	ailuropoda_melanoleuca	ailMel1	2010-01-Ensembl	0	1	NULL	NULL	Panda	NULL	60	NULL
+111	28377	anolis_carolinensis	AnoCar2.0	2010-09-Ensembl	1	1	NULL	NULL	Anole lizard	NULL	61	NULL
+112	9103	meleagris_gallopavo	UMD2	2010-09-Ensembl	1	1	NULL	NULL	Turkey	NULL	61	NULL
+115	61853	nomascus_leucogenys	Nleu1.0	2010-10-Ensembl	0	1	NULL	NULL	Gibbon	NULL	62	NULL
+116	8364	xenopus_tropicalis	JGI_4.2	2010-09-Ensembl	0	1	NULL	NULL	Xenopus	NULL	62	NULL
+117	9483	callithrix_jacchus	C_jacchus3.2.1	2010-02-Ensembl	1	1	NULL	NULL	Marmoset	NULL	63	NULL
+118	59463	myotis_lucifugus	Myoluc2.0	2010-12-Ensembl	0	1	NULL	NULL	Microbat	NULL	63	NULL
+120	7757	petromyzon_marinus	Pmarinus_7.0	2011-02-Ensembl	0	1	NULL	NULL	Lamprey	NULL	64	NULL
+121	9305	sarcophilus_harrisii	DEVIL7.0	2011-03-Ensembl	0	1	NULL	NULL	Tasmanian devil	NULL	64	NULL
+122	9913	bos_taurus	UMD3.1	2011-04-Ensembl	1	1	NULL	NULL	Cow	NULL	64	NULL
+123	9595	gorilla_gorilla	gorGor3.1	2009-08-Ensembl	1	0	NULL	NULL	Gorilla	NULL	64	NULL
+124	30611	otolemur_garnettii	OtoGar3	2011-06-Ensembl	0	1	NULL	NULL	Bushbaby	NULL	65	NULL
+125	9598	pan_troglodytes	CHIMP2.1.4	2011-05-Ensembl	1	1	NULL	NULL	Chimpanzee	NULL	65	NULL
+126	8049	gadus_morhua	gadMor1	2010-01-Ensembl	0	0	NULL	NULL	Cod	NULL	65	NULL
+127	4932	saccharomyces_cerevisiae	R64-1-1	2011-09-SGD	1	1	NULL	S288C	Saccharomyces cerevisiae	NULL	65	NULL
+128	7719	ciona_intestinalis	KH	2011-08-Ensembl	1	1	NULL	NULL	C.intestinalis	NULL	66	NULL
+129	7897	latimeria_chalumnae	LatCha1	2011-09-Ensembl	0	1	NULL	NULL	Coelacanth	NULL	66	NULL
+130	8128	oreochromis_niloticus	Orenil1.0	2011-05-Ensembl	0	1	NULL	NULL	Tilapia	NULL	67	NULL
+131	43179	ictidomys_tridecemlineatus	spetri2	2011-12-Ensembl	0	1	NULL	NULL	Squirrel	NULL	67	NULL
+132	9823	sus_scrofa	Sscrofa10.2	2011-09-Ensembl	1	1	NULL	NULL	Pig	NULL	67	NULL
+134	10090	mus_musculus	GRCm38	2012-01-Ensembl	1	1	NULL	reference (CL57BL6)	Mouse	NULL	68	NULL
+135	9615	canis_familiaris	CanFam3.1	2011-11-Ensembl	1	1	NULL	NULL	Dog	NULL	68	NULL
+136	13735	pelodiscus_sinensis	PelSin_1.0	2011-11-Ensembl	0	1	NULL	NULL	Chinese softshell turtle	NULL	68	NULL
+137	8083	xiphophorus_maculatus	Xipmac4.4.2	2012-01-Ensembl	0	1	NULL	NULL	Platyfish	NULL	69	NULL
+138	9669	mustela_putorius_furo	MusPutFur1.0	2012-04-Ensembl	0	1	NULL	NULL	Ferret	NULL	69	NULL
+139	9685	felis_catus	Felis_catus_6.2	2011-12-Ensembl	1	1	NULL	NULL	Cat	NULL	70	NULL
+143	6239	caenorhabditis_elegans	WBcel235	2015-10-WormBase	1	1	NULL	N2	Caenorhabditis elegans	NULL	71	NULL
+144	8839	anas_platyrhynchos	BGI_duck_1.0	2009-09-Ensembl	0	1	NULL	NULL	Duck	NULL	73	NULL
+145	59894	ficedula_albicollis	FicAlb_1.4	2012-05-Ensembl	0	1	NULL	NULL	Flycatcher	NULL	73	NULL
+146	7994	astyanax_mexicanus	AstMex102	2013-04-Ensembl	0	1	NULL	NULL	Cave fish	NULL	74	NULL
+147	9940	ovis_aries	Oar_v3.1	2012-12-Ensembl	1	1	NULL	NULL	Sheep	NULL	74	NULL
+148	7918	lepisosteus_oculatus	LepOcu1	2012-01-Ensembl	1	1	NULL	NULL	Spotted gar	NULL	74	NULL
+149	9361	dasypus_novemcinctus	Dasnov3.0	2013-06-Ensembl	0	1	NULL	NULL	Armadillo	NULL	74	NULL
+150	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	NULL	NULL	Human	NULL	76	NULL
+151	9555	papio_anubis	PapAnu2.0	2013-01-Ensembl	1	1	NULL	NULL	Olive baboon	NULL	76	NULL
+152	48698	poecilia_formosa	PoeFor_5.1.2	2013-11-Ensembl	0	1	NULL	NULL	Amazon molly	NULL	76	NULL
+153	60711	chlorocebus_sabaeus	ChlSab1.1	2014-03-Ensembl	1	1	NULL	NULL	Vervet-AGM	NULL	77	NULL
+154	7955	danio_rerio	GRCz10	2014-09-Ensembl	1	1	NULL	NULL	Zebrafish	NULL	80	NULL
+155	10116	rattus_norvegicus	Rnor_6.0	2014-09-Ensembl	1	1	NULL	NULL	Rat	NULL	80	NULL
+156	7227	drosophila_melanogaster	BDGP6	2014-05-FlyBase	1	1	NULL	NULL	Fruitfly	NULL	79	NULL
+157	9031	gallus_gallus	Gallus_gallus-5.0	2016-06-Ensembl	1	1	NULL	NULL	Chicken	NULL	86	NULL
+158	9544	macaca_mulatta	Mmul_8.0.1	2016-02-Ensembl	1	1	NULL	NULL	Macaque	NULL	86	NULL
+159	30608	microcebus_murinus	Mmur_2.0	2016-06-Ensembl	0	1	NULL	NULL	Mouse Lemur	NULL	86	NULL
+160	10090	mus_musculus_129s1svimj	129S1_SvImJ_v1	2016-07-External	1	1	NULL	129S1SvImJ	Mouse 129S1/SvImJ	NULL	86	NULL
+161	10090	mus_musculus_aj	A_J_v1	2016-07-External	1	1	NULL	AJ	Mouse A/J	NULL	86	NULL
+162	10090	mus_musculus_balbcj	BALB_cJ_v1	2016-07-External	1	1	NULL	BALBcJ	Mouse BALB/cJ	NULL	86	NULL
+163	10090	mus_musculus_c3hhej	C3H_HeJ_v1	2016-07-External	1	1	NULL	C3HHeJ	Mouse C3H/HeJ	NULL	86	NULL
+164	10090	mus_musculus_c57bl6nj	C57BL_6NJ_v1	2016-07-External	1	1	NULL	C57BL6NJ	Mouse C57BL/6NJ	NULL	86	NULL
+165	10091	mus_musculus_casteij	CAST_EiJ_v1	2016-07-External	1	1	NULL	CASTEiJ	Mouse CAST/EiJ	NULL	86	NULL
+166	10090	mus_musculus_cbaj	CBA_J_v1	2016-07-External	1	1	NULL	CBAJ	Mouse CBA/J	NULL	86	NULL
+167	10090	mus_musculus_dba2j	DBA_2J_v1	2016-07-External	1	1	NULL	DBA2J	Mouse DBA/2J	NULL	86	NULL
+168	10090	mus_musculus_fvbnj	FVB_NJ_v1	2016-07-External	1	1	NULL	FVBNJ	Mouse FVB/NJ	NULL	86	NULL
+169	10090	mus_musculus_lpj	LP_J_v1	2016-07-External	1	1	NULL	LPJ	Mouse LP/J	NULL	86	NULL
+170	10090	mus_musculus_nodshiltj	NOD_ShiLtJ_v1	2016-07-External	1	1	NULL	NODShiLtJ	Mouse NOD/ShiLtJ	NULL	86	NULL
+171	10090	mus_musculus_nzohlltj	NZO_HlLtJ_v1	2016-07-External	1	1	NULL	NZOHlLtJ	Mouse NZO/HlLtJ	NULL	86	NULL
+172	39442	mus_musculus_pwkphj	PWK_PhJ_v1	2016-07-External	1	1	NULL	PWKPhJ	Mouse PWK/PhJ	NULL	86	NULL
+173	10092	mus_musculus_wsbeij	WSB_EiJ_v1	2016-07	1	1	NULL	WSBEiJ	Mouse WSB/EiJ	NULL	86	NULL
+174	10096	mus_spretus_spreteij	SPRET_EiJ_v1	2016-07	1	1	NULL	SPRETEiJ	Mouse SPRET/EiJ	NULL	86	NULL
+178	10090	mus_musculus_akrj	AKR_J_v1	2016-07-External	1	1	NULL	AKRJ	Mouse AKR/J	NULL	86	NULL

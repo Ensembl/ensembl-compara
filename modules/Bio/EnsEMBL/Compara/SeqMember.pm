@@ -170,7 +170,7 @@ sub new_from_Transcript {
 
     my ($transcript, $genome_db, $translate, $dnafrag) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DNAFRAG)], @args);
 
-    assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
+    assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
 
     my $seq_string;
     my ($start, $end) = ($transcript->seq_region_start, $transcript->seq_region_end);
@@ -531,7 +531,7 @@ sub gene_member {
   my $gene_member = shift;
 
   if ($gene_member) {
-    assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
+    assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember', 'gene_member');
     $self->{'_gene_member'} = $gene_member;
   }
   if(!defined($self->{'_gene_member'}) and

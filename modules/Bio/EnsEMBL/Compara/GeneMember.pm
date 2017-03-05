@@ -103,8 +103,8 @@ sub new_from_Gene {
 
     my ($gene, $genome_db, $dnafrag, $biotype_group) = rearrange([qw(GENE GENOME_DB DNAFRAG BIOTYPE_GROUP)], @args);
 
-    assert_ref($gene, 'Bio::EnsEMBL::Gene');
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     unless (defined $gene->stable_id) {
       throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
     }

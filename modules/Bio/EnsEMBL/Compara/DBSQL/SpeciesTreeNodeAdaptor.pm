@@ -108,7 +108,7 @@ sub store_node {
     my ($self, $node, $mlss_id) = @_;
 
 ## This may fail in the case of CAFEGeneFamilyNodes
-    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
 
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
 

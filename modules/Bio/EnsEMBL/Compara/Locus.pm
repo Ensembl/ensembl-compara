@@ -167,7 +167,7 @@ sub dnafrag {
   my ($self, $dnafrag) = @_;
 
   if (defined($dnafrag)) {
-    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', );
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
     $self->{'dnafrag'} = $dnafrag;
     if ($self->{'dnafrag_id'}) {
       if (!$self->{'dnafrag'}->dbID) {
@@ -390,7 +390,7 @@ sub genome_db {
   my ($self, $genome_db) = @_;
 
   if (defined($genome_db)) {
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB object');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     my $dnafrag = $self->dnafrag();
     if (!$dnafrag) {
       throw("Cannot set genome_db if dnafrag does not exist");

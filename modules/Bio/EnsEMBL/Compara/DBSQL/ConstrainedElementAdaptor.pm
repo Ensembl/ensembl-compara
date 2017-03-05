@@ -82,7 +82,7 @@ sub store {
 	}
 
 	foreach my $constrained_element (@{$constrained_element_group}) {
-            assert_ref($constrained_element, 'Bio::EnsEMBL::Compara::ConstrainedElement');
+            assert_ref($constrained_element, 'Bio::EnsEMBL::Compara::ConstrainedElement', 'constrained_element');
 	    $constrained_element_sth->execute(
 					      $constrained_element_id,
 					      $constrained_element->reference_dnafrag_id,

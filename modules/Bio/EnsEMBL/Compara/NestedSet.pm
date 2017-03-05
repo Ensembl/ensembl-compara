@@ -200,7 +200,7 @@ sub add_child {
   
   throw("child not defined") 
      unless(defined($child));
-  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet', 'child');
   
   #printf("add_child: parent(%s) <-> child(%s)\n", $self->node_id, $child->node_id);
   
@@ -296,7 +296,7 @@ sub has_parent {
 sub has_ancestor {
   my $self = shift;
   my $ancestor = shift;
-  assert_ref($ancestor, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($ancestor, 'Bio::EnsEMBL::Compara::NestedSet', 'ancestor');
   my $node = $self->parent;
   while($node) {
     return 1 if($node->equals($ancestor));
@@ -1117,7 +1117,7 @@ sub _internal_newick_format_ryo {
 sub has_child {
   my $self = shift;
   my $child = shift;
-  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($child, 'Bio::EnsEMBL::Compara::NestedSet', 'child');
   $self->load_children_if_needed;
   my $link = $self->link_for_neighbor($child);
   return 0 unless($link);
@@ -1150,7 +1150,7 @@ sub is_leaf {
 sub merge_children {
   my $self = shift;
   my $nset = shift;
-  assert_ref($nset, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($nset, 'Bio::EnsEMBL::Compara::NestedSet', 'nset');
   foreach my $child_node (@{$nset->children}) {
     $self->add_child($child_node, $child_node->distance_to_parent);
   }
@@ -1373,7 +1373,7 @@ sub delete_lineage {
   my $self = shift;
   my $del_me = shift;
 
-  assert_ref($del_me, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($del_me, 'Bio::EnsEMBL::Compara::NestedSet', 'del_me');
 
   my $parent = $del_me->parent;
   while ($parent) {

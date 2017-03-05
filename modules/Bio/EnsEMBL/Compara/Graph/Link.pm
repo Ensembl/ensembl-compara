@@ -95,8 +95,8 @@ sub new {
   my $node2 = shift;
   my $dist = shift;
 
-  assert_ref($node1, 'Bio::EnsEMBL::Compara::Graph::Node');
-  assert_ref($node2, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node1, 'Bio::EnsEMBL::Compara::Graph::Node', 'node1');
+  assert_ref($node2, 'Bio::EnsEMBL::Compara::Graph::Node', 'node2');
 
   my $self = {};
   bless $self, "Bio::EnsEMBL::Compara::Graph::Link";

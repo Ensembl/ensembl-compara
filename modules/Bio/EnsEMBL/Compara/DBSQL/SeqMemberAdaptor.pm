@@ -362,7 +362,7 @@ sub init_instance_from_rowhash {
 sub store {
     my ($self, $member) = @_;
    
-    assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
+    assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember', 'member');
 
 
   my $sth = $self->prepare("INSERT ignore INTO seq_member (stable_id,version, source_name,
@@ -452,7 +452,7 @@ sub update_sequence {   ## DEPRECATED
 sub _set_member_as_canonical {
     my ($self, $member) = @_;
 
-    assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
+    assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember', 'member');
 
     my $sth = $self->prepare('UPDATE gene_member SET canonical_member_id = ? WHERE gene_member_id = ?');
     $sth->execute($member->seq_member_id, $member->gene_member_id);

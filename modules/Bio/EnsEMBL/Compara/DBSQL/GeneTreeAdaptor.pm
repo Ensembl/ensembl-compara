@@ -405,7 +405,7 @@ sub store {
 sub delete_tree {
     my ($self, $tree) = @_;
 
-    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
+    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
 
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;

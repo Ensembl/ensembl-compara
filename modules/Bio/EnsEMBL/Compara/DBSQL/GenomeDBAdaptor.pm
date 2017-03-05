@@ -364,7 +364,7 @@ sub fetch_all_by_mixed_ref_lists {
     # Find all the species. Accepted values are: GenomeDBs, genome_db_ids, and species names (incl. aliases)
     foreach my $s (@{wrap_array($species_list)}) {
         if (ref($s)) {
-            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
+            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB', 'element of -SPECIES_LIST');
             $unique_gdbs{$s->dbID} = $s;
         } elsif (looks_like_number($s)) {
             $unique_gdbs{$s} = $self->fetch_by_dbID($s) || throw("Could not find a GenomeDB with dbID=$s");
@@ -381,7 +381,7 @@ sub fetch_all_by_mixed_ref_lists {
     foreach my $t (@{wrap_array($taxon_list)}) {
         my $tax;
         if (ref($t)) {
-            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon');
+            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon', 'element of -TAXON_LIST');
             $tax = $t->dbID;
         } elsif (looks_like_number($t)) {
             $ncbi_a->fetch_node_by_taxon_id($t) || throw("Could not find a NCBITaxon with dbID=$t");
@@ -419,7 +419,7 @@ sub fetch_all_by_mixed_ref_lists {
 sub store {
     my ($self, $gdb) = @_;
 
-    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
 
     if(my $reference_dba = $self->db->reference_dba()) {
         $reference_dba->get_GenomeDBAdaptor->store( $gdb );
@@ -468,7 +468,7 @@ sub store {
 sub update {
     my ($self, $gdb) = @_;
 
-    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
 
     if(my $reference_dba = $self->db->reference_dba()) {
         $reference_dba->get_GenomeDBAdaptor->update( $gdb );

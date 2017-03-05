@@ -340,7 +340,7 @@ sub init_instance_from_rowhash {
 sub update {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
   my $table= ($self->_tables)[0]->[0];
   my $sth = $self->dbc->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ? WHERE taxon_id = ?");

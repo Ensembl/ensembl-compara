@@ -493,7 +493,7 @@ sub alignment {
         return $self->{_alignment};
     }
 
-    assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
+    assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'other_gene_align');
 
     $self->seq_type($other_gene_align->seq_type);
     $self->gene_align_id($other_gene_align->dbID);
@@ -632,7 +632,7 @@ sub get_alignment_of_homologues {
     my ($self, $query_gene, $method_link_type, $species) = @_;
 
     assert_ref($query_gene, 'Bio::EnsEMBL::Compara::Member', 'query_gene');
-    assert_ref($species, 'ARRAY') if $species;
+    assert_ref($species, 'ARRAY', 'species') if $species;
 
     # List the homologues
     my $homologies = $self->adaptor->db->get_HomologyAdaptor->fetch_all_by_Member($query_gene, -METHOD_LINK_TYPE => $method_link_type);
@@ -737,7 +737,7 @@ sub get_all_Members {
 
 sub add_Member {
     my ($self, $member) = @_;
-    assert_ref($member, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+    assert_ref($member, 'Bio::EnsEMBL::Compara::GeneTreeMember', 'member');
     $self->root->add_child($member);
     $member->tree($self);
     $self->SUPER::add_Member($member);
