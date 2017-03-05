@@ -43,7 +43,7 @@ sub content {
   my $taxon_id        = $node->taxon_id;     
   my $scientific_name = $taxon->scientific_name();
   my $taxon_mya       = $taxon->get_tagvalue('ensembl timetree mya');
-  my $taxon_alias     = $taxon->ensembl_alias_name(); 
+  my $taxon_alias     = $node->get_common_name();
  
 
   my $caption   = "Taxon: ";
