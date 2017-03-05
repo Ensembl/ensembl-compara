@@ -42,7 +42,7 @@ sub content {
   my $parent_distance = $node->distance_to_parent || 0;  
   my $taxon_id        = $node->taxon_id;     
   my $scientific_name = $taxon->scientific_name();
-  my $taxon_mya       = $taxon->get_tagvalue('ensembl timetree mya');
+  my $taxon_mya       = $node->get_divergence_time();
   my $taxon_alias     = $node->get_common_name();
  
 

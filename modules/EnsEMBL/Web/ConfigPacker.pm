@@ -1253,19 +1253,6 @@ sub _summarise_compara_db {
   }
   ###################################################################
   
-  ###################################################################
-  ## Section for storing the taxa properties
-  
-  # We need the age of each ancestor
-  $res_aref = $dbh->selectall_arrayref(qq(SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class='ensembl timetree mya'));
-  foreach my $row (@$res_aref) {
-    my ($taxon_id, $taxon_mya) = @$row;
-    $self->db_tree->{$db_name}{'TAXON_MYA'}{$taxon_id} = $taxon_mya;
-  }
-
-
-  ###################################################################
-  
   $dbh->disconnect;
 }
 

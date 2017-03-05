@@ -69,11 +69,10 @@ sub content {
 
   my $tagvalues       = $node->get_tagvalue_hash;
   my $speciesTreeNode = $node->species_tree_node();
-  my $taxon_id             = $speciesTreeNode->taxon_id;
-     $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
   my $taxon_name      = $speciesTreeNode->get_scientific_name;
-  my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
+  my $taxon_mya       = $speciesTreeNode->get_divergence_time;
   my $taxon_alias     = $speciesTreeNode->get_common_name;
+
   my $caption         = 'Taxon: ';
   
   if (defined $taxon_alias) {
@@ -106,7 +105,7 @@ sub content {
        
     $self->add_entry({
       type  => 'Lost taxa',
-      label => join(', ', map { $_->get_common_name } @$lost_taxa ),
+      label => join(', ', map { $_->get_common_name || $_->get_scientific_name } @$lost_taxa ),
       order => 5.6
     });
   }
