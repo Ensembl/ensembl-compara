@@ -318,7 +318,7 @@ sub retrieve_all_direct_attributes {
 
   my $full_ga = $self->fetch_by_dbID($genomic_align->dbID);
   # NOTE: There is a slight risk that this may replace a node_id with undef
-  return $full_ga->copy($genomic_align);
+  return $full_ga->copy($genomic_align) if $full_ga;
 }
 
 
