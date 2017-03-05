@@ -47,6 +47,15 @@ Now, we need to set up the Compara API:
 	perl Makefile.PL
 	make
 
+Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
+files to be downloaded from
+(ftp://ftp.ensembl.org/pub/data_files/multi/hal_files/) in order to be fetched with the
+API. The files must have the same name as on the FTP and must be placed
+under `multi/hal_files/` within your directory of choice.
+Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
+the latter.
+
+
 # Contact us
 
 Please email comments or questions to the public Ensembl developers list at
