@@ -1256,16 +1256,7 @@ sub _summarise_compara_db {
   ###################################################################
   ## Section for storing the taxa properties
   
-  # Default name is the name stored in species_tree_node: the glyphset will use it by default
-
-  # But a better name is the ensembl alias
-  $res_aref = $dbh->selectall_arrayref(qq(SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class='ensembl alias name'));
-  foreach my $row (@$res_aref) {
-    my ($taxon_id, $taxon_name) = @$row;
-    $self->db_tree->{$db_name}{'TAXON_NAME'}{$taxon_id} = $taxon_name;
-  }
-
-  # And we need the age of each ancestor
+  # We need the age of each ancestor
   $res_aref = $dbh->selectall_arrayref(qq(SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class='ensembl timetree mya'));
   foreach my $row (@$res_aref) {
     my ($taxon_id, $taxon_mya) = @$row;
