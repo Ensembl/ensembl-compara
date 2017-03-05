@@ -83,7 +83,7 @@ sub _ids_string {
 sub _synchronise {
     my ($self, $species_set) = @_;
 
-    assert_ref($species_set, 'Bio::EnsEMBL::Compara::SpeciesSet', 'argument to _synchronise');
+    assert_ref($species_set, 'Bio::EnsEMBL::Compara::SpeciesSet', 'species_set');
 
     my $dbID        = $species_set->dbID;
     my $genome_dbs  = $species_set->genome_dbs;
@@ -373,7 +373,7 @@ sub fetch_all_by_name {
 sub fetch_all_by_GenomeDB {
     my ($self, $genome_db) = @_;
 
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
     my $genome_db_id = $genome_db->dbID or throw "[$genome_db] must have a dbID";
 

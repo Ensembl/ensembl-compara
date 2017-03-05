@@ -224,7 +224,7 @@ sub method_link_species_set {
 
     if(@_) {
         my $mlss = shift;
-        assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
+        assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
         $self->{'_method_link_species_set'} = $mlss;
         $self->{'_method_link_species_set_id'} = $mlss->dbID;
 
@@ -336,7 +336,7 @@ sub deep_copy {
 sub add_Member {
     my ($self, $member) = @_;
 
-    assert_ref($member, $self->member_class);
+    assert_ref($member, $self->member_class, 'member');
     my $source_name = $member->source_name() || 'NA';
     my $taxon_id = $member->taxon_id() || 'NA';
     my $genome_db_id = $member->genome_db_id() || 'NA';
@@ -564,7 +564,7 @@ sub get_Member_by_source_taxon {
 sub get_Member_by_GenomeDB {
     my ($self, $genome_db) = @_;
     throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     my ($scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
     return $self->_get_Member($scope, $key);
 }
@@ -586,7 +586,7 @@ sub get_Member_by_GenomeDB {
 sub get_Member_by_source_GenomeDB {
     my ($self, $source_name, $genome_db) = @_;
     throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     my ($scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
     return $self->_get_Member($scope, $key);
 }

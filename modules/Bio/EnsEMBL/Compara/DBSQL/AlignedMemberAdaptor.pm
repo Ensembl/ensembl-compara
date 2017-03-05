@@ -84,7 +84,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 sub fetch_all_by_AlignedMemberSet {
     my ($self, $set) = @_;
-    assert_ref($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
+    assert_ref($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'set');
 
     if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::Homology')) {
         return $self->fetch_all_by_Homology($set);
@@ -111,7 +111,7 @@ sub fetch_all_by_AlignedMemberSet {
 
 sub fetch_all_by_Homology {
     my $self = shift;
-    assert_ref($_, 'Bio::EnsEMBL::Compara::Homology') for @_;
+    assert_ref($_, 'Bio::EnsEMBL::Compara::Homology', 'homology') for @_;
     throw("At least 1 argument is expected in AlignedMemberAdaptor::fetch_all_by_Homology()") unless scalar(@_);
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos', 'hm.homology_id'];
@@ -132,7 +132,7 @@ sub fetch_all_by_Homology {
 
 sub fetch_all_by_Family {
     my ($self, $family) = @_;
-    assert_ref($family, 'Bio::EnsEMBL::Compara::Family');
+    assert_ref($family, 'Bio::EnsEMBL::Compara::Family', 'family');
 
     my $extra_columns = ['fm.cigar_line'];
     my $join = [[['family_member', 'fm'], 'm.seq_member_id = fm.seq_member_id', $extra_columns]];
@@ -157,7 +157,7 @@ sub fetch_all_by_Family {
 
 sub fetch_all_by_GeneTree {
     my ($self, $tree) = @_;
-    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree');
+    assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
 
     return $self->fetch_all_by_gene_align_id($tree->gene_align_id);
 }

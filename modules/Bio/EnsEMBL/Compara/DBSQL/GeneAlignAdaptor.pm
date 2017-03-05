@@ -47,7 +47,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 sub fetch_all_by_SeqMember {
   my ($self, $member) = @_;
 
-  assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
+  assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember', 'member');
 
   my $join = [[['gene_align_member', 'gam'], 'ga.gene_align_id = gam.gene_align_id']];
   my $constraint = 'gam.seq_member_id = ?';
@@ -105,7 +105,7 @@ sub _objs_from_sth {
 
 sub store {
     my ($self, $aln, $force_new_alignment) = @_;
-    assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
+    assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'aln');
   
     # dbID for GeneTree is too dodgy, so we need to use gene_align_id
     my $id = $aln->isa('Bio::EnsEMBL::Compara::GeneTree') ? $aln->gene_align_id() : $aln->dbID();

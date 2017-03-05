@@ -94,7 +94,7 @@ sub fetch_all_by_Member {
   my ($method_link_type, $method_link_species_set, $species_tree_node_ids, $target_species, $target_taxon) =
     rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS TARGET_SPECIES TARGET_TAXON)], @args);
 
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member', 'member');
 
   if ($target_species or $target_taxon) {
     throw("-METHOD_LINK_SPECIES_SET cannot be used together with -TARGET_SPECIES or -TARGET_TAXON") if $method_link_species_set;
@@ -213,8 +213,8 @@ sub _find_target_mlsss {
 sub fetch_by_Member_Member {
   my ($self, $member1, $member2) = @_;
 
-  assert_ref($member1, 'Bio::EnsEMBL::Compara::Member');
-  assert_ref($member2, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($member1, 'Bio::EnsEMBL::Compara::Member', 'member1');
+  assert_ref($member2, 'Bio::EnsEMBL::Compara::Member', 'member2');
   my $pid1 = $member1->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member1->canonical_member_id : $member1->dbID;
   my $pid2 = $member2->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member2->canonical_member_id : $member2->dbID;
 
@@ -399,12 +399,12 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
     if (check_ref($ref, 'Bio::EnsEMBL::Compara::GenomeDB')) {
         $species = $ref;
     } else {
-        assert_ref($ref, 'Bio::EnsEMBL::Compara::Member');
+        assert_ref($ref, 'Bio::EnsEMBL::Compara::Member', 'member');
         $species = $ref->genome_db;
     }
     my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
 
-    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon', 'boundary_species');
     # The last common ancestor of $species1 and $species2 defines the boundary
     my $lca = $self->db->get_NCBITaxonAdaptor->fetch_first_shared_ancestor_indexed($species->taxon, $boundary_species);
 
@@ -475,7 +475,7 @@ sub fetch_orthocluster_with_Member {
   my $self = shift;
   my $member = shift;
   
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member', 'member');
   $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
 
   my $ortho_set = {};
@@ -594,7 +594,7 @@ sub _objs_from_sth {
 sub store {
   my ($self,$hom) = @_;
   
-  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
+  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 
   $hom->adaptor($self);
 
@@ -602,7 +602,7 @@ sub store {
     $self->db->get_MethodLinkSpeciesSetAdaptor->store($hom->method_link_species_set);
   }
 
-  assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
+  assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'hom->method_link_species_set');
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
@@ -638,7 +638,7 @@ sub update_genetic_distance {
   my $self = shift;
   my $hom = shift;
 
-  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
+  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 
   throw("homology object must have dbID")
     unless ($hom->dbID);

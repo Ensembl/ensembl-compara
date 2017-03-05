@@ -260,7 +260,7 @@ sub prune_tree {
 sub get_timetree_estimate {
     my ($self, $node) = @_;
 
-    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
     return if $node->is_leaf();
     my @children = @{$node->children};
     if (scalar(@children) == 1) {

@@ -81,7 +81,7 @@ sub fetch_all_homology_orphans_by_GenomeDB {
   my $self = shift;
   my $gdb = shift;
 
-  assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+  assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
 
   my $constraint = 'm.genome_db_id = ?';
   $self->bind_param_generic_fetch($gdb->dbID, SQL_INTEGER);
@@ -215,7 +215,7 @@ sub init_instance_from_rowhash {
 sub store {
     my ($self, $member) = @_;
    
-    assert_ref($member, 'Bio::EnsEMBL::Compara::GeneMember');
+    assert_ref($member, 'Bio::EnsEMBL::Compara::GeneMember', 'member');
 
 
   my $sth = $self->prepare("INSERT ignore INTO gene_member (stable_id,version, source_name,

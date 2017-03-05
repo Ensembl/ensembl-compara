@@ -88,7 +88,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_GeneMember {
   my ($self, $gene_member) = @_;
 
-  assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
+  assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember', 'gene_member');
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'], [['seq_member', 'sm'], 'fm.seq_member_id = sm.seq_member_id'] ];
   my $constraint = 'sm.gene_member_id = ?';
@@ -132,7 +132,7 @@ sub fetch_all_by_Gene {
 sub fetch_by_SeqMember {
   my ($self, $seq_member) = @_;
 
-  assert_ref($seq_member, 'Bio::EnsEMBL::Compara::SeqMember');
+  assert_ref($seq_member, 'Bio::EnsEMBL::Compara::SeqMember', 'seq_member');
 
   my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
   my $constraint = 'fm.seq_member_id = ?';
@@ -276,7 +276,7 @@ sub _objs_from_sth {
 sub store {
   my ($self,$fam) = @_;
 
-  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family');
+  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family', 'fam');
 
   $fam->adaptor($self);
 
@@ -322,7 +322,7 @@ sub store {
 sub update {
   my ($self, $fam, $content_only) = @_;
 
-  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family');
+  assert_ref($fam, 'Bio::EnsEMBL::Compara::Family', 'fam');
 
   unless ($content_only) {
     my $sql = 'UPDATE family SET stable_id = ?, version = ?, method_link_species_set_id = ?, description = ?, description_score = ? WHERE family_id = ?';

@@ -399,7 +399,7 @@ sub parse_newick_into_tree {
   # check here on the leaf to test if they all are GeneTreeMembers as
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$tree->root->get_all_leaves}) {
-    assert_ref($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+    assert_ref($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember', 'tree leaf');
   }
   $self->interpret_treebest_tags($tree->root, $ref_support);
   return $tree;

@@ -195,7 +195,7 @@ sub store_nodes_rec {
 sub store_node {
     my ($self, $node) = @_;
 
-    assert_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+    assert_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode', 'node');
 
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
         my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
@@ -233,8 +233,8 @@ sub store_node {
 sub merge_nodes {
   my ($self, $node1, $node2) = @_;
 
-  assert_ref($node1, 'Bio::EnsEMBL::Compara::GeneTreeNode');
-  assert_ref($node2, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  assert_ref($node1, 'Bio::EnsEMBL::Compara::GeneTreeNode', 'node1');
+  assert_ref($node2, 'Bio::EnsEMBL::Compara::GeneTreeNode', 'node2');
 
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
 
@@ -285,7 +285,7 @@ sub delete_nodes_not_in_tree
   my $tree = shift;
 
   # NOTE: $tree is assumed to be a root node
-  assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode');
+  assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode', 'tree');
   my %node_hash;
   foreach my $node (@{$tree->get_all_nodes}) {
     $node_hash{$node->node_id} = $node;

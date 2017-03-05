@@ -190,7 +190,7 @@ sub create_link_to_node {
   my $node = shift;
   my $distance = shift;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node', 'node');
   
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
@@ -210,7 +210,7 @@ sub create_directed_link_to_node {
   my $node = shift;
   my $distance = shift;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node', 'node');
   
   #print("create_link_to_node\n");  $self->print_node; $node->print_node;
   
@@ -259,7 +259,7 @@ sub _unlink_node_in_hash {
 sub unlink_neighbor {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node', 'node');
 
   my $link = $self->link_for_neighbor($node);  
   throw("$self not my neighbor $node") unless($link);
@@ -354,7 +354,7 @@ sub link_for_neighbor {
   my $self = shift;
   my $node = shift;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node', 'node');
 
   return $self->{'_obj_id_to_link'}->{$node};
 }
@@ -405,7 +405,7 @@ sub equals {
 sub like {
   my $self = shift;
   my $other = shift;
-  assert_ref($other, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($other, 'Bio::EnsEMBL::Compara::Graph::Node', 'other');
   return 1 if($self eq $other);
   return 0 unless($self->link_count == $other->link_count);
   foreach my $link (@{$self->links}) {
@@ -419,7 +419,7 @@ sub has_neighbor {
   my $self = shift;
   my $node = shift;
   
-  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::Graph::Node', 'node');
   
   return 1 if(defined($self->{'_obj_id_to_link'}->{$node}));
   return 0;

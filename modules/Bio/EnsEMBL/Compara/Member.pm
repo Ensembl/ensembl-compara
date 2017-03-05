@@ -286,7 +286,7 @@ sub taxon {
 
   if (@_) {
     my $taxon = shift;
-    assert_ref($taxon, 'Bio::EnsEMBL::Compara::NCBITaxon');
+    assert_ref($taxon, 'Bio::EnsEMBL::Compara::NCBITaxon', 'taxon');
     $self->{'_taxon'} = $taxon;
     $self->taxon_id($taxon->ncbi_taxid);
   } else {
@@ -329,7 +329,7 @@ sub genome_db {
 
   if (@_) {
     my $genome_db = shift;
-    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     $self->{'_genome_db'} = $genome_db;
     $self->genome_db_id($genome_db->dbID);
   } else {

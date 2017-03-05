@@ -162,7 +162,7 @@ sub fetch_all_by_dbID_list {
 sub fetch_parent_for_node {
     my ($self, $node) = @_;
 
-    assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+    assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
     return $node->{'_parent_link'}->get_neighbor($node) if defined $node->{'_parent_link'};
     my $parent = undef;
@@ -175,7 +175,7 @@ sub fetch_parent_for_node {
 sub fetch_all_children_for_node {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
   my $constraint = 'parent_id = ?';
   $self->bind_param_generic_fetch($node->node_id, SQL_INTEGER);
@@ -188,7 +188,7 @@ sub fetch_all_children_for_node {
 sub fetch_all_leaves_indexed {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
   my $table= ($self->_tables)[0]->[1];
   $self->bind_param_generic_fetch($node->_root_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($node->left_index, SQL_INTEGER);
@@ -201,7 +201,7 @@ sub fetch_subtree_under_node {
   my $self = shift;
   my $node = shift;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
   unless ($node->left_index && $node->right_index) {
     warning("fetch_subtree_under_node subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=".$node->node_id.". Returning node.\n");
@@ -290,7 +290,7 @@ sub fetch_all_by_root_id {
 sub fetch_root_by_node {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
   my $alias = ($self->_tables)[0]->[1];
 
@@ -364,7 +364,7 @@ sub store_nodes_rec {
 sub update {
   my ($self, $node) = @_;
 
-  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet');
+  assert_ref($node, 'Bio::EnsEMBL::Compara::NestedSet', 'node');
 
  my $table= ($self->_tables)[0]->[0];
   my $sth = $self->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ?, distance_to_parent = ? WHERE $table.node_id = ?");
