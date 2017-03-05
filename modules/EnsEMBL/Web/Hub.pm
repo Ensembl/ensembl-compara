@@ -1050,7 +1050,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
   my $favourites    = $self->get_favourite_species;
   if (scalar @$favourites) {
     my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @$favourites;
-    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+    push @final_sets, ['Favourite species', [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
   }
 
   ## Output in taxonomic groups, ordered by common name
@@ -1060,7 +1060,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
       my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
       my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
       my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @sorted_by_common;
-      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+      push @final_sets, [$name_to_use, [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
   }
 
   return \@final_sets;
