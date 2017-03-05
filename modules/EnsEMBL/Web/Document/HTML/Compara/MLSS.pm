@@ -707,13 +707,16 @@ sub fetch_pairwise_input {
       foreach my $param (split ' ', $pairwise_params) {
         my ($p, $v) = split '=', $param;
         
-        if ($p eq 'Q' && $v =~ /^\/nfs/) {
+        if ($p eq 'Q' && $v =~ /^\$ENSEMBL_CVS_ROOT_DIR/) {
           ## slurp in the matrix file
           my @path  = split '/', $v;
-          my $file  = $path[-1];
-          my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/genome/compara/$file";
+          my $server_root   = $hub->species_defs->ENSEMBL_SERVERROOT;
+          my ($matrix_name) = ($path[-1] =~ /(.*).matrix/);
+          my $file  = $v;
+             $file  =~ s/^\$ENSEMBL_CVS_ROOT_DIR/$server_root/;
+          my $fh    = open IN, $file;
           
-          $v  = '<pre>';
+          $v  = '<pre>' . ucfirst($matrix_name) . ":\n";
           while (<IN>) {
             $v .= $_;
           }
