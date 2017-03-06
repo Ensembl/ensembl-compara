@@ -1,8 +1,8 @@
 use 5.014002;
 use ExtUtils::MakeMaker;
 
-die "Environment variable PROGRESSIVE_CACTUS_DIR must be defined" unless ( $ENV{PROGRESSIVE_CACTUS_DIR} );
-my $cactus = $ENV{PROGRESSIVE_CACTUS_DIR};
+my $cactus = $ARGV[0] || $ENV{PROGRESSIVE_CACTUS_DIR};
+die "The path to the progressiveCactus installation must be provided, either on the command-line or via the environment PROGRESSIVE_CACTUS_DIR" unless $cactus;
 
 print "! Using progressiveCactus installation at $cactus\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
