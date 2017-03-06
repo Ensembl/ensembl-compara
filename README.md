@@ -30,7 +30,7 @@ dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 
 If working with HAL files, additional setup is required. First, install progressiveCactus:
 
-	git clone git://github.com/glennhickey/progressiveCactus.git
+	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
 	git pull
 	git submodule update --init
