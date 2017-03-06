@@ -52,7 +52,6 @@ our $ENSEMBL_START_SERVERS        =  7;                                         
 our $ENSEMBL_PORT                 = 80;                                                   # Port to run Apache (for Listen directive)
 our $ENSEMBL_SERVERNAME           = 'www.mydomain.org';                                   # For Apache ServerName directive (External domain name for the web server)
 our $ENSEMBL_SERVERADMIN          = 'webmaster&#064;mydomain.org';                        # For Apache ServerAdmin directive
-our $ENSEMBL_SETENV               = { LD_LIBRARY_PATH => $ENV{'LD_LIBRARY_PATH'} || '' }; # For Apache SetEnv directive
 ###############################################################################
 
 
@@ -166,7 +165,8 @@ our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl
 ###############################################################################
 ## Genomic data served from files
 our $DATAFILE_ROOT        = defer { $ENSEMBL_SERVERROOT };                                  ## Base path for ro data files
-our $DATAFILE_BASE_PATH   = defer { "$DATAFILE_ROOT/data_files" };                          ## Path to ro data files 
+our $DATAFILE_BASE_PATH   = defer { "$DATAFILE_ROOT/data_files" };                          ## Path to ro data files
+our $COMPARA_HAL_DIR      = defer { "$DATAFILE_BASE_PATH/multi/" };                         ## Path for Compara HAL files
 ###############################################################################
 
 ###############################################################################
@@ -237,6 +237,16 @@ our %__species_aliases;
 
 
 ###############################################################################
+# Variables exported for ENV for apache processes
+our $ENSEMBL_SETENV                   = {}; # Map of ENV variables nams to SiteDefs variable names for setting ENV (check _set_env method)
+$ENSEMBL_SETENV->{'http_proxy'}       = 'HTTP_PROXY';
+$ENSEMBL_SETENV->{'https_proxy'}      = 'HTTP_PROXY';
+$ENSEMBL_SETENV->{'COMPARA_HAL_DIR'}  = 'COMPARA_HAL_DIR';
+$ENSEMBL_SETENV->{'UDC_CACHEDIR'}     = 'UDC_CACHEDIR';
+###############################################################################
+
+
+###############################################################################
 ## Configurations to map URLs to appropriate Controllers and data Objects - DO NOT CHANGE THESE
 our $OBJECT_TO_CONTROLLER_MAP = {
   Gene                => 'Page',
@@ -295,6 +305,9 @@ _update_conf();
 
 # Populate species aliases
 _set_species_aliases();
+
+# Set ENV variables as specified in ENSEMBL_SETENV
+_set_env();
 
 # Finalise other configs that depends upon plugins SiteDefs.
 $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
@@ -568,6 +581,22 @@ sub _populate_plugins_list {
         push @plugins_seen,$p->[0];
       }
       push @$ENSEMBL_PLUGINS,@to_add;
+    }
+  }
+}
+
+sub _set_env {
+  ## Sets env variables for the apache server process or any script that's using SiteDefs
+  ## This gets called once all the plugins are loaded and deferred configs are built
+  no strict qw(refs);
+
+  for (keys %$ENSEMBL_SETENV) {
+    if (defined $ENSEMBL_SETENV->{$_}) {
+      my $var = $ENSEMBL_SETENV->{$_};
+      $ENV{$_} = ${"SiteDefs::$var"};
+      die "Unable to set ENV value for '$var' from \$SiteDefs::$var: $@" if $@;
+    } else {
+      delete $ENV{$_};
     }
   }
 }
