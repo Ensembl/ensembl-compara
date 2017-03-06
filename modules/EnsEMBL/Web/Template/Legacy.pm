@@ -54,7 +54,15 @@ sub add_body {
     account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
-    species_bar      EnsEMBL::Web::Document::Element::SpeciesBar
+  ));
+
+  if ($self->hub->species && $self->hub->species !~ /multi|common/i) { 
+    $page->add_body_elements(qw(
+      species_bar      EnsEMBL::Web::Document::Element::SpeciesBar
+    ));
+  }
+  
+  $page->add_body_elements(qw(
     tabs             EnsEMBL::Web::Document::Element::Tabs
     navigation       EnsEMBL::Web::Document::Element::Navigation
     tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
@@ -89,9 +97,10 @@ sub render_masthead {
   my ($self, $elements) = @_;
 
   ## MASTHEAD & GLOBAL NAVIGATION
-  my $masthead_class = '';
-  if ($self->hub->species && $self->hub->species !~ /multi|common/i) {
-    $masthead_class = $self->hub->type =~ /Info|Search/ ? ' no-tabs' : ' with-tabs';
+  my $masthead_class = ' no-tabs';
+  if ($self->hub->species && $self->hub->species !~ /multi|common/i 
+                          && $self->hub->type !~ /Info|Search/) {
+    $masthead_class = ' with-tabs';
   }
 
   return qq(
