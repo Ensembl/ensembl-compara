@@ -139,10 +139,7 @@ sub _detect_location_on_platform {
     my ($self) = @_;
 
     my $data_dir;
-    if ( eval {require SiteDefs} ){
-        # web setup
-        $data_dir = $SiteDefs::DATAFILE_BASE_PATH . '/multi/';
-    } elsif ( defined $ENV{COMPARA_HAL_DIR} ) {
+    if ( defined $ENV{COMPARA_HAL_DIR} ) {
         $data_dir = $ENV{COMPARA_HAL_DIR};
         die ( "$data_dir (defined in \$COMPARA_HAL_DIR) does not exist" ) unless ( -e $data_dir );
     } else {
