@@ -23,6 +23,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Configuration);
 
+sub has_tabs { return 1; }
+
 sub query_string   { return ''; }
 
 sub set_default_action {

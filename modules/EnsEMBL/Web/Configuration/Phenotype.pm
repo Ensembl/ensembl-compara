@@ -23,6 +23,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Configuration);
 
+sub has_tabs { return 1; }
+
 sub caption { return 'Phenotype'; }
 
 sub modify_page_elements { $_[0]->page->remove_body_element('summary'); }

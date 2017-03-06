@@ -25,8 +25,10 @@ use parent qw(EnsEMBL::Web::Template);
 
 sub init {
   my $self = shift;
-  $self->{'main_class'}     = 'main';
-  $self->{'lefthand_menu'}  = 1;
+  $self->{'main_class'}       = 'main';
+  $self->{'lefthand_menu'}    = 1;
+  $self->{'has_species_bar'}  = $self->hub->species && $self->hub->species !~ /multi|common/i ? 1 : 0;
+  $self->{'has_tabs'}         = $self->hub->controller->configuration->has_tabs;
   $self->add_head;
   $self->add_body;
 }
@@ -56,14 +58,19 @@ sub add_body {
     tools            EnsEMBL::Web::Document::Element::ToolLinks
   ));
 
-  if ($self->hub->species && $self->hub->species !~ /multi|common/i) { 
+  if ($self->{'has_species_bar'}) { 
     $page->add_body_elements(qw(
       species_bar      EnsEMBL::Web::Document::Element::SpeciesBar
     ));
   }
   
+  if ($self->{'has_tabs'}) { 
+    $page->add_body_elements(qw(
+      tabs            EnsEMBL::Web::Document::Element::Tabs
+    ));
+  }
+  
   $page->add_body_elements(qw(
-    tabs             EnsEMBL::Web::Document::Element::Tabs
     navigation       EnsEMBL::Web::Document::Element::Navigation
     tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
     summary          EnsEMBL::Web::Document::Element::Summary
@@ -97,10 +104,12 @@ sub render_masthead {
   my ($self, $elements) = @_;
 
   ## MASTHEAD & GLOBAL NAVIGATION
-  my $masthead_class = ' no-tabs';
-  if ($self->hub->species && $self->hub->species !~ /multi|common/i 
-                          && $self->hub->type !~ /Info|Search/) {
-    $masthead_class = ' with-tabs';
+  my $masthead_class = '';
+  if ($self->{'has_species_bar'}) {
+    $masthead_class = $self->{'has_tabs'} ? ' bar_and_tabs' : ' bar_only';
+  }
+  elsif ($self->{'has_tabs'}) {
+    $masthead_class = ' tabs_only';
   }
 
   return qq(

@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Genome';
 }
 
+sub has_tabs { return 1; }
+
 sub short_caption {
   my $self = shift;
   return 'LRG-based displays';

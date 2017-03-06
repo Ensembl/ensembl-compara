@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = 'Explore';
 }
 
+sub has_tabs { return 1; }
+
 sub user_tree { return 1; }
 
 sub tree_cache_key {
