@@ -592,9 +592,7 @@ sub _set_env {
 
   for (keys %$ENSEMBL_SETENV) {
     if (defined $ENSEMBL_SETENV->{$_}) {
-      my $var = $ENSEMBL_SETENV->{$_};
-      $ENV{$_} = ${"SiteDefs::$var"};
-      die "Unable to set ENV value for '$var' from \$SiteDefs::$var: $@" if $@;
+      $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
     } else {
       delete $ENV{$_};
     }
