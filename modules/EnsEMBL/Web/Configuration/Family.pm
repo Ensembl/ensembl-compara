@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Details';
 }
 
+sub has_tabs { return 1; }
+
 sub caption {
   my $self = shift;
   my $fm = $self->hub->param('fm');

@@ -28,6 +28,7 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = 'Explore';
 }
 
+sub has_tabs { return 1; }
 
 sub populate_tree {
   my $self = shift;
