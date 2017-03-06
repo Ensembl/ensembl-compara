@@ -30,7 +30,7 @@ dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 
 If working with HAL files, additional setup is required. First, install progressiveCactus:
 
-	git clone git://github.com/glennhickey/progressiveCactus.git
+	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
 	git pull
 	git submodule update --init
@@ -39,12 +39,12 @@ If working with HAL files, additional setup is required. First, install progress
 	git pull
 	cd ../../
 	make
-	export PROGRESSIVE_CACTUS_DIR=$PWD
+	pwd  # Prints the installation path
 
 Now, we need to set up the Compara API:
 
 	cd ensembl-compara/xs/HALXS
-	perl Makefile.PL
+	perl Makefile.PL path/to/cactus
 	make
 
 Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
@@ -55,6 +55,8 @@ under `multi/hal_files/` within your directory of choice.
 Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
 the latter.
 
+For production, you should define the `PROGRESSIVE_CACTUS_DIR` environment
+variable to the location of progressiveCactus.
 
 # Contact us
 
