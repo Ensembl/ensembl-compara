@@ -116,7 +116,7 @@ while (my($set, $info) = each(%write_dirs)) {
     }
     else {
       warn_string("Creating directory $path...");
-      my $cmd = "mkdir -p $path; chmod 755 $path";
+      my $cmd = "mkdir -p $path; chmod 775 $path";
       system($cmd) and warn_string("Could not create directory $path");
     }
   }
