@@ -39,8 +39,17 @@ sub _species_sets {}
 
 sub _get_all_analysed_species {
   my ($self, $cdb) = @_;
-  $self->{"_mlss_adaptor_$cdb"} ||= $self->hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
-  my $self->{'_all_analysed_species'} ||= {map {ucfirst($_->name) => 1} @{$self->{"_mlss_adaptor_$cdb"}->fetch_all_by_method_link_type('PROTEIN_TREES')->[0]->species_set->genome_dbs}};
+  if (!$self->{'_all_analysed_species'}) {
+    $self->{"_mlss_adaptor_$cdb"} ||= $self->hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
+    my $pt_mlsss = $self->{"_mlss_adaptor_$cdb"}->fetch_all_by_method_link_type('PROTEIN_TREES');
+    my $best_pt_mlss;
+    if (scalar(@$pt_mlsss) > 1) {
+      ($best_pt_mlss) = grep {$_->species_set->name eq 'collection-default'} @$pt_mlsss;
+    } else {
+      $best_pt_mlss = $pt_mlsss->[0];
+    }
+    $self->{'_all_analysed_species'} = {map {ucfirst($_->name) => 1} @{$best_pt_mlss->species_set->genome_dbs}};
+  }
   return %{$self->{'_all_analysed_species'}};
 }
 
