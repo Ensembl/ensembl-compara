@@ -394,22 +394,29 @@ sub _update_conf {
   # plugin order validation
   foreach my $plugin (sort { $order_validation{$a}{'order'} <=> $order_validation{$b}{'order'} } keys %order_validation) {
 
+    # requires, before, after keys could be strings or arrayrefs
+    for (qw(requires before after)) {
+      $order_validation{$plugin}{$_} = $order_validation{$plugin}{$_} && !ref $order_validation{$plugin}{$_}
+        ? [$order_validation{$plugin}{$_}]
+        : $order_validation{$plugin}{$_} || [];
+    }
+
     # requires
-    foreach my $required (@{$order_validation{$plugin}{'requires'} || []}) {
+    foreach my $required (@{$order_validation{$plugin}{'requires'}}) {
       if (!exists $order_validation{$required}) {
         warn "Plugin Validation Error: Plugin $plugin needs plugin $required to be present.\n";
       }
     }
 
     # after
-    foreach my $after (@{$order_validation{$plugin}{'after'} || []}) {
+    foreach my $after (@{$order_validation{$plugin}{'after'}}) {
       if (exists $order_validation{$after} && $order_validation{$after}{'order'} >= $order_validation{$plugin}{'order'}) {
         warn "Plugin Validation Error: Plugin $plugin needs to be loaded after plugin $after.\n";
       }
     }
 
     # before
-    foreach my $before (@{$order_validation{$plugin}{'before'} || []}) {
+    foreach my $before (@{$order_validation{$plugin}{'before'}}) {
       if (exists $order_validation{$before} && $order_validation{$before}{'order'} <= $order_validation{$before}{'order'}) {
         warn "Plugin Validation Error: Plugin $plugin needs to be loaded before plugin $before.\n";
       }
