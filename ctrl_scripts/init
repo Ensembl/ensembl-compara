@@ -45,21 +45,24 @@ BEGIN {
   require "$Bin/helper.pl";
 };
 
-my $tmp_dir = $SiteDefs::ENSEMBL_TMP_DIR;
-
 my %write_dirs = (
-                  'biomart'     => '',
-                  'failure_dir' => 'ENSEMBL_FAILUREDIR',
-                  'robots_txt'  => 'ENSEMBL_ROBOTS_TXT_DIR',
-                  'img'         => 'ENSEMBL_TMP_DIR_IMG',
-                  'persistent'  => '', 
-                  'precache'    => 'ENSEMBL_PRECACHE_DIR',
-                  'procedure'   => '',
-                  'server'      => 'ENSEMBL_SYS_DIR',
-                  'server/logs' => '$ENSEMBL_LOGDIR',
-                  'temporary'   => '',
-                  'tmp'         => 'ENSEMBL_TMP_DIR',
-                  'udcCache'    => 'UDC_CACHEDIR',
+                  'tmp'       => ['ENSEMBL_TMP_DIR', {
+                                    'tmp'         => 'ENSEMBL_TMP_DIR',
+                                    'server'      => 'ENSEMBL_SYS_DIR',
+                                    'img'         => 'ENSEMBL_TMP_DIR_IMG',
+                                    'precache'    => 'ENSEMBL_PRECACHE_DIR',
+                                    'udcCache'    => 'UDC_CACHEDIR',
+                                    'failure_dir' => 'ENSEMBL_FAILUREDIR',
+                                    'server/logs' => '$ENSEMBL_LOGDIR',
+                                    'robots_txt'  => 'ENSEMBL_ROBOTS_TXT_DIR',
+                                    'procedure'   => '',
+                                    'biomart'     => '',
+                                  }],
+                  'userdata'  => ['ENSEMBL_USERDATA_DIR', {
+                                    'persistent' => '',
+                                    'temporary'   => '',
+                                  }],
+  
                   );
 
 # command line options
@@ -80,33 +83,41 @@ if ($help) {
   exit;
 }
 
-if (!-e $tmp_dir) {
-  die_string("ENSEMBL_TMP_DIR ($tmp_dir) does not exist. Please create it before running the init script.");
-}
+no strict qw(refs);
 
-if (!-w $tmp_dir) {
-  die_string("ENSEMBL_TMP_DIR ($tmp_dir) is not writable. Please set appropriate permissions before running the init script.");
-}
+while (my($set, $info) = each(%write_dirs)) {
 
-foreach my $key (sort keys %write_dirs) {
+  my $root      = $info->[0];
+  my $root_dir  = ${"SiteDefs::$root"};
 
-  no strict qw(refs);
-
-  my $conf = $write_dirs{$key};
-  my $path;
-
-  if ($conf) { ## Directory location is configurable
-    $path = ${"SiteDefs::$conf"};
+  if (!-e $root_dir) {
+    die_string("$root ($root_dir) does not exist. Please create it before running the init script.");
   }
 
-  $path ||= $tmp_dir.'/'.$key;
-
-  if (-e $path) {
-    warn_string("Directory $path already exists - skipping...");
+  if (!-w $root_dir) {
+    die_string("$root ($root_dir) is not writable. Please set appropriate permissions before running the init script.");
   }
-  else {
-    warn_string("Creating directory $path...");
-    my $cmd = "mkdir -p $path; chmod 755 $path";
-    system($cmd) and warn_string("Could not create directory $path");
+
+  my $sub_dirs = $info->[1];
+
+  foreach my $key (sort keys %$sub_dirs) {
+
+    my $conf = $write_dirs{$key};
+    my $path;
+
+    if ($conf) { ## Directory location is configurable
+      $path = ${"SiteDefs::$conf"};
+    }
+
+    $path ||= $root_dir.'/'.$key;
+
+    if (-e $path) {
+      warn_string("Directory $path already exists - skipping...");
+    }
+    else {
+      warn_string("Creating directory $path...");
+      my $cmd = "mkdir -p $path; chmod 755 $path";
+      system($cmd) and warn_string("Could not create directory $path");
+    }
   }
 }
