@@ -124,6 +124,7 @@ my ($before_start, $after_start) = before_after_hooks('start');
 my $cmd = sprintf '%s -d %s -f %s %s', $apache_bin || "$apache_dir/bin/httpd", $apache_dir, $apache_conf, join(' ', map("-D$_", @defines, $apache_define ? grep(/\S/, split ' ', $apache_define) : ()));
 
 require $_ for @$before_start;
+warn "========================\nStarting Apache: $cmd\n========================\n";
 system($cmd) and die_string("Could not start server: $!.\n[FATAL] Server start failed.");
 require $_ for @$after_start;
 
