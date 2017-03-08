@@ -1620,9 +1620,6 @@ sub _munge_meta {
     foreach my $alias (@{$meta_hash->{'species.alias'}||[]}) {
       $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$alias} = $species;
     }
-    unless ($meta_hash->{'species.alias'}) {
-      warn "Species $species has no aliases in its core database."; 
-    }
 
     ## Backwards compatibility
     $self->tree->{$species}{'SPECIES_BIO_NAME'}  = $bio_name;
