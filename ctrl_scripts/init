@@ -54,7 +54,6 @@ my %write_dirs = (
                                     'udcCache'    => 'UDC_CACHEDIR',
                                     'failure_dir' => 'ENSEMBL_FAILUREDIR',
                                     'server/logs' => '$ENSEMBL_LOGDIR',
-                                    'robots_txt'  => 'ENSEMBL_ROBOTS_TXT_DIR',
                                     'procedure'   => '',
                                     'biomart'     => '',
                                   }],

@@ -92,6 +92,11 @@ sub handler {
     
     return FORBIDDEN if $file =~ /\.\./;
 
+    ## Map robots.txt URL
+    if ($file =~ m#robots.txt#) {
+      $file = $SiteDefs::ENSEMBL_ROBOTS_TXT_DIR.'/robots.txt';
+    }
+
     ## Map URLs for temporary files that are stored outside the htdocs directory
     my %tmp_paths = (
                     $SiteDefs::ENSEMBL_TMP_URL        => $SiteDefs::ENSEMBL_TMP_DIR, 
