@@ -1387,9 +1387,14 @@ sub section_text {
 }
 
 sub section_height {
-  return 0 unless $_[0]->{'section_text'};
-  return 24 if @{ $_[0]->{'section_lines'}} == 1;
-  return 36;
+  my $self = shift;
+  my $section_height = 0;
+  if ($self->{'section_text'}) {
+    $section_height = @{$self->{'section_lines'}||[]} == 1 ? 24 : 36; 
+  }
+  ## Set in track config so we can retrieve it in new drawing code
+  $self->{'my_config'}->set('section_height', $section_height);
+  return $section_height;
 }
 
 
