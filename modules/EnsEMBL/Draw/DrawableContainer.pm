@@ -99,84 +99,28 @@ sub new {
     });
     
     ## Initiailize list of glyphsets for this configuration
-    my @glyphsets;
+    my $glyphsets = [];
     $container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
     
     if (($container->{'__type__'} || '') eq 'fake') {
-      my $classname = "$self->{'prefix'}::GlyphSet::comparafake";
-      next unless $self->dynamic_use($classname);
-      
-      my $glyphset;
-      eval { $glyphset = $classname->new($container, $config, $self->{'highlights'}, 1); };
-      $config->container_width(1);
-      push @glyphsets, $glyphset unless $@;
-
+      $self->_create_fake_glyphset($glyphsets, $config, $container, $legend);
     } else {
-      $self->_create_glyphsets(\@glyphsets, $config, $container, $legend);
+      $self->_create_glyphsets($glyphsets, $config, $container, $legend);
     }
    
-    ## Factoring out export - no need to do any drawing-related munging for that, surely?
-    ## TODO - replace text rendering with fetching features and passing to EnsEMBL::IO
     if ($config->get_parameter('text_export')) {
-      my $export_cache;
-    
-      foreach my $glyphset (@glyphsets) {
-        my $name         = $glyphset->{'my_config'}->id;
-        eval {
-          $glyphset->{'export_cache'} = $export_cache;
-        
-          my $text_export = $glyphset->render;
-        
-          if ($text_export) {
-            # Add a header showing the region being exported
-            if (!$self->{'export'}) {
-              my $container = $glyphset->{'container'};
-              my $config    = $self->{'config'};
-            
-              $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name)                    if $container->can('name');
-              $self->{'export'} .= sprintf("Gene:       %s\r\n", $config->core_object('gene')->long_caption)       if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
-              $self->{'export'} .= sprintf("Transcript: %s\r\n", $config->core_object('transcript')->long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
-              $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id)               if $container->isa('Bio::EnsEMBL::Translation');
-              $self->{'export'} .= "\r\n";
-            }
-          
-            $self->{'export'} .= $text_export;
-          }
-        
-          $export_cache = $glyphset->{'export_cache'};
-        };
-      
-        ## don't waste any more time on this row if there's nothing in it
-        if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
-          warn $@ if $@;
-          next;
-        }
-      }
+      $self->_do_export($glyphsets, $container);
     }
     else {
-      ## set the X-locations for each of the bump labels
 
+      ### The "section" is an optional multi-row track label 
+      ### with a coloured strip to group related tracks
       my $section = '';
-      my (%section_label_data,%section_label_dedup,$section_title_pending);
+      my (%section_label_data, %section_label_dedup, $section_title_pending);
       my (%section_colour);
-      foreach my $glyphset (@glyphsets) {
-        next unless defined $glyphset->label;
-        my $img = $glyphset->label_img;
-        my $img_width = 0;
-        my $img_pad = 4;
-        $img_width = $img->width+$img_pad if $img;
 
-        my $text = $glyphset->label_text;
-        $glyphset->recast_label(
-            $label_width-$img_width,$glyphset->max_label_rows,
-            $text, $config->font_face || 'arial',
-            $config->font_size || 100,
-            $colours->{lc $glyphset->{'my_config'}->get('_class')}
-                      {'default'} || 'black'
-        );
-        $glyphset->label->x(-$label_width - $margin + $img_width);
-        $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
-      }
+      ## set the X-locations for each of the bump labels
+      $self->_set_label_x($glyphsets, $config, $label_width, $margin, $colours);
     
       ## pull out alternating background colours for this script
       my $bgcolours = [
@@ -189,7 +133,7 @@ sub new {
       my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
       my %gang_data;
-      foreach my $glyphset (@glyphsets) {
+      foreach my $glyphset (@$glyphsets) {
         my $gang = $glyphset->my_config('gang');
         next unless $gang;
         $gang_data{$gang} ||= {};
@@ -199,12 +143,12 @@ sub new {
 
       ## go ahead and do all the database work
       my $next_section_col = 0;
-      foreach my $glyphset (@glyphsets) {
+      foreach my $glyphset (@$glyphsets) {
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         # NB: we guarantee render will always be called before the
-        #       subititle_* methods.
+        #       subtitle_* methods.
         my $A = time();
         $glyphset->render;
         my $B = time();
@@ -386,7 +330,7 @@ sub new {
         $yoffset += $glyphset->height + $trackspacing;
       }
     
-      push @{$self->{'glyphsets'}}, @glyphsets;
+      push @{$self->{'glyphsets'}}, @$glyphsets;
     
       $yoffset += $inter_space;
       $self->{'__extra_block_spacing__'} += $inter_space;
@@ -427,6 +371,18 @@ sub _init {
   
   bless( $self, $class );
   return $self;
+}
+
+sub _create_fake_glyphset {
+  my ($self, $glyphsets, $config, $container) = @_;
+
+  my $classname = "$self->{'prefix'}::GlyphSet::comparafake";
+  return unless $self->dynamic_use($classname);
+      
+  my $glyphset;
+  eval { $glyphset = $classname->new($container, $config, $self->{'highlights'}, 1); };
+  $config->container_width(1);
+  push @$glyphsets, $glyphset unless $@;
 }
 
 sub _create_glyphsets {
@@ -493,6 +449,69 @@ sub _create_glyphsets {
   }
 }
 
+sub _do_export {
+### Render data as text rather than image
+## TODO - replace text rendering with fetching features and passing to EnsEMBL::IO
+  my ($self, $glyphsets, $container) = @_;
+
+  my $config = $self->{'config'};
+  my $export_cache;
+    
+  foreach my $glyphset (@$glyphsets) {
+    my $name = $glyphset->{'my_config'}->id;
+    eval {
+          $glyphset->{'export_cache'} = $export_cache;
+        
+          my $text_export = $glyphset->render;
+        
+          if ($text_export) {
+            # Add a header showing the region being exported
+            if (!$self->{'export'}) {
+            
+              $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name)                    if $container->can('name');
+              $self->{'export'} .= sprintf("Gene:       %s\r\n", $config->core_object('gene')->long_caption)       if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
+              $self->{'export'} .= sprintf("Transcript: %s\r\n", $config->core_object('transcript')->long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
+              $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id)               if $container->isa('Bio::EnsEMBL::Translation');
+              $self->{'export'} .= "\r\n";
+            }
+          
+            $self->{'export'} .= $text_export;
+          }
+        
+          $export_cache = $glyphset->{'export_cache'};
+    };
+      
+    ## don't waste any more time on this row if there's nothing in it
+    if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
+      warn $@ if $@;
+      next;
+    }
+  }
+}
+
+sub _set_label_x {
+  my ($self, $glyphsets, $config, $label_width, $margin, $colours) = @_;
+
+  foreach my $glyphset (@$glyphsets) {
+    next unless defined $glyphset->label;
+    my $img = $glyphset->label_img;
+    my $img_width = 0;
+    my $img_pad = 4;
+    $img_width = $img->width + $img_pad if $img;
+
+    my $text = $glyphset->label_text;
+    $glyphset->recast_label(
+                              $label_width - $img_width, 
+                              $glyphset->max_label_rows,
+                              $text, 
+                              $config->font_face || 'arial',
+                              $config->font_size || 100,
+                              $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black'
+                            );
+    $glyphset->label->x(-$label_width - $margin + $img_width);
+    $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
+  }
+}
 
 ## render does clever drawing things
 
