@@ -113,12 +113,6 @@ sub new {
     }
     else {
 
-      ### The "section" is an optional multi-row track label 
-      ### with a coloured strip to group related tracks
-      my $section = '';
-      my (%section_label_data, %section_label_dedup, $section_title_pending);
-      my (%section_colour);
-
       ## set the X-locations for each of the bump labels
       $self->_set_label_x($glyphsets, $config, $label_width, $margin, $colours);
     
@@ -141,42 +135,40 @@ sub new {
         $glyphset->gang($gang_data{$gang});
       }
 
+      ### The "section" is an optional multi-row track label 
+      ### with a coloured strip to group related tracks
+      my $section = '';
+      my $section_info = {
+                          'colour'        => {},
+                          'label_dedup'   => {},
+                          'label_data'    => {},
+                          'title_pending' => 0,
+                          'label_width'   => $label_width,
+                          };
+
       ## go ahead and do all the database work
       my $next_section_col = 0;
       foreach my $glyphset (@$glyphsets) {
+
+        ## Build the section first, as it may require more space than the track data
+        $self->_build_section($glyphset, $section, $section_info);
+        my $section_height = $glyphset->section_height;
+
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         # NB: we guarantee render will always be called before the
         #       subtitle_* methods.
-        my $A = time();
+        #my $A = time();
         $glyphset->render;
-        my $B = time();
+        #my $B = time();
         #warn "$glyphset: ".($B-$A)."\n" if $B-$A>0.1;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
-        my $new_section = $glyphset->section;
-        my $section_zmenu = $glyphset->section_zmenu;
-        if($new_section and $section_zmenu) {
-          my $id = $section_zmenu->{'_id'};
-          unless($id and $section_label_dedup{$id}) {
-            $section_label_data{$new_section} ||= [];
-            push @{$section_label_data{$new_section}},$section_zmenu;
-            $section_label_dedup{$id} = 1 if $id;
-          }
-        }
-        if($section ne $new_section) {
-          $section = $new_section;
-          $section_title_pending = $section;
-        }
-        if($section_title_pending and not $glyphset->section_no_text) {
-          $glyphset->section_text($section_title_pending,$label_width);
-          $section_title_pending = undef;
-        }
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
 
-        $transform_obj->translatey(-$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height);
+        $transform_obj->translatey(-$gminy + $yoffset + $section_height + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
@@ -215,10 +207,10 @@ sub new {
           $gminy = $glyphset->miny;
         }
         my $sx = -$label_width - $margin;
-        my $sy = -$glyphset->section_height + 2;
+        my $sy = -$section_height + 2;
         if($glyphset->section_text) {
           my $section = $glyphset->section_text;
-          my $zmdata = $section_label_data{$section};
+          my $zmdata = $section_info->{'label_data'}{$section};
           my $url;
           if($zmdata) {
             $url = $self->{'config'}->hub->url({
@@ -232,17 +224,17 @@ sub new {
             });
           }
 
-          my $sec_colour = $section_colour{$section};
+          my $sec_colour = $section_info->{'colour'}{$section};
           unless($sec_colour) {
             $sec_colour = $section_colours[$next_section_col];
-            $section_colour{$section} = $sec_colour;
+            $section_info->{'colour'}{$section} = $sec_colour;
             $next_section_col = ($next_section_col+1) % @section_colours;
           }
           my $sec_off = -4;
           my @texts = @{$glyphset->section_lines};
           unshift @texts,''; # top blank
           my $leading = 12;
-          my $sec_off = $glyphset->miny - $glyphset->section_height;
+          my $sec_off = $glyphset->miny - $section_height;
           foreach my $i (0..min(scalar(@texts)-1,2)) {
             $glyphset->push($glyphset->Text({
               font => 'Arial',
@@ -306,8 +298,8 @@ sub new {
           }
         }
         if($glyphset->section) {
-          my $sec_colour = $section_colour{$glyphset->section};
-          my $band_min = $glyphset->miny + $glyphset->section_height;
+          my $sec_colour = $section_info->{'colour'}{$glyphset->section};
+          my $band_min = $glyphset->miny + $section_height;
           my $band_max = $glyphset->maxy;
           my $fashionable_gap = 4;
           my $label_width = $self->{'config'}->get_parameter('label_width');
@@ -511,6 +503,32 @@ sub _set_label_x {
     $glyphset->label->x(-$label_width - $margin + $img_width);
     $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
   }
+}
+
+sub _build_section {
+  my ($self, $glyphset, $section, $args) = @_;
+
+  my $new_section   = $glyphset->section;
+  my $section_zmenu = $glyphset->section_zmenu;
+
+  if ($new_section and $section_zmenu) {
+    my $id = $section_zmenu->{'_id'};
+    unless ($id and $args->{'label_dedup'}{$id}) {
+      $args->{'label_data'}{$new_section} ||= [];
+      push @{$args->{'label_data'}{$new_section}}, $section_zmenu;
+      $args->{'label_dedup'}{$id} = 1 if $id;
+    }
+  }
+
+  if($section ne $new_section) {
+    $section = $new_section;
+    $args->{'title_pending'} = $section;
+  }
+  if ($args->{'title_pending'} and not $glyphset->section_no_text) {
+    $glyphset->section_text($args->{'title_pending'}, $args->{'label_width'});
+    $args->{'title_pending'} = undef;
+  }
+
 }
 
 ## render does clever drawing things
