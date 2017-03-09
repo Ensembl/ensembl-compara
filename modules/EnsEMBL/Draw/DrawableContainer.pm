@@ -40,7 +40,7 @@ use Time::HiRes qw(time);
 # Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania
 # State University.
 # Apache 2 license
-my @section_colours = qw(#a6cee3 #1f78b4 #b2df8a #33a02c #fb9a99 #e31a1c
+our @section_colours = qw(#a6cee3 #1f78b4 #b2df8a #33a02c #fb9a99 #e31a1c
                          #fdbf6f #ff7f00 #cab2d6 #6a3d9a #ffff99 #b15928);
 
 sub new {
@@ -123,8 +123,15 @@ sub new {
       ];
     
       $bgcolours->[1] = $bgcolours->[0] if $sortable_tracks;
-    
       my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
+
+      my $settings = {
+                        'label_width'   => $label_width,
+                        'padding'       => $padding,
+                        'margin'        => $margin,
+                        'iteration'     => $iteration,
+                        'bgcolours'     => $bgcolours,
+                      };
 
       my %gang_data;
       foreach my $glyphset (@$glyphsets) {
@@ -139,26 +146,23 @@ sub new {
       ### with a coloured strip to group related tracks
       my $section = '';
       my $section_info = {
-                          'colour'        => {},
-                          'label_dedup'   => {},
-                          'label_data'    => {},
-                          'title_pending' => 0,
-                          'label_width'   => $label_width,
+                          'colour'            => {},
+                          'next_colour'       => 0,
+                          'label_dedup'       => {},
+                          'label_data'        => {},
+                          'title_pending'     => 0,
                           };
 
       ## go ahead and do all the database work
-      my $next_section_col = 0;
       foreach my $glyphset (@$glyphsets) {
 
         ## Build the section first, as it may require more space than the track data
-        $self->_build_section($glyphset, $section, $section_info);
-        my $section_height = $glyphset->section_height;
+        $self->_build_section($glyphset, $section, $section_info, $settings);
+        $section_info->{'height'} = $glyphset->section_height;
 
-        ## load everything from the database
+        ## load everything from the database and render the glyphset
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
-        # NB: we guarantee render will always be called before the
-        #       subtitle_* methods.
         #my $A = time();
         $glyphset->render;
         #my $B = time();
@@ -168,103 +172,21 @@ sub new {
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
 
-        $transform_obj->translatey(-$gminy + $yoffset + $section_height + $glyphset->subtitle_height);
+        $transform_obj->translatey(-$gminy + $yoffset + $section_info->{'height'} + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
-          ## colour the area behind this strip
-          my $background = EnsEMBL::Draw::Glyph::Rect->new({
-            x             => -$label_width - $padding - $margin * 3/2,
-            y             => $gminy - $padding,
-            z             => -100,
-            width         => $panel_width + $label_width + $margin * 2 + (2 * $padding),
-            height        => $glyphset->maxy - $gminy + (2 * $padding),
-            colour        => $bgcolours->[$iteration % 2],
-            absolutewidth => 1,
-            absolutex     => 1,
-          });
-        
-          # this accidentally gets stuffed in twice (for gif & imagemap) so with
-          # rounding errors and such we shouldn't track this for maxy & miny values
-          unshift @{$glyphset->{'glyphs'}}, $background;
-        
-          $iteration++;
+          $self->_colour_bg($glyphset, $gminy, $settings);
         }
-      
-        my $sh = $glyphset->subtitle_height();
-        if($glyphset->use_subtitles) {
-          $glyphset->push($glyphset->Text({
-            font => 'Arial',
-            text => $glyphset->subtitle_text(),
-            ptsize => 8,
-            height => 8,
-            colour    => $glyphset->subtitle_colour(),
-            x => 2,
-            y => $glyphset->miny - $sh + 6,
-            halign => 'left',
-            absolutex => 1,
-          }));
-          $glyphset->miny($glyphset->miny-$sh+6);
-          $gminy = $glyphset->miny;
-        }
-        my $sx = -$label_width - $margin;
-        my $sy = -$section_height + 2;
-        if($glyphset->section_text) {
-          my $section = $glyphset->section_text;
-          my $zmdata = $section_info->{'label_data'}{$section};
-          my $url;
-          if($zmdata) {
-            $url = $self->{'config'}->hub->url({
-              type => 'ZMenu',
-              action => 'Label',
-              section => $section,
-              zmdata => to_json($zmdata),
-              zmcontext => to_json({
-                image_config => $self->{'config'}->type,
-              }),
-            });
-          }
 
-          my $sec_colour = $section_info->{'colour'}{$section};
-          unless($sec_colour) {
-            $sec_colour = $section_colours[$next_section_col];
-            $section_info->{'colour'}{$section} = $sec_colour;
-            $next_section_col = ($next_section_col+1) % @section_colours;
-          }
-          my $sec_off = -4;
-          my @texts = @{$glyphset->section_lines};
-          unshift @texts,''; # top blank
-          my $leading = 12;
-          my $sec_off = $glyphset->miny - $section_height;
-          foreach my $i (0..min(scalar(@texts)-1,2)) {
-            $glyphset->push($glyphset->Text({
-              font => 'Arial',
-              ptsize => 8,
-              height => 8,
-              text => $texts[$i],
-              colour    => 'black',
-              x => -$label_width - $margin,
-              y => $sec_off,
-              width => $label_width,
-              halign => 'left',
-              absolutex => 1,
-              absolutewidth => 1,
-              href => $url,
-              hover => 1,
-              alt => $texts[$i],
-              class => "hoverzmenu",
-            }));
-            $sec_off += $leading;
-          }
-          $glyphset->push($glyphset->Rect({
-            x => $sx -4,
-            y => $sec_off - 2,
-            width => $label_width - 4,
-            height => 2,
-            absolutex => 1,
-            absolutey => 1,
-            absolutewidth => 1,
-            colour => $sec_colour,
-          }));
+        if($glyphset->use_subtitles) {
+          $gminy = $self->_draw_subtitle($glyphset);
+  
+        }
+
+
+        ## Now that we have both track height and section height, draw the top part of tthe section
+        if($glyphset->section_text) {
+          $self->_draw_section_top($glyphset, $section_info, $settings);
         }
 
         ## set up the "bumping button" label for this strip
@@ -299,7 +221,7 @@ sub new {
         }
         if($glyphset->section) {
           my $sec_colour = $section_info->{'colour'}{$glyphset->section};
-          my $band_min = $glyphset->miny + $section_height;
+          my $band_min = $glyphset->miny + $section_info->{'height'};
           my $band_max = $glyphset->maxy;
           my $fashionable_gap = 4;
           my $label_width = $self->{'config'}->get_parameter('label_width');
@@ -506,7 +428,7 @@ sub _set_label_x {
 }
 
 sub _build_section {
-  my ($self, $glyphset, $section, $args) = @_;
+  my ($self, $glyphset, $section, $args, $settings) = @_;
 
   my $new_section   = $glyphset->section;
   my $section_zmenu = $glyphset->section_zmenu;
@@ -525,10 +447,125 @@ sub _build_section {
     $args->{'title_pending'} = $section;
   }
   if ($args->{'title_pending'} and not $glyphset->section_no_text) {
-    $glyphset->section_text($args->{'title_pending'}, $args->{'label_width'});
+    $glyphset->section_text($args->{'title_pending'}, $settings->{'label_width'});
     $args->{'title_pending'} = undef;
   }
 
+}
+
+sub _draw_section_top {
+  my ($self, $glyphset, $section_info, $settings) = @_;
+
+  my $section = $glyphset->section_text;
+  my $sx = -$settings->{'label_width'} - $settings->{'margin'};
+
+  ## Prepare zmenu
+  my $zmdata = $section_info->{'label_data'}{$section};
+  my $url;
+  if ($zmdata) {
+    $url = $self->{'config'}->hub->url({
+                                        type => 'ZMenu',
+                                        action => 'Label',
+                                        section => $section,
+                                        zmdata => to_json($zmdata),
+                                        zmcontext => to_json({
+                                                        image_config => $self->{'config'}->type,
+                                                      }),
+                                        });
+  }
+
+  my $sec_colour = $section_info->{'colour'}{$section};
+  unless($sec_colour) {
+    $sec_colour = $section_colours[$section_info->{'next_colour'}];
+    $section_info->{'colour'}{$section} = $sec_colour;
+    $section_info->{'next_colour'}      = ($section_info->{'next_colour'} + 1) % @section_colours;
+  }
+
+  my $sec_off = -4;
+  my @texts = @{$glyphset->section_lines};
+  unshift @texts, ''; # top blank
+  my $leading = 12;
+  my $sec_off = $glyphset->miny - $section_info->{'height'};
+
+  ## Main text of label
+  foreach my $i (0..min(scalar(@texts)-1,2)) {
+    $glyphset->push($glyphset->Text({
+                                      font          => 'Arial',
+                                      ptsize        => 8,
+                                      height        => 8,
+                                      text          => $texts[$i],
+                                      colour        => 'black',
+                                      x             => $sx,
+                                      y             => $sec_off,
+                                      width         => $settings->{'label_width'},
+                                      halign        => 'left',
+                                      absolutex     => 1,
+                                      absolutewidth => 1,
+                                      href          => $url,
+                                      hover         => 1,
+                                      alt           => $texts[$i],
+                                      class         => "hoverzmenu",
+                                      })
+                    );
+    $sec_off += $leading;
+  }
+
+  ## Horizontal coloured strip below main label
+  $glyphset->push($glyphset->Rect({
+                                    x             => $sx -4,
+                                    y             => $sec_off - 2,
+                                    width         => $settings->{'label_width'} - 4,
+                                    height        => 2,
+                                    absolutex     => 1,
+                                    absolutey     => 1,
+                                    absolutewidth => 1,
+                                    colour        => $sec_colour,
+                                    })
+                  );
+}
+
+sub _colour_bg {
+  my ($self, $glyphset, $gminy, $settings) = @_;
+
+  ## colour the area behind this strip
+  my $background = EnsEMBL::Draw::Glyph::Rect->new({
+            x             => -$settings->{'label_width'} - $settings->{'padding'} - $settings->{'margin'} * 3/2,
+            y             => $gminy - $settings->{'padding'},
+            z             => -100,
+            width         => $settings->{'panel_width'} + $settings->{'label_width'} 
+                              + $settings->{'margin'} * 2 + (2 * $settings->{'padding'}),
+            height        => $glyphset->maxy - $gminy + (2 * $settings->{'padding'}),
+            colour        => $settings->{'bgcolours'}[$settings->{'iteration'} % 2],
+            absolutewidth => 1,
+            absolutex     => 1,
+  });
+        
+  # this accidentally gets stuffed in twice (for gif & imagemap) so with
+  # rounding errors and such we shouldn't track this for maxy & miny values
+  unshift @{$glyphset->{'glyphs'}}, $background;
+        
+  $settings->{'iteration'}++;
+}
+
+sub _draw_subtitle {
+  my ($self, $glyphset) = @_;
+
+  my $sh = $glyphset->subtitle_height();
+
+   $glyphset->push($glyphset->Text({
+                                      font      => 'Arial',
+                                      text      => $glyphset->subtitle_text(),
+                                      ptsize    => 8,
+                                      height    => 8,
+                                      colour    => $glyphset->subtitle_colour(),
+                                      x         => 2,
+                                      y         => $glyphset->miny - $sh + 6,
+                                      halign    => 'left',
+                                      absolutex => 1,
+                                    })
+                    );
+  $glyphset->miny($glyphset->miny - $sh + 6);
+  return $glyphset->miny;
 }
 
 ## render does clever drawing things
