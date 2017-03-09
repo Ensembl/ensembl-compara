@@ -100,81 +100,19 @@ sub new {
     
     ## Initiailize list of glyphsets for this configuration
     my @glyphsets;
-    
     $container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
     
     if (($container->{'__type__'} || '') eq 'fake') {
       my $classname = "$self->{'prefix'}::GlyphSet::comparafake";
-      
       next unless $self->dynamic_use($classname);
       
       my $glyphset;
-      
       eval { $glyphset = $classname->new($container, $config, $self->{'highlights'}, 1); };
-      
       $config->container_width(1);
-      
       push @glyphsets, $glyphset unless $@;
+
     } else {
-      my %glyphset_ids;
-      
-      if ($config->get_parameter('text_export')) {
-        $glyphset_ids{$_->id}++ for @{$config->glyphset_configs};
-      }
-      
-      ## This is much simplified as we just get a row of configurations
-      foreach my $row_config (@{$config->glyphset_configs}) {
-        next if $row_config->get('matrix') eq 'column';
-        
-        my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
-        
-        if ($display eq 'default') {
-          my $column_key = $row_config->get('column_key');
-          
-          if ($column_key) {
-            my $column  = $config->get_node($column_key);
-               $display = $column->get('display') || ($column->get('on') eq 'on' ? 'normal' : 'off') if $column;
-          }
-        }
-        
-        next if $display eq 'off';
-        
-        my $option_key = $row_config->get('option_key');
-        
-        next if $option_key && $config->get_node($option_key)->get('display') ne 'on';
-        
-        my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
-        
-        next if ($self->{'strandedness'} || $glyphset_ids{$row_config->id} > 1) && $strand eq 'f';
-        
-        my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
-        #warn ">>> GLYPHSET ".$row_config->get('glyphset');       
- 
-        next unless $self->dynamic_use($classname);
-        
-        my $glyphset;
-        
-        ## create a new glyphset for this row
-        eval {
-          $glyphset = $classname->new({
-            container   => $container,
-            config      => $config,
-            my_config   => $row_config,
-            strand      => $strand eq 'f' ? 1 : -1,
-            extra       => {},
-            highlights  => $self->{'highlights'},
-            display     => $display,
-            legend      => $legend,
-          });
-        };
-        
-        if ($@ || !$glyphset) {
-          my $reason = $@ || 'No reason given just returns undef';
-          warn "GLYPHSET: glyphset $classname failed at ", gmtime, "\n", "GLYPHSET: $reason";
-        } else {
-          push @glyphsets, $glyphset;
-        }
-      }
+      $self->_create_glyphsets(\@glyphsets, $config, $container, $legend);
     }
    
     ## Factoring out export - no need to do any drawing-related munging for that, surely?
@@ -490,6 +428,71 @@ sub _init {
   bless( $self, $class );
   return $self;
 }
+
+sub _create_glyphsets {
+  my ($self, $glyphsets, $config, $container, $legend) = @_;
+ 
+  my %glyphset_ids;
+  if ($config->get_parameter('text_export')) {
+    $glyphset_ids{$_->id}++ for @{$config->glyphset_configs};
+  }
+
+  ## This is much simplified as we just get a row of configurations
+  foreach my $row_config (@{$config->glyphset_configs}) {
+    next if $row_config->get('matrix') eq 'column';
+        
+    my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
+      
+    if ($display eq 'default') {
+      my $column_key = $row_config->get('column_key');
+          
+      if ($column_key) {
+        my $column  = $config->get_node($column_key);
+        $display    = $column->get('display') || ($column->get('on') eq 'on' ? 'normal' : 'off') if $column;
+      }
+    }
+
+    next if $display eq 'off';
+        
+    my $option_key = $row_config->get('option_key');
+        
+    next if $option_key && $config->get_node($option_key)->get('display') ne 'on';
+        
+    my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
+        
+    next if ($self->{'strandedness'} || $glyphset_ids{$row_config->id} > 1) && $strand eq 'f';
+        
+    my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
+    #warn ">>> GLYPHSET ".$row_config->get('glyphset');       
+ 
+    next unless $self->dynamic_use($classname);
+        
+    my $glyphset;
+        
+
+    ## create a new glyphset for this row
+    eval {
+      $glyphset = $classname->new({
+                      container   => $container,
+                      config      => $config,
+                      my_config   => $row_config,
+                      strand      => $strand eq 'f' ? 1 : -1,
+                      extra       => {},
+                      highlights  => $self->{'highlights'},
+                      display     => $display,
+                      legend      => $legend,
+                  });
+    };
+        
+    if ($@ || !$glyphset) {
+      my $reason = $@ || 'No reason given just returns undef';
+      warn "GLYPHSET: glyphset $classname failed at ", gmtime, "\n", "GLYPHSET: $reason";
+    } else {
+      push @$glyphsets, $glyphset;
+    }
+  }
+}
+
 
 ## render does clever drawing things
 
