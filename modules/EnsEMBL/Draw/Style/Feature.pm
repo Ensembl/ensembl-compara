@@ -276,8 +276,8 @@ sub create_glyphs {
   my $track_label_height = $track_config->get('track_label_rows') * ($self->{'font_size'} + 6);
   $total_height = $track_label_height if $track_label_height > $total_height;
   ## Also allow for tracks with complex track labels, e.g. regulation
-  my $section_height = $track_config->get('section_height'); 
-  $total_height += $section_height if $section_height;
+  my $section_height = $track_config->get('section_height') || 0; 
+  $total_height += $section_height;
 
   $self->draw_hidden_bgd($total_height);
   my $track_height = $track_config->get('total_height') || 0;
