@@ -183,7 +183,6 @@ sub new {
   
         }
 
-
         ## Now that we have both track height and section height, draw the top part of tthe section
         if($glyphset->section_text) {
           $self->_draw_section_top($glyphset, $section_info, $settings);
@@ -219,23 +218,9 @@ sub new {
             }));
           }
         }
+
         if($glyphset->section) {
-          my $sec_colour = $section_info->{'colour'}{$glyphset->section};
-          my $band_min = $glyphset->miny + $section_info->{'height'};
-          my $band_max = $glyphset->maxy;
-          my $fashionable_gap = 4;
-          my $label_width = $self->{'config'}->get_parameter('label_width');
-          my $x = - ($label_width + 9);
-          $glyphset->push($glyphset->Rect({
-            x => $x,
-            y => $band_min + $fashionable_gap,
-            width => 2,
-            height => $band_max-$band_min - 2 * $fashionable_gap,
-            absolutex => 1,
-            absolutewidth => 1,
-            absolutey => 1,
-            colour => $sec_colour,
-          }));
+          $self->_draw_section_bottom($glyphset, $section_info, $settings);
         }
 
         $glyphset->transform;
@@ -522,6 +507,30 @@ sub _draw_section_top {
                                     colour        => $sec_colour,
                                     })
                   );
+}
+
+sub _draw_section_bottom {
+  my ($self, $glyphset, $section_info, $settings) = @_;
+
+  my $sec_colour = $section_info->{'colour'}{$glyphset->section};
+  my $band_min = $glyphset->miny + $section_info->{'height'};
+  my $band_max = $glyphset->maxy;
+  my $fashionable_gap = 4;
+  ## FIXME - why are we not using the existing label width here?
+  my $label_width = $self->{'config'}->get_parameter('label_width');
+
+  $glyphset->push($glyphset->Rect({
+                                    x             => - ($label_width + 9),
+                                    y             => $band_min + $fashionable_gap,
+                                    width         => 2,
+                                    height        => $band_max - $band_min - 2 * $fashionable_gap,
+                                    absolutex     => 1,
+                                    absolutewidth => 1,
+                                    absolutey     => 1,
+                                    colour        => $sec_colour,
+                                    })
+                    );
+
 }
 
 sub _colour_bg {
