@@ -356,8 +356,8 @@ sub _update_conf {
       die "[ERROR] Plugin $name could not be loaded: $dir not found.\n";
     }
 
-    eval qq{ package $plugin_conf; use ConfigDeferrer qw(defer); }; # export 'defer' to the plugin SiteDefs
-    eval qq{ require '$dir/conf/SiteDefs.pm' };                     # load the actual plugin SiteDefs
+    eval qq{ package $plugin_conf; use ConfigDeferrer qw(defer required); };  # export 'defer' and 'required' to the plugin SiteDefs
+    eval qq{ require '$dir/conf/SiteDefs.pm' };                               # load the actual plugin SiteDefs
 
     if ($@) {
       my $message = "Can't locate $dir/conf/SiteDefs.pm in";
@@ -388,6 +388,7 @@ sub _update_conf {
     push    @ENSEMBL_CONF_DIRS,     "$dir/conf";
   }
   build_deferred_configs();
+  validate_required_configs();
 
   my $current_plugin_type = 'functionality';
 
