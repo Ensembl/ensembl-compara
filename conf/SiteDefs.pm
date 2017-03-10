@@ -15,6 +15,10 @@
 
 package SiteDefs;
 
+### Description
+### Declares all config parameters required by the Ensembl website (or other scripts)
+### Loads the main SiteDefs (this file) first and then adds configs from plugin's SiteDefs
+
 use strict;
 use warnings;
 
@@ -162,12 +166,14 @@ our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                          
 our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
 ###############################################################################
 
+
 ###############################################################################
 ## Genomic data served from files
 our $DATAFILE_ROOT        = defer { $ENSEMBL_SERVERROOT };                                  ## Base path for ro data files
 our $DATAFILE_BASE_PATH   = defer { "$DATAFILE_ROOT/data_files" };                          ## Path to ro data files
 our $COMPARA_HAL_DIR      = defer { "$DATAFILE_BASE_PATH/multi/" };                         ## Path for Compara HAL files
 ###############################################################################
+
 
 ###############################################################################
 ## External dependencies path
@@ -296,34 +302,50 @@ our $ENSEMBL_PLUGINS      = []; # List of all plugins enabled - populated by _po
 our $ENSEMBL_IDS_USED     = {}; # All plugins with extra info for perl.startup output - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGINS_USED = {}; # Identities being used for plugins - needed by perl.startup - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGIN_ROOTS = []; # Populated by _update_conf()
+our $ENSEMBL_BASE_URL;          # Populated by import
+our $ENSEMBL_SITE_URL;          # Populated by import
+our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
+our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
+our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
 
-# Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
-_populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
+my $_IMPORTED;
 
-# Load all plugins SiteDefs
-_update_conf();
+sub import {
 
-# Populate species aliases
-_set_species_aliases();
+  if ($_IMPORTED) {
+    warn sprintf "Useless attempt to import SiteDefs at %2\$s line %3\$s.\n", caller;
+    return;
+  }
 
-# Set ENV variables as specified in ENSEMBL_SETENV
-_set_env();
+  $_IMPORTED = 1;
 
-# Finalise other configs that depends upon plugins SiteDefs.
-$ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
-$ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
+  # Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
+  _populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
 
-our $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
-  $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
-  $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
-);
+  # Load all plugins SiteDefs
+  _update_conf();
 
-our $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
-our $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
-    $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
-our $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
+  # Populate species aliases
+  _set_species_aliases();
 
-our $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
+  # Set ENV variables as specified in ENSEMBL_SETENV
+  _set_env();
+
+  # Finalise other configs that depends upon plugins SiteDefs.
+  $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
+  $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
+
+  $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
+    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
+    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
+  );
+
+  $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
+  $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
+  $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
+  $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
+  $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
+}
 
 sub verbose_params {
   ## Prints a list of all the parameters and their values

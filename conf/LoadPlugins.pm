@@ -26,8 +26,6 @@ package LoadPlugins;
 use strict;
 use warnings;
 
-use SiteDefs;
-
 my $IMPORTED;
 my %LOADING;
 
