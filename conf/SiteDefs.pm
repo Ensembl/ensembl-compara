@@ -24,18 +24,12 @@ use File::Spec;
 use Sys::Hostname::Long;
 
 
-<<<<<<< HEAD
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
 our $ENSEMBL_VERSION        = 88;            # Ensembl release number
 our $ARCHIVE_VERSION        = 'Mar2017';     # Archive site for this version
 our $ENSEMBL_RELEASE_DATE   = 'Mar 2017';    # As it would appear in the copyright/footer
 ###############################################################################
-=======
-our $ENSEMBL_VERSION           = 88;
-our $ARCHIVE_VERSION           = 'Mar2017';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'Mar 2017';
->>>>>>> master
 
 
 ###############################################################################
