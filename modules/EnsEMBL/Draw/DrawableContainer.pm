@@ -116,8 +116,7 @@ sub new {
 
       ### The "section" is an optional multi-track label 
       ### with a coloured strip to group related tracks
-      my $section = '';
-      my $section_info = {
+      my $section = {
                           'colour'            => {},
                           'next_colour'       => 0,
                           'label_dedup'       => {},
@@ -129,8 +128,8 @@ sub new {
       foreach my $glyphset (@$glyphsets) {
 
         ## Build the section first, as it may require more space than the track data
-        $self->_build_section($glyphset, $section, $section_info, $options);
-        $section_info->{'height'} = $glyphset->section_height;
+        $self->_build_section($glyphset, $section, $options);
+        $section->{'height'} = $glyphset->section_height;
 
         ## load everything from the database and render the glyphset
         my $name         = $glyphset->{'my_config'}->id;
@@ -144,7 +143,7 @@ sub new {
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
         $options->{'gminy'} = $gminy;
-        $transform_obj->translatey(-$gminy + $yoffset + $section_info->{'height'} + $glyphset->subtitle_height);
+        $transform_obj->translatey(-$gminy + $yoffset + $section->{'height'} + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           $self->_colour_bg($glyphset, $options);
@@ -158,7 +157,7 @@ sub new {
 
         ## Now that we have both track height and section height, draw the top part of the section
         if($glyphset->section_text) {
-          $self->_draw_section_top($glyphset, $section_info, $options);
+          $self->_draw_section_top($glyphset, $section, $options);
         }
 
         if ($glyphset->label && !$options->{'no_labels'}) {
@@ -166,7 +165,7 @@ sub new {
         }
 
         if($glyphset->section) {
-          $self->_draw_section_bottom($glyphset, $section_info, $options);
+          $self->_draw_section_bottom($glyphset, $section, $options);
         }
 
         $glyphset->transform;
@@ -399,45 +398,46 @@ sub _prepare_glyphsets {
 }
 
 sub _build_section {
-  my ($self, $glyphset, $section, $info, $opts) = @_;
+  my ($self, $glyphset, $section, $opts) = @_;
 
-  my $new_section   = $glyphset->section;
-  my $section_zmenu = $glyphset->section_zmenu;
+  my $current_section = $section->{'current'};
+  my $new_section     = $glyphset->section;
+  my $section_zmenu   = $glyphset->section_zmenu;
 
   if ($new_section and $section_zmenu) {
     my $id = $section_zmenu->{'_id'};
-    unless ($id and $info->{'label_dedup'}{$id}) {
-      $info->{'label_data'}{$new_section} ||= [];
-      push @{$info->{'label_data'}{$new_section}}, $section_zmenu;
-      $info->{'label_dedup'}{$id} = 1 if $id;
+    unless ($id and $section->{'label_dedup'}{$id}) {
+      $section->{'label_data'}{$new_section} ||= [];
+      push @{$section->{'label_data'}{$new_section}}, $section_zmenu;
+      $section->{'label_dedup'}{$id} = 1 if $id;
     }
   }
 
-  if($section ne $new_section) {
-    $section = $new_section;
-    $info->{'title_pending'} = $section;
+  if($new_section ne $current_section) {
+    $section->{'current'}        = $new_section;
+    $section->{'title_pending'}  = $new_section;
   }
-  if ($info->{'title_pending'} and not $glyphset->section_no_text) {
-    $glyphset->section_text($info->{'title_pending'}, $opts->{'label_width'});
-    $info->{'title_pending'} = undef;
+  if ($section->{'title_pending'} and not $glyphset->section_no_text) {
+    $glyphset->section_text($section->{'title_pending'}, $opts->{'label_width'});
+    $section->{'title_pending'} = undef;
   }
 
 }
 
 sub _draw_section_top {
-  my ($self, $glyphset, $section_info, $opts) = @_;
+  my ($self, $glyphset, $section, $opts) = @_;
 
-  my $section = $glyphset->section_text;
+  my $section_text = $glyphset->section_text;
   my $sx = -$opts->{'label_width'} - $opts->{'margin'};
 
   ## Prepare zmenu
-  my $zmdata = $section_info->{'label_data'}{$section};
+  my $zmdata = $section->{'label_data'}{$section_text};
   my $url;
   if ($zmdata) {
     $url = $self->{'config'}->hub->url({
                                         type => 'ZMenu',
                                         action => 'Label',
-                                        section => $section,
+                                        section => $section_text,
                                         zmdata => to_json($zmdata),
                                         zmcontext => to_json({
                                                         image_config => $self->{'config'}->type,
@@ -445,18 +445,18 @@ sub _draw_section_top {
                                         });
   }
 
-  my $sec_colour = $section_info->{'colour'}{$section};
+  my $sec_colour = $section->{'colour'}{$section_text};
   unless($sec_colour) {
-    $sec_colour = $section_colours[$section_info->{'next_colour'}];
-    $section_info->{'colour'}{$section} = $sec_colour;
-    $section_info->{'next_colour'}      = ($section_info->{'next_colour'} + 1) % @section_colours;
+    $sec_colour = $section_colours[$section->{'next_colour'}];
+    $section->{'colour'}{$section_text} = $sec_colour;
+    $section->{'next_colour'}      = ($section->{'next_colour'} + 1) % @section_colours;
   }
 
   my $sec_off = -4;
   my @texts = @{$glyphset->section_lines};
   unshift @texts, ''; # top blank
   my $leading = 12;
-  my $sec_off = $glyphset->miny - $section_info->{'height'};
+  my $sec_off = $glyphset->miny - $section->{'height'};
 
   ## Main text of label
   foreach my $i (0..min(scalar(@texts)-1,2)) {
@@ -496,18 +496,17 @@ sub _draw_section_top {
 }
 
 sub _draw_section_bottom {
-  my ($self, $glyphset, $section_info, $opts) = @_;
+  my ($self, $glyphset, $section, $opts) = @_;
 
-  my $sec_colour = $section_info->{'colour'}{$glyphset->section};
-  my $band_min = $glyphset->miny + $section_info->{'height'};
-  my $band_max = $glyphset->maxy;
+  my $sec_colour = $section->{'colour'}{$glyphset->section};
+  my $band_min = $glyphset->miny + $section->{'height'};
+  ## For compatibility with new drawing code:
+  my $band_max = $glyphset->{'my_config'}->get('total_height') || $glyphset->maxy;
   my $fashionable_gap = 4;
-  ## FIXME - why are we not using the existing label width here?
-  my $label_width = $self->{'config'}->get_parameter('label_width');
 
   $glyphset->push($glyphset->Rect({
-                                    x             => - ($label_width + 9),
-                                    y             => $band_min + $fashionable_gap,
+                                    x             => - ($opts->{'label_width'} + 9),
+                                    y             => $band_min + $fashionable_gap, 
                                     width         => 2,
                                     height        => $band_max - $band_min - 2 * $fashionable_gap,
                                     absolutex     => 1,
