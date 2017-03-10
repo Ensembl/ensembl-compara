@@ -22,7 +22,6 @@ package EnsEMBL::Web::Memoize;
 use strict;
 use warnings;
 
-use SiteDefs;
 use JSON;
 use Digest::MD5 qw(md5_hex);
 use File::Path qw(make_path remove_tree);

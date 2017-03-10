@@ -32,7 +32,6 @@ use HTTP::Date;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
-use SiteDefs;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Cache;
 

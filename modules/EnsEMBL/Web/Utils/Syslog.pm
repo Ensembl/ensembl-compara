@@ -26,8 +26,6 @@ use Exporter qw(import);
 
 our @EXPORT_OK = qw(syslog);
 
-use SiteDefs;
-
 sub syslog {
   my ($str) = @_;
 

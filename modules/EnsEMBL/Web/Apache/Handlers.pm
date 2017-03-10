@@ -36,8 +36,6 @@ use Sys::Hostname;
 use Time::HiRes qw(time);
 use POSIX qw(strftime);
 
-use SiteDefs;
-
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 

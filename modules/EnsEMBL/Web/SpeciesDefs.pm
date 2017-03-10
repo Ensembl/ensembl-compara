@@ -72,7 +72,6 @@ use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
 
-use SiteDefs;# qw(:ALL);
 use Sys::Hostname::Long;
 
 use Bio::EnsEMBL::Registry;

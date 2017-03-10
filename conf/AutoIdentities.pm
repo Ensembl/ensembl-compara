@@ -3,8 +3,6 @@ use warnings;
 
 use Sys::Hostname;
 
-use SiteDefs;
-
 sub follow_paths {
   my ($base,$route,$out) = @_;
 

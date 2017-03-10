@@ -13,7 +13,6 @@ use File::Find;
 use Sys::Hostname;
 use Digest::MD5 qw(md5_base64);
 
-use SiteDefs;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub populate_precache {

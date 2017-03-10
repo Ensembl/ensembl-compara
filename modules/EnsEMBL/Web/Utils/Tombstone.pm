@@ -45,8 +45,6 @@ use Fcntl qw(:flock);
 use Exporter qw(import);
 our @EXPORT_OK = qw(tombstone);
 
-use SiteDefs;
-
 sub tombstone {
   my ($date, $username) = @_;
 

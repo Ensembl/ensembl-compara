@@ -21,7 +21,6 @@ package EnsEMBL::Web::Apache::Rss;
 
 use strict;
 
-use SiteDefs;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
