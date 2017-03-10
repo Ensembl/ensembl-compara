@@ -15,7 +15,7 @@ BEGIN {
   eval{
     local *STDERR;
     open(STDERR,">/dev/null");
-    require SiteDefs;
+    require SiteDefs; SiteDefs->import;
     close STDERR;
   };  
   open(STDERR,">&OLDERR");

@@ -41,7 +41,7 @@ my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 @apis = qw(core compara analysis funcgen pipeline variation production) unless scalar @apis; # core must always be first in order to generate links
 
 unshift @INC, "$root/ensembl-webcode/conf", $root;
-require SiteDefs;
+require SiteDefs; SiteDefs->import;
 
 if ($apis[0] ne 'edocs') {
   my %config_by_api = (

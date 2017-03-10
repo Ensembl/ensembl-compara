@@ -24,7 +24,7 @@ use Storable qw(lock_nstore lock_retrieve thaw);
 
 BEGIN{
   unshift @INC, "$Bin/../conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }

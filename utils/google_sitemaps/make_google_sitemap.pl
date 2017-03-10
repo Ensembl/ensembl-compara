@@ -34,7 +34,7 @@ use Regexp::Common qw /URI/;
 BEGIN {
    unshift @INC, "$Bin/../../conf";
    unshift @INC, "$Bin/../..";
-   eval { require SiteDefs };
+   eval { require SiteDefs; SiteDefs->import; };
    if ($@) { die "Can't use SiteDefs.pm - $@\n"; }
    map { unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS; 
 }

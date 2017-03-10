@@ -11,7 +11,7 @@ BEGIN {
   $ENSEMBL_ROOT = dirname( $Bin );
   $ENSEMBL_ROOT =~ s/\/utils$//;
   unshift @INC, "$ENSEMBL_ROOT/conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }

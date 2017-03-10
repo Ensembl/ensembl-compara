@@ -30,7 +30,7 @@ BEGIN{
   $SERVERROOT = dirname( $Bin );
   unshift @INC, "$SERVERROOT/conf";
   unshift @INC, "$SERVERROOT";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
@@ -86,7 +86,6 @@ else {
 my $time1 = time;
 @user_formats = qw(embl genbank) if (!$user_formats[0]);
 $VERBOSITY ||= 2;
-require SiteDefs;
 require EnsEMBL::Web::SpeciesDefs;
 require Bio::EnsEMBL::Utils::SeqDumper;
 require EnsEMBL::Web::DBSQL::DBConnection;

@@ -33,7 +33,7 @@ BEGIN{
   $SERVERROOT = `pwd`; #dirname(  );
   chop $SERVERROOT;
   unshift @INC, "$SERVERROOT/conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
