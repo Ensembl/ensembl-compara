@@ -47,30 +47,32 @@ sub new {
   my $class           = shift;
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
-  my $sortable_tracks = $primary_config->get_parameter('sortable_tracks') eq 'drag';
-  my $no_labels       = $primary_config->get_parameter('no_labels');
-  my $label_width     = $primary_config->get_parameter('label_width')    || 100;
-  my $margin          = $primary_config->get_parameter('margin')         || 5;
-  my $padding         = $primary_config->get_parameter('padding')        || 0;
-  my $trackspacing    = $primary_config->get_parameter('spacing')        || 2;
-  my $image_width     = $primary_config->get_parameter('image_width')    || 700;
-  my $colours         = $primary_config->species_defs->colour('classes') || {};
-  my $label_start     = $margin;
-  my $panel_start     = $label_start + ($no_labels ? 0 : $label_width + $margin) + ($sortable_tracks ? 10 : 0);
-  my $panel_width     = $image_width - $panel_start - $margin;
-  my $yoffset         = $margin;
-  my $iteration       = 0;
   my $legend          = {};
+  
+  ## Parameters used by private methods - easier to pass this way
+  my $options = {
+                  'image_width'     => $primary_config->get_parameter('image_width')    || 700,
+                  'label_width'     => $primary_config->get_parameter('label_width')    || 100, 
+                  'no_labels'       => $primary_config->get_parameter('no_labels'),
+                  'colours'         => $primary_config->species_defs->colour('classes') || {},
+                  'padding'         => $primary_config->get_parameter('padding')        || 0,
+                  'margin'          => $primary_config->get_parameter('margin')         || 5,
+                  'sortable_tracks' => $primary_config->get_parameter('sortable_tracks') eq 'drag',
+                  'iteration'       => 0,
+                  };
+  
+  ## Set some general spacing parameters 
+  my $yoffset         = $options->{'margin'};
   my $inter_space     = $primary_config->get_parameter('intercontainer');
-     $inter_space     = 2 * $margin unless defined $inter_space;
-  
+  $inter_space        = 2 * $options->{'margin'} unless defined $inter_space;
   $self->{'__extra_block_spacing__'} -= $inter_space;
-  
+  my $trackspacing    = $primary_config->get_parameter('spacing')        || 2;
+
   ## Loop through each pair of "container / config"s
+  ## (comparative views, e.g. Location/Alignment, can have more than one slice in an image)
   foreach my $CC (@{$self->{'contents'}}) {
     my ($container, $config) = @$CC;
     
-    ## If either Container or Config not present skip
     if (!defined $container) {
       warn ref($self) . ' No container defined';
       next;
@@ -80,69 +82,39 @@ sub new {
       warn ref($self) . ' No config object defined';
       next;
     }
-    
-    my $w = $config->container_width;
-       $w = $container->length if !$w && $container->can('length');
-       
-    my $x_scale = $w ? $panel_width /$w : 1; 
-
-    my $transform_obj = $config->transform_object;
-
-    $transform_obj->scalex($x_scale); ## set scaling factor for base-pairs -> pixels
-    $transform_obj->absolutescalex(1);
-    $transform_obj->translatex($panel_start); ## because our label starts are < 0, translate everything back onto canvas
-
-    $config->set_parameters({
-      panel_width        => $panel_width,
-      image_end          => ($panel_width + $margin + $padding) / $x_scale, # the right edge of the image, used to find labels which would be drawn too far to the right, and bring them back inside
-      __left_hand_margin => $panel_start - $label_start
-    });
+   
+    my $transform_obj = $self->_set_scaling($config, $container, $options); 
     
     ## Initiailize list of glyphsets for this configuration
     my $glyphsets = [];
     $container->{'web_species'} ||= $ENV{'ENSEMBL_SPECIES'};
     
-    if (($container->{'__type__'} || '') eq 'fake') {
-      $self->_create_fake_glyphset($glyphsets, $config, $container, $legend);
-    } else {
-      $self->_create_glyphsets($glyphsets, $config, $container, $legend);
-    }
-   
     if ($config->get_parameter('text_export')) {
+      $self->_create_glyphsets($glyphsets, $config, $container, $legend);
       $self->_do_export($glyphsets, $container);
     }
     else {
 
-      ## set the X-locations for each of the bump labels
-      $self->_set_label_x($glyphsets, $config, $label_width, $margin, $colours);
-    
       ## pull out alternating background colours for this script
       my $bgcolours = [
         $config->get_parameter('bgcolour1') || 'background1',
         $config->get_parameter('bgcolour2') || 'background2'
       ];
     
-      $bgcolours->[1] = $bgcolours->[0] if $sortable_tracks;
-      my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
-
-      my $settings = {
-                        'label_width'   => $label_width,
-                        'padding'       => $padding,
-                        'margin'        => $margin,
-                        'iteration'     => $iteration,
-                        'bgcolours'     => $bgcolours,
-                      };
-
-      my %gang_data;
-      foreach my $glyphset (@$glyphsets) {
-        my $gang = $glyphset->my_config('gang');
-        next unless $gang;
-        $gang_data{$gang} ||= {};
-        $glyphset->gang_prepare($gang_data{$gang});
-        $glyphset->gang($gang_data{$gang});
+      $bgcolours->[1]         = $bgcolours->[0] if $options->{'sortable_tracks'};
+      my $bgcolour_flag       = $bgcolours->[0] ne $bgcolours->[1];
+      $options->{'bgcolours'} = $bgcolours;
+  
+      ## Deal with comparative views with no alignment
+      if (($container->{'__type__'} || '') eq 'fake') {
+        $self->_create_fake_glyphset($glyphsets, $config, $container, $legend);
+      } else {
+        $self->_create_glyphsets($glyphsets, $config, $container, $legend);
       }
+   
+      $self->_prepare_glyphsets($glyphsets, $config, $options);
 
-      ### The "section" is an optional multi-row track label 
+      ### The "section" is an optional multi-track label 
       ### with a coloured strip to group related tracks
       my $section = '';
       my $section_info = {
@@ -153,11 +125,11 @@ sub new {
                           'title_pending'     => 0,
                           };
 
-      ## go ahead and do all the database work
+      ## now draw the tracks!
       foreach my $glyphset (@$glyphsets) {
 
         ## Build the section first, as it may require more space than the track data
-        $self->_build_section($glyphset, $section, $section_info, $settings);
+        $self->_build_section($glyphset, $section, $section_info, $options);
         $section_info->{'height'} = $glyphset->section_height;
 
         ## load everything from the database and render the glyphset
@@ -167,60 +139,34 @@ sub new {
         $glyphset->render;
         #my $B = time();
         #warn "$glyphset: ".($B-$A)."\n" if $B-$A>0.1;
-        next if scalar @{$glyphset->{'glyphs'}} == 0;
+        next if scalar @{$glyphset->{'glyphs'}} == 0; ## Glyphset is empty, e.g. no features
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
-
+        $options->{'gminy'} = $gminy;
         $transform_obj->translatey(-$gminy + $yoffset + $section_info->{'height'} + $glyphset->subtitle_height);
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
-          $self->_colour_bg($glyphset, $gminy, $settings);
+          $self->_colour_bg($glyphset, $options);
         }
 
         if($glyphset->use_subtitles) {
+          ## Vertical position will need adjusting, so amend gminy
           $gminy = $self->_draw_subtitle($glyphset);
   
         }
 
-        ## Now that we have both track height and section height, draw the top part of tthe section
+        ## Now that we have both track height and section height, draw the top part of the section
         if($glyphset->section_text) {
-          $self->_draw_section_top($glyphset, $section_info, $settings);
+          $self->_draw_section_top($glyphset, $section_info, $options);
         }
 
-        ## set up the "bumping button" label for this strip
-        if ($glyphset->label && !$no_labels) {
-          my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
-
-          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
-          my $liney;
-          $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||0));
-          $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||0);
-          $glyphset->label->height($gh);
-          $glyphset->push($glyphset->label);
-          if($glyphset->label_img) {
-            my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
-            $glyphset->push($glyphset->label_img);
-            $glyphset->miny($miny);
-            $glyphset->maxy($maxy);
-          }
-
-          if ($glyphset->label->{'hover'}) {
-            $glyphset->push($glyphset->Line({
-              absolutex     => 1,
-              absolutey     => 1,
-              absolutewidth => 1,
-              width         => $glyphset->label->width,
-              x             => $glyphset->label->x,
-              y             => $liney,
-              colour        => '#336699',
-              dotted        => 'small'
-            }));
-          }
+        if ($glyphset->label && !$options->{'no_labels'}) {
+          $self->_draw_zmenu_link($glyphset, $config, $options);
         }
 
         if($glyphset->section) {
-          $self->_draw_section_bottom($glyphset, $section_info, $settings);
+          $self->_draw_section_bottom($glyphset, $section_info, $options);
         }
 
         $glyphset->transform;
@@ -272,6 +218,35 @@ sub _init {
   return $self;
 }
 
+sub _set_scaling {
+  my ($self, $config, $container, $opts) = @_;
+
+  my $w = $config->container_width;
+  $w    = $container->length if !$w && $container->can('length');
+      
+  my $label_start     = $opts->{'margin'}; 
+  my $panel_start     = $label_start + ($opts->{'no_labels'} ? 0 : $opts->{'label_width'} + $opts->{'margin'}) 
+                                     + ($opts->{'sortable_tracks'} ? 10 : 0);
+  my $panel_width     = $opts->{'image_width'} - $panel_start - $opts->{'margin'};
+  my $x_scale         = $w ? $panel_width / $w : 1; 
+                 
+  ## Save this for later 
+  $opts->{'panel_width'} = $panel_width;
+
+  my $transform_obj = $config->transform_object;
+
+  $transform_obj->scalex($x_scale); ## set scaling factor for base-pairs -> pixels
+  $transform_obj->absolutescalex(1);
+  $transform_obj->translatex($panel_start); ## because our label starts are < 0, translate everything back onto canvas
+
+  $config->set_parameters({
+                            panel_width        => $panel_width,
+                            image_end          => ($panel_width + $opts->{'margin'} + $opts->{'padding'}) / $x_scale, # the right edge of the image, used to find labels which would be drawn too far to the right, and bring them back inside
+                            __left_hand_margin => $panel_start - $label_start
+  });
+  return $transform_obj;
+}
+
 sub _create_fake_glyphset {
   my ($self, $glyphsets, $config, $container) = @_;
 
@@ -292,7 +267,6 @@ sub _create_glyphsets {
     $glyphset_ids{$_->id}++ for @{$config->glyphset_configs};
   }
 
-  ## This is much simplified as we just get a row of configurations
   foreach my $row_config (@{$config->glyphset_configs}) {
     next if $row_config->get('matrix') eq 'column';
         
@@ -388,10 +362,14 @@ sub _do_export {
   }
 }
 
-sub _set_label_x {
-  my ($self, $glyphsets, $config, $label_width, $margin, $colours) = @_;
+sub _prepare_glyphsets {
+  my ($self, $glyphsets, $config, $opts) = @_;
+
+  my %gang_data;
 
   foreach my $glyphset (@$glyphsets) {
+   
+    ## set the X-locations for each of the bump labels
     next unless defined $glyphset->label;
     my $img = $glyphset->label_img;
     my $img_width = 0;
@@ -400,49 +378,57 @@ sub _set_label_x {
 
     my $text = $glyphset->label_text;
     $glyphset->recast_label(
-                              $label_width - $img_width, 
+                              $opts->{'label_width'} - $img_width, 
                               $glyphset->max_label_rows,
                               $text, 
                               $config->font_face || 'arial',
                               $config->font_size || 100,
-                              $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black'
+                              $opts->{'colours'}{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black'
                             );
-    $glyphset->label->x(-$label_width - $margin + $img_width);
-    $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
+    $glyphset->label->x(-$opts->{'label_width'} - $opts->{'margin'} + $img_width);
+    $glyphset->label_img->x(-$$opts->{'label_width'} - $$opts->{'margin'} + $img_pad/2) if $img;
+ 
+    ## Optionally, 'gang' the data, i.e. combine it between glyphsets for efficiency 
+    my $gang = $glyphset->my_config('gang');
+    next unless $gang;
+    $gang_data{$gang} ||= {};
+    $glyphset->gang_prepare($gang_data{$gang});
+    $glyphset->gang($gang_data{$gang});
   }
+
 }
 
 sub _build_section {
-  my ($self, $glyphset, $section, $args, $settings) = @_;
+  my ($self, $glyphset, $section, $info, $opts) = @_;
 
   my $new_section   = $glyphset->section;
   my $section_zmenu = $glyphset->section_zmenu;
 
   if ($new_section and $section_zmenu) {
     my $id = $section_zmenu->{'_id'};
-    unless ($id and $args->{'label_dedup'}{$id}) {
-      $args->{'label_data'}{$new_section} ||= [];
-      push @{$args->{'label_data'}{$new_section}}, $section_zmenu;
-      $args->{'label_dedup'}{$id} = 1 if $id;
+    unless ($id and $info->{'label_dedup'}{$id}) {
+      $info->{'label_data'}{$new_section} ||= [];
+      push @{$info->{'label_data'}{$new_section}}, $section_zmenu;
+      $info->{'label_dedup'}{$id} = 1 if $id;
     }
   }
 
   if($section ne $new_section) {
     $section = $new_section;
-    $args->{'title_pending'} = $section;
+    $info->{'title_pending'} = $section;
   }
-  if ($args->{'title_pending'} and not $glyphset->section_no_text) {
-    $glyphset->section_text($args->{'title_pending'}, $settings->{'label_width'});
-    $args->{'title_pending'} = undef;
+  if ($info->{'title_pending'} and not $glyphset->section_no_text) {
+    $glyphset->section_text($info->{'title_pending'}, $opts->{'label_width'});
+    $info->{'title_pending'} = undef;
   }
 
 }
 
 sub _draw_section_top {
-  my ($self, $glyphset, $section_info, $settings) = @_;
+  my ($self, $glyphset, $section_info, $opts) = @_;
 
   my $section = $glyphset->section_text;
-  my $sx = -$settings->{'label_width'} - $settings->{'margin'};
+  my $sx = -$opts->{'label_width'} - $opts->{'margin'};
 
   ## Prepare zmenu
   my $zmdata = $section_info->{'label_data'}{$section};
@@ -482,7 +468,7 @@ sub _draw_section_top {
                                       colour        => 'black',
                                       x             => $sx,
                                       y             => $sec_off,
-                                      width         => $settings->{'label_width'},
+                                      width         => $opts->{'label_width'},
                                       halign        => 'left',
                                       absolutex     => 1,
                                       absolutewidth => 1,
@@ -499,7 +485,7 @@ sub _draw_section_top {
   $glyphset->push($glyphset->Rect({
                                     x             => $sx -4,
                                     y             => $sec_off - 2,
-                                    width         => $settings->{'label_width'} - 4,
+                                    width         => $opts->{'label_width'} - 4,
                                     height        => 2,
                                     absolutex     => 1,
                                     absolutey     => 1,
@@ -510,7 +496,7 @@ sub _draw_section_top {
 }
 
 sub _draw_section_bottom {
-  my ($self, $glyphset, $section_info, $settings) = @_;
+  my ($self, $glyphset, $section_info, $opts) = @_;
 
   my $sec_colour = $section_info->{'colour'}{$glyphset->section};
   my $band_min = $glyphset->miny + $section_info->{'height'};
@@ -533,18 +519,52 @@ sub _draw_section_bottom {
 
 }
 
+sub _draw_zmenu_link {
+  my ($self, $glyphset, $config, $opts) = @_;
+
+  my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
+
+  my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+  my $liney;
+  $glyphset->label->y($opts->{'gminy'} + ($glyphset->{'label_y_offset'}||0));
+  $liney = $opts->{'gminy'} + $gh + 1 + ($glyphset->{'label_y_offset'}||0);
+  $glyphset->label->height($gh);
+  $glyphset->push($glyphset->label);
+
+  if($glyphset->label_img) {
+    my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+    $glyphset->push($glyphset->label_img);
+    $glyphset->miny($miny);
+    $glyphset->maxy($maxy);
+  }
+
+  if ($glyphset->label->{'hover'}) {
+    $glyphset->push($glyphset->Line({
+                                      width         => $glyphset->label->width,
+                                      x             => $glyphset->label->x,
+                                      y             => $liney,
+                                      colour        => '#336699',
+                                      dotted        => 'small',
+                                      absolutex     => 1,
+                                      absolutey     => 1,
+                                      absolutewidth => 1,
+                                    })
+                    );
+  }
+}
+
 sub _colour_bg {
-  my ($self, $glyphset, $gminy, $settings) = @_;
+  my ($self, $glyphset, $opts) = @_;
 
   ## colour the area behind this strip
   my $background = EnsEMBL::Draw::Glyph::Rect->new({
-            x             => -$settings->{'label_width'} - $settings->{'padding'} - $settings->{'margin'} * 3/2,
-            y             => $gminy - $settings->{'padding'},
+            x             => -$opts->{'label_width'} - $opts->{'padding'} - $opts->{'margin'} * 3/2,
+            y             => $opts->{'gminy'} - $opts->{'padding'},
             z             => -100,
-            width         => $settings->{'panel_width'} + $settings->{'label_width'} 
-                              + $settings->{'margin'} * 2 + (2 * $settings->{'padding'}),
-            height        => $glyphset->maxy - $gminy + (2 * $settings->{'padding'}),
-            colour        => $settings->{'bgcolours'}[$settings->{'iteration'} % 2],
+            width         => $opts->{'panel_width'} + $opts->{'label_width'} 
+                              + $opts->{'margin'} * 2 + (2 * $opts->{'padding'}),
+            height        => $glyphset->maxy - $opts->{'gminy'} + (2 * $opts->{'padding'}),
+            colour        => $opts->{'bgcolours'}[$opts->{'iteration'} % 2],
             absolutewidth => 1,
             absolutex     => 1,
   });
@@ -553,7 +573,7 @@ sub _colour_bg {
   # rounding errors and such we shouldn't track this for maxy & miny values
   unshift @{$glyphset->{'glyphs'}}, $background;
         
-  $settings->{'iteration'}++;
+  $opts->{'iteration'}++;
 }
 
 sub _draw_subtitle {
