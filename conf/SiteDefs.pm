@@ -19,6 +19,10 @@ package SiteDefs;
 ### Declares all config parameters required by the Ensembl website (or other scripts)
 ### Loads the main SiteDefs (this file) first and then adds configs from plugin's SiteDefs
 
+### Usage
+### use SiteDefs;             # Standard mode
+### use SiteDefs qw(verbose); # Same as above but extra debug verbosity
+
 use strict;
 use warnings;
 
@@ -105,7 +109,6 @@ our $ENSEMBL_DEBUG_IMAGES         = 0; # change these to 1 to prevent css minifi
 
 ###############################################################################
 ## Other DEBUG flags
-our $ENSEMBL_DEBUG_VERBOSE_STARTUP  = 0; # Prints extra info at server startup if set true
 our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1; # Shows messages from EnsEMBL::Web::Apache::*
 our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::Web::Cache
 ###############################################################################
@@ -308,6 +311,7 @@ our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
 our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
 
+my $_VERBOSE;
 my $_IMPORTED;
 
 sub import {
@@ -318,6 +322,7 @@ sub import {
   }
 
   $_IMPORTED = 1;
+  $_VERBOSE = grep $_ eq 'verbose', @_;
 
   # Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
   _populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
@@ -345,15 +350,21 @@ sub import {
   $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
   $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
+
+  _verbose_params() if $_VERBOSE;
 }
 
-sub verbose_params {
+sub _verbose_params {
   ## Prints a list of all the parameters and their values
   my $params = {};
 
   no strict qw(refs);
 
+  warn "SiteDefs configurations:\n";
+
   for (sort keys %{'SiteDefs::'}) {
+
+    next if $_ eq lc $_;
 
     my $sym_name  = "SiteDefs::$_";
     my $sym       = *$sym_name;
@@ -395,8 +406,9 @@ sub _update_conf {
 
       if ($update_conf) {
         $update_conf->();
+        warn "Updating SiteDefs with $name plugin\n" if $_VERBOSE;
       } else {
-        warn "Not updating SiteDefs with $plugin_conf: Function update_conf not defined in $dir/conf/SiteDefs.pm\n";
+        warn "Not updating SiteDefs with $plugin_conf: Function update_conf not defined in $dir/conf/SiteDefs.pm\n" if $_VERBOSE;
       }
 
       register_deferred_configs();
@@ -549,7 +561,7 @@ sub _populate_plugins_list {
     }
     push @ensembl_identity, @{$_->()} for @$ENSEMBL_IDENTITIES;
   }
-  warn " Server has identities\n    ".join("\n    ", @ensembl_identity)."\n";
+  warn " Server has identities\n    ".join("\n    ", @ensembl_identity)."\n" if $_VERBOSE;
 
   # Load AutoPlugin files
   my $paired            = sub { map {[$_[$_*2],$_[$_*2+1]]} 0..int(@_/2)-1 };
@@ -588,7 +600,7 @@ sub _populate_plugins_list {
         next if grep { $_ eq $id } @ensembl_identity;
         my $re = $map->{$id};
         next unless grep { /$re/ } @ensembl_identity;
-        warn " Server has mapped identity $id ($re)\n";
+        warn " Server has mapped identity $id ($re)\n" if $_VERBOSE;
         $any_maps = 1;
         push @ensembl_identity,$id;
       }
@@ -620,11 +632,16 @@ sub _set_env {
   ## This gets called once all the plugins are loaded and deferred configs are built
   no strict qw(refs);
 
-  for (keys %$ENSEMBL_SETENV) {
-    if (defined $ENSEMBL_SETENV->{$_}) {
-      $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
-    } else {
-      delete $ENV{$_};
+  if (keys %$ENSEMBL_SETENV) {
+    warn "Setting ENV variables:\n" if $_VERBOSE;
+    for (sort keys %$ENSEMBL_SETENV) {
+      if (defined $ENSEMBL_SETENV->{$_}) {
+        $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
+        warn sprintf "%20s: %s\n", $_, $ENV{$_} if $_VERBOSE;
+      } else {
+        delete $ENV{$_};
+        warn sprintf "%20s deleted\n", $_ if $_VERBOSE;
+      }
     }
   }
 }
