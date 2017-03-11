@@ -122,6 +122,7 @@ sub fetch_input {
 
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
+      $self->param('mlss', $mlss);
       my $method_class = $mlss->method->class;
 
       my $tree_string;
@@ -395,7 +396,9 @@ sub run_gerp_v2 {
     #run gerpelem
     $command = $gerpelem_path;
 
-    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;# . " -d 0.35";# hack for birds
+    $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;
+    # hack for birds
+    $command .= " -d 0.35" if $self->param('mlss')->name =~ /(sauropsid|bird)/i;
 
     #Calculate the neutral_rate of the species tree for use for those alignments where the default 
     #depth_threshold is too high to call any constrained elements (eg 3way birds)
