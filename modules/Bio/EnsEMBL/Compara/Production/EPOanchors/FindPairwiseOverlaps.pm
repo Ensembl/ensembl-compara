@@ -204,7 +204,6 @@ sub run {
 				dnafrag_end       => $coord_pair->[1],
 				dnafrag_strand    => $ref_sub_slice->strand,
 				} );	
-			push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
 		}
 	}
 	$self->param('synteny_region_jobs', $synteny_region_jobs);
