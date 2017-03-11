@@ -783,6 +783,7 @@ sub find_reference_species {
 
 sub _name_matches {
     my ($genome_db, $name) = @_;
+    return 0 unless $name;
     return (($name eq $genome_db->dbID) or ($name eq $genome_db->_get_unique_name));
 }
 
