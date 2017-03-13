@@ -36,8 +36,8 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    #'pipeline_name'         => 'lastz_ebi_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-	    'host'      => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-	    'port'      => 4485,
+           'host'      => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+           'port'      => 4485,
 	    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
 	    'staging_loc' => {
@@ -55,27 +55,9 @@ sub default_options {
 			-db_version => $self->o('rel_with_suffix'),
 		},
 	    
-	    # 'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
-	    'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
+	    'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
+	    # 'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
 	   	'mlss_id' => 601,
-
-	    'default_chunks' => {#human example
-			     #'reference'   => {'chunk_size' => 30000000,
-			     #		       'overlap'    => 0,
-			     #		       'include_non_reference' => 1,
-			     #		       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
-			     #		       'region' => 'chromosome:22'},
-			     #non human example
-   			    'reference'     => {'chunk_size'      => 10000000,
-   						'overlap'         => 0,
-   						'masking_options' => '{default_soft_masking => 1}'},
-   			    'non_reference' => {'chunk_size'      => 10100000,
-   						'group_set_size'  => 10100000,
-   						'overlap'         => 100000,
-   						'masking_options' => '{default_soft_masking => 1}',
-					        #'region'          => 'chromosome:16'},
-   			    }
-	     },
 
 	    #Location of executables
 	    'pair_aligner_exe' => $self->o('ensembl_cellar').'/lastz/1.02.00/bin/lastz',
@@ -86,8 +68,6 @@ sub default_options {
 	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	    'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
-	    # 'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac',  #hsap vs ggor
 
 	    #
 	    #Default chain

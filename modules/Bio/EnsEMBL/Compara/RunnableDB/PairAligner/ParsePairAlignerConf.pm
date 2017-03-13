@@ -416,13 +416,7 @@ sub get_pair_aligner {
             $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
         }
 
-	my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
-	print "options " . $params->{'options'} . "\n" if ($self->debug);
-	if ($params->{'options'}) {
-	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
-        } else {
-	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
-        }
+	$self->set_pair_aligner_options( $pair_aligner, $ref_dna_collection->{'genome_db'}, $non_ref_dna_collection->{'genome_db'} );
 	print_conf($pair_aligner);
 	print "\n" if ($self->debug);
     }
@@ -430,10 +424,70 @@ sub get_pair_aligner {
 }
 
 #
+# given a datastructure like {'ss1' => 'settings1', 'ss2' => 'settings2', 'default' => 'def_settings'}
+# set the correct pair aligner parameters. 'settings2', for example, will be used when both ref and non-ref
+# genome_db_ids are part of the species_set named 'ss2'. 'default' will be used if the species do not appear
+# together in any of the given collections
+#
+
+sub set_pair_aligner_options {
+	my ($self, $pair_aligner, $ref_genome_db, $non_ref_genome_db) = @_;
+
+	# legacy code - not willing to touch #
+	my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
+	print "options " . $params->{'options'} . "\n" if ($self->debug);
+	if ($params->{'options'}) {
+	   $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
+	   return;
+    } 
+    #####################################
+
+    # check master for species sets - only pairwise LASTZ species set is copied locally
+	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
+	my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+
+	# read in per-species_set settings
+	my %ss_settings = %{ $self->param('default_parameters') };
+
+	my $default_settings = $ss_settings{'default'};
+	delete $ss_settings{'default'};
+
+	my $these_settings;
+	foreach my $ss_name ( keys %ss_settings ) {
+		my @species_sets = sort { $a->dbID <=> $b->dbID } @{$ss_adaptor->fetch_all_by_name($ss_name)};
+		print "Searching for $ss_name species set...\n" if ($self->debug);
+		die "Cannot find $ss_name species set in database...\n" unless ( $species_sets[-1] );
+
+		my @genome_db_ids = map {$_->dbID} @{ $species_sets[-1]->genome_dbs };
+
+		# if both ref and non-ref are present, use these settings
+		my $found_ref     = grep { $_ == $ref_genome_db->dbID } @genome_db_ids;
+		my $found_non_ref = grep { $_ == $non_ref_genome_db->dbID } @genome_db_ids;
+		
+		$these_settings = $ss_settings{$ss_name} if ( $found_ref && $found_non_ref );
+	}
+
+	$these_settings = $default_settings unless ( defined $these_settings );
+	print "!!! PAIR_ALIGNER SETTINGS: $these_settings\n" if ($self->debug);
+	$pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $these_settings;
+}
+
+#
 #Fill in missing information in the conf file from the default_chunk 
 #
 sub get_chunking {
    my ($self, $dna_collection, $default_chunk) = @_;
+
+   # need to check if human-specific chunking params exist
+   # incoming structure would be a hash if so
+   if ( defined $default_chunk->{human} ){ 
+   		if ($dna_collection->{'genome_db'}->dbID == 150) {
+   			$self->get_chunking($dna_collection, $default_chunk->{human});
+   		} else {
+   			$self->get_chunking($dna_collection, $default_chunk->{nonhuman});
+   		}
+   		return;
+   }
 
    #chunk_size
    unless (defined $dna_collection->{'chunk_size'}) {
@@ -476,6 +530,17 @@ sub get_chunking {
 
 sub get_default_chunking {
     my ($dna_collection, $default_chunk, $dump_dir_species) = @_;
+
+   # need to check if human-specific chunking params exist
+   # incoming structure would be a hash if so
+   if ( defined $default_chunk->{human} ){ 
+   		if ($dna_collection->{'genome_db'}->dbID == 150) {
+   			get_default_chunking($dna_collection, $default_chunk->{human});
+   		} else {
+   			get_default_chunking($dna_collection, $default_chunk->{nonhuman});
+   		}
+   		return;
+   }
 
     #chunk_size
     unless (defined $dna_collection->{'chunk_size'}) {
@@ -652,7 +717,8 @@ sub parse_defaults {
 	
 	my $pair_aligner = {};
 	$pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
-	$pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
+	$self->set_pair_aligner_options( $pair_aligner, $pair->{'ref_genome_db'}, $pair->{'non_ref_genome_db'} );
+	# $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
     
 	my $chain_config = {};
 	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),

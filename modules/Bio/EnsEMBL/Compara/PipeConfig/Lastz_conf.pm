@@ -95,27 +95,6 @@ sub default_options {
 	    #Reference species
 	    'ref_species' => 'mus_caroli',
 
-	    #Define chunking
-	    'default_chunks' => {#human example
-			     #'reference'   => {'chunk_size' => 30000000,
-			#		       'overlap'    => 0,
-			#		       'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
-					                                      #0  => do not include non_reference regions
-					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species has a karyotype
-					                                      #since these analyses are the only ones we keep up-to-date with the patches-pipeline, with the exception of self-alignments)
-
-#Should use this for human vs non-primate
-			#		       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
-			     #non human example
-   			    'reference'     => {'chunk_size'      => 10000000,
-   						'overlap'         => 0,
-   						'masking_options' => '{default_soft_masking => 1}'},
-   			    'non_reference' => {'chunk_size'      => 10100000,
-   						'group_set_size'  => 10100000,
-   						'overlap'         => 100000,
-   						'masking_options' => '{default_soft_masking => 1}'},
-   			    },
-
 	    #Location of executables
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
 
@@ -125,9 +104,8 @@ sub default_options {
 	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	    'pair_aligner_options' => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
-#	    'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac',
-	    #
+
+# 	    #
 	    #Default chain
 	    #
 	    'chain_input_method_link' => [1001, 'LASTZ_RAW'],
