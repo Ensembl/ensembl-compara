@@ -498,17 +498,28 @@ sub _draw_section_top {
 sub _draw_section_bottom {
   my ($self, $glyphset, $section, $opts) = @_;
 
-  my $sec_colour = $section->{'colour'}{$glyphset->section};
-  my $band_min = $glyphset->miny + $section->{'height'};
+  my $sec_colour      = $section->{'colour'}{$glyphset->section};
+  my $band_min        = $glyphset->miny + $section->{'height'};
   ## For compatibility with new drawing code:
-  my $band_max = $glyphset->{'my_config'}->get('total_height') || $glyphset->maxy;
+  my $total_height = $glyphset->{'my_config'}->get('total_height');
+  my $band_max        = ($glyphset->maxy && $glyphset->maxy > $glyphset->{'my_config'}->get('total_height')) 
+                          ? $glyphset->maxy : $glyphset->{'my_config'}->get('total_height');
+  my $diff            = $band_max - $band_min;
   my $fashionable_gap = 4;
+  my $height          = $diff - 2 * $fashionable_gap;
+
+  #my @texts = @{$glyphset->section_lines||[]};
+  #warn "\n@@@ $glyphset TRACK @texts";
+  #warn ">>> TOTAL HEIGHT = $total_height";
+  #warn "... GLYPHSET MAX Y ".$glyphset->maxy;
+  #warn ">>> BAND MIN $band_min";
+  #warn "... HEIGHT $height";
 
   $glyphset->push($glyphset->Rect({
                                     x             => - ($opts->{'label_width'} + 9),
                                     y             => $band_min + $fashionable_gap, 
                                     width         => 2,
-                                    height        => $band_max - $band_min - 2 * $fashionable_gap,
+                                    height        => $height,
                                     absolutex     => 1,
                                     absolutewidth => 1,
                                     absolutey     => 1,
@@ -516,6 +527,9 @@ sub _draw_section_bottom {
                                     })
                     );
 
+  if ($diff > $total_height) {
+    $glyphset->{'my_config'}->set('total_height', $diff);
+  }
 }
 
 sub _draw_zmenu_link {
