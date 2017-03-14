@@ -446,6 +446,14 @@ sub set_pair_aligner_options {
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
 	my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 
+	# check if static or dynamic params are being used
+	# static = string input; dynamic = hash ref input
+	my $default_parameters = $self->param('default_parameters');
+	unless ( ref($default_parameters) ) { # input is not a ref - assume string and set params
+		$pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $default_parameters;
+		return;
+	}
+
 	# read in per-species_set settings
 	my %ss_settings = %{ $self->param('default_parameters') };
 
