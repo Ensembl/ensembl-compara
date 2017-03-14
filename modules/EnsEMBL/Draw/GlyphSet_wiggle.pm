@@ -295,19 +295,10 @@ sub draw_wiggle_points {
   }
 }
 
-## Should we draw the mini-label. Yes except CTCF.
-# This code should be deleted when the ctcf glyphset goes in e82.
-sub _should_draw_mini_label {
-  my ($self,$text) = @_;
-
-  return $text ne 'CTCF';
-}
-
 sub _add_regulation_minilabel {
   my ($self,$parameters,$top,$labels,$colours) = @_;
 
   my $header_label = shift @$labels;
-  $header_label = '' unless $self->_should_draw_mini_label($header_label);
   my $click_text = $parameters->{'zmenu_click_text'} || 'Legend';
   my $extra_content = $parameters->{'zmenu_extra_content'};
   $self->_add_sublegend($header_label,$click_text,$header_label,
