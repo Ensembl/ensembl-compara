@@ -39,8 +39,9 @@ sub write_output {
     my $self = shift;
 
     my $homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
-
-    $homo_adaptor->update_wga_coverage( $self->param_required('homology_id'), $self->param_required('prev_wga_score') );
+    foreach my $score_info ( @{ $self->param_required('reuse_list') } ) {
+    	$homo_adaptor->update_wga_coverage( $score_info->{'homology_id'}, $score_info->{'prev_wga_score'} );
+    }
 }
 
 1;

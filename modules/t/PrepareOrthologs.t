@@ -85,11 +85,6 @@ standaloneJob(
 			$exp_dataflow, # expected data flowed out
 			2 # dataflow branch
 		], # end event
-		[
-          'DATAFLOW',
-          undef,
-          3
-        ],
 	]
 );
 
@@ -136,18 +131,43 @@ standaloneJob(
 		[
           'DATAFLOW',
           [
-            {
-              'prev_wga_score' => '100.00',
-              'homology_id' => '102'
-            },
-            {
-              'prev_wga_score' => '100.00',
-              'homology_id' => '103'
-            }
+          	{ reuse_list => [ { 'prev_wga_score' => '100.00', 'homology_id' => '102' } ] },
+            { reuse_list => [ { 'prev_wga_score' => '100.00', 'homology_id' => '103' } ] },
           ],
           3
         ]
 	]
 );
+
+# test reuse output with different batch size
+standaloneJob(
+	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
+	{ # input param hash
+		'species1_id'     => '150',
+		'species2_id'     => '134',
+		'compara_db'      => $compara_db,
+		'previous_rel_db' => $prev_compara_db,
+		'orth_batch_size' => 2
+
+	},
+	[ # list of events to test for (just 1 event in this case)
+		[ # start event
+			'DATAFLOW', # event to test for (could be WARNING)
+			$exp_dataflow_2, # expected data flowed out
+			2 # dataflow branch
+		], # end event
+		[
+          'DATAFLOW',
+          [
+          	{ reuse_list => [
+          		{ 'prev_wga_score' => '100.00', 'homology_id' => '102' },
+                { 'prev_wga_score' => '100.00', 'homology_id' => '103' } 
+            ]},
+          ],
+          3
+        ]
+	]
+);
+
 
 done_testing();
