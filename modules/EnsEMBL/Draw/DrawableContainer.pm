@@ -385,7 +385,7 @@ sub _prepare_glyphsets {
                               $opts->{'colours'}{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black'
                             );
     $glyphset->label->x(-$opts->{'label_width'} - $opts->{'margin'} + $img_width);
-    $glyphset->label_img->x(-$$opts->{'label_width'} - $$opts->{'margin'} + $img_pad/2) if $img;
+    $glyphset->label_img->x(-$$opts->{'label_width'} - $opts->{'margin'} + $img_pad/2) if $img;
  
     ## Optionally, 'gang' the data, i.e. combine it between glyphsets for efficiency 
     my $gang = $glyphset->my_config('gang');
