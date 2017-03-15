@@ -501,19 +501,12 @@ sub _draw_section_bottom {
   my $sec_colour      = $section->{'colour'}{$glyphset->section};
   my $band_min        = $glyphset->miny + $section->{'height'};
   ## For compatibility with new drawing code:
-  my $total_height = $glyphset->{'my_config'}->get('total_height');
+  my $total_height    = $glyphset->{'my_config'}->get('total_height') || 0;
   my $band_max        = ($glyphset->maxy && $glyphset->maxy > $glyphset->{'my_config'}->get('total_height')) 
                           ? $glyphset->maxy : $glyphset->{'my_config'}->get('total_height');
   my $diff            = $band_max - $band_min;
   my $fashionable_gap = 4;
   my $height          = $diff - 2 * $fashionable_gap;
-
-  #my @texts = @{$glyphset->section_lines||[]};
-  #warn "\n@@@ $glyphset TRACK @texts";
-  #warn ">>> TOTAL HEIGHT = $total_height";
-  #warn "... GLYPHSET MAX Y ".$glyphset->maxy;
-  #warn ">>> BAND MIN $band_min";
-  #warn "... HEIGHT $height";
 
   $glyphset->push($glyphset->Rect({
                                     x             => - ($opts->{'label_width'} + 9),
