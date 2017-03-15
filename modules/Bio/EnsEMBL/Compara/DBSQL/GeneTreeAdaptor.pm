@@ -440,6 +440,25 @@ sub delete_tree {
 
 }
 
+sub change_clusterset {
+    my ($self, $tree, $target_clusterset) = @_;
+
+    my $sth;
+    $sth = $self->prepare('SELECT root_id FROM gene_tree_root WHERE tree_type = "clusterset" AND clusterset_id = ? ;'),
+    $sth->execute($target_clusterset);
+    my $target_clusterset_root_id = $sth->fetchrow();
+    $sth->finish();
+
+    my $cluster_set_leave = $tree->root->parent;
+
+    $sth = $self->prepare('UPDATE gene_tree_node SET parent_id=?, root_id=? WHERE node_id=? and seq_member_id IS NULL'),
+    $sth->execute($target_clusterset_root_id, $target_clusterset_root_id , $cluster_set_leave->node_id);
+    $sth->finish();
+
+    $sth = $self->prepare('UPDATE gene_tree_root SET clusterset_id=? WHERE root_id=?'),
+    $sth->execute($target_clusterset, $tree->root->node_id);
+    $sth->finish();
+}
 
 #
 # Virtual methods from TagAdaptor
