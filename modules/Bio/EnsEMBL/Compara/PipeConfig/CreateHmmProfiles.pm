@@ -208,6 +208,10 @@ sub default_options {
         # HMM specific parameters
         # The location of the HMM library:
         'hmm_library_basedir'       => '/nfs/panda/ensembl/production/mateus/compara/hmm_panther_11/',
+        'min_num_members'           => 4,
+        'min_num_species'           => 2,
+        'min_taxonomic_coverage'    => 0.5,
+        'min_ratio_species_genes'   => 0.5,
 
         #name of the profile to be created:
         'hmm_library_name'          => 'panther_11_1.hmm3',
@@ -242,6 +246,8 @@ sub default_options {
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 400,
         'alignment_filtering_capacity'  => 200,
+        'filter_1_capacity'         => 50,
+        'filter_2_capacity'         => 50,
         'cluster_tagging_capacity'  => 200,
         'loadtags_capacity'         => 200,
         'treebest_capacity'         => 500,
@@ -1005,8 +1011,7 @@ sub core_pipeline_analyses {
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
 
-        {
-            -logic_name     => 'load_PANTHER',
+        { -logic_name     => 'load_PANTHER',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadPanther',
             -rc_name       => '4Gb_big_tmp_job',
             -parameters     => {
@@ -1204,6 +1209,29 @@ sub core_pipeline_analyses {
             -batch_size     => 50,
         },
 
+        {   -logic_name => 'filter_1_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
+            },
+            -flow_into  => {
+                2 => 'filter_level_1',
+            }
+        },
+
+        {   -logic_name => 'filter_level_1',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterSmallClusters',
+            -parameters         => {
+                'min_num_members'           => $self->o('min_num_members'),
+                'min_num_species'           => $self->o('min_num_species'),
+                'min_taxonomic_coverage'    => $self->o('min_taxonomic_coverage'),
+                'min_ratio_species_genes'   => $self->o('min_ratio_species_genes'),
+            },
+            -hive_capacity  => $self->o('filter_1_capacity'),
+            -batch_size     => 10,
+        },
+
+
         {   -logic_name         => 'remove_blacklisted_genes',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes',
             -parameters         => {
@@ -1242,8 +1270,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
             },
-            -flow_into  => {
-                2 => 'cluster_tagging',
+            -flow_into => {
+                '2->A'  => [ 'cluster_tagging' ],
+                'A->1'  => [ 'filter_1_factory' ],
             },
         },
 
@@ -1276,13 +1305,14 @@ sub core_pipeline_analyses {
             },
 
             -flow_into  => {
-                '1' => WHEN (
+                '2->A' => WHEN (
                     '(#tree_gene_count# <  #mcoffee_short_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_short',
                     '(#tree_gene_count# >= #mcoffee_short_gene_count# and #tree_gene_count# < #mcoffee_himem_gene_count#)   and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
                     '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)           and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_himem',
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
                 ),
+                'A->1' => [ 'filter_decision' ],
             },
             %decision_analysis_params,
         },
@@ -1392,6 +1422,60 @@ sub core_pipeline_analyses {
             -rc_name    => '8Gb_job',
         },
 
+        {   -logic_name => 'filter_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    'gene_count' => 0,
+                    'aln_length' => 0,
+                },
+                'threshold_n_genes'      => $self->o('threshold_n_genes'),
+                'threshold_aln_len'      => $self->o('threshold_aln_len'),
+                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            },
+            -flow_into  => {
+                1 => WHEN(
+                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'filter_level_2',
+                     '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
+                     ELSE 'noisy',
+                ),
+            },
+            %decision_analysis_params,
+        },
+
+        {   -logic_name     => 'noisy',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff' => $self->o('noisy_cutoff'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '4Gb_job',
+            -batch_size     => 5,
+            -flow_into      => [ 'filter_level_2' ],
+        },
+
+        {   -logic_name     => 'noisy_large',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff'  => $self->o('noisy_cutoff_large'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '16Gb_job',
+            -batch_size     => 5,
+            -flow_into      => [ 'filter_level_2' ],
+        },
+
+        {   -logic_name => 'filter_level_2',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterGappyClusters',
+            -parameters         => {
+                'max_gappiness'           => $self->o('max_gappiness'),
+            },
+            -hive_capacity  => $self->o('filter_1_capacity'),
+            -batch_size     => 10,
+        },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
