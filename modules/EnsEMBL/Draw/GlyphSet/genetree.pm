@@ -674,12 +674,10 @@ sub features {
     my %genes;
     my %leaves;
 
-    my $species_tree_node_id = $tree->get_tagvalue('species_tree_node_id');
+    my $species_tree_node = $tree->species_tree_node();
     my $node_name;
-    if (defined $species_tree_node_id) {
-        my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
-        $node_name               = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$speciesTreeNode->taxon_id}
-            || $speciesTreeNode->node_name;
+    if (defined $species_tree_node) {
+        $node_name = $species_tree_node->get_common_name() || $species_tree_node->get_scientific_name;
     }
 
     foreach my $leaf (@{$tree->get_all_leaves}) {
