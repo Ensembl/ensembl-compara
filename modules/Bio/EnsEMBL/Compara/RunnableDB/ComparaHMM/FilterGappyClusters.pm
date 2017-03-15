@@ -81,7 +81,7 @@ sub run {
         my $cigar_line = $member->cigar_line;
 
         #break the cigar line
-        my %break = $member->cigar_breakout( $member->cigar_line );
+        my %break = $member->get_cigar_breakout( $member->cigar_line );
 
         #get percentages
         foreach my $k ( sort keys %break ) {
