@@ -74,7 +74,7 @@ sub default_options {
 
         # Standard registry file
         'pipeline_name'       => 'dump_trees_'.$self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix'),
-        'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
         'rel_db'        => 'compara_curr',
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
@@ -82,7 +82,7 @@ sub default_options {
 
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
-        'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
+        'target_dir'  => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => '#target_dir#/dump_hash/#basename#',                                                           # where directory hash is created and maintained
     };
 }
