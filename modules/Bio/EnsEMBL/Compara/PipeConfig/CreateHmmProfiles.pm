@@ -293,6 +293,9 @@ sub default_options {
             -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
+        # Production database (for the biotypes)
+        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         #'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
@@ -318,7 +321,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
-        'prev_rel_db' => 'mysql://ensro@mysql-treefam-prod:4401/cc21_protein_trees_83',
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
@@ -367,6 +370,7 @@ sub resource_classes {
          '4Gb_job'          => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '4Gb_big_tmp_job'  => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000,tmp=102400]"' },
          '8Gb_job'          => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '16Gb_job'         => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'         => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
 }
