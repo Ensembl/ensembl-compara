@@ -570,8 +570,9 @@ sub _populate_plugins_list {
   $ENSEMBL_IDS_USED->{'- direct -'} = 0;
   $ENSEMBL_PLUGINS_USED->{$_} = [0] for @plugins_seen;
 
+
   my $code = 1;
-  my (%plugins_list, %plugins_piority, @identity_maps);
+  my (%plugins_list, %plugins_priority, @identity_maps);
   foreach my $f (glob $a_paths) {
     our $ENSEMBL_AUTOPLUGINS  = {}; # populated via AutoPlugins.pm files
     our $ENSEMBL_IDENTITY_MAP = {}; # populated via AutoPlugins.pm files
@@ -586,7 +587,7 @@ sub _populate_plugins_list {
       my $prio = 50;
       my $orig_k = $k;
       $prio = $1 if $k =~ s/^(\d+)!//;
-      $plugins_piority{$k} ||= $prio;
+      $plugins_priority{$k} ||= $prio;
       push @{$plugins_list{$k}||=[]},@{$ENSEMBL_AUTOPLUGINS->{$orig_k}};
     }
   }
@@ -608,7 +609,7 @@ sub _populate_plugins_list {
   }
 
   # Process AutoPlugin files
-  foreach my $k (sort { $plugins_piority{$a} <=> $plugins_piority{$b} } keys %plugins_list) {
+  foreach my $k (sort { $plugins_priority{$a} <=> $plugins_priority{$b} } keys %plugins_list) {
     if (grep { $_ eq $k } @ensembl_identity) {
       warn " Loading $k\n";
       my @to_add;
