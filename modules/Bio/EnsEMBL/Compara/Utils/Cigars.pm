@@ -444,7 +444,7 @@ sub get_cigar_breakout {
     my $cigar = shift;
     my %breakout;
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
-        $breakout{$2} += $1;
+        $breakout{$2} += $1 || 1;
     }
     return %breakout;
 }
