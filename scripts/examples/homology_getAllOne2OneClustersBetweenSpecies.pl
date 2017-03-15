@@ -19,6 +19,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 
 #
@@ -26,36 +27,50 @@ use Bio::EnsEMBL::Registry;
 # given set of species
 #
 
-my $reg = 'Bio::EnsEMBL::Registry';
-
-$reg->load_registry_from_db(
-  -host=>'ensembldb.ensembl.org',
-  -user=>'anonymous', 
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-treefam-prod',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4401,
+     -species => 'Multi',
+     -dbname => 'mateus_tuatara_86',
 );
 
 
-my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
-my $mlss_adaptor = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
-my $genomedb_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
-my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
+my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "Compara", "Homology");
+my $mlss_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
+my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneMember");
+
 
 # The first species is the "reference" species
 # The script will download the one2one orthologies between it and all the
 # other species, and combine the sets
-my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
-#my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
 
-my @gdbs = @{ $genomedb_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => \@list_of_species) };
-my @all_species_names = map {$_->name} @gdbs;
+my @list_of_species = ("tuatara","gallus_gallus", "alligator_sinensis", "chelonia_mydas", "anolis_carolinensis", "ophiophagus_hannah", "ophisaurus_gracilis", "gekko_japonicus", "homo_sapiens", "xenopus_tropicalis", "lepisosteus_oculatus");
+#my @list_of_species = ("alligator_mississippiensis","alligator_sinensis","anas_platyrhynchos","anolis_carolinensis","chelonia_mydas","chrysemys_picta","danio_rerio","ficedula_albicollis","gallus_gallus","gekko_japonicus","homo_sapiens","lepisosteus_oculatus","meleagris_gallopavo","monodelphis_domestica","mus_musculus","ophiophagus_hannah","ophisaurus_gracilis","ornithorhynchus_anatinus","pelodiscus_sinensis","pogona_vitticeps","protobothrops_mucrosquamatus","python_molurus_bivittatus","taeniopygia_guttata","thamnophis_sirtalis","tuatara","xenopus_tropicalis");
+
+my @gdbs = @{ $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => \@list_of_species) };
+my @all_species_names = sort(map {$_->name} @gdbs);
+
+print STDERR "species_list:@all_species_names\n";
 
 my $present_in_all = undef;
-my $sp1_gdb = shift @gdbs;
-  foreach my $sp2_gdb (@gdbs) {
+
+for ( my $i = 0; $i<scalar(@gdbs); $i++ ) {
+    my $sp1_gdb = $gdbs[$i];
+    for ( my $j = $i; $j<scalar(@gdbs); $j++ ) {
+
+        my $sp2_gdb = $gdbs[$j];
+        print STDERR "i=$i|j=$j\n";
+        next if ( $sp1_gdb eq $sp2_gdb );
+
     print STDERR "# Fetching ", $sp1_gdb->name, " - ", $sp2_gdb->name, " orthologues \n";
     my $mlss_orth = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
     my @one2one_orthologies = @{$homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_orth, -ORTHOLOGY_TYPE => 'ortholog_one2one')};
     my $count = 0; my $total_count = scalar @one2one_orthologies;
     foreach my $ortholog (@one2one_orthologies) {
+
       # Create a hash of stable_id pairs with genome name as subkey
       my ($gene1,$gene2) = @{$ortholog->get_all_Members};
       $count++;
@@ -66,9 +81,12 @@ my $sp1_gdb = shift @gdbs;
       $present_in_all->{$gene2->gene_member_id}{$sp2_gdb->name}{$gene1->gene_member_id} = 1;
     }
   }
+}
 
 print STDERR "Loading the gene names\n";
 my %gene_member_id_2_stable_id = map {$_->dbID => $_->stable_id} @{$gene_member_adaptor->fetch_all_by_dbID_list([keys %$present_in_all])};
+
+my %uniq_keys;
 
 # This code below is optional and is only to sort out cases where all
 # genomes are in the list and print the list of ids if it is the case
@@ -82,6 +100,9 @@ foreach my $gene_member_id (keys %$present_in_all) {
         $gene_member_ids->{$id} = 1;
       }
     }
-    print join(",", sort map {$gene_member_id_2_stable_id{$_}} keys %$gene_member_ids), "\n";
+    $uniq_keys{join(",", sort map {$gene_member_id_2_stable_id{$_}} keys %$gene_member_ids)} = 1;
 }
 
+foreach my $one2one (keys %uniq_keys) {
+    print "$one2one\n";
+}
