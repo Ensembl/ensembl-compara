@@ -170,6 +170,28 @@ sub cigar_line {
 }
 
 
+
+=head2 cigar_breakout
+
+  Arg [1]     : (optional) $cigar_line
+  Example     : $object->cigar_line($cigar_line);
+  Example     : $cigar_line = $object->cigar_line();
+  Description : Getter for the cigar_line breackout. It returns the quantities
+                of matches or mismatches (M), deletions (D) and insertions (I).
+
+  Returntype  : hash
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub cigar_breakout{
+  my $self = shift;
+  return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->{'_cigar_line'});
+}
+
+
 =head2 cigar_start
 
   Arg [1]     : (optional) $cigar_start

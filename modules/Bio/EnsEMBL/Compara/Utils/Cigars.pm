@@ -427,4 +427,26 @@ sub identify_removed_columns {
     return join(',', map {sprintf('[%d,%d]', @$_)} @filt_segments);
 }
 
+=head2 get_cigar_breakout
+
+  Arg [1]    : String $cigar_line
+  Example    : my %cigar_breakout = get_cigar_breakout($cigar_line)
+  Description: Return a hash with the quantities of 'M', 'I' and 'D' of the cigar line (like '2M D 3M 2D I 2M')
+               'M' => 7
+               'I' => 1
+               'D' => 3
+
+  Returntype : hash
+
+=cut
+
+sub get_cigar_breakout {
+    my $cigar = shift;
+    my %breakout;
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        $breakout{$2} += $1;
+    }
+    return %breakout;
+}
+
 1;
