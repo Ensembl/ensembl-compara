@@ -75,12 +75,12 @@ sub draw_block {
       $self->draw_noncoding_block($composite, %params);
     }
 
-    $params{'x'} = $coding_start;
+    $params{'x'} = $coding_start - 1;
     $params{'width'} = $coding_width; 
     $self->draw_coding_block($composite, %params);
 
     if (defined($structure->{'utr_3'})) {
-      $params{'x'}     = $structure->{'utr_3'};
+      $params{'x'}     = $structure->{'utr_3'} - 1;
       $params{'width'} = $end - $structure->{'utr_3'} + 1;
       $self->draw_noncoding_block($composite, %params);
     }
