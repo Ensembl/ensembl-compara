@@ -182,6 +182,7 @@ our $COMPARA_HAL_DIR      = defer { "$DATAFILE_BASE_PATH/multi/" };             
 ## External dependencies path
 our $HTSLIB_DIR           = "$ENSEMBL_SERVERROOT/htslib";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
+our $VCFTOOLS_PERL_LIB    = "$ENSEMBL_SERVERROOT/vcftools/lib/perl5/site_perl";
 our $R2R_BIN              = "$ENSEMBL_SERVERROOT/r2r";
 our $HUBCHECK_BIN         = "$ENSEMBL_SERVERROOT/hubCheck";
 our $ENSEMBL_EMBOSS_PATH  = "$ENSEMBL_SERVERROOT/emboss";
@@ -472,6 +473,7 @@ sub _update_conf {
   push @ENSEMBL_LIB_DIRS, (
     "$ENSEMBL_WEBROOT/modules",
     $BIOPERL_DIR,
+    $VCFTOOLS_PERL_LIB,
     "$ENSEMBL_SERVERROOT/biomart-perl/lib",
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
     "$ENSEMBL_SERVERROOT/ensembl-io/modules",
