@@ -318,7 +318,6 @@ my $_IMPORTED;
 sub import {
 
   if ($_IMPORTED) {
-    warn sprintf "Useless attempt to import SiteDefs at %2\$s line %3\$s.\n", caller;
     return;
   }
 

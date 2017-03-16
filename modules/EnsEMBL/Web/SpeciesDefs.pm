@@ -63,6 +63,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use SiteDefs;
+
 use Carp qw(cluck);
 use Data::Dumper;
 use DBI;
