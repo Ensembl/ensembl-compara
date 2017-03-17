@@ -24,7 +24,8 @@ package EnsEMBL::Web::NewTable::Plugins::Decorate;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub children { return [qw(DecorateIconic DecorateLink DecorateEditorial
-                          DecorateAlso DecorateToggle DecorateRecolour)]; }
+                          DecorateAlso DecorateToggle DecorateRecolour
+                          DecorateFancyPosition)]; }
 sub decorate_key { return undef; }
 sub js_plugin {
   my $dk = $_[0]->decorate_key()||'';
@@ -76,6 +77,10 @@ sub col_icon_coltab {
   $_[0]->set_decorates($_[1],$_[2],{ coltab => $col });
 }
 
+sub col_icon_source {
+  $_[0]->set_decorates($_[1],'*',{ icon_source => $_[2] });
+}
+
 package EnsEMBL::Web::NewTable::Plugins::DecorateLink;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
 
@@ -91,6 +96,31 @@ sub col_link_url {
   my $base = $self->hub->url(\%base);
   $self->set_decorates($col,'*',{ base_url => $base, params => \%params});
 }
+
+sub col_url_column {
+  my ($self,$col,$value) = @_;
+
+  $self->set_decorates($col,'*',{ url_column => $value });
+}
+
+sub col_title_column {
+  my ($self,$col,$value) = @_;
+
+  $self->set_decorates($col,'*',{ title_column => $value });
+}
+
+sub col_extra_column {
+  my ($self,$col,$value) = @_;
+
+  $self->set_decorates($col,'*',{ extra_column => $value });
+}
+
+sub col_url_rel {
+  my ($self,$col,$value) = @_;
+
+  $self->set_decorates($col,'*',{ url_rel => $value });
+}
+
 
 package EnsEMBL::Web::NewTable::Plugins::DecorateEditorial;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
@@ -134,6 +164,17 @@ sub col_recolour {
   my ($self,$col,$colours) = @_;
 
   $self->set_decorates($col,'*',{ recolour => $colours });
+}
+
+package EnsEMBL::Web::NewTable::Plugins::DecorateFancyPosition;
+use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
+
+sub decorate_key { return 'fancy_position'; }
+
+sub col_fancy_position  {
+  my ($self,$col,$fancy) = @_;
+
+  $self->set_decorates($col,'*',{ fancy_position => $fancy });
 }
 
 package EnsEMBL::Web::NewTable::Plugins::DecorateToggle;

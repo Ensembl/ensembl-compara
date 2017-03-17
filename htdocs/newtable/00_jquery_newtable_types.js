@@ -73,7 +73,20 @@
     var aa = a.split(/[:-]/);
     var bb = b.split(/[:-]/);
     for(var i=0;i<aa.length;i++) {
-      var c = (parseFloat(aa[i])-parseFloat(bb[i]))*f;
+      var c = 0;
+      if(!isNaN(aa[i])) {
+        if(!isNaN(bb[i])) {
+          c = (parseFloat(aa[i])-parseFloat(bb[i]))*f;
+        } else {
+          c = -f;
+        }
+      } else {
+        if(!isNaN(bb[i])) {
+          c = f;
+        } else {
+          c = aa[i].localeCompare(bb[i])*f;
+        }
+      }
       if(c) { return c; }
     }
     return 0;
@@ -102,6 +115,9 @@
   }
 
   function iconic_sort(a,b,f,c,km,col) {
+    if(((((km['decorate/iconic']||{})[col])||{})['*']||{}).icon_source) {
+      return a.localeCompare(b)*f;
+    }
     if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
     if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
     return c[a].localeCompare(c[b])*-f;
@@ -110,8 +126,8 @@
   function iconic_finish(vv,col,km) {
     var kk = Object.keys(vv);
     kk.sort(function(a,b) {
-      var aa = ((km['decorate/iconic'][col]||{})[a]||{}).order;
-      var bb = ((km['decorate/iconic'][col]||{})[b]||{}).order;
+      var aa = (((km['decorate/iconic']||{})[col]||{})[a]||{}).order;
+      var bb = (((km['decorate/iconic']||{})[col]||{})[b]||{}).order;
       if(aa && bb) { return aa-bb; }
       if(aa) { return 1; }
       if(bb) { return -1; }

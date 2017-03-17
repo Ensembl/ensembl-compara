@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 =cut
 
-package EnsEMBL::Web::Component::Phenotype::Locations;
+package EnsEMBL::Web::Component::Phenotype::LocationsNewTable;
 
 
 
@@ -40,7 +40,8 @@ sub content {
   my $error;
 
   if (!$ph_id && !$ontology_accession) {
-    return $self->_warning("Parameter missing!", "The URL should contain the parameter 'oa' or 'ph'");
+    # /!\ Rewrite the warning /!\
+    return $self->_warning("Parameter missing!", "'oa' or 'ph'");
   }
 
   my $html;
@@ -70,6 +71,13 @@ sub table_content {
     $pfs = $pf_ad->fetch_all_by_phenotype_accession_source($ontology_accession);
   }
 
+  my %type_colour = ( 'Variant'            => '#22A',
+                      'Gene'               => '#A22',
+                      'Structural Variant' => '#2A2',
+                      'QTL'                => '#d91bf7',
+                      'default'            => '#026a7c'
+                    );
+
   ROWS: foreach my $pf (@{$pfs}) {
     next if $callback->free_wheel();
 
@@ -79,34 +87,36 @@ sub table_content {
         
       next if ($feat_type eq 'SupportingStructuralVariation');
 
+      my $feat_type_width = 55;
       if ($feat_type eq 'Variation') {
         $feat_type = 'Variant';
       } elsif ($feat_type eq 'StructuralVariation') {
         $feat_type = 'Structural Variant';
+        $feat_type_width = 110;
       }
+      my $feat_type_colour = ($type_colour{$feat_type}) ? $type_colour{$feat_type} : $type_colour{'default'};
 
-      my $pf_name      = $pf->object_id;
-      my $region       = $pf->seq_region_name;
-      my $start        = $pf->seq_region_start;
-      my $end          = $pf->seq_region_end;
-      my $strand       = $pf->seq_region_strand;
-      my $strand_label = ($strand == 1) ? '+' : '-';
-      my $phe_desc     = $pf->phenotype_description; 
-      my $study_xref   = ($pf->study) ? $pf->study->external_reference : undef;
-      my $external_id  = ($pf->external_id) ? $pf->external_id : undef;
-      my $attribs      = $pf->get_all_attributes;
-      my $source       = $pf->source_name;  
-      my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs->{'xref_id'}, $pf);
+      my $pf_name     = $pf->object_id;
+      my $region      = $pf->seq_region_name;
+      my $start       = $pf->seq_region_start;
+      my $end         = $pf->seq_region_end;
+      my $strand      = $pf->seq_region_strand;
+      my $phe_desc    = $pf->phenotype_description; 
+      my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
+      my $external_id = ($pf->external_id) ? $pf->external_id : undef;
+      my $attribs     = $pf->get_all_attributes;
+      my $source      = $pf->source_name;  
+      my $source_url  = $self->source_url($pf_name, $source, $external_id, $attribs->{'xref_id'}, $pf);
 
       my @reported_genes = split(/,/,$pf->associated_gene);
 
-      my @assoc_genes;
+      my @assoc_gene_links;
       # preparing the URL for all the associated genes and ignoring duplicate one
       foreach my $id (@reported_genes) {
         $id =~ s/\s//g;
         next if $id =~ /intergenic|pseudogene/i || $id eq 'NR';
       
-        my $gene_label = [$id,undef,undef];
+        my $gene_label = $id;
 
         if (!$gene_ids{$id}) {
           foreach my $gene (@{$gene_ad->fetch_all_by_external_name($id) || []}) {
@@ -115,33 +125,28 @@ sub table_content {
         }
 
         if ($gene_ids{$id}) {
-          $gene_label = [$id,$hub->url({ type => 'Gene', action => 'Summary', g => $id }),$gene_ids{$id}];
+          $gene_label = sprintf(
+            '<a href="%s" title="%s">%s</a>',
+            $hub->url({ type => 'Gene', action => 'Summary', g => $id }),
+            $gene_ids{$id},
+            $id
+          );
         }
-        push @assoc_genes,$gene_label;
+        push @assoc_gene_links, $gene_label;
       }
 
-      my $studies = $self->study_urls($study_xref);
-      my @study_links = map { $_->[0]||'' } @$studies;
-      my @study_texts = map { $_->[1]||'' } @$studies;
-      my @gene_texts = map { $_->[0]||'' } @assoc_genes;
-      my @gene_links = map { $_->[1]||'' } @assoc_genes;
-      my @gene_titles = map { $_->[2]||'' } @assoc_genes;
-
-      my ($name_id,$name_url,$name_extra) = $self->pf_link($pf,$feat_type,$pf->phenotype_id);
-
       my $row = {
-           name_id          => $name_id,
-           name_link        => $name_url,
-           name_extra       => $name_extra,
-           location         => "$region:$start-$end$strand_label",
-           feature_type     => $feat_type,
-           phe_source       => $source_text,
-           phe_link         => $source_url,
-           study_links      => join('>','',@study_links),
-           study_texts      => join('>','',@study_texts),
-           gene_links       => join('>','',@gene_links),
-           gene_texts       => join('>','',@gene_texts),
-           gene_titles      => join('>','',@gene_titles),
+           names            => $self->pf_link($pf,$feat_type,$pf->phenotype_id),
+           name_id          => ($pf->type eq 'Gene') ? $self->object->get_gene_display_label($pf_name) : $pf_name, 
+           loc              => "$region:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end"))." (".$strand.")",
+           location         => "$region:".($start>$end?$end:$start),
+           feat_type        => sprintf('<div style="border-radius:5px;text-align:center;width:100%;max-width:%ipx;color:#FFF;background-color:%s">%s</div>', 
+                                       $feat_type_width, $feat_type_colour, $feat_type),
+           feat_type_string => $feat_type,
+           genes            => join(', ', @assoc_gene_links) || '-',
+           phe_source       => $source_url,
+           p_source         => $source,
+           phe_study        => $self->study_url($study_xref),
       };
 
       if (!$hub->param('ph')) {
@@ -170,42 +175,36 @@ sub make_table {
   push @exclude,'phe_desc','p_desc' if $hub->param('ph');
 
   my @columns = ({
-    _key => 'name_id', _type => 'string no_filter',
-    url_column => 'name_link',
-    extra_column => 'name_extra',
+    _key => 'names', _type => 'string no_filter',
     label => "Name(s)",
+    width => 1,
   },{
-    _key => 'name_link', _type => 'string no_filter unshowable',
+    _key => 'name_id', _type => 'string unshowable no_filter',
     sort_for => 'names',
   },{
-    _key => 'name_extra', _type => 'string no_filter unshowable',
-    sort_for => 'names',
-  },{
-    _key => 'feature_type', _type => 'iconic',
+    _key => 'feat_type', _type => 'iconic no_filter',
     label => "Type",
     width => 0.7,
+  },{
+    _key => 'feat_type_string', _type => 'iconic unshowable',
     sort_for => 'feat_type',
     filter_label => 'Feature type',
     filter_keymeta_enum => 1,
     filter_sorted => 1,
     primary => 1,
   },{
-    _key => 'location', _type => 'position no_filter fancy_position',
-    label => 'Location',
-    sort_for => 'loc',
+    _key => 'loc', _type => 'string no_filter',
     label => 'Genomic location (strand)',
-    helptip => $glossary->{'Chr:bp'}.' The symbol (+) corresponds to the forward strand and (-) corresponds to the reverse strand.',
+    helptip => $glossary->{'Chr:bp'},
     width => 1.4,
   },{
-    _key => 'gene_links', _type => 'string no_filter unshowable',
+    _key => 'location', _type => 'position unshowable no_filter',
+    label => 'Location', 
+    sort_for => 'loc',
   },{
-    _key => 'gene_texts', _type => 'string no_filter',
+    _key => 'genes', _type => 'string no_filter',
     label => "Reported gene(s)",
     helptip => 'Gene(s) reported in the study/paper',
-    url_column => 'gene_links',
-    title_column => 'gene_titles',
-  },{
-    _key => 'gene_titles', _type => 'string no_filter unshowable',
   },{
     _key => 'phe_desc', _type => 'iconic no_filter',
     label => 'Phenotype/Disease/Trait',
@@ -219,28 +218,21 @@ sub make_table {
     filter_sorted => 1,
     primary => 3,
   },{ 
-    _key => 'phe_link', _type => 'string no_filter unshowable',
+    _key => 'phe_source', _type => 'iconic no_filter',
     label => 'Annotation source',
     helptip => 'Project or database reporting the association',
   },{
-    _key => 'phe_source', _type => 'iconic',
-    label => 'Annotation source',
-    helptip => 'Project or database reporting the association',
-    url_rel => 'external',
-    url_column => 'phe_link',
+    _key => 'p_source', _type => 'iconic unshowable',
+    sort_for => 'phe_source',
     filter_label => 'Annotation source',
     filter_keymeta_enum => 1,
     filter_sorted => 1,
     primary => 2,
   },{
-    _key => 'study_texts', _type => 'string no_filter',
+    _key => 'phe_study', _type => 'string no_filter',
     label => 'Study',
     helptip => 'Link to the pubmed article or other source showing the association',
-    url_column => 'study_links',
-    url_rel => 'external',
     width => 0.8,
-  },{
-    _key => 'study_links', _type => 'string no_filter unshowable',
   });
 
   $table->add_columns(\@columns,\@exclude);
@@ -255,18 +247,11 @@ sub feature_type_classes {
   my ($self,$table) = @_;
 
   my @ftypes = ('Variant', 'Structural Variant', 'Gene', 'QTL');
-  my %ftype_cols = (
-    'Variant' => '#2222aa',
-    'Structural Variant' => '#22aa22',
-    'Gene' => '#aa2222',
-    'QTL' => '#d91bf7'
-  );
 
-  my $classes_col = $table->column('feature_type');
+  my $classes_col = $table->column('feat_type');
   my $i = 0;
   foreach my $type (@ftypes) {
     $classes_col->icon_order($type,$i++);
-    $classes_col->icon_coltab($type,$ftype_cols{$type});
   }
 }
 
@@ -284,7 +269,11 @@ sub pf_link {
     $source =~ s/ /\_/g;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
 
-    return ($pf_name,$self->hub->get_ExtURL($source,{ ID => $pf_name, SP => $species}),undef);
+    $link = $self->hub->get_ExtURL_link(
+      $pf_name,
+      $source,
+      { ID => $pf_name, SP => $species}
+    );
   }
 
   # link to gene or variation page
@@ -297,11 +286,9 @@ sub pf_link {
 
     my $display_label = '';
     my $extra_label   = '';
-    my $extra_id   = '';
     if ($type eq 'Gene') {
       $display_label = $self->object->get_gene_display_label($pf_name);
       $extra_label   = '<br /><span class="small" style="white-space:nowrap;"><b>ID: </b>'.$pf_name."</span>";
-      $extra_id = $pf_name;
 
       # LRG
       if ($pf_name =~ /(LRG)_\d+$/) {
@@ -320,11 +307,15 @@ sub pf_link {
       $id_param   => $pf_name,
       __clear     => 1
     };
-    return ($display_label,$self->hub->url($params),$extra_id);
+
+    $link = sprintf('<a href="%s">%s</a>%s', $self->hub->url($params), $display_label, $extra_label);
   }
+
+  return $link;
 }
 
-# Cross reference to phenotype entries
+
+##cross reference to phenotype entries
 sub phenotype_url{
   my $self  = shift;
   my $pheno = shift;
@@ -340,7 +331,6 @@ sub phenotype_url{
   return sprintf('<a href="%s">%s</a>', $self->hub->url($params), $pheno);
 }
 
-# External link to the data association source
 sub source_url {
   my ($self, $obj_name, $source, $ext_id, $ext_ref_id, $pf) = @_;
 
@@ -352,31 +342,35 @@ sub source_url {
   if ($source eq 'Animal QTLdb') {
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
 
-    return ($source,$hub->get_ExtURL(
+    return $hub->get_ExtURL_link(
+      $source,
       $source_uc,
       { ID => $obj_name, SP => $species}
-    ));
+    );
   }
   if ($source eq 'GOA') {
-    return ($source,$hub->get_ExtURL_link(
+    return $hub->get_ExtURL_link(
+      $source,
       'QUICK_GO_IMP',
       { ID => $ext_id, PR_ID => $ext_ref_id}
-    ));
+    );
   }
   if ($source_uc eq 'RGD') {
-    return ($source,undef) if (!$ext_id);
-    return ($source,$hub->get_ExtURL(
+    return $source if (!$ext_id);
+    return $hub->get_ExtURL_link(
+      $source,
       $source_uc.'_SEARCH',
       { ID => $ext_id }
-    ));
+    );
   }
   if ($source_uc eq 'ZFIN') {
     my $phe = $pf->phenotype->description;
        $phe =~ s/,//g;
-    return ($source,$hub->get_ExtURL(
+    return $hub->get_ExtURL_link(
+      $source,
       $source_uc.'_SEARCH',
       { ID => $phe }
-    ));
+    );
   }
 
   my $url   = $hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
@@ -400,17 +394,16 @@ sub source_url {
   my $tax = $hub->species_defs->TAXONOMY_ID;
   $url =~ s/###TAX###/$tax/;
 
-  return ($source,undef) if $url eq "";
+  return $source if $url eq "";
 
-  return ($label,$url);
+  return qq{<a rel="external" href="$url">$label</a>};
 }
 
-sub study_urls {
+sub study_url {
   my ($self, $xref) = @_;
 
   my $html;
 
-  my @links;
   my $link;
   if ($xref =~ /(pubmed|PMID)/) {
     foreach my $pmid (split(',',$xref)) {
@@ -422,20 +415,24 @@ sub study_urls {
       $pmid =~ s/\//:/g;
       $pmid =~ s/pubmed/PMID/;
       $html .= qq{<a rel="external" href="$link">$pmid</a>; };
-      push @links,[$link,$pmid];
     }
   }
   elsif ($xref =~ /^MIM\:/) {
   foreach my $mim (split /\,\s*/, $xref) {
       my $id = (split /\:/, $mim)[-1];
-      my $sub_url = $self->hub->get_ExtURL('OMIM', $id);
-      push @links,[$sub_url,$mim];
+      my $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+      $link .= ', '.$sub_link;
+      $link =~ s/^\, //g;
     }
+    $html .= "$link; ";
   }
-  elsif($xref) {
-    push @links,[undef,$xref];
+  else {
+    $html .= "$xref; ";
   }
-  return \@links;
+  $html =~ s/;\s$//;
+  $html = '-' if (!$html || $html eq '');
+
+  return $html;
 }
 
 1;

@@ -16,6 +16,33 @@
  */
 
 (function($) {
+  function expand_urls(urls_in,texts_in,titles_in,extras,more) {
+    var urls = [urls_in];
+    var texts = [texts_in];
+    var titles = [titles_in];
+    if((urls_in||'').charAt(0) == '>') {
+      urls = urls_in.substring(1).split('>');
+      texts = texts_in.substring(1).split('>');
+    }
+    if((titles_in||'').charAt(0) == '>') {
+      titles = titles_in.substring(1).split('>');
+    }
+    html = "";
+    for(var i=0;i<texts.length;i++) {
+      if(i) { html += ', '; }
+      var here = texts[i];
+      var title = '';
+      var more_here = more;
+      if(i<titles.length) { more_here += ' title="'+titles[i]+'"'; }
+      if(urls[i]) { here = '<a href="'+urls[i]+'"'+more_here+'>'+here+'</a>'; }
+      html += here;
+    }
+    if(extras) {
+      html += '<br /><span class="small" style="white-space:nowrap;"><b>ID: </b>'+extras+'</span>';
+    }
+    return html;
+  }
+
   $.fn.newtable_decorate_link = function(config,data) {
     function decorate_fn(column,extras,series) {
       var rseries = {};
@@ -32,40 +59,58 @@
         }
       }
 
-      return function(html,row) {
-        if (!extras['*'] || !extras['*'].base_url) {
-          return html;
-        }
-        var url = extras['*'].base_url;
-        var params = extras['*'].params || {};
-        var query = extras['*'].query || {};
-        var ok = true;
-        for(var k in params) {
-          if(!params.hasOwnProperty(k)) { continue; }
-          var v = params[k];
-          var val = params[k] ? row[rseries[v]] : false;
-          if(val===null || val===undefined) {
-            ok = false;
-          } else {
-            if (val === false) {
-              delete query[k];
-            } else {
-              query[k] = encodeURIComponent(val);
+      return {
+        go: function(html,row) {
+          if (extras['*']) {
+            var more = '';
+            if(extras['*'].url_rel) {
+              more = ' rel="'+extras['*'].url_rel+'"';
+            }
+            if(extras['*'].url_column) {
+              var titles = '';
+              if(extras['*'].title_column) {
+                titles = row[rseries[extras['*'].title_column]];
+              }
+              var extra = '';
+              if(extras['*'].extra_column) {
+                extra = row[rseries[extras['*'].extra_column]];
+              }
+              var url = row[rseries[extras['*'].url_column]];
+              html = expand_urls(url,html,titles,extra,more);
+            } else if(extras['*'].base_url) {
+              var url = extras['*'].base_url;
+              var params = extras['*'].params || {};
+              var query = extras['*'].query || {};
+              var ok = true;
+              for(var k in params) {
+                if(!params.hasOwnProperty(k)) { continue; }
+                var v = params[k];
+                var val = params[k] ? row[rseries[v]] : false;
+                if(val===null || val===undefined) {
+                  ok = false;
+                } else {
+                  if (val === false) {
+                    delete query[k];
+                  } else {
+                    query[k] = encodeURIComponent(val);
+                  }
+                }
+              }
+              if(!ok) { return html; }
+              url = (function(base, params) {
+                params = $.map(params, function(v,i) { return i + '=' + v }).sort().join(';');
+                return params ? base + '?' + params : base;
+              })(url, query);
+  
+              if(html.match(/<a/)) {
+                html = html.replace(/href="/g,'href="'+url);
+              } else {
+                html = '<a href="'+url+'"'+more+'>'+html+'</a>';
+              }
             }
           }
+          return html;
         }
-        if(!ok) { return html; }
-        url = (function(base, params) {
-          params = $.map(params, function(v,i) { return i + '=' + v }).sort().join(';');
-          return params ? base + '?' + params : base;
-        })(url, query);
-
-        if(html.match(/<a/)) {
-          html = html.replace(/href="/g,'href="'+url);
-        } else {
-          html = '<a href="'+url+'">'+html+'</a>';
-        }
-        return html;
       };
     }
 

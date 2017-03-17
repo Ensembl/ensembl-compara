@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,20 +42,38 @@ sub createObjects {
   ### Args: db 
   ### Returns: hashref of API objects
   my $self     = shift;
+  my $hub      = $self->hub;
   my $db       = $self->param('db') || 'core';
   my $features = {};
- 
-  my @ids      = $self->hub->param('ph'); 
 
-  return $self->problem('fatal', 'No ID', $self->_help) if (!scalar(@ids) && $self->hub->action ne 'All');
+  my $dbc = $hub->database('variation');
+  return unless $dbc;
+  $dbc->include_non_significant_phenotype_associations(0);
+ 
+  my @ids = $self->param('ph');
+
+  # Retrieve the ontology accession if there is only 1 associated with a phenotype entry
+  if ($self->param('ph') and !$self->param('oa')) {
+    my $phen_ad = $dbc->get_adaptor('Phenotype');
+    my $phen_obj = $phen_ad->fetch_by_dbID($self->param('ph'));
+    my $ontology_accessions = $phen_obj->ontology_accessions();
+    if (scalar(@{$ontology_accessions}) == 1) {
+      $self->param('oa', $ontology_accessions->[0]);
+    }
+  }
+  # Use the ontology accession if no ph param provided
+  elsif (!@ids && $self->param('oa')) {
+    my $phen_ad = $dbc->get_adaptor('Phenotype');
+    my %phenotypes = map { $_->dbID => 1 } @{$phen_ad->fetch_all_by_ontology_accession( $hub->param('oa') )};
+    @ids = keys(%phenotypes);
+  }
+
+  return $self->problem('fatal', 'No ID', $self->_help) if (!scalar(@ids) && $hub->action ne 'All');
   
   if (@ids) {
     my $pfs = [];
     my $genes = [];
 
-    my $dbc = $self->hub->database('variation');
-    return unless $dbc;
-    $dbc->include_non_significant_phenotype_associations(0);    
     my $adaptor = $dbc->get_adaptor('PhenotypeFeature');
 
     my %associated_gene;
@@ -110,7 +128,6 @@ sub createObjects {
       $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$pfs);
     }
   }
-
   my $object = $self->new_object('Phenotype', $features, $self->__data);
   $object->phenotype_id(\@ids);
 

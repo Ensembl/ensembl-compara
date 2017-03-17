@@ -16,39 +16,32 @@
  */
 
 (function($) {
-  $.fn.newtable_decorate_editorial = function(config,data) {
+  $.fn.newtable_decorate_fancy_position = function(config,data) {
     function decorate_fn(column,extras,series) {
-      var colkey = column;
-      if(extras['*'] && extras['*'].source) {
-        colkey = extras['*'].source;
-      }
-      var idx = -1;
-      for(var i=0;i<series.length;i++) {
-        if(series[i]==colkey) { idx = i; }
-      }
       return {
         go: function(html,row) {
-          if(idx==-1) { return html; }
-          if(!html) { return '-'; }
-          var type = row[idx];
-          var style = extras[type];
-          if(!style) { return html; }
-          var helptip = (style.helptip || type);
-          return '<div align="center"><div title="'+helptip+'" class="_ht score '+style.cssclass+'">'+html+'</div></div>';
+          var m = html.match(/^(.*?):(\d+)-(\d+)([+-]?)$/);
+          if(m) {
+            var reg = m[2]+"-"+m[3];
+            if(m[2]==m[3]) { reg = m[2]; }
+            html = "<b>"+m[1]+"</b>:"+reg;
+            if(m[4]) { html += " ("+m[4]+")"; }
+          } 
+          return html;
         }
       };
     }
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && $.inArray("editorial",cc.decorate)!=-1) {
+      if(cc.decorate && $.inArray("fancy_position",cc.decorate)!=-1) {
         decorators[key] = [decorate_fn];
       }
     });
 
     return {
       decorators: {
-        editorial: decorators
+        fancy_position: decorators
       }
     };
   }; 
