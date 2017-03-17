@@ -168,7 +168,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter li { position: relative; }
 .newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; color: black; cursor: auto; }
 .newtable_filter .newtable_filtertype_class .body ul { margin: -3px 0; padding: 0; display: block; float: left; font-size: 75%; line-height: 1em; }
-.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#444,#666),#666; color: #888; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; white-space: nowrap; border-radius: 8px; cursor: pointer; }
+.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#444,#666),#666; color: #888; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; border-radius: 8px; cursor: pointer; }
 .newtable_filter li .m .tail li { cursor: pointer; }
 .newtable_filter .newtable_filtertype_class .body li img { max-height: 12px; }
 .newtable_filter .newtable_filtertype_class .body li:before { content: "Off"; background: linear-gradient(to top,#422,#633), #633; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 26px; display: inline-block; text-align: center; color: #999; overflow: hidden; border-radius: 0 8px 8px 0; }

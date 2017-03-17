@@ -46,38 +46,40 @@
       var rseries = {};
       $.each(series,function(i,v) { rseries[v] = i; });
 
-      return function(html,row) {
-        var sep = RegExp(extras['*'].separator || '\s');
-        var max = (extras['*'].max || 20);
-        var parts = split_up(sep,html);
-        var all = parts.slice();
-        var out = "";
-        var trimmed = false;
-        var highlight_col = extras['*'].highlight_col;
-        var highlight_over = (extras['*'].highlight_over || 0);
-        var highlight_value;
-        if(highlight_col && parts.length>2*highlight_over) {
-          highlight_value = row[rseries[highlight_col]];
-        }
-        for(var i=0;i<parts.length;i+=2) {
-          var highlight = (parts[i] == highlight_value);
-          if(parts[i].length>max) {
-            parts[i] = parts[i].substring(0,max-2)+"...";
-            trimmed = true;
+      return {
+        go: function(html,row) {
+          var sep = RegExp(extras['*'].separator || '\s');
+          var max = (extras['*'].max || 20);
+          var parts = split_up(sep,html);
+          var all = parts.slice();
+          var out = "";
+          var trimmed = false;
+          var highlight_col = extras['*'].highlight_col;
+          var highlight_over = (extras['*'].highlight_over || 0);
+          var highlight_value;
+          if(highlight_col && parts.length>2*highlight_over) {
+            highlight_value = row[rseries[highlight_col]];
           }
-          if(highlight) {
-            parts[i] = '<b>'+parts[i]+'</b>';
-            all[i] = '<b>'+all[i]+'</b>';
+          for(var i=0;i<parts.length;i+=2) {
+            var highlight = (parts[i] == highlight_value);
+            if(parts[i].length>max) {
+              parts[i] = parts[i].substring(0,max-2)+"...";
+              trimmed = true;
+            }
+            if(highlight) {
+              parts[i] = '<b>'+parts[i]+'</b>';
+              all[i] = '<b>'+all[i]+'</b>';
+            }
+            out = out + parts[i];
+            if(i<parts.length-1) {
+              out = out + parts[i+1];
+            }
           }
-          out = out + parts[i];
-          if(i<parts.length-1) {
-            out = out + parts[i+1];
+          if(trimmed) {
+            return add_toggler(out,all.join(''));
+          } else {
+            return all.join('');
           }
-        }
-        if(trimmed) {
-          return add_toggler(out,all.join(''));
-        } else {
-          return all.join('');
         }
       };
     }

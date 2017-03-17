@@ -41,3 +41,4 @@ span.ld_focus_variant {background-color:[[BUTTON_BG]]; color:[[BUTTON_TEXT]];pad
 /* Gene and regulation */
 div.var_trans_pos     { height: 10px; width:100px; border:1px solid black; background-color:#FFF; margin-top:1px; box-shadow:1px 1px 2px #888; }
 div.var_trans_pos_sub { float:left; height: 10px; }
+

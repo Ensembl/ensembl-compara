@@ -25,50 +25,73 @@
 
   $.fn.newtable_decorate_iconic = function(config,data) {
     function paint_fn(column,extras) {
-      return function(value) {
-        var ann = extras[value] || {};
-        // TODO: support params to allow - or blank to be specified
-        if(ann.icon) {
-          value = '<img src="'+ann.icon+'"/>' + value;
-        } else {
-          if(ann.coltab) { value = tabify(ann.coltab,value); }
+      return {
+        go :function(value) {
+          var ann = extras[value] || {};
+          // TODO: support params to allow - or blank to be specified
+          if(ann.icon) {
+            value = '<img src="'+ann.icon+'"/>' + value;
+          } else {
+            if(ann.coltab) { value = tabify(ann.coltab,value); }
+          }
+          return value;
         }
-        return value;
       };
     }
 
-    function decorate_fn(column,extras) {
-      return function(html) {
-        var values = html.split('~');
-        var new_html = "";
-        for(var i=0;i<values.length;i++) {
-          var val = "";
-          var ann = {};
-          if(extras[values[i]]) { ann = extras[values[i]]; }
-          if(ann.icon) {
-            var more = '';
-            if(ann.helptip) {
-              more += ' class="_tht" title="'+ann.helptip+'" ';
-            }
-            val = '<img src="'+ann.icon+'" '+more+'/>';
-          } else {
-            if(ann.helptip) {
-              val = '<span class="ht _tht">'+
-                '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
-            }
-            val += values[i];
-            if(!values[i]) { val += '-'; }
-            if(ann.helptip) {
-              val += '</span>';
-            }
-            if(ann.coltab) { val = tabify(ann.coltab,val); }
+    function decorate_fn(column,extras,series,gextras) {
+      var icon_col = null;
+      var rseries = {};
+      $.each(series,function(i,v) { rseries[v] = i; });
+      var plus_text = false;
+      if(extras['*'] && extras['*']['icon_source']) {
+        icon_col = rseries[extras['*']['icon_source']];
+        plus_text = true;
+      }
+      return {
+        prio: 10,
+        go: function(html,row) {
+          var values = html.split('~');
+          var source = extras;
+          if(icon_col || icon_col===0) {
+            values = [row[icon_col]];
+            source = gextras.iconic[extras['*']['icon_source']];
           }
-          new_html += val;
+          var new_html = "";
+          for(var i=0;i<values.length;i++) {
+            var val = "";
+            var ann_val = values[i];
+            var ann = {};
+            if(source[values[i]]) { ann = source[values[i]]; }
+            if(ann.icon) {
+              var more = '';
+              if(ann.helptip) {
+                more += ' class="_tht" title="'+ann.helptip+'" ';
+              }
+              val += '<img src="'+ann.icon+'" '+more+'/>';
+            } else {
+              if(ann.helptip) {
+                val = '<span class="ht _tht">'+
+                  '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
+              }
+              val += values[i];
+              if(!values[i]) { val += '-'; }
+              if(ann.helptip) {
+                val += '</span>';
+              }
+              if(ann.coltab) { val = tabify(ann.coltab,val); }
+            }
+            new_html += val;
+          }
+          if(plus_text) {
+            if(new_html!="") { new_html += ' '; }
+            new_html += html;
+          }
+          if(!values.length || html==='') {
+            new_html = '-';
+          }
+          return new_html;
         }
-        if(!values.length || html==='') {
-          new_html = '-';
-        }
-        return new_html;
       };
     }
 

@@ -17,39 +17,42 @@
 
 (function($) {
   $.fn.newtable_decorate = function(config,data,widgets) {
-    function do_decorate(column,ff_in,extras,series) {
+    function do_decorate(column,ff_in,extras,series,gextras) {
       var ff_out = [];
       for(var i=0;i<ff_in.length;i++) {
-        var f = ff_in[i](column,extras,series);
+        var f = ff_in[i](column,extras,series,gextras);
         if(f) { ff_out.push(f); }
       }
       return ff_out;
     }
 
-    function find_decorators(decorators,type,column,extras,fnname,series) {
+    function find_decorators(decorators,type,column,extras,fnname,series,gextras) {
       $.each(widgets,function(name,w) {
         if(w[fnname] && w[fnname][type] && w[fnname][type][column]) {
-          var ff = do_decorate(column,w[fnname][type][column],extras,series);
+          var ff = do_decorate(column,w[fnname][type][column],extras,series,gextras);
           if(!decorators[column]) { decorators[column] = []; }
           decorators[column] = decorators[column].concat(ff);
         }
+      });
+      $.each(decorators,function(k,v) {
+        v.sort(function(a,b) { return (b.prio||50)-(a.prio||50); });
       });
     }
 
     function make_decorators($table,fnname,series) {
       var decorators = {};
       var km = $table.data('keymeta') || {};
-      var extras = {};
+      var gextras = {};
       $.each(km,function(key,keyvalues) {
         var t = key.split('/',2);
         if(t[0] == 'decorate') {
-          extras[t[1]] = keyvalues;
+          gextras[t[1]] = keyvalues;
         }
       });
       var decorators = {};
-      $.each(extras,function(type,vv) {
+      $.each(gextras,function(type,vv) {
         $.each(vv,function(col,extras) {
-          find_decorators(decorators,type,col,extras,fnname,series);
+          find_decorators(decorators,type,col,extras,fnname,series,gextras);
         });
       });
       return decorators;
@@ -63,7 +66,7 @@
             var decorators = make_decorators($table,'decorate_one');
             var ff = decorators[key] || [];
             for(var i=0;i<ff.length;i++) {
-              value = ff[i](value);
+              value = ff[i].go(value);
             }
             if(value=='') { value = 'No data'; }
             return value;
@@ -74,7 +77,6 @@
           function(need,got) {
             return {
               dundo: function(manifest,grid,series,start,length) {
-                console.log("dundo",start,length);
                 var fabric = [];
                 var decorators = make_decorators($table,'decorators',series);
                 for(var i=0;i<grid.length;i++) { fabric[i] = grid[i]; }
@@ -87,7 +89,7 @@
                     if(decorators[key]) {
                       var ff = decorators[key];
                       for(var k=0;k<ff.length;k++) {
-                        v = ff[k](v,grid[i],series);
+                        v = ff[k].go(v,grid[i],series);
                       }
                     }
                     if(!v) { v = '-'; }
@@ -95,7 +97,6 @@
                   }
                   fabric[i] = new_row;
                 }
-                console.log("dundo done");
                 return fabric;
               }
             };

@@ -129,8 +129,8 @@
       var key = config.columns[idx];
       var state = (($table.data('view').filter||{})[key])||{};
       var kind = config.colconf[key].range;
-      var values = ($table.data('ranges')||{})[key];
-      if(!values) { values = []; }
+      var vals = ($table.data('ranges')||{})[key];
+      if(!vals) { vals = []; }
       var km = $table.data('keymeta').filter;
       if(km) { km = km[key]; }
       var w = find_widget(kind,'filters','class');
@@ -147,11 +147,11 @@
       if($('.new_table_loading:visible',$table).length) {
       }
       $stext = $('<div class="summary_text"/>').html("&#x00A0;").appendTo($summary);
-      if(w.visible(values)) {
+      if(w.visible(vals)) {
         var replace = !!($button.find('.m:visible').length);
         var replace_state = $button.data('filter-state');
         if(replace && replace_state!==undefined) { state = replace_state; }
-        w.display($box,$button,values,state,km,key,$table);
+        w.display($box,$button,vals,state,km,key,$table);
         var $tail = $('<div class="tail"/>').appendTo($box);
         add_ok_cancel($tail,$table,$button,replace);
       } else {

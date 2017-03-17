@@ -17,19 +17,63 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
+## Retrieve all the ontology accessions associated with a phenotype
+sub get_all_ontology_data{
+
+  my $self = shift;
+
+  my %data;
+
+  my $ontologyterms = $self->object->get_OntologyTerms();
+
+  return undef unless defined $ontologyterms;
+
+  foreach my $ot (@{$ontologyterms}){
+
+    ## build link out to Ontology source
+    my $acc = $ot->accession();
+    next unless $acc;
+
+    $data{$acc}{link}       = $self->external_ontology_link($acc);
+    $data{$acc}{name}       = $ot->name();
+    $data{$acc}{definition} = (split/\"/, $ot->definition())[1];
+  }
+
+  return \%data;
+}
+
 ## build link out to Ontology source
+sub external_ontology {
+  my $self = shift;
+  my $acc  = shift;
+  my $term = shift;
+
+  my $iri_form = $acc;
+  $iri_form =~ s/\:/\_/ unless $iri_form =~ /^GO/;
+
+  my $ontology_url = undef;
+  $ontology_url = $self->hub->get_ExtURL('EFO',  $iri_form) if $iri_form =~ /^EFO/;
+  $ontology_url = $self->hub->get_ExtURL('ORDO', $iri_form) if $iri_form =~ /^Orphanet/;
+  $ontology_url = $self->hub->get_ExtURL('HPO',  $iri_form) if $iri_form =~ /^HP/;
+  $ontology_url = $self->hub->get_ExtURL('GO',   $iri_form) if $iri_form =~ /^GO/;
+
+  return $ontology_url;
+}
+
 sub external_ontology_link{
   my $self = shift;
   my $acc  = shift;
+  my $term = shift;
 
+  my $label = ($term) ? $term : $acc;
   my $iri_form = $acc;
-  $iri_form =~ s/\:/\_/ unless $acc =~ /^GO/;
+  $iri_form =~ s/\:/\_/ unless $iri_form =~ /^GO/;
 
-  my $ontology_link;
-  $ontology_link = $self->hub->get_ExtURL_link( $acc, 'EFO',  $iri_form) if $iri_form =~ /^EFO/;
-  $ontology_link = $self->hub->get_ExtURL_link( $acc, 'ORDO', $iri_form) if $iri_form =~ /^Orphanet/;
-  $ontology_link = $self->hub->get_ExtURL_link( $acc, 'HPO',  $iri_form) if $iri_form =~ /^HP/;
-  $ontology_link = $self->hub->get_ExtURL_link( $acc, 'GO',   $iri_form) if $iri_form =~ /^GO/;
+  my $ontology_link = $acc;
+  $ontology_link = $self->hub->get_ExtURL_link( $label, 'EFO',  $iri_form) if $iri_form =~ /^EFO/;
+  $ontology_link = $self->hub->get_ExtURL_link( $label, 'ORDO', $iri_form) if $iri_form =~ /^Orphanet/;
+  $ontology_link = $self->hub->get_ExtURL_link( $label, 'HPO',  $iri_form) if $iri_form =~ /^HP/;
+  $ontology_link = $self->hub->get_ExtURL_link( $label, 'GO',   $iri_form) if $iri_form =~ /^GO/;
 
   return $ontology_link;
 }
