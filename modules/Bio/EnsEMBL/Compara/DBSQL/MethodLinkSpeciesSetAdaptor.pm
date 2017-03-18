@@ -492,12 +492,12 @@ sub fetch_all_by_method_link_type_GenomeDB {
 =cut
 
 sub fetch_by_method_link_type_GenomeDBs {
-    my ($self, $method_link_type, $genome_dbs) = @_;
+    my ($self, $method_link_type, $genome_dbs, $undef_on_missing_methods) = @_;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
     if (not defined $method) {
-        # Do not complain if ENSEMBL_HOMOEOLOGUES does not exist
-        return undef if $method_link_type eq 'ENSEMBL_HOMOEOLOGUES';
+        # Do not complain if asked not to
+        return undef if $undef_on_missing_methods;
         die "Could not fetch Method with type='$method_link_type'";
     }
     my $method_link_id = $method->dbID;
