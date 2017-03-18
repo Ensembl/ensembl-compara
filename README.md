@@ -41,6 +41,17 @@ If working with HAL files, additional setup is required. First, install progress
 	make
 	pwd  # Prints the installation path
 
+Note that depending on your build environment, you may have to do this as
+well
+
+        # Seems to be required on Ubuntu installations
+        sudo apt-get install python-dev
+        sudo ln -s /usr/lib/python2.7/plat-*/_sysconfigdata_nd.py /usr/lib/python2.7/
+        # Seems to be required under linuxbrew installations
+        cd progressiveCactus/submodules/sonLib
+        # edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 27)
+
+
 Now, we need to set up the Compara API:
 
 	cd ensembl-compara/xs/HALXS
