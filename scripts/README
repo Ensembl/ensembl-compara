@@ -54,3 +54,8 @@ Modules and scripts used to provide a DAS server out of a Compara database. DAS 
 
 They've been used in very old releases to load homology data into a Compara database
 
+* scripts/view_alignment
+
+This directory used to contain scripts to fetch Compara alignment and format them to be used
+in the Staden software suite
+
