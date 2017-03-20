@@ -193,7 +193,7 @@ sub summary_table {
       
       $row->{'plot'} = qq{<a class="ld_plot_link space-right" href="$url">View plot</a>};
       
-      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }).' table', $id);
+      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
       
       # export table
       $url = $hub->url({
@@ -268,7 +268,7 @@ sub linked_var_table {
   my @colour_scale    = $hub->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
   my %mappings        = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my ($vf, $loc);
-  
+
   if (keys %mappings == 1) {
     ($loc) = values %mappings;
   } else { 
