@@ -86,6 +86,8 @@ sub construct_sql_query {
 
     my @tabs = $self->_tables;
     my $columns = join(', ', $self->_columns());
+    my @all_extra_columns;
+    $self->{_all_extra_columns} = \@all_extra_columns;
 
     if ($join) {
         foreach my $single_join (@{$join}) {
@@ -100,7 +102,9 @@ sub construct_sql_query {
                 }
             } 
             if ($extra_columns) {
-                $columns .= ", " . join(', ', @{$extra_columns});
+                my @sorted_keys = sort keys %$extra_columns;
+                push @all_extra_columns, @$extra_columns{@sorted_keys};
+                $columns .= ", " . join(', ', @sorted_keys);
             }
         }
     }
@@ -260,11 +264,11 @@ sub _bind_params_and_execute {
 sub generic_objs_from_sth {
     my ($self, $sth, $class, $field_names, $callback) = @_;
 
-    my @objs;
-    my @cols = $self->_columns;
-    my @vals = map {undef} @cols;
-    my @ind  = 0..(scalar(@cols)-1);
+    push @$field_names, @{$self->{_all_extra_columns}};   # Requested by on-the-fly JOINs
+    my @vals = map {undef} @$field_names;
+    my @ind  = 0..(scalar(@vals)-1);
 
+    my @objs;
     $sth->bind_columns(\(@vals));
     while ( $sth->fetch() ) {
         my $obj = $class->new_fast( {

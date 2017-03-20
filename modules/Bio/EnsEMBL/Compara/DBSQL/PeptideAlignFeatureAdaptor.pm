@@ -500,7 +500,6 @@ sub _objs_from_sth {
             return {
                 ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),
                 ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),
-                ($a->[16] ? ('_rhit_dbID'   => $a->[16]) : ()),
             };
         });
 }
@@ -602,7 +601,7 @@ sub fetch_BRH_by_member_genomedb
    my $extrajoin = [
                      [ ['peptide_align_feature_'.$hit_genome_db_id, 'paf2'],
                        'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       ['paf2.peptide_align_feature_id AS pafid2']]
+                       {'paf2.peptide_align_feature_id AS pafid2' => '_rhit_dbID'}]
                    ];
 
    my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=? AND paf.hgenome_db_id=?";

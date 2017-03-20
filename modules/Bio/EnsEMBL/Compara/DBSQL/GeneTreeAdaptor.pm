@@ -337,7 +337,7 @@ sub fetch_subtrees {
     assert_ref_or_dbID($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
     my $tree_id = (ref($tree) ? $tree->root_id : $tree);
 
-    my $join = [[['gene_tree_node', 'gtn2'], 'gtn2.node_id = gtr.root_id', ['gtn2.parent_id']], [['gene_tree_node', 'gtn1'], 'gtn1.node_id = gtn2.parent_id']];
+    my $join = [[['gene_tree_node', 'gtn2'], 'gtn2.node_id = gtr.root_id', {'gtn2.parent_id' => '_parent_id'}], [['gene_tree_node', 'gtn1'], 'gtn1.node_id = gtn2.parent_id']];
     my $constraint = "(gtn1.root_id = ?) AND (gtn2.root_id != gtn1.root_id)";
 
     $self->bind_param_generic_fetch($tree_id, SQL_INTEGER);
