@@ -88,13 +88,12 @@ sub content {
     })
   });
 
-  # Eagle change, add in extra_data if available ( dna_align_feature.external_data )
-  my %extra_data = $features->[0]->extra_data && ref $features->[0]->extra_data eq 'HASH' ? %{$features->[0]->extra_data} : ();
+  my @attrs = @{ $features->[0]->get_all_Attributes };
 
-  foreach my $type ( sort keys %extra_data ) {
+  foreach my $attr ( sort {$a->name cmp $b->name} @attrs ) {
     $self->add_entry({
-      'type'  => $type,
-      'label' => $extra_data{$type}
+      'type'  => $attr->name,
+      'label' => $attr->value
     });
   }
 }
