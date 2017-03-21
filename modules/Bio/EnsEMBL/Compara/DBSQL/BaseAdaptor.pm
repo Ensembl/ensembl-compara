@@ -101,7 +101,10 @@ sub construct_sql_query {
                     $constraint = " $condition";
                 }
             } 
-            if ($extra_columns) {
+            if ($extra_columns && (ref($extra_columns) eq 'ARRAY')) {
+                $columns .= ", " . join(', ', @{$extra_columns});
+
+            } elsif ($extra_columns && (ref($extra_columns) eq 'HASH')) {
                 my @sorted_keys = sort keys %$extra_columns;
                 push @all_extra_columns, @$extra_columns{@sorted_keys};
                 $columns .= ", " . join(', ', @sorted_keys);
