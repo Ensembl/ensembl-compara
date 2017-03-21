@@ -259,7 +259,6 @@ sub http_redirect {
   my ($r, $redirect_uri, $permanent) = @_;
   $r->uri($redirect_uri);
   $r->headers_out->add('Location' => $r->uri);
-  $r->child_terminate; # TODO really needed?
 
   return $permanent ? HTTP_MOVED_PERMANENTLY : HTTP_MOVED_TEMPORARILY;
 }
