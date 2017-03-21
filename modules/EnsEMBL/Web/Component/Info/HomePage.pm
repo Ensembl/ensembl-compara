@@ -221,7 +221,7 @@ sub genebuild_text {
     </div>
     <h2>Gene annotation</h2>
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
-    <p><a href="%s" class="nodeco">%sMore about this genebuild</a>%s</p>
+    <p><a href="%s" class="nodeco">%sMore about this genebuild</a></p>
     %s
     %s
     %s
@@ -241,8 +241,6 @@ sub genebuild_text {
     
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
-    $hub->database('rnaseq') ? sprintf(', including <a href="%s" class="nodeco">RNASeq gene expression models</a>', $hub->url({'action' => 'Expression'})) : '',
-
     $ftp ? sprintf(
       '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
       $ftp, lc $species, sprintf($self->{'icon'}, 'download')
