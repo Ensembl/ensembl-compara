@@ -340,7 +340,7 @@ sub fetch_first_shared_ancestor_indexed {
   $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($min_left, SQL_INTEGER);
   $self->bind_param_generic_fetch($max_right, SQL_INTEGER);
-  return $self->generic_fetch_one($constraint, '', $final);
+  return $self->generic_fetch_one($constraint, undef, $final);
 }
 
 
