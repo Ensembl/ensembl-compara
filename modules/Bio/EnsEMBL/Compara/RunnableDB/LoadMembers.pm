@@ -245,14 +245,15 @@ sub loadMembersFromCoreSlices {
 
     } else {
        foreach my $gene (@relevant_genes) {
-          die "Unknown biotype ".$gene->biotype unless $biotype_groups->{$gene->biotype};
+          my $biotype = lc $gene->biotype;
+          die "Unknown biotype ".$gene->biotype." for ".$gene->stable_id."\n" unless $biotype_groups->{$biotype};
 
           my $gene_member;
 
-          if ($self->param('store_coding') && (($biotype_groups->{$gene->biotype} eq 'coding') or ($biotype_groups->{$gene->biotype} eq 'LRG'))) {
+          if ($self->param('store_coding') && (($biotype_groups->{$biotype} eq 'coding') or ($biotype_groups->{$biotype} eq 'LRG'))) {
               $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
               
-          } elsif ( $self->param('store_ncrna') && ($biotype_groups->{$gene->biotype} =~ /noncoding$/) ) {
+          } elsif ( $self->param('store_ncrna') && ($biotype_groups->{$biotype} =~ /noncoding$/) ) {
               $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
 
           } else {

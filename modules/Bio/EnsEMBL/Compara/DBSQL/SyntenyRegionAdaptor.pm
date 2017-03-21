@@ -238,7 +238,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
   my $join = [[['dnafrag_region', 'dfr'], 'sr.synteny_region_id=dfr.synteny_region_id']];
-  my $constraint = '(dfr.dnafrag_id = ?)';
+  my $constraint = '(sr.method_link_species_set_id = ?) AND (dfr.dnafrag_id = ?)';
+  $self->bind_param_generic_fetch($mlss->dbID, SQL_INTEGER);
   $self->bind_param_generic_fetch($dnafrag->dbID, SQL_INTEGER);
   
   if (defined $start) {
