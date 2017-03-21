@@ -444,7 +444,7 @@ sub set_pair_aligner_options {
 
     # check master for species sets - only pairwise LASTZ species set is copied locally
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
-	my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+	my $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor;
 
 	# check if static or dynamic params are being used
 	# static = string input; dynamic = hash ref input
@@ -455,18 +455,21 @@ sub set_pair_aligner_options {
 	}
 
 	# read in per-species_set settings
-	my %ss_settings = %{ $self->param('default_parameters') };
+	my %taxon_settings = %{ $self->param('default_parameters') };
 
 	my $default_settings = $ss_settings{'default'};
-	delete $ss_settings{'default'};
+	delete $taxon_settings{'default'};
 
+	# keep track of the size of the clade - in cases where multiple
+	# clades apply to a single pair, the smallest clade 'wins'
+	my $this_clade_size = 1000; 
 	my $these_settings;
-	foreach my $ss_name ( keys %ss_settings ) {
-		my @species_sets = sort { $a->dbID <=> $b->dbID } @{$ss_adaptor->fetch_all_by_name($ss_name)};
-		print "Searching for $ss_name species set...\n" if ($self->debug);
-		die "Cannot find $ss_name species set in database...\n" unless ( $species_sets[-1] );
+	foreach my $tax_id ( keys %taxon_settings ) {
+		my @genome_db_ids = $gdb_adaptor->fetch_all_by_ancestral_taxon_id($tax_id);
 
-		my @genome_db_ids = map {$_->dbID} @{ $species_sets[-1]->genome_dbs };
+		 # ensure that the smallest taxonomic group settings are applied
+		 # when dealing with nested sets
+		next if ( defined $these_settings && scalar(@genome_db_ids) >= $this_clade_size );
 
 		# if both ref and non-ref are present, use these settings
 		my $found_ref     = grep { $_ == $ref_genome_db->dbID } @genome_db_ids;
@@ -488,14 +491,7 @@ sub get_chunking {
 
    # need to check if human-specific chunking params exist
    # incoming structure would be a hash if so
-   if ( defined $default_chunk->{human} ){ 
-   		if ($dna_collection->{'genome_db'}->dbID == 150) {
-   			$self->get_chunking($dna_collection, $default_chunk->{human});
-   		} else {
-   			$self->get_chunking($dna_collection, $default_chunk->{nonhuman});
-   		}
-   		return;
-   }
+   $self->get_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default});
 
    #chunk_size
    unless (defined $dna_collection->{'chunk_size'}) {
@@ -541,14 +537,8 @@ sub get_default_chunking {
 
    # need to check if human-specific chunking params exist
    # incoming structure would be a hash if so
-   if ( defined $default_chunk->{human} ){ 
-   		if ($dna_collection->{'genome_db'}->dbID == 150) {
-   			get_default_chunking($dna_collection, $default_chunk->{human});
-   		} else {
-   			get_default_chunking($dna_collection, $default_chunk->{nonhuman});
-   		}
-   		return;
-   }
+   get_default_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default});
+
 
     #chunk_size
     unless (defined $dna_collection->{'chunk_size'}) {

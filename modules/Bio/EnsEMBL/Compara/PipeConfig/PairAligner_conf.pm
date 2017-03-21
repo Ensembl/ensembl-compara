@@ -154,7 +154,7 @@ sub default_options {
 	#
      'default_chunks' => {
         'reference'   => { 
-            'human' => {
+            'homo_sapiens' => {
                 'chunk_size' => 30000000,
     			'overlap'    => 0,
     			'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
@@ -165,7 +165,7 @@ sub default_options {
                 #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
             },
     	     #non human example
-    		    'nonhuman' => {
+    		'default' => {
                 'chunk_size'      => 10000000,
     				'overlap'         => 0,
     				'masking_options' => '{default_soft_masking => 1}'
@@ -199,8 +199,8 @@ sub default_options {
 	'pair_aligner_batch_size' => 40,
 
     'pair_aligner_options' => {
-        default  => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac',
-        primates => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac',
+        default => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac',
+        9443    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac',
     },
 
         #

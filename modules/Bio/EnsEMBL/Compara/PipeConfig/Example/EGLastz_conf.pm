@@ -93,27 +93,6 @@ sub default_options {
 #	    'ref_species' => 'homo_sapiens',
 	    'ref_species' => '',
 
-	    #Define chunking
-	    'default_chunks' => {#human example
-#			     'reference'   => {'chunk_size' => 30000000,
-#					       'overlap'    => 0,
-#					       'include_non_reference' => 0, #1  => include non_reference regions (eg human assembly patches)
-					                                      #0  => do not include non_reference regions
-					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species has a karyotype
-					                                      #since these analyses are the only ones we keep up-to-date with the patches-pipeline, with the exception of self-alignments)
-
-#Should use this for human vs non-primate
-#					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
-			     #non human example
-   			    'reference'     => {'chunk_size'      => 10000000,
-   						'overlap'         => 0,
-   						'masking_options' => '{default_soft_masking => 1}'},
-   			    'non_reference' => {'chunk_size'      => 10100000,
-   						'group_set_size'  => 10100000,
-   						'overlap'         => 100000,
-   						'masking_options' => '{default_soft_masking => 1}'},
-   			    },
-
 	    #Location of executables
 #	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
 	    'pair_aligner_exe' =>  $self->o('exe_dir').'/lastz',
@@ -124,7 +103,6 @@ sub default_options {
 	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	    'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', 
 	    # 'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --identity=80..100 --matchcount=1000', # Tomato Vs Potato
 	    
 	    #
