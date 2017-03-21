@@ -23,7 +23,7 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(minify generate_sprites data_url);
+our @EXPORT_OK = qw(minify generate_sprites data_url preload_config);
 
 our $VERSION = '0.01';
 
@@ -48,9 +48,12 @@ my @OK_STYLES = qw(
 my @EXCLUDE_FILES = qw(this-mirror.png);
 my @OK_ATTRS = qw(onClick);
 
+
+my $KIT_COMPLETE = 0;
 sub kit_complete {
   my ($effect) = @_;
 
+  return $KIT_COMPLETE>0 if $KIT_COMPLETE;
   my @required = (
     ['identify --version','ImageMagick'],
     ['convert --version','ImageMagick'],
@@ -61,9 +64,11 @@ sub kit_complete {
     my $out = qx($exe 2>&1) || '';
     unless($out =~ /$grep/) {
       warn "$effect: '$exe' failed. Falling back\n" if $effect;
+      $KIT_COMPLETE = -1;
       return 0;
     }
   }
+  $KIT_COMPLETE = 1;
   return 1;
 }
 
@@ -423,6 +428,15 @@ sub maybe_generate_sprite {
   return qq(<img src=${outq}data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==$outq class=${outq}autosprite-src-$s_t $classes$outq $style $more_attrs/>);
 }
 
+my %SPRITE_MAPS;
+
+sub preload_config {
+  my $root = $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH;
+  foreach my $f (glob "$root/*.map") {
+    $SPRITE_MAPS{$f} = from_json(file_get_contents($f));
+  }
+}
+
 sub load_config {
   my ($species_defs) = @_;
 
@@ -433,7 +447,11 @@ sub load_config {
     $map = $css->minified_filename if $css->name eq 'components';
   }
   $map =~ s/\.css$/.map/;
-  return from_json(file_get_contents("$root/$map"));
+  my $filename = "$root/$map";
+  return $SPRITE_MAPS{$filename} if $SPRITE_MAPS{$filename};
+  my $out = from_json(file_get_contents($filename));
+  $SPRITE_MAPS{$filename} = $out;
+  return $out;
 }
 
 sub generate_sprites {

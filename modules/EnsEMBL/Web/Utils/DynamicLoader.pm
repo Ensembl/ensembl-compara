@@ -25,8 +25,8 @@ use warnings;
 use EnsEMBL::Web::Exceptions qw(ModuleNotFound DynamicLoaderException);
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(dynamic_require dynamic_require_fallback dynamic_use dynamic_use_fallback);
-my %_INC; # each key is module attempted to be required dynamically - value is 0 if required successfully, or error string otherwise
+our @EXPORT_OK = qw(dynamic_require dynamic_require_fallback dynamic_use dynamic_use_fallback %_INC);
+our %_INC; # each key is module attempted to be required dynamically - value is 0 if required successfully, or error string otherwise
 
 sub dynamic_require {
   ## @function
