@@ -448,7 +448,7 @@ sub load_config {
     $map = $css->minified_url_path if $css->name eq 'components';
   }
   $map =~ s/\.css$/.map/;
-  my $filename = "$root/$map";
+  my $filename = "$docroot/$map";
   return $SPRITE_MAPS{$filename} if $SPRITE_MAPS{$filename};
   my $out = from_json(file_get_contents($filename));
   $SPRITE_MAPS{$filename} = $out;
