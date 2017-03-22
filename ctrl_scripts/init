@@ -45,6 +45,8 @@ BEGIN {
   require "$Bin/helper.pl";
 };
 
+my $version = $SiteDefs::ENSEMBL_VERSION;
+
 my %write_dirs = (
                   'tmp'       => ['ENSEMBL_TMP_DIR', {
                                     'tmp'         => 'ENSEMBL_TMP_DIR',
@@ -53,22 +55,27 @@ my %write_dirs = (
                                     'precache'    => 'ENSEMBL_PRECACHE_DIR',
                                     'udcCache'    => 'UDC_CACHEDIR',
                                     'failure_dir' => 'ENSEMBL_FAILUREDIR',
-                                    'server/logs' => '$ENSEMBL_LOGDIR',
+                                    'server/logs' => 'ENSEMBL_LOGDIR',
                                     'procedure'   => '',
-                                    'biomart'     => '',
                                   }],
                   'userdata'  => ['ENSEMBL_USERDATA_DIR', {
                                     'persistent' => '',
                                     'temporary'   => '',
                                   }],
   
+                  'biomart'   => ['ENSEMBL_TMP_DIR', {
+                                    'biomart'                   => '',
+                                    'biomart-perl'              => '',
+                                    "biomart-perl/www_$version" => '',
+                                  }],
                   );
 
 # command line options
-my ($help);
+my ($help, $mart);
 
 &GetOptions(
   "h|help"      => \$help,
+  "mart"        => \$mart,
 );
 
 if ($help) {
@@ -78,6 +85,7 @@ if ($help) {
 
   Options:
     -h, --help      : print this help message
+    --mart          : include mart directories
   );
   exit;
 }
@@ -85,6 +93,8 @@ if ($help) {
 no strict qw(refs);
 
 while (my($set, $info) = each(%write_dirs)) {
+
+  next if $set eq 'biomart' && !$mart;
 
   my $root      = $info->[0];
   my $root_dir  = ${"SiteDefs::$root"};
