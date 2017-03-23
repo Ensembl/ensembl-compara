@@ -659,10 +659,10 @@ sub _set_env {
     for (sort keys %$ENSEMBL_SETENV) {
       if (defined $ENSEMBL_SETENV->{$_}) {
         $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
-        warn sprintf "%20s: %s\n", $_, $ENV{$_} if $_VERBOSE;
+        warn sprintf "%50s: %s\n", $_, $ENV{$_} if $_VERBOSE;
       } else {
         delete $ENV{$_};
-        warn sprintf "%20s deleted\n", $_ if $_VERBOSE;
+        warn sprintf "%50s deleted\n", $_ if $_VERBOSE;
       }
     }
   }
