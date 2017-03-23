@@ -66,7 +66,7 @@ if ( $html ) {
 }
 
 for my $m ( @$mlss ){
-	my $this_species_tree = $dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($m->dbID, 'default');
+	my $this_species_tree = $m->species_tree;
 	for my $g ( @$gdbs ) {
 		next if ( $g->name eq 'ancestral_sequences' );
 		my $this_genomedb_id = $g->dbID;
