@@ -218,8 +218,9 @@ our $ENSEMBL_PRECACHE_DEBUG   = 0;      # change this to 1, 2 or 3 to get requir
 
 ###############################################################################
 ## Mart configs - just keeping flags off by default
-our $ENSEMBL_MART_ENABLED         = 0; # Setting it to non zero will make the mart links appear on the site (the server itself may not be mart)
-our $ENSEMBL_MART_PLUGIN_ENABLED  = 0; # Is set true by the mart plugin itself. No need to override it.
+our $ENSEMBL_MART_ENABLED         = 0;  # Setting it to non zero will make the mart links appear on the site (the server itself may not be mart)
+our $ENSEMBL_MART_PLUGIN_ENABLED  = 0;  # Is set true by the mart plugin itself. No need to override it.
+our $ENSEMBL_MART_SERVER          = ''; # Server address if mart server is running on another server (biomart requests get proxied to ENSEMBL_MART_SERVER)
 ###############################################################################
 
 
@@ -318,6 +319,7 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
 our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
+our $ENSEMBL_MART_SERVERNAME;   # Populated by import
 
 my $_VERBOSE;
 my $_IMPORTED;
@@ -357,6 +359,11 @@ sub import {
   $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
   $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
+
+  if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
+    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s:%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER, $ENSEMBL_MART_PORT;
+    $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
+  }
 
   _verbose_params() if $_VERBOSE;
 }

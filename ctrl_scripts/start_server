@@ -30,15 +30,16 @@ BEGIN {
 };
 
 # Get some configs from SiteDefs
-my $web_root      = $SiteDefs::ENSEMBL_WEBROOT;
-my $conf_dir      = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
-my $conf_file     = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
-my $memcached     = $SiteDefs::ENSEMBL_MEMCACHED;
-my $apache_define = $SiteDefs::APACHE_DEFINE;
-my $apache_dir    = $SiteDefs::APACHE_DIR;
-my $apache_bin    = $SiteDefs::APACHE_BIN;
-my $apache_conf   = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
-my $log_dir       = $SiteDefs::ENSEMBL_LOGDIR;
+my $web_root          = $SiteDefs::ENSEMBL_WEBROOT;
+my $conf_dir          = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
+my $conf_file         = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
+my $memcached         = $SiteDefs::ENSEMBL_MEMCACHED;
+my $apache_define     = $SiteDefs::APACHE_DEFINE;
+my $apache_dir        = $SiteDefs::APACHE_DIR;
+my $apache_bin        = $SiteDefs::APACHE_BIN;
+my $apache_conf       = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
+my $log_dir           = $SiteDefs::ENSEMBL_LOGDIR;
+my $dedicated_biomart = $SiteDefs::ENSEMBL_MART_SERVERNAME ? 1 : 0; # does it have a deicated biomart server somewhere else?
 
 my ($help, $rmconfig, $flush, $verbose, @defines);
 
@@ -123,6 +124,7 @@ my ($before_start, $after_start) = before_after_hooks('start');
 # Build the httpd command string and run all commands
 my $cmd = sprintf '%s -d %s -f %s %s', $apache_bin || "$apache_dir/bin/httpd", $apache_dir, $apache_conf, join(' ', map("-D$_", @defines, $apache_define ? grep(/\S/, split ' ', $apache_define) : ()));
    $cmd = "$cmd -D STARTUP_VERBOSE" if $verbose;
+   $cmd = "$cmd -D DEDICATED_BIOMART" if $dedicated_biomart;
 
 require $_ for @$before_start;
 warn "========================\nStarting Apache: $cmd\n========================\n";
