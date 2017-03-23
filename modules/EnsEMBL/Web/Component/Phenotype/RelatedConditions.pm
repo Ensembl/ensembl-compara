@@ -46,7 +46,9 @@ sub content {
     $html .= $table->render($hub,$self);
   }
   elsif ($hub->param('ph')) {
-    $html .= '<h3>Please select an ontology accession in the form displayed above</h3>';
+    if ($self->get_all_ontology_data) {
+      $html .= '<h3>Please select an ontology accession in the form displayed above</h3>';
+    }
   }
   else {
     my $msg = q{You need to specify an ontology accession ID in the URL, e.g. <a href="/Homo_sapiens/PhenotypeOntologyTerm/Summary?oa=EFO:0003900">.../Homo_sapiens/PhenotypeOntologyTerm/Summary?oa=EFO:0003900</a>};
