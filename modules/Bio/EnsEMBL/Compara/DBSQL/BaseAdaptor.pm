@@ -696,5 +696,30 @@ sub generic_update {
 }
 
 
+=head2 delete_by_dbID
+
+  Arg [1]     : int $id. The unique database identifier for the feature to be deleted
+  Example     : $adaptor->delete_by_dbID(123);
+  Description : Generic method to delete an entry from the database. Note that this
+                basic implementation is not aware of table relations and foreign keys
+                and may either fail or leave the database in an inconsistent state.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub delete_by_dbID {
+    my ($self, $id) = @_;
+
+    throw("id argument is required") if(!defined $id);
+
+    my ($name, $syn) = @{($self->_tables)[0]};
+    my $delete_sql = qq{DELETE FROM $name WHERE ${name}_id = ?};
+
+    $self->dbc->do($delete_sql, undef, $id);
+}
+
+
 1;
 
