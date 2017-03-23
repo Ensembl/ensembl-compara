@@ -405,9 +405,10 @@ sub _substitute_colours {
   ## @private
   ## Replaces colour constants in text with actual values
   my ($content, $colours) = @_;
+  no strict; # for SiteDefs lookup
 
   $colours->{$_} =~ s/^([0-9A-F]{6})$/#$1/i for keys %$colours;
-  $content       =~ s/\[\[(\w+)\]\]/$colours->{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
+  $content       =~ s/\[\[(\w+)\]\]/$colours->{$1}||${"SiteDefs::$1"}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
 
   return $content;
 }
