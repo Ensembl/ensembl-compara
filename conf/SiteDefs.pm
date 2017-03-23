@@ -319,7 +319,7 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
 our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
-our $ENSEMBL_MART_SERVERNAME;   # Populated by import
+our $ENSEMBL_MART_SERVERNAME;   # Populated by _set_dedicated_mart()
 
 my $_VERBOSE;
 my $_IMPORTED;
@@ -342,6 +342,9 @@ sub import {
   # Populate species aliases
   _set_species_aliases();
 
+  # Set Mart servername
+  _set_dedicated_mart();
+
   # Set ENV variables as specified in ENSEMBL_SETENV
   _set_env();
 
@@ -359,11 +362,6 @@ sub import {
   $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
   $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
-
-  if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
-    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s:%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER, $ENSEMBL_MART_PORT;
-    $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
-  }
 
   _verbose_params() if $_VERBOSE;
 }
@@ -535,6 +533,14 @@ sub _set_species_aliases {
   }
 
   $ENSEMBL_SECONDARY_SPECIES = shift @temp_species if $ENSEMBL_SECONDARY_SPECIES eq $ENSEMBL_PRIMARY_SPECIES;
+}
+
+sub _set_dedicated_mart {
+  ## Set ENSEMBL_MART_SERVERNAME if mart is running on a separate dedicated server
+  if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
+    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER;
+    $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
+  }
 }
 
 sub _get_serverroot {
