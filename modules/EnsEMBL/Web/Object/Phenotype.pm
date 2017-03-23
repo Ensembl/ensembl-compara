@@ -117,9 +117,6 @@ sub get_OntologyTerms{
 
   my @ot;
   foreach my $oa (@{$ontology_accessions}){
-
-    ## only these ontologies have links defined currently
-    next unless $oa =~ /^EFO|^Orphanet|^HP|^GO/;
  
     my $ontologyterm = $adaptor->fetch_by_accession($oa);
 
