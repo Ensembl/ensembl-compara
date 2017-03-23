@@ -109,13 +109,10 @@ sub _get_genetic_dist {
     $self->param( 'genomes_list',     $genomes_list );
 
     #store the list of species_tree nodes, in order to get the mrca.
-    my @species_tree_node_list;
-    foreach my $genomeDbId ( keys %{$genomes_list} ) {
-        my $species_tree_node = $self->param('species_tree')->root->find_leaves_by_field( 'genome_db_id', $genomeDbId )->[0];
-        push( @species_tree_node_list, $species_tree_node );
-    }
+    my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
+    my @species_tree_node_list = @$gdbid2stn{keys %{$genomes_list}};
 
-    my $lca_node = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+    my $lca_node = Bio::EnsEMBL::Compara::NestedSet->find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
     my $genetic_dist =$lca_node->taxon->get_value_for_tag('ensembl timetree mya');
     $genetic_dist = $genetic_dist ? $genetic_dist : 101; 

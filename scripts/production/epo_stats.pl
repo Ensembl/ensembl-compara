@@ -66,11 +66,10 @@ if ( $html ) {
 }
 
 for my $m ( @$mlss ){
-	my $this_species_tree = $m->species_tree;
+	my $gdbid2stn = $m->species_tree->get_genome_db_id_2_node_hash();
 	for my $g ( @$gdbs ) {
 		next if ( $g->name eq 'ancestral_sequences' );
-		my $this_genomedb_id = $g->dbID;
-		my $stn = $this_species_tree->root->find_leaves_by_field('genome_db_id', $this_genomedb_id)->[0];
+		my $stn = $gdbid2stn->{$g->dbID} or next;
 		my $coding_exon_bp_coverage = $stn->get_tagvalue("coding_exon_coverage");
 		my $coding_exon_length      = $stn->get_tagvalue("coding_exon_length");
 		my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");

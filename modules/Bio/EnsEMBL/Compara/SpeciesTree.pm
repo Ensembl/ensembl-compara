@@ -154,6 +154,16 @@ sub root {
 }
 
 
+sub get_genome_db_id_2_node_hash {
+    my $self = shift;
+    my %h;
+    foreach my $leaf (@{$self->root->get_all_nodes()}) {
+        $h{$leaf->genome_db_id} = $leaf if $leaf->genome_db_id;
+    }
+    return \%h;
+}
+
+
 sub attach_to_genome_dbs {
     my ($self) = @_;
     my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
