@@ -11,7 +11,6 @@
 ## Miscellaneous, to be removed in Ensembl 88
 
 * `NCBITaxon::binomial()`
-* `SpeciesTree::species_tree()`
 * `GenomeDBAdaptor::fetch_all_by_low_coverage()`
 * `GenomeDBAdaptor::fetch_all_by_taxon_id_assembly()`
 * `GenomeDBAdaptor::fetch_by_taxon_id()`

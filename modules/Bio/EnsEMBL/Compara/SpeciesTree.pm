@@ -154,17 +154,6 @@ sub root {
 }
 
 
-sub species_tree {
-    my ($self, $species_tree) = @_;
-    deprecate('$species_tree->species_tree() is deprecated and will be removed in e88. Use $species_tree->newick_format() instead.');
-    if (defined $species_tree) {
-        $self->{'_species_tree'} = $species_tree;
-    }
-    $self->{'_species_tree'} ||= $self->root->newick_format('simple');
-    return $self->{'_species_tree'};
-}
-
-
 sub attach_to_genome_dbs {
     my ($self) = @_;
     my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
