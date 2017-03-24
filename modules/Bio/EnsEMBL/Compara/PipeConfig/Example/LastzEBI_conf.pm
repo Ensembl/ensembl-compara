@@ -57,7 +57,6 @@ sub default_options {
 	    
 	    'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
 	    # 'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
-	   	'mlss_id' => 601,
 
 	    #Location of executables
 	    'pair_aligner_exe' => $self->o('ensembl_cellar').'/lastz/1.02.00/bin/lastz',

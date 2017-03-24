@@ -38,7 +38,6 @@ sub default_options {
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
 	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_73', #Use a release database for the test only.
-	    'mlss_id'   => 601,
 
 	    'livemirror_loc' => {
 				 -host   => 'ens-livemirror',
