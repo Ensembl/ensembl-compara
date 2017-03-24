@@ -95,7 +95,7 @@ sub new {
 
   my $cache = $config->{'image_config'}->hub->cache || new EnsEMBL::Draw::Utils::LocalCache;
 
-  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap($config->{'image_config'}->hub->species_defs);
 
   my $self = {
               'data'        => $data,

@@ -175,10 +175,11 @@ sub create_glyphs {
       my $font_size     = $self->{'font_size'};
 
       ## Regular labels (outside feature)
+      my $text_height;
       if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
         my $text_info   = $self->get_text_info($feature->{'label'});
-        my $text_width    = $text_info->{'width'};
-        my $text_height   = $text_info->{'height'};
+        my $text_width  = $text_info->{'width'};
+        my $text_height = $text_info->{'height'};
         my ($new_x, $new_y);
 
         if ($bumped eq 'labels_alongside') {
@@ -207,6 +208,12 @@ sub create_glyphs {
                               'font_size'   => $font_size,
                             };
         $self->add_label($feature, $label_position);
+      }
+
+      ## Are we highlighting this feature? 
+      if ($feature->{'highlight'}) {
+        $position->{'height'} = $approx_height + $space_for_labels;
+        $self->add_highlight($feature, $position);
       }
 
       ## Overlaid labels (on top of feature)
@@ -310,26 +317,21 @@ sub draw_feature {
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
 
-  ## Are we highlighting this feature? Default is no!
-  my $highlight = $self->highlight($feature, $params);
-
-  if ($highlight) {
-    push @{$self->glyphs}, $highlight;
-  }
   push @{$self->glyphs}, $self->Rect($params);
 }
 
-sub highlight {
-  my ($self, $feature, $params) = @_;
-  return unless $feature->{'highlight'};
+sub add_highlight {
+  my ($self, $feature, $position) = @_;
 
-  my $colour = $feature->{'highlight_colour'} || 'black';
+  my $colour = $feature->{'highlight'};
+  my $x = $feature->{'start'};
+  $x    = 1 if $x < 1;
 
-  return $self->Rect({
-      x      => $params->{'x'} - 2 / $self->{'pix_per_bp'},
-      y      => $params->{'y'} - 2,
-      width  => $params->{'width'}  + 4 / $self->{'pix_per_bp'},
-      height => $params->{'height'} + 4,
+  push @{$self->glyphs}, $self->Rect({
+      x      => $x - 2 / $self->{'pix_per_bp'},
+      y      => $position->{'y'} - 2,
+      width  => $position->{'width'}  + 4 / $self->{'pix_per_bp'},
+      height => $position->{'height'} + 4,
       colour => $colour,
       z      => -10,
   });
