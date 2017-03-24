@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use Sys::Hostname;
+use List::MoreUtils qw(uniq);
 
 sub follow_paths {
   my ($base,$route,$out) = @_;
@@ -32,11 +33,11 @@ sub follow_paths {
 $SiteDefs::ENSEMBL_IDENTITIES = [
   # Standard UNIX path
   sub {
-    my $host = Sys::Hostname::hostname;
+    my $hostname = Sys::Hostname::hostname;
     my @path = split(m!/!,$SiteDefs::ENSEMBL_SERVERROOT);
     shift @path;
     my @out;
-    foreach my $host (('',Sys::Hostname::hostname)) {
+    foreach my $host (uniq('', $hostname, $hostname =~ s/\..*//r)) {
       my @paths;
       follow_paths([],\@path,\@paths);
       push @out,(map {"unix:$host:$_"} @paths);
