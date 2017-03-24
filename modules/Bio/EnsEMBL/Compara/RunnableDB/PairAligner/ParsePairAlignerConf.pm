@@ -84,11 +84,11 @@ sub fetch_input {
 	    new Bio::EnsEMBL::DBSQL::DBAdaptor(%$core_db);
 	} 
     }
-    if ($self->param('registry_dbs')) {
-	load_registry_dbs($self->param('registry_dbs'));
-    } elsif ($self->param('reg_conf')) { 	    
-      ## die if file cannot be loaded
-      $self->load_registry($self->param('reg_conf'));
+    if ($self->param('reg_conf')) { 	    
+    	## die if file cannot be loaded
+    	$self->load_registry($self->param('reg_conf'));
+    } elsif ($self->param('registry_dbs')) {
+		load_registry_dbs($self->param('registry_dbs'));
     }
 }
 
