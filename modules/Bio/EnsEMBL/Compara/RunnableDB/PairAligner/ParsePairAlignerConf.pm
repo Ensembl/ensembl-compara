@@ -457,7 +457,7 @@ sub set_pair_aligner_options {
 	# read in per-species_set settings
 	my %taxon_settings = %{ $self->param('default_parameters') };
 
-	my $default_settings = $ss_settings{'default'};
+	my $default_settings = $taxon_settings{'default'};
 	delete $taxon_settings{'default'};
 
 	# keep track of the size of the clade - in cases where multiple
@@ -475,7 +475,7 @@ sub set_pair_aligner_options {
 		my $found_ref     = grep { $_ == $ref_genome_db->dbID } @genome_db_ids;
 		my $found_non_ref = grep { $_ == $non_ref_genome_db->dbID } @genome_db_ids;
 		
-		$these_settings = $ss_settings{$ss_name} if ( $found_ref && $found_non_ref );
+		$these_settings = $taxon_settings{$tax_id} if ( $found_ref && $found_non_ref );
 	}
 
 	$these_settings = $default_settings unless ( defined $these_settings );
