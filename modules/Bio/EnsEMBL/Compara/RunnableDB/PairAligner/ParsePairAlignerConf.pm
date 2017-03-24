@@ -491,7 +491,7 @@ sub get_chunking {
 
    # need to check if human-specific chunking params exist
    # incoming structure would be a hash if so
-   $self->get_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default});
+   $self->get_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
 
    #chunk_size
    unless (defined $dna_collection->{'chunk_size'}) {
@@ -537,7 +537,7 @@ sub get_default_chunking {
 
    # need to check if human-specific chunking params exist
    # incoming structure would be a hash if so
-   get_default_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default});
+   get_default_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
 
 
     #chunk_size
