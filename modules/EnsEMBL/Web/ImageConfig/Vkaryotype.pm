@@ -38,7 +38,7 @@ sub init_cacheable {
     all_chromosomes => 'yes',
   });
 
-  $self->create_menus('ideogram', 'user_data');
+  $self->add_menus('ideogram', 'user_data');
 
   $self->add_tracks('ideogram',
     [ 'drag_left', '', 'Vdraggable', { display => 'normal', part => 0, menu => 'no' }],

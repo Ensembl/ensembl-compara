@@ -385,7 +385,7 @@ sub _prepare_glyphsets {
                               $opts->{'colours'}{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black'
                             );
     $glyphset->label->x(-$opts->{'label_width'} - $opts->{'margin'} + $img_width);
-    $glyphset->label_img->x(-$$opts->{'label_width'} - $$opts->{'margin'} + $img_pad/2) if $img;
+    $glyphset->label_img->x(-$opts->{'label_width'} - $opts->{'margin'} + $img_pad/2) if $img;
  
     ## Optionally, 'gang' the data, i.e. combine it between glyphsets for efficiency 
     my $gang = $glyphset->my_config('gang');
@@ -498,17 +498,21 @@ sub _draw_section_top {
 sub _draw_section_bottom {
   my ($self, $glyphset, $section, $opts) = @_;
 
-  my $sec_colour = $section->{'colour'}{$glyphset->section};
-  my $band_min = $glyphset->miny + $section->{'height'};
+  my $sec_colour      = $section->{'colour'}{$glyphset->section};
+  my $band_min        = $glyphset->miny + $section->{'height'};
   ## For compatibility with new drawing code:
-  my $band_max = $glyphset->{'my_config'}->get('total_height') || $glyphset->maxy;
+  my $total_height    = $glyphset->{'my_config'}->get('total_height') || 0;
+  my $band_max        = ($glyphset->maxy && $glyphset->maxy > $glyphset->{'my_config'}->get('total_height')) 
+                          ? $glyphset->maxy : $glyphset->{'my_config'}->get('total_height');
+  my $diff            = $band_max - $band_min;
   my $fashionable_gap = 4;
+  my $height          = $diff - 2 * $fashionable_gap;
 
   $glyphset->push($glyphset->Rect({
                                     x             => - ($opts->{'label_width'} + 9),
                                     y             => $band_min + $fashionable_gap, 
                                     width         => 2,
-                                    height        => $band_max - $band_min - 2 * $fashionable_gap,
+                                    height        => $height,
                                     absolutex     => 1,
                                     absolutewidth => 1,
                                     absolutey     => 1,
@@ -516,6 +520,9 @@ sub _draw_section_bottom {
                                     })
                     );
 
+  if ($diff > $total_height) {
+    $glyphset->{'my_config'}->set('total_height', $diff);
+  }
 }
 
 sub _draw_zmenu_link {

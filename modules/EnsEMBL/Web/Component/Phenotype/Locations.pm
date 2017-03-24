@@ -127,7 +127,7 @@ sub table_content {
       my @gene_links = map { $_->[1]||'' } @assoc_genes;
       my @gene_titles = map { $_->[2]||'' } @assoc_genes;
 
-      my ($name_id,$name_url,$name_extra) = $self->pf_link($pf,$feat_type,$pf->phenotype_id);
+      my ($name_id,$name_url,$name_extra) = $self->pf_link($pf,$pf->type,$pf->phenotype_id);
 
       my $row = {
            name_id          => $name_id,

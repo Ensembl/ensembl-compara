@@ -42,8 +42,9 @@ sub content {
       $feature = $_ if $_->dbID eq $hub->param('vf');
     }
   }
-  
-  my @entries = ([ 'Variant type', $feature->display_consequence ]);
+
+  my $type = $feature->display_consequence;
+  my @entries = ([ 'Consequence', $self->variant_consequence_label($type) ]);
   
   if ($vtype) {
     my $type = lc $vtype;
@@ -80,8 +81,8 @@ sub content {
   
   foreach (grep $_->[1], @entries) {
     $self->add_entry({
-      type  => $_->[0],
-      label => $_->[1]
+      type       => $_->[0],
+      label_html => $_->[1]
     });
   }
 }

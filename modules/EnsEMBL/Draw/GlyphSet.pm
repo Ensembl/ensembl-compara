@@ -290,7 +290,8 @@ sub height {
   my ($self) = @_;
   ## New drawing code calculates its height differently
   my $h = $self->{'my_config'}->get('total_height');
-  return $h || int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+  my $old_h = int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+  return $h > $old_h ? $h : $old_h;
 }
 
 sub width {

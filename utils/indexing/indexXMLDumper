@@ -42,6 +42,7 @@ use Digest::MD5 qw(md5_hex);
 use Fcntl;
 use DB_File;
 use SDBM_File;
+use Encode qw(decode encode);
 
 $| = 1;
 
@@ -3420,12 +3421,21 @@ sub clean {
   $text =~ s/ & / &amp; /g;
   $text =~ s/</&lt;/g;
   $text =~ s/>/&gt;/g;
+  $text = &latin_to_utf($text);
 
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
   }
   return $text;
 }
+
+sub latin_to_utf {
+  my ($text) = @_;
+  $text = decode( 'iso-8859-1', $text );
+  $text = encode( 'utf-8', $text );
+  return $text; 
+}
+
 
 sub make_counter {
   my $start = shift;

@@ -79,8 +79,8 @@ sub draw_feature {
       $params{'colour'} = $join_colour unless $track_config->get('collapsed');
 
       my $start         = $previous{'x'} + $previous{'width'};
-      $start            = 0 if $start < 0;
-      $params{'x'}      = $start;
+      $start            = 1 if $start < 1;
+      $params{'x'}      = $start - 1;
       my $end           = $_->{'start'};
       my $width         = $end - $start + 1;
       if ($end > $image_width) {
@@ -98,9 +98,9 @@ sub draw_feature {
     my %params = %defaults;
 
     my $start = $_->{'start'};
-    $start = 0 if $start < 0;
+    $start = 1 if $start < 1;
     my $end   = $_->{'end'};
-    $params{'x'}      = $start;
+    $params{'x'}      = $start - 1;
     $params{'width'}  = $end - $start + 1;
     $params{'href'}   = $_->{'href'} || $feature->{'href'};
 
