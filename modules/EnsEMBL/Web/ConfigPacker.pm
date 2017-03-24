@@ -1665,11 +1665,12 @@ sub _munge_meta {
       $shash->{uc $k1} = $meta_hash->{$k}->[0];
     }
     ## add in any missing values where text omitted because same as param
-    while (my ($key, $value) = each (%$shash)) {
+    my @original_keys = keys %$shash;
+    foreach my $key (@original_keys) {
       next unless $key =~ /PARAM/;
       (my $type = $key) =~ s/_PARAM//;
       unless ($shash->{$type.'_TEXT'}) {
-        $shash->{$type.'_TEXT'} = $value;
+        $shash->{$type.'_TEXT'} = $shash->{$key};
       } 
     }
 
