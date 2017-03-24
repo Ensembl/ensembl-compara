@@ -878,7 +878,7 @@ sub write_mlss_entry {
     if ($compara_dba->get_MethodAdaptor->fetch_by_type($method_link_type)) {
         my $existing_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, $genome_dbs);
         return $existing_mlss if $existing_mlss;
-        die "The MLSS entry for ${method_link_type}x(".join("+", map {$_->name} @$genome_dbs).") does not exist in the master databse." if $self->param('master_db');
+        #die "The MLSS entry for ${method_link_type}x(".join("+", map {$_->name} @$genome_dbs).") does not exist in the master databse." if $self->param('master_db');
     }
 
     my $method = Bio::EnsEMBL::Compara::Method->new(
