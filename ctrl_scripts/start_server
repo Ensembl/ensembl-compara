@@ -124,7 +124,7 @@ my ($before_start, $after_start) = before_after_hooks('start');
 # Build the httpd command string and run all commands
 my $cmd = sprintf '%s -d %s -f %s %s', $apache_bin || "$apache_dir/bin/httpd", $apache_dir, $apache_conf, join(' ', map("-D$_", @defines, $apache_define ? grep(/\S/, split ' ', $apache_define) : ()));
    $cmd = "$cmd -D STARTUP_VERBOSE" if $verbose;
-   $cmd = "$cmd -D DEDICATED_BIOMART" if $dedicated_biomart;
+   $cmd = "$cmd -D HAS_DEDICATED_MART" if $dedicated_biomart;
 
 require $_ for @$before_start;
 warn "========================\nStarting Apache: $cmd\n========================\n";
