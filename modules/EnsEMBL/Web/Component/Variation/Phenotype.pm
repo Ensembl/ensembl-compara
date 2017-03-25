@@ -113,7 +113,7 @@ sub add_table_columns {
     $table->add_columns({ key => 'stats',  title => 'Statistics', align => 'left', sort => 'none' });
   }
 
-  $table->add_columns({ key => 'locations', align => 'left', title => 'Genomic Locations' });
+  $table->add_columns({ key => 'locations', align => 'left', title => 'Associated loci' });
   
   return $table;
 }
@@ -258,7 +258,7 @@ sub table_data {
     }
     # Karyotype link
     if ($bm_flag == 0) {
-      $locations = qq{<a href="$disease_url" class="karyotype_link">View on Karyotype</a>} unless ($disease =~ /HGMD/);
+      $locations = qq{<a href="$disease_url">View</a>} unless ($disease =~ /HGMD/);
     }
 
     # Stats column
