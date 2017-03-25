@@ -92,7 +92,7 @@ sub gene_phenotypes {
       $phenotypes{$phe}{'source'}{$source_url} = 1;
 
       my $locs = sprintf(
-        '<a href="%s" class="karyotype_link">View on Karyotype</a>',
+        '<a href="%s">View</a>',
         $hub->url({
           type    => 'Phenotype',
           action  => 'Locations',
@@ -143,7 +143,7 @@ sub gene_phenotypes {
     if ($has_allelic == 1) {
       push @columns, { key => 'allelic', align => 'left', title => 'Allelic requirement' , help => 'Allelic status associated with the disease (monoallelic, biallelic, etc)' };
     }
-    push @columns, { key => 'locations', align => 'left', title => 'Genomic locations' };
+    push @columns, { key => 'locations', align => 'left', title => 'Associated loci' };
 
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_sort no_col_toggle', sorting => [ 'phenotype asc' ], exportable => 1 })->render;
   }
