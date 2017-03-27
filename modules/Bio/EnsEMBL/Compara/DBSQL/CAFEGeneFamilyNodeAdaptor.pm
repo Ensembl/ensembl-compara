@@ -56,17 +56,25 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamilyNode;
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor');
 
 
+########################
+# Store/update methods #
+########################
+
 sub store_node {
     my ($self, $node, $cafe_gene_family_id) = @_;
 
-    my $sth = $self->prepare("INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, n_members, pvalue) VALUES (?,?,?,?)");
-    # print STDERR "INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, n_members, pvalue) VALUES ($cafe_gene_family_id, " , $node->node_id, ", ", $node->n_members, ", ", $node->pvalue , ")\n";
-
-    $sth->execute($cafe_gene_family_id, $node->node_id, $node->n_members || 0, $node->pvalue);
-    $sth->finish;
-    return;
-
+    $self->generic_insert('CAFE_species_gene', {
+            'cafe_gene_family_id'   => $cafe_gene_family_id,
+            'node_id'               => $node->node_id,
+            'n_members'             => $node->n_members || 0,
+            'pvalue'                => $node->pvalue,
+        } );
 }
+
+
+############################################################
+# Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor implementation #
+############################################################
 
 sub _columns {
     return qw (
