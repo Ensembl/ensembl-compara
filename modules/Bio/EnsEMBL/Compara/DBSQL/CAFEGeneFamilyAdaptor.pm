@@ -51,7 +51,7 @@ use DBI qw(:sql_types);
 use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 sub fetch_by_GeneTree {
@@ -79,14 +79,26 @@ sub fetch_all_by_method_link_species_set_id {
     return $self->generic_fetch($constraint);
 }
 
+
+########################
+# Store/update methods #
+########################
+
 sub store {
     my ($self, $tree) = @_;
 
-    my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas) VALUES (?,?,?,?,?)");
-    $sth->execute($tree->root->node_id, $tree->lca_id, $tree->gene_tree_root_id, $tree->pvalue_avg, $tree->lambdas);
-    my $cafe_gene_family_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_gene_family', 'cafe_gene_family_id');
-    $sth->finish;
+    # First store the header and grab a new dbID
+    my $cafe_gene_family_id = $self->generic_insert('CAFE_gene_family', {
+            'root_id'           => $tree->root->node_id,
+            'lca_id'            => $tree->lca_id,
+            'gene_tree_root_id' => $tree->gene_tree_root_id,
+            'pvalue_avg'        => $tree->pvalue_avg,
+            'lambdas'           => $tree->lambdas,
+        }, 'cafe_gene_family_id' );
 
+    $self->attach($tree, $cafe_gene_family_id);
+
+    # Then store the nodes
     my $cafe_gene_family_node_adaptor = $self->db->get_CAFEGeneFamilyNodeAdaptor();
     $cafe_gene_family_node_adaptor->store_nodes_rec($tree->root, $cafe_gene_family_id);
 
@@ -94,11 +106,9 @@ sub store {
 }
 
 
-#################################################
-#
-# subclass override methods
-#
-#################################################
+############################################################
+# Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor implementation #
+############################################################
 
 sub _columns {
     return qw (cgf.cafe_gene_family_id
@@ -124,38 +134,16 @@ sub _left_join {
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
-
-    my $tree_list = [];
-
-    while (my $rowhash = $sth->fetchrow_hashref) {
-        my $tree = $self->create_instance_from_rowhash($rowhash);
-        push @$tree_list, $tree;
-    }
-    return $tree_list;
-}
-
-sub create_instance_from_rowhash {
-    my ($self, $rowhash) = @_;
-
-    my $tree = new Bio::EnsEMBL::Compara::CAFEGeneFamily;
-    $self->SUPER::init_instance_from_rowhash($tree, $rowhash);
-    $self->init_instance_from_rowhash($tree, $rowhash);
-    return $tree;
-}
-
-
-sub init_instance_from_rowhash {
-    my ($self, $node, $rowhash) = @_;
-
-    $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
-    $node->gene_tree_root_id($rowhash->{gene_tree_root_id});
-    $node->lambdas($rowhash->{lambdas});
-    $node->lca_id($rowhash->{lca_id});
-    $node->pvalue_avg($rowhash->{pvalue_avg});
-
-    $node->adaptor($self);
-
-    return $node;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::CAFEGeneFamily', [
+            '_cafe_gene_family_id',
+            '_root_id',
+            '_lca_id',
+            '_pvalue_avg',
+            '_lambdas',
+            '_gene_tree_root_id',
+            '_method_link_species_set_id',
+            '_label',
+        ] );
 }
 
 
