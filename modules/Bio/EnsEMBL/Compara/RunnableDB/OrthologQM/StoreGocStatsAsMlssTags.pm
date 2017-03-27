@@ -77,7 +77,7 @@ sub write_output {
   	my $mlss = $self->param('mlss');
   	foreach my $dist (@{$self->param('goc_distribution')}) {
 
-  		if (!$dist->[0]) {
+  		if (! defined $dist->[0]) {
   			$mlss->store_tag("n_goc_null",               $dist->[1]);
   		}
   		else {
