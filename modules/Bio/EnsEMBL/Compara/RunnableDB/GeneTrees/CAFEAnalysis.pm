@@ -177,7 +177,6 @@ sub parse_cafe_output {
     my $fmt = '%{-n}%{":"o}';
 
     my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');  # A CAFEGeneFamilyAdaptor
-    my $speciesTree_Adaptor = $self->param('speciesTree_Adaptor');
     my $mlss_id = $self->param('mlss_id');
 #    my $pvalue_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->param('cafe_out_file') . ".cafe";

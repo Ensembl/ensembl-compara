@@ -50,8 +50,6 @@ my $prev_compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
 
  my $gab_a = $prev_compara_dba->get_GenomicAlignBlockAdaptor;
 
- my $sp_tree_a = $prev_compara_dba->get_SpeciesTreeAdaptor;
-
  my @genomic_align_block_ids;
 
  my $mlss_id = $self->param('msa_mlssid');
