@@ -61,9 +61,10 @@ sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 
     assert_ref_or_dbID($geneTree, 'Bio::EnsEMBL::Compara::GeneTree', 'geneTree');
+    my $root_id = ref($geneTree) ? ($geneTree->ref_root_id() || $geneTree->root_id()) : $geneTree;
 
     my $constraint = 'cgf.gene_tree_root_id = ?';
-    $self->bind_param_generic_fetch($geneTree->root_id(), SQL_INTEGER);
+    $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
 
     return $self->generic_fetch_one($constraint);
 }
