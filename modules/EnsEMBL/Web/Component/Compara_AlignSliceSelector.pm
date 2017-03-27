@@ -70,9 +70,11 @@ sub content {
 
   my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
 
-  my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align, referer_action => $hub->action});
+  my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align});
 
-  my $compara_config_url  = $hub->url('Config', {type => $hub->type,  action=> 'Compara_AlignSliceBottom'});
+  # Tackle action for alignments image and text
+  my $action = $hub->function eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->action;
+  my $compara_config_url  = $hub->url('Config', {type => $hub->type,  action => $action});
 
   ## Get the species in the alignment
   return sprintf(qq{
