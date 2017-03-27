@@ -48,9 +48,6 @@ use warnings;
 
 use DBI qw(:sql_types);
 
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-
 use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
