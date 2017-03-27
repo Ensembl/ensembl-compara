@@ -102,7 +102,7 @@ sub handler {
                     $SiteDefs::ENSEMBL_TMP_URL_IMG    => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
                     $SiteDefs::ENSEMBL_USERDATA_URL   => $SiteDefs::ENSEMBL_USERDATA_DIR, 
                     $SiteDefs::ENSEMBL_MINIFIED_URL   => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
-                    $SiteDefs::ENSEMBL_OPENSEARCH_URL => $SiteDefs::ENSEMBL_OPENSEARCH_FILES_PATH,
+                    $SiteDefs::ENSEMBL_OPENSEARCH_URL => $SiteDefs::ENSEMBL_OPENSEARCH_PATH,
                     );
     my $is_tmp;
     
