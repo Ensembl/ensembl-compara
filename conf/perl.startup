@@ -206,7 +206,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
  ORM Databases:      %s
 
  External address:   %s/
- Real address:       %s://%s:%s%s%s
+ Real address:       %s://%s:%s%s%s%s
 
  Search Server:      %s
 
@@ -241,7 +241,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
   $conf->ENSEMBL_NGINX_PORT ? sprintf("\n NGINX Address:      %s://%s:%s", $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER, $conf->ENSEMBL_NGINX_PORT) : '',
   $conf->MOBILE_URL ? sprintf("\n Mobile URL:         %s", $conf->MOBILE_URL) : '',
-  $conf->ENSEMBL_MART_SERVERNAME ? sprintf("\n Mart redirect to:   %s", $conf->ENSEMBL_MART_SERVERNAME) : '',
+  $conf->ENSEMBL_MART_SERVERNAME ? sprintf("\n\n Mart proxy to:      %s", $conf->ENSEMBL_MART_SERVERNAME) : '',
 
   ref($conf->ENSEMBL_SOLR_ENDPOINT) eq 'ARRAY' ? $conf->ENSEMBL_SOLR_ENDPOINT->[0][0] : $conf->ENSEMBL_SOLR_ENDPOINT,
 
