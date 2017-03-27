@@ -124,6 +124,24 @@ sub init_instance_from_rowhash {
     $node->adaptor($self);
 }
 
+
+#################
+# Fetch methods #
+#################
+
+
+=head2 fetch_tree_by_cafe_gene_family_id
+
+  Example     : $cafe_gene_family_node_adaptor->fetch_tree_by_cafe_gene_family_id();
+  Description : Fetch all the nodes for the given family dbID and assemble them
+                into a tree structure. Returns the root node
+  Returntype  : Bio::EnsEMBL::Compara::CAFEGeneFamilyNode
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub fetch_tree_by_cafe_gene_family_id {
     my ($self, $cafe_gene_family_id) = @_;
     my $table = ($self->_tables)[0]->[1];
