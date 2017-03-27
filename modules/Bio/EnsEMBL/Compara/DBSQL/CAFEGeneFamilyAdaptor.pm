@@ -54,6 +54,27 @@ use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
+#################
+# Fetch methods #
+#################
+
+=head2 fetch_by_GeneTree
+
+  Arg[1]      : Bio::EnsEMBL::Compara::GeneTree $geneTree
+  Example     : $cafe_gene_family_adaptor->fetch_by_GeneTree($gene_tree);
+  Description : Returns the CAFEGeneFamily object summarizing the given GeneTree.
+                Not all the (default) gene-trees will have a CAFEGeneFamily, so you
+                need to expect this method to return undef at times. Moreover,
+                the CAFE analysis is only run for default trees, so calling this
+                method on an intermediate tree (i.e. ref_root_id is defined) will
+                return the CAFEGeneFamily of the reference tree.
+  Returntype  : Bio::EnsEMBL::Compara::CAFEGeneFamily
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 
@@ -67,13 +88,29 @@ sub fetch_by_GeneTree {
 }
 
 
+=head2 fetch_all_by_method_link_species_set_id
+
+  Arg[1]      : Integer $mlss_id
+  Example     : $cafe_gene_family_adaptor->fetch_all_by_method_link_species_set_id();
+  Description : Returns all the CAFEGeneFamily objects associated to the
+                given MethodLinkSpeciesSet
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::CAFEGeneFamily
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub fetch_all_by_method_link_species_set_id {
     my ($self, $mlss_id) = @_;
 
+    # mlss_id is not stored in the CAFE_gene_family table, so we first find
+    # it in the species_tree_root table
     my $species_tree_adaptor = $self->db->get_SpeciesTreeAdaptor;
     my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'cafe');
     my $root_id = $species_tree->root->node_id();
 
+    # And then we fetch all the CAFEGeneFamily attached to that (species_tree_)root_id
     my $constraint = 'str.root_id = ?';
     $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
     return $self->generic_fetch($constraint);
