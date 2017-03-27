@@ -94,13 +94,9 @@ sub fetch_by_root_id {
 }
 
 sub store {
-    my ($self, $tree, $mlss_id) = @_;
+    my ($self, $tree) = @_;
     
-    if($mlss_id){
-     $tree->method_link_species_set_id($mlss_id);
-    } else {
-     $mlss_id = $tree->method_link_species_set_id;
-    }
+    my $mlss_id = $tree->method_link_species_set_id;
 
     my $species_tree_node_adaptor = $self->db->get_SpeciesTreeNodeAdaptor();
 

@@ -48,9 +48,10 @@ sub fetch_input {
  my $full_species_tree = $self->_slurp($tree_path);
  chomp $full_species_tree;
  my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree");
+ $full_tree->method_link_species_set_id($self->param('dummy_mlss_value'));
 
  eval {
-  $species_tree_adapt->store($full_tree, $self->param('dummy_mlss_value'));
+  $species_tree_adapt->store($full_tree);
  };
  throw $@ if $@;
  
@@ -106,9 +107,10 @@ sub fetch_input {
   # store the median branch length trees
   my $median_tree = $species_tree_adapt->new_from_newick($median_newick, "median_species_tree");
   $median_tree=~s/:0;/;/;
+  $median_tree->method_link_species_set_id($mlss_id);
 
   eval {
-   $species_tree_adapt->store($median_tree, $mlss_id);
+   $species_tree_adapt->store($median_tree);
   };
   throw $@ if $@;
   
@@ -136,7 +138,8 @@ sub fetch_input {
  my $merged_newick = $full_tree_root->newick_format("simple");
  $merged_newick=~s/:0;/;/;
  my $merged_tree = $species_tree_adapt->new_from_newick($merged_newick, "merged_branch_lengths");
- $species_tree_adapt->store($merged_tree, $self->param('dummy_mlss_value')); 
+ $merged_tree->method_link_species_set_id($self->param('dummy_mlss_value'));
+ $species_tree_adapt->store($merged_tree);
 }
 
 1;
