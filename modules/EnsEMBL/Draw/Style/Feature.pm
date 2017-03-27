@@ -210,12 +210,6 @@ sub create_glyphs {
         $self->add_label($feature, $label_position);
       }
 
-      ## Are we highlighting this feature? 
-      if ($feature->{'highlight'}) {
-        $position->{'height'} = $approx_height + $space_for_labels;
-        $self->add_highlight($feature, $position);
-      }
-
       ## Overlaid labels (on top of feature)
       ## Note that we can have these as well as regular labels, e.g. on variation tracks
       my $overlay_standard = ($track_config->get('overlay_label') && $feature->{'label'});
@@ -224,7 +218,7 @@ sub create_glyphs {
         my $label_text;
         my $bp_textwidth;
 
-        my $text_info   = $self->get_text_info($feature->{'label'});
+        my $text_info     = $self->get_text_info($feature->{'label'});
         my $text_width    = $text_info->{'width'};
         my $text_height   = $text_info->{'height'};
         ## If overlay text is different from main label, adjust accordingly
@@ -251,7 +245,7 @@ sub create_glyphs {
         if ($feature_width > $tmp_textwidth) { ## OK, so there's space for the overlay
           my $new_x = $feature->{'start'} - 1;
           $new_x = 0 if $new_x < 0;
-          my $new_y = $position->{'y'} + $approx_height - $text_height;
+          my $new_y = $position->{'y'} + $feature_height - $text_height;
           my $label_position = {
                                 'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
                                 'y'           => $new_y,
@@ -264,6 +258,10 @@ sub create_glyphs {
           $self->add_label($feature, $label_position, 'overlay');
         }
       }
+
+      ## Optionally highlight this feature (including its label) 
+      $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
+      $self->add_highlight($feature, $position);
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -322,17 +320,19 @@ sub draw_feature {
 
 sub add_highlight {
   my ($self, $feature, $position) = @_;
+  return unless $feature->{'highlight'};
 
-  my $colour = $feature->{'highlight'};
-  my $x = $feature->{'start'};
-  $x    = 1 if $x < 1;
+  $position->{'highlight_height'} ||= $position->{'height'};
+
+  my $x = $feature->{'start'} - 1;
+  $x    = 0 if $x < 0;
 
   push @{$self->glyphs}, $self->Rect({
       x      => $x - 2 / $self->{'pix_per_bp'},
       y      => $position->{'y'} - 2,
       width  => $position->{'width'}  + 4 / $self->{'pix_per_bp'},
-      height => $position->{'height'} + 4,
-      colour => $colour,
+      height => $position->{'highlight_height'} + 4,
+      colour => $feature->{'highlight'},
       z      => -10,
   });
 
