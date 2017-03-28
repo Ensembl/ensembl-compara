@@ -56,6 +56,13 @@ use Bio::EnsEMBL::Compara::NestedSet;
 use base ('Bio::EnsEMBL::Storable');
 
 
+
+# Needed to enable BaseAdaptor::attach()
+sub dbID {
+    my $self = shift;
+    return $self->root_id(@_);
+}
+
 ######################################################
 #
 # Object variable methods

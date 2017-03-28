@@ -55,6 +55,11 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
+
+###############
+# Constructor #
+###############
+
 sub new_from_newick {
     my ($self, $newick, $label) = @_;
 
@@ -68,6 +73,11 @@ sub new_from_newick {
 
     return $speciesTree;
 }
+
+
+#################
+# Fetch methods #
+#################
 
 sub fetch_by_method_link_species_set_id_label {
     my ($self, $mlss_id, $label) = @_;
@@ -93,6 +103,11 @@ sub fetch_by_root_id {
     return $self->generic_fetch_one($constraint);
 }
 
+
+########################
+# Store/update methods #
+########################
+
 sub store {
     my ($self, $tree) = @_;
     
@@ -102,17 +117,24 @@ sub store {
 
     # Store the nodes
     my $root_id = $species_tree_node_adaptor->store_nodes_rec($tree->root, $mlss_id);
-    $tree->{'_root_id'} = $root_id;
 
     # Store the tree in the header table
-    # method_link_species_set_id must be set to its real value to honour the foreign key
-    my $sth = $self->prepare('INSERT IGNORE INTO species_tree_root (root_id, method_link_species_set_id, label) VALUES (?,?,?)');
-    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default');
+    $self->generic_insert('species_tree_root', {
+            'root_id'                       => $root_id,
+            'method_link_species_set_id'    => $mlss_id,
+            'label'                         => ($tree->label || 'default'),
+        } );
 
-    $tree->adaptor($self);
+    # Register the new object
+    $self->attach($tree, $root_id);
+
     return $root_id;
 }
 
+
+############################################################
+# Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor implementation #
+############################################################
 
 sub _columns {
     return qw ( str.root_id
@@ -127,32 +149,11 @@ sub _tables {
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
-    my $tree_list = [];
-
-    while (my $rowhash = $sth->fetchrow_hashref) {
-        my $tree = $self->create_instance_from_rowhash($rowhash);
-        push @$tree_list, $tree;
-    }
-    return $tree_list;
-}
-
-sub create_instance_from_rowhash {
-    my ($self, $rowhash) = @_;
-
-    my $tree = new Bio::EnsEMBL::Compara::SpeciesTree;
-    $self->init_instance_from_rowhash($tree, $rowhash);
-    return $tree;
-}
-
-sub init_instance_from_rowhash {
-    my ($self, $tree, $rowhash) = @_;
-
-    $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
-    $tree->label($rowhash->{label});
-    $tree->root_id($rowhash->{root_id});
-
-    $tree->adaptor($self);
-    return $tree;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::SpeciesTree', [
+            '_root_id',
+            '_method_link_species_set_id',
+            '_label',
+        ] );
 }
 
 1;
