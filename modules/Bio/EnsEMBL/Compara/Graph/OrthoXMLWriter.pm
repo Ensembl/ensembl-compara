@@ -357,6 +357,8 @@ sub _write_data {
   $w->emptyTag("scoreDef", "id" => "ds", "desc" => "Rate of synonymous mutations");
   $w->emptyTag("scoreDef", "id" => "lnl", "desc" => "Likelihood of the n/s scores");
   $w->emptyTag("scoreDef", "id" => "dnds_ratio", "desc" => "dN/dS ratio");
+  $w->emptyTag("scoreDef", "id" => "goc_score", "desc" => "Gene order conservation score");
+  $w->emptyTag("scoreDef", "id" => "wga_coverage", "desc" => "Whole genome alignment coverage");
   $w->emptyTag("scoreDef", "id" => "perc_identity", "desc" => "Percentage of identity of this protein to the alignment");
   $w->endTag("scores");
 
