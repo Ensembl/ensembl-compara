@@ -68,6 +68,8 @@ sub content {
     $archive_object = $object->get_archive_object;
   }
 
+  return unless $archive_object;
+
   my $assoc = $self->get_assoc($archive_object);
   
   return '<p>No associated IDs found</p>' unless scalar @$assoc;
