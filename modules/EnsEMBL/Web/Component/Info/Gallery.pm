@@ -79,11 +79,11 @@ sub format_gallery {
       push @toc, sprintf('<div class="gallery-nav">
                           <span class="ht _ht">
                             <span class="_ht_tip hidden">Jump to views associated with %s</span>
-                            <img src="/i/48/%s" /><br />
+                            <a href="#%s"><img src="/i/48/%s" /></a><br />
                             <a href="#%s" class="notext gallery-navlabel">%s</a>
                           </span>
                         </div>', 
-                          lc($title), $icon, lc($title), $title);
+                          lc($title), lc($title), $icon, lc($title), $title);
     }
 
     ## No point in showing individual views if whole section is unavailable
