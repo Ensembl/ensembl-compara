@@ -53,7 +53,7 @@ use Bio::EnsEMBL::Compara::SpeciesTree;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
 ###############
@@ -82,25 +82,19 @@ sub new_from_newick {
 sub fetch_by_method_link_species_set_id_label {
     my ($self, $mlss_id, $label) = @_;
 
-    my $constraint = 'method_link_species_set_id = ? AND label = ?';
-    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
-    $self->bind_param_generic_fetch(($label || 'default'), SQL_VARCHAR);
-    return $self->generic_fetch_one($constraint);
+    return $self->_id_cache->get_by_additional_lookup('mlss_id_label', $mlss_id.'____'.(lc $label));
 }
 
 sub fetch_all_by_method_link_species_set_id_label_pattern {
  my ($self, $mlss_id, $label) = @_; 
  $label //= '';
- my $constraint = "method_link_species_set_id = $mlss_id AND label LIKE '%$label%'";
- return  $self->generic_fetch($constraint);
+ my $mlss_trees = $self->_id_cache->get_all_by_additional_lookup('mlss_id', $mlss_id);
+ return [grep {$_->label =~ /$label/} @$mlss_trees];
 }
 
 sub fetch_by_root_id {
-    my ($self, $root_id) = @_;
-
-    my $constraint = 'root_id = ?';
-    $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
-    return $self->generic_fetch_one($constraint);
+    my $self = shift;
+    return $self->fetch_by_dbID(@_);
 }
 
 
@@ -126,6 +120,7 @@ sub store {
         } );
 
     # Register the new object
+    $self->_id_cache->put($root_id, $tree);
     $self->attach($tree, $root_id);
 
     return $root_id;
@@ -154,6 +149,32 @@ sub _objs_from_sth {
             '_method_link_species_set_id',
             '_label',
         ] );
+}
+
+
+################################################################
+# Bio::EnsEMBL::Compara::DBSQL::BaseFullAdaptor implementation #
+################################################################
+
+
+sub _build_id_cache {
+    my $self = shift;
+    return Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesTree->new($self);
+}
+
+
+package Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesTree;
+
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use strict;
+use warnings;
+
+sub compute_keys {
+    my ($self, $tree) = @_;
+    return {
+        'mlss_id'       => $tree->method_link_species_set_id,
+        'mlss_id_label' => $tree->method_link_species_set_id.'____'.(lc $tree->label),
+    }
 }
 
 1;
