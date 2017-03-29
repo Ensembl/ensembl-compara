@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 #
 # This script fetches clusters of one2one and/or one2many orthologues between a given set of species.
 #
@@ -32,12 +31,12 @@ use List::Util qw(max);
 my $species_set;
 my $one2one_flag;
 my $one2many_flag;
+my $out_dir;
 
-GetOptions( "species_set=s" => \$species_set, "one2one" => \$one2one_flag, "one2many" => \$one2many_flag ) or die("Error in command line arguments\n");
+GetOptions( "species_set=s" => \$species_set, "one2one" => \$one2one_flag, "one2many" => \$one2many_flag, "outdir=s" => \$out_dir ) or die("Error in command line arguments\n");
 
-die "Error in command line arguments [species_set = all_species|species_set_1] [one2one || one2many needs to be defined]"
-  if ( ( !$species_set ) || ( ( $species_set ne "all_species" ) && ( $species_set ne "species_set_1" ) && ( $species_set ne "test" ) ) || ( !$one2one_flag && !$one2many_flag ) );
-
+die "Error in command line arguments [species_set = all_species|species_set_1] [one2one || one2many needs to be defined] [outdir = /your/directory/]"
+  if ( ( !$species_set ) || ( ( $species_set ne "all_species" ) && ( $species_set ne "species_set_1" ) && ( $species_set ne "test" ) ) || ( !$one2one_flag && !$one2many_flag ) || !$out_dir );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -host    => 'mysql-treefam-prod',
                                               -user    => 'ensadmin',
@@ -202,7 +201,7 @@ for ( my $i = 0; $i < scalar(@gdbs); $i++ ) {
 } ## end for ( my $i = 0; $i < scalar...)
 
 #Printing results
-my $out_dir = "/nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/$species_set/promoted/";
+#my $out_dir = "/nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/$species_set/promoted/";
 system("mkdir -p $out_dir");
 
 #one2one
@@ -239,6 +238,7 @@ if ($one2one_flag) {
 
 #one2many
 if ($one2many_flag) {
+
     #Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $gene_member_adaptor, [ keys %$present_in_all_one2many ] );
     print STDERR "Loading the gene names\n";
     my %gene_member_id_2_stable_id_many = map { $_->dbID => $_->stable_id } @{ $gene_member_adaptor->fetch_all_by_dbID_list( [ keys %$present_in_all_one2many ] ) };
