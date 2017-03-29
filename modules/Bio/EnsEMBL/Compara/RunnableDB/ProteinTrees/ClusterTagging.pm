@@ -52,8 +52,8 @@ sub run {
     my $self = shift @_;
 
     #get LCA (lowest common ancestor)
-    my $lca_node_id = $self->_get_lca_node_id();
-    $self->param( 'lca_node_id', $lca_node_id );
+    my $lca_node = $self->_get_lca_node();
+    $self->param( 'lca_node', $lca_node );
 
     #get taxonomic coverage
     my $taxonomic_coverage = $self->_get_taxonomic_coverage();
@@ -66,7 +66,7 @@ sub run {
 
 sub write_output {
     my $self = shift;
-    $self->param('gene_tree')->store_tag( 'lca_node_id',         $self->param('lca_node_id')->dbID );
+    $self->param('gene_tree')->store_tag( 'lca_node_id',         $self->param('lca_node')->dbID );
     $self->param('gene_tree')->store_tag( 'taxonomic_coverage',  $self->param('taxonomic_coverage') );
     $self->param('gene_tree')->store_tag( 'ratio_species_genes', $self->param('ratio_species_genes') );
 }
@@ -78,7 +78,7 @@ sub write_output {
 ##########################################
 
 #Get the latest
-sub _get_lca_node_id {
+sub _get_lca_node {
     my $self = shift;
     my $genomes_list;
 
@@ -101,10 +101,10 @@ sub _get_lca_node_id {
         push( @species_tree_node_list, $species_tree_node );
     }
 
-    my $lca_node_id = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+    my $lca_node = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
-    return $lca_node_id;
-} ## end sub _get_lca_node_id
+    return $lca_node;
+}
 
 sub _get_taxonomic_coverage {
     my $self = shift;
@@ -113,7 +113,7 @@ sub _get_taxonomic_coverage {
     my $genomes_list = scalar( $self->param('genomes_list') );
 
     #get all leaves from MRCA
-    my @leaves_ancestral = @{ $self->param('lca_node_id')->get_all_leaves() };
+    my @leaves_ancestral = @{ $self->param('lca_node')->get_all_leaves() };
     $self->param( 'leaves_ancestral', \@leaves_ancestral );
 
     my $taxonomic_coverage = sprintf( "%.5f", ( keys( %{$genomes_list} )/scalar(@leaves_ancestral) ) );
