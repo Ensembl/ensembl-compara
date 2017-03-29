@@ -37,7 +37,7 @@ sub fetch_input {
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash});
     if (! defined $aln_file) {
         $self->throw("I can not dump the alignment in $alignment_id");
     }

@@ -271,7 +271,7 @@ sub run_generic_command {
         $map_long_seq_names = {};
     }
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}, $map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash}, $map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
     $self->param('alignment_file', $input_aln);
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root,$map_long_seq_names));
 
@@ -417,8 +417,9 @@ sub get_gene_tree_file {
     my $map_long_seq_names      = shift;
 
     # horrible hack: we replace taxon_id with species_tree_node_id
+    my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
     foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
-        $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
+        $leaf->taxon_id($gdbid2stn->{$leaf->genome_db_id}->node_id);
     }
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
@@ -445,7 +446,6 @@ sub _load_species_tree_string_from_db {
     my ($self) = @_;
     my $species_tree = $self->param('gene_tree')->method_link_species_set->species_tree($self->param('species_tree_label') || 'default');
     $self->param('species_tree', $species_tree);
-    $species_tree->attach_to_genome_dbs();
     return $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree'));
 }
 

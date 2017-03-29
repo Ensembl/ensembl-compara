@@ -350,8 +350,9 @@ sub load_cigars_from_file {
         : whether the species (in short name format) should be added to the sequence names
     Arg [-APPEND_GENOMEDB_ID] (opt) boolean (default: false)
         : whether the genome_db_id should be added to the sequence names
-    Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) boolean (default: false)
-        : whether the reference species_tree_node_id should be added to the sequence names
+    Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) hashref (default:  undef)
+        : a hashref {genome_db_id => SpeciesTreeNode} that is used to append species_tree_node_ids
+          to the sequence names
     Arg [-REMOVE_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be removed from the alignment
     Arg [-SEQ_TYPE] (opt) string
@@ -379,7 +380,7 @@ sub get_SimpleAlign {
     my $append_taxon_id = 0;
     my $append_sp_short_name = 0;
     my $append_genomedb_id = 0;
-    my $append_stn_id = 0;
+    my $append_stn_id = undef;
     my $remove_gaps = 0;
     my $seq_type = undef;
     my $removed_columns = undef;
@@ -445,7 +446,7 @@ sub get_SimpleAlign {
         my $suffix = '';
         $suffix = $member->taxon_id if($append_taxon_id);
         $suffix = $member->genome_db_id if ($append_genomedb_id);
-        $suffix = $member->genome_db->_species_tree_node_id if ($append_stn_id);
+        $suffix = $append_stn_id->{$member->genome_db_id}->node_id if ($append_stn_id);
 
         my $seqID;
 

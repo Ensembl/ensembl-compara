@@ -243,12 +243,13 @@ sub run_njtree_phyml {
     } elsif ($genes_for_treebest == 2) {
 
         warn "2 leaves only, we only need sdi\n";
-        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $_->genome_db->_species_tree_node_id) } @{$gene_tree->get_all_leaves};
+        my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
+        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $gdbid2stn->{$_->genome_db_id}->node_id) } @{$gene_tree->get_all_leaves};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
-        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
+        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash});
         $self->param('input_aln', $input_aln);
 
         my $extra_lk_scale = $self->param('extra_lk_scale');

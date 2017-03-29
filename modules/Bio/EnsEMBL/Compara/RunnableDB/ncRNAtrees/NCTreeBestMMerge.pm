@@ -145,7 +145,7 @@ sub run {
     my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
     my $merged_tree = $self->run_treebest_mmerge($input_trees);
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'), 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'), 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash});
     my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
     $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
     
@@ -210,10 +210,11 @@ sub load_input_trees {
   my $self = shift;
   my $tree = $self->param('gene_tree');
 
+  my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
   for my $other_tree (values %{$tree->alternative_trees}) {
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
-        $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
+        $leaf->taxon_id($gdbid2stn->{$leaf->genome_db_id}->node_id);
     }
     print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
