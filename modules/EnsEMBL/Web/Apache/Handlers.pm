@@ -106,6 +106,11 @@ sub get_redirect_uri {
     return '/info/docs/tools/vep/index.html';
   }
 
+  ## Redirect moved documentation
+  if ($uri =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+     return $uri =~ s/docs/genome/r;
+ }
+
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
   if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
     return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);
