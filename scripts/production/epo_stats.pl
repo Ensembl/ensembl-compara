@@ -37,9 +37,6 @@ if ( $help || !$url ){
 
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $url );
 
-my $gdb_a = $dba->get_GenomeDBAdaptor;
-my $gdbs  = $gdb_a->fetch_all();
-
 my $mlss_a = $dba->get_MethodLinkSpeciesSetAdaptor;
 my $mlss;
 if ( defined $mlss_id ) {
@@ -66,10 +63,7 @@ if ( $html ) {
 }
 
 for my $m ( @$mlss ){
-	my $gdbid2stn = $m->species_tree->get_genome_db_id_2_node_hash();
-	for my $g ( @$gdbs ) {
-		next if ( $g->name eq 'ancestral_sequences' );
-		my $stn = $gdbid2stn->{$g->dbID} or next;
+	for my $stn (@{$m->species_tree->get_all_leaves}) {
 		my $coding_exon_bp_coverage = $stn->get_tagvalue("coding_exon_coverage");
 		my $coding_exon_length      = $stn->get_tagvalue("coding_exon_length");
 		my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");
@@ -79,9 +73,9 @@ for my $m ( @$mlss ){
 		my $exon_cov_perc   = $coding_exon_length ? sprintf("%.3f", ($coding_exon_bp_coverage/$coding_exon_length) * 100) : 'N/A';
 
 		if ( $html ) {
-			$html_output .= '<tr>' . _html_tag_list( [ $g->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
+			$html_output .= '<tr>' . _html_tag_list( [ $stn->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
 		} else {
-			print join("\t", _pad_name($g->name), $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
+			print join("\t", _pad_name($stn->name), $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
 			print "\n";
 		}
 	}
