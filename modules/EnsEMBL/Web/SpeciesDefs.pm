@@ -231,7 +231,7 @@ sub reference_species {
   my @ref_species;
   foreach (@valid_species) {
     my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-    if (!$strain || ($strain && $strain =~ /reference/)) {
+    if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
       push @ref_species, $_;
     }
   }
