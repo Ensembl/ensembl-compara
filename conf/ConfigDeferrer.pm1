@@ -1,3 +1,4 @@
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -25,10 +26,8 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
-use Digest::MD5 qw(md5_hex);
-use Data::Dumper;
 
-our @EXPORT_OK    = qw(defer register_deferred_configs build_deferred_configs required validate_required_configs);
+our @EXPORT_OK    = qw(defer register_deferred_configs build_deferred_configs register_declared_vars print_declared_vars required validate_required_configs);
 our %EXPORT_TAGS  = ('all' => [ @EXPORT_OK ]);
 our $DEBUG;
 my (@DEFERRED_CONFIGS, @DEFERRED_VARS_LIST, %DEFERRED_VARS_MAP, %REQUIRED_CONFIGS);
@@ -40,16 +39,12 @@ sub defer (&) {
   return $conf;
 }
 
-sub required {
+sub required (&) {
   ## Subroutine to be used to declare the configs that needs to be redeclared in another plugin
-  my $val = '__UNDECLARED_REQUIRED_CONFIG__';
-
-  if (@_) {
-    $val .= sprintf '(%s)', md5_hex(sprintf '%s%s%s', caller);
-    $REQUIRED_CONFIGS{$val} = $_[0];
-  }
-
-  return $val;
+  my ($conf) = @_;
+  $REQUIRED_CONFIGS{"$conf"} = 1;
+  warn $conf;
+  return $conf;
 }
 
 sub register_deferred_configs {
@@ -123,20 +118,38 @@ sub validate_required_configs {
       my $sym       = *$sym_name;
       next unless ref(\$sym) eq 'GLOB';
 
-      if (defined $$sym && !ref $$sym && !index("$$sym", required())) {
-        push @missing, {$sym_name, $REQUIRED_CONFIGS{"$$sym"}};
+      if (*{$sym}{'SCALAR'} && ref *{$sym}{'SCALAR'} eq 'REF' && exists $REQUIRED_CONFIGS{"$$sym"}) {
+        push @missing, $sym_name;
       }
     }
   }
 
-  die(sprintf("Following config%s %s required. Please declare in your plugin's SiteDefs.\n%s\n", @missing > 1 ? ('s', 'are') : ('', 'is'), join("\n", map { my ($k) = keys %$_; sprintf ($_->{$k} ? '  $%s = %s;' : '  $%s', $k, _str($_->{$k}))} @missing))) if @missing;
+  die(sprintf("Following config%s %s required. Please declare in your plugin's SiteDefs.\n%s\n", @missing > 1 ? ('s', 'are') : ('', 'is'), join("\n", @missing))) if @missing;
 }
 
-sub _str {
-  ## @private
-  my $ref = shift;
+my %DECLARED_VARS;
+sub register_declared_vars {
+  my $package = caller;
+  my $plugin = shift;
 
-  return ref $ref ? Data::Dumper->new([ $ref ])->Sortkeys(1)->Useqq(1)->Terse(1)->Indent(0)->Maxdepth(0)->Dump  : "'$ref'";
+  {
+    no strict qw(refs);
+
+    # go through all the possible variables and add the ones to the deferred list that have a code ref matching in @DEFERRED_CONFIGS
+    for (sort keys %{$package.'::'}) {
+      my $sym_name  = "${package}::$_";
+
+      $DECLARED_VARS{$sym_name} ||= $plugin;
+    }
+  }
+}
+
+sub print_declared_vars {
+  my $v = {};
+  for (keys %DECLARED_VARS) {
+    push @{$v->{$DECLARED_VARS{$_}}}, $_;
+  }
+#  use Data::Dumper; warn Dumper $v;
 }
 
 1;
