@@ -103,7 +103,7 @@ sub species_tree_node {
     }
 
     my $stn_id = $self->_species_tree_node_id();
-    if ($stn_id && $self->adaptor) {
+    if ($stn_id && $self->adaptor && !$self->{_species_tree_node}) {
         $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($stn_id);
     }
 
@@ -122,9 +122,11 @@ sub _species_tree_node_id {
     my $self = shift;
 
     ## Leaves don't have species_tree_node_id tag, so this value has to be taken from the GeneTreeMember (via its genome_db_id);
-    if (not $self->has_tag('species_tree_node_id') and $self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        $self->tree->species_tree->attach_to_genome_dbs() unless $self->genome_db->_species_tree_node_id;
-        $self->{'_tags'}->{'species_tree_node_id'} = $self->genome_db->_species_tree_node_id;
+    if (not $self->has_tag('species_tree_node_id') and $self->isa('Bio::EnsEMBL::Compara::GeneTreeMember') and $self->adaptor) {
+        # The species-tree the gene-tree is reconciled to is not necessarily the "default" one, so we need to find it via another (internal) node
+        my $tree_root_id = $self->parent->species_tree_node->_root_id;
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_dbID($tree_root_id)->get_genome_db_id_2_node_hash()->{$self->genome_db_id};
+        $self->{'_tags'}->{'species_tree_node_id'} = $self->{_species_tree_node}->node_id;
     }
 
     return $self->get_value_for_tag('species_tree_node_id')
