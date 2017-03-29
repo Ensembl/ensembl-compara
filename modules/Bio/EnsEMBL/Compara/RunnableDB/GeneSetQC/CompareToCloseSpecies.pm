@@ -79,8 +79,7 @@ sub fetch_input {
     my $tree_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0];
     my $species_tree = $tree_mlss->species_tree;
     
-    my %gdbid_2_stn = map {$_->genome_db_id => $_} @{$species_tree->root->get_all_leaves};
-    my $lca_node = $species_tree->root->find_first_shared_ancestor_from_leaves([map {$gdbid_2_stn{$_}} ($genome_db_id, @$cmp_genome_db_ids)]);
+    my $lca_node = $species_tree->find_lca_of_GenomeDBs( [$genome_db_id, @$cmp_genome_db_ids] );
     my %subtree_nodes = map {$_->node_id => 1} @{$lca_node->get_all_nodes};
     $self->param('subtree_nodes', \%subtree_nodes);
     my %genome_db_ids = map {$_->genome_db_id => 1} @{$lca_node->get_all_leaves};
@@ -89,7 +88,7 @@ sub fetch_input {
     if ($self->debug) {
         warn "Last common ancestor: ", $lca_node->node_name, "\n";
         warn scalar(keys %subtree_nodes), " nodes / ", scalar(keys %genome_db_ids), " species in total under the LCA\n";
-        warn "Using ", join(", ", map {$gdbid_2_stn{$_}->node_name} @$cmp_genome_db_ids), " for comparison\n";
+        warn "Using GenomeDBs", join(", ", @$cmp_genome_db_ids), " for comparison\n";
     }
 }
 

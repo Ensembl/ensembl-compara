@@ -51,6 +51,9 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
+    # Extract stuff that is needed by several functions
+    $self->_extract_tree_data();
+
     #get LCA (lowest common ancestor)
     my $lca_node = $self->_get_lca_node();
     $self->param( 'lca_node', $lca_node );
@@ -78,7 +81,7 @@ sub write_output {
 ##########################################
 
 #Get the latest
-sub _get_lca_node {
+sub _extract_tree_data {
     my $self = shift;
     my $genomes_list;
 
@@ -93,15 +96,11 @@ sub _get_lca_node {
     #storing refences in order to avoid multiple calls of the same functions.
     $self->param( 'genomes_list',     $genomes_list );
     $self->param( 'gene_tree_leaves', $gene_tree_leaves );
+}
 
-    #store the list of species_tree nodes, in order to get the mrca.
-    my @species_tree_node_list;
-    foreach my $genomeDbId ( keys %{$genomes_list} ) {
-        my $species_tree_node = $self->param('species_tree')->root->find_leaves_by_field( 'genome_db_id', $genomeDbId )->[0];
-        push( @species_tree_node_list, $species_tree_node );
-    }
-
-    my $lca_node = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+sub _get_lca_node {
+    my $self = shift;
+    my $lca_node = $self->param('species_tree')->find_lca_of_GenomeDBs( [keys %{$genomes_list}] );
 
     return $lca_node;
 }

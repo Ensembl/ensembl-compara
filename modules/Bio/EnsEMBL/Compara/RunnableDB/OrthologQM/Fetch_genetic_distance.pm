@@ -96,23 +96,8 @@ sub write_output {
 
 sub _get_genetic_dist {
     my $self = shift;
-    my $genomes_list;
 
-  
-    foreach my $gdb ( @{$self->param('genome_dbs')} ) {
-        my $genomeDbId = $gdb->dbID();
-        print "\n\n   $genomeDbId   \n" if ( $self->debug >3 );
-        $genomes_list->{$genomeDbId} = 1;
-    }
-
-    #storing refences in order to avoid multiple calls of the same functions.
-    $self->param( 'genomes_list',     $genomes_list );
-
-    #store the list of species_tree nodes, in order to get the mrca.
-    my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
-    my @species_tree_node_list = @$gdbid2stn{keys %{$genomes_list}};
-
-    my $lca_node = Bio::EnsEMBL::Compara::NestedSet->find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+    my $lca_node = $self->param('species_tree')->find_lca_of_GenomeDBs( $self->param('genome_dbs') );
 
     my $genetic_dist =$lca_node->taxon->get_value_for_tag('ensembl timetree mya');
     $genetic_dist = $genetic_dist ? $genetic_dist : 101; 

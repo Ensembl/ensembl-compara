@@ -50,8 +50,11 @@ package Bio::EnsEMBL::Compara::SpeciesTree;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Storable');
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::NestedSet;
+
+use base ('Bio::EnsEMBL::Storable');
+
 
 ######################################################
 #
@@ -161,6 +164,16 @@ sub get_genome_db_id_2_node_hash {
         $h{$leaf->genome_db_id} = $leaf if $leaf->genome_db_id;
     }
     return \%h;
+}
+
+
+sub find_lca_of_GenomeDBs {
+    my ($self, $genome_dbs) = @_;
+
+    my $gdbid2stn = $self->get_genome_db_id_2_node_hash();
+    my @species_tree_node_list = map {$gdbid2stn->{ref($_) ? $_->dbID : $_}} @$genome_dbs;
+
+    return Bio::EnsEMBL::Compara::NestedSet->find_first_shared_ancestor_from_leaves( \@species_tree_node_list );
 }
 
 
