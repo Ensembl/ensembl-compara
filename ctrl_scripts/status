@@ -39,8 +39,8 @@ printf "  PATH: %s\n", $ENV{'PATH'};
 
 my $httpd_pid_file  = $SiteDefs::ENSEMBL_PIDFILE;
 my $nginx_pid_file  = $SiteDefs::ENSEMBL_NGINX_RUNDIR ? sprintf('%s/nginx.pid', $SiteDefs::ENSEMBL_NGINX_RUNDIR) : undef;
-my $httpd_pid       = file_get_contents($httpd_pid_file);
-my $nginx_pid       = $nginx_pid_file && file_get_contents($nginx_pid_file);
+my $httpd_pid       = $httpd_pid_file && -e $httpd_pid_file && file_get_contents($httpd_pid_file) || '';
+my $nginx_pid       = $nginx_pid_file && -e $nginx_pid_file && file_get_contents($nginx_pid_file) || '';
 
 chomp $httpd_pid;
 chomp $nginx_pid;
