@@ -21,6 +21,7 @@ limitations under the License.
 
 use strict;
 use warnings;
+no warnings qw(once);
 
 use FindBin qw($Bin);
 use Getopt::Long;
