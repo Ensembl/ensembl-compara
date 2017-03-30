@@ -92,7 +92,8 @@ if ($help) {
 
 no strict qw(refs);
 
-while (my($set, $info) = each(%write_dirs)) {
+foreach my $set (keys %write_dirs) {
+  my $info = $write_dirs{$set};
 
   next if $set eq 'biomart' && !$mart;
 
@@ -111,7 +112,7 @@ while (my($set, $info) = each(%write_dirs)) {
 
   foreach my $key (sort keys %$sub_dirs) {
 
-    my $conf = $write_dirs{$key};
+    my $conf = $sub_dirs->{$key};
     my $path;
 
     if ($conf) { ## Directory location is configurable
