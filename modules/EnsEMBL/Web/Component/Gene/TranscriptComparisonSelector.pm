@@ -25,6 +25,7 @@ use base qw(EnsEMBL::Web::Component::MultiSelector);
 
 sub _init {
   my $self = shift;
+  my $hub = $self->hub;
   
   $self->SUPER::_init;
 
@@ -34,6 +35,7 @@ sub _init {
   $self->{'panel_type'}      = 'MultiSelector';
   $self->{'url_param'}       = 't';
   $self->{'rel'}             = 'modal_select_transcripts';
+  $self->{'url'}             = $hub->url({ function => undef, action => 'TranscriptComparison', align => $hub->param('align') }, 1);
 }
 
 sub content_ajax {
