@@ -66,6 +66,8 @@ sub content {
     $archive_object = $object->get_archive_object; 
   }
   
+  return unless $archive_object;
+  
   my $latest        = $archive_object->get_latest_incarnation;
   my $id            = $latest->stable_id . '.' . $latest->version;
   my $version_html  = [];

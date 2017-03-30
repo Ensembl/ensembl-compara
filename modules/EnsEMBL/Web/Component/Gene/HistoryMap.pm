@@ -64,6 +64,8 @@ sub content {
     $archive = $object->get_archive_object; # retrieve archive object
   }
 
+  return '<p><b>There is no history available.</b></p>' unless $archive;
+
   my $name        = $archive->stable_id . '.' . $archive->version;
   my $historytree = $htree || $object->history; 
 
