@@ -52,8 +52,9 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Compara::CAFEGeneFamilyNode;
+use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 ########################
@@ -78,8 +79,6 @@ sub store_node {
 
 sub _columns {
     return qw (
-                  str.root_id
-
                   stn.node_id
                   stn.parent_id
                   stn.root_id
@@ -93,35 +92,34 @@ sub _columns {
                   csg.cafe_gene_family_id
                   csg.n_members
                   csg.pvalue
-                  csg.node_id
              );
 }
 
 sub _tables {
-    return (['CAFE_species_gene', 'csg'], ['species_tree_node', 'stn'], ['species_tree_root', 'str'] );
+    return (['CAFE_species_gene', 'csg'], ['species_tree_node', 'stn']);
 }
 
-sub _left_join {
-    return (['species_tree_node', 'stn.node_id=csg.node_id']);
+sub _default_where_clause {
+    return 'stn.node_id=csg.node_id';
 }
 
-sub create_instance_from_rowhash {
-    my ($self, $rowhash) = @_;
-    my $node = new Bio::EnsEMBL::Compara::CAFEGeneFamilyNode;
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::CAFEGeneFamilyNode', [
+            '_node_id',
+            '_parent_id',
+            '_root_id',
+            '_left_index',
+            '_right_index',
+            '_distance_to_parent',
+            '_taxon_id',
+            '_genome_db_id',
+            '_node_name',
 
-    $self->init_instance_from_rowhash($node, $rowhash);
-    return $node;
-}
-
-sub init_instance_from_rowhash {
-    my ($self, $node, $rowhash) = @_;
-
-    $self->SUPER::init_instance_from_rowhash($node, $rowhash);
-    $node->cafe_gene_family_id($rowhash->{cafe_gene_family_id});
-    $node->n_members($rowhash->{n_members});
-    $node->pvalue($rowhash->{pvalue});
-
-    $node->adaptor($self);
+            '_cafe_gene_family_id',
+            '_n_members',
+            '_pvalue',
+        ] );
 }
 
 
@@ -148,7 +146,7 @@ sub fetch_tree_by_cafe_gene_family_id {
     my $constraint = "$table.cafe_gene_family_id = ?";
     $self->bind_param_generic_fetch($cafe_gene_family_id, SQL_INTEGER);
     my $nodes = $self->generic_fetch($constraint);
-    my $tree = $self->_build_tree_from_nodes($nodes);
+    my $tree = Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor->_build_tree_from_nodes($nodes);
     return $tree;
 }
 
