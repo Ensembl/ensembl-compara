@@ -456,17 +456,16 @@ sub preload {
 
     # We can't use _load_and_attach_all because _species_tree_node_id
     # is not stored as a key in the hash (it's a tag)
-    my $species_tree_nodes = $self->species_tree->root->get_all_nodes;
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $species_tree_nodes);
-    my %stn_id_lookup = map {$_->node_id => $_} @$species_tree_nodes;
+    my $stn_id_lookup = $self->species_tree->get_node_id_2_node_hash();
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, [values %$stn_id_lookup]);
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
         # This is like GeneTreeNode::species_tree_node() but using the lookup
-        $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id} if $node->_species_tree_node_id;
+        $node->{_species_tree_node} = $stn_id_lookup->{$node->_species_tree_node_id} if $node->_species_tree_node_id;
         # This is like GeneTreeNode::lost_taxa() but using the lookup
-        $node->{_lost_species_tree_nodes} = [map {$stn_id_lookup{$_}} @{ $node->get_all_values_for_tag('lost_species_tree_node_id') }];
+        $node->{_lost_species_tree_nodes} = [map {$stn_id_lookup->{$_}} @{ $node->get_all_values_for_tag('lost_species_tree_node_id') }];
     }
 
     # Loads all the gene members in one go
