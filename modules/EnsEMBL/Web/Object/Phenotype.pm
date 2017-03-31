@@ -88,7 +88,7 @@ sub get_gene_display_label {
   my $gene  = $self->hub->database('core')->get_adaptor('Gene')->fetch_by_stable_id($gene_id);
   my $xref  = $gene && $gene->display_xref;
 
-  return $xref && $xref->display_id || '';
+  return $xref && $xref->display_id || $gene_id;
 }
 
 # return underlying Variation API Phenotype object

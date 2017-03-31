@@ -296,12 +296,10 @@ sub pf_link {
     $id_param = lc($id_param);
 
     my $display_label = '';
-    my $extra_label   = '';
     my $extra_id   = '';
     if ($type eq 'Gene') {
       $display_label = $self->object->get_gene_display_label($pf_name);
-      $extra_label   = '<br /><span class="small" style="white-space:nowrap;"><b>ID: </b>'.$pf_name."</span>";
-      $extra_id = $pf_name;
+      $extra_id = $pf_name if ($display_label !~ /$pf_name/);
 
       # LRG
       if ($pf_name =~ /(LRG)_\d+$/) {
