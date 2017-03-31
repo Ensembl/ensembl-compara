@@ -227,9 +227,11 @@ sub write_homologies {
     my ($self, $homologies) = @_;
 
     return unless scalar(@$homologies);
-    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologies->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologies);
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologies->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($homologies->[0]->adaptor->db->get_SpeciesTreeNodeAdaptor, $homologies);
+    my $db_adaptor = $homologies->[0]->adaptor->db;
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($db_adaptor->get_AlignedMemberAdaptor, $homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($db_adaptor->get_GeneMemberAdaptor, $sms);
+    my $stns = Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($db_adaptor->get_SpeciesTreeNodeAdaptor, $homologies);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($db_adaptor->get_NCBITaxonAdaptor, $stns);
     return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
 

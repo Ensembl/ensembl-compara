@@ -457,6 +457,7 @@ sub preload {
     # We can't use _load_and_attach_all because _species_tree_node_id
     # is not stored as a key in the hash (it's a tag)
     my $species_tree_nodes = $self->species_tree->root->get_all_nodes;
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, $species_tree_nodes);
     my %stn_id_lookup = map {$_->node_id => $_} @$species_tree_nodes;
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
