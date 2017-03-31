@@ -49,8 +49,6 @@ sub _build_ld_vcf {
     $input = <STDIN>;
   }
 
-  close STDIN;
-
   chomp $input;
 
   if ($input =~ /y/i) {
