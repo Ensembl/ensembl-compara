@@ -1349,7 +1349,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           my $u2e_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $this_gdb->dbID };
           my $df_name = $u2e_mappings->{$chr} || $chr;
           my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($this_gdb, $df_name);
-          next if ( !defined $this_dnafrag );
+          die "Could not find a DnaFrag named '$df_name' for species '".$this_gdb->name."' ($species_id)" unless ( defined $this_dnafrag );
           # when fetching by slice, input slice will be set as $dnafrag->slice, complete with start and end positions
           # this can mess up subslicing down the line - reset it and it will be pulled fresh from the db
           $this_dnafrag->{'_slice'} = undef; 
@@ -1469,7 +1469,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
               my $df_name = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{ $target_gdb->dbID }->{ @$entry[0] } || @$entry[0];
               my $target_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_gdb, $df_name);
-              next unless ( defined $target_dnafrag );
+              die "Could not find a DnaFrag named '$df_name' for species '".$target_gdb->name."' ($target)" unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
               next if ( @$entry[2] + @$entry[3] > $end || @$entry[1] + @$entry[3] > $end );
