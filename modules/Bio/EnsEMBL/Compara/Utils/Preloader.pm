@@ -88,7 +88,9 @@ sub load_all_DnaFrags {
 sub load_all_NCBITaxon {
     my $ncbitaxon_adaptor = shift;
     assert_ref($ncbitaxon_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor', 'ncbitaxon_adaptor');
-    return _load_and_attach_all('_taxon_id', '_taxon', $ncbitaxon_adaptor, @_);
+    my $all_taxa = _load_and_attach_all('_taxon_id', '_taxon', $ncbitaxon_adaptor, @_);
+    $ncbitaxon_adaptor->_load_tagvalues_multiple($all_taxa);
+    return $all_taxa
 }
 
 
