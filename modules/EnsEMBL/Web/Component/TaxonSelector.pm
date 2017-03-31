@@ -53,7 +53,7 @@ sub _init {
   $self->{caller}          = $self->{action};
 
   $self->{multiselect}     = $self->param('multiselect');
-  $self->{selection_limit} = undef;
+  $self->{selection_limit} = 40;
   $self->{is_blast}        = 0,
   $self->{entry_node}      = undef;
 }
