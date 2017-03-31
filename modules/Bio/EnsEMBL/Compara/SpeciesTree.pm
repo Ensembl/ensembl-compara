@@ -166,7 +166,10 @@ sub root {
 
 sub get_genome_db_id_2_node_hash {
     my $self = shift;
+    # Assumes the tree doesn't change
+    return $self->{_genome_db_id_2_node_hash} if $self->{_genome_db_id_2_node_hash};
     my %h;
+    $self->{_genome_db_id_2_node_hash} = \%h;
     foreach my $leaf (@{$self->root->get_all_nodes()}) {
         $h{$leaf->genome_db_id} = $leaf if $leaf->genome_db_id;
     }
