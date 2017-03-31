@@ -597,8 +597,7 @@ sub bam_adaptor {
 use Digest::MD5 qw(md5_hex);
 our $cbuild_dir;
 BEGIN {
-  my $name = $SiteDefs::ENSEMBL_COHORT;
-  $cbuild_dir = "$SiteDefs::ENSEMBL_SYS_DIR/.cbuild-".md5_hex($name);
+  $cbuild_dir = $SiteDefs::ENSEMBL_CBUILD_DIR;
   mkdir $cbuild_dir unless -e $cbuild_dir;
 };
 

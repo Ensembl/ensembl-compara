@@ -34,12 +34,17 @@ use Carp qw(cluck);
 use Data::Dumper;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(%_INC);
+use EnsEMBL::Web::Utils::FileSystem qw(create_path);
 
 BEGIN {
 # Used to enable symbolic debugging support in dynamic_use.
   if($ENV{'PERLDB'}) {
     require Inline;
-    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT");
+
+    my $cbuild_dir = $SiteDefs::ENSEMBL_CBUILD_DIR;
+    create_path($cbuild_dir) unless -e $cbuild_dir;
+
+    Inline->import(C => Config => DIRECTORY => $cbuild_dir);
     Inline->import(C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }");
   }
 }
