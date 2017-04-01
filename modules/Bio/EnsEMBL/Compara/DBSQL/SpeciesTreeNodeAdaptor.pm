@@ -54,6 +54,19 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
+
+sub cached_fetch_by_dbID {
+    my ($self, $node_id) = @_;
+    my $tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_node_id($node_id);
+    return $tree->get_node_id_2_node_hash()->{$node_id};
+}
+
+sub cached_fetch_all_by_dbID_list {
+    my ($self, $node_ids) = @_;
+    return [map {$self->cached_fetch_by_dbID($_)} @$node_ids];
+}
+
+
 =head2 new_from_NestedSet
 
     Arg[1]      : An object that inherits from NestedSet

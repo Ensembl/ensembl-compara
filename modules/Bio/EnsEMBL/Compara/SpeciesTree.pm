@@ -158,6 +158,7 @@ sub root {
         if (defined $self->{'_root_id'} and defined $self->adaptor) {
             my $stn_adaptor = $self->adaptor->db->get_SpeciesTreeNodeAdaptor;
             $self->{'_root'} = $stn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            $self->adaptor->_add_to_node_id_lookup($self);
         }
     }
     return $self->{'_root'};

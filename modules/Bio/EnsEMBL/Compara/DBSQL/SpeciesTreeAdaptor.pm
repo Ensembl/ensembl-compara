@@ -97,6 +97,19 @@ sub fetch_by_root_id {
     return $self->fetch_by_dbID(@_);
 }
 
+sub fetch_by_node_id {
+    my ($self, $node_id) = @_;
+    my $tree = $self->_id_cache->get_by_additional_lookup('node_id', $node_id);
+    unless ($tree) {
+        my $constraint = 'node_id = ?';
+        my $join = [[['species_tree_node', 'stn'], 'stn.root_id = str.root_id']];
+        $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
+        $tree = $self->generic_fetch_one($constraint, $join);
+        $tree->root if $tree;   # to populate the node_id lookup
+    }
+    return $tree;
+}
+
 
 ########################
 # Store/update methods #
@@ -161,6 +174,18 @@ sub _build_id_cache {
     my $self = shift;
     return Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesTree->new($self);
 }
+
+# FullIdCache expects each object to associate a single value to each
+# lookup key. Here we'd like to register many node_ids for each tree.
+# We should be reimplementing remove_from_additional_lookup as well.
+sub _add_to_node_id_lookup {
+    my ($self, $tree) = @_;
+    my $additional_lookup = $self->_id_cache->_additional_lookup();
+    foreach my $node (@{$tree->root->get_all_nodes}) {
+        push(@{$additional_lookup->{'node_id'}->{$node->node_id}}, $tree->root_id);
+    }
+}
+
 
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesTree;
