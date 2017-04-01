@@ -104,7 +104,7 @@ sub species_tree_node {
 
     my $stn_id = $self->_species_tree_node_id();
     if ($stn_id && $self->adaptor && !$self->{_species_tree_node}) {
-        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($stn_id);
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->cached_fetch_by_dbID($stn_id);
     }
 
     return $self->{_species_tree_node};
@@ -182,7 +182,7 @@ sub _newick_dup_code {
 sub lost_taxa {
     my $self = shift;
     unless ($self->{_lost_species_tree_nodes}) {
-        $self->{_lost_species_tree_nodes} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_all_by_dbID_list( $self->get_all_values_for_tag('lost_species_tree_node_id') );
+        $self->{_lost_species_tree_nodes} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->cached_fetch_all_by_dbID_list( $self->get_all_values_for_tag('lost_species_tree_node_id') );
     }
     return $self->{_lost_species_tree_nodes};
 }
