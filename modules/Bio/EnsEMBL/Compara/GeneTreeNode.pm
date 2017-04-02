@@ -128,7 +128,7 @@ sub _species_tree_node_id {
         return unless $parent_species_tree_node;
         my $tree_root_id = $parent_species_tree_node->_root_id;
         $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_dbID($tree_root_id)->get_genome_db_id_2_node_hash()->{$self->genome_db_id};
-        $self->{'_tags'}->{'species_tree_node_id'} = $self->{_species_tree_node}->node_id;
+        $self->{'_tags'}->{'species_tree_node_id'} = $self->{_species_tree_node}->node_id if $self->{_species_tree_node};
     }
 
     return $self->get_value_for_tag('species_tree_node_id')
