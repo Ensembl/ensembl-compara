@@ -56,7 +56,7 @@ use base ('Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
 
 sub lambdas {
-    my ($self) = @_;
+    my $self = shift;
     $self->{'_lambdas'} = shift if @_;
     return $self->{'_lambdas'};
 }
