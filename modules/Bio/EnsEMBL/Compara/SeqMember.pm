@@ -133,10 +133,6 @@ sub copy {
   
   my $mycopy = $self->SUPER::copy(@_);
   
-  # pre_sec_struct_tree, genomic_alignment and sec_struct_model_tree call deep_copy() on trees that don't have sequences yet
-  # This means that $self->sequence() below will actually connect to the database
-  # Why ??
-  $self->sequence;  # To make sure the sequence is loaded because the new copy doesn't have an adaptor
   # Here we copy all the sequence keys, i.e. the sequences that $self already had
   foreach my $key (keys %$self) {
       if (($key =~ /^_seq_/) or ($key =~ /^_sequence/)) {
