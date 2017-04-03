@@ -3019,7 +3019,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -flow_into      => [ 'ktreedist' ],
+            -flow_into      => [ 'ktreedist', 'consensus_cigar_line_prep' ],
             %hc_analysis_params,
         },
 
@@ -3045,6 +3045,13 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '4Gb_job',
+        },
+
+        {   -logic_name     => 'consensus_cigar_line_prep',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
+            -rc_name        => '2Gb_job',
+            -hive_capacity  => $self->o('ktreedist_capacity'),
+            -batch_size     => 20,
         },
 
         {   -logic_name => 'build_HMM_aa_v3',
