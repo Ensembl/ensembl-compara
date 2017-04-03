@@ -204,6 +204,7 @@ sub root {
         if (defined $self->cafe_gene_family_id and defined $self->adaptor) {
             my $stn_adaptor = $self->adaptor->db->get_CAFEGeneFamilyNodeAdaptor;
             $self->{'_root'} = $stn_adaptor->fetch_tree_by_cafe_gene_family_id($self->cafe_gene_family_id());
+            $_->lambdas($self->lambdas) for @{$self->{'_root'}->get_all_nodes};
         }
     }
     return $self->{'_root'};
