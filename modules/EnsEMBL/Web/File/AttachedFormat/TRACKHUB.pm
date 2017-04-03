@@ -52,7 +52,7 @@ sub check_data {
   my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
   if ($hubCheck && !$self->{'registry'}) {
     my $url = $self->{'url'};
-    my $hc_error = `$hubCheck $url -checkSettings -noTracks`;	
+    my $hc_error = `$hubCheck '$url' -checkSettings -noTracks`;	
     if ($hc_error) {
       ## Parse and ignore issues we don't care about
       my @lines = split /\n/, $hc_error;
