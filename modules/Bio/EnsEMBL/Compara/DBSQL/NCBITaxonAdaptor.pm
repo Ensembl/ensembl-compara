@@ -88,7 +88,13 @@ sub _build_id_cache {
 
 sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
+  # In theory we should be checking $self->_no_id_cache() but we've set ignore_cache_override to 1 (see above)
+  return $self->_id_cache()->get($taxon_id);
+}
 
+
+sub _uncached_fetch_by_dbID {
+  my ($self, $taxon_id) = @_;
   assert_integer($taxon_id, 'taxon_id');
 
   my $constraint = 't.taxon_id = ?';
@@ -137,8 +143,14 @@ sub fetch_by_dbID {
 
 sub fetch_all_by_dbID_list {
     my ($self, $taxon_ids) = @_;
+    # In theory we should be checking $self->_no_id_cache() but we've set ignore_cache_override to 1 (see above)
+    return $self->_id_cache()->get_by_list($taxon_ids);
+}
 
-    my $nodes = $self->_uncached_fetch_all_by_id_list($taxon_ids, undef, 'taxon_id', 1);
+sub _uncached_fetch_all_by_id_list {
+    my ($self, $taxon_ids) = @_;
+
+    my $nodes = $self->SUPER::_uncached_fetch_all_by_id_list($taxon_ids, undef, 'taxon_id', 1);
     my %seen_taxon_ids = map {$_->taxon_id => $_} @$nodes;
 
     my @missing_taxon_ids = grep {!$seen_taxon_ids{$_}} @$taxon_ids;
