@@ -64,7 +64,7 @@ sub format_gallery {
     my $icon  = $group->{'icon'};
     if ($group->{'disabled'}) {
       push @toc, sprintf('<div class="gallery-nav">
-                          <span class="ht _ht">
+                          <span class="_ht">
                             <span class="_ht_tip hidden">No %s views for this species</span>
                             <img src="/i/48/%s" class="disabled" /><br />
                             <span class="notext gallery-navlabel disabled">%s</span>
@@ -72,12 +72,9 @@ sub format_gallery {
                         </div>', 
                         lc($title), $icon, $title);
     }
-    elsif ($group->{'hide'}) {
-      ## Do nothing
-    }
-    else {
+    elsif (!$group->{'hide'}) {
       push @toc, sprintf('<div class="gallery-nav">
-                          <span class="ht _ht">
+                          <span class="_ht">
                             <span class="_ht_tip hidden">Jump to views associated with %s</span>
                             <a href="#%s"><img src="/i/48/%s" /></a><br />
                             <a href="#%s" class="notext gallery-navlabel">%s</a>
