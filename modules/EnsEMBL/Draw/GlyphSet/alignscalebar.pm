@@ -128,6 +128,7 @@ sub render_align_bar {
   my $pix_per_bp  = $self->scalex;
   my $last_end    = undef;
   my $last_chr    = -1;
+  my $last_slice  = undef;
   my $join_z      = -20;
   my $last_s2s    = -1;
   my $last_s2e    = -1;
@@ -209,10 +210,12 @@ sub render_align_bar {
       $href = '';
       
       if ($last_chr ne $s2t) {
+       if ($s2 && $s2->has_karyotype && $last_slice && $last_slice->has_karyotype) {
         # Different chromosomes
         $colour = 'black';
         $title = "AlignSlice Break; There is a breakpoint in the alignment between chromosome $last_chr and $s2t";
         $legend = "Breakpoint between $other_species_common_name chromosomes";
+       }
       } elsif ($last_s2st ne $s2st) {
         # Same chromosome, different strand (inversion)
         $colour = 'dodgerblue';
@@ -271,6 +274,7 @@ sub render_align_bar {
     $last_s2e = $s2e;
     $last_s2st = $s2st;
     $last_chr = $s2t;
+    $last_slice = $s2;
   }
   
   # alignment legend for multiple alignment (show everything)
