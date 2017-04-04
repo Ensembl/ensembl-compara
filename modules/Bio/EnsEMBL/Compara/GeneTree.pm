@@ -765,6 +765,9 @@ sub release_tree {
         delete $member->{'_tree'};
     }
 
+    # Release all the references to the members
+    $self->clear;
+
     # Let's now release the alternative trees if they've been loaded
     return unless $self->{_alternative_trees};
     foreach my $other_tree (values %{$self->{_alternative_trees}}) {
