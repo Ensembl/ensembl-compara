@@ -321,6 +321,7 @@ sub species_tree {
             $self->{'_species_tree'} = shift;
         } elsif ($self->{'_species_tree_root_id'}) {
             $self->{'_species_tree'} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_root_id( $self->{'_species_tree_root_id'} );
+            $self->{'_need_to_release_species_tree'} = 1;
         } else {
             $self->{'_species_tree'} = $self->method_link_species_set->species_tree(shift || 'default');
         }
@@ -764,6 +765,13 @@ sub release_tree {
     foreach my $member (@{$self->{'_member_array'}}) {
         delete $member->{'_tree'};
     }
+
+    $self->{'_species_tree'}->root->release_tree if $self->{'_need_to_release_species_tree'};
+    delete $self->{'_species_tree'};
+    delete $self->{'_need_to_release_species_tree'};
+
+    # Release all the references to the members
+    $self->clear;
 
     # Let's now release the alternative trees if they've been loaded
     return unless $self->{_alternative_trees};
