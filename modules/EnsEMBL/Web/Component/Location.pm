@@ -38,23 +38,6 @@ sub _configure_display {
   );
 }
 
-sub default_otherspecies {
-## DEPRECATED - use Hub::otherspecies instead
-  my $self         = shift;
-  my $species_defs = $self->hub->species_defs;
-  my $species      = $self->hub->species;
-  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
-  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-
-  return $primary_sp if  ($synteny{$species}->{$primary_sp});
-
-  return $secondary_sp if  ($synteny{$species}->{$secondary_sp});
-
-  my @has_synteny  = sort keys %{$synteny{$species}};
-  return $has_synteny[0];
-}
-
 sub chromosome_form {
   my ($self, $ic)   = @_;
   my $hub           = $self->hub;
