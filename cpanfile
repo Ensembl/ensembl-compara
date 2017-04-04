@@ -10,5 +10,6 @@ requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
 
 test_requires 'Test::Exception';
+test_requires 'Test::Most';
 test_requires 'Test::Perl::Critic';
 test_requires 'Perl::Critic::Utils';
