@@ -56,6 +56,7 @@ sub draw_feature {
                                       height  => $position->{'height'},
                                       title   => $feature->{'title'},
                                       href    => $feature->{'href'},
+                                      class   => 'group',
                                   });
 
   my %defaults = (
