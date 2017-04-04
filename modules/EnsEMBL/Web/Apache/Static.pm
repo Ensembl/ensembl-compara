@@ -103,6 +103,7 @@ sub handler {
                     $SiteDefs::ENSEMBL_USERDATA_URL   => $SiteDefs::ENSEMBL_USERDATA_DIR, 
                     $SiteDefs::ENSEMBL_MINIFIED_URL   => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
                     $SiteDefs::ENSEMBL_OPENSEARCH_URL => $SiteDefs::ENSEMBL_OPENSEARCH_PATH,
+                    $SiteDefs::GOOGLE_SITEMAPS_URL    => $SiteDefs::GOOGLE_SITEMAPS_PATH,
                     );
     my $is_tmp;
     
