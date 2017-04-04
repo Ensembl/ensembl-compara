@@ -52,7 +52,7 @@ foreach my $dir ( @dirs ) {
     chomp $pattern;
 
     # Get all the files that contain Inline codes.
-    my $cmd_grep_inline = 'grep -r "' . $pattern . '" ' . $modules_dir . ' | awk -F ":" \'{print $1}\' | sort | uniq';
+    my $cmd_grep_inline = 'grep -l -r "' . $pattern . '" ' . $modules_dir;
     my @files = `$cmd_grep_inline`;
 
     foreach my $file ( @files ) {
