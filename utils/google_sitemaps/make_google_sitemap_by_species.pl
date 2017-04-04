@@ -61,29 +61,30 @@ BEGIN {
   require EnsEMBL::Web::DBHub;
 }
 
+my $skip_list;
+GetOptions("skip=s", \$skip_list);
+
 my $hub = EnsEMBL::Web::DBHub->new;
 my $sd = $hub->species_defs;
 my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
-my $ouput_dir = 'sitemaps'; 
 my @sitemaps;
 
 my $this_release = $sd->ENSEMBL_VERSION;
 
-my $sitemap_path; # default setting is htdocs root
-my $skip_list;
-GetOptions("sitemap_path=s", \$sitemap_path, "skip=s", \$skip_list);
+my $sitemap_path = $sd->GOOGLE_SITEMAPS_PATH;
+mkdir($sitemap_path) unless -d $sitemap_path;
 
-my @skip = split /,/, $skip_list;
-
-if ($sitemap_path) {
-  $sitemap_path =~ s/^\///;
-  $sitemap_path =~ s/\/$//;
-  $sitemap_path = "$domain/$sitemap_path";
+my $sitemap_url = $sd->GOOGLE_SITEMAPS_URL;
+if ($sitemap_url) {
+  $sitemap_url =~ s/^\///;
+  $sitemap_url =~ s/\/$//;
+  $sitemap_url = "$domain/$sitemap_url";
 } else {
-  $sitemap_path = $domain;
+  $sitemap_url = $domain;
 }
-#`rm -r $ouput_dir` if(-d $ouput_dir);
-mkdir($ouput_dir) unless -d $ouput_dir;
+
+warn "Writing files to $sitemap_path";
+warn "Actual URL will be $sitemap_url";
 
 # create the 'common' sitemap for non-species urls
 my $map = Search::Sitemap->new();
@@ -93,8 +94,10 @@ $map->add(Search::Sitemap::URL->new(
   priority => 1.0,
   lastmod => 'now'
 ));
-$map->write("${ouput_dir}/sitemap-common.xml");
+$map->write("${sitemap_path}/sitemap-common.xml");
 push @sitemaps, "sitemap-common.xml";
+
+my @skip = split /,/, $skip_list;
 
 # create the sitemaps for each dataset
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
@@ -118,13 +121,14 @@ foreach (@sitemaps) {
     lastmod => 'now'
   ));
 }
-$index->write("${ouput_dir}/sitemap-index.xml");
+$index->write("${sitemap_path}/sitemap-index.xml");
 
-if($domain eq "http://www.ensembl.org") {
-  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/ \n");
-  system("rm -r /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps");
-  system("mv sitemaps /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/");
-}
+#if($domain eq "http://www.ensembl.org") {
+#  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/ \n");
+#  system("rm -r /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps");
+#  system("mv sitemaps /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/");
+#}
+
 exit;
 
 #------------------------------------------------------------------------------
@@ -251,8 +255,8 @@ sub create_dataset_sitemaps {
 # jh15: fixed a bug here, "$total_count == $#urls" was wrong. The loop ended 1 early and last url was never written
 # and no file was written if total_count < batch_count
       my $filename = "sitemap_${dataset}_${suffix}.xml";
-      $map->write("${ouput_dir}/$filename");
-      print "  Wrote ${ouput_dir}/$filename\n";
+      $map->write("${sitemap_path}/$filename");
+      print "  Wrote ${sitemap_path}/$filename\n";
       push @files, $filename;
       # get ready for next batch...
       $map = Search::Sitemap->new();
