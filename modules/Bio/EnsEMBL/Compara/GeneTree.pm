@@ -768,6 +768,7 @@ sub release_tree {
 
     $self->{'_species_tree'}->root->release_tree if $self->{'_need_to_release_species_tree'};
     delete $self->{'_species_tree'};
+    delete $self->{'_need_to_release_species_tree'};
 
     # Release all the references to the members
     $self->clear;
