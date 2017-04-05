@@ -204,9 +204,11 @@ sub get_divergence_time {
     my ($self, $query_timetree) = @_;
 
     require Bio::EnsEMBL::Compara::Utils::SpeciesTree;
-    my $mya = $self->taxon->get_value_for_tag('ensembl timetree mya');
-       $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($self) if $query_timetree && !(defined $mya);
-    return $mya;
+    if ($query_timetree && !$self->taxon->has_tag('ensembl timetree mya')) {
+        my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($self);
+        $self->taxon->add_tag('ensembl timetree mya', $mya);
+    }
+    return $self->taxon->get_value_for_tag('ensembl timetree mya');
 }
 
 
