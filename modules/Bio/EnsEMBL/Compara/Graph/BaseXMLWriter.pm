@@ -112,8 +112,9 @@ sub handle {
     $self->{handle} = $handle;
   }
   else {
-    if(! defined $self->{handle}) {
-      $self->{handle} = IO::File->new($self->file(), 'w');
+    if((! defined $self->{handle}) && $self->file()) {
+      $self->{handle} = IO::File->new($self->file(), 'w')
+                        or die "Could not open file ".$self->file()." for writing: $!\n";
     }
   }
   return $self->{handle};
