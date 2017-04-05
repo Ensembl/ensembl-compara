@@ -136,14 +136,14 @@ sub make_temp_files {
 
   my $seq_file = EnsEMBL::Web::TmpFile::Text->new(
     extension    => 'fa',
-    prefix       => '',
+    prefix       => 'export',
     content_type => 'text/plain; charset=utf-8'
   );
   
   my $anno_file = EnsEMBL::Web::TmpFile::Text->new(
     filename     => $seq_file->filename,
     extension    => 'txt',
-    prefix       => '',
+    prefix       => 'export',
     content_type => 'text/plain; charset=utf-8'
   );
     
@@ -155,7 +155,7 @@ sub make_temp_files {
   
   my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
     filename        => $seq_file->filename,
-    prefix          => '',
+    prefix          => 'export',
     use_short_names => 1
   );
   
