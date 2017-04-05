@@ -476,7 +476,7 @@ sub _load_in_species_pages {
   if (-e $spp_tree_packed) {
     $spp_tree = lock_retrieve($spp_tree_packed);
   } else {
-    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $self->multi_hash->{'ENSEMBL_DATASETS'}) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
+    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $SiteDefs::PRODUCTION_NAMES) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
     lock_nstore($spp_tree, $spp_tree_packed);
   }
   
