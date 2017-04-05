@@ -233,13 +233,8 @@ our $ENSEMBL_PRECACHE_DEBUG   = 0;      # change this to 1, 2 or 3 to get requir
 ###############################################################################
 ## Species
 ###############################################################################
-our $ENSEMBL_DATASETS             = [];
 our $ENSEMBL_PRIMARY_SPECIES      = 'Homo_sapiens'; # Default species
 our $ENSEMBL_SECONDARY_SPECIES    = undef;
-## This hash is used to configure the species available in this
-## copy of EnsEMBL - comment out any lines which are not relevant
-## If you add a new species MAKE sure that one of the values of the
-## array is the "SPECIES_CODE" defined in the species.ini file
 ###############################################################################
 
 
