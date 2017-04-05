@@ -118,7 +118,7 @@ sub init {
  
   if ($object && $object->can_export) {
     my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
-    my $caption = $object->can_export =~ /[a-zA-Z]+/ ? $object->can_export : 'Export data';
+    my $caption = $object->can_export =~ /[A-Za-z]/ ? $object->can_export : 'Export data';
     $self->add_entry({
       caption => $caption,
       icon    => 'export',
@@ -153,7 +153,7 @@ sub export_url {
   my $action = $hub->action;
   my $export;
 
-  if ($type eq 'Gene') {
+  if ($type eq 'Gene' && $action eq 'Sequence') {
     return $hub->url({ type => 'DataExport', action => 'GeneSeq',
                        component =>  'GeneSeq', 'data_type' => 'Gene'});
   }
