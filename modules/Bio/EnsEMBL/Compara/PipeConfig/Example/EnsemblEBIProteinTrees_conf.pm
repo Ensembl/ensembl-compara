@@ -196,18 +196,9 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-    pipeline_db => {
-      -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-      -port   => 4522,
-      -user   => 'ensadmin',
-      -pass   => $ENV{'ENSADMIN_PSW'},
-      #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
-      #-dbname => 'treefam_10_mammals_baboon',
-      #-dbname => 'ckong_protein_trees_compara_homology_protists_topup24',
-      -dbname => 'waakanni_protein_trees_88',
-      -driver => 'mysql',
-      #-db_version => $self->o('ensembl_release')
-    },
+        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port'  => 4522,
+
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
