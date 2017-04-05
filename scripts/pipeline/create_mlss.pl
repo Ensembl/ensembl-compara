@@ -564,7 +564,7 @@ sub ask_for_genome_dbs {
 
   return undef if (!$compara_dba);
 
-  my $all_genome_dbs = $taxon_id ? $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($taxon_id) : $compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $all_genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
      $all_genome_dbs = [grep {$_->has_karyotype}    @$all_genome_dbs] if $only_with_karyotype;
      $all_genome_dbs = [grep {$_->is_high_coverage} @$all_genome_dbs] if $only_high_coverage;
 
