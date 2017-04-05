@@ -139,9 +139,10 @@ Use all the species in that collection (more practical than giving a long list o
 Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSpeciesSet)
 as "current", i.e. with a first_release and an undefined last_release
 
-=item B<[--taxon_id taxon_id]>
+=item B<[--taxon_id taxon_id]> and B<[--taxon_id taxon_name]>
 
-The taxon_id of the clade to consider. Used to automatically cre4te a species-set
+The taxon ID or name of the clade to consider. Used to automatically create a species-set.
+This option can be repeated to form paraphyletic sets.
 
 =item B<[--only_with_karyotype 0/1]>
 
@@ -195,7 +196,8 @@ my $species_set_name;
 my $collection;
 my $method_link_class;
 my $release;
-my $taxon_id;
+my @taxon_ids;
+my @taxon_names;
 my $only_with_karyotype;
 my $only_high_coverage;
 my $ref_name;
@@ -219,7 +221,8 @@ GetOptions(
     "species_set_name|species_set_tag=s" => \$species_set_name,
     "collection=s" => \$collection,
     'release' => \$release,
-    'taxon_id=i' => \$taxon_id,
+    'taxon_id=i@' => \@taxon_ids,
+    'taxon_name=s@' => \@taxon_names,
     'only_with_karyotype' => \$only_with_karyotype,
     'only_high_coverage' => \$only_high_coverage,
     'ref_for_taxon=s@' => \@ref_for_taxon,
@@ -320,10 +323,23 @@ if (!$source) {
   }
 }
 
-if ($taxon_id) {
-    my %good_gdb_id = map {$_->dbID => 1} @{ $gdba->fetch_all_by_ancestral_taxon_id($taxon_id) };
-    @input_genome_dbs = grep {$good_gdb_id{$_->dbID}} @input_genome_dbs;
+foreach my $id (@taxon_ids) {
+    $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($id)
+        or die "Could not find a taxon with the ID '$id'";
 }
+foreach my $n (@taxon_names) {
+    my $taxon = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_name($n);
+    if ($taxon) {
+        push @taxon_ids, $taxon->dbID;
+    } else {
+        die "Could not find a taxon named '$n'";
+    }
+}
+my %good_gdb_id;
+foreach my $taxon_id (@taxon_ids) {
+    $good_gdb_id{$_->dbID} = 1 for @{ $gdba->fetch_all_by_ancestral_taxon_id($taxon_id) };
+}
+@input_genome_dbs = grep {$good_gdb_id{$_->dbID}} @input_genome_dbs if %good_gdb_id;
 
 if ($only_with_karyotype) {
     @input_genome_dbs = grep {$_->has_karyotype} @input_genome_dbs;
@@ -502,7 +518,8 @@ sub create_mlss {
     $mlssa->store($new_mlss);
     $mlssa->make_object_current($new_mlss) if $release;
     if (!$singleton && !$pairwise) {
-        $new_mlss->store_tag('taxon_id', $taxon_id) if $taxon_id;
+        $new_mlss->store_tag('taxon_id', $_) for @taxon_ids;
+        $new_mlss->store_tag('taxon_name', $_) for @taxon_names;
         $new_mlss->store_tag('only_with_karyotype', $only_with_karyotype) if $only_with_karyotype;
         $new_mlss->store_tag('only_high_coverage', $only_high_coverage) if $only_high_coverage;
     }
