@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 DESCRIPTION
 
-    This pipeline dumps all the gene-trees and homologies under #target_dir#
+    This pipeline dumps all the gene-trees and homologies under #base_dir#
 
 =head1 CONTACT
 
@@ -72,6 +72,9 @@ sub default_options {
         # either 'default' or 'murinae'
         #'clusterset_id'     => 'default',
 
+        # Can be "ensembl", "plants", etc
+        'division'    => 'ensembl',
+
         # Standard registry file
         'pipeline_name'       => 'dump_trees_'.$self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix'),
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
@@ -82,8 +85,13 @@ sub default_options {
 
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
-        'target_dir'  => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
-        'work_dir'    => '#target_dir#/dump_hash/#basename#',                                                           # where directory hash is created and maintained
+
+        'base_dir'    => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),     # where the final dumps will be stored
+        'work_dir'    => '#base_dir#/dump_hash/#basename#',                                                             # where directory hash is created and maintained
+        'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
+        'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
+        'emf_dir'     => '#target_dir#/emf/ensembl-compara/homologies/',                                                # where the EMF dumps are put
+        'tsv_dir'     => '#target_dir#/tsv/ensembl-compara/homologies/',                                                # where the TSV dumps are put
     };
 }
 
@@ -105,8 +113,13 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'base_dir'      => $self->o('base_dir'),
         'target_dir'    => $self->o('target_dir'),
         'work_dir'      => $self->o('work_dir'),
+        'xml_dir'       => $self->o('xml_dir'),
+        'emf_dir'       => $self->o('emf_dir'),
+        'tsv_dir'       => $self->o('tsv_dir'),
+        'division'      => $self->o('division'),
 
         'basename'      => '#member_type#_#clusterset_id#',
         'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
@@ -165,10 +178,10 @@ sub _pipeline_analyses {
             -parameters => {
                 'readme_dir'    => $self->o('readme_dir'),
                 'cmd'           => join('; ',
-                                    'mkdir -p #target_dir#/xml #target_dir#/emf #target_dir#/tsv',
-                                    'cp -af #readme_dir#/README.gene_trees.emf_dumps.txt #target_dir#/emf/',
-                                    'cp -af #readme_dir#/README.gene_trees.xml_dumps.txt #target_dir#/xml/',
-                                    'cp -af #readme_dir#/README.gene_trees.tsv_dumps.txt #target_dir#/tsv/',
+                                    'mkdir -p #xml_dir# #emf_dir# #tsv_dir#',
+                                    'cp -af #readme_dir#/README.gene_trees.emf_dumps.txt #emf_dir#',
+                                    'cp -af #readme_dir#/README.gene_trees.xml_dumps.txt #xml_dir#',
+                                    'cp -af #readme_dir#/README.gene_trees.tsv_dumps.txt #tsv_dir#',
                                    ),
             },
             -input_ids  => [ {} ],
@@ -193,7 +206,7 @@ sub _pipeline_analyses {
                     {
                         'create_dump_jobs' => undef,
                         'fire_homology_dumps' => undef,
-                        'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
+                        'dump_all_trees_orthoxml' => { 'file' => '#xml_dir#/#name_root#.alltrees.orthoxml.xml', },
                     }
                 ],
         },
@@ -202,7 +215,7 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => sprintf('#target_dir#/ensembl.GeneTree_content.#clusterset_id#.e%s.txt', $self->o('ensembl_release')),
+                'output_file'   => sprintf('#base_dir#/#division#.GeneTree_content.#clusterset_id#.e%s.txt', $self->o('ensembl_release')),
                 'append'        => [qw(-N -q)],
                 'input_query'   => sprintf q|
                     SELECT 
@@ -240,8 +253,8 @@ sub _pipeline_analyses {
                 2 => WHEN('#max_hom_id#' => {
                         'dump_all_homologies_tsv' => undef,
                         'dump_all_homologies_orthoxml' => [
-                            {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
-                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
+                            {'file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
+                            {'file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
                         ],
                     } ),
             },
@@ -290,7 +303,7 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => '#target_dir#/tsv/#name_root#.homologies.tsv',
+                'output_file'   => '#tsv_dir#/#name_root#.homologies.tsv',
                 'append'        => [qw(-q)],
                 'input_query'   => sprintf q|
                     SELECT
@@ -360,7 +373,7 @@ sub _pipeline_analyses {
         {   -logic_name    => 'collate_dumps',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'collated_file' => '#target_dir#/emf/#dump_file_name#',
+                'collated_file' => '#emf_dir#/#dump_file_name#',
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
             },
             -hive_capacity => 2,
@@ -387,7 +400,7 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'file_list'     => '#work_dir#/#extension#.list',
-                'tar_archive'   => '#target_dir#/xml/#dump_file_name#.tar',
+                'tar_archive'   => '#xml_dir#/#dump_file_name#.tar',
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n | tee #file_list# | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -hive_capacity => 2,
@@ -416,8 +429,8 @@ sub _pipeline_analyses {
         {   -logic_name => 'md5sum_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => [ [ 'emf' ], [ 'xml' ], [ 'tsv' ] ],
-                'column_names'  => [ 'format' ],
+                'inputlist'     => [ [ '#emf_dir#' ], [ '#xml_dir#' ], [ '#tsv_dir#' ] ],
+                'column_names'  => [ 'directory' ],
             },
             -flow_into => {
                 2 => [ 'md5sum' ],
@@ -427,7 +440,7 @@ sub _pipeline_analyses {
         {   -logic_name => 'md5sum',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'cd #target_dir#/#format# ; md5sum *.gz >MD5SUM',
+                'cmd' => 'cd #directory# ; md5sum *.gz >MD5SUM',
             },
         },
 
