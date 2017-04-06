@@ -63,7 +63,7 @@ use warnings;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
+use Bio::EnsEMBL::Compara::Utils::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MemberSet;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
@@ -85,7 +85,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
+    $self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Utils::ConnectedComponents);
 
     # We can directly fetch the leaves
     my $gene_tree_id = $self->param_required('gene_tree_id');
@@ -135,13 +135,6 @@ sub write_output {
 
     $self->store_split_genes;
 }
-
-
-sub post_cleanup {
-    my $self = shift;
-    $self->param('connected_split_genes')->holding_node->cascade_unlink;
-}
-
 
 
 sub check_for_split_genes {
@@ -272,7 +265,7 @@ sub check_for_split_genes {
 
 
     if($self->debug) {
-        printf("%1.3f secs to analyze %d pairings of genome_db_id %d, (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), $genome_db_id, scalar(@{$connected_split_genes->holding_node->links}) );
+        printf("%1.3f secs to analyze %d pairings of genome_db_id %d, (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), $genome_db_id, $connected_split_genes->get_component_count);
     }
 
 }
@@ -281,7 +274,6 @@ sub store_split_genes {
     my $self = shift;
 
     my $connected_split_genes = $self->param('connected_split_genes');
-    my $holding_node = $connected_split_genes->holding_node;
 
     if ($self->param('genome_db_id')) {
         my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) JOIN seq_member USING (seq_member_id) WHERE root_id = ? AND genome_db_id = ?');
@@ -296,17 +288,15 @@ sub store_split_genes {
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
     my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');
 
-    # node_ids in the connected component are actually seq_member_ids
-    foreach my $link (@{$holding_node->links}) {
-        my $node1 = $link->get_neighbor($holding_node);
-        print STDERR "node1 $node1->node_id\n" if $self->debug;
-        $sth1->execute($node1->node_id);
+    foreach my $comp (@{$connected_split_genes->get_components}) {
+        my $node1 = shift $comp;
+        print STDERR "node1 $node1\n" if $self->debug;
+        $sth1->execute($node1);
         my $gene_split_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'split_genes', 'gene_split_id');
 
-        foreach my $node2 (@{$node1->all_nodes_in_graph}) {
-            print STDERR "node2 $node2->node_id\n" if $self->debug;
-            next if $node2->node_id eq $node1->node_id;
-            $sth2->execute($node2->node_id, $gene_split_id);
+        foreach my $node2 (@$comp) {
+            print STDERR "node2 $node2\n" if $self->debug;
+            $sth2->execute($node2, $gene_split_id);
         }
     }
     $sth1->finish;

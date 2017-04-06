@@ -53,10 +53,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::Utils::ConnectedComponents;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
+
 
 =head2
 sub param_defaults {
@@ -84,7 +87,7 @@ sub param_defaults {
 sub fetch_input {
 
 	my $self = shift;
-	$self->debug(5);
+	#$self->debug(5);
 	my $species_set_id = $self->param('species_set_id');
 #	print scalar $species_set_id;
 
@@ -111,7 +114,7 @@ sub fetch_input {
 			print scalar @allOrthologs, "  all size \n" if $self->debug() ;
 		}
 	} 
-	$self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
+	$self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Utils::ConnectedComponents);
 	$self->param('ortholog_objects', \@allOrthologs );
 }
 
@@ -145,20 +148,13 @@ sub _buildConnectedComponents {
 #		last if $c >= 30;
 		
 	}
-	printf("built %d clusters\n", $self->param('connected_split_genes')->get_graph_count) if $self->debug() ;
-    printf("has %d distinct components\n", $self->param('connected_split_genes')->get_component_count) if $self->debug() ;
+        printf("%d elements split into %d distinct components\n", $self->param('connected_split_genes')->get_element_count, $self->param('connected_split_genes')->get_component_count) if $self->debug();
 	my $cluster_id=0;
-	my $holding_node = $self->param('connected_split_genes')->holding_node;
-	foreach my $link (@{$holding_node->links}) {
-    	my $one_node = $link->get_neighbor($holding_node);
-    	my $nodes = $one_node->all_nodes_in_graph;
-    	my @seq_member_ids = map {$_->node_id} @$nodes;
-    	print Dumper(\@seq_member_ids) if $self->debug() ;
-    	print "\n seq_member_ids :     \n" if $self->debug() ;
-    	$allclusters{$cluster_id} = { 'members' => \@seq_member_ids };
-    	$cluster_id++;	    
-
-	}
+        foreach my $comp (@{$self->param('connected_split_genes')->get_components}) {
+            $allclusters{$cluster_id} = { 'members' => $comp };
+            $cluster_id++;
+        }
+        print Dumper(\%allclusters) if $self->debug;
 }
 
 1; 
