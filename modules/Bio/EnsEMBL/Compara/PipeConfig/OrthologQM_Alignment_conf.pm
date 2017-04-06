@@ -108,14 +108,14 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'compara_db'      => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_87",
+        'compara_db'      => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_88",
         'master_db'       => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master",
         'species1'        => undef,
         'species2'        => undef,
         'collection'      => undef,
         'species_set_id'  => undef,
         'ref_species'     => undef,
-        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
         'alt_aln_db'      => undef,
         'alt_homology_db' => undef,
         'previous_rel_db' => undef,
@@ -182,7 +182,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
                 '2->B' => [ 'select_mlss' ],
-                'B->1' => [ 'prepare_table_copy' ],
+                'B->1' => [ 'copy_compara_tables' ],
                 '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
@@ -215,28 +215,32 @@ sub pipeline_analyses {
             -rc_name => '200M_job',
         },
 
-        {   -logic_name => 'prepare_table_copy',
+        {   -logic_name => 'copy_compara_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepTableCopy',
-            -parameters => { copy_chunk_size => 20 },
+            -parameters => { 
+                'copy_chunk_size' => 10,
+                'program'         => $self->o('populate_new_database_exe'),
+                'reg_conf'        => $self->o('reg_conf'),
+                'master_db'       => $self->o('master_db'),
+                'pipeline_db'     => $self->pipeline_url(),
+                'old_compara_db'  => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
+            },
             -flow_into  => {
                 '1' => [ 'write_threshold' ],
                 '3->C' => [ 'copy_alignment_tables' ],
                 'C->2' => [ 'copy_funnel' ]
             },
+            -analysis_capacity => 1,
             -rc_name => '1Gb_job'
 
         },
 
         {   -logic_name => 'copy_alignment_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyAlignmentTables',
             -parameters    => {
-                  'program'           => $self->o('populate_new_database_exe'),
-                  'reg_conf'          => $self->o('reg_conf'),
-                  'master_db'         => $self->o('master_db'),
-                  'pipeline_db'       => $self->pipeline_url(),
-                  'old_compara_db'    => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
-                  'ignore_collection' => 1, # PopulateNewDatabase will grab the collection name automatically - turn this off. We only want to copy by MLSS
-            },
+                'from_url' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
+                'to_url'   => $self->pipeline_url(),       
+             },
             -rc_name => '1Gb_job',
             -analysis_capacity => 1,
         },

@@ -64,8 +64,11 @@ sub write_output {
 	my $mlss_adap = $dba->get_MethodLinkSpeciesSetAdaptor;
 	for my $this_mlss ( @mlss_ids ) {
 		my $mlss = $mlss_adap->fetch_by_dbID( $this_mlss );
+		unless ( defined $mlss ) {
+			warn "Could not find mlss with dbID $this_mlss\n";
+			next;
+		}
 		$mlss->store_tag( 'wga_quality_threshold', $self->_calculate_threshold ) if defined $mlss;
-		warn "Could not find mlss with dbID $this_mlss\n";
 	}
 }
 

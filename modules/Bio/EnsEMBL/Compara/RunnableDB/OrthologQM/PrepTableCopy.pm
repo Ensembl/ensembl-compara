@@ -51,7 +51,24 @@ sub fetch_input {
 		}
 	}
 	my @uniq_list = keys %uniq_mlss;
+	print "\n\n!!!" . scalar(@uniq_list) . " unique mlsses found\n\n" if $self->debug;
 	$self->param('uniq_mlss_list', \@uniq_list);
+
+	my @cmd;
+    push @cmd, $self->param_required('program');
+    push @cmd, '--master', $self->param_required('master_db');
+    push @cmd, '--new', $self->param_required('pipeline_db');
+    push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');
+    push @cmd, '--old', $self->param_required('old_compara_db');
+    push @cmd, '--skip-data';
+
+    $self->param('cmd', \@cmd);
+}
+
+sub run {
+	my $self = shift;
+
+	system( join( ' ', @{ $self->param('cmd') } ) );
 }
 
 sub write_output {
@@ -67,7 +84,7 @@ sub write_output {
 	}
 
 	$self->dataflow_output_id( { mlss => $self->param('uniq_mlss_list') }, 1 ); # to write_threshold
-	$self->dataflow_output_id( \@copy_dataflow, 3 ); # to copy_tables
+	$self->dataflow_output_id( \@copy_dataflow, 3 ); # to copy_alignment_tables
 	$self->dataflow_output_id( {}, 2 ); # to copy_funnel
 }
 
