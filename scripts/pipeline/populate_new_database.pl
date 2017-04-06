@@ -208,6 +208,7 @@ my $only_show_intentions = 0;
 my $cellular_component = 0;
 my $collection = undef;
 my $filter_by_mlss = 0;
+my $alignments_only = 0;
 
 GetOptions(
     "help" => \$help,
@@ -223,6 +224,7 @@ GetOptions(
     'cellular_component=i' => \$cellular_component,
     'collection=s' => \$collection,
     'filter_by_mlss' => \$filter_by_mlss,
+    'alignments_only' => \$alignments_only,
   );
 
 
@@ -339,6 +341,7 @@ if ($old_dba and !$skip_data) {
 
 ## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
+  exit(0) if ( $alignments_only );
 ## Copy Ancestor dnafrags
   copy_ancestor_dnafrag($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy Synteny data
@@ -692,6 +695,9 @@ sub copy_dna_dna_alignements {
     next if ($this_method_link_species_set->method->dbID >= 100);
     ## We ignore LASTZ_PATCH alignments as they should be reloaded fresh every release
     next if ($this_method_link_species_set->method->type eq 'LASTZ_PATCH');
+    ## Skip HAL alignments as there's nothing in the db
+    next if ($this_method_link_species_set->method->type =~ m/CACTUS_HAL/);
+
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name,
         " (", $this_method_link_species_set->dbID, "): ";
     my $where = "genomic_align_block_id >= ".
@@ -712,9 +718,11 @@ sub copy_dna_dna_alignements {
     copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where);
     print "ok!\n";
   }
+  print "re-enabling keys\n";
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS");
+  print "keys enabled!\n";
 }
 
 =head2 copy_ancestor_dnafrag
