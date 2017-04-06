@@ -673,23 +673,8 @@ sub _set_env {
 }
 
 sub memcached {
-  my $pars    = shift;
-  my $args    = {};
   my @caller  = caller;
-
-  warn qq(SiteDefs::memcached() is deprecated. Set \$SiteDefs::ENSEMBL_MEMCACHED variable to a ref of hash containing keys 'server' [list of server:port], 'debug' and 'default_exptime' at $caller[1] line $caller[2].\n);
-
-  unless (scalar @{$pars->{'servers'} || []}) {
-    $SiteDefs::ENSEMBL_MEMCACHED = undef;
-    return;
-  }
-
-  $args->{'servers'}          = delete $pars->{'servers'};
-  $args->{'debug'}            = $pars->{'debug'} ? 1 : 0;
-  $args->{'default_exptime'}  = $pars->{'default_exptime'} if exists $pars->{'default_exptime'};
-
-  $SiteDefs::ENSEMBL_MEMCACHED  = $pars;
-  $SiteDefs::ENSEMBL_COHORT     = Sys::Hostname::Long::hostname_long().":".$ENSEMBL_SERVERROOT;
+  die qq(SiteDefs::memcached() is not in use anymore. Set \$SiteDefs::ENSEMBL_MEMCACHED variable to a ref of hash containing keys 'server' [list of server:port], 'debug' and 'default_exptime' at $caller[1] line $caller[2].\n);
 }
 
 1;
