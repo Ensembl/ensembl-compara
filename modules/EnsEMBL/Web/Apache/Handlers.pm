@@ -50,7 +50,10 @@ use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 use EnsEMBL::Web::Apache::ServerError;
 
+our $preload_time;
+#BEGIN { $preload_time = time; }
 use Preload;
+#BEGIN { warn sprintf("preload took %dms\n",(time-$preload_time)*1000); }
 
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
@@ -321,6 +324,8 @@ sub postReadRequestHandler {
   # run any plugged-in code
   request_start_hook($r);
 
+  Bio::EnsEMBL::Registry->set_reconnect_when_lost();
+
   return OK;
 }
 
@@ -341,6 +346,58 @@ sub transHandler {
   $r->subprocess_env('LOG_REQUEST_URI', $r->unparsed_uri);
 
   return DECLINED;
+}
+
+our (%HOT_DBS,%EXPULSIONS);
+
+sub check_port_exhaustion {
+  my $count = 0;
+  open(SOCKETS,"/proc/net/tcp") || return 0;
+  while(<SOCKETS>) { $count++; }
+  close SOCKETS;
+  return $count;
+}
+
+sub tidy_databases {
+  my $debug = $SiteDefs::ENSEMBL_DB_TIDY_DEBUG;
+
+  # tidy up unused databases
+  my %databases;
+  foreach my $dba ( @{Bio::EnsEMBL::Registry->get_all_DBAdaptors()}){
+    my $dbc = $dba->dbc;
+    next unless $dbc->connected();
+    my $dsn = $dbc->_driver_object->connect_params($dbc)->{'dsn'};
+    ($HOT_DBS{$dsn}||=0)++;
+    $databases{$dsn} = $dbc;
+  }
+
+  my $tokill = scalar(keys %databases)-$SiteDefs::ENSEMBL_DB_IDLE_LIMIT;
+
+  my $ports_used = check_port_exhaustion;
+  if($ports_used < 10000) {
+    foreach my $dsn (sort { $HOT_DBS{$a} <=> $HOT_DBS{$b} } keys %HOT_DBS) {
+      last if $tokill <= 0;
+      next unless $databases{$dsn};
+      warn "disconnecting $dsn\n" if $debug;
+      $databases{$dsn}->disconnect_if_idle();
+      ($EXPULSIONS{$dsn}||=0)++;
+      $tokill--;
+    }
+  } else {
+    warn "not disconnecting due to impending port exhaustion.\n" if $debug;
+  }
+
+  # A db will have been loaded EXPULSIONS+1 times. It will have been used
+  # HOT_DBS times. miss rate = Sum{ (EXPULSIONS+1)/HOT_DBS }
+  if($debug) {
+    my ($misses,$total) = (0,0);
+    foreach my $dsn (keys %HOT_DBS) {
+      $misses += ($EXPULSIONS{$dsn}||0)+1;
+      $total += $HOT_DBS{$dsn};
+    }
+    warn sprintf("hit rate %d%%\n",($total-$misses)*100/$total) if $total;
+    warn sprintf("%d ports in use\n",$ports_used);
+  }
 }
 
 sub handler {
@@ -431,6 +488,8 @@ sub handler {
 
   # kill off the process when it grows too large
   $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
+
+  tidy_databases();
 
   return $response_code;
 }
