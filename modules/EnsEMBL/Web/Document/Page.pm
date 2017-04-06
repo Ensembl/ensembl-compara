@@ -421,7 +421,7 @@ sub render_JSON {
 sub render_TextGz {
 #### ONLY USED BY OLD EXPORT ########
   my $self     = shift;
-  my $renderer = EnsEMBL::Web::Document::Renderer::GzFile->new($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
+  my $renderer = EnsEMBL::Web::Document::Renderer::GzFile->new($self->species_defs->ENSEMBL_TMP_DIR . '/export/' . $self->temp_file_name . '.gz');
   
   $renderer->print(shift->{'content'});
   $renderer->close;
