@@ -231,7 +231,6 @@ our $ENSEMBL_MART_SERVER          = ''; # Server address if mart server is runni
 ###############################################################################
 ## Memcached specific configs
 our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|1] and 'default_exptime'. See EnsEMBL::Web::Cache in public-plugins for details.
-our $ENSEMBL_COHORT     = defer { scalar keys %{$ENSEMBL_MEMCACHED || {}} ? Sys::Hostname::Long::hostname_long().":".$ENSEMBL_SERVERROOT : undef };
 ###############################################################################
 
 
@@ -318,6 +317,7 @@ our $ENSEMBL_PLUGINS      = []; # List of all plugins enabled - populated by _po
 our $ENSEMBL_IDS_USED     = {}; # All plugins with extra info for perl.startup output - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGINS_USED = {}; # Identities being used for plugins - needed by perl.startup - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGIN_ROOTS = []; # Populated by _update_conf()
+our $ENSEMBL_COHORT       = ''; # Populated by import
 our $ENSEMBL_BASE_URL;          # Populated by import
 our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
@@ -365,6 +365,7 @@ sub import {
   $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
   $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
+  $ENSEMBL_COHORT            = [ grep $ENSEMBL_IDS_USED->{$_}, sort keys %$ENSEMBL_IDS_USED ]->[0] || $ENSEMBL_SERVERROOT;
   $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
 
   _verbose_params() if $_VERBOSE;
