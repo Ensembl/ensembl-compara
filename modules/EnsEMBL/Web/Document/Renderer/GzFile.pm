@@ -35,6 +35,7 @@ sub new {
   );
   
   if (!$self->exists($filename)) {
+    ## Here be dragons - export fails unless we make the directory, but no file is saved!
     $self->make_directory($filename);
     $self->{'file'} = gzopen($filename, 'wb') || undef;
   }
