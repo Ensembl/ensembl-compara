@@ -344,6 +344,7 @@ sub import {
 
   # Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
   _populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
+  die "ERROR: ENSEMBL_PLUGINS not populated\n" unless scalar @$ENSEMBL_PLUGINS;
 
   # Load all plugins SiteDefs
   _update_conf();
