@@ -92,9 +92,9 @@ sub form_fields {
     'name'    => 'ld_type',
     'label'   => 'LD track type(s)',
     'values'  => [
-      { 'value' => 'r2',      'caption' => 'r&sup2;'             },
-      { 'value' => 'd_prime', 'caption' => "D'"                  },
-      { 'value' => 'both'   , 'caption' => "both r&sup2; and D'" },
+      { 'value' => 'r2',      'caption' => {'inner_HTML' => 'r&sup2;'}            },
+      { 'value' => 'd_prime', 'caption' => "D'"                                   },
+      { 'value' => 'both'   , 'caption' => {'inner_HTML' => "both r&sup2; and D'"}},
     ]
   };
 
