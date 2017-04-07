@@ -1455,7 +1455,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                '2->A' => [ 'blastp' ],
+                '2->A' => { 'blastp' => INPUT_PLUS() }
                 'A->1' => [ 'hc_pafs' ],
             },
         },
@@ -1468,7 +1468,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                '2->A' => [ 'blastp' ],
+                '2->A' => { 'blastp' => INPUT_PLUS() }
                 'A->1' => [ 'hc_pafs' ],
             },
         },

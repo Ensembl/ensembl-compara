@@ -46,6 +46,9 @@ eg "seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
         Species genome db id.
     'reuse_ss_id' => <number>
         Reuse species set id. Normally stored in the meta table. Obligatory.
+    'output_db' => Compara URL (optional)
+        By default the blast hits will be stored in the same database as the
+        members themselves, but they can be written to 'output_db' instead.
 
 =cut
 
@@ -181,6 +184,11 @@ sub fetch_input {
         die "Missing blast index: $fastafile.pin\n" unless -e "$fastafile.pin" and -s "$fastafile.pin";
     }
 
+    if ($self->param('output_db')) {
+        $self->param('output_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('output_db')));
+    } else {
+        $self->param('output_dba', $self->compara_dba);
+    }
 }
 
 sub parse_blast_table_into_paf {
@@ -296,7 +304,7 @@ sub write_output {
     my $cross_pafs = $self->param('cross_pafs');
 
     $self->call_within_transaction(sub {
-        $self->compara_dba->get_PeptideAlignFeatureAdaptor->rank_and_store_PAFS(@$cross_pafs);
+        $self->param('output_dba')->get_PeptideAlignFeatureAdaptor->rank_and_store_PAFS(@$cross_pafs);
     });
 }
 
