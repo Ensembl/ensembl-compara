@@ -460,14 +460,7 @@ sub copy_data_in_binary_mode {
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
-        #my $start_time  = time();
-
-        system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." --insert-ignore -t $from_dbname $table_name ".
-            "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
-
-        #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-
-        return;
+        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name);
     }
 
     print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
@@ -512,11 +505,7 @@ sub copy_data_in_binary_mode {
         $from_dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
         ## mysqldump data
-
-        system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." --insert-ignore -t $from_dbname $table_name ".
-            "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
-
-        #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+        copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name);
 
         ## Undo table names change
         $from_dbc->db_handle->do("DROP TABLE $table_name");
