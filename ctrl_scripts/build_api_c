@@ -92,7 +92,7 @@ sub _build_halxs {
   my $perl      = "$^X";
   my $command   = "cd $xs_folder;\n$perl Makefile.PL $progressive_cactus_dir;\nmake;";
 
-  while ($input !~ m/^(y|n)$/i) {
+  while ($input && $input !~ m/^(y|n)$/i) {
     print "Running the following command:\n===\n$command\n===\nConfirm (y/n):";
     $input = <STDIN>;
     chomp $input;
