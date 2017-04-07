@@ -88,7 +88,7 @@ our $SITE_LOGO_HEIGHT = '';
 our $SITE_LOGO_ALT = '';
 our $SITE_LOGO_HREF = '';
 
-our $ENSEMBL_CONFIG_FILENAME          = 'config.packed';
+our $ENSEMBL_CONFIG_FILENAME_SUFFIX   = 'config.packed';
 our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Setting to 0 will try to recover from $ENSEMBL_CONFIG_FILENAME on startup
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
@@ -325,6 +325,7 @@ our $ENSEMBL_PLUGIN_ROOTS = []; # Populated by _update_conf()
 our $ENSEMBL_COHORT       = ''; # Populated by import
 our $ENSEMBL_BASE_URL;          # Populated by import
 our $ENSEMBL_SITE_URL;          # Populated by import
+our $ENSEMBL_CONFIG_FILENAME;   # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
 our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
@@ -372,6 +373,7 @@ sub import {
   $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
   $ENSEMBL_COHORT            = [ grep $ENSEMBL_IDS_USED->{$_}, sort keys %$ENSEMBL_IDS_USED ]->[0] || $ENSEMBL_SERVERROOT;
+  $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_COHORT =~ s/\W+/-/gr, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
   $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
 
   _verbose_params() if $_VERBOSE;
