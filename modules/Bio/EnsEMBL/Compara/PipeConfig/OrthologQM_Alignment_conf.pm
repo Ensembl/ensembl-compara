@@ -227,7 +227,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1' => [ 'write_threshold' ],
-                '3->C' => [ 'copy_alignment_tables' ],
+                '3->C' => [ 'copy_genomic_align_blocks' ],
                 'C->2' => [ 'copy_funnel' ]
             },
             -analysis_capacity => 1,
@@ -235,13 +235,24 @@ sub pipeline_analyses {
 
         },
 
-        {   -logic_name => 'copy_alignment_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyAlignmentTables',
+        {   -logic_name => 'copy_genomic_align_blocks',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'from_url' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
-                'to_url'   => $self->pipeline_url(),       
+                'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
+                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
+                'table'       => 'genomic_align_block',       
              },
-            -rc_name => '1Gb_job',
+            -analysis_capacity => 1,
+            -flow_into => { 1 => [ 'copy_genomic_aligns' ] },
+        },
+
+        {   -logic_name => 'copy_genomic_aligns',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
+                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
+                'table'       => 'genomic_align',       
+             },
             -analysis_capacity => 1,
         },
 
