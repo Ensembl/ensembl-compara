@@ -76,7 +76,7 @@ sub _build_ld_vcf {
 sub _build_halxs {
   my $progressive_cactus_dir = $ENV{PROGRESSIVE_CACTUS_DIR};
 
-  my $input;
+  my $input = '';
 
   while (!$progressive_cactus_dir) {
     print "Please enter a valid location for PROGRESSIVE_CACTUS_DIR:\n";
@@ -92,7 +92,7 @@ sub _build_halxs {
   my $perl      = "$^X";
   my $command   = "cd $xs_folder;\n$perl Makefile.PL $progressive_cactus_dir;\nmake;";
 
-  while ($input && $input !~ m/^(y|n)$/i) {
+  while ($input !~ m/^(y|n)$/i) {
     print "Running the following command:\n===\n$command\n===\nConfirm (y/n):";
     $input = <STDIN>;
     chomp $input;
