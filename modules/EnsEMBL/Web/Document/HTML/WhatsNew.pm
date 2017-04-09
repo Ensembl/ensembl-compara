@@ -174,7 +174,7 @@ sub read_rss_file {
     if ($content) {
       ## Does this feed work best with XML::Atom or XML:RSS? 
       my $rss_type = $rss_path =~ /atom/ ? 'atom' : 'rss';
-      $items = $self->_process_xml($rss_type, $content, $limit);
+      $items = $self->process_xml($rss_type, $content, $limit);
     }
   }
   else {
