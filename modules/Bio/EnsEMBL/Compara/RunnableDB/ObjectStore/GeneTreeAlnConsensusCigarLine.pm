@@ -87,7 +87,7 @@ sub run {
     $self->dbc and $self->dbc->disconnect_if_idle();
 
     my %ccl;
-    foreach my $node (@{$self->param('gene_tree')}) {
+    foreach my $node (@{$self->param('gene_tree')->get_all_nodes}) {
         # Only the internal nodes
         $ccl{$node->node_id} = $node->consensus_cigar_line unless $node->is_leaf;
     }
