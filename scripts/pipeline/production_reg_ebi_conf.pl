@@ -36,7 +36,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 # The majority of core databases live on two staging servers:
  Bio::EnsEMBL::Registry->load_registry_from_url(
-   'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/88');
+   'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/89');
 
 # # Extra core databases that live on genebuilders' servers:
 # Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
