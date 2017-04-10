@@ -46,7 +46,7 @@ sub _build_ld_vcf {
   }
 
   my $c_code_folder = "$SiteDefs::ENSEMBL_SERVERROOT/ensembl-variation/C_code";
-  my $command       = "export HTSLIB_DIR=$SiteDefs::HTSLIB_DIR;\ncd $c_code_folder;\nmake;";
+  my $command       = "export HTSLIB_DIR=$SiteDefs::HTSLIB_DIR;\ncd $c_code_folder;\nmake -B;";
   my $input         = '';
 
   while ($input !~ m/^(y|n)$/i) {
