@@ -101,11 +101,8 @@ sub fetch_by_node_id {
     my ($self, $node_id) = @_;
     my $tree = $self->_id_cache->get_by_additional_lookup('node_id', $node_id);
     unless ($tree) {
-        my $constraint = 'node_id = ?';
-        my $join = [[['species_tree_node', 'stn'], 'stn.root_id = str.root_id']];
-        $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
-        $tree = $self->generic_fetch_one($constraint, $join);
-        $tree->root if $tree;   # to populate the node_id lookup
+        my $sql = 'SELECT root_id FROM species_tree_node WHERE node_id = ?';
+        $tree = $self->_id_cache->get_by_sql($sql, [$node_id]);
     }
     return $tree;
 }
