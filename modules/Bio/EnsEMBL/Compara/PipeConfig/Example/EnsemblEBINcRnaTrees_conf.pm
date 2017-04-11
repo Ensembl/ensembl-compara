@@ -116,7 +116,7 @@ sub default_options {
             'parsimonator_exe'      => $self->o('ensembl_cellar').'/parsimonator/1.0.2/bin/parsimonator-SSE3',
             'ktreedist_exe'         => $self->o('ensembl_cellar').'/ktreedist/1.0.0/bin/Ktreedist.pl',
             'fasttree_exe'          => $self->o('ensembl_cellar').'/fasttree/2.1.8/bin/FastTree',
-            'treebest_exe'          => $self->o('ensembl_cellar').'/treebest/84/bin/treebest',
+            'treebest_exe'          => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
             'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/1.1.0/bin/quicktree',
             'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.4/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
