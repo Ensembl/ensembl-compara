@@ -73,73 +73,32 @@ sub default_options {
     my ($self) = @_;
 
     return {
-	%{$self->SUPER::default_options},
-        'pipeline_name' => 'compara_GenerateAnchors',
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
-	   # parameters that are likely to change from execution to another:
-	'core_db_version' => 74, # version of the dbs from which to get the pairwise alignments
-	   # connection parameters to various databases:
-	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara4',
-                -driver => 'mysql',
-		-port   => 3306,
-                -user   => 'ensadmin',
-		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_6fish_gen_anchors_'.$self->o('rel_with_suffix'),
-   	},
-	  # database containing the pairwise alignments needed to get the overlaps
-	'compara_pairwise_db' => {
-		-user => 'ensro',
-		-port => 3306,
-		-host => 'ens-livemirror',
-		-driver => 'mysql',
-		-pass => '',
-		-dbname => 'ensembl_compara_72',
-	},
-	# location of most of the core dbs - to get the sequence from
-        'main_core_dbs' => [
-          {
-            -user => 'ensro',
-            -port => 3306,
-            -host => 'ens-livemirror',
-	    -driver => 'mysql',
-            -dbname => '',
-            -db_version => $self->o('core_db_version'),
-          },
-        ],
-        # any additional core dbs
-        'additional_core_db_urls' => { 
-#                'gallus_gallus' => 'mysql://ensro@ens-staging1:3306/gallus_gallus_core_73_4',
-        },  
+      	%{$self->SUPER::default_options},
+        'pipeline_name' => 'compara_generate_anchors',
+      	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
+      	# parameters that are likely to change from execution to another:
+      	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments
+      	
+      	# alignment chunk size
+      	'chunk_size' => 100000000,
+      	# max block size for pecan to align
+      	'pecan_block_size' => 1000000,
+      	'pecan_mlid' => 10, # dummy value (change if necessary)
+      	'pecan_mlssid' => 10, # dummy value
+      	'gerp_ce_mlid' => 11, # dummy value 
+      	'gerp_ce_mlssid' => 20, # dummy value
 
-	  # genome_db_id from which pairwise alignments will be used
-	'reference_genome_db_id' => 142,
-	'list_of_pairwise_mlss_ids' => "634,635,636",
-	  # location of species core dbs which were used in the pairwise alignments
-	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/72' ],
-	  # alignment chunk size
-	'chunk_size' => 100000000,
-	  # max block size for pecan to align
-	'pecan_block_size' => 1000000,
-	'pecan_mlid' => 10, # dummy value (change if necessary)
-	'pecan_mlssid' => 10, # dummy value
-	'gerp_ce_mlid' => 11, # dummy value 
-	'gerp_ce_mlssid' => 20, # dummy value
-	'gerp_program_version' => "2.1",
-	'gerp_exe_dir' => "/software/ensembl/compara/gerp/GERPv2.1",
-	'species_set_id' => 10000, # dummy value for reference and non-reference species
-	'overlaps_mlid' => 10000, # dummy value 
-	'overlaps_method_link_name' => 'GEN_ANCS',
-	'overlaps_mlssid' => 10000, # dummy value
-	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
-	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
+      	'species_set_id' => 10000, # dummy value for reference and non-reference species
+      	'overlaps_mlid' => 10000, # dummy value 
+      	'overlaps_method_link_name' => 'GEN_ANCS',
+      	'overlaps_mlssid' => 10000, # dummy value
+      	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
+      	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
         'min_anchor_size' => 50, # at least one of the sequences in an anchor must be of this size
-	'max_anchor_seq_len' => 100, # anchors longer than this value will be trimmed
-	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
-	'max_number_of_seqs_per_anchor' => 30, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
-        'exonerate' => '/software/ensembl/compara/exonerate/exonerate', # path to exonerate executable
-        'ortheus_c_exe' => '/software/ensembl/compara/OrtheusC/bin/OrtheusC',
-     };
+      	'max_anchor_seq_len' => 100, # anchors longer than this value will be trimmed
+      	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
+      	'max_number_of_seqs_per_anchor' => 30, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
+    };
 }
 
 

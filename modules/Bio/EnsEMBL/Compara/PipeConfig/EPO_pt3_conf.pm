@@ -74,69 +74,39 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
  my ($self) = @_;
 
- return {
-  %{$self->SUPER::default_options},
+    return {
+        %{$self->SUPER::default_options},
 
-        # Change this name
-        'species_set_name' => 'primates',
-
-        # But not this one
         'pipeline_name' => $self->o('species_set_name').'_epo',
 
-        # Where the pipeline lives
-        'host'  => 'compara5',
+        'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
+        # 'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
+        # 'gerp_ce_mlss_id' => 648,
+        # 'gerp_cs_mlss_id' => 50295,
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
 
-  'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
-  #'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
-#  'gerp_ce_mlss_id' => 648,
-#  'gerp_cs_mlss_id' => 50295,
-  'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
-
-
-  'bl2seq' => '/software/ensembl/compara/bl2seq', # location of ncbi bl2seq executable on farm3
-  'enredo_bin_dir' => '/software/ensembl/compara/', # location of enredo executable
-  'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
-	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
+        'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
+    	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
 
         # Dump directory
-  'dump_dir' => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
-  'enredo_output_file' => $self->o('dump_dir').'enredo_'.$self->o('epo_mlss_id').'.out',
-  'bed_dir' => $self->o('dump_dir').'bed_dir',
-  'feature_dumps' => $self->o('dump_dir').'feature_dumps',
-  'enredo_mapping_file' => $self->o('dump_dir').'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'),
-  'bl2seq_dump_dir' => $self->o('dump_dir').'bl2seq', # location for dumping sequences to determine strand (for bl2seq)
-  'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
+        'enredo_output_file' => $self->o('dump_dir').'enredo_'.$self->o('epo_mlss_id').'.out',
+        'bed_dir' => $self->o('dump_dir').'bed_dir',
+        'feature_dumps' => $self->o('dump_dir').'feature_dumps',
+        'enredo_mapping_file' => $self->o('dump_dir').'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'),
+        'bl2seq_dump_dir' => $self->o('dump_dir').'bl2seq', # location for dumping sequences to determine strand (for bl2seq)
+        'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
 
-  # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
-  'add_non_nuclear_alignments' => 1,
+        # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
+        'add_non_nuclear_alignments' => 1,
 
-  'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
-  'gerp_version' => '2.1', #gerp program version
-  'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
-  'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1', #gerp program
-  'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-  'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-  'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-  'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
-  'epo_stats_report_email' => $ENV{'USER'} . '@sanger.ac.uk',
+        'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
+        'skip_multiplealigner_stats' => 0, #skip this module if set to 1
+        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
 
-  'ancestral_sequences_name' => 'ancestral_sequences',
-  # connection parameters to various databases:
-	'ancestral_db' => { # core ancestral db
-		-driver => 'mysql',
-		-host   => 'compara4',
-		-port   => 3306,
-		-species => $self->o('ancestral_sequences_name'),
-		-user   => 'ensadmin',
-		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
-	},
-	# master db
-        'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-	# anchor mappings
-        'compara_mapped_anchor_db' => 'mysql://ensro@compara5/wa2_primates_epo_anchor_mapping',
-
-     }; 
+        'ancestral_sequences_name' => 'ancestral_sequences',
+    }; 
 }
 
 sub pipeline_create_commands {

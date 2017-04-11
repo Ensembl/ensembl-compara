@@ -69,37 +69,23 @@ sub default_options {
     my ($self) = @_;
 
     return {
-	%{$self->SUPER::default_options},
+    	%{$self->SUPER::default_options},
 
-        # Change this name
-        'species_set_name' => '17mammals_reuse',
-
-        # But not this one
         'pipeline_name' => $self->o('species_set_name').'_epo_anchor_mapping',
 
-        # Where the pipeline lives
-        'host'  => 'compara2',
-
-	  # database containing the anchors for mapping
-	'compara_anchor_db' => 'mysql://ensro@compara3/sf5_TEST_gen_anchors_mammals_cat_100',
-
-	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
-        'ortheus_c_exe' => '/software/ensembl/compara/OrtheusC/bin/OrtheusC',
-	#'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
-	'mapping_method_link_id' => 10000, # dummy value - should not need to change
-	'mapping_method_link_name' => 'MAP_ANCHORS', 
-	'mapping_mlssid' => 10000, # dummy value - should not need to change
-	'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
-	 # place to dump the genome sequences
-	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('ensembl_release'),
-	 # dont dump the MT sequence for mapping
-	'only_nuclear_genome' => 1,
-	 # batch size of grouped anchors to map
-	'anchor_batch_size' => 10,
-	 # max number of sequences to allow in an anchor
-	'anc_seq_count_cut_off' => 15,
-        'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-     };
+    	#'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
+    	'mapping_method_link_id' => 10000, # dummy value - should not need to change
+    	'mapping_method_link_name' => 'MAP_ANCHORS', 
+    	'mapping_mlssid' => 10000, # dummy value - should not need to change
+    	'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
+    	
+    	 # dont dump the MT sequence for mapping
+    	'only_nuclear_genome' => 1,
+    	 # batch size of grouped anchors to map
+    	'anchor_batch_size' => 10,
+    	 # max number of sequences to allow in an anchor
+    	'anc_seq_count_cut_off' => 15,
+    };
 }
 
 sub pipeline_create_commands {
