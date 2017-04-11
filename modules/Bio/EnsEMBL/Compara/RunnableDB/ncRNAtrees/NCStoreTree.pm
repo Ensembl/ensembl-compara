@@ -49,11 +49,11 @@ sub store_newick_into_nc_tree {
 
 
 sub _dumpMultipleAlignmentToWorkdir {
-    my ($self, $tree) = @_;
+    my ($self, $tree, $nj) = @_;
 
     my $root_id = $tree->root_id;
     my $leafcount = scalar(@{$tree->get_all_leaves});
-    if($leafcount<4) {
+    if(!$nj && $leafcount<4) {
         $self->input_job->autoflow(0);
         $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
     }

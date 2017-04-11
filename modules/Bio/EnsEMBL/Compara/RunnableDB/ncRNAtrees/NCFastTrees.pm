@@ -96,7 +96,7 @@ sub fetch_input {
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->alignment($aln);
 
-    $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
+    $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree, 1));
 }
 
 =head2 run
@@ -113,6 +113,7 @@ sub run {
     my ($self) = @_;
 
     $self->_run_fasttree;
+    return if scalar(@{ $self->param('gene_tree')->get_all_leaves }) < 4;
     $self->_run_parsimonator;
     $self->_run_parse_examl;
     $self->_run_examl;
