@@ -411,7 +411,7 @@ sub _internal_format_newick {
                 ($token->{place} eq "Internal") && (! $tree->is_leaf) ||
                 ($token->{place} eq "Both")) {
             next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$tree->parent);
-            for my $item (split //,$token->{main}.$token->{alternatives}x!!$token->{alternatives}) {  ## For "main" and "alternatives"
+            for my $item (split //,$token->{main}.($token->{alternatives} || '')) {  ## For "main" and "alternatives"
                 die "Callback $item not defined\n" unless exists $self->{callbacks}{$item};
                 my $itemstr = $self->{callbacks}{$item}->($self, $token);
                 #print STDERR "ITEMSTR:$itemstr\n";exit;
@@ -431,7 +431,7 @@ sub _internal_format_newick {
 
                     $itemstr = uc $itemstr if exists $token->{upper};
 
-                    my $str_to_append = $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};
+                    my $str_to_append = ($token->{preliteral} || '').$itemstr.($token->{postliteral} || '');
                     $str_to_append = substr($str_to_append, 0, $token->{len_limit}) if exists $token->{Len_limit};
                     $header .= $str_to_append;
                     last;
