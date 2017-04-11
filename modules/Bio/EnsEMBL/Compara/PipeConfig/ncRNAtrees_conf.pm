@@ -122,6 +122,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
+        'production_db_url' => $self->o('production_db_url'),
     }
 }
 
@@ -351,9 +352,6 @@ sub pipeline_analyses {
 
         {   -logic_name        => 'load_members',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
-            -parameters        => {
-                'production_db_url' => $self->o('production_db_url'),
-            },
             -analysis_capacity => 10,
             -rc_name           => '1Gb_job',
             -flow_into         => [ 'hc_members_per_genome' ],
