@@ -94,6 +94,8 @@ sub default_options {
             'per_family_table'         => 0,
             'cafe_species'             => [],
 
+            # Analyses usually don't fail
+            'hive_default_max_retry_count'  => 1,
            };
 }
 
