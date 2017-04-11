@@ -126,9 +126,14 @@ sub _species_tree_node_id {
         # The species-tree the gene-tree is reconciled to is not necessarily the "default" one, so we need to find it via another source.
         # In e88 the ncRNA murinae gene-trees don't have the correct gene_tree_root.species_tree_root_id, so we have to use the parent
         # (gene-tree) node.
-        return unless $self->tree->species_tree_root_id;
-        my $species_tree_root_id = $self->parent->species_tree_node->_root_id;
-        my $species_tree = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_dbID($species_tree_root_id);
+        my $species_tree = $self->tree->species_tree;
+        if (my $parent_species_tree_node = $self->parent->species_tree_node) {
+            if ($parent_species_tree_node->_root_id) {
+                my $s = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_dbID( $parent_species_tree_node->_root_id );
+                $species_tree = $s if $s;
+            }
+        }
+        return unless $species_tree;
         $self->{_species_tree_node} = $species_tree->get_genome_db_id_2_node_hash()->{$self->genome_db_id};
         $self->{'_tags'}->{'species_tree_node_id'} = $self->{_species_tree_node}->node_id;
     }
