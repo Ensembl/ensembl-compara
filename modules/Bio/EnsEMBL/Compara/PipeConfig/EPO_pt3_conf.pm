@@ -314,7 +314,8 @@ return
 	-logic_name => 'find_dnafrag_region_strand',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
-		bl2seq => $self->o('bl2seq'),
+		bl2seq_exe => $self->o('bl2seq'),
+        blastn_exe  => $self->o('blastn'),
 		bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
 	-hive_capacity => 10,
@@ -328,8 +329,9 @@ return
 	-logic_name => 'find_dnafrag_region_strand_more_mem',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
-		bl2seq => $self->o('bl2seq'),
-		bl2seq_file => $self->o('bl2seq_file_stem'),
+		bl2seq_exe => $self->o('bl2seq'),
+        blastn_exe  => $self->o('blastn'),
+        bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
 	-rc_name => 'mem3500',
 	-flow_into => {

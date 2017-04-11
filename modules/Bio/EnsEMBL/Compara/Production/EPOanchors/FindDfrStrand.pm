@@ -105,7 +105,7 @@ print $synteny_region_id, " ***********\n";
 	($q_files, $t_files) = write_files($query_set, $target_set, $file_stem);
 	foreach my $query_file (@$q_files) {
 		foreach my $target_file (@$t_files) {
-			my $command = $self->param('bl2seq') . " -i $query_file -j $target_file -p blastn";
+			my $command = $self->_bl2seq_command( $query_file, $target_file );
 			my $bl2seq_fh;
 			open($bl2seq_fh, "$command |") or throw("Error opening command: $command"); # run the command
 			# parse_bl2seq returns a hashref of the scores and the number of hits to each query strand
@@ -141,6 +141,27 @@ print $synteny_region_id, " ***********\n";
 #	foreach my $blast_file(@$q_files, @$t_files){
 #		unlink($blast_file) or die "cant remove file: $blast_file\n";	
 #	}
+}
+
+
+#
+# bl2seq is kind of deprecated. functionality has been rolled into blastn. (https://www.biostars.org/p/17580/)
+# we will continue to support bl2seq as well as new blastn command for legacy reasons.
+# adjust the command depending on whether bl2seq_exe or blastn_exe is defined (preference for bl2seq)
+#
+
+sub _bl2seq_command {
+	my ($self, $query_file, $target_file) = @_;
+
+	my $command;
+	if ( defined $self->param('bl2seq_exe') ) {
+		$command = $self->param('bl2seq') . " -i $query_file -j $target_file -p blastn";
+	} elsif ( defined $self->param('blastn_exe') ) {
+		$command = $self->param('blastn_exe') . " -query $query_file -subject $target_file";
+	} else {
+		die "'bl2seq_exe' or 'blastn_exe' must be defined!\n";
+	}
+	return $command;
 }
 
 sub write_output {
