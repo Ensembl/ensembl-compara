@@ -140,14 +140,27 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
+  my $merged_tree;
+
+  my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
+  if ($leafcount == 2) {
+
+    warn "2 leaves only, we only need sdi\n";
+    my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
+    my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $gdbid2stn->{$_->genome_db_id}->node_id) } @{$self->param('gene_tree')->get_all_leaves};
+    $merged_tree = $self->run_treebest_sdi_genepair(@goodgenes);
+
+  } else {
+
     $self->reroot_inputtrees;
     $self->param('ref_support', [keys %{$self->param('inputtrees_rooted')}]);
     my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
-    my $merged_tree = $self->run_treebest_mmerge($input_trees);
+    $merged_tree = $self->run_treebest_mmerge($input_trees);
 
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'), 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash});
-    my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
-    $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
+    $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree);
+
+  }
     
     $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'), $self->param('ref_support'));
 }
