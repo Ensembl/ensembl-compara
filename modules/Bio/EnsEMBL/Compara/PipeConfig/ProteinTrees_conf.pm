@@ -3270,6 +3270,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
