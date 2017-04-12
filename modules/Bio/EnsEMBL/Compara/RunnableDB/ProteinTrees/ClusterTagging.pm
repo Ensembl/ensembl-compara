@@ -100,7 +100,7 @@ sub _extract_tree_data {
 
 sub _get_lca_node {
     my $self = shift;
-    my $lca_node = $self->param('species_tree')->find_lca_of_GenomeDBs( [keys %{$genomes_list}] );
+    my $lca_node = $self->param('species_tree')->find_lca_of_GenomeDBs( [keys %{$self->param( 'genomes_list' )}] );
 
     return $lca_node;
 }
