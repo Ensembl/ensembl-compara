@@ -182,8 +182,8 @@ SPECIES: foreach my $sp (sort @species) {
       ## Now set new assembly
       my $initial = $sd->get_config($sp, 'GENEBUILD_RELEASE') || '';
       my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
-      $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-      @args = ($release_id, $species_id, $a_version, $a_name, '', '', $initial, $latest);
+      $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      @args = ($release_id, $species_id, i$sd->get_config($sp, 'SPECIES_URL'), $a_version, $a_name, '', '', $initial, $latest);
       $sth = $adaptor->db->prepare($sql);
       $sth->execute(@args) unless $DEBUG;
       print "ADDED $sp to release $release_id \n";
