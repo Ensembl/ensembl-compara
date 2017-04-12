@@ -979,7 +979,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
             -flow_into => {
-                2 => [ '?table_name=sequence' ],
+                2 => [ '?table_name=sequence&insertion_method=INSERT_IGNORE' ],
                 1 => [ 'seq_member_table_reuse' ],
             },
         },
@@ -1032,7 +1032,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                2 => [ '?table_name=other_member_sequence' ],
+                2 => [ '?table_name=other_member_sequence&insertion_method=INSERT_IGNORE' ],
                 1 => [ 'hmm_annot_table_reuse' ],
             },
         },
@@ -1046,7 +1046,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
             -flow_into => {
-                2 => [ '?table_name=hmm_annot' ],
+                2 => [ '?table_name=hmm_annot&insertion_method=INSERT_IGNORE' ],
                 1 => [ 'hc_members_per_genome' ],
             },
         },
@@ -1456,7 +1456,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                '2->A' => { 'blastp' => INPUT_PLUS() }
+                '2->A' => { 'blastp' => INPUT_PLUS() },
                 'A->1' => [ 'hc_pafs' ],
             },
         },
@@ -1469,7 +1469,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                '2->A' => { 'blastp' => INPUT_PLUS() }
+                '2->A' => { 'blastp' => INPUT_PLUS() },
                 'A->1' => [ 'hc_pafs' ],
             },
         },
