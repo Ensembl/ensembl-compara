@@ -1619,7 +1619,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tags_to_copy'              => [ 'division' ],
             },
-            -rc_name => '500Mb_job',
+            -rc_name => '4Gb_job',
         },
 
 

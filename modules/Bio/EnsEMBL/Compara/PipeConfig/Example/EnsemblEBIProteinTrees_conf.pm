@@ -121,7 +121,7 @@ sub default_options {
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 200,
-        'cluster_tagging_capacity'  => 200,
+        'cluster_tagging_capacity'  => 100,
         'loadtags_capacity'         => 200,
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
@@ -156,8 +156,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'  => 4522,
+        'host'  => 'mysql-treefam-prod.ebi.ac.uk',
+        'port'  => 4401,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
@@ -201,12 +201,11 @@ sub default_options {
         'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        #'prev_rel_db' => 'mysql://anonymous@mysql-ensembl-mirror.ebi.ac.uk:4240/ensembl_compara_74',
-        #'prev_rel_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/mm14_treefam10_snapshot',
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
         # If 'prev_rel_db' above is not set, you need to set all the dbs individually
-        'reuse_db'              => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy',
-        'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_87_copy',
+        #'reuse_db'              => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
 
         # How will the pipeline create clusters (families) ?
