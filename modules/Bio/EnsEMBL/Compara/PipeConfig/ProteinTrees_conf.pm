@@ -274,6 +274,9 @@ sub default_options {
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
 
+    #default maximum retry count:
+        'hive_default_max_retry_count' => 1,
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
@@ -514,13 +517,11 @@ sub core_pipeline_analyses {
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
-            -max_retry_count    => 1,
     );
     my %decision_analysis_params = (
             -analysis_capacity  => $self->o('decision_capacity'),
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
-            -max_retry_count    => 1,
     );
     my %raxml_parsimony_parameters = (
         'raxml_pthread_exe_sse3'    => $self->o('raxml_pthread_exe_sse3'),
@@ -2067,7 +2068,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '2Gb_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'get_num_of_patterns' ],
@@ -2087,7 +2087,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name					=> '4Gb_job',
-            -max_retry_count 			=> 1,
             -flow_into  => {
                 #-1 => [ 'get_num_of_patterns' ],
                 1 => [ 'get_num_of_patterns' ],
@@ -2104,7 +2103,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '8Gb_8c_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 1 => [ 'get_num_of_patterns' ],
 				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
@@ -2123,7 +2121,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_16c_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 1 => [ 'get_num_of_patterns' ],
 				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
@@ -2142,7 +2139,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_32c_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 1 => [ 'get_num_of_patterns' ],
 				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
@@ -2228,7 +2224,6 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -batch_size    				=> 100,
             -rc_name    				=> '4Gb_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
                 2 => [ 'treebest_small_families' ],
@@ -2244,7 +2239,6 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -batch_size    				=> 100,
             -rc_name    				=> '16Gb_job',
-            -max_retry_count			=> 1,
             -flow_into  => {
                 1 => [ 'raxml_parsimony_decision' ],
             }
@@ -2496,7 +2490,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_8c_mpi',
-            -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_16_cores' ],       # RUNTIME 
@@ -2511,7 +2504,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_8c_mpi',
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'examl_16_cores',
@@ -2522,7 +2514,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_16c_mpi',
-            -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_16_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_32_cores' ],  	  # RUNTIME
@@ -2537,7 +2528,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_16c_mpi',
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'examl_32_cores',
@@ -2548,7 +2538,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_32c_mpi',
-            -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_64_cores' ],  	  # RUNTIME
@@ -2563,7 +2552,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_32c_mpi',
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'examl_64_cores',
