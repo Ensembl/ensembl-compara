@@ -1776,6 +1776,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'subject' => "Homologies (".$self->o('pipeline_name').") are ready for hand-over",
                 'text' => "This is an automatic message.\nHomologies for release ".$self->o('pipeline_name')." are done.",
+                'email' => $self->o('email'),
             },
         },
 
