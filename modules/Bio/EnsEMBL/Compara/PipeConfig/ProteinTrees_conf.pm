@@ -84,7 +84,7 @@ sub default_options {
 
     # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
         # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-         'ensembl_release'       => 88,
+        #'ensembl_release'       => 88,
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)

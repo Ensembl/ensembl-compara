@@ -176,6 +176,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
+            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
         },
 
         'egmirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
