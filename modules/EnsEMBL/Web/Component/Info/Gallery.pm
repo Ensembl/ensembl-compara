@@ -92,7 +92,7 @@ sub format_gallery {
     ## Template for each entry
     my $entry_template = '<div class="gallery-preview">
                             <div class="page-preview">%s</div>
-                            <h3%s>%s</h3>
+                            <h3 class="%s">%s</h3>
                               <p class="preview-caption">%s</p>
                               <p%s>%s</p>
                           </div>';
@@ -112,7 +112,7 @@ sub format_gallery {
       my ($img_disabled, $img_title, $next_action);
       my $action_class  = '';
       my $link_class    = '';
-      my $title_class   = '';
+      my $title_class   = '_title';
       my ($img_link, $multi_form);
 
       if ($page->{'disabled'}) {
@@ -123,7 +123,7 @@ sub format_gallery {
           $next_action .= ': '.$page->{'message'};
         }
         $img_title    = $next_action;
-        $title_class  = ' class="disabled"';
+        $title_class  = ' disabled';
       }
       elsif ($page->{'multi'}) {
         my $multi_type = $page->{'multi'}{'type'};
