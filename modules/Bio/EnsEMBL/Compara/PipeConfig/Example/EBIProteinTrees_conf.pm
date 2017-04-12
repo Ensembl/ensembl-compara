@@ -66,7 +66,7 @@ sub default_options {
         'trimal_exe'                => $self->o('ensembl_cellar').'/trimal/1.4.1/bin/trimal',
         'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
         'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
-        'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/84/bin/treebest',
+        'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
         'raxml_pthread_exe_sse3'    => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3',
         'raxml_pthread_exe_avx'     => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-AVX',
         'raxml_exe_sse3'            => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-SSE3',
