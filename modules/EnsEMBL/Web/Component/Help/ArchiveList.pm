@@ -94,14 +94,15 @@ sub content {
         ## Static (or pseudostatic) pages
         foreach (sort {$b <=> $a} keys %$archives) {
           next if $_ == $current;
-          push @links, $self->output_link($archives, $_, $url);
+
+          push @links, $self->output_link($species, $archives, $_, $url);
         }
       }
       elsif ($type eq 'Info') {
         # species home pages
         foreach (sort {$b <=> $a} keys %$archives) {
           next if $_ == $current;
-          push @links, $self->output_link($archives, $_, $url);
+          push @links, $self->output_link($species, $archives, $_, $url);
         }
       } else {
         my $page = join('/', $type, $action);
@@ -132,7 +133,7 @@ sub content {
           $url .= "/$function" if $function;
           $url .= "?$params" if $params;
 
-          push @links, $self->output_link($archives, $_, $url);
+          push @links, $self->output_link($species, $archives, $_, $url);
 
         }
         
@@ -152,27 +153,43 @@ sub content {
 }
 
 sub output_link {
-  my ($self, $archives, $release, $url) = @_;
+  my ($self, $species, $archives, $release, $url) = @_;
   my $sitename         = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $assembly         = $archives->{$release}{'assembly'};
   my $date             = $archives->{$release}{'archive'};
   my $month            = substr $date, 0, 3;
   my $year             = substr $date, 3, 4;
   my $release_date     = "$month $year";
+
+  ## Go by position in list, as the archive numbers may not be continuous
+  my @releases         = sort keys %$archives;
+  my ($current_index)  = grep { $releases[$_] eq $release } 0..$#releases;
+  my $previous_index   = $current_index - 1;
+  $previous_index      = undef if $previous_index < 0; ## Avoid looping back to the end of the array!
+  my $previous_release = defined($previous_index) ? $releases[$previous_index] : undef;
+
   my $initial_geneset  = $archives->{$release}{'initial_release'}  || ''; 
   my $current_geneset  = $archives->{$release}{'last_geneset'}  || '';
-  my $previous_geneset = $archives->{$release - 1}{'last_geneset'} || '';
+  my $previous_geneset = $archives->{$previous_release}{'last_geneset'} || '';
  
+  ## Check if this species has been renamed
+  my $species_url = $archives->{$release}{'url'};
+  if ($species_url ne $species) {
+    $url =~ s/$species/$species_url/;
+  }
+
   my $string;
   if ($archives->{$release}{'date'}) {
     $string = qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
     $string .= sprintf ' (%s)', $assembly if $assembly;
 
     if ($current_geneset) {
-      if ($current_geneset eq $initial_geneset) {
-        $string .= sprintf ' - gene set updated %s', $current_geneset;
-      } elsif ($current_geneset ne $previous_geneset) {
-        $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
+      if ($current_geneset ne $previous_geneset) {
+        if ($current_geneset eq $initial_geneset) {
+          $string .= sprintf ' - gene set updated %s', $current_geneset;
+        } else { 
+          $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
+        }
       }
     }
   }
