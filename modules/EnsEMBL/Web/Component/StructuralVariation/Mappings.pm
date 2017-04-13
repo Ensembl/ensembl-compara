@@ -254,50 +254,52 @@ sub regfeat_table {
     }
   }
 
-  
-  my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
-  
-  foreach my $msv(@{$svf->get_all_MotifFeatureStructuralVariations}) {
+  if ($hub->species_defs->get_config($hub->species, 'databases') && $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_FUNCGEN'}) {
       
-    my $mf = $msv->feature;
-    
-    # check that the motif has a binding matrix, if not there's not 
-    # much we can do so don't return anything
-    next unless defined $mf->binding_matrix;
-    my $matrix = $mf->display_label;
-    
-    # get the corresponding regfeat
-    my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
-  
-    next unless $rf;
-  
-    # create a URL
-    my $url = $hub->url({
-      type   => 'Regulation',
-      action => 'Summary',
-      rf     => $rf->stable_id,
-      fdb    => 'funcgen',
-    });
-      
-    my $ftype  = 'Motif feature';
-    my $allele = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
-                         $self->object->get_class_colour($svf->class_SO_term),
-                         $svf->structural_variation->var_class);
-      
-    foreach my $msva(@{$msv->get_all_StructuralVariationOverlapAlleles}) {
-      my $type = $self->render_consequence_type($msva);
-      
-      my %row = (
-        rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-        ftype    => $ftype,
-        allele   => $allele,
-        type     => $type,
-        coverage => $self->_coverage_glyph($mf, $svf),
-      );
-        
-      push @$rows, \%row;
-    }
-  }
+      my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
+
+      foreach my $msv(@{$svf->get_all_MotifFeatureStructuralVariations}) {
+
+        my $mf = $msv->feature;
+
+        # check that the motif has a binding matrix, if not there's not 
+        # much we can do so don't return anything
+        next unless defined $mf->binding_matrix;
+        my $matrix = $mf->display_label;
+
+        # get the corresponding regfeat
+        my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
+
+        next unless $rf;
+
+        # create a URL
+        my $url = $hub->url({
+          type   => 'Regulation',
+          action => 'Summary',
+          rf     => $rf->stable_id,
+          fdb    => 'funcgen',
+        });
+
+        my $ftype  = 'Motif feature';
+        my $allele = sprintf('<p><span class="structural-variation-allele" style="background-color:%s"></span>%s</p>',
+                             $self->object->get_class_colour($svf->class_SO_term),
+                             $svf->structural_variation->var_class);
+
+        foreach my $msva(@{$msv->get_all_StructuralVariationOverlapAlleles}) {
+          my $type = $self->render_consequence_type($msva);
+
+          my %row = (
+            rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
+            ftype    => $ftype,
+            allele   => $allele,
+            type     => $type,
+            coverage => $self->_coverage_glyph($mf, $svf),
+          );
+
+          push @$rows, \%row;
+        }
+      }
+   }
   
   return @$rows ? $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'rf asc' ], data_table_config => {iDisplayLength => 25} })->render : '<p>No overlap with Ensembl Regulatory features</p>';
 }
