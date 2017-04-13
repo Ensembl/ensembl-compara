@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzEBI_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf;
 
 #
 #Test with a master and method_link_species_set_id.

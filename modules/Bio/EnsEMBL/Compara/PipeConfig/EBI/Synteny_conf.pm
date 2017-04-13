@@ -19,13 +19,13 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::SyntenyEBI_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf
 
 =head1 DESCRIPTION
 
 This is an EBI specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::SyntenyEBI_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
 
 =head1 CONTACT
 
@@ -37,7 +37,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::SyntenyEBI_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf;
 
 use strict;
 use warnings;
@@ -55,18 +55,6 @@ sub default_options {
         'port'      => 4485,
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         'work_dir'  => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 

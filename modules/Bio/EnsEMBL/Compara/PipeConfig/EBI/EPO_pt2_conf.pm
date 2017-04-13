@@ -76,8 +76,8 @@ sub default_options {
     # !!! add when run of EPO pt1 completes !!!
 	'compara_anchor_db' => 'mysql://ensro@compara3/sf5_TEST_gen_anchors_mammals_cat_100',
 
-	'mapping_exe' => "/nfs/software/ensembl/RHEL7/linuxbrew/bin/exonerate",
-    'ortheus_c_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/ortheus_core',
+	'mapping_exe' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate',
+    'ortheus_c_exe' => $self->o('ensembl_cellar') . 'ortheus/0.5.0/bin/ortheus_core',
 
 	 # place to dump the genome sequences
     'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo_anchor_mapping/release_' . $self->o('rel_with_suffix'),

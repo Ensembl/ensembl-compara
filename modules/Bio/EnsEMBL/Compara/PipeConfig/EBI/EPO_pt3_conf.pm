@@ -84,16 +84,16 @@ sub default_options {
       'port' => 4522,
 
       'bl2seq' => undef,
-      'blastn' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/blastn',
+      'blastn' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate''blast/2.2.30/bin/blastn',
       'enredo_bin_dir' => '/nfs/ensembl/bin/enredo/', # location of enredo executable
 
       # Dump directory
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
-      'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
+      'jar_file' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate''pecan/0.8.0/pecan.jar',
       'gerp_version' => '2.1', #gerp program version
-      'gerp_exe_dir'    => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/', #gerp program
-      
+      'gerp_exe_dir'    => $self->o('ensembl_cellar') . 'gerp/20080211/bin/', #gerp program
+
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
       # connection parameters to various databases:

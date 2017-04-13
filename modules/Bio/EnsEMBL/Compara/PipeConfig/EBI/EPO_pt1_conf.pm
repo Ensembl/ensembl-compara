@@ -69,15 +69,18 @@ sub default_options {
     return {
       	%{$self->SUPER::default_options},
 
-        'reference_genome_db_id' => 142,
-        'list_of_pairwise_mlss_ids' => "634,635,636",
+        # set up for birds 
+        'species_set_name' => 'sauropsids',
+        'reference_genome_db_id' => 157,
+        'list_of_pairwise_mlss_ids' => "809,816,817",
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
 
 
-           # connection parameters to various databases:
+        # connection parameters to various databases:
       	'pipeline_db' => { # the production database itself (will be created)
-        		-host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        		-host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
             -driver => 'mysql',
-        		-port   => 4522,
+        		-port   => 4485,
             -user   => 'ensadmin',
         		-pass   => $self->o('password'),
         		-dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
@@ -113,9 +116,9 @@ sub default_options {
       	# location of species core dbs which were used in the pairwise alignments
       	'core_db_urls' => [ 'mysql://ensro@mysql-ensembl-mirror.ebi.ac.uk:4240/'.$self->o('core_db_version') ],
       	'gerp_program_version' => "2.1",
-        'gerp_exe_dir'    => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/', #gerp program
-        'exonerate' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/exonerate', # path to exonerate executable
-        'ortheus_c_exe' => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/ortheus_core',
+        'gerp_exe_dir'    => $self->o('ensembl_cellar') . 'gerp/20080211/bin/', #gerp program
+        'exonerate' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
+        'ortheus_c_exe' => $self->o('ensembl_cellar') . 'ortheus/0.5.0/bin/ortheus_core',
     };
 }
 

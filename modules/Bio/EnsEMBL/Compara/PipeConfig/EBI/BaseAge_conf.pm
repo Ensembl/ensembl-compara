@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::EBIBaseAge_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EBIBaseAge_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf -password <your_password>
 
 =head1 DESCRIPTION
 
@@ -39,7 +39,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EBIBaseAge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf;
 
 use strict;
 use warnings;

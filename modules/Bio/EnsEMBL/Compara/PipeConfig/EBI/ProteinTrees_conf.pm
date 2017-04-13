@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::EBIProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EBI::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
@@ -41,7 +41,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EBIProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::ProteinTrees_conf;
 
 use strict;
 use warnings;
