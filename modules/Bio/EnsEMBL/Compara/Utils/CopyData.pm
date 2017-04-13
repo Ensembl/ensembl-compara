@@ -660,7 +660,8 @@ sub bulk_insert {
             $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {defined $_ ? '"'.$_.'"' : 'NULL'} @{shift @$data}) . ')';
             $first = 0;
         }
-        $insert_n += $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+        my $this_time = $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+        $insert_n += $this_time;
     }
     return $insert_n;
 }
