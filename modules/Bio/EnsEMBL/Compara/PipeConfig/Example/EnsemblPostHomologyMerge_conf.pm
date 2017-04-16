@@ -147,7 +147,7 @@ sub pipeline_wide_parameters {
         'threshold_levels'  => $self->o('threshold_levels'),
 
         'do_alt_alleles'        => 1,
-        'do_member_update'      => 1,
+        'do_member_update'      => 0,
         'do_member_stats'       => 1,
         'do_high_confidence'    => 1,
     }
