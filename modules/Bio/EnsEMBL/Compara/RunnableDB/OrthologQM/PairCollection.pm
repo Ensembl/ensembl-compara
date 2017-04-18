@@ -34,8 +34,8 @@ limitations under the License.
 	ref_species		pairs not containing this reference species will be omitted (optional)
 	either:
 		species1 & species2 : names of species of interest
-		collection : name of species_set/collection
-		species_set_id : dbID of species set of interest (usually used where collection name is ambiguous)
+		species_set_name    : name of species_set
+		species_set_id      : dbID of species set of interest (usually used where species_set_name is ambiguous)
 	
 	Output:
 		pairs of genome_db_ids e.g. {species1_id => 150, species2_id => 125} 
@@ -54,7 +54,7 @@ sub fetch_input {
 	my $self = shift;
 
 	# import params to variables
-	my $species_set_name = $self->param( 'collection' );
+	my $species_set_name = $self->param( 'species_set_name' );
 	my $species_set_id   = $self->param( 'species_set_id' );
 	my $ref_species      = $self->param( 'ref_species' );
 	my $compara_db = $self->param( 'compara_db' );
@@ -78,9 +78,9 @@ sub fetch_input {
 		}
 	}
 
-	# find genome_dbs for species1 and species2 if not running on a collection
+	# find genome_dbs for species1 and species2 if not running on a species set
 	if ( !defined $species_set_name && !defined $species_set_id ){
-		die "Please provide a collection name OR individual species" unless ( $species1 && $species2 );
+		die "Please provide a species set name OR individual species" unless ( $species1 && $species2 );
 		
 		# find GenomeDBs for each species
 		my $species1_gdb = $gdb_adaptor->fetch_by_name_assembly($species1);
@@ -94,7 +94,7 @@ sub fetch_input {
 		return 1;
 	}
 
-	# if running on a collection, add all members gdb_ids to the species list
+	# if running on a species set, add all members gdb_ids to the species list
 	my $ss; 
 	if ( $species_set_name ){
 		my @ss_list = @{ $ss_adaptor->fetch_all_by_name( $species_set_name ) };
@@ -103,7 +103,7 @@ sub fetch_input {
 			die "More than one species set exists for '$species_set_name':\n" . join("\n", @id_list) . "\nPlease specify the ID of the set of interest (species_set_id)\n";
 		}
 		$ss = $ss_list[0];
-		die "Cannot find collection '$species_set_name' in db ($compara_db)" unless ( defined $ss );
+		die "Cannot find species_set named '$species_set_name' in db ($compara_db)" unless ( defined $ss );
 		$self->param( 'species_set_id', $ss->dbID );
 	}
 	elsif ( $species_set_id ){
