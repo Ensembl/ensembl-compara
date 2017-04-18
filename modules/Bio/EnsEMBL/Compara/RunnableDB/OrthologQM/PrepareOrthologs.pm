@@ -219,24 +219,28 @@ sub _reusable_homologies {
     # next, split the homologies into reusable and non-reusable (new)
     # copy score of reusable homs to new db
     my ( @reusables, @dont_reuse );
+    my %old_id_2_new_hom;
     foreach my $h ( @{ $current_homologs } ) {
         my $h_id = $h->dbID;
         my $homolog_map = $reuse_homologs->{ $h_id };
         if ( defined $homolog_map ){
-            # check if wga_coverage has already been calculated for this homology
-            my $previous_homolog      = $previous_homo_adaptor->fetch_by_dbID( $homolog_map->{prev_release_homology_id} );
-            if ( defined $previous_homolog && defined $previous_homolog->wga_coverage ) { # score already exists
-                push( @reusables, { homology_id => $h_id, prev_wga_score => $previous_homolog->wga_coverage } );
-            }
-            else {
-                push( @dont_reuse, $h );
-            }
+            $old_id_2_new_hom{ $homolog_map->{prev_release_homology_id} } = $h;
         }
         else {
             push( @dont_reuse, $h );
         }
     }
     $sth->finish;
+
+    my $previous_homologies = $previous_homo_adaptor->fetch_all_by_dbID_list([keys %old_id_2_new_hom]);
+    # check if wga_coverage has already been calculated for these homologies
+    foreach my $previous_homolog (@$previous_homologies) {
+        next unless defined $previous_homolog->wga_coverage; # score doesn't exist
+        push( @reusables, { homology_id => $old_id_2_new_hom{$previous_homolog->dbID}->dbID, prev_wga_score => $previous_homolog->wga_coverage } );
+        delete $old_id_2_new_hom{$previous_homolog->dbID};
+    }
+    # There is no score for these homologies
+    push @dont_reuse, values %old_id_2_new_hom;
 
     $self->param('reusables', \@reusables);
 
