@@ -100,6 +100,15 @@ sub fetch_input {
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch MLSS with dbID=$mlss_id";
 
+    my $sequence_ids_sql = 'SELECT seq_member_id, sequence_id FROM gene_member JOIN seq_member ON canonical_member_id = seq_member_id';
+    my $all_members = $self->compara_dba->dbc->db_handle->selectall_arrayref($sequence_ids_sql);
+    my %member2seq = map {$_->[0] => $_->[1]} @$all_members;
+    my %seq2member;
+    push @{$seq2member{$_->[1]}}, $_->[0] for @$all_members;
+    $self->param('member2seq', \%member2seq);
+    $self->param('seq2member', \%seq2member);
+    $self->param('classified_members', {});
+
     $self->param('cluster_mlss', $mlss);
 }
 
@@ -139,6 +148,8 @@ sub run_rfamclassify {
     my %allclusters;
     $self->param('allclusters', \%allclusters);
 
+    my %seen_seqid;
+
     # Classify the cluster that already have an RFAM id or mir id
     print STDERR "Storing clusters...\n" if ($self->debug);
     my $counter = 1;
@@ -146,6 +157,19 @@ sub run_rfamclassify {
         print STDERR "++ $cm_id\n" if ($self->debug);
         next if not defined($self->param('rfamclassify')->{$cm_id});
         my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
+        my $n1 = scalar(@cluster_list);
+
+        # Expand with other members that have the same sequence
+        foreach my $id (@cluster_list) {
+            my $sequence_id = $self->param('member2seq')->{$id};
+            $seen_seqid{$sequence_id} = 1;
+            foreach my $other_id (@{ $self->param('seq2member')->{$sequence_id} }) {
+                next if $self->param('classified_members')->{$other_id};
+                $self->param('rfamclassify')->{$cm_id}->{$other_id}++;
+            }
+        }
+        @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
+
         # If it's a singleton, we don't store it as a nc tree
         next if (scalar(@cluster_list < 2));
 
@@ -156,13 +180,21 @@ sub run_rfamclassify {
         if    (defined($self->param('model_id_names')->{$cm_id})) { $model_name = $self->param('model_id_names')->{$cm_id}; }
         elsif (defined($self->param('model_name_ids')->{$cm_id})) { $model_name = $cm_id; }
 
-        print STDERR "ModelName: $model_name\n" if ($self->debug);
+        print STDERR "ModelName: $model_name: $n1+".(scalar(@cluster_list)-$n1)." members\n" if ($self->debug);
 
         $allclusters{$cm_id} = {'members' => [@cluster_list],
                                 'model_name' => $model_name,
                                 'model_id' => $cm_id,
                                }
+    }
 
+    # Now find the clusters made of identical sequences with no RFAM ids
+    my $seq2member = $self->param('seq2member');
+    foreach my $sequence_id (keys %$seq2member) {
+        next if $seen_seqid{$sequence_id};
+        next if scalar(@{$seq2member->{$sequence_id}}) < 2;
+        $allclusters{"s$sequence_id"} = { 'members' => $seq2member->{$sequence_id}, };
+        print STDERR "New cluster for sequence_id=$sequence_id : ".scalar(@{$seq2member->{$sequence_id}})." members\n" if $self->debug;
     }
 }
 
@@ -213,6 +245,7 @@ sub build_hash_models {
         $transcript_model_id = $self->param('model_name_ids')->{$transcript_model_id};
     }
     $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
+    $self->param('classified_members')->{$transcript_member_id} = 1;
 
     # Store list of orphan ids
     unless (defined($self->param('rfamcms')->{'model_id'}{$transcript_model_id}) || defined($self->param('rfamcms')->{'name'}{$transcript_model_id})) {
