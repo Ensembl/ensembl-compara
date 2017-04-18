@@ -147,6 +147,7 @@ sub default_options {
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
         'goc_capacity'              => 30,
+        'store_goc_capacity'        => 70,
 	      'genesetQC_capacity'        => 100,
 
     # connection parameters to various databases:
