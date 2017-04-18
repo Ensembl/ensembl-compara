@@ -102,7 +102,7 @@ sub fetch_by_node_id {
     my $tree = $self->_id_cache->get_by_additional_lookup('node_id', $node_id);
     unless ($tree) {
         my $sql = 'SELECT root_id FROM species_tree_node WHERE node_id = ?';
-        $tree = $self->_id_cache->get_by_sql($sql, [$node_id]);
+        $tree = $self->_id_cache->get_by_sql($sql, [$node_id])->[0];
     }
     return $tree;
 }
