@@ -36,8 +36,8 @@ limitations under the License.
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
 
-    To run on a collection:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -collection <species_set_name>
+    To run on a species_set:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_name <species_set_name>
         or
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_id <species_set dbID>
 
@@ -108,21 +108,21 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'compara_db'      => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_88",
-        'master_db'       => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master",
-        'species1'        => undef,
-        'species2'        => undef,
-        'collection'      => undef,
-        'species_set_id'  => undef,
-        'ref_species'     => undef,
-        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-        'alt_aln_db'      => undef,
-        'alt_homology_db' => undef,
-        'previous_rel_db' => undef,
-        'user'            => 'ensadmin',
-        'orth_batch_size' => 10, # set how many orthologs should be flowed at a time
+        'pipeline_name'    => 'wga_' . $self->o('current_release'),
 
-        'ensembl_cvs_root_dir' => $ENV{ENSEMBL_CVS_ROOT_DIR},
+        'species1'         => undef,
+        'species2'         => undef,
+        'species_set_name' => undef,
+        'species_set_id'   => undef,
+        'ref_species'      => undef,
+        'reg_conf'         => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'alt_aln_db'       => undef,
+        'alt_homology_db'  => undef,
+        'previous_rel_db'  => undef,
+        'user'             => 'ensadmin',
+        'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
+
+        'ensembl_cvs_root_dir'      => $ENV{ENSEMBL_CVS_ROOT_DIR},
         'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
@@ -185,15 +185,15 @@ sub pipeline_analyses {
                 '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
-                'collection'      => $self->o('collection'),
-                'species_set_id'  => $self->o('species_set_id'),
-                'ref_species'     => $self->o('ref_species'),
-                'species1'        => $self->o('species1'),
-                'species2'        => $self->o('species2'),
-                'compara_db'      => $self->o('compara_db'),
-                'alt_aln_db'      => $self->o('alt_aln_db'),
-                'alt_homology_db' => $self->o('alt_homology_db'),
-                'previous_rel_db' => $self->o('previous_rel_db'),
+                'species_set_name' => $self->o('species_set_name'),
+                'species_set_id'   => $self->o('species_set_id'),
+                'ref_species'      => $self->o('ref_species'),
+                'species1'         => $self->o('species1'),
+                'species2'         => $self->o('species2'),
+                'compara_db'       => $self->o('compara_db'),
+                'alt_aln_db'       => $self->o('alt_aln_db'),
+                'alt_homology_db'  => $self->o('alt_homology_db'),
+                'previous_rel_db'  => $self->o('previous_rel_db'),
             }],
         },
 
