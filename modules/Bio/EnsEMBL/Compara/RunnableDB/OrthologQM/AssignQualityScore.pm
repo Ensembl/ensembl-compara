@@ -52,8 +52,6 @@ use Bio::EnsEMBL::Registry;
 sub fetch_input {
 	my $self = shift;
 
-	return 1;
-
 	my @orth_ids = @{ $self->param_required('orth_ids') };
 	my %max_quality;
 
@@ -75,8 +73,6 @@ sub fetch_input {
 
 sub write_output {
 	my $self = shift;
-
-	return 1;
 
 	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
 	my %max_quality      = %{ $self->param('max_quality') };
