@@ -365,6 +365,34 @@ sub add_Member {
 }
 
 
+=head2 remove_Member
+
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Example    : $gene_tree->remove_Member($member);
+  Description: Remove a new Member from this set
+  Returntype : none
+  Exceptions : Throws if input objects don't check
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub remove_Member {
+    my ($self, $member) = @_;
+
+    assert_ref($member, $self->member_class, 'member');
+    my $source_name = $member->source_name() || 'NA';
+    my $taxon_id = $member->taxon_id() || 'NA';
+    my $genome_db_id = $member->genome_db_id() || 'NA';
+
+    $self->{'_member_array'} = [grep {$_ ne $member} @{$self->{'_member_array'}}];
+    $self->{'_members_by_source'}{$source_name} = [grep {$_ ne $member} @{$self->{'_members_by_source'}{$source_name}}];
+    $self->{'_members_by_source_taxon'}{"${source_name}_${taxon_id}"} = [grep {$_ ne $member} @{$self->{'_members_by_source_taxon'}{"${source_name}_${taxon_id}"}}];
+    $self->{'_members_by_genome_db'}{$genome_db_id} = [grep {$_ ne $member} @{$self->{'_members_by_genome_db'}{$genome_db_id}}];
+    $self->{'_members_by_source_genome_db'}{"${source_name}_${genome_db_id}"} = [grep {$_ ne $member} @{$self->{'_members_by_source_genome_db'}{"${source_name}_${genome_db_id}"}}];
+}
+
+
 =head2 get_all_Members
 
   Example    : 

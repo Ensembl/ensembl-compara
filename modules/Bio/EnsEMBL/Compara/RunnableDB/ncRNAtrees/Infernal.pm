@@ -433,6 +433,7 @@ sub store_fasta_alignment {
     my ($new_cigar_hash, $alignment_length) = $self->get_cigar_lines($new_align_hash);
 
     my $aln = $self->param('gene_tree')->deep_copy();
+    my %original_members = map {$_->stable_id => $_} @{$self->param('gene_tree')->get_all_leaves};
 
     for my $member (@{$aln->get_all_leaves}) {
 
@@ -464,6 +465,15 @@ sub store_fasta_alignment {
     for my $member (@{$aln->get_all_Members}) {
         my $seq = $new_align_hash->{$member->sequence_id};
         $seq =~ s/-//g;
+        unless ($seq) {
+            # After filtering the sequence may become empty
+            $self->compara_dba->get_GeneTreeNodeAdaptor->remove_seq_member($original_members{$member->stable_id});
+            # We can call remove_Member because the latter creates a new
+            # array-ref within the MemberSet, so the cursor of the above
+            # for loop is unaffected
+            $aln->remove_Member($member);
+            next;
+        }
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
     }
 
