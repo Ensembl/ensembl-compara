@@ -188,7 +188,6 @@ sub pipeline_analyses {
                 'collection'      => $self->o('collection'),
                 'species_set_id'  => $self->o('species_set_id'),
                 'ref_species'     => $self->o('ref_species'),
-                'compara_db'      => $self->o('compara_db'),
                 'species1'        => $self->o('species1'),
                 'species2'        => $self->o('species2'),
                 'compara_db'      => $self->o('compara_db'),
