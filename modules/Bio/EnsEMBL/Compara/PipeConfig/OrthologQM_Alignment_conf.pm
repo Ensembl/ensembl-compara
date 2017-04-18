@@ -157,7 +157,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'take_time'       => 1,
         'orth_batch_size' => 10,
     };
 }
