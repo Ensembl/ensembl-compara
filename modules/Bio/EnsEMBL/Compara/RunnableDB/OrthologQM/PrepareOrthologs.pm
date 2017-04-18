@@ -86,7 +86,7 @@ sub fetch_input {
     my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
     
     if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $current_homologs, $mlss->dbID );
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->param('previous_rel_db'), $current_homologs, $mlss->dbID );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
@@ -204,10 +204,10 @@ sub write_output {
 =cut
 
 sub _reusable_homologies {
-    my ( $self, $dba, $current_homologs, $mlss_id ) = @_;
+    my ( $self, $dba, $previous_db, $current_homologs, $mlss_id ) = @_;
 
-    my $previous_db = $self->param('previous_rel_db');
-    my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
+    my $previous_compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
+    my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
 
     # first, find reusable homologies based on id mapping table
     my $sql = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ? AND prev_release_homology_id IS NOT NULL";
@@ -224,11 +224,8 @@ sub _reusable_homologies {
         my $homolog_map = $reuse_homologs->{ $h_id };
         if ( defined $homolog_map ){
             # check if wga_coverage has already been calculated for this homology
-            my $previous_compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
-            my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
             my $previous_homolog      = $previous_homo_adaptor->fetch_by_dbID( $homolog_map->{prev_release_homology_id} );
             if ( defined $previous_homolog && defined $previous_homolog->wga_coverage ) { # score already exists
-                # $current_homo_adaptor->update_wga_coverage( $h_id, $previous_homolog->wga_coverage ); # copy score
                 push( @reusables, { homology_id => $h_id, prev_wga_score => $previous_homolog->wga_coverage } );
             }
             else {
@@ -239,6 +236,7 @@ sub _reusable_homologies {
             push( @dont_reuse, $h );
         }
     }
+    $sth->finish;
 
     $self->param('reusables', \@reusables);
 
