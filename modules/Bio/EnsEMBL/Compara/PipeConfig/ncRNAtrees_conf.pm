@@ -841,7 +841,7 @@ sub pipeline_analyses {
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -flow_into => [ 'homology_id_mapping' ],
+            -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
         {   -logic_name => 'homology_id_mapping',
