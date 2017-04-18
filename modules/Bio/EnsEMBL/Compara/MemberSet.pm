@@ -323,8 +323,8 @@ sub deep_copy {
 
 =head2 add_Member
 
-  Arg [1]    : Member
-  Example    : 
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Example    : $gene_tree->add_Member($member);
   Description: Add a new Member to this set
   Returntype : none
   Exceptions : Throws if input objects don't check
