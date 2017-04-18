@@ -141,7 +141,7 @@ sub default_options {
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-treefam-prod:4401',
+            #'host' => 'mysql-treefam-prod:4401',
 
 
             'reg1' => {
