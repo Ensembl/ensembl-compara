@@ -133,7 +133,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
+	'dump_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
         # Dnafrags to load and align
         'only_cellular_component'   => undef,   # Do we load *all* the dnafrags or only the ones from a specific cellular-component ?
@@ -248,8 +248,8 @@ sub default_options {
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'bed_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'output_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
             
         #
         #Resource requirements
@@ -585,7 +585,7 @@ sub pipeline_analyses {
 	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
- 	       -hive_capacity => 5,
+	       -hive_capacity => $self->o('chain_hive_capacity'),
  	       -batch_size => 1,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
