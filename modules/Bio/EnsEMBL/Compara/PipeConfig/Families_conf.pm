@@ -256,6 +256,7 @@ sub pipeline_analyses {
                 'include_nonreference'  => 1,
                 'include_patches'       => 1,
                 'include_reference'     => 0,
+                'store_ncrna'           => 0,
                 'production_db_url'     => $self->o('production_db_url'),
             },
             -rc_name => '2GigMem',
