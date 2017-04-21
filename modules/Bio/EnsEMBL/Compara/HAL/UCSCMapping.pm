@@ -1089,7 +1089,6 @@ sub load_mapping_from_mlss {
         $u2e_mappings->{$genome_db_id} = {} unless exists $u2e_mappings->{$genome_db_id};
         foreach my $dnafrag_name (keys %{$alt_synonyms->{$genome_db_id}}) {
             my $alt_name = $alt_synonyms->{$genome_db_id}->{$dnafrag_name};
-            $alt_name .= '.1' if ($alt_name =~ /^CM/);
             $e2u_mappings->{$genome_db_id}->{ $dnafrag_name } = $alt_name;
             $u2e_mappings->{$genome_db_id}->{ $alt_name } = $dnafrag_name;
         }
