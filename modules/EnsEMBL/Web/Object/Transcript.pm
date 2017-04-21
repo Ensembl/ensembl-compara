@@ -1075,7 +1075,7 @@ sub get_similarity_hash {
 
  Arg[1]       : none 
  Example      : %probe_data  = %{$transdate->get_oligo_probe_data}
- Description  : Retrieves all oligo probe releated DBEntries for this transcript
+ Description  : Retrieves probe and probe set to transcript mappings for this transcript
  Returntype   : Hashref of probe info
 
 =cut
@@ -1083,51 +1083,36 @@ sub get_similarity_hash {
 sub get_oligo_probe_data {
   my $self = shift; 
   my $fg_db = $self->database('funcgen'); 
-  my $probe_adaptor = $fg_db->get_ProbeAdaptor; 
-  my @transcript_xrefd_probes = @{$probe_adaptor->fetch_all_by_external_name($self->stable_id)};
-  my $probe_set_adaptor = $fg_db->get_ProbeSetAdaptor; 
-  my @transcript_xrefd_probesets = @{$probe_set_adaptor->fetch_all_by_external_name($self->stable_id)};
+  
+  my $probe_transcript_mapping_adaptor = $fg_db->get_ProbeTranscriptMappingAdaptor;
+  my $probe_transcript_mapping = $probe_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($self->stable_id);
+  
   my %probe_data;
-
-  # First retrieve data for Probes linked to transcript
-  foreach my $probe (@transcript_xrefd_probes) {
-    my ($array_name, $probe_name, $vendor, @info);
-   
-    foreach my $complete (@{$probe->get_all_complete_names}) {
-      ($array_name,$probe_name) = split /:/,$complete;
-      $vendor = $_->vendor for(values %{$probe->get_names_Arrays});
-      @info = ('probe', $_->linkage_annotation) for @{$probe->get_all_Transcript_DBEntries};
-
-      my $key = "$vendor $array_name";
-      $key = $vendor if $vendor eq $array_name;
-
-      if (exists $probe_data{$key}) {
-        my %probes = %{$probe_data{$key}};
-        $probes{$probe_name} = \@info;
-        $probe_data{$key} = \%probes;
-      } else {
-        my %probes = ($probe_name, \@info);
-        $probe_data{$key} = \%probes;
-      }
-    }
-  }
-
-  # Next retrieve same information for probesets linked to transcript
-  foreach my $probeset (@transcript_xrefd_probesets) {
-    my ($array_name, $probe_name, $vendor, @info);
-
-    $probe_name = $probeset->name;
+  
+  PROBE:
+  foreach my $current_probe_transcript_mapping (@$probe_transcript_mapping) {
+  
+    my $probe       = $current_probe_transcript_mapping->fetch_Probe;
+    my $description = $current_probe_transcript_mapping->description;
     
-    foreach (@{$probeset->get_all_Arrays}) {
-     $vendor =  $_->vendor;
-     $array_name = $_->name;
-    }
+    my $array_chip = $probe->array_chip;
+    my $array      = $array_chip->get_Array;
     
-    @info = ('pset', $_->linkage_annotation) for @{$probeset->get_all_Transcript_DBEntries};
+    # If the probe is part of a probe set, then the individual probe mappings 
+    # are not displayed.
+    #
+    next PROBE if ($array->is_probeset_array);
     
+    my $array_name = $array->name;
+    my $vendor     = $array->vendor;
+    my $probe_name = $probe->name;
+    
+    my @info = ('probe', $description);
+
     my $key = "$vendor $array_name";
-    
-    if (exists $probe_data{$key}){
+    $key = $vendor if $vendor eq $array_name;
+
+    if (exists $probe_data{$key}) {
       my %probes = %{$probe_data{$key}};
       $probes{$probe_name} = \@info;
       $probe_data{$key} = \%probes;
@@ -1136,6 +1121,34 @@ sub get_oligo_probe_data {
       $probe_data{$key} = \%probes;
     }
   }
+
+  my $probe_set_transcript_mapping_adaptor = $fg_db->get_ProbeSetTranscriptMappingAdaptor;
+  my $probe_set_transcript_mapping = $probe_set_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($self->stable_id);
+  
+  foreach my $current_probe_set_transcript_mapping (@$probe_set_transcript_mapping) {
+  
+    my $probe_set   = $current_probe_set_transcript_mapping->fetch_ProbeSet;
+    my $description = $current_probe_set_transcript_mapping->description;
+    
+    my $probe_set_name = $probe_set->name;
+    my $array      = $probe_set->get_Array;
+    my $vendor     = $array->vendor;
+    my $array_name = $array->name;
+
+    my @info = ('pset', $description);
+    
+    my $key = "$vendor $array_name";
+    
+    if (exists $probe_data{$key}) {
+      my %probes = %{$probe_data{$key}};
+      $probes{$probe_set_name} = \@info;
+      $probe_data{$key} = \%probes;
+    } else {
+      my %probes = ($probe_set_name, \@info);
+      $probe_data{$key} = \%probes;
+    }
+  }
+
 
   $self->sort_oligo_data(\%probe_data); 
 }
