@@ -37,10 +37,9 @@ The PipeConfig file for a pipeline that should for data integrity of a gene-tree
 =head1 SYNOPSIS
 
 It can be entirely configured from the command line
- $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf [-host pipeline_db_host] [-hc_capacity number_of_workers] [-hc_batch_size how_many_jobs_they_claim_at_a_time] [-allow_ambiguity_codes default_parameter_for_ambiguity_codes]
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf [-host pipeline_db_host] [-hc_capacity number_of_workers] [-hc_batch_size how_many_jobs_they_claim_at_a_time]
  $ seed_pipeline.pl -url ${EHIVE_URL} -logic_name pipeline_entry -input_id '{"db_conn" => "mysql://ensro\@compara1/mm14_protein_trees_77"}'
  $ beekeeper.pl -url ${EHIVE_URL} -loop
-Note that allow_ambiguity_codes can be overriden in the input_id of the seeded job, and that multiple databases can be tested (one per seeded job)
 
 =head1 AUTHORSHIP
 
@@ -73,8 +72,6 @@ sub default_options {
 
         'hc_capacity'           =>  10,
         'hc_batch_size'         =>  20,
-
-        'allow_ambiguity_codes' =>   0,
 
     };
 }
@@ -139,7 +136,9 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                allow_ambiguity_codes   => $self->o('allow_ambiguity_codes'),
+                allow_ambiguity_codes       => 0,
+                allow_missing_coordinates   => 0,
+                allow_missing_cds_seqs      => 0,
             },
             %hc_analysis_params,
         },
