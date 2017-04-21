@@ -1273,9 +1273,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
       }
 
       my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
-      ### HACK e86 ###
-      $species_map->{174} = 'SPRET_EiJ';
-      ################
       my %hal_species_map = reverse %$species_map;
       $mlss->{'_hal_species_name_mapping'} = $species_map;
       $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
