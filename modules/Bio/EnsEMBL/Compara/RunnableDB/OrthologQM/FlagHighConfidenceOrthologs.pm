@@ -74,10 +74,10 @@ sub fetch_input {
 
     my @external_conditions;
     if ($has_goc and $thresholds->[0]) {
-        push @external_conditions, "goc_score IS NOT NULL AND goc_score >= ".$thresholds->[0];
+        push @external_conditions, "(goc_score IS NOT NULL AND goc_score >= ".$thresholds->[0].")";
     }
     if ($has_wga and $thresholds->[1]) {
-        push @external_conditions, "wga_coverage IS NOT NULL AND wga_coverage >= ".$thresholds->[1];
+        push @external_conditions, "(wga_coverage IS NOT NULL AND wga_coverage >= ".$thresholds->[1].")";
     }
 
     # Use the independent metrics if possible or fallback to is_tree_compliant
