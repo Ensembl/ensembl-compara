@@ -62,7 +62,7 @@ sub fetch_input {
     # ncRNAs and protein-coding genes, for instance)
     my $homology_filter = 'method_link_species_set_id = ?';
     if ($self->param('range_filter')) {
-        $homology_filter .= ' AND '.$self->param('range_filter');
+        $homology_filter .= ' AND ('.$self->param('range_filter').')';
     }
 
     # The %identity filter always applies
