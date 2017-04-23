@@ -1,45 +1,50 @@
-############################ Overall pipeline summary
+EPO multiple alignment
+======================
 
-The EPO pipeline can be divided into 3 parts:
-1). Generating the anchors for constructing the graph. The anchors consist of 
-two or more sequences which are generated from pairwise whole-genome alignments 
-(eg. BLASTZ/LASTZ or tBLAT alignments).
-2). Once the anchors are generated these can be mapped to the target genomes 
-(we use exonerate to do this).
-3). The positions where the anchors map are then dumped to file and used as an 
-input to the program Enredo, which generates a graph representation of the "syntenic"
-regions shared by the target genomes. The syntenic regions from enredo are loaded 
-into a database and finally the these are aligned using ortheus 
-(which also generates ancestral sequences).
 
-###########################
+Overall pipeline summary
+------------------------
 
-This README describes all three parts of the pipeline (see above)
+The EPO pipeline can be divided into 3 parts, all described in this
+document:
 
-###########################
+1. Generating the anchors for constructing the graph. The anchors consist of 
+   two or more sequences which are generated from pairwise whole-genome alignments 
+   (eg. BLASTZ/LASTZ or tBLAT alignments).
+2. Once the anchors are generated these can be mapped to the target genomes 
+   (we use exonerate to do this).
+3. The positions where the anchors map are then dumped to file and used as an 
+   input to the program Enredo, which generates a graph representation of the "syntenic"
+   regions shared by the target genomes. The syntenic regions from enredo are loaded 
+   into a database and finally the these are aligned using ortheus 
+   (which also generates ancestral sequences).
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout).
 You will need the following software components for all 3 parts of the pipeline:
 
-MySQL 5.1             (or higher)        * Perl 5.6              (or higher)
-Perl DBI API 1.6      (or higher)
+* MySQL 5.1             (or higher)
+* Perl 5.6              (or higher)
+* Perl DBI API 1.6      (or higher)
 
 EnsEMBL and BioPerl software:
-        * bioperl-live          - (bioperl-1-2-3)
-        * ensembl               - core API on which the rest of ensembl APIs are based
-        * ensembl-compara       - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-        * ensembl-analysis      - some of the pipeline runnables live here
-        * ensembl-hive          - the system to run pipelines
+
+        :bioperl-live:           BioPerl 1.2.3
+        :ensembl:                Core API on which the rest of ensembl APIs are based
+        :ensembl-compara:        Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+        :ensembl-analysis:       Some of the pipeline runnables live here
+        :ensembl-hive:           The system to run pipelines
 
 
-########################### 1st part of the pipeline - generating the anchor sequences from a list of pairwise alignments
+Generating the anchor sequences from a list of pairwise alignments
+------------------------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt1_conf.pm
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt1_conf.pm``
 
-1. General description of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+General description of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The pipeline uses pre-existing pairwise alignments (LASTZ or tBLAT) between a set of species and a reference species. The pairwise alignments
 are present in a single database ('compara_pairwise_db'). It uses the coordinate system of the reference genome in each of the pairwise alignments
 to find regions of overlap between all the species in the set. The reference genome is first chunked into convenient sized fragments ('chunk_size')
@@ -48,64 +53,72 @@ The constrained elements are transfered to the anchor_align table (these are the
 and trimmed to a particular size range ito form the final anchor set(default mlss_id=10000).
 
 see diagram :
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt1.png
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt1.png``
 
-2. Necessary software components and databases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Necessary software components and databases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You will need 1 pre-existing compara database containing all the pairwise alignments, and the associated core dbs containing the sequences (set in 'core_db_urls')
 
- You will also need to install the following executables and set their locations:
+You will also need to install the following executables and set their locations:
 
- gerp (http://mendel.stanford.edu/SidowLab/downloads/gerp/index.html) - set in 'gerp_exe_dir'
- pecan (http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html) - set in 'jar_file' in Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan
+- `Gerp <http://mendel.stanford.edu/SidowLab/downloads/gerp/index.html>`_ set in ``gerp_exe_dir``
+- `Pecan <http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html>`_ set in ``jar_file`` in ``Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan``
 
-3. Configuration of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf.pm
+::
 
-and then run the beekeeper.pl (see README-beekeeper.txt)
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf.pm
+
+and then run the beekeeper.pl (see :doc:`beekeeper`)
 
 
-########################### 2nd part of the pipeline - mapping the anchor sequences from a set of genomes
+Mapping the anchor sequences from a set of genomes
+--------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt2_conf.pm
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt2_conf.pm``
 
-1. General description of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+General description of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The pipeline maps the anchors generated from the previous pipeline (1st part) to a set of target genomes (these genomes will need to be phylogenetically close
 to the set of species from which the anchors were generated). We use exonerate to do the mapping. After mapping, overlapping mapped anchors are removed, so that 
 no mapped position is associated with more than one anchor (this is necessary for the graph generated by Enredo (3rd part)). Finally the mapping positions are 
 reduced (trimmed) to a 2 base pair position on the target genome.
 
 see diagram :
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt2.png
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt2.png``
 
-2. Necessary software components and databases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Necessary software components and databases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You will need the database containing the anchor set from the 1st part (set in 'compara_anchor_db') and the associated core dbs containing the target genomes (set in 'core_db_urls').
  
- You will also need to install the following executables and set their locations:
- exonerate (http://www.ebi.ac.uk/~guy/exonerate/) - set in 'mapping_exe'
+You will also need to install the following executables and set their locations:
 
-3. Configuration of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- `exonerate <http://www.ebi.ac.uk/~guy/exonerate/>`_ set in ``mapping_exe``
 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf.pm
+Configuration of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-and then run the beekeeper.pl (see README-beekeeper.txt)
+::
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf.pm
+
+and then run the beekeeper.pl (see :doc:`beekeeper`)
 
 
-########################### 3rd part of the pipeline - generating the multiple sequence alignments from the mapped anchor positions
+Generating the multiple sequence alignments from the mapped anchor positions
+----------------------------------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt3_conf.pm
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt3_conf.pm``
 
-1. General description of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+General description of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The pipeline sets up an ancestral database to store the predicted ancestral genome sequences ('ancestral_db').
 The nesessary tables (genome_db, dnafrags, method_link etc.) are set up using data from the compara_master and core databases.
 Mapping information is dumped from the 'compara_mapped_anchor_db' database to file and enredo is run using this file as input ('enredo_mapping_file_name').
@@ -117,13 +130,13 @@ entries are added to the dnafrag table in the compara db (one entry per ancestra
 Gerp is used to generate conservation scores and constrained elements from the alignments and are added to the appropriate tables in the compara db.
 
 see diagram :
-$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt3.png
+``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt3.png``
 
-2. Necessary software components and databases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Necessary software components and databases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You will need 2 pre-existing databases: 
-The first database ('compara_mapped_anchor_db') will hold the data for the anchor set mapped to the various genomes (see epo_pt2.txt).
+The first database ('compara_mapped_anchor_db') will hold the data for the anchor set mapped to the various genomes.
 The second database databases ('compara_master') will hold general information regarding the dnafrags, genome_dbs, method_link_ids, 
 method_link_species_set_ids etc. used.
 
@@ -132,19 +145,24 @@ the sequence from which will be use to generate the MSA.
 
 You will also need to install the following executables and set their locations:
 
- bl2seq (from NCBI) - set in the 'bl2seq' 
- gerpcol and gerpelem (http://mendel.stanford.edu/SidowLab/downloads/gerp/) - set in 'gerp_exe_dir'
- pecan (http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html) - set in 'jar_file'
- enredo (https://github.com/jherrero/enredo) - set in 'enredo_bin_dir'
- ortheus (http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html)
+- bl2seq (from NCBI), set in the ``bl2seq``
+- gerpcol and gerpelem (`download link <http://mendel.stanford.edu/SidowLab/downloads/gerp/>`_) set in ``gerp_exe_dir``
+- `Pecan <http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html>`_ set in ``jar_file``
+- `Enredo <https://github.com/jherrero/enredo>`_ set in ``enredo_bin_dir``
+- `Ortheus <http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html>`_
 
-3. Configuration of the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf.pm
+::
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf.pm
 
 Before running beekeeper.pl, please include this line on your .bashrc:
-export PYTHONPATH=/software/ensembl/compara/OrtheusC/src/python/
 
-and then run the beekeeper.pl (see README-beekeeper.txt)
+.. code-block:: bash
+
+    export PYTHONPATH=/software/ensembl/compara/OrtheusC/src/python/
+
+and then run the beekeeper.pl (see :doc:`beekeeper`)
 

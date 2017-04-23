@@ -67,8 +67,8 @@ Download files from UCSC
 
    .. code-block:: bash
 
-     mkdir /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
-     cd /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
+      mkdir /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
+      cd /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
 
 #. Goto the UCSC downloads directory: http://hgdownload.cse.ucsc.edu/downloads.html
 
@@ -116,9 +116,10 @@ Download files from UCSC
         gunzip ctgPos.txt.gz
 
 
-4- Configure the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Modifiy ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportUcscChainNet_conf.pm file if necessary.
+Configure the pipeline
+----------------------
+
+Modifiy ``ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportUcscChainNet_conf.pm`` file if necessary.
 Check that the default_options are set correctly.
 Options most likely to need changing are:
 
@@ -145,20 +146,20 @@ It is recommended the following options are set on the command line
 :config_url:                       Database containing configuration details
 :ucsc_url:                         URL to UCSC download page. Used for creation of statistics page
 
-5- Run init_pipeline.pl
-~~~~~~~~~~~~~~~~~~~~~~~
+Run init_pipeline.pl
+--------------------
 
 Examples:
 
 Human self alignments
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password *** -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map hsap/ctgPos.txt --config_url mysql://user:pass@host:port/pair_aligner_config_db --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 
 Human vs Orangutan alignments
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
