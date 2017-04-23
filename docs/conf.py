@@ -43,12 +43,11 @@ from recommonmark.parser import CommonMarkParser
 
 source_parsers = {
     '.md': CommonMarkParser,
-    '.txt': CommonMarkParser,
 }
 
 
 # The suffix of source filenames.
-source_suffix = ['.rst', '.md', '.txt']
+source_suffix = ['.rst', '.md']
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
