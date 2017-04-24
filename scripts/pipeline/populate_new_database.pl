@@ -801,9 +801,9 @@ sub copy_constrained_elements {
   # Keys are disabled / enabled only once for the whole loop
   $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS");
 
-  my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
-      " WHERE method_link_species_set_id = ? LIMIT 1");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
+    my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
+	" WHERE method_link_species_set_id = ? LIMIT 1");
     $constrained_element_fetch_sth->execute($this_method_link_species_set->dbID);
     my $all_rows = $constrained_element_fetch_sth->fetchall_arrayref;
     if (!@$all_rows) {
