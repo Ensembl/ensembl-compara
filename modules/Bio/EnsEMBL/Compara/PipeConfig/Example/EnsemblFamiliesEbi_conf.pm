@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamiliesEbi_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
@@ -72,8 +72,8 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-3.ebi.ac.uk',        # where the pipeline database will be created
-        'port'          => '4523',                      # server port
+        'host'          => 'mysql-ens-compara-prod-2.ebi.ac.uk',        # where the pipeline database will be created
+        'port'          => '4522',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
@@ -121,8 +121,8 @@ sub default_options {
         # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #release# - 1)expr#',
 
-        # Protein Tree database
-        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-2:4522/waakanni_protein_trees_88',
+        # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
+        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
 
         # Production database (for the biotypes)
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
