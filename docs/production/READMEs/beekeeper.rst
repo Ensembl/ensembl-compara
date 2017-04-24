@@ -71,9 +71,9 @@ you will need to drop the partially created database in order to try again.
 
 If the process completes successfully, it will print the recommended command lines
 
-      * to connect to the database (if you want to monitor the progress)
-      * to "sync" the database (more about it later) and
-      * to run the pipeline
+* to connect to the database (if you want to monitor the progress)
+* to "sync" the database (more about it later) and
+* to run the pipeline
 
 Please remember that these command lines are for use only with a particular pipeline database,
 and are likely to be different next time you run the pipeline. Moreover, they will contain a sensitive password!

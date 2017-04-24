@@ -29,11 +29,11 @@ You will need the following software components for all 3 parts of the pipeline:
 
 EnsEMBL and BioPerl software:
 
-        :bioperl-live:           BioPerl 1.2.3
-        :ensembl:                Core API on which the rest of ensembl APIs are based
-        :ensembl-compara:        Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-        :ensembl-analysis:       Some of the pipeline runnables live here
-        :ensembl-hive:           The system to run pipelines
+:bioperl-live:           BioPerl 1.2.3
+:ensembl:                Core API on which the rest of ensembl APIs are based
+:ensembl-compara:        Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+:ensembl-analysis:       Some of the pipeline runnables live here
+:ensembl-hive:           The system to run pipelines
 
 
 Generating the anchor sequences from a list of pairwise alignments

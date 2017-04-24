@@ -81,8 +81,8 @@ in bash
 
 Also refer to the following pages for tips about installation and setting up the environment:
 
-    - http://www.ensembl.org/info/docs/api/api_installation.html
-    - http://www.ensembl.org/info/docs/eHive.html
+- http://www.ensembl.org/info/docs/api/api_installation.html
+- http://www.ensembl.org/info/docs/eHive.html
 
 
 Configuration of the pipeline
@@ -93,26 +93,26 @@ Nearly all of the pipeline configuration now lives in a base "PipeConfig" file, 
 
 It contains the following subroutines:
 
-        :default_options:                
-                            Defines customizable options and their default values.
-                            In the majority of cases you will only need to modify some of these.
-                            Do not rush to run your favourite text editor, as you may also change
-                            any of these options from the command line.
+:default_options:                
+                    Defines customizable options and their default values.
+                    In the majority of cases you will only need to modify some of these.
+                    Do not rush to run your favourite text editor, as you may also change
+                    any of these options from the command line.
 
-        :pipeline_create_commands:
+:pipeline_create_commands:
 
-                            Defines a list of specific shell commands needed to create a pipeline database.
-                            It is unlikely you will need to change it.
+                    Defines a list of specific shell commands needed to create a pipeline database.
+                    It is unlikely you will need to change it.
 
-        :resource_classes:
-                            Defines a list of resource classes and corresponding farm-specific parameters for each class.
-                            You may need to adjust some of these if running the pipeline on your own farm.
+:resource_classes:
+                    Defines a list of resource classes and corresponding farm-specific parameters for each class.
+                    You may need to adjust some of these if running the pipeline on your own farm.
 
-        :pipeline_analyses:
+:pipeline_analyses:
 
-                            Defines the structure of the pipeline itself - which tasks to run, in which order, etc.
-                            These are the very guts of the pipeline, so make sure you know what you are doing
-                            if you are planning to change anything.
+                    Defines the structure of the pipeline itself - which tasks to run, in which order, etc.
+                    These are the very guts of the pipeline, so make sure you know what you are doing
+                    if you are planning to change anything.
 
 There are 3 other Perl modules which inherit from this base class.
 

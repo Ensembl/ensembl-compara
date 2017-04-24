@@ -44,15 +44,15 @@ Perl libraries:
 Any compiled binaries mentioned in ``ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm``
 Here is the list of the versions that we used for the e78 production:
 
-        * NCBI-blast 2.2.28+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/
-        * mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
-        * MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
-        * hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
-        * treebest (tag e78)   - https://github.com/Ensembl/treebest
-        * quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
-        * hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
-        * codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html
-        * Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
+* NCBI-blast 2.2.28+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/
+* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
+* MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
+* hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
+* treebest (tag e78)   - https://github.com/Ensembl/treebest
+* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
+* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
+* codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html
+* Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
 
 Except for CodeML, more recent versions probably still work (as long as the command line parameters haven't changed) but we only guarantee that the pipeline behaves with the advertised versions.
 
@@ -89,23 +89,23 @@ db_prepare
 
 At this step, the pipeline will initialize:
 
- - the ncbi_taxa_node and ncbi_taxa_name tables: copied over from a reference database (either a "master" database, or a pre-existing Compara database)
- - entries in the method_link, species_set_header, species_set, and method_link_species_set tables
+- the ncbi_taxa_node and ncbi_taxa_name tables: copied over from a reference database (either a "master" database, or a pre-existing Compara database)
+- entries in the method_link, species_set_header, species_set, and method_link_species_set tables
 
 Then, it will:
 
- - check that the connections to each core database / FASTA file are available
- - check whether some species-specific data can be reused from a reference Compara database (to save some time at the later stages of the pipeline). This is only available if you are running the pipeline with a master database.
- - build the default species tree (using the NCBI taxonomy)
+- check that the connections to each core database / FASTA file are available
+- check whether some species-specific data can be reused from a reference Compara database (to save some time at the later stages of the pipeline). This is only available if you are running the pipeline with a master database.
+- build the default species tree (using the NCBI taxonomy)
 
 genome_load
 ~~~~~~~~~~~
 
 At this step, the pipeline will actually load all the data related to the species:
 
- - the list of members (genes and peptides)
- - the peptide sequences
- - the list of canonical transcripts (in case of alternative splicing: the isoform / sequence that should be used in the pipeline)
+- the list of members (genes and peptides)
+- the peptide sequences
+- the list of canonical transcripts (in case of alternative splicing: the isoform / sequence that should be used in the pipeline)
 
 (path A) allvsallblast
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -130,9 +130,9 @@ tree_building
 
 At this step, the pipeline will actually compute the trees with the
 
- - multiple alignment (Mcoffee if the cluster has less than 250 genes, Mafft otherwise)
- - tree reconstruction with TreeBest
- - homology inference
+- multiple alignment (Mcoffee if the cluster has less than 250 genes, Mafft otherwise)
+- tree reconstruction with TreeBest
+- homology inference
 
 To prevent computation issues, the largest clusters (more than 400 genes) are recursively split in halves until they fall until the limit size
 with the QuickTree program (using a Mafft alignment)
@@ -150,17 +150,17 @@ The pipeline structure (analysis work-flow) is defined in ``ensembl-compara/modu
 parameters used by the various groups at the Genome Campus are defined in ``ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/*ProteinTrees_conf.pm``
 They mainly include custom:
 
- - paths to executables
- - database connection parameters
- - more general parameters (pipeline-related)
- - beekeeper parameters
+- paths to executables
+- database connection parameters
+- more general parameters (pipeline-related)
+- beekeeper parameters
 
 To configure the pipeline:
 
- - make a copy of PipeConfig/Example/EnsemblProteinTrees_conf.pm into PipeConfig/Example/
- - update the package name
- - update the parameters in the default_options() section
- - check that your grid engine is parameterized in resource_classes(): by default, only LSF is.
+- make a copy of PipeConfig/Example/EnsemblProteinTrees_conf.pm into PipeConfig/Example/
+- update the package name
+- update the parameters in the default_options() section
+- check that your grid engine is parameterized in resource_classes(): by default, only LSF is.
 
 Here follows a description of each category of parameters
 
@@ -179,14 +179,14 @@ Database connections
 
 The pipeline can connect to a "master" database to initialize. This is needed if you intend to:
 
- - run the pipeline multiple times (and reuse the list of blastp hits to speed up the consecutive runs)
- - run the pipeline on a selection of species
+- run the pipeline multiple times (and reuse the list of blastp hits to speed up the consecutive runs)
+- run the pipeline on a selection of species
 
 Refer to :doc`master_database` to correctly set it up should you need one.
 You will have to import all the species on which you want to run the pipeline with:
 
- - ``ensembl-compara/scripts/pipeline/update_genome.pl`` for species with an Ensembl core database
- - or a manual SQL INSERT, otherwise
+- ``ensembl-compara/scripts/pipeline/update_genome.pl`` for species with an Ensembl core database
+- or a manual SQL INSERT, otherwise
 
 Species with an Ensembl core database
 '''''''''''''''''''''''''''''''''''''
@@ -195,22 +195,22 @@ Be aware that the Ensembl Registry relies on a specific nomenclature to automati
 For instance, core databases must be named ``${SPECIES_NAME}_core_${ENSEMBL_VERSION}_${ASSEMBLY_VERSION}``.
 If you have built databases your own core databases using a different nomenclature, you'll have to (for each of them):
 
- - add a Registry entry in ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl`` with
+- add a Registry entry in ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl`` with
 
-   ::
+  ::
 
        Bio::EnsEMBL::Registry->load_registry_from_url("mysql://${USER}@${HOST}:${PORT}/${DATABASE_NAME}?group=core&species=${SPECIES_PRODUCTION_NAME}");
 
- - run update_genome.pl
- - define a "locator" for their corresponding genome_db. The locator is a string like:
+- run update_genome.pl
+- define a "locator" for their corresponding genome_db. The locator is a string like:
 
-   ::
+  ::
 
        Bio::EnsEMBL::DBSQL::DBAdaptor/host=${HOST};port=${PORT};user=${USER};pass=${PASSWORD};dbname=${DATABASE_NAME};species=${SPECIES_PRODUCTION_NAME};species_id=${INTERNAL_SPECIES_ID};disconnect_when_inactive=1"
 
    that can be updated with:
 
-   .. code-block:: sql
+  .. code-block:: sql
 
       UPDATE genome_db SET locator = (...) WHERE genome_db_id = (...);
 
@@ -338,7 +338,7 @@ linked to ``reuse_db``. Again, on Ensembl data, you can define: ``'prev_core_sou
 More general parameters (pipeline-related)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- :mlss_id: The method_link_species_set_id created by ``scripts/pipeline/create_mlss.pl``
+:mlss_id: The method_link_species_set_id created by ``scripts/pipeline/create_mlss.pl``
    This defines the instance of the pipeline (which species to work on). It is only needed if you run the pipeline with a master database. Otherwise, the pipeline will create its own one.
 
    To get it from the master database, run the following query:
@@ -354,27 +354,27 @@ More general parameters (pipeline-related)
        SELECT name FROM species_set JOIN genome_db USING (genome_db_id)
        WHERE species_set_id = XXX ORDER BY name;
 
- :release: The API version of your Ensembl checkouts
+:release: The API version of your Ensembl checkouts
 
- :rel_suffix: Any string (defaults to "") to distinguish between several runs on the same API version
+:rel_suffix: Any string (defaults to "") to distinguish between several runs on the same API version
 
- :work_dir: where to store temporary files
+:work_dir: where to store temporary files
    The pipeline will create there 3 folders:
 
     - blast_db: the blast databases for the all-vs-all blastp
     - cluster: files used by hcluster_sg
     - dumps: backups (checkpoints) of the database (make sure you have enough space available !)
 
- :outgroups: The list of outgroup species (genome_db names)
+:outgroups: The list of outgroup species (genome_db names)
    This is used by hcluster_sg to produce more relevant clusters. It allows two levels of outgroups (named as "2" and "4", "4" being the most out)
    In the Ensembl run, we only define S.cerevisae as outgroup (level 2). Hence the configuration: ``{'saccharomyces_cerevisiae' => 2}``
 
- :taxlevels: On which clades should the pipeline try to compute dN/dS values.
+:taxlevels: On which clades should the pipeline try to compute dN/dS values.
    Those values are only available for close enough species and it is generally not a good idea to use very large clades (like the animal kingdom.
    The parameter is a list of taxa (given by their names in the NCBI taxonomy). The list can be empty to skip this step of the pipeline.
    In Ensembl, we only use mammals, some birds and some fish, in the config file this is shown as ``['Theria', 'Sauria', 'Tetraodontiformes']``
 
- :filter_high_coverage: Only compute dN/dS values on "high coverage" species, i.e. the species that have the "is_high_coverage" flag set to 1 in
+:filter_high_coverage: Only compute dN/dS values on "high coverage" species, i.e. the species that have the "is_high_coverage" flag set to 1 in
    the genome_db table. The parameter is used by the "group_genomes_under_taxa" analysis, so as long as it hasn't yet run, you can sill modify
    the parameter in the analysis.
 

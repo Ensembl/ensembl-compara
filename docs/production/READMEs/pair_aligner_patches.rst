@@ -95,8 +95,8 @@ By default, the script will search for core databases of the same version as the
 
 Options become tricky when the "patched" species is not the reference used in the alignment (e.g. the human-vs-mouse alignment uses human as the reference but the patches may be on the mosue side). For mouse patches, the script needs to be called twice:
 
- - once with ``--skip_species homo_sapiens`` to generate the config file that will align the new mouse patches to every species except human
- - once with ``--patched_species_is_alignment_reference 0 --species homo_sapiens`` to generate the config file that will align all the human chromosomes to the mouse patches (mouse is the non-reference species in the alignment)
+- once with ``--skip_species homo_sapiens`` to generate the config file that will align the new mouse patches to every species except human
+- once with ``--patched_species_is_alignment_reference 0 --species homo_sapiens`` to generate the config file that will align all the human chromosomes to the mouse patches (mouse is the non-reference species in the alignment)
 
 
 NOTE: see below for the command-lines and the resulting lastz.conf used in e81 in which we had human and mouse patches
