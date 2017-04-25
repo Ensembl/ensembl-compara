@@ -1,4 +1,9 @@
+# Tutorial
+
 The tutorial is the same as found on the [Ensembl website](http://www.ensembl.org/info/docs/api/compara/compara_tutorial.html) and is provided here for offline use.
+
+
+# Workshop materials
 
 The workshop materials relate to a workshop given in June 2016 in
 Cambridge, on the version 84 of the API. Most of what is described is still

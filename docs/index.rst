@@ -25,6 +25,12 @@ User documentation
 ==================
 
 .. toctree::
+   :caption: Perl API
+   :maxdepth: 1
+
+   api/README
+
+.. toctree::
    :caption: Production concepts and preparation
    :maxdepth: 1
 
