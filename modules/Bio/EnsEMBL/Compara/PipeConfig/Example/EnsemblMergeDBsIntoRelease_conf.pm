@@ -66,18 +66,18 @@ sub default_options {
         'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
 
         # A registry file to avoid having to use URLs
-        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 
         # All the source databases
         'src_db_aliases'    => {
             'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-            'protein_db'    => 'mysql://ensro@mysql-ens-compara-prod-2:4522/waakanni_protein_trees_88',
-            'ncrna_db'      => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_ensembl_ebinc_rna_trees_88',
-            'family_db'     => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_ensembl_families_ebi_88b',
-            'mouse_strains' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mouse_strain_homologies_88',
+            'protein_db'    => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
+            'ncrna_db'      => 'mysql://ensro@mysql-ens-compara-prod-3:4523/muffato_ensembl_ebinc_rna_trees_89c',
+            'family_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_ensembl_families_ebi_89',
+            'mouse_strains' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mouse_strain_homologies_89',
         },
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1:4485/ensembl_compara_88",
+        'curr_rel_db'   => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1:4485/ensembl_compara_89",
 
         # From these databases, only copy these tables
         'only_tables'       => {
