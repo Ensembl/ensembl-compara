@@ -158,6 +158,8 @@ sub run {
     my $ref_member = $seq_members[$refs[0]];
     foreach my $other_member (@seq_members) {
         next if $other_member->stable_id eq $ref_member->stable_id;
+        # Homology pairs must be unique (also allows rerunning the job)
+        next if $self->param('homology_adaptor')->fetch_by_Member_Member($ref_member, $other_member);
 
         # create an Homology object
         my $homology = new Bio::EnsEMBL::Compara::Homology;
