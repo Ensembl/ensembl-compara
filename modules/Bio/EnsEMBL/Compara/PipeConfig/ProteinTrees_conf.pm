@@ -1738,6 +1738,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 2 => 'cluster_tagging',
             },
+            -rc_name => '500Mb_job',
         },
 
 
@@ -1755,6 +1756,7 @@ sub core_pipeline_analyses {
                 ),
                 'A->1' => [ 'hc_global_tree_set' ],
             },
+            -rc_name => '500Mb_job',
         },
 
         {   -logic_name => 'alignment_entry_point',
@@ -3215,7 +3217,9 @@ sub core_pipeline_analyses {
                 # We don't use build_HMM_aa_v2 because hmmcalibrate takes ages
                 2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
             },
+            -rc_name => '1Gb_job',
         },
+
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
         {   -logic_name => 'polyploid_move_back_factory',
