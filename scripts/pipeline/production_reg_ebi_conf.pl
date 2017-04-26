@@ -64,41 +64,41 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 # # Individual pipeline database for ProteinTrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-2',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4522,
-     -species => 'compara_ptrees',
-     -dbname => 'waakanni_protein_trees_87',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
-     -species => 'compara_mouse_strains_homologies',
-     -dbname => 'muffato_mouse_strain_homologies_88',
-);
-
-# Individual pipeline database for ncRNAtrees:
- Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-treefam-prod',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
-     -species => 'compara_nctrees',
-     -dbname => 'mateus_ensembl_ebinc_rna_trees_88',
- );
+     -species => 'compara_ptrees',
+     -dbname => 'mateus_protein_trees_89',
+);
 
-# # Individual pipeline database for Families:
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#     -host => 'mysql-ens-compara-prod-1',
+#     -user => 'ensadmin',
+#     -pass => $ENV{'ENSADMIN_PSW'},
+#     -port => 4485,
+#     -species => 'compara_mouse_strains_homologies',
+#     -dbname => 'muffato_mouse_strain_homologies_88',
+#);
+
+# Individual pipeline database for ncRNAtrees:
  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-3',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4523,
+     -species => 'compara_nctrees',
+     -dbname => 'muffato_ensembl_ebinc_rna_trees_89c',
+ );
+
+# # Individual pipeline database for Families:
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-2',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4522,
      -species => 'compara_families',
-     -dbname => 'muffato_ensembl_families_ebi_88b',
+     -dbname => 'waakanni_ensembl_families_ebi_89',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
@@ -112,12 +112,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 # ----------------------------------------------------------------------
 
 # Merged homologies
-Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+#Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
     # eHive DBAdaptor only accepts a URL
-     -url  => 'mysql://ensadmin:'.$ENV{'ENSADMIN_PSW'}.'@compara1:3306/mm14_pipeline_hom_final_merge_86',
-     -species => 'homologies_merged',
-     -no_sql_schema_version_check => 1,
-);
+#     -url  => 'mysql://ensadmin:'.$ENV{'ENSADMIN_PSW'}.'@compara1:3306/mm14_pipeline_hom_final_merge_86',
+#     -species => 'homologies_merged',
+#     -no_sql_schema_version_check => 1,
+#);
 
 # Compara Master database:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -136,7 +136,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_prev',
-    -dbname => 'ensembl_compara_87',
+    -dbname => 'ensembl_compara_88',
 );
 
 # current release database on one of Compara servers:
@@ -146,7 +146,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_curr',
-    -dbname => 'ensembl_compara_88',
+    -dbname => 'ensembl_compara_89',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -156,7 +156,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'ancestral_prev',
-    -dbname => 'mp14_ensembl_ancestral_87',
+    -dbname => 'mateus_ensembl_ancestral_88',
 );
 
 # current ancestral database on one of Compara servers:
@@ -166,7 +166,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'ancestral_curr',
-    -dbname => 'mateus_ensembl_ancestral_88',
+    -dbname => 'waakanni_ensembl_ancestral_89',
 );
 
 # ensembl production (maintained by production team):
