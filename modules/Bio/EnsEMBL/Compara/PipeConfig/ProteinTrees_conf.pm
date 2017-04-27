@@ -663,6 +663,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'subject' => "Protein-Tree pipeline (".$self->o('pipeline_name').") has completed",
                 'text' => "This is an automatic message.\nProtein-Tree Pipeline for release ".$self->o('pipeline_name')." has completed.",
+                'email' => $self->o('email'),
             },
         },
 
@@ -3298,6 +3299,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
             -flow_into  => {
                 -1 => [ 'homology_id_mapping_himem' ],
             },
@@ -3305,6 +3309,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'homology_id_mapping_himem',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
             -rc_name => '1Gb_job',
