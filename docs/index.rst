@@ -8,15 +8,18 @@
 Welcome to the Ensembl Compara documentation
 ============================================
 
-Compare long and prosper.
+.. warning:: This is work in progress. The documentation is currently hosted on `Read
+             The Docs`_ but this may change in the future. Watch out the changes !
 
 The code is open source, and `available on GitHub`_.
 
 .. _available on GitHub: http://github.com/Ensembl/ensembl-compara
+.. _Read The Docs: http://ensembl-compara.readthedocs.io/
 
 The main documentation is organized into a couple sections:
 
 * :ref:`user-docs`
+* :ref:`prod-docs`
 * :ref:`dev-docs`
 
 .. _user-docs:
@@ -29,6 +32,11 @@ User documentation
    :maxdepth: 1
 
    api/README
+
+.. _prod-docs:
+
+Data-production documentation
+=============================
 
 .. toctree::
    :caption: Production concepts and preparation
