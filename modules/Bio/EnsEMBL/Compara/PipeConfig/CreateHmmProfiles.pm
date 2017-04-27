@@ -212,6 +212,7 @@ sub default_options {
         'min_num_species'           => 2,
         'min_taxonomic_coverage'    => 0.5,
         'min_ratio_species_genes'   => 0.5,
+        'max_gappiness'             => 0.95,
 
         #name of the profile to be created:
         'hmm_library_name'          => 'panther_11_1.hmm3',
@@ -248,6 +249,7 @@ sub default_options {
         'alignment_filtering_capacity'  => 200,
         'filter_1_capacity'         => 50,
         'filter_2_capacity'         => 50,
+        'filter_3_capacity'         => 50,
         'cluster_tagging_capacity'  => 200,
         'loadtags_capacity'         => 200,
         'treebest_capacity'         => 500,
@@ -285,8 +287,8 @@ sub default_options {
         },
 
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
+            -host   => 'mysql-ens-sta-1',
+            -port   => 4519,
             -user   => 'ensro',
             -pass   => '',
             # This value works in production. Change it if you want to run the pipeline in another context, but don't commit the change !
@@ -1025,6 +1027,19 @@ sub core_pipeline_analyses {
                                 'url'               => $self->o('panther_url'),
                                 'file'              => $self->o('panther_file'),
             },
+            -flow_into      => [ 'treefam_panther_hmm_overlapping' ],
+        },
+
+        { -logic_name     => 'treefam_panther_hmm_overlapping',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HmmOverlap',
+            -rc_name       => '4Gb_big_tmp_job',
+            -parameters     => {
+                                'hmmer_home'        => $self->o('hmmer3_home'),
+                                'library_name'      => $self->o('hmm_library_name'),
+                                'hmm_lib'           => $self->o('hmm_library_basedir'),
+                                'url'               => $self->o('panther_url'),
+                                'file'              => $self->o('panther_file'),
+            },
             -flow_into      => [ 'HMMer_search_factory' ],
         },
 
@@ -1249,7 +1264,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update filter_level_1 filter_level_2 )],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update filter_level_1 filter_level_2 filter_level_3 fasttree )],
             },
         },
 
@@ -1477,8 +1492,24 @@ sub core_pipeline_analyses {
             -parameters         => {
                 'max_gappiness'           => $self->o('max_gappiness'),
             },
-            -hive_capacity  => $self->o('filter_1_capacity'),
-            -batch_size     => 10,
+            -hive_capacity  => $self->o('filter_2_capacity'),
+            -batch_size     => 5,
+            -flow_into      => [ 'filter_level_3' ],
+        },
+
+        {   -logic_name => 'filter_level_3',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterSubfamiliesPatterns',
+            get identities from: http://search.cpan.org/dist/BioPerl/Bio/SimpleAlign.pm#average_percentage_identity
+            -parameters         => {
+                'max_gappiness'           => $self->o('max_gappiness'),
+                'fasttree_exe'            => $self->o('fasttree_mp_exe'),
+                'treebest_exe'            => $self->o('treebest_exe'),
+                'output_clusterset_id'    => 'fasttree',
+                'input_clusterset_id'     => 'default',
+            },
+            -hive_capacity  => $self->o('filter_3_capacity'),
+            -rc_name 		=> '2Gb_job',
+            -batch_size     => 5,
         },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
