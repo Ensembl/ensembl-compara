@@ -275,7 +275,7 @@ sub pipeline_analyses {
         {   -logic_name => 'calculate_wga_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -analysis_capacity => 200,
-            -batch_size => 5,
+            -batch_size => 20,
             -parameters => { pipeline_url => $self->pipeline_url },
             -flow_into  => {
                 '1'  => [ '?table_name=ortholog_quality' ],
@@ -304,7 +304,7 @@ sub pipeline_analyses {
         {   -logic_name => 'reuse_wga_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
             -analysis_capacity => 100,
-            -batch_size        => 10,
+            -batch_size        => 50,
         },
 
         {   -logic_name => 'write_threshold',
