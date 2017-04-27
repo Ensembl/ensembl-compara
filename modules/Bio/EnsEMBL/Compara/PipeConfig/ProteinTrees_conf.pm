@@ -506,6 +506,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
+        'do_homology_stats' => $self->o('do_homology_stats'),
     };
 }
 
