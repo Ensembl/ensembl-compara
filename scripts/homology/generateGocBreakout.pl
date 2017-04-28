@@ -197,7 +197,49 @@ foreach my $reference (@references) {
     close($fh_out);
     close($fh_out_above_with);
 }
+
+#---------------------------------------------------------------------------------------------------
+#Data used to generate a heatmap
+#---------------------------------------------------------------------------------------------------
+
+open( my $fh_heatmap, '>', "$out_dir/heatmap.data" ) || die "Could not open output file at $out_dir";
+
+my $sql_heatmap = 'select
+  replace(ntn1.name, " ", "_") as name1,
+  replace(ntn2.name, " ", "_") as name2,
+  n_goc_0,
+  n_goc_25,
+  n_goc_50,
+  n_goc_75,
+  n_goc_100,
+  n_goc_0 / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_eq_0,
+  (n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_25,
+  (n_goc_50 + n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_50,
+  (n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_75,
+  n_goc_100 / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_eq_100
+from
+  method_link_species_set_attr mlssa inner join
+  method_link_species_set mlss using (method_link_species_set_id) inner join
+  species_set ss1 on mlss.species_set_id = ss1.species_set_id inner join
+  species_set ss2 on mlss.species_set_id = ss2.species_set_id inner join
+  genome_db gdb1 on ss1.genome_db_id = gdb1.genome_db_id inner join
+  genome_db gdb2 on ss2.genome_db_id = gdb2.genome_db_id inner join
+  ncbi_taxa_name ntn1 on gdb1.taxon_id = ntn1.taxon_id inner join
+  ncbi_taxa_name ntn2 on gdb2.taxon_id = ntn2.taxon_id
+where
+  mlss.method_link_id = 201 and
+  ntn1.name <> ntn2.name and
+  ntn1.name_class = "scientific name" and
+  ntn2.name_class = "scientific name"
+order by ntn1.name, ntn2.name';
+
+my $sth_heatmap = $dbh->prepare($sql_heatmap);
+$sth_heatmap->execute();
+while ( my @row = $sth_heatmap->fetchrow_array() ) {
+    print $fh_heatmap @row;
 }
+
+close($fh_heatmap);
 
 sub num { $a <=> $b }
 
