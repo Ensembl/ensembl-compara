@@ -472,6 +472,7 @@ sub gene_member_id {
                             - STABLE_ID => stable ID
                             - VERSION => stable ID and version number
                             - SOURCE_STABLE_ID => source name and stable ID
+                            - APPEND_SP_NAME => append the species name in the sequence description
   Arg [-WITH_DESCRIPTION] : boolean - add this Member's description
   Example    : my $bioperl_seq = $member->bioseq;
   Description: returns sequence of this member as a Bio::Seq object
@@ -482,9 +483,10 @@ sub gene_member_id {
 =cut
 
 sub bioseq {
+
     my $self = shift;
-    my ($seq_type, $id_type, $with_description) =
-        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION)], @_);
+    my ($seq_type, $id_type, $with_description, $append_sp_name ) =
+        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
 
@@ -500,7 +502,16 @@ sub bioseq {
         $seqname = $self->stable_id if $id_type =~ m/^STA/i;
         $seqname = $self->stable_id.($self->version ? '.'.$self->version : '') if $id_type =~ m/^VER/i;
         $seqname = $self->source_name . ':' . $self->stable_id if $id_type =~ m/^SOU/i;
+        $seqname = $self->gene_member->stable_id if $id_type =~ m/^STABLE_GENE/i;
     };
+
+    # Append $seqID with species short name, if required
+    if ( $append_sp_name and $self->genome_db_id ) {
+        my $species = $self->genome_db->name;
+        $species =~ s/\s/_/g;
+        $seqname .= "|" . $species;
+    }
+
 
     return Bio::Seq->new(
         -seq                => $sequence,
