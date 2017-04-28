@@ -50,6 +50,7 @@ my $version = $SiteDefs::ENSEMBL_VERSION;
 my %write_dirs = (
                   'tmp'       => ['ENSEMBL_TMP_DIR', {
                                     'tmp'         => 'ENSEMBL_TMP_DIR',
+                                    'tmp_tmp'     => 'ENSEMBL_TMP_TMP',
                                     'server'      => 'ENSEMBL_SYS_DIR',
                                     'img'         => 'ENSEMBL_TMP_DIR_IMG',
                                     'precache'    => 'ENSEMBL_PRECACHE_DIR',
