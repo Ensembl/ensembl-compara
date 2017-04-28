@@ -18,24 +18,70 @@
 use strict;
 use warnings;
 use Data::Dumper;
+use Getopt::Long;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+# Parameters
+#-----------------------------------------------------------------------------------------------------
+#URL to the compara database containing the homologies
+my $compara_url;
+
+#Directory to print out the results
+my $out_dir;
+
+#Add extra debug information to STDOUT
+my $debug;
+
+#Text file containing a list of one species per line
+my $species_list_file;
+
+GetOptions( "compara_url=s"         => \$compara_url, 
+            "species_list_file=s"   => \$species_list_file, 
+            "outdir=s"              => \$out_dir, 
+            "debug"                 => \$debug ) or
+  die("Error in command line arguments\n");
+    
+die "Error in command line arguments [compara_url = mysql://user\@server/db] [species_list_file = file_with_list_of_species (one per line)] [outdir = /your/directory/]"
+  if ( ( !$compara_url ) || ( !$species_list_file ) || !$out_dir );
+
+#Prepare the list with the species names.
+#-----------------------------------------------------------------------------------------------------
+my %species_list;
+open my $fh_species_list, $species_list_file || die "Could not open file $species_list_file";
+while (<$fh_species_list>) {
+    chomp($_);
+    $species_list{$_} = 1;
+}
+close($fh_species_list);
 
 
 # The wanted/unwanted species
-
 #my $species_list = {"rat"=>1, "cow"=>1, "mouse"=>1, "tetraodon"=>0};
-my $species_list = {"rat"=>1, "cow"=>1};
+#my $species_list = { "tuatara"=>1, "gallus_gallus"=>1, "alligator_sinensis"=>1 };
 
+#my $species_list = {"gallus_gallus"=>1, "alligator_sinensis"=>1, "chelonia_mydas"=>1, "anolis_carolinensis"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "gekko_japonicus"=>1, "tuatara"=>1, "homo_sapiens"=>1, "xenopus_tropicalis"=>1, "lepisosteus_oculatus"=>1};
 
+#my $species_list = {"alligator_mississippiensis"=>1, "alligator_sinensis"=>1, "anas_platyrhynchos"=>1, "anolis_carolinensis"=>1, "chelonia_mydas"=>1, "chrysemys_picta"=>1, "danio_rerio"=>1, "ficedula_albicollis"=>1, "gallus_gallus"=>1, "gekko_japonicus"=>1, "homo_sapiens"=>1, "lepisosteus_oculatus"=>1, "meleagris_gallopavo"=>1, "monodelphis_domestica"=>1, "mus_musculus"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "ornithorhynchus_anatinus"=>1, "pelodiscus_sinensis"=>1, "pogona_vitticeps"=>1, "protobothrops_mucrosquamatus"=>1, "python_molurus_bivittatus"=>1, "taeniopygia_guttata"=>1, "thamnophis_sirtalis"=>1, "tuatara"=>1, "xenopus_tropicalis"=>1};
 
 # Auto-configure the registry
-Bio::EnsEMBL::Registry->load_registry_from_db(-host=>'ensembldb.ensembl.org', -user=>'anonymous') ;
+#Bio::EnsEMBL::Registry->load_registry_from_db(-host=>'ensembldb.ensembl.org', -user=>'anonymous') ;
 
-my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "Compara", "Homology");
-my $mlss_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
-my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
+my $compara_dba         = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_url );
 
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     #-host => 'mysql-treefam-prod',
+     #-user => 'ensadmin',
+     #-pass => $ENV{'ENSADMIN_PSW'},
+     #-port => 4401,
+     #-species => 'Multi',
+     #-dbname => 'mateus_tuatara_86',
+#);
+
+my $homology_adaptor    = $compara_dba->get_HomologyAdaptor;
+my $mlss_adaptor        = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my $genome_db_adaptor   = $compara_dba->get_GenomeDBAdaptor;
 
 # The same list as species_list, but with genome_db_ids
 my %genomedbid_list;
@@ -49,26 +95,27 @@ my $n_goodspecies = 0;
 # Contains the mlss objects for each pair of species
 my %mlss_cache;
 
-my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [keys %{$species_list}]);
+my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => [keys %species_list]);
 # Finds all pairs of species, and initializes the above variables
 foreach my $gdb1 (@$genome_dbs) {
 	my $gdb_id1 = $gdb1->dbID;
 	my $gdb_name1 = $gdb1->name;
 	$gdbid2name{$gdb_id1} = $gdb_name1;
-	$genomedbid_list{$gdb_id1} = ${$species_list}{$gdb_name1};
-	$tmp1 = $gdb_id1 if ${$species_list}{$gdb_name1} == 1;
-	$n_goodspecies += 1 if ${$species_list}{$gdb_name1} == 1;
+	$genomedbid_list{$gdb_id1} = $species_list{$gdb_name1};
+	$tmp1 = $gdb_id1 if $species_list{$gdb_name1} == 1;
+	$n_goodspecies += 1 if $species_list{$gdb_name1} == 1;
 	$mlss_cache{$gdb_id1} = {};
 	foreach my $gdb2 (@$genome_dbs) {
 		my $gdb_id2 = $gdb2->dbID;
 		$mlss_cache{$gdb_id1}{$gdb_id2} = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$gdb_id1, $gdb_id2]) if ($gdb_id1 != $gdb_id2);
-		$tmp2 = $gdb_id2 if (${$species_list}{$gdb2->name} == 1) and ($tmp1 ne $gdb_id2);
+		$tmp2 = $gdb_id2 if ($species_list{$gdb2->name} == 1) and ($tmp1 ne $gdb_id2);
 	}
 }
 
 
 # All the orthologues between two arbitrary species. It is more efficient than trying all the gene of a given species
 my $homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_cache{$tmp1}->{$tmp2});
+my $cluster_counter = 0;
 foreach my $homology (@{$homologies}) {
 	my $gene_member = $homology->get_all_Members->[0];
 	my $member_set = {};
@@ -81,11 +128,14 @@ foreach my $homology (@{$homologies}) {
 		if (scalar(keys %{$member_set}) == $n_goodspecies) {
 
 			# Cluster content can be accessed like this:
-			print "cluster content: ";
+            #print "cluster content: ";
+			print "$cluster_counter\t";
 			foreach my $species (keys %{$member_set} ) {
-				print "$species: ", join("-", (map {$_->stable_id}  @{$member_set->{$species}})), ", ";
+				print "$species:", join(",", (map {$_->stable_id}  @{$member_set->{$species}})), "|";
+                #print join("|", (map {$_->stable_id}  @{$member_set->{$species}})), "|";
 			}
 			print "\n";
+            $cluster_counter++;
 
 		} else {
 			# invalid cluster because a wanted species is missing
