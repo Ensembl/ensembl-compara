@@ -19,11 +19,24 @@
 #It only generates the inputs to be plotted separately.
 #It does not use the API.
 
+#SELECT node_name, nb_genes, nb_long_genes, nb_short_genes, nb_orphan_genes, nb_genes_in_tree, nb_genes_in_tree_single_species, nb_orphan_genes, nb_dup_nodes, nb_gene_splits, (nb_genes-nb_genes_in_tree) as nb_missing_genes FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL AND root_id = 40001000 group by genome_db_id);
+
 use strict;
 use DBI;
+use Getopt::Long;
 
+# Parameters
+#-----------------------------------------------------------------------------------------------------
+#Directory to print out the results
+my $out_dir;
 
-#SELECT node_name, nb_genes, nb_long_genes, nb_short_genes, nb_orphan_genes, nb_genes_in_tree, nb_genes_in_tree_single_species, nb_orphan_genes, nb_dup_nodes, nb_gene_splits, (nb_genes-nb_genes_in_tree) as nb_missing_genes FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL AND root_id = 40001000 group by genome_db_id);
+#-----------------------------------------------------------------------------------------------------
+
+# Parse command line
+#-----------------------------------------------------------------------------------------------------
+GetOptions( "outdir=s" => \$out_dir ) or die("Error in command line arguments\n");
+
+die "Error in command line arguments [outdir = /your/directory/]" if ( !$out_dir );
 
 #DB connection.
 my $user     = "ensadmin";
@@ -125,17 +138,17 @@ my @references = ( "homo_sapiens", "tuatara" );
 
 foreach my $reference (@references) {
     #File with breakout of the different GOC levels
-    open( OUT,            ">$reference\_ref.txt" );
+    open( my $fh_out, '>', "$out_dir/$reference\_ref.txt" ) || die "Could not open output file at $out_dir";
 
     #File with the above and bollow 0.5 GOC threasholds
-    open( OUT_above_with, ">$reference\_above_with_splits.txt" );
+    open( my $fh_out_above_with, '>', "$out_dir/$reference\_above_with_splits.txt" ) || die "Could not open output file at $out_dir";
 
     #File with the  percentage of scores above 0.5
-    open( OUT_above,      ">$reference\_ref_above_threshold.txt" );
+    open( my $fh_out_above, '>', "$out_dir/$reference\_ref_above_threshold.txt" ) || die "Could not open output file at $out_dir";
 
-    print OUT "species;goc;threshold;taxon\n";
-    print OUT_above "species;perc_orth_above_goc_thresh;taxon\n";
-    print OUT_above_with "species;goc;threshold;taxon\n";
+    print $fh_out "species;goc;threshold;taxon\n";
+    print $fh_out_above "species;perc_orth_above_goc_thresh;taxon\n";
+    print $fh_out_above_with "species;goc;threshold;taxon\n";
 
     my @uniq_mlss_ids = keys(%mlss_ids);
 
@@ -147,11 +160,11 @@ foreach my $reference (@references) {
             my $sth5 = $dbh->prepare($sql5);
             $sth5->execute();
             while ( my @row5 = $sth5->fetchrow_array() ) {
-                print OUT_above "$names;$row5[0];$colors{$taxon{$names}}\n";
+                print $fh_out_above "$names;$row5[0];$colors{$taxon{$names}}\n";
             }
         }
     }
-    close(OUT_above);
+    close($fh_out_above);
 
     foreach my $mlss_id ( keys %mlss_ids ) {
         my $names = join( "", @{ $names{$mlss_id}{'names'} } );
@@ -170,20 +183,20 @@ foreach my $reference (@references) {
             my $sum_above_50 = 0;
 
             foreach my $goc_score ( sort num keys %{ $mlss_ids{$mlss_id} } ) {
-                print OUT "$names;$mlss_ids{$mlss_id}{$goc_score};X_$goc_score;$colors{$taxon{$names}}\n";
+                print $fh_out "$names;$mlss_ids{$mlss_id}{$goc_score};X_$goc_score;$colors{$taxon{$names}}\n";
                 if (($goc_score < 50) || ($goc_score eq "NULL")){
                         $sum_under_50 += $mlss_ids{$mlss_id}{$goc_score}; 
                 }else{
                         $sum_above_50 += $mlss_ids{$mlss_id}{$goc_score}; 
                 }
             }
-            #print OUT_above_with "$names;$sum_under_50;$sum_above_50;$colors{$taxon{$names}}\n";
-            print OUT_above_with "$names;$sum_under_50;under;$colors{$taxon{$names}}\n";
-            print OUT_above_with "$names;$sum_above_50;above;$colors{$taxon{$names}}\n";
+            print $fh_out_above_with "$names;$sum_under_50;under;$colors{$taxon{$names}}\n";
+            print $fh_out_above_with "$names;$sum_above_50;above;$colors{$taxon{$names}}\n";
         }
     }
-    close(OUT);
-    close(OUT_above_with);
+    close($fh_out);
+    close($fh_out_above_with);
+}
 }
 
 sub num { $a <=> $b }
