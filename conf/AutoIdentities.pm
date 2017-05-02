@@ -20,7 +20,7 @@ sub follow_paths {
       foreach my $link (grep { -l "$here/$_" } readdir($DIR)) {
         my $dest = readlink("$here/$link");
         $dest = "$here/$dest" unless $dest =~ m!^/!;
-	next if $here eq $dest;
+	      next if !$dest || $here eq $dest;
         my $there = "/".(join("/",@new_base));
         if($dest eq $there) {
           my @sym_base = (@$base,$link);
