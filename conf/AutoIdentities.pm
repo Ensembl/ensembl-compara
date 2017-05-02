@@ -52,7 +52,8 @@ sub add_symlinks {
       foreach my $link (grep { !$done->{$_} } grep -l, map "$here/$_", readdir($dir)) {
         my $dest = readlink($link);
            $dest = abs_path($dest =~ m!^/! ? $dest : "$here/$dest");
-	      next if !$dest || $here = $dest;
+        next unless $dest;
+	      next if $here = $dest;
         foreach my $matching_dest (grep { $_ eq $dest } @$out) {
           push @$out, map { $_ =~ s/^\Q$matching_dest\E/$link/r } grep { m/^\Q$matching_dest\E/ } @$out;
           $done->{$link} = 1;
