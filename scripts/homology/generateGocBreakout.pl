@@ -19,6 +19,9 @@
 #It only generates the inputs to be plotted separately.
 #It does not use the API.
 
+#cmd line example:
+#perl generateGocBreakout.pl -outdir /homes/mateus/goc -user ensro -database mateus_tuatara_86 -hostname mysql-treefam-prod:4401
+
 #SELECT node_name, nb_genes, nb_long_genes, nb_short_genes, nb_orphan_genes, nb_genes_in_tree, nb_genes_in_tree_single_species, nb_orphan_genes, nb_dup_nodes, nb_gene_splits, (nb_genes-nb_genes_in_tree) as nb_missing_genes FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL AND root_id = 40001000 group by genome_db_id);
 
 use strict;
@@ -30,21 +33,27 @@ use Getopt::Long;
 #Directory to print out the results
 my $out_dir;
 
+#MySQL user used to query the database
+my $user;
+
+#Database to use
+my $database;
+
+#Hostname used in the query
+my $hostname;
+
 #-----------------------------------------------------------------------------------------------------
 
 # Parse command line
 #-----------------------------------------------------------------------------------------------------
-GetOptions( "outdir=s" => \$out_dir ) or die("Error in command line arguments\n");
-
-die "Error in command line arguments [outdir = /your/directory/]" if ( !$out_dir );
+GetOptions( "outdir=s" => \$out_dir, "user=s" => \$user, "database=s" => \$database, "hostname=s" => \$hostname ) or die("Error in command line arguments\n");
+die "Error in command line arguments [outdir = /your/directory/] [user = your_sql_username] [database = your_database] [hostname = your_host:port] " if ( !$out_dir || !$user || !$database || !$hostname );
 
 #DB connection.
-my $user     = "ensadmin";
-my $password = $ENV{'ENSADMIN_PSW'};
-my $database = "mp14_Tuatara_ProteinTree_86";
-my $hostname = "compara4";
+#-----------------------------------------------------------------------------------------------------
 my $dsn      = "DBI:mysql:database=$database;host=$hostname";
-my $dbh      = DBI->connect( $dsn, $user, $password );
+my $dbh      = DBI->connect( $dsn, $user );
+#-----------------------------------------------------------------------------------------------------
 
 my %mlss_ids;
 my %names;
