@@ -213,39 +213,39 @@ foreach my $reference (@references) {
 
 open( my $fh_heatmap, '>', "$out_dir/heatmap.data" ) || die "Could not open output file at $out_dir";
 
-my $sql_heatmap = 'select
-  replace(ntn1.name, " ", "_") as name1,
-  replace(ntn2.name, " ", "_") as name2,
-  n_goc_0,
-  n_goc_25,
-  n_goc_50,
-  n_goc_75,
-  n_goc_100,
-  n_goc_0 / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_eq_0,
-  (n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_25,
-  (n_goc_50 + n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_50,
-  (n_goc_75 + n_goc_100) / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_gte_75,
-  n_goc_100 / (n_goc_0 + n_goc_25 + n_goc_50 + n_goc_75 + n_goc_100) as goc_eq_100
-from
-  method_link_species_set_attr mlssa inner join
-  method_link_species_set mlss using (method_link_species_set_id) inner join
-  species_set ss1 on mlss.species_set_id = ss1.species_set_id inner join
-  species_set ss2 on mlss.species_set_id = ss2.species_set_id inner join
-  genome_db gdb1 on ss1.genome_db_id = gdb1.genome_db_id inner join
-  genome_db gdb2 on ss2.genome_db_id = gdb2.genome_db_id inner join
-  ncbi_taxa_name ntn1 on gdb1.taxon_id = ntn1.taxon_id inner join
-  ncbi_taxa_name ntn2 on gdb2.taxon_id = ntn2.taxon_id
-where
-  mlss.method_link_id = 201 and
-  ntn1.name <> ntn2.name and
-  ntn1.name_class = "scientific name" and
-  ntn2.name_class = "scientific name"
-order by ntn1.name, ntn2.name';
+print $fh_heatmap "name1\tname2\tn_goc_0\tn_goc_25\tn_goc_50\tn_goc_75\tn_goc_100\tgoc_eq_0\tgoc_gte_25\tgoc_gte_50\tgoc_gte_75\tgoc_eq_100\n";
+
+my $sql_heatmap = "
+    SELECT
+        replace(ntn1.name, ' ', '_') AS name1,
+        replace(ntn2.name, ' ', '_') AS name2,
+        IFNULL(n_goc_0,0),
+        IFNULL(n_goc_25,0),
+        IFNULL(n_goc_50,0),
+        IFNULL(n_goc_75,0),
+        IFNULL(n_goc_100,0),
+        IFNULL(n_goc_0,0) / (IFNULL(n_goc_0,0) + IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) AS goc_eq_0,
+        (IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) / (IFNULL(n_goc_0,0) + IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) AS goc_gte_25,
+        (IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) / (IFNULL(n_goc_0,0) + IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) AS goc_gte_50,
+        (IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) / (IFNULL(n_goc_0,0) + IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) AS goc_gte_75,
+        IFNULL(n_goc_100,0) / (IFNULL(n_goc_0,0) + IFNULL(n_goc_25,0) + IFNULL(n_goc_50,0) + IFNULL(n_goc_75,0) + IFNULL(n_goc_100,0)) AS goc_eq_100
+    FROM
+        method_link_species_set_attr mlssa inner JOIN   method_link_species_set
+        mlss using (method_link_species_set_id) inner JOIN   species_set ss1 on
+        mlss.species_set_id = ss1.species_set_id inner JOIN   species_set ss2 on
+        mlss.species_set_id = ss2.species_set_id inner JOIN   genome_db gdb1 on
+        ss1.genome_db_id = gdb1.genome_db_id inner JOIN   genome_db gdb2 on
+        ss2.genome_db_id = gdb2.genome_db_id inner JOIN   ncbi_taxa_name ntn1 on
+        gdb1.taxon_id = ntn1.taxon_id inner JOIN   ncbi_taxa_name ntn2 on
+        gdb2.taxon_id = ntn2.taxon_id where   mlss.method_link_id = 201 AND
+        ntn1.name <> ntn2.name AND   ntn1.name_class = 'scientific name' AND
+        ntn2.name_class = 'scientific name' ORDER by ntn1.name, ntn2.name;
+";
 
 my $sth_heatmap = $dbh->prepare($sql_heatmap);
 $sth_heatmap->execute();
 while ( my @row = $sth_heatmap->fetchrow_array() ) {
-    print $fh_heatmap @row;
+    print $fh_heatmap join("\t", @row) . "\n";
 }
 
 close($fh_heatmap);
