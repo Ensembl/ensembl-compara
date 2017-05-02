@@ -93,6 +93,7 @@ sub default_options {
         'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
+        'num_sequences_per_blast_job'   => 5000,
 
     # clustering parameters:
 
