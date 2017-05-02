@@ -13,6 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#Data can be exctracted from the database by running the generateGocBreakout.pl script:
+#   perl generateGocBreakout.pl -outdir /homes/mateus/goc -user ensro -database mateus_tuatara_86 -hostname mysql-treefam-prod:4401
+
+#How to plot the data:
+#   Rscript plotGocData.r your_tree.newick heatmap.data /your/output_directory/
+
 args = commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) {
   stop('Three arguments are required: tree_file data_file out_dir')
