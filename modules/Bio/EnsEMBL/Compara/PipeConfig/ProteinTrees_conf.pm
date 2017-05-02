@@ -508,6 +508,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
         'do_homology_stats' => $self->o('do_homology_stats'),
+        'do_hmm_export'     => $self->o('do_hmm_export'),
+        'do_gene_qc'        => $self->o('do_gene_qc'),
     };
 }
 
