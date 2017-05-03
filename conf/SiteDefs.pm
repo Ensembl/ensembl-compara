@@ -57,10 +57,10 @@ our $ENSEMBL_HTTPD_CONFIG_FILE    = "$ENSEMBL_WEBROOT/conf/httpd.conf";         
 our $ENSEMBL_MIN_SPARE_SERVERS    = 20;                                                   # For Apache MinSpareServers directive
 our $ENSEMBL_MAX_SPARE_SERVERS    = 50;                                                   # For Apache MaxSpareServers directive
 our $ENSEMBL_START_SERVERS        =  7;                                                   # For Apache StartServers directive
-our $ENSEMBL_DB_IDLE_LIMIT     = 12;
+our $ENSEMBL_DB_IDLE_LIMIT        = 0;
               # Maximum number of connections to "carry through" to next
               # connection
-our $ENSEMBL_DB_TIDY_DEBUG     = 0;
+our $ENSEMBL_DB_TIDY_DEBUG        = 0;
               # Debug conneciton management.
 our $ENSEMBL_PORT                 = 80;                                                   # Port to run Apache (for Listen directive)
 our $ENSEMBL_SERVERNAME           = 'www.mydomain.org';                                   # For Apache ServerName directive (External domain name for the web server)
