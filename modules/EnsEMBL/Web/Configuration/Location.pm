@@ -237,7 +237,6 @@ sub add_external_browsers {
     delete $browsers{'NCBI_DB'};
   }
 
-  $self->add_vega_link;
   ## Link to previous/next assembly if available  
   $self->add_archive_link if $hub->species_defs->SWITCH_ASSEMBLY;
   
@@ -273,55 +272,6 @@ sub add_archive_link {
       $link = $site.$hub->url();
     }
     $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => $class }));
-  }
-}
-
-sub add_vega_link {
-  my $self           = shift;
-  my $hub            = $self->hub;
-  my $urls           = $hub->ExtURL;
-  my $species        = $hub->species;
-  my $species_defs   = $hub->species_defs;
-  my $type           = $hub->type;
-  my $action         = $hub->action;
-  my @alt_assemblies = @{$species_defs->ALTERNATIVE_ASSEMBLIES || []};
-  my ($vega_link, $link_class);
-
-  if (lc $species_defs->ENSEMBL_SITETYPE ne 'vega' && $action =~ /^(Chromosome|Overview|View)$/ && $alt_assemblies[0] =~ /VEGA/ && $urls->is_linked('VEGA')) {
-    my $object = $self->object;
-    
-    if ($object) {
-      my $reg        = 'Bio::EnsEMBL::Registry';
-      my $adaptor    = $reg->get_DNAAdaptor($species, 'vega');
-      my $orig_group = $adaptor->group;
-      
-      $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
-         
-      my $chromosome   = $object->name;
-      my $start        = $object->seq_region_start;
-      my $end          = $object->seq_region_end;
-      my $strand       = $object->seq_region_strand;
-      my $coord_system = $object->slice->coord_system;
-      my $start_slice  = $hub->get_adaptor('get_SliceAdaptor', 'vega')->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
-      my $vega_projection;
-      
-      eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]); };
-      
-      if ($vega_projection) {
-        if (scalar @$vega_projection == 1) {
-          my $vega_slice = $vega_projection->[0]->to_Slice;
-          $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
-          $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
-        } elsif (scalar @$vega_projection > 1) {
-          $vega_link  = $self->hub->url({ type => 'Help', action => 'ListVegaMappings' });
-          $link_class = 'modal_link';
-        }
-      }
-      
-      $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => defined($vega_link), url => $vega_link, raw => 1, external => !defined($link_class), class => $link_class }));
   }
 }
 
