@@ -99,7 +99,7 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
-            'protein_db'        => [qw(peptide_align_feature%)],
+            #'protein_db'        => [qw(peptide_align_feature%)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         },
 
