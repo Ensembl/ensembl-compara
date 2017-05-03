@@ -1748,11 +1748,6 @@ sub _munge_species_url_map {
 
   my $aliases = $multi_tree->{'SPECIES_ALIASES'} || {};
 
-  if (!keys %$aliases) {
-    warn "SPECIES_ALIASES has not been populated. This will not redirect aliases to correct species URLs.\n";
-    return;
-  }
-
   my %species_map = (
     %$aliases,
     common        => 'common',
