@@ -170,7 +170,7 @@ SPECIES: foreach my $sp (sort @species) {
             $is_different = 1;
           }
           if ($old_name ne $a_name) {
-            print "!!! Old assembly name was $old_name; new nome is $a_name\n";
+            print "!!! Old assembly name was $old_name; new name is $a_name\n";
             $is_different = 1;
           }
           if ($is_different) {
@@ -183,7 +183,7 @@ SPECIES: foreach my $sp (sort @species) {
       my $initial = $sd->get_config($sp, 'GENEBUILD_RELEASE') || '';
       my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
       $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      @args = ($release_id, $species_id, i$sd->get_config($sp, 'SPECIES_URL'), $a_version, $a_name, '', '', $initial, $latest);
+      @args = ($release_id, $species_id, $sd->get_config($sp, 'SPECIES_URL'), $a_version, $a_name, '', '', $initial, $latest);
       $sth = $adaptor->db->prepare($sql);
       $sth->execute(@args) unless $DEBUG;
       print "ADDED $sp to release $release_id \n";
