@@ -92,6 +92,13 @@ sub fetch_all_by_method_link_species_set_id_label_pattern {
  return [grep {$_->label =~ /$label/} @$mlss_trees];
 }
 
+
+sub fetch_all_by_method_link_species_set_id {
+ my ($self, $mlss_id) = @_; 
+ my $mlss_trees = $self->_id_cache->get_all_by_additional_lookup('mlss_id', $mlss_id);
+ return $mlss_trees;
+}
+
 sub fetch_by_root_id {
     my $self = shift;
     return $self->fetch_by_dbID(@_);
