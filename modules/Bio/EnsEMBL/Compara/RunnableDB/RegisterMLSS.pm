@@ -55,15 +55,17 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'allow_reregistration'              => 0,   # Boolean. 0 means: die if the current database is already registered for this MLSS
-        'allow_overwrite_other_database'    => 0,   # Boolean. 0 means: die if another database has been registered for this MLSS
+        'test_mode'                         => 1,   # Boolean. 0 means exit gracefully without registrering the url or causing a failure
     }
 }
 
 
 sub fetch_input {
     my $self = shift @_;
-
+    #if we are not in production skip this runnable
+    if ($self->param_required('test_mode')) {
+        $self->complete_early('we are in test mode');
+    }
     # Connect to the master db
     my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
 
@@ -81,7 +83,7 @@ sub fetch_input {
     # Build the url string
     my $this_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
     # Trick to avoid leaking the password in the master database
-    if ($this_dbc->username eq 'ensadmin') {
+    if ($this_dbc->username eq 'ensadmin' or 'ensrw') {
         $this_dbc->username('ensro');
         $this_dbc->password('');
     }
@@ -94,22 +96,8 @@ sub write_output {
 
     my $master_mlss = $self->param('master_mlss');
     my $this_url = $self->param('this_url');
-
-    if ($master_mlss->get_original_url) {
-        if ($master_mlss->get_original_url eq $this_url) {
-            unless ($self->param('allow_reregistration')) {
-                die "This database [$this_url] is already registered for MLSS ", $master_mlss->dbID, "\n";
-            }
-        } else {
-            unless ($self->param('allow_overwrite_other_database')) {
-                die "The MLSS ".$master_mlss->dbID." is already registered to a different database: ", $master_mlss->get_original_url, "\n";
-            }
-        }
-    }
-
-    # FIXME: this UPDATE query should be in the MLSS adaptor
-    my $update_query = 'UPDATE method_link_species_set SET url = ? WHERE method_link_species_set_id = ?';
-    $self->param('master_dbc')->do($update_query, undef, $this_url, $self->param('mlss_id'));
+    my $master_mlss_adaptor = $self->param('master_mlss')->adaptor();
+    $master_mlss_adaptor->register_url($this_url, $self->param('mlss_id') );
 }
 
 1;
