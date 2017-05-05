@@ -731,7 +731,12 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
     var currSelArr = new Array();
     for (var i = 0; i < items.length; i++) {
-      items[i] && currSelArr.push(items[i].key);
+      if (this.isCompara) {
+        items[i] && currSelArr.push(items[i].data.key);
+      }
+      else {
+        items[i] && currSelArr.push(items[i].key);
+      }
     }
 
     if (!panel.approveSelection(currSelArr)) {
