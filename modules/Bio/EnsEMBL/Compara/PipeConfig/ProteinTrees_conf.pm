@@ -92,6 +92,9 @@ sub default_options {
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
 
+       #production run or test/development run
+       
+        'test_mode' => 1, 
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -665,9 +668,17 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
             -parameters => {
                 'subject' => "Protein-Tree pipeline (".$self->o('pipeline_name').") has completed",
-                'text' => "This is an automatic message.\nProtein-Tree Pipeline for release ".$self->o('pipeline_name')." has completed.",
+                'text' => "This is an automatic message.\n Protein-Tree Pipeline for release  #expr(\$self->hive_pipeline->display_name)expr#  has completed.",
                 'email' => $self->o('email'),
             },
+            -flow_into  => [ 'register_pipeline_url' ],
+        },
+
+        {   -logic_name => 'register_pipeline_url',
+            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+             -parameters => { 
+                'test_mode' => $self->o('test_mode'),
+            }
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
@@ -1805,6 +1816,7 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
+                'subject' => "Protein tree Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Gene tree report: ",
             },
         },
 
