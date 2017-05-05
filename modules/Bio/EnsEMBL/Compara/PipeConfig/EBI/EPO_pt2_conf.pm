@@ -28,6 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt2_conf
 
        'species_set_name'  - used in the naming of the database
 	   'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
+       'epo_mlss_id'       - mlss_id for the epo alignment (in master)
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
@@ -65,19 +66,21 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
 
-    'species_set_name' => '17mammals_reuse',
+    'species_set_name' => 'sauropsids',
 
     # Where the pipeline lives
-    'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-    'port' => 4522,
+    'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+    'port' => 4485,
+
+    'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+
 
 	# database containing the anchors for mapping
-    # !!!!!!! CANNOT FIND A DUMP OF THIS ANYWHERE !!!!!!
-    # !!! add when run of EPO pt1 completes !!!
-	'compara_anchor_db' => 'mysql://ensro@compara3/sf5_TEST_gen_anchors_mammals_cat_100',
+	'compara_anchor_db' => 'mysql://ensadmin:ensembl@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_generate_anchors_sauropsids',
+    'reuse_db' => undef,
 
-	'mapping_exe' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate',
-    'ortheus_c_exe' => $self->o('ensembl_cellar') . 'ortheus/0.5.0/bin/ortheus_core',
+	'mapping_exe' => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate',
+    'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
 
 	 # place to dump the genome sequences
     'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo_anchor_mapping/release_' . $self->o('rel_with_suffix'),

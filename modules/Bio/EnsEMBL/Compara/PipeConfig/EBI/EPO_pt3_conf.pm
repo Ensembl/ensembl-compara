@@ -74,25 +74,31 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf');
 sub default_options {
  my ($self) = @_;
 
+    # environment required by ortheus
+    $ENV{PYTHONPATH} = $self->o('ensembl_cellar') . '/ortheus/0.5.0/';
+    $ENV{CLASSPATH}  = $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/';
+
     return {
       %{$self->SUPER::default_options},
 
-      'species_set_name' => 'primates',
+      # NOTE : remember to adjust the species_tree_file in the base class 
+      #        in accordance with this species_set!
+      'species_set_name' => 'sauropsids',
 
       # Where the pipeline lives
-      'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-      'port' => 4522,
+      'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+      'port' => 4523,
 
       'bl2seq' => undef,
-      'blastn' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate''blast/2.2.30/bin/blastn',
+      'blastn' => $self->o('ensembl_cellar') . '/blast/2.2.30/bin/blastn',
       'enredo_bin_dir' => '/nfs/ensembl/bin/enredo/', # location of enredo executable
 
       # Dump directory
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
-      'jar_file' => $self->o('ensembl_cellar') . 'exonerate22/2.2.0/bin/exonerate''pecan/0.8.0/pecan.jar',
+      'jar_file' => $self->o('ensembl_cellar') . '/pecan/0.8.0/pecan.jar',
       'gerp_version' => '2.1', #gerp program version
-      'gerp_exe_dir'    => $self->o('ensembl_cellar') . 'gerp/20080211/bin/', #gerp program
+      'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
 
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
@@ -109,9 +115,10 @@ sub default_options {
       # master db
       'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
       # anchor mappings
-      'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/primates_epo_anchor_mapping',
+      'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_sauropsids_epo_anchor_mapping',
 
     }; 
+
 }
 
 1;

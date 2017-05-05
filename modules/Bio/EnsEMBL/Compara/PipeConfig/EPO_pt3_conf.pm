@@ -83,7 +83,7 @@ sub default_options {
         # 'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
         # 'gerp_ce_mlss_id' => 648,
         # 'gerp_cs_mlss_id' => 50295,
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
 
         'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
     	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
@@ -500,6 +500,7 @@ return
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
             -parameters => {
                 'mlss_id'   => $self->o('epo_mlss_id'),
+                'compara_db' => $self->pipeline_url,
             },
         },
 
@@ -508,6 +509,7 @@ return
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('epo_stats_report_email'),
+                'subject'   => "EPO Pipeline( #expr(\$self->hive_pipeline->display_name)expr# ) has completed", 
             }
 
         },
