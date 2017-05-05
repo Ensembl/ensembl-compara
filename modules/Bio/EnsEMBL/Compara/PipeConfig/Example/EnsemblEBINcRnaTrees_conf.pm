@@ -66,6 +66,9 @@ sub default_options {
 
             # Must be given on the command line
             #'mlss_id'          => 40100,
+            
+            'test_mode' => 1, #set this to 0 if this is production run
+
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
             'work_dir'         => '/hps/nobackup/production/ensembl/' .

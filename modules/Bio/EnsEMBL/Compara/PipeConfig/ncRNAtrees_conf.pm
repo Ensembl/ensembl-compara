@@ -210,7 +210,25 @@ sub pipeline_analyses {
 
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into  => ['notify_pipeline_completed'],
                 %backbone_params,
+            },
+
+            {   -logic_name => 'notify_pipeline_completed',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+                -parameters => {
+                    'subject' => "ncRNA-Tree pipeline (".$self->o('pipeline_name').") has completed",
+                    'text' => "This is an automatic message.\n ncRNA-Tree Pipeline for release  #expr(\$self->hive_pipeline->display_name)expr#  has completed.",
+                    'email' => $self->o('email'),
+                    },
+                -flow_into  => [ 'register_pipeline_url' ],
+            },
+
+            {   -logic_name => 'register_pipeline_url',
+                -module      => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+                -parameters => { 
+                    'test_mode' => $self->o('test_mode'),
+                    }
             },
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
