@@ -60,6 +60,9 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
+
+        'test_mode' => 1, #set this to 0 if this is production run
+        
         'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
