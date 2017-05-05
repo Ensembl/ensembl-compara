@@ -77,6 +77,8 @@ sub default_options {
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
+        'test_mode' => 1, #set this to 0 if this is production run
+
         #Binary source directory
         'exe_dir'               =>  $self->o('ensembl_cellar').'',
 
