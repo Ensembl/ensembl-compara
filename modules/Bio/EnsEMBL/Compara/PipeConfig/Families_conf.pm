@@ -708,10 +708,18 @@ sub pipeline_analyses {
         {   -logic_name => 'notify_pipeline_completed',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
             -parameters => {
-                'subject' => "FamilyPipeline(".$self->o('pipeline_name').") has completed",
-                'text' => "This is an automatic message.\nFamilyPipeline for release ".$self->o('pipeline_name')." has completed.",
+                'subject' => "Family Pipeline(".$self->o('pipeline_name').") has completed",
+                'text' => "This is an automatic message.\n Family Pipeline for release #expr(\$self->hive_pipeline->display_name)expr# has completed.",
             },
             -rc_name => 'urgent',
+            -flow_into => [ 'register_pipeline_url' ],
+        },
+
+        {   -logic_name => 'register_pipeline_url',
+            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -parameters => { 
+                'test_mode' => $self->o('test_mode'),
+                }
         },
 
         #
