@@ -85,7 +85,7 @@ sub fetch_input {
         my $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
-	open(my $fh, '>', $query_file) || throw("Couldn't open $query_file");
+	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 	}
@@ -98,9 +98,9 @@ sub fetch_input {
 sub run {
 	my ($self) = @_;
         $self->dbc->disconnect_if_idle();
-	my $program = $self->param('mapping_exe');
-	my $query_file = $self->param('query_file');
-	my $target_file = $self->param('genome_db_file');
+	my $program = $self->param_required('mapping_exe');
+	my $query_file = $self->param_required('query_file');
+	my $target_file = $self->param_required('genome_db_file');
 	my $option_st;
 	while( my ($opt, $opt_value) = each %{ $self->param('mapping_params') } ) {
 		$option_st .= " --" . $opt . " " . $opt_value; 
@@ -108,7 +108,7 @@ sub run {
 	my $command = join(" ", $program, $option_st, $query_file, $target_file); 
 	print $command, "\n";
 	my $out_fh;
-	open( $out_fh, '-|', $command ) or throw("Error opening exonerate command: $? $!"); #run mapping program
+	open( $out_fh, '-|', $command ) or die("Error opening exonerate command: $? $!"); #run mapping program
 	$self->param('out_file', $out_fh);
 }
 
@@ -156,7 +156,7 @@ sub process_exonerate_hits {
 				my $index = join(":", $anchor_id, $targ_dnafrag_info, $hit_position->[0]);
 				my $number_of_org_hits = keys %{$hit_numbers->{$index}->{anc_orgs}};
 				my $number_of_seq_hits = $hit_numbers->{$index}->{seq_nums};
-				push @records_to_load}, [$self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
+				push @records_to_load, [$self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
 			}
 		}
 	}

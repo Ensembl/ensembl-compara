@@ -740,7 +740,13 @@ sub _parse_rates_file {
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {
 	if ($bucket->{$win_sizes->[$j]}->{delete_cnt} >= 0 && 
 	    $bucket->{$win_sizes->[$j]}->{delete_cnt} <= $merge_dist) {
-	    my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
+	    my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(
+          -genomic_align_block => $gab, 
+          -window_size => $win_sizes->[$j], 
+          -position => $bucket->{$win_sizes->[$j]}->{start_pos}, 
+          -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, 
+          -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores}
+      );				
 	    $cs_adaptor->store($conservation_score);  
 	}
     }
@@ -760,7 +766,8 @@ sub _parse_rates_file {
 sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
 
-    my $tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
+    my $db_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
+    my $tree = $db_tree->copy();
 
     #if the tree leaves are species names, need to convert these into genome_db_ids
     my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
@@ -770,7 +777,14 @@ sub _build_tree_string {
         if ($genome_db->name ne "ancestral_sequences") {
 	    $leaf_check{$genome_db->dbID} = 2;
 	} 
-    }  
+    }
+
+    if ( $self->debug ) {
+      use Data::Dumper;
+      print Dumper \%leaf_check;
+      $tree->print_tree(100);
+    }
+
     foreach my $leaf (@{$tree->get_all_leaves}) {
         $leaf_check{$leaf->genome_db_id}++;
     }
@@ -791,7 +805,7 @@ sub _build_tree_string {
     # Remove quotes around node labels
     $tree_string =~ s/"(_\d+_)"/$1/g;
     $tree_string=~s/:0;/;/; # Remove unused node at end
-    $tree->release_tree;
+    # $tree->release_tree;
  
     $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
 

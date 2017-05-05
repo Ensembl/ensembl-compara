@@ -58,6 +58,8 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand;
 
 use strict;
 use warnings;
+no warnings "uninitialized";
+
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::SearchIO;
@@ -69,7 +71,7 @@ sub fetch_input {
 	my ($self) = @_;
 	my ($query_set, $target_set, $q_files, $t_files, $blastResults, $matches, $query_index);
 	my $synteny_region_id = $self->param('zero_st_synteny_region_id');
-print $synteny_region_id, " ***********\n";
+	print $synteny_region_id, " ***********\n" if $self->debug;
 
 	my $sth1 = $self->dbc->prepare("SELECT df.coord_system_name, dfr.dnafrag_id, df.name, gdb.name, dfr.dnafrag_start, ".
 			"dfr.dnafrag_end, dfr.dnafrag_strand FROM dnafrag_region dfr INNER JOIN dnafrag df ON df.dnafrag_id = ".
@@ -109,7 +111,7 @@ print $synteny_region_id, " ***********\n";
 			my $bl2seq_fh;
 			open($bl2seq_fh, "$command |") or throw("Error opening command: $command"); # run the command
 			# parse_bl2seq returns a hashref of the scores and the number of hits to each query strand
-			push(@$blastResults, parse_bl2seq($bl2seq_fh));
+			push(@$blastResults, $self->parse_bl2seq($bl2seq_fh));
 		}   
 	} 
 	foreach my $this_result ( @$blastResults ) {
@@ -136,6 +138,7 @@ print $synteny_region_id, " ***********\n";
 	foreach my $dnafrag_region_res(@$query_set, @$target_set){
 		push(@$dnafrag_region_strands, [ $synteny_region_id, @{ $dnafrag_region_res }[0,1,2,4] ]);
 	}
+
 	$self->param('dnafrag_regions_strands', $dnafrag_region_strands);
 # uncomment lines below if you want to remove the bl2seq input files
 #	foreach my $blast_file(@$q_files, @$t_files){
@@ -157,21 +160,28 @@ sub _bl2seq_command {
 	if ( defined $self->param('bl2seq_exe') ) {
 		$command = $self->param('bl2seq') . " -i $query_file -j $target_file -p blastn";
 	} elsif ( defined $self->param('blastn_exe') ) {
-		$command = $self->param('blastn_exe') . " -query $query_file -subject $target_file";
+		$command = $self->param('blastn_exe') . " -query $query_file -subject $target_file -outfmt 6";
 	} else {
 		die "'bl2seq_exe' or 'blastn_exe' must be defined!\n";
 	}
+
+	print " --- BL2SEQ CMD : $command\n" if $self->debug;
+
 	return $command;
 }
 
 sub write_output {
 	my ($self) = @_;
 	my ($synt_region_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand);
+	
 	foreach my $dnafrag_regions (@{ $self->param('dnafrag_regions_strands') }) {
 		($synt_region_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = @$dnafrag_regions;
-		my $sth = $self->dbc->prepare("UPDATE dnafrag_region SET dnafrag_strand = ? WHERE synteny_region_id = $synt_region_id " .
-				"AND dnafrag_id = $dnafrag_id AND dnafrag_start = $dnafrag_start AND dnafrag_end = $dnafrag_end");
-		$sth->execute($dnafrag_strand);
+		my $sql = "UPDATE dnafrag_region SET dnafrag_strand = $dnafrag_strand WHERE synteny_region_id = $synt_region_id " .
+				"AND dnafrag_id = $dnafrag_id AND dnafrag_start = $dnafrag_start AND dnafrag_end = $dnafrag_end";
+		my $sth = $self->dbc->prepare($sql);
+		print " --- SQL : $sql\n" if $self->debug;
+		# print " --- DNAFRAG : $dnafrag_strand\n" if $self->debug;
+		$sth->execute();
 	}
 	$self->dataflow_output_id( [ { synteny_region_id => $synt_region_id } ], 2 ); # flow to a job factory to set up ortheus
 }
@@ -189,7 +199,7 @@ sub write_files {
 }
 
 sub print_to_file {
-        my($slice_info, $type, $file_stem) = @_; 
+    my($slice_info, $type, $file_stem) = @_; 
 	my $file_name = $file_stem . join("_", @{ $slice_info }[0..2] ) . ".$type";
 	my $slice = $slice_info->[3]; 
 	my $seq = $slice->seq;
@@ -201,10 +211,23 @@ sub print_to_file {
 }
 
 sub parse_bl2seq {
-	my $file2parse = shift;
+	my ($self, $file2parse) = @_;
 	my $hits;
 	local $/ = "\n";
-	my $blast_io = new Bio::SearchIO(-format => 'blast', -fh => $file2parse);
+
+	# die gracefully if blast file is empty
+	if ( -z $file2parse ) {
+		$self->dataflow_output_id(undef, $self->param('escape_branch'));
+		$self->input_job->autoflow(0);
+		$self->complete_early( "No blast results found - skipping" );
+	}
+
+	# parser was not playing nice with blastn output format
+	# use tabular output if using blastn
+	my $blast_fmt = ( defined $self->param('blastn_exe') ) ? 'blasttable' : 'blast';
+	print " --- BLAST_FMT : $blast_fmt\n" if $self->debug;
+
+	my $blast_io = new Bio::SearchIO(-format => $blast_fmt, -fh => $file2parse);
 	my $count;
 	while( my $result = $blast_io->next_result ) {
 		while( my $hit = $result->next_hit ) {
@@ -213,6 +236,7 @@ sub parse_bl2seq {
 			}
 		}
 	}
+
 	return $hits;
 }
 

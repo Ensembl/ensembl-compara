@@ -91,20 +91,26 @@ sub fetch_input {
   }
   $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
-  exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
-
 
   return 1;
 }
 
 sub run {
   my $self = shift;
-  exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
-  exit(1) if (!$self->param('tree_string'));
-
+  
+  # if ( $self->debug ) {
+  #   my $personal_debug_dir = "/homes/carlac/gpfs_nobackup/epo_migration_testing/pt2/";
+  #   foreach my $f ( @{ $self->param('fasta_files') } ) {
+  #     my $this_file = $f;
+  #     $this_file =~ s/\/tmp\//$personal_debug_dir/;
+  #     print " --- Copying $f\t->\t$this_file\n";
+  #     system("cp $f $this_file");
+  #   }
+  # }
+  
   my @ortheus_cmd = ($self->param('ortheus_c_exe'));
-  push @ortheus_cmd, '-a', @{$self->param('fasta_files')};
-  push @ortheus_cmd, '-b', $self->param('tree_string');
+  push @ortheus_cmd, '-a', @{$self->param_required('fasta_files')};
+  push @ortheus_cmd, '-b', $self->param_required('tree_string');
   push @ortheus_cmd, '-h'; # output leaves only
 
   my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1 });
@@ -113,7 +119,6 @@ sub run {
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
   return 1;
 }
-
 
 sub write_output {
   my ($self) = @_;
@@ -144,6 +149,11 @@ sub _dump_fasta {
   my $self = shift;
   my $all_anchor_aligns = $self->param('anchor_aligns');
   my $tree_str = "(";
+
+  if ( scalar @$all_anchor_aligns < 2 ){
+      $self->input_job->autoflow(0);
+      $self->complete_early( "Not enough sequences in current anchor - omitting" );
+  }
 
   foreach my $anchor_align (@$all_anchor_aligns) {
     my $anchor_align_id = $anchor_align->dbID;

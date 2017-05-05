@@ -197,28 +197,45 @@ sub run {
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  #$runnable->run_analysis;
+  
   #Capture error message from ortheus and write it to the job_message table
-  eval {
-      $runnable->run_analysis;
-  } or do {
-      #make hash to remove duplicate messages
-      my %err_msgs;
-      my @lines = split /\n/, $@;
+  my $ortheus_output = $runnable->run_analysis;
+
+  print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
+
+  if ( defined $ortheus_output ) {
+      my (%err_msgs, $traceback, $trace_open);
+      my @lines = split /\n/, $ortheus_output;
       foreach my $line (@lines) {
-	  next if ($line =~ /Arguments received/);
-	  next if ($line =~ /^total_time/);
-	  next if ($line =~ /^alignment/);
-	  $err_msgs{$line} = 1;
+          next if ($line =~ /Arguments received/);
+          next if ($line =~ /^total_time/);
+          next if ($line =~ /^alignment/);
+
+          # group python tracebacks into one error
+          $trace_open = 1 if ( $line =~ /^Traceback/ );
+          if ( $trace_open ) {
+              $traceback .= $line;
+              if ( $line =~ /Error:/ ) { # end of traceback
+                  $trace_open = 0;
+                  $err_msgs{$traceback} = 1;
+              }
+              next;
+          }
+          $err_msgs{$line} = 1;
       }
-      
+
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
-	  $self->warning("Ortheus failed with error: $err_msg\n");
+          $self->warning("Ortheus failed with error: $err_msg\n");
+          if ($err_msg =~ /AttributeError: 'int' object has no attribute 'internal'/) {
+              # hack to deal with cases where the dataset is too small for ortheus to
+              # create a tree. Change when Ortheus.py reports a saner error
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Ortheus failed to create a tree - dataset too small. Skipping." );
+          }
       }
       return;
-  };
-
+  }
 
   $self->parse_results();
 }
@@ -878,19 +895,19 @@ sub remove_empty_cols {
     my $gaps = {};
     foreach my $start_pos (sort {$a <=> $b} keys %$seqs) {
         my $end_pos = $seqs->{$start_pos};
-        print " $start_pos -> $end_pos\n" if $self->debug;
+        # print " $start_pos -> $end_pos\n" if $self->debug;
         if ($end_pos <= $last_end_pos) {
             ## Included in the current block. Skip this
-            print " XXX\n" if $self->debug;
+            # print " XXX\n" if $self->debug;
             next;
         } elsif ($start_pos <= $last_end_pos + 1) {
             ## Overlapping or consecutive segments. Change last_end
             $last_end_pos = $end_pos;
-            print " ---> $end_pos\n" if $self->debug;
+            # print " ---> $end_pos\n" if $self->debug;
         } else {
             ## New segment: there are gap-only cols
             $gaps->{$last_end_pos + 1} = $start_pos - 1 if ($last_end_pos);
-            print " ---> GAP (" . ($last_end_pos + 1) . "-" . ($start_pos - 1) . ")\n" if $self->debug;
+            # print " ---> GAP (" . ($last_end_pos + 1) . "-" . ($start_pos - 1) . ")\n" if $self->debug;
             $last_start_pos = $start_pos;
             $last_end_pos = $end_pos;
         }
@@ -904,7 +921,7 @@ sub remove_empty_cols {
 		$this_genomic_align->adaptor($gaa);
 	    }
             my $aligned_sequence = $this_genomic_align->aligned_sequence;
-	    print "before cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
+	          # print "before cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
             foreach my $start_pos (sort {$b <=> $a} keys %$gaps) { ## IN REVERSE ORDER!!
                 my $end_pos = $gaps->{$start_pos};
                 ## substr works with 0-based coordinates
@@ -913,7 +930,7 @@ sub remove_empty_cols {
 	    ## Uses the new sequence
             $this_genomic_align->{cigar_line} = undef;
             $this_genomic_align->aligned_sequence($aligned_sequence);
-	    print "after cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
+	    # print "after cigar " . $this_genomic_align->cigar_line . "\n" if $self->debug;
 	}
     }
 }
@@ -963,8 +980,8 @@ sub get_species_tree {
       return $self->param('species_tree');
   }
 
-  my $species_tree =
-      $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('ortheus_mlssid'), 'default')->root;
+  my $db_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('ortheus_mlssid'), 'default')->root;
+  my $species_tree = $db_species_tree->copy;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
   my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
@@ -1117,7 +1134,8 @@ sub _dump_fasta {
 sub get_tree_string {
   my $self = shift;
 
-  my $tree = $self->get_species_tree->copy;
+  # my $tree = $self->get_species_tree->copy;
+  my $tree = $self->get_species_tree;
   return if (!$tree);
 
   $tree = $self->_update_tree($tree);
