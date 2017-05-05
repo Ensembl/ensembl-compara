@@ -125,7 +125,7 @@ sub default_options {
 
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
-	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
+	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw', #location of full species tree, will be pruned 
 	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
@@ -261,7 +261,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-			'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2')], #, $self->o('livemirror_loc')],
+			'registry_dbs'  => [ $self->o('staging_loc1')], #, $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '100Mb',
@@ -477,6 +477,7 @@ sub pipeline_analyses {
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('epo_stats_report_email'),
+                'subject' => "EPO LOW Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Report: ",
             }
         },
 
