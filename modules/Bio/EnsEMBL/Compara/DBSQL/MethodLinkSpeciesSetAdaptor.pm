@@ -258,6 +258,37 @@ sub store {
   return $mlss;
 }
 
+=head2 register_url
+
+  Arg  1     : integer $method_link_species_set_id
+  Arg  2     : string $database url
+  Example    : $mlssa->register_url(mlss_id, url)
+  Description: store a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet production pipeline url in the master database               the database.
+  Returntype : none
+  Exception  :
+  Caller     :
+
+=cut
+
+sub register_url {
+    my ($self, $url, $mlss_id) = @_;
+
+    throw("mlss dbID is required") unless ($mlss_id);
+
+    unless (defined $url) {
+    warn("mlss needs valid production pipeline url to store");
+    return $self;
+  }
+
+  my $sql = 'UPDATE method_link_species_set SET url = ? WHERE method_link_species_set_id = ?';
+  my $sth = $self->prepare($sql);
+  $sth->execute($url, $mlss_id);
+  $sth->finish();
+  return $self;
+}
+
+
+
 
 =head2 delete
 
