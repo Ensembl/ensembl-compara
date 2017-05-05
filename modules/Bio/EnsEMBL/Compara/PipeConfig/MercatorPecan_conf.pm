@@ -756,6 +756,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
+            -parameters => {
+              'db_conn' => undef,
+            }
         },
 
         {   -logic_name => 'email_stats_report',
@@ -763,6 +766,7 @@ sub pipeline_analyses {
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('epo_stats_report_email'),
+                'subject' => "MercatorPecan Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Report:",
             }
         },
 
