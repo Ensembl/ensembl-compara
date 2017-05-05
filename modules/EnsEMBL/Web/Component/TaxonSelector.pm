@@ -37,20 +37,19 @@ sub _init {
   $self->{method}          = 'get'; # get|post
   $self->{extra_params}    = {}; # additional params to send     
   $self->{redirect}        = $hub->url({ function => undef }, 0, 1); # url to redirect to
-  # $self->{form_action}   = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
-  $self->{form_action}     = $hub->referer->{uri};
+  #$self->{form_action}     = $self->{'url'} || $self->{'url'} || $hub->url({ action => $hub->param('referer_action'), function => $hub->param('referer_function'), align => $hub->param('align') });
   $self->{link_text}       = 'Species selector';
   $self->{finder_prompt}   = 'Start typing the name of a species...';
 
-  $self->{action}          = $hub->referer->{ENSEMBL_ACTION};
-  $self->{view_config}      = $hub->referer->{ENSEMBL_FUNCTION} eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->referer->{ENSEMBL_ACTION};
+  $self->{action}          = undef;
+  $self->{view_config}     = $hub->param('referer_function') eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->param('referer_action');
   $self->{data_url}        = $hub->url('Json', {
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
-                              action => $self->{action} || '',
+                              action => $hub->param('referer_action') || '',
                               align => $hub->param('align') ? $hub->param('align') : ''
                             });
-  $self->{caller}          = $self->{action};
+  $self->{caller}          = $hub->param('referer_action');
 
   $self->{multiselect}     = $self->param('multiselect');
   $self->{selection_limit} = 40;
@@ -86,22 +85,31 @@ sub content_ajax {
   my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
   push @{$params{defaultKeys}}, @$shown if scalar @$shown;
 
-  
   my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
+
+
   if ($is_cmp) {
     my $alignment = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$hub->param('align')};
-    $params{alignLabel} = $alignment->{name};
+    $params{alignLabel} = $alignment->{name} if ($alignment->{'class'} !~ /pairwise/);
+
     my $sp;
     my $vc_key;
     my $vc_val = 0;
     $params{defaultKeys} = [];
+
     foreach (keys %{$alignment->{species}}) {
-      $vc_key = join '_', ('species', $alignment->{id}, lc($_));
-      $vc_val = $hub->get_viewconfig($self->{view_config})->get($vc_key);
-      push @{$params{defaultKeys}}, $vc_key if $vc_val eq 'yes';
+      next if ($_ eq $hub->species);
+      if ($alignment->{'class'} !~ /pairwise/) { # Multiple alignments
+        $vc_key = join '_', ('species', $alignment->{id}, lc($_));
+        $vc_val = $hub->get_viewconfig($self->{view_config})->get($vc_key);
+        push @{$params{defaultKeys}}, $vc_key if $vc_val eq 'yes';
+      }
+      else {
+        push @{$params{defaultKeys}}, $_;
+
+      }
     }
   }
-
   return $self->jsonify({
     content   => $self->render_selector,
     panelType => $self->{panel_type},
@@ -116,25 +124,10 @@ sub render_selector {
   my $action       = $self->{action};
   my $method       = $self->{method};
   my $extra_params = $self->{extra_params} || {};
-  # $extra_params->{redirect} = $self->{redirect} if $self->{redirect};
 
   my $hidden_fields;
-  # foreach (keys %$extra_params) {
-  #   $hidden_fields .= qq{<input type="hidden" name="$_" value="$extra_params->{$_}" />\n};
-  # }
   
   my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
-  if ($is_cmp) {
-    foreach (keys %{$hub->referer->{params}}) {
-      if ($_ ne 'align') {
-        $hidden_fields .= sprintf qq{<input type="hidden" name="%s" value="%s" />\n}, $_, $hub->referer->{params}->{$_}[0];
-      }
-    }    
-    $action = $self->{form_action};
-  }
-  if ($self->{caller} eq 'Multi') {
-    $action = $self->{form_action};
-  }
 
   my $taxon_tree = sprintf qq {
     <div class="taxon_selector_tree">
@@ -163,15 +156,14 @@ sub render_selector {
     </div>    
   };
 
-  return qq{
+  return sprintf qq{
     <div class="content">
       <form action="$action" method="$method" class="hidden">
         $hidden_fields
       </form>
       <div class="taxon_tree_master hidden"></div>
       <div class="species_select_container">
-      $taxon_tree
-      $taxon_list
+      %s
       </div>
       <div class="ss-buttons">
         <button id="ss-reset" type="reset">Reset All</button>
@@ -180,7 +172,8 @@ sub render_selector {
       </div>
       <div class="ss-msg"><span></span></div>
     </div>
-  };
+  },
+  $taxon_tree . $taxon_list;
 
 }
 

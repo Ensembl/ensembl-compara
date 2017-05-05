@@ -185,7 +185,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
       $(a).off().on('click', function(){
         var node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(child.key);
-        panel.addBreadcrumbs(node);
+        // Crate breadcrumbs if node has submenu in it
+        node.data.is_submenu && panel.addBreadcrumbs(node);
         if (child.is_submenu) {
           if (child.children) {
             panel.createMenu(child.children);
@@ -219,7 +220,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     // Get path
     var path = node.getKeyPath(false, 'key');
     var highlight = false;
-
     if (path) {
       path = path.split('/');
       $.each(path, function(i, val) {
@@ -347,10 +347,13 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       select: function(event, ui) {
         // Reload Dynatree so that the tree is reloaded (checkbox reset) on selecting a multi node via search
         acKeys[ui.item.value].multi && panel.elLk.mastertree.dynatree('getTree').reload();
-        panel.locateNode(acKeys[ui.item.value].key, true);
+        panel.locateNode(acKeys[ui.item.value].key, panel.activeTreeKey === 'Multiple');
+
         if (!panel.multiSelect) {
           var node = panel.elLk.tree.dynatree("getTree").getSelectedNodes();
-          panel.lastSelected = node && node[0];
+          if (node.length && panel.activeTreeKey !== 'Multiple') {
+            panel.lastSelected = node[0];
+          }
         }
       },
       open: function(event, ui) { $('.ui-menu').css('z-index', 999999999 + 1) } // force menu above modal
@@ -414,6 +417,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
         if (panel.isCompara && taxon_key === 'Multiple') {
           var alignment_selected;
+
+          // Select Multiple alignment label node as alignment_selected.
           if (!node.data.isFolder && node.parent.data.key !== 'Multiple') {
             alignment_selected = node.parent;
             panel.updateMultipleAlignmentsHash(node, flag);
@@ -424,11 +429,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
           if (panel.lastSelected && panel.lastSelected.data &&
               panel.lastSelected.data.key !== alignment_selected.data.key) {
-
               // Hack to handle parent.selected false when children are selected.
               // This is because we have selectMode: 3 for multiple alignments
               panel.lastSelected.hasSubSel && panel.lastSelected.select(true);
-
               panel.lastSelected.select(false);
               panel.setSelection(node, flag, true, true);
           }
@@ -471,25 +474,18 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
       $.each(panel.defaultKeys.reverse(), function(index, _key) { 
-        if (multipleAlign) {
-          node = treeObj.getNodeByKey(_key);
-          if (node) {
-            node.select();      // tick it
-            // node.makeVisible(); // force parent path to be expanded
-            panel.setSelection(node, true)
-          }
-        }
-        else {
-          node = treeObj.getNodeByKey(_key);
-          if (node) {
-            node.select();      // tick it
-            node.makeVisible(); // force parent path to be expanded
-            panel.setSelection(node, true)
-          }          
+        node = treeObj.getNodeByKey(_key);
+        if (node) {
+          node.select();      // tick it
+          !multipleAlign && node.makeVisible(); // force parent path to be expanded
+          panel.setSelection(node, true);
+          panel.lastSelected = node;
         }
       });
 
-      multipleAlign && panel.locateNode(panel.alignLabel);
+
+      // Locate multiple alignment with label instead of species name as one species may be found in different EPO alignments
+      multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(panel.defaultKeys[0]);
     }
   },
 
@@ -533,8 +529,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
     return getTree(key, node, node);
   },
-
-
 
   resize: function () {
     var newHeight = $(this.el).height() - 80;
@@ -586,6 +580,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   setSelection: function(node, flag, resetMasterTree, resetSelectedList) {
     var panel = this;
     var items = new Array();
+
     // Get selected items from displayed subtree
     if(node.hasChildren()) {
       // If selected node is an internal node then get all its children
@@ -657,15 +652,18 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var tree = panel.getTree(mastertree_node, 'isInternalNode');
     var submenu_tree = panel.getTree(mastertree_node, 'is_submenu');
 
-    panel.createMenu(submenu_tree.data.children, tree.data.title)
-    panel.addBreadcrumbs(submenu_tree);
+    if (submenu_tree) {
+      panel.createMenu(submenu_tree.data.children, tree.data.title)
+      panel.addBreadcrumbs(submenu_tree);
+    }
     panel.displayTree(tree.data.title);
 
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);
     node && node.activate();
     node && !node.data.isFolder && select && node.select();
-    this.lastSelected = this.activeTreeKey === 'Multiple' && node;
-      // node.li.scrollIntoView();
+    if (!this.isCompara) {
+      this.lastSelected = node;
+    }
   },
   
   removeListItem: function(li) {
@@ -720,10 +718,24 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
     if (this.multiSelect) {
       var tree = this.elLk.mastertree;
-      items = this.getSelectedItems(tree, true);
+      items = this.getSelectedItems(tree);
     }
     else {
-      items = [ this.lastSelected ];
+      // For multiple alignment, it needs the node object to see which species are turned on and off
+      items = this.lastSelected ? [ this.lastSelected ] : [];
+    }
+
+    if (!items.length) {
+      return false;
+    }
+
+    var currSelArr = new Array();
+    for (var i = 0; i < items.length; i++) {
+      items[i] && currSelArr.push(items[i].key);
+    }
+
+    if (!panel.approveSelection(currSelArr)) {
+      return false;
     }
 
     if (this.caller === 'Blast') {
@@ -731,6 +743,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
     else if (this.isCompara) {
       var sel_alignment = items[0];
+
       if (multipleAlignment) {
         Ensembl.EventManager.trigger('updateMultipleAlignmentSpeciesSelection', sel_alignment);
       }
@@ -738,21 +751,13 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         Ensembl.EventManager.trigger('updateAlignmentSpeciesSelection', sel_alignment);
       }
     }
-    else if (panel.caller === 'Multi') {
+    else if (panel.caller === 'Multi') { //Region Comparison
       var params = [];
-      var currSelArr = new Array();
       for (var i = 0; i < items.length; i++) {
-        if (items[i]) {
-          params.push('s' + (i + 1) + '=' + items[i].key);
-          currSelArr.push(items[i].key);
-        }
+        items[i] && params.push('s' + (i + 1) + '=' + items[i].key);
       }
 
-      if (!panel.approveSelection(currSelArr)) {
-        return false;
-      }
-
-      var url = this.elLk.form.attr('action').replace(/[s,r]\d+=.*(;)?/,'');
+      var url = this.elLk.form.prop('action').replace(/[s,r]\d+=.*(;)?/,'');
       Ensembl.redirect(url + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + params.join(';')));
       
     }
@@ -761,7 +766,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   // Check if there was any change in the selection. If not, then do nothing.
   approveSelection: function(currSel) {
-    return currSel.join(',') !== this.defaultKeys.join(',');
+    return currSel.length && currSel.join(',') !== this.defaultKeys.join(',');
   }
   
 });
