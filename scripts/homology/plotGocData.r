@@ -139,8 +139,6 @@ barplot.phylo <- function(x_df, x_df_cols, x_df_labels, species, tree_row, filen
 phylo_tree = read.tree(tree_file)
 phylo_tree = ladderize(collapse.singles(phylo_tree), FALSE)
 
-goc_summary
-
 goc_summary    = read.delim(data_file, sep="\t", header=TRUE, na.strings=c('NULL'))
 goc_0_matrix   = as.matrix(acast(goc_summary, name1~name2, value.var='goc_eq_0'))
 goc_25_matrix  = as.matrix(acast(goc_summary, name1~name2, value.var='goc_gte_25'))
