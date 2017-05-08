@@ -100,9 +100,9 @@ print STDERR "species_list:@all_species_names\n";
 
 #Main variables used to store the homology
 #-----------------------------------------------------------------------------------------------------
-my %goc_list_one2one;
+my %combined_score_list;
 
-# $goc_list_one2one is Used to track down one2many that map to different species to assure we choose the one with the max overal goc score
+# $combined_score_list is Used to track down one2many that map to different species to assure we choose the one with the max overal goc score
 #e.g.:
 #((gene_1,gene_2),(gene_3,(gene_4,gene_5)));
 #
@@ -185,8 +185,8 @@ for ( my $i = 0; $i < scalar(@gdbs); $i++ ) {
             $count_one2one++;
             print STDERR "one2one: [$count_one2one/$total_count_one2one]\n" if ( 0 == $count_one2one % 1000 );
 
-            $goc_list_one2one{ $gene1->gene_member_id } = $combined_score;
-            $goc_list_one2one{ $gene2->gene_member_id } = $combined_score;
+            $combined_score_list{ $gene1->gene_member_id }{ $gene2->gene_member_id } = $combined_score;
+            $combined_score_list{ $gene2->gene_member_id }{ $gene1->gene_member_id } = $combined_score;
 
             #add the one2ones int the connection object
             $connected_homologies->add_connection( $gene1->gene_member_id, $gene2->gene_member_id );
@@ -325,18 +325,25 @@ foreach my $cluster ( keys %allclusters ) {
                     my $species_counter = 0;
                     foreach my $core_species ( keys %{ $species_status{'core'} } ) {
                         foreach my $core_member ( keys %{ $species_status{'core'}{$core_species} } ) {
-                            $total_goc += $goc_list_one2one{$core_member};
-                            print " + " . $goc_list_one2one{$core_member} if ($debug);
-                            $species_counter++;
+                            if (exists $combined_score_list{$repeated_member}{$core_member}){
+                                my $species_from_core_member = $member_data_map{$core_member}{'species'};
+                                my $species_from_repeated_member = $member_data_map{$repeated_member}{'species'};
+
+                                $total_goc += $combined_score_list{$repeated_member}{$core_member};
+                                print " + " . $combined_score_list{$repeated_member}{$core_member} if ($debug);
+                                $species_counter++;
+                            }
                         }
                     }
 
-                    #adding the goc value of the repeated member to the list, so its complete
-                    $total_goc += $goc_list_one2one{$repeated_member};
-                    $species_counter++;
-                    print " + " . $goc_list_one2one{$repeated_member} . "\t/\t$species_counter" if ($debug);
-                    $averaged_goc{$repeated_species}{$repeated_member} = $total_goc/$species_counter;
-                    print "\naveraged_goc:$repeated_member\t" . $averaged_goc{$repeated_species}{$repeated_member} . "\n" if ($debug);
+                    if ($species_counter == 0){
+                        #There are no core species/member or no combined score available for the pair
+                        $averaged_goc{$repeated_species}{$repeated_member} = 0;
+                    }
+                    else{
+                        $averaged_goc{$repeated_species}{$repeated_member} = $total_goc/$species_counter;
+                    }
+                    print "\naveraged_goc:$repeated_member\t$total_goc/$species_counter\t=\t" . $averaged_goc{$repeated_species}{$repeated_member} . "\n" if ($debug);
                 }
 
                 #3 - get the best member of the repeated species
@@ -345,7 +352,7 @@ foreach my $cluster ( keys %allclusters ) {
                 #actual promotion
                 $phylogeny_ready_homology_promoted{$cluster}{$max_val_key} = 1;
 
-                print "\t\tPROMOTED:$repeated_species|$max_val_key:\t" . $averaged_goc{$repeated_species}{$max_val_key} . "\n" if ($debug);
+                print "\n\t\tPROMOTED:$repeated_species|$max_val_key:\t" . $averaged_goc{$repeated_species}{$max_val_key} . "\n" if ($debug);
 
             } ## end foreach my $repeated_species...
         } ## end if ( $species_count >=...)
