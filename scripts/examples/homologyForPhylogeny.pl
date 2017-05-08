@@ -162,15 +162,15 @@ for ( my $i = 0; $i < scalar(@gdbs); $i++ ) {
         my $mlss_orth = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs( 'ENSEMBL_ORTHOLOGUES', [ $sp1_gdb, $sp2_gdb ] );
 
         #one2one orthologues
-        my @one2one_orthologies = @{ $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet( $mlss_orth, -ORTHOLOGY_TYPE => 'ortholog_one2one' ) };
+        my @orthologies = @{ $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet( $mlss_orth, -ORTHOLOGY_TYPE => ['ortholog_one2one','ortholog_one2many'] ) };
 
-        #Preloading all one2one homologies.
-        my $sms_one2one = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $one2one_orthologies[0]->adaptor->db->get_AlignedMemberAdaptor, \@one2one_orthologies );
-        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $one2one_orthologies[0]->adaptor->db->get_GeneMemberAdaptor, $sms_one2one );
+        #Preloading all homologies.
+        my $sms_homology = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $orthologies[0]->adaptor->db->get_AlignedMemberAdaptor, \@orthologies );
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $orthologies[0]->adaptor->db->get_GeneMemberAdaptor, $sms_homology );
 
-        my $count_one2one       = 0;
-        my $total_count_one2one = scalar @one2one_orthologies;
-        foreach my $ortholog (@one2one_orthologies) {
+        my $count_homology       = 0;
+        my $total_count_homology = scalar @orthologies;
+        foreach my $ortholog (@orthologies) {
 
             #transform the undef's returned by GOC analysis to -100
             my $goc = $ortholog->goc_score() // -100;
@@ -182,45 +182,16 @@ for ( my $i = 0; $i < scalar(@gdbs); $i++ ) {
             # *100+$gene1->perc_id is a formula to take the identity into account
             my $combined_score = max( $goc*100 + $gene1->perc_id, $goc*100 + $gene2->perc_id );
 
-            $count_one2one++;
-            print STDERR "one2one: [$count_one2one/$total_count_one2one]\n" if ( 0 == $count_one2one % 1000 );
+            $count_homology++;
+            print STDERR "homology: [$count_homology/$total_count_homology]\n" if ( 0 == $count_homology % 1000 );
 
             $combined_score_list{ $gene1->gene_member_id }{ $gene2->gene_member_id } = $combined_score;
             $combined_score_list{ $gene2->gene_member_id }{ $gene1->gene_member_id } = $combined_score;
 
-            #add the one2ones int the connection object
-            $connected_homologies->add_connection( $gene1->gene_member_id, $gene2->gene_member_id );
-        }
+            print "SCORE:|".$gene1->gene_member_id."|=|".$gene2->gene_member_id." = $combined_score\n" if ($debug);
+            print "SCORE|".$gene2->gene_member_id."|=|".$gene1->gene_member_id." = $combined_score\n" if ($debug);
 
-        #=======================================================================
-        #one2many orthologues
-        my @one2many_orthologies = @{ $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet( $mlss_orth, -ORTHOLOGY_TYPE => 'ortholog_one2many' ) };
-
-        #Preloading all one2many homologies.
-        my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $one2many_orthologies[0]->adaptor->db->get_AlignedMemberAdaptor, \@one2many_orthologies );
-        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $one2many_orthologies[0]->adaptor->db->get_GeneMemberAdaptor, $sms );
-
-        my $count_one2many       = 0;
-        my $total_count_one2many = scalar @one2many_orthologies;
-
-        foreach my $ortholog_many (@one2many_orthologies) {
-
-            $count_one2many++;
-            print STDERR "one2many: [$count_one2many/$total_count_one2many]\n" if ( 0 == $count_one2many % 1000 );
-
-            #transform the undef's returned by GOC analysis to -100
-            my $goc = $ortholog_many->goc_score() // -100;
-
-            # Create a hash of stable_id pairs with genome name as subkey
-            my ( $gene1, $gene2 ) = @{ $ortholog_many->get_all_Members };
-
-            #make sure it is present in all the species
-            # *100+$gene1->perc_id is a formula to take the identity into account
-            my $combined_score = max( $goc*100 + $gene1->perc_id, $goc*100 + $gene2->perc_id );
-
-            $goc_list_one2one{ $gene1->gene_member_id } = $combined_score;
-            $goc_list_one2one{ $gene2->gene_member_id } = $combined_score;
-
+            #add the homologies int the connection object
             $connected_homologies->add_connection( $gene1->gene_member_id, $gene2->gene_member_id );
         }
     } ## end for ( my $j = $i + 1; $j...)
@@ -304,19 +275,30 @@ foreach my $cluster ( keys %allclusters ) {
             }
 
             foreach my $member (@members_list) {
-                if ( $repeated_core_species{ $member_data_map{$member}{'species'} } == 1 ) {
-                    print "\tcore:\t\tmember:$member\tgoc:" . $goc_list_one2one{$member} . "\tspecies:" . $member_data_map{$member}{'species'} . "\n" if ($debug);
+                my $species_from_member = $member_data_map{$member}{'species'};
+
+                if ( $repeated_core_species{ $species_from_member } == 1 ) {
                     $species_status{'core'}{ $member_data_map{$member}{'species'} }{$member} = 1;
                     $phylogeny_ready_homology_promoted{$cluster}{$member} = 1;
                 }
                 else {
-                    $species_status{'repeated'}{ $member_data_map{$member}{'species'} }{$member} = 1;
-                    print "\trepeated:\tmember:$member\tgoc:" . $goc_list_one2one{$member} . "\tspecies:" . $member_data_map{$member}{'species'} . "\n" if ($debug);
+                    $species_status{'repeated'}{ $species_from_member }{$member} = 1;
                 }
             }
 
             my %averaged_goc;
             print "\nThere are " . scalar( keys %{ $species_status{'repeated'} } ) . " repeated species\n" if ($debug);
+
+            foreach my $repeated_species ( keys %{ $species_status{'repeated'} } ) {
+                foreach my $repeated_member ( keys %{ $species_status{'repeated'}{$repeated_species} } ) {
+                    print "\trepeated:\t$repeated_member\tspecies:$repeated_species\n" if ($debug);
+                }
+            }
+            foreach my $core_species ( keys %{ $species_status{'core'} } ) {
+                foreach my $core_member ( keys %{ $species_status{'core'}{$core_species} } ) {
+                    print "\tcore:\t$core_member\tspecies:$core_species\n" if ($debug);
+                }
+            }
 
             #Build the GOC-score average among all the members of all the species withing the homology so we can choose the one with the highest overall GOC score.
             foreach my $repeated_species ( keys %{ $species_status{'repeated'} } ) {
