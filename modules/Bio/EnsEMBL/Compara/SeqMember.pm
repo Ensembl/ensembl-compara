@@ -472,8 +472,9 @@ sub gene_member_id {
                             - STABLE_ID => stable ID
                             - VERSION => stable ID and version number
                             - SOURCE_STABLE_ID => source name and stable ID
-                            - APPEND_SP_NAME => append the species name in the sequence description
+                            - STABLE_GENE => sequence stable gene ID (e.g. "ENSG...")
   Arg [-WITH_DESCRIPTION] : boolean - add this Member's description
+  Arg [-APPEND_SP_NAME] : Append the species name in the sequence description
   Example    : my $bioperl_seq = $member->bioseq;
   Description: returns sequence of this member as a Bio::Seq object
   Returntype : Bio::Seq object
