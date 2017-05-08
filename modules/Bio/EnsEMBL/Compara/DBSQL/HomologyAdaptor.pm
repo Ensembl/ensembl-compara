@@ -260,6 +260,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
     throw("method_link_species_set arg is required\n") unless ($mlss);
 
+
     my ($orthology_type, $is_tree_compliant, $species_tree_node_ids) =
         rearrange([qw(ORTHOLOGY_TYPE IS_TREE_COMPLIANT SPECIES_TREE_NODE_IDS)], @args);
 
@@ -268,8 +269,13 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
 
     if (defined $orthology_type) {
-        $constraint .= ' AND h.description = ?';
-        $self->bind_param_generic_fetch($orthology_type, SQL_VARCHAR);
+        $orthology_type = [$orthology_type] if ref($orthology_type) ne 'ARRAY';
+        if (scalar(@$orthology_type) == 0){
+            #We want to reset the array of binds to avoid cache contaminations from the above bind_param_generic_fetch.
+            $self->{'_bind_param_generic_fetch'} = [];
+            return [];
+        }
+        $constraint .= sprintf(' AND h.description IN (%s)', join(',',  map { "'$_'" } @$orthology_type));
     }
 
     if (defined $is_tree_compliant) {
