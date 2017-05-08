@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=master)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/89)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=release/89&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=release/89)
 [![Documentation Status](https://readthedocs.org/projects/ensembl-compara/badge/?version=master)](http://ensembl-compara.readthedocs.io/en/master/)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
