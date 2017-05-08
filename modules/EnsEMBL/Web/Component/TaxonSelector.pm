@@ -156,14 +156,15 @@ sub render_selector {
     </div>    
   };
 
-  return sprintf qq{
+  return qq{
     <div class="content">
       <form action="$action" method="$method" class="hidden">
         $hidden_fields
       </form>
       <div class="taxon_tree_master hidden"></div>
       <div class="species_select_container">
-      %s
+      $taxon_tree
+      $taxon_list
       </div>
       <div class="ss-buttons">
         <button id="ss-reset" type="reset">Reset All</button>
@@ -172,8 +173,7 @@ sub render_selector {
       </div>
       <div class="ss-msg"><span></span></div>
     </div>
-  },
-  $taxon_tree . $taxon_list;
+  };
 
 }
 
