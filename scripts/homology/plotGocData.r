@@ -21,16 +21,18 @@
 #   Rscript plotGocData.r your_tree.newick heatmap.data /your/output_directory/
 
 args = commandArgs(trailingOnly = TRUE)
-if (length(args) != 3) {
-  stop('Three arguments are required: tree_file data_file out_dir')
+if (length(args) != 4) {
+  stop('Four arguments are required: tree_file data_file out_dir')
 }
 
 tree_file = args[1]
 data_file = args[2]
 out_dir   = args[3]
+reference_species_file   = args[4] #File with one reference species per line
 
 library(ape)
 library(reshape2)
+library(ggplot2)
 
 heatmap.phylo = function(x_mat, tree_row, tree_col, filename, maintitle, ...) {
   # x_mat:     numeric matrix, with rows and columns labelled with species names
@@ -87,6 +89,9 @@ heatmap.phylo = function(x_mat, tree_row, tree_col, filename, maintitle, ...) {
   dev.off()
 }
 
+#-------------------------------------------------------------------------
+#                        Barplots with topology
+#-------------------------------------------------------------------------
 barplot.phylo <- function(x_df, x_df_cols, x_df_labels, species, tree_row, filename, ...) {
   # x_df:        dataframe with columns name1 and name2 with species names
   # x_df_cols:   list of column names from the data frame to plot
@@ -154,6 +159,9 @@ barplot_col    = rainbow(length(n_goc_cols))
 
 goc_100_matrix
 
+#-------------------------------------------------------------------------
+#                               Heatmaps
+#-------------------------------------------------------------------------
 heatmap.phylo(goc_0_matrix,   phylo_tree, phylo_tree, paste(out_dir, 'goc_0.pdf', sep='/'),   'Percentage of orthologs with GOC score = 0',   col=heatmap_col, fill=heatmap_col, border=heatmap_col)
 heatmap.phylo(goc_25_matrix,  phylo_tree, phylo_tree, paste(out_dir, 'goc_25.pdf', sep='/'),  'Percentage of orthologs with GOC score >= 25', col=heatmap_col, fill=heatmap_col, border=heatmap_col)
 heatmap.phylo(goc_50_matrix,  phylo_tree, phylo_tree, paste(out_dir, 'goc_50.pdf', sep='/'),  'Percentage of orthologs with GOC score >= 50', col=heatmap_col, fill=heatmap_col, border=heatmap_col)
@@ -166,4 +174,125 @@ for (species in levels(goc_summary$name1)) {
   barplot.phylo(goc_summary, n_goc_cols, n_goc_labels, species, phylo_tree, filename, fill=barplot_col, col=barplot_col)
 }
 
+
+#-------------------------------------------------------------------------
+#                       Barplots sorted by GOC scores
+#-------------------------------------------------------------------------
+
+
+# Gene count
+#---------------------------------------------------------------------------------------------------
+pdf(paste(out_dir, 'gene_count.pdf', sep='/'),width=6,height=4,paper='special')
+num_of_genes_dat = read.delim(paste(out_dir, 'gene_count.data', sep='/'), sep="\t", header=TRUE, na.strings=c('NULL'))
+num_of_genes_plot <- melt(num_of_genes_dat, id.vars='species')
+ggplot(num_of_genes_plot, aes(x=species, y=value)) + geom_bar(stat='identity') + facet_grid(.~variable) + coord_flip() + labs(x='',y='') + theme(text = element_text(size=5)) + theme(axis.text.x = element_text(size=rel(0.4)))
+
+
+# Orthologues count
+#---------------------------------------------------------------------------------------------------
+pdf(paste(out_dir, 'number_of_orthologues.pdf', sep='/'),width=6,height=4,paper='special')
+num_of_orthologues_dat  = read.delim(paste(out_dir, 'homology.data', sep='/'), sep="\t", header=TRUE, na.strings=c('NULL'))
+num_of_orthologues_plot <- melt(num_of_orthologues_dat, id.vars='species')
+options(scipen=10000)
+ggplot(num_of_orthologues_plot, aes(x=species, y=value)) + geom_bar(stat='identity') + facet_grid(.~variable) + coord_flip() + labs(x='',y='') + theme(text = element_text(size=5)) + theme(axis.text.x = element_text(size=rel(0.8)))
+
+# References above 100
+#---------------------------------------------------------------------------------------------------
+reference_species = read.delim(reference_species_file, sep="\n", header=FALSE, na.strings=c('NULL'))
+
+file_name = paste(out_dir, 'ordered_goc_100_refernces.pdf', sep='/')
+pdf(file_name,width=6,height=4,paper='special')
+for (ref_species in levels(reference_species$V1)) {
+    raw_data = read.delim( paste(paste(out_dir,ref_species,sep='/'), "_ref.dat", sep=''), header = TRUE, sep = ";")
+    raw_data$threshold = as.factor(sapply(raw_data$threshold , function(x){strsplit(as.character(x), split = "X_")[[1]][2]}))
+
+    x = raw_data[raw_data$threshold == "100",]
+
+    species_list = x[rev(order(x$goc)),]$species
+    taxon_list = x[rev(order(x$goc)),]$taxon
+    sorted_species_list = rev(species_list)
+    sorted_taxon_list = rev(taxon_list)
+
+    list = c("Crocodylia" = "chartreuse4"
+              , "Birds" = "blue"
+              , "Squamata" = "darkorange2"
+              , "Mammals" = "red"
+              , "Fish" = "darkcyan"
+              , "Testudines" = "black"
+              , "Amphibia" = "deeppink")
+
+    raw_data$species = factor(raw_data$species, levels = sorted_species_list)
+    raw_data$taxonomy = sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
+
+    graph_title = paste("GOC scores, ordered by GOC=100, reference: ",ref_species,sep='')
+
+    print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))
+                + geom_bar(stat="identity", size = 0)
+                + coord_flip()
+                + theme(axis.text.y = element_text(colour = as.character(sorted_taxon_list)) , axis.text=element_text(size=7))
+                + ggtitle(graph_title) + theme(plot.title = element_text(size = 7, face = "bold"))
+                + guides(colour = guide_legend(override.aes = list(size=1)))
+                + scale_colour_manual(values = list)
+        )
+}
+
+# References above threshold with splits
+#---------------------------------------------------------------------------------------------------
+file_name = paste(out_dir, 'above_with_splits_references.pdf', sep='/')
+pdf(file_name,width=6,height=4,paper='special')
+for (ref_species in levels(reference_species$V1)) {
+
+    raw_data = read.delim( paste(paste(out_dir,ref_species,sep='/'), "_above_with_splits.dat", sep=''), header = TRUE, sep = ";")
+
+    x <- raw_data[raw_data$threshold == "above",]
+    species_list <- x[rev(order(x$goc)),]$species
+    taxon_list <- x[rev(order(x$goc)),]$taxon
+    sorted_species_list <- rev(species_list)
+    sorted_taxon_list <- rev(taxon_list)
+
+    list <- c("Crocodylia" = "chartreuse4"
+              , "Birds" = "blue"
+              , "Squamata" = "darkorange2"
+              , "Mammals" = "red"
+              , "Fish" = "darkcyan"
+              , "Testudines" = "black"
+              , "Amphibia" = "deeppink")
+
+    raw_data$species <- factor(raw_data$species, levels = sorted_species_list)
+    raw_data$taxonomy <- sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
+
+    graph_title = paste("GOC scores above and under 50, reference: ",ref_species,sep='')
+
+    print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))
+                + geom_bar(stat="identity", size = 0) + coord_flip()
+                + theme(axis.text.y = element_text(colour = as.character(sorted_taxon_list)) , axis.text=element_text(size=7))
+                + ggtitle(graph_title) + theme(plot.title = element_text(size = 7, face = "bold"))
+                + guides(colour = guide_legend(override.aes = list(size=1)))
+                + scale_colour_manual(values = list)
+    )
+}
+
+# References above threshold without splits
+#---------------------------------------------------------------------------------------------------
+file_name = paste(out_dir, 'above_threshold_references.pdf', sep='/')
+pdf(file_name,width=6,height=4,paper='special')
+for (ref_species in levels(reference_species$V1)) {
+
+    raw_data = read.delim( paste(paste(out_dir,ref_species,sep='/'), "_ref_above_threshold.dat", sep=''), header = TRUE, sep = ";")
+
+    species_list <- raw_data[rev(order(raw_data$perc_orth_above_goc_thresh)),]$species
+    taxon_list <- raw_data[rev(order(raw_data$perc_orth_above_goc_thresh)),]$taxon
+    sorted_species_list <- rev(species_list)
+    sorted_taxon_list <- rev(taxon_list)
+    raw_data$species                     <- factor(raw_data$species, levels = sorted_species_list)
+
+    graph_title = paste("Number of GOC>=50, reference: ",ref_species,sep='')
+
+    print(ggplot(data = raw_data[,c(1:2)], aes(x = species, y = perc_orth_above_goc_thresh, fill = perc_orth_above_goc_thresh))
+                + geom_bar(stat="identity") + coord_flip()
+                + theme(axis.text.y = element_text(colour = c(sorted_taxon_list)), axis.text=element_text(size=7))
+                + ggtitle("Number of GOC>=50: Tuatara as reference") + theme(plot.title = element_text(size = 7, face = "bold"))
+
+    )
+}
 
