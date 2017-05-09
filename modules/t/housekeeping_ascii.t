@@ -59,9 +59,13 @@ sub is_ascii {
     close($fh);
 }
 
+my %allowed_subdirs = map {$_ => 1} qw(modules scripts docs sql travisci xs);
 my @source_files = all_source_code($root);
 #Find all files & run
 foreach my $f (@source_files) {
+    if ($f =~ /ensembl-compara\/modules\/t\/..\/..\/([^\/]*)\//) {
+        next unless $allowed_subdirs{$1};
+    }
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
     is_ascii($f);
 }
