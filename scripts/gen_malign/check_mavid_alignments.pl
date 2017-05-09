@@ -240,11 +240,11 @@ print STDERR "Bio::EnsEMBL::Compara::GenomicAlign (", $genomic_align->dbID,") co
     my $seq1 = $genomic_alignment->aligned_sequence;
     $seq1 =~ s/\-//g;
     print $genomic_alignment->dnafrag->genome_db->name, " (", $genomic_alignment->dnafrag_strand, ")\n";
-    print substr($seq1, 0, 20), " ·· ", substr($seq1, -21),"\n";
+    print substr($seq1, 0, 20), " -- ", substr($seq1, -21),"\n";
     foreach my $sequence (@these_sequences) {
       my $seq2 = $sequence->seq;
       $seq2 =~ s/\-//g;
-      print substr($seq2, 0, 20), " ·· ", substr($seq2, -21), "\n";
+      print substr($seq2, 0, 20), " -- ", substr($seq2, -21), "\n";
       if ($sequence->seq eq $genomic_alignment->aligned_sequence) {
         $match = 1;
         last;

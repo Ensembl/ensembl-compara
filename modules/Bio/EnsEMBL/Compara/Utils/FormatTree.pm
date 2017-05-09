@@ -484,7 +484,7 @@ sub _internal_format_newick {
 
 # ++ Equivalences with existing formats:
 
-# "full" --> ‘%{n}’
+# "full" --> '%{n};
 
 # "full_common" --> '%{n}%{ -c}%{.-d}{_t-}' -- Reads: Print the name of the node, if you are in a leaf and its "common_name" is defined print a space and the "common_name". Then, if you are in a leaf and the "gdb_id" is defined, print a dot and the "gdb_id", print an underscore and the "ensembl timetree mya".
 
@@ -503,7 +503,7 @@ sub _internal_format_newick {
 
 # PS: The specification of the format in EBNF could be something like this:
 
-# Format = “'” { string_literal | Token } “'” .
-# Token = “%{“ [string_literal] Code [ “:” Code ] [string_literal] “}” .
-# Code = [ “-”  ] Letter_code [ “-” ]
-# Letter_code = [ “n“ | “c” | “d” | “t” | “l” | “h” | “s” | “p” | “t” | “m” | “g” | “i” | “e” ] .
+# Format = "'" { string_literal | Token } "'" .
+# Token = "%{" [string_literal] Code [ ":" Code ] [string_literal] "}" .
+# Code = [ "-"  ] Letter_code [ "-" ]
+# Letter_code = [ "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "t" | "m" | "g" | "i" | "e" ] .

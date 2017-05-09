@@ -695,7 +695,7 @@ sub copy_dna_dna_alignements {
     next if ($this_method_link_species_set->method->dbID >= 100);
     ## We ignore LASTZ_PATCH alignments as they should be reloaded fresh every release
     next if ($this_method_link_species_set->method->type eq 'LASTZ_PATCH');
-    ## Skip HAL alignments as there's nothing in the db
+    ## Skip HAL alignments as there's nothing in the db
     next if ($this_method_link_species_set->method->type =~ m/CACTUS_HAL/);
 
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name,

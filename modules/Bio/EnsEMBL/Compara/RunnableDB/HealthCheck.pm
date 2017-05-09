@@ -523,7 +523,7 @@ sub _run_compare_to_previous_db_test {
       eval {
 	      $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $previous_gdbs);
 
-        ### HACK ###
+        ### HACK ###
         # if this is the first time this type of analysis is run, the MLSS will not exist in previous DB
         # in this case, find another MLSS of the same class
         unless ( defined $previous_mlss ) {

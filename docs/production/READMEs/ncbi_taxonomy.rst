@@ -8,16 +8,11 @@ Import of the NCBI Taxonomy
 #. Edit ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql`` to ensembl aliases if needed.
 
    The file needs to be updated as new species are integrated into Ensembl.
-   Make sure that for each species, 'ensembl alias name' is provided.
 
-   .. note: The following two keys are only used by Compara and Production does not need to update them
+   .. note: The following is only used by Compara and Production does not need to update them
 
-    For the Compara analysis, the ancestral species must be fully updated:
-
-        - ensembl alias name
-        - ensembl timetree mya
-
-    The "ensembl timetree mya" tags come from the TimeTree database (http://www.timetree.org).
+    For the Compara analysis, the ancestral species must have an "ensembl timetree mya" tag,
+    which usually comes from the TimeTree database (http://www.timetree.org).
     Unfortunately, the website is not able to give the age of an ancestral species directly.
     You will have to enter two extant species that have that ancestral species as their last common ancestor.
  

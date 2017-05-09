@@ -1428,7 +1428,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       undef $maf_file_str;
     }
 
-    else { # pairwise alignment
+    else { # pairwise alignment
       my $ref_slice_adaptor = $ref_gdb->db_adaptor->get_SliceAdaptor;
 
       foreach my $target_gdb (@$targets_gdb) {
