@@ -19,7 +19,7 @@ limitations under the License.
 
 ##
 ## Configuration file for DumpMultiAlign pipeline
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGDumpMultiAlign_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::DumpMultiAlign_conf;
 
 use strict;
 use warnings;

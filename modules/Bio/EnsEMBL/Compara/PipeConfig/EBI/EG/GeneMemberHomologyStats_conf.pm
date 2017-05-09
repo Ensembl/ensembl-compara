@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EGGeneMemberHomologyStats_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EGGeneMemberHomologyStats_conf
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGGeneMemberHomologyStats_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf;
 
 use strict;
 use warnings;

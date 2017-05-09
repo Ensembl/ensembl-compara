@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 
     #5. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -57,11 +57,11 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGLastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::Lastz_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EGPairAligner_conf');  # Inherit from base PairAligner class
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::PairAligner_conf');  # Inherit from base PairAligner class
 
 
 sub default_options {

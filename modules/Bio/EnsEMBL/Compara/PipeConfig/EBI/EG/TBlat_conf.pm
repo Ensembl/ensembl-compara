@@ -57,11 +57,11 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGTBlat_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EGPairAligner_conf');  # Inherit from base PairAligner class
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::PairAligner_conf');  # Inherit from base PairAligner class
 
 
 sub default_options {

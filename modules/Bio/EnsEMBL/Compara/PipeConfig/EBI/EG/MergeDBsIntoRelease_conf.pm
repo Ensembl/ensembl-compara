@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EGMergeDBsIntoRelease_conf
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EGMergeDBsIntoRelease_conf -password <your_password>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::MergeDBsIntoRelease_conf -password <your_password>
 
     #3. run the beekeeper.pl
 
@@ -42,7 +42,7 @@ because synteny_region_id is not ranged by MLSS.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGMergeDBsIntoRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::MergeDBsIntoRelease_conf;
 
 use strict;
 use warnings;
