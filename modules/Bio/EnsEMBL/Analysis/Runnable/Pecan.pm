@@ -64,13 +64,13 @@ use Bio::EnsEMBL::Analysis::Config::Compara;
 use Bio::EnsEMBL::Analysis::Runnable;
 our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
-my $java_exe = "/software/bin/java";
+my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
 my $default_exonerate = $EXONERATE;
-my $default_jar_file = "pecan_v0.8.jar";
+my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
 my $default_java_class = "bp.pecan.Pecan";
-my $estimate_tree = "/software/ensembl/compara/pecan/EstimateTree.py";
+my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
 
 =head2 new
 
