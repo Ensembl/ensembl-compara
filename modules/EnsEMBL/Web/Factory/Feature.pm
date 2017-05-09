@@ -183,12 +183,12 @@ sub _create_ProbeFeatures_linked_transcripts {
     my $id = $self->param('id');
     my $probe_set_adaptor = $db_adaptor->get_ProbeSetAdaptor;
     my $probe_set = shift @{$probe_set_adaptor->fetch_all_by_name($id)};
-    @db_entries = $probe_set ? @{$probe_set->get_all_Transcript_DBEntries} : ();
+    @db_entries = $probe_set ? @{$probe_set->fetch_all_ProbeSetTranscriptMappings} : ();
   } else {
     my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
     foreach my $probe (@probe_objs) {
-      my @entries = @{$probe->get_all_Transcript_DBEntries};
+      my @entries = @{$probe->fetch_all_ProbeTranscriptMappings};
       push(@db_entries, @entries);
     }
   }
@@ -198,10 +198,10 @@ sub _create_ProbeFeatures_linked_transcripts {
     my $core_db_adaptor    = $self->_get_core_adaptor;
     my $transcript_adaptor = $core_db_adaptor->get_TranscriptAdaptor;
 
-    if (!exists $seen{$entry->primary_id}) {
-      my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->primary_id);
+    if (!exists $seen{$entry->stable_id}) {
+      my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->stable_id);
       push @transcripts, $transcript;
-      $seen{$entry->primary_id} = 1;
+      $seen{$entry->stable_id} = 1;
     }
   }
 
