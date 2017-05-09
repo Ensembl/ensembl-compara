@@ -603,7 +603,7 @@ Compara (Gene-tree) data
 
      SELECT * from gene_tree_backup RIGHT JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" AND gene_tree_backup.root_id IS NULL;
 
-SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name’;
+SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name';
 
 * Count all the trees via gene_root_tag:
 
