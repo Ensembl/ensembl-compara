@@ -1049,6 +1049,20 @@ sub core_pipeline_analyses {
             -rc_name => '4Gb_job',
             -flow_into => {
                 2 => [ '?table_name=other_member_sequence&insertion_method=INSERT_IGNORE' ],
+                1 => [ 'exon_boundaries_table_reuse' ],
+            },
+        },
+
+        {   -logic_name => 'exon_boundaries_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                            'db_conn'    => '#reuse_db#',
+                            'inputquery' => 'SELECT e.* FROM exon_boundaries e JOIN seq_member USING (seq_member_id) WHERE seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -rc_name => '1Gb_job',
+            -flow_into => {
+                2 => [ '?table_name=exon_boundaries&insertion_method=INSERT_IGNORE' ],
                 1 => [ 'hmm_annot_table_reuse' ],
             },
         },
