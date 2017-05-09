@@ -74,13 +74,21 @@ use Data::Dumper;
 use Bio::EnsEMBL::Analysis::Runnable;
 our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
-my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
 my $default_exonerate = $EXONERATE;
-my $default_jar_file = "pecan.0.8.jar";
+
+# my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
+# my $default_jar_file = "pecan.0.8.jar";
+# my $default_java_class = "bp.pecan.Pecan";
+# my $estimate_tree = "~/pecan/EstimateTree.py";
+
+my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
+my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
 my $default_java_class = "bp.pecan.Pecan";
-my $estimate_tree = "~/pecan/EstimateTree.py";
+my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
+$ENV{'PYTHONPATH'} = '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/ortheus/0.5.0/';
+$ENV{'CLASSPATH'}  = '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/';
 
 =head2 new
 
@@ -272,7 +280,7 @@ sub run_ortheus {
   }
 
   #Add -X to fix -ve indices in array bug suggested by BP
-  $command .= " -m \"$JAVA " . $java_params . "\" -k \"#-J " . $self->exonerate . " -X\"";
+  $command .= " -m \"$JAVA " . $java_params . "\" -k \" -J " . $self->exonerate . " -X\"";
 
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
@@ -292,15 +300,22 @@ sub run_ortheus {
   if ($self->options) {
       $command .= " " . $self->options;
   }
+
   print "Running ortheus: " . $command . "\n";
 
   #Capture output messages when running ortheus instead of throwing
-  open(ORTHEUS, "$command 2>&1 |") || die "Failed: $!\n";
+  open(ORTHEUS, "$command 2>&1 |") or die "Failed: $!\n";
   my $output = "";
   while (<ORTHEUS>){
       $output .= $_;
   }
   close ORTHEUS;
+
+  if ( $self->debug ) {
+      print "\nOUTPUT TREE:\n";
+      system("cat output.$$.tree");
+      print "\n\n";
+  }
 
   return $output;
 
