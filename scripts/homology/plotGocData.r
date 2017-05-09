@@ -18,17 +18,16 @@
 #   perl generateGocBreakout.pl -outdir /homes/mateus/goc -user ensro -database mateus_tuatara_86 -hostname mysql-treefam-prod:4401
 
 #How to plot the data:
-#   Rscript plotGocData.r your_tree.newick heatmap.data /your/output_directory/
+#   Rscript plotGocData.r your_tree.newick /your/output_directory/ your_reference_species_file
 
 args = commandArgs(trailingOnly = TRUE)
-if (length(args) != 4) {
-  stop('Four arguments are required: tree_file data_file out_dir')
+if (length(args) != 3) {
+  stop('Four arguments are required: tree_file out_dir reference_species_file')
 }
 
-tree_file = args[1]
-data_file = args[2]
-out_dir   = args[3]
-reference_species_file   = args[4] #File with one reference species per line
+tree_file               = args[1]
+out_dir                 = args[2]
+reference_species_file  = args[3] #File with one reference species per line
 
 library(ape)
 library(reshape2)
@@ -141,10 +140,10 @@ barplot.phylo <- function(x_df, x_df_cols, x_df_labels, species, tree_row, filen
   dev.off()
 }
 
-phylo_tree = read.tree(tree_file)
+phylo_tree = read.tree(paste(out_dir, tree_file, sep='/'))
 phylo_tree = ladderize(collapse.singles(phylo_tree), FALSE)
 
-goc_summary    = read.delim(data_file, sep="\t", header=TRUE, na.strings=c('NULL'))
+goc_summary    = read.delim(paste(out_dir, "heatmap.data", sep='/'), sep="\t", header=TRUE, na.strings=c('NULL'))
 goc_0_matrix   = as.matrix(acast(goc_summary, name1~name2, value.var='goc_eq_0'))
 goc_25_matrix  = as.matrix(acast(goc_summary, name1~name2, value.var='goc_gte_25'))
 goc_50_matrix  = as.matrix(acast(goc_summary, name1~name2, value.var='goc_gte_50'))
