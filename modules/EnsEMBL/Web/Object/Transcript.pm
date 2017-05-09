@@ -251,22 +251,24 @@ sub count_similarity_matches {
 sub count_oligos {
   my $self = shift;
   my $type = 'funcgen';
-  return 0 unless $self->database('funcgen');
-  my $dbc = $self->database($type)->dbc; 
-  my $sql = qq{
-   SELECT count(distinct(ox.ensembl_id))
-     FROM object_xref ox, xref x, external_db edb
-    WHERE ox.xref_id = x.xref_id
-      AND x.external_db_id = edb.external_db_id
-      AND (ox.ensembl_object_type = 'ProbeSet'
-           OR ox.ensembl_object_type = 'Probe')
-      AND x.info_text = 'Transcript'
-      AND x.dbprimary_acc = ?};
-      
-  my $sth = $dbc->prepare($sql); 
-  $sth->execute($self->Obj->stable_id);
-  my $c = $sth->fetchall_arrayref->[0][0];
-  return $c;
+  my $dba = $self->database($type);
+  
+  return 0 unless $dba;
+  
+  my $probe_set_transcript_mapping_adaptor = $dba->get_ProbeSetTranscriptMappingAdaptor;
+  my $probe_transcript_mapping_adaptor     = $dba->get_ProbeTranscriptMappingAdaptor;
+
+  my $stable_id = $self->Obj->stable_id;
+
+  my $probe_set_mappings = $probe_set_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($stable_id);
+  my $probe_mappings     = $probe_transcript_mapping_adaptor    ->fetch_all_by_transcript_stable_id($stable_id);
+
+  my $num_probe_set_mappings = @$probe_set_mappings;
+  my $num_probe_mappings     = @$probe_mappings;
+
+  my $total_number_of_mappings = $num_probe_set_mappings + $num_probe_mappings;
+
+  return $total_number_of_mappings;
 }
 
 sub default_track_by_gene {
