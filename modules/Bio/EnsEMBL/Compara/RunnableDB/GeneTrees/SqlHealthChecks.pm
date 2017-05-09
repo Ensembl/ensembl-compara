@@ -237,14 +237,6 @@ our $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
-            },
-            {
-                description => 'Checks that the tree has not gained any genes since the backup',
-                query => 'SELECT gene_tree_node.seq_member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NOT NULL AND gene_tree_backup.seq_member_id IS NULL',
-            },
-            {
                 description => 'Checks that the tree has an alignment',
                 query => 'SELECT * FROM gene_tree_root WHERE root_id = #gene_tree_id# AND gene_align_id IS NULL',
             },
@@ -271,14 +263,6 @@ our $config = {
     unpaired_alignment => {
         params => [ 'gene_tree_id', 'gene_align_id' ],
         tests => [
-            {
-                description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
-            },
-            {
-                description => 'Checks that the tree has not gained any genes since the backup',
-                query => 'SELECT gene_tree_node.seq_member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NOT NULL AND gene_tree_backup.seq_member_id IS NULL',
-            },
             {
                 description => 'Checks that the alignment exists',
                 query => 'SELECT * FROM gene_align WHERE gene_align_id = #gene_align_id#',
@@ -333,6 +317,23 @@ our $config = {
         ],
     },
 
+    tree_content => {
+        params => [ 'gene_tree_id' ],
+        tests => [
+            {
+                description => 'Checks that the tree has not lost any genes since the backup',
+                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
+            },
+            {
+                description => 'Checks that the tree has not gained any genes since the backup',
+                query => 'SELECT gene_tree_node.seq_member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NOT NULL AND gene_tree_backup.seq_member_id IS NULL',
+            },
+            {
+                description => 'All the species a tree contains must be part of the MethodLinkSpeciesSet',
+                query => 'SELECT gene_tree_node.*, seq_member.genome_db_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id, genome_db_id) WHERE species_set.species_set_id IS NULL AND root_id = #gene_tree_id#',
+            },
+        ],
+    },
 
 
     ### Attributes / tags of the gene tree nodes

@@ -609,6 +609,7 @@ sub call_hcs_all_trees {
     my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
     foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
         $self->param('gene_tree_id', $root_id);
+        $self->call_one_hc('tree_content');
         if ($root_id == $ini_gene_tree_id) {
             if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
                 $self->call_one_hc('alignment');
