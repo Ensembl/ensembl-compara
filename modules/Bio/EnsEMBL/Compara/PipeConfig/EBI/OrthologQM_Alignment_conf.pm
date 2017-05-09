@@ -30,19 +30,19 @@ limitations under the License.
 
 =head1 NAME
 	
-	Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf;
+	Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf;
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf
 
     To run on a species_set_name:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -species_set_name <species_set_name>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -species_set_name <species_set_name>
         or
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -species_set_id <species_set dbID>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -species_set_id <species_set dbID>
 
     To run on a pair of species:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -species1 homo_sapiens -species2 gallus_gallus
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -species1 homo_sapiens -species2 gallus_gallus
 
 =head1 DESCRIPTION
 
@@ -67,16 +67,16 @@ limitations under the License.
     Examples:
     ---------
     # scores go to homology db, alignments come from afar
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -compara_db mysql://user:pass@host/homologies
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/homologies
         -alt_aln_db mysql://ro_user@hosty_mchostface/alignments
 
     # scores go to alignment db
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -compara_db mysql://user:pass@host/alignments
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
         -alt_homology_db mysql://ro_user@hostess_with_the_mostest/homologies
 
 
     # standard production run:
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf -compara_db <current protein tree db> -alt_aln_db 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -compara_db <current protein tree db> -alt_aln_db 
         <previous release database (unless new alignments were run)> -previous_rel_db <previous release database> 
         -species_set_name "collection-default"
     
@@ -92,7 +92,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::WGA_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf;
 
 use strict;
 use warnings;

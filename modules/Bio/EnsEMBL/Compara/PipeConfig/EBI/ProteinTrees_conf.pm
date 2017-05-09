@@ -58,6 +58,7 @@ sub default_options {
 
     # User details
         'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
+        'base_dir'              => '/hps/nobackup/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
 
     # executable locations:
         'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
@@ -88,6 +89,11 @@ sub default_options {
 
         # Production database (for the biotypes)
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+        # 'master_db' => 'mysql://ensro@mysql-ens-compara-prod-',
+
+        'curr_core_sources_locs' => undef,
+        'prev_core_sources_locs' => undef,
+
 
     };
 }

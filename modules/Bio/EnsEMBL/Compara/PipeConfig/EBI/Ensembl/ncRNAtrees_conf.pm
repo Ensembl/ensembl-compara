@@ -50,11 +50,11 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblNcRnaTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -62,18 +62,11 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # User details
-            'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
-
             # Must be given on the command line
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
             'rel_suffix'       => '',
-            'work_dir'         => '/lustre/scratch110/ensembl/' .
-                               $self->o('ENV', 'USER') .
-                               '/nc_trees_' .
-                               $self->o('rel_with_suffix'),
 
             'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
 
@@ -103,21 +96,6 @@ sub default_options {
             'hc_capacity'                     => 40,
             'hc_batch_size'                   => 10,
 
-            # executable locations:
-            'cmalign_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmalign',
-            'cmbuild_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmbuild',
-            'cmsearch_exe'          => '/software/ensembl/compara/infernal-1.1.1/src/cmsearch',
-            'mafft_exe'             => '/software/ensembl/compara/mafft-7.221/bin/mafft',
-            'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
-            'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight-PTHREADS',
-            'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
-            'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-            'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
-            'treebest_exe'          => '/software/ensembl/compara/treebest',
-            'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-            'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
-            'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
-
             # RFAM parameters
             'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
             'rfam_remote_file'       => 'Rfam.cm.gz',
@@ -131,40 +109,7 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 4,
-            'epo_db'                => 'mysql://ensro@compara1/epolc_mammals',
-            'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
-
-            # connection parameters
-
-            # the production database itself (will be created)
-            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'compara3',
-
-
-            'reg1' => {
-                       -host   => 'ens-staging',
-                       -port   => 3306,
-                       -user   => 'ensro',
-                       -pass   => '',
-                      },
-
-             'reg2' => {
-                        -host   => 'ens-staging2',
-                        -port   => 3306,
-                        -user   => 'ensro',
-                        -pass   => '',
-                       },
-
-
-            'master_db' => {
-                            -host   => 'compara1',
-                            -port   => 3306,
-                            -user   => 'ensro',
-                            -pass   => '',
-                            -dbname => 'mm14_ensembl_compara_master', # 'mm14_ensembl_compara_master',
-                           },
-
-           };
+            
 }
 
 sub resource_classes {

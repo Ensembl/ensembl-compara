@@ -61,7 +61,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblFamilies_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf;
 
 use strict;
 use warnings;

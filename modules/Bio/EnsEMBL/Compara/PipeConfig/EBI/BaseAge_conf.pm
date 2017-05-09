@@ -53,29 +53,29 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+            # Connection parameters for production database (the rest is defined in the base class)
+            'host' => 'mysql-ens-compara-prod-1',
+            'port' => 4485,
+
             'ref_species' => 'homo_sapiens',
             'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Location url of database to get EPO GenomicAlignTree objects from
 #            'compara_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/cc21_mammals_epo_pt3_86',
+            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_mammals_epo_pt3_86',
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_86_38?group=variation',
+            'variation_url' => 'mysql://ensro@mysql-ensembl-mirror:4240/homo_sapiens_variation_86_38?group=variation',
 
             #Location details of ancestral sequences database
             #'anc_host'   => 'mysql-ensembl-mirror',
             'anc_host'   => 'mysql-ens-compara-prod-2',
             'anc_name'   => 'ancestral_sequences',
             #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
-            'anc_dbname' => 'cc21_mammals_ancestral_core_86',
+            'anc_dbname' => 'carlac_mammals_ancestral_core_86',
             'anc_user'  => 'anonymous',
             'anc_port'  => 4522,
-
-            #Connection parameters for production database (the rest is defined in the base class)
-            'host' => 'mysql-ens-compara-prod-1',
-            'port' => 4485,
 
             'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 

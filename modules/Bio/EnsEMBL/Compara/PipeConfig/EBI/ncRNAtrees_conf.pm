@@ -50,16 +50,21 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf;
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
 
     return {
             %{$self->SUPER::default_options},
+
+            # the production database itself (will be created)
+            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+            'host' => 'mysql-treefam-prod',
+            'port' => 4401,
 
             # User details
             'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
@@ -75,32 +80,6 @@ sub default_options {
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
-
-            # tree break
-            'treebreak_gene_count'     => 400,
-
-            # capacity values for some analysis:
-            'load_members_capacity'           => 10,
-            'quick_tree_break_capacity'       => 100,
-            'msa_chooser_capacity'            => 200,
-            'other_paralogs_capacity'         => 200,
-            'aligner_for_tree_break_capacity' => 200,
-            'infernal_capacity'               => 200,
-            'orthotree_capacity'              => 200,
-            'treebest_capacity'               => 400,
-            'genomic_tree_capacity'           => 300,
-            'genomic_alignment_capacity'      => 300,
-            'fast_trees_capacity'             => 300,
-            'raxml_capacity'                  => 300,
-            'recover_capacity'                => 150,
-            'ss_picts_capacity'               => 200,
-            'ortho_stats_capacity'            => 10,
-            'homology_dNdS_capacity'          => 10,
-
-            # Params for healthchecks;
-            'hc_priority'                     => 10,
-            'hc_capacity'                     => 40,
-            'hc_batch_size'                   => 10,
 
             # executable locations:
             'cmalign_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.1/bin/cmalign',
@@ -124,28 +103,12 @@ sub default_options {
             'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.4/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
 
-            # RFAM parameters
-            'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
-            'rfam_remote_file'       => 'Rfam.cm.gz',
-            'rfam_expanded_basename' => 'Rfam.cm',
-            'rfam_expander'          => 'gunzip ',
-
-            # CAFE parameters
-            'initialise_cafe_pipeline'  => 1,
-            # Use production names here
-            'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
-
+            
             # Other parameters
-            'raxml_number_of_cores' => 4,
             'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_EPO_low_mammals_86',
             'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
 
             # connection parameters
-
-            # the production database itself (will be created)
-            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            #'host' => 'mysql-treefam-prod:4401',
-
 
             'reg1' => {
                        -host   => 'mysql-ens-sta-1',
@@ -161,32 +124,6 @@ sub default_options {
                             -dbname => 'ensembl_compara_master',
                            },
 
-           };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::resource_classes() },
-            '250Mb_job'               => { 'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-            '500Mb_job'               => { 'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-            '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-            '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-            '8Gb_long_job'                 => { 'LSF' => '-C0 -q long -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-            '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
-
-            '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
-            '8Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
-            '32Gb_ncores_job'         => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
-
-            # When we grab a machine in the long queue, let's keep it as long as we can
-            # this is for other_paralogs
-            '250Mb_long_job'          => { 'LSF' => ['-C0  -M250   -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
-            # this is for fast_trees
-            '8Gb_long_ncores_job'     => { 'LSF' => ['-q mpi-rh7 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=' . $self->o('raxml_number_of_cores') . ' ]"'] },
-            '32Gb_long_ncores_job'    => { 'LSF' => ['-q mpi-rh7 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=' . $self->o('raxml_number_of_cores') . ' ]"' ] },
            };
 }
 
