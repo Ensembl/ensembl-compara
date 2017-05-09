@@ -213,6 +213,8 @@ sub calc_genetic_distance {
         print_simple_align($aln, 80);
         die "Codeml failed. Please investigate this homology.\n";
       }
+    } else {
+      die "No result but no error either !";
     }
     return $homology;
   }
