@@ -99,8 +99,7 @@ sub _get_genetic_dist {
 
     my $lca_node = $self->param('species_tree')->find_lca_of_GenomeDBs( $self->param('genome_dbs') );
 
-    my $genetic_dist =$lca_node->taxon->get_value_for_tag('ensembl timetree mya');
-    $genetic_dist = $genetic_dist ? $genetic_dist : 101; 
+    my $genetic_dist = $lca_node->get_divergence_time() || 101;
     print "\n\n  GENETIC DISTANCE :  $genetic_dist \n\n" if ( $self->debug >3 );
     return $genetic_dist;
 } ## end sub _get_genetic_dist

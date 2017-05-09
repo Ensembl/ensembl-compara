@@ -179,8 +179,7 @@ sub include_distance_to_parent {
     for my $node (@$nodes) {
         unless ($node->is_leaf) {
             my $taxon_id = $node->taxon_id();
-            my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
-            my $mya = $ncbiTaxon->get_value_for_tag('ensembl timetree mya');
+            my $mya = $node->get_divergence_time();
             if (!$mya && $self->param('use_timetree_times')) {
                 die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n";
             }

@@ -68,10 +68,10 @@ sub _convert_node {
   my $hash;
 
   my $taxon_id   = $node->taxon_id();
-  if (my $taxon = $node->taxon) {
+  if ($taxon_id) {
     $hash->{tax} = {
 		    'id' => $taxon_id + 0,
-		    'timetree_mya' => $taxon->get_value_for_tag('ensembl timetree mya') || 0 + 0
+		    'timetree_mya' => $node->get_divergence_time() || 0 + 0
 		   };
     $hash->{tax}->{'scientific_name'} = $node->get_scientific_name;
     my $cn = $node->get_common_name();
