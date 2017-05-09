@@ -47,16 +47,18 @@ sub is_ascii {
     my $has_non_ascii;
     open(my $fh, '<', $filename) or die "Cannot open '$filename' because '$!'\n";
     while(<$fh>) {
-        $has_non_ascii = /[^[:space:][:print:]]/;
-        if ($has_non_ascii) {
+        if (/[^[:space:][:print:]]/) {
+            $has_non_ascii = 1;
             s/([^[:space:][:print:]]+)/colored($1, 'on_red')/eg;
             diag($filename.' has '.$_);
-            fail($filename);
-            last;
         }
     }
-    pass($filename) unless $has_non_ascii;
     close($fh);
+    if ($has_non_ascii) {
+        fail($filename);
+    } else {
+        pass($filename);
+    }
 }
 
 my %allowed_subdirs = map {$_ => 1} qw(modules scripts docs sql travisci xs);
