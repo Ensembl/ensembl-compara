@@ -58,7 +58,7 @@ foreach my $gene (@$genes) {
         $two_stable_ids[1],
         $homology->is_tree_compliant,
         $homology->taxonomy_level,
-        $homology->species_tree_node->taxon->get_value_for_tag('ensembl timetree mya'),
+        $homology->species_tree_node->get_divergence_time(),
         $distance_a,
         $distance_b,
     ),"\n";

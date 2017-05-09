@@ -66,7 +66,7 @@ my $species_tree = $mlss->species_tree($label);
 if ($get_timetree_divergence_times) {
     foreach my $node (@{$species_tree->root->get_all_nodes}) {
         next if $node->is_leaf;
-        my $d = $node->get_value_for_tag('ensembl timetree mya');
+        my $d = $node->get_divergence_time();
            $d = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($node) unless defined $d;
         $node->node_name( sprintf("%s [%s]", $node->node_name, $d) ) if $d;
     }

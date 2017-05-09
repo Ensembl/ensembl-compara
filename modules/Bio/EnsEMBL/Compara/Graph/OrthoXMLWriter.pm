@@ -517,7 +517,8 @@ sub _taxonomy_info_properties {
         my $taxon = $species_tree_node->taxon;
         my $common_name = $species_tree_node->get_common_name;
         $w->emptyTag('property', 'name' => 'common_name', 'value' => $common_name) if $common_name;
-        $w->emptyTag('property', 'name' => 'timetree_mya', 'value' => $taxon->get_value_for_tag('ensembl timetree mya')) if $taxon->has_tag('ensembl timetree mya');
+        my $timetree = $species_tree_node->get_divergence_time;
+        $w->emptyTag('property', 'name' => 'timetree_mya', 'value' => $timetree) if $timetree;
     }
 }
 
