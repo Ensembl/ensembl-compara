@@ -147,13 +147,13 @@ my @references = ( "homo_sapiens", "tuatara" );
 
 foreach my $reference (@references) {
     #File with breakout of the different GOC levels
-    open( my $fh_out, '>', "$out_dir/$reference\_ref.txt" ) || die "Could not open output file at $out_dir";
+    open( my $fh_out, '>', "$out_dir/$reference\_ref.dat" ) || die "Could not open output file at $out_dir";
 
     #File with the above and bollow 0.5 GOC threasholds
-    open( my $fh_out_above_with, '>', "$out_dir/$reference\_above_with_splits.txt" ) || die "Could not open output file at $out_dir";
+    open( my $fh_out_above_with, '>', "$out_dir/$reference\_above_with_splits.dat" ) || die "Could not open output file at $out_dir";
 
     #File with the  percentage of scores above 0.5
-    open( my $fh_out_above, '>', "$out_dir/$reference\_ref_above_threshold.txt" ) || die "Could not open output file at $out_dir";
+    open( my $fh_out_above, '>', "$out_dir/$reference\_ref_above_threshold.dat" ) || die "Could not open output file at $out_dir";
 
     print $fh_out "species;goc;threshold;taxon\n";
     print $fh_out_above "species;perc_orth_above_goc_thresh;taxon\n";
@@ -208,7 +208,7 @@ foreach my $reference (@references) {
 }
 
 #---------------------------------------------------------------------------------------------------
-#Data used to generate a heatmap
+#           Data used to generate a heatmap
 #---------------------------------------------------------------------------------------------------
 
 open( my $fh_heatmap, '>', "$out_dir/heatmap.data" ) || die "Could not open output file at $out_dir";
@@ -249,6 +249,54 @@ while ( my @row = $sth_heatmap->fetchrow_array() ) {
 }
 
 close($fh_heatmap);
+
+#---------------------------------------------------------------------------------------------------
+# Additional plots
+#---------------------------------------------------------------------------------------------------
+
+# Homology count
+#---------------------------------------------------------------------------------------------------
+my %homology;
+my $sql_homology = "SELECT genome_db.name, description, COUNT(*) FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING (genome_db_id) GROUP BY genome_db_id, description";
+
+my $sth_homology = $dbh->prepare($sql_homology);
+$sth_homology->execute();
+while ( my @row = $sth_homology->fetchrow_array() ) {
+    $homology{$row[0]}{$row[1]} = $row[2];
+}
+
+open( my $fh_homology, '>', "$out_dir/homology.data" ) || die "Could not open output file at $out_dir";
+
+print $fh_homology "species\tgene_split\tortholog_many2many\tortholog_one2many\t ortholog_one2one\t  within_species_paralog\n";
+
+foreach my $species ( sort keys %homology ) {
+    print $fh_homology "$species\t";
+
+    my @values;
+
+    foreach my $description ( sort keys %{ $homology{$species} } ) {
+        push( @values, $homology{$species}{$description} );
+    }
+
+    print $fh_homology join("\t", @values) . "\n";
+}
+close($fh_homology);
+
+# Gene count
+#---------------------------------------------------------------------------------------------------
+my %gene_count;
+my $sql_gene_count = "SELECT node_name, nb_genes, nb_long_genes, nb_short_genes, nb_orphan_genes, nb_genes_in_tree, nb_genes_in_tree_single_species, nb_dup_nodes, nb_gene_splits FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL GROUP BY genome_db_id) ORDER BY node_name";
+
+open( my $fh_gene_count, '>', "$out_dir/gene_count.data" ) || die "Could not open output file at $out_dir";
+print $fh_gene_count "species\tnb_genes\tnb_long_genes\tnb_short_genes\tnb_orphan_genes\tnb_genes_in_tree\tnb_genes_in_tree_single_species\tnb_dup_nodes\tnb_gene_splits\n";
+
+my $sth_gene_count = $dbh->prepare($sql_gene_count);
+$sth_gene_count->execute();
+while ( my @row = $sth_gene_count->fetchrow_array() ) {
+    print $fh_gene_count join("\t", @row) . "\n";
+}
+close($fh_gene_count);
+
 
 sub num { $a <=> $b }
 
