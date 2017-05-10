@@ -22,13 +22,19 @@ limitations under the License.
 use strict;
 use warnings;
 
+use Getopt::Long;
 use FindBin qw($Bin);
 use Storable qw(retrieve);
 use JSON qw(to_json);
+use Storable qw(freeze);
 
 BEGIN {
   require "$Bin/helper.pl";
 };
+
+my $format = 'json';
+GetOptions('format=s' => \$format);
+$format = lc($format);
 
 my $data = {
   SiteDefs => {},
@@ -57,6 +63,10 @@ sub cleanup {
 
 $data = cleanup($data);
 
-print to_json($data);
+if($format eq 'json') {
+  print to_json($data);
+} elsif($format eq 'storable') {
+  print freeze($data);
+}
 
 1;
