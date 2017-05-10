@@ -46,6 +46,8 @@ use Encode qw(decode encode);
 
 $| = 1;
 
+my $tmpdir = '.';
+
 my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
@@ -58,6 +60,7 @@ GetOptions('species=s'        => \$species_list,
            'dir=s'            => \$dir,
            'check_xml'        => \$check_xml,
 	   'help'             => \$help,
+	   'tmpdir=s'         => \$tmpdir,
          );
 
 if ($help){
@@ -98,7 +101,7 @@ my $boosts = {
 if ($debug) {
   $log = '>-';
 }
-else {
+elsif(!$log) {
   my $counter = 1;
   $log =  "dumping_${release}.log";
   my $l =  $log."_".sprintf("%03d", $counter);
@@ -182,7 +185,6 @@ foreach (@indexes) {
 }
 
 # if the SPECIES is set to ALL grab them all from the config...
-my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
   @species = ();
@@ -193,15 +195,14 @@ if( $species_list eq 'ALL' ) {
     $val = 1 if($ig =~ s!^>!!);
     @ignored{grep { ($_ cmp $ig) == $val } @{$SD->ENSEMBL_DATASETS}} = ();
   }
-  foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
+  foreach my $sp (@{$SD->PRODUCTION_NAMES}) {
     push @species,$sp unless exists $ignored{$sp};
   }
 }
 else {
-  @species = grep {$_} map { $X{lc($_)} } @species;
   if (@species ne $input_c) {
     print LOG "WARNING - one or more of your species names is not recognised, please check your spelling. Available species are:\n";
-    print LOG join "\n", @{$SD->ENSEMBL_DATASETS};
+    print LOG join "\n", @{$SD->PRODUCTION_NAMES};
     print LOG "\n";
     exit;
   }
@@ -228,6 +229,7 @@ foreach my $index (@indexes) {
   foreach my $species ( @species ) {
 #    next unless ($species =~ /^Mus/);
     my $single_species = 0;
+    $species = ucfirst($species);
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
@@ -1873,7 +1875,7 @@ sub FamilyLine {
   <field name="description">$desc</field>);
     my $sample_g;
     my %seen_names;
-    foreach my $gsi (keys $genes){
+    foreach my $gsi (keys %$genes){
       unless ($sample_g) {
         $sample_g = $gsi;
         $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
@@ -3370,7 +3372,7 @@ sub on_disk_set {
   my ($name) = @_;
 
   my %var;
-  tie(%var,'DB_File',"$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
+  tie(%var,'DB_File',"$tmpdir/$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
   return \%var;
 }
 
