@@ -249,7 +249,6 @@ foreach my $index (@indexes) {
   foreach my $species ( @species ) {
 #    next unless ($species =~ /^Mus/);
     my $single_species = 0;
-    $species = ucfirst($species);
     my %dbs = %{$PD->{$species}{'databases'}||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->{'ENSEMBL_VERSION'};
@@ -315,7 +314,7 @@ foreach my $index (@indexes) {
           exit;
         }
         if ($index =~ /Family|GeneTree/) {
-          my $compara = $PD->{'MULTI'}{'DATABASE_COMPARA'};
+          my $compara = $PD->{'MULTI'}{'databases'}{'DATABASE_COMPARA'};
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
                                                 $compara->{'USER'},
                                                 $compara->{'PASS'},
