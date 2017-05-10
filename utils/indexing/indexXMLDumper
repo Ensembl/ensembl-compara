@@ -48,12 +48,13 @@ foreach my $url (keys %$PD) {
   push @$ENSEMBL_DATASETS,$url;
   $PD->{$PD->{$url}{'SPECIES_PRODUCTION_NAME'}} = $PD->{$url};
 }
+print "There are ".scalar(@$ENSEMBL_DATASETS)." species\n";
 
 $| = 1;
 
 my $tmpdir = '.';
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help,$array);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
@@ -66,6 +67,7 @@ GetOptions('species=s'        => \$species_list,
            'check_xml'        => \$check_xml,
 	   'help'             => \$help,
 	   'tmpdir=s'         => \$tmpdir,
+	   'array'	      => \$array,
          );
 
 if ($help){
@@ -114,6 +116,10 @@ elsif(!$log) {
     $l = $log."_".sprintf("%03d", $counter);
   }
   $log = $l;
+}
+
+if($array and not $debug) {
+  $log .= "-$ENV{'LSB_JOBINDEX'}";
 }
 
 open (LOG, ">$log") or die "Can't open $log: $!";
@@ -210,6 +216,16 @@ else {
     print LOG "\n";
     exit;
   }
+}
+
+if($array) {
+  my $index = $ENV{'LSB_JOBINDEX'}-1;
+  if($index >= @species) {
+    print LOG "Not that many species ($index)!\n";
+    exit 0;
+  }
+  @species = ( $species[$index] );
+  print LOG "Specialising to species $index ($species[0])\n";
 }
 
 # path to files
