@@ -1363,13 +1363,9 @@ sub dumpOligoProbe {
 
   my $probe_set_trans_dets;
   $sql = qq(
-    SELECT ps.probe_set_id, x.dbprimary_acc, x.display_label
-      FROM $FUNCDB.probe_set ps, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
-     WHERE ps.probe_set_id = ox.ensembl_id 
-       AND ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ox.ensembl_object_type='ProbeSet'
-       AND edb.db_name = '${dbspecies}_core_Transcript');
+      SELECT probe_set_id, stable_id, stable_id
+        FROM $FUNCDB.probe_set_transcript
+    ORDER BY probe_set_id);
   $sth = $conf->{'dbh'}->prepare($sql);
   $sth->execute;
   while( my( $probe_set_id, $tsi, $display_label) = $sth->fetchrow_array ) {
@@ -1380,16 +1376,22 @@ sub dumpOligoProbe {
     };
   };
 
-  $sth    = $conf->{'dbh'}->prepare(
-    "select ps.name, ps.probe_set_id, count(distinct pf.probe_feature_id) as hits, a.vendor
-         from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a
-       where
-         ps.probe_set_id = p.probe_set_id
-         and p.probe_id = pf.probe_id
-         and p.array_chip_id = ac.array_chip_id
-         and ac.array_id = a.array_id
-       group by ps.name, a.vendor" 
-  );
+  $sth    = $conf->{'dbh'}->prepare(qq(
+    SELECT
+      probe_set.name,
+      probe_set.probe_set_id,
+      count(distinct probe_feature.probe_feature_id) as hits,
+      array.name
+    FROM
+      $FUNCDB.probe_set
+      join $FUNCDB.probe using (probe_set_id)
+      join $FUNCDB.probe_feature using (probe_id)
+      join $FUNCDB.array_chip on (probe.array_chip_id=array_chip.array_chip_id)
+      join $FUNCDB.array using (array_id)
+    GROUP BY
+      probe_set.name,
+      array.name
+));
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
   while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
@@ -1414,13 +1416,10 @@ sub dumpOligoProbe {
 
   my $probe_trans_dets;
   $sql = qq(
-    SELECT p.probe_id, x.dbprimary_acc, x.display_label
-      FROM $FUNCDB.probe p, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
-     WHERE p.probe_id = ox.ensembl_id 
-       AND ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ox.ensembl_object_type='Probe'
-       AND edb.db_name = '${dbspecies}_core_Transcript');
+        SELECT probe_id, stable_id, stable_id
+          FROM $FUNCDB.probe_transcript
+      ORDER BY probe_id
+  );
   $sth = $conf->{'dbh'}->prepare($sql);
   $sth->execute;
   while( my( $probe_id, $tsi, $display_label) = $sth->fetchrow_array ) {
@@ -1431,16 +1430,23 @@ sub dumpOligoProbe {
     };
   };
 
-  $sth    = $conf->{'dbh'}->prepare(
-    "select p.probe_id, p.name, a.vendor, a.name, count(distinct pf.probe_feature_id) as hits
-       from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a
-      where
-       p.probe_set_id is NULL
-       and p.probe_id = pf.probe_id
-       and p.array_chip_id = ac.array_chip_id
-       and ac.array_id = a.array_id
-     group by p.name"
-  );
+  $sth    = $conf->{'dbh'}->prepare(qq(
+    select
+      probe.probe_id,
+      probe.name,
+      array.vendor,
+      array.name,
+      count(distinct probe_feature.probe_feature_id) as hits
+    from
+      $FUNCDB.probe_feature
+      join $FUNCDB.probe using (probe_id)
+      join $FUNCDB.array_chip using (array_chip_id)
+      join $FUNCDB.array using (array_id)
+    where
+      probe.probe_set_id is null
+    group by
+      probe.name
+  ));
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
   my $old;
