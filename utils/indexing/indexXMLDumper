@@ -22,6 +22,7 @@ package indexXMLDumper;
 use FindBin qw($Bin);
 use Storable qw(retrieve);
 
+use DBI;
 use XML::Parser;
 use Data::Dumper;
 use Getopt::Long;
@@ -257,7 +258,7 @@ foreach my $index (@indexes) {
 
     if ($index eq 'Help') {
       $single_species = 1;
-      my $website = $PD->{'MULTI'}{'DATABASE_WEBSITE'};
+      my $website = $PD->{'MULTI'}{'databases'}{'DATABASE_WEBSITE'};
       $conf->{'website'}{'name'} = $website->{'NAME'};
       $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}",
                                                 $website->{'USER'},
