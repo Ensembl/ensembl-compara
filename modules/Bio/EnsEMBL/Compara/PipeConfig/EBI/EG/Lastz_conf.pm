@@ -68,6 +68,19 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
+
+	    'host' => 'mysql-eg-prod-2.ebi.ac.uk',  
+        'port' => 4239,
+        'pipeline_db' => {                                  
+            -host   => $self->o('host'),
+            -port   => $self->o('port'),
+            -user   => 'ensrw',
+            -pass   => $self->o('password'), 
+	        -dbname => $self ->o('dbname'),
+	        -driver => 'mysql',
+#            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
+        },
+
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 	    'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)

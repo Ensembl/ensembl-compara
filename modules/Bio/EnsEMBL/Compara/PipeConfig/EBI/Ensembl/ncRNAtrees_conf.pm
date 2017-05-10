@@ -90,6 +90,7 @@ sub default_options {
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
             'ortho_stats_capacity'            => 10,
+            'homology_dNdS_capacity'          => 10,
 
             # Params for healthchecks;
             'hc_priority'                     => 10,
@@ -110,7 +111,8 @@ sub default_options {
             # Other parameters
             'raxml_number_of_cores' => 4,
             
-}
+    };
+}   
 
 sub resource_classes {
     my ($self) = @_;

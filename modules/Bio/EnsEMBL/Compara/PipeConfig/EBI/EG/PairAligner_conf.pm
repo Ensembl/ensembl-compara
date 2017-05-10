@@ -74,18 +74,20 @@ sub default_options {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
+    'dbname' => $self->o('ENV', 'USER') . "_" . $self->o('pipeline_name'),
 
          # dependent parameters:
-        'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        # 'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'host'        => 'mysql-eg-prod-2.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'host' => 'mysql-eg-prod-2.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'port' => 4239,
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'mysql-eg-prod-2.ebi.ac.uk',
-            -port   => 4239,
+            -host   => $self->o('host'),
+            -port   => $self->o('port'),
             -user   => 'ensrw',
             -pass   => $self->o('password'), 
-	    -dbname => $self ->o('dbname'),
-	    -driver => 'mysql',
+	        -dbname => $self ->o('dbname'),
+	        -driver => 'mysql',
 #            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
         },
 

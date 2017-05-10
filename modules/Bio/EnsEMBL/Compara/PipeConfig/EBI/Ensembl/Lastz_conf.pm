@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
 
 #
 #Test with a master and method_link_species_set_id.
@@ -36,9 +36,10 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    #'pipeline_name'         => 'lastz_ebi_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-           'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-           'port'      =>  4522,
+        'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port'      =>  4522,
 	    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+
 
 	    'staging_loc' => {
             -host   => 'mysql-ens-sta-1.ebi.ac.uk',

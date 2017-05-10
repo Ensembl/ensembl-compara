@@ -61,15 +61,8 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
             
-#            'host'          => 'compara5',      # Where to host the pipeline database
-
-#	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-#            'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
-
-            'host'          => 'compara4',      # Where to host the pipeline database
-
-            'master_db' => 'mysql://ensro@compara4/wa2_compara_master_86',
-            'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
+            # run in top-up mode by default
+            'recompute_existing_syntenies' => 0,
 
             # Connection to the alignment database must be given
             'alignment_db' => undef,    # alignment database to calculate the syntenies from

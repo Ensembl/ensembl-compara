@@ -101,10 +101,10 @@ sub resource_classes {
     my ($self) = @_; 
     return {
 	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
-	'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-	'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-	'mem14000' => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
+	'default'  => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
+	'mem3500'  => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
+	'mem7500'  => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
+    'mem14000' => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
 
     };  
 }
@@ -326,9 +326,9 @@ sub pipeline_analyses {
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
-        -flow_into => { -1 => 'ignore_huge_trim_anchor_align' }
+        -flow_into => { -1 => 'ignore_huge_trim_anchor_align' },
 		-hive_capacity => 150,
-                -rc_name => 'mem7500',
+        -rc_name => 'mem7500',
 	    },
 
         # some jobs just will not run, no matter how much memory is allocated - ignore them

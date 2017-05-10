@@ -53,7 +53,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf;
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
