@@ -32,14 +32,31 @@ Bio::EnsEMBL::Compara::Utils::CopyData
 
 =head1 DESCRIPTION
 
-This package exports method to copy_data between databases.
-copy_data() is usually used to copy whole tables or large chunks of data,
-without paying attention to the foreign-key constraints. It has two
-specialized version copy_data_in_binary_mode() and copy_data_in_text_mode()
-that are automatically used depending on the data-types in the table.
+This package exports method to copy data between databases.
+
+=head2 :table_copy export-tag
+
+copy_table() is used to copy whole tables or large chunks of data,
+without paying attention to the foreign-key constraints. If defined,
+the filter can only be a straight WHERE clause.
+
+For more advanced cases, copy_data() can run an arbitrary query and
+insert its result into another table. Use copy_data() when you cannot
+express the constraint with a WHERE and need a JOIN.
+
+Both copy_data() and copy_table() automatically choose the optimal
+transfer mode depending on the type of query and the data types.
+
+=head2 :row_copy export-tag
+
 copy_data_with_foreign_keys_by_constraint() can copy individual rows with
 their own depedencies. It will also "expand" the data, for instance by
 copying homology_member too when asked to copy homology_member.
+
+=head2 :insert export-tag
+
+single_insert() and bulk_insert() are simple methods to run INSERT statements.
+bulk_insert() is optimized to insert large chunks of data
 
 =head1 SYNOPSIS
 
