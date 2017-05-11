@@ -98,13 +98,14 @@ sub href {
 
   # Fix URL encoding issue with the "<>" characters
   my $var = $f->variation_name;
-  $var =~ s/(<|>)/_/g;
+  $var =~ s/(<|>)/_/g if $var;
 
   return {
     species  => $args->{'species'},
     type     => 'Variation',
     v        => $var,
     vf       => $f->dbID,
+    vl       => $f->location_string,
     vdb      => $args->{'var_db'} || 'variation',
     snp_fake => 1,
     config   => $args->{'config_type'},
