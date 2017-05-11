@@ -203,7 +203,7 @@ if( $species_list eq 'ALL' ) {
     my $val = 0;
     $val = -1  if($ig =~ s!^<!!);
     $val = 1 if($ig =~ s!^>!!);
-    @ignored{grep { ($_ cmp $ig) == $val } @{$ENSEMBL_DATASETS}} = ();
+    @ignored{grep { ($_ cmp $ig) == $val } @{$SD->{'PRODUCTION_NAMES'}}} = ();
   }
   foreach my $sp (@{$SD->{'PRODUCTION_NAMES'}}) {
     push @species,$sp unless exists $ignored{$sp};
