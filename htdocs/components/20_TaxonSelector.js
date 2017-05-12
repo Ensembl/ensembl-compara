@@ -352,7 +352,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         if (!panel.multiSelect) {
           var node = panel.elLk.tree.dynatree("getTree").getSelectedNodes();
           if (node.length && panel.activeTreeKey !== 'Multiple') {
-            panel.lastSelected = node[0];
+            panel.setLastSelectedSpecies(node[0]);
           }
         }
       },
@@ -439,12 +439,13 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
             panel.setSelection(node, flag);
           }
 
-          panel.lastSelected = alignment_selected;
+          this.setLastSelectedSpecies(alignment_selected);
           return;
         }
         else if (panel.isCompara && !panel.multiSelect) {
           // Update last selected item for single select
-          panel.lastSelected = flag ? node : null;
+          var n = flag ? node : null;
+          this.setLastSelectedSpecies(n)
           panel.setSelection(node, flag, true, true);
           return;
         }
@@ -479,13 +480,23 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           node.select();      // tick it
           !multipleAlign && node.makeVisible(); // force parent path to be expanded
           panel.setSelection(node, true);
-          panel.lastSelected = node;
         }
       });
-
-
       // Locate multiple alignment with label instead of species name as one species may be found in different EPO alignments
       multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(panel.defaultKeys[0]);
+    }
+
+    node && this.setLastSelectedSpecies(node);
+  },
+
+  setLastSelectedSpecies: function(node) {
+    var panel = this;
+    if (!node) return;
+    if (panel.isCompara && panel.activeTreeKey === 'Multiple') {
+      panel.lastSelected = node.parent;
+    }
+    else {
+      panel.lastSelected = node;
     }
   },
 
@@ -662,7 +673,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     node && node.activate();
     node && !node.data.isFolder && select && node.select();
     if (!this.isCompara) {
-      this.lastSelected = node;
+      this.setLastSelectedSpecies(node);
     }
   },
   
