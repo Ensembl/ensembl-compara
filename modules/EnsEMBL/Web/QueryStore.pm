@@ -31,7 +31,7 @@ use EnsEMBL::Web::Query;
 my $DEBUG = 0;
 
 sub new {
-  my ($proto,$sources,$cache,$cohort) = @_;
+  my ($proto,$sources,$cache) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = { sources => $sources, cache => $cache, open => 0 };

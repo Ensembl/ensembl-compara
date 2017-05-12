@@ -856,7 +856,7 @@ sub query_store_setup {
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs),
     SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($self->species_defs),
-  },$cache,$SiteDefs::ENSEMBL_COHORT);
+  },$cache);
 }
 
 sub get_query     { $_[0]->{'_query_store'}->get($_[1]); }

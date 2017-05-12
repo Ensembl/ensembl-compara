@@ -84,7 +84,7 @@ sub run1 {
   my $qs = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD),
     SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($SD),
-  },$cache,$SiteDefs::ENSEMBL_COHORT);
+  },$cache);
 
   my $q = $qs->get($query);
   my $pc = $q->precache($kind,$i,$n,$subparts);
