@@ -135,6 +135,11 @@ sub _species_tree_node_id {
         }
         return unless $species_tree;
         $self->{_species_tree_node} = $species_tree->get_genome_db_id_2_node_hash()->{$self->genome_db_id};
+        #unless ($self->{_species_tree_node}) {
+        #    $self->{'_tags'}->{'species_tree_node_id'} = undef;
+        #    return;
+        #}
+        die sprintf("The genome_db_id '%s' cannot be found in the species_tree root_id=%s", $self->genome_db_id, $species_tree->dbID) unless $self->{_species_tree_node};
         $self->{'_tags'}->{'species_tree_node_id'} = $self->{_species_tree_node}->node_id;
     }
 
