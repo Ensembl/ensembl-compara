@@ -723,30 +723,27 @@ sub _parse {
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
-=pod
     ## Need to gather strain info for all species
-    $name_lookup->{$config_packer->tree->{$species}{'SPECIES_COMMON_NAME'}} = $species;
-    my $collection = $config_packer->tree->{$species}{'STRAIN_COLLECTION'};
-    my $strain_name = $config_packer->tree->{$species}{'SPECIES_STRAIN'};
+    $name_lookup->{$config_packer->tree->{'SPECIES_COMMON_NAME'}} = $species;
+    my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
+    ## Key on actual URL, not production name
+    my $species_key = $config_packer->tree->{'SPECIES_URL'};
+    my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
     if ($collection && $strain_name !~ /reference/) {
       if ($species_to_strains->{$collection}) {
-        push @{$species_to_strains->{$collection}}, $species;
+        push @{$species_to_strains->{$collection}}, $species_key;
       }
       else {
-        $species_to_strains->{$collection} = [$species];
+        $species_to_strains->{$collection} = [$species_key];
       }
     }
-=cut
   }
 
-
-=pod
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
     my $species = $name_lookup->{ucfirst($k)};
     $tree->{$species}{'ALL_STRAINS'} = $v;
   } 
-=cut
 
   #use Data::Dumper; 
   #$Data::Dumper::Maxdepth = 2;
