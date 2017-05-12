@@ -264,6 +264,8 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
                 'compara_db'            => '#rel_db#',
+                'member_type'           => '#member_type#',
+                'clusterset_id'         => '#clusterset_id#',
             },
             -flow_into => {
                 1 => {

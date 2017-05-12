@@ -74,6 +74,7 @@ sub param_defaults {
         "ortholog_method_link_id"   => 201,
         'high_confidence'           => 0,
         "clusterset_id"             => 'default',
+        "member_type"               => 'protein',
            };
 }
 
@@ -132,10 +133,13 @@ sub run {
                         JOIN homology_member hm1 USING (homology_id)
                         JOIN homology_member hm2 USING (homology_id)
                         JOIN method_link_species_set USING (method_link_species_set_id)
+                        JOIN gene_tree_root gtr ON h.gene_tree_root_id = gtr.root_id
                     WHERE
                         method_link_id = %d
                         AND hm1.seq_member_id < hm2.seq_member_id
-            }, $self->param_required('ortholog_method_link_id'));
+                        AND gtr.member_type = "%s"
+                        AND gtr.clusterset_id = "%s"
+            }, $self->param_required('ortholog_method_link_id'), $self->param_required('member_type'), $self->param_required('clusterset_id'));
 
     if (defined $self->param('min_hom_id')) {
         $sql .= " AND homology_id >= ".$self->param('min_hom_id');

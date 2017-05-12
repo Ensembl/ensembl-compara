@@ -44,6 +44,14 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf');
 
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::default_options},   # inherit the generic ones
+        'pipeline_name'       =>    'dump_all_trees_'.$self->o('rel_with_suffix'),
+    }
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
