@@ -336,7 +336,7 @@ sub import {
   # Set Mart servername
   _set_dedicated_mart();
 
-# Set ENV variables as specified in ENSEMBL_SETENV
+ # Set ENV variables as specified in ENSEMBL_SETENV
   _set_env();
 
   # Finalise other configs that depends upon plugins SiteDefs.
@@ -360,7 +360,8 @@ sub import {
   _verbose_params() if $_VERBOSE;
 }
 
-sub verbose_params {
+sub _verbose_params {
+  ## Prints a list of all the parameters and their values
 
   my $params = {};
 
