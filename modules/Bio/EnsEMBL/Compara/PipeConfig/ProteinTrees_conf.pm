@@ -987,17 +987,15 @@ sub core_pipeline_analyses {
 
 
         {   -logic_name => 'sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
+                            'table'      => 'sequence',
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '1Gb_job',
-            -flow_into => {
-                2 => [ '?table_name=sequence&insertion_method=INSERT_IGNORE' ],
-                1 => [ 'seq_member_table_reuse' ],
-            },
+            -rc_name => '250Mb_job',
+            -flow_into => [ 'seq_member_table_reuse' ],
         },
 
         {   -logic_name => 'dnafrag_table_reuse',
@@ -1040,45 +1038,39 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'other_sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
+                            'table'      => 'other_member_sequence',
                             'inputquery' => 'SELECT s.seq_member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_type = "cds" AND seq_member_id <= '.$self->o('protein_members_range'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '4Gb_job',
-            -flow_into => {
-                2 => [ '?table_name=other_member_sequence&insertion_method=INSERT_IGNORE' ],
-                1 => [ 'exon_boundaries_table_reuse' ],
-            },
+            -rc_name => '250Mb_job',
+            -flow_into => [ 'exon_boundaries_table_reuse' ],
         },
 
         {   -logic_name => 'exon_boundaries_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
+                            'table'      => 'exon_boundaries',
                             'inputquery' => 'SELECT e.* FROM exon_boundaries e JOIN seq_member USING (seq_member_id) WHERE seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
-            -flow_into => {
-                2 => [ '?table_name=exon_boundaries&insertion_method=INSERT_IGNORE' ],
-                1 => [ 'hmm_annot_table_reuse' ],
-            },
+            -flow_into => [ 'hmm_annot_table_reuse' ],
         },
 
         {   -logic_name => 'hmm_annot_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
+                            'table'      => 'hmm_annot',
                             'inputquery' => 'SELECT h.* FROM hmm_annot h JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member_id <= '.$self->o('protein_members_range'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '1Gb_job',
-            -flow_into => {
-                2 => [ '?table_name=hmm_annot&insertion_method=INSERT_IGNORE' ],
-                1 => [ 'hc_members_per_genome' ],
-            },
+            -rc_name => '250Mb_job',
+            -flow_into => [ 'hc_members_per_genome' ],
         },
 
         {   -logic_name         => 'hc_members_per_genome',

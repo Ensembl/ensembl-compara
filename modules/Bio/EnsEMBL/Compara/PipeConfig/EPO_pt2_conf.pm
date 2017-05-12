@@ -248,13 +248,11 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'reuse_anchor_align',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
                 -parameters => {
                     'db_conn'    => '#reuse_db#',
+                    'table'      => 'anchor_align',
                     'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
-                },
-                -flow_into => {
-                    2 => [ '?table_name=anchor_align' ],
                 },
             },
 

@@ -398,16 +398,14 @@ sub pipeline_analyses {
 
 
         {   -logic_name => 'sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
                 'db_conn'    => $self->o('reuse_db'),
+                'table'      => 'sequence',
                 'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
             },
             -hive_capacity => 4,
-            -flow_into => {
-		 1 => [ 'seq_member_table_reuse' ],    # n_reused_species
-		 2 => [ '?table_name=sequence' ],
-            },
+            -flow_into => [ 'seq_member_table_reuse' ],    # n_reused_species
 	    -rc_name => '1Gb',
         },
 
