@@ -258,7 +258,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   @xs_enabled?join("\n".(' ' x 21),@xs_enabled):'- none -',
   join("\n".(' 'x21),map { "$_ (".$conf->ENSEMBL_IDS_USED->{$_}.")" } sort keys %{$conf->ENSEMBL_IDS_USED}),
   join("\n                     ", grep(/::/, map { "$_ (".join(',',@{$conf->ENSEMBL_PLUGINS_USED->{$_}||[]}).")" } @{$conf->ENSEMBL_PLUGINS || []}), $extra),
-  $conf->ENSEMBL_MACHINE_SIGNATURE;
+  $conf->ENSEMBL_SERVER_SIGNATURE;
 }
 
 1;
