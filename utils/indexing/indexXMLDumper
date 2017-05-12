@@ -3428,7 +3428,7 @@ sub off_disk {
 
   return unless defined $var;
   untie %$var;
-  unlink "$name.$$.db";
+  unlink "$tmpdir/$name.$$.db";
 }
 
 #######################################################################
