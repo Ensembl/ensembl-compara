@@ -357,7 +357,7 @@ sub retrieve {
   my $Q    = lock_retrieve($self->{'_filename'}) or die "Can't open $self->{'_filename'}: $!"; 
   
   $CONF->{'_storage'} = $Q if ref $Q eq 'HASH';
-  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_COHORT;
+  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_MACHINE_SIGNATURE;
 }
 
 sub store {
@@ -367,7 +367,7 @@ sub store {
   
   my $self = shift;
 
-  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_COHORT;
+  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_MACHINE_SIGNATURE;
 
   die "[FATAL] Could not write to $self->{'_filename'}: $!" unless lock_nstore($CONF->{'_storage'}, $self->{'_filename'});
   return 1;
