@@ -311,6 +311,7 @@ sub _has_binary_column {
   Arg[10]     : (opt) boolean $reenable_keys (default: true)
   Arg[11]     : (opt) boolean $holes_possible (default: false)
   Arg[12]     : (opt) boolean $replace (default: false) [only used when the underlying data is text-only]
+  Arg[13]     : (opt) boolean $debug
 
   Description : Copy data in this table. The main optional arguments are:
                  - ($index_name,$min_id,$max_id) to restrict to a range
@@ -320,12 +321,12 @@ sub _has_binary_column {
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
-    print "Copying data in table $table_name\n";
+    print "Copying data in table $table_name\n" if $debug;
 
     die "Keys must be disabled in order to be reenabled\n" if $reenable_keys and not $disable_keys;
 
@@ -333,15 +334,17 @@ sub copy_data {
     if ($disable_keys // 1) {
         #speed up writing of data by disabling keys, write the data, then enable
         #but takes far too long to ENABLE again
+        print "DISABLE KEYS\n" if $debug;
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
     my $rows;
     if (_has_binary_column($from_dbc, $table_name)) {
-        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
+        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $debug);
     } else {
-        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
+        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace, $debug);
     }
     if ($reenable_keys // 1) {
+        print "ENABLE KEYS\n" if $debug;
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
     }
     return $rows;
@@ -371,7 +374,7 @@ sub _escape {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -399,13 +402,12 @@ sub copy_data_in_text_mode {
 
     my $total_rows = 0;
     while (1) {
-        #my $start_time = time();
         my $end = $start + $step - 1;
         my $sth;
         my $sth_attribs = { 'mysql_use_result' => 1 };
 
-        #print "start $start end $end\n";
-        #print "query $query\n";
+        print "start $start end $end\nquery $query\n" if $debug;
+
         if ($use_limit) {
             $sth = $from_dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
         } else {
@@ -423,7 +425,6 @@ sub copy_data_in_text_mode {
             return $total_rows;
         }
 
-        #my $time = time();
         my ($fh, $filename) = tempfile("${table_name}.XXXXXX", TMPDIR => 1);
         print $fh join("\t", map {_escape($_)} @$first_row), "\n";
         my $nrows = 1;
@@ -433,9 +434,8 @@ sub copy_data_in_text_mode {
         }
         close($fh);
         $sth->finish;
-        #print "start $start end $end $max_id rows $nrows\n";
-        #print "FILE $filename\n";
-        #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+
+        print "start $start end $end limit $step rows $nrows in file $filename\n" if $debug;
 
         # Heuristics: it's going to take some time to insert these rows, so
         # better to disconnect to save resources on the source server
@@ -560,7 +560,7 @@ sub copy_table {
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
-    print "Copying data in table $table_name\n";
+    #print "Copying data in table $table_name\n";
 
     if (_has_binary_column($from_dbc, $table_name)) {
         return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys);
