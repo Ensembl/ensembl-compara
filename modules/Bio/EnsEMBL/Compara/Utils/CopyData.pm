@@ -111,6 +111,7 @@ use Data::Dumper;
 use File::Temp qw/tempfile/;
 
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 my %foreign_key_cache = ();
 
@@ -441,7 +442,8 @@ sub copy_data_in_text_mode {
         # better to disconnect to save resources on the source server
         $from_dbc->disconnect_if_idle if $nrows >= 100_000;
 
-        system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
+        my @cmd = ('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
+        Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(\@cmd, { die_on_failure => 1, debug => $debug });
 
         unlink($filename);
         $total_rows += $nrows;
