@@ -483,7 +483,7 @@ sub core_pipeline_analyses {
                 'quick_reuse'   => $self->o('quick_reuse'),
             },
             -flow_into  => {
-                '1->A'  => [ 'dnafrag_reuse_factory' ],
+                '1->A'  => [ 'nonpolyploid_genome_reuse_factory' ],
                 'A->1'  => [ 'backbone_fire_clustering' ],
             },
         },
@@ -724,17 +724,6 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
-        {   -logic_name => 'dnafrag_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'species_set_id'    => '#reuse_ss_id#',
-            },
-            -flow_into => {
-                '2->A' => [ 'dnafrag_table_reuse' ],
-                'A->1' => [ 'nonpolyploid_genome_reuse_factory' ],
-            },
-        },
-
         {   -logic_name => 'nonpolyploid_genome_reuse_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -742,7 +731,7 @@ sub core_pipeline_analyses {
                 'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
-                '2->A' => [ 'sequence_table_reuse' ],
+                '2->A' => [ 'all_table_reuse' ],
                 'A->1' => [ 'polyploid_genome_reuse_factory' ],
             },
         },
@@ -764,7 +753,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
             -flow_into => {
                 '2->A' => {
-                    'move_component_genes' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
+                    'dnafrag_table_reuse' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
                 },
                 'A->1' => [ 'hc_polyploid_genes' ],
             },
@@ -790,16 +779,11 @@ sub core_pipeline_analyses {
         },
 
 
-        {   -logic_name => 'sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
-            -parameters => {
-                            'db_conn'    => '#reuse_db#',
-                            'table'      => 'sequence',
-                            'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-            },
+        {   -logic_name => 'all_table_reuse',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyMembersByGenomeDB',
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '250Mb_job',
-            -flow_into => [ 'seq_member_table_reuse' ],
+            -flow_into => [ 'hc_members_per_genome' ],
         },
 
         {   -logic_name => 'dnafrag_table_reuse',
@@ -807,62 +791,11 @@ sub core_pipeline_analyses {
             -parameters => {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'dnafrag',
-                'where'         => 'genome_db_id = #genome_db_id#',
+                'where'         => 'genome_db_id = #target_gdb_id#',
                 'mode'          => 'insertignore',
             },
+            -flow_into  => [ 'move_component_genes' ],
             -hive_capacity => $self->o('reuse_capacity'),
-        },
-
-        {   -logic_name => 'seq_member_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#reuse_db#',
-                'table'         => 'seq_member',
-                'where'         => 'seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => [ 'gene_member_table_reuse' ],
-            },
-        },
-
-        {   -logic_name => 'gene_member_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#reuse_db#',
-                'table'         => 'gene_member',
-                'where'         => 'gene_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => [ 'other_sequence_table_reuse' ],
-            },
-        },
-
-        {   -logic_name => 'other_sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
-            -parameters => {
-                            'db_conn'    => '#reuse_db#',
-                            'table'      => 'other_member_sequence',
-                            'inputquery' => 'SELECT s.seq_member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND seq_member_id <= '.$self->o('protein_members_range'),
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
-            -flow_into => [ 'hmm_annot_table_reuse' ],
-        },
-
-        {   -logic_name => 'hmm_annot_table_reuse',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
-            -parameters => {
-                            'db_conn'    => '#reuse_db#',
-                            'table'      => 'hmm_annot',
-                            'inputquery' => 'SELECT h.* FROM hmm_annot h JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member_id <= '.$self->o('protein_members_range'),
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
-            -flow_into => [ 'hc_members_per_genome' ],
         },
 
         {   -logic_name         => 'hc_members_per_genome',
