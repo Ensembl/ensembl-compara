@@ -141,18 +141,14 @@ sub overall_groupset_qc {
     my $xtb_filename = $self->join_one_pair( $reuse_compara_dba, $self->compara_dba );
 
     my $xtb_copy_filename = $self->param('cluster_dir') . "/" . "groupset_qc.xtb";
-    my $cpcmd = "cp $xtb_filename $xtb_copy_filename";
-    unless(system($cpcmd) == 0) {
-      warn "failed to copy $xtb_filename to $xtb_copy_filename\n";
-    }
+    my $cpcmd = ['cp', $xtb_filename, $xtb_copy_filename];
+    $self->run_command($cpcmd, { die_on_failure => 1 });
 
     my $map_filename = $self->cluster_mapping($xtb_filename, $reuse_compara_dba, $self->compara_dba);
 
     my $map_copy_filename = $self->param('cluster_dir') . "/" . "groupset_qc.map";
-    $cpcmd = "cp $map_filename $map_copy_filename";
-    unless(system($cpcmd) == 0) {
-      warn "failed to copy $map_filename to $map_copy_filename\n";
-    }
+    $cpcmd = ['cp', $map_filename, $map_copy_filename];
+    $self->run_command($cpcmd, { die_on_failure => 1 });
 
     $self->quantify_mapping($map_filename, $reuse_compara_dba);
 }

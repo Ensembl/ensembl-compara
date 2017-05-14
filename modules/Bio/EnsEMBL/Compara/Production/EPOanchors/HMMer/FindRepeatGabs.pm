@@ -59,7 +59,7 @@ sub run {
 		close(IN);
 		my $subset_rep_file = $comp_files . ".reps.$dnafrag_id";
 		my $subset_repeats_cmd = "grep \"^$dnafrag_id\" $repeats_file > $subset_rep_file";
-		system($subset_repeats_cmd);
+		$self->run_command($subset_repeats_cmd);
 		my $sth2 = $self_dba->dbc->prepare('UPDATE genomic_align_block SET score = -10000 WHERE genomic_align_block_id = ?');
 		my $cmd = $self->param('find_overlaps') . " $subset_rep_file $gab_file --filter | cut -f4 | sort | uniq";
 		my $filter_fh;

@@ -73,31 +73,26 @@ sub run {
 		print "$tmp_file already exists\n";
 		$genome_seq_file = $tmp_file;
 	    } else {
-		my $start_time = time;
 		print "Need to copy file\n";
-		my $rsync_cmd = "rsync $genome_seq_file $tmp_file";
-		print "$rsync_cmd\n";
 
-		system($rsync_cmd) == 0 or die "system $rsync_cmd failed:$?";
-
-		print "Time to rsync " . (time - $start_time) . "\n";
-		my $rsync_time = time;
+		my $rsync_cmd = ['rsync', $genome_seq_file, $tmp_file];
+		my $runCmd = $self->run_command($rsync_cmd, { die_on_failure => 1 });
+		print "Time to rsync " . $runCmd/1000 . "\n";
 
 		#Check md5sum
+		my $start_time = time;
 		my $md5sum = `md5sum $tmp_file`;
 		if ($md5sum == $self->param('md5sum')) {
 		    $genome_seq_file = $tmp_file;
 		} else {
 		    print "md5sum failed. Use $genome_seq_file\n";
 		}
-		print "Time to md5sum " . (time - $rsync_time) . "\n";
-		print "Total time" . (time - $start_time) . "\n";
+		print "Time to md5sum " . (time - $start_time) . "\n";
 	    }
 	}
 
-	my $hmm_build_command = $self->param('hmmbuild') . " $hmm_file $stk_file";  
-	print $hmm_build_command, " **\n";
-	system($hmm_build_command);
+	my $hmm_build_command = [$self->param('hmmbuild'), $hmm_file, $stk_file];
+	$self->run_command($hmm_build_command);
 
 	unlink($stk_file);
 	

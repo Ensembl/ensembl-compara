@@ -86,24 +86,19 @@ sub write_output {
     }
     my $file_list = join " ", @ordered_files;
 
-    unless (system("cat $file_list > $concat_file") == 0) {
-        throw("Failed cat $file_list $?\n");
-    }
+    my $cat_cmd = "cat $file_list > $concat_file";
+    $self->run_command($cat_cmd, { die_on_failure => 1 });
     
     #First check concat_file is not empty
     if (-s $concat_file) {
         
         #bgzip
-        my $bgzip = $self->param('bgzip');
-        unless (system("$bgzip -f $concat_file") == 0) {
-            throw("bgzip execution failed $?");
-        }
+        my $bgzip_cmd = [$self->param('bgzip'), '-f', $concat_file];
+        $self->run_command($bgzip_cmd, { die_on_failure => 1 });
         
         #create tabix
-        my $tabix = $self->param('tabix');
-        unless (system("$tabix -s 1 -b 2 -e 2 $concat_file.gz") == 0) {
-            throw("tabix execution failed $?");
-        }
+        my $tabix_cmd = [$self->param('tabix'), qw(-s 1 -b 2 -e 2), $concat_file.'.gz'];
+        $self->run_command($tabix_cmd, { die_on_failure => 1 });
     } else {
         #empty concat_file
         unlink $concat_file;

@@ -92,8 +92,8 @@ sub fetch_input {
 	#build the hmm from the stockholm format file
 	my $hmmbuild_outfile = $self->worker_temp_directory . "$genomic_align_block_id.hmm";
 	my $hmmbuild = $self->param_required('hmmbuild');
-	my $hmmbuild_command = "$hmmbuild --dna $hmmbuild_outfile $stockholm_file";
-	system($hmmbuild_command);
+	my $hmmbuild_command = [$hmmbuild, '--dna', $hmmbuild_outfile, $stockholm_file];
+	$self->run_command($hmmbuild_command);
 	$self->param('query_file', $hmmbuild_outfile);
 }
 

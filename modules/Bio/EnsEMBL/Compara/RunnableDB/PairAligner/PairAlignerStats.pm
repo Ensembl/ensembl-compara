@@ -197,10 +197,7 @@ sub dump_bed_file {
     } else {
         #Need to dump toplevel features
         my $cmd = $self->param('dump_features') . " --url \"$dbc_url\" $species_arg --feature toplevel > $genome_bed_file";
-
-        unless (system($cmd) == 0) {
-            die("$cmd execution failed\n");
-        }
+        $self->run_command($cmd, { die_on_failure => 1 });
     }
 
     return ($genome_bed_file);
@@ -281,10 +278,7 @@ sub calc_stats {
     my $species_arg   = "--species ".$genome_db->name;
        $species_arg  .= " --component ".$genome_db->genome_component if $genome_db->genome_component;
     my $cmd = "$dump_features --url \"$dbc_url\" --compara_url '$compara_url' $species_arg --feature $feature > $alignment_bed";
-
-    unless (system($cmd) == 0) {
-        die("$cmd execution failed\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 });
 
     #Run compare_beds.pl
     my $compare_beds = $self->param('compare_beds');
@@ -340,9 +334,7 @@ sub run_create_pair_aligner_page {
     $cmd .= " --ucsc_url " . $self->param('ucsc_url') if ($self->param('ucsc_url'));
     $cmd .= " > ./mlss_" . $self->param('mlss_id') . ".html";
 
-    unless (system($cmd) == 0) {
-	die("$cmd execution failed\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 });
 }
 
 1;

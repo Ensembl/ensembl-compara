@@ -69,10 +69,7 @@ sub run {
 
     #Check README file and directory exist (do not for maf)
     if (-e $from && -e $to) { 
-	if(my $return_value = system($cmd)) {
-	    $return_value >>= 8;
-	    die "system( $cmd ) failed: $return_value";
-	}
+        $self->run_command($cmd, { die_on_failure => 1 });
     }
 
     #Create specific README file

@@ -83,9 +83,8 @@ sub fetch_input {
       push @ordered_files, $sorted_bed_file;
   }
   my $file_list = join " ", @ordered_files;
-  unless (system("cat $file_list > $concat_bed_file") == 0) {
-      throw("Failed cat $file_list: $?\n");
-  }
+  my $cat_cmd = "cat $file_list > $concat_bed_file";
+  $self->run_command($cat_cmd, { die_on_failure => 1 });
 
   $self->param('concat_file', $concat_bed_file);
   #Should be able to delete the original files now
@@ -99,10 +98,8 @@ sub write_output {
   my $concat_file = $self->param('concat_file');
   #First check concat_file is not empty
   if (-s $concat_file) {
-      my $cmd = join " ", $self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=bed3+3', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file');
-      unless (system($cmd) == 0) {
-          throw("Failed $cmd: $?\n");
-      }
+      my $cmd = [$self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=bed3+3', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file')];
+      $self->run_command($cmd, { die_on_failure => 1 });
   } else {
       #empty concat_file
       #unlink $concat_file;
@@ -117,9 +114,7 @@ sub sort_bed {
     my $sorted_bed_file = $bed_file . ".sort";
     return $sorted_bed_file if (-e $sorted_bed_file) and ((-s $sorted_bed_file) == (-s $bed_file));
     my $sort_cmd = "sort -k2,2n $bed_file > $sorted_bed_file";
-    unless (system($sort_cmd) == 0) {
-        throw("Problem running $sort_cmd: $!");
-    }
+    $self->run_command($sort_cmd, { die_on_failure => 1 });
     #remove original bed file
     #unlink $bed_file;
     return $sorted_bed_file;

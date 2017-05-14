@@ -359,9 +359,7 @@ sub run_gerp {
 	$command .= " " . $self->param('param_file_tmp');
     }
     #run gerp with parameter file
-    unless (system($command) == 0) {
-	throw("gerp execution failed\n");
-    }
+    $self->run_command($command, { die_on_failure => 1 });
 }
 
 #run gerp version 2.1
@@ -385,13 +383,8 @@ sub run_gerp_v2 {
 
     #run gerpcol
     my $command = $gerpcol_path;
-
     $command .= " -t " . $self->param('modified_tree_file') . " -f " . $self->param('mfa_file');
-    print STDERR "command $command\n";
-
-    unless (system($command) == 0) {
-	throw("gerpcol execution failed\n");
-    }
+    $self->run_command($command, { die_on_failure => 1 });
 
     #run gerpelem
     $command = $gerpelem_path;
@@ -416,10 +409,7 @@ sub run_gerp_v2 {
     if (defined $self->param('depth_threshold')) {
         $command .= " -d " . $self->param('depth_threshold');
     }
-    print STDERR "command $command\n";
-    unless (system($command) == 0) {
-	throw("gerpelem execution failed\n");
-    }
+    $self->run_command($command, { die_on_failure => 1 });
 }
 
 #Parse results for Gerp version 1

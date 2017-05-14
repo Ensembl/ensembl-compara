@@ -172,10 +172,7 @@ sub dump_bed_file {
     } else {
         #Need to dump toplevel features
         my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature toplevel > $genome_bed_file";
-
-        unless (system($cmd) == 0) {
-            die("$cmd execution failed\n");
-        }
+        $self->run_command($cmd, { die_on_failure => 1 });
     }
 
     ##############################
@@ -188,10 +185,7 @@ sub dump_bed_file {
     } else {
         #Need to dump toplevel features
         my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature coding-exons > $coding_exon_bed_file";
-
-        unless (system($cmd) == 0) {
-            die("$cmd execution failed\n");
-        }
+        $self->run_command($cmd, { die_on_failure => 1 });
     }
     return ($genome_bed_file, $coding_exon_bed_file);
 }
@@ -252,10 +246,7 @@ sub calc_stats {
     my $alignment_bed = $self->param('output_dir') . "/" . $feature . "." . $species . ".bed";
     my $dump_features = $self->param('dump_features');
     my $cmd = "$dump_features --url $dbc_url --compara_url '$compara_url' --species $species --feature $feature > $alignment_bed";
-
-    unless (system($cmd) == 0) {
-        die("$cmd execution failed\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1 });
 
     #Run compare_beds.pl
     my $compare_beds = $self->param('compare_beds');
