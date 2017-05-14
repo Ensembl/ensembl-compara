@@ -315,6 +315,7 @@ sub _has_binary_column {
   Description : Copy data in this table. The main optional arguments are:
                  - ($index_name,$min_id,$max_id) to restrict to a range
                  - $query for a general way of altering the data (e.g. fixing it)
+  Return      : Integer - The number of rows copied over
 
 =cut
 
@@ -334,14 +335,16 @@ sub copy_data {
         #but takes far too long to ENABLE again
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
+    my $rows;
     if (_has_binary_column($from_dbc, $table_name)) {
-        copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
+        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
     } else {
-        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
+        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
     }
     if ($reenable_keys // 1) {
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
     }
+    return $rows;
 }
 
 
@@ -474,6 +477,7 @@ sub copy_data_in_binary_mode {
 
     my $use_limit = 0;
     my $start = $min_id;
+    my $total_rows = 0;
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
@@ -523,6 +527,7 @@ sub copy_data_in_binary_mode {
 
         ## mysqldump data
         copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name);
+        $total_rows += $count;
 
         ## Undo table names change
         $from_dbc->db_handle->do("DROP TABLE $table_name");
@@ -530,6 +535,7 @@ sub copy_data_in_binary_mode {
 
         #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
     }
+    return $total_rows;
 }
 
 
