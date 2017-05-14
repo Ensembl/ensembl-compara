@@ -66,9 +66,19 @@ use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+
+        'disable_and_enable_keys'   => undef,
+    }
+}
+
 sub write_output {
     my $self = shift @_;
-    copy_data($self->data_dbc, $self->compara_dba->dbc, $self->param_required('table'), $self->param_required('inputquery'));
+    copy_data($self->data_dbc, $self->compara_dba->dbc, $self->param_required('table'), $self->param_required('inputquery'),
+                undef, undef, undef, undef, $self->param('disable_and_enable_keys'), $self->param('disable_and_enable_keys'));
 }
 
 1;
