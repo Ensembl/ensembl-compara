@@ -55,6 +55,24 @@ use Data::Dumper;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 
+sub new_and_exec {
+    my ($class, $cmd, $options) = @_;
+
+    my $debug   = $options->{debug};
+    my $timeout = $options->{timeout};
+    my $flat_cmd = ref($cmd) ? join(' ', @$cmd) : $cmd;
+    print STDERR "COMMAND: $flat_cmd\n" if ($debug);
+    print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
+    my $runCmd = $class->new($cmd, $timeout);
+    $runCmd->run();
+    print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
+    print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
+    my $purpose = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
+    die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $purpose, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
+    return $runCmd;
+}
+
+
 sub new {
     my ($class, $cmd, $timeout) = @_;
     my $self = {};
