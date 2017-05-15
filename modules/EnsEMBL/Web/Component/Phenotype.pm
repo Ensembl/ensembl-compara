@@ -56,6 +56,7 @@ sub external_ontology {
   $ontology_url = $self->hub->get_ExtURL('ORDO', $iri_form) if $iri_form =~ /^Orphanet/;
   $ontology_url = $self->hub->get_ExtURL('HPO',  $iri_form) if $iri_form =~ /^HP/;
   $ontology_url = $self->hub->get_ExtURL('GO',   $iri_form) if $iri_form =~ /^GO/;
+  $ontology_url = $self->hub->get_ExtURL('MP',   $iri_form) if $iri_form =~ /^MP/;
 
   return $ontology_url;
 }
@@ -74,6 +75,7 @@ sub external_ontology_link{
   $ontology_link = $self->hub->get_ExtURL_link( $label, 'ORDO', $iri_form) if $iri_form =~ /^Orphanet/;
   $ontology_link = $self->hub->get_ExtURL_link( $label, 'HPO',  $iri_form) if $iri_form =~ /^HP/;
   $ontology_link = $self->hub->get_ExtURL_link( $label, 'GO',   $iri_form) if $iri_form =~ /^GO/;
+  $ontology_link = $self->hub->get_ExtURL_link( $label, 'MP',   $iri_form) if $iri_form =~ /^MP/;
 
   return $ontology_link;
 }
