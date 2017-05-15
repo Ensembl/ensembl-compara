@@ -97,7 +97,8 @@ sub handler {
     }
 
     ## Map URLs for temporary files that are stored outside the htdocs directory
-    my %tmp_paths = (
+    ## Note that we can't guarantee that URLs are unique, so use an array rather than a hash
+    my @tmp_paths = (
                     $SiteDefs::ENSEMBL_TMP_URL        => $SiteDefs::ENSEMBL_TMP_DIR, 
                     $SiteDefs::ENSEMBL_TMP_URL_IMG    => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
                     $SiteDefs::ENSEMBL_USERDATA_URL   => $SiteDefs::ENSEMBL_USERDATA_DIR, 
@@ -106,14 +107,20 @@ sub handler {
                     $SiteDefs::GOOGLE_SITEMAPS_URL    => $SiteDefs::GOOGLE_SITEMAPS_PATH,
                     );
     my $is_tmp;
+    #warn ">>> FILE $file";
     
-    while (my($url, $dir) = each(%tmp_paths)) {
+    while (my($url, $dir) = splice @tmp_paths, 0, 2) {
+      #warn "... URL $url, DIR $dir";
       if ($file =~ /^$url/) {
-        $file =~ s/$url/$dir/;
-        $is_tmp = 1;
-        last;
+        (my $filecheck = $file) =~ s/$url/$dir/;
+        if (-e $filecheck) {
+          $file = $filecheck;
+          $is_tmp = 1;
+          last;
+        }
       }
     }
+    #warn "<<< FILE $file";
     
     ## Non-temporary static files are pluggable:
     unless ($is_tmp) {
