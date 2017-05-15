@@ -195,13 +195,8 @@ sub max_display_length    { return 1000000; }
 
 sub validation_status  { 
   my $self = shift; 
-  my $states = $self->Obj->get_all_validation_states;
-  if (scalar(@$states) and $states->[0]) {
-    return join (',',@$states);
-  }
-  else { 
-    return '';
-  }
+  my $status = $self->Obj->validation_status();
+  return ($status) ? $status : '';
 }    
 
 # SSV associated colours
