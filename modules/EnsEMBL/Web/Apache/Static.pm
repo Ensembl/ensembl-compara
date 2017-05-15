@@ -107,10 +107,8 @@ sub handler {
                     $SiteDefs::GOOGLE_SITEMAPS_URL    => $SiteDefs::GOOGLE_SITEMAPS_PATH,
                     );
     my $is_tmp;
-    #warn ">>> FILE $file";
     
     while (my($url, $dir) = splice @tmp_paths, 0, 2) {
-      #warn "... URL $url, DIR $dir";
       if ($file =~ /^$url/) {
         (my $filecheck = $file) =~ s/$url/$dir/;
         if (-e $filecheck) {
@@ -120,7 +118,6 @@ sub handler {
         }
       }
     }
-    #warn "<<< FILE $file";
     
     ## Non-temporary static files are pluggable:
     unless ($is_tmp) {
