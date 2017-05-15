@@ -1584,6 +1584,9 @@ sub _munge_meta {
     foreach my $alias (@{$meta_hash->{'species.alias'}||[]}) {
       $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$alias} = $species;
     }
+    ## Make sure we define the URL as an alias, even if no other aliases exist for this species,
+    ## otherwise the mapping in Apache handlers will fail
+    $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$species} = $species;
 
     ## Backwards compatibility
     $self->tree->{'SPECIES_BIO_NAME'}  = $bio_name;
