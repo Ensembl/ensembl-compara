@@ -91,15 +91,17 @@ sub gene_phenotypes {
       $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} };
       $phenotypes{$phe}{'source'}{$source_url} = 1;
 
-      my $locs = sprintf(
-        '<a href="%s">View</a>',
-        $hub->url({
-          type    => 'Phenotype',
-          action  => 'Locations',
-          ph      => $pf->phenotype->dbID
-        }),
+      my $phe_url = sprintf(
+          '<a href="%s" title="%s">%s</a>',
+          $hub->url({
+            type    => 'Phenotype',
+            action  => 'Locations',
+            ph      => $pf->phenotype->dbID
+           }),
+           'View associate loci',
+           $phe
       );
-      $phenotypes{$phe}{'locations'} = $locs;
+      $phenotypes{$phe}{'url'} = $phe_url;
 
       my $allelic_requirement = '-';
       if ($attribs->{'inheritance_type'}) {
@@ -111,7 +113,7 @@ sub gene_phenotypes {
       if ($pf->study) {
         $pmids = $self->add_study_links($pf->study->external_reference);
         foreach my $pmid (@$pmids) {
-          $phenotypes{$phe}{'pmids'}{$pmid} = 1;
+         $phenotypes{$phe}{'pmids'}{$pmid} = 1;
         }
         $has_study = 1;
       }
@@ -124,8 +126,7 @@ sub gene_phenotypes {
 
       push @rows, {
         source    => join(', ', keys(%{$phenotypes{$phe}{'source'}})),
-        phenotype => $phe,
-        locations => $phenotypes{$phe}{'locations'},
+        phenotype => $phenotypes{$phe}{'url'},
         allelic   => ($phenotypes{$phe}{'allelic_requirement'}) ? join(', ', keys(%{$phenotypes{$phe}{'allelic_requirement'}})) : '-',
         study     => $study
       }
@@ -143,7 +144,6 @@ sub gene_phenotypes {
     if ($has_allelic == 1) {
       push @columns, { key => 'allelic', align => 'left', title => 'Allelic requirement' , help => 'Allelic status associated with the disease (monoallelic, biallelic, etc)' };
     }
-    push @columns, { key => 'locations', align => 'left', title => 'Associated loci' };
 
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_sort no_col_toggle', sorting => [ 'phenotype asc' ], exportable => 1 })->render;
   }
@@ -169,7 +169,7 @@ sub add_study_links {
     push @pmids_list, qq{<a rel="external" href="$link">$pmid</a>};
   }
 
-  return join(', ', @pmids_list);
+  return \@pmids_list;
 }
 
 1;
