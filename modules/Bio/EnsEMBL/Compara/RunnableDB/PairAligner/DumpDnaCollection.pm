@@ -135,7 +135,7 @@ sub dumpNibFiles {
           $dna_object->dump_chunks_to_fasta_file($fastafile);
           
           if (-e $self->param('faToNib_exe')) {
-              system($self->param('faToNib_exe'), "$fastafile", "$nibfile") and die("Could not convert fasta file $fastafile to nib: $!\n");
+              $self->run_command([$self->param('faToNib_exe'), $fastafile, $nib_files], { die_on_failure => 1, description => 'convert fasta file $fastafile to nib' } );
           } else {
               die("Unable to find faToNib. Must either define faToNib_exe or it must be in your path");
           }

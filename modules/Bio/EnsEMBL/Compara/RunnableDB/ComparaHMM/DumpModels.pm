@@ -157,11 +157,8 @@ sub create_blast_db {
     ## Create the blast db
     my $blast_bin_dir = $self->param('blast_bin_dir');
     my $formatdb_exe = "$blast_bin_dir/makeblastdb";
-    my $cmd = "$formatdb_exe -dbtype prot -in $globalsDir/con.Fasta";
-    if (my $err = system($cmd)) {
-        die "Problem creating the blastdb: $err\n";
-    }
-    return;
+    my $cmd = [$formatdb_exe, qw(-dbtype prot -in), $globalsDir.'/con.Fasta'];
+    $self->run_command($cmd, { die_on_failure => 1, description => 'create the blastdb' } );
 }
 
 1;

@@ -143,10 +143,7 @@ sub _download_panter_families {
 
     #untar file
     my $cmd = "tar -xzvf " . $tmp_file;
-    print ">>>$cmd\n" if ( $self->debug );
-    unless ( system( "cd " . $self->param('hmm_lib') . "; $cmd" ) == 0 ) {
-        $self->throw("error expanding PANTHER families $!\n");
-    }
+    $self->run_command("cd " . $self->param('hmm_lib') . "; $cmd", { die_on_failure => 1, description => 'expand PANTHER families' } );
 
     printf( "time for fetching and decompressing PANTHER families: %1.3f secs\n", time() - $starttime );
 } ## end sub _download_panter_families
@@ -192,10 +189,7 @@ sub _hmm_press_profiles {
 
     #move HMM library into place
     $cmd = "mv " . $self->param('hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
-    unless ( system($cmd) == 0 ) {
-        print "$cmd\n" if ( $self->debug );
-        $self->throw("error in moving the HMM library to 'hmm_library_basedir' $!\n");
-    }
+    $self->run_command($cmd, { die_on_failure => 1, description => 'move the HMM library to "hmm_library_basedir"' } );
 }
 
 #After parsing we should clean up the files, since they are quite big.
@@ -203,18 +197,12 @@ sub _clear_tmp_panther_directory_structure {
     my $self = shift;
 
     #remove previous directory structure (books, globals, etc)
-    my $cmd = "rm -f " . $self->param('panther_dir');
-    print "$cmd\n" if ( $self->debug );
-    unless ( system($cmd) == 0 ) {
-        $self->throw("error deleting previously PANTHER directory structure $!\n");
-    }
+    my $cmd = [qw(rm -f), $self->param('panther_dir')];
+    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous PANTHER directory structure' } );
 
     #remove previously downloaded file from PANTHER FTP
-    $cmd = "rm -f " . $self->param('file');
-    print "$cmd\n" if ( $self->debug );
-    unless ( system($cmd) == 0 ) {
-        $self->throw("error deleting previously downloaded .tgz file $!\n");
-    }
+    $cmd = [qw(rm -f), $self->param('file')];
+    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previousdownloaded .tgz file' } );
 }
 
 1;

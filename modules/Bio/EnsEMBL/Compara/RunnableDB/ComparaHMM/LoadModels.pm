@@ -113,12 +113,8 @@ sub download_models {
     die "Error $status trying to retrieve $ftp_file" unless (is_success($status));
 
     my $cmd = $self->param('expander') . " $tmp_file";
-    print STDERR "$cmd\n" if ($self->debug());
+    $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1, description => 'expand models' } );
 
-    unless (system("cd $worker_temp_directory; $cmd") == 0) {
-        print STDERR "$cmd\n";
-        $self->throw("error expanding models with [$cmd]: $!\n");
-    }
     printf ("time for fetching and expanding models : %1.3f secs\n", time()-$starttime);
 
     $self->param('cm_file_or_directory', $expanded_file);

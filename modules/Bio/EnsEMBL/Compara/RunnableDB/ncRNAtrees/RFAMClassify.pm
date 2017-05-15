@@ -303,16 +303,10 @@ sub load_mirbase_families {
 
   $mifam =~ s/\.gz//;
   my $cmd = "rm -f $mifam";
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error deleting previously downloaded file $!\n");
-  }
+  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1, description => 'delete previously downloaded file' } );
 
   $cmd = "gunzip $tmp_file";
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error expanding mirbase families $!\n");
-  }
+  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1, description => 'expand mirbase families' } );
 
     # vivfication:
   $self->param('mirbase_families', {});
