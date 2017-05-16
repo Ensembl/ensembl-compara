@@ -93,7 +93,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'       => '#compara_url#',
-                'inputquery'    => 'SELECT method_link_species_set_id, label, method_link_id, name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
+                'inputquery'    => 'SELECT method_link_species_set_id, label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
             },
             -flow_into => {
                 2 => WHEN( '((#method_link_id# eq "401") || (#method_link_id# eq "402")) && (#label# ne "cafe")' => {'dump_one_tree_without_distances' => INPUT_PLUS() },
@@ -121,7 +121,7 @@ sub pipeline_analyses {
         {   -logic_name => 'sanitize_file',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" "#name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"; rename "s/  */_/g" "#name#_#label#.nh"',
+                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" "#name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"',
             },
         },
     ];
