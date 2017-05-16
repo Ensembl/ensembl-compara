@@ -37,11 +37,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-<<<<<<< HEAD:modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblFamiliesEbi_conf.pm
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamiliesEbi_conf \
-=======
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblFamilies_conf \
->>>>>>> Further rearragement of the PipeConfigs:modules/Bio/EnsEMBL/Compara/PipeConfig/EBI/EnsemblFamilies_conf.pm
+
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
