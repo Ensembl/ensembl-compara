@@ -123,39 +123,6 @@ sub transcript_table {
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
  
-  # alternative (Vega) coordinates
-  if ($object->get_db eq 'vega') {
-    my $alt_assemblies  = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
-    my ($vega_assembly) = map { $_ =~ /VEGA/; $_ } @$alt_assemblies;
-    
-    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-    my $reg        = 'Bio::EnsEMBL::Registry';
-    my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
-    
-    $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
-
-    my $alt_slices = $object->vega_projection($vega_assembly); # project feature slice onto Vega assembly
-    
-    # link to Vega if there is an ungapped mapping of whole gene
-    if (scalar @$alt_slices == 1 && $alt_slices->[0]->length == $object->feature_length) {
-      my $l = $alt_slices->[0]->seq_region_name . ':' . $alt_slices->[0]->start . '-' . $alt_slices->[0]->end;
-      
-      $location_html .= ' [<span class="small">This corresponds to ';
-      $location_html .= sprintf(
-        '<a href="%s" target="external" class="constant">%s-%s</a>',
-        $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l),
-        $self->thousandify($alt_slices->[0]->start),
-        $self->thousandify($alt_slices->[0]->end)
-      );
-      
-      $location_html .= " in $vega_assembly coordinates</span>]";
-    } else {
-      $location_html .= sprintf qq{ [<span class="small">There is no ungapped mapping of this %s onto the $vega_assembly assembly</span>]}, lc $object->type_name;
-    }
-    
-    $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
-  }
-
   $location_html = "<p>$location_html</p>";
 
   my $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
