@@ -615,10 +615,11 @@ sub copy_table_in_binary_mode {
     my $start_time  = time();
     my $insert_mode = $replace ? '--replace' : '--insert-ignore';
 
-    system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
+    my $cmd = "mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
         ($where_filter ? "-w '$where_filter'" : "")." ".
         ($skip_disable_keys ? "--skip-disable-keys" : "")." ".
-        "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
+        "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname";
+    Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
 
     print "time " . (time - $start_time) . "\n" if $debug;
 }

@@ -29,6 +29,7 @@ use Getopt::Long;
 use DBI;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 my ($help, $srcDB, $destDB, $host, $user, $pass, $port, $seq_region_file, $dest_host, $dest_user, $dest_pass, $dest_port, $source_url, $dest_url);
 
@@ -122,14 +123,11 @@ $to_dbh->do( "CREATE DATABASE " . $destDB )
 
 # May have to eliminate the -p pass part... not sure
 
-my $rc = 0xffff & system(
+my $cmd = (
   "mysqldump -u $user -h $host -P $port --no-data $srcDB | " .
   "mysql -p$dest_pass -u $dest_user -h $dest_host -P $dest_port $destDB");
+Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1 } );
 
-if($rc != 0) {
-  $rc >>= 8;
-  die "mysqldump and insert failed with return code: $rc";
-}
 $to_dbc->do("use $destDB");
 
 # populate coord_system table

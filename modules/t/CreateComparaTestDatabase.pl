@@ -27,6 +27,8 @@ use warnings;
 use Getopt::Long;
 use DBI;
 
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
+
 my ($help, $srcDB, $destDB, $host, $user, $pass, $port, $seq_region_file);
 my ($srcAncDB, $destAncDB);
 
@@ -132,24 +134,16 @@ if ($destAncDB) {
 
 # May have to eliminate the -p pass part... not sure
 
-my $rc = 0xffff & system(
+my $cmd = (
   "mysqldump -u ensro -h $host -P $port --no-data $srcDB | " .
   "mysql -p$pass -u $user -h $host -P $port $destDB");
-
-if($rc != 0) {
-  $rc >>= 8;
-  die "mysqldump and insert failed with return code: $rc";
-}
+Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1 } );
 
 if ($destAncDB) {
-    my $rc = 0xffff & system(
+                         $cmd = (
                              "mysqldump -u ensro -h $host -P $port --no-data $srcAncDB | " .
                              "mysql -p$pass -u $user -h $host -P $port $destAncDB");
-    
-    if($rc != 0) {
-        $rc >>= 8;
-        die "mysqldump and insert failed with return code: $rc";
-    }
+                         Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1 } );
 }
 
 
