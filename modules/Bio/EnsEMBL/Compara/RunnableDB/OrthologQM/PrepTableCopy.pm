@@ -37,7 +37,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
 	my $self = shift;
@@ -65,14 +65,13 @@ sub fetch_input {
     $self->param('cmd', \@cmd);
 }
 
-sub run {
-	my $self = shift;
-
-	system( join( ' ', @{ $self->param('cmd') } ) );
-}
 
 sub write_output {
 	my $self = shift;
+
+        # To check for failures
+        $self->SUPER::write_output();
+
 	my $chunk_size = $self->param_required('copy_chunk_size');
 
 	my @copy_dataflow;
