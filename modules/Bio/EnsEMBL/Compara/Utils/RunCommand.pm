@@ -83,10 +83,7 @@ sub new {
 }
 
 sub cmd {
-    my ($self, $cmd) = @_;
-    if (defined $cmd) {
-        return $self->new($cmd);
-    }
+    my ($self) = @_;
     return $self->{_cmd};
 }
 
