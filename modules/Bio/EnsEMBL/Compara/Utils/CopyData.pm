@@ -460,7 +460,7 @@ sub copy_data_in_text_mode {
 =cut
 
 sub copy_data_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -483,7 +483,7 @@ sub copy_data_in_binary_mode {
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name);
+        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
     }
 
     print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
@@ -501,9 +501,9 @@ sub copy_data_in_binary_mode {
         $step = 1000000;
     }
     while (1) {
-        #my $start_time  = time();
+        my $start_time  = time();
         my $end = $start + $step - 1;
-        #print "start $start end $end\n";
+        print "start $start end $end\nquery $query\n" if $debug;
 
         ## Copy data into a aux. table
         my $sth;
@@ -528,14 +528,14 @@ sub copy_data_in_binary_mode {
         $from_dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
         ## mysqldump data
-        copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name);
+        copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
         $total_rows += $count;
 
         ## Undo table names change
         $from_dbc->db_handle->do("DROP TABLE $table_name");
         $from_dbc->db_handle->do("ALTER TABLE original_$table_name RENAME $table_name");
 
-        #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+        print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n" if $debug;
     }
     return $total_rows;
 }
@@ -548,6 +548,7 @@ sub copy_data_in_binary_mode {
   Arg[3]      : string $table_name
   Arg[4]      : (opt) string $where_filter
   Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $debug
 
   Description : Copy the table (either all of it or a subset).
                 The main optional argument is $where_filter, which allows to select a portion of
@@ -557,17 +558,17 @@ sub copy_data_in_binary_mode {
 =cut
 
 sub copy_table {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
-    #print "Copying data in table $table_name\n";
+    print "Copying data in table $table_name\n" if $debug;
 
     if (_has_binary_column($from_dbc, $table_name)) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys);
+        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug);
     } else {
-        return copy_table_in_text_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace);
+        return copy_table_in_text_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug);
     }
 }
 
@@ -580,10 +581,10 @@ sub copy_table {
 =cut
 
 sub copy_table_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug) = @_;
 
     my $query = 'SELECT * FROM '.$table_name.($where_filter ? ' WHERE '.$where_filter : '');
-    return copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, undef, undef, undef, undef, undef, $replace);
+    return copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, undef, undef, undef, undef, undef, $replace, $debug);
 }
 
 
@@ -595,7 +596,7 @@ sub copy_table_in_text_mode {
 =cut
 
 sub copy_table_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -612,7 +613,7 @@ sub copy_table_in_binary_mode {
     my $to_port = $to_dbc->port;
     my $to_dbname = $to_dbc->dbname;
 
-    #my $start_time  = time();
+    my $start_time  = time();
     my $insert_mode = $replace ? '--replace' : '--insert-ignore';
 
     system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
@@ -620,7 +621,7 @@ sub copy_table_in_binary_mode {
         ($skip_disable_keys ? "--skip-disable-keys" : "")." ".
         "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
 
-    #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
+    print "time " . (time - $start_time) . "\n" if $debug;
 }
 
 
