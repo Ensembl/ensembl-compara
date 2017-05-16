@@ -64,7 +64,7 @@ sub draw_block {
   ## not with respect to biology, because it makes the logic a lot simpler
   my $coding_start  = $structure->{'utr_5'} || $start;
   my $coding_end    = $structure->{'utr_3'} || $end;
-  my $coding_width = $coding_end - $coding_start + 1;
+  my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block($composite, %params);

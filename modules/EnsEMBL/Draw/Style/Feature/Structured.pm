@@ -81,7 +81,7 @@ sub draw_feature {
 
       my $start         = $previous{'x'} + $previous{'width'};
       $start            = 1 if $start < 1;
-      $params{'x'}      = $start - 1;
+      $params{'x'}      = $start;
       my $end           = $_->{'start'};
       my $width         = $end - $start + 1;
       if ($end > $image_width) {

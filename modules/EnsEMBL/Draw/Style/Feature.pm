@@ -304,7 +304,7 @@ sub draw_feature {
   my $x = $feature->{'start'};
   $x    = 1 if $x < 1;
   my $params = {
-                  x            => $x-1,
+                  x            => $x,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
