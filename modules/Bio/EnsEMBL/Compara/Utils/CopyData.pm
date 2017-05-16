@@ -478,7 +478,7 @@ sub copy_data_in_binary_mode {
     my $to_dbname = $to_dbc->dbname;
 
     my $use_limit = 0;
-    my $start = $min_id;
+    my $start = $min_id // 0;
     my $total_rows = 0;
 
     #all the data in the table needs to be copied and does not need fixing
@@ -496,7 +496,6 @@ sub copy_data_in_binary_mode {
         $use_limit = 1;
         $start = 0;
     }
-    #my $start = 0;
     if (!defined $step) {
         $step = 1000000;
     }
