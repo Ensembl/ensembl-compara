@@ -195,9 +195,10 @@ sub transcript_table {
         }
       }
     }
+
     my %url_params = (
       type   => 'Transcript',
-      action => $page_type eq 'gene' || $action eq 'ProteinSummary' ? 'Summary' : $action
+      action => $page_type eq 'gene' ? 'Summary' : $action,
     );
     
     if ($count == 1) { 
@@ -258,9 +259,14 @@ sub transcript_table {
       my %extras;
       my $cds_tag           = '-';
       my $gencode_set       = '-';
-      my $url               = $hub->url({ %url_params, t => $tsi });
       my (@flags, @evidence);
       
+      ## Override link destination if this transcript has no protein
+      if (!$_->translation && ($action eq 'ProteinSummary' || $action eq 'Domains' || $action eq 'ProtVariations')) {
+        $url_params{'action'} = 'Summary';
+      }
+      my $url = $hub->url({ %url_params, t => $tsi });
+
       if (my $translation = $_->translation) {
         $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
         $translation_id = $translation->stable_id;
