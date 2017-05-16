@@ -9,6 +9,22 @@ Alignments not containing the reference species are written to files called
 Alignments containing duplications in the reference species are dumped once
 per duplicated segment.
 
+The pipeline will create all the necessary jobs, run scripts/dumps/DumpMultiAlign.pl, optionally run emf2maf, compress, create the MD5SUM and also create a stanadard readme file. The pipeline looks something like::
+
+                  InitJobs           Readme
+             /       |         \
+ CreateChrJobs CreateSuperJobs CreateOtherJobs
+              \      |         /
+               DumpMultiAlign
+                     |     \
+                     |     emf2maf
+                     |     /
+                  Compress
+                     |
+		   MD5SUM
+
+You need a reg_conf file containing the location of the EnsEMBL core sequences and the location of the compara database containing the alignments to dump.
+
 All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
 #. Edit ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm``
