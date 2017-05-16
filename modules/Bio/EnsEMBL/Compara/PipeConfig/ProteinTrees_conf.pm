@@ -207,31 +207,8 @@ sub default_options {
         # The TreeFam release to map to
         'tf_release'                => undef,
 
-    # executable locations:
-        #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
-        #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
-        #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        #'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
-        #'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
-        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
-        #'treebest_exe'              => '/software/ensembl/compara/treebest',
-        #'examl_exe_avx'             => 'UNDEF',
-        #'examl_exe_sse3'            => 'UNDEF',
-        #'parse_examl_exe'           => 'UNDEF',
-        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
-        #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
-        #'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
-        #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
-        #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-        #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
-        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        #'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
-
     # HMM specific parameters (set to 0 or undef if not in use)
-       # The location of the HMM library.
-       #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii',
-        'hmm_library_basedir'       => undef,
+       'hmm_library_basedir'       => undef,
 
        # Dumps coming from InterPro
        'panther_annotation_file'    => '/dev/null',

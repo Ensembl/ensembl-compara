@@ -77,45 +77,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-             # dependent parameters:
-        'host'        => 'compara1',                        #separate parameter to use the resources aswell
-
-	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-
-	    'staging_loc1' => {
-            -host   => 'ens-staging3',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-        # 'staging_loc2' => {
-        #     -host   => 'ens-staging2',
-        #     -port   => 3306,
-        #     -user   => 'ensro',
-        #     -pass   => '',
-        # },  
-	    'livemirror_loc' => {
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-	        -db_version => 71,
-        },
-
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1') ], # $self->o('staging_loc2'), ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
-
-            # executable locations:
+        # executable locations:
         'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
         'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
         'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
-        'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
-        'lavToAxt_exe' => '/software/ensembl/compara/bin/lavToAxt',
-        'axtChain_exe' => '/software/ensembl/compara/bin/axtChain',
-        'chainNet_exe' => '/software/ensembl/compara/bin/chainNet',
 
             #Set for single pairwise mode
         'mlss_id' => '',
@@ -131,9 +98,6 @@ sub default_options {
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
-
-	#directory to dump nib files
-	'dump_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
         # Dnafrags to load and align
         'only_cellular_component'   => undef,   # Do we load *all* the dnafrags or only the ones from a specific cellular-component ?
@@ -247,10 +211,7 @@ sub default_options {
 	#Default pairaligner config
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
-#	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'output_dir' => '/nfs/production/panda/ensembl/compara/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-            
+
         #
         #Resource requirements
         #

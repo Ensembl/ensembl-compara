@@ -98,25 +98,19 @@ sub default_options {
 
         #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        # resource requirements:
-        #'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
-        #'blast_gigs'      =>  4,
-        #'blast_hm_gigs'   =>  6,
-        #'mcl_gigs'        => 72,
-        #'mcl_threads'     => 12,
-        #'lomafft_gigs'    =>  4,
-        #'himafft_gigs'    => 14,
-        #'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        #'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
-        #'mafft_capacity'  =>  400,
-        #'cons_capacity'   =>  100,
-        #'HMMer_classify_capacity' => 100,
+        resource requirements:
+        'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
+        'blast_gigs'      =>  4,
+        'blast_hm_gigs'   =>  6,
+        'mcl_gigs'        => 72,
+        'mcl_threads'     => 12,
+        'lomafft_gigs'    =>  4,
+        'himafft_gigs'    => 14,
+        'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
+        'mafft_capacity'  =>  400,
+        'cons_capacity'   =>  100,
+        'HMMer_classify_capacity' => 100,
 
-        # used by the StableIdMapper as the reference:
-        #'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
-
-        # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        #'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
     };
 }
 
@@ -163,27 +157,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'hmm_clustering'    => $self->o('hmm_clustering'),
     };
 }
-
-=head2 RESOURCE CLASSES
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        # Note that these descriptions include "database tokens" which are only provided by Sanger Systems
-
-        'urgent'       => { 'LSF' => '-q yesterday' },
-        'RegBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').'000 -q normal -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 360' ]  },
-        'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
-        'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
-        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000 -n '.$self->o('mcl_threads').' -q hugemem -R"select[ncpus>='.$self->o('mcl_threads').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
-        'LoMafft'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
-        '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-    };
-}
-
-=cut
 
 sub hive_meta_table {
     my ($self) = @_;
