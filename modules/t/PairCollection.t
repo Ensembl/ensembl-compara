@@ -35,7 +35,7 @@ my $dba = $multi_db->get_DBAdaptor('cc21_pair_species');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
-# Test collection #
+# Test with species_set_name #
 my $exp_dataflow = [
 	{
 	'species_set_id' => '35399',
@@ -72,7 +72,7 @@ my $exp_dataflow = [
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection', # module
 	{ # input param hash
-		'collection' => 'sauropsids', 
+		'species_set_name' => 'sauropsids', 
 		'compara_db' => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
