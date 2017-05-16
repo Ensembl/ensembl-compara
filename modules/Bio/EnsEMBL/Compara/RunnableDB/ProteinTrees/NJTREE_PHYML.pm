@@ -193,7 +193,7 @@ sub write_output {
     }
 
     if ($self->param('output_dir')) {
-        system(sprintf('cd %s; zip -r -9 %s/%d.zip', $self->worker_temp_directory, $self->param('output_dir'), $self->param('gene_tree_id')));
+        $self->run_command(sprintf('cd %s; zip -r -9 %s/%d.zip', $self->worker_temp_directory, $self->param('output_dir'), $self->param('gene_tree_id')), { die_on_failure => 1 });
     }
 
     $self->call_hcs_all_trees();

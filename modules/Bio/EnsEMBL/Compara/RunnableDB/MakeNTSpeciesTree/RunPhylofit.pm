@@ -120,7 +120,7 @@ sub write_output {
  close(TR);
 # run phylofit 
  my @command = ($self->param('phylofit_exe'), '--tree', $species_tree_file, '--subst-mod', 'HKY85', '--out-root', $gab_file, $msa_fasta_file);
- system(@command);
+ $self->run_command(\@command, { die_on_failure => 1 });
  my $output_file_name = "$gab_file.mod";
  open(TREE, $output_file_name) or throw("cant open $output_file_name");
  my ($newick_tree_string) = grep {/^TREE: /} <TREE>;

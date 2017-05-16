@@ -45,6 +45,7 @@ use File::Temp qw/tempfile/;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 our $zopfli_path = `which zopfli 2> /dev/null`;
 chomp $zopfli_path;
@@ -99,7 +100,7 @@ sub compress_to_mysql {
         my ($fh, $filename) = tempfile(UNLINK => 1);
         print $fh $data;
         close($fh);
-        system($zopfli_path, '--zlib', $filename);
+        Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec([$zopfli_path, '--zlib', $filename], { die_on_failure => 1 });
         $zlib_data = slurp($filename.'.zlib');
         unlink $filename.'.zlib';
     } else {

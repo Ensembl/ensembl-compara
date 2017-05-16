@@ -121,7 +121,7 @@ sub write_output {
   print TR $self->param('msa_species_tree_string');
   my $phylo_out_file = "$exon_dir/phylo$exon_id";
   my @command = ($self->param('phylofit_exe'), '--tree', $tree_file, '--subst-mod', 'HKY85', '--out-root', $phylo_out_file, $msa_fasta_file);
-  system(@command);
+  $self->run_command(\@command, { die_on_failure => 1 });
   if( -e "$phylo_out_file.mod" ){
    open(TREE, "$phylo_out_file.mod") or warn ("cant open $phylo_out_file.mod");
    my($training_lnl, $phylo_newick);
