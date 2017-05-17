@@ -80,12 +80,12 @@ sub draw_feature {
       $params{'colour'} = $join_colour unless $track_config->get('collapsed');
 
       my $start         = $previous{'x'} + $previous{'width'};
-      $start            = 1 if $start < 1;
+      $start            = 0 if $start < 0;
       $params{'x'}      = $start;
       my $end           = $_->{'start'};
-      my $width         = $end - $start + 1;
+      my $width         = $end - $start - 1;
       if ($end > $image_width) {
-        $width          = $image_width - $start + 1;
+        $width          = $image_width - $start;
         $last_element   = 1;
       }
       $params{'width'}  = $width;
