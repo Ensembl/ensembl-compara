@@ -28,7 +28,7 @@ sub draw_join {
 
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
-    $params{'x'}          = 0;
+    $params{'x'}          = -1;
     $params{'width'}     += $params{'x'};
   }
 
