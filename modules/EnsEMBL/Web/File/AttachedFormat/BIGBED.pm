@@ -46,23 +46,18 @@ sub check_data {
   require Bio::DB::BigFile;
 
   $url = chase_redirects($url, {'hub' => $self->{'hub'}});
-  if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BIGWIG) {
-    $error = "The BigBed file could not be added - FTP is not supported, please use HTTP.";
-  }
-  else {
-    # try to open and use the bigbed file
-    # this checks that the bigbed files is present and correct
-    my $bigbed;
-    eval {
-      Bio::DB::BigFile->set_udc_defaults;
-      $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
-    };
-    warn $@ if $@;
-    warn "Failed to open BigBed " . $url unless $bigbed;
+  # try to open and use the bigbed file
+  # this checks that the bigbed files is present and correct
+  my $bigbed;
+  eval {
+    Bio::DB::BigFile->set_udc_defaults;
+    $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
+  };
+  warn $@ if $@;
+  warn "Failed to open BigBed " . $url unless $bigbed;
 
-    if ($@ or !$bigbed) {
-      $error = "Unable to open remote BigBed file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
-    }
+  if ($@ or !$bigbed) {
+    $error = "Unable to open remote BigBed file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
   }
   return ($url, $error);
 }

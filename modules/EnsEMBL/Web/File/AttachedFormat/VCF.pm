@@ -47,30 +47,25 @@ sub check_data {
     $url = $url_check;
   }
 
-  if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_VCF) {
-    $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
-  } 
-  else {
-    # try to open and use the VCF file
-    # this checks that the VCF and index files are present and correct, 
-    # and should also cause the index file to be downloaded and cached in /tmp/ 
-    my ($adaptor, $index);
-    eval {
-          $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
-          $adaptor->fetch_variations(1, 1, 10);
-    };
-    warn $@ if $@;
-    warn "Failed to open VCF $url\n $@\n " if $@; 
-    warn "Failed to open VCF $url\n $@\n " unless $adaptor;
+  # try to open and use the VCF file
+  # this checks that the VCF and index files are present and correct, 
+  # and should also cause the index file to be downloaded and cached in /tmp/ 
+  my ($adaptor, $index);
+  eval {
+        $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+        $adaptor->fetch_variations(1, 1, 10);
+  };
+  warn $@ if $@;
+  warn "Failed to open VCF $url\n $@\n " if $@; 
+  warn "Failed to open VCF $url\n $@\n " unless $adaptor;
           
-    if ($@ or !$adaptor) {
-      $error = qq{
-          Unable to open/index remote VCF file: $url
-          <br />Ensembl can only display sorted, indexed VCF files
-          <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
-          <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
-      };
-    }
+  if ($@ or !$adaptor) {
+    $error = qq{
+        Unable to open/index remote VCF file: $url
+        <br />Ensembl can only display sorted, indexed VCF files
+        <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
+        <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
+    };
   }
   return ($url, $error);
 }
