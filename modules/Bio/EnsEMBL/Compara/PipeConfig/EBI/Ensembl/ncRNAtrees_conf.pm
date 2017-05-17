@@ -62,6 +62,11 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
+            # the production database itself (will be created)
+            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+            'host' => 'mysql-ens-compara-prod-2',
+            'port' => 4522,
+
             # Must be given on the command line
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB

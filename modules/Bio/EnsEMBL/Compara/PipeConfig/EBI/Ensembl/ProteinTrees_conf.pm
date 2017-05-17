@@ -56,6 +56,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # the production database itself (will be created)
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+
+        'host'  => 'mysql-ens-compara-prod-1',
+        'port'  => 4485,
+
     # User details
 
     # parameters that are likely to change from execution to another:
@@ -154,14 +160,6 @@ sub default_options {
 	      'genesetQC_capacity'        => 100,
 
     # connection parameters to various databases:
-
-        # Uncomment and update the database locations
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-treefam-prod.ebi.ac.uk',
-        'port'  => 4401,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
