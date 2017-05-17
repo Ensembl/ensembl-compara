@@ -1783,8 +1783,8 @@ sub get_snpedia_data {
   $rev->{'*'} =~s/(\{\{(?!PMID).*?\}\})//g;
 
   # Link all PMIDs to EPMC
-  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 }) . "]"/ge;
-  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 })/ge;
+  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => encode_entities($1) }) . "]"/ge;
+  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => encode_entities($1) })/ge;
 
   # Remove starting newline characters
   $rev->{'*'} =~s/^(\*{3})+//g;
@@ -1797,7 +1797,7 @@ sub get_snpedia_data {
 
   # Link content inside [[ rs id ]] back to e!
   $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $var_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
-  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
+  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => encode_entities($1) }) : "<b>$1<\/b>"/ge;
 
   # Create html links for content like [url linktext]
   $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;
