@@ -187,22 +187,22 @@ sub make_table {
     primary => 1,
     width => 2,
   },{
-    _key => 'var_count', _type => 'string no_filter',
+    _key => 'var_count', _type => 'numeric no_filter',
     label => 'Variant',
     helptip => 'Variant phenotype association count',
     width => 1
   },{
-    _key => 'sv_count', _type => 'string no_filter',
+    _key => 'sv_count', _type => 'numeric no_filter',
     label => 'Structural Variant',
     helptip => 'Structural Variant phenotype association count',
     width => 1
   },{
-    _key => 'gene_count', _type => 'string no_filter',
+    _key => 'gene_count', _type => 'numeric no_filter',
     label => 'Gene',
     helptip => 'Gene phenotype association count',
     width => 1
   },{
-    _key => 'qtl_count', _type => 'string no_filter',
+    _key => 'qtl_count', _type => 'numeric no_filter',
     label => 'QTL',
     helptip => 'Quantitative trait loci (QTL) phenotype association count',
     width => 1
