@@ -26,7 +26,7 @@ You will need both the [Core API
 dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 [ours](cpanfile).
 
-## HAL alignments and progressive-Cactus
+## HAL alignments and progressiveCactus
 
 If working with HAL files, additional setup is required. First, install progressiveCactus:
 
@@ -34,10 +34,6 @@ If working with HAL files, additional setup is required. First, install progress
 	cd progressiveCactus
 	git pull
 	git submodule update --init
-	cd submodules/hal/
-	git checkout master
-	git pull
-	cd ../../
 	make
 	pwd  # Prints the installation path
 
@@ -49,7 +45,7 @@ well
         sudo ln -s /usr/lib/python2.7/plat-*/_sysconfigdata_nd.py /usr/lib/python2.7/
         # Seems to be required under linuxbrew installations
         cd progressiveCactus/submodules/sonLib
-        # edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 27)
+        # edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 27) and make
 
 
 Now, we need to set up the Compara API:
