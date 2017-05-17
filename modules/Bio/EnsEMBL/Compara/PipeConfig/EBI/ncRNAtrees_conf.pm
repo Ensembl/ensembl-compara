@@ -61,11 +61,6 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # the production database itself (will be created)
-            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-treefam-prod',
-            'port' => 4401,
-
             # User details
             'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
