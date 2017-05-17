@@ -57,10 +57,11 @@ sub default_options {
         #'compara_url'      => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
 
         #Connection parameters for production database (the rest is defined in the base class)
-        'host'              => 'compara2',
+        'host'              => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+        'port'              => 4485,
 
         #Locations to write output files
-        'dump_dir'          => sprintf('/lustre/scratch109/ensembl/%s/%s/', $ENV{USER}, $self->o('pipeline_name')),
+        'dump_dir'          => '/hps/nobackup/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
 
         # Script to dump a tree
         'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
