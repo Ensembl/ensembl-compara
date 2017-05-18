@@ -632,7 +632,8 @@ sub render_text {
     my $nonref = $gab->get_all_non_reference_genomic_aligns->[0];
     my @row = ( 
       $ref->dnafrag->name,
-      $db eq 'vega' ? 'Vega' : 'Ensembl', $type,
+      'Ensembl', 
+      $type,
       $ref->dnafrag_start,
       $ref->dnafrag_end,
       $gab->score,'.','.',

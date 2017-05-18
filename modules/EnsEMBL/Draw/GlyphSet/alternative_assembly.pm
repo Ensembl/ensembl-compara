@@ -40,19 +40,6 @@ sub features {
   my $orig_group;
   my $this_slice = $self->{'container'};
 
-  # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-  if( $self->my_config( 'assembly_name' ) =~ /VEGA/ ) {
-    my $vega_dnadb = $reg->get_DNAAdaptor($species, "vega");
-    $orig_group = $vega_dnadb->group;
-    $reg->add_DNAAdaptor($species, "vega", $species, "vega");
-    # get a Vega slice to do the projection
-    my $vega_sa = Bio::EnsEMBL::Registry->get_adaptor($species, "vega", "Slice");
-    $this_slice = $vega_sa->fetch_by_region(
-      ( map { $self->{'container'}->$_ } qw( coord_system_name seq_region_name start end strand) ),
-      $self->{'container'}->coord_system->version
-    );
-  }
-
   my $res = [];
   my $projection = $this_slice->project('chromosome', $assembly);
   foreach my $seg ( @$projection ) {
@@ -67,8 +54,6 @@ sub features {
     push @$res, $f;
   }
 
-  # set dnadb back to what it was originally
-  $reg->add_DNAAdaptor($species, "vega", $species, $orig_group) if ($orig_group);
   return $res;
 }
 

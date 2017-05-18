@@ -33,11 +33,6 @@ use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Videogram_legend);
 
-####################################################################
-### set true only while you're generating the vega karyotype image ##
-#####################################################################
-## end of vega karyotype static image colours ###
-
 sub _init {
   my ($self) = @_;
   my $config = $self->{'config'};
@@ -81,18 +76,11 @@ sub _init {
     }));
   }
   
-  # use this array to store bands created for vega annotation status; draw these last
-  my @annot_bands;
   my $alt_stain = 25;
   
   if (scalar @bands) {
     foreach my $band (@bands) {
       my $stain = lc $band->stain;
-      
-      if ($stain =~ /annotation/mx) {
-        push @annot_bands, $band;
-        next;
-      }
       
       my $bandname      = $band->name;
       my $vc_band_start = $band->start + $v_offset;
@@ -221,46 +209,6 @@ sub _init {
         absolutey => 1,
       }));
     }
-  }
-  
-  # lastly draw annotation status bands (if uncommented the colour definition)
-  for my $band (@annot_bands) {
-    my $bandname      = $band->name;
-    my $vc_band_start = $band->start + $v_offset;
-    my $vc_band_end   = $band->end   + $v_offset;
-    
-#    next if $vc_band_end - $vc_band_start < 280000; # hack to make zfish annotated regions look wider on the ideogram
-    
-    my $stain = $band->stain;
-    my $R     = $vc_band_start;
-    my $T     = $bpperpx * ((int $vc_band_end / $bpperpx) - (int $vc_band_start / $bpperpx));
-
-    $self->push(
-      $self->Rect({
-        x         => $R,
-        y         => $h_offset,
-        width     => $T,
-        height    => $wid,
-        colour    => $self->my_colour($stain),
-        absolutey => 1,
-      }),
-      $self->Line({
-        x         => $R,
-        y         => $h_offset,
-        width     => $T,
-        height    => 0,
-        colour    => $black,
-        absolutey => 1,
-      }),
-      $self->Line({
-        x         => $R,
-        y         => $h_offset + $wid,
-        width     => $T,
-        height    => 0,
-        colour    => $black,
-        absolutey => 1,
-      })
-    );
   }
   
   $self->push(@decorations);
