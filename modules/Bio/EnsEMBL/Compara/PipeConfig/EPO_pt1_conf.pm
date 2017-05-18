@@ -85,8 +85,6 @@ sub default_options {
       	'pecan_block_size' => 1000000,
       	'pecan_mlid' => 10, # dummy value (change if necessary)
       	'pecan_mlssid' => 10, # dummy value
-      	'gerp_ce_mlid' => 11, # dummy value 
-      	'gerp_ce_mlssid' => 20, # dummy value
 
       	'species_set_id' => 10000, # dummy value for reference and non-reference species
       	'overlaps_mlid' => 10000, # dummy value 
@@ -124,8 +122,6 @@ sub pipeline_wide_parameters {
                 'additional_core_db_urls' => $self->o('additional_core_db_urls'),
         	'pecan_mlid' => $self->o('pecan_mlid'),
 	        'pecan_mlssid' => $self->o('pecan_mlssid'),
-	        'gerp_ce_mlid' => $self->o('gerp_ce_mlid'),
-		'gerp_ce_mlssid' => $self->o('gerp_ce_mlssid'),
         	'overlaps_mlid' => $self->o('overlaps_mlid'),
         	'overlaps_method_link_name' => $self->o('overlaps_method_link_name'),
 		'overlaps_mlssid' => $self->o('overlaps_mlssid'),
@@ -173,8 +169,7 @@ return [
       'REPLACE INTO method_link (method_link_id, type) VALUES(#overlaps_mlid#, "#overlaps_method_link_name#")',
       'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES '
       .'(#overlaps_mlssid#, #overlaps_mlid#, "get_overlaps", #species_set_id#),'
-      .'(#pecan_mlssid#, #pecan_mlid#, "pecan", #species_set_id#),'
-      .'(#gerp_ce_mlssid#, #gerp_ce_mlid#, "gerp", #species_set_id#)',
+      .'(#pecan_mlssid#, #pecan_mlid#, "pecan", #species_set_id#)',
       ],
  },
  -flow_into => { 
@@ -279,6 +274,7 @@ return [
  -logic_name    => 'gerp_constrained_element',
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
  -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+     'constrained_element_method_link_type' => '#overlaps_method_link_name#', 'no_conservation_scores' => 1,
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => '#pecan_mlssid#', },
  -hive_capacity => 100,
  -batch_size    => 10,
