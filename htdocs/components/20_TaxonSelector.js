@@ -486,9 +486,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
       // Locate multiple alignment with label instead of species name as one species may be found in different EPO alignments
       multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(panel.defaultKeys[0]);
-      if (!node.data.isFolder && node.parent.data.key !== 'Multiple') {
-        this.lastSelected = node.parent;
-      }
     }
   },
 
