@@ -65,7 +65,10 @@ sub new_and_exec {
     # simply joined without having to quote and escape the arguments
     my $flat_cmd = ref($cmd) ? join(' ', @$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
-    my $cmd_to_run = $options->{'use_bash_pipefail'} ? ['bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)] : $cmd;
+    my $cmd_to_run = $cmd;
+    if ($options->{'use_bash_pipefail'} or $flat_cmd =~ /;/) {
+        $cmd_to_run = ['bash' => ('-o' => 'errexit', $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (), '-c' => $flat_cmd)];
+    }
 
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
