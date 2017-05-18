@@ -93,7 +93,7 @@ sub create_form {
   if (ref($fields_by_format) eq 'ARRAY') {
     foreach (@$fields_by_format) {
       while (my($group,$formats) = each (%$_)) {
-        push @format_info, $self->_munge_format_info($formats, $group);
+        push @format_info, $self->_munge_format_info($formats, $settings->{'Disabled'}, $group);
         while (my($f,$h) = each (%$formats)) {
           $ok_formats{$f} = $h;
         }
@@ -101,7 +101,7 @@ sub create_form {
     }
   }
   else {
-    @format_info = $self->_munge_format_info($fields_by_format);
+    @format_info = $self->_munge_format_info($fields_by_format, $settings->{'Disabled'});
     while (my($k,$v) = each (%$fields_by_format)) {
       $ok_formats{$k} = $v;
     }
@@ -261,7 +261,13 @@ sub create_form {
     my $tutorial_fieldset = $form->add_fieldset;
     my $html = '<p><b>Guide to file formats</b></p><div class="_export_formats export-formats">';
     foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
-      $html .= $self->show_preview($format);
+      my $disabled_message = $settings->{'Disabled'}{lc $format};
+      if ($disabled_message) {
+        $html .= $self->show_disabled($format, $disabled_message);
+      }
+      else {
+        $html .= $self->show_preview($format);
+      }
     }
     $html .= '</div>';
     $tutorial_fieldset->add_notes($html);
@@ -281,6 +287,13 @@ sub default_file_name {
   return $self->hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
 }
 
+sub show_disabled {
+  my ($self, $format, $message) = @_;
+  
+  my $html = sprintf('<div><p>%s</p><p style="width:200px">Format unavailable: %s</p></div>', $format, $message);
+  return $html;
+}
+
 sub show_preview {
   my ($self, $format) = @_;
   my $img = lc($format);
@@ -297,10 +310,11 @@ our $format_label = {
 
 
 sub _munge_format_info {
-  my ($self, $hashref, $optgroup) = @_;
+  my ($self, $hashref, $disabled, $optgroup) = @_;
   my @munged_info;
 
   foreach (sort {lc($a) cmp lc($b)} keys %$hashref) {
+    next if $disabled->{lc $_};
     my $info = {'value' => $_,
                 'caption' => $format_label->{$_} || $_,
                 'class' => "_stt__$_ _action_$_",

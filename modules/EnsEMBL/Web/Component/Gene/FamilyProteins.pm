@@ -231,6 +231,7 @@ sub buttons {
                   'component'   => 'FamilyProteins',
                   'fm'          => $hub->param('fm'),
                   'align'       => 'family',
+                  'members'     => 0,
                 };
   return {
     'url'     => $hub->url($params),
