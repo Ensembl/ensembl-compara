@@ -1564,10 +1564,11 @@ sub vep_icon {
 }
 
 sub display_items_list {
-  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
+  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label) = @_;
 
   my $html = "";
-  my $count = scalar(@{$url_data});
+  my @sorted_data = ($display_data->[0] =~ /^<a/i) ? @{$display_data} : sort { lc($a) cmp lc($b) } @{$display_data};
+  my $count = scalar(@{$display_data});
   if ($count > 5) {
     $html = sprintf(qq{
         <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
@@ -1577,12 +1578,12 @@ sub display_items_list {
       $div_id,
       ($no_count_label) ? $label : "$count $label",
       $div_id,
-      join(",", sort(@{$export_data})),
-      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
+      join(",", sort { lc($a) cmp lc($b) } @{$export_data}),
+      '<li>'.join("</li><li>", @sorted_data).'</li>'
     );
   }
   else {
-    $html = join(", ", sort(@{$url_data}));
+    $html = join(", ", @sorted_data);
   }
 
   return $html;

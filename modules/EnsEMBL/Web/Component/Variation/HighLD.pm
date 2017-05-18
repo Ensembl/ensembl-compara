@@ -401,24 +401,31 @@ sub linked_var_table {
         }),
         $_->external_name
       ), @{$gene_objs};
-      
-      # gene phenotypes
-      my $pgene = join(', <br />',
-        map {
-          sprintf(
-            '<a href="%s">%s</a>',
-            $hub->url({
-              type   => 'Phenotype',
-              action => 'Locations',
-              ph     => $_->phenotype->dbID
-            }),
-            $_->phenotype->description
-          )
+
+      # get genes phenotypes
+      my %pgenes = map {
+          $_->phenotype->dbID => $_->phenotype->description
         } map {
           @{$pfa->fetch_all_by_Gene($_)}
-        } @$gene_objs
-      );
+        } @$gene_objs;
+
+      my @phe_gene_links = map { 
+           sprintf(
+             '<a href="%s">%s</a>',
+             $hub->url({
+               type   => 'Phenotype',
+               action => 'Locations',
+               ph     => $_
+             }),
+             $pgenes{$_}
+           )
+         } sort { lc($pgenes{$a}) cmp lc($pgenes{$b}) } keys(%pgenes); 
+
+      my @phe_gene_texts = sort { lc($a) cmp lc($b) } values(%pgenes);
       
+      my $pgene = $self->display_items_list($variation_name.'_gene_phe', 'phenotypess', 'phenotypes', \@phe_gene_links, \@phe_gene_texts);
+
+
       # build URLs
       my $var_url = $hub->url({
         type   => 'Variation',
@@ -449,7 +456,7 @@ sub linked_var_table {
       });
     }
   }
-  
+ 
   return $table->has_rows ?
     $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}">[back to top]</a></span>}) :
     '<h3>No variants found</h3><br /><br />';
@@ -464,7 +471,7 @@ sub ld_populations {
   my $self    = shift;
   my $object  = $self->object;
   my $pop_ids = $object->ld_pops_for_snp;
-  
+ 
   return {} unless @$pop_ids;
 
   my %pops;
