@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use File::Basename qw(dirname);
 use FindBin qw($Bin);
 use Storable qw(retrieve);
 use JSON qw(to_json);
@@ -36,12 +37,18 @@ my $format = 'json';
 GetOptions('format=s' => \$format);
 $format = lc($format);
 
+my ($filename) = @ARGV;
+
 my $data = {
   SiteDefs => {},
 };
 
 foreach my $k (keys %SiteDefs::) {
-  $data->{'SiteDefs'}{$k} = ${$SiteDefs::{$k}};
+  if(@{$SiteDefs::{$k}}) {
+    $data->{'SiteDefs'}{$k} = [ @{$SiteDefs::{$k}} ];
+  } else {
+    $data->{'SiteDefs'}{$k} = ${$SiteDefs::{$k}};
+  }
 }
 
 my $packed_fn = "$SiteDefs::ENSEMBL_SYS_DIR/conf/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
@@ -63,10 +70,34 @@ sub cleanup {
 
 $data = cleanup($data);
 
-if($format eq 'json') {
-  print to_json($data);
-} elsif($format eq 'storable') {
-  store_fd($data,\*STDOUT);
+sub human {
+  my ($x,$fd,$p) = @_;
+  $p ||= [];
+
+  if(ref($x) eq 'HASH') {
+    human($x->{$_},$fd,[@$p,$_]) for keys %$x;
+  } elsif(ref($x) eq 'ARRAY') {
+    human($x->[$_],$fd,[@$p,$_]) for(0..$#$x);
+  } elsif(!ref($x)) {
+    $x = 'undef' unless defined $x;
+    $fd->print(join("/",@$p)." -> ".$x."\n");
+  }
 }
 
+if($filename) {
+  open(FILE,'>',$filename) or die "Cannot write '$filename': $!";
+} else {
+  *FILE = *STDOUT;
+}
+
+if($format eq 'json') {
+  print FILE to_json($data);
+} elsif($format eq 'storable') {
+  store_fd($data,\*FILE);
+} elsif($format eq 'human') {
+  human($data,\*FILE);
+}
+close FILE;
+
 1;
+
