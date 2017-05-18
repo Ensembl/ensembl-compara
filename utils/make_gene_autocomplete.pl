@@ -55,7 +55,7 @@ $dbh->do(
 );
 
 if (!@ARGV and !$nodelete) {
-  my %existing_species = map { lc $_ => 1 } @$SiteDefs::ENSEMBL_DATASETS;
+  my %existing_species = map { lc $_ => 1 } @{$sd->multi_hash->{'ENSEMBL_DATASETS'}};
   my @delete = grep !$existing_species{$_}, @{$dbh->selectcol_arrayref('select distinct(species) from gene_autocomplete')};
   
   if (@delete) {
@@ -64,7 +64,7 @@ if (!@ARGV and !$nodelete) {
   }
 }
 
-foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
+foreach my $dataset (@ARGV ? @ARGV : @{$sd->multi_hash->{'ENSEMBL_DATASETS'}}) {
   warn "$dataset\n";
   
   my $dbs = $sd->get_config($dataset, 'databases');
