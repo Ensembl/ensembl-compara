@@ -19,7 +19,7 @@ limitations under the License.
 
 ## Configuration file for the Epo Low Coverage pipeline
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI_EpoLowCoverage_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf;
 
 use strict;
 use warnings;
@@ -38,7 +38,11 @@ sub default_options {
 	'rel_suffix'	=> '11way_fish_89',
 	'ensembl_release' => 89, 
 	'prev_release'  => 88,
+
     'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+
+        'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_Lc/' . 'release_' . $self->o('rel_with_suffix') . '/',
+
     'pipeline_db' => {
         -host   => $self->o('host'),
         -port   => 4523,
@@ -69,12 +73,10 @@ sub default_options {
 	master_db => { 
             -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
             -port   => 4485,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
+            -user   => 'ensro',
             -dbname => 'ensembl_compara_master',
 	    -driver => 'mysql',
         },
-	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 
 	'staging_loc1' => {
             -host   => 'mysql-ens-sta-1',
@@ -107,45 +109,24 @@ sub default_options {
 	    	#-db_version => 76,
 		#},
 
-	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
-	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
-	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
-	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
 #	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
 	'ref_species' => 'oryzias_latipes',
 #	'ref_species' => 'homo_sapiens',
-	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
-	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
-        'step' => 10000, #size used in ImportAlignment for selecting how many entries to copy at once
+	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
-	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.11fish.branch_len.nw', #location of full species tree, will be pruned 
-	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
         'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
 	'gerp_exe_dir'    => $self->o('ensembl_cellar').'/gerp/20080211/bin',   #gerp program
         'semphy_exe'      => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy', #semphy program
         'treebest_exe'      => $self->o('ensembl_cellar').'/treebest/88/bin/treebest', #treebest program
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-
-        #
-        #Default statistics
-        #
-        'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-        'bed_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_Lc_test/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-        'output_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_Lc_test/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-        #
-        #Resource requirements
 
        # stats report email
-       'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
   	   'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };
 }

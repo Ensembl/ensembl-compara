@@ -33,93 +33,14 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'rel_suffix'	=> 86,
-	'ensembl_release' => 86, 
-	'prev_release'  => 85,
-    'host' => 'compara4',
-    'pipeline_db' => {
-        -host   => $self->o('host'),
-        -port   => 3306,
-        -user   => 'ensadmin',
-        -pass   => $self->o('password'),
-        -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
-    -driver => 'mysql',
-    },
-
-	#Location of compara db containing most pairwise mlss ie previous compara
-	'live_compara_db' => {
-        -host   => 'compara5',
-        -port   => 3306,
-        -user   => 'ensro',
-        -pass   => '',
-		-dbname => 'wa2_ensembl_compara_85',
-		-driver => 'mysql',
-    },
-
-    #location of new pairwise mlss if not in the pairwise_default_location eg:
-	#'pairwise_exception_location' => { },
-	'pairwise_exception_location' => { 820 => 'mysql://ensro@compara3/cc21_hsap_mmul_mmur_lastz_86', 
-									   821 => 'mysql://ensro@compara3/cc21_hsap_mmul_mmur_lastz_86',},
-
-	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
-
-	master_db => { 
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'mm14_ensembl_compara_master',
-	    -driver => 'mysql',
-        },
 	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-
-	'staging_loc1' => {
-            -host   => 'ens-staging1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-	    -db_version => $self->o('ensembl_release'),
-        },
-        'staging_loc2' => {
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-	    -db_version => $self->o('ensembl_release'),
-        },  
-	'livemirror_loc' => {
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-	    -db_version => $self->o('prev_release'),
-        },
-
-		'additional_core_db_urls' => { },
-
-		#If we declare things like this, it will FAIL!
-		#We should include the locator on the master_db
-		#'additional_core_db_urls' => {
-			#-host => 'compara1',
-			#-user => 'ensro',
-			#-port => 3306,
-            #-pass   => '',
-			#-species => 'rattus_norvegicus',
-			#-group => 'core',
-			#-dbname => 'mm14_db8_rat6_ref',
-	    	#-db_version => 76,
-		#},
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
 	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
 	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
-#	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
-#	'ref_species' => 'oryzias_latipes',
-	'ref_species' => 'homo_sapiens',
+
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
-	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
         'step' => 10000, #size used in ImportAlignment for selecting how many entries to copy at once
 
@@ -127,14 +48,9 @@ sub default_options {
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw', #location of full species tree, will be pruned 
-	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
         'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
-	'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1',   #gerp program
-        'semphy_exe'      => '/software/ensembl/compara/semphy_latest', #semphy program
-        'treebest_exe'      => '/software/ensembl/compara/treebest.doubletracking', #treebest program
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
@@ -142,8 +58,8 @@ sub default_options {
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-        'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/EPO_Lc_test/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-        'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/EPO_Lc_test/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+        'bed_dir' => $self->o('work_dir') . '/bed_dir/',
+        'output_dir' => $self->o('work_dir') . '/feature_dumps/',
 
         #
         #Resource requirements
@@ -153,7 +69,6 @@ sub default_options {
 
        # stats report email
        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
-  	   'epo_stats_report_email' => $ENV{'USER'} . '@sanger.ac.uk',
     };
 }
 
