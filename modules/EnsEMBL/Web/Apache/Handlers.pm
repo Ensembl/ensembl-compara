@@ -56,7 +56,8 @@ our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
 sub get_postread_redirect_uri {
   ## Gets called at PostReadRequest stage and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed without executing to the actual handler
-  ## Used to perform any mirror site and mobile redirects etc
+  ## Used to perform any mirror site redirects etc
+  ## Gets called for all the requests
   ## @param Apache2::RequestRec request object
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
@@ -71,7 +72,8 @@ sub get_rewritten_uri {
 }
 
 sub get_redirect_uri {
-  ## Receives the current URI and returns a new URI in case a PERMANENT external HTTP redirect has to be performed on that
+  ## Receives the current URI and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed on that while executing to the actual handler
+  ## Gets called for only non-Static requests
   ## @param URI string
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
@@ -439,7 +441,7 @@ sub handler {
 
   # handle any redirects
   if (my $redirect = get_redirect_uri($uri)) {
-    return http_redirect($r, $redirect, 1);
+    return http_redirect($r, $redirect);
   }
 
   # populate subprocess_env with species, path and query or perform a redirect to a rectified url
