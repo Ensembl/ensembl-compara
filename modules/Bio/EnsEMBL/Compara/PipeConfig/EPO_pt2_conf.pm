@@ -257,7 +257,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                     'species_set_id'    => '#nonreuse_ss_id#',
-                    'extra_parameters'      => [ 'locator', 'name', 'assembly' ],
+                    'extra_parameters'      => [ 'name', 'assembly' ],
                 },
                 -flow_into => {
                     '2->A' => { 'dump_genome_sequence' => { 'genome_db_name' => '#name#', 'genome_db_assembly' => '#assembly#', 'genome_db_id' => '#genome_db_id#' } },
