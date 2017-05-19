@@ -136,7 +136,7 @@ sub _archive_link {
     my $adaptor      = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release_info = $adaptor->fetch_release($archive_object->release);
     my $archive_site = $release_info->{'archive'};
-    $url             = "http://$archive_site.archive.ensembl.org";
+    $url             = "//$archive_site.archive.ensembl.org";
     
     if ($archive_object->release >= 51) {
       $url .= $hub->url({ type => $type, action => $action, $p => $name });

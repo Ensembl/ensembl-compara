@@ -122,7 +122,7 @@ sub get_redirect_uri {
 
   ## Redirect to live site if this instance has no Doxygen files
   if ($uri =~ /Doxygen/ && !(-e $species_defs->ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs'.$uri)) {
-    return 'http://www.ensembl.org/'.$uri;
+    return '//www.ensembl.org/'.$uri;
   } 
 
   return undef;

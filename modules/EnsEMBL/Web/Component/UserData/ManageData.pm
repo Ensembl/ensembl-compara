@@ -139,7 +139,7 @@ sub content {
       if (scalar keys %other_servers) {
         $message = 'You also have uploaded data saved on the following sites:<br /><ul>';
         foreach (keys %other_servers) {
-          $message .= sprintf('<li><a href="http://%s">%s</a></li>', $_, $_);
+          $message .= sprintf('<li><a href="//%s">%s</a></li>', $_, $_);
         }
         $message .= '</ul>';
       }

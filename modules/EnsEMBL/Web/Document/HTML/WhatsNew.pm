@@ -50,7 +50,7 @@ sub render {
   $html .= $headlines if $headlines;
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
-    push @links, qq(<a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
+    push @links, qq(<a href="//www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
     $blog = $self->_include_blog($hub);
   }
   if (scalar(@links)) {

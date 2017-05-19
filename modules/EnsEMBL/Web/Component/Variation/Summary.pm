@@ -206,7 +206,7 @@ sub variation_source {
   }
   
   ## parse description for links
-  (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
+  (my $description = $object->source_description) =~ s/(\w+) \[(https?:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
   my $source_prefix = 'View in';
 
   # Source link

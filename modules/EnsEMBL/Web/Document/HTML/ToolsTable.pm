@@ -173,7 +173,7 @@ sub render {
 
   }
   else {
-    $html .= '<p><b>No tools are available on this site. Please visit <a href="http://www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
+    $html .= '<p><b>No tools are available on this site. Please visit <a href="//www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
   }
 
   ## Table of other tools
