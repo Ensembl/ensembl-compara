@@ -50,7 +50,7 @@ sub content_from_db {
 
   my $fgh = $hub->database('funcgen');
   my $fsa = $fgh->get_FeatureSetAdaptor();
-  my $cta = $fgh->get_CellTypeAdaptor;
+  my $cta = $fgh->get_EpigenomeAdaptor;
   my $sa = $hub->database('core')->get_SliceAdaptor();
   return unless $fsa and $cta and $sa;
   my $slice = $sa->fetch_by_region('toplevel',$chr,$pos,$pos+1);
