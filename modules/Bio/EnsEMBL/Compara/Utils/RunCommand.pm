@@ -63,7 +63,7 @@ sub new_and_exec {
 
     # Simpler version of what eHive can do: we assume the array can be
     # simply joined without having to quote and escape the arguments
-    my $flat_cmd = ref($cmd) ? join(' ', @$cmd) : $cmd;
+    my $flat_cmd = ref($cmd) ? join_command_args(@$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
     my $cmd_to_run = $cmd;
     if ($options->{'use_bash_pipefail'} or $flat_cmd =~ /;/) {
@@ -79,6 +79,24 @@ sub new_and_exec {
     my $purpose = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
     die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $purpose, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
     return $runCmd;
+}
+
+
+my %shell_characters = map {$_ => 1} qw(< > |);
+sub join_command_args {
+
+    my @new_args = ();
+    foreach my $a (@_) {
+        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\/\-]+\z/) {
+            push @new_args, $a;
+        } else {
+            # Escapes the single-quotes and protects the arguments
+            $a =~ s/'/'\\''/g;
+            push @new_args, "'$a'";
+        }
+    }
+
+    return join(' ', @new_args);
 }
 
 
