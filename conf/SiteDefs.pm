@@ -93,7 +93,7 @@ our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Set
 our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
-our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
+our $ENSEMBL_REST_URL                 = '//rest.mydomain.org';            # url to your REST service (Add http or https if your REST server only supports one protocol)
 our $CGI_POST_MAX                     = 20 * 1024 * 1024; # 20MB file upload max limit
 our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests

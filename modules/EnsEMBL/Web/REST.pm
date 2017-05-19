@@ -36,6 +36,7 @@ sub new {
 
   $species_defs ||= $hub->species_defs;
   $server ||= $species_defs->ENSEMBL_REST_URL;
+  $server  = sprintf('%s:%s', $SiteDefs::ENSEMBL_PROTOCOL, $server) if $server =~ /^\/\//;
   my $self = { 'hub' => $hub, 'server' => $server, 'species_defs' => $species_defs };
   bless $self, $class;
   return $self;
