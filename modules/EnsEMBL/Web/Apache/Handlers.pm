@@ -66,6 +66,7 @@ sub get_postread_redirect_uri {
 sub get_rewritten_uri {
   ## Receives the current URI and returns a new URI in case it has to be rewritten
   ## The same request itself is handled according to the rewritten URI instead of making an external redirect request
+  ## @param Apache2::RequestRec request object
   ## @param URI string
   ## @return URI string if modified, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
@@ -74,10 +75,11 @@ sub get_rewritten_uri {
 sub get_redirect_uri {
   ## Receives the current URI and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed on that while executing to the actual handler
   ## Gets called for only non-Static requests
+  ## @param Apache2::RequestRec request object
   ## @param URI string
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
-  my $uri = shift;
+  my ($r, $uri) = @_;
 
   ## Redirect to contact form
   if ($uri =~ m|^/contact\?$|) {
@@ -350,7 +352,7 @@ sub transHandler {
   return DECLINED if $uri eq '*';
 
   # apply any uri rewrite rules
-  if (my $modified = get_rewritten_uri($uri)) {
+  if (my $modified = get_rewritten_uri($r, $uri)) {
     $r->parse_uri($modified);
   }
 
@@ -440,7 +442,7 @@ sub handler {
   }
 
   # handle any redirects
-  if (my $redirect = get_redirect_uri($uri)) {
+  if (my $redirect = get_redirect_uri($r, $uri)) {
     return http_redirect($r, $redirect);
   }
 
