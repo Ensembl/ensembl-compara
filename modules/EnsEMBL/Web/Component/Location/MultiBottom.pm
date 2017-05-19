@@ -86,7 +86,7 @@ sub content {
       more_slices     => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       base_url        => $base_url,
-      join_types      => $gene_join_types
+      bridge_types    => $gene_join_types
     });
     # allows the 'set as primary' sprite to be shown on an single species view
     if ($image_config->get_parameter('can_set_as_primary') && $i != 1) {
@@ -128,7 +128,7 @@ sub content {
             more_slices     => 1,
             compara         => 'primary',
             base_url        => $base_url,
-            join_types      => $gene_join_types
+            bridge_types    => $gene_join_types
           });
         }
         
