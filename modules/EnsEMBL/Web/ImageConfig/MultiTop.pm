@@ -21,6 +21,7 @@ package EnsEMBL::Web::ImageConfig::MultiTop;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
