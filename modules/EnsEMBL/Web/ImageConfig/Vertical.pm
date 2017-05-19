@@ -151,8 +151,20 @@ sub load_user_track_data {
                                              'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-      $bins = 0 if $display !~ /^density/;
-      ($data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
+
+      if ($iow) {
+        $bins = 0 if $display !~ /^density/;
+        ($data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
+      }
+      else {
+        $hub->session->set_record_data({
+          'type'      => 'message',
+          'function'  => '_warning',
+          'code'      => "deleted_userdata",
+          'message'   => "Your file has been deleted from our servers. If you wish to keep your data longer than 7 days, please log into (or create) your user account and save your data.", 
+        });
+
+      }
     }
 
     $max_value = $max1 if $max1 && $max1 > $max_value;
