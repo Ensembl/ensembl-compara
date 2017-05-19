@@ -76,11 +76,8 @@ sub default_options {
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'pipeline_name'         => 'pecan_23way',
-        'work_dir'              => '/lustre/scratch110/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-
-        'species_set' => undef, 
 
     # dependent parameters:
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
@@ -88,15 +85,6 @@ sub default_options {
 
     # blast parameters:
 	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
-        'blast_capacity'        => 100,
-        'reuse_capacity'        => 100,
-
-    #location of full species tree, will be pruned
-	    #'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
-        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.23amniots.branch_len.nw', 
-
-    #master database
-        'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
     # Mercator default parameters
     'strict_map'        => 1,
@@ -112,20 +100,12 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx2500M -Xms2000m',
     'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
     'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
-#    'jar_file'          => '/nfs/users/nfs_k/kb3/src/benedictpaten-pecan-973a28b/lib/pecan.jar',
-    'jar_file'          => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
-    'gerp_version'      => 2.1,
 	    
-    #Location of executables (or paths to executables)
+    #Location of compara scripts
     'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
-    'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
-    'mercator_exe'              => '/software/ensembl/compara/mercator',
-    'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
-    'exonerate_exe'             => '/software/ensembl/compara/exonerate/exonerate',
-
     'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
     'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
@@ -133,78 +113,8 @@ sub default_options {
     #Default statistics
     #
     'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-    'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-    'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-    # connection parameters to various databases:
-
-        'host'        => 'compara4',            #separate parameter to use the resources aswell
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => $self->o('host'),
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_pecan_23way_'.$self->o('rel_with_suffix'),
-	    -driver => 'mysql',
-        },
-
-        'staging_loc1' => {                     # general location of half of the current release core databases
-            -host   => 'ens-staging1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'staging_loc2' => {                     # general location of the other half of the current release core databases
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-        # "production mode"
-       'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-       'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-
-       'reuse_db' => {   # usually previous pecan production database
-           -host   => 'compara5',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'sf5_pecan_23way_pt2_77',
-	   -driver => 'mysql',
-        },
-
-	#Testing mode
-        'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'ensdb-archive',
-            -port   => 5304,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'curr_loc' => {                   # general location of the current release core databases (for checking their reusability)
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => '79'
-        },
-#        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
-#        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-#        'reuse_db' => {   # usually previous production database
-#           -host   => 'compara4',
-#           -port   => 3306,
-#           -user   => 'ensro',
-#           -pass   => '',
-#           -dbname => 'kb3_pecan_19way_61',
-#        },
+    'bed_dir' => $self->o('work_dir') . '/bed_dir/',
+    'output_dir' => $self->o('work_dir') . '/feature_dumps/',
 
 
      #
@@ -215,7 +125,6 @@ sub default_options {
 
      # stats report email
      'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
-     'epo_stats_report_email' => $ENV{'USER'} . '@sanger.ac.uk',
     };
 }
 
@@ -242,6 +151,7 @@ sub pipeline_create_commands {
 }
 
 
+# Syntax for LSF farm 3
 sub resource_classes {
     my ($self) = @_;
     return {

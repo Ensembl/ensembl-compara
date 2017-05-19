@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::MercatorPecan_conf
 
 =head1 SYNOPSIS
 
@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --cs_mlss_id <conservation_score_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --cs_mlss_id <conservation_score_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -52,7 +52,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI_MercatorPecan_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::MercatorPecan_conf;
 
 use strict;
 use warnings;
@@ -77,64 +77,33 @@ sub default_options {
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'pipeline_name'         => 'pecan_24way',
         'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('pipeline_name'),
-	'do_not_reuse_list'     => [ 134, 150,43,46,61,60,108,87,112,111,123,117,122,125,135,132,147,139,153,151],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
-        'species_set' => undef, 
-
-    # dependent parameters:
-        'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
-        'mercator_dir'          => $self->o('work_dir') . '/mercator',  
-
     # blast parameters:
-	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
         'blast_capacity'        => 100,
         'reuse_capacity'        => 100,
 
     #location of full species tree, will be pruned
-	    #'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.24amniots.branch_len.nw', 
 
     #master database
         'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
-    # Mercator default parameters
-    'strict_map'        => 1,
-#    'cutoff_score'     => 100,   #not normally defined
-#    'cutoff_evalue'    => 1e-5, #not normally defined
-    'maximum_gap'       => 50000,
-    'input_dir'         => $self->o('work_dir').'/mercator',
-    'all_hits'          => 0,
-
     #Pecan default parameters
-    'max_block_size'    => 1000000,
     'java_options'      => '-server -Xmx1000M',
     'java_options_mem1' => '-server -Xmx2500M -Xms2000m',
     'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
     'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
-#    'jar_file'          => '/nfs/users/nfs_k/kb3/src/benedictpaten-pecan-973a28b/lib/pecan.jar',
+
     'jar_file'          => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
 
-    #Gerp default parameters
-    'window_sizes'      => [1,10,100,500],
     'gerp_version'      => 2.1,
 	    
     #Location of executables (or paths to executables)
-    'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
     'gerp_exe_dir'              => $self->o('ensembl_cellar').'/gerp/20080211/bin',
     'mercator_exe'              => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/mercator',
     'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
     'exonerate_exe'             => $self->o('ensembl_cellar').'/exonerate22/2.2.0/bin/exonerate',
-
-    'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-    'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-
-    #
-    #Default statistics
-    #
-    'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-    'bed_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/pecan/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-    'output_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/pecan/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
     'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
@@ -202,7 +171,6 @@ sub default_options {
 
 
      # stats report email
-     'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
      'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };
 }
