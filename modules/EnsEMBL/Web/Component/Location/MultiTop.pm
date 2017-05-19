@@ -81,7 +81,7 @@ sub content {
       slice_number    => "$i|2",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
-      join_types      => $gene_join_types
+      bridge_types    => $gene_join_types
     });
     
     if ($annotation_status) {
