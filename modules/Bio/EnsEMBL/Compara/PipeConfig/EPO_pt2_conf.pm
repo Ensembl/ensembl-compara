@@ -71,7 +71,7 @@ sub default_options {
     return {
     	%{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('species_set_name').'_epo_anchor_mapping',
+        'pipeline_name' => $self->o('species_set_name').'_epo_anchor_mapping_'.$self->o('rel_with_suffix'),
 
     	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
     	# 'epo_mlss_id' => 825, # epo mlss from master

@@ -74,7 +74,7 @@ sub default_options {
 
     return {
       	%{$self->SUPER::default_options},
-        'pipeline_name' => 'generate_anchors_' . $self->o('species_set_name'),
+        'pipeline_name' => 'generate_anchors_' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix'),
       	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
       	# parameters that are likely to change from execution to another:
       	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments

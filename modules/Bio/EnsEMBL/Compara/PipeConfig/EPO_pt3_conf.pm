@@ -77,7 +77,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('species_set_name').'_epo',
+        'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
         'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
         # 'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated

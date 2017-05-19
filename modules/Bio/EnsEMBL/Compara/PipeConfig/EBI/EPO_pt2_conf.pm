@@ -67,6 +67,7 @@ sub default_options {
 	%{$self->SUPER::default_options},
 
     'species_set_name' => 'sauropsids',
+    #'rel_suffix' => 'b',
 
     # Where the pipeline lives
     'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
@@ -83,7 +84,7 @@ sub default_options {
     'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
 
 	 # place to dump the genome sequences
-    'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo_anchor_mapping/release_' . $self->o('rel_with_suffix'),
+    'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
     'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
      };
 }
