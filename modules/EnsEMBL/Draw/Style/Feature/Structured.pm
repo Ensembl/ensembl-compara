@@ -146,11 +146,4 @@ sub draw_block {
   $composite->push($self->Rect(\%params));
 }
 
-sub draw_bridge {
-  ## Set up a "join tag" to display mapping between features, e.g. homologues
-  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
-  my ($self, $composite, $bridge) = @_;
-  $self->add_bridge($composite, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
-}
-
 1;

@@ -165,7 +165,7 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      $self->draw_feature($feature, $position);
+      my $glyph = $self->draw_feature($feature, $position);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
       $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
@@ -262,6 +262,7 @@ sub create_glyphs {
       ## Optionally highlight this feature (including its label) 
       $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
       $self->add_highlight($feature, $position);
+
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -315,7 +316,14 @@ sub draw_feature {
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
 
-  push @{$self->glyphs}, $self->Rect($params);
+  my $glyph = $self->Rect($params);
+
+  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'bridges'}||[]}) {
+    $self->draw_bridge($glyph ,$_);
+  }
+
+  push @{$self->glyphs}, $glyph;
 }
 
 sub add_highlight {
@@ -387,6 +395,14 @@ sub add_label {
 
   push @{$self->glyphs}, $self->Text($label);
 }
+
+sub draw_bridge {
+  ## Set up a "join tag" to display mapping between features, e.g. homologues
+  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
+  my ($self, $glyph, $bridge) = @_;
+  $self->add_bridge($glyph, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
+}
+
 
 
 1;
