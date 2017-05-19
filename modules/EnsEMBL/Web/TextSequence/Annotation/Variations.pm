@@ -178,12 +178,13 @@ sub annotate {
       $markup->{'variants'}{$_}{'alleles'}  .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
 
       unshift @{$markup->{'variants'}{$_}{'links'}}, $link if $_ == $s;
+      my $factorytype = $config->{'factorytype'} || 'Location';
 
       $markup->{'variants'}{$_}{'href'} ||= {
         species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
         type        => 'ZMenu',
         action      => 'TextSequence',
-        factorytype => 'Location',
+        factorytype => $factorytype,
         v => undef,
       };
 
