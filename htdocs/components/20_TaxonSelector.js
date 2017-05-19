@@ -701,13 +701,17 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // give priority to matches that begin with the term
       var aBegins = a.toUpperCase().substr(0, term.length) == term;
       var bBegins = b.toUpperCase().substr(0, term.length) == term;
+      // Bring any references on top of the list
+      if (a.match(/reference/i)) return -1;
+      if (b.match(/reference/i)) return 1;
+
       if (aBegins == bBegins) {
         if (a == b) return 0;
         return a < b ? -1 : 1;
       }
       return aBegins ? -1 : 1;
     });
-    return matches;   
+    return matches;
   },   
   
   updateConfiguration: function() {
