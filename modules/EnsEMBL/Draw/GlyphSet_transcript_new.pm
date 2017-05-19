@@ -263,11 +263,11 @@ sub get_gene_bridges {
 }
   
 sub get_homologous_gene_ids {
-  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
+  my ($self, $species, $bridge_types, $homology_adaptor, $qy_member, $method) = @_;
   my @homologues;
   
   foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
-    my $colour_key = $join_types->{$homology->description};
+    my $colour_key = $bridge_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
     
@@ -323,7 +323,7 @@ sub calculate_collapsed_bridges {
   my $next_species     = $self->my_config('next_species');
   my $previous_target  = $self->my_config('previous_target');
   my $next_target      = $self->my_config('next_target');
-  my $bridge_types     = $self->get_parameter('join_types');
+  my $bridge_types     = $self->get_parameter('bridge_types');
   my $alt_alleles      = $gene->get_all_alt_alleles;
   my $seq_region_name  = $gene->slice->seq_region_name;
   my ($target, @gene_tags);
