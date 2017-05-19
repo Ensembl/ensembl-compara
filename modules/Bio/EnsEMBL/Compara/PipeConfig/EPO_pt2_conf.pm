@@ -62,6 +62,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -267,8 +268,17 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'dump_genome_sequence',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
 		-parameters => {
-			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'only_nuclear_genome' => $self->o('only_nuclear_genome'),
+		},
+		-flow_into => { 1 => {'map_anchors_factory' => INPUT_PLUS() } },
+		-rc_name => 'mem7500',
+		-hive_capacity => 10,
+	    },
+
+	    {	-logic_name     => 'map_anchors_factory',
+		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchorsFactory',
+		-parameters     => {
+			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
 		},
 		-flow_into => {

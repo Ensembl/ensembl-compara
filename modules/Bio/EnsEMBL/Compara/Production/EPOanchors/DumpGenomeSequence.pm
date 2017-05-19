@@ -59,7 +59,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence;
 use strict;
 use warnings;
 use Data::Dumper;
-use File::Path qw(make_path remove_tree);
+use File::Path qw(make_path);
 use Bio::EnsEMBL::Utils::IO::FASTASerializer;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -97,45 +97,9 @@ sub fetch_input {
 	close($filehandle);
 }
 
-sub run {
-    my ($self) = @_;
-    my $genome_dump_file = $self->param('genome_dump_file');
-    my $batch_size = $self->param_required('anchor_batch_size');
-    die "'anchor_batch_size' must be non-zero\n" unless $batch_size;
-    # We only need a DBConnection here
-    my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
-    my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, COUNT(*) ct FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id");
-    $sth->execute();
-    my $count = 1;
-    my @anchor_ids;
-    my $min_anchor_id;
-    my $max_anchor_id;
-    while( my $ref = $sth->fetchrow_arrayref() ){
-        next if($ref->[1] > $self->param('anc_seq_count_cut_off'));
-        if (($count % $batch_size) == 1) {
-            $min_anchor_id = $ref->[0];
-            $max_anchor_id = $ref->[0];
-        } else {
-            $max_anchor_id = $ref->[0];
-        }
-        unless ($count % $batch_size) {
-            push(@anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id, 'genome_db_file' => "$genome_dump_file",
-                    'genome_db_id' => $self->param('genome_db_id'), });
-            $min_anchor_id = undef;
-        }
-        $count++;
-    }
-    if (defined $min_anchor_id) {
-        push(@anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id, 'genome_db_file' => "$genome_dump_file",
-                'genome_db_id' => $self->param('genome_db_id'), });
-    }
-    $self->param('query_and_target', \@anchor_ids);
-}
-
 sub write_output {
-	my ($self) = @_;
-	return unless $self->param('query_and_target');
-	$self->dataflow_output_id( $self->param('query_and_target'), 2) if $self->param('query_and_target');
+    my ($self) = @_;
+    $self->dataflow_output_id( {'genome_dump_file' => $self->param('genome_dump_file')} );
 }
 
 1;
