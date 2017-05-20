@@ -147,7 +147,6 @@ sub run {
 		foreach my $mlss( @{ $self->param('mlss') } ){
 			my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_sub_slice);
 			next unless(scalar(@$gabs));
-                        $self->param('compara_pairwise_dba')->dbc->disconnect_if_idle();
 			my %non_ref_dnafrags;
 			foreach my $gab(@$gabs){
 				my $rgab = $gab->restrict_between_reference_positions( @$coord_pair );
