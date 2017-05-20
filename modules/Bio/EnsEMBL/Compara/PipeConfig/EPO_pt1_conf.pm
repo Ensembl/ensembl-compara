@@ -271,7 +271,7 @@ return [
  -logic_name    => 'gerp_constrained_element',
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
  -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
-     'constrained_element_method_link_type' => '#overlaps_method_link_name#', 'no_conservation_scores' => 1,
+     'constrained_element_method_link_type' => 'PECAN', 'no_conservation_scores' => 1,
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => '#pecan_mlssid#', },
  -hive_capacity => 100,
  -batch_size    => 10,
@@ -306,7 +306,7 @@ return [
  -logic_name => 'trim_anchor_align',			
  -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
  -parameters => {
-    'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
+    'input_method_link_species_set_id' => '#pecan_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
     'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
@@ -321,7 +321,7 @@ return [
  -logic_name => 'trim_anchor_align_himem',
  -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
  -parameters => {
-    'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
+    'input_method_link_species_set_id' => '#pecan_mlssid#',
     'output_method_link_species_set_id' => '#overlaps_mlssid#',
     'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
