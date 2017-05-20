@@ -49,7 +49,7 @@ sub fetch_input {
 		push(@ce_ids, { 'ce_ids' => [$i, $top_bound] });
 	}
 	my $gdba = $compara_db->get_adaptor("GenomeDB");
-	foreach my $genome( @{ eval $self->param('high_coverage_species') } ){
+	foreach my $genome( @{ $self->param_required('high_coverage_species') } ){
 		my $assembly = $gdba->fetch_by_registry_name("$genome")->assembly;
 		my $dbID = $gdba->fetch_by_registry_name("$genome")->dbID;
 		$assembly=~s/ /_/g;

@@ -40,7 +40,7 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my $hcs = eval $self->param("high_coverage_species");
+	my $hcs = $self->param_required("high_coverage_species");
 	my %HiCvSp;
 	foreach my$hcs(@$hcs){
 		$HiCvSp{$hcs}++;
