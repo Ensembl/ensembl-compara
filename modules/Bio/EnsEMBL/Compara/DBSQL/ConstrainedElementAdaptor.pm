@@ -91,7 +91,7 @@ sub store {
 					      $constrained_element->strand,
 					      $constrained_element->score,
 					      $mlssid,
-					      ($constrained_element->p_value or undef)
+					      $constrained_element->p_value,
 					     );
 	}
     }

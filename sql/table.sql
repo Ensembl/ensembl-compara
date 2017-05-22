@@ -2156,6 +2156,8 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_89_90_b.sql|genomic_align_tree_parent_id_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_c.sql|constrained_element_pvalue_not_null');
 
 
 
