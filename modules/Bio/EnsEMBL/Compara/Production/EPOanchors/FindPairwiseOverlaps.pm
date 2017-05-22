@@ -132,7 +132,6 @@ sub run {
 		}
 	}
 	my $genomic_align_block_adaptor = $self->param('compara_pairwise_dba')->get_GenomicAlignBlockAdaptor;
-	my $pecan_mlssid = $self->param('pecan_mlssid');
 	foreach my $coord_pair( @$reference_positions ){
 		my $ref_sub_slice =  $self->param('ref_slice_adaptor')->fetch_by_region(
 					$self->param('ref_dnafrag')->coord_system_name,
@@ -140,7 +139,7 @@ sub run {
 					@$coord_pair);
 		# get a unique id for the synteny_region
 		my $sth = $self->dbc->prepare("INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)");
-		$sth->execute( $pecan_mlssid );
+		$sth->execute( $self->param('mlss_id') );
 		my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
 		push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
 		foreach my $mlss( @{ $self->param('mlss') } ){
