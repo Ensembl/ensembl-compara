@@ -31,13 +31,13 @@ sub fetch_input {
 	my $compara_dba = $self->compara_dba();
 
 	my $dnafrag_chunk_size = $self->param_required('chunk_size');
-	my $reference_species_id = $self->param_required('reference_genome_db_id');
+	my $reference_genome_db_name = $self->param_required('reference_genome_db_name');
 
 	my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");	
 	my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
 	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");	
 
-	my $reference_genome_db = $genome_db_adaptor->fetch_by_dbID($reference_species_id);
+	my $reference_genome_db = $genome_db_adaptor->fetch_by_name_assembly($reference_genome_db_name);
 	my @dnafrag_region_jobs = ();
 	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db, undef, undef, 1);
 	foreach my $dnafrag( @{ $reference_dnafrags } ){

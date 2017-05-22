@@ -36,8 +36,8 @@ sub fetch_input {
 	# $compara_pairwise_dba is the pairwise alignments db
 	my $compara_pairwise_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
 	$self->param('compara_pairwise_dba', $compara_pairwise_dba);
-	my $reference_genome_db_id = $self->param('reference_genome_db_id');
-	my $ref_genome_db = $self->compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
+	my $reference_genome_db_name = $self->param_required('reference_genome_db_name');
+	my $ref_genome_db = $self->compara_dba->get_GenomedbAdaptor()->fetch_by_name_assembly($reference_genome_db_name);
 	# $reference_species_dba is the reference species core dba object
 	my $reference_species_dba = $ref_genome_db->db_adaptor;
 	$self->param('reference_dba', $reference_species_dba);
@@ -56,7 +56,7 @@ sub fetch_input {
         my $methods = $self->compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
         my $main_mlss = $method_link_species_set_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
         foreach my $non_ref_genome_db (@{$main_mlss->species_set->genome_dbs}) {
-                next if $non_ref_genome_db->dbID == $self->param('reference_genome_db_id');
+                next if $non_ref_genome_db->dbID == $ref_genome_db->dbID;
                 my $species_set = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
                     || die "Cannot find a SpeciesSet for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n";
                 my @pair_mlss = grep {defined $_} map {$method_link_species_set_adaptor->fetch_by_method_link_id_species_set_id($_->dbID, $species_set->dbID)} @$methods;

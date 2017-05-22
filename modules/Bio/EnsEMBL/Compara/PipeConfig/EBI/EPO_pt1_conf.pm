@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf
 
       'password' - your mysql password
 	    'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
-	    'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments
+	    'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	    
       'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
 	    'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
@@ -70,7 +70,7 @@ sub default_options {
 
         # set up for birds 
         'species_set_name' => 'sauropsids',
-        'reference_genome_db_id' => 157,
+        'reference_genome_db_name' => 'gallus_gallus',
 
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',

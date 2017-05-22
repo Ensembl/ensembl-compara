@@ -33,8 +33,8 @@ sub fetch_input {
 	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
 	my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
 	my $dnafrag_chunk_size = $self->param('dnafrag_chunk_size');
-	my $reference_species_id = $self->param('reference_genome_db_id');
-	my $reference_genome_db = $genome_db_adaptor->fetch_by_dbID($reference_species_id);
+	my $reference_genome_db_name = $self->param('reference_genome_db_name');
+	my $reference_genome_db = $genome_db_adaptor->fetch_by_name_assembly($reference_genome_db_name);
 	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db, undef, undef, 1);
 	foreach my $dnafrag( @{ $reference_dnafrags } ){
 		my $dnafrag_len = $dnafrag->length;

@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
 
         'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
-	'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments
+	'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
 	'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
         The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
@@ -121,7 +121,7 @@ sub pipeline_wide_parameters {
 		'min_number_of_seqs_per_anchor' => $self->o('min_number_of_seqs_per_anchor'),
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
 		'max_frag_diff' => $self->o('max_frag_diff'),
-	        'reference_genome_db_id' => $self->o('reference_genome_db_id'),
+	        'reference_genome_db_name' => $self->o('reference_genome_db_name'),
 	};
 	
 }
