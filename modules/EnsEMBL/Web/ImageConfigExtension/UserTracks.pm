@@ -272,9 +272,10 @@ sub _add_trackhub {
   my $already_attached = $self->get_node($menu_name);
   return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
+  ## Note: no need to validate assembly at this point, as this will have been done
+  ## by the attachment interface - otherwise we run into issues with synonyms
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup,
-                                      'parse_tracks' => 1}); ## Do we have data for this species?
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
 
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub

@@ -37,8 +37,9 @@ sub process {
   my $session_record  = $hub->session->get_data('code' => $hub->param('code'), 'type' => 'url');
  
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $hub, 'url' => $session_record->{'url'});
+  ## Don't validate assembly - if we're reattaching, it must by definition be OK
+  ## (unless it's been changed radically, in which case all bets are off!)
   my $hub_info = $trackhub->get_hub({
-                                      'assembly_lookup' => $hub->species_defs->assembly_lookup,
                                       'parse_tracks'    => 1,
                                       'refresh'         => 1,
                                     });
