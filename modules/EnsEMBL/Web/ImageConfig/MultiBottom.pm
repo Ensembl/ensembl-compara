@@ -218,7 +218,7 @@ sub select_alignment_based_on_hierarchy {
   return $prioritised_alignments || $alignments;
 }
 
-sub bridge_genes {
+sub connect_genes {
   my $self = shift;
   my ($pos, $total, @slices) = @_;
 
@@ -239,7 +239,7 @@ sub bridge_genes {
     $_->set_data('next_species',     $next_species) if $next_species;
     $_->set_data('previous_target',  $prev_target)  if $prev_target;
     $_->set_data('next_target',      $next_target)  if $next_target;
-    $_->set_data('bridge', 1);
+    $_->set_data('connect', 1);
   }
 }
 

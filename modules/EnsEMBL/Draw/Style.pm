@@ -102,7 +102,7 @@ sub new {
               'cache'       => $cache,
               'colourmap'   => $colourmap,
               'glyphs'      => [],
-              'bridges'     => [],
+              'connections' => [],
               %$config
               };
 
@@ -126,9 +126,9 @@ sub colourmap {
   return $self->{'colourmap'};
 }
 
-sub bridges {
+sub connections {
   my $self = shift;
-  return $self->{'bridges'};
+  return $self->{'connections'};
 }
 
 sub create_glyphs {
@@ -379,9 +379,9 @@ sub add_messages {
   }
 }
 
-sub add_bridge {
+sub add_connection {
   my ($self, $glyph, $tag, @params) = @_;
-  push @{$self->{'bridges'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => \@params};
+  push @{$self->{'connections'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => \@params};
 }
 
 #### TRIGONOMETRY FOR CIRCULAR GLYPHS

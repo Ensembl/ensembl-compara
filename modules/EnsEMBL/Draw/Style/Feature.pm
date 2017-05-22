@@ -318,9 +318,9 @@ sub draw_feature {
 
   my $glyph = $self->Rect($params);
 
-  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
-  foreach (@{$feature->{'bridges'}||[]}) {
-    $self->draw_bridge($glyph ,$_);
+  ## Add any 'connections', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'connections'}||[]}) {
+    $self->draw_connection($glyph ,$_);
   }
 
   push @{$self->glyphs}, $glyph;
@@ -396,11 +396,11 @@ sub add_label {
   push @{$self->glyphs}, $self->Text($label);
 }
 
-sub draw_bridge {
+sub draw_connection {
   ## Set up a "join tag" to display mapping between features, e.g. homologues
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
-  my ($self, $glyph, $bridge) = @_;
-  $self->add_bridge($glyph, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
+  my ($self, $glyph, $connection) = @_;
+  $self->add_connection($glyph, $connection->{'key'}, 0.5, 0.5, $connection->{'colour'}, 'line', 1000);
 }
 
 

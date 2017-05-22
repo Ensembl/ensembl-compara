@@ -46,9 +46,9 @@ sub content {
   my $slices          = $object->multi_locations;
   my $max             = scalar @$slices;
   my $i               = 1;
-  my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
+  my $gene_connection_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $compara_db      = EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database;
-  my $join_genes      = $self->param('opt_join_genes_top') eq 'on';
+  my $connect_genes   = $self->param('opt_join_genes_top') eq 'on';
   my @images;
   
   foreach (@$slices) {
@@ -76,12 +76,12 @@ sub content {
     }
     
     $image_config->set_parameters({
-      container_width => $slice->length,
-      image_width     => $image_width,
-      slice_number    => "$i|2",
-      multi           => 1,
-      compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
-      bridge_types    => $gene_join_types
+      container_width   => $slice->length,
+      image_width       => $image_width,
+      slice_number      => "$i|2",
+      multi             => 1,
+      compara           => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
+      connection_types  => $gene_connection_types
     });
     
     if ($annotation_status) {
@@ -93,8 +93,8 @@ sub content {
     $image_config->get_node('ruler')->set('caption_img',"f:24\@-6:".$_->{'species'});
     $image_config->highlight($highlight_gene) if $highlight_gene;
     
-    if ($join_genes) {
-      $image_config->join_genes($slices->[$i-1]{'slice'}->seq_region_name, map $_ >= 0 && $_ < $max ? $slices->[$_] : {}, $i-2, $i);
+    if ($connect_genes) {
+      $image_config->connect_genes($slices->[$i-1]{'slice'}->seq_region_name, map $_ >= 0 && $_ < $max ? $slices->[$_] : {}, $i-2, $i);
       $slice->adaptor->db->set_adaptor('compara', $compara_db);
     }
     
