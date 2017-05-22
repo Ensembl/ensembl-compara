@@ -649,12 +649,6 @@ sub gene_type {
     $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
     $type =~ s/_/ /;
     $type ||= $self->db_type;
-  } elsif ($db =~ /vega/) {
-    my $biotype = ($self->Obj->biotype eq 'tec') ? uc($self->Obj->biotype) : ucfirst(lc($self->Obj->biotype));
-    $type = ucfirst(lc($self->Obj->status))." $biotype";
-    $type =~ s/_/ /g;
-    $type =~ s/unknown //i;
-    return $type;
   } else {
     $type = $self->logic_name;
     if ($type =~/^(proj|assembly_patch)/ ){
