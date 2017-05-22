@@ -53,11 +53,11 @@ sub fetch_input {
 				$ref_dnafrag->name, @{ $self->param('dnafrag_chunks') });
 	$self->param('ref_slice_adaptor', $ref_slice_adaptor);
 	my (@multi_gab_overlaps, @mlss);
-        my $methods = $self->compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
-        my $main_mlss = $method_link_species_set_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
+        my $methods = $compara_pairwise_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
+        my $main_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
         foreach my $non_ref_genome_db (@{$main_mlss->species_set->genome_dbs}) {
                 next if $non_ref_genome_db->dbID == $ref_genome_db->dbID;
-                my $species_set = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
+                my $species_set = $compara_pairwise_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
                     || die "Cannot find a SpeciesSet for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n";
                 my @pair_mlss = grep {defined $_} map {$method_link_species_set_adaptor->fetch_by_method_link_id_species_set_id($_->dbID, $species_set->dbID)} @$methods;
                 die "No pairwise alignment could be found for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n" unless @pair_mlss;
