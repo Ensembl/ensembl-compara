@@ -166,7 +166,6 @@ sub get_available_adaptors {
         'DnaFragChunk'          => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor',
         'DnaFragChunkSet'       => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor',
         'DnaCollection'         => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor',
-        'AnchorSeq'             => 'Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor',
         'AnchorAlign'           => 'Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor',
 
             # gene-product:
