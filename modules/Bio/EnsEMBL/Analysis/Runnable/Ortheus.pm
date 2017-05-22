@@ -311,11 +311,11 @@ sub run_ortheus {
   }
   close ORTHEUS;
 
-  if ( $self->debug ) {
-      print "\nOUTPUT TREE:\n";
-      system("cat output.$$.tree");
-      print "\n\n";
-  }
+  #if ( $self->debug ) {
+      #print "\nOUTPUT TREE:\n";
+      #system("cat output.$$.tree");
+      #print "\n\n";
+  #}
 
   return $output;
 
