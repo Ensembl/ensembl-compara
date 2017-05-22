@@ -74,38 +74,25 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 =cut
 
 sub store {
-  my ($self, $anchor_align)  = @_;
+    my ($self, $anchor_align)  = @_;
 
-  assert_ref($anchor_align, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign', 'anchor_align');
+    assert_ref($anchor_align, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign', 'anchor_align');
 
-  my $query = qq{
-  INSERT INTO anchor_align
-    (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,
-    dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue)
-  VALUES (?,?,?,?,?,?,?,?,?,?)};
-
-  my $sth = $self->prepare($query);
-  my $insertCount =
-     $sth->execute($anchor_align->method_link_species_set_id,
-        $anchor_align->anchor_id,
-        $anchor_align->dnafrag_id,
-        $anchor_align->dnafrag_start,
-        $anchor_align->dnafrag_end,
-        $anchor_align->dnafrag_strand,
-        $anchor_align->score,
-        $anchor_align->num_of_organisms,
-        $anchor_align->num_of_sequences,
-	$anchor_align->evalue,
-        );
-  if($insertCount>0) {
-    #sucessful insert
-    $anchor_align->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'anchor_align', 'anchor_align_id') );
-    $sth->finish;
-  }
-
-  $anchor_align->adaptor($self);
-
-  return $anchor_align;
+    my $dbID = $self->generic_insert('anchor_align', {
+            'method_link_species_set_id'    => $anchor_align->method_link_species_set_id,
+            'anchor_id'                     => $anchor_align->anchor_id,
+            'dnafrag_id'                    => $anchor_align->dnafrag_id,
+            'dnafrag_start'                 => $anchor_align->dnafrag_start,
+            'dnafrag_end'                   => $anchor_align->dnafrag_end,
+            'dnafrag_strand'                => $anchor_align->dnafrag_strand,
+            'score'                         => $anchor_align->score,
+            'num_of_organisms'              => $anchor_align->num_of_organisms,
+            'num_of_sequences'              => $anchor_align->num_of_sequences,
+            'evalue'                        => $anchor_align->evalue,
+            'anchor_status'                 => $anchor_align->anchor_status,
+            }, 'anchor_align_id');
+    $self->attach($anchor_align, $dbID);
+    return $anchor_align;
 }
 
 sub store_mapping_hits {
@@ -280,31 +267,20 @@ sub _columns {
 
 
 sub _objs_from_sth {
-  my ($self, $sth) = @_;
-
-  my @anchor_aligns = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-    my $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
-
-    $this_anchor_align->adaptor($self);
-    $this_anchor_align->dbID($row_hashref->{'anchor_align_id'});
-    $this_anchor_align->method_link_species_set_id($row_hashref->{'method_link_species_set_id'});
-    $this_anchor_align->anchor_id($row_hashref->{'anchor_id'});
-    $this_anchor_align->dnafrag_id($row_hashref->{'dnafrag_id'});
-    $this_anchor_align->dnafrag_start($row_hashref->{'dnafrag_start'});
-    $this_anchor_align->dnafrag_end($row_hashref->{'dnafrag_end'});
-    $this_anchor_align->dnafrag_strand($row_hashref->{'dnafrag_strand'});
-    $this_anchor_align->score($row_hashref->{'score'});
-    $this_anchor_align->num_of_organisms($row_hashref->{'num_of_organisms'});
-    $this_anchor_align->num_of_sequences($row_hashref->{'num_of_sequences'});
-    $this_anchor_align->anchor_status($row_hashref->{'anchor_status'});
-
-    push @anchor_aligns, $this_anchor_align;
-  }
-  $sth->finish;
-
-  return \@anchor_aligns;
+    my ($self, $sth) = @_;
+    return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign', [
+            'dbID',
+            '_method_link_species_set_id',
+            '_anchor_id',
+            'dnafrag_id',
+            'dnafrag_start',
+            'dnafrag_end',
+            'dnafrag_strand',
+            '_score',
+            '_num_of_organisms',
+            '_num_of_sequences',
+            '_anchor_status',
+        ] );
 }
 
 
