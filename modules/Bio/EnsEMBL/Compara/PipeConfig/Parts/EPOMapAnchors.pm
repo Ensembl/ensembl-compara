@@ -165,12 +165,13 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
             },
 
+            # Copy all the untrimmed anchor_aligns
             {   -logic_name => 'reuse_anchor_align',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
                 -parameters => {
                     'db_conn'    => '#reuse_db#',
                     'table'      => 'anchor_align',
-                    'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
+                    'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid# AND untrimmed_anchor_align_id IS NULL',
                 },
 		-hive_capacity => $self->o('low_capacity'),
             },
@@ -178,7 +179,7 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name => 'reset_anchor_status',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters => {
-                    'sql' => 'UPDATE anchor_align SET anchor_status = NULL',
+                    'sql' => 'UPDATE anchor_align SET is_overlapping = 0',
                 },
                 -flow_into  => [ 'dump_genome_sequence_factory' ],
             },
@@ -319,7 +320,7 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name => 'trim_anchor_align_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
-                                'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE anchor_status IS NULL",
+                                'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE untrimmed_anchor_align_id IS NULL AND is_overlapping = 0",
                                },  
                 -flow_into => {
                                2 => [ 'trim_anchor_align' ],

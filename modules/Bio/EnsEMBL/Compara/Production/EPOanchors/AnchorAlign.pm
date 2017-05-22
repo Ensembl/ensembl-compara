@@ -49,10 +49,10 @@ sub new {
     ## First line is for backward compatibility with an old schema
     ## last is are for the new schema
     my ($method_link_species_set, $method_link_species_set_id, $anchor_id,
-        $score, $num_of_organisms, $num_of_sequences, $evalue, $anchor_status) =
+        $score, $num_of_organisms, $num_of_sequences, $evalue, $is_overlapping, $untrimmed_anchor_align_id) =
       rearrange([qw(
           METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID ANCHOR_ID
-          SCORE NUM_OF_ORGANISMS NUM_OF_SEQUENCES EVALUE ANCHOR_STATUS)], @args);
+          SCORE NUM_OF_ORGANISMS NUM_OF_SEQUENCES EVALUE IS_OVERLAPPING UNTRIMMED_ANCHOR_ALIGN_ID)], @args);
 
     $self->method_link_species_set($method_link_species_set) if (defined($method_link_species_set));
     $self->method_link_species_set_id($method_link_species_set_id) if (defined($method_link_species_set_id));
@@ -61,7 +61,8 @@ sub new {
     $self->num_of_organisms($num_of_organisms) if (defined($num_of_organisms));
     $self->num_of_sequences($num_of_sequences) if (defined($num_of_sequences));
     $self->evalue($evalue) if (defined($evalue));
-    $self->anchor_status($anchor_status) if (defined($anchor_status));
+    $self->is_overlapping($is_overlapping) if (defined($is_overlapping));
+    $self->untrimmed_anchor_align_id($untrimmed_anchor_align_id) if (defined($untrimmed_anchor_align_id));
     return $self;
 }
 
@@ -124,12 +125,20 @@ sub num_of_sequences {
   return $self->{_num_of_sequences};
 }
 
-sub anchor_status {
+sub is_overlapping {
   my $self = shift;
   if (@_) {
-	$self->{_anchor_status} = shift;
+    $self->{_is_overlapping} = shift;
   }
-  return $self->{_anchor_status};
+  return $self->{_is_overlapping};
+}
+
+sub untrimmed_anchor_align_id {
+  my $self = shift;
+  if (@_) {
+    $self->{_untrimmed_anchor_align_id} = shift;
+  }
+  return $self->{_untrimmed_anchor_align_id};
 }
 
 sub seq {

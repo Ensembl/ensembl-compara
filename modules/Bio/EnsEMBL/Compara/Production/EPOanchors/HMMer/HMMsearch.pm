@@ -124,7 +124,7 @@ sub run {
 		my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_genome_db, $seq_region_name);
 		next unless($dnafrag);	
 		push( @anchor_align_records, [ $self->param('mlssid_of_alignments'), $mapping_id, $dnafrag->dbID, $alifrom, $alito,
-						$strand, $score, $hmm_from, $hmm_to, $evalue, $hmm_len ] );  
+						$strand, $score, $hmm_from, $hmm_to, $evalue ] );  # hmm_from goes to num_of_organisms, hmm_to goes to num_of_sequences, hmm_len is not stored
 	}	
 	unlink("$stk_file");
 	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );

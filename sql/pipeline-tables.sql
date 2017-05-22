@@ -135,8 +135,10 @@ CREATE TABLE `anchor_align` (
   `num_of_organisms` smallint(5) unsigned default NULL,
   `num_of_sequences` smallint(5) unsigned default NULL,
   `evalue` varchar(10) default NULL,
-  `anchor_status` int(10) default NULL,
+  `untrimmed_anchor_align_id` bigint(20) unsigned default NULL,
+  `is_overlapping` tinyint(1) not null default 0,
   PRIMARY KEY  (`anchor_align_id`),
+  KEY `untrimmed_anchor_align_id` (`untrimmed_anchor_align_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 

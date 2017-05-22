@@ -363,6 +363,7 @@ sub get_trimmed_anchor_aligns {
     $new_anchor_align->dnafrag_start($start);
     $new_anchor_align->dnafrag_end($end);
     $new_anchor_align->method_link_species_set_id($self->param('output_method_link_species_set_id'));
+    $new_anchor_align->untrimmed_anchor_align_id($this_anchor_align->dbID);
     push(@$trimmed_anchor_aligns, $new_anchor_align);
   }
 

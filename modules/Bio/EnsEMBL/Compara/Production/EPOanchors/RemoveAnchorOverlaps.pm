@@ -67,13 +67,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub param_defaults {
-	return {
-		'overlapping_id' => 3333, # unique id for overlapping anchors
-	};
-}
-
 sub run {
 	my ($self) = @_;
 	my $anc_mapping_mlssid = $self->param('mapping_mlssid');
@@ -133,10 +126,11 @@ sub run {
 
 
 sub write_output {
-	my ($self) = @_;
-	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
-	my $Anchors_2_remove = $self->param('overlapping_ancs_to_remove'); 
-	$anchor_align_adaptor->update_anchor_status($Anchors_2_remove, $self->param('overlapping_id'), $self->param('mapping_mlssid'));
+    my ($self) = @_;
+    # Reset the flag to 0 for all the anchor_align
+    $self->compara_dba()->dbc->do('UPDATE anchor_align SET is_overlapping = 0 WHERE method_link_species_set_id = ?', undef,  $self->param('mapping_mlssid'));
+    # And set it to 1 for the ones we've found
+    $self->compara_dba()->get_adaptor('AnchorAlign')->flag_as_overlapping($self->param('overlapping_ancs_to_remove'), $self->param('mapping_mlssid'));
 }
 
 1;
