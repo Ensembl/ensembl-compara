@@ -925,7 +925,7 @@ sub snpedia {
       my $show = 0;
 
       $desc =  sprintf( '%s...
-                    <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
+                    <a title="Click to read more" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
                     <div class="toggleable snpedia_more_desc" style="%s">
                       %s
                       %s
