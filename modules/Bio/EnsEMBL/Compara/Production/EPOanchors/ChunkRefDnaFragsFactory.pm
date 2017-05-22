@@ -30,8 +30,8 @@ sub fetch_input {
 	my ($self) = @_;
 	my $compara_dba = $self->compara_dba();
 
-	my $dnafrag_chunk_size = $self->param('chunk_size');
-	my $reference_species_id = $self->param('reference_genome_db_id');
+	my $dnafrag_chunk_size = $self->param_required('chunk_size');
+	my $reference_species_id = $self->param_required('reference_genome_db_id');
 
 	my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");	
 	my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
