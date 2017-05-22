@@ -37,16 +37,14 @@ sub fetch_input {
 	my $compara_pairwise_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
 	$self->param('compara_pairwise_dba', $compara_pairwise_dba);
 	my $reference_genome_db_id = $self->param('reference_genome_db_id');
-	# $compara_dba is the compara part of the pipeline db
-	my $compara_dba = $self->compara_dba();
-	my $ref_genome_db = $compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
+	my $ref_genome_db = $self->compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
 	# $reference_species_dba is the reference species core dba object
 	my $reference_species_dba = $ref_genome_db->db_adaptor;
 	$self->param('reference_dba', $reference_species_dba);
         
 	$self->param('ref_genome_db', $ref_genome_db);
 	my $ref_slice_adaptor = $reference_species_dba->get_SliceAdaptor();
-	my $ref_dnafrag = $compara_dba->get_DnaFragAdaptor()->fetch_by_dbID($self->param('ref_dnafrag_id'));
+	my $ref_dnafrag = $self->compara_dba->get_DnaFragAdaptor()->fetch_by_dbID($self->param('ref_dnafrag_id'));
 	$self->param('ref_dnafrag', $ref_dnafrag);
 	$self->param('dnafrag_chunks', eval{ $self->param('dnafrag_chunks') });
 	my $genomic_align_block_adaptor = $compara_pairwise_dba->get_GenomicAlignBlockAdaptor;
