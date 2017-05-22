@@ -316,6 +316,7 @@ if($only_show_intentions) {
 update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
+print "Copying taxa and method_link tables...\n";
 copy_table($master_dba->dbc, $new_dba->dbc, "ncbi_taxa_node");
 copy_table($master_dba->dbc, $new_dba->dbc, "ncbi_taxa_name");
 copy_table($master_dba->dbc, $new_dba->dbc, "method_link");
