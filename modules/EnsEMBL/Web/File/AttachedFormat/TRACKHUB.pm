@@ -49,7 +49,6 @@ sub check_data {
   ## as (in theory) it will have already been checked
   ## However only warn the errors, as most hubs have minor errors and hubCheck
   ## is not yet flexible enough to deal with them
-  my $assembly_check = $self->{'registry'} ? 0 : 1;
   my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
   if ($hubCheck && !$self->{'registry'}) {
     my $url = $self->{'url'};
@@ -78,6 +77,8 @@ sub check_data {
  
   ## Check that we can use it with this website's species
   my $hub_params = {'parse_tracks' => 0};
+  ## Don't check assembly if the hub came from the registry
+  my $assembly_check = $self->{'registry'} ? 0 : 1;
   $hub_params->{'assembly_lookup'} = $assembly_lookup if $assembly_check;
   my $hub_info = $self->{'trackhub'}->get_hub($hub_params);
   
