@@ -72,6 +72,7 @@ my @sitemaps;
 my $this_release = $sd->ENSEMBL_VERSION;
 
 my $sitemap_path = $sd->GOOGLE_SITEMAPS_PATH;
+
 mkdir($sitemap_path) unless -d $sitemap_path;
 
 my $sitemap_url = $sd->GOOGLE_SITEMAPS_URL;
@@ -84,10 +85,11 @@ if ($sitemap_url) {
 }
 
 warn "Writing files to $sitemap_path";
-warn "Actual URL will be $sitemap_url";
+warn "Actual URL will be $sitemap_url\n\n";
 
 # create the 'common' sitemap for non-species urls
 my $map = Search::Sitemap->new();
+warn "\n\n"; ## Add some space because of deprecation warnings
 $map->add(Search::Sitemap::URL->new(
   loc => "$domain/index.html",
   changefreq => 'monthly',
@@ -100,7 +102,7 @@ push @sitemaps, "sitemap-common.xml";
 my @skip = split /,/, $skip_list;
 
 # create the sitemaps for each dataset
-foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
+foreach my $dataset (@ARGV ? @ARGV : @{$sd->multi_hash->{'ENSEMBL_DATASETS'}}) {
   next if grep { $_ eq $dataset } @skip;
   
   print "$dataset\n";
