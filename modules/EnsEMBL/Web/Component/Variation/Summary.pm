@@ -893,7 +893,7 @@ sub snpedia {
 
   if($cache) {
     # Get from memcached
-    $desc = decode($cache->get($key));
+    $desc = decode('utf8', $cache->get($key));
   }
 
   if ($desc) {
@@ -940,7 +940,7 @@ sub snpedia {
         $snpedia_search_link
       );
 
-      $cache && $cache->set($key, encode($desc) || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, encode('utf8', $desc) || 'no_entry', 60*60*24*7);
 
       return [
         'Description from SNPedia',
