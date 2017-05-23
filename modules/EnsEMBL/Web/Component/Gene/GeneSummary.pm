@@ -205,34 +205,12 @@ sub content {
       $table->add_row("Other assemblies", $txt);
     }
 
-  # add some Vega info
-  if ($db eq 'vega') {
-    my $type    = $object->gene_type;
-    my $version = $object->version;
-    my $c_date  = $object->created_date;
-    my $m_date  = $object->mod_date;
-    my $author  = $object->get_author_name;
-    my $remarks = $object->retrieve_remarks;
-
-    $table->add_row('Gene type', qq{<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>});
-    $table->add_row('Version &amp; date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>});
-    $table->add_row('Author', "This transcript was annotated by $author");
-    if ( @$remarks ) {
-      my $text;
-      foreach my $rem (@$remarks) {
-      	next unless $rem;  #ignore remarks with a value of 0
-        $text .= "<p>$rem</p>";
-      }
-      $table->add_row('Remarks', $text) if $text;
-    }
-  } else {
-    my $type = $object->gene_type;
-    $table->add_row('Gene type', $type) if $type;
-  }
+  my $type = $object->gene_type;
+  $table->add_row('Gene type', $type) if $type;
 
   eval {
     # add prediction method
-    my $label = ($db eq 'vega' || $site_type eq 'Vega' ? 'Curation' : 'Annotation') . ' method';
+    my $label = 'Annotation method';
     my $text  = "<p>No $label defined in database</p>";
     my $o     = $object->Obj;
 
