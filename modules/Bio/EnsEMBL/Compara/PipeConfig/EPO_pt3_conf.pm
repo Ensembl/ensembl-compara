@@ -83,8 +83,6 @@ sub default_options {
 
         'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
-        # 'gerp_ce_mlss_id' => 648,
-        # 'gerp_cs_mlss_id' => 50295,
         #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
 
         'run_gerp' => 0,
@@ -145,8 +143,6 @@ sub pipeline_wide_parameters {
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
  		'mapping_mlssid' => $self->o('mapping_mlssid'),
 		'mlss_id' => $self->o('mlss_id'),
-#		'gerp_ce_mlss_id' => $self->o('gerp_ce_mlss_id'),
-#		'gerp_cs_mlss_id' => $self->o('gerp_cs_mlss_id'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
                 'run_gerp' => $self->o('run_gerp'),
 	};
@@ -465,8 +461,8 @@ return
                 -flow_into => {
                                '2->A' => WHEN( '#run_gerp#' => {
                                      'conservation_score_healthcheck'  => [
-                                                                           {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'},
-                                                                           {'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('gerp_cs_mlss_id')},
+                                                                           {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO'},
+                                                                           {'test' => 'conservation_scores'},
                                                                 ],
                                     } ),
                                'A->1' => ['register_mlss'],
