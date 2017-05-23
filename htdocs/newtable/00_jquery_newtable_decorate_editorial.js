@@ -26,14 +26,16 @@
       for(var i=0;i<series.length;i++) {
         if(series[i]==colkey) { idx = i; }
       }
-      return function(html,row) {
-        if(idx==-1) { return html; }
-        if(!html) { return '-'; }
-        var type = row[idx];
-        var style = extras[type];
-        if(!style) { return html; }
-        var helptip = (style.helptip || type);
-        return '<div align="center"><div title="'+helptip+'" class="_ht score '+style.cssclass+'">'+html+'</div></div>';
+      return {
+        go: function(html,row) {
+          if(idx==-1) { return html; }
+          if(!html) { return '-'; }
+          var type = row[idx];
+          var style = extras[type];
+          if(!style) { return html; }
+          var helptip = (style.helptip || type);
+          return '<div align="center"><div title="'+helptip+'" class="_ht score '+style.cssclass+'">'+html+'</div></div>';
+        }
       };
     }
 

@@ -49,7 +49,7 @@ use EnsEMBL::Web::Utils::Encryption qw/encrypt_value/;
 ###  - file_name may be auto-generated, or set by the user
 
 our %path_map = (
-                'user'  => ['ENSEMBL_TMP_DIR', 'ENSEMBL_TMP_URL'],
+                'user'  => ['ENSEMBL_USERDATA_DIR', 'ENSEMBL_USERDATA_URL'],
                 'image' => ['ENSEMBL_TMP_DIR_IMG', 'ENSEMBL_TMP_URL_IMG'],
                 'tools' => ['ENSEMBL_TMP_DIR_TOOLS'],
                 );

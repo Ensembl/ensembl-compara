@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use File::Basename qw(dirname);
@@ -14,7 +14,7 @@ BEGIN {
   unshift @INC, "$serverroot/conf";
   unshift @INC, "$serverroot/modules";
 
-  eval { require SiteDefs; };
+  eval { require SiteDefs; SiteDefs->import };
   
   die "Can't use SiteDefs.pm - $@\n" if $@;
   

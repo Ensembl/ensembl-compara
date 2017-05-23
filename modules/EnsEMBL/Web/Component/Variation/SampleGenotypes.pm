@@ -166,8 +166,8 @@ sub summary_tables {
   }
 
   # Other populations 
-  my $other_pop = (scalar(keys($priority_data)) > 0) ? 'Other populations' : 'Summary of genotypes by population';
-  my $display_count = (scalar(keys($priority_data)) > 0) ? 1 : 0;
+  my $other_pop = (scalar(keys(%$priority_data)) > 0) ? 'Other populations' : 'Summary of genotypes by population';
+  my $display_count = (scalar(keys(%$priority_data)) > 0) ? 1 : 0;
   $html .= $self->format_table($rows, $other_pop_data, $other_pop, $display_count )  if scalar(keys(%$other_pop_data)) > 0;
 
   # Other samples

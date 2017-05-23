@@ -31,14 +31,11 @@ package EnsEMBL::Web::Object::Gene;
 use strict;
 
 use EnsEMBL::Web::Constants; 
-use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::Homology;
 
 use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -59,7 +56,7 @@ sub availability {
         })->[0];
 
       $availability->{'has_gxa'} = $self->gxa_check;
-      $availability->{'logged_in'} = $self->user;
+      $availability->{'logged_in'} = $self->user ? 1 : 0;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
@@ -151,11 +148,9 @@ sub get_go_list {
             $info_text =~ s/Quick_Go://;
             $label = "(QuickGO:$pid)";
           }
-          if ($vega_go_xref) {
-            my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
-            $ext_url = "$did $ext_url" if $vega_go_xref;
-            push @$sources, $ext_url;
-          }
+          my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
+          $ext_url = "$did $ext_url" if $vega_go_xref;
+          push @$sources, $ext_url;
         }
       }
 
@@ -316,101 +311,6 @@ sub insdc_accession {
     }
   }
   return undef;
-}
-
-sub count_go {
-  my ($self, $goid) = @_;
-
-  my $go_name;
-  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
-  my $counts;
-  $counts = $MEMD->get($key) if $MEMD;
-  $counts = 0 if $counts==-1; # Can't to store 0 in memcached!
-  if (!defined $counts) {
-    foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
-      my $transcript = $trans_obj->Obj;   
-
-      next unless $transcript->translation;
-      my $type = $self->get_db;      
-      my $dbc = $self->database($type)->dbc;
-      my $tl_dbID = $transcript->translation->dbID;
-
-      # First get the available ontologies
-      if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
-          my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
-
-          my $sql = qq{
-           SELECT distinct(dbprimary_acc)
-               FROM object_xref ox, xref x, external_db edb
-               WHERE ox.xref_id = x.xref_id
-               AND x.external_db_id = edb.external_db_id
-               AND edb.db_name $ontologies_list
-               AND ((ox.ensembl_object_type = 'Translation' AND ox.ensembl_id = ?)               
-               OR   (ox.ensembl_object_type = 'Transcript'  AND ox.ensembl_id = ?))};
-               
-          # Count the ontology terms mapped to the translation
-          my $sth = $dbc->prepare($sql);
-          $sth->execute($transcript->translation->dbID, $transcript->dbID);
-          foreach ( @{$sth->fetchall_arrayref} ) {
-              $go_name .= '"'.$_->[0].'",';
-          }
-          
-      }    
-    }
-    if($go_name) {
-      $go_name =~ s/,$//g;
-
-      my $goadaptor = $self->hub->database('go')->dbc;
-
-      my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
-
-      my $sth = $goadaptor->prepare($go_sql);
-      $sth->execute();
-
-      foreach (@{$sth->fetchall_arrayref}) {
-        $counts = $_->[1] if($_->[0] eq "$goid");
-      }
-    }
-    $counts ||= -1;
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
-  }
-  $counts = 0 if $counts == -1;
-  return $counts;
-}
-
-sub count_xrefs {
-  my $self = shift;
-  my $type = $self->get_db;
-  my $dbc = $self->database($type)->dbc;
-
-  # xrefs on the gene
-  my $xrefs_c = 0;
-  my $sql = '
-    SELECT x.display_label, edb.db_name, edb.status
-      FROM gene g, object_xref ox, xref x, external_db edb
-     WHERE g.gene_id = ox.ensembl_id
-       AND ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ox.ensembl_object_type = "Gene"
-       AND g.gene_id = ?';
-
-  my $sth = $dbc->prepare($sql);
-  $sth->execute($self->Obj->dbID);
-  while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
-    #these filters are taken directly from Component::_sort_similarity_links
-    #code duplication needs removing, and some of these may well not be needed any more
-    next if ($status eq 'ORTH');                        # remove all orthologs
-    next if (lc($db_name) eq 'medline');                # ditch medline entries - redundant as we also have pubmed
-    next if ($db_name =~ /^flybase/i && $type =~ /^CG/ ); # Ditch celera genes from FlyBase
-    next if ($db_name eq 'Vega_gene');                  # remove internal links to self and transcripts
-    next if ($db_name eq 'Vega_transcript');
-    next if ($db_name eq 'Vega_translation');
-    next if ($db_name eq 'GO');
-    next if ($db_name eq 'OTTP') && $label =~ /^\d+$/; #ignore xrefs to vega translation_ids
-    next if ($db_name =~ /ENSG|OTTG/);
-    $xrefs_c++;
-  }
-  return $xrefs_c;
 }
 
 sub count_gene_supporting_evidence {
@@ -749,12 +649,6 @@ sub gene_type {
     $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
     $type =~ s/_/ /;
     $type ||= $self->db_type;
-  } elsif ($db =~ /vega/) {
-    my $biotype = ($self->Obj->biotype eq 'tec') ? uc($self->Obj->biotype) : ucfirst(lc($self->Obj->biotype));
-    $type = ucfirst(lc($self->Obj->status))." $biotype";
-    $type =~ s/_/ /g;
-    $type =~ s/unknown //i;
-    return $type;
   } else {
     $type = $self->logic_name;
     if ($type =~/^(proj|assembly_patch)/ ){
@@ -1713,9 +1607,10 @@ sub get_rnaseq_tracks {
 
 sub can_export {
   my $self = shift;
-  return 0 unless $self->availability->{'gene'}; 
+  return unless $self->availability->{'gene'};
   ## Don't export main sequence from compara views
-  return $self->action =~ /TranscriptComparison|Compara|Tree|Family/ ? 0 : 'Download sequence';
+  return 0 if $self->action =~ /TranscriptComparison|Compara|Tree|Family/;
+  return $self->action eq 'Sequence' ? 'Download sequence' : 1;
 }
 
 1;

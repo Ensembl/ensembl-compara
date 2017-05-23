@@ -169,7 +169,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
   addOption: function(optgroup, species, favSection) {
     optgroup.append(
       '<option value="' + species.homepage + '">' +
-      species.common + ( favSection && species.favourite && species.has_alt ? (' ' + (species.assembly_v || species.assembly) ) : '' ) +
+      species.common + 
       '</option>'
     );
     if (!favSection && species.strainspage) {

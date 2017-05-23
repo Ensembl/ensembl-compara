@@ -31,7 +31,7 @@ BEGIN{
   warn $SERVERROOT;
   unshift @INC, "$SERVERROOT";
   unshift @INC, "$SERVERROOT/conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   warn  @SiteDefs::ENSEMBL_LIB_DIRS;
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;

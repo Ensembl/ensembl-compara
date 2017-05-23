@@ -23,18 +23,20 @@
         recolour = extras['*'].recolour;
       }
 
-      return function(html,row) {
-        if(!recolour) { return html; }
-        // TODO avoid stomping with repeated substitutions. These cannot
-        // occur in current uses, but could if used more broadly, esp.
-        // bad as depends on evaluation order of unordered hash. But
-        // how to make quick? eg.
-        // { cat -> dog, loft -> attic } => cloft -> dogtic/cattic
-        $.each(recolour,function(k,v) {
-          html = html.replace(new RegExp(k,"g"),
-                              '<span style="color:'+v+'">'+k+'</span>');
-        });
-        return html;
+      return {
+        go: function(html,row) {
+          if(!recolour) { return html; }
+          // TODO avoid stomping with repeated substitutions. These cannot
+          // occur in current uses, but could if used more broadly, esp.
+          // bad as depends on evaluation order of unordered hash. But
+          // how to make quick? eg.
+          // { cat -> dog, loft -> attic } => cloft -> dogtic/cattic
+          $.each(recolour,function(k,v) {
+            html = html.replace(new RegExp(k,"g"),
+                                '<span style="color:'+v+'">'+k+'</span>');
+          });
+          return html;
+        }
       };
     }
 

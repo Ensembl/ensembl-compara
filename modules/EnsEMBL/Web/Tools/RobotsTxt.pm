@@ -26,11 +26,11 @@ use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents);
 
 sub create {
-  ## Creates the robots.txt file and places it in the htdocs folder
+  ## Creates the robots.txt file and places it in the htdocs folder (unless an alternative directory is configured)
   ## @return none
   my $species = shift;
   my $sd      = shift;
-  my $root    = $sd->ENSEMBL_WEBROOT . '/htdocs';
+  my $root    = $sd->ENSEMBL_ROBOTS_TXT_DIR || $sd->ENSEMBL_WEBROOT.'/htdocs';
   my @lines;
 
   warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
@@ -91,7 +91,11 @@ sub create {
 
   $lines[0] =~ s/^\n//;
 
-  file_put_contents("$root/robots.txt", @lines);
+  try {
+    file_put_contents("$root/robots.txt", @lines);
+  } catch {
+    warn _box("Could not create robots.txt due to the following error:\n$_");
+  };
 }
 
 sub _lines { # utility
@@ -100,8 +104,9 @@ sub _lines { # utility
 }
 
 sub _box {
-  my $text = shift;
-  return join("\n", '-' x length $text, $text, '-' x length $text, '');
+  my $text  = shift;
+  my @lines = split "\n", $text;
+  return join("\n", '-' x length $lines[0], $text, '-' x length $lines[-1], '');
 }
 
 1;

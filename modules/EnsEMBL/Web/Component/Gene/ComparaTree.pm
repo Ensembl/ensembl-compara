@@ -204,9 +204,10 @@ sub content {
   # Ideally, this should be stored in $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}
   # or any other centralized place, to avoid recomputing it many times
   my %genome_db_ids_by_clade = map {$_ => []} @{ $self->hub->species_defs->TAXON_ORDER };
+  my $genome_db_adaptor = $tree->adaptor->db->get_GenomeDBAdaptor;
   foreach my $species_name (keys %{$self->hub->get_species_info}) {  
     foreach my $clade (@{ $self->hub->species_defs->get_config($species_name, 'SPECIES_GROUP_HIERARCHY') }) {
-      push @{$genome_db_ids_by_clade{$clade}}, $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'GENOME_DB'}{lc ($hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME'))};
+      push @{$genome_db_ids_by_clade{$clade}}, $genome_db_adaptor->fetch_by_name_assembly($hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME'))->dbID;
     }
   }
   $genome_db_ids_by_clade{LOWCOVERAGE} = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'}{'LOWCOVERAGE'};

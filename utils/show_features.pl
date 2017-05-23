@@ -24,7 +24,7 @@ no warnings 'uninitialized';
 BEGIN{
   warn dirname( $Bin );
   unshift @INC, "$Bin/../conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }

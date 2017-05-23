@@ -47,6 +47,22 @@ sub draw_feature {
   else {
     $self->SUPER::draw_feature($feature, $position);
   }
+
+  ### Are we highlighting this feature? Default is no!
+  if ($self->image_config->get_option('opt_highlight_feature') != 0) {
+
+    my $var_id;
+    my $variant = $self->image_config->core_object('variation');
+    if ($variant) {
+      $var_id = $variant->name;
+    }
+
+    if ($var_id && $var_id eq $feature->{'label'}) {
+      ## Highlight just the feature (i.e. not including label), using a black border
+      $position->{'highlight_height'} = $position->{'height'};
+      $feature->{'highlight'}         = 'black';
+    }
+  }
 }
 
 sub draw_insertion {
@@ -92,12 +108,6 @@ sub draw_insertion {
               height    => $position->{'height'} + 2,
             };
   $composite->push($self->Rect($params));
-
-  ## Are we highlighting this feature? Default is no!
-  my $highlight = $self->highlight($feature, $params);
-  if ($highlight) {
-    push @{$self->glyphs}, $highlight;
-  }
 
   ## Draw a triangle below the line to identify it as an insertion
   ## Note that we can't add the triangle to the composite, for Reasons
@@ -161,30 +171,11 @@ sub draw_deletion {
     $triangle = $self->Triangle($params);
   }
 
-  ## Are we highlighting this feature? Default is no!
-  my $highlight = $self->highlight($feature, $params);
-  if ($highlight) {
-    push @{$self->glyphs}, $highlight;
-  }
   push @{$self->glyphs}, $rectangle;
   push @{$self->glyphs}, $triangle if $triangle;
 }
 
-sub highlight {
-### Highlight the variant by adding a 2-pixel black border
-  my ($self, $feature, $params) = @_;
-  return unless $self->image_config->get_option('opt_highlight_feature') != 0;
-
-  my $var_id;
-  my $variant = $self->image_config->core_object('variation');
-  if ($variant) {
-    $var_id = $variant->name;
-  }
-  return unless $var_id && $var_id eq $feature->{'label'};
-
-  ## Use default highlight style
-  $feature->{'highlight'} = 1;
-  $self->SUPER::highlight($feature, $params); 
+sub set_highlight {
 }
 
 1;

@@ -29,7 +29,7 @@ BEGIN {
   my $serverroot = dirname($Bin);
   unshift @INC, "$serverroot/conf", $serverroot;
   
-  require SiteDefs;
+  require SiteDefs; SiteDefs->import;
   
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 

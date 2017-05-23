@@ -32,12 +32,8 @@ use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
-use EnsEMBL::Web::Cache;
-use Data::Dumper;
 use base qw(EnsEMBL::Web::Object);
 use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -85,18 +81,20 @@ sub availability {
 sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : 'Summary'; }
 
 sub counts {
-  my $self = shift;
-  my $sd = $self->species_defs;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
+  my $sd    = $self->species_defs;
 
   my $key = sprintf(
-    '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
-    $self->species, 
-    $self->hub->core_param('db'), 
-    $self->hub->core_param('t')
+    '::COUNTS::TRANSCRIPT::%s::%s::%s::',
+    $self->species,
+    $hub->core_param('db'),
+    $hub->core_param('t')
   );
   
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   if (!$counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
@@ -111,7 +109,7 @@ sub counts {
       %{$self->_counts}
     };
     
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 
@@ -253,22 +251,24 @@ sub count_similarity_matches {
 sub count_oligos {
   my $self = shift;
   my $type = 'funcgen';
-  return 0 unless $self->database('funcgen');
-  my $dbc = $self->database($type)->dbc; 
-  my $sql = qq{
-   SELECT count(distinct(ox.ensembl_id))
-     FROM object_xref ox, xref x, external_db edb
-    WHERE ox.xref_id = x.xref_id
-      AND x.external_db_id = edb.external_db_id
-      AND (ox.ensembl_object_type = 'ProbeSet'
-           OR ox.ensembl_object_type = 'Probe')
-      AND x.info_text = 'Transcript'
-      AND x.dbprimary_acc = ?};
-      
-  my $sth = $dbc->prepare($sql); 
-  $sth->execute($self->Obj->stable_id);
-  my $c = $sth->fetchall_arrayref->[0][0];
-  return $c;
+  my $dba = $self->database($type);
+  
+  return 0 unless $dba;
+  
+  my $probe_set_transcript_mapping_adaptor = $dba->get_ProbeSetTranscriptMappingAdaptor;
+  my $probe_transcript_mapping_adaptor     = $dba->get_ProbeTranscriptMappingAdaptor;
+
+  my $stable_id = $self->Obj->stable_id;
+
+  my $probe_set_mappings = $probe_set_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($stable_id);
+  my $probe_mappings     = $probe_transcript_mapping_adaptor    ->fetch_all_by_transcript_stable_id($stable_id);
+
+  my $num_probe_set_mappings = @$probe_set_mappings;
+  my $num_probe_mappings     = @$probe_mappings;
+
+  my $total_number_of_mappings = $num_probe_set_mappings + $num_probe_mappings;
+
+  return $total_number_of_mappings;
 }
 
 sub default_track_by_gene {
@@ -1077,7 +1077,7 @@ sub get_similarity_hash {
 
  Arg[1]       : none 
  Example      : %probe_data  = %{$transdate->get_oligo_probe_data}
- Description  : Retrieves all oligo probe releated DBEntries for this transcript
+ Description  : Retrieves probe and probe set to transcript mappings for this transcript
  Returntype   : Hashref of probe info
 
 =cut
@@ -1085,51 +1085,36 @@ sub get_similarity_hash {
 sub get_oligo_probe_data {
   my $self = shift; 
   my $fg_db = $self->database('funcgen'); 
-  my $probe_adaptor = $fg_db->get_ProbeAdaptor; 
-  my @transcript_xrefd_probes = @{$probe_adaptor->fetch_all_by_external_name($self->stable_id)};
-  my $probe_set_adaptor = $fg_db->get_ProbeSetAdaptor; 
-  my @transcript_xrefd_probesets = @{$probe_set_adaptor->fetch_all_by_external_name($self->stable_id)};
+  
+  my $probe_transcript_mapping_adaptor = $fg_db->get_ProbeTranscriptMappingAdaptor;
+  my $probe_transcript_mapping = $probe_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($self->stable_id);
+  
   my %probe_data;
-
-  # First retrieve data for Probes linked to transcript
-  foreach my $probe (@transcript_xrefd_probes) {
-    my ($array_name, $probe_name, $vendor, @info);
-   
-    foreach my $complete (@{$probe->get_all_complete_names}) {
-      ($array_name,$probe_name) = split /:/,$complete;
-      $vendor = $_->vendor for(values %{$probe->get_names_Arrays});
-      @info = ('probe', $_->linkage_annotation) for @{$probe->get_all_Transcript_DBEntries};
-
-      my $key = "$vendor $array_name";
-      $key = $vendor if $vendor eq $array_name;
-
-      if (exists $probe_data{$key}) {
-        my %probes = %{$probe_data{$key}};
-        $probes{$probe_name} = \@info;
-        $probe_data{$key} = \%probes;
-      } else {
-        my %probes = ($probe_name, \@info);
-        $probe_data{$key} = \%probes;
-      }
-    }
-  }
-
-  # Next retrieve same information for probesets linked to transcript
-  foreach my $probeset (@transcript_xrefd_probesets) {
-    my ($array_name, $probe_name, $vendor, @info);
-
-    $probe_name = $probeset->name;
+  
+  PROBE:
+  foreach my $current_probe_transcript_mapping (@$probe_transcript_mapping) {
+  
+    my $probe       = $current_probe_transcript_mapping->fetch_Probe;
+    my $description = $current_probe_transcript_mapping->description;
     
-    foreach (@{$probeset->get_all_Arrays}) {
-     $vendor =  $_->vendor;
-     $array_name = $_->name;
-    }
+    my $array_chip = $probe->array_chip;
+    my $array      = $array_chip->get_Array;
     
-    @info = ('pset', $_->linkage_annotation) for @{$probeset->get_all_Transcript_DBEntries};
+    # If the probe is part of a probe set, then the individual probe mappings 
+    # are not displayed.
+    #
+    next PROBE if ($array->is_probeset_array);
     
+    my $array_name = $array->name;
+    my $vendor     = $array->vendor;
+    my $probe_name = $probe->name;
+    
+    my @info = ('probe', $description);
+
     my $key = "$vendor $array_name";
-    
-    if (exists $probe_data{$key}){
+    $key = $vendor if $vendor eq $array_name;
+
+    if (exists $probe_data{$key}) {
       my %probes = %{$probe_data{$key}};
       $probes{$probe_name} = \@info;
       $probe_data{$key} = \%probes;
@@ -1138,6 +1123,34 @@ sub get_oligo_probe_data {
       $probe_data{$key} = \%probes;
     }
   }
+
+  my $probe_set_transcript_mapping_adaptor = $fg_db->get_ProbeSetTranscriptMappingAdaptor;
+  my $probe_set_transcript_mapping = $probe_set_transcript_mapping_adaptor->fetch_all_by_transcript_stable_id($self->stable_id);
+  
+  foreach my $current_probe_set_transcript_mapping (@$probe_set_transcript_mapping) {
+  
+    my $probe_set   = $current_probe_set_transcript_mapping->fetch_ProbeSet;
+    my $description = $current_probe_set_transcript_mapping->description;
+    
+    my $probe_set_name = $probe_set->name;
+    my $array      = $probe_set->get_Array;
+    my $vendor     = $array->vendor;
+    my $array_name = $array->name;
+
+    my @info = ('pset', $description);
+    
+    my $key = "$vendor $array_name";
+    
+    if (exists $probe_data{$key}) {
+      my %probes = %{$probe_data{$key}};
+      $probes{$probe_set_name} = \@info;
+      $probe_data{$key} = \%probes;
+    } else {
+      my %probes = ($probe_set_name, \@info);
+      $probe_data{$key} = \%probes;
+    }
+  }
+
 
   $self->sort_oligo_data(\%probe_data); 
 }
@@ -1350,9 +1363,19 @@ sub get_int_seq {
 sub save_seq {
   my $self = shift;
   my $content = shift ;
+
+  ## Truncate FASTA headers to prevent psw from throwing an error message
+  my $safe_content = '';
+  foreach (split('\n', $content)) {
+    if ($_ =~ /$\>/) {
+      $_ = substr($_, 0, 15);
+    }
+    $safe_content .= $_."\n";
+  }
+
   my $seq_file = $self->species_defs->ENSEMBL_TMP_TMP . '/SEQ_' . time() . int(rand()*100000000) . $$;
   open (TMP,">$seq_file") or die("Cannot create working file.$!");
-  print TMP $content;
+  print TMP $safe_content;
   close TMP;
   return ($seq_file)
 }
@@ -1394,27 +1417,22 @@ sub get_alignment {
 
   my $label_width  = '22'; # width of column for e! object label
   my $output_width = 61;   # width of alignment
-  my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
-  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
+  my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s';
+  my $pepAlignExe  = '%s/bin/psw -dymem explicit -m %s/share/genewise/BLOSUM62.bla %s %s > %s';
 
   my $out_file = time() . int(rand()*100000000) . $$;
-  $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
+  $out_file = $self->species_defs->ENSEMBL_TMP_TMP.'/' . $out_file . '.out';
 
   my $command;
   if ($seq_type eq 'DNA') {
-    $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln';
+    $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
     `$command`;
-    
-    unless (open(OUT, "<$out_file")) {
-      $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file;
-      `$command`;
-    }
     
     unless (open(OUT, "<$out_file")) {
       $self->problem('fatal', "Cannot open alignment file.", $!);
     }
   } elsif ($seq_type eq 'PEP') {
-    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
+    $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $out_file;
     `$command`;
 
     unless (open(OUT, "<$out_file")) {
@@ -1449,7 +1467,7 @@ sub get_alignment {
   unlink $out_file;
   unlink $int_seq_file;
   unlink $ext_seq_file;
-  $alignment;
+  return $alignment;
 }
 
 ###################################

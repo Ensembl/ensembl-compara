@@ -421,8 +421,8 @@ sub add_genes {
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 
-  # overwriting Genes comprehensive track description to not be the big concatenation of many description
-  $self->modify_configs(['transcript_core_ensembl'],{ description => 'The <a class="popup" href="/Help/Glossary?id=487">GENCODE Comprehensive</a> set is the gene set for human and mouse' });
+  # overwriting Genes comprehensive track description to not be the big concatenation of many description (only gencode gene track)
+  $self->modify_configs(['transcript_core_ensembl'],{ description => 'The <a class="popup" href="/Help/Glossary?id=487">GENCODE Comprehensive</a> set is the gene set for human and mouse' }) if($self->species_defs->GENCODE_VERSION);
 }
 
 sub add_trans_associated {
@@ -1612,7 +1612,7 @@ sub add_phenotypes {
 sub add_structural_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
-  my @A = keys $hashref;
+  my @A = keys %$hashref;
 
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
   my $prefix_caption      = 'SV - ';
@@ -1836,7 +1836,7 @@ sub add_somatic_mutations {
     my $tissue_menu = $self->create_menu_node('somatic_mutation_by_tissue', 'Somatic variants by tissue');
 
     ## Add tracks for each tumour site
-    my %tumour_sites = ($self->species_defs->databases->{'DATABASE_VARIATION'} && %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2}||{}}) || ();
+    my %tumour_sites = ($self->species_defs->databases->{'DATABASE_VARIATION'} && %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}}) || ();
 
     foreach my $description (sort keys %tumour_sites) {
       next if $description eq 'none';

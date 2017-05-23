@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Details';
 }
 
+sub has_tabs { return 1; }
+
 sub caption {
   my $self = shift;
   my $fm = $self->hub->param('fm');
@@ -42,8 +44,7 @@ sub availability {
 sub populate_tree {
   my $self = shift;
   $self->create_node('Details', 'Proteins in this family', [qw(
-          ensembl EnsEMBL::Web::Component::Family::ComparaFamily/ensembl
-          other   EnsEMBL::Web::Component::Family::ComparaFamily/other
+          family EnsEMBL::Web::Component::Family::ComparaFamily
           )]);
 }
 

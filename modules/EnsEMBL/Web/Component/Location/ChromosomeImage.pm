@@ -161,6 +161,8 @@ sub legend {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
+  return unless @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
+
   my @buttons;
 
   my $params = {

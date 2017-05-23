@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Summary';
 }
 
+sub has_tabs { return 1; }
+
 sub user_tree { return 1; }
 
 # either - prediction transcript or transcript

@@ -36,6 +36,10 @@ sub content {
 
   my $settings = {'Hidden' => ['align','fm']};
 
+  if ($hub->param('members') && $hub->param('members') >= 500) {
+    $settings->{'Disabled'} = {'clustalw' => 'Too many members in this family.'};
+  }
+
   ## Options per format
   my $fields_by_format;
   foreach ($self->alignment_formats) {

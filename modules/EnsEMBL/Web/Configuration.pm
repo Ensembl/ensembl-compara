@@ -29,12 +29,12 @@ sub new {
   my ($class, $page, $hub, $builder, $data) = @_;
   
   my $self = {
-    page    => $page,
-    hub     => $hub,
-    builder => $builder,
-    object  => $builder->object,
-    _data   => $data,
-    cl      => {}
+    page      => $page,
+    hub       => $hub,
+    builder   => $builder,
+    object    => $builder->object,
+    _data     => $data,
+    cl        => {}
   };
   
   bless $self, $class;
@@ -68,6 +68,7 @@ sub new_for_components {
   return $self->get_configurable_components(undef, $action, $function);
 }
 
+sub has_tabs          { return 0; } ## Does a page of this type normally have tabs?
 sub default_template {}
 
 sub init {

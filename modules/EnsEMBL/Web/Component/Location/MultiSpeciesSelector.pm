@@ -28,9 +28,10 @@ sub _init {
   my $self = shift;
   my $hub = $self->hub;
   $self->SUPER::_init;
-  $self->{'link_text'}       = 'Select species or regions';
-  $self->{'url_param'}       = 's';
-  $self->{'rel'}             = 'modal_select_species_or_regions';
+  $self->{'link_text'} = 'Select species or regions';
+  $self->{'url_param'} = 's';
+  $self->{'rel'}       = 'modal_select_species_or_regions';
+  $self->{'action'}    = $hub->url({ function => undef });
 }
 
 sub buttons {

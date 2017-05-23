@@ -292,14 +292,13 @@ sub get_html_for_gene_tree_coverage {
     { key => 'piechart_dup',                      width => '10%',  align => 'center', sort => 'none',    title => 'Species-specific duplications', class => '_no_export'},
   ) if $method eq 'NC_TREES'; 
 
-  my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
   foreach my $sp (@$species) {
     my $piecharts; 
 
     if ($method eq 'PROTEIN_TREES') { 
       $piecharts = $self->get_piecharts_for_species($sp, $counter_raphael_holders);
       $table->add_row({
-      'species' => $common_names->{$sp->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$sp->taxon_id}, $sp->node_name) : $sp->node_name,
+      'species' => species_tree_node_label($sp),
       'piechart_cov' => {
         value => $piecharts->[1],
         class => '_no_export'
@@ -314,7 +313,7 @@ sub get_html_for_gene_tree_coverage {
     else {
       $piecharts = $self->get_piecharts_for_species_ncrna($sp, $counter_raphael_holders);
       $table->add_row({
-      'species' => $common_names->{$sp->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$sp->taxon_id}, $sp->node_name) : $sp->node_name,
+      'species' => species_tree_node_label($sp),
       'piechart_cov' => {
         value => $piecharts->[1],
         class => '_no_export'
@@ -392,7 +391,6 @@ sub get_html_for_tree_size_statistics {
       { key => 'root_avg_gene_per_spec',    width => '11%',  align => 'center', sort => 'numeric', title => 'Average # genes per species', },
     ], [], {data_table => 1, sorting => ['species asc']} );
 
-  my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
   my $tot_ntrees = sum(map {$_->get_value_for_tag('root_nb_trees') || 0} @{$species_tree_root->get_all_nodes});
   my $tot_ngenes = sum(map {$_->get_value_for_tag('root_nb_genes') || 0} @{$species_tree_root->get_all_nodes});
 
@@ -402,7 +400,7 @@ sub get_html_for_tree_size_statistics {
     next unless $ntrees;
 
     $table->add_row({
-        'species' => $common_names->{$node->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$node->taxon_id}, $node->node_name) : $node->node_name,
+        'species' => species_tree_node_label($node),
         'root_perc_trees' => $self->piechart_data([$ntrees, $tot_ntrees-$ntrees], $counter_raphael_holders),
         'root_perc_genes' => $self->piechart_data([$ngenes, $tot_ngenes-$ngenes], $counter_raphael_holders),
         (map {$_ => $node->get_value_for_tag($_)} qw(root_nb_trees root_nb_genes root_min_gene root_max_gene root_min_spec root_max_spec)),
@@ -427,14 +425,13 @@ sub get_html_for_node_statistics {
       { key => 'avg_dupscore_nondub',   width => '12%', align => 'center', sort => 'numeric', title => 'Average duplication confidence score (non-dubious nodes)', },
     ], [], {data_table => 1, sorting => ['species asc']} );
 
-  my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
   foreach my $node (@{$species_tree_root->get_all_nodes}) {
     next if $node->is_leaf;
     next unless $node->get_value_for_tag('nb_nodes');
     my $piecharts = $self->get_piecharts_for_internal_node($node, $counter_raphael_holders);
 
     $table->add_row({
-        'species' => $common_names->{$node->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$node->taxon_id}, $node->node_name) : $node->node_name,
+        'species' => species_tree_node_label($node),
         'piechart' => $piecharts->[0],
         (map {$_ => $node->get_value_for_tag($_)} qw(nb_nodes nb_spec_nodes nb_dup_nodes nb_dubious_nodes)),
         (map {$_ => sprintf('%.1f&nbsp;%%', 100*$node->get_value_for_tag($_))} qw(avg_dupscore avg_dupscore_nondub)),
@@ -478,8 +475,6 @@ sub draw_tree {
   my ($self, $matrix, $node, $next_y, $counter_raphael_holders, $method) = @_;
   my $nchildren = scalar(@{$node->children});
 
-  my $common_names  = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
-
   my $horiz_branch  = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_hor.png" />};
   my $vert_branch   = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_ver.png" />};
   my $top_branch    = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_top.png" />};
@@ -518,8 +513,7 @@ sub draw_tree {
       $piecharts = $self->get_piecharts_for_species_ncrna($node, $counter_raphael_holders); 
     }
 
-    $matrix->[$y]->[$width-1] = $common_names->{$node->taxon_id} || $node->node_name;
-    $matrix->[$y]->[$width-1] = $common_names->{$node->taxon_id} || $node->node_name;
+    $matrix->[$y]->[$width-1] = species_tree_node_label($node);
     $matrix->[$y]->[$width-2] = $piecharts->[0];
     $matrix->[$y]->[$width-3] = $piecharts->[1];
     $matrix->[$y]->[$width-4] = $half_horiz_branch;
@@ -528,6 +522,19 @@ sub draw_tree {
 
 }
 
+
+# Helper functions
+
+sub species_tree_node_label {
+    my $species_tree_node = shift;
+    my $taxon_alias = $species_tree_node->get_common_name();
+    my $scientific_name = $species_tree_node->get_scientific_name();
+    if ($taxon_alias) {
+        return sprintf('%s (%s)', $taxon_alias, $scientific_name);
+    } else {
+        return $scientific_name;
+    }
+}
 
 
 1;

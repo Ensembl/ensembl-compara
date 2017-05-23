@@ -208,12 +208,12 @@ sub _is_align_slice {
   my $data = $self->data;
   my $target;
   if($self->phase eq 'split') {
-    return ref($data->[0]{'slice'}) eq 'HASH' and
+    return ref($data->[0]{'slice'}) eq 'HASH' &&
       exists $data->[0]{'slice'}{'mlss'};
   } elsif($self->phase eq 'pre_process') {
     return ref($data->{$key}) eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice';
   } elsif($self->phase eq 'pre_generate') {
-    return ref($data->{$key}) eq 'HASH' and exists $data->{$key}{'mlss'};
+    return ref($data->{$key}) eq 'HASH' && exists $data->{$key}{'mlss'};
   }
 }
 

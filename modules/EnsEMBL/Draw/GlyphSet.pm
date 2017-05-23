@@ -290,7 +290,8 @@ sub height {
   my ($self) = @_;
   ## New drawing code calculates its height differently
   my $h = $self->{'my_config'}->get('total_height');
-  return $h || int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+  my $old_h = int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+  return $h > $old_h ? $h : $old_h;
 }
 
 sub width {
@@ -895,7 +896,7 @@ sub get_gd {
   
   return $cache{$font_key} if exists $cache{$font_key};
   
-  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  my $fontpath = $self->{'config'}->species_defs->get_font_path."$font.ttf";
   my $gd       = GD::Simple->new(400, 400);
   
   eval {
@@ -1387,9 +1388,14 @@ sub section_text {
 }
 
 sub section_height {
-  return 0 unless $_[0]->{'section_text'};
-  return 24 if @{ $_[0]->{'section_lines'}} == 1;
-  return 36;
+  my $self = shift;
+  my $section_height = 0;
+  if ($self->{'section_text'}) {
+    $section_height = @{$self->{'section_lines'}||[]} == 1 ? 24 : 36; 
+  }
+  ## Set in track config so we can retrieve it in new drawing code
+  $self->{'my_config'}->set('section_height', $section_height);
+  return $section_height;
 }
 
 

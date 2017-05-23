@@ -213,26 +213,44 @@ sub get_feature_sets {
 }
 
 sub get_location_url {
-  my $self = shift;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $action  = $self->hub->action eq 'Multi' ? 'Multi' : 'View';
+
+  my @other_spp_params = grep {$_ =~ /^s[\d+]$/} $hub->param;
+  my %other_spp;
+  foreach (@other_spp_params) {
+    $other_spp{$_} = $hub->param($_);
+  }
 
   return $self->hub->url({
     type   => 'Location',
-    action => 'View',
+    action => $action,
     rf     => $self->stable_id,
     fdb    => 'funcgen',
     r      => $self->location_string,
+    %other_spp,
   });
 }
 
 sub get_bound_location_url {
-  my $self = shift;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $action  = $self->hub->action eq 'Multi' ? 'Multi' : 'View';
+
+  my @other_spp_params = grep {$_ =~ /^s[\d+]$/} $hub->param;
+  my %other_spp;
+  foreach (@other_spp_params) {
+    $other_spp{$_} = $hub->param($_);
+  }
 
   return $self->hub->url({
     type   => 'Location',
-    action => 'View',
+    action => $action,
     rf     => $self->stable_id,
     fdb    => 'funcgen',
     r      => $self->bound_location_string,
+    %other_spp,
   });
 }
 

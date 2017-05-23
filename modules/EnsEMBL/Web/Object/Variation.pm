@@ -38,12 +38,9 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Cache;
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::REST;
 use base qw(EnsEMBL::Web::Object);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub availability {
   my $self = shift;
@@ -73,9 +70,10 @@ sub availability {
 }
 
 sub counts {
-  my $self = shift;
-  my $obj  = $self->Obj;
-  my $hub  = $self->hub;
+  my $self  = shift;
+  my $obj   = $self->Obj;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
 
@@ -84,7 +82,7 @@ sub counts {
   $key   .= $vf . '::' if $vf;
 
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   unless ($counts) {
     $counts = {};
@@ -100,7 +98,7 @@ sub counts {
     $counts->{'locations'}   = scalar @{$self->get_variation_features};
     ($counts->{'population_freqs'}, $counts->{'populations'}) = @{$self->count_populations};
 
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 
@@ -1429,7 +1427,6 @@ sub ld_pops_for_snp {
   my @vari_mappings = @{ $self->unique_variation_feature }; 
   return [] unless @vari_mappings;                    # must have mapping
   return [] unless $self->counts->{'samples'};    # must have genotypes
-  return [] unless $self->vari_class =~ /snp/i;  # must be a SNP or mixed
 
   my $pa = $self->Obj->adaptor->db->get_PopulationAdaptor;
   return [map {$_->dbID} @{$pa->fetch_all_LD_Populations}];
@@ -1785,8 +1782,8 @@ sub get_snpedia_data {
   $rev->{'*'} =~s/(\{\{(?!PMID).*?\}\})//g;
 
   # Link all PMIDs to EPMC
-  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 }) . "]"/ge;
-  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 })/ge;
+  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => encode_entities($1) }) . "]"/ge;
+  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => encode_entities($1) })/ge;
 
   # Remove starting newline characters
   $rev->{'*'} =~s/^(\*{3})+//g;
@@ -1799,7 +1796,7 @@ sub get_snpedia_data {
 
   # Link content inside [[ rs id ]] back to e!
   $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $var_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
-  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
+  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => encode_entities($1) }) : "<b>$1<\/b>"/ge;
 
   # Create html links for content like [url linktext]
   $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;

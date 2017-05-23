@@ -1,0 +1,103 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Basename qw(dirname);
+use FindBin qw($Bin);
+use Storable qw(retrieve);
+use JSON qw(to_json);
+use Storable qw(store_fd);
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+my $format = 'json';
+GetOptions('format=s' => \$format);
+$format = lc($format);
+
+my ($filename) = @ARGV;
+
+my $data = {
+  SiteDefs => {},
+};
+
+foreach my $k (keys %SiteDefs::) {
+  if(@{$SiteDefs::{$k}}) {
+    $data->{'SiteDefs'}{$k} = [ @{$SiteDefs::{$k}} ];
+  } else {
+    $data->{'SiteDefs'}{$k} = ${$SiteDefs::{$k}};
+  }
+}
+
+my $packed_fn = "$SiteDefs::ENSEMBL_SYS_DIR/conf/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
+
+$data->{'packed'} = retrieve($packed_fn);
+
+sub cleanup {
+  my ($x) = @_;
+
+  if(ref($x) eq 'HASH') {
+    $x->{$_} = cleanup($x->{$_}) for keys %$x;
+  } elsif(ref($x) eq 'ARRAY') {
+    $x = [ map { cleanup($_) } @$x ];
+  } elsif(ref($x)) {
+    return undef;
+  }
+  return $x;
+}
+
+$data = cleanup($data);
+
+sub human {
+  my ($x,$fd,$p) = @_;
+  $p ||= [];
+
+  if(ref($x) eq 'HASH') {
+    human($x->{$_},$fd,[@$p,$_]) for keys %$x;
+  } elsif(ref($x) eq 'ARRAY') {
+    human($x->[$_],$fd,[@$p,$_]) for(0..$#$x);
+  } elsif(!ref($x)) {
+    $x = 'undef' unless defined $x;
+    $fd->print(join("/",@$p)." -> ".$x."\n");
+  }
+}
+
+if($filename) {
+  open(FILE,'>',$filename) or die "Cannot write '$filename': $!";
+} else {
+  *FILE = *STDOUT;
+}
+
+if($format eq 'json') {
+  print FILE to_json($data);
+} elsif($format eq 'storable') {
+  store_fd($data,\*FILE);
+} elsif($format eq 'human') {
+  human($data,\*FILE);
+}
+close FILE;
+
+1;
+

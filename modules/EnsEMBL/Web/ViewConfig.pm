@@ -267,18 +267,15 @@ sub update_from_input {
 
   # if user is resetting the configs
   if (my $reset = $params->{'reset'}) {
-
     $self->altered($self->reset_user_settings($reset));
+  }
 
-  } else {
+  my $settings = $params->{$self->config_type};
 
-    my $settings = $params->{$self->config_type};
+  foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
-    foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
-
-      my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
-      $self->altered($key) if $self->set_user_setting($key, @values > 1 ? \@values : $values[0]);
-    }
+    my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
+    $self->altered($key) if $self->set_user_setting($key, @values > 1 ? \@values : $values[0]);
   }
 
   # now apply config changes to linked image config

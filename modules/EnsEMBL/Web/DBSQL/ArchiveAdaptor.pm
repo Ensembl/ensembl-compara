@@ -153,7 +153,7 @@ sub fetch_archives_by_species {
   my $sql = qq(
     SELECT
       r.release_id, r.date, r.archive, r.description, 
-      rs.assembly_name, rs.assembly_version, rs.initial_release, rs.last_geneset
+      rs.species_url, rs.assembly_name, rs.assembly_version, rs.initial_release, rs.last_geneset
     FROM
       ens_release as r,
       species as s,
@@ -179,10 +179,11 @@ sub fetch_archives_by_species {
       'date'            => $data[1],
       'archive'         => $data[2],
       'description'     => $data[3],
-      'assembly'        => $data[4],
-      'version'         => $data[5],
-      'initial_release' => $data[6],
-      'last_geneset'    => $data[7],
+      'url'             => $data[4],
+      'assembly'        => $data[5],
+      'version'         => $data[6],
+      'initial_release' => $data[7],
+      'last_geneset'    => $data[8],
     };
   }
 
@@ -190,7 +191,7 @@ sub fetch_archives_by_species {
   $sql = qq(
     SELECT
       r.number, r.date, r.archive, r.description, 
-      rs.assembly_name, rs.assembly_version, rs.initial_release, rs.last_geneset
+      rs.species_url, rs.assembly_name, rs.assembly_version, rs.initial_release, rs.last_geneset
     FROM
       ens_release as r,
       species as s,
@@ -216,10 +217,11 @@ sub fetch_archives_by_species {
       'date'            => $data[1],
       'archive'         => $data[2],
       'description'     => $data[3],
-      'assembly'        => $data[4],
-      'version'         => $data[5],
-      'initial_release' => $data[6],
-      'last_geneset'    => $data[7],
+      'url'             => $data[4],
+      'assembly'        => $data[5],
+      'version'         => $data[6],
+      'initial_release' => $data[7],
+      'last_geneset'    => $data[8],
     };
   }
   return $records;

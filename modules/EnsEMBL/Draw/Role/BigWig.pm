@@ -107,8 +107,6 @@ sub _fetch_data {
   my ($self, $bins, $url) = @_;
   $bins ||= $self->bins;
 
-  #return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
- 
   my $hub       = $self->{'config'}->hub;
   $url          ||= $self->my_config('url');
 
@@ -143,7 +141,6 @@ sub _fetch_data {
     return [];
   }
 
-  my $slice     = $self->{'container'};
   my $args      = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
@@ -160,15 +157,28 @@ sub _fetch_data {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour') || 'slategray';
     $self->{'my_config'}->set('axis_colour', $colour);
-    $bins   ||= $self->bins;
+  
+    my ($slice, $whole_chromosome);
+    if (ref($self->{'container'}) eq 'Bio::EnsEMBL::Slice') {
+      $slice = $self->{'container'};
+    }
+    elsif ($self->{'container'}{'chr'} && $self->{'container'}{'sa'}) {
+      my $adaptor = $self->{'container'}{'sa'};
+      $slice      = $adaptor->fetch_by_region('chromosome', $self->{'container'}{'chr'});
+      $whole_chromosome = 1;
+    }
+
+    my $length = $slice ? $slice->length : $hub->species_defs->MAX_CHR_LENGTH;
+    $bins   ||= $self->bins($slice);
+
     my $metadata = {
                     'name'            => $self->{'my_config'}->get('name'),
                     'colour'          => $colour,
                     'join_colour'     => $colour,
                     'label_colour'    => $colour,
                     'graphType'       => 'bar',
-                    'unit'            => $slice->length / $bins,
-                    'length'          => $slice->length,
+                    'unit'            => $length / $bins,
+                    'length'          => $length,
                     'bins'            => $bins,
                     'display'         => $self->{'display'},
                     'no_titles'       => $self->my_config('no_titles'),
@@ -186,7 +196,7 @@ sub _fetch_data {
     }
 
     ## Parse the file, filtering on the current slice
-    $data = $iow->create_tracks($slice, $metadata);
+    $data = $iow->create_tracks($slice, $metadata, $whole_chromosome);
   }
 
   # Don't cache here, it's not properly managed. Rely on main cache layer.
@@ -194,13 +204,12 @@ sub _fetch_data {
 }
 
 sub bins {
-### Set number of bins for summary - will typically be around 1000
+### Set number of bins for summary - will typically be around 1000 for region in detail or 150 on whole chromosomes
 ### @return Integer
-  my $self = shift;
+  my ($self, $slice) = @_;
 
   if(!$self->{'_bins'}) {
-    my $slice = $self->{'container'};
-    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
+    $self->{'_bins'} = $slice ? min($self->{'config'}->image_width, $self->{'container'}->length) : 150;
   }
   return $self->{'_bins'};
 }

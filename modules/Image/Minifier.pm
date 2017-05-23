@@ -23,7 +23,7 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(minify generate_sprites data_url);
+our @EXPORT_OK = qw(minify generate_sprites data_url preload_config);
 
 our $VERSION = '0.01';
 
@@ -32,7 +32,7 @@ use Digest::MD5 qw(md5_hex);
 use JSON qw(from_json);
 use YAML qw(LoadFile);
 use MIME::Base64;
-use SiteDefs;
+
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use EnsEMBL::Web::Utils::PluginInspector qw(get_all_plugins);
 
@@ -48,9 +48,12 @@ my @OK_STYLES = qw(
 my @EXCLUDE_FILES = qw(this-mirror.png);
 my @OK_ATTRS = qw(onClick);
 
+
+my $KIT_COMPLETE = 0;
 sub kit_complete {
   my ($effect) = @_;
 
+  return $KIT_COMPLETE>0 if $KIT_COMPLETE;
   my @required = (
     ['identify --version','ImageMagick'],
     ['convert --version','ImageMagick'],
@@ -61,9 +64,11 @@ sub kit_complete {
     my $out = qx($exe 2>&1) || '';
     unless($out =~ /$grep/) {
       warn "$effect: '$exe' failed. Falling back\n" if $effect;
+      $KIT_COMPLETE = -1;
       return 0;
     }
   }
+  $KIT_COMPLETE = 1;
   return 1;
 }
 
@@ -177,11 +182,11 @@ sub minify {
   return if !kit_complete('not building sprite page');
   my @prefetch;
   my $conf = build_conf();
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot open '$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log'";
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or die "Cannot open $SiteDefs::ENSEMBL_LOGDIR/image-minify.log";
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
   $title .= ('=' x length $title)."\n\n";
   print LOG $title;
-  my $root = $species_defs->ENSEMBL_DOCROOT.'/'.$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $root = $species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $css = '';
   # Process each file
   my @files;
@@ -284,7 +289,7 @@ sub minify {
       my $hex = $md5->hexdigest;
       my $fn = "$root/$hex.$type";
       rename $tmp2,$fn;
-      my $url = "/minified/$hex.$type";
+      my $url = $species_defs->ENSEMBL_MINIFIED_URL."/$hex.$type";
       $css .= qq(.autosprite-src-$page-$type { background-image: url($url) });
       push @prefetch,$url;
       foreach my $f (@{$files{$type}{$page}}) {
@@ -423,18 +428,30 @@ sub maybe_generate_sprite {
   return qq(<img src=${outq}data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==$outq class=${outq}autosprite-src-$s_t $classes$outq $style $more_attrs/>);
 }
 
+my %SPRITE_MAPS;
+
+sub preload_config {
+  my $root = $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH;
+  foreach my $f (glob "$root/*.map") {
+    $SPRITE_MAPS{$f} = from_json(file_get_contents($f));
+  }
+}
+
 sub load_config {
   my ($species_defs) = @_;
 
-  my $docroot = $species_defs->ENSEMBL_DOCROOT;
-  my $root = "$docroot/".$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $root = $species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $csses = $species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'};
   my $map;
   foreach my $css (@$csses) {
-    $map = $css->minified_url_path if $css->name eq 'components';
+    $map = $css->minified_filename if $css->name eq 'components';
   }
   $map =~ s/\.css$/.map/;
-  return from_json(file_get_contents("$docroot/$map"));
+  my $filename = "$root/$map";
+  return $SPRITE_MAPS{$filename} if $SPRITE_MAPS{$filename};
+  my $out = from_json(file_get_contents($filename));
+  $SPRITE_MAPS{$filename} = $out;
+  return $out;
 }
 
 sub generate_sprites {
@@ -461,7 +478,7 @@ sub find_file {
 sub data_url_convert {
   my ($key,$prefix,$suffix,$sd,$url) = @_;
 
-  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or warn "Cannot write '$SiteDefs::ENSEMBL_LOGDIR/image-minify.log':$!";
+  open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log') or die "Cannot write '$SiteDefs::ENSEMBL_LOGDIR/image-minify.log':$!";
   $url =~ s/^"(.*)"$/$1/;
   $url =~ s/^'(.*)'$/$1/;
   return undef unless $url =~ m!^/!;
@@ -502,7 +519,6 @@ sub data_url {
 
   return $content if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
   return $content if !kit_complete('not building data URIs');
-  my $root = $species_defs->ENSEMBL_DOCROOT;
   $content =~ s!background-image:\s*url\(([^\)]+)\);?!data_url_convert_try('background-image','','',$species_defs,$1)!ge;
   $content =~ s!list-style-image:\s*url\(([^\)]+)\);?!data_url_convert_try('list-style-image','','',$species_defs,$1)!ge;
   $content =~ s!background:([^;}]*\s*)url\(([^\)]+)\)(\s*[^;}]*);?!data_url_convert_try('background',$1,$3,$species_defs,$2)!ge;

@@ -50,7 +50,8 @@ sub get {
   my ($self,$args) = @_;
 
   return [] unless defined $args->{'feature'};
-  my $out = $args->{'feature'}->get_underlying_structure($args->{'epigenome'});
-  return [ map { +{ locus => $_ } } @{$out} ];
+  my $out = eval { $args->{'feature'}->get_underlying_structure($args->{'epigenome'}); };
+  return $@ ? [] : [ map { +{ locus => $_ } } @{$out} ];
 }
+
 1;

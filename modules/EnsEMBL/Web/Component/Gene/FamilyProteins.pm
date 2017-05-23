@@ -33,6 +33,25 @@ sub _init {
   $self->ajaxable(1);
 }
 
+sub content {
+  my $self    = shift;
+  my $html;
+
+  my ($ensembl_content, $count1) = $self->content_ensembl;
+  my ($other_content, $count2) = $self->content_other;
+
+  my $total = $count1 + $count2;
+  ## No point in exporting alignment if only one peptide!
+  if ($total > 1) {
+    ## Pass total members to hub, so we can set param on export button
+    $self->hub->param('members', $total);
+  }
+
+  $html .= $ensembl_content;
+  $html .= $other_content;
+  return $html;
+}
+
 sub content_other {
   my $self    = shift;
   my $hub     = $self->hub;
@@ -112,7 +131,7 @@ sub content_other {
     ))
   }
 
-  return $html;
+  return ($html, $count);
 }
 
 sub content_ensembl {
@@ -158,8 +177,6 @@ sub content_ensembl {
   $html .= $table->render;
 
   if ($count > 0) {
-    ## No point in exporting alignment if only one peptide!
-    $html .= $self->content_buttons if $count > 1;
 
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
 
@@ -204,7 +221,7 @@ sub content_ensembl {
     ));
   }
 
-  return $html;
+  return ($html, $count);
 }
 
 sub export_options { return {'action' => 'Family'}; }
@@ -223,6 +240,9 @@ sub get_export_data {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
+  my $members = $hub->param('members');
+  ## No point exporting alignments unless there are at least 2 proteins
+  return unless $members > 1;
 
   my $params  = {
                   'type'        => 'DataExport',
@@ -231,6 +251,7 @@ sub buttons {
                   'component'   => 'FamilyProteins',
                   'fm'          => $hub->param('fm'),
                   'align'       => 'family',
+                  'members'     => $members,
                 };
   return {
     'url'     => $hub->url($params),

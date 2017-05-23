@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -37,8 +36,6 @@ use Sys::Hostname;
 use Time::HiRes qw(time);
 use POSIX qw(strftime);
 
-use SiteDefs;
-
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
@@ -50,32 +47,39 @@ use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 use EnsEMBL::Web::Apache::ServerError;
 
+our $preload_time;
+#BEGIN { $preload_time = time; }
 use Preload;
+#BEGIN { warn sprintf("preload took %dms\n",(time-$preload_time)*1000); }
 
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
 sub get_postread_redirect_uri {
   ## Gets called at PostReadRequest stage and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed without executing to the actual handler
-  ## Used to perform any mirror site and mobile redirects etc
+  ## Used to perform any mirror site redirects etc
+  ## Gets called for all the requests
   ## @param Apache2::RequestRec request object
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
 }
 
 sub get_rewritten_uri {
-  ## Recieves the current URI and returns a new URI in case it has to be rewritten
+  ## Receives the current URI and returns a new URI in case it has to be rewritten
   ## The same request itself is handled according to the rewritten URI instead of making an external redirect request
+  ## @param Apache2::RequestRec request object
   ## @param URI string
   ## @return URI string if modified, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
 }
 
 sub get_redirect_uri {
-  ## Recieves the current URI and returns a new URI in case a PERMANENT external HTTP redirect has to be performed on that
+  ## Receives the current URI and returns a new URI in case a TEMPORARY external HTTP redirect has to be performed on that while executing to the actual handler
+  ## Gets called for only non-Static requests
+  ## @param Apache2::RequestRec request object
   ## @param URI string
   ## @return URI string if redirection required, undef otherwise
   ## In a plugin, use this function with PREV to add plugin specific rules
-  my $uri = shift;
+  my ($r, $uri) = @_;
 
   ## Redirect to contact form
   if ($uri =~ m|^/contact\?$|) {
@@ -106,10 +110,20 @@ sub get_redirect_uri {
     return '/info/docs/tools/vep/index.html';
   }
 
+  ## Redirect moved documentation
+  if ($uri =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+     return $uri =~ s/docs/genome/r;
+ }
+
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
   if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
     return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);
   }
+
+  ## Redirect to live site if this instance has no Doxygen files
+  if ($uri =~ /Doxygen/ && !(-e $species_defs->ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs'.$uri)) {
+    return 'http://www.ensembl.org/'.$uri;
+  } 
 
   return undef;
 }
@@ -245,6 +259,16 @@ sub get_sub_handlers {
   return @combinations;
 }
 
+sub set_remote_ip {
+  ## Sets the ENSEMBL_REMOTE_ADDR env variable to the possibly most accurate client's address
+  my $r   = shift;
+  my $ip  = $r->subprocess_env('HTTP_X_FORWARDED_FOR') || $r->subprocess_env('HTTP_X_CLUSTER_CLIENT_IP') || $r->subprocess_env('HTTP_CLIENT_IP') || $r->subprocess_env('REMOTE_ADDR') || '';
+
+  ($ip)   = split /\s*\,\s*/, $ip;
+
+  $r->subprocess_env('ENSEMBL_REMOTE_ADDR', $ip);
+}
+
 sub http_redirect {
   ## Perform an http redirect
   ## @param Apache2::RequestRec request object
@@ -254,7 +278,6 @@ sub http_redirect {
   my ($r, $redirect_uri, $permanent) = @_;
   $r->uri($redirect_uri);
   $r->headers_out->add('Location' => $r->uri);
-  $r->child_terminate; # TODO really needed?
 
   return $permanent ? HTTP_MOVED_PERMANENTLY : HTTP_MOVED_TEMPORARILY;
 }
@@ -285,7 +308,7 @@ sub childInitHandler {
   ## @param APR::Pool object
   ## @param Apache2::ServerRec server object
   ## This handler only adds an entry to the logs
-  warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;
 }
@@ -300,6 +323,9 @@ sub postReadRequestHandler {
   # VOID request to populate %ENV
   $r->subprocess_env;
 
+  # Set possibly most accurate remote IP address
+  set_remote_ip($r);
+
   # Any redirect needs to be performed at this stage?
   if (my $redirect_uri = get_postread_redirect_uri($r)) {
     $r->subprocess_env('LOG_REQUEST_IGNORE', 1);
@@ -311,6 +337,8 @@ sub postReadRequestHandler {
 
   # run any plugged-in code
   request_start_hook($r);
+
+  Bio::EnsEMBL::Registry->set_reconnect_when_lost();
 
   return OK;
 }
@@ -324,7 +352,7 @@ sub transHandler {
   return DECLINED if $uri eq '*';
 
   # apply any uri rewrite rules
-  if (my $modified = get_rewritten_uri($uri)) {
+  if (my $modified = get_rewritten_uri($r, $uri)) {
     $r->parse_uri($modified);
   }
 
@@ -332,6 +360,58 @@ sub transHandler {
   $r->subprocess_env('LOG_REQUEST_URI', $r->unparsed_uri);
 
   return DECLINED;
+}
+
+our (%HOT_DBS,%EXPULSIONS);
+
+sub check_port_exhaustion {
+  my $count = 0;
+  open(SOCKETS,"/proc/net/tcp") || return 0;
+  while(<SOCKETS>) { $count++; }
+  close SOCKETS;
+  return $count;
+}
+
+sub tidy_databases {
+  my $debug = $SiteDefs::ENSEMBL_DB_TIDY_DEBUG;
+
+  # tidy up unused databases
+  my %databases;
+  foreach my $dba ( @{Bio::EnsEMBL::Registry->get_all_DBAdaptors()}){
+    my $dbc = $dba->dbc;
+    next unless $dbc->connected();
+    my $dsn = $dbc->_driver_object->connect_params($dbc)->{'dsn'};
+    ($HOT_DBS{$dsn}||=0)++;
+    $databases{$dsn} = $dbc;
+  }
+
+  my $tokill = scalar(keys %databases)-$SiteDefs::ENSEMBL_DB_IDLE_LIMIT;
+
+  my $ports_used = check_port_exhaustion;
+  if($ports_used < 10000) {
+    foreach my $dsn (sort { $HOT_DBS{$a} <=> $HOT_DBS{$b} } keys %HOT_DBS) {
+      last if $tokill <= 0;
+      next unless $databases{$dsn};
+      warn "disconnecting $dsn\n" if $debug;
+      $databases{$dsn}->disconnect_if_idle();
+      ($EXPULSIONS{$dsn}||=0)++;
+      $tokill--;
+    }
+  } else {
+    warn "not disconnecting due to impending port exhaustion.\n" if $debug;
+  }
+
+  # A db will have been loaded EXPULSIONS+1 times. It will have been used
+  # HOT_DBS times. miss rate = Sum{ (EXPULSIONS+1)/HOT_DBS }
+  if($debug) {
+    my ($misses,$total) = (0,0);
+    foreach my $dsn (keys %HOT_DBS) {
+      $misses += ($EXPULSIONS{$dsn}||0)+1;
+      $total += $HOT_DBS{$dsn};
+    }
+    warn sprintf("hit rate %d%%\n",($total-$misses)*100/$total) if $total;
+    warn sprintf("%d ports in use\n",$ports_used);
+  }
 }
 
 sub handler {
@@ -362,8 +442,8 @@ sub handler {
   }
 
   # handle any redirects
-  if (my $redirect = get_redirect_uri($uri)) {
-    return http_redirect($r, $redirect, 1);
+  if (my $redirect = get_redirect_uri($r, $uri)) {
+    return http_redirect($r, $redirect);
   }
 
   # populate subprocess_env with species, path and query or perform a redirect to a rectified url
@@ -423,6 +503,8 @@ sub handler {
   # kill off the process when it grows too large
   $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
 
+  tidy_databases();
+
   return $response_code;
 }
 
@@ -446,15 +528,16 @@ sub cleanupHandler {
   ## This handler gets called immediately after the request has been served (the client went away) and before the request object is destroyed.
   ## Any time consuming logging process should be done in this handler since the request connection has actually been closed by now.
   ## @param Apache2::RequestRec request object
-  my $r = shift;
+  my $r     = shift;
+  my $uuri  = $r->unparsed_uri;
 
-  return OK if $r->unparsed_uri =~ m/^(\*|\/Crash|\/Error)/;
+  return OK if !defined $uuri || $uuri =~ m/^(\*|\/Crash|\/Error)/;
 
   # run any plugged-in code
   request_end_hook($r);
 
   # no need to go further if debug flag is off
-  return OK unless $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  return OK unless $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   # if LOG_REQUEST_IGNORE is set true by the code, don't log the request url
   return OK if $r->subprocess_env('LOG_REQUEST_IGNORE');
@@ -473,7 +556,7 @@ sub cleanupHandler {
       "LONG PROCESS: %12s AT: %s  TIME: %s  SIZE: %s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP: %s  UA: %s\n",
       $$, time_str($start_time), $time_taken, $size,
       $$, $uri,
-      $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
+      $$, $r->subprocess_env('ENSEMBL_REMOTE_ADDR') || 'unknown', $r->headers_in->{'User-Agent'} || 'unknown'
     );
   }
 
@@ -487,7 +570,7 @@ sub childExitHandler {
   ## This handler only adds an entry to the logs
   my ($p, $s) = @_;
 
-  warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+  warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;
 }

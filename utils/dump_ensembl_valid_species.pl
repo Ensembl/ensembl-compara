@@ -22,7 +22,7 @@ use Data::Dumper;
 BEGIN {
   unshift @INC, "$Bin/../conf";
   unshift @INC, "$Bin/../";
-  require SiteDefs;
+  require SiteDefs; SiteDefs->import;
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 

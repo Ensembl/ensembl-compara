@@ -101,7 +101,7 @@ sub post_process {
 
     ## Now add any lone transcripts (with no exons) to the feature array
     $data->{$track_key}{'features'} ||= [];
-    push $data->{$track_key}{'features'}, values %{$data->{$track_key}{'transcripts'}||{}};
+    push @{$data->{$track_key}{'features'}}, values %{$data->{$track_key}{'transcripts'}||{}};
 
     ## Transcripts will be out of order, owing to being stored in hash
     ## Sort by start coordinate, then reverse length (i.e. longest first)
@@ -129,8 +129,8 @@ sub create_hash {
   return if $seqname ne $slice->seq_region_name;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
-  my $start         = $feature_start - $slice->start;
-  my $end           = $feature_end - $slice->start;
+  my $start         = $feature_start - $slice->start + 1;
+  my $end           = $feature_end - $slice->start + 1;
   return if $end < 0 || $start > $slice->length;
 
   ## Only set colour if we have something in metadata, otherwise

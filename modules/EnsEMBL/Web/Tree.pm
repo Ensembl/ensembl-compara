@@ -75,7 +75,10 @@ sub get_node {
   ## @return Requested node(s) (EnsEMBL::Web::TreeNode object or list of multiple objects in list context) or possibly undef if node with the given id doesn't exist
   my ($self, $id) = @_;
 
-  throw WebException('Node id is needed to get a node') unless $id;
+  if (!$id) {
+    warn 'ERROR at EnsEMBL::Web::Tree::get_node: Node id is needed to get a node';
+    return undef;
+  }
 
   my @nodes = grep $_->parent_node, @{$self->{'_node_lookup'}{clean_id($id)} || []};
 

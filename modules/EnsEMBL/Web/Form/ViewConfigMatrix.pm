@@ -267,7 +267,6 @@ sub build {
 
     $rows_html .= qq(<tr class="$row_class">$row_html</tr>);
   }
-  warn ">>> HTML $rows_html";
 
   my $c = 0;
 

@@ -18,8 +18,10 @@
 (function($) {
   $.fn.newtable_diagonal = function(config,data,widgets,callw) {
     function decorate_fn(column,extras,series) {
-      return function(html,row) {
-        return '<div style="text-align: center">'+html+'</div>';
+      return {
+        go: function(html,row) {
+          return '<div style="text-align: center">'+html+'</div>';
+        }
       }
     }
 

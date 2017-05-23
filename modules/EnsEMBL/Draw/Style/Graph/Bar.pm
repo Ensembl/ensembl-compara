@@ -38,16 +38,20 @@ sub draw_wiggle {
 
   my $plain_x = 0;
 
-  foreach my $f (@$features) {
+  foreach my $_f (@$features) {
 
-    unless(ref($f) eq 'HASH') {
+    my $f;
+
+    if (ref $_f eq 'HASH') {
+      $f = $_f;
+    } else {
       # Plain old value
       $f = {
         start => $plain_x,
-        end => $plain_x + $c->{'unit'},
-        score => $f,
+        end   => $plain_x + $c->{'unit'},
+        score => $_f
       };
-      $plain_x += $c->{'unit'};
+      $plain_x   += $c->{'unit'};
     }
 
     my $start   = $f->{'start'};

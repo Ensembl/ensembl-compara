@@ -165,7 +165,7 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      $self->draw_feature($feature, $position);
+      my $glyph = $self->draw_feature($feature, $position);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
       $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
@@ -175,10 +175,11 @@ sub create_glyphs {
       my $font_size     = $self->{'font_size'};
 
       ## Regular labels (outside feature)
+      my $text_height;
       if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
         my $text_info   = $self->get_text_info($feature->{'label'});
-        my $text_width    = $text_info->{'width'};
-        my $text_height   = $text_info->{'height'};
+        my $text_width  = $text_info->{'width'};
+        my $text_height = $text_info->{'height'};
         my ($new_x, $new_y);
 
         if ($bumped eq 'labels_alongside') {
@@ -217,7 +218,7 @@ sub create_glyphs {
         my $label_text;
         my $bp_textwidth;
 
-        my $text_info   = $self->get_text_info($feature->{'label'});
+        my $text_info     = $self->get_text_info($feature->{'label'});
         my $text_width    = $text_info->{'width'};
         my $text_height   = $text_info->{'height'};
         ## If overlay text is different from main label, adjust accordingly
@@ -244,7 +245,7 @@ sub create_glyphs {
         if ($feature_width > $tmp_textwidth) { ## OK, so there's space for the overlay
           my $new_x = $feature->{'start'} - 1;
           $new_x = 0 if $new_x < 0;
-          my $new_y = $position->{'y'} + $approx_height - $text_height;
+          my $new_y = $position->{'y'} + $feature_height - $text_height;
           my $label_position = {
                                 'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
                                 'y'           => $new_y,
@@ -257,6 +258,11 @@ sub create_glyphs {
           $self->add_label($feature, $label_position, 'overlay');
         }
       }
+
+      ## Optionally highlight this feature (including its label) 
+      $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
+      $self->add_highlight($feature, $position);
+
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -272,9 +278,12 @@ sub create_glyphs {
   }
 
   ## Check if overall track label (in LH margin) is taller than track itself
-  ## (Use stanaard font size plus padding)
+  ## (Use standard font size plus padding)
   my $track_label_height = $track_config->get('track_label_rows') * ($self->{'font_size'} + 6);
   $total_height = $track_label_height if $track_label_height > $total_height;
+  ## Also allow for tracks with complex track labels, e.g. regulation
+  my $section_height = $track_config->get('section_height') || 0; 
+  $total_height += $section_height;
 
   $self->draw_hidden_bgd($total_height);
   my $track_height = $track_config->get('total_height') || 0;
@@ -296,7 +305,7 @@ sub draw_feature {
   my $x = $feature->{'start'};
   $x    = 1 if $x < 1;
   my $params = {
-                  x            => $x-1,
+                  x            => $x,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
@@ -307,27 +316,31 @@ sub draw_feature {
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
 
-  ## Are we highlighting this feature? Default is no!
-  my $highlight = $self->highlight($feature, $params);
+  my $glyph = $self->Rect($params);
 
-  if ($highlight) {
-    push @{$self->glyphs}, $highlight;
+  ## Add any 'connections', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'connections'}||[]}) {
+    $self->draw_connection($glyph ,$_);
   }
-  push @{$self->glyphs}, $self->Rect($params);
+
+  push @{$self->glyphs}, $glyph;
 }
 
-sub highlight {
-  my ($self, $feature, $params) = @_;
+sub add_highlight {
+  my ($self, $feature, $position) = @_;
   return unless $feature->{'highlight'};
 
-  my $colour = $feature->{'highlight_colour'} || 'black';
+  $position->{'highlight_height'} ||= $position->{'height'};
 
-  return $self->Rect({
-      x      => $params->{'x'} - 2 / $self->{'pix_per_bp'},
-      y      => $params->{'y'} - 2,
-      width  => $params->{'width'}  + 4 / $self->{'pix_per_bp'},
-      height => $params->{'height'} + 4,
-      colour => $colour,
+  my $x = $feature->{'start'} - 1;
+  $x    = 0 if $x < 0;
+
+  push @{$self->glyphs}, $self->Rect({
+      x      => $x - 2 / $self->{'pix_per_bp'},
+      y      => $position->{'y'} - 2,
+      width  => $position->{'width'}  + 4 / $self->{'pix_per_bp'},
+      height => $position->{'highlight_height'} + 4,
+      colour => $feature->{'highlight'},
       z      => -10,
   });
 
@@ -382,6 +395,14 @@ sub add_label {
 
   push @{$self->glyphs}, $self->Text($label);
 }
+
+sub draw_connection {
+  ## Set up a "join tag" to display mapping between features, e.g. homologues
+  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
+  my ($self, $glyph, $connection) = @_;
+  $self->add_connection($glyph, $connection->{'key'}, 0.5, 0.5, $connection->{'colour'}, 'line', 1000);
+}
+
 
 
 1;

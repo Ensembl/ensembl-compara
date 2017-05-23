@@ -246,7 +246,7 @@ sub write_fasta {
 
   ## Do a bit of munging of this data, according to export options selected
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
-  my $slice       = $self->object->expand_slice($data_object->slice);
+  my $slice       = $data_object->slice;
 
   my $masking         = $hub->param('masking');
   my $seq_region_name = $data_object->seq_region_name;

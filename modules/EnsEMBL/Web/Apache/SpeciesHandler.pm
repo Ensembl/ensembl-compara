@@ -61,7 +61,7 @@ sub get_redirect_uri {
   if (my $redirect = get_redirect($path_segments->[0])) {
     $redirect = join('?', join('/', '', $species, $redirect), $query || ());
 
-    warn "OLD LINK REDIRECT: $path_segments->[0] $redirect\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+    warn "OLD LINK REDIRECT: $path_segments->[0] $redirect\n" if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
     return $redirect;
   }

@@ -35,8 +35,7 @@ sub init_canvas {
   $self->{'im_height'}    = $im_height;
 
   if( $self->{'config'}->can('species_defs') ) {
-    my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE || {};
-    $self->{'ttf_path'} ||= $ST->{'GRAPHIC_TTF_PATH'};
+    $self->{'ttf_path'} ||= $self->{'config'}->species_defs->get_font_path;
   }
   $self->{'ttf_path'}   ||= '/usr/local/share/fonts/ttfonts/';
 

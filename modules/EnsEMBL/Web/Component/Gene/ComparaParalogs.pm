@@ -48,7 +48,6 @@ sub content {
   my %paralogue_map       = qw(SEED BRH PIP RHS);
   my %cached_lca_desc     = ();
   my $alignview           = 0;
-  my $taxon_common_names  = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
   my $lookup              = { 'Paralogues (same species)' => 'Within species paralogues (within species paralogs)' };
 
   my $columns = [
@@ -143,19 +142,10 @@ sub content {
       } elsif ($species_tree_node->is_leaf) {
         $ancestral_taxonomy = $hub->species_defs->species_label($hub->species_defs->production_name_mapping($species_tree_node->genome_db->name));
       } else {
-        if ($species_tree_node->taxon_id and exists $taxon_common_names->{$species_tree_node->taxon_id}) {
-          $ancestral_taxonomy = sprintf('%s (%s)', $taxon_common_names->{$species_tree_node->taxon_id}, $species_tree_node->node_name());
-        } else {
-          $ancestral_taxonomy = $species_tree_node->node_name();
-        }
+        $ancestral_taxonomy = species_tree_node_label($species_tree_node);
         my ($c0, $c1) = @{$species_tree_node->children()};
         my $other_side = scalar(@{$c0->find_leaves_by_field('genome_db_id', $paralogue->{'homologue'}->genome_db_id)}) ? $c1 : $c0;
-        $lca_desc = "Last common ancestor with ";
-        if ($other_side->taxon_id and exists $taxon_common_names->{$other_side->taxon_id}) {
-          $lca_desc .= sprintf('%s (%s)', $taxon_common_names->{$other_side->taxon_id}, $other_side->node_name());
-        } else {
-          $lca_desc .= $other_side->node_name();
-        }
+        $lca_desc = "Last common ancestor with " . species_tree_node_label($other_side);
         $cached_lca_desc{$species_tree_node->node_id} = [$ancestral_taxonomy, $lca_desc];
       }
       
@@ -238,6 +228,19 @@ sub buttons {
   return @buttons;
 }
 
+
+# Helper functions
+
+sub species_tree_node_label {
+    my $species_tree_node = shift;
+    my $taxon_alias = $species_tree_node->get_common_name();
+    my $scientific_name = $species_tree_node->get_scientific_name();
+    if ($taxon_alias) {
+        return sprintf('%s (%s)', $taxon_alias, $scientific_name);
+    } else {
+        return $scientific_name;
+    }
+}
 
 1;
 

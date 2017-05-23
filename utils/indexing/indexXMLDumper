@@ -19,33 +19,42 @@ use strict;
 
 package indexXMLDumper;
 
-my $ENSEMBL_ROOT;
+use FindBin qw($Bin);
+use Storable qw(retrieve);
 
-BEGIN {
-  use FindBin qw($Bin);
-  use File::Basename qw( dirname );
-  $ENSEMBL_ROOT = dirname( $Bin );
-  $ENSEMBL_ROOT =~ s/\/utils$//;
-  unshift @INC, "$ENSEMBL_ROOT/conf";
-  eval{ require SiteDefs };
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
-}
-
-use EnsEMBL::Web::SpeciesDefs;
+use DBI;
 use XML::Parser;
 use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
-use HTML::Strip;
+use HTML::TreeBuilder;
 use Digest::MD5 qw(md5_hex);
 use Fcntl;
 use DB_File;
 use SDBM_File;
+use Encode qw(decode encode);
+
+my $CONF = retrieve("$Bin/dumper.sconf");
+
+my $SD = $CONF->{'SiteDefs'};
+my $PD = $CONF->{'packed'};
+
+# Make species also available by production name, build datasets
+my $ENSEMBL_DATASETS = [];
+foreach my $url (keys %$PD) {
+  next unless ref($PD->{$url}) eq 'HASH';
+  next unless $PD->{$url}{'SPECIES_PRODUCTION_NAME'};
+  next unless grep { $_ eq $PD->{$url}{'SPECIES_PRODUCTION_NAME'} } @{$SD->{'PRODUCTION_NAMES'}};
+  push @$ENSEMBL_DATASETS,$url;
+  $PD->{$PD->{$url}{'SPECIES_PRODUCTION_NAME'}} = $PD->{$url};
+}
+print "There are ".scalar(@$ENSEMBL_DATASETS)." species\n";
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help);
+my $tmpdir = '.';
+
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help,$array);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
@@ -57,6 +66,8 @@ GetOptions('species=s'        => \$species_list,
            'dir=s'            => \$dir,
            'check_xml'        => \$check_xml,
 	   'help'             => \$help,
+	   'tmpdir=s'         => \$tmpdir,
+	   'array'	      => \$array,
          );
 
 if ($help){
@@ -69,10 +80,9 @@ my @ignore_species = split ',',$ignore_species_list;
 my @indexes        = split ',',$indexes_list;
 my @ignore_indexes = split ',',$ignore_indexes_list;
 
-my $SD          = EnsEMBL::Web::SpeciesDefs->new();
-my $release     = $SD->ENSEMBL_VERSION;
+my $release     = $SD->{'ENSEMBL_VERSION'};
 my $parser      = new XML::Parser( 'ErrorContext' => 3 ); #used to check xml is well formed
-my $sitetype    = $SD->ENSEMBL_SITETYPE || 'Ensembl';
+my $sitetype    = $SD->{'ENSEMBL_SITETYPE'} || 'Ensembl';
 my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
                 : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
                 : 'http://www.ensembl.org';
@@ -97,7 +107,7 @@ my $boosts = {
 if ($debug) {
   $log = '>-';
 }
-else {
+elsif(!$log) {
   my $counter = 1;
   $log =  "dumping_${release}.log";
   my $l =  $log."_".sprintf("%03d", $counter);
@@ -106,6 +116,10 @@ else {
     $l = $log."_".sprintf("%03d", $counter);
   }
   $log = $l;
+}
+
+if($array and not $debug) {
+  $log .= "-$ENV{'LSB_JOBINDEX'}";
 }
 
 open (LOG, ">$log") or die "Can't open $log: $!";
@@ -181,7 +195,6 @@ foreach (@indexes) {
 }
 
 # if the SPECIES is set to ALL grab them all from the config...
-my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
   @species = ();
@@ -190,20 +203,29 @@ if( $species_list eq 'ALL' ) {
     my $val = 0;
     $val = -1  if($ig =~ s!^<!!);
     $val = 1 if($ig =~ s!^>!!);
-    @ignored{grep { ($_ cmp $ig) == $val } @{$SD->ENSEMBL_DATASETS}} = ();
+    @ignored{grep { ($_ cmp $ig) == $val } @{$SD->{'PRODUCTION_NAMES'}}} = ();
   }
-  foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
+  foreach my $sp (@{$SD->{'PRODUCTION_NAMES'}}) {
     push @species,$sp unless exists $ignored{$sp};
   }
 }
 else {
-  @species = grep {$_} map { $X{lc($_)} } @species;
   if (@species ne $input_c) {
     print LOG "WARNING - one or more of your species names is not recognised, please check your spelling. Available species are:\n";
-    print LOG join "\n", @{$SD->ENSEMBL_DATASETS};
+    print LOG join "\n", @{$SD->{'PRODUCTION_NAMES'}};
     print LOG "\n";
     exit;
   }
+}
+
+if($array) {
+  my $index = $ENV{'LSB_JOBINDEX'}-1;
+  if($index >= @species) {
+    print LOG "Not that many species ($index)!\n";
+    exit 0;
+  }
+  @species = ( $species[$index] );
+  print LOG "Specialising to species $index ($species[0])\n";
 }
 
 # path to files
@@ -227,10 +249,10 @@ foreach my $index (@indexes) {
   foreach my $species ( @species ) {
 #    next unless ($species =~ /^Mus/);
     my $single_species = 0;
-    my %dbs = %{$SD->get_config($species,'databases')||{}};
+    my %dbs = %{$PD->{$species}{'databases'}||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
-    $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
-    $conf->{'dbs'}{'DATABASE_GO'}      = 'ensembl_ontology_'.$SD->ENSEMBL_VERSION;
+    $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->{'ENSEMBL_VERSION'};
+    $conf->{'dbs'}{'DATABASE_GO'}      = 'ensembl_ontology_'.$SD->{'ENSEMBL_VERSION'};
 
     my $core = $dbs{'DATABASE_CORE'};
     $conf->{'core_details'}            = $core;
@@ -240,7 +262,7 @@ foreach my $index (@indexes) {
       $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}",
                                                $variation->{'USER'},
                                                $variation->{'PASS'},
-                                               { PrintError => 1, RaiseError => 0} );
+					        { PrintError => 1, RaiseError => 0} );
       $conf->{'variation_details'} = $variation;
       $conf->{'variation_dbname'}  = $variation->{'NAME'};
     }
@@ -251,23 +273,24 @@ foreach my $index (@indexes) {
 
     if ($index eq 'Help') {
       $single_species = 1;
-      my $website = $SD->multidb->{DATABASE_WEBSITE};
+      my $website = $PD->{'MULTI'}{'databases'}{'DATABASE_WEBSITE'};
       $conf->{'website'}{'name'} = $website->{'NAME'};
       $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}",
                                                 $website->{'USER'},
                                                 $website->{'PASS'},
-                                                { PrintError => 1, RaiseError => 0} );
+						 { PrintError => 1, RaiseError => 0} );
     }
     else {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
-      $conf->{'authority'}           = $SD->get_config($species,'AUTHORITY');
-      $conf->{'species_common_name'} = $SD->get_config($species,'SPECIES_COMMON_NAME');;
-      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($SD->get_config($species,'STRAIN_COLLECTION'));
-      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($SD->get_config($species,'SPECIES_SCIENTIFIC_NAME'));
-      $conf->{'strain_details'}{'strain_name'}        = ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) . ' ' . $SD->get_config($species,'SPECIES_STRAIN');
+      $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
+      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
+      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
+      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($PD->{$species}{'STRAIN_COLLECTION'});
+      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($PD->{$species}{'SPECIES_SCIENTIFIC_NAME'});
+      $conf->{'strain_details'}{'strain_name'}        = ucfirst($PD->{$species}{'STRAIN_COLLECTION'}) . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
       $conf->{'strain_details'}{'reference_strain'} = 1;
-      if ( ucfirst($SD->get_config($species,'STRAIN_COLLECTION')) && ucfirst($SD->get_config($species,'SPECIES_COMMON_NAME')) ne  ucfirst($SD->get_config($species,'STRAIN_COLLECTION'))) {
+      if ( ucfirst($PD->{$species}{'STRAIN_COLLECTION'}) && ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) ne  ucfirst($PD->{$species}{'STRAIN_COLLECTION'})) {
         $conf->{'strain_details'}{'reference_strain'} = 0;
       }
     }
@@ -284,18 +307,18 @@ foreach my $index (@indexes) {
         $conf->{'dbh'} = DBI->connect("dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
                                       $core->{'USER'},
                                       $core->{'PASS'},
-                                      {PrintError => 1, RaiseError => 0}
+ 				       {PrintError => 1, RaiseError => 0}
                                     );
         if ( ! $conf->{'dbh'}) {
           print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
           exit;
         }
         if ($index =~ /Family|GeneTree/) {
-          my $compara = $SD->multidb->{DATABASE_COMPARA};
+          my $compara = $PD->{'MULTI'}{'databases'}{'DATABASE_COMPARA'};
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
                                                 $compara->{'USER'},
                                                 $compara->{'PASS'},
-                                                {PrintError => 1, RaiseError => 0}
+						  {PrintError => 1, RaiseError => 0}
                                               );
         }
         my $function = "dump$index";
@@ -454,11 +477,13 @@ sub helpLine {
   my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
 
   #remove all HTML markup, extra whitespace and extra lines. Escape any characters that might have slipped through
-  my $hs = HTML::Strip->new(decode_entities => 0); #don't decode HTML entitites, they're fine as they are
-  my $description = $hs->parse( $desc );
+  my $hs = HTML::TreeBuilder->new;
+  $hs->no_expand_entities(1);
+  $hs->parse($desc);
+  $hs->eof;
+  my $description = $hs->as_text;
   $description =~ s/\s{1,}/ /g;
   $description = clean($description);
-  $hs->eof;
 
   #remove markup from headers and escape just to be sure
   $title =~ s/<\/?\w+>//g;
@@ -1022,16 +1047,25 @@ sub dumpPhenotype {
       GROUP BY p.phenotype_id),'description');
   foreach my $phen (keys %$phenotype_info) {
     my $syns = $synonyms{$phenotype_info->{$phen}{'phenotype_id'}} || [];
-    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, $counter ), $fh);
+    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $syns, '', $counter ), $fh);
   }
 
+  my $ont_db  = $conf->{'dbs'}{'DATABASE_GO'};
+  my $phenotype_ont_info = $conf->{'variation_dbh'}->selectall_hashref(qq(
+     SELECT distinct t.accession, t.name
+       FROM $ont_db.term t, phenotype_ontology_accession poa
+      WHERE t.accession = poa.accession),'accession');
+  foreach my $phenotype_ont (keys %$phenotype_ont_info) {
+    &p( PhenLine( $dbspecies, $phenotype_ont_info->{$phenotype_ont}{'name'}, $phenotype_ont, [], 1, $counter ), $fh);
+  }
   return footer( $counter->(), $fh);
 }
 
 sub PhenLine {
-  my ($species, $name, $id, $synonyms, $counter ) = @_;
-  my $url = sprintf(qq(%s/Phenotype/Locations?ph=%s),
+  my ($species, $name, $id, $synonyms, $is_ont, $counter ) = @_;
+  my $url = sprintf(qq(%s/Phenotype/Locations?%s=%s),
                     $species,
+                    $is_ont ? 'oa' : 'ph',
                     $id);
   $species =~ s/_/ /;
   $name = &clean($name,'name');
@@ -1089,7 +1123,7 @@ sub dumpStructuralVariation {
     $quick_links = 'all:0';
   }
 
-  my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
+  my $scale           = $PD->{'species'}{'ENSEMBL_GENOME_SIZE'} || 1;
   my $max_length      = $scale *= 1e6;
   my $T = $conf->{'variation_dbh'}->selectall_arrayref(qq(
     SELECT v.structural_variation_id,
@@ -1328,13 +1362,9 @@ sub dumpOligoProbe {
 
   my $probe_set_trans_dets;
   $sql = qq(
-    SELECT ps.probe_set_id, x.dbprimary_acc, x.display_label
-      FROM $FUNCDB.probe_set ps, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
-     WHERE ps.probe_set_id = ox.ensembl_id 
-       AND ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ox.ensembl_object_type='ProbeSet'
-       AND edb.db_name = '${dbspecies}_core_Transcript');
+      SELECT probe_set_id, stable_id, stable_id
+        FROM $FUNCDB.probe_set_transcript
+    ORDER BY probe_set_id);
   $sth = $conf->{'dbh'}->prepare($sql);
   $sth->execute;
   while( my( $probe_set_id, $tsi, $display_label) = $sth->fetchrow_array ) {
@@ -1345,16 +1375,22 @@ sub dumpOligoProbe {
     };
   };
 
-  $sth    = $conf->{'dbh'}->prepare(
-    "select ps.name, ps.probe_set_id, count(distinct pf.probe_feature_id) as hits, a.vendor
-         from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a
-       where
-         ps.probe_set_id = p.probe_set_id
-         and p.probe_id = pf.probe_id
-         and p.array_chip_id = ac.array_chip_id
-         and ac.array_id = a.array_id
-       group by ps.name, a.vendor" 
-  );
+  $sth    = $conf->{'dbh'}->prepare(qq(
+    SELECT
+      probe_set.name,
+      probe_set.probe_set_id,
+      count(distinct probe_feature.probe_feature_id) as hits,
+      array.name
+    FROM
+      $FUNCDB.probe_set
+      join $FUNCDB.probe using (probe_set_id)
+      join $FUNCDB.probe_feature using (probe_id)
+      join $FUNCDB.array_chip on (probe.array_chip_id=array_chip.array_chip_id)
+      join $FUNCDB.array using (array_id)
+    GROUP BY
+      probe_set.name,
+      array.name
+));
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
   while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
@@ -1379,13 +1415,10 @@ sub dumpOligoProbe {
 
   my $probe_trans_dets;
   $sql = qq(
-    SELECT p.probe_id, x.dbprimary_acc, x.display_label
-      FROM $FUNCDB.probe p, $FUNCDB.object_xref ox, $FUNCDB.xref x, $FUNCDB.external_db edb
-     WHERE p.probe_id = ox.ensembl_id 
-       AND ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ox.ensembl_object_type='Probe'
-       AND edb.db_name = '${dbspecies}_core_Transcript');
+        SELECT probe_id, stable_id, stable_id
+          FROM $FUNCDB.probe_transcript
+      ORDER BY probe_id
+  );
   $sth = $conf->{'dbh'}->prepare($sql);
   $sth->execute;
   while( my( $probe_id, $tsi, $display_label) = $sth->fetchrow_array ) {
@@ -1396,16 +1429,23 @@ sub dumpOligoProbe {
     };
   };
 
-  $sth    = $conf->{'dbh'}->prepare(
-    "select p.probe_id, p.name, a.vendor, a.name, count(distinct pf.probe_feature_id) as hits
-       from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a
-      where
-       p.probe_set_id is NULL
-       and p.probe_id = pf.probe_id
-       and p.array_chip_id = ac.array_chip_id
-       and ac.array_id = a.array_id
-     group by p.name"
-  );
+  $sth    = $conf->{'dbh'}->prepare(qq(
+    select
+      probe.probe_id,
+      probe.name,
+      array.vendor,
+      array.name,
+      count(distinct probe_feature.probe_feature_id) as hits
+    from
+      $FUNCDB.probe_feature
+      join $FUNCDB.probe using (probe_id)
+      join $FUNCDB.array_chip using (array_chip_id)
+      join $FUNCDB.array using (array_id)
+    where
+      probe.probe_set_id is null
+    group by
+      probe.name
+  ));
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
   my $old;
@@ -1863,7 +1903,7 @@ sub FamilyLine {
   <field name="description">$desc</field>);
     my $sample_g;
     my %seen_names;
-    foreach my $gsi (keys $genes){
+    foreach my $gsi (keys %$genes){
       unless ($sample_g) {
         $sample_g = $gsi;
         $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
@@ -3360,7 +3400,7 @@ sub on_disk_set {
   my ($name) = @_;
 
   my %var;
-  tie(%var,'DB_File',"$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
+  tie(%var,'DB_File',"$tmpdir/$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
   return \%var;
 }
 
@@ -3369,7 +3409,6 @@ my $SYNC_COUNT = 0;
 sub set_add {
   my ($var,$k,$v) = @_;
 
-  return unless defined $var;
   $var->{$k}.="\t$v";
   $SYNC_COUNT++;
   unless($SYNC_COUNT%1000000) {
@@ -3389,7 +3428,7 @@ sub off_disk {
 
   return unless defined $var;
   untie %$var;
-  unlink "$name.$$.db";
+  unlink "$tmpdir/$name.$$.db";
 }
 
 #######################################################################
@@ -3411,12 +3450,21 @@ sub clean {
   $text =~ s/ & / &amp; /g;
   $text =~ s/</&lt;/g;
   $text =~ s/>/&gt;/g;
+  $text = &latin_to_utf($text);
 
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
   }
   return $text;
 }
+
+sub latin_to_utf {
+  my ($text) = @_;
+  $text = decode( 'iso-8859-1', $text );
+  $text = encode( 'utf-8', $text );
+  return $text; 
+}
+
 
 sub make_counter {
   my $start = shift;

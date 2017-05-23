@@ -42,18 +42,20 @@ sub handler {
 
   my ($content, $content_type);
 
+  my $to_logs = $species_defs->SERVER_ERRORS_TO_LOGS;
   my $heading = '500 Server Error';
-  my $message = 'An unknown error has occurred';
-  my $stack   = '';
+  my $message = $to_logs ? 'An unknown error has occurred' : "$exception";
 
   try {
 
     if ($exception) {
       my $error_id  = random_string(8);
       $heading      = sprintf 'Server Exception: %s', $exception->type;
-      $message      = sprintf(q(There was a problem with our website. Please report this issue to %s, quoting error reference '%s'.), $species_defs->ENSEMBL_HELPDESK_EMAIL, $error_id);
+      $message      = $to_logs
+        ? sprintf(q(There was a problem with our website. Please report this issue to %s, quoting error reference '%s'.), $species_defs->ENSEMBL_HELPDESK_EMAIL, $error_id)
+        : "$exception";
 
-      warn "ERROR: $error_id (Server Exception)\n";
+      warn "ERROR: $error_id (Server Exception)\n" if $to_logs;
       warn $exception;
     }
 
@@ -71,7 +73,7 @@ sub handler {
   } catch {
     warn $_;
     $content_type = 'text/plain; charset=utf-8';
-    $content      = "$heading\n\n$message\n\n$stack";
+    $content      = "$heading\n\n$message";
   };
 
   $r->status(Apache2::Const::SERVER_ERROR);

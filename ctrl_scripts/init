@@ -1,0 +1,134 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+
+=head2
+
+  DESCRIPTION:  Script to initialise directories required for files written
+                by the Apache server processes: images, uploads, caches, etc
+                Only needed if your Apache process is run by a user who does
+                not have write permissions on your server
+          
+                N.B. If using, Run this script as the Apache user, and ensure 
+                that the ENSEMBL_TMP_DIR directory is writeable by this user
+
+  USAGE:        Run once when first setting up the server
+
+                ./ctrl-scripts/init
+
+=cut
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+my $version = $SiteDefs::ENSEMBL_VERSION;
+
+my %write_dirs = (
+                  'tmp'       => ['ENSEMBL_TMP_DIR', {
+                                    'tmp'         => 'ENSEMBL_TMP_DIR',
+                                    'tmp_tmp'     => 'ENSEMBL_TMP_TMP',
+                                    'server'      => 'ENSEMBL_SYS_DIR',
+                                    'img'         => 'ENSEMBL_TMP_DIR_IMG',
+                                    'precache'    => 'ENSEMBL_PRECACHE_DIR',
+                                    'udcCache'    => 'UDC_CACHEDIR',
+                                    'failure_dir' => 'ENSEMBL_FAILUREDIR',
+                                    'server/logs' => 'ENSEMBL_LOGDIR',
+                                    'procedure'   => '',
+                                  }],
+                  'userdata'  => ['ENSEMBL_USERDATA_DIR', {
+                                    'persistent' => '',
+                                    'temporary'   => '',
+                                  }],
+  
+                  'biomart'   => ['ENSEMBL_TMP_DIR', {
+                                    'biomart'                   => '',
+                                    'biomart-perl'              => '',
+                                    "biomart-perl/www_$version" => '',
+                                  }],
+                  );
+
+# command line options
+my ($help, $mart);
+
+&GetOptions(
+  "h|help"      => \$help,
+  "mart"        => \$mart,
+);
+
+if ($help) {
+  print qq(
+  Usage:
+    ctrl_scripts/init
+
+  Options:
+    -h, --help      : print this help message
+    --mart          : include mart directories
+  );
+  exit;
+}
+
+no strict qw(refs);
+
+foreach my $set (keys %write_dirs) {
+  my $info = $write_dirs{$set};
+
+  next if $set eq 'biomart' && !$mart;
+
+  my $root      = $info->[0];
+  my $root_dir  = ${"SiteDefs::$root"};
+
+  if (!-e $root_dir) {
+    die_string("$root ($root_dir) does not exist. Please create it before running the init script.");
+  }
+
+  if (!-w $root_dir) {
+    die_string("$root ($root_dir) is not writable. Please set appropriate permissions before running the init script.");
+  }
+
+  my $sub_dirs = $info->[1];
+
+  foreach my $key (sort keys %$sub_dirs) {
+
+    my $conf = $sub_dirs->{$key};
+    my $path;
+
+    if ($conf) { ## Directory location is configurable
+      $path = ${"SiteDefs::$conf"};
+    }
+
+    $path ||= $root_dir.'/'.$key;
+
+    if (-e $path) {
+      warn_string("Directory $path already exists - skipping...");
+    }
+    else {
+      warn_string("Creating directory $path...");
+      my $cmd = "mkdir -p $path; chmod 775 $path";
+      system($cmd) and warn_string("Could not create directory $path");
+    }
+  }
+}

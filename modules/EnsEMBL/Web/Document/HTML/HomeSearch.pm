@@ -85,7 +85,8 @@ sub render {
 
   # species dropdown
   if ($page_species eq 'Multi' && !$is_help) {
-    my %species      = map { $species_defs->get_config($_, 'DISPLAY_NAME') => $_ } grep { !$species_defs->get_config($_,'IS_STRAIN_OF') } @{$species_defs->ENSEMBL_DATASETS};
+    my $species_info = $hub->get_species_info;
+    my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
     my %common_names = reverse %species;
 
     $field->add_element({

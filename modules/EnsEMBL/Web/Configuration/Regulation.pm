@@ -42,6 +42,8 @@ sub init {
   }
 }
 
+sub has_tabs { return 1; }
+
 sub set_default_action {
   my $self = shift;
   $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Summary';

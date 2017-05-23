@@ -49,7 +49,6 @@ use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
-use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
 use EnsEMBL::Web::QueryStore::Cache::None;
@@ -136,7 +135,7 @@ sub init_cookies {
 sub init_cache {
   ## Initialises cache object
   my $self = shift;
-  $self->{'cache'} = EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000);
+  $self->{'cache'} = EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000, ens_debug=> 0);
 }
 
 sub init_input {
@@ -144,8 +143,9 @@ sub init_input {
   my $self  = shift;
   my $input = CGI->new;
 
-  $self->{'input'}  = $input;
-  $CGI::POST_MAX    = $self->controller->upload_size_limit if $self->controller; # Set max upload size
+  $self->{'input'}        = $input;
+  $CGI::POST_MAX          = $self->controller->upload_size_limit if $self->controller; # Set max upload size
+  $CGI::LIST_CONTEXT_WARN = 2; # Hack to stop perl warning about 'param' method being used in list context
 }
 
 sub init_session {
@@ -181,7 +181,7 @@ sub image_width {
     $self->set_cookie('ENSEMBL_WIDTH', $width);
   }
 
-  return $self->{'image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
+  return $self->{'image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || 800;
 }
 
 sub get_cookie_value {
@@ -334,6 +334,10 @@ sub get_species_info {
        @required_species  = grep {$species eq $_} @required_species if $species;
 
     for (@required_species) {
+      my $strain            = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
+      my $strain_collection = $species_defs->get_config($_, 'STRAIN_COLLECTION') || '';
+      my $is_reference      = !$strain || ($strain && $strain =~ /reference/)
+                                       || !$strain_collection;
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
         'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
@@ -342,8 +346,9 @@ sub get_species_info {
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
-        'strain'            => $species_defs->get_config($_, 'SPECIES_STRAIN') || '',
-        'strain_collection' => $species_defs->get_config($_, 'STRAIN_COLLECTION') || '',
+        'strain'            => $strain,
+        'is_reference'      => $is_reference,
+        'strain_collection' => $strain_collection,
       } unless exists $self->{'_species_info'}{$_};
     }
 
@@ -830,13 +835,14 @@ sub snpedia_status {
 
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
   my $out;
-  eval {$out = $failover->get_cached};
-  if ($@) {
+
+  try {
+    $out = $failover->get_cached
+  } catch {
     warn "SNPEDIA failure";
-  }
-  else {
-    return $out;
-  }
+  };
+
+  return $out;
 }
 
 # Query Store stuff
@@ -844,22 +850,13 @@ sub snpedia_status {
 sub query_store_setup {
   my ($self) = @_;
 
-  my $cache;
-  if($SiteDefs::ENSEMBL_MEMCACHED) {
-     # and EnsEMBL::Web::Cache->can("stats_reset")) { # Hack to detect plugin
-    $cache = EnsEMBL::Web::QueryStore::Cache::Memcached->new(
-      $SiteDefs::ENSEMBL_MEMCACHED
-    );
-  } else {
-    $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
-  }
-  $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-    dir => $SiteDefs::ENSEMBL_BOOK_DIR
+  my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
+    dir => $SiteDefs::ENSEMBL_PRECACHE_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs),
     SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($self->species_defs),
-  },$cache,$SiteDefs::ENSEMBL_COHORT);
+  },$cache);
 }
 
 sub get_query     { $_[0]->{'_query_store'}->get($_[1]); }
@@ -1050,7 +1047,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
   my $favourites    = $self->get_favourite_species;
   if (scalar @$favourites) {
     my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @$favourites;
-    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+    push @final_sets, ['Favourite species', [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
   }
 
   ## Output in taxonomic groups, ordered by common name
@@ -1060,7 +1057,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
       my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
       my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
       my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @sorted_by_common;
-      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{$_})} @allowed_production_names]] if @allowed_production_names;
+      push @final_sets, [$name_to_use, [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
   }
 
   return \@final_sets;

@@ -159,7 +159,7 @@ sub new {
 
   warn " Merging $self->{'group_name'} $type files\n";
   warn sprintf("   (%d to merge)\n",scalar @{$self->{'files'}}) if $DEBUG;
-  $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
+  $self->_merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
 }
@@ -183,8 +183,13 @@ sub files {
   return shift->{'files'} || [];
 }
 
+sub minified_filename {
+  ## @return minified file name for this group
+  return shift->{'minified_filename'};
+}
+
 sub minified_url_path {
-  ## @return URL path minified file name for this group
+  ## @return URL path of minified file for this group
   return shift->{'minified_url_path'};
 }
 
@@ -258,11 +263,12 @@ sub _merge_files {
   my $ext = $type;
   $ext = 'image.css' if $type eq 'image';
   $ext = 'ie7.css' if $type eq 'ie7css';
-  my $url_path  = sprintf '%s/%s.%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename, $ext;
-  my $abs_path  = sprintf '%s%s', $species_defs->ENSEMBL_DOCROOT, $url_path;
+  $filename .= '.'.$ext;
+  my $url_path = sprintf '%s/%s', $species_defs->ENSEMBL_MINIFIED_URL, $filename;
+  my $abs_path = sprintf '%s/%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename;
 
   # create and save the minified file if it doesn't already exist there
-  warn "   using filename $filename.$ext\n" if $DEBUG;
+  warn "   using filename $filename\n" if $DEBUG;
   unless(-e $abs_path) {
     warn "   doesn't exist, creating\n" if $DEBUG;
     if($type ne 'image') {
@@ -292,7 +298,12 @@ sub _merge_files {
     warn "   already exists\n" if $DEBUG;
   }
 
-  return $url_path;
+  if ($url_path) {
+    $self->{'minified_url_path'} = $url_path;
+    $self->{'minified_filename'} = $filename;
+  }
+
+  return;;
 }
 
 sub _minify_content {
@@ -394,9 +405,10 @@ sub _substitute_colours {
   ## @private
   ## Replaces colour constants in text with actual values
   my ($content, $colours) = @_;
+  no strict; # for SiteDefs lookup
 
   $colours->{$_} =~ s/^([0-9A-F]{6})$/#$1/i for keys %$colours;
-  $content       =~ s/\[\[(\w+)\]\]/$colours->{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
+  $content       =~ s/\[\[(\w+)\]\]/$colours->{$1}||${"SiteDefs::$1"}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
 
   return $content;
 }

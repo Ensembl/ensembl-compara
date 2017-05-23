@@ -536,6 +536,7 @@ sub render_cactus_multiple {
 
   my $hub     = $self->hub;
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $version = $hub->species_defs->ENSEMBL_VERSION;
   my $html;
   my ($species_order, $info) = $self->mlss_species_info($mlss);
 
@@ -548,6 +549,10 @@ sub render_cactus_multiple {
     $html .= qq{<p>This alignment of $count genomes has been imported from UCSC since release $rel.</p>};
     $html .= $self->error_message('API access', sprintf(
         '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
+    if ($mlss->method->type =~ /CACTUS_HAL/) {
+        $html .= $self->error_message('HAL configuration', sprintf(
+            '<p>HAL alignments require further configuration. See the instructions in our <a href="https://github.com/Ensembl/ensembl-compara/blob/release/%d/README.md">README</a>.</p>', $version), 'info')
+    }
 
     my $table = EnsEMBL::Web::Document::Table->new([
         { key => 'species', title => 'Species',         width => '50%', align => 'left', sort => 'string' },
@@ -702,13 +707,16 @@ sub fetch_pairwise_input {
       foreach my $param (split ' ', $pairwise_params) {
         my ($p, $v) = split '=', $param;
         
-        if ($p eq 'Q' && $v =~ /^\/nfs/) {
+        if ($p eq 'Q' && $v =~ /^\$ENSEMBL_CVS_ROOT_DIR/) {
           ## slurp in the matrix file
           my @path  = split '/', $v;
-          my $file  = $path[-1];
-          my $fh    = open IN, $hub->species_defs->ENSEMBL_SERVERROOT . "/public-plugins/ensembl/htdocs/info/genome/compara/$file";
+          my $server_root   = $hub->species_defs->ENSEMBL_SERVERROOT;
+          my ($matrix_name) = ($path[-1] =~ /(.*).matrix/);
+          my $file  = $v;
+             $file  =~ s/^\$ENSEMBL_CVS_ROOT_DIR/$server_root/;
+          my $fh    = open IN, $file;
           
-          $v  = '<pre>';
+          $v  = '<pre>' . ucfirst($matrix_name) . ":\n";
           while (<IN>) {
             $v .= $_;
           }

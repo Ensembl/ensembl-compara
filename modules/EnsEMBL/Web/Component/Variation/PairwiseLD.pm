@@ -122,9 +122,9 @@ sub content_results {
     }
   }
   my $seq_region_name = $vf->seq_region_name;
-  my $vfs2 = $second_variant->get_all_VariationFeatures;
+  my @vfs2 = grep { $_->slice->is_reference } @{$second_variant->get_all_VariationFeatures};
   my @vfs = ($vf);
-  foreach my $vf2 (@$vfs2) {
+  foreach my $vf2 (@vfs2) {
     my $seq_region_name2 = $vf2->seq_region_name;
     if ($seq_region_name ne $seq_region_name2) {
       my $html = $self->_warning('No Pairwise Linkage Disequilibrium Data', qq{Could not compute LD data because variants <b>$focus_variant_name</b> and <b>$second_variant_name</b> are on different chromosomes.});

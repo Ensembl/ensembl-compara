@@ -63,6 +63,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use SiteDefs;
+
 use Carp qw(cluck);
 use Data::Dumper;
 use DBI;
@@ -72,7 +74,6 @@ use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
 
-use SiteDefs;# qw(:ALL);
 use Sys::Hostname::Long;
 
 use Bio::EnsEMBL::Registry;
@@ -107,9 +108,12 @@ sub new {
     _last_time  => undef,
   }, $class);
 
-  my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
+  my $write_dir = $SiteDefs::ENSEMBL_SYS_DIR.'/conf';
+  my $conffile = "$write_dir/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
   
-  $self->{'_filename'} = $conffile;
+  $self->{'_conf_dir'} = $write_dir;
+  $self->{'_filename'}  = $conffile;
+
 
   # TODO - these need to be pulled in dynamically from appropriate modules
   my @params = qw/ph g h r t v sv m db pt rf ex vf svf fdb lrg vdb gt mr/;
@@ -201,7 +205,7 @@ sub valid_species {
   my @valid_species = @{$self->{'_valid_species'} || []};
   
   if (!@valid_species) {
-    foreach my $sp (@$SiteDefs::ENSEMBL_DATASETS) {
+    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
       my $config = $self->get_config($sp, 'DB_SPECIES');
       
       if ($config->[0]) {
@@ -231,7 +235,7 @@ sub reference_species {
   my @ref_species;
   foreach (@valid_species) {
     my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-    if (!$strain || ($strain && $strain =~ /reference/)) {
+    if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
       push @ref_species, $_;
     }
   }
@@ -278,6 +282,14 @@ sub all_colours {
   return $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
 }
 
+sub get_font_path {
+  my $self = shift;
+  my $path = $SiteDefs::GRAPHIC_TTF_PATH || ($self->ENSEMBL_STYLE || {})->{'GRAPHIC_TTF_PATH'};
+  $path = $path ? $path =~ /^\// ? $path : $SiteDefs::ENSEMBL_SERVERROOT."/$path" : "/usr/local/share/fonts/ttfonts/";
+
+  return $path =~ s/\/+/\//gr;
+}
+
 sub get_config {
   ## Returns the config value for a given species and a given config key
   ### Arguments: species name(string), parameter name (string)
@@ -290,24 +302,29 @@ sub get_config {
   my $var = shift || $species;
 
   if (defined $CONF->{'_storage'}) {
-    return $CONF->{'_storage'}{$species}{$species}{$var} if exists $CONF->{'_storage'}{$species} && 
-                                                            exists $CONF->{'_storage'}{$species}{$species} && 
-                                                            exists $CONF->{'_storage'}{$species}{$species}{$var};
-                                                            
     return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
                                                   exists $CONF->{'_storage'}{$species}{$var};
-                                                  
+    
+    ## Try production name
+    $species = $CONF->{'_storage'}{$species}{'SPECIES_PRODUCTION_NAME'} if exists $CONF->{'_storage'}{$species};
+
+    if ($species) {
+      return $CONF->{'_storage'}{$species}{$var} if exists $CONF->{'_storage'}{$species} &&
+                                                    exists $CONF->{'_storage'}{$species}{$var};
+    }
+   
     return $CONF->{'_storage'}{$var} if exists $CONF->{'_storage'}{$var};
   }
-  
+
   no strict 'refs';
-  my $S = "SiteDefs::$var";
-  
-  return ${$S}  if defined ${$S};
-  return \@{$S} if defined @{$S};
-  
-  warn "UNDEF ON $var [$species]. Called from ", (caller(1))[1] , " line " , (caller(1))[2] , "\n" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & 4;
-  
+
+  # undeclared param
+  return undef unless grep { $_ eq $var } keys %{'SiteDefs::'};
+
+  my $sym_name = "SiteDefs::$var";
+
+  return ${$sym_name}  if defined ${$sym_name};
+  return \@{$sym_name} if @{$sym_name};
   return undef;
 }
 
@@ -340,7 +357,7 @@ sub retrieve {
   my $Q    = lock_retrieve($self->{'_filename'}) or die "Can't open $self->{'_filename'}: $!"; 
   
   $CONF->{'_storage'} = $Q if ref $Q eq 'HASH';
-  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_COHORT;
+  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_SERVER_SIGNATURE;
 }
 
 sub store {
@@ -350,7 +367,7 @@ sub store {
   
   my $self = shift;
 
-  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_COHORT;
+  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_SERVER_SIGNATURE;
 
   die "[FATAL] Could not write to $self->{'_filename'}: $!" unless lock_nstore($CONF->{'_storage'}, $self->{'_filename'});
   return 1;
@@ -384,7 +401,7 @@ sub parse {
   $self->store;
   $reg_conf->configure;
   
-  EnsEMBL::Web::Tools::RobotsTxt::create($self->ENSEMBL_DATASETS, $self);
+  EnsEMBL::Web::Tools::RobotsTxt::create($self->multi_hash->{'ENSEMBL_DATASETS'}, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
   
   ## Set location for file-based data
@@ -435,7 +452,7 @@ sub _load_in_webtree {
   ### Check for cached value first
   
   my $self            = shift;
-  my $web_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'web_tree.packed');
+  my $web_tree_packed = File::Spec->catfile($self->{'_conf_dir'}, 'packed', 'web_tree.packed');
   my $web_tree        = { _path => '/info/' };
   
   if (-e $web_tree_packed) {
@@ -453,13 +470,13 @@ sub _load_in_species_pages {
   ### Load in the static pages for each species 
   ### Check for cached value first
   my $self = shift;
-  my $spp_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'spp_tree.packed');
+  my $spp_tree_packed = File::Spec->catfile($self->{'_conf_dir'}, 'packed', 'spp_tree.packed');
   my $spp_tree        = { _path => '/' };
   
   if (-e $spp_tree_packed) {
     $spp_tree = lock_retrieve($spp_tree_packed);
   } else {
-    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $SiteDefs::ENSEMBL_DATASETS) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
+    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $SiteDefs::PRODUCTION_NAMES) for reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS;
     lock_nstore($spp_tree, $spp_tree_packed);
   }
   
@@ -540,11 +557,6 @@ sub _promote_general {
 
 sub _expand_database_templates {
   my ($self, $filename, $tree) = @_;
- 
-  ## NASTY HACK! Collapse strain names
-  if ($filename =~ /^([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)_([[:alnum:]]+)$/) {
-    $filename = sprintf '%s_%s_%s%s', $1, $2, $3, $4;
-  }
  
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
@@ -679,8 +691,6 @@ sub _parse {
 
   # Parse the web tree to create the static content site map
   $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
-  ## Parse species directories for static content
-  $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $self->_info_line('Filesystem', 'Trawled web tree');
   
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
@@ -695,7 +705,7 @@ sub _parse {
   # o/w attach the species databases
 
   # load the data and store the packed files
-  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
     $config_packer->species($species);
     $self->process_ini_files($species, $config_packer, $defaults);
     $self->_merge_db_tree($tree, $db_tree, $species);
@@ -708,21 +718,23 @@ sub _parse {
   my $species_to_strains = {};
 
   # Loop over each tree and make further manipulations
-  foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
     ## Need to gather strain info for all species
-    $name_lookup->{$config_packer->tree->{$species}{'SPECIES_COMMON_NAME'}} = $species;
-    my $collection = $config_packer->tree->{$species}{'STRAIN_COLLECTION'};
-    my $strain_name = $config_packer->tree->{$species}{'SPECIES_STRAIN'};
+    $name_lookup->{$config_packer->tree->{'SPECIES_COMMON_NAME'}} = $species;
+    my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
+    ## Key on actual URL, not production name
+    my $species_key = $config_packer->tree->{'SPECIES_URL'};
+    my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
     if ($collection && $strain_name !~ /reference/) {
       if ($species_to_strains->{$collection}) {
-        push @{$species_to_strains->{$collection}}, $species;
+        push @{$species_to_strains->{$collection}}, $species_key;
       }
       else {
-        $species_to_strains->{$collection} = [$species];
+        $species_to_strains->{$collection} = [$species_key];
       }
     }
   }
@@ -732,8 +744,28 @@ sub _parse {
     my $species = $name_lookup->{ucfirst($k)};
     $tree->{$species}{'ALL_STRAINS'} = $v;
   } 
+
+  #use Data::Dumper; 
+  #$Data::Dumper::Maxdepth = 2;
+  #$Data::Dumper::Sortkeys = 1;
+  #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
+
+  ## Finally, rename the tree keys for easy data access via URLs
+  ## (and backwards compatibility!)
+  my $datasets = [];
+  foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
+    my $url = $tree->{$species}{'SPECIES_URL'};
+    $tree->{$url} = $tree->{$species};
+    push @$datasets, $url;
+    delete $tree->{$species};
+  } 
+  $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
+  #warn ">>> NEW KEYS: ".Dumper($tree);
  
+  ## Parse species directories for static content
+  $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
+  $self->_info_line('Filesystem', 'Trawled species static content');
 }
 
 sub process_ini_files {
@@ -741,7 +773,7 @@ sub process_ini_files {
   my $type = 'db';
   
   my $msg  = "$species database";
-  my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
+  my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
   

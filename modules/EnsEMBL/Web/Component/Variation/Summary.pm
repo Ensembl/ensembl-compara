@@ -23,6 +23,7 @@ package EnsEMBL::Web::Component::Variation::Summary;
 use strict;
 
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
+use Encode qw(encode decode);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -392,30 +393,70 @@ sub alleles {
   my $alt_string  = $c_alleles > 2 ? 's' : '';
   my $ancestor    = $object->ancestor;
      $ancestor    = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
-  my $ambiguity   = $variation->ambig_code;
-     $ambiguity   = 'not available' if $object->source =~ /HGMD/;
-     $ambiguity   = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+  my $species     = $self->hub->species;
+
   my $freq        = $variation->minor_allele_frequency;
      $freq        = sprintf ('%.2f', $freq) if ($freq != 0);
      $freq        = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
-  my $maf_helptip = helptip('MAF', '<b>Minor Allele Frequency</b><br />It corresponds to the frequency of the second most frequent allele.');
+  my $maf_helptip = helptip(
+    'MAF',
+    '<b>Minor Allele Frequency</b><br />Frequency of the second most frequent allele'.
+    ($species eq 'Homo_sapiens' ? ' in 1000 Genomes Phase 3 combined population' : '')
+  );
   my $maf         = $variation->minor_allele;
      $maf         = sprintf(qq{<span class="_ht ht">%s</span>: <strong>%s</strong> (%s)},$maf_helptip,$freq,$maf) if $maf;
   my $html;
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
 
+  my $vf_id = $self->hub->param('vf');
+  my @vfs = @{$variation->get_all_VariationFeatures};
+  my ($vf) = grep {$_->dbID eq $vf_id} @vfs;
+  my $max_f;
+  if($vf) {
+    my $max_alleles = $vf->get_all_highest_frequency_minor_Alleles;
+
+    if($max_alleles && @$max_alleles) {
+      my $tmp_freq = sprintf('%.2f', $max_alleles->[0]->frequency);
+      $tmp_freq = '&lt; 0.01' if $tmp_freq eq '0.00';
+
+      my $ht =
+        '<b>Highest population Minor Allele Frequency</b><br />Highest minor allele frequency observed in any population'.
+        ($species eq 'Homo_sapiens' ? ' from 1000 Genomes Phase 3, ESP and ExAC' : '');
+
+      my $allele_hover_text;
+      if(scalar @$max_alleles > 1) {
+        $allele_hover_text = sprintf(
+          '<ul style="margin-bottom:0px">%s</ul>',
+          join("",
+            map { '<li><b>'.$_->allele.'</b> in '.$_->population->name.'</li>' }
+            @$max_alleles
+          )
+        );
+      }
+      else {
+        $allele_hover_text = '<b>'.$max_alleles->[0]->allele.'</b> in '.$max_alleles->[0]->population->name;
+      }
+
+      $max_f = sprintf(
+        '<span class="_ht ht" title="%s">Highest population MAF</span>: <span class="_ht ht" title=\'%s\'><b>%s</b></span>',
+        $ht,
+        $allele_hover_text,
+        $tmp_freq,
+      );
+    }
+  }
+
   my $extra_allele_info = '';
-  if ($ancestor || $ambiguity || $maf) {
+  if ($ancestor || $maf || $max_f) {
     if ($ancestor) {
       $extra_allele_info .= $self->text_separator;
       $extra_allele_info .= qq{<span>$ancestor</span>};
     }
-    if ($ambiguity) {
-      $extra_allele_info .= $self->text_separator;
-      $extra_allele_info .= qq{<span>$ambiguity</span>};
-    }
     if ($maf) {
       $extra_allele_info .= $self->text_separator.$maf;
+    }
+    if ($max_f) {
+      $extra_allele_info .= $self->text_separator.$max_f;
     }
   }
 
@@ -852,7 +893,7 @@ sub snpedia {
 
   if($cache) {
     # Get from memcached
-    $desc = $cache->get($key);
+    $desc = decode('utf8', $cache->get($key));
   }
 
   if ($desc) {
@@ -885,13 +926,13 @@ sub snpedia {
       my $show = 0;
 
       $desc =  sprintf( '%s...
-                    <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
+                    <a title="Click to read more" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
                     <div class="toggleable snpedia_more_desc" style="%s">
                       %s
                       %s
                     </div>
                   ',
-        shift $snpedia_wiki_results->{desc},
+        shift @{$snpedia_wiki_results->{desc}},
         $show ? 'open' : 'closed',        
         $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',
@@ -899,7 +940,7 @@ sub snpedia {
         $snpedia_search_link
       );
 
-      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, encode('utf8', $desc) || 'no_entry', 60*60*24*7);
 
       return [
         'Description from SNPedia',

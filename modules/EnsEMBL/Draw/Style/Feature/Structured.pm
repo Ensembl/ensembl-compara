@@ -56,6 +56,7 @@ sub draw_feature {
                                       height  => $position->{'height'},
                                       title   => $feature->{'title'},
                                       href    => $feature->{'href'},
+                                      class   => 'group',
                                   });
 
   my %defaults = (
@@ -82,9 +83,9 @@ sub draw_feature {
       $start            = 0 if $start < 0;
       $params{'x'}      = $start;
       my $end           = $_->{'start'};
-      my $width         = $end - $start + 1;
+      my $width         = $end - $start - 1;
       if ($end > $image_width) {
-        $width          = $image_width - $start + 1;
+        $width          = $image_width - $start;
         $last_element   = 1;
       }
       $params{'width'}  = $width;
@@ -98,9 +99,9 @@ sub draw_feature {
     my %params = %defaults;
 
     my $start = $_->{'start'};
-    $start = 0 if $start < 0;
+    $start = 1 if $start < 1;
     my $end   = $_->{'end'};
-    $params{'x'}      = $start;
+    $params{'x'}      = $start - 1;
     $params{'width'}  = $end - $start + 1;
     $params{'href'}   = $_->{'href'} || $feature->{'href'};
 
@@ -118,9 +119,9 @@ sub draw_feature {
     %previous = %params;
   }
 
-  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
-  foreach (@{$feature->{'bridges'}||[]}) {
-    $self->draw_bridge($composite ,$_);
+  ## Add any 'connections', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'connections'}||[]}) {
+    $self->draw_connection($composite ,$_);
   } 
 
   push @{$self->glyphs}, $composite;
@@ -143,13 +144,6 @@ sub draw_join {
 sub draw_block {
   my ($self, $composite, %params) = @_;
   $composite->push($self->Rect(\%params));
-}
-
-sub draw_bridge {
-  ## Set up a "join tag" to display mapping between features, e.g. homologues
-  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
-  my ($self, $composite, $bridge) = @_;
-  $self->add_bridge($composite, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
 }
 
 1;

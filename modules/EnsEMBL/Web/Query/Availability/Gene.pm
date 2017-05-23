@@ -45,14 +45,12 @@ sub fixup {
 }
 
 sub _count_go {
-  my ($self,$args,$goid) = @_;
+  my ($self,$args,$out) = @_;
 
-  my $counts = 0;
   my $go_name;
   foreach my $transcript (@{$args->{'gene'}->get_all_Transcripts}) {
-    next unless $transcript->translation;
     my $dbc = $self->database_dbc($args->{'species'},$args->{'type'});
-    my $tl_dbID = $transcript->translation->dbID;
+    my $tl_dbID = $transcript->translation ? $transcript->translation->dbID : undef;
 
     # First get the available ontologies
     my $ontologies = $self->sd_config($args,'SPECIES_ONTOLOGIES');
@@ -71,13 +69,13 @@ sub _count_go {
 
       # Count the ontology terms mapped to the translation
       my $sth = $dbc->prepare($sql);
-      $sth->execute($transcript->translation->dbID, $transcript->dbID);
+      $sth->execute($tl_dbID, $transcript->dbID);
       foreach ( @{$sth->fetchall_arrayref} ) {
         $go_name .= '"'.$_->[0].'",';
       }
     }
   }
-  return 0 unless $go_name;
+  return unless $go_name;
   $go_name =~ s/,$//g;
 
   my $goadaptor = $self->database_dbc($args->{'species'},'go');
@@ -87,10 +85,15 @@ sub _count_go {
   my $sth = $goadaptor->prepare($go_sql);
   $sth->execute();
 
+  my %clusters = $self->multiX('ONTOLOGIES');
+  $out->{"has_go_$_"} = 0 for(keys %clusters);
+
   foreach (@{$sth->fetchall_arrayref}) {
-    $counts = $_->[1] if($_->[0] eq "$goid");
+    my $goid = $_->[0];
+    if ( exists $clusters{$goid} ) {
+      $out->{"has_go_$goid"} = $_->[1];
+    }
   }
-  return $counts;
 }
 
 sub _count_xrefs {
@@ -235,7 +238,6 @@ sub get {
   my $member = $self->compara_member($args) if $out->{'database:compara'};
   my $panmember = $self->pancompara_member($args) if $out->{'database:compara_pan_ensembl'};
   my $counts = $self->_counts($args,$member,$panmember);
-  my %clusters = $self->multiX('ONTOLOGIES');
 
   $out->{'counts'} = $counts;
   $out->{'history'} =
@@ -279,7 +281,8 @@ sub get {
   )) {
     $out->{"has_$_"} = $counts->{$_};
   }
-  $out->{"has_go_$_"} = $self->_count_go($args,$_) for(keys %clusters);
+
+  $self->_count_go($args, $out);
   $out->{'multiple_transcripts'} = ($counts->{'transcripts'}>1);
   $out->{'not_patch'} = 0+!($args->{'gene'}->stable_id =~ /^ASMPATCH/);
   $out->{'has_alt_alleles'} = 0+!!(@{$self->_get_alt_alleles($args)});

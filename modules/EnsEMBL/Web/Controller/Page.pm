@@ -27,6 +27,8 @@ use warnings;
 
 use URI::Escape qw(uri_unescape);
 
+use EnsEMBL::Web::Exceptions;
+
 use parent qw(EnsEMBL::Web::Controller);
 
 sub request {
@@ -44,9 +46,23 @@ sub init {
   my $cached = $self->get_cached_content;
 
   if (!$cached) {
-    $self->builder->create_objects;
+    my $redirection_required;
+    try {
+      $self->builder->create_objects;
+    } catch {
+      if ($_->type eq 'RedirectionRequired') {
+        $redirection_required = $_;
+      } else {
+        throw $_;
+      }
+    };
     $self->configure;
     $self->update_configuration_for_request;
+    
+    if ($redirection_required) { # trigger redirection after applying configuration
+      $hub->store_records_if_needed;
+      throw $redirection_required;
+    }
   }
 
   $self->update_user_history if $hub->user;
@@ -102,6 +118,7 @@ sub update_configuration_for_request {
   # now update all the view configs accordingly
   for (@view_config) {
     if (keys %inp_params) {
+      $inp_params{$_} = from_json($inp_params{$_} || '{}') for grep $inp_params{$_}, qw(image_config view_config);
       $_->update_from_input({ %inp_params }); # avoid passing reference to the original hash to prevent manipulation
     }
     if (keys %url_params) {

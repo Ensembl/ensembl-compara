@@ -17,25 +17,19 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::DBSQL::SessionDBConnection;
+package Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
 use strict;
 use warnings;
-use EnsEMBL::Web::Cache;
 
-use base qw(EnsEMBL::Web::DBSQL::DirectDBConnection);
+### Override the package in ensembl-variation to set binary paths according to website setup
 
-our $cache = EnsEMBL::Web::Cache->new;
+sub executable {
+  return $SiteDefs::ENSEMBL_SERVERROOT.'/ensembl-variation/C_code/calc_genotypes';
+}
 
-sub import {
-  my ($class, $sd) = @_;
-
-  my $caller  = caller;
-  my $db      = $sd->session_db;
-
-  $class->direct_connection($caller, $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}, $db->{'USER'}, $db->{'PASS'});
-
-  $caller->cache($cache) if $cache;
+sub vcf_executable {
+  return $SiteDefs::ENSEMBL_SERVERROOT.'/ensembl-variation/C_code/ld_vcf';
 }
 
 1;

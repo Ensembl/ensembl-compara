@@ -45,14 +45,13 @@ sub psychic {
   my $species_defs  = $self->species_defs;
   my $site_type     = lc $species_defs->ENSEMBL_SITETYPE;
   my $script        = 'Search/Results';
-  my %sp_hash       = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
+  my %sp_hash       = %{$species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP')||{}};
   my $dest_site     = $hub->param('site') || $site_type;
   my $index         = $hub->param('idx')  || undef;
   my $query         = $hub->param('q');
   my $sp_param      = $hub->param('species');
   my $species       = $sp_param || $hub->species;
      $species       = '' if $species eq 'Multi';
-  my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
   my ($url, $site);
 
   if ($species eq 'all' && $dest_site eq 'ensembl') {
@@ -142,6 +141,7 @@ sub psychic {
     ## match any of the following:
     if ($jump_query =~ /^\s*([-\.\w]+)[:]/i ) {
     #using core api to return location value (see perl documentation for core to see the available combination)
+      my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
       my ($seq_region_name, $start, $end, $strand) = $slice_adaptor->parse_location_to_values($jump_query);
 
       $seq_region_name =~ s/chr//;

@@ -1,0 +1,118 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+no warnings qw(once);
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+## ld vcf
+if (my $error = _build_ld_vcf()) {
+  warn "ERROR: $error\n";
+}
+
+## compara hal xs
+if (my $error = _build_halxs()) {
+  warn "ERROR: $error\n";
+}
+
+sub _build_ld_vcf {
+  if (!$SiteDefs::HTSLIB_DIR) {
+    return('$SiteDefs::HTSLIB_DIR is not set');
+  }
+
+  my $c_code_folder = "$SiteDefs::ENSEMBL_SERVERROOT/ensembl-variation/C_code";
+  my $command       = "export HTSLIB_DIR=$SiteDefs::HTSLIB_DIR;\ncd $c_code_folder;\nmake -B;";
+  my $input         = '';
+
+  while ($input !~ m/^(y|n)$/i) {
+    print "Running the following command:\n===\n$command\n===\nConfirm (y/n):";
+    $input = <STDIN>;
+    chomp $input;
+  }
+
+  if ($input =~ /y/i) {
+    print "Running command..\n";
+
+    if (!-w $c_code_folder) {
+      return "Can not write to folder $c_code_folder\nPlease run the above commands as the user with write permission to this directory.";
+    }
+
+    if (system($command)) {
+      return sprintf 'Failed to run `%s`', $command =~ s/\n//gr;
+    }
+
+    print "DONE\n";
+  } else {
+    print "Exiting\n";
+  }
+  return;
+}
+
+sub _build_halxs {
+  my $progressive_cactus_dir = $ENV{PROGRESSIVE_CACTUS_DIR};
+
+  my $input = '';
+
+  while (!$progressive_cactus_dir) {
+    print "Please enter a valid location for PROGRESSIVE_CACTUS_DIR:\n";
+    $input = <STDIN>;
+    chomp $input;
+
+    if (-e $input && -e "$input/submodules") {
+      $progressive_cactus_dir = $input;
+    }
+  }
+
+  my $xs_folder = "$SiteDefs::ENSEMBL_SERVERROOT/ensembl-compara/xs/HALXS";
+  my $perl      = "$^X";
+  my $command   = "cd $xs_folder;\n$perl Makefile.PL $progressive_cactus_dir;\nmake;";
+
+  while ($input !~ m/^(y|n)$/i) {
+    print "Running the following command:\n===\n$command\n===\nConfirm (y/n):";
+    $input = <STDIN>;
+    chomp $input;
+  }
+
+  if ($input =~ /y/i) {
+    print "Running command..\n";
+
+    if (!-w $xs_folder) {
+      return "Can not write to folder $xs_folder\nPlease run the above commands as the user with write permission to this directory.";
+    }
+
+    if (system($command)) {
+      return sprintf 'Failed to run `%s`', $command =~ s/\n//gr;
+    }
+
+    print "DONE\n";
+  } else {
+    print "Exiting\n";
+  }
+  return;
+}
+

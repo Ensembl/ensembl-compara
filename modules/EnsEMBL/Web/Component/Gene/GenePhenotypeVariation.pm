@@ -107,7 +107,7 @@ sub stats_table {
     { key => 'phen',    title => 'Phenotype, disease and trait', sort => 'string', width => '35%'  },
     { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
     $species_defs->ENSEMBL_CHROMOSOMES
-    ? { key => 'loc',   title => 'Genomic locations', sort => 'none',   width => '16%'  }
+    ? { key => 'loc',   title => 'Associated loci', sort => 'none',   width => '16%'  }
     : (),
     $species_defs->ENSEMBL_MART_ENABLED
     ? { key => 'mart',  title => 'Biomart',   sort => 'none',   width => '13%'  }
@@ -162,7 +162,7 @@ sub stats_table {
  
     # Karyotype link
     if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
-      $loc = sprintf '<a href="%s" class="karyotype_link">View on Karyotype</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+      $loc = sprintf '<a href="%s">View</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
     }
        
     push @rows, {

@@ -193,7 +193,7 @@ sub summary_table {
       
       $row->{'plot'} = qq{<a class="ld_plot_link space-right" href="$url">View plot</a>};
       
-      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }).' table', $id);
+      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
       
       # export table
       $url = $hub->url({
@@ -268,7 +268,7 @@ sub linked_var_table {
   my @colour_scale    = $hub->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
   my %mappings        = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my ($vf, $loc);
-  
+
   if (keys %mappings == 1) {
     ($loc) = values %mappings;
   } else { 
@@ -298,6 +298,7 @@ sub linked_var_table {
     { key => 'r2',        title => 'r<sup>2</sup>',           align => 'left',  sort => 'numeric', help => $glossary->{'r2'} },
     { key => 'd_prime',   title => q{D'},                     align => 'left',  sort => 'numeric', help => $glossary->{"D'"} },
     { key => 'pfs',       title => 'Associated phenotype(s)', align => 'left',  sort => 'html'                               },
+    { key => 'ctype',     title => 'Consequence Type',        align => 'left',  sort => 'html'                               },
     { key => 'genes',     title => 'Located in gene(s)',      align => 'left',  sort => 'html'                               },
     { key => 'pgene',     title => 'Gene phenotype(s)',       align => 'left',  sort => 'html'                               },
   ], [], { data_table => 1 });
@@ -400,24 +401,31 @@ sub linked_var_table {
         }),
         $_->external_name
       ), @{$gene_objs};
-      
-      # gene phenotypes
-      my $pgene = join(', <br />',
-        map {
-          sprintf(
-            '<a href="%s">%s</a>',
-            $hub->url({
-              type   => 'Phenotype',
-              action => 'Locations',
-              ph     => $_->phenotype->dbID
-            }),
-            $_->phenotype->description
-          )
+
+      # get genes phenotypes
+      my %pgenes = map {
+          $_->phenotype->dbID => $_->phenotype->description
         } map {
           @{$pfa->fetch_all_by_Gene($_)}
-        } @$gene_objs
-      );
+        } @$gene_objs;
+
+      my @phe_gene_links = map { 
+           sprintf(
+             '<a href="%s">%s</a>',
+             $hub->url({
+               type   => 'Phenotype',
+               action => 'Locations',
+               ph     => $_
+             }),
+             $pgenes{$_}
+           )
+         } sort { lc($pgenes{$a}) cmp lc($pgenes{$b}) } keys(%pgenes); 
+
+      my @phe_gene_texts = sort { lc($a) cmp lc($b) } values(%pgenes);
       
+      my $pgene = $self->display_items_list($variation_name.'_gene_phe', 'phenotypess', 'phenotypes', \@phe_gene_links, \@phe_gene_texts);
+
+
       # build URLs
       my $var_url = $hub->url({
         type   => 'Variation',
@@ -441,13 +449,14 @@ sub linked_var_table {
         distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
         r2          => sprintf("%.3f", $ld->{'r2'}),
         d_prime     => sprintf("%.3f", $ld->{'d_prime'}),
+        ctype       => $self->render_consequence_type($ld_vf,1),
         genes       => $genes     || '-',
         pfs         => $pf_string || '-',
         pgene       => $pgene     || '-',
       });
     }
   }
-  
+ 
   return $table->has_rows ?
     $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}">[back to top]</a></span>}) :
     '<h3>No variants found</h3><br /><br />';
@@ -462,7 +471,7 @@ sub ld_populations {
   my $self    = shift;
   my $object  = $self->object;
   my $pop_ids = $object->ld_pops_for_snp;
-  
+ 
   return {} unless @$pop_ids;
 
   my %pops;

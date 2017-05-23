@@ -134,12 +134,12 @@ sub show_headlines {
 sub _include_blog {
   my ($self, $hub) = @_;
 
-  my $rss_path  = $hub->species_defs->ENSEMBL_TMP_DIR.'/web/blog/rss.xml';
+  my $rss_path  = $hub->species_defs->ENSEMBL_TMP_DIR.'/rss.xml';
   my $rss_url   = $hub->species_defs->ENSEMBL_BLOG_RSS;
   my $items     = $self->read_rss_file($hub, $rss_path, $rss_url, 3); 
   my $html;
 
-  if (scalar(@$items)) {
+  if (scalar(@{$items||[]})) {
     $html .= "<ul>";
     foreach my $item (@$items) {
       my $title = $item->{'title'};
@@ -158,6 +158,103 @@ sub _include_blog {
   $html .= qq(<p style="text-align:right"><a href="$blog_url">Go to Ensembl blog</a></p>);
 
   return $html;
+}
+
+sub read_rss_file {
+  my ($self, $hub, $rss_path, $rss_url, $limit) = @_;
+  if (!$hub || !$rss_path) {
+    return [];
+  }
+
+  my $items = [];
+  my $args = {'no_exception' => 1};
+
+  if (file_exists($rss_path, $args)) {
+    my $content = read_file($rss_path, $args);
+    if ($content) {
+      ## Does this feed work best with XML::Atom or XML:RSS? 
+      my $rss_type = $rss_path =~ /atom/ ? 'atom' : 'rss';
+      $items = $self->process_xml($rss_type, $content, $limit);
+    }
+  }
+  else {
+    ## Fall back to fetching feed if no file cached
+    $items = $self->get_rss_feed($hub, $rss_url, $limit);
+  }
+  return $items;
+}
+
+sub get_rss_feed {
+  my ($self, $hub, $rss_url, $limit) = @_;
+  if (!$hub || !$rss_url) {
+    return [];
+  }
+
+  my $ua = LWP::UserAgent->new;
+  my $proxy = $hub->species_defs->ENSEMBL_WWW_PROXY;
+  $ua->proxy( 'http', $proxy ) if $proxy;
+  #$ua->timeout(5);
+
+  my $items = [];
+
+  my $response = $ua->get($rss_url);
+  if ($response->is_success) {
+    ## Does this feed work best with XML::Atom or XML:RSS? 
+    my $rss_type = $rss_url =~ /atom/ ? 'atom' : 'rss';
+    $items = $self->process_xml($rss_type, $response->decoded_content, $limit);
+  }
+  else {
+    warn "!!! COULD NOT GET RSS FEED from $rss_url: ".$response->code.' ('.$response->message.')';
+  }
+  return $items;
+}
+
+sub process_xml {
+  my ($self, $rss_type, $content, $limit) = @_;
+  my $items = [];
+
+  eval {
+    my $count = 0;
+    if ($rss_type eq 'atom') {
+      die 'Cannot use XML::Atom::Feed' unless $self->dynamic_use('XML::Atom::Feed');
+      my $feed = XML::Atom::Feed->new(\$content);
+      my @entries = $feed->entries;
+      foreach my $entry (@entries) {
+        my ($link) = grep { $_->rel eq 'alternate' } $entry->link;
+        my $date  = $self->pretty_date(substr($entry->published, 0, 10), 'daymon');
+        my $item = {
+                'title'   => encode_utf8($entry->title),
+                'content' => encode_utf8($entry->content),
+                'link'    => encode_utf8($link->href),
+                'date'    => encode_utf8($date),
+        };
+        push @$items, $item;
+        $count++;
+        last if ($limit && $count == $limit);
+      }
+    }
+    elsif ($rss_type eq 'rss') {
+      die 'Cannot use XML::RSS' unless $self->dynamic_use('XML::RSS');
+      my $rss = XML::RSS->new;
+      $rss->parse($content);
+      foreach my $entry (@{$rss->{'items'}}) {
+        my $date = substr($entry->{'pubDate'}, 5, 11);
+        my $item = {
+            'title'   => encode_utf8($entry->{'title'}),
+            'content' => encode_utf8($entry->{'http://purl.org/rss/1.0/modules/content/'}{'encoded'}),
+            'link'    => encode_utf8($entry->{'link'}),
+            'date'    => encode_utf8($date),
+        };
+        push @$items, $item;
+        $count++;
+        last if ($limit && $count == $limit);
+      }
+    }
+  };
+  if($@) {
+    warn "Error parsing blog: $@\n";
+  }
+  return $items;
 }
 
 1;

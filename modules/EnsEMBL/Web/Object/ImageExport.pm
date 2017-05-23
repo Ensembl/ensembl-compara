@@ -70,6 +70,16 @@ sub create_component {
   return ($component, $error);
 }
 
+sub get_sub_object {
+  ## Required by Tools components
+  ## Gets the actual web object according to the 'data_action' parameter
+  ## @param Object type if action part is missing or invalid
+  ## @return Blast or VEP web object if available for the hub->action (or the param provided), Tools object otherwise
+  my $self = shift;
+  my $type = shift || $self->hub->param('data_action') || $self->hub->action || '';
+  return $self->{"_sub_object_$type"} ||= $type && ref $self eq __PACKAGE__ && $self->new_object($type, {}, $self->__data) || $self;
+}
+
 sub handle_download {
 ### Retrieves file contents and outputs direct to Apache
 ### request, so that the browser will download it instead

@@ -15,7 +15,7 @@ BEGIN {
   eval{
     local *STDERR;
     open(STDERR,">/dev/null");
-    require SiteDefs;
+    require SiteDefs; SiteDefs->import;
     close STDERR;
   };  
   open(STDERR,">&OLDERR");
@@ -45,13 +45,13 @@ sub merge {
 
   my $id = identity();
   my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-    dir => $SiteDefs::ENSEMBL_BOOK_DIR,
+    dir => $SiteDefs::ENSEMBL_PRECACHE_DIR,
     base => "generate.merged.$id",
     write => 1,
   });
 
   my $select = $cache->select(
-    "$SiteDefs::ENSEMBL_BOOK_DIR/ready.*","ready","merging.$id",2,$limit
+    "$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*","ready","merging.$id",2,$limit
   );
 
   unless($select) {
@@ -76,7 +76,7 @@ sub run1 {
   my $SD = EnsEMBL::Web::SpeciesDefs->new();
 
   my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-    dir => $SiteDefs::ENSEMBL_BOOK_DIR,
+    dir => $SiteDefs::ENSEMBL_PRECACHE_DIR,
     base => "generate.$kind.$id",
     write => 1,
   });
@@ -84,7 +84,7 @@ sub run1 {
   my $qs = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD),
     SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($SD),
-  },$cache,$SiteDefs::ENSEMBL_COHORT);
+  },$cache);
 
   my $q = $qs->get($query);
   my $pc = $q->precache($kind,$i,$n,$subparts);
@@ -126,7 +126,7 @@ if($mode eq 'list') {
   exit 0;
 }
 
-unlink "$SiteDefs::ENSEMBL_BOOK_DIR/spec" if $mode eq 'start';
+unlink "$SiteDefs::ENSEMBL_PRECACHE_DIR/spec" if $mode eq 'start';
 # Build specs
 my @procs;
 foreach my $k (@jobs) {
@@ -139,15 +139,15 @@ foreach my $k (@jobs) {
 
 if($mode eq 'start') {
   # Remove old files
-  unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/generate.*"));
-  unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/ready.*"));
-  unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/merging.*"));
-  unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/selected.*"));
+  unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/generate.*"));
+  unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*"));
+  unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/merging.*"));
+  unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/selected.*"));
 }
 
 if($mode eq 'start') {
-  warn $SiteDefs::ENSEMBL_BOOK_DIR;
-  open(SPEC,'>',"$SiteDefs::ENSEMBL_BOOK_DIR/spec") or die;
+  warn $SiteDefs::ENSEMBL_PRECACHE_DIR;
+  open(SPEC,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
   exit 0;
@@ -157,7 +157,7 @@ if($mode eq 'index') {
   my $task;
   {
     local $/ = undef;
-    open(SPEC,'<',"$SiteDefs::ENSEMBL_BOOK_DIR/spec") or die;
+    open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
     my $spec = JSON->new->decode(<SPEC>);
     close SPEC;
     $task = $spec->[$index];
@@ -171,7 +171,7 @@ if($mode eq 'end') {
   merge();
 
   # Rename ready as candidate for compilation
-  my @r = glob("$SiteDefs::ENSEMBL_BOOK_DIR/ready.*.idx");
+  my @r = glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*.idx");
   die "None ready" unless @r;
   die "Multiple ready" if @r >1;
   my $ready = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({

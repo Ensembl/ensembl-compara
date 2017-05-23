@@ -51,10 +51,11 @@ sub create_hash {
   my $click_start     = $self->parser->get_start;
   my $click_end       = $feature_2_end;
 
-  my $feature_1_start = $click_start - $slice_start;
-  my $feature_1_end   = $self->parser->get_end - $slice_start;
-  $feature_2_start   -= $slice_start;
-  $feature_2_end     -= $slice_start;
+  my $offset          = $slice->start - 1;
+  my $feature_1_start = $click_start - $offset;
+  my $feature_1_end   = $self->parser->get_end - $offset;
+  $feature_2_start   -= $offset;
+  $feature_2_end     -= $offset;
   return if $feature_2_end < 0 || $feature_1_start > $slice->length;
 
   my $structure = [

@@ -37,7 +37,7 @@ BEGIN {
   ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils##;
 
   unshift @INC, "$SERVERROOT/conf";
-  eval { require SiteDefs };
+  eval { require SiteDefs; SiteDefs->import; };
   die "Can't use SiteDefs.pm - $@\n" if $@;
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }

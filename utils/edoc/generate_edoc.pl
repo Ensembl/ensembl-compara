@@ -27,7 +27,7 @@ my @modules = qw( EnsEMBL );
 BEGIN{
   unshift @INC, "$Bin/../../conf";
   unshift @INC, "$Bin/../../modules";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
 }
 

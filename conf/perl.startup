@@ -40,7 +40,7 @@ BEGIN {
   @xs_enabled = @{EnsEMBL::Web::Startup::XS::bootstrap_begin()};
 }
 
-$Apache2::SizeLimit::MAX_PROCESS_SIZE = $SiteDefs::MAX_PROCESS_SIZE || 1000000; # Kill httpd over 1000Mb
+$Apache2::SizeLimit::MAX_PROCESS_SIZE = $SiteDefs::ENSEMBL_MAX_PROCESS_SIZE || 1000000; # Kill httpd over 1000Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
 use DBI;
@@ -60,7 +60,7 @@ my $conf = EnsEMBL::Web::SpeciesDefs->new;
 # Setup the ORM DB connections before loading files
 my $orm_connections = $conf->register_orm_databases;
 
-if ($conf->ENSEMBL_MART_ENABLED > 0) {
+if ($conf->ENSEMBL_MART_PLUGIN_ENABLED) {
   require 'BioMart/Initializer.pm';
   BioMart::Initialize->import;
   require 'BioMart/AttributeTable.pm';
@@ -160,13 +160,6 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
       close FH;
     }                             
   }
-  
-  # Remove cached image files
-  my @cached_images = map { glob($conf->ENSEMBL_TMP_DIR_CACHE."/$_.*") } 'mapview', 'chromoview';
-  my $icount        = unlink @cached_images;
-  
-  warn "[CONF]    [INFO] Removed $icount cached image files\n" if $icount;
-  warn "[CONF]    [WARN] Some cached image files not removed: $!" unless $icount == @cached_images;
 
   my $extra = '';
   
@@ -176,33 +169,24 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     if (!$@ && EnsEMBL::Web::Cache->new) {
       $extra .= '
  Memcached enabled:  ' . join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []};
-    
-      $extra .= '
-
- Memcached flags:    '. join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'} || []};
     }
   }
 
-  if ($conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
-    my $i = 1;
-    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
-    $extra .= '
+  if ($conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
+    my $i = 0;
 
- Debug flags:        ' . join "\n                     ", map { $T & (($i <<= 1) >> 1) ? ucfirst lc =~ s/_/ /rg : () } @{$conf->ENSEMBL_DEBUG_FLAG_NAMES};
-
-    $i = 0;
     $extra .= '
 
 ==============================================================================
 
  Species' . 
     join("\n        ", 
-      map { sprintf '%4d  %-6.6s %-32.32s %s', ++$i, $conf->get_config($_, 'SPECIES_RELEASE_VERSION'), $_, $conf->get_config($_, 'SPECIES_COMMON_NAME') } @{$conf->ENSEMBL_DATASETS}
+      map { sprintf '%4d  %-6.6s %-32.32s %s', ++$i, $conf->get_config($_, 'SPECIES_RELEASE_VERSION'), $_, $conf->get_config($_, 'SPECIES_COMMON_NAME') } @{$conf->multi_hash->{'ENSEMBL_DATASETS'}}
     );
   }
  
   # Timestamp file for last start
-  open(STARTED,'>',"${SiteDefs::ENSEMBL_SERVERROOT}/ensembl-webcode/conf/started");
+  open(STARTED,'>',"${SiteDefs::ENSEMBL_LOGDIR}/httpd_started");
   close STARTED;
   if($SiteDefs::MEMOIZE_ENABLED) {
     warn "MEMOIZE ${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started\n";
@@ -222,8 +206,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
  ORM Databases:      %s
 
  External address:   %s/
- Real address:       %s://%s:%s
- Mobile URL:         %s
+ Real address:       %s://%s:%s%s%s%s
 
  Search Server:      %s
 
@@ -243,7 +226,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
  Identities used:    %s
 
  Plugins installed:  %s
- Cohort:             %s
+ Signature:          %s
 
 ==============================================================================
 
@@ -256,9 +239,11 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
-  $conf->MOBILE_URL ? $conf->MOBILE_URL : "",
+  $conf->ENSEMBL_NGINX_PORT ? sprintf("\n NGINX Address:      %s://%s:%s", $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER, $conf->ENSEMBL_NGINX_PORT) : '',
+  $conf->MOBILE_URL ? sprintf("\n Mobile URL:         %s", $conf->MOBILE_URL) : '',
+  $conf->ENSEMBL_MART_SERVERNAME ? sprintf("\n\n Mart proxy to:      %s", $conf->ENSEMBL_MART_SERVERNAME) : '',
 
-  $conf->LUCENE_ENDPOINT,
+  ref($conf->ENSEMBL_SOLR_ENDPOINT) eq 'ARRAY' ? $conf->ENSEMBL_SOLR_ENDPOINT->[0][0] : $conf->ENSEMBL_SOLR_ENDPOINT,
 
   $conf->ENSEMBL_BASE_URL,
 
@@ -273,7 +258,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   @xs_enabled?join("\n".(' ' x 21),@xs_enabled):'- none -',
   join("\n".(' 'x21),map { "$_ (".$conf->ENSEMBL_IDS_USED->{$_}.")" } sort keys %{$conf->ENSEMBL_IDS_USED}),
   join("\n                     ", grep(/::/, map { "$_ (".join(',',@{$conf->ENSEMBL_PLUGINS_USED->{$_}||[]}).")" } @{$conf->ENSEMBL_PLUGINS || []}), $extra),
-  $conf->ENSEMBL_COHORT;
+  $conf->ENSEMBL_SERVER_SIGNATURE;
 }
 
 1;

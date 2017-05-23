@@ -64,7 +64,7 @@ sub format_gallery {
     my $icon  = $group->{'icon'};
     if ($group->{'disabled'}) {
       push @toc, sprintf('<div class="gallery-nav">
-                          <span class="ht _ht">
+                          <span class="_ht">
                             <span class="_ht_tip hidden">No %s views for this species</span>
                             <img src="/i/48/%s" class="disabled" /><br />
                             <span class="notext gallery-navlabel disabled">%s</span>
@@ -72,18 +72,15 @@ sub format_gallery {
                         </div>', 
                         lc($title), $icon, $title);
     }
-    elsif ($group->{'hide'}) {
-      ## Do nothing
-    }
-    else {
+    elsif (!$group->{'hide'}) {
       push @toc, sprintf('<div class="gallery-nav">
-                          <span class="ht _ht">
+                          <span class="_ht">
                             <span class="_ht_tip hidden">Jump to views associated with %s</span>
-                            <img src="/i/48/%s" /><br />
+                            <a href="#%s"><img src="/i/48/%s" /></a><br />
                             <a href="#%s" class="notext gallery-navlabel">%s</a>
                           </span>
                         </div>', 
-                          lc($title), $icon, lc($title), $title);
+                          lc($title), lc($title), $icon, lc($title), $title);
     }
 
     ## No point in showing individual views if whole section is unavailable
@@ -95,7 +92,7 @@ sub format_gallery {
     ## Template for each entry
     my $entry_template = '<div class="gallery-preview">
                             <div class="page-preview">%s</div>
-                            <h3%s>%s</h3>
+                            <h3 class="%s">%s</h3>
                               <p class="preview-caption">%s</p>
                               <p%s>%s</p>
                           </div>';
@@ -115,7 +112,7 @@ sub format_gallery {
       my ($img_disabled, $img_title, $next_action);
       my $action_class  = '';
       my $link_class    = '';
-      my $title_class   = '';
+      my $title_class   = '_title';
       my ($img_link, $multi_form);
 
       if ($page->{'disabled'}) {
@@ -126,7 +123,7 @@ sub format_gallery {
           $next_action .= ': '.$page->{'message'};
         }
         $img_title    = $next_action;
-        $title_class  = ' class="disabled"';
+        $title_class  = ' disabled';
       }
       elsif ($page->{'multi'}) {
         my $multi_type = $page->{'multi'}{'type'};
@@ -167,7 +164,7 @@ sub format_gallery {
       my $image;
       if ($img_disabled) {
         $image = sprintf '<img src="/i/gallery/%s.png" title="%s" class="disabled"/>', 
-                            $page->{'img'};
+                            $page->{'img'}, $img_title || '';
       }
       elsif ($img_link) {
         $image = sprintf '<a href="%s"%s><img src="/i/gallery/%s.png" class="embiggen" /></a>', 
@@ -221,7 +218,7 @@ sub _sub_header {
   my $type  = $hub->param('data_type');
   my $param = $data_type->{$type}{'param'};
   my $value = $hub->param($param);
-  my $label = sprintf '%s displays for', $title, $data_type->{$type}{'term'};
+  my $label = sprintf '%s displays for', $title;
 
   my $form  = $self->new_form({'class' => 'gallery-header',  'method' => 'get'});
 

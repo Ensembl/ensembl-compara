@@ -32,7 +32,6 @@ use HTTP::Date;
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
-use SiteDefs;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Cache;
 
@@ -91,9 +90,37 @@ sub handler {
     my $file = $uri;
     
     return FORBIDDEN if $file =~ /\.\./;
+
+    ## Map robots.txt URL
+    if ($file =~ m#robots.txt#) {
+      $file = $SiteDefs::ENSEMBL_ROBOTS_TXT_DIR.'/robots.txt';
+    }
+
+    ## Map URLs for temporary files that are stored outside the htdocs directory
+    ## Note that we can't guarantee that URLs are unique, so use an array rather than a hash
+    my @tmp_paths = (
+                    $SiteDefs::ENSEMBL_TMP_URL        => $SiteDefs::ENSEMBL_TMP_DIR, 
+                    $SiteDefs::ENSEMBL_TMP_URL_IMG    => $SiteDefs::ENSEMBL_TMP_DIR_IMG,
+                    $SiteDefs::ENSEMBL_USERDATA_URL   => $SiteDefs::ENSEMBL_USERDATA_DIR, 
+                    $SiteDefs::ENSEMBL_MINIFIED_URL   => $SiteDefs::ENSEMBL_MINIFIED_FILES_PATH,
+                    $SiteDefs::ENSEMBL_OPENSEARCH_URL => $SiteDefs::ENSEMBL_OPENSEARCH_PATH,
+                    $SiteDefs::GOOGLE_SITEMAPS_URL    => $SiteDefs::GOOGLE_SITEMAPS_PATH,
+                    );
+    my $is_tmp;
     
-    ## Not temporary static files are pluggable:
-    unless ($file =~ s/^$SiteDefs::ENSEMBL_TMP_URL_IMG/$SiteDefs::ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$SiteDefs::ENSEMBL_TMP_URL/$SiteDefs::ENSEMBL_TMP_DIR/g) {
+    while (my($url, $dir) = splice @tmp_paths, 0, 2) {
+      if ($file =~ /^$url/) {
+        (my $filecheck = $file) =~ s/$url/$dir/;
+        if (-e $filecheck) {
+          $file = $filecheck;
+          $is_tmp = 1;
+          last;
+        }
+      }
+    }
+    
+    ## Non-temporary static files are pluggable:
+    unless ($is_tmp) {
       ## walk through plugins tree and search for the file in all htdocs dirs
       $file = htdoc_dir($file, $r);
     }

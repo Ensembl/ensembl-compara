@@ -39,8 +39,17 @@ sub _species_sets {}
 
 sub _get_all_analysed_species {
   my ($self, $cdb) = @_;
-  $self->{"_mlss_adaptor_$cdb"} ||= $self->hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
-  my $self->{'_all_analysed_species'} ||= {map {ucfirst($_->name) => 1} @{$self->{"_mlss_adaptor_$cdb"}->fetch_all_by_method_link_type('PROTEIN_TREES')->[0]->species_set->genome_dbs}};
+  if (!$self->{'_all_analysed_species'}) {
+    $self->{"_mlss_adaptor_$cdb"} ||= $self->hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
+    my $pt_mlsss = $self->{"_mlss_adaptor_$cdb"}->fetch_all_by_method_link_type('PROTEIN_TREES');
+    my $best_pt_mlss;
+    if (scalar(@$pt_mlsss) > 1) {
+      ($best_pt_mlss) = grep {$_->species_set->name eq 'collection-default'} @$pt_mlsss;
+    } else {
+      $best_pt_mlss = $pt_mlsss->[0];
+    }
+    $self->{'_all_analysed_species'} = {map {ucfirst($_->name) => 1} @{$best_pt_mlss->species_set->genome_dbs}};
+  }
   return %{$self->{'_all_analysed_species'}};
 }
 
@@ -106,8 +115,12 @@ sub content {
 
   if ($species_sets) {
     $html .= qq{
-      <h3>Summary of orthologues of this gene</h3>
-      <p class="space-below">Click on 'Show details' to display the orthologues for one or more groups of species. Alternatively, click on 'Configure this page' to choose a custom list of species.</p>
+      <h3>
+        Summary of orthologues of this gene
+        <a title="Click to show or hide the table" rel="orthologues_summary_table" href="#" class="toggle_link toggle icon_only open _slide_toggle"></a>
+      </h3>
+      <div class="toggleable orthologues_summary_table">
+        <p class="space-below">Click on 'Show details' to display the orthologues for one or more groups of species. Alternatively, click on 'Configure this page' to choose a custom list of species.</p>
     };
  
     $columns = [
@@ -134,11 +147,17 @@ sub content {
     }
     
     $html .= $self->new_table($columns, \@rows)->render;
+    $html .= "</div>"; # Closing toggleable div
   }
 
   ##----------------------------- FULL TABLE -----------------------------------------
 
-  $html .= '<h3>Selected orthologues</h3>' if $species_sets; 
+  if ($species_sets) {
+    $html .= '<h3>
+                Selected orthologues
+                <a title="Click to show or hide the table" rel="selected_orthologues_table" href="#" class="toggle_link toggle icon_only open _slide_toggle"></a>
+              </h3>';
+  }
   
   $columns = [
     { key => 'Species',    align => 'left', width => '10%', sort => 'html'                                                },
@@ -171,9 +190,9 @@ sub content {
       my $dnds_class  = ($orthologue_dnds_ratio ne "n/a" && $orthologue_dnds_ratio >= 1) ? "box-highlight" : "";
       
       # GOC Score, wgac and high confidence
-      my $goc_score  = $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0 ? $orthologue->{'goc_score'} : 'n/a';
-      my $wgac       = $orthologue->{'wgac'} && $orthologue->{'wgac'} >= 0 ? $orthologue->{'wgac'} : 'n/a';
-      my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Y' : $orthologue->{'highconfidence'} eq '0' ? 'N' : 'n/a';
+      my $goc_score  = (defined $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0) ? $orthologue->{'goc_score'} : 'n/a';
+      my $wgac       = (defined $orthologue->{'wgac'} && $orthologue->{'wgac'} >= 0) ? $orthologue->{'wgac'} : 'n/a';
+      my $confidence = $orthologue->{'highconfidence'} eq '1' ? 'Yes' : $orthologue->{'highconfidence'} eq '0' ? 'No' : 'n/a';
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
          
@@ -296,7 +315,7 @@ sub content {
     $button_set{'view'} = 1;
   }
   
-  $html .= $table->render;
+  $html .= '<div class="toggleable selected_orthologues_table">' . $table->render . '</div>';
   
   if (scalar keys %skipped) {
     my $count;

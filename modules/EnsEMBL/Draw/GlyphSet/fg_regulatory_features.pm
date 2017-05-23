@@ -219,13 +219,28 @@ sub highlight {
 
 sub href {
   my ($self, $f) = @_;
-  
+ 
+  my $hub = $self->{'config'}->hub;
+  my $page_species = $hub->referer->{'ENSEMBL_SPECIES'};
+  my @other_spp_params = grep {$_ =~ /^s[\d+]$/} $hub->param;
+  my %other_spp;
+  foreach (@other_spp_params) {
+    ## If we're on an aligned species, swap parameters around
+    if ($hub->param($_) eq $self->species) {
+      $other_spp{$_} = $page_species;
+    }
+    else {
+      $other_spp{$_} = $hub->param($_);
+    }
+  }
+
   return $self->_url({
     species =>  $self->species, 
     type    => 'Regulation',
     rf      => $f->stable_id,
     fdb     => 'funcgen', 
     cl      => $self->my_config('cell_line'),  
+    %other_spp,
   });
 }
 

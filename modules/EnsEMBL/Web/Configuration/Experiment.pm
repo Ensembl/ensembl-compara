@@ -28,6 +28,8 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Sources';
 }
 
+sub has_tabs { return 1; }
+
 sub caption { return 'Experiment View'; }
 
 sub populate_tree {

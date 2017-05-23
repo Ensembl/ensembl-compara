@@ -1,0 +1,73 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+no warnings qw(once);
+
+use FindBin qw($Bin);
+use Getopt::Long;
+
+BEGIN {
+  require "$Bin/helper.pl";
+
+  require EnsEMBL::Web::Utils::FileHandler;
+          EnsEMBL::Web::Utils::FileHandler->import(qw(file_get_contents));
+};
+
+printf "========\n";
+printf "  ENSEMBL_SERVER: %s\n", $SiteDefs::ENSEMBL_SERVER;
+printf "  ENSEMBL_SERVERNAME: %s\n", $SiteDefs::ENSEMBL_SERVERNAME;
+printf "  PATH: %s\n", $ENV{'PATH'};
+
+my $httpd_pid_file  = $SiteDefs::ENSEMBL_PIDFILE;
+my $nginx_pid_file  = $SiteDefs::ENSEMBL_NGINX_RUNDIR ? sprintf('%s/nginx.pid', $SiteDefs::ENSEMBL_NGINX_RUNDIR) : undef;
+my $httpd_pid       = $httpd_pid_file && -e $httpd_pid_file && file_get_contents($httpd_pid_file) || '';
+my $nginx_pid       = $nginx_pid_file && -e $nginx_pid_file && file_get_contents($nginx_pid_file) || '';
+
+chomp $httpd_pid;
+chomp $nginx_pid;
+
+if ($httpd_pid) {
+  my $http_process  = `ps hf -ocommand -p $httpd_pid`;
+  chomp $http_process;
+  printf "  Apache (%s): %s\n", $httpd_pid, $http_process || 'No process';
+  if ($http_process) {
+    my $port = `ss -l -p -n | grep ",$httpd_pid," | awk '{print \$4}'`;
+    chomp $port;
+    printf "  Apache port: SiteDefs=%s, Actual=%s\n", $SiteDefs::ENSEMBL_PORT, $port;
+  }
+} else {
+  printf "  Apache: No process\n";
+}
+
+if ($nginx_pid) {
+  my $nginx_process = `ps hf -ocommand -p $nginx_pid`;
+  chomp $nginx_process;
+  printf "  NGINX (%s): %s\n", $nginx_pid, $nginx_process || 'No process';
+  if ($nginx_process) {
+    my $port = `ss -l -p -n | grep ",$nginx_pid," | awk '{print \$4}'`;
+    chomp $port;
+    printf "  NGINX port: SiteDefs=%s, Actual=%s\n", $SiteDefs::ENSEMBL_NGINX_PORT, $port;
+  }
+} else {
+  printf "  NGINX: No process\n";
+}

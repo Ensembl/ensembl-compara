@@ -26,11 +26,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Cache;
-
 use base qw(EnsEMBL::Web::Object);
-
-our $MEMD = EnsEMBL::Web::Cache->new;
 
 sub _filename {
   my $self = shift;
@@ -69,9 +65,10 @@ sub availability {
 
 
 sub counts {
-  my $self = shift;
-  my $obj  = $self->Obj;
-  my $hub  = $self->hub;
+  my $self  = shift;
+  my $obj   = $self->Obj;
+  my $hub   = $self->hub;
+  my $cache = $hub->cache;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::StructuralVariation');
 
@@ -80,15 +77,15 @@ sub counts {
   $key   .= $svf . '::' if $svf;
 
   my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
+  $counts ||= $cache->get($key) if $cache;
 
   unless ($counts) {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'supporting_structural_variation'} = $self->count_supporting_structural_variation;
-    $counts->{'phenotypes'} = $self->count_phenotypes;    
+    $counts->{'phenotypes'} = $self->count_phenotypes;
 
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $cache->set($key, $counts, undef, 'COUNTS') if $cache;
     $self->{'_counts'} = $counts;
   }
 
@@ -198,13 +195,8 @@ sub max_display_length    { return 1000000; }
 
 sub validation_status  { 
   my $self = shift; 
-  my $states = $self->Obj->get_all_validation_states;
-  if (scalar(@$states) and $states->[0]) {
-    return join (',',@$states);
-  }
-  else { 
-    return '';
-  }
+  my $status = $self->Obj->validation_status();
+  return ($status) ? $status : '';
 }    
 
 # SSV associated colours

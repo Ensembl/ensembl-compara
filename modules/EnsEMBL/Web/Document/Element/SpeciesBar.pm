@@ -45,9 +45,9 @@ sub content {
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
   ## Quality flag
-  (my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
-  my $glossary_helptip = glossary_helptip($hub, ucfirst $text);
-  my $quality = sprintf '<img src="/i/16/rev/database.png"/> %s', $glossary_helptip;
+  #(my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
+  #my $glossary_helptip = glossary_helptip($hub, ucfirst $text);
+  my $quality = ''; # sprintf '<img src="/i/16/rev/database.png"/> %s', $glossary_helptip;
 
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
@@ -89,7 +89,7 @@ sub init_species_list {
 
   #adding species strain (Mouse strains) to the list above
   foreach ($species_defs->valid_species) {
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( $self->{'species_list'}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
   }
   @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   

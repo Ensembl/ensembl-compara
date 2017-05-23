@@ -95,7 +95,7 @@ sub content {
 
       ## Data was uploaded on release 84, before we added the site to records
       if (!$record_data->{'site'}) {
-        my $path_to_file = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$record_data->{'file'};
+        my $path_to_file = $hub->species_defs->ENSEMBL_USERDATA_DIR.'/'.$record_data->{'file'};
         unless (-e $path_to_file) {
           $data_elsewhere = 1;
           next;
@@ -306,6 +306,7 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
+=pod
   if ($record_data->{'format'} eq 'TRACKHUB') {
     my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
     ## 'Disabled' class will show 'connect' version of icon in swp sprite
@@ -315,6 +316,7 @@ sub table_row {
     my $connect_url   = $hub->url({'action' => 'FlipTrackHub', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}});
     $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
   }
+=cut
 
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 

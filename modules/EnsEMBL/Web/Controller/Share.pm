@@ -115,7 +115,7 @@ sub share_create {
   return {'confirmShare' => $user_data} if @$user_data;
 
   if (keys %$data) {
-    my $code    = md5_hex(to_json($data).$hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
+    my $code    = md5_hex(sprintf '%s %s %s', to_json($data), $hub->species, $hub->species_defs->ENSEMBL_VERSION); # same data gets new url in new release
     my $manager = $self->rose_manager;
 
     if (!$manager->fetch_by_primary_key($code)) {

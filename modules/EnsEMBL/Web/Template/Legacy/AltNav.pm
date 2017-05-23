@@ -25,11 +25,12 @@ use parent qw(EnsEMBL::Web::Template::Legacy);
 
 sub init {
   my $self = shift;
-  $self->{'main_class'}     = 'main';
-  $self->{'lefthand_menu'}  = 0;
+  $self->{'main_class'}       = 'main';
+  $self->{'lefthand_menu'}    = 0;
+  $self->{'has_species_bar'}  = 0;
+  $self->{'has_tabs'}         = $self->hub->controller->configuration->has_tabs;
   $self->add_head;
   $self->add_body;
-  $self->page->remove_body_element('species_bar');
 }
 
 1;

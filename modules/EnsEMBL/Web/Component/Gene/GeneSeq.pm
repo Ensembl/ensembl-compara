@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Gene::GeneSeq;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
+use parent qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
 use EnsEMBL::Web::TextSequence::View::GeneSeq;
 

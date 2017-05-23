@@ -24,12 +24,21 @@ package EnsEMBL::Draw::GlyphSet::Vuserdata;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet::V_density);
+use Role::Tiny::With;
+with 'EnsEMBL::Draw::Role::Wiggle';
+with 'EnsEMBL::Draw::Role::BigWig';
+
+use parent qw(EnsEMBL::Draw::GlyphSet::V_density);
 
 sub _init {
-  my $self = shift;
-  my $rtn  = $self->build_tracks;
-  return $self->{'text_export'} && $self->can('render_text') ? $rtn : undef;
+my $self  = shift;
+  ## Force default style to one that's understood by the vertical code
+  $self->{'display'} = 'density_line';
+  ## Filter data by chromosome
+  my $chr   = $self->{'container'}->{'chr'};
+  my $data  = $self->get_data;
+  my $set   = $data->[0]{$chr} || {};
+  return $self->build_tracks($set);
 }
 
 1;

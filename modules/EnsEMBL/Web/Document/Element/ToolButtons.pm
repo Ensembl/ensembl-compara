@@ -102,23 +102,36 @@ sub init {
       title   => 'There are no options for this page'
     });
   }
-  
-  $self->add_entry({
-    caption => 'Custom tracks',
-    icon    => 'data',
-    class   => 'modal_link',
-    rel     => 'modal_user_data',
-    url     => $hub->url({
-      time    => time,
-      type    => 'UserData',
-      action  => 'ManageData',
-      __clear => 1
-    })
-  });
+ 
+  ## TODO - make this more generic - but how does an Element find out
+  ## about the images on the page and whether they accept userdata? 
+  if ($hub->action eq 'ProteinSummary') {
+    $self->add_entry({
+      caption => 'Custom tracks',
+      icon    => 'data',
+      class   => 'disabled',
+      url     => undef,
+      title   => 'Data upload is not available on this page'
+    });
+  }
+  else {
+    $self->add_entry({
+      caption => 'Custom tracks',
+      icon    => 'data',
+      class   => 'modal_link',
+      rel     => 'modal_user_data',
+      url     => $hub->url({
+        time    => time,
+        type    => 'UserData',
+        action  => 'ManageData',
+        __clear => 1
+      })
+    });
+  }
  
   if ($object && $object->can_export) {
     my $strain_param = ";strain=1" if($hub->action =~ /Strain_/); #once we have a better check for strain view, we can remove this dirty check
-    my $caption = $object->can_export =~ /[a-zA-Z]+/ ? $object->can_export : 'Export data';
+    my $caption = $object->can_export =~ /[A-Za-z]/ ? $object->can_export : 'Export data';
     $self->add_entry({
       caption => $caption,
       icon    => 'export',
@@ -153,7 +166,7 @@ sub export_url {
   my $action = $hub->action;
   my $export;
 
-  if ($type eq 'Gene') {
+  if ($type eq 'Gene' && $action eq 'Sequence') {
     return $hub->url({ type => 'DataExport', action => 'GeneSeq',
                        component =>  'GeneSeq', 'data_type' => 'Gene'});
   }

@@ -28,7 +28,6 @@ use JSON qw(from_json);
 
 use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
-use SiteDefs;
 use Text::CSV;
 
 use EnsEMBL::Web::NewTable::Config;

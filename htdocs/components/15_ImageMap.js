@@ -1609,8 +1609,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   getMapCoords: function (e) {
-    this.imgOffset = this.imgOffset || this.elLk.img.offset();
-
+    if (this.elLk.img || this.imgOffset) {
+      this.imgOffset = this.imgOffset || this.elLk.img.offset();
+    }
+    else {
+      this.imgOffset = 0;
+    }
     return {
       x: e.pageX - this.imgOffset.left - 1, // exclude the 1px borders
       y: e.pageY - this.imgOffset.top - 1

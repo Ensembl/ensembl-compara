@@ -123,39 +123,6 @@ sub transcript_table {
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
  
-  # alternative (Vega) coordinates
-  if ($object->get_db eq 'vega') {
-    my $alt_assemblies  = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
-    my ($vega_assembly) = map { $_ =~ /VEGA/; $_ } @$alt_assemblies;
-    
-    # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-    my $reg        = 'Bio::EnsEMBL::Registry';
-    my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
-    
-    $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
-
-    my $alt_slices = $object->vega_projection($vega_assembly); # project feature slice onto Vega assembly
-    
-    # link to Vega if there is an ungapped mapping of whole gene
-    if (scalar @$alt_slices == 1 && $alt_slices->[0]->length == $object->feature_length) {
-      my $l = $alt_slices->[0]->seq_region_name . ':' . $alt_slices->[0]->start . '-' . $alt_slices->[0]->end;
-      
-      $location_html .= ' [<span class="small">This corresponds to ';
-      $location_html .= sprintf(
-        '<a href="%s" target="external" class="constant">%s-%s</a>',
-        $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l),
-        $self->thousandify($alt_slices->[0]->start),
-        $self->thousandify($alt_slices->[0]->end)
-      );
-      
-      $location_html .= " in $vega_assembly coordinates</span>]";
-    } else {
-      $location_html .= sprintf qq{ [<span class="small">There is no ungapped mapping of this %s onto the $vega_assembly assembly</span>]}, lc $object->type_name;
-    }
-    
-    $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
-  }
-
   $location_html = "<p>$location_html</p>";
 
   my $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
@@ -228,9 +195,10 @@ sub transcript_table {
         }
       }
     }
+
     my %url_params = (
       type   => 'Transcript',
-      action => $page_type eq 'gene' || $action eq 'ProteinSummary' ? 'Summary' : $action
+      action => $page_type eq 'gene' ? 'Summary' : $action,
     );
     
     if ($count == 1) { 
@@ -291,9 +259,14 @@ sub transcript_table {
       my %extras;
       my $cds_tag           = '-';
       my $gencode_set       = '-';
-      my $url               = $hub->url({ %url_params, t => $tsi });
       my (@flags, @evidence);
       
+      ## Override link destination if this transcript has no protein
+      if (!$_->translation && ($action eq 'ProteinSummary' || $action eq 'Domains' || $action eq 'ProtVariations')) {
+        $url_params{'action'} = 'Summary';
+      }
+      my $url = $hub->url({ %url_params, t => $tsi });
+
       if (my $translation = $_->translation) {
         $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
         $translation_id = $translation->stable_id;
@@ -350,7 +323,7 @@ sub transcript_table {
 
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
-        name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
+        name        => { value => $_->display_xref ? $_->display_xref->display_id : '-', class => 'bold' },
         transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
@@ -1591,10 +1564,11 @@ sub vep_icon {
 }
 
 sub display_items_list {
-  my ($self, $div_id, $title, $label, $url_data, $export_data, $no_count_label) = @_;
+  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label) = @_;
 
   my $html = "";
-  my $count = scalar(@{$url_data});
+  my @sorted_data = ($display_data->[0] =~ /^<a/i) ? @{$display_data} : sort { lc($a) cmp lc($b) } @{$display_data};
+  my $count = scalar(@{$display_data});
   if ($count > 5) {
     $html = sprintf(qq{
         <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
@@ -1604,12 +1578,12 @@ sub display_items_list {
       $div_id,
       ($no_count_label) ? $label : "$count $label",
       $div_id,
-      join(",", sort(@{$export_data})),
-      '<li>'.join("</li><li>", sort(@{$url_data})).'</li>'
+      join(",", sort { lc($a) cmp lc($b) } @{$export_data}),
+      '<li>'.join("</li><li>", @sorted_data).'</li>'
     );
   }
   else {
-    $html = join(", ", sort(@{$url_data}));
+    $html = join(", ", @sorted_data);
   }
 
   return $html;

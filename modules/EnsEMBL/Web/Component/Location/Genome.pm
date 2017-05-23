@@ -200,6 +200,7 @@ sub _render_features {
           style        => $hub->param('style')  || $defaults->[0],            
           gradient     => $gradient,
         });
+        $feat_type = 'Variant' if $feat_type eq 'Variation';
         $legend_info->{$feat_type} = {'colour' => $colour, 'gradient' => $gradient};  
         push @$pointers, $pointer_ref;
         $has_gradient++ if $gradient;
@@ -233,6 +234,7 @@ sub _render_features {
       my $columns = [
         {'key' => 'ftype',  'title' => 'Feature type'},
         {'key' => 'colour', 'title' => 'Colour'},
+        {'key' => 'other',  'title' => ''},
       ];
       my $rows;
 
@@ -244,6 +246,7 @@ sub _render_features {
         my $legend    = '';
         if ($colour eq 'gradient' && @gradient) {
           $gradient[0] = '20';
+          $swatch = qq{<div style="background-color:#000;" title="No p-value">-</div>}; 
           my @colour_scale = $hub->colourmap->build_linear_gradient(@gradient);
           my $i = 1;
           foreach my $step (@colour_scale) {                
@@ -260,15 +263,15 @@ sub _render_features {
             $swatch .= qq{<div style="background:#$step">$label</div>};
             $i++;
           }
-          $legend = sprintf '<div class="swatch-legend">Less significant -log(p-values) &#9668;<span>%s</span>&#9658; More significant -log(p-values)</div>', ' ' x 20;
+          $legend = sprintf '<div class="swatch-legend">Less significant -log(p-values) &#9668;<span>%s</span>&#9658; More significant -log(p-values)*</div>', ' ' x 20;
         }
         else {
           $swatch = qq{<div style="background-color:$colour;" title="$colour"></div>};
         }
         push @$rows, {
               'ftype'  => {'value' => $type_name},
-              'colour' => {'value' => qq(<div class="swatch-wrapper"><div class="swatch">$swatch</div>$legend</div>)},
-        };
+              'colour' => {'value' => qq(<div class="swatch-wrapper"><div class="swatch">$swatch</div>$legend</div>)}
+                  };
       }
       my $legend = $self->new_table($columns, $rows); 
       $html .= $legend->render;
@@ -350,7 +353,7 @@ sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
   ## Omit button from, e.g. Phenotype/Locations
-  return unless $hub->type eq 'Location';
+  return unless ($hub->type eq 'Location' && @{$hub->species_defs->ENSEMBL_CHROMOSOMES});
   my @buttons;
 
   my $params = {

@@ -33,11 +33,18 @@ no warnings 'uninitialized';
 use Carp qw(cluck);
 use Data::Dumper;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(%_INC);
+use EnsEMBL::Web::Utils::FileSystem qw(create_path);
+
 BEGIN {
 # Used to enable symbolic debugging support in dynamic_use.
   if($ENV{'PERLDB'}) {
     require Inline;
-    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT");
+
+    my $cbuild_dir = $SiteDefs::ENSEMBL_CBUILD_DIR;
+    create_path($cbuild_dir) unless -e $cbuild_dir;
+
+    Inline->import(C => Config => DIRECTORY => $cbuild_dir);
     Inline->import(C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }");
   }
 }
@@ -47,7 +54,6 @@ BEGIN {
 #   hash means that it /is/ definitely already loaded. Not being in it says
 #   nothing. As this is the most common case it's a great speedup to cache
 #   this.
-my (%FAILED_MODULES,%SOME_SUCCESSFUL_MODULES);
 
 sub new {
 ### Stub - do not instantiate this module directly!
@@ -80,37 +86,35 @@ sub dynamic_use {
     my @caller = caller(0);
     my $error_message = "Dynamic use called from $caller[1] (line $caller[2]) with no classname parameter\n";
     warn $error_message;
-    $FAILED_MODULES{$classname} = $error_message;
+    $_INC{$classname} = $error_message;
     return 0;
   }
- 
-  return 0 if exists $FAILED_MODULES{$classname};
-  return 1 if exists $SOME_SUCCESSFUL_MODULES{$classname};
 
   my $inc_filename = $classname.".pm";
   $inc_filename =~ s!::!/!g;
-  if($INC{$inc_filename}) {
-    $SOME_SUCCESSFUL_MODULES{$classname} = 1;
-    return 1;
+
+  unless(exists $_INC{$classname}) {
+    eval "require $classname";
+
+    if ($@) {
+      my $path = $classname;
+      $path =~ s/::/\//g;
+
+      cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
+
+      $_INC{$classname} = $@;
+      $@ = undef;
+      return 0;
+    } else {
+      $_INC{$classname} = 0;
+    }
   }
-
-  eval "require $classname";
-
-  if ($@) {
-    my $path = $classname;
-    $path =~ s/::/\//g;
-
-    cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
-
-    $FAILED_MODULES{$classname} = $@;
-    $@ = undef;
+  if(!$_INC{$classname}) {
+    $classname->import;
+    return 1;
+  } else {
     return 0;
   }
- 
-  _fix_lvalues($classname) if $ENV{'PERLDB'};
-  $classname->import;
-  $SOME_SUCCESSFUL_MODULES{$classname} = 1;
-  return 1;
 }
 
 sub dynamic_use_fallback {
@@ -126,7 +130,7 @@ sub dynamic_use_fallback {
 sub dynamic_use_failure {
 ### Return error message cached if use previously failed
   my ($self, $classname) = @_;
-  return $FAILED_MODULES{$classname};
+  return $_INC{$classname};
 }
 
 ######### PRIVATE METHODS ################

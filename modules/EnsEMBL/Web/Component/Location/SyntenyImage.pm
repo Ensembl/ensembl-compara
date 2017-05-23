@@ -92,7 +92,7 @@ sub content {
   $chr_form->add_element(
       type  => 'Hidden',
       name  => 'otherspecies',
-      value => $self->hub->param('otherspecies') || $self->default_otherspecies,
+      value => $hub->param('otherspecies') || $hub->otherspecies,
   );
  
 
@@ -145,7 +145,7 @@ sub species_form {
       'type'        => 'dropdown',
       'name'        => 'otherspecies',
       'values'      => \@values,
-      'value'       => $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies,
+      'value'       => $hub->param('otherspecies') || $hub->param('species') || $hub->otherspecies,
     }, {
       'type'        => 'submit',
       'value'       => 'Go'

@@ -60,7 +60,7 @@ sub convert_class_to_style {
     $key = lc $key unless $class_to_style{$key};
     push @class_order,[$key,$class_to_style{$key}[1]];
   }
-  foreach my $values (sort { $a->[0] <=> $b->[0] } @class_order) {
+  foreach my $values (sort { $a->[0] cmp $b->[0] } @class_order) {
     my $st = $values->[1];
     map $style_hash{$_} = $st->{$_}, keys %$st;
   }

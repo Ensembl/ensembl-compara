@@ -45,13 +45,11 @@ use Fcntl qw(:flock);
 use Exporter qw(import);
 our @EXPORT_OK = qw(tombstone);
 
-use SiteDefs;
-
 sub tombstone {
   my ($date, $username) = @_;
 
   ## Just in case the parameters were omitted...
-  $username ||= $SiteDefs::ENSEMBL_USER;
+  $username ||= $SiteDefs::ENSEMBL_SERVERADMIN =~ s/\@.+//r;
   unless ($date) {
     my ($sec, $min, $hour, $day, $month, $year) = gmtime;
     $date = sprintf('%s-%s-%s', $day, $month+1, $year+1900);

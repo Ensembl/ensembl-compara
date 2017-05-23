@@ -34,8 +34,9 @@ body.static #widemain { margin-left: 0; }
 
 /* Masthead */
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
-#masthead.no-tabs                         { height: 100px; }
-#masthead.with-tabs                       { height: 120px; }
+#masthead.tabs_only                       { height: 80px; }
+#masthead.bar_only                        { height: 100px; }
+#masthead.bar_and_tabs                    { height: 120px; }
 #masthead div                             { background-color: [[MH_BG]] important; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }

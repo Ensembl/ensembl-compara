@@ -28,7 +28,7 @@ BEGIN{
   $SERVERROOT = dirname( $Bin );
   unshift @INC, "$SERVERROOT/conf";
   unshift @INC, "$SERVERROOT";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
 }
 
 our $MAX_WIDTH  = 400;

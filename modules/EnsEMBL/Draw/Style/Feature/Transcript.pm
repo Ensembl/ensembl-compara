@@ -28,7 +28,7 @@ sub draw_join {
 
   ## Now that we have used the correct coordinates, constrain to viewport
   if ($params{'x'} < 0) {
-    $params{'x'}          = 0;
+    $params{'x'}          = -1;
     $params{'width'}     += $params{'x'};
   }
 
@@ -64,7 +64,7 @@ sub draw_block {
   ## not with respect to biology, because it makes the logic a lot simpler
   my $coding_start  = $structure->{'utr_5'} || $start;
   my $coding_end    = $structure->{'utr_3'} || $end;
-  my $coding_width = $coding_end - $coding_start + 1;
+  my $coding_width = $coding_end - $coding_start;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block($composite, %params);
@@ -75,12 +75,12 @@ sub draw_block {
       $self->draw_noncoding_block($composite, %params);
     }
 
-    $params{'x'} = $coding_start;
+    $params{'x'} = $coding_start - 1;
     $params{'width'} = $coding_width; 
     $self->draw_coding_block($composite, %params);
 
     if (defined($structure->{'utr_3'})) {
-      $params{'x'}     = $structure->{'utr_3'};
+      $params{'x'}     = $structure->{'utr_3'} - 1;
       $params{'width'} = $end - $structure->{'utr_3'} + 1;
       $self->draw_noncoding_block($composite, %params);
     }

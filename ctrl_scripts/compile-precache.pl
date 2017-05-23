@@ -11,7 +11,7 @@ BEGIN {
   $ENSEMBL_ROOT = dirname( $Bin );
   $ENSEMBL_ROOT =~ s/\/utils$//;
   unshift @INC, "$ENSEMBL_ROOT/conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
@@ -39,20 +39,20 @@ foreach my $p (@precache) {
   $versions{$pkg} = version($pkg);
 }
 
-unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/replacement.*"));
-unlink $_ for(glob("$SiteDefs::ENSEMBL_BOOK_DIR/monitor.*"));
+unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/replacement.*"));
+unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/monitor.*"));
 
 my $cache = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-  dir => $SiteDefs::ENSEMBL_BOOK_DIR,
+  dir => $SiteDefs::ENSEMBL_PRECACHE_DIR,
   base => "replacement",
   write => 1,
 });
 
 $cache->cache_open;
 # Copy in from candidates
-my @candidates = glob("$SiteDefs::ENSEMBL_BOOK_DIR/candidate.*.idx");
-if(-e "$SiteDefs::ENSEMBL_BOOK_DIR/precache.idx") {
-  push @candidates,"$SiteDefs::ENSEMBL_BOOK_DIR/precache.idx";
+my @candidates = glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/candidate.*.idx");
+if(-e "$SiteDefs::ENSEMBL_PRECACHE_DIR/precache.idx") {
+  push @candidates,"$SiteDefs::ENSEMBL_PRECACHE_DIR/precache.idx";
 }
 
 my (%seen,%lengths);
@@ -84,7 +84,7 @@ foreach my $s (keys %seen) {
 }
 warn "optimising\n";
 my $opt = EnsEMBL::Web::QueryStore::Cache::PrecacheFile->new({
-  dir => $SiteDefs::ENSEMBL_BOOK_DIR,
+  dir => $SiteDefs::ENSEMBL_PRECACHE_DIR,
   base => "optimised",
   write => 1,
 });

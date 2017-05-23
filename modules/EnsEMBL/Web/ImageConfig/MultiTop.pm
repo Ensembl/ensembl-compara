@@ -21,6 +21,7 @@ package EnsEMBL::Web::ImageConfig::MultiTop;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
@@ -70,7 +71,7 @@ sub init_cacheable {
   );
 }
 
-sub join_genes {
+sub connect_genes {
   my ($self, $chr, @slices) = @_;
   my ($ps, $pt, $ns, $nt) = map { $_->{'species'}, $_->{'target'} } @slices;
   my $sp         = $self->{'species'};
@@ -86,7 +87,7 @@ sub join_genes {
     $_->set('next_species',     $ns) if $ns;
     $_->set('previous_target',  $pt) if $pt;
     $_->set('next_target',      $nt) if $nt;
-    $_->set('join', 1);
+    $_->set('connect', 1);
   }
 }
 

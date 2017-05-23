@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -56,7 +56,7 @@ my $serverroot;
 BEGIN {
   $serverroot = dirname($Bin);
   unshift @INC, "$serverroot/conf";
-  eval{ require SiteDefs };
+  eval{ require SiteDefs; SiteDefs->import; };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 };
