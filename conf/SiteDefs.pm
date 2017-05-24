@@ -311,7 +311,6 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_CONFIG_FILENAME;   # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
-our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
 our $ENSEMBL_MART_SERVERNAME;   # Populated by _set_dedicated_mart()
 
 my $_VERBOSE;
@@ -354,7 +353,6 @@ sub import {
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-  $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
 
   _verbose_params() if $_VERBOSE;
 }
