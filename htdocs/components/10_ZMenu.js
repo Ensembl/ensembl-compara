@@ -18,8 +18,8 @@
 Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {
     this.base(id);
-
-    var area = data.area.a;
+    this.data = data;
+    var area  = data.area.a;
     var params, n;
 
     if (data.area.link) {
@@ -72,6 +72,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
+    Ensembl.EventManager.register('removeMarking', this, this.removeMarking);
   },
   
   init: function () {
@@ -163,7 +164,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
     }, 300);
   
-    if (this.drag === 'drag') {
+    if (this.data.mr_menu) {
+      this.show_mr_menu();
+    }else if (this.drag === 'drag') {
       this.populateRegion();
     } else if (this.drag === 'vdrag') {
       this.populateVRegion();
@@ -178,6 +181,23 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
   
+  show_mr_menu: function () {
+    var panel = this;
+    var menu = [];
+
+    if (Ensembl.markedLocation) {
+      var a = '<a class="loc-icon-a" style="cursor:pointer;" onClick=Ensembl.updateLocation("'+Ensembl.markedLocation[0]+'")> <span class="loc-icon loc-change"></span>Jump to marked location</a>';
+      var b = '<a class="loc-icon-a" style="cursor:pointer;" onClick=Ensembl.EventManager.trigger("removeMarking");> <span class="loc-icon remove"></span>Remove marking</a>';
+      menu.push(a,b);
+    }
+    this.buildMenu(menu, 'Marked Region');
+  },
+
+  removeMarking: function() {
+    Ensembl.markLocation(false);
+    this.hide();
+  },
+
   populate: function (link, extra) {
     var menu    = this.title.toString().split('; ');
     var caption = menu.shift();
@@ -577,7 +597,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       } else {
         var kv = decodeHTML ? $('<span/>').html(content[i]).text() : content[i]; // Unescape HTML if needed
-        menu = kv.split(': ');  
+        menu = kv.split(': ');
         body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ kv ]));
       }
     }
@@ -655,7 +675,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         this.elLk.header.remove();
         delete this.elLk.header;
       }
-      
       this.elLk.container.empty();
       this.hide();
       this.getContent();
