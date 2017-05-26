@@ -501,9 +501,10 @@ sub _get_serverroot {
   my $file            = shift;
   my ($volume, $dir)  = File::Spec->splitpath($file);
 
-  $volume =~ s|\.snapshots/[^/]+|latest|;
+  my $path = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+     $path =~ s|\.snapshots/[^/]+|latest|;
 
-  return File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+  return $path;
 }
 
 sub _populate_plugins_list {
