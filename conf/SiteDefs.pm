@@ -501,7 +501,7 @@ sub _get_serverroot {
   my $file            = shift;
   my ($volume, $dir)  = File::Spec->splitpath($file);
 
-  $volume =~ |\.snapshots/[^/]+|latest|;
+  $volume =~ s|\.snapshots/[^/]+|latest|;
 
   return File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
 }
