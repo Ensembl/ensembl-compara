@@ -72,7 +72,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
-    Ensembl.EventManager.register('removeMarking', this, this.removeMarking);
   },
   
   init: function () {
@@ -165,7 +164,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }, 300);
   
     if (this.data.mr_menu) {
-      this.show_mr_menu();
+      this.showMarkRegionMenu();
     }else if (this.drag === 'drag') {
       this.populateRegion();
     } else if (this.drag === 'vdrag') {
@@ -181,21 +180,18 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
   
-  show_mr_menu: function () {
+  showMarkRegionMenu: function () {
     var panel = this;
     var menu = [];
 
     if (Ensembl.markedLocation) {
-      var a = '<a class="loc-icon-a" style="cursor:pointer;" onClick=Ensembl.updateLocation("'+Ensembl.markedLocation[0]+'")> <span class="loc-icon loc-change"></span>Jump to marked location</a>';
-      var b = '<a class="loc-icon-a" style="cursor:pointer;" onClick=Ensembl.EventManager.trigger("removeMarking");> <span class="loc-icon remove"></span>Remove marking</a>';
+      var a = '<a class="loc-icon-a _mr_jump_location"> <span class="loc-icon loc-change"></span>Jump to marked location</a>';
+      var b = '<a class="loc-icon-a _mr_remove" style="cursor:pointer;"> <span class="loc-icon remove"></span>Remove marking</a>';
       menu.push(a,b);
     }
     this.buildMenu(menu, 'Marked Region');
-  },
-
-  removeMarking: function() {
-    Ensembl.markLocation(false);
-    this.hide();
+    this.elLk.container.find('._mr_jump_location').off().on('click', function(e) { Ensembl.updateLocation(Ensembl.markedLocation[0]); panel.hide(); }).css({'cursor':'pointer'});
+    this.elLk.container.find('._mr_remove').off().on('click', function(e) { Ensembl.markLocation(false); panel.hide(); });
   },
 
   populate: function (link, extra) {
@@ -562,7 +558,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.buildMenu(menu, caption);
   },
-  
+
   buildMenu: function (content, caption, link, extra, decodeHTML) {
     var body = [];
     var i    = content.length;
