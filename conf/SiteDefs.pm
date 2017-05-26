@@ -90,7 +90,7 @@ our $SITE_LOGO_HREF = '';
 
 our $ENSEMBL_CONFIG_FILENAME_SUFFIX   = 'config.packed';
 our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Setting to 0 will try to recover from $ENSEMBL_CONFIG_FILENAME on startup
-our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\/\.[^\/]+/-X-/gr =~ s/\W+/-/gr; # Unique string representing this machine/server
+our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
 our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
@@ -500,6 +500,8 @@ sub _get_serverroot {
   ## Gets the root folder path for ensembl-webcode
   my $file            = shift;
   my ($volume, $dir)  = File::Spec->splitpath($file);
+
+  $volume =~ |\.snapshots/[^/]+|latest|;
 
   return File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
 }
