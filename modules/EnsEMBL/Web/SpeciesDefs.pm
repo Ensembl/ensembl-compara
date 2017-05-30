@@ -1135,6 +1135,17 @@ sub species_label {
   }  
 }
 
+sub production_name_lookup {
+## Maps all species to their production name
+  my $self = shift;
+  my $names = {};
+  
+  foreach ($self->valid_species) {
+    $names->{$self->get_config($_, 'SPECIES_PRODUCTION_NAME')} = $_;
+  }
+  return $names;
+}
+
 sub production_name_mapping {
 ### As the name said, the function maps the production name with the species URL, 
 ### @param production_name - species production name
