@@ -105,7 +105,7 @@ sub _help {
     <p>
       <br />This view requires a variation identifier in the URL. For example:
     </p>
-    <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
+    <div class="left-margin bottom-margin word-wrap"><a href="%s">%s</a></div>',
     encode_entities($url),
     encode_entities($self->species_defs->ENSEMBL_BASE_URL. $url)
   );
