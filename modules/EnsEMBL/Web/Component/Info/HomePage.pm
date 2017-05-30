@@ -224,7 +224,6 @@ sub genebuild_text {
     <p><a href="%s" class="nodeco">%sMore about this genebuild</a></p>
     %s
     %s
-    %s
     %s',
     
     sprintf(
@@ -246,8 +245,8 @@ sub genebuild_text {
       $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
-    $idm_link,
-    
+    $idm_link
+  );
 }
 
 sub compara_text {
