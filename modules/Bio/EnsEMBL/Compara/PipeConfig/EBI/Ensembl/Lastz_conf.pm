@@ -56,8 +56,10 @@ sub default_options {
 			-db_version => $self->o('rel_with_suffix'),
 		},
 	    
-	    'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
-	    # 'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
+	    # 'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
+	    # 'curr_core_dbs_locs' => [ $self->o('staging_loc') ],
+	    'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
+	    'curr_core_dbs_locs' => [ $self->o('livemirror_loc') ],
 
 	    #Location of executables
 	    'pair_aligner_exe' => $self->o('ensembl_cellar').'/lastz/1.02.00/bin/lastz',
