@@ -59,8 +59,8 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Tarsius syrichta",
-          "key":"Tarsius_syrichta",
+          "scientific_name":"Carlito syrichta",
+          "key":"Carlito_syrichta",
           "is_leaf":"true"
       },
       {
@@ -284,8 +284,8 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Macropus eugenii",
-              "key":"Macropus_eugenii",
+              "scientific_name":"Notamacropus eugenii",
+              "key":"Notamacropus_eugenii",
               "is_leaf":"true"
           }
         ]
