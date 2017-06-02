@@ -47,10 +47,10 @@ sub all_species {
 
   ### Example     : my @all_species = @{ utils::Tool::all_species };
   ### Description : returns a list of all the species configured in SiteDefs
-  ###                ENSEMBL_DATASETS
+  ###                PRODUCTION_NAMES
   ### Returns arrayref
 
-  return $SiteDefs::ENSEMBL_DATASETS || [];
+  return $SiteDefs::PRODUCTION_NAMES || [];
 }
 
 #------------------------------------------------------------------------
