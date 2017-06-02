@@ -146,7 +146,8 @@ sub create_glyphs {
                                         : ($feature->{'end'}, $feature->{'start'});
       $drawn_start      = 0 if $drawn_start < 0;
       $drawn_end        = $slice_width if $drawn_end > $slice_width;
-      my $feature_width = $drawn_end - $drawn_start + 1; 
+      my $feature_width = $drawn_end - $drawn_start; 
+      $feature_width    = 1 if $feature_width < 1;
   
       my $labels_height   = $label_row * $font_height;
 
@@ -305,7 +306,7 @@ sub draw_feature {
   my $x = $feature->{'start'};
   $x    = 1 if $x < 1;
   my $params = {
-                  x            => $x,
+                  x            => $x - 1,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
