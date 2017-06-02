@@ -179,23 +179,16 @@ sub fetch_features {
         # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my $c = $self->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
-
-        if($c) {
-          # set config file via ENV variable
-          $ENV{ENSEMBL_VARIATION_VCF_CONFIG_FILE} = $c->{'CONFIG'};
-          $variation_db_adaptor->use_vcf($c->{'ENABLED'}) if $variation_db_adaptor->can('use_vcf');
-        }
-        
+        my $vf_adaptor = $variation_db_adaptor->get_VariationFeatureAdaptor;
         my @temp_variations = @{$vf_adaptor->fetch_all_by_Slice($slice) || []}; 
         
         ## Add a filtering step here
         @vari_features =
-          # map  { $_->[1] }                                                ## Quick indexing schwartzian transform
-          # sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
-          # map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
-          # grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
-          # grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
+          map  { $_->[1] }                                                ## Quick indexing schwartzian transform
+          sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
+          map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
+          grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
+          grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
           @temp_variations;
       }
 
@@ -232,7 +225,6 @@ sub href {
     type     => 'Variation',
     v        => $f->variation_name,
     vf       => $f->dbID,
-    vl       => $f->seq_region_name.':'.join("-", $self->slice2sr($f->start, $f->end)),
     vdb      => $self->my_config('db'),
     snp_fake => 1,
     config   => $self->{'config'}{'type'},
