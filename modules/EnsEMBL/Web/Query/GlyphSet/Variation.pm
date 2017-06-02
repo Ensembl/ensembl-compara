@@ -186,7 +186,7 @@ sub fetch_features {
   my $sets = $args->{'config'}{'sets'};
   my $set_name = $args->{'config'}{'set_name'};
   my $var_db = $args->{'var_db'} || 'variation';
-  my $slice = $args->{'slice'}; 
+  my $slice = $args->{'slice'};
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
   return [] unless $vdb;
@@ -225,6 +225,13 @@ sub fetch_features {
         
       # Reset the flag for displaying of failed variations to its original state
       $vdb->include_failed_variations($orig_failed_flag);
+    } elsif ($id =~ /^variation_vcf/) {
+      my $vca = $vdb->get_VCFCollectionAdaptor;
+      my $vcf_id = $id;
+      $vcf_id =~ s/^variation_vcf_//;
+      if(my $vc = $vca->fetch_by_id($vcf_id)) {
+        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice)};
+      }
     } else {
       my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_SO_terms($slice) || []}; 
       
