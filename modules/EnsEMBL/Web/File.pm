@@ -23,7 +23,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use EnsEMBL::Web::Utils::RandomString qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_ticket);
 use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression check_compression/;
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
@@ -190,7 +190,7 @@ sub init {
       ($name, $extension, $compression) = _parse_filename(sanitise_filename($filename));
 
       ## Set a random path in case we have multiple files with this name
-      $sub_dir ||= random_string;
+      $sub_dir ||= random_ticket;
     }
     elsif ($self->{'read_name'}) { 
       ## Uploaded file, so keep original name but save uncompressed
@@ -198,12 +198,11 @@ sub init {
       $extension = $self->{'read_ext'};
       $compression = 0;
       ## Set a random path in case we have multiple files with this name
-      $sub_dir ||= random_string;
+      $sub_dir ||= random_ticket;
     }
     else {
       ## Create a file name if none given
-      $name = $self->set_timestamp if $args{'timestamp_name'};
-      $name .= random_string;
+      $name = random_ticket;
     }
 
     if (!$extension) {
