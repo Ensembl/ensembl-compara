@@ -514,7 +514,10 @@ sub _populate_plugins_list {
 
   $plugins_root ||= '*-plugins';
 
-  my @plugins_paths = ($web_root, "$server_root/$plugins_root/".getpwuid($>));
+  my $user_id   = getpwuid($>);
+  my $group_id  = getgrgid($));
+
+  my @plugins_paths = ($web_root, map sprintf('%s/%s/%s', $server_root, $plugins_root, $_), grep $_, $user_id, $group_id);
 
   # Define Plugin directories
   if (-e "$web_root/conf/Plugins.pm") {
