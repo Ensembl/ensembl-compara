@@ -83,6 +83,8 @@ sub default_options {
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
 
+        'dump_per_species_tsv'  => 0,
+
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
 
@@ -123,6 +125,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'basename'      => '#member_type#_#clusterset_id#',
         'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
+
+        'dump_per_species_tsv'  => $self->o('dump_per_species_tsv'),
 
         'rel_db'        => $self->o('rel_db'),
     };
@@ -250,14 +254,18 @@ sub _pipeline_analyses {
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -flow_into => {
-                2 => WHEN('#max_hom_id#' => {
-                        'factory_per_genome_homology_range_dumps' => undef,
+                2 => WHEN(
+                    '#max_hom_id#' => {
                         'dump_all_homologies_tsv' => undef,
                         'dump_all_homologies_orthoxml' => [
                             {'file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
                             {'file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
                         ],
-                    } ),
+                    } ,
+                    '#max_hom_id# && #dump_per_species_tsv#' => {
+                        'factory_per_genome_homology_range_dumps' => undef,
+                    },
+                ),
             },
         },
 
