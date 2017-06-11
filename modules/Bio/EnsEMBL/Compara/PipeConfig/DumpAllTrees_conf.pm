@@ -22,11 +22,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpTreesAll_conf
+Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTreesAll_conf -host compara1
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf -host compara1
 
     By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
     -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTreesAll_conf
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::DumpTreesAll_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf;
 
 use strict;
 use warnings;
