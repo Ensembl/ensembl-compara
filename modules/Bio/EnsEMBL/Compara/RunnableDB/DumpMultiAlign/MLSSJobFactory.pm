@@ -99,6 +99,7 @@ sub _test_mlss {
     my $filename;
     if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
         my ($non_ref_gdb) = grep {$_->dbID != $genome_db->dbID} @{$mlss->species_set->genome_dbs};
+        $non_ref_gdb //= $genome_db;    # for self-alignments
         $filename = sprintf("%s.%s.vs.%s.%s.%s", $genome_db->name, $genome_db->assembly, $non_ref_gdb->name, $non_ref_gdb->assembly, lc $mlss->method->type);
     } else {
         $filename = $mlss->name;
