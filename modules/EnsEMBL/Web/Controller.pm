@@ -106,8 +106,14 @@ sub process {
 
   $self->init_cache;
   $hub->qstore_open;
-  $self->init;
+  my $err;
+  try {
+    $self->init;
+  } catch {
+    $err = $_;
+  };
   $hub->qstore_close;
+  throw $err if $err;
   $hub->store_records_if_needed;
 }
 
