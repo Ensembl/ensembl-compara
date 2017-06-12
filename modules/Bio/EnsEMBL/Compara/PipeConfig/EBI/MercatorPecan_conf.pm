@@ -101,7 +101,7 @@ sub default_options {
 	    
     #Location of executables (or paths to executables)
     'gerp_exe_dir'              => $self->o('ensembl_cellar').'/gerp/20080211/bin',
-    'mercator_exe'              => '/nfs/software/ensembl/RHEL7/linuxbrew/bin/mercator',
+    'mercator_exe'              => $self->o('ensembl_cellar').'/cndsrc/2013.01.11/bin/mercator',
     'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
     'exonerate_exe'             => $self->o('ensembl_cellar').'/exonerate22/2.2.0/bin/exonerate',
 
