@@ -80,20 +80,17 @@ sub default_options {
 
         'test_mode' => 1, #set this to 0 if this is production run
 
-        #Binary source directory
-        'exe_dir'               =>  $self->o('ensembl_cellar').'',
-
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
         'hmm_library_basedir' => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
         'pantherScore_path'   => '/nfs/panda/ensembl/compara/mateus/family_pipeline_binaries/pantherScore1.03',
-        'hmmer2_home'         => $self->o('exe_dir').'/hmmer2/2.3.2/bin/',
+        'hmmer2_home'         => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
 
         # code directories:
-        'blast_bin_dir'  => $self->o('exe_dir').'/blast-2230/2.2.30/bin/',
-        'mcl_bin_dir'    => $self->o('exe_dir').'/mcl/14-137/bin/',
-        'mafft_root_dir' => $self->o('exe_dir').'/mafft/7.305/',
+        'blast_bin_dir'  => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
+        'mcl_bin_dir'    => $self->o('ensembl_cellar').'/mcl/14-137/bin/',
+        'mafft_root_dir' => $self->o('ensembl_cellar').'/mafft/7.305/',
 
         # data directories:
         'work_dir'      => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
