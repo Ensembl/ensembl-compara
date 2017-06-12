@@ -60,8 +60,6 @@ sub default_options {
 
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 
-        'ensembl_cellar'        => $self->o('ENV', 'ENSEMBL_SOFTWARE_HOME').'/linuxbrew/Cellar',
-
         # The list of collections and clusterset_ids
         'member_stats_config'   => [
             INPUT_PLUS({
@@ -124,7 +122,6 @@ sub default_options {
         #Software dependencies
         'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
 
-        # Pipeline graph
     };
 }
 
