@@ -94,8 +94,8 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx2500M -Xms2000m',
     'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
     'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
-#    'jar_file'          => '/nfs/users/nfs_k/kb3/src/benedictpaten-pecan-973a28b/lib/pecan.jar',
-    'jar_file'          => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
+#    'pecan_jar'         => '/nfs/users/nfs_k/kb3/src/benedictpaten-pecan-973a28b/lib/pecan.jar',
+    'pecan_jar'         => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
 
     'gerp_version'      => 2.1,
 	    

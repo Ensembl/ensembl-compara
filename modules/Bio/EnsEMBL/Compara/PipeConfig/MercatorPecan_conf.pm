@@ -510,7 +510,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options'),
-		 'jar_file'                   => $self->o('jar_file'),
+		 'jar_file'                   => $self->o('pecan_jar'),
                  'exonerate'                  => $self->o('exonerate_exe'),
              },
              -max_retry_count => 1,
@@ -530,7 +530,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem1'),
-		 'jar_file'                   => $self->o('jar_file'),
+		 'jar_file'                   => $self->o('pecan_jar'),
                  'exonerate'                  => $self->o('exonerate_exe'),
              },
              -max_retry_count => 1,
@@ -548,7 +548,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem2'),
-                 'jar_file'                   => $self->o('jar_file'),
+                 'jar_file'                   => $self->o('pecan_jar'),
                  'exonerate'                  => $self->o('exonerate_exe'),
              },
              -max_retry_count => 1,
@@ -566,7 +566,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem3'),
-                 'jar_file'                   => $self->o('jar_file'),
+                 'jar_file'                   => $self->o('pecan_jar'),
                  'exonerate'                  => $self->o('exonerate_exe'),
              },
              -max_retry_count => 1,

@@ -344,7 +344,7 @@ return
 	-parameters => {
 		max_block_size => 1000000,
 		java_options => '-server -Xmx1000M',
-		jar_file => $self->o('jar_file'),
+		jar_file => $self->o('pecan_jar'),
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
@@ -362,7 +362,7 @@ return
 	-parameters => {
 		max_block_size=>1000000,
 		java_options=>'-server -Xmx2500M -Xms2000m',
-		jar_file => $self->o('jar_file'),
+		jar_file => $self->o('pecan_jar'),
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
@@ -379,7 +379,7 @@ return
         -parameters => {
                 max_block_size=>1000000,
                 java_options=>'-server -Xmx6500M -Xms6000m',
-		jar_file => $self->o('jar_file'),
+		jar_file => $self->o('pecan_jar'),
                 ortheus_mlssid => $self->o('epo_mlss_id'),
         },  
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',

@@ -134,7 +134,7 @@ sub pipeline_wide_parameters {
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
 		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_id' => $self->o('reference_genome_db_id'),
-		'exonerate' => $self->o('exonerate'),
+		'exonerate' => $self->o('exonerate_exe'),
 	};
 	
 }

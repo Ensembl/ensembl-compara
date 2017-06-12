@@ -89,7 +89,7 @@ sub default_options {
       # Dump directory
       'dump_dir' => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
-      'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
+      'pecan_jar' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
       'gerp_version' => '2.1', #gerp program version
       'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1', #gerp program
       'epo_stats_report_email' => $ENV{'USER'} . '@sanger.ac.uk',

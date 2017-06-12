@@ -96,7 +96,7 @@ sub default_options {
       # Dump directory
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
-      'jar_file' => $self->o('ensembl_cellar') . '/pecan/0.8.0/pecan.jar',
+      'pecan_jar' => $self->o('ensembl_cellar') . '/pecan/0.8.0/pecan.jar',
       'gerp_version' => '2.1', #gerp program version
       'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
 

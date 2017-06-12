@@ -95,7 +95,7 @@ sub default_options {
     'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
     'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
 
-    'jar_file'          => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
+    'pecan_jar'         => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
 
     'gerp_version'      => 2.1,
 	    
