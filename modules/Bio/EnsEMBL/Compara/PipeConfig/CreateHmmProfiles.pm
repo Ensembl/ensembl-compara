@@ -99,7 +99,7 @@ sub default_options {
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
     # dependent parameters: updating 'base_dir' should be enough
-        'work_dir'              =>  '/nfs/panda/ensembl/production/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
+        'work_dir'              =>  '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',

@@ -71,7 +71,7 @@ sub default_options {
         # Intentionally left empty
         #'compara_db' => 'Multi',
 
-        'export_dir'    => '/nfs/production/panda/ensembl/compara/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+        'export_dir'    => '/hps/nobackup/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
 
         # Maximum number of blocks per file
         'split_size' => 200,
