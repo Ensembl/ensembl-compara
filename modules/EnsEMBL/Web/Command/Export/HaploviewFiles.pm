@@ -41,11 +41,11 @@ sub make_files {
   my $self = shift;
   my $location = $self->object->get_location_object;
   
-  my $gen_file   = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => '');
+  my $gen_file   = EnsEMBL::Web::TmpFile::Text->new(extension => 'ped', prefix => 'export');
   my $locus_file = EnsEMBL::Web::TmpFile::Text->new(
     filename  => $gen_file->filename,
     extension => 'txt',
-    prefix    => ''
+    prefix    => 'export'
   );
   
   my $slice_genotypes = $location->get_all_genotypes; # gets all genotypes in the Slice as a hash. where key is region_name-region_start
