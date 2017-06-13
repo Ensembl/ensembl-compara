@@ -192,7 +192,7 @@ my $trust_ce = 0;
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
-my $patch_merge = 0; #special case for merging patches where the dbIDs are not consecutive
+my $patch_merge; #special case for merging patches where the dbIDs are not consecutive
 
 my $dry_run = 0;    # if set, will stop just before any data has been copied
 
@@ -248,6 +248,9 @@ my %type_to_adaptor = (
 );
 
 my %all_mlss_objects = ();
+
+# This is used to tell copy_data() that dbIDs are not necessarily contiguous
+$patch_merge //= scalar(grep {$type_to_adaptor{$_->method->type}} @{$from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()});
 
     # First adding MLSS objects via method_link_type values (the most portable way)
 foreach my $one_method_link_type (@method_link_types) {
