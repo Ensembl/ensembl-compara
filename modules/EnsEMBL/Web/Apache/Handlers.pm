@@ -593,6 +593,7 @@ sub cleanupHandler {
 
   if((my $oob = out_of_bounds())) {
     warn "TERMINATING PROCESS DUE TO OOB [$$]: $oob\n";
+    $r->child_terminate;
   }
 
   return OK;
