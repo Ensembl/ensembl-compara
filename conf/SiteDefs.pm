@@ -54,8 +54,8 @@ our $APACHE_DIR                   = "$ENSEMBL_SERVERROOT/apache2";              
 our $APACHE_BIN                   = defer { "$APACHE_DIR/bin/httpd" };                    # Location of Apache bin file to run server
 our $APACHE_DEFINE                = undef;                                                # Extra command line arguments for httpd command
 our $ENSEMBL_HTTPD_CONFIG_FILE    = "$ENSEMBL_WEBROOT/conf/httpd.conf";                   # Apache config file location
-our $ENSEMBL_MIN_SPARE_SERVERS    = 20;                                                   # For Apache MinSpareServers directive
-our $ENSEMBL_MAX_SPARE_SERVERS    = 50;                                                   # For Apache MaxSpareServers directive
+our $ENSEMBL_MIN_SPARE_SERVERS    = 10;                                                   # For Apache MinSpareServers directive
+our $ENSEMBL_MAX_SPARE_SERVERS    = 15;                                                   # For Apache MaxSpareServers directive
 our $ENSEMBL_START_SERVERS        =  7;                                                   # For Apache StartServers directive
 our $ENSEMBL_DB_IDLE_LIMIT        = 0;
               # Maximum number of connections to "carry through" to next
