@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory;
 use strict;
 use warnings;
 
-use Scalar::Util qw(looks_like_number);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_integer);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -79,14 +79,13 @@ sub fetch_input {
     # We try our best to get a list of GenomeDBs
     my $genome_dbs;
 
-    if ($self->param('species_set_id')) {
-        my $species_set_id = $self->param_required('species_set_id');
-        die unless looks_like_number($species_set_id);
+    if (my $species_set_id = $self->param('species_set_id')) {
+        assert_integer($species_set_id, 'species_set_id');
         my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or die "Could not fetch ss with dbID=$species_set_id";
         $genome_dbs        = $species_set->genome_dbs();
 
-    } elsif ($self->param('mlss_id')) {
-        my $mlss_id = $self->param('mlss_id');
+    } elsif (my $mlss_id = $self->param('mlss_id')) {
+        assert_integer($mlss_id, 'mlss_id');
         my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
         $genome_dbs = $mlss->species_set->genome_dbs;
 
