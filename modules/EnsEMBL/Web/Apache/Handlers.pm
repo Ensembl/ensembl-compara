@@ -1,4 +1,6 @@
 =head1 LICENSE
+f
+
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2017] EMBL-European Bioinformatics Institute
@@ -524,6 +526,35 @@ sub logHandler {
   return DECLINED;
 }
 
+sub out_of_bounds {
+  my $lim = $SiteDefs::ENSEMBL_OOB_LIMITS;
+  my $actual = {};
+  # Too many file descriptors left open?
+  if($lim->{'fd'}) {
+    $actual->{'fd'} = scalar(my @x = (glob "/proc/$$/fd/*"));
+  }
+  # Too much memory in use?
+  if($lim->{'memory'}) {
+    if(open(STATM,'<',"/proc/$$/statm")) {
+      my @data = split(/\s+/,<STATM>);
+      close STATM;
+      $actual->{'memory'} = $data[0] /1024 *4; # 4kb -> Mb
+    }
+  }
+  # Too old?
+  if($lim->{'age'}) {
+    $actual->{'age'} = time - (stat "/proc/$$/stat")[10];
+  }
+  # ADD YOUR TEST HERE! 
+  # do the checks
+  foreach my $k (keys %$actual) {
+    return "$k: ($actual->{$k} > $lim->{$k})" if $actual->{$k} > $lim->{$k};
+    #warn "$k: actual=$actual->{$k} limit=$lim->{$k}\n";
+  }
+  # in-bounds
+  return undef;
+}
+
 sub cleanupHandler {
   ## This handler gets called immediately after the request has been served (the client went away) and before the request object is destroyed.
   ## Any time consuming logging process should be done in this handler since the request connection has actually been closed by now.
@@ -558,6 +589,10 @@ sub cleanupHandler {
       $$, $uri,
       $$, $r->subprocess_env('ENSEMBL_REMOTE_ADDR') || 'unknown', $r->headers_in->{'User-Agent'} || 'unknown'
     );
+  }
+
+  if((my $oob = out_of_bounds())) {
+    warn "TERMINATING PROCESS DUE TO OOB [$$]: $oob\n";
   }
 
   return OK;
