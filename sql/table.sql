@@ -727,8 +727,8 @@ CREATE TABLE genomic_align_tree (
   root_id                     bigint(20) unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
   right_index                 int(10) NOT NULL default 0,
-  left_node_id                bigint(10) NOT NULL default 0,
-  right_node_id               bigint(10) NOT NULL default 0,
+  left_node_id                bigint(10),
+  right_node_id               bigint(10),
   distance_to_parent          double NOT NULL default 1,
 
   PRIMARY KEY node_id (node_id),
@@ -2158,6 +2158,8 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_89_90_b.sql|genomic_align_tree_parent_id_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_89_90_c.sql|constrained_element_pvalue_not_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_d.sql|genomic_align_tree_left_node_id_null');
 
 
 
