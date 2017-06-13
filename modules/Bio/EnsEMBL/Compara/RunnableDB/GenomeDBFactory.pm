@@ -68,6 +68,8 @@ sub param_defaults {
 
         # Definition of the species-set
         'species_set_id'    => undef,
+        'species_set_name'  => undef,
+        'collection_name'   => undef,
         'mlss_id'           => undef,
         'all_current'       => undef,
     }
@@ -88,6 +90,16 @@ sub fetch_input {
         assert_integer($mlss_id, 'mlss_id');
         my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
         $genome_dbs = $mlss->species_set->genome_dbs;
+
+    } elsif (my $species_set_name = $self->param('species_set_name')) {
+        my $species_sets   = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_all_by_name($species_set_name);
+        die "Could not fetch ss with name=$species_set_name" unless scalar(@$species_sets);
+        die "Too many ss with name=$species_set_name" if scalar(@$species_sets) > 1;
+        $genome_dbs        = $species_sets->[0]->genome_dbs();
+
+    } elsif (my $collection_name = $self->param('collection_name')) {
+        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name) or die "Could not fetch collection ss with name=$collection_name";
+        $genome_dbs        = $species_set->genome_dbs();
 
     } elsif ($self->param('all_current')) {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();
