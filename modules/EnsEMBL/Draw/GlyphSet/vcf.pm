@@ -54,7 +54,7 @@ sub render_histogram {
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->get_data->[0]{'features'}} > 200) {
+  if (scalar @{$self->get_data->[0]{'features'}||[]} > 200) {
     $self->too_many_features;
     return undef;
   }
