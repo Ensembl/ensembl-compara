@@ -25,6 +25,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Element);
 
+use HTML::Entities qw(encode_entities);
+
 sub entries {
   my $self = shift;
   return $self->{'_entries'} || [];
@@ -57,7 +59,8 @@ sub content {
       $class    = qq{ class="$class"} if $class;
       $rel      = qq{ rel="$rel"}     if $rel;
 
-      $html .= qq(<p><a href="$_->{'url'}"$class$rel>$_->{'caption'}</a></p>);
+      my $url = encode_entities($_->{'url'});
+      $html .= qq(<p><a href="$url"$class$rel>$_->{'caption'}</a></p>);
     }
   }
   
