@@ -300,12 +300,12 @@ sub default_options {
         'clustering_mode'           => 'blastp',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
-        # Possible values: 'clusters' (default), 'blastp', 'members'
+        # Possible values: 'clusters' (default), 'members'
         #   'members' means that only the members are copied over, and the rest will be re-computed
         #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
         #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
-        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
-        #   'ortholog' the orthologs will be copied from the reuse db
+        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'  >> UNIMPLEMENTED <<
+        #   'ortholog' the orthologs will be copied from the reuse db  >> UNIMPLEMENTED <<
         #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
         #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
@@ -424,10 +424,10 @@ sub pipeline_create_commands {
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
 
-    my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
-    die "'reuse_level' must be set to one of: clusters, blastp, members" if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
+    my %reuse_modes = (clusters => 1, members => 1);
+    die "'reuse_level' must be set to one of: ".join(", ", keys %reuse_modes) if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
-    die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+    die "'clustering_mode' must be set to one of: ".join(", ", keys %clustering_modes) if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
 
 
     # In HMM mode the library must exist
@@ -574,20 +574,6 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'nonpolyploid_genome_reuse_factory' ],
-                'A->1'  => WHEN(
-                    '(#clustering_mode# eq "blastp") and !(#are_all_species_reused# and #quick_reuse#)' => 'backbone_fire_allvsallblast',
-                    ELSE 'backbone_fire_clustering',
-                ),
-            },
-        },
-
-        {   -logic_name => 'backbone_fire_allvsallblast',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -parameters => {
-                'output_file'   => '#dump_dir#/snapshot_2_before_allvsallblast.sql.gz',
-            },
-            -flow_into  => {
-                '1->A'  => [ 'blastdb_factory' ],
                 'A->1'  => [ 'backbone_fire_clustering' ],
             },
         },
@@ -595,12 +581,13 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
-                'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_3_before_clustering.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_2_before_clustering.sql.gz',
             },
             -flow_into  => {
-                '1->A'  => [ 'test_whether_can_copy_clusters' ],
+                '1->A'  => WHEN(
+                    '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
+                    ELSE 'clustering_method_decision',
+                ),
                 'A->1'  => [ 'backbone_fire_tree_building' ],
             },
         },
@@ -610,7 +597,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_4_before_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_3_before_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
@@ -623,7 +610,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_5_after_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_4_after_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'polyploid_move_back_factory' ],
@@ -636,7 +623,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_6_pipeline_finished.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_5_pipeline_finished.sql.gz',
             },
             -flow_into  => [ 'notify_pipeline_completed' ],
         },
@@ -1114,6 +1101,14 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
+        {   -logic_name => 'blastp_controller',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'reusedspecies_factory', 'nonreusedspecies_factory' ],
+                'A->1' => [ 'hcluster_dump_factory' ],
+            },
+        },
+
         {   -logic_name => 'reusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -1124,7 +1119,6 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 2 => [ 'paf_table_reuse' ],
-                1 => [ 'nonreusedspecies_factory' ],
             },
         },
 
@@ -1354,7 +1348,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
-                'A->1'  => [ 'reusedspecies_factory' ],
+                'A->1'  => [ 'blastp_controller' ],
             },
         },
 
@@ -1452,14 +1446,15 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
-        {   -logic_name => 'test_whether_can_copy_clusters',
+        {   -logic_name => 'clustering_method_decision',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
                 '1->A' => WHEN(
-                    '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# eq "ortholog")' => 'ortholog_cluster',
-                    '!(#are_all_species_reused# and (#reuse_level# eq "clusters")) and (#clustering_mode# ne "blastp") and (#clustering_mode# ne "ortholog")' => 'load_InterproAnnotation',
+                    '#clustering_mode# eq "blastp"'     => 'blastdb_factory',
+                    '#clustering_mode# eq "ortholog"'   => 'ortholog_cluster',
+                    '#clustering_mode# eq "hmm"'        => 'load_InterproAnnotation',
+                    '#clustering_mode# eq "hybrid"'     => 'load_InterproAnnotation',
+                    '#clustering_mode# eq "topup"'      => 'load_InterproAnnotation',
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
@@ -1545,7 +1540,9 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyClusters',
             -parameters => {
                 'tags_to_copy'              => [ 'division' ],
+                'quick_reuse'               => $self->o('quick_reuse'),
             },
+            -flow_into  => [ 'remove_blacklisted_genes' ],
             -rc_name => '4Gb_job',
         },
 
