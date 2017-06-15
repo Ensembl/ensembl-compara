@@ -751,18 +751,26 @@ sub _parse {
   #$Data::Dumper::Sortkeys = 1;
   #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
 
-  ## Finally, rename the tree keys for easy data access via URLs
-  ## (and backwards compatibility!)
+  ## Final munging
   my $datasets = [];
-  foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
-    my $url = $tree->{$species}{'SPECIES_URL'};
-    $tree->{$url} = $tree->{$species};
+  my $aliases  = $tree->{'MULTI'}{'SPECIES_ALIASES'};
+  foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
+    my $url = $tree->{$prodname}{'SPECIES_URL'};
+    
+    ## Add in aliases to production names if they don't exist
+    unless ($aliases->{$prodname}) {
+      $aliases->{$prodname} = $url;
+    }
+    
+    ## Rename the tree keys for easy data access via URLs
+    ## (and backwards compatibility!)
+    $tree->{$url} = $tree->{$prodname};
     push @$datasets, $url;
-    delete $tree->{$species};
+    delete $tree->{$prodname};
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
- 
+
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
