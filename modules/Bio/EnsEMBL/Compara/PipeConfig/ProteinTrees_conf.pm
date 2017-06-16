@@ -3169,7 +3169,7 @@ sub core_pipeline_analyses {
                 'goc_taxlevels'         => $self->o('goc_taxlevels'),
             },
             -flow_into  => {
-                '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
+                '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #goc_reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
                 'A->1' => 'rib_fire_goc',
             },
         },
@@ -3278,7 +3278,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_prev_goc_score_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => '#reuse_db#',
+                'src_db_conn'   => '#goc_reuse_db#',
                 'mode'          => 'overwrite',
                 'table'         => 'ortholog_goc_metric',
                 'renamed_table' => 'prev_rel_goc_metric',
@@ -3288,7 +3288,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_prev_gene_member_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => '#reuse_db#',
+                'src_db_conn'   => '#goc_reuse_db#',
                 'mode'          => 'overwrite',
                 'table'         => 'gene_member',
                 'renamed_table' => 'prev_rel_gene_member'
