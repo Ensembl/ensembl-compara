@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyMembersByGenomeDB
+Bio::EnsEMBL::Compara::RunnableDB::CopyMembersByGenomeDB
 
 =head1 DESCRIPTION
 
@@ -41,7 +41,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyMembersByGenomeDB;
+package Bio::EnsEMBL::Compara::RunnableDB::CopyMembersByGenomeDB;
 
 use strict;
 use warnings;
@@ -76,19 +76,19 @@ sub run {
 }
 
 sub _copy_data_wrapper {
-    my ($self, $table, $input_query) = @_;
+    my ($self, $table, $input_query, $genome_db_id_prefix) = @_;
 
     my $genome_db_id    = $self->param('genome_db_id');
     my $from_dbc        = $self->param('reuse_dba')->dbc;
     my $to_dbc          = $self->compara_dba->dbc;
 
     # We add the genome_db_id filter
-    if ($input_query =~ /\<where\>/i) {
+    if ($input_query =~ /\bwhere\b/i) {
         $input_query .= ' AND '
     } else {
         $input_query .= ' WHERE '
     }
-    $input_query .= 'genome_db_id = '.$genome_db_id;
+    $input_query .= ($genome_db_id_prefix // '') . 'genome_db_id = '.$genome_db_id;
 
     # The extra arguments tell copy_data *not* to disable and enable keys
     # since there is too little data to copy to make it worth

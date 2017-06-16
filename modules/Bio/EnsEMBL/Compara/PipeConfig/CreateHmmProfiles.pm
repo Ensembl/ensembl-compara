@@ -756,7 +756,10 @@ sub core_pipeline_analyses {
 
 
         {   -logic_name => 'all_table_reuse',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyMembersByGenomeDB',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',
+            -parameters => {
+                'biotype_filter'        => 'biotype_group = "coding"',
+            },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
