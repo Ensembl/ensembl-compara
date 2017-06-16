@@ -354,7 +354,7 @@ sub store_protein_coding_gene_and_all_transcripts {
                     -GENE       => $gene,
                     -DNAFRAG    => $dnafrag,
                     -GENOME_DB  => $self->param('genome_db'),
-                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{$gene->biotype},
+                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{lc $gene->biotype},
                 );
                 print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
                 $gene_member_adaptor->store($gene_member);

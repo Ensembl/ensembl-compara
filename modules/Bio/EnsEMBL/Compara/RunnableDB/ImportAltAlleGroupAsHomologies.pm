@@ -90,7 +90,7 @@ sub fetch_or_store_gene {
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member ", $gene_member->toString(), "\n";}
     } else {
-        my $biotype_group = $self->param('biotype_groups')->{$gene->biotype};
+        my $biotype_group = $self->param('biotype_groups')->{lc $gene->biotype};
         $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'), -biotype_group => $biotype_group);
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         if ($self->debug) {print "NEW: $gene_member ", $gene_member->toString(), "\n";}
