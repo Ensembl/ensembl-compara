@@ -26,7 +26,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Sanger::EpoLowCoverage_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf');
 
 sub default_options {
     my ($self) = @_;

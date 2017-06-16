@@ -59,7 +59,7 @@ use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EBIProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ProteinTrees_conf');
 
 
 sub default_options {

@@ -98,7 +98,7 @@ sub default_options {
 
         #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        resource requirements:
+        #resource requirements:
         'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
         'blast_gigs'      =>  4,
         'blast_hm_gigs'   =>  6,

@@ -54,7 +54,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Sanger::ncRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Ensembl::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;

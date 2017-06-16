@@ -63,9 +63,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::ProteinTrees_conf');
 
 
 sub default_options {

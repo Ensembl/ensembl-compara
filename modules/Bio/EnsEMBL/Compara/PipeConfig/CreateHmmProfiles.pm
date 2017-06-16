@@ -1403,7 +1403,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'filter_level_3',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterSubfamiliesPatterns',
-            get identities from: http://search.cpan.org/dist/BioPerl/Bio/SimpleAlign.pm#average_percentage_identity
+            #get identities from: http://search.cpan.org/dist/BioPerl/Bio/SimpleAlign.pm#average_percentage_identity
             -parameters         => {
                 'max_gappiness'           => $self->o('max_gappiness'),
                 'fasttree_exe'            => $self->o('fasttree_mp_exe'),
