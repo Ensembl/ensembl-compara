@@ -960,7 +960,7 @@ CREATE TABLE gene_member (
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
-  biotype_group               ENUM('coding', 'snoncoding', 'lnoncoding', 'mnoncoding', 'LRG') NOT NULL DEFAULT 'coding',
+  biotype_group               ENUM('coding','pseudogene','snoncoding','lnoncoding','mnoncoding','LRG','undefined','no_group','current_notdumped','notcurrent') NOT NULL DEFAULT 'coding',
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
