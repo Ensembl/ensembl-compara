@@ -86,6 +86,7 @@ sub default_options {
         'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
         'fasttree_mp_exe'           => 'UNDEF',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
+        'cdhit_exe' => '/homes/carlac/software/cdhit/cd-hit',
 
         # Production database (for the biotypes)
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
@@ -114,6 +115,7 @@ sub resource_classes {
          '512Gb_job'    => {'LSF' => '-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
 
          '4Gb_8c_job'   => {'LSF' => '-n 8 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]" span[hosts=1]' },
+         '8Gb_4c_job'   => {'LSF' => '-n 4 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]" span[hosts=1]' },         
          '8Gb_8c_job'   => {'LSF' => '-n 8 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]" span[hosts=1]' },
          '16Gb_8c_job'  => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_8c_job'  => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },

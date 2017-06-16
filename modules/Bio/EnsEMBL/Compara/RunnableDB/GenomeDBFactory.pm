@@ -67,6 +67,9 @@ sub param_defaults {
         'genome_db_data_source' => undef,   # Alternative source for these attributes
 
         'fan_branch_code'   => 2,
+        
+        # also flow an arrayref of all genome_db_ids to this branch
+        'arrayref_branch'   => undef, 
 
         # Definition of the species-set
         'species_set_id'    => undef,
@@ -131,6 +134,14 @@ sub write_output {
     my $self = shift;
 
     # Dataflow the GenomeDBs
+    if ( $self->param('arrayref_branch') ) {
+        my @genome_db_id_list;
+        foreach my $gdb ( @{$self->param('genome_dbs')} ) {
+            push( @genome_db_id_list, $gdb->dbID );
+        }
+        $self->dataflow_output_id({ 'genome_db_ids' => \@genome_db_id_list }, $self->param('arrayref_branch')); # to cdhit
+    }
+    
     foreach my $gdb (@{$self->param('genome_dbs')}) {
         my $h = { 'genome_db_id' => $gdb->dbID };
         foreach my $p (@{$self->param('extra_parameters')}) {
@@ -138,6 +149,7 @@ sub write_output {
         }
         $self->dataflow_output_id($h, $self->param('fan_branch_code'));
     }
+    
 }
 
 1;

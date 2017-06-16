@@ -166,6 +166,17 @@ sub _fetch_all_representative_for_blast_by_genome_db_id {
     return $self->generic_fetch($constraint, $join, $final_clause);
 }
 
+sub _fetch_all_representative_for_blast_by_genome_db_id {
+    my ($self, $genome_db_id) = @_;
+
+    my $join = [[['seq_member_projection', 'left_source_proj'], 'left_source_proj.source_seq_member_id = m.seq_member_id'] ];
+    my $constraint = 'm.genome_db_id = ?';
+    my $final_clause = 'GROUP BY seq_member_id';
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+
+    return $self->generic_fetch($constraint, $join, $final_clause);
+}
+
 
 =head2 fetch_canonical_for_gene_member_id
 
@@ -294,6 +305,7 @@ sub _store_exon_boundaries_for_SeqMember {
 sub _left_join {
     return (
         ['seq_member_projection left_projection', 'left_projection.target_seq_member_id = m.seq_member_id'],
+        ['seq_member_projection left_source_proj', 'left_source_proj.source_seq_member_id = m.seq_member_id'],
     );
 }
 

@@ -1,0 +1,51 @@
+================================================================
+Program: CD-HIT, V4.6 (+OpenMP), May 2017
+Command: cd-hit -i test.fasta -o test -c 1.0
+
+Started: ----
+================================================================
+                            Output
+----------------------------------------------------------------
+Warning: from file "homo_sapiens_GRCh38.fasta",
+1. Discarding invalid sequence or sequence without identifier and description!
+
+>634759
+IS*DILKDKWSPALQIR
+Warning: from file "homo_sapiens_GRCh38.fasta",
+1. Discarding invalid sequence or sequence without identifier and description!
+
+>770780
+QY*TH*STL*GTRK*KGPLIEQ*K
+Warning: from file "homo_sapiens_GRCh38.fasta",
+1. Discarding invalid sequence or sequence without identifier and description!
+
+>1496856
+SR*SRYGGVSILHCHNS
+total seq: 20229
+longest and shortest : 35991 and 11
+Total letters: 11358198
+Sequences have been sorted
+
+Approximated minimal memory consumption:
+Sequence        : 13M
+Buffer          : 1 X 18M = 18M
+Table           : 1 X 65M = 65M
+Miscellaneous   : 0M
+Total           : 98M
+
+Table limit with the given memory limit:
+Max number of representatives: 802143
+Max number of word counting entries: 87733596
+
+comparing sequences from          0  to      20229
+..........    10000  finished       9946  clusters
+..........    20000  finished      19731  clusters
+
+    20229  finished      19945  clusters
+
+Apprixmated maximum memory consumption: 186M
+writing new database
+writing clustering information
+program completed !
+
+Total CPU time 4.39

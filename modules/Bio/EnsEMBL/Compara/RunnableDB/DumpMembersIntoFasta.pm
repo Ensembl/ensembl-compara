@@ -55,19 +55,57 @@ use Bio::EnsEMBL::Compara::MemberSet;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+
+sub param_defaults {
+    return {
+        'only_representative' => 0, # if seq_member_projection table is populated, dump only representative sequences
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
-    my $genome_db_id = $self->param_required('genome_db_id');
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
+    # accept either single genome_db_ids or an arrayref of them
+    my @gdb_ids;
+    die "Params 'genome_db_id' and 'genome_db_ids' are mutually exclusive!" if ( $self->param('genome_db_id') && $self->param('genome_db_ids') );
+    if ( $self->param('genome_db_id') ) {
+        @gdb_ids = ( $self->param('genome_db_id') );
+    } elsif ( $self->param('genome_db_ids') ) {
+        @gdb_ids = @{ $self->param('genome_db_ids') };
+    } else {
+        die "Param 'genome_db_id' or 'genome_db_ids' must be defined!";
+    }
 
-    my $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
+    my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+
+    # set output filename
+    my $fasta_file;
+    if ( scalar @gdb_ids == 1 ) {
+        my $genome_db_id = $gdb_ids[0];
+        my $genome_db = $gdb_adaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
+
+        $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
+    } else {
+        $fasta_file = $self->param('fasta_dir') . '/multispecies_dump.fasta';
+    }
+
     $fasta_file =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
 
-    my $members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
-    $self->param('members', $members);
+    # fetch members
+    my @members;
+    if ( $self->param('only_representative') ) {
+        foreach my $gdb ( @gdb_ids ) {
+            push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($gdb) });
+        }
+    } else {
+        foreach my $gdb ( @gdb_ids ) {
+            push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($gdb) });
+        }
+    }
+    $self->param('members', \@members);
 }
 
 sub run {
@@ -91,7 +129,11 @@ sub write_output {
     my $self = shift @_;
 
     $self->input_job->autoflow(0);
-    $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_id' => $self->param('genome_db_id') } , 1);
+    if ( $self->param('genome_db_id') ) {
+        $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_id' => $self->param('genome_db_id') } , 1 );
+    } elsif ( $self->param('genome_db_ids') ) {
+        $self->dataflow_output_id( { 'fasta_name' => $self->param('fasta_file'), 'genome_db_ids' => $self->param('genome_db_ids') } , 1 );
+    }
 }
 
 

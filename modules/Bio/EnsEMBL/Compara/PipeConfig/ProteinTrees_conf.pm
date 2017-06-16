@@ -1118,20 +1118,56 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
+        {   -logic_name => 'prepare_blastdb',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'blastdb_factory' ],
+                'A->1' => [ 'blastp_controller' ],
+            },
+        },
+
         {   -logic_name => 'blastdb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'polyploid_genomes' => 0,
+                'arrayref_branch' => 1,
             },
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
-                'A->1'  => [ 'blastp_controller' ],
+                'A->1'  => [ 'cdhit'  ],
             },
         },
 
         {   -logic_name => 'dump_canonical_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',   # Gets fasta_dir from pipeline_wide_parameters
-            -rc_name       => '250Mb_job',
+            -rc_name       => '500Mb_job',
+            -hive_capacity => $self->o('reuse_capacity'),
+            #-flow_into => [ 'cdhit' ],
+        },
+
+        {   -logic_name => 'cdhit',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CDHit',
+            -parameters => {
+                'cdhit_exe' => $self->o('cdhit_exe'),
+                'cdhit_identity_threshold' => $self->o('cdhit_identity_threshold'),
+                'cdhit_num_threads' => 4,
+                'cdhit_memory_in_mb' => 8000,
+            },
+            -flow_into     => {
+                2 => [ 'dump_representative_members' ],
+                3 => [ '?table_name=seq_member_projection' ],
+            },
+            -rc_name       => '8Gb_4c_job',
+            -hive_capacity => $self->o('reuse_capacity'),
+        },
+
+        {   -logic_name => 'dump_representative_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
+            -rc_name    => '250Mb_job',
+            -parameters => {
+                'only_canonical' => 0,
+                'only_representative' => 1,
+            },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'make_blastdb' ],
         },
@@ -1148,7 +1184,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'members_against_allspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
-                'step'              => $self->o('num_sequences_per_blast_job'),
+                'step' => $self->o('num_sequences_per_blast_job'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -1227,7 +1263,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
                 '1->A' => WHEN(
-                    '#clustering_mode# eq "blastp"'     => 'blastdb_factory',
+                    '#clustering_mode# eq "blastp"'     => 'prepare_blastdb',
                     '#clustering_mode# eq "ortholog"'   => 'ortholog_cluster',
                     ELSE                                   'load_InterproAnnotation',   # hmm, hybrid, topup
                 ),
