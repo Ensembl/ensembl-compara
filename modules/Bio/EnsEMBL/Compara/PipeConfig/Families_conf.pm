@@ -145,7 +145,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'uniprot_dir'       => $self->o('uniprot_dir'),
         'file_basename'     => $self->o('file_basename'),
         'blastdb_name'      => $self->o('blastdb_name'),
-        'protein_trees_db'  => $self->o('protein_trees_db'),
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
@@ -153,6 +152,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases
+        'member_db'         => $self->o('member_db'),
 
         'hmm_clustering'    => $self->o('hmm_clustering'),
     };
@@ -176,19 +176,13 @@ sub pipeline_analyses {
             -input_ids => [ {} ],
             -parameters => {
                 'inputlist'     => [
-                                        [ '#protein_trees_db#'   => 'genome_db' ],       # we need them in "located" state
-                                        [ '#protein_trees_db#'   => 'sequence' ],
-                                        [ '#protein_trees_db#'   => 'seq_member' ],
-                                        [ '#protein_trees_db#'   => 'gene_member' ],
-                                        [ '#protein_trees_db#'   => 'hmm_annot' ],
-                                        [ '#protein_trees_db#'   => 'hmm_curated_annot' ],
+                                        [ '#member_db#'     => 'genome_db' ],       # we need them in "located" state
                                         [ '#master_db#'     => 'ncbi_taxa_node' ],
                                         [ '#master_db#'     => 'ncbi_taxa_name' ],
                                         [ '#master_db#'     => 'method_link' ],
                                         [ '#master_db#'     => 'species_set_header' ],
                                         [ '#master_db#'     => 'species_set' ],
                                         [ '#master_db#'     => 'method_link_species_set' ],
-                                        [ '#master_db#'     => 'dnafrag' ],
                                     ],
                 'column_names'  => [ 'src_db_conn', 'table' ],
             },
@@ -218,21 +212,19 @@ sub pipeline_analyses {
         {   -logic_name => 'genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into => {
-                '2->A' => [ 'load_nonref_members' ],
+                '2->A' => [ 'genome_member_copy' ],
                 'A->1' => [ 'hc_nonref_members' ],
             },
         },
 
-        {   -logic_name => 'load_nonref_members',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
-            -parameters => {
-                'include_nonreference'  => 1,
-                'include_patches'       => 1,
-                'include_reference'     => 0,
-                'store_ncrna'           => 0,
-                'production_db_url'     => $self->o('production_db_url'),
+        {   -logic_name        => 'genome_member_copy',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::Families::CopyMembersByGenomeDB',
+            -parameters        => {
+                'reuse_db'              => '#member_db#',
+                'biotype_filter'        => 'biotype_group IN ("coding","LRG")',
             },
-            -rc_name => '2GigMem',
+            -analysis_capacity => 10,
+            -rc_name           => '250Mb_job',
         },
 
         {   -logic_name         => 'hc_nonref_members',
