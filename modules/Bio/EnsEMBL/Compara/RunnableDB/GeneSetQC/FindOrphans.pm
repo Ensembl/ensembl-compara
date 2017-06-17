@@ -67,8 +67,8 @@ sub run {
     my $sql_normal_trees = q{SELECT stable_id FROM gene_member JOIN gene_tree_node gtn ON canonical_member_id = gtn.seq_member_id JOIN (SELECT root_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" GROUP BY root_id HAVING COUNT(DISTINCT genome_db_id) > 1) t USING (root_id) WHERE genome_db_id = ? AND};
 
     # Add this to the above queries to restrict the search to prot / rna
-    my $sql_prot_member = q{ gene_member_id < 100000000};
-    my $sql_rna_member = q{ gene_member_id BETWEEN 100000000 AND 200000000};
+    my $sql_prot_member = q{ biotype_group = "coding"};
+    my $sql_rna_member = q{ biotype_group LIKE "%noncoding"};
 
     # Even though the family pipeline takes all the proteins into account,
     # we only use the canonical ones here 1) to allow the comparison with
