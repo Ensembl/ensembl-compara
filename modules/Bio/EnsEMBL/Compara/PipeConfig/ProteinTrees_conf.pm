@@ -124,8 +124,6 @@ sub default_options {
         'allow_ambiguity_codes'     => 0,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
-        # highest member_id for a protein member
-        'protein_members_range'     => 100000000,
         # Genes with these logic_names will be ignored from the pipeline.
         # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
         # An empty string can also be used as the key to define logic_names excluded from *all* species
@@ -270,7 +268,6 @@ sub default_options {
         #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
         'master_db' => undef,
         'ncbi_db'   => $self->o('master_db'),
-        'master_db_is_missing_dnafrags' => 0,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
@@ -287,6 +284,9 @@ sub default_options {
         'prev_rel_db' => undef,
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
+
+        # Where the members come from (as loaded by the LoadMembers pipeline)
+        #'member_db'   => 'mysql://....',
 
     # Configuration of the pipeline worklow
 
@@ -462,6 +462,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'master_db'     => $self->o('master_db'),
         'ncbi_db'       => $self->o('ncbi_db'),
+        'member_db'     => $self->o('member_db'),
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
         'production_db_url'             => $self->o('production_db_url'),
@@ -562,18 +563,6 @@ sub core_pipeline_analyses {
             -input_ids  => [ { } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
-                'A->1'  => [ 'backbone_fire_genome_load' ],
-            },
-        },
-
-        {   -logic_name => 'backbone_fire_genome_load',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -parameters => {
-                'output_file'   => '#dump_dir#/snapshot_1_before_genome_load.sql.gz',
-                'quick_reuse'   => $self->o('quick_reuse'),
-            },
-            -flow_into  => {
-                '1->A'  => [ 'nonpolyploid_genome_reuse_factory' ],
                 'A->1'  => [ 'backbone_fire_clustering' ],
             },
         },
@@ -581,7 +570,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'output_file'   => '#dump_dir#/snapshot_2_before_clustering.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => WHEN(
@@ -597,7 +586,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_3_before_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_2_before_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
@@ -610,7 +599,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_4_after_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'polyploid_move_back_factory' ],
@@ -623,7 +612,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_5_pipeline_finished.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
             -flow_into  => [ 'notify_pipeline_completed' ],
         },
@@ -767,25 +756,16 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -rc_name => '2Gb_job',
             -flow_into => {
-                1 => [ 'make_treebest_species_tree' ],
-                2 => [ 'check_reuse_db_is_myisam', 'check_reuse_db_is_patched' ],
+                1 => [ 'make_treebest_species_tree', 'check_member_db_is_same_version' ],
             },
         },
 
-        {   -logic_name => 'check_reuse_db_is_myisam',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-            -parameters => {
-                'db_conn'       => '#reuse_db#',
-                'description'   => q{The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM. So please run the following MySQL commands on the #reuse_db#: SET FOREIGN_KEY_CHECKS = 0; ALTER TABLE other_member_sequence DROP FOREIGN KEY other_member_sequence_ibfk_1; ALTER TABLE other_member_sequence ENGINE=MyISAM; },
-                'query'         => 'SHOW TABLE STATUS WHERE Name = "other_member_sequence" AND Engine NOT LIKE "MyISAM" -- limit',      # -- limit is a trick to ask SqlHealthcheck not to add "LIMIT 1" at the end of the query
-            },
-        },
-
-        {   -logic_name => 'check_reuse_db_is_patched',
+        {   -logic_name => 'check_member_db_is_same_version',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
             -parameters => {
-                'db_conn'       => '#reuse_db#',
+                'db_conn'       => '#member_db#',
             },
+            -flow_into => [ 'genome_load_factory' ],
         },
 
 
@@ -884,81 +864,26 @@ sub core_pipeline_analyses {
         },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
-        {   -logic_name => 'nonpolyploid_genome_reuse_factory',
+        {   -logic_name => 'genome_load_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'component_genomes' => 0,
-                'species_set_id'    => '#reuse_ss_id#',
+                'polyploid_genomes' => 0,
             },
             -flow_into => {
-                '2->A' => [ 'all_table_reuse' ],
-                'A->1' => [ 'polyploid_genome_reuse_factory' ],
+                '2->A' => [ 'genome_member_copy' ],
+                'A->1' => [ 'hc_members_globally' ],
             },
         },
 
-        {   -logic_name => 'polyploid_genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'component_genomes' => 0,
-                'normal_genomes'    => 0,
-                'species_set_id'    => '#reuse_ss_id#',
-            },
-            -flow_into => {
-                '2->A' => [ 'component_genome_dbs_move_factory' ],
-                'A->1' => [ 'nonpolyploid_genome_load_fresh_factory' ],
-            },
-        },
-
-        {   -logic_name => 'component_genome_dbs_move_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
-            -flow_into => {
-                '2->A' => {
-                    'dnafrag_table_reuse' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
-                },
-                'A->1' => [ 'hc_polyploid_genes' ],
-            },
-        },
-
-        {   -logic_name => 'move_component_genes',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => {
-                    'hc_members_per_genome' => { 'genome_db_id' => '#target_gdb_id#' },
-                },
-            },
-        },
-
-        {   -logic_name => 'hc_polyploid_genes',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-            -parameters => {
-                'description'   => 'All the genes of the polyploid species should be moved to the component genomes',
-                'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #genome_db_id#',
-            },
-            %hc_analysis_params,
-        },
-
-
-        {   -logic_name => 'all_table_reuse',
+        {   -logic_name => 'genome_member_copy',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',
             -parameters => {
+                'reuse_db'              => '#member_db#',
                 'biotype_filter'        => 'biotype_group = "coding"',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
-        },
-
-        {   -logic_name => 'dnafrag_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#reuse_db#',
-                'table'         => 'dnafrag',
-                'where'         => 'genome_db_id = #target_gdb_id#',
-                'mode'          => 'insertignore',
-            },
-            -flow_into  => [ 'move_component_genes' ],
-            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name         => 'hc_members_per_genome',
@@ -972,127 +897,6 @@ sub core_pipeline_analyses {
             %hc_analysis_params,
         },
 
-
-# ---------------------------------------------[load the rest of members]------------------------------------------------------------
-
-        {   -logic_name => 'nonpolyploid_genome_load_fresh_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'polyploid_genomes' => 0,
-                'species_set_id'    => '#nonreuse_ss_id#',
-                'extra_parameters'  => [ 'locator' ],
-            },
-            -flow_into => {
-                '2->A' => WHEN(
-                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and  #master_db#' => 'copy_dnafrags_from_master',
-                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and !#master_db#' => 'load_fresh_members_from_db',
-                    ELSE 'load_fresh_members_from_file',
-                ),
-                'A->1' => [ 'polyploid_genome_load_fresh_factory' ],
-            },
-        },
-
-        {   -logic_name => 'polyploid_genome_load_fresh_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'component_genomes' => 0,
-                'normal_genomes'    => 0,
-                'species_set_id'    => '#nonreuse_ss_id#',
-                'extra_parameters'  => [ 'locator' ],
-            },
-            -flow_into => {
-                '2->A' => WHEN(
-                    # Not all the cases are covered
-                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and #master_db#' => 'copy_polyploid_dnafrags_from_master',
-                    '!(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/)' => 'component_dnafrags_duplicate_factory',
-                ),
-                'A->1' => [ 'hc_members_globally' ],
-            },
-        },
-
-        {   -logic_name => 'component_dnafrags_duplicate_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
-            -flow_into => {
-                2 => {
-                    'duplicate_component_dnafrags' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
-                },
-            },
-        },
-
-        {   -logic_name => 'duplicate_component_dnafrags',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [
-                    'INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference) SELECT length, name, #principal_genome_db_id#, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
-                ],
-            },
-            -flow_into  => [ 'hc_component_dnafrags' ],
-        },
-
-        {   -logic_name => 'copy_polyploid_dnafrags_from_master',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#master_db#',
-                'table'         => 'dnafrag',
-                'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into  => [ 'component_dnafrags_hc_factory' ],
-        },
-
-        {   -logic_name => 'component_dnafrags_hc_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
-            -flow_into => {
-                2 => [ 'hc_component_dnafrags' ],
-            },
-        },
-
-        {   -logic_name => 'hc_component_dnafrags',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
-            -parameters => {
-                'description'   => 'All the component dnafrags must be in the principal genome',
-                'query'         => 'SELECT d1.* FROM dnafrag d1 LEFT JOIN dnafrag d2 ON d2.genome_db_id = #principal_genome_db_id# AND d1.name = d2.name WHERE d1.genome_db_id = #component_genome_db_id# AND d2.dnafrag_id IS NULL',
-            },
-            %hc_analysis_params,
-        },
-
-        {   -logic_name => 'copy_dnafrags_from_master',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#master_db#',
-                'table'         => 'dnafrag',
-                'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => [ 'load_fresh_members_from_db' ],
-        },
-
-        {   -logic_name => 'load_fresh_members_from_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
-            -parameters => {
-                'store_related_pep_sequences' => 1,
-                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
-                'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-                'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
-                'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
-                'store_ncrna'                   => $self->o('store_ncrna'),
-            },
-            -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '4Gb_job',
-            -flow_into => [ 'hc_members_per_genome' ],
-        },
-
-        {   -logic_name => 'load_fresh_members_from_file',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles',
-            -parameters => {
-                'need_cds_seq'  => 1,
-            },
-            -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '2Gb_job',
-            -flow_into => [ 'hc_members_per_genome' ],
-        },
 
         {   -logic_name         => 'hc_members_globally',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',

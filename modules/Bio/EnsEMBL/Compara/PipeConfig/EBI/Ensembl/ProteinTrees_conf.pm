@@ -205,6 +205,9 @@ sub default_options {
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
+        # Where the members come from (as loaded by the LoadMembers pipeline)
+        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90',
+
         # If 'prev_rel_db' above is not set, you need to set all the dbs individually
         #'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
         #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
