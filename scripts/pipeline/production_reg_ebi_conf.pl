@@ -99,7 +99,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 #      -port => 4522,
 #      -species => 'compara_families',
 #      -dbname => 'waakanni_ensembl_families_ebi_89',
-);
+#);
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
