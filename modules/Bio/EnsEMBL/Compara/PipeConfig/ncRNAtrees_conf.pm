@@ -118,6 +118,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
+        'member_db'     => $self->o('member_db'),
 
         'skip_epo'      => $self->o('skip_epo'),
         'epo_db'        => $self->o('epo_db'),
@@ -162,25 +163,13 @@ sub pipeline_analyses {
     return [
 
 # --------------------------------------------- [ backbone ]-----------------------------------------------------------------------------
-            {   -logic_name => 'backbone_fire_init_compara_tables',
+            {   -logic_name => 'backbone_fire_load_genomes',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -input_ids  => [ {} ],
                 -flow_into  => {
                                 '1->A'  => [ 'copy_tables_factory' ],
-                                'A->1'  => [ 'backbone_fire_load_genomes' ],
+                                'A->1'  => [ 'backbone_fire_classify_genes' ],
                                },
-                %backbone_params,
-            },
-
-            {   -logic_name => 'backbone_fire_load_genomes',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-                -parameters  => {
-                                  'output_file'          => $self->o('dump_dir').'/snapshot_before_load.sql',
-                                },
-                -flow_into  => {
-                               '1->A'   => [ 'load_members_factory' ],
-                               'A->1'   => [ 'backbone_fire_classify_genes' ],
-                              },
                 %backbone_params,
             },
 
@@ -299,7 +288,7 @@ sub pipeline_analyses {
                 tree_method_link    => 'NC_TREES',
             },
             -flow_into => {
-                1 => [ 'make_species_tree' ],
+                1 => [ 'make_species_tree', 'load_members_factory' ],
             },
         },
 
@@ -317,9 +306,20 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '2->A' => 'dnafrag_table_reuse',
+                '2->A' => 'genome_member_copy',
                 'A->1' => [ 'hc_members_globally' ],
             },
+        },
+
+        {   -logic_name        => 'genome_member_copy',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',
+            -parameters        => {
+                'reuse_db'              => '#member_db#',
+                'biotype_filter'        => 'biotype_group LIKE "%noncoding"',
+            },
+            -analysis_capacity => 10,
+            -rc_name           => '250Mb_job',
+            -flow_into         => [ 'hc_members_per_genome' ],
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -354,27 +354,6 @@ sub pipeline_analyses {
             },
             -flow_into          => [ WHEN('#initialise_cafe_pipeline#', 'make_full_species_tree') ],
             %hc_params,
-        },
-
-# ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
-
-        {   -logic_name => 'dnafrag_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#master_db#',
-                'table'         => 'dnafrag',
-                'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-            },
-            -flow_into         => [ 'load_members' ],
-            -analysis_capacity => 10,
-        },
-
-        {   -logic_name        => 'load_members',
-            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
-            -analysis_capacity => 10,
-            -rc_name           => '1Gb_job',
-            -flow_into         => [ 'hc_members_per_genome' ],
         },
 
 # ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
