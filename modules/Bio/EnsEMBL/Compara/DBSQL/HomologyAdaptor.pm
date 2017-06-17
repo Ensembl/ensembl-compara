@@ -35,7 +35,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
-our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1, 'ENSEMBL_ORTHOLOGUES' => 0, 'ENSEMBL_PROJECTIONS' => 0);
+our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1, 'ENSEMBL_ORTHOLOGUES' => 0, 'ENSEMBL_PROJECTIONS' => 1);
 
 
 =head2 fetch_all_by_Gene
