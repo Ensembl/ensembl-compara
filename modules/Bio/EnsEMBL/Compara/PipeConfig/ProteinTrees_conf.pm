@@ -1259,9 +1259,7 @@ sub core_pipeline_analyses {
                 '1->A' => WHEN(
                     '#clustering_mode# eq "blastp"'     => 'blastdb_factory',
                     '#clustering_mode# eq "ortholog"'   => 'ortholog_cluster',
-                    '#clustering_mode# eq "hmm"'        => 'load_InterproAnnotation',
-                    '#clustering_mode# eq "hybrid"'     => 'load_InterproAnnotation',
-                    '#clustering_mode# eq "topup"'      => 'load_InterproAnnotation',
+                    ELSE                                   'load_InterproAnnotation',   # hmm, hybrid, topup
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
