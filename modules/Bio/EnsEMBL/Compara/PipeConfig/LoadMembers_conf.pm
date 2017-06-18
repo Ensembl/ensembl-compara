@@ -225,7 +225,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_ncbi_tables_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link' ],
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
                 'column_names' => [ 'table' ],
             },
             -flow_into => {
