@@ -60,6 +60,7 @@ use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -91,12 +92,7 @@ sub fetch_input {
  }
 # get the species dba from the registry
  my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor("$species_name", "core");
- my ($user, $host, $port, $dbname, $pass) = ($dba->dbc->username, $dba->dbc->host, $dba->dbc->port, $dba->dbc->dbname, $dba->dbc->password);
- $pass = ";pass=".$pass if $pass; # if its "ancestral_sequences"
- my $locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=";
- $locator_string .= $host.";port=".$port.";user=".$user.$pass.";dbname=".$dbname.";species=".$species_name.";disconnect_when_inactive=1";
-
- $genome_db->locator( $locator_string );
+ $genome_db->locator( $dba->locator );
 }
 
 sub write_output {
