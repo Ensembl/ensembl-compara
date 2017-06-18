@@ -179,7 +179,6 @@ sub store_ncrna_gene {
 
         print STDERR "   transcript " . $transcript->stable_id  if ($self->debug);
         my $fasta_description = $self->_ncrna_description($gene, $transcript);
-        next unless (defined $fasta_description);
 
         my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                                                                              -transcript => $transcript,
