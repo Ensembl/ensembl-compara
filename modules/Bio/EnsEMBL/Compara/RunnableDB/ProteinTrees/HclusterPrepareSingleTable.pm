@@ -128,7 +128,7 @@ sub fetch_categories {
 
   my $starttime = time();
 
-  my $sql = "SELECT canonical_member_id, genome_db_id FROM gene_member WHERE canonical_member_id IS NOT NULL";
+  my $sql = "SELECT seq_member_id, genome_db_id FROM seq_member";
   print +("$sql\n") if ($self->debug);
   #my $sth = $self->compara_dba->dbc->prepare($sql, {'mysql_use_result' => 1});
   my $sth = $self->compara_dba->dbc->prepare($sql);

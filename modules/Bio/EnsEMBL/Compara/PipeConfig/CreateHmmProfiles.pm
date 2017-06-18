@@ -705,6 +705,7 @@ sub core_pipeline_analyses {
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
                 allow_missing_coordinates   => $self->o('allow_missing_coordinates'),
                 allow_missing_cds_seqs      => $self->o('allow_missing_cds_seqs'),
+                only_canonical              => 1,
             },
             %hc_analysis_params,
         },
@@ -805,7 +806,6 @@ sub core_pipeline_analyses {
              -parameters => {
                  'division'     => $self->o('division'),
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
-                 'only_canonical'   => 1,
              },
              -rc_name => '8Gb_job',
              -flow_into      => [ 'dump_unannotated_members' ],

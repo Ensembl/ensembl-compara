@@ -56,7 +56,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'hmmer_cutoff'        => 0.001,
-            'only_canonical'      => 1,
            };
 }
 
@@ -127,9 +126,7 @@ sub get_queries {
     my $end_member_id   = $self->param_required('end_member_id');
 
     #Get list of members and sequences
-    my $member_ids = $self->param_required('only_canonical')
-        ? $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_range($start_member_id, $end_member_id)
-        : $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot_by_range($start_member_id, $end_member_id);
+    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot_by_range($start_member_id, $end_member_id);
     return $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 }
 

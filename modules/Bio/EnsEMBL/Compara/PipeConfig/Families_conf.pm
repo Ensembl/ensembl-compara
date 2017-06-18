@@ -408,9 +408,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'HMMer_classify_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
-            -parameters => {
-                'only_canonical'    => 0,
-            },
             -rc_name       => '8GigMem',
             -flow_into => {
                 '2->A'  => [ 'HMMer_classifyPantherScore' ],
@@ -427,7 +424,6 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'only_canonical'      => 0,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
             -batch_size     => 2,
@@ -445,7 +441,6 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'only_canonical'      => 0,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '4GigMem',

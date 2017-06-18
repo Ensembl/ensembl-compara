@@ -410,6 +410,7 @@ sub pipeline_analyses {
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
                 allow_missing_coordinates   => $self->o('allow_missing_coordinates'),
                 allow_missing_cds_seqs      => $self->o('allow_missing_cds_seqs'),
+                only_canonical              => 0,
             },
             %hc_analysis_params,
         },
