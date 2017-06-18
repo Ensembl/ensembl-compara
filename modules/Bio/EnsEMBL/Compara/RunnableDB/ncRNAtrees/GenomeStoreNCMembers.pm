@@ -96,6 +96,8 @@ sub fetch_input {
     my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
     $self->param('core_db', $core_db);
 
+    $self->_load_biotype_groups($self->param_required('production_db_url'));
+
     return;
 }
 
@@ -199,7 +201,6 @@ sub store_ncrna_gene {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
-            $self->_load_biotype_groups($self->param_required('production_db_url'));
             my $biotype_group = $self->param('biotype_groups')->{lc $gene->biotype};
             $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
