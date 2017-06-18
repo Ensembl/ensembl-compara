@@ -62,7 +62,9 @@ sub param_defaults {
         'normal_genomes'    => 1,
         'ancestral_genomes' => 0,
 
+        # List of GenomeDB attribute names that will be added to the output_ids
         'extra_parameters'  => [],
+        'genome_db_data_source' => undef,   # Alternative source for these attributes
 
         'fan_branch_code'   => 2,
 
@@ -114,6 +116,12 @@ sub fetch_input {
     $genome_dbs = [grep {not $_->is_polyploid} @$genome_dbs] if not $self->param('polyploid_genomes');
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
     $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
+
+    if ($self->param('genome_db_data_source')) {
+        my $genomedb_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('genome_db_data_source'));
+        my $genomedb_adaptor = $genomedb_dba->get_GenomeDBAdaptor;
+        $genome_dbs = [map {$genomedb_adaptor->fetch_by_dbID($_->dbID)} @$genome_dbs];
+    }
 
     $self->param('genome_dbs', $genome_dbs);
 }

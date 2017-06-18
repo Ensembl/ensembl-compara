@@ -165,43 +165,6 @@ sub default_options {
         #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
-        # Ensembl-specific databases
-        'staging_loc' => {                     # general location of half of the current release core databases
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'anonymous',
-            -pass   => '',
-            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
-        },
-
-        'egmirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-eg-mirror.ebi.ac.uk',
-            -port   => 4157,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'triticum_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-cluster-eg-prod-1.ebi.ac.uk',
-            -port   => 4238,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc')],
-
-        # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 

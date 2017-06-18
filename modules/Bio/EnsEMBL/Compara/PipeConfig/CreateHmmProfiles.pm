@@ -252,22 +252,6 @@ sub default_options {
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
-        eg_prod=> {
-            -host => 'mysql-eg-prod-1.ebi.ac.uk',
-            -port => 4238,
-            -user => 'ensro',
-            #-verbose => 1,
-            -db_version => 30,
-        },
-
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
-            -user   => 'ensro',
-            -pass   => '',
-            # This value works in production. Change it if you want to run the pipeline in another context, but don't commit the change !
-            -db_version => Bio::EnsEMBL::ApiVersion::software_version()-1,
-        },
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
@@ -278,17 +262,6 @@ sub default_options {
         #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
         'master_db' => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/treefam_master',
         'ncbi_db'   => $self->o('master_db'),
-
-        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        'curr_core_registry'        => undef,
-        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
-
-        # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
@@ -354,18 +327,11 @@ sub resource_classes {
 sub pipeline_create_commands {
     my ($self) = @_;
 
-    # There must be some species on which to compute trees
-    die "There must be some species on which to compute trees"
-        if ref $self->o('curr_core_sources_locs') and not scalar(@{$self->o('curr_core_sources_locs')})
-        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')})
-        and not $self->o('curr_core_registry');
-
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a mlss_id" if $self->o('master_db') and not $self->o('mlss_id');
     die "mlss_id can not be defined in the absence of a master dabase" if $self->o('mlss_id') and not $self->o('master_db');
     die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
-    die "Species reuse is only possible with some previous core databases" if $self->o('prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
@@ -489,10 +455,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
-                'A->1' => WHEN(
-                    '#master_db#' => 'populate_method_links_from_db',
-                    ELSE 'populate_method_links_from_file',
-                ),
+                'A->1' => [ 'check_member_db_is_same_version' ],
             },
         },
 
@@ -527,14 +490,16 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'load_genomedb_factory' ],
         },
 
-# ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
+# ---------------------------------------------[load GenomeDB entries from member_db]---------------------------------------------
 
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
                 'mlss_id'           => $self->o('mlss_id'),
+                # Add the locators coming from member_db
                 'extra_parameters'  => [ 'locator' ],
+                'genome_db_data_source' => '#member_db#',
             },
             -rc_name => '4Gb_job',
             -flow_into => {
@@ -547,14 +512,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('ensembl_release'),
-                'registry_files'    => $self->o('curr_file_sources_locs'),
-            },
-            -rc_name => '4Gb_job',
-            -flow_into  => [ 'check_reusability' ],
+            -flow_into  => [ 'genome_member_copy' ],
             -batch_size => 10,
             -hive_capacity => 30,
             -max_retry_count => 2,
@@ -567,25 +525,18 @@ sub core_pipeline_analyses {
                 'executable'            => 'mysqlimport',
                 'append'                => [ '#method_link_dump_file#' ],
             },
-            -flow_into      => [ 'load_all_genomedbs_from_registry' ],
+            -flow_into      => {
+                1 => {
+                    'load_genomedb_factory' => INPUT_PLUS( { 'master_db' => '#member_db#', } ),
+                }
+            },
         },
 
-        {   -logic_name => 'load_all_genomedbs_from_registry',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry',
-            -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('ensembl_release'),
-                'registry_files'    => $self->o('curr_file_sources_locs'),
-            },
-            -flow_into => [ 'create_mlss_ss' ],
-        },
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
         {   -logic_name => 'check_reusability',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckBlastReusability',
             -parameters => {
-                'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -batch_size => 5,
@@ -601,7 +552,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -rc_name => '2Gb_job',
             -flow_into => {
-                1 => [ 'make_treebest_species_tree', 'check_member_db_is_same_version' ],
+                1 => [ 'make_treebest_species_tree', 'hc_members_globally' ],
             },
         },
 
@@ -610,7 +561,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'db_conn'       => '#member_db#',
             },
-            -flow_into => [ 'genome_load_factory' ],
+            -flow_into => WHEN(
+                '#master_db#' => 'populate_method_links_from_db',
+                ELSE 'populate_method_links_from_file',
+            ),
         },
 
 
@@ -676,16 +630,6 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
-        {   -logic_name => 'genome_load_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'polyploid_genomes' => 0,
-            },
-            -flow_into => {
-                '2->A' => [ 'genome_member_copy' ],
-                'A->1' => [ 'hc_members_globally' ],
-            },
-        },
 
         {   -logic_name => 'genome_member_copy',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',
@@ -707,6 +651,7 @@ sub core_pipeline_analyses {
                 allow_missing_cds_seqs      => $self->o('allow_missing_cds_seqs'),
                 only_canonical              => 1,
             },
+            -flow_into => [ 'check_reusability' ],
             %hc_analysis_params,
         },
 

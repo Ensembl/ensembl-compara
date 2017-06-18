@@ -91,10 +91,6 @@ sub default_options {
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
         # 'master_db' => 'mysql://ensro@mysql-ens-compara-prod-',
 
-        'curr_core_sources_locs' => undef,
-        'prev_core_sources_locs' => undef,
-
-
     };
 }
 
