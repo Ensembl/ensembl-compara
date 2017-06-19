@@ -1,0 +1,110 @@
+[
+
+{
+	"production_name" : "tuatara",
+	"taxonomy_id"     : "8508",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/Tuatara.cds.fa",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/Tuatara.prot.fa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/MASKED_Tuatara.DEVO.annot15102.gff",
+    "source"          : "augustus_maker",
+},
+
+{
+	"production_name" : "alligator_mississippiensis",
+	"taxonomy_id"     : "8496",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_mississippiensis/GCF_000281125.2_ASM28112v3_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_mississippiensis/GCF_000281125.2_ASM28112v3_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_mississippiensis/GCF_000281125.2_ASM28112v3_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "alligator_sinensis",
+	"taxonomy_id"     : "38654",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_sinensis/GCF_000455745.1_ASM45574v1_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_sinensis/GCF_000455745.1_ASM45574v1_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/alligator_sinensis/GCF_000455745.1_ASM45574v1_genomic.gff",
+    "source"          : "refseq",
+},
+{
+	"production_name" : "chelonia_mydas",
+	"taxonomy_id"     : "8469",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chelonia_mydas/GCF_000344595.1_CheMyd_1.0_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chelonia_mydas/GCF_000344595.1_CheMyd_1.0_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chelonia_mydas/GCF_000344595.1_CheMyd_1.0_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "chrysemys_picta",
+	"taxonomy_id"     : "8479",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chrysemys_picta/GCF_000241765.3_Chrysemys_picta_bellii-3.0.3_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chrysemys_picta/GCF_000241765.3_Chrysemys_picta_bellii-3.0.3_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/chrysemys_picta/GCF_000241765.3_Chrysemys_picta_bellii-3.0.3_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "gekko_japonicus",
+	"taxonomy_id"     : "146911",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/gekko_japonicus/GCF_001447785.1_Gekko_japonicus_V1.1_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/gekko_japonicus/GCF_001447785.1_Gekko_japonicus_V1.1_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/gekko_japonicus/GCF_001447785.1_Gekko_japonicus_V1.1_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "protobothrops_mucrosquamatus",
+	"taxonomy_id"     : "103944",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/protobothrops_mucrosquamatus/GCF_001527695.2_P.Mucros_1.0_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/protobothrops_mucrosquamatus/GCF_001527695.2_P.Mucros_1.0_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/protobothrops_mucrosquamatus/GCF_001527695.2_P.Mucros_1.0_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "python_molurus_bivittatus",
+	"taxonomy_id"     : "176946",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/python_bivittatus/GCF_000186305.1_Python_molurus_bivittatus-5.0.2_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/python_bivittatus/GCF_000186305.1_Python_molurus_bivittatus-5.0.2_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/python_bivittatus/GCF_000186305.1_Python_molurus_bivittatus-5.0.2_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "thamnophis_sirtalis",
+	"taxonomy_id"     : "35019",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/thamnophis_sirtalis/GCF_001077635.1_Thamnophis_sirtalis-6.0_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/thamnophis_sirtalis/GCF_001077635.1_Thamnophis_sirtalis-6.0_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/thamnophis_sirtalis/GCF_001077635.1_Thamnophis_sirtalis-6.0_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "ophiophagus_hannah",
+	"taxonomy_id"     : "8665",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophiophagus_hannah/GCA_000516915.1_OphHan1.0_cds_from_genomic.fna",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophiophagus_hannah/GCA_000516915.1_OphHan1.0_protein.faa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophiophagus_hannah/GCA_000516915.1_OphHan1.0_genomic.gff",
+    "source"          : "refseq",
+},
+
+{
+	"production_name" : "ophisaurus_gracilis",
+	"taxonomy_id"     : "102190",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophisaurus_gracilis/O.gracilis.final.gene.cds",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophisaurus_gracilis/O.gracilis.final.gene.pep.fa",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/ophisaurus_gracilis/O.gracilis.final.gene.gff",
+    "source"          : "gigascience",
+},
+
+{
+	"production_name" : "pogona_vitticeps",
+	"taxonomy_id"     : "103695",
+	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/pogona_vitticeps/Pogona_vitticeps.male.cds",
+	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/pogona_vitticeps/Pogona_vitticeps.male.pep",
+	"gene_coord_gff"  : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/additional_species/pogona_vitticeps/Pogona_vitticeps.male.gff",
+    "source"          : "gigascience",
+},
+
+]
