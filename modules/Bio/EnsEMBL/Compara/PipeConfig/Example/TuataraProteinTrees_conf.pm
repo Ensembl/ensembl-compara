@@ -212,7 +212,7 @@ sub default_options {
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_file_sources_locs'    => [ '/lustre/scratch109/ensembl/mp14/tuatara_data/tuatara_source.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ '/homes/mateus/ENSEMBL/master/ensembl-compara/scripts/examples/tuatara_source.json' ],    # It can be a list of JSON files defining an additionnal set of species
     };
 }
 
