@@ -40,7 +40,11 @@ sub populate_tree {
   $self->create_node('ManageData',            'Custom tracks', [qw(
                     manage_remote EnsEMBL::Web::Component::UserData::ManageData
     )]);
-  $self->create_node('TrackHubSearch',     'Track Hub Registry Search', [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubSearch)]);
+  my $not_protein = $self->hub->referer->{'ENSEMBL_ACTION'} eq 'ProteinSummary' ? 0 : 1;
+  $self->create_node('TrackHubSearch',     'Track Hub Registry Search', 
+    [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubSearch)],
+    { 'availability' => $not_protein }
+    );
 
   ## Non-visible nodes for various interfaces
 
