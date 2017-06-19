@@ -44,7 +44,7 @@ my $format = 'fasta';
 
 #-----------------------------------------------------------------------------------------------------
 # Command line example:
-#   perl dumpFastaSequences.pl -compara_url mysql://ensro@mysql-treefam-prod:4401/mateus_tuatara_86 -input_file /nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/all/promoted/promoted_ids.txt -out_dir /nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/all/promoted/seq/promoted/ -format fasta
+#   perl dumpSequences.pl -compara_url mysql://ensro@mysql-treefam-prod:4401/mateus_tuatara_86 -input_file /nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/all/promoted/promoted_ids.txt -out_dir /nfs/production/panda/ensembl/compara/mateus/tuatara_phylogeny/all/promoted/seq/promoted/ -format fasta
 #-----------------------------------------------------------------------------------------------------
 
 # Parse command line
