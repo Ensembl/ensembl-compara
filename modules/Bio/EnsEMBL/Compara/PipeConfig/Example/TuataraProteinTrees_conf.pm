@@ -35,8 +35,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::TuataraProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf');
-
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::NoMasterProteinTrees_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -170,8 +169,6 @@ sub default_options {
             -species        => "xenopus_tropicalis"
         },
 
-        'filter_high_coverage'      => 0,
-	    	    
 	    #if collection is set both 'curr_core_dbs_locs' and 'curr_core_sources_locs' parameters are set to undef otherwise the are to use the default pairwise values
         'curr_core_sources_locs' => [
                                       $self->o('gallus_gallus'),       $self->o('meleagris_gallopavo'),
@@ -183,16 +180,6 @@ sub default_options {
                                       $self->o('takifugu_rubripes'),   $self->o('mus_musculus'),
           ],
 
-
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-
-        # To run without a master database
-        'mlss_id'                   => undef,
-        'do_stable_id_mapping'      => 0,
-        'prev_rel_db'               => undef,
-        'clustering_mode'           => 'blastp',
-
     # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'Tuatara_ProteinTree_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
@@ -203,12 +190,6 @@ sub default_options {
 
         #Compara server to be used
         'host' => 'compara4',
-
-    # connection parameters to various databases:
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => undef,
-        'ncbi_db'   => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
