@@ -108,7 +108,7 @@ sub init {
  
   ## TODO - make this more generic - but how does an Element find out
   ## about the images on the page and whether they accept userdata? 
-  if ($hub->action eq 'ProteinSummary') {
+  if ($hub->action =~ 'Prot|Domain') {
     $self->add_entry({
       caption => 'Custom tracks',
       icon    => 'data',
