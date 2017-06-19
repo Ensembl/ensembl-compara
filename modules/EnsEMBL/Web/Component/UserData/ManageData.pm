@@ -154,22 +154,26 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my $trackhub_search = $self->trackhub_search;
-
-  if (scalar @$records_data) {
-    my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
-    ## Show 'add more' link at top as well, if table is long
-    if (scalar(@rows) > 10) {
-      $html = $more.$html;
-    }
-
-    $html .= $more if scalar(@rows);
+  if ($hub->referer->{'ENSEMBL_ACTION'} eq 'ProteinSummary') {
+    $html .= $self->info_panel('Custom Tracks Unavailable', 'Sorry, you cannot upload or attach tracks on this view.');
   }
   else {
-    $html .= $trackhub_search;
-    $html .= $self->userdata_form;
-  }
+    my $trackhub_search = $self->trackhub_search;
 
+    if (scalar @$records_data) {
+      my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+      ## Show 'add more' link at top as well, if table is long
+      if (scalar(@rows) > 10) {
+        $html = $more.$html;
+      }
+
+      $html .= $more if scalar(@rows);
+    }
+    else {
+      $html .= $trackhub_search;
+      $html .= $self->userdata_form;
+    }
+  }
   return $html;
 }
 
