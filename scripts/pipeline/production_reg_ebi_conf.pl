@@ -39,15 +39,15 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/90');
 
 # # Extra core databases that live on genebuilders' servers:
-# Bio::EnsEMBL::Registry->remove_DBAdaptor('gallus_gallus', 'core'); # deregister old version
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#     -host => 'genebuild12',
-#     -user => 'ensro',
-#     -port => 3306,
-#     -species => 'gallus_gallus',
-#     -group => 'core',
-#     -dbname => 'th3_chicken_core_mt',
-# );
+Bio::EnsEMBL::Registry->remove_DBAdaptor('sus_scrofa', 'core'); # deregister old version
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensro',
+    -port => 4485,
+    -species => 'sus_scrofa',
+    -group => 'core',
+    -dbname => 'sus_scrofa_core_90',
+);
 
 # Bio::EnsEMBL::Registry->remove_DBAdaptor('mus_musculus', 'core'); # deregister old version
 # Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -99,7 +99,8 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 #      -port => 4522,
 #      -species => 'compara_families',
 #      -dbname => 'waakanni_ensembl_families_ebi_89',
-#);
+# );
+
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
