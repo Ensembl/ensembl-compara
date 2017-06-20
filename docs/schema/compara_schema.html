@@ -2983,7 +2983,7 @@ available: <a target="_blank" href="./diagrams/genomic_schema.png">Genomic align
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
         <td class="bg1">External reference to gene_member_id in the <a href="#gene_member" class="sql_schema_link">gene_member</a> table to allow querying all the exons of all the translations of a gene</td>
-        <td class="bg1"></td>
+        <td class="bg1">index: <i>gene_member_id</i></td>
       </tr>
 
       <tr>
@@ -2991,7 +2991,7 @@ available: <a target="_blank" href="./diagrams/genomic_schema.png">Genomic align
         <td class="bg2">INT(10)</td>
         <td class="bg2">-</td>
         <td class="bg2">External reference to seq_member_id in the <a href="#seq_member" class="sql_schema_link">seq_member</a> table to indicate which translation the exons refer to</td>
-        <td class="bg2"></td>
+        <td class="bg2">index: <i>seq_member_id</i></td>
       </tr>
 
       <tr>
