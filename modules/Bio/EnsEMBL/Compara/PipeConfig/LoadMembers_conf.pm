@@ -276,7 +276,7 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '1Gb_job',
             -flow_into  => [ 'check_reusability' ],
             -hive_capacity => $self->o('loadmembers_capacity'),
             -batch_size => $self->o('loadmembers_capacity'),    # Simple heuristic
@@ -305,7 +305,7 @@ sub pipeline_analyses {
             },
             -batch_size => 5,
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name => '1Gb_job',
             -flow_into => {
                 2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
