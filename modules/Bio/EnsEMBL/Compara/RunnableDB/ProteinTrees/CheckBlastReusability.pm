@@ -160,7 +160,7 @@ sub hash_all_canonical_members {
     my ($compara_dba, $genome_db_id) = @_;
 
     my $sql = qq{
-        SELECT CONCAT_WS(':', gm.stable_id, gd.name, gm.dnafrag_start, gm.dnafrag_end, gm.dnafrag_strand, sm.stable_id, sd.name, sm.dnafrag_start, sm.dnafrag_end, sm.dnafrag_strand, s.md5sum)
+        SELECT CONCAT_WS(':', gm.gene_member_id, gm.stable_id, gd.name, gm.dnafrag_start, gm.dnafrag_end, gm.dnafrag_strand, sm.seq_member_id, sm.stable_id, sd.name, sm.dnafrag_start, sm.dnafrag_end, sm.dnafrag_strand, s.md5sum)
           FROM (gene_member gm JOIN dnafrag gd USING (dnafrag_id)) JOIN (seq_member sm JOIN dnafrag sd USING (dnafrag_id)JOIN sequence s USING (sequence_id)) ON seq_member_id=canonical_member_id
          WHERE gm.genome_db_id = ?
     };
