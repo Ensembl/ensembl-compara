@@ -300,9 +300,8 @@ sub pipeline_analyses {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
             },
             -flow_into => {
-                #$self->o('hmm_clustering')>1 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
                 1 => WHEN (
-                    '#hmm_clustering#' => 'HMMer_classifyCurated',
+                    '#hmm_clustering#' => 'reuse_hmm_annot',
                     ELSE { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
                 )
             },
@@ -388,6 +387,15 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
             },
+        },
+
+        {
+            -logic_name     => 'reuse_hmm_annot',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ReuseHMMAnnot',
+            -parameters     => {
+                'reuse_db'      => $self->o('prev_rel_db'),
+            },
+            -flow_into      => [ 'HMMer_classifyCurated' ],
         },
 
         {
