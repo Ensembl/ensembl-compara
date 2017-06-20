@@ -219,7 +219,10 @@ sub pipeline_analyses {
         {   -logic_name => 'check_versions_match',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
             -input_ids  => [ { } ],
-            -flow_into  => [ 'check_reuse_db_is_patched' ],
+            -flow_into  => WHEN(
+                '#reuse_member_db#' => 'check_reuse_db_is_patched',
+                ELSE 'copy_ncbi_tables_factory',
+            ),
         },
 
         {   -logic_name => 'copy_ncbi_tables_factory',
