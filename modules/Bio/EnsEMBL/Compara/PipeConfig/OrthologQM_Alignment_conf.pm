@@ -238,7 +238,8 @@ sub pipeline_analyses {
             -parameters    => {
                 'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align_block',       
+                'table'       => 'genomic_align_block',
+                'mode'        => 'topup',     
              },
             -analysis_capacity => 1,
             -flow_into => { 1 => [ 'copy_genomic_aligns' ] },
@@ -249,7 +250,8 @@ sub pipeline_analyses {
             -parameters    => {
                 'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align',       
+                'table'       => 'genomic_align',
+                'mode'        => 'topup',      
              },
             -analysis_capacity => 1,
         },
