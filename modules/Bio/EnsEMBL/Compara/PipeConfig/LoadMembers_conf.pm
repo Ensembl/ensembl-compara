@@ -278,8 +278,8 @@ sub pipeline_analyses {
             },
             -rc_name => '4Gb_job',
             -flow_into  => [ 'check_reusability' ],
-            -batch_size => 10,
-            -hive_capacity => 30,
+            -hive_capacity => $self->o('loadmembers_capacity'),
+            -batch_size => $self->o('loadmembers_capacity'),    # Simple heuristic
             -max_retry_count => 2,
         },
 
@@ -304,7 +304,7 @@ sub pipeline_analyses {
                 'reuse_db'          => '#reuse_member_db#',
             },
             -batch_size => 5,
-            -hive_capacity => 30,
+            -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '8Gb_job',
             -flow_into => {
                 2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
