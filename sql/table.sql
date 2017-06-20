@@ -140,6 +140,8 @@ CREATE TABLE ncbi_taxa_name (
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
 @column genome_component  Only used for polyploid genomes: the name of the genome component
+@column strain_name       Name of the particular strain this GenomeDB refers to
+@column display_name      Named used for display purposes. Imported from the core databases
 @column locator           Used for production purposes or for user configuration in in-house installation.
 @column first_release     The first release this genome was present in
 @column last_release      The last release this genome was present in, or NULL if it is still current
