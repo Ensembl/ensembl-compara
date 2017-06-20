@@ -76,24 +76,24 @@ sub default_options {
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'pipeline_name'         => 'pecan_24way',
-        'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('pipeline_name'),
-#	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+	'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('pipeline_name'),
+	'do_not_reuse_list'     => [ -1,155,139,122,158,87,174,46,125,157,147,123,134,61,108,111,153,135,112,60,151,132,43,117,150 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
     # blast parameters:
-        'blast_capacity'        => 100,
-        'reuse_capacity'        => 100,
+    'blast_capacity'        => 100,
+    'reuse_capacity'        => 100,
 
     #location of full species tree, will be pruned
-        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.24amniots.branch_len.nw', 
+    'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.24amniots.branch_len.nw', 
 
     #master database
-        'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+    'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
     #Pecan default parameters
     'java_options'      => '-server -Xmx1000M',
-    'java_options_mem1' => '-server -Xmx2500M -Xms2000m',
-    'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
-    'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
+    'java_options_mem1' => '-server -Xmx3500M -Xms3000m',
+    'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
+    'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
 
     'pecan_jar'         => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
 
@@ -114,7 +114,7 @@ sub default_options {
             -port   => 4522,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_pecan_24way_'.$self->o('rel_with_suffix'),
+            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -144,6 +144,15 @@ sub default_options {
 	   -driver => 'mysql',
         },
 
+        #production database
+        'production_db' => {   # required by the load_fresh_members analysis
+           -host   => 'mysql-ens-sta-1',
+           -port   => 4519,
+           -user   => 'ensro',
+           -pass   => '',
+           -dbname => 'ensembl_production',
+       -driver => 'mysql',
+        },
 	#Testing mode
         'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ensembldb.ensembl.org',
@@ -184,12 +193,14 @@ sub resource_classes {
          '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
          '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
-         '7.5Gb' =>  { 'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-         '11.4Gb' => { 'LSF' => '-C0 -M11400 -R"select[mem>11400] rusage[mem=11400]"' },
-         '14Gb' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-         '14Gb_long_job' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]" -q long' }, 
+	 '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
+         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
+         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
          'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
          'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800] rusage[mem=3800]"' },
+         
+
+
     };
 }
 

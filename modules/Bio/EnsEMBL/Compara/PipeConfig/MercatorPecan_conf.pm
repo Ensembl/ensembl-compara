@@ -75,7 +75,7 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'pipeline_name'         => 'pecan_23way',
+	'pipeline_name'         => 'pecan_24way',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
@@ -97,9 +97,9 @@ sub default_options {
     #Pecan default parameters
     'max_block_size'    => 1000000,
     'java_options'      => '-server -Xmx1000M',
-    'java_options_mem1' => '-server -Xmx2500M -Xms2000m',
-    'java_options_mem2' => '-server -Xmx4500M -Xms4000m',
-    'java_options_mem3' => '-server -Xmx6500M -Xms6000m',
+    'java_options_mem1' => '-server -Xmx3500M -Xms3000m',
+    'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
+    'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
@@ -160,10 +160,9 @@ sub resource_classes {
          '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
          '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
-         '7.5Gb' =>  { 'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-         '11.4Gb' => { 'LSF' => '-C0 -M11400 -R"select[mem>11400] rusage[mem=11400]"' },
-         '14Gb' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-         '14Gb_long_job' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]" -q long' }, 
+         '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
+         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
+         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
          'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11]"' },
          'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11]"' },
     };
@@ -390,7 +389,9 @@ sub pipeline_analyses {
         {   -logic_name => 'load_fresh_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {'coding_exons' => 1,
-			    'min_length' => 20 },
+			    'min_length' => 20,
+                'production_db_url' => $self->dbconn_2_url('production_db'),
+                },
 	    -rc_name => '1.8Gb',
         },
 
@@ -498,12 +499,22 @@ sub pipeline_analyses {
              -hive_capacity => 1,
 	     -rc_name => '3.6Gb',
              -flow_into => {
-                 '2->A' => [ 'pecan' ],
+                 '2->A' => [ 'pecan_job_delegator' ],
                  'A->1' => [ 'update_max_alignment_length' ],
              },
          },
 
 # ---------------------------------------------[pecan]---------------------------------------------------------------------
+         {  -logic_name => 'pecan_job_delegator',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan_mem_decision',
+            -flow_into  => {
+                2 => ['pecan'],
+                3 => ['pecan_mem1'],
+                4 => ['pecan_mem2'],
+                5 => ['pecan_mem3'],
+            },
+        },
+
 
          {   -logic_name => 'pecan',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
@@ -535,7 +546,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 1,
-	     -rc_name => '7.5Gb',
+	     -rc_name => '7Gb',
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -553,7 +564,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 1,
-	     -rc_name => '11.4Gb',
+	     -rc_name => '14Gb',
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -571,7 +582,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 1,
-	     -rc_name => '14Gb',
+	     -rc_name => '30Gb',
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
