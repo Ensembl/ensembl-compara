@@ -303,7 +303,6 @@ sub pipeline_analyses {
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 'reuse_db'          => '#reuse_member_db#',
             },
-            -batch_size => 5,
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '1Gb_job',
             -flow_into => {
