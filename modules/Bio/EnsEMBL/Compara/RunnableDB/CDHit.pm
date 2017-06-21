@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::RunnableDB::CDHit
 =head1 DESCRIPTION
 
 Conctenates *.fasta in the param 'fasta_dir' and run cd-hit on it. 
-Then parse the output into seq_member_projection.
+Then parse the output clusters into seq_member_projection.
 
 =cut
 
@@ -53,38 +53,29 @@ sub run {
     my $self = shift;
 
     my $cdhit_exe       = $self->param_required('cdhit_exe');
-    # my $fasta_db        = $self->param_required('fasta_name');
     my $cdhit_threshold = $self->param_required('cdhit_identity_threshold');
     my $fasta_dir       = $self->param_required('fasta_dir');
 
     my $genome_db_ids = $self->param_required('genome_db_ids'); # die now, rather than running whole thing and dying @ write_output
-    # die "Database '$fasta_db' does not exist!" unless ( -e $fasta_db );
 
-    unless ( defined $self->param('cluster_file' ) &&
-             defined $self->param('cdhit_outfile')) {
+    unless ( defined $self->param('cluster_file')) {
 
         my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
-        # my $tmp_dir = $fasta_dir;
         my $fasta_db = "$tmp_dir/multispecies_db.fa";
-        system("cat $fasta_dir/*.fasta > $fasta_db"); # == 0 or die "Error concatenating fasta files from $fasta_dir to $fasta_db";
+        system("cat $fasta_dir/*.fasta > $fasta_db") == 0 or die "Error concatenating fasta files from $fasta_dir to $fasta_db";
         my $cdhit_mem = $self->param_required('cdhit_memory_in_mb');
         my $cdhit_num_threads = $self->param_required('cdhit_num_threads');
         my $cmd = "$cdhit_exe -i $fasta_db -o $tmp_dir/blastdb -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads";
         print " --- $cmd\n" if $self->debug;
-        system($cmd); # == 0 or die "Error running command: $cmd";
+        system($cmd) == 0 or die "Error running command: $cmd";
 
         my ($cluster_file, $cdhit_outfile) = ("$tmp_dir/blastdb.clstr", "$tmp_dir/cdhit.out");
-        die "Problem finding cd-hit output: $cluster_file\n"  unless ( -e $cluster_file   );
-        # die "Problem finding cd-hit output: $cdhit_outfile\n" unless ( -e  $cdhit_outfile );
         $self->param( 'cluster_file',  $cluster_file  );
-        $self->param( 'cdhit_outfile', $cdhit_outfile );
     }
 
-    #$self->reinclude_filtered_sequences; # cd-hit filters out sequences with ambiguous characters - add them back into blast db
+    die "Problem finding cd-hit output: " . $self->param('cluster_file') . "\n"  unless ( -e $self->param('cluster_file') );
+    
     my $clusters = $self->parse_clusters; # prepare clusters for seq_member_projection table
-    # my $filtered = $self->parse_filtered_sequences; # cd-hit filters out sequences with ambiguous characters - catch them
-    # my @seq_projections = ( @$clusters, @$filtered );
-    # $self->param( 'seq_projections', \@seq_projections );
 }
 
 sub write_output {
@@ -100,59 +91,6 @@ sub write_output {
     my $br3_dataflow = $self->param('seq_projections');
     $self->dataflow_output_id( $br3_dataflow, 3 ); # to seq_member_projection table
 }
-
-sub parse_filtered_sequences {
-    my $self = shift;
-
-    open(CDHIT_OUT, '<',  $self->param_required('cdhit_outfile'));
-    my @filtered_seq_member_ids;
-    while ( my $line = <CDHIT_OUT> ) {
-        chomp $line;
-        if ( $line =~ m/^>([0-9]+)/ ) {
-            push( @filtered_seq_member_ids, $1 );
-        }
-    }
-
-    my @filtered_projs;
-    foreach my $filt ( @filtered_seq_member_ids ) {
-        push( @filtered_projs, { source_seq_member_id => $filt  } );
-    }
-    # $self->param( 'seq_projections', @seq_projections );
-    return \@filtered_projs;
-}
-
-# sub reinclude_filtered_sequences {
-#     my $self = shift;
-
-#     open(CDHIT_OUT, '<',  $self->param_required('cdhit_outfile'));
-#     open(BLASTDB,   '>>', $self->param_required('blastdb_file'));
-    
-#     my ( $fasta_capture, $this_fasta_seq );
-#     while ( my $line = <CDHIT_OUT> ) {
-#         chomp $line;
-#         if ( $line =~ m/^>/ ) { # start of fasta sequence
-#             $fasta_capture = 1;
-#         }
-#         elsif ( $fasta_capture && $line =~ m/[^>A-Z*]+/ ) { # end of fasta sequence - append it to blastdb
-#             print BLASTDB "$this_fasta_seq";
-            
-#             $fasta_capture = 0;
-#             $this_fasta_seq = '';
-#         }
-
-#         $this_fasta_seq .= "$line\n" if ( $fasta_capture ); # capture open fasta sequences
-#     }
-
-#     close CDHIT_OUT;
-#     close BLASTDB;
-# }
-
-# >Cluster 19801
-# 0       45aa, >621010... *
-# 1       45aa, >622175... at 100.00%
-# 2       45aa, >622235... at 100.00%
-# >Cluster 19802
-# 0       45aa, >943204... *
 
 sub parse_clusters {
     my $self = shift;
@@ -183,7 +121,6 @@ sub parse_clusters {
     push( @seq_projections, @{ $self->_cluster_to_seq_projection( \@this_cluster ) } );
 
     $self->param('seq_projections', \@seq_projections);
-    # return \@seq_projections;
 }
 
 sub _cluster_to_seq_projection {
@@ -199,12 +136,6 @@ sub _cluster_to_seq_projection {
             $rep_seq = $1;
         }
     }
-
-    # even if nothing is projected (i.e. only one seq in cluster), we still want to flow
-    # it as a representative sequence for downstream dumping of sequences which will rely on
-    # the seq_member_projection table
-    # @projection = ({}) unless defined $projection[0];
-
 
     foreach my $pro ( @projection ) {
         $pro->{source_seq_member_id} = $rep_seq;

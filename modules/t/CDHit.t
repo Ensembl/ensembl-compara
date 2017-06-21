@@ -22,16 +22,17 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
 BEGIN {
     use Test::Most;
-    use File::Compare;
-    use File::Temp qw(tempdir);
-    use File::Copy qw(copy);
 }
+
+# find absolute path to the test output
+# important for travis-ci
+use Cwd 'abs_path';
+my $test_path = abs_path($0);
+my $cluster_file = $test_path;
+$cluster_file =~ s!CDHit\.t!cdhit_data/test.clstr!;
 
 # check module can be seen and compiled
 use_ok('Bio::EnsEMBL::Compara::RunnableDB::CDHit'); 
-
-# my $tmp = tempdir( CLEANUP => 1 );
-# copy 'cdhit_data/test.fastadb', "$tmp/test.blastdb";
 
 my ( $branch1_dataflow, $branch2_dataflow );
 
@@ -72,11 +73,11 @@ standaloneJob(
 	{ # input param hash
 		'cdhit_exe'                => 'fake_cdhit',
 		'cdhit_identity_threshold' => 100,
-		#'fasta_name'               => 'cdhit_data/test.fastadb',
 		'fasta_dir'                => 'cdhit_data',
 		'genome_db_ids'            => [134, 150, 125],
-		'cluster_file'             => 'cdhit_data/test.clstr',
-		'cdhit_outfile'            => 'cdhit_data/test.out',
+		'cluster_file'             => $cluster_file,
+		'cdhit_memory_in_mb'       => 8000,
+		'cdhit_num_threads'        => 4,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
@@ -91,8 +92,5 @@ standaloneJob(
         ]
 	]
 );
-
-# test that blast database file is as expected
-# ok( compare("$tmp/test.blastdb", 'cdhit_data/test.exp.blastdb') == 0, 'blast database contents ok' );
 
 done_testing();
