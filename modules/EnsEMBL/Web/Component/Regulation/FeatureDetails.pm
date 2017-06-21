@@ -24,6 +24,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
 
 use base qw(EnsEMBL::Web::Component::Regulation);
 
@@ -79,25 +80,32 @@ sub content {
     if ($activity eq 'Active') {
       $colour_key = $object->feature_type->name;
     }
+    my $tooltip = '';
+    if ($activity eq 'Na') {
+      $activity = 'N/A';
+      $tooltip = 'Insufficient data available to predict activity level';
+    }
     my $bg_colour = lc $colours->{lc($colour_key)}{'default'};
     ## Note - hex_by_name includes the hash symbol at the beginning
     my $contrast  = $bg_colour ? $colourmap->hex_by_name($colourmap->contrast($bg_colour)) : '#000000';
     if ($data->{$activity}) {
       $data->{$activity}{'colour'}    = $contrast;
       $data->{$activity}{'bg_colour'} = $bg_colour;
+      $data->{$activity}{'tooltip'}   = $tooltip;
       push @{$data->{$activity}{'entries'}}, $name;
     }
     else {
-      $data->{$activity} = {'entries' => [$name], 'colour' => $contrast, 'bg_colour' => $bg_colour};
+      $data->{$activity} = {'entries' => [$name], 'colour' => $contrast, 'bg_colour' => $bg_colour, 'tooltip' => $tooltip};
     }
     $total++;
   }
 
   my $col_width = int(100 / scalar keys %$data);
   my (@columns, $row);
-  while (my($activity, $info) = each(%$data)) {
+  foreach my $activity (sort keys %$data) {
+    my $info = $data->{$activity};
     my $title = sprintf '%s (%s/%s)', $activity, scalar @{$info->{'entries'}}, $total;
-    push @columns, {'key' => $activity, 'title' => $title, 'width' => $col_width, 
+    push @columns, {'key' => $activity, 'label' => helptip($title, $info->{'tooltip'}), 'width' => $col_width, 
                     'style' => sprintf 'color:%s;background-color:#%s', $info->{'colour'}, $info->{'bg_colour'}};
     $row->{$activity} = join('<br/>', @{$info->{'entries'}});
   }
