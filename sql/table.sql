@@ -881,7 +881,7 @@ CREATE TABLE constrained_element (
   dnafrag_end int(12) unsigned NOT NULL,
   dnafrag_strand int(2) not null,
   method_link_species_set_id int(10) unsigned NOT NULL,
-  p_value double,
+  p_value double NOT NULL DEFAULT 0,
   score double NOT NULL default 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -1153,7 +1153,7 @@ CREATE TABLE seq_member_projection_stable_id (
 CREATE TABLE seq_member_projection (
   source_seq_member_id      int(10) unsigned NOT NULL,
   target_seq_member_id      int(10) unsigned NOT NULL,
-  identity                  DEC(5,2),
+  identity                  float(5,2) NOT NULL,
 
   FOREIGN KEY (source_seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
