@@ -2188,6 +2188,10 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_89_90_c.sql|constrained_element_pvalue_not_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_89_90_d.sql|genomic_align_tree_left_node_id_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_e.sql|seq_member_projection');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_f.sql|gene_member_missing_biotype_groups');
 
 
 

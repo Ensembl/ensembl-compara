@@ -13,12 +13,12 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_88_89_a.sql
+# patch_89_90_a.sql
 #
 # Title: Update schema version.
 #
 # Description:
-#   Update schema_version in meta table to 89.
+#   Update schema_version in meta table to 90.
 
 DELETE FROM meta WHERE meta_key='schema_version';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '90');
