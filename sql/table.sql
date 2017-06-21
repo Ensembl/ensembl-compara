@@ -723,7 +723,7 @@ CREATE TABLE genomic_align_block (
 
 CREATE TABLE genomic_align_tree (
   node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
-  parent_id                   bigint(20) unsigned NOT NULL default 0,
+  parent_id                   bigint(20) unsigned DEFAULT NULL,
   root_id                     bigint(20) unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
   right_index                 int(10) NOT NULL default 0,
@@ -1105,6 +1105,33 @@ CREATE TABLE exon_boundaries (
 	left_over        TINYINT(1) DEFAULT 0 NOT NULL,
 	INDEX (seq_member_id),
 	INDEX (gene_member_id)
+) ENGINE=MyISAM;
+
+
+/**
+@table seq_member_projection
+@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering
+@colour   #1E90FF
+
+@example   The following query shows the projections of the mouse gene Pdk3 to all the other species
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+
+@column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this gene was annotated by projection of source_seq_member_id
+
+@see seq_member
+*/
+
+CREATE TABLE seq_member_projection (
+  source_seq_member_id      int(10) unsigned NOT NULL,
+  target_seq_member_id      int(10) unsigned NOT NULL,
+  identity                  DEC(5,2),
+
+  FOREIGN KEY (source_seq_member_id) REFERENCES seq_member(seq_member_id),
+  FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
+
+  PRIMARY KEY (target_seq_member_id),
+  KEY (source_seq_member_id)
 ) ENGINE=MyISAM;
 
 
@@ -2118,7 +2145,7 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '89');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '90');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
@@ -2126,5 +2153,9 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_88_89_a.sql|schema_version');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_b.sql|genomic_align_tree_parent_id_null');
+
 
 
