@@ -49,7 +49,6 @@ $branch2_dataflow = [
 	  target_seq_member_id => 622235, 
 	  identity => '100.00' 
 	},
-	{ source_seq_member_id => 943204 },
 	{ source_seq_member_id => 768254, 
 	  target_seq_member_id => 768261, 
 	  identity => '100.00'
@@ -66,9 +65,6 @@ $branch2_dataflow = [
 	  target_seq_member_id => 768620, 
 	  identity => '100.00' 
 	},
-	{ source_seq_member_id => 634759 },
-	{ source_seq_member_id => 770780 },
-	{ source_seq_member_id => 1496856 },
 ];
 
 standaloneJob(

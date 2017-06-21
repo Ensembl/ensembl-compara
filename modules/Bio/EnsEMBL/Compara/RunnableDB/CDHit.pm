@@ -57,33 +57,34 @@ sub run {
     my $cdhit_threshold = $self->param_required('cdhit_identity_threshold');
     my $fasta_dir       = $self->param_required('fasta_dir');
 
+    my $genome_db_ids = $self->param_required('genome_db_ids'); # die now, rather than running whole thing and dying @ write_output
     # die "Database '$fasta_db' does not exist!" unless ( -e $fasta_db );
 
     unless ( defined $self->param('cluster_file' ) &&
              defined $self->param('cdhit_outfile')) {
 
-        # my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
-        my $tmp_dir = $fasta_dir;
-        my $fasta_db = "$tmp_dir/multispecies_db.fasta";
+        my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
+        # my $tmp_dir = $fasta_dir;
+        my $fasta_db = "$tmp_dir/multispecies_db.fa";
         system("cat $fasta_dir/*.fasta > $fasta_db"); # == 0 or die "Error concatenating fasta files from $fasta_dir to $fasta_db";
         my $cdhit_mem = $self->param_required('cdhit_memory_in_mb');
         my $cdhit_num_threads = $self->param_required('cdhit_num_threads');
-        my $cmd = "$cdhit_exe -i $fasta_db -o $tmp_dir/blastdb -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads > $tmp_dir/cdhit.out";
+        my $cmd = "$cdhit_exe -i $fasta_db -o $tmp_dir/blastdb -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads";
         print " --- $cmd\n" if $self->debug;
         system($cmd); # == 0 or die "Error running command: $cmd";
 
         my ($cluster_file, $cdhit_outfile) = ("$tmp_dir/blastdb.clstr", "$tmp_dir/cdhit.out");
         die "Problem finding cd-hit output: $cluster_file\n"  unless ( -e $cluster_file   );
-        die "Problem finding cd-hit output: $cdhit_outfile\n" unless ( -e  $cdhit_outfile );
+        # die "Problem finding cd-hit output: $cdhit_outfile\n" unless ( -e  $cdhit_outfile );
         $self->param( 'cluster_file',  $cluster_file  );
         $self->param( 'cdhit_outfile', $cdhit_outfile );
     }
 
     #$self->reinclude_filtered_sequences; # cd-hit filters out sequences with ambiguous characters - add them back into blast db
     my $clusters = $self->parse_clusters; # prepare clusters for seq_member_projection table
-    my $filtered = $self->parse_filtered_sequences; # cd-hit filters out sequences with ambiguous characters - catch them
-    my @seq_projections = ( @$clusters, @$filtered );
-    $self->param( 'seq_projections', \@seq_projections );
+    # my $filtered = $self->parse_filtered_sequences; # cd-hit filters out sequences with ambiguous characters - catch them
+    # my @seq_projections = ( @$clusters, @$filtered );
+    # $self->param( 'seq_projections', \@seq_projections );
 }
 
 sub write_output {
@@ -181,8 +182,8 @@ sub parse_clusters {
     # catch final cluster!
     push( @seq_projections, @{ $self->_cluster_to_seq_projection( \@this_cluster ) } );
 
-    # $self->param('seq_projections', \@seq_projections);
-    return \@seq_projections;
+    $self->param('seq_projections', \@seq_projections);
+    # return \@seq_projections;
 }
 
 sub _cluster_to_seq_projection {
@@ -202,7 +203,9 @@ sub _cluster_to_seq_projection {
     # even if nothing is projected (i.e. only one seq in cluster), we still want to flow
     # it as a representative sequence for downstream dumping of sequences which will rely on
     # the seq_member_projection table
-    @projection = ({}) unless defined $projection[0];
+    # @projection = ({}) unless defined $projection[0];
+
+
     foreach my $pro ( @projection ) {
         $pro->{source_seq_member_id} = $rep_seq;
     }

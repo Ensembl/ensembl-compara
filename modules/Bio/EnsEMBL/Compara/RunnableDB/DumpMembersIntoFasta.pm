@@ -98,7 +98,8 @@ sub fetch_input {
     my @members;
     if ( $self->param('only_representative') ) {
         foreach my $gdb ( @gdb_ids ) {
-            push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($gdb) });
+            push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_canonical_for_blast_by_genome_db_id($gdb) });
+            # push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($gdb) });
         }
     } else {
         foreach my $gdb ( @gdb_ids ) {

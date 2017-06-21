@@ -169,7 +169,10 @@ sub _fetch_all_representative_for_blast_by_genome_db_id {
 sub _fetch_all_representative_for_blast_by_genome_db_id {
     my ($self, $genome_db_id) = @_;
 
-    my $join = [[['seq_member_projection', 'left_source_proj'], 'left_source_proj.source_seq_member_id = m.seq_member_id'] ];
+    # SELECT seq_member_id FROM seq_member LEFT JOIN seq_member_projection ON seq_member_id = target_seq_member_id WHERE target_seq_member_id IS NULL
+
+    # my $join = [[['seq_member_projection', 'left_source_proj'], 'left_source_proj.target_seq_member_id = m.seq_member_id'] ];
+    my $join = [[['seq_member_projection', 'left_projection'], 'left_projection.target_seq_member_id IS NULL'] ];
     my $constraint = 'm.genome_db_id = ?';
     my $final_clause = 'GROUP BY seq_member_id';
     $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
@@ -305,7 +308,7 @@ sub _store_exon_boundaries_for_SeqMember {
 sub _left_join {
     return (
         ['seq_member_projection left_projection', 'left_projection.target_seq_member_id = m.seq_member_id'],
-        ['seq_member_projection left_source_proj', 'left_source_proj.source_seq_member_id = m.seq_member_id'],
+        # ['seq_member_projection left_source_proj', 'left_source_proj.source_seq_member_id = m.seq_member_id'],
     );
 }
 

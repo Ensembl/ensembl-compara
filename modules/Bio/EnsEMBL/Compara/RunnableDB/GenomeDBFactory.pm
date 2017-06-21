@@ -132,6 +132,14 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift;
+    
+    foreach my $gdb (@{$self->param('genome_dbs')}) {
+        my $h = { 'genome_db_id' => $gdb->dbID };
+        foreach my $p (@{$self->param('extra_parameters')}) {
+            $h->{$p} = $gdb->$p;
+        }
+        $self->dataflow_output_id($h, $self->param('fan_branch_code'));
+    }
 
     # Dataflow the GenomeDBs
     if ( $self->param('arrayref_branch') ) {
@@ -140,14 +148,6 @@ sub write_output {
             push( @genome_db_id_list, $gdb->dbID );
         }
         $self->dataflow_output_id({ 'genome_db_ids' => \@genome_db_id_list }, $self->param('arrayref_branch')); # to cdhit
-    }
-    
-    foreach my $gdb (@{$self->param('genome_dbs')}) {
-        my $h = { 'genome_db_id' => $gdb->dbID };
-        foreach my $p (@{$self->param('extra_parameters')}) {
-            $h->{$p} = $gdb->$p;
-        }
-        $self->dataflow_output_id($h, $self->param('fan_branch_code'));
     }
     
 }
