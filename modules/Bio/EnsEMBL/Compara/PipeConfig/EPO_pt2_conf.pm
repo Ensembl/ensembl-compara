@@ -279,7 +279,20 @@ sub pipeline_analyses {
 		-parameters => {
 			'mapping_exe' => $self->o('mapping_exe'),
 		},
+                -flow_into => {
+                    -1 => 'map_anchors_himem',
+                },
 		-hive_capacity => 1000,
+		-max_retry_count => 1,
+	    },
+
+	    {	-logic_name     => 'map_anchors_himem',
+		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
+		-parameters => {
+			'mapping_exe' => $self->o('mapping_exe'),
+		},
+		-hive_capacity => 1000,
+                -rc_name => 'mem7500',
 		-max_retry_count => 1,
 	    },
 
