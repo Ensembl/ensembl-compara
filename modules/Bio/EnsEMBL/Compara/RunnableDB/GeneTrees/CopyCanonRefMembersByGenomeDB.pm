@@ -83,7 +83,7 @@ sub _copy_data_wrapper_join {
 
     my $input_query     = 'SELECT ' . $table . '.* FROM gene_member JOIN dnafrag USING (dnafrag_id) JOIN seq_member ON canonical_member_id = seq_member_id'
                           . ($extra_join ? ' JOIN '.$extra_join : '')
-                          . ' WHERE is_reference = 1'
+                          . ' WHERE is_reference = 1 AND has_translation_edits = 0'
                           . ($biotype_filter ? ' AND '.$biotype_filter : '');
 
     $self->_copy_data_wrapper($table, $input_query, 'gene_member.');
