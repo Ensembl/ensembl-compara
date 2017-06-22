@@ -71,13 +71,26 @@ sub get_data {
   }
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
 
-  my $drawable = []; 
-  my $legend_entries = [];
+  my $drawable        = []; 
+  my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
+  my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
+  my $flanking_seen   = 0;
   foreach my $rf (@{$reg_feats||[]}) {
     my ($type, $is_activity)  = $self->colour_key($rf);
+
+    ## Do legend stuff
+    if ($is_activity) {
+      push @$activities, $type;
+    }
+    else {
+      push @$legend_entries, $type;
+    }
+
+    ## Create feature hash for drawing
     my $colour  = $self->my_colour($type, $is_activity) || '#e1e1e1';
     my $text    = $self->my_colour($type,'text');
-    my $extra_blocks = $self->get_structure($rf, $type, $colour);
+    my ($extra_blocks, $has_flanking) = $self->get_structure($rf, $type, $colour);
+    $flanking_seen = 1 if $has_flanking;
     push @$drawable,{
       colour        => $colour,
       label_colour  => $colour,
@@ -87,9 +100,14 @@ sub get_data {
       href          => $self->href($rf),
       extra_blocks  => $extra_blocks,
     };
-    push @$legend_entries, [$type, $colour];
   }
-  $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
+
+  push @$legend_entries, 'promoter_flanking' if $flanking_seen;
+
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $legend_entries;
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
 
   #use Data::Dumper; warn Dumper($drawable);
   return [{
@@ -126,6 +144,7 @@ sub get_structure {
   my $bound_end = pop @$loci;
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
+  my $has_flanking = 0;;
 
   my $extra_blocks = [];
   if ($bound_start < $start || $bound_end > $end) {
@@ -139,6 +158,7 @@ sub get_structure {
       end    => $bound_end,
       colour => $flank_colour,
     };
+    $has_flanking = 1;
   }
 
   # Motif features
@@ -151,7 +171,7 @@ sub get_structure {
                           };
   }
   
-  return $extra_blocks;
+  return ($extra_blocks, $has_flanking);;
 }
 
 sub colour_key {
