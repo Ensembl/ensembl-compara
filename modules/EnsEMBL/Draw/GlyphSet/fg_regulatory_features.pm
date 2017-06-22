@@ -84,6 +84,7 @@ sub get_data {
       start         => $rf->start,
       end           => $rf->end,
       label         => $text,
+      href          => $self->href($rf),
       extra_blocks  => $extra_blocks,
     };
     push @$legend_entries, [$type, $colour];
