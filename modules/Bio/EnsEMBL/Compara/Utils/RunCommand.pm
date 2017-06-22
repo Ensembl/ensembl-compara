@@ -61,8 +61,6 @@ sub new_and_exec {
     my $debug   = $options->{debug};
     my $timeout = $options->{timeout};
 
-    # Simpler version of what eHive can do: we assume the array can be
-    # simply joined without having to quote and escape the arguments
     my $flat_cmd = ref($cmd) ? join_command_args(@$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
     my $cmd_to_run = $cmd;
