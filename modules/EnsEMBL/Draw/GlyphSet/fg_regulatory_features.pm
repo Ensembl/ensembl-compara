@@ -75,8 +75,10 @@ sub get_data {
   my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
   my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
   my $flanking_seen   = 0;
+  my ($flank_colour, $extra_blocks);
   foreach my $rf (@{$reg_feats||[]}) {
     my ($type, $activity)  = $self->colour_key($rf);
+    $extra_blocks = undef; ## reset if necessary
 
     ## Create feature hash for drawing
     my $text    = $self->my_colour($type,'text');
@@ -84,6 +86,7 @@ sub get_data {
     ## Determine colour and pattern
     my $key     = $activity =~ /active/ ? $type : $activity;
     my $colour  = $self->my_colour($key) || '#e1e1e1';
+    warn ">>> TYPE $type (ACTIVITY $activity) -> KEY $key = COLOUR $colour";
     my ($pattern, $patterncolour, $bordercolour);
     if ($activity eq 'inactive') {
       $pattern        = 'hatch_thicker';
@@ -94,8 +97,19 @@ sub get_data {
       $bordercolour = 'grey50';
     }
 
-    my ($extra_blocks, $has_flanking) = $self->get_structure($rf, $type, $colour);
-    $flanking_seen = 1 if $has_flanking;
+    ## Do legend colours and styles
+    unless ($text =~ /unknown/i) {
+      my $legend_params = {'text' => $text, 'colour' => $colour};
+      if ($activity =~ /active/) {
+        push @$legend_entries, $legend_params;
+      }
+      else {
+        push @$activities, $legend_params;
+      }
+    }
+
+    ($extra_blocks, $flank_colour) = $self->get_structure($rf, $type, $colour);
+    $flanking_seen = 1 if $flank_colour;
     my $params = {
       start         => $rf->start,
       end           => $rf->end,
@@ -114,18 +128,9 @@ sub get_data {
     }
 
     push @$drawable, $params;
-
-    ## Do legend stuff
-    if ($activity) {
-      push @$activities, $activity;
-    }
-    else {
-      push @$legend_entries, $type;
-    }
-
   }
 
-  push @$legend_entries, 'promoter_flanking' if $flanking_seen;
+  push @$legend_entries, {'text' => 'promoter_flanking', 'colour' => $flank_colour} if $flanking_seen;
 
   $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
   $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
@@ -147,11 +152,6 @@ sub get_data {
 sub get_structure {
   my ($self, $f, $type, $colour) = @_;
 
-  my $flank_colour = $colour;
-  if ($type eq 'promoter') {
-    $flank_colour = $self->my_colour('promoter_flanking');
-  }
-
   my $hub = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
   my $loci = [ map { $_->{'locus'} }
@@ -168,6 +168,10 @@ sub get_structure {
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
   my $has_flanking = 0;;
+  my $flank_colour = $colour;
+  if ($type eq 'promoter') {
+    $flank_colour = $self->my_colour('promoter_flanking');
+  }
 
   my $extra_blocks = [];
   if ($bound_start < $start || $bound_end > $end) {
@@ -184,6 +188,7 @@ sub get_structure {
     };
     $has_flanking = 1;
   }
+  $flank_colour = undef unless $has_flanking;
 
   # Motif features
   my $motifs = [];
@@ -195,7 +200,7 @@ sub get_structure {
                           };
   }
   
-  return ($extra_blocks, $has_flanking);;
+  return ($extra_blocks, $flank_colour);
 }
 
 sub colour_key {

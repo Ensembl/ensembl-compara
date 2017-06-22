@@ -57,13 +57,9 @@ sub _init {
   my $empty = 1;
 
   foreach (@features) {
-    my $legend = $self->my_colour($_, 'text'); 
-    
-    next if $legend =~ /unknown/i; 
-  
     $self->add_to_legend({
-      legend => $legend,
-      colour => $self->my_colour($_),
+      legend => $_->{'text'},,
+      colour => $_->{'colour'},
     });
     
     $empty = 0;
@@ -73,18 +69,15 @@ sub _init {
     $self->add_to_legend({
       legend => 'Activity in epigenome - Inactive',
       colour => 'black',
-      stripe => 'hatch_really_thick|grey90',
+      stripe => 'hatch_thicker|grey20',
     });
 
     if (scalar @activities) {
       $self->add_space;
       foreach (@activities) {
-        my $colour = $self->my_colour($_);
-        my $legend = $self->my_colour($_, 'text');
-        next if $legend =~ /unknown/i; 
         $self->add_to_legend({
-          legend => 'Activity in epigenome - '.$legend,
-          colour => $self->my_colour($_),
+          legend => 'Activity in epigenome - '.$_->{'text'},
+          colour => $_->{'colour'},
         });
       }
     }
