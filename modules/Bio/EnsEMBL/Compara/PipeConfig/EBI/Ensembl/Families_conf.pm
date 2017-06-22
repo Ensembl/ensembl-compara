@@ -73,8 +73,8 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-3',        # where the pipeline database will be created
-        'port'          => '4523',                      # server port
+        'host'          => 'mysql-ens-compara-prod-4',        # where the pipeline database will be created
+        'port'          => '4401',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
