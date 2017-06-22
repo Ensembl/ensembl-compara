@@ -56,12 +56,15 @@ sub draw_feature {
                   );
 
   ## Draw main feature 
-  my %params        = %defaults; 
-  my $x             = $feature->{'start'};
-  $x                = 0 if $x < 0;
-  $params{'x'}      = $x;
-  $params{'width'}  = $position->{'width'};
-  $params{'colour'} = $feature->{'colour'};
+  my %params                = %defaults; 
+  my $x                     = $feature->{'start'};
+  $x                        = 0 if $x < 0;
+  $params{'x'}              = $x;
+  $params{'width'}          = $position->{'width'};
+  $params{'colour'}         = $feature->{'colour'};
+  $params{'bordercolour'}   = $feature->{'bordercolour'};
+  $params{'pattern'}        = $feature->{'pattern'};
+  $params{'patterncolour'}  = $feature->{'patterncolour'};
   $composite->push($self->Rect(\%params));
 
   ## Draw internal structure, e.g. motif features

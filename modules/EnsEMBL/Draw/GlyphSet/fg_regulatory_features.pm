@@ -33,7 +33,7 @@ sub render_normal {
   $self->{'my_config'}->set('drawing_style', ['Feature::MultiBlocks']);
   $self->{'my_config'}->set('display_structure', 1);
   $self->{'my_config'}->set('bumped', 1);
-  $self->{'my_config'}->set('height', 12);
+  $self->{'my_config'}->set('height', 10);
   my $data = $self->get_data;
   $self->draw_features($data);
 }
@@ -76,30 +76,53 @@ sub get_data {
   my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
   my $flanking_seen   = 0;
   foreach my $rf (@{$reg_feats||[]}) {
-    my ($type, $is_activity)  = $self->colour_key($rf);
-
-    ## Do legend stuff
-    if ($is_activity) {
-      push @$activities, $type;
-    }
-    else {
-      push @$legend_entries, $type;
-    }
+    my ($type, $activity)  = $self->colour_key($rf);
 
     ## Create feature hash for drawing
-    my $colour  = $self->my_colour($type, $is_activity) || '#e1e1e1';
     my $text    = $self->my_colour($type,'text');
+
+    ## Determine colour and pattern
+    my $key     = $activity =~ /active/ ? $type : $activity;
+    my $colour  = $self->my_colour($key) || '#e1e1e1';
+    my ($pattern, $patterncolour, $bordercolour);
+    if ($activity eq 'inactive') {
+      $pattern        = 'hatch_thicker';
+      $patterncolour  ='grey20';
+    }
+    elsif ($activity eq 'na') {
+      $colour       = 'white';
+      $bordercolour = 'grey50';
+    }
+
     my ($extra_blocks, $has_flanking) = $self->get_structure($rf, $type, $colour);
     $flanking_seen = 1 if $has_flanking;
-    push @$drawable,{
-      colour        => $colour,
-      label_colour  => $colour,
+    my $params = {
       start         => $rf->start,
       end           => $rf->end,
       label         => $text,
       href          => $self->href($rf),
       extra_blocks  => $extra_blocks,
     };
+    if ($pattern || $bordercolour) {
+      $params->{'pattern'}        = $pattern;
+      $params->{'patterncolour'}  = $patterncolour;
+      $params->{'colour'}         = $colour;
+      $params->{'bordercolour'}   = $bordercolour;
+    }
+    else {
+      $params->{'colour'} = $colour;
+    }
+
+    push @$drawable, $params;
+
+    ## Do legend stuff
+    if ($activity) {
+      push @$activities, $activity;
+    }
+    else {
+      push @$legend_entries, $type;
+    }
+
   }
 
   push @$legend_entries, 'promoter_flanking' if $flanking_seen;
@@ -149,6 +172,7 @@ sub get_structure {
   my $extra_blocks = [];
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
+    $bound_start = 0 if $bound_start < 0;
     push @$extra_blocks, {
       start  => $bound_start,
       end    => $start,
@@ -194,21 +218,17 @@ sub colour_key {
     $type = 'Unclassified';
   }
 
-  my $is_activity = 0;
-  my $config      = $self->{'config'};
+  my $activity  = 'active';
+  my $config    = $self->{'config'};
   my $epigenome = $self->{'my_config'}->get('epigenome');
   if ($epigenome) {
-    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+    my $regact = $f->regulatory_activity_for_epigenome($epigenome);
     if ($regact) {
-      my $activity  = $regact->activity;
-      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
-        $type = $activity;
-        $is_activity = 1;
-      }
+      $activity  = $regact->activity;
     }
   }
 
-  return (lc $type, $is_activity);
+  return (lc $type, lc $activity);
 }
 
 sub href {
