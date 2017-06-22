@@ -214,6 +214,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'extra_parameters'  => ['name'],
+            },
             -flow_into => {
                 '2->A' => [ 'genome_member_copy' ],
                 'A->1' => [ 'hc_nonref_members' ],
@@ -228,6 +231,11 @@ sub pipeline_analyses {
             },
             -analysis_capacity => 10,
             -rc_name           => '250Mb_job',
+            -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'load_lrgs'),
+        },
+
+        {   -logic_name => 'load_lrgs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadLRGs',
         },
 
         {   -logic_name         => 'hc_nonref_members',
