@@ -64,8 +64,8 @@ sub default_options {
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-ens-compara-prod-2',
-            'port' => 4522,
+            'host' => 'mysql-treefam-prod',
+            'port' => 4401,
 
             # Must be given on the command line
             #'mlss_id'          => 40100,
@@ -129,7 +129,6 @@ sub resource_classes {
             '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
             '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
             '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-            '8Gb_long_job'                 => { 'LSF' => '-C0 -q long -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
             '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
 
             '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
@@ -138,12 +137,12 @@ sub resource_classes {
 
             # When we grab a machine in the long queue, let's keep it as long as we can
             # this is for other_paralogs
-            '250Mb_long_job'          => { 'LSF' => ['-C0 -q long -M250   -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
+            '250Mb_long_job'          => { 'LSF' => ['-C0 -M250 -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
             # this is for fast_trees
-            '8Gb_long_ncores_job'     => { 'LSF' => ['-C0 -q long -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
-            '32Gb_long_ncores_job'    => { 'LSF' => ['-C0 -q long -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
+            '8Gb_long_ncores_job'     => { 'LSF' => ['-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            '32Gb_long_ncores_job'    => { 'LSF' => ['-C0 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
             # this is for genomic_alignment_basement_himem
-            '8Gb_basement_ncores_job' => { 'LSF' => ['-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 2880' ] },
+            '8Gb_basement_ncores_job' => { 'LSF' => ['-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 2880' ] },
            };
 }
 
