@@ -235,7 +235,7 @@ sub update_single_peptide_tree {
 sub run_infernal {
   my $self = shift;
 
-  my $stk_output = $self->worker_temp_directory . "output.stk";
+  my $stk_output = $self->worker_temp_directory . "/output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
   my $cmalign_exe = $self->require_executable('cmalign_exe');
@@ -308,7 +308,7 @@ sub dump_model {
     unless (defined($nc_profile)) {
         return 1;
     }
-    my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
+    my $profile_file = $self->worker_temp_directory . "/" . $model_id . "_profile.cm";
     open FILE, ">$profile_file" or die "$!";
     print FILE $nc_profile;
     close FILE;

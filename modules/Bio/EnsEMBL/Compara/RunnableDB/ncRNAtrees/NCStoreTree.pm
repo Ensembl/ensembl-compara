@@ -58,7 +58,7 @@ sub _dumpMultipleAlignmentToWorkdir {
         $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
     }
 
-    my $file_root = $self->worker_temp_directory. "nctree_". $root_id;
+    my $file_root = $self->worker_temp_directory. "/nctree_". $root_id;
     $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
     my $aln_file = $file_root . ".aln";

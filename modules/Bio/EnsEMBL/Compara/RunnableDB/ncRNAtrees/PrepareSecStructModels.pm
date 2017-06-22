@@ -222,7 +222,7 @@ sub _run_bootstrap_raxml {
     $self->param('bootstrap_num', int($ideal_bootstrap_num) );
   }
 
-  my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
+  my $raxml_output = $self->worker_temp_directory . "/RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
 
   $self->store_newick_into_nc_tree('ml_it_'.$bootstrap_num, $raxml_output);
 
