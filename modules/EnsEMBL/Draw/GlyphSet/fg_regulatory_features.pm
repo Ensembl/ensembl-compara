@@ -88,7 +88,7 @@ sub get_data {
   }
   $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
 
-  use Data::Dumper; warn Dumper($drawable);
+  #use Data::Dumper; warn Dumper($drawable);
   return [{
     features => $drawable,
     metadata => {

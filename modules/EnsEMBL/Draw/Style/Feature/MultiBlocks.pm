@@ -38,37 +38,46 @@ sub draw_feature {
   return unless ($feature->{'colour'});
   my $total_height = $position->{'height'};
 
-  ## Set parameters
-  my $x = $feature->{'start'};
-  $x    = 0 if $x < 0;
-  my $params = {
-                  x           => $x,
-                  y           => $position->{'y'},
-                  width       => $position->{'width'},
-                  height      => $position->{'height'},
-                  href        => $feature->{'href'},
-                  title       => $feature->{'title'},
-                  colour      => $feature->{'colour'},
-                  absolutey   => 1,
-                };
-  #use Data::Dumper; warn Dumper($params);
+  ## Need to set y to 0 here, as a composite's components' y-coords are _added_ to this base y
+  my $composite = $self->Composite({
+                                      y       => 0,
+                                      height  => $position->{'height'},
+                                      title   => $feature->{'title'},
+                                      href    => $feature->{'href'},
+                                      class   => 'group',
+                                  });
 
-  push @{$self->glyphs}, $self->Rect($params);
+
+  ## Set default parameters
+  my %defaults = (
+                    y           => $position->{'y'},
+                    height      => $position->{'height'},
+                    colour      => $feature->{'colour'},
+                    absolutey   => 1,
+                  );
+
+  ## Draw main feature 
+  my %params        = %defaults; 
+  my $x             = $feature->{'start'};
+  $x                = 0 if $x < 0;
+  $params{'x'}      = $x;
+  $params{'width'}  = $position->{'width'};
+  $composite->push($self->Rect(\%params));
 
   ## Draw internal structure, e.g. motif features
   if ($feature->{'structure'} && $self->track_config->get('display_structure')) {
     foreach my $element (@{$feature->{'structure'}}) {
-      push @{$self->glyphs}, $self->Rect({
-          x         => $element->{'start'} - 1,
-          y         => $position->{'y'},
-          height    => $position->{'height'},
-          width     => $element->{'end'} - $element->{'start'} + 1,
-          absolutey => 1,
-          colour    => 'black',
-        });
+      $composite->push($self->Rect({
+                                    x         => $element->{'start'} - 1,
+                                    width     => $element->{'end'} - $element->{'start'} + 1,
+                                    colour    => 'black',
+                                    %defaults
+                                    }
+      ));
     }
   }
 
+  push @{$self->glyphs}, $composite;
   return $total_height;
 }
 
