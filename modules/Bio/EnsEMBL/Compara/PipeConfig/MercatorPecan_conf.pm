@@ -228,7 +228,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                'A->1' => [ 'create_mlss_ss' ],
+                'A->1' => [ 'create_reuse_ss' ],
             },
 	    -rc_name => '100Mb',
 	},
