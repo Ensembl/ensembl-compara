@@ -31,6 +31,8 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 sub render_normal {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::MultiBlocks']);
+  $self->{'my_config'}->set('display_structure', 1);
+  $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('height', 12);
   my $data = $self->get_data;
   $self->draw_features($data);
@@ -75,14 +77,14 @@ sub get_data {
     my ($type, $is_activity)  = $self->colour_key($rf);
     my $colour  = $self->my_colour($type, $is_activity) || '#e1e1e1';
     my $text    = $self->my_colour($type,'text');
-    my ($flanks, $motifs) = $self->get_structure($rf, $type, $colour);
+    my $extra_blocks = $self->get_structure($rf, $type, $colour);
     push @$drawable,{
       colour        => $colour,
       label_colour  => $colour,
       start         => $rf->start,
       end           => $rf->end,
       label         => $text,
-      structure     => $motifs,
+      extra_blocks  => $extra_blocks,
     };
     push @$legend_entries, [$type, $colour];
   }
@@ -124,27 +126,31 @@ sub get_structure {
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
 
-  my $flanks    = [];
+  my $extra_blocks = [];
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
-    push @$flanks, {
-      colour => $flank_colour,
+    push @$extra_blocks, {
       start  => $bound_start,
-      end    => $start
-    },{
+      end    => $start,
       colour => $flank_colour,
+    },{
       start  => $end,
-      end    => $bound_end
+      end    => $bound_end,
+      colour => $flank_colour,
     };
   }
 
   # Motif features
   my $motifs = [];
   while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
-    push @$motifs, {start => $mf_start, end => $mf_end};
+    push @$extra_blocks, {
+                          start   => $mf_start, 
+                          end     => $mf_end,
+                          colour  => 'black',
+                          };
   }
   
-  return ($flanks, $motifs);
+  return $extra_blocks;
 }
 
 sub colour_key {

@@ -52,7 +52,6 @@ sub draw_feature {
   my %defaults = (
                     y           => $position->{'y'},
                     height      => $position->{'height'},
-                    colour      => $feature->{'colour'},
                     absolutey   => 1,
                   );
 
@@ -62,15 +61,16 @@ sub draw_feature {
   $x                = 0 if $x < 0;
   $params{'x'}      = $x;
   $params{'width'}  = $position->{'width'};
+  $params{'colour'} = $feature->{'colour'};
   $composite->push($self->Rect(\%params));
 
   ## Draw internal structure, e.g. motif features
-  if ($feature->{'structure'} && $self->track_config->get('display_structure')) {
-    foreach my $element (@{$feature->{'structure'}}) {
+  if ($feature->{'extra_blocks'} && $self->track_config->get('display_structure')) {
+    foreach my $element (@{$feature->{'extra_blocks'}}) {
       $composite->push($self->Rect({
                                     x         => $element->{'start'} - 1,
                                     width     => $element->{'end'} - $element->{'start'} + 1,
-                                    colour    => 'black',
+                                    colour    => $element->{'colour'},
                                     %defaults
                                     }
       ));
@@ -79,6 +79,24 @@ sub draw_feature {
 
   push @{$self->glyphs}, $composite;
   return $total_height;
+}
+
+sub configure_bumping {
+  my ($self, $features) = @_;
+  
+  foreach my $f (@$features) {
+    ## Set defaults
+    $f->{'_bstart'} = $f->{'start'};
+    $f->{'_bend'}   = $f->{'end'};
+
+    ## Do we have any extra blocks outside the main feature?
+    if ($f->{'extra_blocks'}) {
+      foreach (@{$f->{'extra_blocks'}}) {
+        $f->{'_bstart'} = $_->{'start'} if $_->{'start'} < $f->{'_bstart'};
+        $f->{'_bend'} = $_->{'end'} if $_->{'end'} > $f->{'_bend'};
+      }
+    }
+  }
 }
 
 1;
