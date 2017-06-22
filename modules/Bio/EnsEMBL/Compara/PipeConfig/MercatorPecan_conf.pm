@@ -121,7 +121,10 @@ sub default_options {
      #Resource requirements
      #
      'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
-     'aligner_capacity' => 4000,
+    'pecan_capacity'        => 500,
+    'gerp_capacity'         => 500,
+    'blast_capacity'        => 100,
+    'reuse_capacity'        => 100,
 
      # stats report email
      'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
@@ -523,7 +526,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 1,
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem1'], #retry with more heap memory
@@ -544,7 +547,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '7Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem2'], #retry with even more heap memory
@@ -562,7 +565,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '14Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem3'], #retry with even more heap memory
@@ -580,7 +583,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '30Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
              },
@@ -595,7 +598,7 @@ sub pipeline_analyses {
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
-             -hive_capacity => 500,  
+             -hive_capacity => $self->o('gerp_capacity'),
              -flow_into => {
 		 -1 => [ 'gerp_himem'], #retry with more memory
              },
@@ -608,7 +611,7 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
              },
-            -hive_capacity => 500,  
+            -hive_capacity => $self->o('gerp_capacity'),
 	     -rc_name => 'higerp',
          },
 
