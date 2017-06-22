@@ -63,8 +63,9 @@ sub new_and_exec {
 
     my $flat_cmd = ref($cmd) ? join_command_args(@$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
+    my $use_bash_errexit = $options->{'use_bash_errexit'} // ($flat_cmd =~ /;/);
     my $cmd_to_run = $cmd;
-    if ($options->{'use_bash_pipefail'} or $flat_cmd =~ /;/) {
+    if ($options->{'use_bash_pipefail'} or $use_bash_errexit) {
         $cmd_to_run = ['bash' => ('-o' => 'errexit', $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (), '-c' => $flat_cmd)];
     }
 

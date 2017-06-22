@@ -113,7 +113,7 @@ sub run {
   push @ortheus_cmd, '-b', $self->param_required('tree_string');
   push @ortheus_cmd, '-h'; # output leaves only
 
-  my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1 });
+  my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1, 'use_bash_errexit' => 0 });
 
   my $trim_position = $self->get_best_trimming_position($cmd->out);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
