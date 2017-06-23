@@ -113,7 +113,16 @@ sub run {
   push @ortheus_cmd, '-b', $self->param_required('tree_string');
   push @ortheus_cmd, '-h'; # output leaves only
 
-  my $cmd = $self->run_command(\@ortheus_cmd, { 'die_on_failure' => 1, 'use_bash_errexit' => 0 });
+  my $cmd = $self->run_command(\@ortheus_cmd, { 'use_bash_errexit' => 0 });
+  if ($cmd->exit_code == 137 or $cmd->exit_code == 265) {
+      # OOM Killer in action
+      # Let's first wait to check whether the worker itself is going to be killed
+      sleep(30);
+      $self->dataflow_output_id(undef, -1);
+      $self->complete_early($self->param('ortheus_c_exe').' was killed because it was using too much memory.');
+  } elsif ($cmd->exit_code) {
+      die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->param('ortheus_c_exe'), $cmd->exit_code, $cmd->out, $cmd->err);
+  }
 
   my $trim_position = $self->get_best_trimming_position($cmd->out);
   $self->param('trimmed_anchor_aligns', $self->get_trimmed_anchor_aligns($trim_position));
