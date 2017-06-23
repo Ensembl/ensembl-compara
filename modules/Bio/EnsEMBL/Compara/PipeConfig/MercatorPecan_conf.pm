@@ -495,6 +495,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator',
              -parameters => {
 			     'input_dir' => $self->o('input_dir'),
+                             'mercator_exe' => $self->param('mercator_exe'),
 			    },
              -hive_capacity => 1,
 	     -rc_name => '3.6Gb',
