@@ -172,7 +172,7 @@ return
                 },
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                    '1->A' => [ 'create_ancestral_db', 'set_internal_ids' ],
+                    '1->A' => [ 'drop_ancestral_db', 'set_internal_ids' ],
                     'A->1' => [ 'copy_mlss' ],
                 },
             },
@@ -197,6 +197,15 @@ return
             },
 
 # ------------------------------------- create the ancestral db	
+{
+ -logic_name => 'drop_ancestral_db',
+ -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+ -parameters => {
+  'db_conn' => '#ancestral_db#',
+  'input_query' => 'DROP DATABASE IF EXISTS',
+  },
+  -flow_into => { 1 => 'create_ancestral_db' },
+},
 {
  -logic_name => 'create_ancestral_db',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
