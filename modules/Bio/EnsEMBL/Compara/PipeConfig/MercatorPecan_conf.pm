@@ -552,6 +552,7 @@ sub pipeline_analyses {
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem2'], #retry with even more heap memory
+		-1 => [ 'pecan_mem2'], #MEMLIMIT
 		-2 => [ 'pecan_mem2'], #RUNLIMIT
              },
          },
@@ -570,6 +571,7 @@ sub pipeline_analyses {
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem3'], #retry with even more heap memory
+		-1 => [ 'pecan_mem3'], #MEMLIMIT
 		-2 => [ 'pecan_mem3'], #RUNLIMIT
              },
          },
