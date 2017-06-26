@@ -28,7 +28,7 @@
 CREATE TABLE seq_member_projection (
   target_seq_member_id      int(10) unsigned NOT NULL,
   source_seq_member_id      int(10) unsigned NOT NULL,
-  identity                  FLOAT(5,2) NOT NULL,
+  identity                  FLOAT(5,2) DEFAULT NULL,
 
   FOREIGN KEY (target_seq_member_id) REFERENCES seq_member (seq_member_id),
   FOREIGN KEY (source_seq_member_id) REFERENCES seq_member (seq_member_id),
