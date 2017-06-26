@@ -107,7 +107,9 @@ sub get_data {
         $activities->{'inactive'}   = $legend_params;
       }
       else {
-        $legend_params->{'legend'} = 'Activity in epigenome: ' . $_ eq 'na' ? 'Insufficient evidence' : ucfirst($activity);
+        my $label = 'Activity in epigenome: ';
+        $label .= $_ eq 'na' ? 'Insufficient evidence' : ucfirst($activity);
+        $legend_params->{'legend'} = $label; 
         $activities->{$activity} = $legend_params;
       }
     }
