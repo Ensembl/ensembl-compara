@@ -138,8 +138,6 @@ sub run {
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
-    $self->param('reuse_this', 1); return;
-
     my $prev_hash = hash_all_canonical_members( $self->param('prev_core_dba') );
     my $curr_hash = hash_all_canonical_members( $self->param('curr_core_dba') );
     my ($removed, $remained1) = check_hash_equals($prev_hash, $curr_hash);
