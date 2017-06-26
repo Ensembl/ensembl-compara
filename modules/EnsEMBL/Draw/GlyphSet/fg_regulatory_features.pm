@@ -198,13 +198,15 @@ sub get_structure {
 
   # Motif features
   my $has_motifs = 0;
-  while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
-    push @$extra_blocks, {
-                          start   => $mf_start, 
-                          end     => $mf_end,
-                          colour  => 'black',
-                          };
-    $has_motifs = 1;
+  if ($activity eq 'active') {
+    while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
+      push @$extra_blocks, {
+                            start   => $mf_start, 
+                            end     => $mf_end,
+                            colour  => 'black',
+                            };
+      $has_motifs = 1;
+    }
   }
   
   return ($extra_blocks, $flank_colour, $has_motifs);
