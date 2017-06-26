@@ -1094,7 +1094,7 @@ sub _summarise_compara_db {
       where mls.species_set_id = ss.species_set_id
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
-        and ml.type LIKE "LASTZ_PATCH"
+        and ml.class = "GenomicAlignBlock.pairwise_alignment"
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
@@ -1296,7 +1296,7 @@ sub _summarise_compara_alignments {
   
   # get details of alignments
   my @where;
-  push @where,"is_reference = 0" unless $vega;
+  # push @where,"is_reference = 0" unless $vega;
   if(@method_link_species_set_ids) {
     my $mlss = join(',',@method_link_species_set_ids);
     push @where,"ga_ref.method_link_species_set_id in ($mlss)";

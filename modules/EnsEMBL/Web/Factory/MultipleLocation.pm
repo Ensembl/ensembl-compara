@@ -187,7 +187,7 @@ sub add_species {
         if ($species eq $self->species) {
           $paralogues++ unless $seq_region_name;
           if ($seq_region_name) {
-            push @haplotypes, $self->species_defs->species_label($species) . $seq_region_name;
+            push @haplotypes, $self->species_defs->species_label($species) . ' ' . $seq_region_name;
           }
         } else {
           push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
@@ -230,7 +230,7 @@ sub add_species {
       function => '_warning',
       code     => 'missing_species',
       message  => scalar @haplotypes > 1 ? 
-        'There are no alignments in this region for the following haplotypes / patches: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
+        'There are no alignments in this region for the following: <ul><li>' . join('</li><li>', @haplotypes) . '</li></ul>' :
         'There is no alignment in this region for ' . $haplotypes[0]
     });
   }

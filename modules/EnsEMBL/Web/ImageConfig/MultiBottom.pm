@@ -196,22 +196,27 @@ sub select_alignment_based_on_hierarchy {
 
   my $prioritised_alignments = {};
   my $hash_flag = {};
-  foreach my $order (keys %$alignments) {
-    for (my $i=0; $i<=$#$hierarchy; $i++) {
-      my $method = $hierarchy->[$i];
-      my $re = qr /$method/i;
-      foreach my $align (@{$alignments->{$order}}) {
-        if ($align->{type} =~ $re && !$hash_flag->{$align->{'species_set_id'}}) {
+  my ($align, $order, $i, $j, $method, $re);
+  foreach $order (keys %$alignments) {
+    for ($i=0; $i<=$#$hierarchy; $i++) {
+      $method = $hierarchy->[$i];
+      $re = qr /$method/i;
+
+      for ($j=0; $j<=$#{$alignments->{$order}}; $j++) {
+        $align = $alignments->{$order}->[$j];
+        if ($align->{type} =~ $re) {
           push @{$prioritised_alignments->{$order}}, $align;
-          $hash_flag->{$align->{'species_set_id'}} = 1;
           last;
         }
 
-        if (!$hash_flag->{$align->{'species_set_id'}} && $i == $#$hierarchy) {
+        if ($i == $#$hierarchy && $j == $#{$alignments->{$order}}) {
           push @{$prioritised_alignments->{$order}}, $align;
-          $hash_flag->{$align->{'species_set_id'}} = 1;
           last;
         }
+      }
+
+      if ($prioritised_alignments->{$order}) {
+        last;
       }
     }
   }
