@@ -293,9 +293,7 @@ sub set_core_params {
     my @param = $self->param($_);
     $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param if scalar @param;
     if ($_ eq 'vdb') {
-      my $value = $core_params->{'vdb'};
-      $value =~ s/core//;
-      $core_params->{'vdb'} = $value;
+      $core_params->{'vdb'} = 'variation';
     }
   }
 
