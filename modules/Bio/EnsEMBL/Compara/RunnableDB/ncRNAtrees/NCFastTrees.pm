@@ -142,7 +142,7 @@ sub _run_fasttree {
 
     my $fasttree_exe = $self->require_executable('fasttree_exe');
 
-    my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
+    my $fasttree_output = $self->worker_temp_directory . "/FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
 #    my $tag = 'ft_it_nj';
     my $cmd = $fasttree_exe;
