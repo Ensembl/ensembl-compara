@@ -57,12 +57,7 @@ sub _init {
   my $empty = 1;
 
   foreach (sort keys %$entries) {
-    $self->add_to_legend({
-      legend => $entries->{$_}{'text'},
-      colour => $entries->{$_}{'colour'},
-      border => $entries->{$_}{'border'},
-    });
-    
+    $self->add_to_legend($entries->{$_});
     $empty = 0;
   }
 
@@ -70,13 +65,7 @@ sub _init {
     if (scalar keys %$activities) {
       $self->add_space;
       foreach (sort keys %$activities) {
-        my $label = $_ eq 'na' ? 'Insufficient evidence' : $activities->{$_}{'text'};
-        $self->add_to_legend({
-          legend => "Activity in epigenome - $label",
-          colour => $activities->{$_}{'colour'},
-          border => $activities->{$_}{'border'},
-          stripe => $activities->{$_}{'stripe'},
-        });
+        $self->add_to_legend($activities->{$_});
       }
     }
   }

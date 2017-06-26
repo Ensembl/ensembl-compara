@@ -74,11 +74,8 @@ sub get_data {
   my $drawable        = []; 
   my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};
   my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || {};
-  my $flanking_seen   = 0;
-  my ($flank_colour, $extra_blocks);
   foreach my $rf (@{$reg_feats||[]}) {
     my ($type, $activity)  = $self->colour_key($rf);
-    $extra_blocks = undef; ## reset if necessary
 
     ## Create feature hash for drawing
     my $text    = $self->my_colour($type,'text');
@@ -100,23 +97,26 @@ sub get_data {
     unless ($text =~ /unknown/i) {
       my $legend_params = {'colour' => $colour, 'border' => $bordercolour};
       if ($activity eq 'active') {
-        $legend_params->{'text'}  = $text;
-        $entries->{$key}          = $legend_params;
+        $legend_params->{'legend'} = $text;
+        $entries->{$key} = $legend_params;
       }
       elsif ($activity eq 'inactive') { ## Only show one generic entry for all inactive features
         $legend_params->{'stripe'}  = $patterncolour;
         $legend_params->{'colour'}  = 'grey80';
-        $legend_params->{'text'}    = 'Inactive';
+        $legend_params->{'legend'}  = 'Activity in epigenome: Inactive';
         $activities->{'inactive'}   = $legend_params;
       }
       else {
-        $legend_params->{'text'} = ucfirst $activity;
+        $legend_params->{'legend'} = 'Activity in epigenome: ' . $_ eq 'na' ? 'Insufficient evidence' : ucfirst($activity);
         $activities->{$activity} = $legend_params;
       }
     }
 
-    ($extra_blocks, $flank_colour) = $self->get_structure($rf, $type, $activity, $colour);
-    $flanking_seen = $flank_colour if $flank_colour;
+    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $colour);
+    $entries->{'promoter_flanking'} = {'text' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
+    ## Add motif box  at end of feature types
+    $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+
     my $params = {
       start         => $rf->start,
       end           => $rf->end,
@@ -137,7 +137,6 @@ sub get_data {
     push @$drawable, $params;
   }
 
-  $entries->{'promoter_flanking'} = {'text' => 'Promoter Flank', 'colour' => $flanking_seen} if $flanking_seen;
 
   $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
   $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
@@ -198,16 +197,17 @@ sub get_structure {
   $flank_colour = undef unless $has_flanking;
 
   # Motif features
-  my $motifs = [];
+  my $has_motifs = 0;
   while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
     push @$extra_blocks, {
                           start   => $mf_start, 
                           end     => $mf_end,
                           colour  => 'black',
                           };
+    $has_motifs = 1;
   }
   
-  return ($extra_blocks, $flank_colour);
+  return ($extra_blocks, $flank_colour, $has_motifs);
 }
 
 sub colour_key {
