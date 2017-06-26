@@ -33,7 +33,7 @@ sub render_normal {
   $self->{'my_config'}->set('drawing_style', ['Feature::MultiBlocks']);
   $self->{'my_config'}->set('display_structure', 1);
   $self->{'my_config'}->set('bumped', 1);
-  $self->{'my_config'}->set('height', 10);
+  $self->{'my_config'}->set('height', 12);
   my $data = $self->get_data;
   $self->draw_features($data);
 }
@@ -72,8 +72,8 @@ sub get_data {
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
 
   my $drawable        = []; 
-  my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
-  my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
+  my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};
+  my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || {};
   my $flanking_seen   = 0;
   my ($flank_colour, $extra_blocks);
   foreach my $rf (@{$reg_feats||[]}) {
@@ -86,11 +86,10 @@ sub get_data {
     ## Determine colour and pattern
     my $key     = $activity =~ /active/ ? $type : $activity;
     my $colour  = $self->my_colour($key) || '#e1e1e1';
-    warn ">>> TYPE $type (ACTIVITY $activity) -> KEY $key = COLOUR $colour";
     my ($pattern, $patterncolour, $bordercolour);
     if ($activity eq 'inactive') {
-      $pattern        = 'hatch_thicker';
-      $patterncolour  ='grey20';
+      $patterncolour  = 'white';
+      $pattern        = $self->{'container'}->length > 10000 ? 'hatch_thick' : 'hatch_thicker';
     }
     elsif ($activity eq 'na') {
       $colour       = 'white';
@@ -99,17 +98,25 @@ sub get_data {
 
     ## Do legend colours and styles
     unless ($text =~ /unknown/i) {
-      my $legend_params = {'text' => $text, 'colour' => $colour};
-      if ($activity =~ /active/) {
-        push @$legend_entries, $legend_params;
+      my $legend_params = {'colour' => $colour, 'border' => $bordercolour};
+      if ($activity eq 'active') {
+        $legend_params->{'text'}  = $text;
+        $entries->{$key}          = $legend_params;
+      }
+      elsif ($activity eq 'inactive') { ## Only show one generic entry for all inactive features
+        $legend_params->{'stripe'}  = $patterncolour;
+        $legend_params->{'colour'}  = 'grey80';
+        $legend_params->{'text'}    = 'Inactive';
+        $activities->{'inactive'}   = $legend_params;
       }
       else {
-        push @$activities, $legend_params;
+        $legend_params->{'text'} = ucfirst $activity;
+        $activities->{$activity} = $legend_params;
       }
     }
 
-    ($extra_blocks, $flank_colour) = $self->get_structure($rf, $type, $colour);
-    $flanking_seen = 1 if $flank_colour;
+    ($extra_blocks, $flank_colour) = $self->get_structure($rf, $type, $activity, $colour);
+    $flanking_seen = $flank_colour if $flank_colour;
     my $params = {
       start         => $rf->start,
       end           => $rf->end,
@@ -130,11 +137,11 @@ sub get_data {
     push @$drawable, $params;
   }
 
-  push @$legend_entries, {'text' => 'promoter_flanking', 'colour' => $flank_colour} if $flanking_seen;
+  $entries->{'promoter_flanking'} = {'text' => 'Promoter Flank', 'colour' => $flanking_seen} if $flanking_seen;
 
   $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
   $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
-  $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $legend_entries;
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $entries;
   $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
 
   #use Data::Dumper; warn Dumper($drawable);
@@ -150,7 +157,7 @@ sub get_data {
 }
 
 sub get_structure {
-  my ($self, $f, $type, $colour) = @_;
+  my ($self, $f, $type, $activity, $colour) = @_;
 
   my $hub = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
@@ -169,7 +176,7 @@ sub get_structure {
   my ($bound_start, $start, @mf_loci) = @$loci;
   my $has_flanking = 0;;
   my $flank_colour = $colour;
-  if ($type eq 'promoter') {
+  if ($type eq 'promoter' && $activity eq 'active') {
     $flank_colour = $self->my_colour('promoter_flanking');
   }
 
