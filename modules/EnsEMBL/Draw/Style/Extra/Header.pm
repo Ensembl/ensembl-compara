@@ -137,23 +137,25 @@ sub _sublegend_zmenu_text {
 
   my @out;
   foreach my $label (keys %{$args->{'colour_legend'}||{}}) {
-    push @out,"$label:$args->{'colour_legend'}{$label}";
+    push @out, sprintf '<span style="width:24px;height:12px;background-color:#%s;margin-right:8px;display:inline-block"></span>%s', $args->{'colour_legend'}{$label}, $label;;
   }
-  return join(',',@out);
+  if ($args->{'show_peaks'}) {
+    push @out, '<img src="/i/16/collapse.png" style="margin-right:4px">Peak';
+  }
+  return @out;
 }
 
 ## Contents of the ZMenu of the special box found on reg. multi-wiggles
 sub _sublegend_zmenu {
   my ($self,$args) = @_;
 
-  my $legend_alt_text = $self->_sublegend_zmenu_text($args);
+  my @entries = $self->_sublegend_zmenu_text($args);
   my $title = $args->{'title'} || 'Info';
   $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
-  my @extra;
   foreach my $link (@{$args->{'sublegend_links'}||[]}) {
-    push @extra,qq(<a href="$link->{'href'}" class="$link->{'class'}">$link->{'text'}</a>);
+    push @entries, qq(<a href="$link->{'href'}" class="$link->{'class'}">$link->{'text'}</a>);
   }
-  return [$title,"[ $legend_alt_text ]",@extra];
+  return [$title, @entries];
 }
 
 sub _draw_sublegend_box {

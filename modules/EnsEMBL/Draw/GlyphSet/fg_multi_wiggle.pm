@@ -180,6 +180,9 @@ sub draw_aggregate {
   if ($show_blocks && $show_wiggle) {
     $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
   }
+  if ($show_blocks) {
+    $params->{'show_peaks'} = 1;
+  }
   $header->draw_sublegend($params);
   $self->push(@{$header->glyphs||[]});
 
