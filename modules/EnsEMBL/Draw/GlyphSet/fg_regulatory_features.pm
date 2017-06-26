@@ -115,7 +115,7 @@ sub get_data {
     }
 
     my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $colour);
-    $entries->{'promoter_flanking'} = {'text' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
+    $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
     ## Add motif box  at end of feature types
     $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
 
@@ -175,10 +175,12 @@ sub get_structure {
   my $bound_end = pop @$loci;
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
-  my $has_flanking = 0;;
   my $flank_colour = $colour;
+  my $has_flanking = 0;;
+  my $flank_different = 0;
   if ($type eq 'promoter' && $activity eq 'active') {
     $flank_colour = $self->my_colour('promoter_flanking');
+    $flank_different = 1;
   }
 
   my $extra_blocks = [];
@@ -196,11 +198,11 @@ sub get_structure {
     };
     $has_flanking = 1;
   }
-  $flank_colour = undef unless $has_flanking;
+  $flank_colour = undef unless ($has_flanking && $flank_different);
 
   # Motif features
   my $has_motifs = 0;
-  if ($activity eq 'active') {
+  if ($activity !~ /^[na|inactive]$/) {
     while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
       push @$extra_blocks, {
                             start   => $mf_start, 
