@@ -35,26 +35,17 @@ sub draw_feature {
   my ($self, $feature, $position) = @_;
 
   my $total_height = $self->SUPER::draw_feature($feature, $position);
-  ## Get the glyph added by the above method
-  my @glyphs = @{$self->glyphs};
-  my $composite = $glyphs[-1];
-
-  unless ($composite) { 
-    warn "!!! FAILED TO DRAW COMPOSITE FEATURE FOR PEAKS";
-    return 0;
-  }
 
   my $length    = $self->image_config->container_width;
   my $midpoint  = $feature->{'midpoint'};
   if ($midpoint && $self->track_config->get('display_summit') && $length <= 20000) {
     $midpoint -= $self->track_config->get('slice_start');
-    $midpoint -= $feature->{'start'} if $feature->{'start'} > 0;
 
     if ($midpoint > 0 && $midpoint < $length) {
       my $th  = 4;
       my $h   = $position->{'height'};
       my $y   = $position->{'y'};
-      $composite->push($self->Triangle({ # Upward pointing triangle
+      push @{$self->glyphs}, $self->Triangle({ # Upward pointing triangle
           width     => 4 / $self->{'pix_per_bp'},
           height    => $th,
           direction => 'up',
@@ -68,7 +59,7 @@ sub draw_feature {
           mid_point => [ $midpoint, $h + $y - 9 ],
           colour    => 'black',
           absolutey => 1,
-      }));
+      });
     }
     ## Increase total height regardless of whether there are triangles or not,
     ## otherwise it causes problems when some features are outside the viewport
