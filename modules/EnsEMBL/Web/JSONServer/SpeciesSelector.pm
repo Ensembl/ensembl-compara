@@ -132,9 +132,19 @@ sub get_extras_as_dynatree {
 
     $children = [];
 
-    foreach my $hash (@{$extras->{$k}->{data}}) {
+    # For sorting based on chromosome numbers
+    my $is_primary_assembly = $extras->{$k}->{data}[0]->{assembly_target} ? 1 : 0;
+    my @extras_data_array;
+    if ($is_primary_assembly) {
+      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$extras->{$k}->{data}};
+    }
+    else {
+      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$extras->{$k}->{data}};
+    }
+
+    foreach my $hash (@extras_data_array) {
       my $icon = '';
-      if ($k =~/haplotype|self_alignment/ and $hash->{key} =~/--/) {
+      if ($k =~/haplotype|primary assembly/ and $hash->{key} =~/--/) {
         my ($sp, $type) = split('--', $hash->{key});
         $icon = '/i/species/16/' . $sp . '.png';
       }
