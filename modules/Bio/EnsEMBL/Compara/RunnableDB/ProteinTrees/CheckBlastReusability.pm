@@ -138,10 +138,10 @@ sub run {
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
-    my $prev_hash = hash_all_canonical_members( $self->param('prev_core_dba') );
-    my $curr_hash = hash_all_canonical_members( $self->param('curr_core_dba') );
-    my ($removed, $remained1) = check_hash_equals($prev_hash, $curr_hash);
-    my ($added, $remained2)   = check_hash_equals($curr_hash, $prev_hash);
+    my $prev_hash = $self->hash_all_canonical_members( $self->param('reuse_dba')->dbc );
+    my $curr_hash = $self->hash_all_canonical_members( $self->compara_dba->dbc );
+    my ($removed, $remained1) = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability::check_hash_equals($prev_hash, $curr_hash);
+    my ($added, $remained2)   = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability::check_hash_equals($curr_hash, $prev_hash);
 
     my $coding_objects_differ = $added || $removed;
     if($coding_objects_differ) {
@@ -155,18 +155,18 @@ sub run {
 # ------------------------- non-interface subroutines -----------------------------------
 
 sub hash_all_canonical_members {
-    my ($compara_dba, $genome_db_id) = @_;
+    my ($self, $compara_dbc) = @_;
 
     my $sql = qq{
         SELECT CONCAT_WS(':', gm.gene_member_id, gm.stable_id, gd.name, gm.dnafrag_start, gm.dnafrag_end, gm.dnafrag_strand, sm.seq_member_id, sm.stable_id, sd.name, sm.dnafrag_start, sm.dnafrag_end, sm.dnafrag_strand, s.md5sum)
-          FROM (gene_member gm JOIN dnafrag gd USING (dnafrag_id)) JOIN (seq_member sm JOIN dnafrag sd USING (dnafrag_id)JOIN sequence s USING (sequence_id)) ON seq_member_id=canonical_member_id
-         WHERE gm.genome_db_id = ?
+          FROM (gene_member gm JOIN dnafrag gd USING (dnafrag_id)) JOIN (seq_member sm JOIN dnafrag sd USING (dnafrag_id) JOIN sequence s USING (sequence_id)) ON seq_member_id=canonical_member_id
+         WHERE gm.genome_db_id = ? AND biotype_group = "coding";
     };
 
     my %member_set = ();
 
-    my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute($genome_db_id);
+    my $sth = $compara_dbc->prepare($sql);
+    $sth->execute($self->param('genome_db_id'));
 
     while(my ($key) = $sth->fetchrow()) {
         $member_set{$key} = 1;
