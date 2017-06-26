@@ -119,7 +119,7 @@ foreach my $dataset (@ARGV ? @ARGV : @{$sd->multi_hash->{'ENSEMBL_DATASETS'}}) {
 my $index = Search::Sitemap::Index->new();
 foreach (@sitemaps) {
   $index->add(Search::Sitemap::URL->new(
-    loc => "$sitemap_path/$_", 
+    loc => "$sitemap_url/$_", 
     lastmod => 'now'
   ));
 }

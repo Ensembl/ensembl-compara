@@ -54,8 +54,8 @@ our $APACHE_DIR                   = "$ENSEMBL_SERVERROOT/apache2";              
 our $APACHE_BIN                   = defer { "$APACHE_DIR/bin/httpd" };                    # Location of Apache bin file to run server
 our $APACHE_DEFINE                = undef;                                                # Extra command line arguments for httpd command
 our $ENSEMBL_HTTPD_CONFIG_FILE    = "$ENSEMBL_WEBROOT/conf/httpd.conf";                   # Apache config file location
-our $ENSEMBL_MIN_SPARE_SERVERS    = 20;                                                   # For Apache MinSpareServers directive
-our $ENSEMBL_MAX_SPARE_SERVERS    = 50;                                                   # For Apache MaxSpareServers directive
+our $ENSEMBL_MIN_SPARE_SERVERS    = 10;                                                   # For Apache MinSpareServers directive
+our $ENSEMBL_MAX_SPARE_SERVERS    = 15;                                                   # For Apache MaxSpareServers directive
 our $ENSEMBL_START_SERVERS        =  7;                                                   # For Apache StartServers directive
 our $ENSEMBL_DB_IDLE_LIMIT        = 0;
               # Maximum number of connections to "carry through" to next
@@ -110,6 +110,7 @@ our $ENSEMBL_STATIC_SERVER            = '';     # Static server address - if sta
 our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subroutine called by `syslog` - check EnsEMBL::Web::Utils::Syslog
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
+our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
 ###############################################################################
 
 
@@ -311,7 +312,6 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_CONFIG_FILENAME;   # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
-our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
 our $ENSEMBL_MART_SERVERNAME;   # Populated by _set_dedicated_mart()
 
 my $_VERBOSE;
@@ -354,7 +354,6 @@ sub import {
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-  $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
 
   _verbose_params() if $_VERBOSE;
 }
@@ -503,7 +502,10 @@ sub _get_serverroot {
   my $file            = shift;
   my ($volume, $dir)  = File::Spec->splitpath($file);
 
-  return File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+  my $path = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+     $path =~ s|\.snapshots/[^/]+|latest|;
+
+  return $path;
 }
 
 sub _populate_plugins_list {
@@ -513,7 +515,10 @@ sub _populate_plugins_list {
 
   $plugins_root ||= '*-plugins';
 
-  my @plugins_paths = ($web_root, "$server_root/$plugins_root/".getpwuid($>));
+  my $user_id   = getpwuid($>);
+  my $group_id  = getgrgid($));
+
+  my @plugins_paths = ($web_root, map sprintf('%s/%s/%s', $server_root, $plugins_root, $_), grep $_, $user_id, $group_id);
 
   # Define Plugin directories
   if (-e "$web_root/conf/Plugins.pm") {

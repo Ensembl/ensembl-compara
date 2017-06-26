@@ -83,7 +83,7 @@ sub init {
     $self->{'_data'}{'tree'} = $tree;
   } else {
     $self->{'_data'}{'tree'} = EnsEMBL::Web::Tree->new;
-    $self->create_node('Unknown', 'Not Available',
+    $self->create_node('Unknown', '',
             [qw(
               404  EnsEMBL::Web::Component::404
             )],

@@ -105,8 +105,9 @@ sub content {
     my $name         = encode_entities($self->strip_HTML($entry->{'caption'}));
     my ($short_name) = split /\b/, $name;
     my $constant     = $entry->{'constant'} ? ' class="constant"' : '';
-    my $short_link   = qq(<a href="$entry->{'url'}" title="$name"$constant>$short_name</a>);
-    my $long_link    = qq(<a href="$entry->{'url'}"$constant>$name</a>);
+    my $url = encode_entities($entry->{'url'});
+    my $short_link   = qq(<a href="$url" title="$name"$constant>$short_name</a>);
+    my $long_link    = qq(<a href="$url"$constant>$name</a>);
     
     if ($entry->{'disabled'}) {
       my $span = $entry->{'dropdown'} ? qq(<span class="disabled toggle" title="$entry->{'dropdown'}">) : '<span class="disabled">';

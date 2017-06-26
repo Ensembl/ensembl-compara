@@ -380,7 +380,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     return false;
   },
   
-  changeTrackRenderer: function (tracks, renderer, updateCount) {
+  changeTrackRenderer: function (tracks, renderer, updateCount, isConfigMatrix) {
     var subTracks = this.params.subTracks || {};
     var change    = 0;
     var subTrack, c;
@@ -436,7 +436,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     tracks = null;
 
-    this.configSettingChanged();
+    this.configSettingChanged(isConfigMatrix);
   },
   
   addTracks: function (type) {
@@ -835,8 +835,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var viewConfig  = {};
     
     $.each(this.subPanels, function (i, id) {
-      var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id);
-      
+      var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
@@ -883,7 +882,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     });
-    
     if (diff === true || typeof saveAs !== 'undefined') {
 
       if (saveAs === true) {
@@ -892,7 +890,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
 
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
-
+      
       this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
       
       return diff;
@@ -1357,10 +1355,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
   },
 
-  configSettingChanged: function() {
-    var changes = this.updateConfiguration(true, true);
-
-    // trigger select/unselect on selected option accordingly
+  configSettingChanged: function(isConfigMatrix) {
+    var changes = isConfigMatrix ? this.updateConfiguration(this.id) : this.updateConfiguration(true, true);
     this.elLk.configSelector.find(this.elLk.configSelector.val() === 'default' ? 'option[value=current]' : ':selected').trigger($.isEmptyObject(changes.imageConfig) && $.isEmptyObject(changes.viewConfig) ? 'unselect' : 'select');
   },
 

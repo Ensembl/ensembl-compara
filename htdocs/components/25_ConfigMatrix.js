@@ -65,7 +65,11 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     this.elLk.popup         = $();
     this.elLk.subtracks     = $();
     this.elLk.hiddenCells   = $();
-    
+    // new config sets stuff
+    this.elLk.configForm        = this.el.closest('.panel').find('._config_settings');
+    this.elLk.configDropdown    = this.elLk.configForm.find('._config_dropdown');
+    this.elLk.configSelector    = this.elLk.configDropdown.find('select');
+
     this.elLk.tableWrapper.data('maxWidth', this.elLk.tableWrapper[0].style.width).width('auto');
     
     var headerLabels = this.elLk.columnHeaders.children('p');
@@ -286,7 +290,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       var el         = $(this).toggleClass('on');
       var cellTracks = panel.params.cellTracks ? $.trim(panel.params.cellTracks[this.title]) : false;
       var popup, colTrack;
-      
+
       if (cellTracks && el.hasClass('on')) {
         panel.removePopups();
         
@@ -372,7 +376,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       target = null;
       return false;
     }
-    
+
     var popup     = target.parents('.subtracks');
     var cell      = popup.data('cell');
     var colTrack  = popup.data('colTrack');
@@ -391,7 +395,6 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     }
     
     this.params.defaultRenderers[cell[0].title] = $('> ul.config_menu > li.default', popup).length;
-    
     cell.find('span.on').html(popup.find('li.track.on').length);
     
     this.updateLinkCount();
@@ -411,7 +414,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     if (tracks.length) {
       this.changeTrackRenderer(tracks, renderer, true);
     }
-    
+
     tracks = null;
     
     return true;
@@ -423,13 +426,12 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     var off   = renderer === 'off' ? -1 : 1;
     var track;
     
-    this.base(tracks, renderer, false);
+    this.base(tracks, renderer, false, true);
     
     if (isColumn) {
       if (this.params.defaultRenderers) {
         tracks.each(function (i) {
           track = $(this);
-          
           if (track.hasClass('on') !== on[i]) {
             panel.elLk.options.filter('.' + track.data('track').colClass).find('.on').html(function (j, html) {
               return parseInt(html, 10) + panel.params.defaultRenderers[$(this).parents('td.opt')[0].title] * off;
@@ -612,11 +614,12 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
   
   // Called by triggerSpecific from the parent Configurator panel.
   // Does not cause an AJAX request, just returns the diff data.
-  updateConfiguration: function (subPanel) {
+  updateConfiguration: function (subPanel, force) {
+
     if (subPanel !== this.id) {
       return;
     }
-    
+
     var panel  = this;
     var config = {};
     var diff   = false;
@@ -624,8 +627,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     
     this.elLk.options.each(function () {
       on = $(this).hasClass('on') ? 'on' : 'off';
-      
-      if (panel.imageConfig[this.configCode].renderer !== on) {
+      if (panel.imageConfig[this.configCode].renderer !== on || force) {
         config[this.configCode] = { renderer: on };
         diff = true;
       }
@@ -633,19 +635,18 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
     
     this.elLk.tracks.each(function () {
       var track = $(this).data('track');
-      
-      if (panel.imageConfig[track.id].renderer !== track.renderer) {
+      if (panel.imageConfig[track.id].renderer !== track.renderer || force) {
         config[track.id] = { renderer: track.renderer };
         diff = true;
       }
     });
-    
+
     if (diff) {
       $.extend(true, this.imageConfig, config);
       return { imageConfig: config };
     }
   },
-    
+
   dragStart: function (e) {
     var target = e.target.nodeName === 'P' ? $(e.target.parentNode) : e.target.nodeName === 'SPAN' ? $(e.target.parentNode.parentNode) : $(e.target);    
     

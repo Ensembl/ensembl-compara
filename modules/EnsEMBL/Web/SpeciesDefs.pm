@@ -199,22 +199,23 @@ sub valid_species {
   ### Filters the list of species to those configured in the object.
   ### If an empty list is passes, returns a list of all configured species
   ### Returns: array of configured species names
-  
+
   my $self          = shift;
   my %test_species  = map { $_ => 1 } @_;
   my @valid_species = @{$self->{'_valid_species'} || []};
-  
-  if (!@valid_species) {
-    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
+  my %uniq_valid_species;
+
+   if (!@valid_species) {
+    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) { 
       my $config = $self->get_config($sp, 'DB_SPECIES');
-      
+
       if ($config->[0]) {
-        push @valid_species, @{$config};
+        $uniq_valid_species{$_} = 1 foreach @{$config};
       } else {
         warn "Species $sp is misconfigured: please check generation of packed file";
       }
     }
-    
+    @valid_species = keys %uniq_valid_species;    
     $self->{'_valid_species'} = [ @valid_species ]; # cache the result
   }
 
@@ -395,12 +396,12 @@ sub parse {
     }
     warn " conf was not generated here, regenerating\n";
   }
-  
+ 
 #  $self->_get_valid_urls; # under development
   $self->_parse;
   $self->store;
   $reg_conf->configure;
-  
+
   EnsEMBL::Web::Tools::RobotsTxt::create($self->multi_hash->{'ENSEMBL_DATASETS'}, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
   
@@ -750,18 +751,26 @@ sub _parse {
   #$Data::Dumper::Sortkeys = 1;
   #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
 
-  ## Finally, rename the tree keys for easy data access via URLs
-  ## (and backwards compatibility!)
+  ## Final munging
   my $datasets = [];
-  foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
-    my $url = $tree->{$species}{'SPECIES_URL'};
-    $tree->{$url} = $tree->{$species};
+  my $aliases  = $tree->{'MULTI'}{'SPECIES_ALIASES'};
+  foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
+    my $url = $tree->{$prodname}{'SPECIES_URL'};
+    
+    ## Add in aliases to production names if they don't exist
+    unless ($aliases->{$prodname}) {
+      $aliases->{$prodname} = $url;
+    }
+    
+    ## Rename the tree keys for easy data access via URLs
+    ## (and backwards compatibility!)
+    $tree->{$url} = $tree->{$prodname};
     push @$datasets, $url;
-    delete $tree->{$species};
+    delete $tree->{$prodname};
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
- 
+
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
@@ -1132,6 +1141,17 @@ sub species_label {
   } else {
     return "$common ($rtn)";
   }  
+}
+
+sub production_name_lookup {
+## Maps all species to their production name
+  my $self = shift;
+  my $names = {};
+  
+  foreach ($self->valid_species) {
+    $names->{$self->get_config($_, 'SPECIES_PRODUCTION_NAME')} = $_;
+  }
+  return $names;
 }
 
 sub production_name_mapping {

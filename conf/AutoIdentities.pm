@@ -51,8 +51,9 @@ sub add_symlinks {
     if (opendir(my $dir, $here)) {
       foreach my $link (grep { !$done->{$_} } grep -l, map "$here/$_", readdir($dir)) {
         my $dest = readlink($link);
-           $dest = abs_path($dest =~ m!^/! ? $dest : "$here/$dest");
-        next if $dest =~ /^\Q$here\E\/?/; # prevent infinite loop in case symlink points to a parent dir
+           $dest &&= abs_path($dest =~ m!^/! ? $dest : "$here/$dest");
+        next if !$dest; # ignore broken links
+        next if $here =~ /^\Q$dest\E(\/|$)/; # prevent infinite loop in case symlink points to a parent dir
         foreach my $matching_dest (grep { $_ eq $dest } @$out) {
           push @$out, map { $_ =~ s/^\Q$matching_dest\E/$link/r } grep { m/^\Q$matching_dest\E/ } @$out;
           $done->{$link} = 1;

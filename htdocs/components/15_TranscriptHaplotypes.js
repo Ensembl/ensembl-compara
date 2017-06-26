@@ -487,7 +487,7 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
           if(cdsDiffs[i].hasOwnProperty(cdsPos + j)) {
             if(cdsDiffs[i][cdsPos + j].hasOwnProperty('variation_feature')) {
               cdsHtml = cdsHtml +
-                '<a class="sequence_info zmenu" draggable="false" href="/Homo_sapiens/ZMenu/Variation?v=' +
+                '<a class="sequence_info zmenu" draggable="false" href="/' + Ensembl.species + '/ZMenu/Variation?v=' +
                 cdsDiffs[i][cdsPos + j].variation_feature +
                 '&vf=' + cdsDiffs[i][cdsPos + j].variation_feature_id + '">' +
                 base + '</a>';

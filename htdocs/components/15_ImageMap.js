@@ -1202,7 +1202,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       area.a.attrs.href = Ensembl.updateURL({mr: Ensembl.markedLocation[0]}, area.a.attrs.href);
     }
 
-    var id = 'zmenu_' + area.a.coords.join('_');
+    var id = (params && params.mr_menu ? 'mr_menu' : 'zmenu_') + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
     if (e.shiftKey || area.a.klass.das || area.a.klass.group) {
@@ -1233,7 +1233,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
-    
     this.zMenus[id] = 1;
     return id;
   },
@@ -1488,14 +1487,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (!this.locationMarkingArea) {
       return;
     }
-
     // create the marked area div
     if (!this.elLk.markedLocation) {
-      this.elLk.markedLocation = $('<div class="selector mrselector"><div class="mrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
-        .find('div').helptip({content: 'Clear marked region'}).on('click mousedown', function(e) {
+      this.elLk.markedLocation = $('<div class="selector mrselector"><div class="mrselector-close">&#9776;</div></div>').hide().insertAfter(this.elLk.selector)
+        .find('div').helptip({content: 'Click for more options'}).on('click mousedown', function(e) {
           e.stopPropagation();
+          $(this).helptip('close');
           if (e.type === 'click') {
-            Ensembl.markLocation(false);
+            panel.makeZMenu(e, panel.getMapCoords(e), { onclose: function() { panel.selectArea(false); }, context: panel, mr_menu : 1 });
           }
         })
       .end();
@@ -1542,7 +1541,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // calculate start and end of the current image
     start = this.locationMarkingArea.range.start - offset;
-    end   = this.locationMarkingArea.range.end - offset;
+    end   = (this.locationMarkingArea.range.end+1) - offset;
 
     // display the marked region if it overlaps the current region
     if (this.locationMarkingArea.range.chr === r[1] && (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3])) {

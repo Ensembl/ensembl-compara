@@ -224,7 +224,6 @@ sub genebuild_text {
     <p><a href="%s" class="nodeco">%sMore about this genebuild</a></p>
     %s
     %s
-    %s
     %s',
     
     sprintf(
@@ -246,13 +245,7 @@ sub genebuild_text {
       $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
-    $idm_link,
-    
-    $vega->{$species} ? qq(
-      <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">
-      <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;margin-bottom:1em;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
-      <p>Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">Vega</a></p>
-    ) : ''
+    $idm_link
   );
 }
 

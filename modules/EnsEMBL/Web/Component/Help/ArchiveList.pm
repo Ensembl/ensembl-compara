@@ -143,8 +143,9 @@ sub content {
       $html .= '<p>This is a new species, so there are no archives containing equivalent data.</p>';
     }
   } else { # TODO - map static content moves
-    my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
-    push @links, map { $_ == $current ? () : $self->output_link($archives, $_, $url) } sort {$b <=> $a} keys %$archives;
+    my $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+    my $archives = $adaptor->fetch_archives_by_species($species); 
+    push @links, map { $_ == $current ? () : $self->output_link($species, $archives, $_, $url) } sort {$b <=> $a} keys %$archives;
   }
   $html .= sprintf '<p>%s</p><ul>%s</ul>', $self->top_message, join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';

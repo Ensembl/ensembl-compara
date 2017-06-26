@@ -59,8 +59,8 @@
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Tarsius syrichta",
-          "key":"Tarsius_syrichta",
+          "scientific_name":"Carlito syrichta",
+          "key":"Carlito_syrichta",
           "is_leaf":"true"
       },
       {
@@ -86,6 +86,16 @@
             "scientific_name":"Mus musculus",
             "display_name":"Mouse reference (CL57BL6)",
             "key":"Mus_musculus",
+            "is_leaf":"true"
+          },
+          {
+            "scientific_name":"Mus caroli",
+            "key":"Mus_caroli",
+            "is_leaf":"true"
+          },
+          {
+            "scientific_name":"Mus pahari",
+            "key":"Mus_pahari",
             "is_leaf":"true"
           }
         ]
@@ -113,8 +123,33 @@
         "is_internal_node":"true",
         "child_nodes":[  
           {
+              "scientific_name":"Cavia aperea",
+              "key":"Cavia_aperea",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Nannospalax galili",
+              "key":"Nannospalax_galili",
+              "is_leaf":"true"
+          },
+          {
               "scientific_name":"Cavia porcellus",
               "key":"Cavia_porcellus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Cricetulus griseus",
+              "key":"Cricetulus_griseus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Fukomys damarensis",
+              "key":"Fukomys_damarensis",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Octodon degus",
+              "key":"Octodon_degus",
               "is_leaf":"true"
           },
           {
@@ -122,14 +157,66 @@
               "key":"Dipodomys_ordii",
               "is_leaf":"true"
           },
-          {    
-              "scientific_name":"Rattus norvegicus",
-              "key":"Rattus_norvegicus",
+          {
+              "scientific_name":"Mesocricetus auratus",
+              "key":"Mesocricetus_auratus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Cavia porcellus",
+              "key":"Cavia_porcellus",
               "is_leaf":"true"
           },
           {   
               "scientific_name":"Ictidomys tridecemlineatus",
               "key":"Ictidomys_tridecemlineatus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Echinops telfairi",
+              "key":"Echinops_telfairi",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Chinchilla lanigera",
+              "key":"Chinchilla_lanigera",
+              "is_leaf":"true"
+          },
+          {
+            "key":"Naked_mole_rat",
+            "display_name":"Naked mole rat",
+            "is_internal_node":"true",
+            "child_nodes":[
+              {
+                  "scientific_name":"Heterocephalus glaber",
+                  "key":"Heterocephalus_glaber_female",
+                  "is_leaf":"true"
+              },
+              {
+                  "scientific_name":"Heterocephalus_glaber",
+                  "key":"Heterocephalus_glaber_male",
+                  "is_leaf":"true"
+              }
+            ]
+          },
+          {
+              "scientific_name":"Peromyscus maniculatus bairdii",
+              "key":"Peromyscus_maniculatus_bairdii",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Microtus ochrogaster",
+              "key":"Microtus_ochrogaster",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Rattus norvegicus",
+              "key":"Rattus_norvegicus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Jaculus jaculus",
+              "key":"Jaculus_jaculus",
               "is_leaf":"true"
           }
         ]
@@ -284,8 +371,8 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Macropus eugenii",
-              "key":"Macropus_eugenii",
+              "scientific_name":"Notamacropus eugenii",
+              "key":"Notamacropus_eugenii",
               "is_leaf":"true"
           }
         ]

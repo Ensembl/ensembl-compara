@@ -989,9 +989,9 @@ sub _help {
     <p>
       A location is required to build this page. For example, %s coordinates:
     </p>
-    <blockquote class="space-below">
+    <div class="left-margin bottom-margin word-wrap">
       <a href="%s">%s</a>
-    </blockquote>',
+    </div>',
     $assembly_level,
     encode_entities($url),
     encode_entities($self->species_defs->ENSEMBL_BASE_URL . $url)

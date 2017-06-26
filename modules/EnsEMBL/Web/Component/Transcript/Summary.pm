@@ -42,20 +42,34 @@ sub content {
   my $object = $self->object;
 
   return sprintf '<p>%s</p>', $object->Obj->description if $object->Obj->isa('EnsEMBL::Web::Fake');
-  return '<p>This transcript is not in the current gene set</p>' unless $object->Obj->isa('Bio::EnsEMBL::Transcript');
-  
+
   my $html = "";
  
-  my @warnings = $self->status_warnings;
-  if(@warnings>1 and $warnings[0] and $warnings[1]) {
-    $html .= $self->_info_panel($warnings[2]||'warning',
+  if ($object->Obj->isa('Bio::EnsEMBL::Transcript')) {
+
+    my @warnings = $self->status_warnings;
+    if(@warnings>1 and $warnings[0] and $warnings[1]) {
+      $html .= $self->_info_panel($warnings[2]||'warning',
                                 $warnings[0],$warnings[1]);
+    }
+    my @hints = $self->status_hints;
+    if(@hints>1 and $hints[0] and $hints[1]) {
+      $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
+    }
+    $html .= $self->transcript_table;
   }
-  my @hints = $self->status_hints;
-  if(@hints>1 and $hints[0] and $hints[1]) {
-    $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
+  else {
+    my ($function, $text);
+    if ($self->hub->action =~ /Prot|Domain/) {
+      $function = 'Protein';
+      $text     = 'Protein';
+    }
+    else {
+      $text     = 'Transcript';
+    }
+    my $url = $self->hub->url({'action' => 'Idhistory', 'function' => $function});
+    $html = sprintf '<p>This transcript is not in the current gene set. Previous versions of the %s may be available on the <a href="%s">%s History page</a>.</p>', lc($text), $url, $text; 
   }
-  $html .= $self->transcript_table;
 
   return $html;
 }
