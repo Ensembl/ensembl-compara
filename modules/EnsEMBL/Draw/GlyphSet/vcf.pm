@@ -49,22 +49,33 @@ sub init {
 sub render_histogram {
   my $self = shift;
   my $features = $self->get_data->[0]{'features'};
-  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_simple;
+  if ($features) {
+    return scalar @$features > 200 ? $self->render_density_bar : $self->render_simple;
+  }
+  else {
+    $self->no_features;
+  }
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->get_data->[0]{'features'}} > 200) {
-    $self->too_many_features;
-    return undef;
+  my $features = $self->get_data->[0]{'features'};
+  if ($features) {
+    if (scalar @$features > 200) {
+      $self->too_many_features;
+      return undef;
+    }
+    else {
+      ## Convert raw features into correct data format 
+      $self->{'my_config'}->set('height', 12);
+      $self->{'my_config'}->set('default_strand', 1);
+      $self->{'my_config'}->set('drawing_style', ['Feature']);
+      $self->{'data'}[0]{'features'} = $self->consensus_features;
+      $self->draw_features;
+    }
   }
   else {
-    ## Convert raw features into correct data format 
-    $self->{'my_config'}->set('height', 12);
-    $self->{'my_config'}->set('default_strand', 1);
-    $self->{'my_config'}->set('drawing_style', ['Feature']);
-    $self->{'data'}[0]{'features'} = $self->consensus_features;
-    $self->draw_features;
+    $self->no_features;
   }
 }
 
@@ -75,14 +86,19 @@ sub render_density_bar {
   $self->{'my_config'}->set('integer_score', 1);
   my $colours = $self->species_defs->colour('variation');
   $self->{'my_config'}->set('colour', $colours->{'default'}->{'default'});
-  #$self->{'data'}[0]{'metadata'}{'colour'} = $colour;
 
   ## Convert raw features into correct data format 
   my $density_features = $self->density_features;
-  $self->{'data'}[0]{'features'} = $density_features;
-  $self->{'my_config'}->set('max_score', max(@$density_features));
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
-  $self->_render_aggregate;
+  if ($density_features) {
+    $self->{'data'}[0]{'features'} = $density_features;
+    $self->{'my_config'}->set('max_score', max(@$density_features));
+    $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+    $self->_render_aggregate;
+  }
+  else {
+    $self->no_features;
+  }
+
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -91,8 +107,9 @@ sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
   $self->{'my_config'}->set('show_subtitle', 1);
+  $self->{'data'} ||= [];
 
-  unless ($self->{'data'} && scalar @{$self->{'data'}}) {
+  unless (scalar @{$self->{'data'}}) {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
