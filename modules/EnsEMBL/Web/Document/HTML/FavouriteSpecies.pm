@@ -170,6 +170,7 @@ sub _species_list {
 
 sub _fav_template {
   ## @private
+  return qq(<div class="species-box-outer"><div class="species-box"><a href="{{species.homepage}}"><img src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" height="48" width="48"/></a><a href="{{species.homepage}}">{{species.common}}</a><div>{{species.assembly}}</div></div></div>);
   return qq(<div class="species-box"><a href="{{species.homepage}}"><span class="sp-img"><img
     src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" height="48"
     width="48"></span></a><a href="{{species.homepage}}"><span>{{species.common}}</span></a><span>{{species.assembly}}</span></div>);
