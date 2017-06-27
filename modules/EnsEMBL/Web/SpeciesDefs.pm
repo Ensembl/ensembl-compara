@@ -753,14 +753,12 @@ sub _parse {
 
   ## Final munging
   my $datasets = [];
-  my $aliases  = $tree->{'MULTI'}{'SPECIES_ALIASES'};
+  my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
     
-    ## Add in aliases to production names if they don't exist
-    unless ($aliases->{$prodname}) {
-      $aliases->{$prodname} = $url;
-    }
+    ## Add in aliases to production names
+    $aliases->{$prodname} = $url;
     
     ## Rename the tree keys for easy data access via URLs
     ## (and backwards compatibility!)
