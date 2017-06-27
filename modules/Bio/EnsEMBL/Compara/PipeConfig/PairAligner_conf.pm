@@ -516,6 +516,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
+			       'dump_min_nib_size' => $self->o('dump_min_nib_size'),
                                'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,
