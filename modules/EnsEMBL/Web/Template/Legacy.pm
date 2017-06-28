@@ -23,6 +23,8 @@ package EnsEMBL::Web::Template::Legacy;
 
 use parent qw(EnsEMBL::Web::Template);
 
+use HTML::Entities qw(encode_entities);
+
 sub init {
   my $self = shift;
   $self->{'main_class'}       = 'main';
@@ -201,8 +203,10 @@ sub render_page_end {
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $core_params         = $hub->core_params || {};
-  my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
-
+  my $core_params_html = join('',map {
+      $v = encode_entities($core_params->{$_});
+      qq(<input type="hidden" name="$_" value="$v" />)
+    } keys %$core_params);
   return qq(
       </div>
     </div>
