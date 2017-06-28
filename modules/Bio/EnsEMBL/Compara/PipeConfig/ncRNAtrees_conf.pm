@@ -658,7 +658,7 @@ sub pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_long_ncores_job',
+             -rc_name => '8Gb_mpi_ncores_job',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -670,7 +670,7 @@ sub pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -rc_name => '32Gb_long_ncores_job',
+             -rc_name => '32Gb_mpi_ncores_job',
             },
 
         {
