@@ -71,7 +71,7 @@ LEFT JOIN gene_tree_node gtn2 ON gtn2.seq_member_id = smp.target_seq_member_id W
 
 my $sql_unexpandable_members = 'SELECT source_seq_member_id, target_seq_member_id
 FROM seq_member_projection smp JOIN seq_member ON source_seq_member_id = seq_member_id LEFT JOIN gene_tree_node gtn1 USING (seq_member_id) LEFT JOIN gene_tree_node gtn2 ON gtn2.seq_member_id = smp.target_seq_member_id
-WHERE gtn1.node_id IS NULL AND source_name = "ENSEMBLPEP"
+WHERE gtn1.node_id IS NULL
 AND gtn2.seq_member_id IS NULL
 ';
 
