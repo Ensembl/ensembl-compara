@@ -108,7 +108,6 @@ sub default_options {
         'division'              => undef,
 
     #default parameters for the geneset qc
-
         'coverage_threshold' => 50, #percent
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
@@ -124,11 +123,6 @@ sub default_options {
         'allow_ambiguity_codes'     => 0,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
-        # Genes with these logic_names will be ignored from the pipeline.
-        # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
-        # An empty string can also be used as the key to define logic_names excluded from *all* species
-        'exclude_gene_analysis'     => {},
-        'store_ncrna'               => 0,
 
     # blast parameters:
         'num_sequences_per_blast_job'   => 500,
@@ -174,7 +168,6 @@ sub default_options {
     # sequence type used on the phylogenetic inferences
     # It has to be set to 1 for the strains
         'use_dna_for_phylogeny'     => 0,
-        #'use_dna_for_phylogeny'     => 1,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,

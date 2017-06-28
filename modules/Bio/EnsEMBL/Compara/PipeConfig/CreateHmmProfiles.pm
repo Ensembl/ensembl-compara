@@ -109,10 +109,6 @@ sub default_options {
         'allow_ambiguity_codes'     => 0,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
-        # Genes with these logic_names will be ignored from the pipeline.
-        # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
-        # An empty string can also be used as the key to define logic_names excluded from *all* species
-        'exclude_gene_analysis'     => {},
 
     # blast parameters:
     # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
