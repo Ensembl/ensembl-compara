@@ -260,8 +260,8 @@ sub run {
 
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $blast_infile  = $worker_temp_directory . 'blast.in.'.$$;     # only for debugging
-    my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
+    my $blast_infile  = $worker_temp_directory . '/blast.in.'.$$;     # only for debugging
+    my $blast_outfile = $worker_temp_directory . '/blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
 
