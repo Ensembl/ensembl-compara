@@ -115,7 +115,7 @@ sub write_output {
 
 sub dump_sequences_to_workdir {
     my ($self,$cluster) = @_;
-    my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
+    my $fastafile = $self->worker_temp_directory . "/cluster_" . $cluster->root_id . ".fasta";
 
     my $member_list = $cluster->get_all_leaves;
     $self->param('tag_gene_count', scalar (@{$member_list}) );

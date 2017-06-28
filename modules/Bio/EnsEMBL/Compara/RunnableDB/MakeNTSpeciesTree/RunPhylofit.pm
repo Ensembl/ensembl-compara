@@ -98,9 +98,9 @@ sub fetch_input {
 sub write_output {
  my $self = shift @_;
  my $block_id = $self->param('block_id');
- my $gab_file = $self->worker_temp_directory.$block_id;
+ my $gab_file = $self->worker_temp_directory."/".$block_id;
 
- my $msa_fasta_file = $self->worker_temp_directory."msa_fasta.$block_id";
+ my $msa_fasta_file = $self->worker_temp_directory."/msa_fasta.$block_id";
  open(IN, ">$msa_fasta_file") or throw("cant open $msa_fasta_file");
  my $fasta_set = $self->param('fasta_set');
  foreach my $assemb_type(keys %{ $fasta_set }){
@@ -114,7 +114,7 @@ sub write_output {
    }
   }
  }
- my $species_tree_file = $self->worker_temp_directory."species_tree.$block_id";
+ my $species_tree_file = $self->worker_temp_directory."/species_tree.$block_id";
  open(TR, ">$species_tree_file") or throw("cant open $species_tree_file file\n");
  print TR $self->param('newick_tree');
  close(TR);

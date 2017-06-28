@@ -295,7 +295,7 @@ sub load_mirbase_families {
   my $url  = 'ftp://mirbase.org/pub/mirbase/CURRENT/';
   my $file = 'miFam.dat.gz';
 
-  my $tmp_file = $worker_temp_directory . $file;
+  my $tmp_file = $worker_temp_directory . "/" .$file;
   my $mifam = $tmp_file;
 
   my $ftp_file = $url . $file;

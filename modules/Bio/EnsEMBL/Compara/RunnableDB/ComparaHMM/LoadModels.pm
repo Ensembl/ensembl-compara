@@ -104,10 +104,10 @@ sub download_models {
         print STDERR "mkdir $worker_temp_directory (0755)\n" if ($self->debug());
         die "Impossible create directory $worker_temp_directory\n" unless (mkdir($worker_temp_directory, 0755));
     }
-    my $expanded_file = $worker_temp_directory . $self->param('expanded_basename');
+    my $expanded_file = $worker_temp_directory . "/" . $self->param('expanded_basename');
 
     unlink ($expanded_file); # retry safe ## Works on directories?
-    my $tmp_file = $worker_temp_directory . $self->param('remote_file');
+    my $tmp_file = $worker_temp_directory . "/" . $self->param('remote_file');
     print STDERR "wget $ftp_file > $tmp_file\n" if ($self->debug());
     my $status = getstore($ftp_file, $tmp_file);
     die "Error $status trying to retrieve $ftp_file" unless (is_success($status));

@@ -250,7 +250,7 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   print STDERR "Total number of keys:  $total_count\n" if ($self->debug);
   print STDERR "Number of common keys: $common_count\n" if ($self->debug);
 
-  my $xtb_filename = $self->worker_temp_directory . $from_dbname . "-" . $to_dbname. '.xtb';
+  my $xtb_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.xtb';
   open(OUT, ">$xtb_filename") or die "Could not open '$xtb_filename' for writing : $!";
   foreach my $from_id (sort {$a <=> $b} keys %direct) {
     my $from_name = $from_clustername->{$from_id};
@@ -336,7 +336,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $from_dbname   = $self->generate_dbname( $from_dba );
   my $to_dbname     = $self->generate_dbname( $to_dba );
 
-  my $map_filename = $self->worker_temp_directory . $from_dbname . "-" . $to_dbname. '.map';
+  my $map_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.map';
   open(MAP, ">$map_filename") or die "Could not open '$map_filename' for writing : $!";
 
  TOPAIR: foreach my $topair (sort { $b->[1] <=> $a->[1] } map { [$_,$to2size->{$_}] } keys %$to2size ) {

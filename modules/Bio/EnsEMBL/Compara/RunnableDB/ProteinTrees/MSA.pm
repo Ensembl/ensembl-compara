@@ -217,7 +217,7 @@ sub run_msa {
     my $tempdir = $self->worker_temp_directory;
     print "TEMP DIR: $tempdir\n" if ($self->debug);
 
-    my $msa_output = $tempdir . 'output.mfa';
+    my $msa_output = $tempdir . '/output.mfa';
     $msa_output =~ s/\/\//\//g;
     $self->param('msa_output', $msa_output);
 
@@ -255,7 +255,7 @@ sub dumpProteinTreeToWorkdir {
   my $self = shift;
   my $tree = shift;
 
-  my $fastafile =$self->worker_temp_directory.'proteintree_'.($tree->root_id).'.fasta';
+  my $fastafile =$self->worker_temp_directory.'/proteintree_'.($tree->root_id).'.fasta';
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if (-e $fastafile);

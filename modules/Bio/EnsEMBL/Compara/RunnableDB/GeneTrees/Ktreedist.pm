@@ -197,8 +197,8 @@ sub run_ktreedist {
   my $ktreedist_exe = $self->param('ktreedist_exe');
   my $temp_directory = $self->worker_temp_directory;
 
-  my $comparisonfilename = $temp_directory . $root_id . ".ct";
-  my $referencefilename = $temp_directory . $root_id . ".rt";
+  my $comparisonfilename = $temp_directory . "/" . $root_id . ".ct";
+  my $referencefilename = $temp_directory .  "/" .$root_id . ".rt";
   open CTFILE,">$comparisonfilename" or die $!;
   print CTFILE "#NEXUS\n\n";
   print CTFILE "Begin TREES;\n\n";

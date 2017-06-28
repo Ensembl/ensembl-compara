@@ -119,9 +119,9 @@ sub run_cafe_script {
     my $pval_lim = $self->param('pvalue_lim');
 
     my $tmp_dir = $self->worker_temp_directory;
-    my $cafe_table_file = $tmp_dir . "cafe_${mlss_id}_${fam_id}.in";
-    my $cafe_out_file   = $tmp_dir . "cafe_${mlss_id}_${fam_id}.out";
-    my $script_file     = $tmp_dir . "cafe_${mlss_id}_${fam_id}.sh";
+    my $cafe_table_file = $tmp_dir . "/cafe_${mlss_id}_${fam_id}.in";
+    my $cafe_out_file   = $tmp_dir . "/cafe_${mlss_id}_${fam_id}.out";
+    my $script_file     = $tmp_dir . "/cafe_${mlss_id}_${fam_id}.sh";
     print STDERR "CAFE results will be written into [$cafe_out_file]\n";
     print STDERR "Script file is [$script_file]\n" if ($self->debug());
     $self->param('cafe_out_file', $cafe_out_file);

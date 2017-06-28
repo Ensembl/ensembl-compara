@@ -119,7 +119,7 @@ sub _get_queries {
 sub _dump_sequences_to_workdir {
     my ($self) = @_;
 
-    my $fastafile = $self->worker_temp_directory . "unannotated.fasta";    ## Include pipeline name to avoid clashing??
+    my $fastafile = $self->worker_temp_directory . "/unannotated.fasta";    ## Include pipeline name to avoid clashing??
     print STDERR "Dumping unannotated members in $fastafile\n" if ( $self->debug );
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set') );

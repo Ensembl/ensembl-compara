@@ -43,7 +43,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub _write_temp_tree_file {
     my ($self, $tree_name, $tree_content) = @_;
 
-    my $filename = $self->worker_temp_directory . $tree_name;
+    my $filename = $self->worker_temp_directory . "/" . $tree_name;
     open my $fh, ">", $filename or die "Could not open '$filename' for writing : $!";
     print $fh $tree_content;
     close $fh;
@@ -179,7 +179,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         }
     }
 
-    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID, $format);
+    my $aln_file = $self->worker_temp_directory.sprintf('/align.%d.%s', $dbID, $format);
 
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
