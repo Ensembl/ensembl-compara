@@ -155,7 +155,7 @@ sub cleanup {   # NOT CALLED ?
     my ($self) = @_;
     my $raxml_tag = $self->param('raxml_tag');
     my $model = $self->param('model');
-    my $tmp_regexp = $self->worker_temp_directory."*$raxml_tag.$model.RUN.*";
+    my $tmp_regexp = $self->worker_temp_directory."/*$raxml_tag.$model.RUN.*";
     $self->run_command("rm -f $tmp_regexp", { die_on_failure => 1 });
 }
 

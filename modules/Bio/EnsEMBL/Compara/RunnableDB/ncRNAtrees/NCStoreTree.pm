@@ -86,7 +86,7 @@ sub _dumpStructToWorkdir {
     my ($self, $tree) = @_;
 
     my $root_id = $tree->root_id;
-    my $file_root = $self->worker_temp_directory. "nctree_". $root_id;
+    my $file_root = $self->worker_temp_directory. "/nctree_". $root_id;
        $file_root =~ s/\/\//\//g;  # converts any // in path to /
     my $struct_file = $file_root . ".struct";
 

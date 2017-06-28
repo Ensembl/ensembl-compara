@@ -195,7 +195,7 @@ sub dump_sequences_to_workdir {
   my $cluster = shift;
 
   my $root_id = $cluster->root_id;
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $root_id . ".fasta";
+  my $fastafile = $self->worker_temp_directory . "/cluster_" . $root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
 
   my $tag_gene_count = scalar(@{$cluster->get_all_leaves});
