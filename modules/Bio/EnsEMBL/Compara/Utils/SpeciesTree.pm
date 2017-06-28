@@ -163,6 +163,7 @@ sub create_species_tree {
     }
 
         # Deleting subnodes down to a given node:
+    my %taxon_id_to_flatten = ();
     foreach my $extra_taxon (@$multifurcation_deletes_all_subnodes) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
         my $taxon_name = $taxon->name;
@@ -173,6 +174,7 @@ sub create_species_tree {
             my $node_children = $node->children;
             foreach my $child (@$node_children) {
                 $node->parent->add_child($child);
+                $taxon_id_to_flatten{$child->taxon_id} = 1;
             }
             $node->disavow_parent;
         }
@@ -212,6 +214,15 @@ sub create_species_tree {
                 $new_leaf->taxon_id($genome_db->taxon_id);
                 $new_leaf->node_name($genome_db->taxon->name);
             }
+        }
+        # If a parent node of this species has been flattened by a
+        # multifurcation_deletes_all_subnodes flag, we need to keep it flat
+        if ($taxon_id_to_flatten{$taxon_id}) {
+            $new_node->print_node;
+            my $anchor_node = $new_node->parent;
+            my $leaves = $new_node->children;
+            $anchor_node->add_child($_) for @$leaves;
+            $new_node->disavow_parent;
         }
     }
 
