@@ -79,7 +79,7 @@ sub run {
     my $self = shift @_;
 
     # Add genes to the clusters
-    #$self->compara_dba->dbc->do($sql_expand_clusters);
+    $self->compara_dba->dbc->do($sql_expand_clusters);
 
     # Find the source genes that are not in clusters
     my %allclusters = ();
