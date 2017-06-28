@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::UserData::ConfigureBigWig;
+package EnsEMBL::Web::Component::UserData::ConfigureGraph;
 
 use strict;
 use warnings;
@@ -82,19 +82,19 @@ sub content {
 #   );
 # 
 # 
-#   $form->add_element('type'  => 'Float',
-#                      'name'  => 'min',
-#                      'label' => 'Range Minimum (optional)',
-#                      'size'  => '10',
-#                      'notes' => 'You can set a fixed minimum or leave this field blank in which case automatic scaling will be done.'
-#                      );
-# 
-#   $form->add_element('type'  => 'Float',
-#                      'name'  => 'max',
-#                      'label' => 'Range Maximum (optional)',
-#                      'size'  => '10',
-#                      'notes' => 'You can set a fixed maximum or leave this field blank in which case automatic scaling will be done.'
-#                      );
+   $form->add_element('type'  => 'Float',
+                      'name'  => 'min',
+                      'label' => 'Range Minimum (optional)',
+                      'size'  => '10',
+                      'notes' => 'You can set a fixed minimum or leave this field blank in which case automatic scaling will be done.'
+                      );
+ 
+   $form->add_element('type'  => 'Float',
+                      'name'  => 'max',
+                      'label' => 'Range Maximum (optional)',
+                      'size'  => '10',
+                      'notes' => 'You can set a fixed maximum or leave this field blank in which case automatic scaling will be done.'
+                      );
 
   $form->add_element('type' => 'Hidden', 'name' => 'code', 'value' => $self->hub->param('code'));
   $form->add_element('type' => 'Submit', 'value' => 'Save');

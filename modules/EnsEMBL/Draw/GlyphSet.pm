@@ -621,7 +621,7 @@ sub init_label {
       track_highlight => [ $highlight_track_uniq_id, $hl, "$url;updated=0;$track=highlight_" ],
       component       => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers       => \@r,
-      scaleable       => $scaleable,
+      scaleable       => $url.';track_id='.$track,
       fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',

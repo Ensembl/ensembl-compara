@@ -363,8 +363,8 @@ sub hover_label_tabs {
 
   $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
 
-  my $url = $self->hub->url;
-  my $axis_form = qq(<form action="$url" class="freeform">
+  my $url = $label->{'scaleable'};
+  my $axis_form = qq(<form action="$url" method="POST" class="freeform">
 <p><label for="y_min">Minimum: <input name="y_min" type="text" class="small" /></p>
 <p><label for="y_max">Maximum: <input name="y_max" type="text" class="small" /></p>
 <input type="submit" value="Update" class="small button" />
