@@ -302,8 +302,6 @@ sub default_options {
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
         'reuse_level'               => 'clusters',
 
-        # If all the species can be reused, and if the reuse_level is "clusters" or above, do we really want to copy all the peptide_align_feature / hmm_profile tables ? They can take a lot of space and are not used in the pipeline
-        'quick_reuse'   => 1,
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
@@ -1351,7 +1349,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyClusters',
             -parameters => {
                 'tags_to_copy'              => [ 'division' ],
-                'quick_reuse'               => $self->o('quick_reuse'),
             },
             -flow_into  => [ 'remove_blacklisted_genes' ],
             -rc_name => '4Gb_job',
