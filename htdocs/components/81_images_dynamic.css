@@ -178,9 +178,13 @@ li.usertrack_highlight:after {
 .hover_label div.hl-tab                   { background-color: [[PANEL_BG]]; display: none; clear: both; padding: 8px; }
 .hover_label div.hl-tab.active            { display: block; }
 .hover_label div.hl-tab input             { width: 97% }
+.hover_label div.hl-tab input.small       { width: 25% }
+.hover_label div.hl-tab input.button      { background-color: [[BUTTON_BG]]; color:white; }
+.hover_label div.hl-tab label             { display:inline}
 
 .hl-icon-info                             { background-image: url(/i/16/info.png); }
 .hl-icon-setting                          { background-image: url(/i/16/setting.png); }
+.hl-icon-scale                            { background-image: url(/i/16/chart.png); }
 .hl-icon-link                             { background-image: url(/i/16/link.png); }
 .hover_label a.hl-icon-highlight          { display: block; width: 16px; height: 16px; background: url(/i/16/swp/highlight.png) no-repeat; }
 .hover_label a.hl-icon-highlight:hover    { cursor: pointer;}

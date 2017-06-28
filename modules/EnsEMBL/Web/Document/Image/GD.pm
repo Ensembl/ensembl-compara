@@ -363,6 +363,13 @@ sub hover_label_tabs {
 
   $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
 
+  my $url = $self->hub->url;
+  my $axis_form = qq(<form action="$url" class="freeform">
+<p><label for="y_min">Minimum: <input name="y_min" type="text" class="small" /></p>
+<p><label for="y_max">Maximum: <input name="y_max" type="text" class="small" /></p>
+<input type="submit" value="Update" class="small button" />
+</form>);
+
   my (@buttons, @contents);
 
   if ($label->{'desc'}) {
@@ -373,6 +380,11 @@ sub hover_label_tabs {
   if ($renderers) {
     push @buttons, qq(<div class="_hl_icon hl-icon hl-icon-setting"></div>);
     push @contents, qq(<div class="_hl_tab hl-tab config"><p>Change track style:</p><ul>$renderers</ul></div>);
+  }
+
+  if ($label->{'scaleable'}) {
+    push @buttons, qq(<div class="_hl_icon hl-icon hl-icon-scale"></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Change Y axis limits:</p>$axis_form</div>);
   }
 
   if ($label->{'conf_url'}) {
