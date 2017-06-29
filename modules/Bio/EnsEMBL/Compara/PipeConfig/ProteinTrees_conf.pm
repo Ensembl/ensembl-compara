@@ -508,7 +508,7 @@ sub core_pipeline_analyses {
         'raxml_exe_avx'             => $self->o('raxml_exe_avx'),
         'treebest_exe'              => $self->o('treebest_exe'),
         'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-        'input_clusterset_id'       => 'default',
+        'input_clusterset_id'       => 'raxml_parsimony',
     );
     my %raxml_update_parameters = (
         'raxml_pthread_exe_sse3'    => $self->o('raxml_pthread_exe_sse3'),
