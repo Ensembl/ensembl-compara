@@ -59,7 +59,7 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-1',
+        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
         'port'  => 4485,
 
     # User details
@@ -73,14 +73,10 @@ sub default_options {
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => 'ensembl',
 
     #default parameters for the geneset qc
-
 
     # dependent parameters: updating 'base_dir' should be enough
         'base_dir'              => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/',
@@ -89,6 +85,8 @@ sub default_options {
         'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold' => 0.99,
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -97,8 +95,10 @@ sub default_options {
         'gene_blacklist_file'           => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
 
     # tree building parameters:
+        'use_raxml'                 => 0,
         'use_quick_tree_break'      => 0,
         'use_notung'                => 0,
+        'use_dna_for_phylogeny'     => 0,
 
     # alignment filtering options
 
@@ -116,11 +116,9 @@ sub default_options {
         # The TreeFam release to map to
         'tf_release'                => '9_69',
 
-    # executable locations:
-
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library.
-        'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+       'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -157,16 +155,15 @@ sub default_options {
         'ortho_stats_capacity'      => 10,
         'goc_capacity'              => 30,
         'store_goc_capacity'        => 70,
-	      'genesetQC_capacity'        => 100,
+        'genesetQC_capacity'        => 100,
 
     # connection parameters to various databases:
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/muffato_compara_master_20140317',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
         'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
@@ -182,6 +179,7 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode'           => 'blastp',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
@@ -198,6 +196,7 @@ sub default_options {
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => 1,
+        #Use Timetree divergence times for the CAFETree internal nodes
         'use_timetree_times'        => 1,
 
     # GOC parameters
@@ -213,17 +212,29 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping'                 => 1,
-
-        'cdhit_identity_threshold' => 0.99,
     };
 }
+
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes},
+
+        '38Gb_job'     => {'LSF' => '-C0 -M38000 -R"select[mem>38000] rusage[mem=38000]"' },
+    }
+}
+
 
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
+    ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'CAFE_table'                => '24Gb_job',
+        'hcluster_run'              => '38Gb_job',
+        'split_genes'               => '250Mb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
