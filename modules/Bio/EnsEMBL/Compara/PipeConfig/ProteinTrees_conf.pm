@@ -295,6 +295,8 @@ sub default_options {
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
         'reuse_level'               => 'clusters',
 
+    # Ortholog-clustering parameters
+        'ref_ortholog_db'           => undef,
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
@@ -854,7 +856,17 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
+            -flow_into          => [ 'insert_member_projections' ],
             %hc_analysis_params,
+        },
+
+        {   -logic_name => 'insert_member_projections',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'INSERT INTO seq_member_projection (target_seq_member_id, source_seq_member_id) SELECT target_seq_member_id, canonical_member_id FROM seq_member_projection_stable_id JOIN gene_member ON source_stable_id = stable_id',
+                ],
+            },
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
@@ -1274,10 +1286,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'ortholog_cluster',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters',
             -parameters => {
-                'species_set_id'     => '#reuse_ss_id#',
-                'member_type'             => 'protein',
                 'sort_clusters'         => 1,
             },
+            -rc_name    => '2Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
         },
 
@@ -1346,10 +1357,8 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name         => 'expand_clusters_with_projections',
-            -module             => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters         => {
-                'sql'   => 'INSERT INTO gene_tree_node (parent_id, root_id, seq_member_id) SELECT gtn.parent_id, gtn.root_id, smp.target_seq_member_id FROM gene_tree_node gtn JOIN seq_member_projection smp ON gtn.seq_member_id = smp.source_seq_member_id',
-            },
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
+            -rc_name            => '250Mb_job',
             -flow_into          => [ 'remove_blacklisted_genes' ],
         },
 
