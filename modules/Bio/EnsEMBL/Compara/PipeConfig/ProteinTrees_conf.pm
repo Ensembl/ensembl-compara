@@ -1775,7 +1775,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tags'  => {
                     #The default value matches the default dataflow we want: _8_cores analysis.
-                    'aln_num_of_patterns' => 200,
+                    'aln_length'          => 200,
                     'gene_count'          => 0,
                 },
             },
