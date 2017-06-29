@@ -142,24 +142,8 @@ sub default_options {
 
 
         # How will the pipeline create clusters (families) ?
-        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   'hmm' means that the pipeline will run an HMM classification
-        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode'           => 'ortholog',
-
-        # How much the pipeline will try to reuse from "prev_rel_db"
-        # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   'members' means that only the members are copied over, and the rest will be re-computed
-        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
-        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
-        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
-        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
-        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
-        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
-        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
@@ -200,6 +184,9 @@ sub tweak_analyses {
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     #$analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under "Mus" are flattened, i.e. it's rat vs a rake of mice
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 862507 ];    # rat vs pahari vs (all others as a rake)
+    $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'overall_qc'}->{'-parameters'}->{'unmap_tolerance'} = 0.5;
+    $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
 }
 
 
