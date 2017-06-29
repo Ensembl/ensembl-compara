@@ -704,7 +704,6 @@ sub core_pipeline_analyses {
             },
             -batch_size => 5,
             -hive_capacity => 30,
-            -rc_name => '8Gb_job',
             -flow_into => {
                 2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
@@ -833,7 +832,6 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => 'biotype_group = "coding"',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
@@ -1154,7 +1152,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'dump_representative_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
-            -rc_name    => '250Mb_job',
+            -rc_name    => '500Mb_job',
             -parameters => {
                 'only_canonical' => 0,
                 'only_representative' => 1,
@@ -1622,7 +1620,7 @@ sub core_pipeline_analyses {
                 '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'split_genes',
             ),
-            -rc_name    => '250Mb_job',
+            -rc_name    => '500Mb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
@@ -2771,7 +2769,17 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
-            -rc_name        => '2Gb_job',
+            -rc_name        => '500Mb_job',
+            -hive_capacity  => $self->o('ktreedist_capacity'),
+            -batch_size     => 20,
+            -flow_into      => {
+                -1  => [ 'consensus_cigar_line_prep_himem' ],
+            },
+        },
+
+        {   -logic_name     => 'consensus_cigar_line_prep_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
+            -rc_name        => '4Gb_job',
             -hive_capacity  => $self->o('ktreedist_capacity'),
             -batch_size     => 20,
         },
