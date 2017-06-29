@@ -1745,7 +1745,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name    	=> '4Gb_job',
             -batch_size     => 50,
-            -flow_into      => [ 'small_trees_go_to_treebest' ],
+            -flow_into      => [ 'get_num_of_patterns' ],
         },
 
 # ---------------------------------------------[small trees decision]-------------------------------------------------------------
@@ -1754,16 +1754,16 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
                 'tags'  => {
-                    'gene_count'                    => 0,
+                    'aln_num_of_patterns'       => 0,
+                    'num_distinct_sequences'    => 0,
                 },
             },
             -flow_into  => {
                 1 => WHEN (
-                    '#tree_gene_count# < 4'                                     => 'treebest_small_families',
-                    '!#tree_best_fit_model_family# && #do_model_selection#'     => 'prottest_decision',
-                    '!#tree_best_fit_model_family# && !#do_model_selection#'    => 'get_num_of_patterns',
-                    '#tree_best_fit_model_family# && #do_model_selection#'      => 'prottest_decision',
-                    '#tree_best_fit_model_family# && !#do_model_selection#'     => 'get_num_of_patterns',
+                    '(#tree_num_distinct_sequences# >=4) && (#tree_aln_num_of_patterns# >= 4) && #do_model_selection#'  => 'prottest_decision',
+                    '#tree_num_distinct_sequences# < 4'     => 'treebest_small_families',
+                    '#tree_aln_num_of_patterns# < 4'        => 'treebest_small_families',
+                    ELSE                                       'raxml_parsimony_decision',
                 ),
             },
             %decision_analysis_params,
@@ -1794,8 +1794,8 @@ sub core_pipeline_analyses {
                     '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# <= 500)'   => 'prottest_32_cores',
                     '(#tree_aln_length# > 8000) && (#tree_aln_length# <= 16000) && (#tree_gene_count# > 500)'    => 'prottest_32_cores',
                     '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# <= 500)'  => 'prottest_32_cores',
-                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# > 500)'   => 'get_num_of_patterns',
-                    '(#tree_aln_length# > 32000)'                                                                => 'get_num_of_patterns',
+                    '(#tree_aln_length# > 16000) && (#tree_aln_length# <= 32000) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_decision',
+                    '(#tree_aln_length# > 32000)'                                                                => 'raxml_parsimony_decision',
                 ),
             },
         },
@@ -1811,10 +1811,7 @@ sub core_pipeline_analyses {
             -rc_name    				=> '2Gb_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
-                1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -1829,8 +1826,8 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name					=> '4Gb_job',
             -flow_into  => {
-                #-1 => [ 'get_num_of_patterns' ],
-                1 => [ 'get_num_of_patterns' ],
+                #-1 => [ 'raxml_parsimony_decision' ],
+                1 => [ 'raxml_parsimony_decision' ],
 			}
         },
 
@@ -1845,10 +1842,7 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '8Gb_8c_job',
             -flow_into  => {
-                1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -1863,10 +1857,7 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_16c_job',
             -flow_into  => {
-                1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -1881,10 +1872,7 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_32c_job',
             -flow_into  => {
-                1 => [ 'get_num_of_patterns' ],
-				2 => [ 'treebest_small_families' ], # This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
-                                                    #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
-                                                    #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -1968,7 +1956,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
                 2 => [ 'treebest_small_families' ],
-                1 => [ 'raxml_parsimony_decision' ],
+                1 => [ 'small_trees_go_to_treebest' ],
             }
         },
 
@@ -1981,7 +1969,7 @@ sub core_pipeline_analyses {
             -batch_size    				=> 100,
             -rc_name    				=> '16Gb_job',
             -flow_into  => {
-                1 => [ 'raxml_parsimony_decision' ],
+                1 => [ 'small_trees_go_to_treebest' ],
             }
         },
 
