@@ -121,7 +121,10 @@ sub run {
     while ( my $orth = shift( @orth_objects ) ) {
         my @gene_members = @{ $orth->get_all_GeneMembers() };
         my (%orth_ranges, @orth_dnafrags, %orth_exons);
+        my $has_transcript_edits = 0;
         foreach my $gm ( @gene_members ){
+            $has_transcript_edits ||= $gm->has_transcript_edits;
+
             push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
             
@@ -130,6 +133,10 @@ sub run {
             my $ex_bounds = $sth->fetchall_arrayref([]);
             $orth_exons{$gm->genome_db_id} = $ex_bounds;
         }
+
+        # When there are transcript edits, the coordinates cannot be
+        # trusted, so it's better to skip the pair
+        next if $has_transcript_edits;
 
         push( @orth_info, { 
             id       => $orth->dbID, 
