@@ -107,6 +107,10 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => undef,
 
+    # Parameters to allow merging different runs of the pipeline
+        'dbID_range_index'      => undef,
+        'label_prefix'          => undef,
+
     #default parameters for the geneset qc
         'coverage_threshold' => 50, #percent
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
@@ -467,6 +471,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_homology_stats' => $self->o('do_homology_stats'),
         'do_hmm_export'     => $self->o('do_hmm_export'),
         'do_gene_qc'        => $self->o('do_gene_qc'),
+        'dbID_range_index'  => $self->o('dbID_range_index'),
     };
 }
 
@@ -866,6 +871,14 @@ sub core_pipeline_analyses {
                 'sql'   => [
                     'INSERT INTO seq_member_projection (target_seq_member_id, source_seq_member_id) SELECT target_seq_member_id, canonical_member_id FROM seq_member_projection_stable_id JOIN gene_member ON source_stable_id = stable_id',
                 ],
+            },
+            -flow_into  => WHEN('#dbID_range_index#' => 'offset_homology_tables' ),
+        },
+
+        {   -logic_name => 'offset_homology_tables',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -parameters => {
+                'range_index'   => '#dbID_range_index#',
             },
         },
 
@@ -2978,8 +2991,23 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #goc_reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
+                'A->1' => 'rib_fire_rename_labels',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_rename_labels',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters => {
+                'label_prefix' => $self->o('label_prefix'),
+            },
+            -flow_into  => {
+                '1->A' => WHEN('#label_prefix#' => 'rename_labels'),
                 'A->1' => 'rib_fire_goc',
             },
+        },
+
+        {   -logic_name => 'floating_rib',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
         {   -logic_name => 'group_genomes_under_taxa',
@@ -3078,6 +3106,17 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_goc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters => {
+                'taxlevels'             => $self->o('goc_taxlevels'),
+            },
+            -flow_into  => {
+                '1->A' => WHEN( '#expr(scalar(@{#taxlevels#}))expr#' => 'copy_prev_tables' ),
+                'A->1' => ['floating_rib'],
+            },
+        },
+
+        {   -logic_name => 'copy_prev_tables',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
                 'A->1' => ['goc_group_genomes_under_taxa'],
@@ -3166,6 +3205,15 @@ sub core_pipeline_analyses {
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
             -hive_capacity => $self->o('ortho_stats_capacity'),
+        },
+
+        {
+             -logic_name => 'rename_labels',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
+             -parameters => {
+                 'division'     => $self->o('division'),
+                 'label_prefix' => $self->o('label_prefix'),
+             },
         },
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },

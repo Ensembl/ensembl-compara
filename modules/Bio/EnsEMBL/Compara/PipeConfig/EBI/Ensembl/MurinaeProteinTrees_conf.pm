@@ -90,6 +90,11 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => 'murinae',
 
+    # Parameters to allow merging different runs of the pipeline
+        'dbID_range_index'      => 3,
+        'label_prefix'          => 'mur_',
+
+
     #default parameters for the geneset qc
 
     # dependent parameters: updating 'base_dir' should be enough
