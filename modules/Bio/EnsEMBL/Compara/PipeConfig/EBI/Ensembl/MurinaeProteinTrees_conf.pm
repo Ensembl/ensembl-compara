@@ -182,8 +182,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
-    #$analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under "Mus" are flattened, i.e. it's rat vs a rake of mice
-    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 862507 ];    # rat vs pahari vs (all others as a rake)
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'overall_qc'}->{'-parameters'}->{'unmap_tolerance'} = 0.5;
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
