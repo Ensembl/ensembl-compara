@@ -206,7 +206,8 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE sequence                   AUTO_INCREMENT=800000001',
-                    'ALTER TABLE seq_member                 AUTO_INCREMENT=8000000001',
+                    'ALTER TABLE seq_member                 AUTO_INCREMENT=800000001',
+                    'ALTER TABLE gene_member                AUTO_INCREMENT=800000001',
                 ],
             },
             -flow_into => [ 'genomedb_factory' ],
