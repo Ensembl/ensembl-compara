@@ -3036,6 +3036,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'prev_rel_db'   => '#mapping_db#',
             },
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 -1 => [ 'homology_id_mapping_himem' ],
             },
@@ -3048,7 +3049,7 @@ sub core_pipeline_analyses {
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
-            -rc_name => '1Gb_job',
+            -rc_name => '4Gb_job',
         },
 
         {   -logic_name => 'homology_dNdS',
