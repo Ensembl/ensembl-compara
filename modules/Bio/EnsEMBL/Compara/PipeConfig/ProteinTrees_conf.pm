@@ -1676,6 +1676,7 @@ sub core_pipeline_analyses {
                     ELSE 'hc_post_tree',
                 ),
             },
+            %decision_analysis_params,
         },
 
 
