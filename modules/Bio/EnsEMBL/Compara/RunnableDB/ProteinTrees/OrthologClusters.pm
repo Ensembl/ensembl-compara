@@ -66,6 +66,7 @@ sub param_defaults {
     return {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 0,
+            'add_model_id'          => 0,
     };
 }
 
@@ -83,6 +84,7 @@ sub fetch_input {
 	$self->param('previous_dba' , Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('ref_ortholog_db')) );
 	$self->param('prev_homolog_adaptor', $self->param('previous_dba')->get_HomologyAdaptor);
 	$self->param('prev_mlss_adaptor', $self->param('previous_dba')->get_MethodLinkSpeciesSetAdaptor);
+	$self->param('prev_genetree_adaptor', $self->param('previous_dba')->get_GeneTreeAdaptor);
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
 
 
@@ -137,6 +139,8 @@ sub _buildConnectedComponents {
     $self->dbc and $self->dbc->disconnect_if_idle();
     my $c = 0;
     my %allclusters = ();
+    my %tree_model_id;
+    my %member_model_id;
     $self->param('allclusters', \%allclusters);
     while ( my $ortholog = shift( @{ $ortholog_objects } ) ) {
 		my $gene_members = $ortholog->get_all_Members();
@@ -146,12 +150,22 @@ sub _buildConnectedComponents {
 		$self->param('connected_split_genes')->add_connection($seq_mid1, $seq_mid2);
 		$c++;
 #		last if $c >= 30;
-		
+		if ($self->param('add_model_id')) {
+                        unless ($tree_model_id{$ortholog->_gene_tree_root_id}) {
+                            $tree_model_id{$ortholog->_gene_tree_root_id} = $ortholog->gene_tree->get_value_for_tag('model_id');
+                            #my $tree = $self->param('prev_genetree_adaptor')->fetch
+                        }
+                        $member_model_id{$seq_mid1} = $tree_model_id{$ortholog->_gene_tree_root_id};
+                        $member_model_id{$seq_mid2} = $tree_model_id{$ortholog->_gene_tree_root_id};
+                }
 	}
         printf("%d elements split into %d distinct components\n", $self->param('connected_split_genes')->get_element_count, $self->param('connected_split_genes')->get_component_count) if $self->debug();
 	my $cluster_id=0;
         foreach my $comp (@{$self->param('connected_split_genes')->get_components}) {
             $allclusters{$cluster_id} = { 'members' => $comp };
+            # By construction all the members of a component come from the
+            # same tree, so there is a single possible model_id (when it exists)
+            $allclusters{$cluster_id}->{'model_id'} = $member_model_id{$comp->[0]} if $member_model_id{$comp->[0]};
             $cluster_id++;
         }
         print Dumper(\%allclusters) if $self->debug;

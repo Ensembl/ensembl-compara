@@ -74,6 +74,19 @@ sub default_options {
             'dump_dir'              => $self->o('work_dir') . '/dumps',
             'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
 
+            # How will the pipeline create clusters (families) ?
+            # Possible values: 'rfam' (default) or 'ortholog'
+            #   'blastp' means that the pipeline will clusters genes according to their RFAM accession
+            #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
+            'clustering_mode'           => 'rfam',
+
+            'division'              => undef,
+
+    # Parameters to allow merging different runs of the pipeline
+        'dbID_range_index'      => 1,
+        'label_prefix'          => undef,
+
+        # How much the pipeline will try to reuse from "prev_rel_db"
             # tree break
             'treebreak_tags_to_copy'   => ['model_id', 'model_name'],
 
@@ -93,6 +106,9 @@ sub default_options {
             'full_species_tree_label'  => 'full_species_tree',
             'per_family_table'         => 0,
             'cafe_species'             => [],
+
+            # Ortholog-clustering parameters
+            'ref_ortholog_db'           => undef,
 
             # Analyses usually don't fail
             'hive_default_max_retry_count'  => 1,
@@ -126,6 +142,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'production_db_url' => $self->o('production_db_url'),
+        'dbID_range_index'  => $self->o('dbID_range_index'),
+        'clustering_mode'   => $self->o('clustering_mode'),
     }
 }
 
@@ -245,6 +263,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -parameters => {
+                'range_index'   => '#dbID_range_index#',
+            },
             -flow_into  => [ 'offset_more_tables' ],
         },
 
@@ -328,7 +349,17 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
+            -flow_into          => [ 'insert_member_projections' ],
             %hc_params,
+        },
+
+        {   -logic_name => 'insert_member_projections',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'INSERT INTO seq_member_projection (target_seq_member_id, source_seq_member_id) SELECT target_seq_member_id, canonical_member_id FROM seq_member_projection_stable_id JOIN gene_member ON source_stable_id = stable_id',
+                ],
+            },
         },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
@@ -369,14 +400,17 @@ sub pipeline_analyses {
                                'type'              => 'infernal',
                                'skip_consensus'    => 1,
                               },
-            -flow_into     => [ 'rfam_classify' ],
+            -flow_into     => WHEN(
+                                   '#clustering_mode# eq "ortholog"' => 'ortholog_cluster',
+                                   ELSE 'rfam_classify',
+                               ),
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
-                -flow_into     => [ 'clusterset_backup', 'create_additional_clustersets', 'cluster_qc_factory' ],
+                -flow_into     => [ 'cluster_qc_factory' ],
                 -rc_name       => '1Gb_job',
             },
 
@@ -385,6 +419,7 @@ sub pipeline_analyses {
                 -parameters    => {
                     'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
                 },
+                -flow_into     => [ 'create_additional_clustersets' ],
             },
 
             {   -logic_name    => 'create_additional_clustersets',
@@ -398,13 +433,30 @@ sub pipeline_analyses {
             {   -logic_name => 'cluster_qc_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
-                    2 => [ 'per_genome_qc' ],
+                    '2->A' => [ 'per_genome_qc' ],
+                    'A->1' => [ 'clusterset_backup' ],
                 },
             },
 
             {   -logic_name => 'per_genome_qc',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             },
+
+        {   -logic_name => 'ortholog_cluster',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters',
+            -parameters => {
+                'sort_clusters'         => 1,
+                'add_model_id'          => 1,
+            },
+            -rc_name    => '2Gb_job',
+            -flow_into  => 'expand_clusters_with_projections',
+        },
+
+        {   -logic_name         => 'expand_clusters_with_projections',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
+            -rc_name            => '250Mb_job',
+            -flow_into          => [ 'cluster_qc_factory' ],
+        },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
 
@@ -424,9 +476,28 @@ sub pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags', 'homology_stats_factory', 'id_map_mlss_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
+              -flow_into          => [ 'write_stn_tags',
+                                        WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                                        WHEN('#initialise_cafe_pipeline#', 'CAFE_table'),
+                                    ],
               %hc_params,
             },
+
+        {
+             -logic_name => 'remove_overlapping_homologies',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
+             -flow_into  => [ 'rename_labels' ],
+        },
+
+        {
+             -logic_name => 'rename_labels',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
+             -parameters => {
+                 'division'     => $self->o('division'),
+                 'label_prefix' => $self->o('label_prefix'),
+             },
+             -flow_into  => [ 'homology_stats_factory', 'id_map_mlss_factory' ],
+        },
 
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',

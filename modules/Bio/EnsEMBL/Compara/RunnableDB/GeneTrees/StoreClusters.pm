@@ -186,7 +186,7 @@ sub add_cluster {
         -tree_type => 'tree',
         -method_link_species_set_id => $clusterset->method_link_species_set_id,
         -clusterset_id => $clusterset->clusterset_id,
-        -stable_id => $cluster_def->{'model_id'},
+        $self->param('add_model_id') ? () : (-stable_id => $cluster_def->{'model_id'}),
     );
 
     # The cluster leaves
