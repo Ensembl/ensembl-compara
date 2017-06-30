@@ -123,7 +123,7 @@ sub run {
         my (%orth_ranges, @orth_dnafrags, %orth_exons);
         my $has_transcript_edits = 0;
         foreach my $gm ( @gene_members ){
-            $has_transcript_edits ||= $gm->has_transcript_edits;
+            $has_transcript_edits ||= $gm->get_canonical_SeqMember->has_transcript_edits;
 
             push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
