@@ -123,6 +123,7 @@ sub get_data {
     my $consensus;
     foreach my $seq_region_name (@$seq_region_names) {
       $consensus = eval { $self->vcf_adaptor->fetch_variations($seq_region_name, $slice->start, $slice->end); };
+      warn $@ if $@;
       return [] if $@;
       last if $consensus and @$consensus;
     } 
@@ -300,7 +301,7 @@ sub vcf_adaptor {
        $url    =~ s/###CHR###/$region/g;
   }
 
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'config'}->hub);
 }
 
 1;
