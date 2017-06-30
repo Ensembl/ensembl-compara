@@ -83,9 +83,9 @@ sub fetch_input {
 
     my $mlss_id         = $self->param_required('mlss_id');
     my $mlss            = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $prev_mlss_id    = $self->param_required('previous_mlss_id');
+    my $prev_mlss_id    = $self->param('previous_mlss_id');
 
-    if ($prev_mlss_id) {
+    if (defined $prev_mlss_id) {
         $self->_fetch_and_map_previous_homologies( $prev_mlss_id);
     } else {
         $self->_write_empty_mapping();
