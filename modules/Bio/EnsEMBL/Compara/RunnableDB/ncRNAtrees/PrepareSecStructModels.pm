@@ -192,6 +192,11 @@ sub _run_bootstrap_raxml {
     $self->raxml_exe_decision();
     my $raxml_exe = $self->require_executable('raxml_exe');
 
+  # Unlink previous files
+  my $temp_dir = $self->worker_temp_directory;
+  my $temp_regexp = $temp_dir."*$raxml_tag.*";
+  system("rm -f $temp_regexp");
+
     my $bootstrap_num = 10;
 
   my $cmd = $raxml_exe;
@@ -227,8 +232,7 @@ sub _run_bootstrap_raxml {
   $self->store_newick_into_nc_tree('ml_it_'.$bootstrap_num, $raxml_output);
 
   # Unlink run files
-  my $temp_dir = $self->worker_temp_directory;
-  my $temp_regexp = $temp_dir."*$raxml_tag.$bootstrap_num.RUN.*";
+  $temp_regexp = $temp_dir."*$raxml_tag.$bootstrap_num.RUN.*";
   system("rm -f $temp_regexp");
   return 1;
 }
