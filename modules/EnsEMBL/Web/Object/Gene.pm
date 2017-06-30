@@ -56,6 +56,8 @@ sub availability {
         })->[0];
 
       $availability->{'has_gxa'} = $self->gxa_check;
+      $availability->{'has_plant_reactome'} = $self->plant_reactome_check;
+      warn Data::Dumper::Dumper $self->plant_reactome_check;
       $availability->{'logged_in'} = $self->user ? 1 : 0;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
@@ -514,6 +516,7 @@ sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
+sub plant_reactome_check        { return; } #implemented in widget plugin, to check for plant reactome availability
 
 
 sub get_database_matches {
@@ -830,7 +833,6 @@ sub fetch_homology_species_hash {
   my $name_lookup          = $self->hub->species_defs->production_name_lookup;
   my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
   my %homologues;
-  my $missing;
 
   foreach my $homology (@$homologies) {
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold);
@@ -855,23 +857,11 @@ sub fetch_homology_species_hash {
 
     ## In case of data bugs, make sure this is a genuine node
     my $species_tree_node = eval { $homology->species_tree_node(); };
+    next unless $species_tree_node;
+
     my $species_url = $name_lookup->{$genome_db_name};
 
-    if ($species_tree_node) {
-      push @{$homologues{$species_url}}, [ $target_member, $homology->description, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
-    }
-    else {
-      $missing++; 
-    }
-  }
-
-  if ($missing && $self->hub->action ne 'Phenotype') { 
-    $self->hub->session->set_record_data({
-        'type'      => 'message',
-        'function'  => '_info',
-        'code'      => 'mouse_strain_bug',
-        'message'   => sprintf 'Homology data for mouse strains is missing from this release. Please visit the <a href="http://e88.ensembl.org%s">release 88 archive site</a> to view this data', $self->hub->url,
-      });
+    push @{$homologues{$species_url}}, [ $target_member, $homology->description, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
   }
 
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
