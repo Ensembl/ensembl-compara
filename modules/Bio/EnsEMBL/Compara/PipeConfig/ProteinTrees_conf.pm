@@ -1517,6 +1517,7 @@ sub core_pipeline_analyses {
                     'write_stn_tags',
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
+                    WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
                 ],
                 'A->1' => 'notify_homologies_completed',
             },
@@ -3214,6 +3215,11 @@ sub core_pipeline_analyses {
                  'division'     => $self->o('division'),
                  'label_prefix' => $self->o('label_prefix'),
              },
+        },
+
+        {
+             -logic_name => 'remove_overlapping_homologies',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
         },
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
