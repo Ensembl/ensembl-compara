@@ -32,12 +32,14 @@ sub process {
   my $session  = $hub->session;
   my $redirect = $hub->species_path($hub->data_species) . '/UserData/RemoteFeedback';
   my $param    = {};
+  my $code     = $hub->param('code');
+  my $type     = $hub->param('record_type');
 
-  my $data = $session->get_record_data({type => 'url', code => $hub->param('code')});
+  my $data = $session->get_record_data({type => $type, code => $code});
 
-  $data->{'type'} = 'url';
-  $data->{'code'} = $hub->param('code');
   $data->{'colour'} = $hub->param('colour');
+  $data->{'y_max'}  = $hub->param('y_max');
+  $data->{'y_min'}  = $hub->param('y_min');
   $session->set_record_data($data);
 
   $self->ajax_redirect($redirect, $param);  

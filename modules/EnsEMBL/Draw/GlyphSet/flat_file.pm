@@ -63,6 +63,14 @@ sub get_data {
   my $file  = EnsEMBL::Web::File::User->new(%args);
   return [] unless $file->exists;
   
+  ## Get settings from user interface
+  my ($colour, $y_min, $y_max);
+  if ($self->{'my_config'}{'data'}) {
+    $colour = $self->{'my_config'}{'data'}{'colour'};
+    $y_min  = $self->{'my_config'}{'data'}{'y_min'};
+    $y_max  = $self->{'my_config'}{'data'}{'y_max'};
+  }
+
   my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
                                             'hub'         => $hub, 
                                             'config_type' => $self->{'config'}{'type'},
@@ -73,6 +81,9 @@ sub get_data {
                         'strand_to_omit'  => $strand_to_omit,
                         'display'         => $self->{'display'},
                         'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                        'colour'          => $colour,
+                        'y_min'           => $y_min, 
+                        'y_max'           => $y_max, 
                         };
 
     ## Parse the file, filtering on the current slice

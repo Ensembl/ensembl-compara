@@ -83,20 +83,22 @@ sub content {
 # 
 # 
    $form->add_element('type'  => 'Float',
-                      'name'  => 'min',
+                      'name'  => 'y_min',
                       'label' => 'Range Minimum (optional)',
                       'size'  => '10',
                       'notes' => 'You can set a fixed minimum or leave this field blank in which case automatic scaling will be done.'
                       );
  
    $form->add_element('type'  => 'Float',
-                      'name'  => 'max',
+                      'name'  => 'y_max',
                       'label' => 'Range Maximum (optional)',
                       'size'  => '10',
                       'notes' => 'You can set a fixed maximum or leave this field blank in which case automatic scaling will be done.'
                       );
 
-  $form->add_element('type' => 'Hidden', 'name' => 'code', 'value' => $self->hub->param('code'));
+  foreach (qw(code record_type)) {
+    $form->add_element('type' => 'Hidden', 'name' => $_, 'value' => $self->hub->param($_));
+  }
   $form->add_element('type' => 'Submit', 'value' => 'Save');
 
   return $form->render;
