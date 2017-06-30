@@ -201,6 +201,7 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+        'calculate_goc_distribution'    => 0,
 
     # Extra analyses
         # Export HMMs ?
