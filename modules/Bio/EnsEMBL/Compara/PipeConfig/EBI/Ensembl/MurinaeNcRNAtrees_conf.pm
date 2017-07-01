@@ -85,6 +85,9 @@ sub default_options {
 
             # CAFE parameters
             'initialise_cafe_pipeline'  => 0,
+
+            # For the homology_id_mapping
+            #'prev_rel_db'  => ...
     };
 }   
 

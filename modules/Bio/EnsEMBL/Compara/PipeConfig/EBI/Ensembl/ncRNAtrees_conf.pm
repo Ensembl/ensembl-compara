@@ -115,7 +115,9 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 4,
-            
+
+            # For the homology_id_mapping
+            #'prev_rel_db'  => ...
     };
 }   
 

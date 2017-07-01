@@ -135,6 +135,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
+        'prev_rel_db'   => $self->o('prev_rel_db'),
 
         'skip_epo'      => $self->o('skip_epo'),
         'epo_db'        => $self->o('epo_db'),
