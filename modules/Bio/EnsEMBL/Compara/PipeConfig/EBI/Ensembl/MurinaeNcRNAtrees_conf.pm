@@ -110,6 +110,7 @@ sub pipeline_analyses {
 
     $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+    $analyses_by_name{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
 
     return $all_analyses;
 }
