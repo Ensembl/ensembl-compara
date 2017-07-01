@@ -57,7 +57,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 sub param_defaults {
     return {
             'sort_clusters'         => 1,
-            'member_type'           => 'protein',
             'immediate_dataflow'    => 0,
     };
 }
@@ -74,6 +73,12 @@ FROM seq_member_projection smp JOIN seq_member ON source_seq_member_id = seq_mem
 WHERE gtn1.node_id IS NULL
 AND gtn2.seq_member_id IS NULL
 ';
+
+sub fetch_input {
+    my $self = shift;
+    my $this_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
+    $self->param('member_type', $this_mlss->method->type eq 'PROTEIN_TREES' ? 'protein' : 'ncrna');
+}
 
 sub run {
     my $self = shift @_;
