@@ -83,11 +83,13 @@ sub default_options {
 
       # NOTE : remember to adjust the species_tree_file in the base class 
       #        in accordance with this species_set!
-      'species_set_name' => 'sauropsids',
+      'species_set_name' => 'mammals',
 
       # Where the pipeline lives
       'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
       'port' => 4523,
+
+      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.42mammals.branch_len.nw',
 
       'bl2seq' => undef,
       'blastn' => $self->o('ensembl_cellar') . '/blast/2.2.30/bin/blastn',
@@ -105,8 +107,8 @@ sub default_options {
       # connection parameters to various databases:
       'ancestral_db' => { # core ancestral db
         	-driver => 'mysql',
-          -host => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-          -port => 4522,
+          -host => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+          -port => 4523,
         	-species => $self->o('ancestral_sequences_name'),
         	-user   => 'ensadmin',
         	-pass   => $self->o('password'),
@@ -115,7 +117,7 @@ sub default_options {
       # master db
       'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
       # anchor mappings
-      'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_sauropsids_epo_anchor_mapping',
+      'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_anchor_mapping_90',
 
     }; 
 
