@@ -77,7 +77,8 @@ sub default_options {
         #'pipeline_name'        => 'load_members'.$self->o('rel_with_suffix'),
 
         # names of species we don't want to reuse this time
-        'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'bos_taurus', 'cavia_porcellus' ],
+        #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
+        'do_not_reuse_list'     => [ ],
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
@@ -121,6 +122,7 @@ sub default_options {
             -port   => 4519,
             -user   => 'ensro',
             -pass   => '',
+            -db_version => 90,
         },
 
         'livemirror_loc' => {
@@ -133,8 +135,8 @@ sub default_options {
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        #'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         #'curr_core_registry'        => "registry.conf",
         'curr_core_registry'        => undef,
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
@@ -149,6 +151,7 @@ sub default_options {
         'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
 
         # Production database (for the biotypes)
+        #'production_db_url'     => 'mysql://anonymous@ensembldb.ensembl.org:5306/ensembl_production_89',
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     };
 }
