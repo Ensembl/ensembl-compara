@@ -75,16 +75,12 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'pipeline_name'         => 'pecan_24way',
-	'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('pipeline_name'),
-	'do_not_reuse_list'     => [ -1,155,139,122,158,87,174,46,125,157,147,123,134,61,108,111,153,135,112,60,151,132,43,117,150 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-
-    # blast parameters:
-    'blast_capacity'        => 100,
-    'reuse_capacity'        => 100,
+        'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
+        'species_set'           => '27amniotes',
+        'do_not_reuse_list'     => [ ],
 
     #location of full species tree, will be pruned
-    'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.24amniots.branch_len.nw', 
+    'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.27amniotes.branch_len.nw',
 
     #master database
     'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
@@ -108,15 +104,8 @@ sub default_options {
     'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
 
-        'host'        => 'mysql-ens-compara-prod-2.ebi.ac.uk',            #separate parameter to use the resources aswell
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => $self->o('host'),
-            -port   => 4522,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
-	    -driver => 'mysql',
-        },
+        'host'        => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port'        => 4522,
 
         'staging_loc' => {                     # general location of half of the current release core databases
             -host   => 'mysql-ens-sta-1',
@@ -130,6 +119,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
+            -db_version => 89,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
@@ -140,7 +130,7 @@ sub default_options {
            -port   => 4522,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'sf5_pecan_23way_pt2_77',
+           -dbname => 'mm14_pecan_24way_86b',
 	   -driver => 'mysql',
         },
 

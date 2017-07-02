@@ -75,9 +75,12 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'pipeline_name'         => 'pecan_24way',
+        #'species_set'           => '24amniotes',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+
+    # Automatically set using the above
+        'pipeline_name'         => $self->o('species_set_name').'_pecan_'.$self->o('rel_with_suffix'),
 
     # dependent parameters:
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
