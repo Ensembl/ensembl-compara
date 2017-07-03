@@ -123,6 +123,7 @@ sub get_data {
     my $consensus;
     foreach my $seq_region_name (@$seq_region_names) {
       $consensus = eval { $self->vcf_adaptor->fetch_variations($seq_region_name, $slice->start, $slice->end); };
+      warn $@ if $@;
       return [] if $@;
       last if $consensus and @$consensus;
     } 
@@ -278,14 +279,17 @@ sub density_features {
   my $length   = $slice->length;
   my $im_width = $self->{'config'}->image_width;
   my $divlen   = $length / $im_width;
-  $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
   $self->{'data'}[0]{'metadata'}{'unit'} = $divlen;
-  my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}};
+  ## Prepopulate bins, as histogram requires data at every point
+  my %density  = map {$_, 0} (1..$im_width);
+  foreach (@{$self->{'data'}[0]{'features'}}) {
+    my $key = ($_->{'POS'} - $start) / $divlen;
+    $density{int(($_->{'POS'} - $start) / $divlen)}++;
+  }
 
   my $density_features = [];
-  foreach (sort {$a <=> $b} keys %$density) {
-    push @$density_features, $density->{$_};
+  foreach (sort {$a <=> $b} keys %density) {
+    push @$density_features, $density{$_};
   }
   return $density_features;
 }
@@ -300,7 +304,7 @@ sub vcf_adaptor {
        $url    =~ s/###CHR###/$region/g;
   }
 
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'config'}->hub);
 }
 
 1;
