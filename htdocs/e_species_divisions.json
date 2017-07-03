@@ -128,16 +128,6 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Nannospalax galili",
-              "key":"Nannospalax_galili",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Cavia porcellus",
-              "key":"Cavia_porcellus",
-              "is_leaf":"true"
-          },
-          {
               "scientific_name":"Cricetulus griseus",
               "key":"Cricetulus_griseus",
               "is_leaf":"true"
@@ -153,11 +143,6 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Dipodomys ordii",
-              "key":"Dipodomys_ordii",
-              "is_leaf":"true"
-          },
-          {
               "scientific_name":"Mesocricetus auratus",
               "key":"Mesocricetus_auratus",
               "is_leaf":"true"
@@ -167,9 +152,9 @@
               "key":"Cavia_porcellus",
               "is_leaf":"true"
           },
-          {   
-              "scientific_name":"Ictidomys tridecemlineatus",
-              "key":"Ictidomys_tridecemlineatus",
+          {
+              "scientific_name":"Dipodomys ordii",
+              "key":"Dipodomys_ordii",
               "is_leaf":"true"
           },
           {
@@ -217,6 +202,16 @@
           {
               "scientific_name":"Jaculus jaculus",
               "key":"Jaculus_jaculus",
+              "is_leaf":"true"
+          },
+          {   
+              "scientific_name":"Ictidomys tridecemlineatus",
+              "key":"Ictidomys_tridecemlineatus",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Nannospalax galili",
+              "key":"Nannospalax_galili",
               "is_leaf":"true"
           }
         ]
