@@ -612,7 +612,8 @@ sub init_label {
     
     my $display   = $self->{'my_config'}->get('display') || '';
     my $scaleable = (ref($self) =~ /Wiggle/ && $display eq 'normal') 
-                      || ($display =~ /signal/ || $display =~ /wiggle/); 
+                      || ($display =~ /signal/ || $display =~ /wiggle/)
+                        ? $url.';track_id='.$track : undef; 
 
     $config->{'hover_labels'}->{$class} = {
       header          => $name,
@@ -621,7 +622,7 @@ sub init_label {
       track_highlight => [ $highlight_track_uniq_id, $hl, "$url;updated=0;$track=highlight_" ],
       component       => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers       => \@r,
-      scaleable       => $url.';track_id='.$track,
+      scaleable       => $scaleable,
       fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
