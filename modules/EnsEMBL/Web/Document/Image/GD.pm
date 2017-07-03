@@ -363,12 +363,16 @@ sub hover_label_tabs {
 
   $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
 
-  my $url   = $label->{'scaleable'};
-  my $y_min = $label->{'y_min'} || 0;
-  my $y_max = $label->{'y_max'};
+  my $url     = $label->{'scaleable'};
+  my $y_min   = $label->{'y_min'} || 0;
+  my $y_max   = $label->{'y_max'};
+  my $config  = $label->{'component'};
+  my $track   = $label->{'track'};
   my $axis_form = qq(<form action="$url" method="POST" class="freeform graph_config">
 <p><label for="y_min">Minimum: <input name="y_min" type="text" value="$y_min" class="small" /></p>
 <p><label for="y_max">Maximum: <input name="y_max" type="text" value="$y_max" class="small" /></p>
+<input type="hidden" name="config" value="$config">
+<input type="hidden" name="track" value="$track">
 <input type="submit" value="Update" class="small button" />
 </form>);
 
