@@ -623,6 +623,8 @@ sub init_label {
       component       => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers       => \@r,
       scaleable       => $scaleable,
+      y_min           => $self->{'my_config'}{'data'}{'y_min'}, 
+      y_max           => $self->{'my_config'}{'data'}{'y_max'}, 
       fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
