@@ -61,8 +61,19 @@ sub content {
 
   $html .= $image->render;
 
+  my $reg_feat = $object->fetch_by_stable_id;
+  my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
+  my $num_active = scalar( @{$active_epigenomes});
+
+  my $epigenome_count = 0;
+  if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    $epigenome_count = grep { $_ > 0 } values %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  }
+
   ## Now that we have so many cell lines, it's quicker to show activity in a table
-  $html .= '<h3>Cell types by regulatory feature activity</h3>';
+  $html .= '<h3>Cell types by regulatory feature activity
+              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle icon_only closed _slide_toggle">Show</a>
+            </h3>';
 
   ## We want one column per activity type, so get the data first
   my $data  = {}; 
@@ -114,7 +125,7 @@ sub content {
     my $table = $self->new_table;
     $table->add_columns(@columns);
     $table->add_row($row);
-    $html .= $table->render;
+    $html .= '<div class="toggleable celltype_regfeature_table" style="display:none;">'. $table->render . '</div>';
   }
   else {
     $html .= '<p>No epigenomic data available for this feature.</p>';

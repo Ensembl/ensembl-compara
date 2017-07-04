@@ -120,12 +120,12 @@ a.external-link:hover,
 a[rel=external]:hover { background-image: url("[[IMG:external_link_hover.svg]]") }
 span.link             { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
 
-a.toggle              { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none;}
-a.toggle.closed       { background-image: url(/i/closed2.gif); }
+a.toggle              { background: url(/i/open_1x.png) no-repeat right center; text-decoration: none; padding-right: 20px; outline: 0 none;}
+a.toggle.closed       { background-image: url(/i/close_1x.png); }
 
 
-a.toggle.icon_only        { background: url(/i/open_1x.png) no-repeat right center !important; }
-a.toggle.closed.icon_only { background: url(/i/close_1x.png) no-repeat right center !important; display: inline; min-height: 16px; }
+/*a.toggle              { background: url(/i/open_1x.png) no-repeat right center !important; }*/
+/*a.toggle.closed       { background: url(/i/close_1x.png) no-repeat right center !important; display: inline; min-height: 16px; }*/
 a.ajax_add            { background: none!important; padding-right: 0; }
 p.button a            { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
 p.warn a              { background-color: [[WARNING_BG]]; }
