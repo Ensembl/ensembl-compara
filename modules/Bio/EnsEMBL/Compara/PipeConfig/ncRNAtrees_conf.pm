@@ -706,6 +706,7 @@ sub pipeline_analyses {
                            2  => ['genomic_tree'],
                           },
             -rc_name => '2Gb_ncores_job',
+            -priority      => $self->o('genomic_alignment_priority'),
         },
 
             {
@@ -748,6 +749,7 @@ sub pipeline_analyses {
                             'inhugemem' => 1,
                            },
          -rc_name => '8Gb_ncores_job',
+         -priority  => $self->o('genomic_alignment_priority'),
          -flow_into => {
                         3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],

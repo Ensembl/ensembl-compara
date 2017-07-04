@@ -97,6 +97,10 @@ sub default_options {
             'ortho_stats_capacity'            => 10,
             'homology_dNdS_capacity'          => 10,
 
+            # Setting priorities
+            'genomic_alignment_priority'      => 40,
+
+
             # Params for healthchecks;
             'hc_priority'                     => 10,
             'hc_capacity'                     => 40,
