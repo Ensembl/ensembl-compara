@@ -71,8 +71,8 @@ sub content {
   }
 
   ## Now that we have so many cell lines, it's quicker to show activity in a table
-  $html .= '<h3>Cell types by regulatory feature activity
-              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle icon_only closed _slide_toggle">Show</a>
+  $html .= '<h3>Summary of Regulatory Activity
+              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle icon_only open _slide_toggle">Hide</a>
             </h3>';
 
   ## We want one column per activity type, so get the data first
@@ -125,7 +125,7 @@ sub content {
     my $table = $self->new_table;
     $table->add_columns(@columns);
     $table->add_row($row);
-    $html .= '<div class="toggleable celltype_regfeature_table" style="display:none;">'. $table->render . '</div>';
+    $html .= '<div class="toggleable celltype_regfeature_table">'. $table->render . '</div>';
   }
   else {
     $html .= '<p>No epigenomic data available for this feature.</p>';
