@@ -696,6 +696,7 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
                             %raxml_parameters,
+                            'cmd_max_runtime'       => '43200',
                             'mafft_exe'             => $self->o('mafft_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'prank_exe'             => $self->o('prank_exe'),
@@ -704,6 +705,7 @@ sub pipeline_analyses {
                            -1 => ['genomic_alignment_himem'],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
+                           -2 => [ 'fast_trees' ],
                           },
             -rc_name => '2Gb_ncores_job',
             -priority      => $self->o('genomic_alignment_priority'),
@@ -743,6 +745,7 @@ sub pipeline_analyses {
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
                             %raxml_parameters,
+                            'cmd_max_runtime'       => '43200',
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
@@ -754,6 +757,7 @@ sub pipeline_analyses {
                         3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                         -1 => [ 'genomic_alignment_hugemem' ],
+                        -2 => [ 'fast_trees' ],
                        },
         },
         {
