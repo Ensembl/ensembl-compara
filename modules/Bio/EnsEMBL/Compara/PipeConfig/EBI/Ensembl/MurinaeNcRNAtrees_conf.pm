@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
@@ -79,6 +79,9 @@ sub default_options {
 
             'skip_epo'          => 1,
 
+            # Where to draw the orthologues from
+            'ref_ortholog_db'   => 'mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90',
+
             'pipeline_name'    => 'murinae_nctrees_'.$self->o('rel_with_suffix'),
 
             'clustering_mode'   => 'ortholog',
@@ -87,7 +90,7 @@ sub default_options {
             'initialise_cafe_pipeline'  => 0,
 
             # For the homology_id_mapping
-            #'prev_rel_db'  => ...
+            'prev_rel_db'  => 'mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
     };
 }   
 
