@@ -36,6 +36,6 @@ my $pid=<PIDFILE>;
 chomp $pid;
 close PIDFILE;
 
-kill 'HUP',$pid or die "Cannot hup $pid: $!";
+kill 'USR1',$pid or die "Cannot hup $pid: $!";
 
 1;
