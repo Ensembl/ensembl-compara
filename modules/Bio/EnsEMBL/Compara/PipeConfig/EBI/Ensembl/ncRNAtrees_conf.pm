@@ -89,16 +89,17 @@ sub default_options {
             'orthotree_capacity'              => 200,
             'treebest_capacity'               => 400,
             'genomic_tree_capacity'           => 300,
-            'genomic_alignment_capacity'      => 500,
+            'genomic_alignment_capacity'      => 700,
             'fast_trees_capacity'             => 400,
-            'raxml_capacity'                  => 500,
+            'raxml_capacity'                  => 700,
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
             'ortho_stats_capacity'            => 10,
             'homology_dNdS_capacity'          => 10,
 
             # Setting priorities
-            'genomic_alignment_priority'      => 40,
+            'genomic_alignment_priority'       => 35,
+            'genomic_alignment_himem_priority' => 40,
 
 
             # Params for healthchecks;
