@@ -232,7 +232,6 @@ sub run_RAxML {
                                       );
             $self->input_job->autoflow(0);
             $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
-            die "RAXML ERROR: ", $command->err, "\n";
         }
 
         if ($command->exit_code == -2) {
@@ -249,6 +248,7 @@ sub run_RAxML {
             $self->complete_early(sprintf("Timeout reached, analysis will most likelly not finish. Data-flowing to 'fast_trees'.\n"));
         }
 
+        die "RAXML ERROR: ", $command->err, "\n";
     }
 
     return
