@@ -148,6 +148,7 @@ sub resource_classes {
             '250Mb_long_job'          => { 'LSF' => ['-C0 -M250 -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
             # this is for fast_trees
             '8Gb_mpi_ncores_job'     => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            '16Gb_mpi_ncores_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M16000 -R"span[hosts=1] select[mem>16000] rusage[mem=16000]"', '-lifespan 360' ] },
             '32Gb_mpi_ncores_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
            };
 }

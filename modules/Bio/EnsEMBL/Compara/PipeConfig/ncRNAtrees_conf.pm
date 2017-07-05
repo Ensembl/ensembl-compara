@@ -736,7 +736,7 @@ sub pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -rc_name => '32Gb_mpi_ncores_job',
+             -rc_name => '16Gb_mpi_ncores_job',
             },
 
         {
