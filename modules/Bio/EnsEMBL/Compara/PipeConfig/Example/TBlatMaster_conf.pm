@@ -64,13 +64,13 @@ sub default_options {
 	    'ref_species' => 'homo_sapiens',
 
 	    #directory to dump dna files
-	    'dump_dna_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	    'dump_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	    'default_chunks' => {
 			     'reference'   => {'chunk_size' => 1000000,
 				               'overlap'    => 10000,
 					       'group_set_size' => 100000000,
-					       'dump_dir' => $self->o('dump_dna_dir'),
+					       'dump_dir' => $self->o('dump_dir'),
 					       #human
 					       'include_non_reference' => 1,
 					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
@@ -111,16 +111,6 @@ sub default_options {
 	    'net_output_method_link' => [7, 'TRANSLATED_BLAT_NET'],
 
 	   };
-}
-
-sub pipeline_create_commands {
-    my ($self) = @_;
-    print "pipeline_create_commands\n";
-
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('dump_dna_dir'), #Make dump_dna_dir directory
-    ];
 }
 
 1;

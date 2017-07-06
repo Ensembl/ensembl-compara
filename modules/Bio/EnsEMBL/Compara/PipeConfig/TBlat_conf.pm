@@ -93,14 +93,5 @@ sub default_options {
 	   };
 }
 
-sub pipeline_create_commands {
-    my ($self) = @_;
-    print "pipeline_create_commands\n";
-
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('dump_dna_dir'), #Make dump_dna_dir directory
-    ];
-}
 
 1;

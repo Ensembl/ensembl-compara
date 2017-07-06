@@ -91,13 +91,13 @@ sub default_options {
 
 	    #directory to dump dna files. Note that 2 subdirectories will be appended to this, ${genome_db_id1}_${genome_db_id2}/species_name to
 	    #ensure uniqueness across pipelines
-	    'dump_dna_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	    'dump_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	    'default_chunks' => {
 			     'reference'   => {'chunk_size' => 1000000,
 				               'overlap'    => 10000,
 					       'group_set_size' => 100000000,
-					       'dump_dir' => $self->o('dump_dna_dir'),
+					       'dump_dir' => $self->o('dump_dir'),
 					       #human
 					       'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
 					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
