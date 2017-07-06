@@ -225,7 +225,7 @@ sub default_options {
         'extra_model_tags_file'     => undef,
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>  10,
+        'reuse_capacity'            =>  30,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
         'blastpu_capacity'          => 150,
@@ -239,6 +239,7 @@ sub default_options {
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'loadmembers_capacity'      => 30,
+        'HMMer_search_capacity'     => 50,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -665,15 +666,16 @@ sub core_pipeline_analyses {
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
 
-        { -logic_name     => 'load_PANTHER',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadPanther',
-            -rc_name       => '4Gb_big_tmp_job',
-            -parameters     => {
-                                'hmmer_home'        => $self->o('hmmer3_home'),
-                                'library_name'      => $self->o('hmm_library_name'),
-                                'hmm_lib'           => $self->o('hmm_library_basedir'),
-                                'url'               => $self->o('panther_url'),
-                                'file'              => $self->o('panther_file'),
+        { -logic_name           => 'load_PANTHER',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadPanther',
+            -rc_name            => '4Gb_big_tmp_job',
+            -max_retry_count    => 0,
+            -parameters         => {
+                                    'hmmer_home'        => $self->o('hmmer3_home'),
+                                    'library_name'      => $self->o('hmm_library_name'),
+                                    'hmm_lib'           => $self->o('hmm_library_basedir'),
+                                    'url'               => $self->o('panther_url'),
+                                    'file'              => $self->o('panther_file'),
             },
             -flow_into      => [ 'treefam_panther_hmm_overlapping' ],
         },
