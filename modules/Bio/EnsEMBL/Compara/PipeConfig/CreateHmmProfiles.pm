@@ -100,7 +100,6 @@ sub default_options {
 
     # dependent parameters: updating 'base_dir' should be enough
         'work_dir'              =>  '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
-        'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -180,17 +179,17 @@ sub default_options {
         'tf_release'                => undef,
 
     # executable locations:
-        'hcluster_exe'              => $self->o('exe_dir').'/hcluster_sg',
-        'mcoffee_home'              => '/nfs/panda/ensemblgenomes/external/t-coffee',
-        'mafft_home'                => '/nfs/panda/ensemblgenomes/external/mafft',
-        'treebest_exe'              => $self->o('exe_dir').'/treebest',
-        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
-        'hmmer3_home'               => '/homes/mateus/create_hmm_pipeline/hmmer/hmmer-3.1b2-linux-intel-x86_64/binaries',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.3.0+/bin/',
+        'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
+        'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
+        'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
+        'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
+        'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
+        'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
+        'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
+        'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
-        'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
         # HMM specific parameters
         # The location of the HMM library:
