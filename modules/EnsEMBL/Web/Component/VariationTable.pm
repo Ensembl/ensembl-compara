@@ -184,7 +184,9 @@ sub class_classes {
   $classes_col->filter_add_baked('not_somatic','Not Somatic','Exclude somatic variant classes');
   my $i = 0;
   foreach my $term (qw(display_term somatic_display_term)) {
-    foreach my $class (values %VARIATION_CLASSES) {
+    foreach my $class (sort { ($a->{$term} !~ /SNP|SNV/ cmp $b->{$term} !~ /SNP|SNV/) || $a->{$term} cmp $b->{$term} } values %VARIATION_CLASSES) {
+      next if ($class->{'type'} eq 'sv');
+
       $classes_col->icon_order($class->{$term},$i++);
       if($term eq 'somatic_display_term') {
         $classes_col->filter_bake_into($class->{$term},'somatic');
