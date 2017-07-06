@@ -207,6 +207,11 @@ sub default_options {
 	'do_pairwise_gabs' => 1,
 	'do_compare_to_previous_db' => 1,
 
+        # Scratch disk space
+        #'dump_dir' => ...,
+        'bed_dir' => $self->o('dump_dir').'/bed_dir',
+        'output_dir' => $self->o('dump_dir').'/feature_dumps',
+
         #
 	#Default pairaligner config
 	#
@@ -240,7 +245,7 @@ sub pipeline_create_commands {
         coding_exon_length          INT(10) DEFAULT 0
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       'rm -rf '.$self->o('dump_dir'), #Cleanup dump_dir directory
+       'rm -rf '.$self->o('dump_dir').' '.$self->o('output_dir').' '.$self->o('bed_dir'), #Cleanup dump_dir directory
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory

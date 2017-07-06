@@ -21,31 +21,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 
-=head1 SYNOPSIS
-
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options in PairAligner_conf.pm, especically:
-        release
-        pipeline_db (-host)
-        resource_classes 
-
-    #4. Check all default_options below, especially
-        ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
-        pair_aligner_options
-
-    #5. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
-
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
-
-
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults specific for the lastz net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
-    Please see PairAligner_conf.pm for general details of the pipeline.
+This is a base configuration files for all LastZ runs.
+It is not intended to be run on its own, it just turns the generic
+PairAligner pipeline into a LastZ one.
 
 =head1 CONTACT
 
@@ -68,35 +48,6 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-
-	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-	    'reference' => {
-	    	-host           => "compara4",
-	    	-port           => 3306,
-	    	-user           => "ensro",
-	    	-dbname         => "cc21_CAROLI_EiJ_core_80",
-	    	-species        => "mus_caroli"
-	       },
-            'non_reference' => {
-	    	    -host           => "compara4",
-	    	    -port           => 3306,
-	    	    -user           => "ensro",
-	    	    -dbname         => "wa2_Pahari_EiJ_core_80",
-	    	    -species        => "mus_pahari"
-	    	  },
-	    
-	    #if collection is set both 'curr_core_dbs_locs' and 'curr_core_sources_locs' parameters are set to undef otherwise the are to use the default pairwise values
-	    $self->o('collection') ? 
-	    	('curr_core_dbs_locs'=>undef, 
-	    		'curr_core_sources_locs'=> undef) : 
-	    	('curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ], 
-	    		'curr_core_sources_locs'=> ''),
-
-	    #Reference species
-	    'ref_species' => 'mus_caroli',
-
-	    #Location of executables
-	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
 
 	    #
 	    #Default pair_aligner
