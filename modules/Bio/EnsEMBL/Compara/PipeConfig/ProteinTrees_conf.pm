@@ -538,6 +538,7 @@ sub core_pipeline_analyses {
     my %notung_parameters = (
         'notung_jar'                => $self->o('notung_jar'),
         'treebest_exe'              => $self->o('treebest_exe'),
+        'java_exe'                  => $self->o('java_exe'),
         'label'                     => 'binary',
         'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
         'output_clusterset_id'      => 'notung',
@@ -1827,6 +1828,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'java_exe'              => $self->o('java_exe'),
                 'prottest_memory'       => 3500,
                 'n_cores'               => 1,
             },
@@ -1842,6 +1844,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'java_exe'              => $self->o('java_exe'),
                 'prottest_memory'       => 7000,
                 #'escape_branch'         => -1,      # RAxML will use a default model, anyway
                 'n_cores'               => 1,
@@ -1858,6 +1861,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'java_exe'              => $self->o('java_exe'),
                 'prottest_memory'       => 3500,
                 #'escape_branch'         => -1,
                 'n_cores'               => 8,
@@ -1873,6 +1877,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'java_exe'              => $self->o('java_exe'),
                 'prottest_memory'       => 3500,
                 #'escape_branch'         => -1,
                 'n_cores'               => 16,
@@ -1888,6 +1893,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'java_exe'              => $self->o('java_exe'),
                 'prottest_memory'       => 3500,
                 #'escape_branch'         => -1,
                 'n_cores'               => 32,

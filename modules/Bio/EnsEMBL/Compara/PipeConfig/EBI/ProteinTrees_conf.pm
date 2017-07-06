@@ -86,6 +86,7 @@ sub default_options {
         'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
         'fasttree_mp_exe'           => 'UNDEF',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
+        'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-112/bin/java',
         'cdhit_exe' => '/homes/carlac/software/cdhit/cd-hit',
 
         # Production database (for the biotypes)

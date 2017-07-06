@@ -94,6 +94,8 @@ sub default_options {
             'DumpGFFHomologuesForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl",
             'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
 
+            'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-112/bin/java',
+
            };
 }
 
@@ -268,7 +270,7 @@ sub pipeline_analyses {
             { -logic_name => 'build_synteny',
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny',
               -parameters => {
-                              'program' => 'java -Xmx1700M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
+                              'program' => $self->o('java_exe').' -Xmx1700M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
