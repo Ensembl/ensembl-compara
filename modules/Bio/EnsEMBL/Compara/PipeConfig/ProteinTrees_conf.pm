@@ -535,6 +535,14 @@ sub core_pipeline_analyses {
         'output_clusterset_id'      => 'raxml_bl',
     );
 
+    my %notung_parameters = (
+        'notung_jar'                => $self->o('notung_jar'),
+        'treebest_exe'              => $self->o('treebest_exe'),
+        'label'                     => 'binary',
+        'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+        'output_clusterset_id'      => 'notung',
+    );
+
     return [
 
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
@@ -2485,11 +2493,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'                => $self->o('notung_jar'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'label'                     => 'binary',
-                'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'      => 'notung',
+                %notung_parameters,
                 'notung_memory'             => 1500,
             },
             -hive_capacity                  => $self->o('notung_capacity'),
@@ -2503,11 +2507,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung_8gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'            => $self->o('notung_jar'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'  => 'notung',
+                %notung_parameters,
                 'notung_memory'         => 7000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
@@ -2518,11 +2518,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung_16gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'            => $self->o('notung_jar'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'  => 'notung',
+                %notung_parameters,
                 'notung_memory'         => 14000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
@@ -2533,11 +2529,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung_32gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'            => $self->o('notung_jar'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'  => 'notung',
+                %notung_parameters,
                 'notung_memory'         => 28000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
@@ -2548,11 +2540,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung_64gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'            => $self->o('notung_jar'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'  => 'notung',
+                %notung_parameters,
                 'notung_memory'         => 56000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
@@ -2563,11 +2551,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notung_512gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
-                'notung_jar'            => $self->o('notung_jar'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
-                'output_clusterset_id'  => 'notung',
+                %notung_parameters,
                 'notung_memory'         => 448000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
