@@ -89,7 +89,6 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => undef,
 
@@ -193,7 +192,7 @@ sub default_options {
 
         # HMM specific parameters
         # The location of the HMM library:
-        'hmm_library_basedir'       => '/nfs/panda/ensembl/production/mateus/compara/hmm_panther_11/',
+        'hmm_library_basedir'       => '/nfs/production/panda/ensembl/compara/mateus/compara/hmm_panther_11/',
         'min_num_members'           => 4,
         'min_num_species'           => 2,
         'min_taxonomic_coverage'    => 0.5,
@@ -207,7 +206,7 @@ sub default_options {
         'panther_url'               => 'ftp://ftp.pantherdb.org/panther_library/current_release/',
 
         #File name in the 'panther_url':
-        'panther_file'              => 'PANTHER11.1_hmmscoring.tgz',
+        'panther_file'              => 'PANTHER11.1_ascii.tgz',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
