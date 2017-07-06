@@ -104,13 +104,16 @@ sub create_hash {
   my $id    = $self->parser->get_id || $label;
 
   my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
+  ## Constrain click coords by viewport, so we don't fetch unnecessary data in zmenu
+  my $click_start = $feature_start < $slice->start ? $slice->start : $feature_start;
+  my $click_end   = $feature_end > $slice->end ? $slice->end : $feature_end;
   my $href = $self->href({
                         'action'        => $metadata->{'action'},
                         'id'            => $id,
                         'url'           => $metadata->{'url'},
                         'seq_region'    => $seqname,
-                        'start'         => $feature_start,
-                        'end'           => $feature_end,
+                        'start'         => $click_start,
+                        'end'           => $click_end,
                         'strand'        => $drawn_strand,
                         'zmenu_extras'  => $metadata->{'zmenu_extras'},
                         }) unless $metadata->{'omit_feature_links'};
