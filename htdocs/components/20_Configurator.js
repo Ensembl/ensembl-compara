@@ -763,7 +763,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.headers.hide().filter('.' + active).show();
-    
+    // Hide all captions and show only the funcgen captions on Active tracks below
+    this.elLk.configDivs.filter('.functional').find('.hidden-caption').hide();
+
     switch (active) {
       case 'search_results':
         this.elLk.search.val(this.query).css('color', '#000');
@@ -772,6 +774,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
       case 'active_tracks':
         this.elLk.configs.hide().filter('.on').show().parents('li, div.subset, div.config').show();
+        this.elLk.configDivs.filter('.functional').find('.hidden-caption').show();
         break;
       
       case 'favourite_tracks':
