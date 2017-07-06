@@ -189,7 +189,7 @@ sub default_options {
         'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
+        'fasttree_exe'              => $self->o('ensembl_cellar'). 'fasttree/2.1.8/bin/FastTree',
 
         # HMM specific parameters
         # The location of the HMM library:
@@ -1151,7 +1151,7 @@ sub core_pipeline_analyses {
             #get identities from: http://search.cpan.org/dist/BioPerl/Bio/SimpleAlign.pm#average_percentage_identity
             -parameters         => {
                 'max_gappiness'           => $self->o('max_gappiness'),
-                'fasttree_exe'            => $self->o('fasttree_mp_exe'),
+                'fasttree_exe'            => $self->o('fasttree_exe'),
                 'treebest_exe'            => $self->o('treebest_exe'),
                 'output_clusterset_id'    => 'fasttree',
                 'input_clusterset_id'     => 'default',
