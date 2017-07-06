@@ -150,8 +150,6 @@ sub default_options {
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
 	'filter_duplicates_himem_rc_name' => 'crowd_himem',
-    'filter_duplicates_hive_capacity' => 200,
-    'filter_duplicates_batch_size' => 10,
 
 	#
 	#Default pair_aligner
@@ -159,8 +157,6 @@ sub default_options {
    	'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	'pair_aligner_logic_name' => 'LastZ',
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	'pair_aligner_analysis_capacity' => 700,
-	'pair_aligner_batch_size' => 40,
 
     'pair_aligner_options' => {
         default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
@@ -178,8 +174,6 @@ sub default_options {
 	'linear_gap' => 'medium',
 
   	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
-    'chain_hive_capacity' => 200,
-    'chain_batch_size' => 10,
 
 	#
         #Default patch_alignments
@@ -193,8 +187,6 @@ sub default_options {
         'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
-    'net_hive_capacity' => 300,
-    'net_batch_size' => 10,
   	'bidirectional' => 0,
 
 	#

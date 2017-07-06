@@ -95,6 +95,17 @@ sub default_options {
 
 	    #Location of executables
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
+
+            # Capacities
+            'filter_duplicates_hive_capacity' => 200,
+            'filter_duplicates_batch_size' => 10,
+            'pair_aligner_analysis_capacity' => 700,
+            'pair_aligner_batch_size' => 40,
+            'chain_hive_capacity' => 200,
+            'chain_batch_size' => 10,
+            'net_hive_capacity' => 300,
+            'net_batch_size' => 10,
+
     }
 }
 
