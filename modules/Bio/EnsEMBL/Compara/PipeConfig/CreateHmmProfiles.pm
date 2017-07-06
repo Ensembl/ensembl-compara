@@ -250,12 +250,16 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'host' => 'mysql-ens-compara-prod-2:4522',
+        'host' => 'mysql-ens-compara-prod-4:4401',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
-        'master_db' => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/treefam_master',
+        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+
+        # Member database:
+        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
+
+        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
