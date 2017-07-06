@@ -68,7 +68,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
-    return { 'source_dir'          => '/nfs/panda/ensembl/production/mateus/compara',
+    return {
              'library_name'        => '#hmm_library_name#',
              'hmmpress_exe'        => '#hmmer_home#/hmmpress',
              'hmm_library_basedir' => '#hmm_library_basedir#',
@@ -125,10 +125,9 @@ sub _download_panter_families {
 
     my $ftp_file = $self->param('url') . $self->param('file');
     my $tmp_file = $self->param('hmm_lib') . "/" . $self->param('file');
-    $self->param( 'panther_file', $tmp_file );
 
     my $panther_dir = $tmp_file;
-    $panther_dir =~ s/_hmmscoring\.tgz//;
+    $panther_dir =~ s/_ascii\.tgz//;
     $self->param( 'panther_dir', $panther_dir );
 
     #cleanup after hmmpress
@@ -158,7 +157,7 @@ sub _concatenate_profiles {
     find( sub { push @hmm_list, $File::Find::name if -f && /\.hmm$/ }, $self->param('panther_dir') );
 
     $self->param( 'hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );
-    print ">>concatenating:" . $self->param('hmm_library') . "|\n";
+    print ">>concatenating:" . $self->param('hmm_library') . "|\n" if ($self->debug);
 
     open( LIBRARY, ">" . $self->param('hmm_library') );
     foreach my $hmm (@hmm_list) {
@@ -202,7 +201,7 @@ sub _clear_tmp_panther_directory_structure {
 
     #remove previously downloaded file from PANTHER FTP
     $cmd = [qw(rm -f), $self->param('file')];
-    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previousdownloaded .tgz file' } );
+    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous downloaded .tgz file' } );
 }
 
 1;
