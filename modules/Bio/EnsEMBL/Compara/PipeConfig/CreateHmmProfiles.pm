@@ -188,7 +188,7 @@ sub default_options {
         'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'fasttree_exe'              => $self->o('ensembl_cellar'). 'fasttree/2.1.8/bin/FastTree',
+        'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
 
         # HMM specific parameters
         # The location of the HMM library:
