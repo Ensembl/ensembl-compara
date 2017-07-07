@@ -141,11 +141,12 @@ sub init_cache {
 sub init_input {
   ## Initialise CGI input
   my $self  = shift;
-  my $input = CGI->new;
 
-  $self->{'input'}        = $input;
   $CGI::POST_MAX          = $self->controller->upload_size_limit if $self->controller; # Set max upload size
   $CGI::LIST_CONTEXT_WARN = 2; # Hack to stop perl warning about 'param' method being used in list context
+
+  my $input = CGI->new;
+  $self->{'input'}        = $input;
 }
 
 sub init_session {
