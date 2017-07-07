@@ -130,15 +130,15 @@ sub _download_panter_families {
     $panther_dir =~ s/_ascii\.tgz//;
     $self->param( 'panther_dir', $panther_dir );
 
-    #cleanup after hmmpress
+    #cleanup before downlading
     $self->_clear_tmp_panther_directory_structure;
 
     #get fresh file from FTP
     my $status = getstore( $ftp_file, $tmp_file );
     die "_download_panter_families error $status on $ftp_file" unless is_success($status);
 
-    #Avoid downloading.
-    #system("cp /nfs/panda/ensembl/production/mateus/compara/PANTHER_11_1_original_to_delete_soon/PANTHER11.1_hmmscoring.tgz $tmp_file");
+    #Avoid downloading, usefull for debugging.
+    #system("cp /nfs/production/panda/ensembl/compara/mateus/compara/PANTHER11.1_ascii.tgz $tmp_file");
 
     #untar file
     my $cmd = "tar -xzvf " . $tmp_file;
@@ -156,10 +156,10 @@ sub _concatenate_profiles {
 
     find( sub { push @hmm_list, $File::Find::name if -f && /\.hmm$/ }, $self->param('panther_dir') );
 
-    $self->param( 'hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );
-    print ">>concatenating:" . $self->param('hmm_library') . "|\n" if ($self->debug);
+    $self->param( 'local_hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );
+    print ">>concatenating:" . $self->param('local_hmm_library') . "|\n" if ($self->debug);
 
-    open( LIBRARY, ">" . $self->param('hmm_library') );
+    open( LIBRARY, ">" . $self->param('local_hmm_library') );
     foreach my $hmm (@hmm_list) {
         open( HMM, $hmm );
         my @lines = <HMM>;
@@ -176,10 +176,10 @@ sub _hmm_press_profiles {
 
     print STDERR "running hmmpress on concatenated profiles ...\n" if ( $self->debug );
 
-    my $cmd = join( ' ', $self->param('hmmpress_exe'), $self->param('hmm_library') );
+    my $cmd = join( ' ', $self->param('hmmpress_exe'), $self->param('local_hmm_library') );
 
     my $cmd_out = $self->run_command( $cmd, { die_on_failure => 1 } );
-    unless ( ( -e $self->param('hmm_library') ) and ( -s $self->param('hmm_library') ) ) {
+    unless ( ( -e $self->param('local_hmm_library') ) and ( -s $self->param('local_hmm_library') ) ) {
 
         # Add some waiting time to allow the filesystem to distribute the file accross
         sleep 10;
@@ -187,7 +187,7 @@ sub _hmm_press_profiles {
     my $runtime_msec = $cmd_out->runtime_msec;
 
     #move HMM library into place
-    $cmd = "mv " . $self->param('hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
+    $cmd = "mv " . $self->param('local_hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
     $self->run_command($cmd, { die_on_failure => 1, description => 'move the HMM library to "hmm_library_basedir"' } );
 }
 
@@ -196,11 +196,11 @@ sub _clear_tmp_panther_directory_structure {
     my $self = shift;
 
     #remove previous directory structure (books, globals, etc)
-    my $cmd = [qw(rm -f), $self->param('panther_dir')];
+    my $cmd = [qw(rm -rf), $self->param('panther_dir')];
     $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous PANTHER directory structure' } );
 
     #remove previously downloaded file from PANTHER FTP
-    $cmd = [qw(rm -f), $self->param('file')];
+    $cmd = [qw(rm -rf), $self->param('file')];
     $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous downloaded .tgz file' } );
 }
 
