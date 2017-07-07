@@ -69,6 +69,24 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
+            'default_chunks' => {
+                'reference'   => {'chunk_size' => 1000000,
+                    'overlap'    => 10000,
+                    'group_set_size' => 100000000,
+                    'dump_dir' => $self->o('dump_dir'),
+                    #human
+                    'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
+                    #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
+                    #non-human
+                    'masking_options' => '{default_soft_masking => 1}',
+                },
+                'non_reference' => {'chunk_size'      => 25000,
+                    'group_set_size'  => 10000000,
+                    'overlap'         => 10000,
+                    'masking_options' => '{default_soft_masking => 1}'
+                },
+            },
+
 	    #
 	    #Default pair_aligner
 	    #
