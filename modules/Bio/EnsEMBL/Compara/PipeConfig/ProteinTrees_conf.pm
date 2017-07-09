@@ -503,6 +503,7 @@ sub core_pipeline_analyses {
         'examl_exe_avx'         => $self->o('examl_exe_avx'),
         'parse_examl_exe'       => $self->o('parse_examl_exe'),
         'treebest_exe'          => $self->o('treebest_exe'),
+        'mpirun_exe'            => $self->o('mpirun_exe'),
         'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
         'input_clusterset_id'   => 'raxml_parsimony',
     );

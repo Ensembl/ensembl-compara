@@ -87,7 +87,10 @@ sub default_options {
         'fasttree_mp_exe'           => 'UNDEF',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
         'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-112/bin/java',
-        'cdhit_exe' => '/homes/carlac/software/cdhit/cd-hit',
+
+        # FIXME
+        'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
+        'mpirun_exe'                => '/nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpirun',
 
         # Production database (for the biotypes)
         'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',

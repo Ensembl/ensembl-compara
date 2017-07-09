@@ -218,7 +218,7 @@ sub _run_examl {
 
     my $tag = defined $self->param('examl') ? $self->param('examl') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
-    my $cmd = "mpirun -np " . $examl_number_of_cores . " " . $examl_exe;
+    my $cmd = $self->require_executable('mpirun_exe').' -np ' . $examl_number_of_cores . " " . $examl_exe;
     $cmd .= " -m GAMMA";
     $cmd .= " -s $binary_input_aln";
     $cmd .= " -t $parsimony_tree";

@@ -173,6 +173,7 @@ sub pipeline_analyses {
         'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
         'examl_exe_avx'         => $self->o('examl_exe_avx'),
         'parse_examl_exe'       => $self->o('parse_examl_exe'),
+        'mpirun_exe'            => $self->o('mpirun_exe'),
     );
 
     my $analyses_full_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_full_species_tree($self);
