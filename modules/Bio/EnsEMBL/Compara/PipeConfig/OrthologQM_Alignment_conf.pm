@@ -118,8 +118,8 @@ sub default_options {
         'reg_conf'         => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [
-            'mysql://ensro@mysql-ens-compara-prod-3:4523/muffato_mammals_epo_90b',
-            'mysql://ensro@mysql-ens-compara-prod-3:4523/mateus_human_pig_lastz_90',
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_alignments_merged_90',
         ],
         'alt_homology_db'  => undef,
         'previous_rel_db'  => undef,
