@@ -690,9 +690,9 @@ sub sync_with_registry {
     return if $self->locator and not $self->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
 
     my $coreDBA;
-    my $registry_name;
+    my $registry_name = $self->name;
     if ($self->assembly) {
-      $registry_name = $self->name ." ". $self->assembly;
+      $registry_name .= " ". $self->assembly;
       if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
         $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
       }
