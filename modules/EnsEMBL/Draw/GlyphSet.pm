@@ -615,6 +615,21 @@ sub init_label {
                       || ($display =~ /signal/ || $display =~ /wiggle/)
                         ? $url : undef; 
 
+    ## These can be zero, so check if defined
+    my ($y_min, $y_max);
+    if (defined($self->{'my_config'}->get('y_min'))) {
+      $y_min = $self->{'my_config'}->get('y_min');;
+    }
+    elsif (defined($self->{'my_config'}{'data'}{'y_min'})) {
+      $y_min = $self->{'my_config'}{'data'}{'y_min'};
+    }
+    if (defined($self->{'my_config'}->get('y_max'))) {
+      $y_max = $self->{'my_config'}->get('y_max');
+    }
+    elsif (defined($self->{'my_config'}{'data'}{'y_max'})) {
+      $y_max = $self->{'my_config'}{'data'}{'y_max'};
+    }
+
     $config->{'hover_labels'}->{$class} = {
       header          => $name,
       desc            => $desc,
@@ -624,8 +639,8 @@ sub init_label {
       renderers       => \@r,
       track           => $track,
       scaleable       => $scaleable,
-      y_min           => $self->{'my_config'}{'data'}{'y_min'}, 
-      y_max           => $self->{'my_config'}{'data'}{'y_max'}, 
+      y_min           => $y_min, 
+      y_max           => $y_max, 
       fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
