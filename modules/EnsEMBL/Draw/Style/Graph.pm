@@ -233,7 +233,7 @@ sub draw_score {
   my $text_info = $self->get_text_info($text);
   my $width     = $text_info->{'width'};
   my $height    = $text_info->{'height'};
-  my $colour    = $self->track_config->get('axis_colour') || 'red';
+  my $colour    = 'black'; 
 
   my %params = ( 
     absolutey     => 1,
@@ -247,7 +247,7 @@ sub draw_score {
                                       text        => $text,
                                       height      => $height,
                                       width       => $width,
-                                      x           => -2 - $width,
+                                      x           => -8 - $width,
                                       y           => $y - $height * 0.75,
                                       textwidth   => $width * 0.9,
                                       halign      => 'right',
