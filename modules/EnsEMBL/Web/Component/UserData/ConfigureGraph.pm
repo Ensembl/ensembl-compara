@@ -86,14 +86,13 @@ sub content {
                       'name'  => 'y_min',
                       'label' => 'Range Minimum (optional)',
                       'size'  => '10',
-                      'notes' => 'You can set a fixed minimum or leave this field blank in which case automatic scaling will be done.'
                       );
  
    $form->add_element('type'  => 'Float',
                       'name'  => 'y_max',
                       'label' => 'Range Maximum (optional)',
                       'size'  => '10',
-                      'notes' => 'You can set a fixed maximum or leave this field blank in which case automatic scaling will be done.'
+                      'notes' => 'You can set a fixed minimum/maximum or leave these fields blank, in which case automatic scaling will be done. You can also adjust the limits later, using the popup menu on the track name'
                       );
 
   foreach (qw(code record_type)) {
