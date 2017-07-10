@@ -149,12 +149,12 @@ sub _load_remote_url_tracks {
   my $hub             = $self->hub;
   my $session         = $hub->session;
   my $user            = $hub->user;
-  my $sesson_records  = $session->records({'type' => 'url', 'species' => $self->species});
+  my $session_records = $session->records({'type' => 'url', 'species' => $self->species});
   my $user_records    = $user ? $user->records({'type' => 'url', 'species' => $self->species}) : [];
 
   my %tracks_data;
 
-  foreach my $record (@$sesson_records, @$user_records) {
+  foreach my $record (@$session_records, @$user_records) {
 
     my $data = $record->data;
 
@@ -232,10 +232,10 @@ sub _load_uploaded_tracks {
   my $hub             = $self->hub;
   my $session         = $hub->session;
   my $user            = $hub->user;
-  my $sesson_records  = $session->records({'type' => 'upload', 'species' => $self->species});
+  my $session_records = $session->records({'type' => 'upload', 'species' => $self->species});
   my $user_records    = $user ? $user->records({'type' => 'upload', 'species' => $self->species}) : [];
 
-  foreach my $record (@$sesson_records, @$user_records) {
+  foreach my $record (@$session_records, @$user_records) {
 
     my $data    = $record->data;
     my $is_user = $record->record_type ne 'session'; # both user and group
