@@ -305,6 +305,13 @@ sub update_from_input {
         $self->altered(1) if $self->update_favourite_tracks({ map { $_ => $diff->{$_}{'favourite'} || 0 } @fav_setting });
       }
 
+      ## update graph axes
+      foreach my $track_key (keys %$diff) {
+        if (exists $diff->{$track_key}{'y_min'} || exists $diff->{$track_key}{'y_max'}) {
+          $self->altered($self->update_track_axes($track_key, $diff->{$track_key}{'y_min'}, $diff->{$track_key}{'y_max'}));
+        }
+      }
+
     } else {
 
       # TODO - is it in use?
@@ -357,6 +364,35 @@ sub update_track_renderer {
       if ($node->set_user_setting('display', $renderer)) {
         return $node->get_data('name') || $node->get_data('caption') || 1;
       }
+    }
+  }
+}
+
+sub update_track_axes {
+  ## Updated axes for a given track
+  ## @param Track node or Track key
+  ## @param y_min float
+  ## @param y_max float
+  ## @return Track name if renderer changed
+  my ($self, $node, $y_min, $y_max) = @_;
+
+  $node = $self->get_node($node) unless ref $node;
+
+  if ($node) {
+    my $user_data = $node->tree->user_data;
+    my $id        = $node->id;
+    my $updated = 0;
+    ## N.B. Don't use 'set_user_setting' method here, as axes might not be set yet
+    if (defined $y_min) {
+      $user_data->{$id}{'y_min'} = $y_min;
+      $updated = 1;
+    }
+    if (defined $y_max) {
+      $user_data->{$id}{'y_max'} = $y_max;
+      $updated = 1;
+    }
+    if ($updated) {
+      return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
