@@ -371,6 +371,7 @@ sub hover_label_tabs {
   my $axis_form = qq(<form action="$url" method="POST" class="freeform graph_config">
 <p><label for="y_min">Minimum: <input name="y_min" type="text" value="$y_min" class="small" /></p>
 <p><label for="y_max">Maximum: <input name="y_max" type="text" value="$y_max" class="small" /></p>
+<p>(Tip: set both fields to blank to use the full range of values)</p>
 <input type="hidden" name="config" value="$config">
 <input type="hidden" name="track" value="$track">
 <input type="submit" value="Update" class="small button" />
