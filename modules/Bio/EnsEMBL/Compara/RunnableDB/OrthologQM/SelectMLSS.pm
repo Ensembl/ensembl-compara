@@ -65,8 +65,9 @@ sub fetch_input {
 	my $species2_id  = $self->param_required('species2_id');
 	my $aln_mlss_ids = $self->param( 'aln_mlss_ids' );
 
-	if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
-	else { $dba = $self->compara_dba }
+	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	# else { $dba = $self->compara_dba }
+	$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('master_db'));
 
 	# find GenomeDBs for each species
 	my $gdb_adaptor = $dba->get_GenomeDBAdaptor;
@@ -134,6 +135,9 @@ sub fetch_input {
 		$self->warning( "Found " . scalar(@aln_mlss_ids) . " alignments between " . $species1_gdb->name . " and " . $species2_gdb->name );
 	}
 
+	# Find alignment db for these mlsses
+	# $self->_map_mlss_to_db( \@aln_mlss_ids );
+
 	$self->param( 'aln_mlss_ids', \@aln_mlss_ids );
 }
 
@@ -149,7 +153,14 @@ sub write_output {
 	};
 	$self->param('accu_dataflow', $dataflow);
 
-	$self->dataflow_output_id( { species => "$species1_id - $species2_id", accu_dataflow => $dataflow }, 2 ); # to accu
+	$self->dataflow_output_id( { species => "$species1_id - $species2_id", accu_dataflow => $dataflow }, 1 ); # to accu
+	
+	my $mlss_db_map = $self->_map_mlss_to_db( $self->param('aln_mlss_ids') );
+	foreach my $mlss_id ( keys %$mlss_db_map ) {
+		my $this_dataflow = { mlss_id => $mlss_id, mlss_db => $mlss_db_map->{$mlss_id} };
+		$self->dataflow_output_id( $this_dataflow, 2 ); # to accu
+	}
+	
 
 	# print "FLOWING #1: ", Dumper { mlss => $self->param('aln_mlss_ids') };
 	# print "FLOWING #2: ", Dumper $dataflow;
@@ -171,6 +182,39 @@ sub _overlap {
 	}
 	return \@common_mlss if ( scalar( @common_mlss ) > 0 );
 	return;
+}
+
+sub _map_mlss_to_db {
+	my ( $self, $mlsses ) = @_;
+
+	my $aln_dbs = $self->param('alt_aln_dbs');
+	# my %mlss_db_mapping = %{ $self->param('mlss_db_mapping') };
+	my %mlss_db_mapping;
+
+	if ( $aln_dbs ) {
+		foreach my $db_url ( @$aln_dbs ) {
+			my $this_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $db_url );
+			my $mlss_adap = $this_dba->get_MethodLinkSpeciesSetAdaptor;
+
+			foreach my $mlss_id ( @$mlsses ) {
+				my $this_mlss = $mlss_adap->fetch_by_dbID($mlss_id);
+				next unless $this_mlss;
+				$mlss_db_mapping{$this_mlss->dbID} = $db_url;
+			}
+		}
+	} else {
+		foreach my $this_mlss_id ( @$mlsses ) {
+			$mlss_db_mapping{$this_mlss_id} = $self->param('compara_db');
+		}
+	}
+
+	# $self->param('mlss_db_mapping', \%mlss_db_mapping);
+
+	# check all have been mapped
+	foreach my $this_mlss_id ( @$mlsses ) {
+		die "MLSS $this_mlss_id can't be found in the given alignment databases\n" unless ( $mlss_db_mapping{$this_mlss_id} );
+	}
+	return \%mlss_db_mapping;
 }
 
 1;
