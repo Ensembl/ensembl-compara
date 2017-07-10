@@ -63,7 +63,7 @@ if ( $html ) {
 }
 
 for my $m ( @$mlss ){
-	for my $stn (@{$m->species_tree->get_all_leaves}) {
+	for my $stn (@{$m->species_tree->root->get_all_leaves}) {
 		my $coding_exon_bp_coverage = $stn->get_tagvalue("coding_exon_coverage");
 		my $coding_exon_length      = $stn->get_tagvalue("coding_exon_length");
 		my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");
