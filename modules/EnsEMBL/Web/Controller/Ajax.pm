@@ -26,6 +26,7 @@ use HTML::Entities qw(decode_entities);
 use URI::Escape qw(uri_unescape);
 use JSON;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::File::Utils::URL;
 

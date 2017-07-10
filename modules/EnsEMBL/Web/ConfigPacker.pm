@@ -747,7 +747,7 @@ sub _summarise_funcgen_db {
   my $c_aref =  $dbh->selectall_arrayref(
     'select
       distinct epigenome.name, epigenome.epigenome_id, 
-                epigenome.display_label
+                epigenome.display_label, epigenome.description
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
@@ -758,6 +758,7 @@ sub _summarise_funcgen_db {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_ids'}{$cell_type_key} = 1;
   }
@@ -765,7 +766,7 @@ sub _summarise_funcgen_db {
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.name, epigenome.epigenome_id, epigenome.display_label
+        epigenome.name, epigenome.epigenome_id, epigenome.display_label, epigenome.description
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -778,6 +779,7 @@ sub _summarise_funcgen_db {
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
   }
   
@@ -814,9 +816,10 @@ sub _summarise_funcgen_db {
   my $res_cell = $dbh->selectall_arrayref(
       qq(
 	        select 
-	          logic_name, 
+	          logic_name,
 	          epigenome_id,
 	          epigenome.display_label,
+            epigenome.description,
 	          epigenome.name,
             displayable,
             segmentation_file.name
@@ -828,18 +831,19 @@ sub _summarise_funcgen_db {
   );
 
   foreach my $C (@$res_cell) {
-    my $key = $C->[0].':'.$C->[3];
+    my $key = $C->[0].':'.$C->[4];
     my $value = {
-      name => qq($C->[2] Regulatory Segmentation),
-      desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">segmentation state analysis</a>"),
-      disp => $C->[4],
+      name => qq($C->[2]),
+      desc => qq(Genome segmentation in $C->[2]),
+      epi_desc => qq($C->[3]),
+      disp => $C->[5],
       'web' => {
           celltype      => $C->[1],
           celltypename  => $C->[2],
           'colourset'   => 'fg_segmentation_features',
           'display'     => 'off',
           'key'         => "seg_$key",
-          'seg_name'    => $C->[5],
+          'seg_name'    => $C->[6],
           'type'        => 'fg_segmentation_features'
       },
       count => 1,
