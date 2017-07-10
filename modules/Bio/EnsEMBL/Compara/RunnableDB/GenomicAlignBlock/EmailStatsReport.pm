@@ -53,6 +53,7 @@ sub fetch_input {
 	my $stats_cmd = "$stats_exe -url $epo_url -html";
 
 	# run command, capture output
+        warn "CMD: $stats_cmd\n" if $self->debug;
 	my $stats_string = `$stats_cmd`;
 
 	# save to param to be added into email body
