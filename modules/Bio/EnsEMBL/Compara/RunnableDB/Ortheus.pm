@@ -203,7 +203,7 @@ sub run {
 
   print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
-  if ( defined $ortheus_output ) {
+  if ( $ortheus_output ) {
       my (%err_msgs, $traceback, $trace_open);
       my @lines = split /\n/, $ortheus_output;
       foreach my $line (@lines) {
@@ -234,7 +234,7 @@ sub run {
               $self->complete_early( "Ortheus failed to create a tree - dataset too small. Skipping." );
           }
       }
-      return;
+      return if %err_msgs;
   }
 
   $self->parse_results();
