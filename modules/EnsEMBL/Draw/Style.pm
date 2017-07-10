@@ -184,21 +184,19 @@ sub draw_graph_base {
     $min_score = $metadata->{'y_min'} if (defined($metadata->{'y_min'}) && $metadata->{'y_min'} ne ''); 
     $max_score = $metadata->{'y_max'} if (defined($metadata->{'y_max'}) && $metadata->{'y_max'} ne ''); 
   }
-  else {
-    ## Try to calculate something sensible 
-    $range = $max_score - $min_score;
-    if ($range < 0.01) {
-      ## Oh dear, data all has pretty much same value ...
-      if ($max_score > 0.01) {
-        ## ... but it's not zero, so just move minimum down
-        $min_score = 0;
-      } else {
-        ## ... just create some sky
-        $max_score = 0.1;
-      }
+  $range = $max_score - $min_score;
+  ## Try to calculate something sensible 
+  if ($range < 0.01) {
+    ## Oh dear, data all has pretty much same value ...
+    if ($max_score > 0.01) {
+      ## ... but it's not zero, so just move minimum down
+      $min_score = 0;
+    } else {
+      ## ... just create some sky
+      $max_score = 0.1;
     }
-    $min_score = 0 if $min_score >= 0 && $baseline_zero;
   }
+  $min_score = 0 if $min_score >= 0 && $baseline_zero;
   $range = $max_score - $min_score;
 
   my $pix_per_score = $row_height/$range;
