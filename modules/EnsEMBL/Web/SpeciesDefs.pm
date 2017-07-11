@@ -1316,6 +1316,22 @@ sub production_name {
     return $nospaces;
 }
 
+sub verbose_params {
+  my $self    = shift;
+  my $multidb = $self->multidb;
+
+  warn "SpeciesDefs->multidb:\n";
+  for (sort keys %$multidb) {
+    warn sprintf "%50s: %s on %s%s@%s:%s\n",
+      $_,
+      $multidb->{$_}{'NAME'},
+      $multidb->{$_}{'USER'},
+      $multidb->{$_}{'PASS'} ? '<PASS>' : '',
+      $multidb->{$_}{'HOST'},
+      $multidb->{$_}{'PORT'};
+  }
+}
+
 sub DESTROY {
   ## Deliberately empty method - prevents call to AUTOLOAD when object is destroyed
 }

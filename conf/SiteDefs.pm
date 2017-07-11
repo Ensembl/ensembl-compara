@@ -313,9 +313,11 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_CONFIG_FILENAME;   # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
+our $ENSEMBL_STARTUP_VERBOSE;   # Polulated by import (can be overridden in plugins)
 our $ENSEMBL_MART_SERVERNAME;   # Populated by _set_dedicated_mart()
 
 my $_VERBOSE;
+my @_VERBOSE_LINES;
 my $_IMPORTED;
 
 sub import {
@@ -326,6 +328,9 @@ sub import {
 
   $_IMPORTED = 1;
   $_VERBOSE = grep $_ eq 'verbose', @_;
+
+  # verbose param warns extra verbose info at startup
+  $ENSEMBL_STARTUP_VERBOSE = !!$_VERBOSE;
 
   # Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
   _populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
@@ -355,16 +360,16 @@ sub import {
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-
-  _verbose_params() if $_VERBOSE;
 }
 
-sub _verbose_params {
+sub verbose_params {
   ## Prints a list of all the parameters and their values
 
   my $params = {};
 
   no strict qw(refs);
+
+  warn $_ for @_VERBOSE_LINES;
 
   warn "SiteDefs configurations:\n";
 
@@ -615,14 +620,14 @@ sub _set_env {
   no strict qw(refs);
 
   if (keys %$ENSEMBL_SETENV) {
-    warn "Setting ENV variables:\n" if $_VERBOSE;
+    push @_VERBOSE_LINES, "ENV variables added:\n" if $ENSEMBL_STARTUP_VERBOSE;
     for (sort keys %$ENSEMBL_SETENV) {
       if (defined $ENSEMBL_SETENV->{$_}) {
         $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
-        warn sprintf "%50s: %s\n", $_, $ENV{$_} if $_VERBOSE;
+        push @_VERBOSE_LINES, sprintf "%50s: %s\n", $_, $ENV{$_} if $ENSEMBL_STARTUP_VERBOSE;
       } else {
         delete $ENV{$_};
-        warn sprintf "%50s deleted\n", $_ if $_VERBOSE;
+        push @_VERBOSE_LINES, sprintf "%50s deleted\n", $_ if $ENSEMBL_STARTUP_VERBOSE;
       }
     }
   }
