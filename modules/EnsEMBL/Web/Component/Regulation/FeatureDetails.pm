@@ -72,7 +72,7 @@ sub content {
 
   ## Now that we have so many cell lines, it's quicker to show activity in a table
   $html .= '<h3>Summary of Regulatory Activity
-              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle icon_only open _slide_toggle">Hide</a>
+              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle new_icon open _slide_toggle">Hide</a>
             </h3>';
 
   ## We want one column per activity type, so get the data first
