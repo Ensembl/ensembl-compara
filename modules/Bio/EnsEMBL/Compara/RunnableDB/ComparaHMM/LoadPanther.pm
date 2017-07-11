@@ -71,7 +71,7 @@ sub param_defaults {
     return {
              'library_name'        => '#hmm_library_name#',
              'hmmpress_exe'        => '#hmmer_home#/hmmpress',
-             'hmm_library_basedir' => '#hmm_library_basedir#',
+             'panther_hmm_library_basedir' => '#panther_hmm_library_basedir#',
              'url'                 => '#panther_url#',
              'file'                => '#panther_file#', };
 }
@@ -187,7 +187,7 @@ sub _hmm_press_profiles {
     my $runtime_msec = $cmd_out->runtime_msec;
 
     #move HMM library into place
-    $cmd = "mv " . $self->param('local_hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
+    $cmd = "become - compara_ensembl ; mv " . $self->param('local_hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
     $self->run_command($cmd, { die_on_failure => 1, description => 'move the HMM library to "hmm_library_basedir"' } );
 }
 
