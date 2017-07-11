@@ -112,8 +112,8 @@ sub _run_HMM_search {
     }
 
     #Parsing outputs
-    open( HMM, "$worker_temp_directory/treefam_hmm_search.out" );
-    while (<HMM>) {
+    open my $hmm_fh, "$worker_temp_directory/treefam_hmm_search.out" || die "Could not open file: $worker_temp_directory/treefam_hmm_search.out";
+    while (<$hmm_fh>) {
 
         #get rid of the header lines
         next if $_ =~ /^#/;
@@ -136,7 +136,8 @@ sub _run_HMM_search {
             $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
         }
 
-    } ## end while (<HMM>)
+    } ## end while (<$hmm_fh>)
+    close($hmm_fh);
 
     $self->param( 'hmm_annot', \%hmm_annot );
 
