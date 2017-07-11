@@ -107,7 +107,7 @@ sub new {
       'evidence_label'      => $evidence_label,
       'cell_type_name'      => $epigenome_name,
       'efo_id'              => $epigenome->ontology_accession,
-      'xref_genes'          => [ map $_->primary_id, @{$feature_type->get_all_Gene_DBEntries} ],
+      'xref_genes'          => $feature_type->get_all_coding_gene_stable_ids(),
       'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
     };
 
