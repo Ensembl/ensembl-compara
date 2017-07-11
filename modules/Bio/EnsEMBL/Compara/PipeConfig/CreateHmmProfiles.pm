@@ -192,21 +192,26 @@ sub default_options {
 
         # HMM specific parameters
         # The location of the HMM library:
-        'hmm_library_basedir'       => '/nfs/production/panda/ensembl/compara/mateus/compara/hmm_panther_11/',
-        'min_num_members'           => 4,
-        'min_num_species'           => 2,
-        'min_taxonomic_coverage'    => 0.5,
-        'min_ratio_species_genes'   => 0.5,
-        'max_gappiness'             => 0.95,
+        'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
+        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
+        'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
+        'min_num_members'               => 4,
+        'min_num_species'               => 2,
+        'min_taxonomic_coverage'        => 0.5,
+        'min_ratio_species_genes'       => 0.5,
+        'max_gappiness'                 => 0.95,
+	    'sequence_limit'                => 50,
+	    'max_chunk_length'              => 100,
+        'output_prefix'                 => "hmm_split_",
 
         #name of the profile to be created:
-        'hmm_library_name'          => 'panther_11_1.hmm3',
+        'hmm_library_name'          => 'panther_12_0.hmm3',
         
         #URL to find the PANTHER profiles:
         'panther_url'               => 'ftp://ftp.pantherdb.org/panther_library/current_release/',
 
         #File name in the 'panther_url':
-        'panther_file'              => 'PANTHER11.1_ascii.tgz',
+        'panther_file'              => 'PANTHER12.0_ascii.tgz',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
@@ -255,11 +260,6 @@ sub default_options {
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-
-        # Member database:
-        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
-
-        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
@@ -270,7 +270,7 @@ sub default_options {
         'mapping_db'  => $self->o('prev_rel_db'),
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        #'member_db'   => 'mysql://....',
+        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
 
     # Configuration of the pipeline worklow
 
@@ -345,7 +345,8 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('hmm_library_basedir'),
+        'mkdir -p '.$self->o('panther_hmm_library_basedir'),
+        'mkdir -p '.$self->o('lustre_tmp_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -368,7 +369,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
-        'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
+        'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
@@ -671,9 +672,8 @@ sub core_pipeline_analyses {
             -rc_name            => '4Gb_big_tmp_job',
             -max_retry_count    => 0,
             -parameters         => {
-                                    'hmmer_home'        => $self->o('hmmer3_home'),
                                     'library_name'      => $self->o('hmm_library_name'),
-                                    'hmm_lib'           => $self->o('hmm_library_basedir'),
+                                    'hmm_lib'           => $self->o('panther_hmm_library_basedir'),
                                     'url'               => $self->o('panther_url'),
                                     'file'              => $self->o('panther_file'),
             },
