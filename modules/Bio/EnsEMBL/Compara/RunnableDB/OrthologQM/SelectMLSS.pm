@@ -115,13 +115,14 @@ sub fetch_input {
 	
 	if ( defined $common_mlss_list ){
 		foreach my $common_mlss ( @{ $common_mlss_list } ) {
+			next unless $common_mlss->is_current;
 			push( @aln_mlss_ids, $common_mlss->dbID );
 			$self->warning( "Found EPO alignment. mlss_id = " . $common_mlss->dbID );
 		}
 	}
 	# Last, look for a LASTZ aln between pair
 	my $lastz = $mlss_adap->fetch_by_method_link_type_genome_db_ids( "LASTZ_NET", [ $species1_gdb->dbID, $species2_gdb->dbID ] );
-	if ( defined $lastz ) {
+	if ( defined $lastz && $lastz->is_current ) {
 		push( @aln_mlss_ids, $lastz->dbID );
 		$self->warning( "Found LASTZ alignment. mlss_id = " . $lastz->dbID );
 	}
@@ -197,9 +198,15 @@ sub _map_mlss_to_db {
 			my $mlss_adap = $this_dba->get_MethodLinkSpeciesSetAdaptor;
 
 			foreach my $mlss_id ( @$mlsses ) {
+				print "looking in $db_url for $mlss_id...\n" if $self->debug;
 				my $this_mlss = $mlss_adap->fetch_by_dbID($mlss_id);
-				next unless $this_mlss;
-				$mlss_db_mapping{$this_mlss->dbID} = $db_url;
+				if ( $this_mlss ) {
+					print " --- FOUND!\n" if $self->debug;
+					$mlss_db_mapping{$this_mlss->dbID} = $db_url;
+				} else {
+					print " --- NOT FOUND!\n" if $self->debug;
+				}
+				
 			}
 		}
 	} else {
