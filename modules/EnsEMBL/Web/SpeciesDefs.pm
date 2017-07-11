@@ -1326,9 +1326,24 @@ sub verbose_params {
       $_,
       $multidb->{$_}{'NAME'},
       $multidb->{$_}{'USER'},
-      $multidb->{$_}{'PASS'} ? '<PASS>' : '',
+      $multidb->{$_}{'PASS'} ? ':<PASS>' : '',
       $multidb->{$_}{'HOST'},
       $multidb->{$_}{'PORT'};
+  }
+
+  warn "SpeciesDefs species database:\n";
+  foreach my $sp (sort @{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
+    warn sprintf "%65s\n", "====== $sp ======";
+    my $db = $self->get_config($sp, 'databases');
+    for (sort keys %$db) {
+      warn sprintf "%50s: %s on %s%s@%s:%s\n",
+        $_,
+        $db->{$_}{'NAME'} || '-- missing --',
+        $db->{$_}{'USER'} || '-- missing --',
+        $db->{$_}{'PASS'} ? ':<PASS>' : '',
+        $db->{$_}{'HOST'} || '-- missing --',
+        $db->{$_}{'PORT'} || '-- missing --';
+    }
   }
 }
 
