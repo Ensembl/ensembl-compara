@@ -132,6 +132,8 @@ sub get_user_settings {
   ## Any changes made to the returned hashref will get saved to the db when save_user_settings method is called
   ## @return User settings as a hashref
   my $self = shift;
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1; $Data::Dumper::Sortkeys = 1;
+  #warn ">>> USER SETTINGS? ".Dumper($self->{'_user_settings'}{'nodes'});
 
   return $self->{'_user_settings'} ||= $self->hub->session ? $self->hub->session->get_record_data({'type' => $self->config_type, 'code' => $self->code}) : {};
 }

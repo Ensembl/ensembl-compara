@@ -392,7 +392,9 @@ sub update_track_axes {
       $updated = 1;
     }
     if ($updated) {
-      return $node->get_data('name') || $node->get_data('caption') || 1;
+      my $record; # = $node->get_data('linked_record');
+      my $code = $record->{'type'}.'_'.$record->{'code'} if $record;
+      return $code || $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
@@ -496,6 +498,10 @@ sub save_user_settings {
   my $fav_data      = $self->_favourite_tracks;
   my $user_data     = $self->tree->user_data;
   my $record_data   = $self->get_user_settings;
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #$Data::Dumper::Maxdepth = 2;
+  #warn ">>> RECORD DATA: ".Dumper($record_data);
 
   # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
   $hub->session->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });

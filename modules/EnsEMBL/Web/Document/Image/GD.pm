@@ -368,6 +368,7 @@ sub hover_label_tabs {
   my $y_max   = $label->{'y_max'};
   my $config  = $label->{'component'};
   my $track   = $label->{'track'};
+  #$track      =~ s/^(url_|upload_)//;
   my $axis_form = qq(<form action="$url" method="POST" class="freeform graph_config">
 <p><label for="y_min">Minimum: <input name="y_min" type="text" value="$y_min" class="small" /></p>
 <p><label for="y_max">Maximum: <input name="y_max" type="text" value="$y_max" class="small" /></p>
