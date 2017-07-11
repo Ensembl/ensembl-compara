@@ -677,19 +677,53 @@ sub core_pipeline_analyses {
                                     'url'               => $self->o('panther_url'),
                                     'file'              => $self->o('panther_file'),
             },
-            -flow_into      => [ 'treefam_panther_hmm_overlapping' ],
+            -flow_into      => [ 'chunk_sequence' ],
+        },
+
+        { -logic_name => 'chunk_sequence',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
+            -parameters => {
+                            'sequence_limit'            => $self->o('sequence_limit'),
+                            'max_chunk_length'          => $self->o('max_chunk_length'),
+                            'input_format'              => 'fasta',
+                            'seq_filter'                => '^>TF',
+                            'inputfile'                 => $self->o('treefam_hmm_library_basedir')."/globals/con.Fasta",
+                            'output_dir'                => $self->o('lustre_tmp_dir'),
+                            'output_prefix'             => $self->o('output_prefix'),
+                            'hash_directories'          => 1,
+                            'split_by_sequence_count'   => 1,
+            },
+            -flow_into => {
+            '2' => ['treefam_panther_hmm_overlapping'],
+            },
         },
 
         { -logic_name     => 'treefam_panther_hmm_overlapping',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HmmOverlap',
-            -rc_name       => '4Gb_big_tmp_job',
+            -rc_name       => '1Gb_job',
             -parameters     => {
                                 'hmmer_home'        => $self->o('hmmer3_home'),
                                 'library_name'      => $self->o('hmm_library_name'),
-                                'hmm_lib'           => $self->o('hmm_library_basedir'),
-                                'url'               => $self->o('panther_url'),
-                                'file'              => $self->o('panther_file'),
+                                'treefam_hmm_lib'   => $self->o('treefam_hmm_library_basedir'),
+                                'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
             },
+            -hive_capacity  => $self->o('HMMer_search_capacity'),
+            -flow_into      => {
+                                1 => [ 'HMMer_search_factory' ],
+                                -1 => [ 'treefam_panther_hmm_overlapping_himem' ],  # MEMLIMIT
+                            },
+        },
+
+        { -logic_name     => 'treefam_panther_hmm_overlapping_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HmmOverlap',
+            -rc_name       => '2Gb_job',
+            -parameters     => {
+                                'hmmer_home'        => $self->o('hmmer3_home'),
+                                'library_name'      => $self->o('hmm_library_name'),
+                                'treefam_hmm_lib'   => $self->o('treefam_hmm_library_basedir'),
+                                'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
+            },
+            -hive_capacity => $self->o('HMMer_search_capacity'),
             -flow_into      => [ 'HMMer_search_factory' ],
         },
 
