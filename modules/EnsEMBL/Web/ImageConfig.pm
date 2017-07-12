@@ -370,15 +370,26 @@ sub update_track_renderer {
 
 sub update_track_axes {
   ## Updated axes for a given track
-  ## @param Track node or Track key
+  ## @param Track key
   ## @param y_min float
   ## @param y_max float
   ## @return Track name if renderer changed
-  my ($self, $node, $y_min, $y_max) = @_;
+  my ($self, $key, $y_min, $y_max) = @_;
 
-  $node = $self->get_node($node) unless ref $node;
-
-  if ($node) {
+  my $record;
+  if ($key =~ /^(upload|url)_/) {
+    my ($type, $code, $record_id) = split('_', $key);
+    $record = $self->hub->session->get_record_data({'type' => $type, 'code' => sprintf '%s_%s', $code, $record_id});
+    warn $record;
+    if ($record) {
+      $record->{'y_min'} = $y_min if defined $y_min;
+      $record->{'y_max'} = $y_max if defined $y_max;
+      $self->hub->session->set_record_data($record);
+      return $record->{'name'} || 1;
+    }
+  }
+  else {
+    my $node = $self->get_node($key);
     my $user_data = $node->tree->user_data;
     my $id        = $node->id;
     my $updated = 0;
