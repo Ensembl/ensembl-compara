@@ -392,9 +392,7 @@ sub update_track_axes {
       $updated = 1;
     }
     if ($updated) {
-      my $record; # = $node->get_data('linked_record');
-      my $code = $record->{'type'}.'_'.$record->{'code'} if $record;
-      return $code || $node->get_data('name') || $node->get_data('caption') || 1;
+      return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
