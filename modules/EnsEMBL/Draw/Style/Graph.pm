@@ -85,6 +85,14 @@ sub create_glyphs {
       $graph_conf = $self->draw_graph_base($metadata);
     }
 
+    ## Set cutoff point for top of graph if we have one
+    if (defined($self->{'cutoff'})) {
+      $graph_conf->{'cutoff'} = $self->{'cutoff'};
+    }
+    elsif (defined($metadata->{'y_max'})) {
+      $graph_conf->{'cutoff'} = $metadata->{'y_max'}; 
+    }
+
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
