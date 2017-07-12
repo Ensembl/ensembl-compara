@@ -217,6 +217,8 @@ sub calc_genetic_distance {
         print_simple_align($aln, 80);
         die "Codeml failed. Please investigate this homology.\n";
       }
+    } elsif ($codeml->error_string =~ /^alpha reset\n/) {
+      $self->warning('"alpha reset" prevented us from computing dN/dS for homology_id='.$homology->dbID);
     } else {
       die "No result but no error either !";
     }
