@@ -2176,7 +2176,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'fasttree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FastTree',
             -parameters => {
-                'fasttree_exe'                 => $self->o('fasttree_mp_exe'),
+                'fasttree_exe'                 => $self->o('fasttree_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
                 'input_clusterset_id'      => 'default',

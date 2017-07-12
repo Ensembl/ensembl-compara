@@ -119,8 +119,6 @@ sub default_options {
     # executable locations:
         # TODO: this one has to be installed in the Cellar
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        # TODO: should be the same as $self->o('ensembl_cellar').'/fasttree/2.1.8/bin/FastTree' but we need to check the DOUBLE thingy
-        'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'

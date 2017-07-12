@@ -84,7 +84,7 @@ sub default_options {
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
-        'fasttree_mp_exe'           => 'UNDEF',
+        'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
         'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-112/bin/java',
 
