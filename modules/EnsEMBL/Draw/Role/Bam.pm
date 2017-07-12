@@ -128,7 +128,6 @@ sub _render_coverage {
   my %config                = %{$self->track_style_config};
   $config{'pix_per_score'}  = $smax / ($scale * $max); 
   $config{'line_score'}     = 0;
-  $config{'cutoff'}         = $smax;
 
   foreach my $i (0..$#coverage) {
     my $cvrg = $coverage[$i];
