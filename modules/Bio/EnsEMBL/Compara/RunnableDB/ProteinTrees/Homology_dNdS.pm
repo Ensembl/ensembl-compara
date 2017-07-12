@@ -145,6 +145,10 @@ sub calc_genetic_distance {
 
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
 
+  # Temporary files
+  $codeml->save_tempfiles(1) if $self->worker && !$self->worker->perform_cleanup;
+  $codeml->tempdir($self->worker_temp_directory);
+
   my $possible_exe = $self->param('codeml_exe');
   if($possible_exe) {
     print("Using executable at ${possible_exe}\n") if $self->debug;
