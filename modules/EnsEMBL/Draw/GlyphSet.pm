@@ -609,13 +609,9 @@ sub init_label {
         CORE::push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
       }
     }
-    
-    my $display   = $self->{'my_config'}->get('display') || '';
-    my $scaleable = (ref($self) =~ /Wiggle/ && $display eq 'normal') 
-                      || ($display =~ /signal/ || $display =~ /wiggle/)
-                        ? $url : undef; 
 
-    ## These can be zero, so check if defined
+    ## GRAPH Y-AXIS STUFF    
+    my $scaleable = $self->{'my_config'}->get('scaleable') ? $url : ''; 
     my ($y_min, $y_max);
     if (defined($self->{'my_config'}->get('y_min'))) {
       $y_min = $self->{'my_config'}->get('y_min');;

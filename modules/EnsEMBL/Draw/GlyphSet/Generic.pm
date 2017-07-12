@@ -42,6 +42,9 @@ sub init {
 
   if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'gradient') {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
+    if (exists($self->{'my_config'}{'data'}{'y_min'})) {
+      $self->{'my_config'}->set('scaleable', 1);
+    }
   }
   else {
     push @roles, 'EnsEMBL::Draw::Role::Alignment';
@@ -58,9 +61,10 @@ sub init {
 
 sub render_normal {
 ## Backwards-compatibility with old drawing code
-## Different tracks have different opinions of what is 'normal',
-## so let the configuration decide
   my $self = shift;
+
+  ## Different tracks have different opinions of what is 'normal',
+  ## so let the configuration decide
   my $renderers = $self->{'my_config'}->get('renderers');
   my $default = $self->{'my_config'}->get('default_display');
   my $default_is_valid = $default ? grep { $_ eq $default } @$renderers : 0;
