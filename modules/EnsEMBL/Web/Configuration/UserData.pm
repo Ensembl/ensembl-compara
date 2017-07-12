@@ -71,7 +71,7 @@ sub populate_tree {
   
   ## Saving remote data
   $self->create_node('ShowRemote',      '', [qw(show_remote     EnsEMBL::Web::Component::UserData::ShowRemote)]);
-  $self->create_node('ConfigureBigWig', '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)]);
+  $self->create_node('ConfigureGraph',  '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureGraph)]);
   
   $self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' });
   

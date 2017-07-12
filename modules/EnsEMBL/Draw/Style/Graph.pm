@@ -85,6 +85,14 @@ sub create_glyphs {
       $graph_conf = $self->draw_graph_base($metadata);
     }
 
+    ## Set cutoff point for top of graph if we have one
+    if (defined($self->{'cutoff'})) {
+      $graph_conf->{'cutoff'} = $self->{'cutoff'};
+    }
+    elsif (defined($metadata->{'y_max'})) {
+      $graph_conf->{'cutoff'} = $metadata->{'y_max'}; 
+    }
+
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
@@ -233,7 +241,7 @@ sub draw_score {
   my $text_info = $self->get_text_info($text);
   my $width     = $text_info->{'width'};
   my $height    = $text_info->{'height'};
-  my $colour    = $self->track_config->get('axis_colour') || 'red';
+  my $colour    = 'black'; 
 
   my %params = ( 
     absolutey     => 1,
@@ -247,7 +255,7 @@ sub draw_score {
                                       text        => $text,
                                       height      => $height,
                                       width       => $width,
-                                      x           => -2 - $width,
+                                      x           => -8 - $width,
                                       y           => $y - $height * 0.75,
                                       textwidth   => $width * 0.9,
                                       halign      => 'right',

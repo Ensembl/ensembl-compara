@@ -93,6 +93,7 @@ sub upload {
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
+    $params->{'action'}   = lc($format) eq 'bedgraph' ? 'ConfigureGraph' : 'UploadFeedback';
 
     # Store last uploaded userdata to highlight on pageload
     $hub->session->set_record_data({

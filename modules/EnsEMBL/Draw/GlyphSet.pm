@@ -610,6 +610,22 @@ sub init_label {
       }
     }
 
+    ## GRAPH Y-AXIS STUFF    
+    my $scaleable = $self->{'my_config'}->get('scaleable') ? $url : ''; 
+    my ($y_min, $y_max);
+    if (defined($self->{'my_config'}->get('y_min'))) {
+      $y_min = $self->{'my_config'}->get('y_min');;
+    }
+    elsif (defined($self->{'my_config'}{'data'}{'y_min'})) {
+      $y_min = $self->{'my_config'}{'data'}{'y_min'};
+    }
+    if (defined($self->{'my_config'}->get('y_max'))) {
+      $y_max = $self->{'my_config'}->get('y_max');
+    }
+    elsif (defined($self->{'my_config'}{'data'}{'y_max'})) {
+      $y_max = $self->{'my_config'}{'data'}{'y_max'};
+    }
+
     $config->{'hover_labels'}->{$class} = {
       header          => $name,
       desc            => $desc,
@@ -617,6 +633,10 @@ sub init_label {
       track_highlight => [ $highlight_track_uniq_id, $hl, "$url;updated=0;$track=highlight_" ],
       component       => lc($component . ($config->get_parameter('multi_species') && $config->species ne $hub->species ? '_' . $config->species : '')),
       renderers       => \@r,
+      track           => $track,
+      scaleable       => $scaleable,
+      y_min           => $y_min, 
+      y_max           => $y_max, 
       fav             => [ $fav, "$url;updated=0;$track=favourite_" ],
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',

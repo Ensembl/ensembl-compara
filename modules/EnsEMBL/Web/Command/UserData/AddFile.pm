@@ -115,7 +115,6 @@ sub upload_or_attach {
     ## Upload the data
     $url_params = $self->upload($method, $format_name, $renderer, $index_err ? $species_defs->UPLOAD_SIZELIMIT_WITHOUT_INDEX : 0);
     $url_params->{__clear}        = 1;
-    $url_params->{'action'}       = 'UploadFeedback';
     $url_params->{'record_type'}  = 'upload';
   }
 

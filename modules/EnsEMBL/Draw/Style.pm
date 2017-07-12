@@ -177,8 +177,15 @@ sub draw_graph_base {
                           ? $metadata->{'max_score'} : $track_config->get('max_score');
   my $baseline_zero = defined($metadata->{'baseline_zero'})
                           ? $metadata->{'baseline_zero'} : $track_config->get('baseline_zero');
-  
-  my $range = $max_score - $min_score;
+
+  my $range; 
+  if (defined($metadata->{'y_min'}) || defined($metadata->{'y_max'})) {
+    ## User has defined scale, so use it!
+    $min_score = $metadata->{'y_min'} if (defined($metadata->{'y_min'}) && $metadata->{'y_min'} ne ''); 
+    $max_score = $metadata->{'y_max'} if (defined($metadata->{'y_max'}) && $metadata->{'y_max'} ne ''); 
+  }
+  $range = $max_score - $min_score;
+  ## Try to calculate something sensible 
   if ($range < 0.01) {
     ## Oh dear, data all has pretty much same value ...
     if ($max_score > 0.01) {
@@ -190,8 +197,8 @@ sub draw_graph_base {
     }
   }
   $min_score = 0 if $min_score >= 0 && $baseline_zero;
- 
   $range = $max_score - $min_score;
+
   my $pix_per_score = $row_height/$range;
   $self->track_config->set('pix_per_score', $pix_per_score);
 
