@@ -1722,13 +1722,21 @@ sub get_citation_data{
 ## Allele/genotype colours
 sub get_allele_genotype_colours {
   my $self = shift;
-
-  my %colours = ('A' => '<span style="color:green">A</span>',
-                 'C' => '<span style="color:blue">C</span>',
-                 'G' => '<span style="color:#ff9000">G</span>',
-                 'T' => '<span style="color:red">T</span>'
-                );
+  my $raw = $self->raw_allele_colours();
+  my %colours = map {$_ => '<span style="color:'.$raw->{$_}.'">'.$_.'</span>'} keys %$raw;
   return \%colours;
+}
+
+sub raw_allele_colours {
+  my $self = shift;
+
+  return {
+    'A' => 'green',
+    'C' => 'blue',
+    'G' => '#ff9000',
+    'T' => 'red',
+    '-' => 'black'
+  };
 }
 
 # Get SNPedia description from snpedia.com
