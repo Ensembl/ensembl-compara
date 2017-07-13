@@ -78,6 +78,7 @@ sub param_defaults {
                         JOIN (homology_member hm2 JOIN gene_member gm2 USING (gene_member_id) JOIN genome_db gdb2 USING (genome_db_id) JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id)
                     WHERE
                         homology_id BETWEEN #min_hom_id# AND #max_hom_id#
+                        AND hm1.gene_member_id != hm2.gene_member_id
                         #extra_filter#
                 |,
 
