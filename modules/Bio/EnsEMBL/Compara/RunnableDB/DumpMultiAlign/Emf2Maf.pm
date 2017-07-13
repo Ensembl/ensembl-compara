@@ -76,7 +76,7 @@ sub _healthcheck {
 
     my $output_file = $self->param('output_file');
     $output_file =~ s/\.emf$/.maf/;
-    my $cmd = "grep -c ^a " . $output_file;
+    my $cmd = "grep ^a $output_file | wc -l";
 
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
