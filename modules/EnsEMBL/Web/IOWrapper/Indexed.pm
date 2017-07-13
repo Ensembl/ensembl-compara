@@ -28,6 +28,8 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::IO::Utils;
 use Bio::EnsEMBL::IO::Parser;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
+use EnsEMBL::Web::Utils::FormatText qw(date_format);
+use File::Path qw(make_path);
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
@@ -43,7 +45,13 @@ sub open {
 
   my $wrapper;
   if (dynamic_use($class, 1)) {
-    my $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $url);
+    ## Tabix-indexed files: Tabix will want to write the downloaded index file to 
+    ## the current working directory. By default this is '/'
+    my $time    = date_format(time(), '%y-%m-%d');
+    my $tmp_dir = $SiteDefs::ENSEMBL_USERDATA_DIR."/temporary/tabix/$time/";
+    make_path($tmp_dir);
+
+    my $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $url, 'tmp_dir' => $tmp_dir);
 
     if ($parser) {
 
