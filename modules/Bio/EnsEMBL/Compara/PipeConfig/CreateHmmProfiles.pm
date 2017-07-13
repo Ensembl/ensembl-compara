@@ -164,13 +164,6 @@ sub default_options {
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
-    # homology_dnds parameters:
-        # used by 'homology_dNdS'
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
-        'taxlevels'                 => [],
-        # affects 'group_genomes_under_taxa'
-        'filter_high_coverage'      => 0,
-
     # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
