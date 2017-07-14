@@ -37,12 +37,12 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BuildSeedHmms
 This runnable is used to:
     1 - Fetch all TF and PANTHER ids.
     2 - Build a map of all the TF ids and their PANTHER replacements and extract all the non replaced TF families
-    3 - Fetch and compose build hmm3 profiles for them and compose a file with all the non-overlapped TF and all the PANTHER profiles. 
+    3 - Fetch, compose and build hmm3 profiles for them. Subsequently ensembling a library with all the non-overlapped TF and all the PANTHER profiles. 
     4 - Run hmmpress.
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed find an overlap between TreeFam and PANTHER HMM profiles. Whenever there is an overlap, PATHER will have priority.
+This Analysis/RunnableDB is designed to build a the Ensembl seed HMM library.
 
 =cut
 
