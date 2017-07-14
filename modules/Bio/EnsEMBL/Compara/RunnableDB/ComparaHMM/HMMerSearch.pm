@@ -54,7 +54,7 @@ use Bio::EnsEMBL::Compara::MemberSet;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
-    return { 'hmmer_cutoff' => 0.001, 'library_name' => '#hmm_library_name#', };
+    return { 'hmmer_cutoff' => 0.001, 'library_name' => '#hmm_library_name#', 'library_basedir' => '#hmm_library_basedir#' };
 }
 
 sub fetch_input {
@@ -132,12 +132,12 @@ sub _run_HMM_search {
     my ($self) = @_;
 
     my $fastafile    = $self->param('fastafile');
-    my $hmmLibrary   = $self->param('hmm_library_basedir') . "/" . $self->param('library_name');
+    my $hmmLibrary   = $self->param('library_basedir') . "/" . $self->param('library_name');
     my $hmmer_home   = $self->param('hmmer_home');
     my $hmmer_cutoff = $self->param('hmmer_cutoff');                                               ## Not used for now!!
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd                   = $hmmer_home . "/hmmsearch --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+    my $cmd                   = $hmmer_home . "/hmmsearch --cpu 1 -E $hmmer_cutoff --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
 
     my $cmd_out = $self->run_command($cmd);
 
@@ -161,23 +161,19 @@ sub _run_HMM_search {
         #Only split the initial 6 wanted positions, $accession1-2 are not used.
         my ( $seq_id, $accession1, $hmm_id, $accession2, $eval ) = split /\s+/, $_, 6;
 
-        #Only store if e-values are bellow the threshold
-        if ( $eval < $hmmer_cutoff ) {
-
-            #if hash exists we need to compare the already existing value, so that we only store the best e-value
-            if ( exists( $hmm_annot{$seq_id} ) ) {
-                if ( $eval < $hmm_annot{$seq_id}{'eval'} ) {
-                    $hmm_annot{$seq_id}{'eval'}   = $eval;
-                    $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
-                }
-            }
-            else {
-                #storing evalues for the firt time
+        #if hash exists we need to compare the already existing value, so that we only store the best e-value
+        if ( exists( $hmm_annot{$seq_id} ) ) {
+            if ( $eval < $hmm_annot{$seq_id}{'eval'} ) {
                 $hmm_annot{$seq_id}{'eval'}   = $eval;
                 $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
             }
-
         }
+        else {
+            #storing evalues for the firt time
+            $hmm_annot{$seq_id}{'eval'}   = $eval;
+            $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
+        }
+
     } ## end while (<HMM>)
 
     foreach my $seq_id ( keys %hmm_annot ) {
