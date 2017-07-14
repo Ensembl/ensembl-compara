@@ -369,6 +369,7 @@ sub store_PAFS {
           $paf->score, $paf->evalue, $paf->alignment_length,
           $paf->identical_matches, $paf->perc_ident, $paf->positive_matches, $paf->perc_pos, $paf->hit_rank, $paf->cigar_line);
   }
+  $sth->finish;
 }
 
 

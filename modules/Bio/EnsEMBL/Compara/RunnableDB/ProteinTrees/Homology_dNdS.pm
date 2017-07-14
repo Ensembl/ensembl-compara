@@ -145,6 +145,10 @@ sub calc_genetic_distance {
 
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
 
+  # Temporary files
+  $codeml->save_tempfiles(1) if $self->worker && !$self->worker->perform_cleanup;
+  $codeml->tempdir($self->worker_temp_directory);
+
   my $possible_exe = $self->param('codeml_exe');
   if($possible_exe) {
     print("Using executable at ${possible_exe}\n") if $self->debug;
@@ -213,6 +217,8 @@ sub calc_genetic_distance {
         print_simple_align($aln, 80);
         die "Codeml failed. Please investigate this homology.\n";
       }
+    } elsif ($codeml->error_string =~ /^alpha reset\n/) {
+      $self->warning('"alpha reset" prevented us from computing dN/dS for homology_id='.$homology->dbID);
     } else {
       die "No result but no error either !";
     }

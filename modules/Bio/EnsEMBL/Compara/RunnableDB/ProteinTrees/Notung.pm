@@ -39,7 +39,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'cmd'               => 'java -Xmx#notung_memory#M -jar #notung_jar# #gene_tree_file# -s #species_tree_file# --rearrange --treeoutput newick --speciestag postfix --edgeweights length --threshold 0.9 --silent --nolosses',
+        'cmd'               => '#java_exe# -Xmx#notung_memory#M -jar #notung_jar# #gene_tree_file# -s #species_tree_file# --rearrange --treeoutput newick --speciestag postfix --edgeweights length --threshold 0.9 --silent --nolosses',
         'runtime_tree_tag'  => 'notung_runtime',
         'output_file'       => '#gene_tree_file#.rearrange.0',
         'run_treebest_sdi'  => 1,

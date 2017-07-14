@@ -89,7 +89,7 @@ sub fetch_input {
     die sprintf( 'Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id') ) unless $copy_tree;
 	$self->param( 'protein_tree', $self->param('current_gene_tree'));
 
-    my $input_aln = $self->worker_temp_directory.sprintf('align.%d.fasta', $copy_tree->dbID || 0);
+    my $input_aln = $self->worker_temp_directory.sprintf('/align.%d.fasta', $copy_tree->dbID || 0);
     $copy_tree->print_alignment_to_file( $input_aln,
         -FORMAT => 'fasta',
         -ID_TYPE => 'SEQUENCE',

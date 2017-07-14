@@ -154,7 +154,7 @@ sub get_msa_command_line {
     $mcoffee_scores =~ s/\/\//\//g;
     $self->param('mcoffee_scores', $mcoffee_scores);
 
-    my $tree_temp = $tempdir . 'tree_temp.dnd';
+    my $tree_temp = $tempdir . '/tree_temp.dnd';
     $tree_temp =~ s/\/\//\//g;
 
     my $method_string = '-method=';
@@ -182,7 +182,7 @@ sub get_msa_command_line {
     #
     # Output the params file.
     #
-    my $paramsfile = $tempdir. 'temp.params';
+    my $paramsfile = $tempdir. '/temp.params';
     $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
     open(OUTPARAMS, ">$paramsfile") or $self->throw("Error opening $paramsfile for write");
 
@@ -197,7 +197,7 @@ sub get_msa_command_line {
     print OUTPARAMS "-newtree=$tree_temp\n";
     close OUTPARAMS;
 
-    my $t_env_filename = $tempdir . "t_coffee_env";
+    my $t_env_filename = $tempdir . "/t_coffee_env";
     open(TCOFFEE_ENV, ">$t_env_filename")
         or $self->throw("Error opening $t_env_filename for write");
     print TCOFFEE_ENV "http_proxy_4_TCOFFEE=\n";

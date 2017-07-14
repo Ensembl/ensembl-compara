@@ -156,7 +156,7 @@ sub fetch_input {
 	  $tree_string = $gat->newick_format("simple");
           $tree_string=~s/:0;/;/; # Remove unused node at end
 
-	  $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
+	  $self->param('modified_tree_file', $self->worker_temp_directory . "/" . $TREE_FILE);
 
           open (TREE, ">" . $self->param('modified_tree_file')) or throw "error writing alignment (" . $self->param('modified_tree_file') . ") file\n";
           print TREE $tree_string;
@@ -193,7 +193,7 @@ sub fetch_input {
 	  #copy param file into temporary param file in worker directory
 	  my ($filename) = fileparse($self->param('param_file'));
 
-	  $self->param('param_file_tmp', $self->worker_temp_directory . $filename . $PARAM_FILE_SUFFIX);
+	  $self->param('param_file_tmp', $self->worker_temp_directory . "/" . $filename . $PARAM_FILE_SUFFIX);
 	  my $cp_cmd = "cp " . $self->param('param_file') . " " . $self->param('param_file_tmp');
 	  unless (system ($cp_cmd) == 0) {
 	      throw("error copying " . $self->param('param_file') . " to " . $self->param('param_file_tmp') . "\n");
@@ -296,7 +296,7 @@ sub _writeMultiFastaAlignment {
     my $object = shift;
 
     #write out the alignment file
-    $self->param('mfa_file', $self->worker_temp_directory . $ALIGN_FILE);
+    $self->param('mfa_file', $self->worker_temp_directory . "/" . $ALIGN_FILE);
     open (ALIGN, ">" . $self->param('mfa_file') ) or throw "error writing alignment (" . $self->param('mfa_file') . ") file\n";    
 
     
@@ -797,7 +797,7 @@ sub _build_tree_string {
     $tree_string=~s/:0;/;/; # Remove unused node at end
     # $tree->release_tree;
  
-    $self->param('modified_tree_file', $self->worker_temp_directory . $TREE_FILE);
+    $self->param('modified_tree_file', $self->worker_temp_directory . "/" . $TREE_FILE);
 
     open (TREE, ">" . $self->param('modified_tree_file') ) or throw "error writing alignment (" . $self->param('modified_tree_file') . ") file\n";    
     print TREE $tree_string;

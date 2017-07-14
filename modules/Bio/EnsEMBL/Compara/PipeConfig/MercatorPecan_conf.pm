@@ -75,9 +75,12 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'pipeline_name'         => 'pecan_24way',
+        #'species_set'           => '24amniotes',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+
+    # Automatically set using the above
+        'pipeline_name'         => $self->o('species_set_name').'_pecan_'.$self->o('rel_with_suffix'),
 
     # dependent parameters:
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
@@ -121,7 +124,10 @@ sub default_options {
      #Resource requirements
      #
      'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
-     'aligner_capacity' => 4000,
+    'pecan_capacity'        => 500,
+    'gerp_capacity'         => 500,
+    'blast_capacity'        => 100,
+    'reuse_capacity'        => 100,
 
      # stats report email
      'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
@@ -228,7 +234,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                'A->1' => [ 'create_mlss_ss' ],
+                'A->1' => [ 'create_reuse_ss' ],
             },
 	    -rc_name => '100Mb',
 	},
@@ -271,14 +277,12 @@ sub pipeline_analyses {
 	    -rc_name => '1Gb',
         },
 
-        {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+        {   -logic_name => 'create_reuse_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
             -parameters => {
                 'master_db' => $self->o('master_db'),
-				'tree_method_link' => 'PECAN',
             },
             -flow_into => [ 'make_species_tree' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'make_species_tree',
@@ -419,7 +423,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                  'fasta_dir'                 => $self->o('blastdb_dir'),
-                 'only_canonical'            => 0,
             },
             -flow_into => {
                 1 => [ 'make_blastdb' ],
@@ -495,6 +498,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator',
              -parameters => {
 			     'input_dir' => $self->o('input_dir'),
+                             'mercator_exe' => $self->o('mercator_exe'),
 			    },
              -hive_capacity => 1,
 	     -rc_name => '3.6Gb',
@@ -526,7 +530,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 1,
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem1'], #retry with more heap memory
@@ -547,10 +551,11 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '7Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem2'], #retry with even more heap memory
+		-1 => [ 'pecan_mem2'], #MEMLIMIT
 		-2 => [ 'pecan_mem2'], #RUNLIMIT
              },
          },
@@ -565,10 +570,11 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '14Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem3'], #retry with even more heap memory
+		-1 => [ 'pecan_mem3'], #MEMLIMIT
 		-2 => [ 'pecan_mem3'], #RUNLIMIT
              },
          },
@@ -583,7 +589,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '30Gb',
-             -hive_capacity => 500,
+             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
              },
@@ -598,7 +604,7 @@ sub pipeline_analyses {
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
-             -hive_capacity => 500,  
+             -hive_capacity => $self->o('gerp_capacity'),
              -flow_into => {
 		 -1 => [ 'gerp_himem'], #retry with more memory
              },
@@ -611,7 +617,7 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
              },
-            -hive_capacity => 500,  
+            -hive_capacity => $self->o('gerp_capacity'),
 	     -rc_name => 'higerp',
          },
 

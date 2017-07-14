@@ -21,14 +21,14 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::TBlatMaster_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf');  # Inherit from base PairAligner class
+use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');  # Inherit from base PairAligner class
 
 
 sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
 	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_68', #Use a release database for the test only.
 	    'mlss_id'   => 421, #human vs chicken tblat-net
@@ -64,13 +64,14 @@ sub default_options {
 	    'ref_species' => 'homo_sapiens',
 
 	    #directory to dump dna files
-	    'dump_dna_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	    'dump_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
+            # chr 22 vs chr 15
 	    'default_chunks' => {
 			     'reference'   => {'chunk_size' => 1000000,
 				               'overlap'    => 10000,
 					       'group_set_size' => 100000000,
-					       'dump_dir' => $self->o('dump_dna_dir'),
+					       'dump_dir' => $self->o('dump_dir'),
 					       #human
 					       'include_non_reference' => 1,
 					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
@@ -89,38 +90,7 @@ sub default_options {
 	    #Location of executables
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/blat',
 
-	    #
-	    #Default pair_aligner
-	    #
-	    'pair_aligner_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
-	    'pair_aligner_logic_name' => 'Blat',
-	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat',
-	    'pair_aligner_options' => '-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower',
-
-	    #
-	    #Default chain
-	    #
-	    'chain_input_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
-	    'chain_output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-	    'linear_gap' => 'loose',
-
-	    #
-	    #Default net 
-	    #
-	    'net_input_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-	    'net_output_method_link' => [7, 'TRANSLATED_BLAT_NET'],
-
 	   };
-}
-
-sub pipeline_create_commands {
-    my ($self) = @_;
-    print "pipeline_create_commands\n";
-
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('dump_dna_dir'), #Make dump_dna_dir directory
-    ];
 }
 
 1;

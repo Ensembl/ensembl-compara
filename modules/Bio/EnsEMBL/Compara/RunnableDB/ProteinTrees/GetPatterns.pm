@@ -55,16 +55,23 @@ sub get_tags {
     my $self = shift;
 
     my $num_of_patterns;
+    my $num_redundant = 0;
     open( my $output_file, "<", $self->param('output_file') );
     while (<$output_file>) {
+        if (/Found (\d+) sequences that are exactly identical to other sequences in the alignment/) {
+            $num_redundant = $1;
+        }
         if ( $_ =~ /^Alignment has/ ) {
 			my @tok = split (/\s/,$_);
 			$num_of_patterns = $tok[2];
         }
     }
 
+    my $num_sequences = scalar(@{ $self->param('gene_tree')->get_all_leaves });
+
     print "num_of_patterns: $num_of_patterns\n" if $self->debug;
-    return { 'aln_num_of_patterns' => $num_of_patterns };
+    print "num_redundant_sequences: $num_redundant\n" if $self->debug;
+    return { 'aln_num_of_patterns' => $num_of_patterns, 'num_distinct_sequences' => $num_sequences-$num_redundant };
 }
 
 1;

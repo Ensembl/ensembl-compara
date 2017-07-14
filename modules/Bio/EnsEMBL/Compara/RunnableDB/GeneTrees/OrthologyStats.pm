@@ -67,10 +67,10 @@ FROM (
         SUM(IF(genome_db_id=?,perc_id,0)) AS p1,
         SUM(IF(genome_db_id=?,perc_id,0)) AS p2
     FROM (
-        SELECT homology.description, gene_tree_node_id, seq_member_id, genome_db_id, COUNT(DISTINCT homology_id) AS nh, SUM(perc_id) AS perc_id
-        FROM homology JOIN homology_member USING (homology_id) JOIN seq_member USING (seq_member_id)
-        WHERE method_link_species_set_id = ? AND homology_id < 100000000
-        GROUP BY homology.description, gene_tree_node_id, seq_member_id, genome_db_id
+        SELECT homology.description, gene_tree_node_id, gene_member_id, genome_db_id, COUNT(DISTINCT homology_id) AS nh, SUM(perc_id) AS perc_id
+        FROM homology JOIN homology_member USING (homology_id) JOIN gene_member USING (gene_member_id)
+        WHERE method_link_species_set_id = ? AND biotype_group = "coding"
+        GROUP BY homology.description, gene_tree_node_id, gene_member_id, genome_db_id
     ) t1 GROUP BY description, gene_tree_node_id
 ) te GROUP BY description, c1, c2;
 ';

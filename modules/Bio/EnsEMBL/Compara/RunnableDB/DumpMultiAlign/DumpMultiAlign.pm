@@ -141,7 +141,7 @@ sub _write_gab_file {
     
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $tmp_file = $worker_temp_directory . "other_gab_$$.out";
+    my $tmp_file = $worker_temp_directory . "/other_gab_$$.out";
     
     open my $tmp_fh, '>', $tmp_file || die ("Couldn't open $tmp_file for writing");
     while (my $row = $sth->fetchrow) {

@@ -251,7 +251,7 @@ sub dumpChunkSetToWorkdir
 
   my $starttime = time();
 
-  my $fastafile = $self->worker_temp_directory. "chunk_set_". $chunkSet->dbID .".fasta";
+  my $fastafile = $self->worker_temp_directory. "/chunk_set_". $chunkSet->dbID .".fasta";
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
@@ -280,8 +280,7 @@ sub dumpChunkToWorkdir
 
   my $starttime = time();
 
-  my $fastafile = $self->worker_temp_directory .
-                  "chunk_" . $chunk->dbID . ".fasta";
+  my $fastafile = $self->worker_temp_directory . "/chunk_" . $chunk->dbID . ".fasta";
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
 

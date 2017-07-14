@@ -192,8 +192,8 @@ sub run {
 
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $blast_infile  = $worker_temp_directory . "blast_${start_seq_id}.in";    # only for debugging
-    my $blast_outfile = $worker_temp_directory . "blast_${start_seq_id}.out";   # looks like inevitable evil (tried many hairy alternatives and failed)
+    my $blast_infile  = $worker_temp_directory . "/blast_${start_seq_id}.in";    # only for debugging
+    my $blast_outfile = $worker_temp_directory . "/blast_${start_seq_id}.out";   # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
         open(FASTA, ">$blast_infile") || die "Could not open '$blast_infile' for writing";

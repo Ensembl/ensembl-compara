@@ -37,7 +37,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -49,10 +49,13 @@ sub default_options {
 
         'pipeline_name'   => 'alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
+        # Only needed if the member_db doesn't have genome_db.locator
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+        # Source of MLSSs
+        'master_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        # Source of GenomeDBs and members
+        #'member_db'       => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90',
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
@@ -78,7 +81,7 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'mafft_home'    => $self->o('mafft_home'),
-        'production_db_url' => $self->o('production_db_url'),
+        'master_db'     => $self->o('master_db'),
     }
 }
 
@@ -101,7 +104,7 @@ sub pipeline_analyses {
     my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies::pipeline_analyses_alt_alleles($self);
 
     $pipeline_analyses->[0]->{'-input_ids'} = [ {
-            'compara_db' => $self->o('compara_db'),
+            'member_db'     => $self->o('member_db'),
         } ];
 
     return $pipeline_analyses;

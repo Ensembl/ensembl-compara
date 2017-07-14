@@ -115,7 +115,7 @@ sub write_output {
 
 sub dump_sequences_to_workdir {
     my ($self,$cluster) = @_;
-    my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
+    my $fastafile = $self->worker_temp_directory . "/cluster_" . $cluster->root_id . ".fasta";
 
     my $member_list = $cluster->get_all_leaves;
     $self->param('tag_gene_count', scalar (@{$member_list}) );
@@ -220,7 +220,7 @@ sub run_RAxML {
     $cmd .= " -N $bootstrap_num";
     $cmd .= " -n $raxml_outfile";
 
-    my $command = $self->run_command("cd $raxml_outdir; $cmd");
+    my $command = $self->run_command("cd $raxml_outdir; $cmd", { timeout => $self->param('cmd_max_runtime') } );
     if ($command->exit_code) {
         print STDERR "We have a problem running RAxML -- Inspecting error\n";
         # memory problem?
@@ -233,6 +233,21 @@ sub run_RAxML {
             $self->input_job->autoflow(0);
             $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
         }
+
+        if ($command->exit_code == -2) {
+            $self->dataflow_output_id (
+                {
+                    'gene_tree_id'  => $self->param('gene_tree_id'),
+                    'fastTreeTag'   => "ftga_it_nj",
+                    'raxmlLightTag' => "ftga_it_ml",
+                    'alignment_id'  => $self->param('alignment_id'),
+                    'aln_seq_type'  => $self->param('aln_seq_type'),
+                }, 3 #branch 3 (fast_trees)
+            );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, analysis will most likelly not finish. Data-flowing to 'fast_trees'.\n"));
+        }
+
         die "RAXML ERROR: ", $command->err, "\n";
     }
 
@@ -280,7 +295,27 @@ sub run_prank {
     $cmd .= " -t=$tree_file" if (defined $tree_file);
     $cmd .= " -o=$prank_output";
     $cmd .= " -d=$input_fasta";
-    $self->run_command($cmd, { die_on_failure => 1 } );
+
+    #$self->run_command($cmd, { die_on_failure => 1, timeout => $self->param('cmd_max_runtime') } );
+
+    my $command = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
+    if ($command->exit_code) {
+        print STDERR "We have a problem running PRANK\n";
+        if ($command->exit_code == -2) {
+            $self->dataflow_output_id (
+                {
+                    'gene_tree_id'  => $self->param('gene_tree_id'),
+                    'fastTreeTag'   => "ftga_it_nj",
+                    'raxmlLightTag' => "ftga_it_ml",
+                    'alignment_id'  => $self->param('alignment_id'),
+                    'aln_seq_type'  => $self->param('aln_seq_type'),
+                }, 3 #branch 3 (fast_trees)
+            );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, analysis will most likelly not finish. Data-flowing to 'fast_trees'.\n"));
+        }
+        die "PRANK ERROR: ", $command->err, "\n";
+    }
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
     print STDERR "Prank output : ${prank_output}.best.fas\n" if ($self->debug);

@@ -62,9 +62,14 @@ sub param_defaults {
         'normal_genomes'    => 1,
         'ancestral_genomes' => 0,
 
+        # List of GenomeDB attribute names that will be added to the output_ids
         'extra_parameters'  => [],
+        'genome_db_data_source' => undef,   # Alternative source for these attributes
 
         'fan_branch_code'   => 2,
+        
+        # also flow an arrayref of all genome_db_ids to this branch
+        'arrayref_branch'   => undef, 
 
         # Definition of the species-set
         'species_set_id'    => undef,
@@ -115,14 +120,19 @@ sub fetch_input {
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
     $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
 
+    if ($self->param('genome_db_data_source')) {
+        my $genomedb_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('genome_db_data_source'));
+        my $genomedb_adaptor = $genomedb_dba->get_GenomeDBAdaptor;
+        $genome_dbs = [map {$genomedb_adaptor->fetch_by_dbID($_->dbID)} @$genome_dbs];
+    }
+
     $self->param('genome_dbs', $genome_dbs);
 }
 
 
 sub write_output {
     my $self = shift;
-
-    # Dataflow the GenomeDBs
+    
     foreach my $gdb (@{$self->param('genome_dbs')}) {
         my $h = { 'genome_db_id' => $gdb->dbID };
         foreach my $p (@{$self->param('extra_parameters')}) {
@@ -130,6 +140,16 @@ sub write_output {
         }
         $self->dataflow_output_id($h, $self->param('fan_branch_code'));
     }
+
+    # Dataflow the GenomeDBs
+    if ( $self->param('arrayref_branch') ) {
+        my @genome_db_id_list;
+        foreach my $gdb ( @{$self->param('genome_dbs')} ) {
+            push( @genome_db_id_list, $gdb->dbID );
+        }
+        $self->dataflow_output_id({ 'genome_db_ids' => \@genome_db_id_list }, $self->param('arrayref_branch')); # to cdhit
+    }
+    
 }
 
 1;

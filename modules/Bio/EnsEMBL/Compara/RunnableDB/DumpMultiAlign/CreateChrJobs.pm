@@ -77,6 +77,8 @@ sub write_output {
        coord_system_name = ? 
     AND 
        method_link_species_set_id = ? 
+    AND
+       dnafrag_start <= length
     GROUP BY name};
 
     my $sth = $compara_dba->dbc->prepare($sql);

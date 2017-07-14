@@ -44,8 +44,7 @@ use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
-use Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:row_copy);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -66,71 +65,58 @@ sub fetch_input {
     $self->param_required('mafft_home');
     $self->param_required('mafft_exe');
 
-    my $genome_db_id = $self->param_required('genome_db_id');
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) || die "'$genome_db_id' is not a valid GenomeDB dbID";
-    $self->param('genome_db', $genome_db);
+    # Adaptors in the current Compara DB
     $self->param('gene_member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-    $self->param('seq_member_adaptor', $self->compara_dba->get_SeqMemberAdaptor);
     $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
 
-    $self->param('mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->param('method_type'), [$self->param('genome_db')]));
+    # The member database provides a localized GenomeDB
+    my $member_dba      = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('member_db') );
+    my $genome_db_id    = $self->param_required('genome_db_id');
+    my $genome_db       = $member_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)
+                            or die "'$genome_db_id' is not a valid GenomeDB dbID";
+    my $core_dba        = $genome_db->db_adaptor
+                            or die sprintf("Cannot find a Core DBAdaptor for %s/%s", $genome_db->name, $genome_db_id);
+    $self->param('altallele_group_adaptor', $core_dba->get_AltAlleleGroupAdaptor);
+    $self->param('member_dbc', $member_dba->dbc);
 
-    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers::_load_biotype_groups($self, $self->param_required('production_db_url'));
+    # The master database provides the MLSS
+    my $master_dba      = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $mlss            = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->param('method_type'), [$genome_db])
+                            or die sprintf('Cannot find the MLSS %s[%s/%s] in the master database', $self->param('method_type'), $genome_db->name, $genome_db_id);
+    $self->param('mlss', $mlss);
+    $self->param('master_dbc', $master_dba->dbc);
+
 }
 
 
 
-sub fetch_or_store_gene {
+sub copy_and_fetch_gene {
     my $self = shift;
     my $gene = shift;
-    my $translate = shift;
+
+    copy_data_with_foreign_keys_by_constraint($self->param('member_dbc'), $self->compara_dba->dbc, 'gene_member', 'stable_id', $gene->stable_id, undef, 'expand_tables');
 
     # Gene Member
     my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene->stable_id);
-    if (defined $gene_member) {
-        if ($self->debug) {print "REUSE: $gene_member ", $gene_member->toString(), "\n";}
-    } else {
-        my $biotype_group = $self->param('biotype_groups')->{$gene->biotype};
-        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'), -biotype_group => $biotype_group);
-        $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
-        if ($self->debug) {print "NEW: $gene_member ", $gene_member->toString(), "\n";}
-    }
+    if ($self->debug) {print "GENE: $gene_member ", $gene_member->toString(), "\n";}
 
     # Transcript Member
-    my $trans_member = $gene_member->get_canonical_SeqMember;
-    if (defined $trans_member) {
-        if ($self->debug) {print "REUSE: $trans_member", $trans_member->toString(), "\n";}
-    } else {
-        my $transcript = $gene->canonical_transcript;
-        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
-                -transcript     => $transcript,
-                -genome_db      => $self->param('genome_db'),
-                -translate      => $translate,
-                );
-        $trans_member->gene_member_id($gene_member->dbID);
-        $self->param('seq_member_adaptor')->store($trans_member) unless $self->param('dry_run');
-        $self->param('seq_member_adaptor')->_set_member_as_canonical($trans_member) unless $self->param('dry_run');
-        if ($self->debug) {print "NEW: $trans_member ", $trans_member->toString(), "\n";}
-    }
-
-    return $trans_member;
+    return $gene_member->get_canonical_SeqMember;
 }
 
 sub run {
     my $self = shift @_;
 
-    my $core_aaga = $self->param('genome_db')->db_adaptor->get_AltAlleleGroupAdaptor;
+    copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $self->compara_dba->dbc, 'method_link_species_set', 'method_link_species_set_id', $self->param('mlss')->dbID);
 
-    my $group = $core_aaga->fetch_by_dbID($self->param('alt_allele_group_id'));
+    my $group = $self->param('altallele_group_adaptor')->fetch_by_dbID($self->param('alt_allele_group_id'));
     my @genes = @{$group->get_all_Genes};
     my @refs = grep {$genes[$_]->slice->is_reference} 0..(scalar(@genes)-1);
     return unless scalar(@refs);
     die if scalar(@refs) > 1;
     my @canon_transcripts = map {$_->canonical_transcript} @genes;
 
-    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 0 : 1;
-
-    my @seq_members = map {$self->fetch_or_store_gene($_, $translate)} @genes;
+    my @seq_members = map {$self->copy_and_fetch_gene($_)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
     if ($self->param('dry_run')) {
         foreach my $i (1..scalar(@seq_members)) {

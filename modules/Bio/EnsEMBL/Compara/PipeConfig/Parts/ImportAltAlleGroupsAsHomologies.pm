@@ -42,9 +42,10 @@ resource-classes to be defined.
 
 =head2 Seeding
 
-Each seed job has two arguments: "collection" is the name of the
-collection species-set, and "clusterset_id" is the name of the
-clusterset_id under which the trees / homologies are stored
+Seed a job in "offset_tables" or "altallele_species_factory". Its
+parameters have to define a species-set. This can be done via a
+"collection_name" parameter, a "mlss_id", etc. See GenomeDBFactory
+for more details.
 
 =head2 Global parameters
 
@@ -56,11 +57,6 @@ be declared as pipeline-wide.
 =item mafft_home
 
 The home directory of the Mafft aligner
-
-=item production_db_url
-
-The location of the ensembl_production database, to get
-the biotype groups.
 
 =back
 
@@ -89,6 +85,9 @@ sub pipeline_analyses_alt_alleles {
         {
             -logic_name => 'altallele_species_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'    => '#member_db#',
+            },
             -flow_into => {
                 2   => [ 'altallegroup_factory' ],
             },
@@ -98,6 +97,7 @@ sub pipeline_analyses_alt_alleles {
             -logic_name => 'altallegroup_factory',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
+                'compara_db'    => '#member_db#',
                 'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_dbID', '#genome_db_id#'], 'db_adaptor', 'get_AltAlleleGroupAdaptor', 'fetch_all' ],
                 'column_names2getters'  => { 'alt_allele_group_id' => 'dbID' },
             },

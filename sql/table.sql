@@ -140,6 +140,8 @@ CREATE TABLE ncbi_taxa_name (
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
 @column genome_component  Only used for polyploid genomes: the name of the genome component
+@column strain_name       Name of the particular strain this GenomeDB refers to
+@column display_name      Named used for display purposes. Imported from the core databases
 @column locator           Used for production purposes or for user configuration in in-house installation.
 @column first_release     The first release this genome was present in
 @column last_release      The last release this genome was present in, or NULL if it is still current
@@ -721,12 +723,12 @@ CREATE TABLE genomic_align_block (
 
 CREATE TABLE genomic_align_tree (
   node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
-  parent_id                   bigint(20) unsigned NOT NULL default 0,
+  parent_id                   bigint(20) unsigned DEFAULT NULL,
   root_id                     bigint(20) unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
   right_index                 int(10) NOT NULL default 0,
-  left_node_id                bigint(10) NOT NULL default 0,
-  right_node_id               bigint(10) NOT NULL default 0,
+  left_node_id                bigint(10),
+  right_node_id               bigint(10),
   distance_to_parent          double NOT NULL default 1,
 
   PRIMARY KEY node_id (node_id),
@@ -879,7 +881,7 @@ CREATE TABLE constrained_element (
   dnafrag_end int(12) unsigned NOT NULL,
   dnafrag_strand int(2) not null,
   method_link_species_set_id int(10) unsigned NOT NULL,
-  p_value double,
+  p_value double NOT NULL DEFAULT 0,
   score double NOT NULL default 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -958,7 +960,7 @@ CREATE TABLE gene_member (
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
-  biotype_group               ENUM('coding', 'snoncoding', 'lnoncoding', 'mnoncoding', 'LRG') NOT NULL DEFAULT 'coding',
+  biotype_group               ENUM('coding','pseudogene','snoncoding','lnoncoding','mnoncoding','LRG','undefined','no_group','current_notdumped','notcurrent') NOT NULL DEFAULT 'coding',
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
@@ -1104,6 +1106,61 @@ CREATE TABLE exon_boundaries (
 	INDEX (seq_member_id),
 	INDEX (gene_member_id)
 ) ENGINE=MyISAM;
+
+
+/**
+@table seq_member_projection_stable_id
+@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table links to the source stable_id and is used until the source members are loaded
+@colour   #1E90FF
+
+@example   The following query shows the projections of the mouse gene Pdk3 to all the other species
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.stable_id = source_stable_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_stable_id
+@column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+
+@see seq_member
+@see seq_member_projection
+*/
+
+CREATE TABLE seq_member_projection_stable_id (
+  target_seq_member_id      int(10) unsigned NOT NULL,
+  source_stable_id          VARCHAR(128) NOT NULL,
+
+  PRIMARY KEY (target_seq_member_id),
+  INDEX (source_stable_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table seq_member_projection
+@desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table can only be used when both genomes have been loaded. Thus we first
+       populate @link seq_member_projection_stable_id and then copy the data whilst transforming the stable_id into a seq_member_id
+@colour   #1E90FF
+
+@example   The following query shows the projections of the mouse gene Pdk3 to all the other species
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
+@column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+@column identity                    (can be missing). The percentage of identity between the two members.
+
+@see seq_member
+@see seq_member_projection_stable_id
+*/
+
+CREATE TABLE seq_member_projection (
+  source_seq_member_id      int(10) unsigned NOT NULL,
+  target_seq_member_id      int(10) unsigned NOT NULL,
+  identity                  float(5,2) DEFAULT NULL,
+
+  FOREIGN KEY (source_seq_member_id) REFERENCES seq_member(seq_member_id),
+  FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
+
+  PRIMARY KEY (target_seq_member_id),
+  KEY (source_seq_member_id)
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 /**
@@ -2116,13 +2173,25 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '89');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '90');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_88_89_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_89_90_a.sql|schema_version');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_b.sql|genomic_align_tree_parent_id_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_c.sql|constrained_element_pvalue_not_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_d.sql|genomic_align_tree_left_node_id_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_e.sql|seq_member_projection');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_89_90_f.sql|gene_member_missing_biotype_groups');
+
 
 

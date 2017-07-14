@@ -139,6 +139,7 @@ sub pipeline_analyses {
                 allow_ambiguity_codes       => 0,
                 allow_missing_coordinates   => 0,
                 allow_missing_cds_seqs      => 0,
+                only_canonical              => 1,
             },
             %hc_analysis_params,
         },

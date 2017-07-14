@@ -49,10 +49,11 @@ sub fetch_input {
 
 	# build epo_stats.pl command
 	my $stats_exe = $self->param_required('stats_exe');
-	my $epo_url   = $self->dbc->url;
+	my $epo_url   = $self->compara_dba->dbc->url;
 	my $stats_cmd = "$stats_exe -url $epo_url -html";
 
 	# run command, capture output
+        warn "CMD: $stats_cmd\n" if $self->debug;
 	my $stats_string = `$stats_cmd`;
 
 	# save to param to be added into email body

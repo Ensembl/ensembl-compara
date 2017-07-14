@@ -170,7 +170,7 @@ sub pipeline_analyses {
                 -flow_into => {
                     '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
                     '1->A' => [ 'populate_compara_tables' ],
-                    'A->1' => [ 'create_mlss_ss' ],
+                    'A->1' => [ 'create_reuse_ss' ],
                 },
             },
 
@@ -204,12 +204,8 @@ sub pipeline_analyses {
                 },
             },
 
-            {   -logic_name => 'create_mlss_ss',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
-                -parameters => {
-                    'tree_method_link' => 'MAP_ANCHORS',
-                    'create_homology_mlss'  => 0,
-                },
+            {   -logic_name => 'create_reuse_ss',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
                 -flow_into => [ 'reuse_anchor_align_factory' ],
             },
 
@@ -219,6 +215,7 @@ sub pipeline_analyses {
                     'sql' => [
                         # ml and mlss entries for the overlaps, pecan and gerp
                         'REPLACE INTO method_link (method_link_id, type) VALUES(#mapping_method_link_id#, "#mapping_method_link_name#")',
+                        'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES(#mapping_mlssid#, #mapping_method_link_id#, #species_set_id#)',
                     ]
                 },
             },
@@ -282,7 +279,20 @@ sub pipeline_analyses {
 		-parameters => {
 			'mapping_exe' => $self->o('mapping_exe'),
 		},
+                -flow_into => {
+                    -1 => 'map_anchors_himem',
+                },
 		-hive_capacity => 1000,
+		-max_retry_count => 1,
+	    },
+
+	    {	-logic_name     => 'map_anchors_himem',
+		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
+		-parameters => {
+			'mapping_exe' => $self->o('mapping_exe'),
+		},
+		-hive_capacity => 1000,
+                -rc_name => 'mem7500',
 		-max_retry_count => 1,
 	    },
 

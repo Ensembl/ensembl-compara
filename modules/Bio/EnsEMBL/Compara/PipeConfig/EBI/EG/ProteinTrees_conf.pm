@@ -105,7 +105,6 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
         'taxlevels'                 => [],  # this is the default default
         'taxlevels_fungi'           => ['Botryosphaeriales', 'Calosphaeriales', 'Capnodiales', 'Chaetothyriales', 'Dothideales', 'Erysiphales', 'Eurotiales', 'Glomerellales', 'Helotiales', 'Hypocreales', 'Microascales', 'Onygenales', 'Ophiostomatales', 'Orbiliales', 'Pleosporales', 'Pneumocystidales', 'Saccharomycetales', 'Sordariales', 'Verrucariales', 'Xylariales', 'Venturiales', 'Agaricales', 'Atheliales', 'Boletales', 'Cantharellales', 'Corticiales', 'Dacrymycetales', 'Geastrales', 'Georgefischeriales', 'Gloeophyllales', 'Jaapiales', 'Malasseziales', 'Mixiales', 'Polyporales', 'Russulales', 'Sebacinales', 'Sporidiobolales', 'Tremellales', 'Ustilaginales', 'Wallemiales', 'Cryptomycota', 'Glomerales ', 'Rhizophydiales'],
         'taxlevels_metazoa'         => ['Drosophila' ,'Hymenoptera', 'Nematoda'],

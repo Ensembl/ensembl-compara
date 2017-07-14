@@ -51,7 +51,7 @@ sub fetch_input {
 		}
 	}
 	my @uniq_list = keys %uniq_mlss;
-	print "\n\n!!!" . scalar(@uniq_list) . " unique mlsses found\n\n" if $self->debug;
+	print "\n\n!!! " . scalar(@uniq_list) . " unique mlsses found\n\n" if $self->debug;
 	$self->param('uniq_mlss_list', \@uniq_list);
 
 	my @cmd;
@@ -59,7 +59,7 @@ sub fetch_input {
     push @cmd, '--master', $self->param_required('master_db');
     push @cmd, '--new', $self->param_required('pipeline_db');
     push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');
-    push @cmd, '--old', $self->param_required('old_compara_db');
+    push @cmd, '--old', $self->param_required('master_db');
     push @cmd, '--skip-data';
 
     $self->param('cmd', \@cmd);
@@ -75,16 +75,43 @@ sub write_output {
 	my $chunk_size = $self->param_required('copy_chunk_size');
 
 	my @copy_dataflow;
-	my $x = 0;
-	for my $mlss_id ( @{ $self->param('uniq_mlss_list') } ) {
-		push( @copy_dataflow, { mlss_id_list => [] } ) if ( $x % $chunk_size == 0 );
-		push( @{ $copy_dataflow[-1]->{mlss_id_list} }, $mlss_id );
-		$x++;
+	# if data lives across multiple dbs, group the mlsses from the same db together
+	if ( $self->param('alt_aln_dbs') ) {
+		my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
+		my %group_mlss_per_db;
+		while (my ($key, $value) = each %mlss_mapping) {
+   			push( @{ $group_mlss_per_db{$value} }, $key);
+		}
+
+		foreach my $db ( keys %group_mlss_per_db ) {
+			my @these_ids = @{ $group_mlss_per_db{$db} };
+			if ( scalar @these_ids <= $chunk_size ) {
+				push( @copy_dataflow, { mlss_id_list => \@these_ids, src_db_conn => $db } );
+			} else {
+				push( @copy_dataflow, @{ $self->_split_into_chunks( \@these_ids, $chunk_size, $db ) } );
+			}
+		}
+
+	} else {
+		@copy_dataflow = $self->_split_into_chunks($self->param('uniq_mlss_list'), $chunk_size, $self->param('compara_db'));
 	}
 
 	$self->dataflow_output_id( { mlss => $self->param('uniq_mlss_list') }, 1 ); # to write_threshold
 	$self->dataflow_output_id( \@copy_dataflow, 3 ); # to copy_alignment_tables
 	$self->dataflow_output_id( {}, 2 ); # to copy_funnel
+}
+
+sub _split_into_chunks {
+	my ($self, $list, $chunk_size, $db) = @_;
+
+	my $x = 0;
+	my @chunks;
+	for my $mlss_id ( @$list ) {
+		push( @chunks, { mlss_id_list => [], src_db_conn => $db } ) if ( $x % $chunk_size == 0 );
+		push( @{ $chunks[-1]->{mlss_id_list} }, $mlss_id );
+		$x++;
+	}
+	return \@chunks;
 }
 
 1;

@@ -221,7 +221,7 @@ sub new_from_Transcript {
         # "_rna_edit" attributes mean that the transcript sequence won't match the DNA. This can cause problems if we rely on precise genomic coordinates
         _has_transcript_edits   => (scalar(@{$transcript->get_all_SeqEdits('_rna_edit')}) ? 1 : 0),
         # "amino_acid_sub" attributes mean that the protein sequence won't match the transcript sequence. We only afford them if they don't shift the sequence and are small enough (less than 5aa)
-        _has_translation_edits  => (($translate && scalar(grep {$_->length_diff && length($_->alt_seq)>=5} @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')})) ? 1 : 0),
+        _has_translation_edits  => (($translate && scalar(grep {$_->length_diff || length($_->alt_seq)>=5} @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')})) ? 1 : 0),
     });
     $seq_member->{core_transcript} = $transcript;
     return $seq_member;

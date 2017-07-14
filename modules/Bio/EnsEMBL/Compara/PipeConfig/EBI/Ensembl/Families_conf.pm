@@ -73,8 +73,8 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-3',        # where the pipeline database will be created
-        'port'          => '4523',                      # server port
+        'host'          => 'mysql-ens-compara-prod-4',        # where the pipeline database will be created
+        'port'          => '4401',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
@@ -124,9 +124,6 @@ sub default_options {
         # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
         'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
 
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
-
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
 
@@ -146,6 +143,7 @@ sub resource_classes {
         'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000' },
         'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -R"span[hosts=1]"' },
         'LoMafft' => { 'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"' },
+        '250Mb_job' => { 'LSF' => '-C0 -M250 -R"select[mem>250] rusage[mem=250]"' },
         '500MegMem' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
         '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' }, 
         '4GigMem' => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },

@@ -83,7 +83,7 @@ sub default_options {
         # 'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
         # 'gerp_ce_mlss_id' => 648,
         # 'gerp_cs_mlss_id' => 50295,
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
+        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
 
         'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
     	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
@@ -172,7 +172,7 @@ return
                 },
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                    '1->A' => [ 'create_ancestral_db', 'set_internal_ids' ],
+                    '1->A' => [ 'drop_ancestral_db', 'set_internal_ids' ],
                     'A->1' => [ 'copy_mlss' ],
                 },
             },
@@ -197,6 +197,15 @@ return
             },
 
 # ------------------------------------- create the ancestral db	
+{
+ -logic_name => 'drop_ancestral_db',
+ -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+ -parameters => {
+  'db_conn' => '#ancestral_db#',
+  'input_query' => 'DROP DATABASE IF EXISTS',
+  },
+  -flow_into => { 1 => 'create_ancestral_db' },
+},
 {
  -logic_name => 'create_ancestral_db',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',

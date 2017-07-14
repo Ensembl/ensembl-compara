@@ -66,12 +66,17 @@ my $config = {
         tests => [
             {
                 description => 'LRGs must have been loaded for human',
-                query => 'SELECT * FROM gene_member JOIN genome_db USING (genome_db_id) WHERE name = "homo_sapiens" AND gene_member_id BETWEEN 200000000 AND 300000000 AND stable_id LIKE "LRG%"',
+                query => 'SELECT * FROM gene_member JOIN genome_db USING (genome_db_id) WHERE name = "homo_sapiens" AND stable_id LIKE "LRG%"',
+                expected_size => '> 0',
+            },
+            {
+                description => 'Human must have patches',
+                query => 'SELECT * FROM gene_member JOIN genome_db USING (genome_db_id) JOIN dnafrag USING (dnafrag_id) WHERE genome_db.name = "homo_sapiens" AND is_reference = 0 AND stable_id NOT LIKE "LRG%"',
                 expected_size => '> 0',
             },
             {
                 description => 'Mouse must have patches',
-                query => 'SELECT * FROM gene_member JOIN genome_db USING (genome_db_id) WHERE name = "mus_musculus" AND gene_member_id BETWEEN 200000000 AND 300000000',
+                query => 'SELECT * FROM gene_member JOIN genome_db USING (genome_db_id) JOIN dnafrag USING (dnafrag_id) WHERE genome_db.name = "mus_musculus" AND is_reference = 0',
                 expected_size => '> 0',
             },
             

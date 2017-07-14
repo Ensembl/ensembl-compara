@@ -158,7 +158,7 @@ sub run_ncrecoversearch {
   my $worker_temp_directory = $self->worker_temp_directory;
   my $root_id = $self->param('gene_tree_id');
 
-  my $input_fasta = $worker_temp_directory . $root_id . ".db";
+  my $input_fasta = $worker_temp_directory . "/" . $root_id . ".db";
   open FILE,">$input_fasta" or die "$!\n";
 
   foreach my $genome_db_id (keys %{$self->param('recovered_members')}) {
@@ -195,7 +195,7 @@ sub run_ncrecoversearch {
 
   return 1;   # FIXME: this is not ready -- disabling
 
-  my $tabfilename = $worker_temp_directory . $root_id . ".tab";
+  my $tabfilename = $worker_temp_directory . "/" . $root_id . ".tab";
   $cmd .= " --tabfile " . $tabfilename;
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $input_fasta;
@@ -248,7 +248,7 @@ sub dump_model {
   unless (defined($nc_profile)) {
     return 0;
   }
-  my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
+  my $profile_file = $self->worker_temp_directory . "/" . $model_id . "_profile.cm";
   open FILE, ">$profile_file" or die "$!";
   print FILE $nc_profile;
   close FILE;

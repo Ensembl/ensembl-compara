@@ -52,9 +52,6 @@ sub param_defaults {
         'range_index'   => 1,
         'offset'        => '#range_index#00000001',
         'sql'           => [
-                    'ALTER TABLE gene_member       AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE seq_member        AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE sequence          AUTO_INCREMENT=#offset#',
                     'ALTER TABLE homology          AUTO_INCREMENT=#offset#',
                     'ALTER TABLE gene_align        AUTO_INCREMENT=#offset#',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=#offset#',

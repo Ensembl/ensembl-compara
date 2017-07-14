@@ -278,7 +278,7 @@ sub _get_alignment_filtering_cmd {
 
     # External alignment filtering ?
     if ($self->param('filt_cmdline')) {
-        my $tmp_align = $self->worker_temp_directory.'prog-filtalign.fa';
+        my $tmp_align = $self->worker_temp_directory.'/prog-filtalign.fa';
         $cmd .= $tmp_align;
         $cmd = sprintf($self->param('filt_cmdline'), $input_aln, $tmp_align).' ; '.$cmd;
     } else {

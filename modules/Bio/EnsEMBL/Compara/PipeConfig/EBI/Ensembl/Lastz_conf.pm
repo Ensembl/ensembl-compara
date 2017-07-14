@@ -27,7 +27,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf');  # Inherit from base PairAligner class
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf');  # Inherit from LastZ@EBI config file
 
 
 sub default_options {
@@ -61,52 +61,19 @@ sub default_options {
 	    'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
 	    'curr_core_dbs_locs' => [ $self->o('livemirror_loc') ],
 
-	    #Location of executables
-	    'pair_aligner_exe' => $self->o('ensembl_cellar').'/lastz/1.02.00/bin/lastz',
-
-	    #
-	    #Default pair_aligner
-	    #
-	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
-	    'pair_aligner_logic_name' => 'LastZ',
-	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-
-	    #
-	    #Default chain
-	    #
-	    'chain_input_method_link' => [1001, 'LASTZ_RAW'],
-	    'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
-
-	    #
-	    #Default net 
-	    #
-	    'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
-	    'net_output_method_link' => [16, 'LASTZ_NET'],
-
-
 	    'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/',
-	    'bed_dir' => $self->o('dump_dir').'/bed_dir', 
-	    'output_dir' => $self->o('dump_dir').'/feature_dumps',
 
-	    'faToNib_exe'  => $self->o('ensembl_cellar').'/kent/v335/bin/faToNib',
-        'lavToAxt_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/lavToAxt',
-        'axtChain_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/axtChain',
-        'chainNet_exe' => $self->o('ensembl_cellar').'/kent/v335/bin/chainNet',
+            # Capacities
+            'pair_aligner_analysis_capacity' => 700,
+            'pair_aligner_batch_size' => 40,
+            'chain_hive_capacity' => 200,
+            'chain_batch_size' => 10,
+            'net_hive_capacity' => 300,
+            'net_batch_size' => 10,
+            'filter_duplicates_hive_capacity' => 200,
+            'filter_duplicates_batch_size' => 10,
 
 	   };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb'       => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'         => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'long'        => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'crowd'       => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000] rusage[mem=6000]"' },
-    };
 }
 
 1;

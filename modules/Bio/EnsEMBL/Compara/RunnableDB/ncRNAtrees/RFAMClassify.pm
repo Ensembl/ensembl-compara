@@ -82,6 +82,7 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::HMMProfile;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
@@ -100,7 +101,7 @@ sub fetch_input {
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch MLSS with dbID=$mlss_id";
 
-    my $sequence_ids_sql = 'SELECT seq_member_id, sequence_id FROM gene_member JOIN seq_member ON canonical_member_id = seq_member_id';
+    my $sequence_ids_sql = 'SELECT seq_member_id, sequence_id FROM seq_member';
     my $all_members = $self->compara_dba->dbc->db_handle->selectall_arrayref($sequence_ids_sql);
     my %member2seq = map {$_->[0] => $_->[1]} @$all_members;
     my %seq2member;
@@ -205,13 +206,12 @@ sub build_hash_models {
   $self->param('rfamclassify', {});
   $self->param('orphan_transcript_model_id', {});
 
-  # We only take the canonical transcripts.
-  # Right now, this only affects a few transcripts in Drosophila, but it's safer this way.
-  my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
-  my $all_genes_Iterator = $gene_member_adaptor->generic_fetch_Iterator();
+  foreach my $gdb (@{$self->compara_dba->get_GenomeDBAdaptor->fetch_all()}) {
+   my $seq_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($gdb);
+   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $seq_members);
 
-  while (my $gene = $all_genes_Iterator->next) {
-      my $transc = $gene->get_canonical_SeqMember;
+   foreach my $transc (@$seq_members) {
+    my $gene = $transc->gene_member;
       my $gene_description = $gene->description;
       my $transcript_member_id = $transc->seq_member_id;
       my $transcript_description = $transc->description;
@@ -252,6 +252,7 @@ sub build_hash_models {
       $self->param('orphan_transcript_model_id')->{$transcript_model_id}++;     # NB: this data is never used afterwards
     }
    }
+  }
 
   return 1;
 }
@@ -294,7 +295,7 @@ sub load_mirbase_families {
   my $url  = 'ftp://mirbase.org/pub/mirbase/CURRENT/';
   my $file = 'miFam.dat.gz';
 
-  my $tmp_file = $worker_temp_directory . $file;
+  my $tmp_file = $worker_temp_directory . "/" .$file;
   my $mifam = $tmp_file;
 
   my $ftp_file = $url . $file;

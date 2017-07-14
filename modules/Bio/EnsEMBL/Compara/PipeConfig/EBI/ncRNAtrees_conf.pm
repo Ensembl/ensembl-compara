@@ -98,6 +98,9 @@ sub default_options {
             'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.4/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
 
+            # FIXME
+            'mpirun_exe'            => '/nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpirun',
+
             
             # Other parameters
             'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_EPO_low_mammals_86',

@@ -320,7 +320,7 @@ sub store_map {
 sub store_history {
     my ($self, $ncsl, $dbc, $timestamp, $master_dbc) = @_;
     
-    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbc, $master_dbc);
+    my $mapping_session_id = $self->get_mapping_session_id($ncsl, $timestamp, $dbc, $master_dbc);
     
     my $step = 2000;
     my $counter = 0;
@@ -379,7 +379,7 @@ sub store_history {
     warn "\t$counter lines stored, done.\n";
 }
 
-sub _get_mapping_session_id {
+sub get_mapping_session_id {
   my ($self, $ncsl, $timestamp, $dbc, $master_dbc) = @_;
   
   $timestamp  ||= time();

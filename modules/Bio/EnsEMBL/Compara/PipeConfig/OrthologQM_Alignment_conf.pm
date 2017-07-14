@@ -116,11 +116,16 @@ sub default_options {
         'species_set_id'   => undef,
         'ref_species'      => undef,
         'reg_conf'         => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-        'alt_aln_db'       => undef,
+        # 'alt_aln_dbs'      => undef,
+        'alt_aln_dbs'      => [
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_alignments_merged_90',
+        ],
         'alt_homology_db'  => undef,
         'previous_rel_db'  => undef,
         'user'             => 'ensadmin',
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
+        'master_db'        => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 
         'ensembl_cvs_root_dir'      => $ENV{ENSEMBL_CVS_ROOT_DIR},
         'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
@@ -191,7 +196,8 @@ sub pipeline_analyses {
                 'species1'         => $self->o('species1'),
                 'species2'         => $self->o('species2'),
                 'compara_db'       => $self->o('compara_db'),
-                'alt_aln_db'       => $self->o('alt_aln_db'),
+                'alt_aln_dbs'      => $self->o('alt_aln_dbs'),
+                'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
                 'previous_rel_db'  => $self->o('previous_rel_db'),
             }],
@@ -209,6 +215,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
+                2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
             },
             -rc_name => '200M_job',
         },
@@ -221,7 +228,6 @@ sub pipeline_analyses {
                 'reg_conf'        => $self->o('reg_conf'),
                 'master_db'       => $self->o('master_db'),
                 'pipeline_db'     => $self->pipeline_url(),
-                'old_compara_db'  => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
             },
             -flow_into  => {
                 '1' => [ 'write_threshold' ],
@@ -236,9 +242,9 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_genomic_align_blocks',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align_block',       
+                'table'       => 'genomic_align_block',
+                'mode'        => 'topup',     
              },
             -analysis_capacity => 1,
             -flow_into => { 1 => [ 'copy_genomic_aligns' ] },
@@ -247,9 +253,9 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_genomic_aligns',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn' => '#expr( #alt_aln_db# ? #alt_aln_db# : #compara_db# )expr#',
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align',       
+                'table'       => 'genomic_align',
+                'mode'        => 'topup',      
              },
             -analysis_capacity => 1,
         },
@@ -268,7 +274,6 @@ sub pipeline_analyses {
                 2 => [ 'calculate_wga_coverage' ],
                 3 => [ 'reuse_wga_score' ],
             },
-            #-wait_for => [ 'copy_alignment_tables' ],
             -rc_name  => '2Gb_job',
         },
 

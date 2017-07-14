@@ -43,7 +43,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastFactory');
 sub fetch_input {
     my ($self) = @_;
 
-    my $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
+    my $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot('no_null');
     my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($unannotated_member_ids);
     $self->param('query_members', $members);
 

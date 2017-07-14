@@ -150,8 +150,6 @@ sub default_options {
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
 	'filter_duplicates_himem_rc_name' => 'crowd_himem',
-    'filter_duplicates_hive_capacity' => 200,
-    'filter_duplicates_batch_size' => 10,
 
 	#
 	#Default pair_aligner
@@ -159,8 +157,6 @@ sub default_options {
    	'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	'pair_aligner_logic_name' => 'LastZ',
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	'pair_aligner_analysis_capacity' => 700,
-	'pair_aligner_batch_size' => 40,
 
     'pair_aligner_options' => {
         default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
@@ -178,8 +174,6 @@ sub default_options {
 	'linear_gap' => 'medium',
 
   	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
-    'chain_hive_capacity' => 200,
-    'chain_batch_size' => 10,
 
 	#
         #Default patch_alignments
@@ -193,8 +187,6 @@ sub default_options {
         'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
-    'net_hive_capacity' => 300,
-    'net_batch_size' => 10,
   	'bidirectional' => 0,
 
 	#
@@ -207,16 +199,16 @@ sub default_options {
 	'do_pairwise_gabs' => 1,
 	'do_compare_to_previous_db' => 1,
 
+        # Scratch disk space
+        #'dump_dir' => ...,
+        'bed_dir' => $self->o('dump_dir').'/bed_dir',
+        'output_dir' => $self->o('dump_dir').'/feature_dumps',
+
         #
 	#Default pairaligner config
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 
-        #
-        #Resource requirements
-        #
-        'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
-        'aligner_capacity' => 2000,
     };
 }
 
@@ -240,31 +232,13 @@ sub pipeline_create_commands {
         coding_exon_length          INT(10) DEFAULT 0
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       'rm -rf '.$self->o('dump_dir'), #Cleanup dump_dir directory
+       'rm -rf '.$self->o('dump_dir').' '.$self->o('output_dir').' '.$self->o('bed_dir'), #Cleanup dump_dir directory
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
     ];
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'long'   => { 'LSF' => '-q long -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-                # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
-            'crowd' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
-            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
-                # if running on any other server:
-#            '1Gb_core'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000,myens_livemirrortok=1000:duration=3]"' },
-#            'crowd' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-#            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000] rusage[mem=6000]"' },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -516,6 +490,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
+			       'dump_min_nib_size' => $self->o('dump_min_nib_size'),
                                'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,

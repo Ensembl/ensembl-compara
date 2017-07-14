@@ -41,7 +41,6 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
 
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
@@ -107,20 +106,12 @@ sub default_options {
             },
         ],
 
-
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
-
         #Pipeline capacities:
-        'import_altalleles_as_homologies_capacity'  => 300,
         'update_capacity'                           => 5,
         'high_confidence_capacity'                  => 20,
         'high_confidence_batch_size'                => 10,
         'high_confidence_capacity'                  => 5,
         'high_confidence_batch_size'                => 2,
-
-        #Software dependencies
-        'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
 
     };
 }
@@ -139,11 +130,8 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'mafft_home'        => $self->o('mafft_home'),
-        'production_db_url' => $self->o('production_db_url'),
         'threshold_levels'  => $self->o('threshold_levels'),
 
-        'do_alt_alleles'        => 1,
         'do_member_update'      => 0,
         'do_member_stats'       => 1,
         'do_high_confidence'    => 1,
@@ -168,19 +156,11 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-        {   -logic_name => 'backbone_alt_alleles',
+        {   -logic_name => 'backbone_member_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ {
                     'compara_db'    => $self->o('compara_db'),
                 } ],
-            -flow_into  => {
-                '1->A' => WHEN( '#do_alt_alleles#' => 'offset_tables' ),
-                'A->1' => ['backbone_member_stats'],
-            },
-        },
-
-        {   -logic_name => 'backbone_member_stats',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN( '#do_member_stats#' => { 'find_collection_species_set_id' => $self->o('member_stats_config') } ),
                 'A->1' => ['backbone_member_update'],
@@ -207,7 +187,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies::pipeline_analyses_alt_alleles($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions::pipeline_analyses_member_names_descriptions($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },

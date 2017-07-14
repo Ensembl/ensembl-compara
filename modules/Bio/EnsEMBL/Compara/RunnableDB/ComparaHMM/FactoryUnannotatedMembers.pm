@@ -41,9 +41,6 @@ Supported keys:
    'step' => <number>
        How many sequences to write into each job. Default 100
 
-    'only_canonical' => 0/1 [default: 1]
-        Do we dump all the members or only the canonical ones ?
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers;
@@ -57,16 +54,13 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'step'  => 100,
-            'only_canonical'    => 1,
     };
 }
 
 sub fetch_input {
     my ($self) = @_;
 
-    my $unannotated_member_ids = $self->param_required('only_canonical')
-        ? $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot()
-        : $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
+    my $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
     $self->param('unannotated_member_ids', [sort {$a <=> $b} @$unannotated_member_ids]);
 
 }

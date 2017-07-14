@@ -87,6 +87,7 @@ sub param_defaults {
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
         'store_coding'                  => 1,
         'store_ncrna'                   => 1,
+        'store_others'                  => 1,
         'store_exon_coordinates'        => 1,
 
             # only in 'ProteinTree' mode:
@@ -256,12 +257,15 @@ sub loadMembersFromCoreSlices {
           } elsif ( $self->param('store_ncrna') && ($biotype_groups->{$biotype} =~ /noncoding$/) ) {
               $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
 
-          } else {
-              # pseudogene, undefined, no_group
-              next;
+          } elsif ( $self->param('store_others') ) {
+              # Catches pseudogenes, but also "undefined" and "no_group", and also non-current or non-dumped biotypes
+              $gene_member = $self->store_gene_generic($gene, $dnafrag);
           }
 
-          next unless $gene_member;
+          unless ($gene_member) {
+              $self->warning($gene->stable_id." could not be stored -- ".$biotype_groups->{$biotype});
+              next;
+          }
 
           $self->param('realGeneCount', $self->param('realGeneCount')+1 );
           print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
@@ -354,7 +358,7 @@ sub store_protein_coding_gene_and_all_transcripts {
                     -GENE       => $gene,
                     -DNAFRAG    => $dnafrag,
                     -GENOME_DB  => $self->param('genome_db'),
-                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{$gene->biotype},
+                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{lc $gene->biotype},
                 );
                 print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
                 $gene_member_adaptor->store($gene_member);
@@ -380,6 +384,8 @@ sub store_protein_coding_gene_and_all_transcripts {
             $self->store_exon_coordinates($transcript, $pep_member);
         }
 
+        $self->_store_seq_member_projection($pep_member, $transcript);
+
         print(" : stored\n") if($self->param('verbose'));
 
         if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
@@ -399,6 +405,75 @@ sub store_protein_coding_gene_and_all_transcripts {
         # print("     LONGEST " . $canonicalPeptideMember->stable_id . "\n");
     } else {
         $self->warning(sprintf('No canonical peptide for %s', $gene->stable_id));
+    }
+
+    return $gene_member;
+}
+
+
+sub store_gene_generic {
+    my ($self, $gene, $dnafrag) = @_;
+
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
+
+    my $gene_member;
+    my $gene_member_stored = 0;
+
+    for my $transcript (@{$gene->get_all_Transcripts}) {
+
+        print STDERR "   transcript " . $transcript->stable_id  if ($self->debug);
+        my $fasta_description = $self->_ncrna_description($gene, $transcript);
+
+        my $seq_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
+                                                                             -transcript => $transcript,
+                                                                             -dnafrag => $dnafrag,
+                                                                             -genome_db => $self->param('genome_db'),
+                                                                            );
+        $seq_member->description($fasta_description);
+
+        print STDERR "SEQMEMBER: ", $seq_member->description, "    ... ", $seq_member->display_label, "\n" if ($self->debug);
+
+        print STDERR  " => gene " . $seq_member->stable_id if ($self->debug);
+        my $transcript_spliced_seq = $seq_member->sequence;
+        if ($transcript_spliced_seq =~ /^N+$/i) {
+            $self->warning($transcript->stable_id . " cannot be loaded because its sequence is only composed of Ns");
+            next;
+        }
+
+        # store gene_member here only if at least one transcript is to be loaded for the gene
+        if ($self->param('store_genes') and (! $gene_member_stored)) {
+            print STDERR "    gene    " . $gene->stable_id if ($self->debug);
+
+            $self->_load_biotype_groups($self->param_required('production_db_url'));
+            my $biotype_group = $self->param('biotype_groups')->{lc $gene->biotype};
+            $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
+                                                                            -gene => $gene,
+                                                                            -dnafrag => $dnafrag,
+                                                                            -genome_db => $self->param('genome_db'),
+                                                                            -biotype_group => $biotype_group,
+                                                                           );
+            print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
+
+            eval {
+                $gene_member_adaptor->store($gene_member);
+                print STDERR " : stored gene gene_member\n" if ($self->debug);
+            };
+
+            print STDERR "\n" if ($self->debug);
+            $gene_member_stored = 1;
+        }
+        $seq_member->gene_member_id($gene_member->dbID);
+        $seq_member_adaptor->store($seq_member);
+        print STDERR " : stored seq gene_member\n" if ($self->debug);
+        if ($self->param('store_exon_coordinates')) {
+            $self->store_exon_coordinates($transcript, $seq_member);
+        }
+
+        $self->_store_seq_member_projection($seq_member, $transcript);
+
+        $seq_member_adaptor->_set_member_as_canonical($seq_member) if $transcript->is_canonical;
+
     }
 
     return $gene_member;

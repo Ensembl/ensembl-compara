@@ -39,8 +39,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults },
-        'cmd'               => '#java# -jar #modeltest_jar# -d #alignment_file# -s 11 -g 4 -i -f -#criteria# -a -tr #n_cores#',
-        'java'              => 'java', # Can be redefined to /usr/bin/java for instance
+        'cmd'               => '#java_exe# -jar #modeltest_jar# -d #alignment_file# -s 11 -g 4 -i -f -#criteria# -a -tr #n_cores#',
         'runtime_tree_tag'  => 'jmodeltest_runtime',
         'remove_columns'    => 1,
         'read_tags'         => 1,

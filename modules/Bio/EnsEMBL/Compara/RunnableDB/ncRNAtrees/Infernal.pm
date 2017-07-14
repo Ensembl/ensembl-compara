@@ -195,7 +195,7 @@ sub dump_sequences_to_workdir {
   my $cluster = shift;
 
   my $root_id = $cluster->root_id;
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $root_id . ".fasta";
+  my $fastafile = $self->worker_temp_directory . "/cluster_" . $root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
 
   my $tag_gene_count = scalar(@{$cluster->get_all_leaves});
@@ -235,7 +235,7 @@ sub update_single_peptide_tree {
 sub run_infernal {
   my $self = shift;
 
-  my $stk_output = $self->worker_temp_directory . "output.stk";
+  my $stk_output = $self->worker_temp_directory . "/output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
   my $cmalign_exe = $self->require_executable('cmalign_exe');
@@ -288,14 +288,27 @@ sub run_infernal {
   my $cmbuild_exe = $self->require_executable('cmbuild_exe');
 
   $cmd = $cmbuild_exe;
+  #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
+  # This may be necessary if cmbuild crashes.
+  #$cmd .= " --mxsize 20000 --refine $refined_stk_output";
   $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  $self->run_command($cmd, { die_on_failure => 1 });
+  $self->run_command($cmd, { die_on_failure => 0 });
 
-  $self->param('stk_output', $refined_stk_output);
-  $self->param('refined_profile', $refined_profile);
+  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
+  my $cmd_return_value = $self->run_command($cmd);
+  my $log_message = $cmd_return_value->err;
+
+  if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
+      $self->param('stk_output', $stk_output);
+      $self->param('refined_profile', $self->param('profile_file'));
+  }
+  else{
+      $self->param('stk_output', $refined_stk_output);
+      $self->param('refined_profile', $refined_profile);
+  }
 
   return 0;
 }
@@ -308,7 +321,7 @@ sub dump_model {
     unless (defined($nc_profile)) {
         return 1;
     }
-    my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
+    my $profile_file = $self->worker_temp_directory . "/" . $model_id . "_profile.cm";
     open FILE, ">$profile_file" or die "$!";
     print FILE $nc_profile;
     close FILE;

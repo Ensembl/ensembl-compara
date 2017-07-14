@@ -250,7 +250,7 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   print STDERR "Total number of keys:  $total_count\n" if ($self->debug);
   print STDERR "Number of common keys: $common_count\n" if ($self->debug);
 
-  my $xtb_filename = $self->worker_temp_directory . $from_dbname . "-" . $to_dbname. '.xtb';
+  my $xtb_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.xtb';
   open(OUT, ">$xtb_filename") or die "Could not open '$xtb_filename' for writing : $!";
   foreach my $from_id (sort {$a <=> $b} keys %direct) {
     my $from_name = $from_clustername->{$from_id};
@@ -336,7 +336,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $from_dbname   = $self->generate_dbname( $from_dba );
   my $to_dbname     = $self->generate_dbname( $to_dba );
 
-  my $map_filename = $self->worker_temp_directory . $from_dbname . "-" . $to_dbname. '.map';
+  my $map_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.map';
   open(MAP, ">$map_filename") or die "Could not open '$map_filename' for writing : $!";
 
  TOPAIR: foreach my $topair (sort { $b->[1] <=> $a->[1] } map { [$_,$to2size->{$_}] } keys %$to2size ) {
@@ -443,7 +443,7 @@ sub quantify_mapping {
     my $reuse_node = $reuse_gene_tree_adaptor->fetch_by_dbID($reuse_node_id);
     next unless (defined($reuse_node));
     next unless $reuse_node->has_tag('aln_runtime');
-    my $reuse_aln_runtime_value = $reuse_node->get_value_for_tag('aln_runtime');
+    my $reuse_aln_runtime_value = $reuse_node->get_all_values_for_tag('aln_runtime')->[0];  # FIXME it seems that there are multiple occurrences of the tag for some trees, so we can't use get_value_for_tag
     my $this_node = $current_gene_tree_adaptor->fetch_by_dbID($mapped_cluster_id);
     next unless (defined($this_node));
     $this_node->store_tag('reuse_node_id',$reuse_node_id);

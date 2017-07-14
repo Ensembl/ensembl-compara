@@ -142,7 +142,7 @@ sub _run_fasttree {
 
     my $fasttree_exe = $self->require_executable('fasttree_exe');
 
-    my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
+    my $fasttree_output = $self->worker_temp_directory . "/FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
 #    my $tag = 'ft_it_nj';
     my $cmd = $fasttree_exe;
@@ -218,7 +218,7 @@ sub _run_examl {
 
     my $tag = defined $self->param('examl') ? $self->param('examl') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
-    my $cmd = "mpirun -np " . $examl_number_of_cores . " " . $examl_exe;
+    my $cmd = $self->require_executable('mpirun_exe').' -np ' . $examl_number_of_cores . " " . $examl_exe;
     $cmd .= " -m GAMMA";
     $cmd .= " -s $binary_input_aln";
     $cmd .= " -t $parsimony_tree";

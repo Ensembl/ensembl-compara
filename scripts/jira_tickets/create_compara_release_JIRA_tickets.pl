@@ -72,7 +72,6 @@ sub main {
     # ---------------------------------
     # deal with command line parameters
     # ---------------------------------
-    $password="Wla19578otro4";
     ( $relco, $release, $password, $tickets_tsv, $config )
         = set_parameters( $relco, $release, $password, $tickets_tsv, $config,
         $logger );

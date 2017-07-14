@@ -61,14 +61,48 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::PairAligner_conf');  # Inherit from base PairAligner class
+use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');     # We are running TBlat
 
 
 sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+
+        'host'  => 'mysql-eg-prod-2.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'port'  => 4239,
+        'user'  => 'ensrw',
+        'password'  => $self->o('password'),
+
+
+	'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+
+	'staging_loc1' => {
+            -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+            -port   => 4160,
+            -user   => 'ensro',
+            -pass   => '',
+        },
+        'staging_loc2' => {
+            -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+            -port   => 4275,
+            -user   => 'ensro',
+            -pass   => '',
+        },
+	 'prod_loc1' => {
+            -host   => 'mysql-eg-prod-1.ebi.ac.uk',
+            -port   => 4238,
+            -user   => 'ensro',
+            -pass   => '',
+	    -db_version => 74,
+        },
+	'livemirror_loc' => {
+            -host   => 'mysql-eg-mirror.ebi.ac.uk',
+            -port   => 4205,
+            -user   => 'ensro',
+            -pass   => '',
+            -db_version => 73,
+        },
 
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
 #           'reference' => {
@@ -91,62 +125,85 @@ sub default_options {
 	    'ref_species' => '',
 	    #directory to dump dna files. Note that 2 subdirectories will be appended to this, ${genome_db_id1}_${genome_db_id2}/species_name to
 	    #ensure uniqueness across pipelines
-	    'dump_dna_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-
-	    'default_chunks' => {
-			     'reference'   => {'chunk_size' => 1000000,
-				               'overlap'    => 10000,
-					       'group_set_size' => 100000000,
-					       'dump_dir' => $self->o('dump_dna_dir'),
-					       #human
-					       'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
-					       #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
-					       #non-human
-					       'masking_options' => '{default_soft_masking => 1}',
-					      },
-   			    'non_reference' => {'chunk_size'      => 25000,
-   						'group_set_size'  => 10000000,
-   						'overlap'         => 10000,
-   						'masking_options' => '{default_soft_masking => 1}'
-					       },
-   			    },
+	    'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            'bed_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            'output_dir' => '/nfs/panda/ensemblgenomes/production/compara' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	    #Location of executables
 	    'pair_aligner_exe' => '/nfs/panda/ensemblgenomes/production/compara/binaries/blat',
+            'faToNib_exe'       => $self->o('ensembl_cellar').'/kent/v335/bin/faToNib',
+            'lavToAxt_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/lavToAxt',
+            'axtChain_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/axtChain',
+            'chainNet_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/chainNet',
 
-	    #
-	    #Default pair_aligner
-	    #
-	    'pair_aligner_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
-	    'pair_aligner_logic_name' => 'Blat',
-	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat',
-	    'pair_aligner_options' => '-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower',
+            # healthcheck
+            'do_compare_to_previous_db' => 0,
+            # Net
+            'bidirectional' => 1,
 
-	    #
-	    #Default chain
-	    #
-	    'chain_input_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
-	    'chain_output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-	    'linear_gap' => 'loose',
-
-	    #
-	    #Default net 
-	    #
-	    'net_input_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-	    'net_output_method_link' => [7, 'TRANSLATED_BLAT_NET'],
+            # Capacities
+            'pair_aligner_analysis_capacity' => 100,
+            'pair_aligner_batch_size' => 3,
+            'chain_hive_capacity' => 50,
+            'chain_batch_size' => 5,
+            'net_hive_capacity' => 20,
+            'net_batch_size' => 1,
+            'filter_duplicates_hive_capacity' => 200,
+            'filter_duplicates_batch_size' => 10,
 
 	   };
 }
 
-sub pipeline_create_commands {
-    my ($self) = @_;
-    print "pipeline_create_commands\n";
 
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('dump_dna_dir'), #Make dump_dna_dir directory
-    ];
+sub resource_classes {
+    my ($self) = @_;
+
+    return {
+            #%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+            'default' => {'LSF' => '-q production-rh7'},
+            '100Mb' => { 'LSF' => '-q production-rh7 -M100 -R"rusage[mem=100]"' },
+            '500Mb' => { 'LSF' => '-q production-rh7 -M500 -R"rusage[mem=500]"' },
+            '1Gb'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
+            'crowd' => { 'LSF' => '-q production-rh7 -M1800 -R"rusage[mem=1800]"' },
+            'crowd_himem' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
+            '4.2Gb' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
+            '8.4Gb' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
+    };
 }
+
+
+sub pipeline_analyses {
+    my $self = shift;
+    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+
+    ## Extend this section to redefine the resource names of some analysis
+    my %overriden_rc_names = (
+        'pairaligner_stats'         => 'crowd',
+        'alignment_nets'            => 'crowd',
+        'alignment_nets_himem'      => 'crowd_himem',
+        'create_alignment_nets_jobs'=> 'crowd',
+        'alignment_chains'          => '1Gb',
+        'create_alignment_chains_jobs'  => 'crowd_himem',
+        'create_filter_duplicates_jobs'     => 'crowd',
+        'create_pair_aligner_jobs'  => 'crowd',
+        'populate_new_database' => '8.4Gb',
+        'parse_pair_aligner_conf' => '4.2Gb',
+        'set_internal_ids_collection' => '1Gb',
+        'store_sequence'        => '1Gb',
+        'store_sequence_again'  => 'crowd_himem',
+        $self->o('pair_aligner_logic_name') => 'crowd_himem',
+        $self->o('pair_aligner_logic_name')."_himem1" => '8.4Gb',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
+
+    # Other parameters that have to be set
+    $analyses_by_name{'store_sequence_again'}->{'-hive_capacity'} = 50;
+
+    return $all_analyses;
+}
+
 
 1;

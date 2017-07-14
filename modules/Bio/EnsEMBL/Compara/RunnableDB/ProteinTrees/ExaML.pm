@@ -39,11 +39,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML');
 sub param_defaults {
     my $self = shift;
     return {
-        # Note that Examl needs MPI and has to be run through mpirun (which is a symlink to mpiexec.hydra)
+        # Note that Examl needs MPI and has to be run through mpirun
         %{ $self->SUPER::param_defaults },
 		'newest_checkPointFile'=> undef,
-		'cmd_checkpoint'       => 'cp #examl_dir#/#worker_dir#/#gene_tree_id#.binary . ; cp #newest_checkPointFile# latest_ExaML_binaryCheckpoint.#gene_tree_id# ; sleep 10 ; mpirun #examl_exe# -s #gene_tree_id#.binary -R latest_ExaML_binaryCheckpoint.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
-		'cmd_from_scratch'     => '#parse_examl_exe# -s align.#gene_tree_id#.phylip -m #sequence_type# -n #gene_tree_id# ; sleep 10 ; mpirun #examl_exe# -s #gene_tree_id#.binary -t gene_tree_#gene_tree_id#.nhx -m GAMMA -n #gene_tree_id# -S',
+		'cmd_checkpoint'       => 'cp #examl_dir#/#worker_dir#/#gene_tree_id#.binary . ; cp #newest_checkPointFile# latest_ExaML_binaryCheckpoint.#gene_tree_id# ; sleep 10 ; #mpirun_exe# #examl_exe# -s #gene_tree_id#.binary -R latest_ExaML_binaryCheckpoint.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
+		'cmd_from_scratch'     => '#parse_examl_exe# -s align.#gene_tree_id#.phylip -m #sequence_type# -n #gene_tree_id# ; sleep 10 ; #mpirun_exe# #examl_exe# -s #gene_tree_id#.binary -t gene_tree_#gene_tree_id#.nhx -m GAMMA -n #gene_tree_id# -S',
         'aln_format'           => 'phylip',
         'runtime_tree_tag'     => 'examl_runtime',
         'output_clusterset_id' => 'raxml',

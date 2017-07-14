@@ -614,7 +614,7 @@ while(1) {
         }
         #Call fetch_all_by_MethodLinkSpeciesSet_DnaFrag rather than fetch_all_by_MethodLinkSpeciesSet_Slice because of
         #issues with the PAR regions. The _Slice method will dumps alignments on the PAR whereas _DnaFrag will not.
-        warn "fetch_all_by_MethodLinkSpeciesSet_DnaFrag(".join(",",$method_link_species_set->dbID, $this_dnafrag->name, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict), ")\n" if $debug;
+        warn $this_slice->name." -> fetch_all_by_MethodLinkSpeciesSet_DnaFrag(".join(",",$method_link_species_set->dbID, $this_dnafrag->name, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict), ")\n" if $debug;
         my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set, $this_dnafrag, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict);
 

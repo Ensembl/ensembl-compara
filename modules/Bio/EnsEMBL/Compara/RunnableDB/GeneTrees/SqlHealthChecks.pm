@@ -91,7 +91,7 @@ our $config = {
     #############
 
     members_per_genome => {
-        params => [ 'genome_db_id', 'allow_ambiguity_codes', 'allow_missing_coordinates', 'allow_missing_cds_seqs' ],
+        params => [ 'genome_db_id', 'allow_ambiguity_codes', 'allow_missing_coordinates', 'allow_missing_cds_seqs', 'only_canonical' ],
         tests => [
             {
                 description => 'Each genome should have some genes',
@@ -167,6 +167,10 @@ our $config = {
             {
                 description => 'SeqMembers should have the same taxonomy ID as their genomeDB',
                 query => 'SELECT seq_member_id FROM seq_member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND seq_member.taxon_id != genome_db.taxon_id',
+            },
+            {
+                description => 'only canonical SeqMembers are in the database#expr(#only_canonical# ? "" : " [SKIPPED]")expr#',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE #only_canonical# AND gene_member.gene_member_id IS NULL',
             }
         ],
     },

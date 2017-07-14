@@ -358,7 +358,7 @@ if (@ref_for_taxon) {
         }
         my $gdb = $input_species{$species_name} || die "Cannot find $species_name in the available list of GenomeDBs";
         my $ref_taxon = $taxon_id ? $compara_dba->get_NCBITaxonAdaptor->fetch_by_dbID($taxon_id) : $gdb->taxon;
-        @input_genome_dbs = grep {!$ref_taxon->has_ancestor($_->taxon) || ($_->name eq $species_name)} @input_genome_dbs;
+        @input_genome_dbs = grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $species_name)} @input_genome_dbs;
     }
 }
 
