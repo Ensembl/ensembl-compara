@@ -51,18 +51,19 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Bio::SeqIO;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::StableId::Adaptor' );
 
 sub param_defaults {
-    return { 'hmmer_cutoff' => 0.0000000001, 'treefam_hmm_lib' => '#treefam_hmm_library_basedir#', 'panther_hmm_lib' => '#panther_hmm_library_basedir#', };
+    return {
+        'hmmer_cutoff' => 0.0000000001,
+        'panther_hmm_lib' => '#panther_hmm_library_basedir#',
+    };
 }
 
 sub fetch_input {
     my $self = shift @_;
-    $self->param_required('treefam_hmm_lib');
     $self->param_required('panther_hmm_lib');
     $self->param_required('hmmer_home');
     $self->param_required('panther_hmm_library_basedir');
@@ -89,7 +90,6 @@ sub write_output {
 sub _run_HMM_search {
     my ($self) = @_;
 
-    my $fastafile    = $self->param('treefam_hmm_lib') . "/globals/con.Fasta";
     my $hmmLibrary   = $self->param('panther_hmm_lib') . "/" . $self->param('library_name');
     my $hmmer_home   = $self->param('hmmer_home');
     my $hmmer_cutoff = $self->param('hmmer_cutoff');                                           ## Not used for now!!
@@ -120,8 +120,6 @@ sub _run_HMM_search {
 
         #Only split the initial 6 wanted positions, $accession1-2 are not used.
         my ( $seq_id, $accession1, $hmm_id, $accession2, $eval ) = split /\s+/, $_, 6;
-
-        $hmm_id = ( split /\./, $hmm_id )[0];
 
         #if hash exists we need to compare the already existing value, so that we only store the best e-value
         if ( exists( $hmm_annot{$seq_id} ) ) {
