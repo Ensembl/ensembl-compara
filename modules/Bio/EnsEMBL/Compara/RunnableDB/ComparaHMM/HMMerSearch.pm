@@ -161,9 +161,6 @@ sub _run_HMM_search {
         #Only split the initial 6 wanted positions, $accession1-2 are not used.
         my ( $seq_id, $accession1, $hmm_id, $accession2, $eval ) = split /\s+/, $_, 6;
 
-        #print "\n>>>>$seq_id|$hmm_id|$eval\n" if ( $self->debug );
-        $hmm_id = ( split /\./, $hmm_id )[0];
-
         #Only store if e-values are bellow the threshold
         if ( $eval < $hmmer_cutoff ) {
 
