@@ -239,7 +239,7 @@ sub default_options {
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'loadmembers_capacity'      => 30,
-        'HMMer_search_capacity'     => 50,
+        'HMMer_search_capacity'     => 100,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -754,7 +754,8 @@ sub core_pipeline_analyses {
          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
-                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_name'      => $self->o('seed_hmm_library_name'),
+                         'library_basedir'   => $self->o('seed_hmm_library_basedir'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '4Gb_job',
@@ -768,7 +769,8 @@ sub core_pipeline_analyses {
          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
-                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_name'      => $self->o('seed_hmm_library_name'),
+                         'library_basedir'   => $self->o('seed_hmm_library_basedir'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '8Gb_job',
@@ -782,7 +784,8 @@ sub core_pipeline_analyses {
          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
-                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_name'      => $self->o('seed_hmm_library_name'),
+                         'library_basedir'   => $self->o('seed_hmm_library_basedir'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '32Gb_job',
