@@ -690,8 +690,10 @@ sub core_pipeline_analyses {
                             'hash_directories'          => 1,
                             'split_by_sequence_count'   => 1,
             },
-            -flow_into => {
-            '2' => ['treefam_panther_hmm_overlapping'],
+
+            -flow_into  => {
+                '2->A'  => [ 'treefam_panther_hmm_overlapping' ],
+                'A->1'  => [ 'build_seed_hmms' ],
             },
         },
 
@@ -705,7 +707,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('HMMer_search_capacity'),
             -flow_into      => {
-                                1 => [ 'HMMer_search_factory' ],
                                 -1 => [ 'treefam_panther_hmm_overlapping_himem' ],  # MEMLIMIT
                             },
         },
@@ -719,7 +720,23 @@ sub core_pipeline_analyses {
                                 'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
             },
             -hive_capacity => $self->o('HMMer_search_capacity'),
-            -flow_into      => [ 'HMMer_search_factory' ],
+        },
+
+        { -logic_name     => 'build_seed_hmms',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BuildSeedHmms',
+            -rc_name       => '1Gb_job',
+            -parameters     => {
+                                'hmmer_home'                => $self->o('hmmer3_home'),
+                                'panther_hmm_library_name'  => $self->o('hmm_library_name'),
+                                'treefam_hmm_lib'           => $self->o('treefam_hmm_library_basedir'),
+                                'panther_hmm_lib'           => $self->o('panther_hmm_library_basedir'),
+                                'seed_hmm_library_basedir'  => $self->o('seed_hmm_library_basedir'),
+                                'seed_hmm_library_name'     => $self->o('seed_hmm_library_name'),
+            },
+            -hive_capacity  => $self->o('HMMer_search_capacity'),
+            -flow_into      => {
+                                1 => [ 'HMMer_search_factory' ],
+                            },
         },
 
         {   -logic_name => 'HMMer_search_factory',
