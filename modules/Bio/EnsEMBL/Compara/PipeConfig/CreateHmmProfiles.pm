@@ -186,7 +186,9 @@ sub default_options {
         # HMM specific parameters
         # The location of the HMM library:
         'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
-        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
+        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/',
+        'seed_hmm_library_basedir'      => '/hps/nobackup/production/ensembl/compara_ensembl/seed_hmms/',
+        'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
         'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
         'min_num_members'               => 4,
         'min_num_species'               => 2,
@@ -339,6 +341,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('fasta_dir'),
         'mkdir -p '.$self->o('panther_hmm_library_basedir'),
+        'become - compara_ensembl; mkdir -p '.$self->o('seed_hmm_library_basedir'),
         'mkdir -p '.$self->o('lustre_tmp_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
@@ -363,6 +366,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
         'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
+        'seed_hmm_library_basedir'   => $self->o('seed_hmm_library_basedir'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
@@ -697,7 +701,6 @@ sub core_pipeline_analyses {
             -parameters     => {
                                 'hmmer_home'        => $self->o('hmmer3_home'),
                                 'library_name'      => $self->o('hmm_library_name'),
-                                'treefam_hmm_lib'   => $self->o('treefam_hmm_library_basedir'),
                                 'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
             },
             -hive_capacity  => $self->o('HMMer_search_capacity'),
@@ -713,7 +716,6 @@ sub core_pipeline_analyses {
             -parameters     => {
                                 'hmmer_home'        => $self->o('hmmer3_home'),
                                 'library_name'      => $self->o('hmm_library_name'),
-                                'treefam_hmm_lib'   => $self->o('treefam_hmm_library_basedir'),
                                 'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
             },
             -hive_capacity => $self->o('HMMer_search_capacity'),
