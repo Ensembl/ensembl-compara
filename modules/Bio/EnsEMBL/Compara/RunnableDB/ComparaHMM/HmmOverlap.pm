@@ -198,7 +198,7 @@ sub _store_mapping {
         my $ver_to       = 11;
         my $contribution = 100;
 
-        my $sth = $dbc->prepare("INSERT INTO stable_id_history(mapping_session_id, stable_id_from, version_from, stable_id_to, version_to, contribution) VALUES (?, ?, ?, ?, ?, ?)");
+        my $sth = $dbc->prepare("INSERT IGNORE INTO stable_id_history(mapping_session_id, stable_id_from, version_from, stable_id_to, version_to, contribution) VALUES (?, ?, ?, ?, ?, ?)");
         $sth->execute( $mapping_session_id, $hmm_from, $ver_from, $hmm_to, $ver_to, $contribution );
         $sth->finish();
     }
