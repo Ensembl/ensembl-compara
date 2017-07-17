@@ -65,6 +65,12 @@ sub param_defaults {
 sub run {
     my $self = shift;
 
+    #Creates a hash of the tables to be excluded from the copy.
+    if ( defined $self->param('exclute_tables') ) {
+        my %exclude_tables = map { $_ => 1 } @{ $self->param('exclute_tables') };
+        $self->param( 'exclude_tables', \%exclude_tables );
+    }
+
     $self->_copy_data_wrapper_join('dnafrag');
     $self->_copy_data_wrapper_join('gene_member');
     $self->_copy_data_wrapper_join('sequence', 'sequence USING (sequence_id)');
@@ -78,6 +84,9 @@ sub run {
 
 sub _copy_data_wrapper_join {
     my ($self, $table, $extra_join) = @_;
+
+    #If the parameter exclute_tables is defined in the pipeline configuration, the tables defined there will be excluded from the copy.
+    return if ( exists( $self->param('exclude_tables')->{$table} ) );
 
     my $biotype_filter  = $self->param('biotype_filter');
 
