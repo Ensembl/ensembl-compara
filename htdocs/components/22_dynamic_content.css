@@ -110,8 +110,8 @@ body.mac div.reorder_species ul li { cursor: ns-resize; }
 div.toggleable_table             { clear: both; }
 div.toggleable_table h2 a.toggle { background-position: right 50%; }
 
-form.data_table_config,
-form.data_table_export { display: none; }
+div.data_table_config,
+div.data_table_export { display: none; }
 
 
 /***********************************
