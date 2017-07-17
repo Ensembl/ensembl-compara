@@ -1792,7 +1792,7 @@ sub get_snpedia_data {
   $rev->{'*'} =~s/Further reading \(with comments\)//g;
 
   # Convert '''text''' s to <b>text</b>
-  $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;
+  $rev->{'*'} =~s/'''([^']+)'''/<b>$1<\/b>/g;
 
   # Link content inside [[ rs id ]] back to e!
   $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $var_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
