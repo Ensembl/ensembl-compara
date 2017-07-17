@@ -226,11 +226,11 @@ sub render {
     my $options  = sprintf '<input type="hidden" name="expopts" value="%s" />', encode_entities($self->export_options);
     
     $table .= qq{
-      <div class="data_table_export" action="/Ajax/table_export" method="post">
+      <form class="data_table_export" action="/Ajax/table_export" method="post">
         <input type="hidden" name="filename" value="$filename" />
         <input type="hidden" class="data" name="data" value="" />
         $options
-      </div>
+      </form>
     };
   }
    

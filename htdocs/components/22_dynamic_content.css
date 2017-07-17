@@ -111,7 +111,7 @@ div.toggleable_table             { clear: both; }
 div.toggleable_table h2 a.toggle { background-position: right 50%; }
 
 div.data_table_config,
-div.data_table_export { display: none; }
+form.data_table_export { display: none; }
 
 
 /***********************************
