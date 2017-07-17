@@ -340,8 +340,8 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('panther_hmm_library_basedir'),
-        'become - compara_ensembl; mkdir -p '.$self->o('seed_hmm_library_basedir'),
+        'become -- compara_ensembl mkdir -p '.$self->o('panther_hmm_library_basedir'),
+        'become -- compara_ensembl mkdir -p '.$self->o('seed_hmm_library_basedir'),
         'mkdir -p '.$self->o('lustre_tmp_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
