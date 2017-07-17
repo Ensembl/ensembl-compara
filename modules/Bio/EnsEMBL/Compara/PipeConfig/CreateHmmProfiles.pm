@@ -758,7 +758,7 @@ sub core_pipeline_analyses {
                          'library_basedir'   => $self->o('seed_hmm_library_basedir'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
-         -rc_name => '4Gb_job',
+         -rc_name => '2Gb_job',
          -flow_into => {
                        -1 => [ 'HMMer_search_himem' ],  # MEMLIMIT
                        },
@@ -773,7 +773,7 @@ sub core_pipeline_analyses {
                          'library_basedir'   => $self->o('seed_hmm_library_basedir'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
-         -rc_name => '8Gb_job',
+         -rc_name => '4Gb_job',
          -flow_into => {
                        -1 => [ 'HMMer_search_super_himem' ],  # MEMLIMIT
                        },
