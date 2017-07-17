@@ -53,6 +53,7 @@ sub process {
  
   my $url_params      = {};
   $url_params->{ __clear} = 1;
+  $url_params->{reload}   = 1;
   $url_params->{'action'} = 'ManageData';
 
   return $self->ajax_redirect($self->hub->url($url_params));
