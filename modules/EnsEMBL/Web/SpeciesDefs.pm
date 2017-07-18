@@ -504,6 +504,10 @@ sub _read_in_ini_file {
       my $line_number     = 0;
       
       while (<FH>) {
+
+        # parse any inline perl <% perl code %>
+        s/<%(.+?(?=%>))%>/eval($1)/ge;
+
         s/\s+[;].*$//; # These two lines remove any comment strings
         s/^[#;].*$//;  # from the ini file - basically ; or #..
         
