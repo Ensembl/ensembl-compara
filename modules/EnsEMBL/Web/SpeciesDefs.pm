@@ -229,17 +229,22 @@ sub reference_species {
   ### Filters the list of species to reference only, i.e. no secondary strains 
   ### Returns: array of species names
   my $self          = shift;
-  my @valid_species   = $self->{'_valid_species'} ? @{$self->{'_valid_species'}}
-                                                  : $self->valid_species;
-  return unless scalar @valid_species;
+  my %test_species  = map { $_ => 1 } @_;
+  my @ref_species   = @{$self->{'_ref_species'} || []};
 
-  my @ref_species;
-  foreach (@valid_species) {
-    my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-    if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
-      push @ref_species, $_;
+  if (!@ref_species) {
+    my @valid_species = $self->valid_species;
+
+    for (@valid_species) {
+      my $strain = $self->get_config($_, 'SPECIES_STRAIN');
+
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+        push @ref_species, $_;
+      }
     }
   }
+
+  @ref_species = grep $test_species{$_}, @ref_species if %test_species;
 
   return @ref_species;
 }
