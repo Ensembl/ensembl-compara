@@ -504,7 +504,7 @@ sub _get_permanent_url_base {
   my $sd    = $self->species_defs;
 
   return lc($sd->ARCHIVE_BASE_DOMAIN
-    ? sprintf('%s://%s.%s', $sd->ENSEMBL_PROTOCOL, $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
+    ? sprintf('//%s.%s', $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
     : $sd->ENSEMBL_BASE_URL
   );
 }
