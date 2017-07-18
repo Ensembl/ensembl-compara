@@ -18,10 +18,10 @@
 .tool_buttons p,
 .other_tool              { display: none; margin: 0; }
 .tool_buttons div        { display: inline-block; }
-.tool_buttons a,
+.tool_buttons a, .tool_buttons input,
 .tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
 .tool_buttons input.disabled { background-position: 7px 50%; background-repeat: no-repeat;  padding-left: 29px; }
-.tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+.tool_buttons a, tool_buttons input { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
 .tool_buttons .togglebutton.off { background-color: [[BUTTON_ON]]; outline: 1px outset [[BUTTON_ON]]; outline-offset: -4px; }
 .tool_buttons .togglebutton { outline: 1px inset [[BUTTON_BG]]; outline-offset: -4px; background-color: [[BUTTON_BG]]; }
@@ -30,7 +30,7 @@
 .tool_buttons p.disabled, .tool_buttons div.disabled, .tool_buttons .togglebutton.off.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; cursor: default; }
 .tool_buttons .togglebutton.off.disabled { outline: none; }
 
-.tool_buttons a.pulse,
+.tool_buttons a.pulse, .tool_buttons .fbutton-icon:hover,
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons .togglebutton:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons .togglebutton.inactive:hover    { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; }
