@@ -25,6 +25,7 @@ use warnings;
 use base qw(EnsEMBL::Web::Component::Help);
 
 use EnsEMBL::Web::Utils::HoneyPot qw(spam_protect_form);
+use URI::Escape qw(uri_unescape);
 
 sub _init {
   my $self = shift;
@@ -55,7 +56,7 @@ sub content {
     'type'    => 'String',
     'name'    => 'name',
     'label'   => 'Your name',
-    'value'   => $hub->param('name') || '',
+    'value'   => uri_unescape($hub->param('name')) || '',
   }, {
     'type'    => 'Honeypot',
     'name'    => 'email',
@@ -64,12 +65,12 @@ sub content {
     'type'    => 'Email',
     'name'    => 'address',
     'label'   => 'Your Email',
-    'value'   => $hub->param('address') || '',
+    'value'   => uri_unescape($hub->param('address')) || '',
   }, {
     'type'    => 'String',
     'name'    => 'subject',
     'label'   => 'Subject',
-    'value'   => $hub->param('subject') || '',
+    'value'   => uri_unescape($hub->param('subject')) || '',
   }, {
     'type'    => 'Honeypot',
     'name'    => 'comments',
@@ -78,7 +79,7 @@ sub content {
     'type'    => 'Text',
     'name'    => 'message',
     'label'   => 'Message',
-    'value'   => $hub->param('message') || '',
+    'value'   => uri_unescape($hub->param('message')) || '',
     'notes'   => 'Tip: drag the bottom righthand corner to make this box bigger.',
   }, {
     'type'    => 'File',
@@ -89,7 +90,7 @@ sub content {
   
   $fieldset->add_hidden({
     'name'    => 'string',
-    'value'   => $hub->param('string') || '',
+    'value'   => uri_unescape($hub->param('string')) || '',
   });
 
   $fieldset->add_hidden({
