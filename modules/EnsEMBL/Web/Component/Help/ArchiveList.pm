@@ -181,7 +181,7 @@ sub output_link {
 
   my $string;
   if ($archives->{$release}{'date'}) {
-    $string = qq{<li><a href="//$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
+    $string = qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
     $string .= sprintf ' (%s)', $assembly if $assembly;
 
     if ($current_geneset) {
