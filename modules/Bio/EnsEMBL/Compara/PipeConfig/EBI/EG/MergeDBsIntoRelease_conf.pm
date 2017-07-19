@@ -96,7 +96,7 @@ sub resource_classes {
   my ($self) = @_;
   return {
     %{$self->SUPER::resource_classes},
-    'default' => { 'LSF' => '-q production-rh6' },
+    'default' => { 'LSF' => '-q production-rh7' },
   };
 }
 

@@ -79,7 +79,7 @@ sub resource_classes {
     my $self = shift;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'crowd' => { 'LSF' => '-q production-rh6 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
+        'crowd' => { 'LSF' => '-q production-rh7 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
     }
 }
 
