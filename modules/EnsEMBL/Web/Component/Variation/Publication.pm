@@ -65,7 +65,6 @@ sub content {
     { key => 'text',   title => 'Full text', align => 'left', sort => 'html'    },  
   );
 
-  $table->add_columns( { key => 'ucsc',   title => 'UCSC', align => 'center', sort => 'html', help => 'View publication data in UCSC website' }) if $self->hub->species eq 'Homo_sapiens';
   foreach my $row (@{$table_rows}){  $table->add_rows($row);}
 
   $html .=  $table->render;
@@ -130,7 +129,6 @@ sub table_data {
 	  title  => $cit->title(),
 	  author => $cit->authors(),
 	  text   => defined $cit->pmcid() ? $hub->get_ExtURL_link($cit->pmcid(), "EPMC", $cit->pmcid()) : undef,
-	  ucsc   => defined $cit->ucsc_id() ? "<a class=\"_ht\" href=\"" . $ucsc_url . $object->name() ."&pubsFilterExtId=". $cit->ucsc_id() . "\" title=\"View in UCSC\"><img src=\"/i/val/ucsc_logo_small.png\" style=\"border-radius:5px;border:1px solid #000;padding:1px;background-color:#FFF\" alt=\"View\" /><span class=\"hidden export\">" . $ucsc_url . $object->name() ."&pubsFilterExtId=". $cit->ucsc_id() . "</span></a>" : undef 
     };
  
     push @data_rows, $row;
