@@ -55,7 +55,7 @@ sub munge_rest {
       { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
       $url =~ s/<<species>>/$self->species/ge;
       my $response = read_file($url,{
-        proxy => $self->full_tree->{'ENSEMBL_WWW_PROXY'},
+        proxy => $SiteDefs::HTTP_PROXY,
         nice => 1,
         no_exception => 1,
       });

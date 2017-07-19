@@ -191,7 +191,7 @@ sub get_rss_feed {
   }
 
   my $ua = LWP::UserAgent->new;
-  my $proxy = $hub->species_defs->ENSEMBL_WWW_PROXY;
+  my $proxy = $hub->web_proxy;
   $ua->proxy( 'http', $proxy ) if $proxy;
   #$ua->timeout(5);
 

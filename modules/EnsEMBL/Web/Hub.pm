@@ -168,7 +168,7 @@ sub session_id {
 
 sub web_proxy {
   ## Gets the http and https proxy address
-  return shift->species_defs->ENSEMBL_WWW_PROXY || '';
+  return $SiteDefs::HTTP_PROXY || '';
 }
 
 sub image_width {

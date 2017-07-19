@@ -459,7 +459,7 @@ sub proxy {
   my $URL = shift;
   my $PROXY = 1;
   return 0 unless $URL=~/^https?:\/\/([^:\/]+)/;
-  return 0 unless defined $self->{'species_defs'}->ENSEMBL_WWW_PROXY;
+  return 0 unless $SiteDefs::HTTP_PROXY;
   return 1 unless defined $self->{'species_defs'}->ENSEMBL_NO_PROXY;
 # return 1;
   my $DOMAIN = $1 ;
