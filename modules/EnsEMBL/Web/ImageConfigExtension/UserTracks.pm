@@ -149,12 +149,13 @@ sub _load_remote_url_tracks {
   my $hub             = $self->hub;
   my $session         = $hub->session;
   my $user            = $hub->user;
-  my $sesson_records  = $session->records({'type' => 'url', 'species' => $self->species});
+  my $session_records = $session->records({'type' => 'url', 'species' => $self->species});
   my $user_records    = $user ? $user->records({'type' => 'url', 'species' => $self->species}) : [];
+  my $saved_config    = $self->get_user_settings->{'nodes'} || {};
 
   my %tracks_data;
 
-  foreach my $record (@$sesson_records, @$user_records) {
+  foreach my $record (@$session_records, @$user_records) {
 
     my $data = $record->data;
 
@@ -166,6 +167,25 @@ sub _load_remote_url_tracks {
 
     next unless $source_name;
 
+    ## Do we have any saved config for this track?
+    my $key     = sprintf '%s_%s', $record->type, $record->code;
+    my $config  = $saved_config->{$key} || {};
+
+    ## These can be zero, so check if defined
+    my ($y_min, $y_max);
+    if (defined($config->{'y_min'})) {
+      $y_min = $config->{'y_min'};
+    }
+    elsif (defined($data->{'y_min'})) {
+      $y_min = $data->{'y_min'};
+    }
+    if (defined($config->{'y_max'})) {
+      $y_max = $config->{'y_max'};
+    }
+    elsif (defined($data->{'y_max'})) {
+      $y_max = $data->{'y_max'};
+    }
+
     $tracks_data{'url_'.$record->code} = {
       'linked_record' => {'type' => $record->type, 'code' => $record->code, 'record_type' => $record->record_type},
       'source_type'   => $record->record_type,
@@ -175,6 +195,8 @@ sub _load_remote_url_tracks {
       'format'        => $data->{'format'}    || '',
       'style'         => $data->{'style'}     || '',
       'colour'        => $data->{'colour'}    || '',
+      'y_min'         => $y_min, 
+      'y_max'         => $y_max, 
       'renderers'     => $data->{'renderers'} || '',
       'timestamp'     => $data->{'timestamp'} || time,
       'display'       => $data->{'display'}, #$self->check_threshold($data->{'display'}),
@@ -230,13 +252,18 @@ sub _load_uploaded_tracks {
   my $hub             = $self->hub;
   my $session         = $hub->session;
   my $user            = $hub->user;
-  my $sesson_records  = $session->records({'type' => 'upload', 'species' => $self->species});
+  my $session_records = $session->records({'type' => 'upload', 'species' => $self->species});
   my $user_records    = $user ? $user->records({'type' => 'upload', 'species' => $self->species}) : [];
+  my $saved_config    = $self->get_user_settings->{'nodes'} || {};
 
-  foreach my $record (@$sesson_records, @$user_records) {
+  foreach my $record (@$session_records, @$user_records) {
 
     my $data    = $record->data;
     my $is_user = $record->record_type ne 'session'; # both user and group
+
+    ## Do we have any saved config for this track?
+    my $key     = sprintf '%s_%s', $record->type, $record->code;
+    my $config  = $saved_config->{$key} || {};
 
     my ($strand, $renderers, $default) = $self->_user_track_settings($data->{'style'} // '', $data->{'format'} // '');
 
@@ -245,12 +272,30 @@ sub _load_uploaded_tracks {
     my $description = sprintf 'Data that has been %s to the web server. %s', $is_user ? 'saved': 'temporarily uploaded', $data->{'description'} ? add_links($data->{'description'}) : '';
     my $display     = $data->{'display'}; #$self->check_threshold($data->{'display'});
 
+    ## These can be zero, so check if defined
+    my ($y_min, $y_max);
+    if (defined($config->{'y_min'})) {
+      $y_min = $config->{'y_min'};
+    }
+    elsif (defined($data->{'y_min'})) {
+      $y_min = $data->{'y_min'};
+    } 
+    if (defined($config->{'y_max'})) {
+      $y_max = $config->{'y_max'};
+    }
+    elsif (defined($data->{'y_max'})) {
+      $y_max = $data->{'y_max'};
+    } 
+
     $menu->append_child($self->create_track_node('upload_'.$record->code, $data->{'name'}, {
       'linked_record'   => {'type' => $record->type, 'code' => $record->code, 'record_type' => $record->record_type},
       'external'        => 'user',
+      'sub_type'        => $is_user ? 'user' : 'tmp',
       'glyphset'        => 'flat_file',
       'colourset'       => 'userdata',
-      'sub_type'        => $is_user ? 'user' : 'tmp',
+      'colour'          => $data->{'colour'}  || '',
+      'y_min'           => $y_min, 
+      'y_max'           => $y_max, 
       'file'            => $data->{'file'}    || '',
       'format'          => $data->{'format'}  || '',
       'style'           => $data->{'style'}   || '',
@@ -272,9 +317,10 @@ sub _add_trackhub {
   my $already_attached = $self->get_node($menu_name);
   return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
+  ## Note: no need to validate assembly at this point, as this will have been done
+  ## by the attachment interface - otherwise we run into issues with synonyms
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup,
-                                      'parse_tracks' => 1}); ## Do we have data for this species?
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
 
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub

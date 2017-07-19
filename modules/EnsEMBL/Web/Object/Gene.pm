@@ -646,19 +646,13 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+    $type = ucfirst($self->Obj->biotype);
     $type =~ s/_/ /;
     $type ||= $self->db_type;
-  } elsif ($db =~ /vega/) {
-    my $biotype = ($self->Obj->biotype eq 'tec') ? uc($self->Obj->biotype) : ucfirst(lc($self->Obj->biotype));
-    $type = ucfirst(lc($self->Obj->status))." $biotype";
-    $type =~ s/_/ /g;
-    $type =~ s/unknown //i;
-    return $type;
   } else {
     $type = $self->logic_name;
     if ($type =~/^(proj|assembly_patch)/ ){
-      $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+      $type = ucfirst($self->Obj->biotype);
     }
     $type =~ s/_/ /g;
     $type =~ s/^ccds/CCDS/;
@@ -833,6 +827,7 @@ sub fetch_homology_species_hash {
   my $homology_source      = shift;
   my $homology_description = shift;
   my $compara_db           = shift || 'compara';
+  my $name_lookup          = $self->hub->species_defs->production_name_lookup;
   my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
   my %homologues;
 
@@ -857,9 +852,13 @@ sub fetch_homology_species_hash {
       }      
     }
 
-    # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
-    # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
+    ## In case of data bugs, make sure this is a genuine node
+    my $species_tree_node = eval { $homology->species_tree_node(); };
+    next unless $species_tree_node;
+
+    my $species_url = $name_lookup->{$genome_db_name};
+
+    push @{$homologues{$species_url}}, [ $target_member, $homology->description, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
   }
 
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  

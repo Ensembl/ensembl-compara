@@ -355,7 +355,7 @@ sub data_table_config {
   
   $config .= sprintf '<input type="hidden" name="expopts" value="%s" />', encode_entities($self->export_options);
  
-  return qq{<form class="data_table_config" action="#">$config</form>};
+  return qq{<div class="data_table_config">$config</div>};
 }
 
 sub process {

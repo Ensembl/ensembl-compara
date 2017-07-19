@@ -59,16 +59,6 @@ sub init_cacheable {
     [ 'info',    '', 'text', { display => 'normal', strand => 'r', name => 'Information' }]
   );
 
-  foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES || []}) {
-    $self->add_track('misc_feature', "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', {
-      display       => 'off',
-      strand        => 'r',
-      colourset     => 'alternative_assembly' ,
-      description   => "Track indicating $alt_assembly assembly",
-      assembly_name => $alt_assembly
-    });
-  }
-
   $self->load_tracks;
 
   $self->modify_configs(

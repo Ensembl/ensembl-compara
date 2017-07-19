@@ -56,7 +56,7 @@ sub content {
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
-  my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
+  my $gene_connection_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $methods         = { 
                           BLASTZ_NET => $self->param('opt_pairwise_blastz') || '',
                           LASTZ_NET => $self->param('opt_pairwise_blastz') || '',
@@ -67,9 +67,9 @@ sub content {
                         };
 
   my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $bridge_genes    = $self->param('opt_join_genes_bottom') eq 'on';
+  my $connect_genes   = $self->param('opt_join_genes_bottom') eq 'on';
 
-  my $compara_db      = $bridge_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
+  my $compara_db      = $connect_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;
   my @images;
@@ -79,14 +79,14 @@ sub content {
     my $highlight_gene = $hub->param('g' . ($i - 1));
     
     $image_config->set_parameters({
-      container_width => $_->{'slice'}->length,
-      image_width     => $image_width,
-      slice_number    => "$i|3",
-      multi           => 1,
-      more_slices     => 1,
-      compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
-      base_url        => $base_url,
-      bridge_types    => $gene_join_types
+      container_width   => $_->{'slice'}->length,
+      image_width       => $image_width,
+      slice_number      => "$i|3",
+      multi             => 1,
+      more_slices       => 1,
+      compara           => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
+      base_url          => $base_url,
+      connection_types  => $gene_connection_types
     });
     # allows the 'set as primary' sprite to be shown on an single species view
     if ($image_config->get_parameter('can_set_as_primary') && $i != 1) {
@@ -103,32 +103,32 @@ sub content {
     if ($i == 1) {
       $image_config->multi($methods, $seq_region_name, $i, $max, $slices, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
 
-      $image_config->bridge_genes($i, $max, $slices->[$i]) if $bridge_genes && $max == 2;
+      $image_config->connect_genes($i, $max, $slices->[$i]) if $connect_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
       $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
-      $image_config->bridge_genes($i, $max, $slices->[0]) if $bridge_genes;
+      $image_config->connect_genes($i, $max, $slices->[0]) if $connect_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       
       push @images, $_->{'slice'}, $image_config;
       
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
-        if ($join_alignments || $bridge_genes) {
+        if ($join_alignments || $connect_genes) {
           $primary_image_config = $hub->get_imageconfig({type => 'MultiBottom', cache_code => "contigview_bottom_1_$i", species => $primary_species});
           
           $primary_image_config->set_parameters({
-            container_width => $primary_slice->length,
-            image_width     => $image_width,
-            slice_number    => '1|3',
-            multi           => 1,
-            more_slices     => 1,
-            compara         => 'primary',
-            base_url        => $base_url,
-            bridge_types    => $gene_join_types
+            container_width   => $primary_slice->length,
+            image_width       => $image_width,
+            slice_number      => '1|3',
+            multi             => 1,
+            more_slices       => 1,
+            compara           => 'primary',
+            base_url          => $base_url,
+            connection_types  => $gene_connection_types
           });
         }
         
@@ -139,7 +139,7 @@ sub content {
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
-        $primary_image_config->bridge_genes(1, $max, map $slices->[$_], $i - 1, $i) if $bridge_genes;
+        $primary_image_config->connect_genes(1, $max, map $slices->[$_], $i - 1, $i) if $connect_genes;
         
         push @images, $primary_slice, $primary_image_config;
       }

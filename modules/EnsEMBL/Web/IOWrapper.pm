@@ -304,7 +304,8 @@ sub create_tracks {
         ## Skip features that are on the 'wrong' strand or lie outside the current slice
         my $omit = $extra_config->{'strand_to_omit'};
         next if (($strandable && (($omit && $strand == $omit)
-                                    || ($extra_config->{'omit_unstrandable'} && $strand == 0)))
+                            || (!$strand && $omit == 1) ## force unstranded data onto forward strand
+                            || ($extra_config->{'omit_unstrandable'} && $strand == 0)))
                   || !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);
         $self->build_feature($data, $track_key, $slice, $strandable);

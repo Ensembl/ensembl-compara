@@ -28,9 +28,10 @@ use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents);
 sub create {
   ## Creates the robots.txt file and places it in the htdocs folder (unless an alternative directory is configured)
   ## @return none
-  my $species = shift;
-  my $sd      = shift;
-  my $root    = $sd->ENSEMBL_ROBOTS_TXT_DIR || $sd->ENSEMBL_WEBROOT.'/htdocs';
+  my $species   = shift;
+  my $sd        = shift;
+  my $root      = $sd->ENSEMBL_ROBOTS_TXT_DIR || $sd->ENSEMBL_WEBROOT.'/htdocs';
+  my $map_dir   = $sd->GOOGLE_SITEMAPS_PATH || $sd->ENSEMBL_WEBROOT.'/htdocs/sitemaps';
   my @lines;
 
   warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
@@ -39,7 +40,7 @@ sub create {
 
     push @lines, _lines("User-agent", "*");
     push @lines, _lines("Disallow", qw(
-  				 /Multi/  /biomart/  /Account/  /ExternalData/  /UserAnnotation/
+  				 /Multi/  /biomart/  /Account/ */DataExport/ */ImageExport/ 
   				 */Ajax/  */Config/  */Export/  */Experiment/ */Experiment*
   				 */Location/  */LRG/  */Phenotype/  */Regulation/  */Search/ */Share
   				 */UserConfig/  */UserData/  */Variation/
@@ -63,7 +64,7 @@ sub create {
   
     # links from ChEMBL
     push @lines, _lines("Disallow", "/Gene/Summary");
-    push @lines, _lines("Disallow", " /Transcript/Summary");
+    push @lines, _lines("Disallow", "/Transcript/Summary");
   
     # Doxygen
     push @lines, _lines("Disallow", "/info/docs/Doxygen");
@@ -79,10 +80,10 @@ sub create {
     push @lines, _lines("User-agent", "AhrefsBot");
     push @lines, _lines("Disallow", "/");
   
-    if (-e "$root/sitemaps/sitemap-index.xml") {
+    if (-e "$map_dir/sitemap-index.xml") {
       # If we have a sitemap let google know about it.
       warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf '//%s/sitemap-index.xml', $sd->ENSEMBL_SERVERNAME);
+      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_SERVERNAME);
     }
   } else {
     push @lines, _lines("User-agent", "*");

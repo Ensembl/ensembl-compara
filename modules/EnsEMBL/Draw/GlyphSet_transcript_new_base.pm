@@ -88,9 +88,10 @@ sub draw_collapsed_genes {
   foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    $g->{'href'} .= ';display=collapsed';
     $self->_create_exon_structure($g);
     push @$stranded_genes, $g;
-     $self->_add_bridge_to_legend($g);
+     $self->_add_connection_to_legend($g);
   }
   my $data = [{'features' => $stranded_genes}];
 
@@ -99,7 +100,7 @@ sub draw_collapsed_genes {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_bridges($style);
+  $self->_add_connections($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -131,7 +132,7 @@ sub draw_expanded_transcripts {
     $t->{'colour'} = $self->my_colour($t->{'colour_key'});
     $self->_create_exon_structure($t);
     push @$stranded, $t;
-    $self->_add_bridge_to_legend($t);
+    $self->_add_connection_to_legend($t);
   }
   my $data = [{'features' => $stranded}];
 
@@ -140,7 +141,7 @@ sub draw_expanded_transcripts {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_bridges($style);
+  $self->_add_connections($style);
 
   $self->_make_legend($transcripts, $self->my_config('name'));
 
@@ -150,6 +151,7 @@ sub draw_expanded_transcripts {
 
 sub draw_rect_genes {
   my ($self, $genes, $length, $labels, $strand) = @_;
+  #warn ">>> DRAWING RECT GENES FOR ".$self->{'config'};
 
   return unless @$genes;
 
@@ -166,7 +168,7 @@ sub draw_rect_genes {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     $g->{'colour'} = $self->my_colour($g->{'colour_key'});
     push @$stranded_genes, $g;
-    $self->_add_bridge_to_legend($g);
+    $self->_add_connection_to_legend($g);
   }
   my $data = [{'features' => $stranded_genes}];
 
@@ -175,7 +177,7 @@ sub draw_rect_genes {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_bridges($style);
+  $self->_add_connections($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -223,20 +225,23 @@ sub _create_exon_structure {
   return 1;
 }
 
-sub _add_bridges {
+sub _add_connections {
   my ($self, $style) = @_;
-  foreach (@{$style->bridges}) {
+  my @A = @{$style->connections};
+  #warn ">>> ADDING BRIDGES @A";
+  #use Data::Dumper; $Data::Dumper::Maxdepth = 1; warn Dumper($style);
+  foreach (@{$style->connections}) {
     $self->join_tag($_->{'glyph'}, $_->{'tag'}, @{$_->{'params'}||[]});
   }
 }
 
-sub _add_bridge_to_legend {
+sub _add_connection_to_legend {
   my ($self, $feature) = @_;
 
-  foreach (@{$feature->{'bridges'}||[]}) {
+  foreach (@{$feature->{'connections'}||[]}) {
     ## Add to legend
     if ($_->{'legend'}) {
-      $self->{'legend'}{'gene_legend'}{'bridges'}{'legend'}{$_->{'legend'}} = $_->{'colour'};
+      $self->{'legend'}{'gene_legend'}{'connections'}{'legend'}{$_->{'legend'}} = $_->{'colour'};
     }
   }
 }
@@ -269,8 +274,8 @@ sub _use_legend {
   }
   $used_colours->{$label} = [$colour,$section];
 
-  if ($self->{'legend'}{'gene_legend'}{'bridges'}) {
-    $self->{'legend'}{'gene_legend'}{'bridges'}{'priority'} ||= 1000;
+  if ($self->{'legend'}{'gene_legend'}{'connections'}) {
+    $self->{'legend'}{'gene_legend'}{'connections'}{'priority'} ||= 1000;
   }
 }
 

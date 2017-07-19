@@ -48,7 +48,7 @@ sub decrypt_value {
   my $rand1           = substr($string, 16, 8);
   my $time            = substr($string, 24, 8);
 
-  return (0, 'expired') if hex($time) < time();
+#  return (0, 'expired') if hex($time) < time();
 
   my $rand2           = substr($string, 32, 8);
   my $value           = ( ( hex( $rand1 ) ^ hex( $rand2 ) ) - $SiteDefs::ENSEMBL_ENCRYPT_0 ) & 0x0fffffff;

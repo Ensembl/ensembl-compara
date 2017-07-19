@@ -54,7 +54,7 @@ no warnings 'uninitialized';
 use POSIX qw(ceil);
 use List::Util qw(max);
 
-use EnsEMBL::Draw::Utils::Bump qw(mr_bump);
+use EnsEMBL::Draw::Utils::Bump qw(mr_bump do_bump);
 
 use parent qw(EnsEMBL::Draw::Style);
 
@@ -119,10 +119,22 @@ sub create_glyphs {
         $font_height = max($font_height, $text_info->{'height'});
       }
     }
-    mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+
+    if ($self->can('configure_bumping')) {
+      $self->configure_bumping(\@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+      do_bump($self, \@features);
+    }
+    else { ## use generic bump prep method
+      mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+    }
 
     my $typical_label;
     $typical_label = $self->get_text_info($features[0]->{'label'}) if @features;
+
+    #use Data::Dumper; 
+    #$Data::Dumper::Sortkeys = 1;
+    #$Data::Dumper::Maxdepth = 2;
+    #warn Dumper(\@features);
 
     ## SECOND LOOP - draw features row by row
     foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
@@ -146,7 +158,8 @@ sub create_glyphs {
                                         : ($feature->{'end'}, $feature->{'start'});
       $drawn_start      = 0 if $drawn_start < 0;
       $drawn_end        = $slice_width if $drawn_end > $slice_width;
-      my $feature_width = $drawn_end - $drawn_start + 1; 
+      my $feature_width = $drawn_end - $drawn_start; 
+      $feature_width    = 1 if $feature_width < 1;
   
       my $labels_height   = $label_row * $font_height;
 
@@ -305,7 +318,7 @@ sub draw_feature {
   my $x = $feature->{'start'};
   $x    = 1 if $x < 1;
   my $params = {
-                  x            => $x,
+                  x            => $x - 1,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
@@ -318,9 +331,9 @@ sub draw_feature {
 
   my $glyph = $self->Rect($params);
 
-  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
-  foreach (@{$feature->{'bridges'}||[]}) {
-    $self->draw_bridge($glyph ,$_);
+  ## Add any 'connections', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'connections'}||[]}) {
+    $self->draw_connection($glyph ,$_);
   }
 
   push @{$self->glyphs}, $glyph;
@@ -396,11 +409,11 @@ sub add_label {
   push @{$self->glyphs}, $self->Text($label);
 }
 
-sub draw_bridge {
+sub draw_connection {
   ## Set up a "join tag" to display mapping between features, e.g. homologues
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
-  my ($self, $glyph, $bridge) = @_;
-  $self->add_bridge($glyph, $bridge->{'key'}, 0.5, 0.5, $bridge->{'colour'}, 'line', 1000);
+  my ($self, $glyph, $connection) = @_;
+  $self->add_connection($glyph, $connection->{'key'}, 0.5, 0.5, $connection->{'colour'}, 'line', 1000);
 }
 
 

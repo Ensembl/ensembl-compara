@@ -1670,11 +1670,14 @@ sub filter_alignments_by_method {
   my $final_alignments = {};
 
   my $ss_id_hash_flag = {};
-  foreach my $ss_id (keys %$available_alignments) {
-    for (my $i=0; $i<=$#$methods_hierarchy; $i++) {
-      my $method = $methods_hierarchy->[$i];
-      my $re = qr /$method/i;
-      foreach my $alignment (@{$available_alignments->{$ss_id}}) {
+  my ($alignment, $method, $re, $i, $j, $ss_id);
+
+  foreach $ss_id (keys %$available_alignments) {
+    for ($i=0; $i<=$#$methods_hierarchy; $i++) {
+      $method = $methods_hierarchy->[$i];
+      $re = qr /$method/i;
+      for ($j=0; $j<=$#{$available_alignments->{$ss_id}}; $j++) {
+        $alignment = $available_alignments->{$ss_id}->[$j];
         # If type found and if no previous alignments assigned then proceed
         if ($alignment->{type} =~ $re && !$ss_id_hash_flag->{$ss_id}) {
           $final_alignments->{$alignment->{'id'}} = $alignment;
@@ -1683,11 +1686,15 @@ sub filter_alignments_by_method {
         }
 
         # Assign any alignment that does not match the conditions above.
-        if (!$ss_id_hash_flag->{$alignment->{'species_set_id'}} && $i == $#$methods_hierarchy) {
+        if (!$ss_id_hash_flag->{$alignment->{'species_set_id'}} && $i == $#$methods_hierarchy && $j == $#{$available_alignments->{$ss_id}}) {
           $final_alignments->{$alignment->{'id'}} = $alignment;
           $ss_id_hash_flag->{$alignment->{'species_set_id'}} = 1;
           last;
         }
+      }
+
+      if ($final_alignments->{$alignment->{'id'}}) {
+        last;
       }
     }
   }

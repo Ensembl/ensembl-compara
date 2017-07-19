@@ -39,16 +39,12 @@ sub new {
   my $hub   = $self->hub;
   my $r     = $self->r;
 
-  $CGI::POST_MAX = $self->upload_size_limit; # Set max upload size
-
-  $hub->{'_input'} = $self->{'input'} = CGI->new; # Hack to force the new upload limit! FIXME!
-
   my ($json, $chunked);
 
   try {
 
     if (($hub->input->cgi_error || '') =~ /413/) {
-      throw exception('InputError', sprintf 'File exceeds the size limit of %d MB', $CGI::POST_MAX / (1024 * 1024));
+      throw exception('InputError', sprintf 'File exceeds the size limit of %d MB', $self->upload_size_limit / (1024 * 1024));
     }
 
     my @path      = ($hub->type, $hub->action || (), $hub->function || ());

@@ -52,7 +52,7 @@ sub check_data {
   # and should also cause the index file to be downloaded and cached in /tmp/ 
   my ($adaptor, $index);
   eval {
-        $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+        $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'hub'});
         $adaptor->fetch_variations(1, 1, 10);
   };
   warn $@ if $@;

@@ -69,12 +69,19 @@ sub create_hash {
   if ($metadata->{'display'} eq 'text') {
     $feature->{'start'} = $feature_start;
     $feature->{'end'}   = $feature_end;
+
     $feature->{'extra'} = [
                         {'name' => 'Alleles', 'value' => join('/', @alleles)},
                         {'name' => 'Quality', 'value' => $self->parser->get_score},
                         {'name' => 'Filter',  'value' => $self->parser->get_raw_filter_results},
-                        {'name' => 'Info',    'value' => $self->parser->get_raw_info},
                         ];
+
+    ## Convert INFO field into a hash
+    my $parsed_info = $self->parser->get_info || {};
+    my %info_hash; 
+    foreach my $field (sort keys %$parsed_info) {
+      push @{$feature->{'extra'}}, {'name' => $field, 'value' => $parsed_info->{$field}};   
+    }
   }
   else {
     $feature->{'start'} = $start;

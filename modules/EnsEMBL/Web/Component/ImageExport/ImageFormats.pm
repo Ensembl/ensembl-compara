@@ -156,6 +156,13 @@ sub default_file_name {
       $name .= $disp_id || $stable_id;
     }
   }
+  elsif ($type eq 'Variation' && $hub->param('v')) {
+    $name .= '_'.$hub->param('v');
+  }
+  else {
+    $name .= '_'.$type;
+  }
+
   return $name . ($ext ? ".$ext" : '');
 }
 

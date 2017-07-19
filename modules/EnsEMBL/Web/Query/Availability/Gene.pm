@@ -49,9 +49,8 @@ sub _count_go {
 
   my $go_name;
   foreach my $transcript (@{$args->{'gene'}->get_all_Transcripts}) {
-    next unless $transcript->translation;
     my $dbc = $self->database_dbc($args->{'species'},$args->{'type'});
-    my $tl_dbID = $transcript->translation->dbID;
+    my $tl_dbID = $transcript->translation ? $transcript->translation->dbID : undef;
 
     # First get the available ontologies
     my $ontologies = $self->sd_config($args,'SPECIES_ONTOLOGIES');
@@ -70,7 +69,7 @@ sub _count_go {
 
       # Count the ontology terms mapped to the translation
       my $sth = $dbc->prepare($sql);
-      $sth->execute($transcript->translation->dbID, $transcript->dbID);
+      $sth->execute($tl_dbID, $transcript->dbID);
       foreach ( @{$sth->fetchall_arrayref} ) {
         $go_name .= '"'.$_->[0].'",';
       }

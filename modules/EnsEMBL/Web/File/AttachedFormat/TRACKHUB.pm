@@ -76,8 +76,11 @@ sub check_data {
   }
  
   ## Check that we can use it with this website's species
-  my $hub_info = $self->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup,
-                                               'parse_tracks' => 0});
+  my $hub_params = {'parse_tracks' => 0};
+  ## Don't check assembly if the hub came from the registry
+  my $assembly_check = $self->{'registry'} ? 0 : 1;
+  $hub_params->{'assembly_lookup'} = $assembly_lookup if $assembly_check;
+  my $hub_info = $self->{'trackhub'}->get_hub($hub_params);
   
   if ($hub_info->{'error'}) {
     $error  = sprintf('<p>Unable to attach remote TrackHub: %s</p>', $self->url);

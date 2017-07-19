@@ -29,6 +29,7 @@ package EnsEMBL::Web::Attributes;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use EnsEMBL::Web::Exceptions;
 

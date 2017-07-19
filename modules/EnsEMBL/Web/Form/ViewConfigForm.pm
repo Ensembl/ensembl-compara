@@ -356,6 +356,8 @@ sub _build_imageconfig_menus {
     my $controls    = $node->get_data('controls');
     my $subset      = $node->get_data('subset');
     my $name        = encode_entities($node->get_data('name'));
+    my $caption     = encode_entities($node->get_data('caption'));
+    $name           .= $name ne $caption ? "<span class='hidden-caption'> ($caption)</span>" : '';
     my @classes     = ('track', $external ? 'external' : '', lc $external);
     my $menu_header = scalar @states > 4 ? qq(<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>) : '';
     my ($selected, $menu, $help);

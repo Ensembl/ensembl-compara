@@ -323,7 +323,7 @@ sub transcript_table {
 
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
-        name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
+        name        => { value => $_->display_xref ? $_->display_xref->display_id : '-', class => 'bold' },
         transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',

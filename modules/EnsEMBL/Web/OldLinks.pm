@@ -21,9 +21,6 @@ package EnsEMBL::Web::OldLinks;
 
 ### Redirect URLs for both pre-51-style URLs and new/renamed pages in archive links 
 
-### Don't think this is actually being used, see Apache/Handlers.pm
-
-
 use strict;
 
 use base qw(Exporter);

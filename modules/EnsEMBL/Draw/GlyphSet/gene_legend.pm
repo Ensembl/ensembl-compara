@@ -40,8 +40,8 @@ sub _init {
   my (%sections,%headings,%priorities, @legend_check);
 
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {
-    my $bridge  = $type eq 'bridges';
-    my @colours = $bridge ? map { $_, $features->{$type}{'legend'}{$_} } sort keys %{$features->{$type}{'legend'}} : @{$features->{$type}{'legend'}};
+    my $connection  = $type eq 'connections';
+    my @colours = $connection ? map { $_, $features->{$type}{'legend'}{$_} } sort keys %{$features->{$type}{'legend'}} : @{$features->{$type}{'legend'}};
   
     $self->newline(1);
 
@@ -62,9 +62,9 @@ sub _init {
       my $entry = {
                     legend => $legend,
                     colour => $colour,
-                    style  => $bridge ? 'line' : 'box',
+                    style  => $connection ? 'line' : 'box',
                   };
-      $entry->{'height'} = 2 if $bridge;      
+      $entry->{'height'} = 2 if $connection;      
       push @{$sections{$section->{'key'}}||=[]}, $entry;
       $headings{$section->{'key'}} = $section->{'name'};
       $priorities{$section->{'key'}} = $section->{'priority'};

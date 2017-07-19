@@ -88,7 +88,12 @@ sub content {
     })
   });
 
-  my @attrs = @{ $features->[0]->get_all_Attributes };
+  my @attrs;
+  foreach (@$features) {
+    next unless $_->can('get_all_Attributes');
+    @attrs = @{ $_->get_all_Attributes };
+    last;
+  }
 
   foreach my $attr ( sort {$a->name cmp $b->name} @attrs ) {
     $self->add_entry({

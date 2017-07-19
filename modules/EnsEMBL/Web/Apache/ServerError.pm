@@ -42,9 +42,9 @@ sub handler {
 
   my ($content, $content_type);
 
-  my $to_logs = $species_defs->SERVER_ERRORS_TO_LOGS;
+  my $to_logs = $species_defs && $species_defs->SERVER_ERRORS_TO_LOGS;
   my $heading = '500 Server Error';
-  my $message = $to_logs ? 'An unknown error has occurred' : "$exception";
+  my $message = !$to_logs && $exception && "$exception" || 'An unknown error has occurred';
 
   try {
 

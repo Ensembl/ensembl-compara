@@ -112,7 +112,7 @@ sub feature_content {
     if ($_->{'extra'}) {
       foreach my $extra (@{$_->{'extra'}||[]}) {
         next unless $extra->{'name'};
-        if ($extra->{'value'} =~ /<a href/) {
+        if ($extra->{'value'} =~ /<a /) {
           $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
         }
         elsif ($extra->{'name'} =~ /^url$/i) {

@@ -605,6 +605,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       panel.handleConfigClick(this);
     }).end()
 
+    // Ditto for graph y-axis form
+    .find('form.graph_config').on('submit', function (e) {
+      e.preventDefault();
+      panel.handleGraphForm(this);
+    }).end()
+
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
@@ -756,6 +762,36 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $link = null;
   },
 
+  handleGraphForm: function (form) {
+    // Update track config y-axis values from popup form
+    var form      = $(form);
+    var action    = form.prop('action');
+    var href      = action.split(';');
+    var conf      = form.find('input[name=config]').val();
+    var trackName = form.find('input[name=track]').val();
+    var yMin      = form.find('input[name=y_min]').val();
+    var yMax      = form.find('input[name=y_max]').val();
+    
+    form.parents('._label_layer').addClass('hover_label_spinner');
+    var imgConf = {};
+    imgConf[trackName] = {'y_max' : yMax, 'y_min' : yMin};
+    href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
+
+    $.ajax({
+      url: href.join(';'),
+      dataType: 'json',
+      context: { panel: this, track: trackName, update: yMax },
+      success: function (json) {
+        if (json.updated) {
+          this.panel.changeAxes(conf, this.track, this.y_min, this.y_max);
+          //this.panel.updateExportButton();
+        }
+      }
+    });
+
+    $form = null;
+  },
+
   changeConfiguration: function (config, trackName, renderer) {
     Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, trackName, renderer);
 
@@ -768,7 +804,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.trigger('reloadPage', this.id);
     Ensembl.EventManager.trigger('partialReload');
   },
-  
+ 
+  changeAxes: function (config, trackName, yMin, yMax) {
+    Ensembl.EventManager.triggerSpecific('changeAxes', 'modal_config_' + config, trackName, yMin, yMax);
+
+    Ensembl.EventManager.trigger('reloadPage', this.id);
+    Ensembl.EventManager.trigger('partialReload');
+  },
+ 
   makeResizable: function () {
     var panel = this;
     
@@ -1202,7 +1245,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       area.a.attrs.href = Ensembl.updateURL({mr: Ensembl.markedLocation[0]}, area.a.attrs.href);
     }
 
-    var id = 'zmenu_' + area.a.coords.join('_');
+    var id = (params && params.mr_menu ? 'mr_menu' : 'zmenu_') + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
     if (e.shiftKey || area.a.klass.das || area.a.klass.group) {
@@ -1233,7 +1276,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
-    
     this.zMenus[id] = 1;
     return id;
   },
@@ -1488,14 +1530,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (!this.locationMarkingArea) {
       return;
     }
-
     // create the marked area div
     if (!this.elLk.markedLocation) {
-      this.elLk.markedLocation = $('<div class="selector mrselector"><div class="mrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
-        .find('div').helptip({content: 'Clear marked region'}).on('click mousedown', function(e) {
+      this.elLk.markedLocation = $('<div class="selector mrselector"><div class="mrselector-close">&#9776;</div></div>').hide().insertAfter(this.elLk.selector)
+        .find('div').helptip({content: 'Click for more options'}).on('click mousedown', function(e) {
           e.stopPropagation();
+          $(this).helptip('close');
           if (e.type === 'click') {
-            Ensembl.markLocation(false);
+            panel.makeZMenu(e, panel.getMapCoords(e), { onclose: function() { panel.selectArea(false); }, context: panel, mr_menu : 1 });
           }
         })
       .end();
@@ -1542,7 +1584,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // calculate start and end of the current image
     start = this.locationMarkingArea.range.start - offset;
-    end   = this.locationMarkingArea.range.end - offset;
+    end   = (this.locationMarkingArea.range.end+1) - offset;
 
     // display the marked region if it overlaps the current region
     if (this.locationMarkingArea.range.chr === r[1] && (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3])) {

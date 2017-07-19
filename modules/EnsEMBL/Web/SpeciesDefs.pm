@@ -199,22 +199,23 @@ sub valid_species {
   ### Filters the list of species to those configured in the object.
   ### If an empty list is passes, returns a list of all configured species
   ### Returns: array of configured species names
-  
+
   my $self          = shift;
   my %test_species  = map { $_ => 1 } @_;
   my @valid_species = @{$self->{'_valid_species'} || []};
-  
-  if (!@valid_species) {
-    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
+  my %uniq_valid_species;
+
+   if (!@valid_species) {
+    foreach my $sp (@{$self->multi_hash->{'ENSEMBL_DATASETS'}}) { 
       my $config = $self->get_config($sp, 'DB_SPECIES');
-      
+
       if ($config->[0]) {
-        push @valid_species, @{$config};
+        $uniq_valid_species{$_} = 1 foreach @{$config};
       } else {
         warn "Species $sp is misconfigured: please check generation of packed file";
       }
     }
-    
+    @valid_species = keys %uniq_valid_species;    
     $self->{'_valid_species'} = [ @valid_species ]; # cache the result
   }
 
@@ -228,17 +229,22 @@ sub reference_species {
   ### Filters the list of species to reference only, i.e. no secondary strains 
   ### Returns: array of species names
   my $self          = shift;
-  my @valid_species   = $self->{'_valid_species'} ? @{$self->{'_valid_species'}}
-                                                  : $self->valid_species;
-  return unless scalar @valid_species;
+  my %test_species  = map { $_ => 1 } @_;
+  my @ref_species   = @{$self->{'_ref_species'} || []};
 
-  my @ref_species;
-  foreach (@valid_species) {
-    my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-    if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
-      push @ref_species, $_;
+  if (!@ref_species) {
+    my @valid_species = $self->valid_species;
+
+    for (@valid_species) {
+      my $strain = $self->get_config($_, 'SPECIES_STRAIN');
+
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+        push @ref_species, $_;
+      }
     }
   }
+
+  @ref_species = grep $test_species{$_}, @ref_species if %test_species;
 
   return @ref_species;
 }
@@ -395,12 +401,12 @@ sub parse {
     }
     warn " conf was not generated here, regenerating\n";
   }
-  
+ 
 #  $self->_get_valid_urls; # under development
   $self->_parse;
   $self->store;
   $reg_conf->configure;
-  
+
   EnsEMBL::Web::Tools::RobotsTxt::create($self->multi_hash->{'ENSEMBL_DATASETS'}, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
   
@@ -503,6 +509,10 @@ sub _read_in_ini_file {
       my $line_number     = 0;
       
       while (<FH>) {
+
+        # parse any inline perl <% perl code %>
+        s/<%(.+?(?=%>))%>/eval($1)/ge;
+
         s/\s+[;].*$//; # These two lines remove any comment strings
         s/^[#;].*$//;  # from the ini file - basically ; or #..
         
@@ -750,18 +760,24 @@ sub _parse {
   #$Data::Dumper::Sortkeys = 1;
   #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
 
-  ## Finally, rename the tree keys for easy data access via URLs
-  ## (and backwards compatibility!)
+  ## Final munging
   my $datasets = [];
-  foreach my $species (@$SiteDefs::PRODUCTION_NAMES) {
-    my $url = $tree->{$species}{'SPECIES_URL'};
-    $tree->{$url} = $tree->{$species};
+  my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
+  foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
+    my $url = $tree->{$prodname}{'SPECIES_URL'};
+    
+    ## Add in aliases to production names
+    $aliases->{$prodname} = $url;
+    
+    ## Rename the tree keys for easy data access via URLs
+    ## (and backwards compatibility!)
+    $tree->{$url} = $tree->{$prodname};
     push @$datasets, $url;
-    delete $tree->{$species};
+    delete $tree->{$prodname};
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
- 
+
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
@@ -1134,6 +1150,17 @@ sub species_label {
   }  
 }
 
+sub production_name_lookup {
+## Maps all species to their production name
+  my $self = shift;
+  my $names = {};
+  
+  foreach ($self->valid_species) {
+    $names->{$self->get_config($_, 'SPECIES_PRODUCTION_NAME')} = $_;
+  }
+  return $names;
+}
+
 sub production_name_mapping {
 ### As the name said, the function maps the production name with the species URL, 
 ### @param production_name - species production name
@@ -1296,6 +1323,37 @@ sub production_name {
     }
 
     return $nospaces;
+}
+
+sub verbose_params {
+  my $self    = shift;
+  my $multidb = $self->multidb;
+
+  warn "SpeciesDefs->multidb:\n";
+  for (sort keys %$multidb) {
+    warn sprintf "%50s: %s on %s%s@%s:%s\n",
+      $_,
+      $multidb->{$_}{'NAME'},
+      $multidb->{$_}{'USER'},
+      $multidb->{$_}{'PASS'} ? ':<PASS>' : '',
+      $multidb->{$_}{'HOST'},
+      $multidb->{$_}{'PORT'};
+  }
+
+  warn "SpeciesDefs species database:\n";
+  foreach my $sp (sort @{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
+    warn sprintf "%65s\n", "====== $sp ======";
+    my $db = $self->get_config($sp, 'databases');
+    for (sort keys %$db) {
+      warn sprintf "%50s: %s on %s%s@%s:%s\n",
+        $_,
+        $db->{$_}{'NAME'} || '-- missing --',
+        $db->{$_}{'USER'} || '-- missing --',
+        $db->{$_}{'PASS'} ? ':<PASS>' : '',
+        $db->{$_}{'HOST'} || '-- missing --',
+        $db->{$_}{'PORT'} || '-- missing --';
+    }
+  }
 }
 
 sub DESTROY {

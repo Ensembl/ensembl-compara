@@ -110,16 +110,19 @@ sub draw_aggregate {
   my $top = 0;
   my $h   = 4;
 
+  ## Prepare to draw any headers/labels in lefthand column
+  my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+  my $data_for_legend = [];
+
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     my $any_on = scalar keys %{$data->{'on'}};
     if ($self->dynamic_use($style_class)) {
-      my ($data_method, $feature_type, $count_header, $sublabels, $more, $message_text);
+      my ($data_method, $feature_type, $count_header, $sublabels, $message_text);
 
       if ($_ =~ /Feature/) {
         $self->{'my_config'}->set('height', $h * 2);
         $feature_type   = 'block_features';
-        $more           = 'More';
         $message_text   = 'peaks';
         $count_header   = 1;
         $sublabels      = 1;
@@ -128,7 +131,6 @@ sub draw_aggregate {
         $self->{'my_config'}->set('height', $h * 15);
         $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $h * 3);
         $feature_type   = 'wiggle_features';
-        $more           = 'Legend & More';
         $message_text   = 'wiggle';
       }
       
@@ -136,9 +138,7 @@ sub draw_aggregate {
 
         $args->{'feature_type'} = $feature_type;
         my $subset  = $self->get_features($data->{$set}{$feature_type}, $args);
-
-        ## Prepare to draw any headers/labels in lefthand column
-        my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+        push @$data_for_legend, @$subset;
 
         ## Add a summary title in the lefthand margin
         my $label     = $self->my_config('label');
@@ -162,30 +162,29 @@ sub draw_aggregate {
           $header->draw_margin_sublabels($subset);
         }
 
-        ## Finally add the popup menu
-        if ($more) {
-          ## But not twice!
-          unless ($show_blocks && $show_wiggle && $_ =~ /Feature/) {
-            my $colour_legend = $feature_type eq 'wiggle_features' ? $self->_colour_legend($subset) : {};
-            my $params = {
-                          label           => $more,
-                          title           => $label,
-                          colour_legend   => $colour_legend,
-                          sublegend_links => $self->_sublegend_links,
-                          };
-            if ($show_blocks && $show_wiggle) {
-              $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
-            }
-            $header->draw_sublegend($params);
-          }
-        } 
-        $self->push(@{$header->glyphs||[]});
       }
       else {
         $self->display_error_message($cell_line, $set, $message_text) if $any_on;
       }
     }
   }
+
+  ## Finally create the popup menu and add the header to the glyphset
+  my $colour_legend = $self->_colour_legend($data_for_legend);
+  my $params = {
+                label           => 'Legend & More',
+                title           => $label,
+                colour_legend   => $colour_legend,
+                sublegend_links => $self->_sublegend_links,
+               };
+  if ($show_blocks && $show_wiggle) {
+    $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
+  }
+  if ($show_blocks) {
+    $params->{'show_peaks'} = 1;
+  }
+  $header->draw_sublegend($params);
+  $self->push(@{$header->glyphs||[]});
 
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!

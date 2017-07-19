@@ -287,18 +287,6 @@ sub init_cacheable {
 
   $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
 
-  if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
-    foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
-      $self->add_track('misc_feature', "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', {
-        display       => 'off',
-        strand        => 'f',
-        colourset     => 'alternative_assembly',
-        description   => "Track indicating $alt_assembly assembly",
-        assembly_name => $alt_assembly
-      });
-    }
-  }
-
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_trackhubs;

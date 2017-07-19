@@ -1072,12 +1072,13 @@ sub add_regulation_builds {
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
 
-  my (@cell_lines, %cell_names, %regbuild);
+  my (@cell_lines, %cell_names, %epi_desc, %regbuild);
 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
     push @cell_lines, $name;
     $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
+    $epi_desc{$name} = $db_tables->{'cell_type'}{'epi_desc'}{$_}||$name;
     ## Add to lookup for regulatory build cell lines
     $regbuild{$name} = 1 if $db_tables->{'cell_type'}{'regbuild_ids'}{$_};
   }
@@ -1156,6 +1157,7 @@ sub add_regulation_builds {
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
+    my $epi_desc = $segs->{$key}{'epi_desc'} ? " ($segs->{$key}{'epi_desc'})" : "";
     $reg_segs->append_child($self->create_track_node("seg_$key", $name, {
       db            => $key,
       glyphset      => 'fg_segmentation_features',
@@ -1165,11 +1167,11 @@ sub add_regulation_builds {
       depth         => 0,
       colourset     => 'fg_segmentation_features',
       display       => 'off',
-      description   => $segs->{$key}{'desc'},
+      description   => $segs->{$key}{'desc'} . $epi_desc,
       renderers     => [qw(off Off compact On)],
       celltype      => $segs->{$key}{'web'}{'celltype'},
       seg_name      => $segs->{$key}{'web'}{'seg_name'},
-      caption       => "Reg. Segs.",
+      caption       => "Segmentation features",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section       => $segs->{$key}{'web'}{'celltypename'},
       height        => 4,
@@ -1183,20 +1185,22 @@ sub add_regulation_builds {
 
     ## Only add regulatory features if they're in the main build
     if ($regbuild{$cell_line}) {
-      $reg_feats->append_child($self->create_track_node($track_key, "Activity in $cell_names{$cell_line}", {
+
+      my $epi_desc = $epi_desc{$cell_line} ? " ($epi_desc{$cell_line})" : '';
+      $reg_feats->append_child($self->create_track_node($track_key, "$cell_names{$cell_line}", {
         db            => $key,
         glyphset      => $type,
         sources       => 'undef',
         strand        => 'r',
         depth         => $data->{$key_2}{'depth'}     || 0.5,
         colourset     => $data->{$key_2}{'colourset'} || $type,
-        description   => "Activity in epigenome $cell_names{$cell_line}",
+        description   => "Activity types in epigenome $cell_names{$cell_line}" . $epi_desc,
         display       => $display,
         renderers     => \@renderers,
         cell_line     => $cell_line,
         section       => $cell_names{$cell_line},
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-        caption       => "Regulatory Features",
+        caption       => "Epigenome Activity",
       }));
     }
 

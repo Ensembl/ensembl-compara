@@ -54,8 +54,9 @@ our $APACHE_DIR                   = "$ENSEMBL_SERVERROOT/apache2";              
 our $APACHE_BIN                   = defer { "$APACHE_DIR/bin/httpd" };                    # Location of Apache bin file to run server
 our $APACHE_DEFINE                = undef;                                                # Extra command line arguments for httpd command
 our $ENSEMBL_HTTPD_CONFIG_FILE    = "$ENSEMBL_WEBROOT/conf/httpd.conf";                   # Apache config file location
-our $ENSEMBL_MIN_SPARE_SERVERS    = 20;                                                   # For Apache MinSpareServers directive
-our $ENSEMBL_MAX_SPARE_SERVERS    = 50;                                                   # For Apache MaxSpareServers directive
+our $ENSEMBL_MIN_SPARE_SERVERS    = 10;                                                   # For Apache MinSpareServers directive
+our $ENSEMBL_MAX_SPARE_SERVERS    = 15;                                                   # For Apache MaxSpareServers directive
+our $ENSEMBL_MAX_CLIENTS          = 50;
 our $ENSEMBL_START_SERVERS        =  7;                                                   # For Apache StartServers directive
 our $ENSEMBL_DB_IDLE_LIMIT        = 0;
               # Maximum number of connections to "carry through" to next
@@ -110,6 +111,7 @@ our $ENSEMBL_STATIC_SERVER            = '';     # Static server address - if sta
 our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subroutine called by `syslog` - check EnsEMBL::Web::Utils::Syslog
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
+our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
 ###############################################################################
 
 
@@ -184,6 +186,7 @@ our @ENSEMBL_LIB_DIRS;                                                          
 our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates <species>.ini files
 our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                                      # locates mod-perl scripts
 our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our $ENSEMBL_EXTRA_INC    = [];                                                             # Any extra perl paths needed for the site
 ###############################################################################
 
 
@@ -311,10 +314,11 @@ our $ENSEMBL_SITE_URL;          # Populated by import
 our $ENSEMBL_CONFIG_FILENAME;   # Populated by import
 our $ENSEMBL_STATIC_SERVERNAME; # Populated by import
 our $ENSEMBL_STATIC_BASE_URL;   # Populated by import
-our $ENSEMBL_TEMPLATE_ROOT;     # Populated by import
+our $ENSEMBL_STARTUP_VERBOSE;   # Polulated by import (can be overridden in plugins)
 our $ENSEMBL_MART_SERVERNAME;   # Populated by _set_dedicated_mart()
 
 my $_VERBOSE;
+my @_VERBOSE_LINES;
 my $_IMPORTED;
 
 sub import {
@@ -325,6 +329,9 @@ sub import {
 
   $_IMPORTED = 1;
   $_VERBOSE = grep $_ eq 'verbose', @_;
+
+  # verbose param warns extra verbose info at startup
+  $ENSEMBL_STARTUP_VERBOSE = !!$_VERBOSE;
 
   # Populate $ENSEMBL_PLUGINS (Not loading all plugins' SiteDefs yet)
   _populate_plugins_list($ENSEMBL_SERVERROOT, $ENSEMBL_WEBROOT, $ENV{'ENSEMBL_PLUGINS_ROOTS'});
@@ -354,17 +361,16 @@ sub import {
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-  $ENSEMBL_TEMPLATE_ROOT     = "$ENSEMBL_SERVERROOT/biomart-perl/conf";
-
-  _verbose_params() if $_VERBOSE;
 }
 
-sub _verbose_params {
+sub verbose_params {
   ## Prints a list of all the parameters and their values
 
   my $params = {};
 
   no strict qw(refs);
+
+  warn $_ for @_VERBOSE_LINES;
 
   warn "SiteDefs configurations:\n";
 
@@ -486,6 +492,7 @@ sub _update_conf {
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
     "$ENSEMBL_SERVERROOT/ensembl/modules",
+    @{$ENSEMBL_EXTRA_INC || []}
   );
 }
 
@@ -503,7 +510,10 @@ sub _get_serverroot {
   my $file            = shift;
   my ($volume, $dir)  = File::Spec->splitpath($file);
 
-  return File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+  my $path = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
+     $path =~ s|\.snapshots/[^/]+|latest|;
+
+  return $path;
 }
 
 sub _populate_plugins_list {
@@ -513,7 +523,10 @@ sub _populate_plugins_list {
 
   $plugins_root ||= '*-plugins';
 
-  my @plugins_paths = ($web_root, "$server_root/$plugins_root/".getpwuid($>));
+  my $user_id   = getpwuid($>);
+  my $group_id  = getgrgid($));
+
+  my @plugins_paths = ($web_root, map sprintf('%s/%s/%s', $server_root, $plugins_root, $_), grep $_, $user_id, $group_id);
 
   # Define Plugin directories
   if (-e "$web_root/conf/Plugins.pm") {
@@ -609,14 +622,14 @@ sub _set_env {
   no strict qw(refs);
 
   if (keys %$ENSEMBL_SETENV) {
-    warn "Setting ENV variables:\n" if $_VERBOSE;
+    push @_VERBOSE_LINES, "ENV variables added:\n" if $ENSEMBL_STARTUP_VERBOSE;
     for (sort keys %$ENSEMBL_SETENV) {
       if (defined $ENSEMBL_SETENV->{$_}) {
         $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
-        warn sprintf "%50s: %s\n", $_, $ENV{$_} if $_VERBOSE;
+        push @_VERBOSE_LINES, sprintf "%50s: %s\n", $_, $ENV{$_} if $ENSEMBL_STARTUP_VERBOSE;
       } else {
         delete $ENV{$_};
-        warn sprintf "%50s deleted\n", $_ if $_VERBOSE;
+        push @_VERBOSE_LINES, sprintf "%50s deleted\n", $_ if $ENSEMBL_STARTUP_VERBOSE;
       }
     }
   }

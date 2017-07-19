@@ -319,7 +319,7 @@ Ensembl.extend({
     for (var i in params) {
       if (params[i] === false) {
         url = url.replace(new RegExp(this.hashParamRegex.replace('__PARAM__', i)), '$1');
-      } else if (url.match(i + '=')) {
+      } else if (url.match(new RegExp('[#?;&]' + i + '='))) {
         var regex = new RegExp(this.hashParamRegex.replace('__PARAM__', i));
         
         if (url.match(regex)) {

@@ -81,7 +81,7 @@ sub do_http_request {
 
   if (!$self->{'_ua'}) {
     $self->{'_ua'} = LWP::UserAgent->new;
-    $self->{'_ua'}->proxy([qw(http https)], $_) for $self->hub->species_defs->ENSEMBL_WWW_PROXY || ();
+    $self->{'_ua'}->proxy([qw(http https)], $_) for $self->hub->web_proxy || ();
   }
 
   my $response = $self->{'_ua'}->request(HTTP::Request->new($method, $service_url));

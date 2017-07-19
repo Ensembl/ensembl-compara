@@ -60,8 +60,9 @@ my %write_dirs = (
                                     'procedure'   => '',
                                   }],
                   'userdata'  => ['ENSEMBL_USERDATA_DIR', {
-                                    'persistent' => '',
-                                    'temporary'   => '',
+                                    'persistent'          => '',
+                                    'temporary'           => '',
+                                    'temporary/vcf_tabix' => '',
                                   }],
   
                   'biomart'   => ['ENSEMBL_TMP_DIR', {

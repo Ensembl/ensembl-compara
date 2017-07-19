@@ -26,7 +26,7 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::File::AttachedFormat);
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
-sub extra_config_page { return "ConfigureBigWig"; }
+sub extra_config_page { return "ConfigureGraph"; }
 
 sub check_data {
   my ($self) = @_;

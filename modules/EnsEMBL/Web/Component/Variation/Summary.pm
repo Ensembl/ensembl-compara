@@ -23,6 +23,7 @@ package EnsEMBL::Web::Component::Variation::Summary;
 use strict;
 
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
+use Encode qw(encode decode);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -892,7 +893,7 @@ sub snpedia {
 
   if($cache) {
     # Get from memcached
-    $desc = $cache->get($key);
+    $desc = decode('utf8', $cache->get($key));
   }
 
   if ($desc) {
@@ -925,7 +926,7 @@ sub snpedia {
       my $show = 0;
 
       $desc =  sprintf( '%s...
-                    <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
+                    <a title="Click to read more" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
                     <div class="toggleable snpedia_more_desc" style="%s">
                       %s
                       %s
@@ -939,7 +940,7 @@ sub snpedia {
         $snpedia_search_link
       );
 
-      $cache && $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      $cache && $cache->set($key, encode('utf8', $desc) || 'no_entry', 60*60*24*7);
 
       return [
         'Description from SNPedia',

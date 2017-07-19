@@ -75,7 +75,7 @@ sub json_to_dynatree {
         $t->{searchable} = 1;
         # Make it unselectable if it is not in the available species_list
         # $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
-        $t->{children} = $extra_dyna;
+        push @{$t->{children}}, @$extra_dyna;
       }
       push @dyna_tree, $t;
     }
@@ -119,6 +119,7 @@ sub get_extras_as_dynatree {
   my $extras = shift;
   my $internal_node_select = shift;
   my $extra_dyna = [];
+  my $children = [];
 
   foreach my $k (keys %$extras) {
     my $folder = {};
@@ -128,9 +129,22 @@ sub get_extras_as_dynatree {
     $folder->{children}     = [];
     $folder->{searchable}   = 0;
     $folder->{unselectable} = !$internal_node_select;
-    foreach my $hash (@{$extras->{$k}}) {
+
+    $children = [];
+
+    # For sorting based on chromosome numbers
+    my $is_primary_assembly = $extras->{$k}->{data}[0]->{assembly_target} ? 1 : 0;
+    my @extras_data_array;
+    if ($is_primary_assembly) {
+      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$extras->{$k}->{data}};
+    }
+    else {
+      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$extras->{$k}->{data}};
+    }
+
+    foreach my $hash (@extras_data_array) {
       my $icon = '';
-      if ($k =~/haplotype/ and $hash->{key} =~/--/) {
+      if ($k =~/haplotype|primary assembly/ and $hash->{key} =~/--/) {
         my ($sp, $type) = split('--', $hash->{key});
         $icon = '/i/species/16/' . $sp . '.png';
       }
@@ -149,10 +163,18 @@ sub get_extras_as_dynatree {
       if ($hash->{value}) {
         $t->{value}    = $hash->{value};
       }
-      push @{$folder->{children}}, $t;
+      push @$children, $t;
     }
 
-    push @$extra_dyna, $folder;
+    # Create folder if opted
+    if ($extras->{$k}->{create_folder} eq '0') {
+      push @$extra_dyna, @$children;
+    }
+    else {
+      push @{$folder->{children}}, @$children;
+      push @$extra_dyna, $folder;
+    }
+
 
   }
 

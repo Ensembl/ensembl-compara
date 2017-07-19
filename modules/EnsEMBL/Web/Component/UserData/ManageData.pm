@@ -68,9 +68,14 @@ sub content {
     my %other_servers;
 
     $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+    $html .= $self->_add_buttons;
+
+    #my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
 
     my @columns = (
+      { key => 'check',     title => '',              width => '5%',    align => 'center'                                   },
       { key => 'type',      title => 'Type',          width => '10%',   align => 'left'                                     },
+      { key => 'status',    title => 'Status',        width => '10%',   align => 'left'                                     },
       { key => 'name',      title => 'Source',        width => '30%',   align => 'left',    sort => 'html', class => 'wrap' },
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },
       { key => 'assembly',  title => 'Assembly',      width => '15%',   align => 'left',    sort => 'html'                  },
@@ -154,22 +159,26 @@ sub content {
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my $trackhub_search = $self->trackhub_search;
-
-  if (scalar @$records_data) {
-    my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
-    ## Show 'add more' link at top as well, if table is long
-    if (scalar(@rows) > 10) {
-      $html = $more.$html;
-    }
-
-    $html .= $more if scalar(@rows);
+  if ($hub->referer->{'ENSEMBL_ACTION'} eq 'ProteinSummary') {
+    $html .= $self->info_panel('Custom Tracks Unavailable', 'Sorry, you cannot upload or attach tracks on this view.');
   }
   else {
-    $html .= $trackhub_search;
-    $html .= $self->userdata_form;
-  }
+    my $trackhub_search = $self->trackhub_search;
 
+    if (scalar @$records_data) {
+      my $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a> | %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+      ## Show 'add more' link at top as well, if table is long
+      if (scalar(@rows) > 10) {
+        $html = $more.$html;
+      }
+
+      $html .= $more if scalar(@rows);
+    }
+    else {
+      $html .= $trackhub_search;
+      $html .= $self->userdata_form;
+    }
+  }
   return $html;
 }
 
@@ -196,6 +205,24 @@ sub _icon {
 
 sub _no_icon {
   return '';
+}
+
+sub _add_buttons {
+### Buttons for applying methods to all selected files
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  my $html = '<div class="ff-inline tool_buttons"><span class="button-label">Update selected</span>: ';
+
+  my @buttons = qw(enable disable delete);
+
+  foreach (@buttons) {
+    $html .= sprintf '<input type="submit" name="%s_button" value="%s" class="%s fbutton fbutton-icon modal_link">', 
+                        $_, ucfirst($_), $_;
+  }
+  $html .= '</div>';
+
+  return $html;
 }
 
 sub table_row {
@@ -306,7 +333,6 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
-=pod
   if ($record_data->{'format'} eq 'TRACKHUB') {
     my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
     ## 'Disabled' class will show 'connect' version of icon in swp sprite
@@ -316,9 +342,8 @@ sub table_row {
     my $connect_url   = $hub->url({'action' => 'FlipTrackHub', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}});
     $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
   }
-=cut
 
-  my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
+  my $checkbox = sprintf '<input type="checkbox" class="_mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 
   return {
     check   => $checkbox,

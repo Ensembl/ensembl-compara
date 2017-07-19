@@ -119,9 +119,9 @@ sub draw_feature {
     %previous = %params;
   }
 
-  ## Add any 'bridges', i.e. extra glyphs to join two corresponding features
-  foreach (@{$feature->{'bridges'}||[]}) {
-    $self->draw_bridge($composite ,$_);
+  ## Add any 'connections', i.e. extra glyphs to join two corresponding features
+  foreach (@{$feature->{'connections'}||[]}) {
+    $self->draw_connection($composite ,$_);
   } 
 
   push @{$self->glyphs}, $composite;

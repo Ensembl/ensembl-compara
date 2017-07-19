@@ -86,6 +86,7 @@ sub fill        { my $self = shift; $self->_fillstroke_alpha('fill', @_); }
 sub rect        { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
 sub move        { my $self = shift; $self->{'canvas'}{'g'}->move(@_); }
 sub line        { my $self = shift; $self->{'canvas'}{'g'}->line(@_); }
+sub poly        { my $self = shift; $self->{'canvas'}{'g'}->poly(@_); }
 sub hybrid      { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
 
 sub _fillstroke_alpha {
@@ -124,6 +125,60 @@ sub render_Rect {
       $self->strokecolor( $gbordercolour );
       $self->rect($x,$y,$a-$x,$b-$y);
       $self->stroke($glyph->{'alpha'});
+    }
+  }
+
+  if($glyph->{'pattern'}) {
+    my $pattern_def = $EnsEMBL::Draw::Renderer::patterns->{$glyph->{pattern}};
+
+    if( $pattern_def ) {
+      my $size = $pattern_def->{size};
+      my $lines = $pattern_def->{lines} || [];
+      my $polys = $pattern_def->{polys} || [];
+      $self->strokecolor( $glyph->{patterncolour} );
+      # $self->strokecolor(  );
+      $self->fillcolor( $glyph->{patterncolour} );
+      # $self->fillcolor( 'yellow' );
+      my $x1 = $x;
+      my $y1 = $y;
+      my $total_size = 0;
+
+      while ($x1 < $a) {
+        #  For lines
+        if ($#$lines >= 0) {
+          foreach my $line (@$lines) {
+            # Draw line on each tile using the pattern from Renderer.pm
+            $self->move($x1+$line->[2]+3, $y1-$line->[3]);
+            # e.g. [0,7,7,0]
+            $self->line($x1+($line->[2]+3), $y1-$line->[3], $x1+$line->[0] ,$y1-($line->[1]+3));
+          }
+        }
+        # For polys
+        if($#$polys >=0) {
+          foreach my $coords_arr (@$polys) {
+            my $coords = [];
+            foreach my $arr (@$coords_arr) {
+              my ($x, $y);
+              if ($a < $total_size) {
+                $x = $a;
+                $y = $b - ($y1 - $arr->[1]) / 2;
+              }
+              else {
+                $x = $x1 + $arr->[0];
+                $y = $y1 - $arr->[1] + 1;
+              }
+
+              push @$coords, $x, $y;
+            }
+            $self->poly(@$coords);
+          }
+        }
+        $total_size += $size->[0];
+        $x1 += $size->[0];
+      }
+
+      $self->fill($glyph->{'alpha'}) if ($#$polys >= 0);
+      $self->stroke($glyph->{'alpha'}) if ($#$lines >= 0);
     }
   }
 }

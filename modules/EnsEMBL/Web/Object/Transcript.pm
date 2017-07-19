@@ -375,7 +375,6 @@ sub stable_id              { return $_[0]->Obj->stable_id;  }
 sub feature_type           { return $_[0]->Obj->type;       }
 sub version                { return $_[0]->Obj->version;    }
 sub logic_name             { return $_[0]->gene ? $_[0]->gene->analysis->logic_name : $_[0]->Obj->analysis->logic_name; }
-sub status                 { return $_[0]->Obj->status;  }
 sub display_label          { return $_[0]->Obj->analysis->display_label || $_[0]->logic_name; }
 sub coord_system           { return $_[0]->Obj->slice->coord_system->name; }
 sub seq_region_type        { return $_[0]->coord_system; }
@@ -919,7 +918,7 @@ sub gene_type {
   my $self = shift;
   my $db = $self->get_db;
   my $type = '';
-  $type = $self->Obj->status.' '.$self->Obj->biotype;
+  $type = $self->Obj->biotype;
   $type =~ s/_/ /;
   $type ||= $self->display_label;
   $type ||= $self->db_type;
@@ -934,17 +933,17 @@ sub gene_stat_and_biotype {
   my $type = '';
   
   if ($db eq 'core') {
-    $type = ucfirst(lc $self->gene->status) . ' ' . $self->gene->biotype;
+    $type = ucfirst($self->gene->biotype);
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {
     my $biotype = ($self->gene->biotype eq 'tec') ? uc $self->gene->biotype : $self->gene->biotype;
-    $type = ucfirst(lc $self->gene->status) . " $biotype";
+    $type = ucfirst($biotype);
     $type =~ s/unknown //i;
     return $type;
   } else {
     $type = $self->logic_name;
     if ($type =~/^(proj|assembly_patch)/ ){
-      $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+      $type = ucfirst($self->Obj->biotype);
     }
     $type =~ s/^ccds/CCDS/;
   }
@@ -982,7 +981,7 @@ sub transcript_type {
   } elsif ($db !~ /core|vega/i) {
     return '';
   } else {
-    $type = ucfirst(lc $self->Obj->status) . ' ' . $self->Obj->biotype;
+    $type = ucfirst($self->Obj->biotype);
     $type =~ s/_/ /g;
     return $type;
   }
@@ -990,7 +989,7 @@ sub transcript_type {
 
 sub transcript_class {
   my $self = shift;
-  my $class = ucfirst(lc $self->Obj->status) . ' ' . $self->Obj->biotype;
+  my $class = ucfirst($self->Obj->biotype);
   $class =~ s/_/ /g;
   $class =~ s/unknown//i;
   return $class;
