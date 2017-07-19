@@ -186,6 +186,7 @@ our @ENSEMBL_LIB_DIRS;                                                          
 our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates <species>.ini files
 our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                                      # locates mod-perl scripts
 our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our $ENSEMBL_EXTRA_INC    = [];                                                             # Any extra perl paths needed for the site
 ###############################################################################
 
 
@@ -491,6 +492,7 @@ sub _update_conf {
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
     "$ENSEMBL_SERVERROOT/ensembl/modules",
+    @{$ENSEMBL_EXTRA_INC || []}
   );
 }
 
