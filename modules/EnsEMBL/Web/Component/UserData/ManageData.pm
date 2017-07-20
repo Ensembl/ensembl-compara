@@ -68,14 +68,9 @@ sub content {
     my %other_servers;
 
     $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
-    $html .= $self->_add_buttons;
-
-    #my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
 
     my @columns = (
-      { key => 'check',     title => '',              width => '5%',    align => 'center'                                   },
       { key => 'type',      title => 'Type',          width => '10%',   align => 'left'                                     },
-      { key => 'status',    title => 'Status',        width => '10%',   align => 'left'                                     },
       { key => 'name',      title => 'Source',        width => '30%',   align => 'left',    sort => 'html', class => 'wrap' },
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },
       { key => 'assembly',  title => 'Assembly',      width => '15%',   align => 'left',    sort => 'html'                  },
@@ -207,24 +202,6 @@ sub _no_icon {
   return '';
 }
 
-sub _add_buttons {
-### Buttons for applying methods to all selected files
-  my $self    = shift;
-  my $hub     = $self->hub;
-
-  my $html = '<div class="ff-inline tool_buttons"><span class="button-label">Update selected</span>: ';
-
-  my @buttons = qw(enable disable delete);
-
-  foreach (@buttons) {
-    $html .= sprintf '<input type="submit" name="%s_button" value="%s" class="%s fbutton fbutton-icon modal_link">', 
-                        $_, ucfirst($_), $_;
-  }
-  $html .= '</div>';
-
-  return $html;
-}
-
 sub table_row {
   my ($self, $record_data, $sharers) = @_;
   my $hub          = $self->hub;
@@ -343,7 +320,7 @@ sub table_row {
     $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
   }
 
-  my $checkbox = sprintf '<input type="checkbox" class="_mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
+  my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 
   return {
     check   => $checkbox,
