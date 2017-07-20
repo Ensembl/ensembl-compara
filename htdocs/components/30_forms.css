@@ -214,6 +214,13 @@ body.ie6 .ff-inline input.fbutton {
   font-weight:bold;
 }
 
+.ff-inline input.fbutton-icon {
+  height: 22px!important;
+  font-size:14px;
+  font-weight:normal;
+  padding-left: 29px;
+}
+
 .ff-checklist {
   margin-right: 10px;
 }

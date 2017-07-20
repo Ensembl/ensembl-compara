@@ -67,7 +67,7 @@ sub content {
     my $data_elsewhere  = 0;
     my %other_servers;
 
-    #$html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+    $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
     $html .= $self->_add_buttons;
 
     #my $checkbox = '<input type="checkbox" class="choose_all" value="all" />';
@@ -137,7 +137,7 @@ sub content {
       $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
 
-    #$html .= '</form></div>';
+    $html .= '</form></div>';
 
     if ($data_elsewhere) {
       my $message;
@@ -212,13 +212,13 @@ sub _add_buttons {
   my $self    = shift;
   my $hub     = $self->hub;
 
-  my $html = '<div class="tool_buttons"><span class="button-label">Update selected</span>: ';
+  my $html = '<div class="ff-inline tool_buttons"><span class="button-label">Update selected</span>: ';
 
   my @buttons = qw(enable disable delete);
 
   foreach (@buttons) {
-    $html .= sprintf '<a href="" class="%s _mass_update button inline-button modal_link">%s</a>', 
-                        $_, ucfirst($_);
+    $html .= sprintf '<input type="submit" name="%s_button" value="%s" class="%s fbutton fbutton-icon modal_link">', 
+                        $_, ucfirst($_), $_;
   }
   $html .= '</div>';
 
