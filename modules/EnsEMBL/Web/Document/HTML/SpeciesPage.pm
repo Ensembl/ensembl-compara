@@ -44,8 +44,6 @@ sub render {
   my %species;
 
   foreach my $sp (@valid_species) {
-    next if ($species_defs->get_config($sp, 'STRAIN_COLLECTION') 
-              && $species_defs->get_config($sp, 'SPECIES_STRAIN') !~ /reference/);
     (my $genebuild = $hub->species_defs->get_config($sp, 'GENEBUILD_METHOD')) =~ s/_/ /g;
     my $genebuild_helptip = glossary_helptip($hub, ucfirst $genebuild);
     my $info    = {
@@ -98,7 +96,7 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = "<h3>$sitename Species</h3>";
+  my $html = "<h3>Available genomes</h3>";
 
   if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
     ## Hardcode this because the version is actually updated when the site is upgraded
