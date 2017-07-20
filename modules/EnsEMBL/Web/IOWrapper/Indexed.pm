@@ -45,13 +45,7 @@ sub open {
 
   my $wrapper;
   if (dynamic_use($class, 1)) {
-    ## Tabix-indexed files: Tabix will want to write the downloaded index file to 
-    ## the current working directory. By default this is '/'
-    my $time    = date_format(time(), '%y-%m-%d');
-    my $tmp_dir = $SiteDefs::ENSEMBL_USERDATA_DIR."/temporary/tabix/$time/";
-    make_path($tmp_dir);
-
-    my $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $url, 'tmp_dir' => $tmp_dir);
+    my $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $url);
 
     if ($parser) {
 
