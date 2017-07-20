@@ -41,6 +41,7 @@
 .tool_buttons a.disabled { background-color: [[BUTTON_DISABLED]] !important; border: none !important; outline: none !important; cursor: default;  }
 .tool_buttons .group.disabled { background-color: [[BUTTON_GROUP_BG]]; padding: 0; }
 .tool_buttons a.inline-button { display: inline-block; padding: 4px 6px 4px 29px!important; }
+.tool_buttons span.button-label {display: inline-block;margin-bottom:6px;font-size:16px;font-weight:bold;}
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }

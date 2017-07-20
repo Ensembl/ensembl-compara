@@ -197,13 +197,16 @@ sub md_delete_remote {
 sub md_mass_update {
 ### Catchall method for enable/disable/delete buttons
   my $self = shift;
-  if ($self->hub->param('enable_button')) {
+
+  my $form_action = $self->hub->param('form_action');
+
+  if ($form_action eq 'enable') {
     $self->enable_files;
   }
-  elsif ($self->hub->param('disable_button')) {
+  elsif ($form_action eq 'disable') {
     $self->disable_files;
   }
-  elsif ($self->hub->param('delete_button')) {
+  elsif ($form_action eq 'delete') {
     $self->delete_files;
   }
 }
@@ -213,7 +216,7 @@ sub md_mass_update {
 sub delete_files {
   my $self = shift;
   my @files = $self->hub->param('files');
-  #warn ">>> DELETING FILES @files";
+  warn ">>> DELETING FILES @files";
   foreach (@files) {
     my ($source, $code, $id) = split('_', $_);
     if ($source eq 'upload') {

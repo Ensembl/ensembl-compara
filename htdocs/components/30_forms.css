@@ -207,13 +207,6 @@ body.ie6 .ff-inline input.fbutton {
   height: 20px;
 }
 
-.ff-inline span.button-label {
-  display: inline-block;
-  margin-bottom:6px;
-  font-size:16px;
-  font-weight:bold;
-}
-
 .ff-checklist {
   margin-right: 10px;
 }

@@ -217,8 +217,9 @@ sub _add_buttons {
   my @buttons = qw(enable disable delete);
 
   foreach (@buttons) {
-    $html .= sprintf '<a href="" class="%s _mass_update button inline-button modal_link">%s</a>', 
-                        $_, ucfirst($_);
+    my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'form_action' => $_});
+    $html .= sprintf '<a href="%s" class="%s _mass_update button inline-button modal_link">%s</a>', 
+                        $url, $_, ucfirst($_);
   }
   $html .= '</div>';
 
