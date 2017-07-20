@@ -72,7 +72,7 @@
   },
   {  
     "key":"rodents",
-    "display_name":"Rodents",
+    "display_name":"Rodents & Lagomorphs",
     "is_internal_node":"true",
     "is_submenu":"true",
     "child_nodes":[  
