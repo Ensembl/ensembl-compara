@@ -152,6 +152,18 @@ sub feature_content {
         label_html => $external_url
       });
     }
+  }  
+
+  $self->add_entry({
+    type  => 'Class',
+    label => $class,
+  });
+
+  if (scalar @allele_types) {
+    $self->add_entry({
+      type  => 'Allele type' . (scalar @allele_types > 1 ? 's' : ''),
+      label => join(', ', @allele_types),
+    });
   }
 
   if ($is_breakpoint) {
@@ -159,19 +171,14 @@ sub feature_content {
       type       => 'Location',
       label_html => $self->get_locations($sv_id),
     });
-	} else {
+  } else {
     $self->add_entry({
       type        => 'Location',
       label       => sprintf('%s: %s', $self->neat_sr_name($feature->slice->coord_system->name, $seq_region), $position),
       link        => $location_link,
       link_class  => $location_link_class
     });
-	}
-  
-  $self->add_entry({
-    type  => 'Source',
-    label => $variation->source_name,
-  });
+  }
   
   if (defined $study_name) {
     $self->add_entry({
@@ -186,18 +193,6 @@ sub feature_content {
     label => $description,
     link  => $pubmed_link, 
   });
-  
-  $self->add_entry({
-    type  => 'Class',
-    label => $class,
-  });
-  
-  if (scalar @allele_types) {
-    $self->add_entry({
-      type  => 'Allele type' . (scalar @allele_types > 1 ? 's' : ''),
-      label => join(', ', @allele_types),
-    });
-  }
   
   if ($vstatus && ref $vstatus eq 'ARRAY' && $vstatus->[0]) {
     $self->add_entry({
