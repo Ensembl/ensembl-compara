@@ -813,10 +813,10 @@ sub get_shareable_settings {
   my (%share_data, %done_record);
 
   foreach my $data_menu (@data_menus) {
-    my $linked_record = $data_menu->get_data('linked_record');
+    my $parent_linked_record = $data_menu->get_data('linked_record');
 
     foreach my $track (@{$data_menu->get_all_nodes}) {
-      $linked_record ||= $track->get_data('linked_record');
+      my $linked_record = $track->get_data('linked_record') || $parent_linked_record;
 
       next unless $linked_record;
 
