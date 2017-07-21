@@ -916,7 +916,6 @@ sub check_for_missing_species {
 
 sub show_warnings {
   my ($self, $messages) = @_;
-
   return '' unless defined $messages;
 
   my $html;
