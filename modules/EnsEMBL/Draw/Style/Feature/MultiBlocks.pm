@@ -71,9 +71,11 @@ sub draw_feature {
   if ($feature->{'extra_blocks'} && $self->track_config->get('display_structure')) {
     foreach my $element (@{$feature->{'extra_blocks'}}) {
       $composite->push($self->Rect({
-                                    x         => $element->{'start'} - 1,
-                                    width     => $element->{'end'} - $element->{'start'} + 1,
-                                    colour    => $element->{'colour'},
+                                    x             => $element->{'start'} - 1,
+                                    width         => $element->{'end'} - $element->{'start'} + 1,
+                                    colour        => $element->{'colour'},
+                                    pattern       => $element->{'pattern'},
+                                    patterncolour => $element->{'patterncolour'},
                                     %defaults
                                     }
       ));

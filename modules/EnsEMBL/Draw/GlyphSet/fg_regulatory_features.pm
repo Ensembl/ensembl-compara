@@ -114,9 +114,16 @@ sub get_data {
       }
     }
 
-    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $colour);
+    ## Add flanks and motif features
+    my $appearance = {'colour' => $colour};
+    if ($pattern) {
+      $appearance->{'pattern'}        = $pattern;
+      $appearance->{'patterncolour'}  = $patterncolour;
+    }
+    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $appearance);
+
+    ## Extra legend items as required
     $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
-    ## Add motif box  at end of feature types
     $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
 
     my $params = {
@@ -158,7 +165,7 @@ sub get_data {
 }
 
 sub get_structure {
-  my ($self, $f, $type, $activity, $colour) = @_;
+  my ($self, $f, $type, $activity, $appearance) = @_;
 
   my $hub = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
@@ -175,11 +182,10 @@ sub get_structure {
   my $bound_end = pop @$loci;
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
-  my $flank_colour = $colour;
   my $has_flanking = 0;;
   my $flank_different = 0;
-  if ($type eq 'promoter' && $activity eq 'active') {
-    $flank_colour = $self->my_colour('promoter_flanking');
+  if ($type eq 'promoter') {
+    $appearance->{'colour'} = $self->my_colour('promoter_flanking');
     $flank_different = 1;
   }
 
@@ -190,15 +196,14 @@ sub get_structure {
     push @$extra_blocks, {
       start  => $bound_start,
       end    => $start,
-      colour => $flank_colour,
+      %$appearance
     },{
       start  => $end,
       end    => $bound_end,
-      colour => $flank_colour,
+      %$appearance
     };
     $has_flanking = 1;
   }
-  $flank_colour = undef unless ($has_flanking && $flank_different);
 
   # Motif features
   my $has_motifs = 0;
@@ -212,7 +217,9 @@ sub get_structure {
       $has_motifs = 1;
     }
   }
-  
+ 
+  ## Need to pass colour back for use in legend 
+  my $flank_colour = ($has_flanking && $flank_different) ? $appearance->{'colour'} : undef;
   return ($extra_blocks, $flank_colour, $has_motifs);
 }
 
