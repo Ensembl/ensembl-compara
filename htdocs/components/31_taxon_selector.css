@@ -142,13 +142,14 @@ div.taxon_selector_list .selected-sp-img img{
 div.taxon_selector_list li span.remove {
   cursor: pointer;
   font-size: 18px;
-  margin: 12px 12px;
+  padding: 12px 12px;
   right: 0;
   color: #828181;
   font-weight: 100;
 }
 div.taxon_selector_list li span.remove:hover {
-  color: coral;  
+  background-color: coral;
+  color: white;
 }
 /*
 div.taxon_selector_hint         { margin: 0.25em 0.25em 0.5em 0.25em; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
