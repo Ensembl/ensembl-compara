@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
+Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
         ref_species (if not homo_sapiens)
         
     #5. Run init_pipeline.pl script: eg for human self alignments
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -67,7 +67,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf;
 
 use strict;
 use warnings;

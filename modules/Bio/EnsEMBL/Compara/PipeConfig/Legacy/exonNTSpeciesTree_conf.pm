@@ -17,10 +17,10 @@ limitations under the License.
 
 =cut
 
-# init_pipeline.pl NTSpeciesTree_conf.pm msa_mlssid_list --msa_mlssid_list [619,641]
+# init_pipeline.pl exonNTSpeciesTree_conf
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::NTSpeciesTree_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::exonNTSpeciesTree_conf;
 
 use strict;
 use warnings;
@@ -34,13 +34,17 @@ sub default_options {
  
  return {
   %{$self->SUPER::default_options},
-  'pipeline_name' => 'MakeNTSpeciesTree',
-  'db_suffix' => '_NTspeciesTree_',
+  'pipeline_name' => 'MakeNTSpeciesTree2',
+  'db_suffix' => '_new_ExonSpeciesTree_',
 # previous release db with alignments
   'previous_release_version' => '74',
   'core_db_version' => 74,
-# list of method_link_species_set_id(s) for the multiple sequence alignments to generate the trees from 
+# method_link_species_set_id(s) for the multiple sequence alignments to generate the trees 
   'msa_mlssid_csv_string' => '651,664,667,660',
+# and a hash with assoiciated reference species
+  'msa_mlssid_and_reference_species' => { 651 => 90,  664 => 142, 667 => 37, 660 => 90, }, 
+# coord system name to find genes (applies to all the species)
+  'coord_system_name' => 'chromosome',
   'phylofit_exe' => '/software/ensembl/compara/phast/phyloFit', 
   'species_tree_bl' => '~/src/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 # dummy mlss and mlss_id value for the stored species_tree_blength.nh
@@ -58,9 +62,9 @@ sub default_options {
   'core_dbs' => [
    {   
      -driver => 'mysql',
-     -user => 'ensro',
-     -port => 3306,
-     -host => 'ens-livemirror',
+     -user => 'anonymous',
+     -port => 5306,
+     -host => 'ensembldb.ensembl.org',
      -dbname => '', 
      -db_version => $self->o('core_db_version'),
    },  
@@ -76,23 +80,27 @@ sub default_options {
 # compara db with the alignments (usually the previous release db)
   'previous_compara_db' => {
     -driver  => 'mysql',
-    -host    => 'ens-livemirror',
+    -host    => 'compara3',
     -species => 'Multi',
     -port    => '3306',
     -user    => 'ensro',
-    -dbname  => 'ensembl_compara_74',
+    -dbname  => 'mp12_ensembl_compara_74',
   },
  };
 }   
   
+
 sub pipeline_wide_parameters {
  my $self = shift @_;
  return {
   %{$self->SUPER::pipeline_wide_parameters},
   
   'previous_compara_db' => $self->o('previous_compara_db'),
+  'msa_mlssid_and_reference_species' => $self->o('msa_mlssid_and_reference_species'),
   'msa_mlssid_csv_string' => $self->o('msa_mlssid_csv_string'),
   'dummy_mlss_value' => $self->o('dummy_mlss_value'),
+  'core_dbs' => $self->o('core_dbs'),
+  'coord_system_name' => $self->o('coord_system_name'),
  };
 }
 sub resource_classes {
@@ -102,7 +110,6 @@ sub resource_classes {
   
      'mem3600' => {'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
      'mem5600' => {'LSF' => '-C0 -M5600 -R"select[mem>5600] rusage[mem=5600]"' },
-     'mem6600max' => {'LSF' => '-C0 -M6600 -R"select[mem>6600] rusage[mem=6600]" -W01:30' },
     };  
 }
 
@@ -145,7 +152,10 @@ sub pipeline_analyses {
         'WHERE ss.genome_db_id IS NULL',
        ],
     },
-    -flow_into => 'mlss_factory',
+    -flow_into =>  {
+     '2->A' => [ 'mlss_factory' ],
+     'A->1' => [ 'merge_msa_trees' ],
+    },
    },
 
    { 
@@ -156,59 +166,48 @@ sub pipeline_analyses {
     },
     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     -flow_into => { 
-      '2->A' => [ 'phylofit_factory' ],
-      'A->1' => [ 'merge_msa_trees' ],
+      2 => [ 'slice_factory' ],
     },  
     -meadow_type=> 'LOCAL',
   },
-
-  {
-   -logic_name => 'phylofit_factory',
-   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::PhylofitFactory',
-   -parameters => {
-     'previous_compara_db' => $self->o('previous_compara_db'),
-   },
-   -flow_into => { 
-    '2' => [ 'run_phylofit' ],
-   },  
-   -max_retry_count => 1,
-   -rc_name => 'mem3600',
-  },
   
   {
-   -logic_name => 'run_phylofit',
-   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::RunPhylofit',
-   -parameters => {
-    'phylofit_exe' => $self->o('phylofit_exe'),
-    'previous_compara_db' => $self->o('previous_compara_db'),
-    'core_dbs' => $self->o('core_dbs'),
+   -logic_name => 'slice_factory',
+   -parameters => {},
+   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::SliceFactory',
+   -flow_into => {
+    2 => [ 'gene_factory' ],
    },
-   -failed_job_tolerance => 90,
-   -hive_capacity => 60,
-   -batch_size => 10,
-   -rc_name => 'mem6600max',
-   -max_retry_count => 1,
+  },
+
+  {
+   -logic_name => 'gene_factory',
+   -parameters => {},
+   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::GeneFactory',
+   -flow_into => {
+     2 => [ 'exon_phylofit_factory' ]
+   },
+  },
+
+  {
+   -logic_name => 'exon_phylofit_factory',
+   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::ExonPhylofitFactory',
+   -parameters => {
+     'previous_compara_db' => $self->o('previous_compara_db'),
+     'phylofit_exe' => $self->o('phylofit_exe'),
+   },
    -flow_into => {
     '2' => { '?accu_name=phylofit_trees&accu_address={tree_mlss_id}{block_id}&accu_input_variable=phylofit_tree_string' => INPUT_PLUS(), },
    },
+   -hive_capacity => 20,
+   -batch_size => 10,
+   -max_retry_count => 1,
+   -rc_name => 'mem3600',
   },
  
-#  {
-#   -logic_name => 'run_phylofit_more_mem',
-#   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::RunPhylofit',
-#   -parameters => {
-#    'phylofit_exe' => $self->o('phylofit_exe'),
-#    'previous_compara_db' => $self->o('previous_compara_db'),
-#    'core_dbs' => $self->o('core_dbs'),
-#   },
-#   -max_retry_count => 1,
-#   -rc_name => 'mem5600',
-#   -hive_capacity => 50, 
-#  },
-
   {
    -logic_name => 'merge_msa_trees',
-   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeMSATrees',
+   -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeEMSAtrees',
    -parameters => {'species_tree_bl' => $self->o('species_tree_bl'),},
    -max_retry_count => 1,
   },

@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::HmmerConstrainedElements_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::HmmerConstrainedElements_conf;
 
 use strict;
 use warnings;

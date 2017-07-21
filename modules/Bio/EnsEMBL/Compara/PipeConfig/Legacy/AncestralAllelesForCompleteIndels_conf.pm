@@ -21,11 +21,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::AncestralAllelesForCompleteIndels_conf
+Bio::EnsEMBL::Compara::PipeConfig::Legacy::AncestralAllelesForCompleteIndels_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::AncestralAllelesForCompleteIndels_conf -password <your_password> -mlss_id <alignment method_link_species_set_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::AncestralAllelesForCompleteIndels_conf -password <your_password> -mlss_id <alignment method_link_species_set_id>
 
 =head1 DESCRIPTION  
 
@@ -84,7 +84,7 @@ Questions may also be sent to the Ensembl help desk at
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::AncestralAllelesForCompleteIndels_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::AncestralAllelesForCompleteIndels_conf;
 
 use strict;
 use warnings;
