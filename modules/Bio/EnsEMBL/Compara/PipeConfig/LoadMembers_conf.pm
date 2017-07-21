@@ -96,9 +96,9 @@ sub default_options {
         'store_others'              => 1,
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   3,
-        'hc_capacity'               => 150,
-        'loadmembers_capacity'      =>  30,
+        #'reuse_capacity'            =>   3,
+        #'hc_capacity'               => 150,
+        #'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -109,50 +109,31 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'  => 4522,
+        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        #'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
         'master_db_is_missing_dnafrags' => 0,
-
-        # Ensembl-specific databases
-        'staging_loc' => {
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 90,
-        },
-
-        'livemirror_loc' => {
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 89,
-        },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
         #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         #'curr_core_registry'        => "registry.conf",
         'curr_core_registry'        => undef,
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         #'prev_core_sources_locs'   => [ ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+        #'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
 
         # Production database (for the biotypes)
         #'production_db_url'     => 'mysql://anonymous@ensembldb.ensembl.org:5306/ensembl_production_89',
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+        #'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     };
 }
 
