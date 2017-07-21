@@ -117,7 +117,7 @@ sub content {
     $html .= qq{
       <h3>
         Summary of orthologues of this gene
-        <a title="Click to show or hide the table" rel="orthologues_summary_table" href="#" class="toggle_link toggle icon_only open _slide_toggle"></a>
+        <a title="Click to show or hide the table" rel="orthologues_summary_table" href="#" class="toggle_link toggle new_icon open _slide_toggle">Hide</a>
       </h3>
       <div class="toggleable orthologues_summary_table">
         <p class="space-below">Click on 'Show details' to display the orthologues for one or more groups of species. Alternatively, click on 'Configure this page' to choose a custom list of species.</p>
@@ -155,7 +155,7 @@ sub content {
   if ($species_sets) {
     $html .= '<h3>
                 Selected orthologues
-                <a title="Click to show or hide the table" rel="selected_orthologues_table" href="#" class="toggle_link toggle icon_only open _slide_toggle"></a>
+                <a title="Click to show or hide the table" rel="selected_orthologues_table" href="#" class="toggle_link toggle new_icon open _slide_toggle">Hide</a>
               </h3>';
   }
   

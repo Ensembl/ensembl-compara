@@ -375,6 +375,25 @@ sub hover_label_tabs {
     push @contents, qq(<div class="_hl_tab hl-tab config"><p>Change track style:</p><ul>$renderers</ul></div>);
   }
 
+  if ($label->{'scaleable'}) {
+    my $url     = $label->{'scaleable'};
+    my $y_min   = $label->{'y_min'} || 0;
+    my $y_max   = $label->{'y_max'};
+    my $config  = $label->{'component'};
+    my $track   = $label->{'track'};
+    my $axis_form = qq(<form action="$url" method="POST" class="freeform graph_config">
+<p><label for="y_min">Minimum: <input name="y_min" type="text" value="$y_min" class="small" /></p>
+<p><label for="y_max">Maximum: <input name="y_max" type="text" value="$y_max" class="small" /></p>
+<p>(Tip: set both fields to blank to use the full range of values)</p>
+<input type="hidden" name="config" value="$config">
+<input type="hidden" name="track" value="$track">
+<input type="submit" value="Update" class="small button" />
+</form>);
+
+    push @buttons, qq(<div class="_hl_icon hl-icon hl-icon-scale"></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Change Y axis limits:</p>$axis_form</div>);
+  }
+
   if ($label->{'conf_url'}) {
     push @buttons, qq(<div class="_hl_icon hl-icon hl-icon-link"></div>);
     push @contents, qq(<div class="_hl_tab hl-tab"><p>URL to turn this track on</p><p><input class="_copy_url" type="text" value="$label->{'conf_url'}" /></p><p>Copy the above url to force this track to be turned on</p></div>);

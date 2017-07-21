@@ -49,22 +49,33 @@ sub init {
 sub render_histogram {
   my $self = shift;
   my $features = $self->get_data->[0]{'features'};
-  return scalar @{$features||[]} > 200 ? $self->render_density_bar : $self->render_simple;
+  if ($features) {
+    return scalar @$features > 200 ? $self->render_density_bar : $self->render_simple;
+  }
+  else {
+    $self->no_features;
+  }
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->get_data->[0]{'features'}||[]} > 200) {
-    $self->too_many_features;
-    return undef;
+  my $features = $self->get_data->[0]{'features'};
+  if ($features) {
+    if (scalar @$features > 200) {
+      $self->too_many_features;
+      return undef;
+    }
+    else {
+      ## Convert raw features into correct data format 
+      $self->{'my_config'}->set('height', 12);
+      $self->{'my_config'}->set('default_strand', 1);
+      $self->{'my_config'}->set('drawing_style', ['Feature']);
+      $self->{'data'}[0]{'features'} = $self->consensus_features;
+      $self->draw_features;
+    }
   }
   else {
-    ## Convert raw features into correct data format 
-    $self->{'my_config'}->set('height', 12);
-    $self->{'my_config'}->set('default_strand', 1);
-    $self->{'my_config'}->set('drawing_style', ['Feature']);
-    $self->{'data'}[0]{'features'} = $self->consensus_features;
-    $self->draw_features;
+    $self->no_features;
   }
 }
 
@@ -75,14 +86,19 @@ sub render_density_bar {
   $self->{'my_config'}->set('integer_score', 1);
   my $colours = $self->species_defs->colour('variation');
   $self->{'my_config'}->set('colour', $colours->{'default'}->{'default'});
-  #$self->{'data'}[0]{'metadata'}{'colour'} = $colour;
 
   ## Convert raw features into correct data format 
   my $density_features = $self->density_features;
-  $self->{'data'}[0]{'features'} = $density_features;
-  $self->{'my_config'}->set('max_score', max(@$density_features));
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
-  $self->_render_aggregate;
+  if ($density_features) {
+    $self->{'data'}[0]{'features'} = $density_features;
+    $self->{'my_config'}->set('max_score', max(@$density_features));
+    $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+    $self->_render_aggregate;
+  }
+  else {
+    $self->no_features;
+  }
+
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -91,8 +107,9 @@ sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
   $self->{'my_config'}->set('show_subtitle', 1);
+  $self->{'data'} ||= [];
 
-  unless ($self->{'data'} && scalar @{$self->{'data'}}) {
+  unless (scalar @{$self->{'data'}}) {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
@@ -106,6 +123,7 @@ sub get_data {
     my $consensus;
     foreach my $seq_region_name (@$seq_region_names) {
       $consensus = eval { $self->vcf_adaptor->fetch_variations($seq_region_name, $slice->start, $slice->end); };
+      warn $@ if $@;
       return [] if $@;
       last if $consensus and @$consensus;
     } 
@@ -261,14 +279,17 @@ sub density_features {
   my $length   = $slice->length;
   my $im_width = $self->{'config'}->image_width;
   my $divlen   = $length / $im_width;
-  $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
   $self->{'data'}[0]{'metadata'}{'unit'} = $divlen;
-  my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}};
+  ## Prepopulate bins, as histogram requires data at every point
+  my %density  = map {$_, 0} (1..$im_width);
+  foreach (@{$self->{'data'}[0]{'features'}}) {
+    my $key = ($_->{'POS'} - $start) / $divlen;
+    $density{int(($_->{'POS'} - $start) / $divlen)}++;
+  }
 
   my $density_features = [];
-  foreach (sort {$a <=> $b} keys %$density) {
-    push @$density_features, $density->{$_};
+  foreach (sort {$a <=> $b} keys %density) {
+    push @$density_features, $density{$_};
   }
   return $density_features;
 }
@@ -283,7 +304,7 @@ sub vcf_adaptor {
        $url    =~ s/###CHR###/$region/g;
   }
 
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'config'}->hub);
 }
 
 1;

@@ -103,7 +103,7 @@ sub content {
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
-          s1     => $spp,
+          s1     => $spp . '--' . $self->object->seq_region_name,
           r      => undef,
           config => 'opt_join_genes_bottom=on',
         })

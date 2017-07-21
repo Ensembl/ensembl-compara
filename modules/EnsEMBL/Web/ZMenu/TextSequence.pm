@@ -96,14 +96,16 @@ sub variation_content {
   
   $self->caption(sprintf('%s: <a href="%s">%s</a>', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $hub->url({ action => 'Explore', %url_params }), $v), 1);
   
-  my @entries = ({ type => 'Position', label => $position });
-  
+  my @entries = ({ type => 'Class', label => $feature->var_class });
+
+  push @entries, { type => 'Location', label => $position };
+ 
   if (scalar @failed) {
     push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };
     push @entries, { type => '',              label_html => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
   }
-  
-  push @entries, { type => 'LRG position', label => $lrg_position } if $lrg_position;
+
+  push @entries, { type => 'LRG location', label => $lrg_position } if $lrg_position;
   push @entries, { type => 'Alleles',      label => $allele };
   
   if ($self->{'transcript'}) {

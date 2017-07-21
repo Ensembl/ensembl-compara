@@ -55,7 +55,7 @@ sub munge_rest {
       { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
       $url =~ s/<<species>>/$self->species/ge;
       my $response = read_file($url,{
-        proxy => $self->full_tree->{'ENSEMBL_WWW_PROXY'},
+        proxy => $SiteDefs::HTTP_PROXY,
         nice => 1,
         no_exception => 1,
       });
@@ -747,7 +747,7 @@ sub _summarise_funcgen_db {
   my $c_aref =  $dbh->selectall_arrayref(
     'select
       distinct epigenome.name, epigenome.epigenome_id, 
-                epigenome.display_label
+                epigenome.display_label, epigenome.description
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
@@ -758,6 +758,7 @@ sub _summarise_funcgen_db {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_ids'}{$cell_type_key} = 1;
   }
@@ -765,7 +766,7 @@ sub _summarise_funcgen_db {
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.name, epigenome.epigenome_id, epigenome.display_label
+        epigenome.name, epigenome.epigenome_id, epigenome.display_label, epigenome.description
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -778,6 +779,7 @@ sub _summarise_funcgen_db {
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
   }
   
@@ -814,9 +816,10 @@ sub _summarise_funcgen_db {
   my $res_cell = $dbh->selectall_arrayref(
       qq(
 	        select 
-	          logic_name, 
+	          logic_name,
 	          epigenome_id,
 	          epigenome.display_label,
+            epigenome.description,
 	          epigenome.name,
             displayable,
             segmentation_file.name
@@ -828,18 +831,19 @@ sub _summarise_funcgen_db {
   );
 
   foreach my $C (@$res_cell) {
-    my $key = $C->[0].':'.$C->[3];
+    my $key = $C->[0].':'.$C->[4];
     my $value = {
-      name => qq($C->[2] Regulatory Segmentation),
-      desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">segmentation state analysis</a>"),
-      disp => $C->[4],
+      name => qq($C->[2]),
+      desc => qq(Genome segmentation in $C->[2]),
+      epi_desc => qq($C->[3]),
+      disp => $C->[5],
       'web' => {
           celltype      => $C->[1],
           celltypename  => $C->[2],
           'colourset'   => 'fg_segmentation_features',
           'display'     => 'off',
           'key'         => "seg_$key",
-          'seg_name'    => $C->[5],
+          'seg_name'    => $C->[6],
           'type'        => 'fg_segmentation_features'
       },
       count => 1,
@@ -1094,7 +1098,7 @@ sub _summarise_compara_db {
       where mls.species_set_id = ss.species_set_id
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
-        and ml.type LIKE "LASTZ_PATCH"
+        and ml.class = "GenomicAlignBlock.pairwise_alignment"
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
@@ -1296,7 +1300,7 @@ sub _summarise_compara_alignments {
   
   # get details of alignments
   my @where;
-  push @where,"is_reference = 0" unless $vega;
+  # push @where,"is_reference = 0" unless $vega;
   if(@method_link_species_set_ids) {
     my $mlss = join(',',@method_link_species_set_ids);
     push @where,"ga_ref.method_link_species_set_id in ($mlss)";

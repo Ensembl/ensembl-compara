@@ -28,8 +28,9 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift;
   my $hub    = $self->hub;
+  my $collapsed = ($hub->param('display') && $hub->param('display') eq 'collapsed');
   
-  if ($self->click_location) {
+  if ($self->click_location && !$collapsed) {
     my $object = $self->object;
     push @{$self->{'features'}}, @{EnsEMBL::Web::ZMenu::Transcript->new($hub, $self->new_object('Transcript', $_, $object->__data))->{'features'}} for @{$object->Obj->get_all_Transcripts};
   } else {

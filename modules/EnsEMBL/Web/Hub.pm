@@ -141,11 +141,12 @@ sub init_cache {
 sub init_input {
   ## Initialise CGI input
   my $self  = shift;
-  my $input = CGI->new;
 
-  $self->{'input'}        = $input;
   $CGI::POST_MAX          = $self->controller->upload_size_limit if $self->controller; # Set max upload size
   $CGI::LIST_CONTEXT_WARN = 2; # Hack to stop perl warning about 'param' method being used in list context
+
+  my $input = CGI->new;
+  $self->{'input'}        = $input;
 }
 
 sub init_session {
@@ -167,7 +168,7 @@ sub session_id {
 
 sub web_proxy {
   ## Gets the http and https proxy address
-  return shift->species_defs->ENSEMBL_WWW_PROXY || '';
+  return $SiteDefs::HTTP_PROXY || '';
 }
 
 sub image_width {

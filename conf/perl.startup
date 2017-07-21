@@ -172,19 +172,15 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     }
   }
 
-  if ($conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
-    my $i = 0;
-
-    $extra .= '
-
-==============================================================================
-
- Species' . 
-    join("\n        ", 
-      map { sprintf '%4d  %-6.6s %-32.32s %s', ++$i, $conf->get_config($_, 'SPECIES_RELEASE_VERSION'), $_, $conf->get_config($_, 'SPECIES_COMMON_NAME') } @{$conf->multi_hash->{'ENSEMBL_DATASETS'}}
-    );
+  # print extra info if required
+  if ($SiteDefs::ENSEMBL_STARTUP_VERBOSE) {
+    warn "==============================================================================
+ ENSEMBL_STARTUP_VERBOSE
+==============================================================================\n";
+    SiteDefs->verbose_params;
+    $conf->verbose_params;
   }
- 
+
   # Timestamp file for last start
   open(STARTED,'>',"${SiteDefs::ENSEMBL_LOGDIR}/httpd_started");
   close STARTED;

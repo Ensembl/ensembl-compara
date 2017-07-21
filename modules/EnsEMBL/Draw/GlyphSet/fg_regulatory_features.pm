@@ -23,42 +23,44 @@ package EnsEMBL::Draw::GlyphSet::fg_regulatory_features;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet_simple);
+use Role::Tiny::With;
+with 'EnsEMBL::Draw::Role::Default';
 
-sub my_label { return sprintf 'Reg. Features from cell type %s. Select another using button above?', $_[0]->my_config('cell_line'); }
-sub my_empty_label { return sprintf('No Reg. Features from cell type %s. Select another using button above?', $_[0]->my_config('cell_line')); }
-sub class    { return 'group'; }
+use base qw(EnsEMBL::Draw::GlyphSet);
 
-sub features {
+sub render_normal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Feature::MultiBlocks']);
+  $self->{'my_config'}->set('display_structure', 1);
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('height', 12);
+  my $data = $self->get_data;
+  $self->draw_features($data);
+}
+
+sub get_data {
   my $self    = shift;
   my $slice   = $self->{'container'}; 
-  my $db_type = $self->my_config('db_type') || 'funcgen';
-  my $fg_db;
 
+  ## First, work out if we can even get any data!
+  my $db_type = $self->my_config('db_type') || 'funcgen';
+  my $db;
   if (!$slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
-    
-    if (!$fg_db) {
+    $db = $slice->adaptor->db->get_db_adaptor($db_type);
+    if (!$db) {
       warn "Cannot connect to $db_type db";
       return [];
     }
   }
-  
-  return $self->fetch_features($fg_db);
-}
-
-sub fetch_features {
-  my ($self, $db) = @_;
-  my $cell_line = $self->my_config('cell_line');  
-  my $rfa       = $db->get_RegulatoryFeatureAdaptor; 
-  
+  my $rfa = $db->get_RegulatoryFeatureAdaptor; 
   if (!$rfa) {
     warn ("Cannot get get adaptors: $rfa");
     return [];
   }
-  
+ 
+  ## OK, looking good - fetch data from db 
+  my $cell_line = $self->my_config('cell_line');  
   my $config      = $self->{'config'};
-
   my $fsets;
   if ($cell_line) {
     my $fsa = $db->get_FeatureSetAdaptor;
@@ -69,42 +71,149 @@ sub fetch_features {
   }
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
 
-  my $rf_url        = $config->hub->param('rf');
-  my $counter       = 0;
-  
-  if ($rf_url) {
-    foreach (@$reg_feats) {
-      last if $_->stable_id eq $rf_url;
-      $counter++;
-    }
-    
-    if (exists $reg_feats->[$counter]) { 
-      unshift @$reg_feats, $reg_feats->[$counter];  # adding the matching regulatory features to the top of the array so that it is drawn first
-      splice @$reg_feats, $counter + 1, 1;          # and removing it where it was in the array (counter+1 since we add one more element above)
-    }
-  }
+  my $drawable        = []; 
+  my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};
+  my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || {};
+  foreach my $rf (@{$reg_feats||[]}) {
+    my ($type, $activity)  = $self->colour_key($rf);
 
-  if (scalar @{$reg_feats||[]}) {
-    my $legend_entries  = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || [];
-    my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || [];
-    foreach (@$reg_feats) {
-      my ($key, $is_activity) = $self->colour_key($_);
-      if ($is_activity) {
-        push @$activities, $key;
+    ## Create feature hash for drawing
+    my $text    = $self->my_colour($type,'text');
+
+    ## Determine colour and pattern
+    my $key     = $activity =~ /active/ ? $type : $activity;
+    my $colour  = $self->my_colour($key) || '#e1e1e1';
+    my ($pattern, $patterncolour, $bordercolour);
+    if ($activity eq 'inactive') {
+      $patterncolour  = 'white';
+      $pattern        = $self->{'container'}->length > 10000 ? 'hatch_thick' : 'hatch_thicker';
+    }
+    elsif ($activity eq 'na') {
+      $colour       = 'white';
+      $bordercolour = 'grey50';
+    }
+
+    ## Do legend colours and styles
+    unless ($text =~ /unknown/i) {
+      my $legend_params = {'colour' => $colour, 'border' => $bordercolour};
+      if ($activity eq 'active') {
+        $legend_params->{'legend'} = $text;
+        $entries->{$key} = $legend_params;
+      }
+      elsif ($activity eq 'inactive') { ## Only show one generic entry for all inactive features
+        $legend_params->{'stripe'}  = $patterncolour;
+        $legend_params->{'colour'}  = 'grey80';
+        $legend_params->{'legend'}  = 'Activity in epigenome: Inactive';
+        $activities->{'inactive'}   = $legend_params;
       }
       else {
-        push @$legend_entries, $key;
+        my $label = 'Activity in epigenome: ';
+        $label .= $_ eq 'na' ? 'Insufficient evidence' : ucfirst($activity);
+        $legend_params->{'legend'} = $label; 
+        $activities->{$activity} = $legend_params;
       }
     }
-    push @$legend_entries, 'promoter_flanking' if scalar @$legend_entries;
 
-    $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
-    $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
-    $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $legend_entries;
-    $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
+    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $colour);
+    $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
+    ## Add motif box  at end of feature types
+    $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+
+    my $params = {
+      start         => $rf->start,
+      end           => $rf->end,
+      label         => $text,
+      href          => $self->href($rf),
+      extra_blocks  => $extra_blocks,
+    };
+    if ($pattern || $bordercolour) {
+      $params->{'pattern'}        = $pattern;
+      $params->{'patterncolour'}  = $patterncolour;
+      $params->{'colour'}         = $colour;
+      $params->{'bordercolour'}   = $bordercolour;
+    }
+    else {
+      $params->{'colour'} = $colour;
+    }
+
+    push @$drawable, $params;
   }
 
-  return $reg_feats;
+
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'priority'}  ||= 1020;
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'legend'}    ||= [];
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $entries;
+  $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
+
+  #use Data::Dumper; warn Dumper($drawable);
+  return [{
+    features => $drawable,
+    metadata => {
+      force_strand => '-1',
+      default_strand => 1,
+      omit_feature_links => 1,
+      display => 'normal'
+    }
+  }];
+}
+
+sub get_structure {
+  my ($self, $f, $type, $activity, $colour) = @_;
+
+  my $hub = $self->{'config'}{'hub'};
+  my $epigenome = $self->{'my_config'}->get('epigenome') || '';
+  my $loci = [ map { $_->{'locus'} }
+     @{$hub->get_query('GlyphSet::RFUnderlying')->go($self,{
+      species => $self->{'config'}{'species'},
+      type => 'funcgen',
+      epigenome => $epigenome,
+      feature => $f,
+    })}
+  ];
+  return if $@ || !$loci || !scalar(@$loci);
+
+  my $bound_end = pop @$loci;
+  my $end       = pop @$loci;
+  my ($bound_start, $start, @mf_loci) = @$loci;
+  my $flank_colour = $colour;
+  my $has_flanking = 0;;
+  my $flank_different = 0;
+  if ($type eq 'promoter' && $activity eq 'active') {
+    $flank_colour = $self->my_colour('promoter_flanking');
+    $flank_different = 1;
+  }
+
+  my $extra_blocks = [];
+  if ($bound_start < $start || $bound_end > $end) {
+    # Bound start/ends
+    $bound_start = 0 if $bound_start < 0;
+    push @$extra_blocks, {
+      start  => $bound_start,
+      end    => $start,
+      colour => $flank_colour,
+    },{
+      start  => $end,
+      end    => $bound_end,
+      colour => $flank_colour,
+    };
+    $has_flanking = 1;
+  }
+  $flank_colour = undef unless ($has_flanking && $flank_different);
+
+  # Motif features
+  my $has_motifs = 0;
+  if ($activity !~ /^[na|inactive]$/) {
+    while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
+      push @$extra_blocks, {
+                            start   => $mf_start, 
+                            end     => $mf_end,
+                            colour  => 'black',
+                            };
+      $has_motifs = 1;
+    }
+  }
+  
+  return ($extra_blocks, $flank_colour, $has_motifs);
 }
 
 sub colour_key {
@@ -127,94 +236,17 @@ sub colour_key {
     $type = 'Unclassified';
   }
 
-  my $is_activity = 0;
-  my $config      = $self->{'config'};
+  my $activity  = 'active';
+  my $config    = $self->{'config'};
   my $epigenome = $self->{'my_config'}->get('epigenome');
   if ($epigenome) {
-    my $regact    = $f->regulatory_activity_for_epigenome($epigenome);
+    my $regact = $f->regulatory_activity_for_epigenome($epigenome);
     if ($regact) {
-      my $activity  = $regact->activity;
-      if ($activity =~ /^(POISED|REPRESSED|NA)$/) {
-        $type = $activity;
-        $is_activity = 1;
-      }
+      $activity  = $regact->activity;
     }
   }
 
-  return (lc $type, $is_activity);
-}
-
-sub tag {
-  my ($self, $f) = @_;
-
-  my $hub = $self->{'config'}{'hub'};
-
-  my ($colour_key) = $self->colour_key($f);
-  my $colour     = $self->my_colour($colour_key);
-  my $flank_colour = $colour;
-  if ($colour_key eq 'promoter') {
-    $flank_colour = $self->my_colour('promoter_flanking');
-  }
-  my $epigenome = $self->{'my_config'}->get('epigenome')||'';
-
-  my @result;
-  my $loci = [ map { $_->{'locus'} }
-     @{$hub->get_query('GlyphSet::RFUnderlying')->go($self,{
-      species => $self->{'config'}{'species'},
-      type => 'funcgen',
-      epigenome => $epigenome,
-      feature => $f,
-    })}
-  ];
-
-  return if $@ || !$loci || !scalar(@$loci);
-  my $bound_end  = pop @$loci;
-  my $end        = pop @$loci;
-  my ($bound_start, $start, @mf_loci) = @$loci;
-  if ($bound_start < $start || $bound_end > $end) {
-    # Bound start/ends
-    push @result, {
-      style  => 'rect',
-      colour => $flank_colour,
-      start  => $bound_start,
-      end    => $start
-    },{
-      style  => 'rect',
-      colour => $flank_colour,
-      start  => $end,
-      end    => $bound_end
-    };
-  }
-  
-  # Motif features
-  while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) { 
-    push @result, {
-      style  => 'rect',
-      colour => 'black',
-      start  => $mf_start,
-      end    => $mf_end,
-      class  => 'group'
-    };
-  }
-
-  return @result;
-}
-
-sub highlight {
-  my ($self, $f, $composite, $pix_per_bp, $h) = @_;
-  return unless $self->{'config'}->get_option('opt_highlight_feature') != 0;
-
-  my %highlights = map { $_ => 1 } $self->highlights;  
-  return unless $highlights{$f->stable_id};
-  
-  $self->unshift($self->Rect({
-    x         => $composite->x - 2/$pix_per_bp,
-    y         => $composite->y - 2,
-    width     => $composite->width + 4/$pix_per_bp,
-    height    => $h + 4,
-    colour    => 'highlight2',
-    absolutey => 1,
-  }));
+  return (lc $type, lc $activity);
 }
 
 sub href {
@@ -243,52 +275,5 @@ sub href {
     %other_spp,
   });
 }
-
-sub title {
-  my ($self, $f) = @_;
-  my ($colour_key) = $self->colour_key($f);
-  return sprintf 'Regulatory Feature: %s; Type: %s; Location: Chr %s:%s-%s', $f->stable_id, ucfirst $colour_key, $f->seq_region_name, $f->start, $f->end;
-}
-
-sub export_feature {
-  my $self = shift;
-  my ($feature, $feature_type) = @_;
-  
-  return $self->_render_text($feature, $feature_type, { 
-    headers => [ 'id' ],
-    values  => [ $feature->stable_id ]
-  });
-}
-
-sub pattern {
-  my ($self,$f) = @_;
-  my $epigenome = $self->{'my_config'}->get('epigenome');
-  return undef unless $epigenome;
-
-  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
-  if ($regact) {
-    my $act     = $regact->activity;
-    return ['hatch_really_thick','grey90',0] if $act eq 'INACTIVE';
-    return ['hatch_really_thick','white',0] if $act eq 'NA';
-  }
-  return undef;
-}
-
-sub feature_label {
-  my ($self,$f) = @_;
-  my $epigenome = $self->{'my_config'}->get('epigenome');
-  return undef unless $epigenome;
-
-  my $regact  = $f->regulatory_activity_for_epigenome($epigenome);
-  if ($regact) {
-    my $act     = $regact->activity;
-    return "{grey30}inactive in this cell line" if $act eq 'INACTIVE';
-    return "{grey30}N/A" if $act eq 'NA';
-  }
-  return undef;
-}
-
-sub label_overlay { return 1; }
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
 
 1;

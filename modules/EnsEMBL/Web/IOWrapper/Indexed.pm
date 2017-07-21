@@ -28,6 +28,8 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::IO::Utils;
 use Bio::EnsEMBL::IO::Parser;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
+use EnsEMBL::Web::Utils::FormatText qw(date_format);
+use File::Path qw(make_path);
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 

@@ -648,13 +648,13 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   if( $db eq 'core' ){
-    $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+    $type = ucfirst($self->Obj->biotype);
     $type =~ s/_/ /;
     $type ||= $self->db_type;
   } else {
     $type = $self->logic_name;
     if ($type =~/^(proj|assembly_patch)/ ){
-      $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+      $type = ucfirst($self->Obj->biotype);
     }
     $type =~ s/_/ /g;
     $type =~ s/^ccds/CCDS/;

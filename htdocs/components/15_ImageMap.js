@@ -605,6 +605,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       panel.handleConfigClick(this);
     }).end()
 
+    // Ditto for graph y-axis form
+    .find('form.graph_config').on('submit', function (e) {
+      e.preventDefault();
+      panel.handleGraphForm(this);
+    }).end()
+
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
@@ -756,6 +762,36 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $link = null;
   },
 
+  handleGraphForm: function (form) {
+    // Update track config y-axis values from popup form
+    var form      = $(form);
+    var action    = form.prop('action');
+    var href      = action.split(';');
+    var conf      = form.find('input[name=config]').val();
+    var trackName = form.find('input[name=track]').val();
+    var yMin      = form.find('input[name=y_min]').val();
+    var yMax      = form.find('input[name=y_max]').val();
+    
+    form.parents('._label_layer').addClass('hover_label_spinner');
+    var imgConf = {};
+    imgConf[trackName] = {'y_max' : yMax, 'y_min' : yMin};
+    href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
+
+    $.ajax({
+      url: href.join(';'),
+      dataType: 'json',
+      context: { panel: this, track: trackName, update: yMax },
+      success: function (json) {
+        if (json.updated) {
+          this.panel.changeAxes(conf, this.track, this.y_min, this.y_max);
+          //this.panel.updateExportButton();
+        }
+      }
+    });
+
+    $form = null;
+  },
+
   changeConfiguration: function (config, trackName, renderer) {
     Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, trackName, renderer);
 
@@ -768,7 +804,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.trigger('reloadPage', this.id);
     Ensembl.EventManager.trigger('partialReload');
   },
-  
+ 
+  changeAxes: function (config, trackName, yMin, yMax) {
+    Ensembl.EventManager.triggerSpecific('changeAxes', 'modal_config_' + config, trackName, yMin, yMax);
+
+    Ensembl.EventManager.trigger('reloadPage', this.id);
+    Ensembl.EventManager.trigger('partialReload');
+  },
+ 
   makeResizable: function () {
     var panel = this;
     

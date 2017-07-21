@@ -54,7 +54,7 @@ no warnings 'uninitialized';
 use POSIX qw(ceil);
 use List::Util qw(max);
 
-use EnsEMBL::Draw::Utils::Bump qw(mr_bump);
+use EnsEMBL::Draw::Utils::Bump qw(mr_bump do_bump);
 
 use parent qw(EnsEMBL::Draw::Style);
 
@@ -119,10 +119,22 @@ sub create_glyphs {
         $font_height = max($font_height, $text_info->{'height'});
       }
     }
-    mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+
+    if ($self->can('configure_bumping')) {
+      $self->configure_bumping(\@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+      do_bump($self, \@features);
+    }
+    else { ## use generic bump prep method
+      mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+    }
 
     my $typical_label;
     $typical_label = $self->get_text_info($features[0]->{'label'}) if @features;
+
+    #use Data::Dumper; 
+    #$Data::Dumper::Sortkeys = 1;
+    #$Data::Dumper::Maxdepth = 2;
+    #warn Dumper(\@features);
 
     ## SECOND LOOP - draw features row by row
     foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {

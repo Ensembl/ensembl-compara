@@ -37,6 +37,7 @@ sub my_url { return $_[0]->my_config('url'); }
 
 sub get_data {
   my ($self, $url) = @_;
+  return $self->{'data'} if scalar @{$self->{'data'}||[]};
   my $hub         = $self->{'config'}->hub;
   $url          ||= $self->my_url;
   my $container   = $self->{'container'};
@@ -44,6 +45,7 @@ sub get_data {
 
   my ($skip, $strand_to_omit) = $self->get_strand_filters; 
   return $data if $skip == $self->strand;
+
 
   my $args            = { 'options' => {
                                   'hub'         => $hub,

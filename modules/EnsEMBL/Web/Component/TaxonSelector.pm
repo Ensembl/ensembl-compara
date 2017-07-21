@@ -44,6 +44,7 @@ sub _init {
   $self->{action}          = undef;
   $self->{view_config}     = $hub->param('referer_function') eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->param('referer_action');
   $self->{data_url}        = $hub->url('Json', {
+                              %{$hub->multi_params},
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
                               action => $hub->param('referer_action') || '',

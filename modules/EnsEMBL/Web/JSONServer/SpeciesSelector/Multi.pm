@@ -56,7 +56,7 @@ sub json_fetch_species {
   my $final_hash      = {};
   my $all_species     = {};
   my $extras = {};
-
+  my $uniq_assembly = {};
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
     my $type = lc $alignment->{'type'};
@@ -69,9 +69,21 @@ sub json_fetch_species {
     my $tmp = {};
     $tmp->{scientific} = $s;
     $tmp->{key} = $s;
-    $tmp->{common}      = (grep($target eq $_, @$chromosomes) ? 'Chromosome ' : '') . "$target";
-
-    push (@{$extras->{$sp}->{'haplotypes and patches'}}, $tmp);
+    if (grep($target eq $_, @$chromosomes)) {
+      $tmp->{common} = 'Chromosome ' . "$target";
+      $tmp->{assembly_target} = $target;
+      if (!$uniq_assembly->{$target}) {
+        push @{$extras->{$sp}->{'primary assembly'}->{data}}, $tmp;
+        $uniq_assembly->{$target} = 1; # to remove duplicates
+      }
+      if (!$extras->{$sp}->{'primary assembly'}->{create_folder}) {
+        $extras->{$sp}->{'primary assembly'}->{create_folder} = 1;
+      }
+    }
+    else {
+      $tmp->{common} = "$target";
+      push @{$extras->{$sp}->{'haplotypes and patches'}->{data}}, $tmp;
+    }
   }
 
   foreach (grep !$species{$_}, keys %shown) {
@@ -106,7 +118,7 @@ sub json_fetch_species {
           $tmp->{key} = $_;
           $tmp->{common} = $species_info->{$_}->{common};
           if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}}, $tmp;
+            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}->{data}}, $tmp;
             # $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
           }
           else {

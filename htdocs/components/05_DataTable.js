@@ -185,7 +185,7 @@ Ensembl.DataTable = {
     options.aLengthMenu = menu;
     
     // Extend options from config defined in the html
-    $('input', table.siblings('form.data_table_config')).each(function () {
+    $('input', table.siblings('div.data_table_config')).each(function () {
       if (this.name === 'code') {
         table.data('code', this.value);
         

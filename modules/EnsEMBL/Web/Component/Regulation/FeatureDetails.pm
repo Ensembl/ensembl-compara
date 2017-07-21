@@ -24,6 +24,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
 
 use base qw(EnsEMBL::Web::Component::Regulation);
 
@@ -60,8 +61,19 @@ sub content {
 
   $html .= $image->render;
 
+  my $reg_feat = $object->fetch_by_stable_id;
+  my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
+  my $num_active = scalar( @{$active_epigenomes});
+
+  my $epigenome_count = 0;
+  if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
+    $epigenome_count = grep { $_ > 0 } values %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  }
+
   ## Now that we have so many cell lines, it's quicker to show activity in a table
-  $html .= '<h3>Cell types by regulatory feature activity</h3>';
+  $html .= '<h3>Summary of Regulatory Activity
+              <a title="Click to show or hide the table" rel="celltype_regfeature_table" href="#" class="toggle_link toggle new_icon open _slide_toggle">Hide</a>
+            </h3>';
 
   ## We want one column per activity type, so get the data first
   my $data  = {}; 
@@ -79,25 +91,32 @@ sub content {
     if ($activity eq 'Active') {
       $colour_key = $object->feature_type->name;
     }
+    my $tooltip = '';
+    if ($activity eq 'Na') {
+      $activity = 'N/A';
+      $tooltip = 'Insufficient data available to predict activity level';
+    }
     my $bg_colour = lc $colours->{lc($colour_key)}{'default'};
     ## Note - hex_by_name includes the hash symbol at the beginning
     my $contrast  = $bg_colour ? $colourmap->hex_by_name($colourmap->contrast($bg_colour)) : '#000000';
     if ($data->{$activity}) {
       $data->{$activity}{'colour'}    = $contrast;
       $data->{$activity}{'bg_colour'} = $bg_colour;
+      $data->{$activity}{'tooltip'}   = $tooltip;
       push @{$data->{$activity}{'entries'}}, $name;
     }
     else {
-      $data->{$activity} = {'entries' => [$name], 'colour' => $contrast, 'bg_colour' => $bg_colour};
+      $data->{$activity} = {'entries' => [$name], 'colour' => $contrast, 'bg_colour' => $bg_colour, 'tooltip' => $tooltip};
     }
     $total++;
   }
 
   my $col_width = int(100 / scalar keys %$data);
   my (@columns, $row);
-  while (my($activity, $info) = each(%$data)) {
+  foreach my $activity (sort keys %$data) {
+    my $info = $data->{$activity};
     my $title = sprintf '%s (%s/%s)', $activity, scalar @{$info->{'entries'}}, $total;
-    push @columns, {'key' => $activity, 'title' => $title, 'width' => $col_width, 
+    push @columns, {'key' => $activity, 'label' => helptip($title, $info->{'tooltip'}), 'width' => $col_width, 
                     'style' => sprintf 'color:%s;background-color:#%s', $info->{'colour'}, $info->{'bg_colour'}};
     $row->{$activity} = join('<br/>', @{$info->{'entries'}});
   }
@@ -106,7 +125,7 @@ sub content {
     my $table = $self->new_table;
     $table->add_columns(@columns);
     $table->add_row($row);
-    $html .= $table->render;
+    $html .= '<div class="toggleable celltype_regfeature_table">'. $table->render . '</div>';
   }
   else {
     $html .= '<p>No epigenomic data available for this feature.</p>';

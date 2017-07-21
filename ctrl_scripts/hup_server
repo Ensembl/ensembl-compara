@@ -1,3 +1,5 @@
+#! /usr/bin/env perl
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -17,32 +19,23 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::UserData::SaveExtraConfig;
-
 use strict;
+use warnings;
 
-use EnsEMBL::Web::Root;
+use Getopt::Long;
+use FindBin qw($Bin);
 
-use base qw(EnsEMBL::Web::Command);
+BEGIN {
+  require "$Bin/helper.pl";
+};
 
-sub process {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my $object   = $self->object;
-  my $session  = $hub->session;
-  my $redirect = $hub->species_path($hub->data_species) . '/UserData/RemoteFeedback';
-  my $param    = {};
-  my $code     = $hub->param('code');
-  my $type     = $hub->param('record_type');
+use SiteDefs;
 
-  my $data = $session->get_record_data({type => $type, code => $code});
+open(PIDFILE,'<',$SiteDefs::ENSEMBL_PIDFILE) || die "Cannot open pidfile '$SiteDefs::ENSEMBL_PIDFILE': $!";
+my $pid=<PIDFILE>;
+chomp $pid;
+close PIDFILE;
 
-  $data->{'colour'} = $hub->param('colour');
-  $data->{'y_max'}  = $hub->param('y_max');
-  $data->{'y_min'}  = $hub->param('y_min');
-  $session->set_record_data($data);
-
-  $self->ajax_redirect($redirect, $param);  
-}
+kill 'USR1',$pid or die "Cannot hup $pid: $!";
 
 1;

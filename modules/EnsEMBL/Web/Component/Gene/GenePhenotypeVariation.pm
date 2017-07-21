@@ -106,12 +106,6 @@ sub stats_table {
   my $columns = [
     { key => 'phen',    title => 'Phenotype, disease and trait', sort => 'string', width => '35%'  },
     { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
-    $species_defs->ENSEMBL_CHROMOSOMES
-    ? { key => 'loc',   title => 'Associated loci', sort => 'none',   width => '16%'  }
-    : (),
-    $species_defs->ENSEMBL_MART_ENABLED
-    ? { key => 'mart',  title => 'Biomart',   sort => 'none',   width => '13%'  }
-    : (),
     { key => 'count',   title => 'Number of variants',  sort => 'numeric_hidden', width => '10%',   align => 'right'  },
     { key => 'view',    title => 'Show/hide details',   sort => 'none',           width => '10%',   align => 'center' }
   ];
@@ -157,21 +151,27 @@ sub stats_table {
     my $phe_count    = scalar (keys(%{$phenotype->{'count'}}));
     my $warning      = $phe_count > $max_lines ? $warning_text : '';
     my $sources_list = join ', ', map $self->source_link($_, undef, undef, $gene_name, $phe_desc), sort {$a cmp $b} keys(%{$phenotype->{'source'}});
-    my $loc          = '-';
-    my $mart         = '-';
+    my $phe_url      = $_;
  
-    # Karyotype link
+    # Associate loci link
     if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
-      $loc = sprintf '<a href="%s">View</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+      $phe_url = sprintf (
+                   '<a href="%s" title="%s">%s</a>', 
+                   $hub->url({ 
+                     type => 'Phenotype', 
+                     action => 'Locations', 
+                     ph => $phenotype->{'id'}
+                   }),
+                   'View associate loci',
+                   $_
+                 ) unless /(HGMD|COSMIC)/;
     }
        
     push @rows, {
-      phen   => "$_ $warning",
+      phen   => "$phe_url $warning",
       count  => $phe_count,
       view   => $self->ajax_add($self->ajax_url(undef, { sub_table => $_ }), $table_id),
-      source => $sources_list,
-      loc    => $loc,
-      mart   => $mart,
+      source => $sources_list
     };
   }
 

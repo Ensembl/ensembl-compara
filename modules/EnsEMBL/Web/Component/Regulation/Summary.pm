@@ -60,42 +60,11 @@ sub content {
   my $bound_html = $self->_location_url($object->bound_start,
                                         $object->bound_end);
 
-  my %active;
-  my $reg_feat = $object->fetch_by_stable_id;
-  my $active_epigenomes = $reg_feat->get_epigenomes_by_activity('ACTIVE');
-
-  foreach my $ag (@{$active_epigenomes}) {
-    $active{$ag->display_label} = 1;
-  }
-  my $num_active = scalar( @{$active_epigenomes});
-
-  my $show        = $self->hub->get_cookie_value('toggle_epigenomes_list') eq 'open';
   my @class = ($object->feature_type->name);
-
-  my $epigenome_count = 0;
-  if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
-    $epigenome_count = grep { $_ > 0 } values %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  }
 
   $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-
-  my $toggle = $num_active > 0 
-                ? sprintf('- <a title="Click to show list of epigenomes" rel="epigenomes_list" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p>
-                              <div class="epigenomes_list twocol-cell">
-                                <div class="toggleable" style="font-weight:normal;%s">
-                                  <ul>%s</ul>
-                                </div>
-                              </div>',
-                            $show ? 'open' : 'closed',
-                            $show ? 'Hide' : 'Show',
-                            $show ? '' : 'display:none',
-                            join('', map "<li>$_</li>", sort {lc($a) cmp lc($b)} keys %active)
-                  )
-                : '</p>';
-
-  $summary->add_row('Active in', sprintf('<p>%s/%s epigenomes%s', $num_active, $epigenome_count, $toggle));
 
   my $nav_buttons = $self->nav_buttons;
   return $nav_buttons.$summary->render;

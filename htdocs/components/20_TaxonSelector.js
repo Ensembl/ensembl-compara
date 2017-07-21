@@ -417,7 +417,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
         if (panel.isCompara && taxon_key === 'Multiple') {
           var alignment_selected;
-
           // Select Multiple alignment label node as alignment_selected.
           if (!node.data.isFolder && node.parent.data.key !== 'Multiple') {
             alignment_selected = node.parent;
@@ -429,10 +428,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
           if (panel.lastSelected && panel.lastSelected.data &&
               panel.lastSelected.data.key !== alignment_selected.data.key) {
-              // Hack to handle parent.selected false when children are selected.
-              // This is because we have selectMode: 3 for multiple alignments
-              panel.lastSelected.hasSubSel && panel.lastSelected.select(true);
-              panel.lastSelected.select(false);
               panel.setSelection(node, flag, true, true);
           }
           else {
@@ -479,7 +474,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           node.select();      // tick it
           !multipleAlign && node.makeVisible(); // force parent path to be expanded
           panel.setSelection(node, true);
-          panel.lastSelected = node;
+          panel.lastSelected = (panel.isCompara && panel.alignLabel) ? treeObj.getNodeByKey(panel.alignLabel) : node;
         }
       });
 
@@ -591,7 +586,22 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       items.push(node);
     }
 
-    resetMasterTree   && panel.elLk.mastertree.dynatree('getTree').reload();
+    if (resetMasterTree) {
+      if (panel.isCompara && panel.activeTreeKey === 'Multiple') {
+        panel.elLk.mastertree.dynatree('getTree').visit(function(node) {
+          node && node.select(false)
+        });
+        panel.elLk.tree.dynatree("getTree").visit(function(node) {
+          node && node.select(false)
+        })
+        // Select the checkbox after resetting all only if it is multiple alignment
+        node.select(flag);
+      }
+      else {
+        panel.elLk.mastertree.dynatree('getTree').reload();
+      }
+    }
+
     resetSelectedList && panel.elLk.list.children().remove();
 
     $.each(items, function(index, item){

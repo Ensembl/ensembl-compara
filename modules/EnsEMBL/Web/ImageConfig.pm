@@ -305,6 +305,13 @@ sub update_from_input {
         $self->altered(1) if $self->update_favourite_tracks({ map { $_ => $diff->{$_}{'favourite'} || 0 } @fav_setting });
       }
 
+      ## update graph axes
+      foreach my $track_key (keys %$diff) {
+        if (exists $diff->{$track_key}{'y_min'} || exists $diff->{$track_key}{'y_max'}) {
+          $self->altered($self->update_track_axes($track_key, $diff->{$track_key}{'y_min'}, $diff->{$track_key}{'y_max'}));
+        }
+      }
+
     } else {
 
       # TODO - is it in use?
@@ -357,6 +364,46 @@ sub update_track_renderer {
       if ($node->set_user_setting('display', $renderer)) {
         return $node->get_data('name') || $node->get_data('caption') || 1;
       }
+    }
+  }
+}
+
+sub update_track_axes {
+  ## Updated axes for a given track
+  ## @param Track key
+  ## @param y_min float
+  ## @param y_max float
+  ## @return Track name if renderer changed
+  my ($self, $key, $y_min, $y_max) = @_;
+
+  my $record;
+  if ($key =~ /^(upload|url)_/) {
+    my ($type, $code, $record_id) = split('_', $key);
+    $record = $self->hub->session->get_record_data({'type' => $type, 'code' => sprintf '%s_%s', $code, $record_id});
+    warn $record;
+    if ($record) {
+      $record->{'y_min'} = $y_min if defined $y_min;
+      $record->{'y_max'} = $y_max if defined $y_max;
+      $self->hub->session->set_record_data($record);
+      return $record->{'name'} || 1;
+    }
+  }
+  else {
+    my $node = $self->get_node($key);
+    my $user_data = $node->tree->user_data;
+    my $id        = $node->id;
+    my $updated = 0;
+    ## N.B. Don't use 'set_user_setting' method here, as axes might not be set yet
+    if (defined $y_min) {
+      $user_data->{$id}{'y_min'} = $y_min;
+      $updated = 1;
+    }
+    if (defined $y_max) {
+      $user_data->{$id}{'y_max'} = $y_max;
+      $updated = 1;
+    }
+    if ($updated) {
+      return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
@@ -460,6 +507,10 @@ sub save_user_settings {
   my $fav_data      = $self->_favourite_tracks;
   my $user_data     = $self->tree->user_data;
   my $record_data   = $self->get_user_settings;
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #$Data::Dumper::Maxdepth = 2;
+  #warn ">>> RECORD DATA: ".Dumper($record_data);
 
   # Save the favourite record (this record is shared by other image configs, so doesn't have code set as the current image config's name)
   $hub->session->set_record_data({ %$fav_data, 'type' => 'favourite_tracks', 'code' => 'favourite_tracks' });
@@ -813,10 +864,10 @@ sub get_shareable_settings {
   my (%share_data, %done_record);
 
   foreach my $data_menu (@data_menus) {
-    my $linked_record = $data_menu->get_data('linked_record');
+    my $parent_linked_record = $data_menu->get_data('linked_record');
 
     foreach my $track (@{$data_menu->get_all_nodes}) {
-      $linked_record ||= $track->get_data('linked_record');
+      my $linked_record = $track->get_data('linked_record') || $parent_linked_record;
 
       next unless $linked_record;
 

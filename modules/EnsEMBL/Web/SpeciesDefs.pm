@@ -229,17 +229,22 @@ sub reference_species {
   ### Filters the list of species to reference only, i.e. no secondary strains 
   ### Returns: array of species names
   my $self          = shift;
-  my @valid_species   = $self->{'_valid_species'} ? @{$self->{'_valid_species'}}
-                                                  : $self->valid_species;
-  return unless scalar @valid_species;
+  my %test_species  = map { $_ => 1 } @_;
+  my @ref_species   = @{$self->{'_ref_species'} || []};
 
-  my @ref_species;
-  foreach (@valid_species) {
-    my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-    if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
-      push @ref_species, $_;
+  if (!@ref_species) {
+    my @valid_species = $self->valid_species;
+
+    for (@valid_species) {
+      my $strain = $self->get_config($_, 'SPECIES_STRAIN');
+
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+        push @ref_species, $_;
+      }
     }
   }
+
+  @ref_species = grep $test_species{$_}, @ref_species if %test_species;
 
   return @ref_species;
 }
@@ -504,6 +509,10 @@ sub _read_in_ini_file {
       my $line_number     = 0;
       
       while (<FH>) {
+
+        # parse any inline perl <% perl code %>
+        s/<%(.+?(?=%>))%>/eval($1)/ge;
+
         s/\s+[;].*$//; # These two lines remove any comment strings
         s/^[#;].*$//;  # from the ini file - basically ; or #..
         
@@ -753,14 +762,12 @@ sub _parse {
 
   ## Final munging
   my $datasets = [];
-  my $aliases  = $tree->{'MULTI'}{'SPECIES_ALIASES'};
+  my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
     
-    ## Add in aliases to production names if they don't exist
-    unless ($aliases->{$prodname}) {
-      $aliases->{$prodname} = $url;
-    }
+    ## Add in aliases to production names
+    $aliases->{$prodname} = $url;
     
     ## Rename the tree keys for easy data access via URLs
     ## (and backwards compatibility!)
@@ -1316,6 +1323,37 @@ sub production_name {
     }
 
     return $nospaces;
+}
+
+sub verbose_params {
+  my $self    = shift;
+  my $multidb = $self->multidb;
+
+  warn "SpeciesDefs->multidb:\n";
+  for (sort keys %$multidb) {
+    warn sprintf "%50s: %s on %s%s@%s:%s\n",
+      $_,
+      $multidb->{$_}{'NAME'},
+      $multidb->{$_}{'USER'},
+      $multidb->{$_}{'PASS'} ? ':<PASS>' : '',
+      $multidb->{$_}{'HOST'},
+      $multidb->{$_}{'PORT'};
+  }
+
+  warn "SpeciesDefs species database:\n";
+  foreach my $sp (sort @{$self->multi_hash->{'ENSEMBL_DATASETS'}}) {
+    warn sprintf "%65s\n", "====== $sp ======";
+    my $db = $self->get_config($sp, 'databases');
+    for (sort keys %$db) {
+      warn sprintf "%50s: %s on %s%s@%s:%s\n",
+        $_,
+        $db->{$_}{'NAME'} || '-- missing --',
+        $db->{$_}{'USER'} || '-- missing --',
+        $db->{$_}{'PASS'} ? ':<PASS>' : '',
+        $db->{$_}{'HOST'} || '-- missing --',
+        $db->{$_}{'PORT'} || '-- missing --';
+    }
+  }
 }
 
 sub DESTROY {

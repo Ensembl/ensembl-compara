@@ -88,6 +88,7 @@ sub draw_collapsed_genes {
   foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     $g->{'colour'} = $self->my_colour($g->{'colour_key'});
+    $g->{'href'} .= ';display=collapsed';
     $self->_create_exon_structure($g);
     push @$stranded_genes, $g;
      $self->_add_connection_to_legend($g);
