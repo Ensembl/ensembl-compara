@@ -155,7 +155,7 @@ sub content {
 
   my $url = $self->hub->url({ht_type => lc($other_type)});
   $html .= sprintf(
-    '<h4><a href="%s">Switch to %s view</a> <img src="/i/16/reload.png" height="12px"></h4>',
+    '<h4><a href="%s" style="vertical-align:middle">Switch to %s view</a> <img src="/i/16/reload.png" style="vertical-align:middle"></h4>',
     $url, $titles{$other_type}
   );
   

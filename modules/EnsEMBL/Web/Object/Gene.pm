@@ -56,6 +56,7 @@ sub availability {
         })->[0];
 
       $availability->{'has_gxa'} = $self->gxa_check;
+      $availability->{'has_pathway'} = $self->pathway_check;
       $availability->{'logged_in'} = $self->user ? 1 : 0;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
@@ -514,6 +515,7 @@ sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
+sub pathway_check               { return; } #implemented in widget plugin, to check for plant reactome availability
 
 
 sub get_database_matches {

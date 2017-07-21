@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::Compara_Alignments;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);

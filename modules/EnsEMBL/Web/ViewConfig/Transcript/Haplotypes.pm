@@ -35,34 +35,37 @@ sub init {
   $self->set_default_options($defaults);
 }
 
-sub form {
+sub field_order {
+  return qw(show_variants filter_enabled filter_frequency);
+}
+
+sub form_fields {
   my $self = shift;
 
-  $self->add_form_element({
-    type    => 'CheckBox',
-    label   => 'Show contributing variants in table',
-    name    => 'show_variants',
-    value   => 'on',
-    checked => 0,
-    class   => '_stt',
-  });
-
-  $self->add_form_element({
-    type    => 'CheckBox',
-    label   => 'Filter variants',
-    name    => 'filter_enabled',
-    value   => 'on',
-    checked => 0,
-    class   => '_stt',
-  });
-
-  $self->add_form_element({
-    type  => 'string',
-    label => 'Filter out variants with frequency less than',
-    name  => 'filter_frequency',
-    field_class => '_stt_filter_enabled',
-    value => 0.01,
-  });
+  return {'show_variants' => {
+                              type    => 'CheckBox',
+                              label   => 'Show contributing variants in table',
+                              name    => 'show_variants',
+                              value   => 'on',
+                              checked => 0,
+                              class   => '_stt',
+                              },
+          'filter_enabled' => {
+                              type    => 'CheckBox',
+                              label   => 'Filter variants',
+                              name    => 'filter_enabled',
+                              value   => 'on',
+                              checked => 0,
+                              class   => '_stt',
+                            },
+          'filter_frequency' => {
+                                  type  => 'string',
+                                  label => 'Filter out variants with frequency less than',
+                                  name  => 'filter_frequency',
+                                  value => 0.01,
+                                  field_class => '_stt_filter_enabled',
+                                },
+  };
 }
 
 1;
