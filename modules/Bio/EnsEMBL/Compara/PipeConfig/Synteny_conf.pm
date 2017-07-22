@@ -186,13 +186,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'compute_synteny_start_using_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::FetchSyntenyParametersOrthologs',
-            -parameters  =>
-                {
-                    'ptree_db'      => $self->o('ptree_db'),
-                    
-#                    'registry'          => $self->o('registry'),
-                },
-            
             -wait_for   => [ 'copy_table', 'copy_table_factory' ],
             -flow_into  => {
                 2 => 'create_work_dir',
