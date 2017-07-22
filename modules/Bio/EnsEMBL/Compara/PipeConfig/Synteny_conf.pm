@@ -65,7 +65,7 @@ sub default_options {
             'recompute_existing_syntenies' => 0,
 
             # Connection to the alignment database must be given
-            'alignment_db' => undef,    # alignment database to calculate the syntenies from
+            #'alignment_db' => undef,    # alignment database to calculate the syntenies from
             'ptree_db'     => undef,     # protein database to calculate the syntenies from
             'ortholog_method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
             #'registry' => undef,        # needed to find the core databases (and also if "alignment_db" is a registry name (a division name, for instance))
