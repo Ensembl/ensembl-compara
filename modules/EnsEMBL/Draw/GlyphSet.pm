@@ -1230,14 +1230,30 @@ sub sort_features_by_priority {
 
 sub no_features {
   my $self  = shift;
-  my $label;
-  if($self->can('my_empty_label')) {
-    $label = $self->my_empty_label;
-  }
-  $label ||= $self->my_label;
+  my $label = $self->my_empty_label;
   $self->errorTrack($label) if $label && 
     ($self->{'config'}->get_option('opt_empty_tracks') == 1
       || $self->{'my_config'}->get('show_empty_track') == 1 );
+}
+
+sub my_empty_label {
+  my $self = shift;
+  my $message;
+  if ($self->can('get_data') || $self->can('features')) {
+    $message = 'No features';
+    my $track_name = $self->my_config('name');
+    if ($track_name) {
+      $message .= sprintf(' from %s', $track_name);
+    }
+    my $strand_flag = $self->my_config('strand');
+    if ($strand_flag eq 'b') {
+      $message .= ' on this strand';
+    }
+    else {
+      $message .= ' in this region';
+    }
+  }
+  return $message;
 }
 
 sub too_many_features {
