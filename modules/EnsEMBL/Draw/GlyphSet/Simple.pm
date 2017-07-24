@@ -106,11 +106,6 @@ sub get_colours {
   return $self->{'feature_colours'}{$colour_key};
 }
 
-sub my_empty_label {
-  my $self = shift;
-  return sprintf('No features from %s on this strand', $self->my_config('name'));
-}
-
 sub ok_feature {
 ### Check if this feature is OK to display
 ### @param feature - some kind of feature object
