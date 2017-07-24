@@ -268,6 +268,19 @@ sub pipeline_analyses {
                               },
               -rc_name => '1.8Gb',
               -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
+              -flow_into => {
+                  -1 => 'build_synteny_himem',
+              },
+            },
+            { -logic_name => 'build_synteny_himem',
+              -module => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny',
+              -parameters => {
+                              'program' => $self->o('java_exe').' -Xmx3500M -Xss16M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
+                              'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
+                              'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
+                              },
+              -rc_name => '3.6Gb',
+              -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
             },
             #Concatenate into single file
             { -logic_name => 'concat_files',

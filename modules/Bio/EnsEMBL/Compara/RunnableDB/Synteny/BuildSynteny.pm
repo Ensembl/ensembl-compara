@@ -99,8 +99,12 @@ sub run {
       my $command = $self->run_command($sort_cmd);
 
       #recheck err file
-      if ($command->err) {
-          die "Error even after sorting gff_file " . $command->err;
+      if ($command->err =~ /QuickSort/) {
+          $self->warning("Error even after sorting gff_file");
+          my $j = $self->dataflow_output_id(undef, -1);
+          unless (@$j) {
+              die "No more _himem analysis. Giving up";
+          }
       }
   }
 
