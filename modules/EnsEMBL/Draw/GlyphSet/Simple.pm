@@ -80,11 +80,14 @@ sub render_normal {
   my $self = shift;
 
   my $data = $self->get_data;
-  return unless scalar @{$data->[0]{'features'}||[]};
-
-  my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
-  $self->push($style->create_glyphs);
+  if (scalar @{$data->[0]{'features'}||[]}) {
+    my $config = $self->track_style_config;
+    my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+    $self->push($style->create_glyphs);
+  }
+  else {
+    $self->no_features;
+  }
 }
 
 sub get_colours {
@@ -101,6 +104,11 @@ sub get_colours {
   }
  
   return $self->{'feature_colours'}{$colour_key};
+}
+
+sub my_empty_label {
+  my $self = shift;
+  return sprintf('No features from %s on this strand', $self->my_config('name'));
 }
 
 sub ok_feature {
