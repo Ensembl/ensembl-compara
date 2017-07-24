@@ -129,7 +129,12 @@
           },
           {
               "scientific_name":"Cricetulus griseus",
-              "key":"Cricetulus_griseus",
+              "key":"Cricetulus_griseus_crigri",
+              "is_leaf":"true"
+          },
+          {
+              "scientific_name":"Cricetulus griseus",
+              "key":"Cricetulus_griseus_chok1gshd",
               "is_leaf":"true"
           },
           {
