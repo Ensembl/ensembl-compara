@@ -113,6 +113,10 @@ sub coding_regions {
         foreach my $transcript (@$transcripts) {
           my $exons = $transcript->get_all_translateable_Exons();
           foreach my $exon (@$exons) {
+            if ($exon->start > $exon->end) {
+              $self->warning("Funny exon coordinates: start > end ! " . $gdb->name. " ". $gene->stable_id. " ". $exon->stable_id. " ". $exon->feature_Slice->name. " ". $exon->start. " ". $exon->end);
+              next;
+            }
             if (!exists $exons{$exon->dbID}) {
               push @{$coding_regions{$species}{$exon->seq_region_name}}, [$exon->start, $exon->end];
               $coding_lengths{$species} += $exon->length;
