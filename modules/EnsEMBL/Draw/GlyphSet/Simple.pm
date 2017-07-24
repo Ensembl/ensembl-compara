@@ -63,7 +63,6 @@ sub init {
   ## Set track height
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
   my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
-  $height               = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
   $height               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   $self->{'my_config'}->set('height', $height); 
 
