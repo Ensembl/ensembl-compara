@@ -107,24 +107,23 @@ sub run {
 sub _update_dnafrags {
     my ($self, $dbc, $old_genome_db_id, $new_genome_db_id) = @_;
 
-    my $fake_genome_db_id   = $old_genome_db_id + 1_000_000_000;
-    my $dnafrag_offset      = 1_000_000_000;
+    my $offset      = 1_000_000_000;
 
     ## 1. Shift old DnaFrags
     # Make a fake genome_db_id
-    $dbc->do("INSERT INTO genome_db SELECT $fake_genome_db_id, taxon_id, name, assembly, genebuild, has_karyotype, is_high_coverage, genome_component, strain_name, display_name, locator, first_release, last_release FROM genome_db WHERE genome_db_id = ?", undef, $old_genome_db_id);
+    $dbc->do("INSERT INTO genome_db SELECT genome_db_id+$offset, taxon_id, name, assembly, genebuild, has_karyotype, is_high_coverage, genome_component, strain_name, display_name, locator, first_release, last_release FROM genome_db WHERE genome_db_id = ?", undef, $old_genome_db_id);
     # Duplicate DnaFrags
-    $dbc->do("INSERT INTO dnafrag SELECT dnafrag_id+$dnafrag_offset, length, name, $fake_genome_db_id, coord_system_name, cellular_component, is_reference, codon_table_id FROM dnafrag WHERE genome_db_id = ?", undef, $old_genome_db_id);
+    $dbc->do("INSERT INTO dnafrag SELECT dnafrag_id+$offset, length, name, genome_db_id+$offset, coord_system_name, cellular_component, is_reference, codon_table_id FROM dnafrag WHERE genome_db_id = ?", undef, $old_genome_db_id);
     # Link to shifted DnaFrags
-    $dbc->do("UPDATE genomic_align JOIN dnafrag USING (dnafrag_id) SET genomic_align.dnafrag_id = genomic_align.dnafrag_id+$dnafrag_offset WHERE genome_db_id = ?", undef, $old_genome_db_id);
-    # Remove old DnaFrags
+    $dbc->do("UPDATE genomic_align JOIN dnafrag USING (dnafrag_id) SET genomic_align.dnafrag_id = genomic_align.dnafrag_id+$offset WHERE genome_db_id = ?", undef, $old_genome_db_id);
+    # Remove unshifted DnaFrags
     $dbc->do("DELETE FROM dnafrag WHERE genome_db_id = ?", undef, $old_genome_db_id);
 
     ## 2. Bring the new DnaFrags in
     # Copy new DnaFrags
     copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'dnafrag', 'dnafrag_id', $new_genome_db_id);
     # Link to new DnaFrags
-    $dbc->do('UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.genome_db_id = ? AND d2.genome_db_id = ?', undef, $fake_genome_db_id, $new_genome_db_id);
+    $dbc->do('UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.genome_db_id = ? AND d2.genome_db_id = ?', undef, $old_genome_db_id+$offset, $new_genome_db_id);
 
 }
 
