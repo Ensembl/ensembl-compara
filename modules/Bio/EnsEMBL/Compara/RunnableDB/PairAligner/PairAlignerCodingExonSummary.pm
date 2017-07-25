@@ -96,7 +96,7 @@ sub write_output {
   my ($coding_exon_length, $matches, $mis_matches, $ref_insertions, $uncovered);
 
   my $sql = "SELECT SUM(coding_exon_length), SUM(matches), SUM(mis_matches), SUM(ref_insertions), SUM(uncovered) FROM statistics WHERE genome_db_id = ? AND method_link_species_set_id = ?";
-  my $sth = $compara_dba->dbc->prepare($sql);
+  my $sth = $self->dbc->prepare($sql);
 
   #Ref species
   $sth->execute($self->param('ref_genome_db')->dbID, $mlss_id);
