@@ -1140,7 +1140,7 @@ sub render_text {
     
     next if $target_gene && $gene_id ne $target_gene;
     
-    my $gene_type   = $gene->status . '_' . $gene->biotype;
+    my $gene_type   = $gene->biotype;
     my $gene_name   = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
     my $gene_source = $gene->source;
     
