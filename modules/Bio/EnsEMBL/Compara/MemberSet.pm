@@ -473,6 +473,7 @@ sub get_all_GeneMembers {
             $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
           }
         }
+        die "Cannot find the GeneMember of ".$aligned_member->stable_id unless $aligned_member->gene_member;
     }
 
     return [values %seen_gene_members];
