@@ -80,8 +80,8 @@ body.static #widemain { margin-left: 0; }
                                                   border: 2px solid [[MH_BORDER]];
                                                   border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }
-#masthead div.spbar_holder div.dropdown.species            { width: 505px; }
-#masthead div.spbar_holder div.dropdown.species ul li      { width: 130px; float: left; }
+#masthead div.spbar_holder div.dropdown.species            { width: 720px; }
+#masthead div.spbar_holder div.dropdown.species ul li      { width: 200px; float: left; }
 
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
