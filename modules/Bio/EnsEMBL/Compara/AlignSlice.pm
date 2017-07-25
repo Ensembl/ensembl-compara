@@ -1237,6 +1237,7 @@ sub _add_GenomicAlign_to_a_Slice {
           -strand => 0
         );
     $this_core_slice->{seq} = "." x ($this_block_end - $this_block_start + 1);
+    $this_core_slice->{karyotype} = 0;
   }
   return if (!$this_core_slice); ## The restriction of the GenomicAlignBlock may return a void GenomicAlign
 

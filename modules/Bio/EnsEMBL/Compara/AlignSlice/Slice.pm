@@ -1693,6 +1693,7 @@ sub get_all_underlying_Slices {
               -strand => 0
             );
         $this_underlying_slice->{seq} = "." x ($start_position - $current_position);
+        $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
         push(@$underlying_slices, $this_underlying_slice);
       }
 #     } else {
@@ -1718,6 +1719,7 @@ sub get_all_underlying_Slices {
               -strand => 0
           );
       $this_underlying_slice->{seq} = "-" x ($end_position - $start_position + 1);
+      $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
     } else {
       $this_underlying_slice = new Bio::EnsEMBL::Slice(
               -coord_system => $this_slice->coord_system,
@@ -1727,6 +1729,7 @@ sub get_all_underlying_Slices {
               -strand => $this_subseq_strand
           );
       $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
+      $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
       $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
       $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
       weaken($this_underlying_slice->{_node_in_tree});
@@ -1747,6 +1750,7 @@ sub get_all_underlying_Slices {
           -strand => 0
         );
     $this_underlying_slice->{seq} = "." x ($end - $current_position + 1);
+    $this_underlying_slice->{karyotype} = 0; #(@$underlying_slices ? $underlying_slices->[-1]->has_karyotype() : 0);
     push(@$underlying_slices, $this_underlying_slice);
   }
   if ($strand == -1) {
