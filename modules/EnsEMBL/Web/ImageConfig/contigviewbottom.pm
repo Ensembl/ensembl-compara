@@ -60,8 +60,10 @@ sub update_from_url {
   my $species_defs    = $self->species_defs;
 
   my $attach = !!$params->{'attach'};
-  my @values = split(/,/, $params->{'attach'}); 
-  push @values, split(/,/, $params->{$self->type}); 
+  my @values = grep $_, split(/,/, $params->{'attach'} || ''); #attach=url:https://some_url_to_attach/=normal
+  push @values, grep $_, split(/,/, $params->{$self->type} || ''); # contigviewbottom=url:https://some_url_to_attach/=normal
+
+  my @other_values;
   # delete params to avoid doing it again when calling SUPER method
   delete $params->{$self->type};
   delete $params->{'attach'};
@@ -199,20 +201,12 @@ sub update_from_url {
         'message'   => $message,
       });
     } else {
-      ($url, $renderer) = split /=/, $v;
-      $renderer ||= 'normal';
-      $self->update_track_renderer($url, $renderer);
+      push @other_values, $v; # let the parent method deal with these
     }
   }
 
-  if ($self->is_altered) {
-    my $tracks = join(', ', grep $_ ne '1', @{$self->altered});
-    $session->set_record_data({
-      'type'      => 'message',
-      'function'  => '_info',
-      'code'      => 'image_config',
-      'message'   => "The link you followed has made changes to these tracks: $tracks.",
-    });
+  if (@other_values) {
+    $params->{$self->type} = join(',', @other_values);
   }
 
   return $self->SUPER::update_from_url($params);

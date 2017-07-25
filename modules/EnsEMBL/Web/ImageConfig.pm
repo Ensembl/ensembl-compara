@@ -273,6 +273,15 @@ sub update_from_url {
 
   $self->save_user_settings if $self->is_altered;
 
+  if ($self->is_altered) {
+    my $tracks = join(', ', grep $_ ne '1', @{$self->altered});
+    $self->hub->session->set_record_data({
+      'type'      => 'message',
+      'function'  => '_info',
+      'code'      => 'image_config',
+      'message'   => "The link you followed has made changes to these tracks: $tracks.",
+    });
+  }
   return $self->is_altered;
 }
 
