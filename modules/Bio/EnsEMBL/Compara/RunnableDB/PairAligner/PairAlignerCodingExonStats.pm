@@ -112,6 +112,7 @@ sub run {
 
   #Necessary to get unique bits of Y
   my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $dnafrag->name);
+  die "No slices for dnafrag ".$dnafrag->name unless @$slices;
 
   foreach my $slice (@$slices) {
       get_coding_exon_regions($slice, $coding_exons);
