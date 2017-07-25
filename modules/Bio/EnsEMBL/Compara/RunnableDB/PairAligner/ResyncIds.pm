@@ -90,9 +90,9 @@ sub run {
         # Copy new MLSS
         copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'method_link_species_set', 'method_link_species_set_id', $self->param('master_mlss')->dbID);
         # Change mlss_id
-        $dbc->do('UPDATE genomic_align SET method_link_species_set_id = ? WHERE method_link_species_set_id = ?', undef, $self->param('master_mlss')->dbID, $self->param('out_of_sync_mlss_id'));
-        $dbc->do('UPDATE genomic_align_block SET method_link_species_set_id = ? WHERE method_link_species_set_id = ?', undef, $self->param('master_mlss')->dbID, $self->param('out_of_sync_mlss_id'));
-        $dbc->do('UPDATE method_link_species_set_tag SET method_link_species_set_id = ? WHERE method_link_species_set_id = ?', undef, $self->param('master_mlss')->dbID, $self->param('out_of_sync_mlss_id'));
+        for my $table_name (qw(genomic_align genomic_align_block method_link_species_set_tag)) {
+            $dbc->do("UPDATE $table_name SET method_link_species_set_id = ? WHERE method_link_species_set_id = ?", undef, $self->param('master_mlss')->dbID, $self->param('out_of_sync_mlss_id'));
+        }
         # Delete old MLSS
         $dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('out_of_sync_mlss_id'));
 
