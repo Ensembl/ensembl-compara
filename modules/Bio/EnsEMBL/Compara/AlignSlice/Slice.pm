@@ -571,7 +571,6 @@ sub _get_mapped_Gene {
               -external_status => $this_transcript->external_status,
               -display_xref => $this_transcript->display_xref,
               -analysis => $this_transcript->analysis,
-              -status => $this_transcript->status,
               -biotype => $this_transcript->biotype,
               -exons => $these_exons,
           );
@@ -594,7 +593,6 @@ sub _get_mapped_Gene {
           -EXTERNAL_NAME => $gene->external_name,
           -TYPE => $gene->biotype,
           -BIOTYPE => $gene->biotype,
-          -STATUS => $gene->status,
           -EXTERNAL_DB => $gene->external_db,
           -EXTERNAL_STATUS => $gene->external_status,
           -DISPLAY_XREF => $gene->display_xref,
@@ -708,7 +706,6 @@ sub _compile_mapped_Genes {
                 -external_status => $old_transcript->external_status,
                 -display_xref => $old_transcript->display_xref,
                 -analysis => $old_transcript->analysis,
-                -status => $old_transcript->status,
                 -biotype => $old_transcript->biotype,
                 -EXONS => $this_set_of_compatible_exons
             );
