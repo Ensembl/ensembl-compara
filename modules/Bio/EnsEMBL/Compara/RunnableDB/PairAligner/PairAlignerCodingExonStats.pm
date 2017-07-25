@@ -221,7 +221,7 @@ sub write_output {
       print "$key " . $totals->{$key} . "\n" if($self->debug);
   }
 
-  my $sql = "INSERT INTO statistics (method_link_species_set_id, genome_db_id, dnafrag_id, matches, mis_matches, ref_insertions, non_ref_insertions, uncovered, coding_exon_length) VALUES (?,?,?,?,?,?,?,?,?)";
+  my $sql = "REPLACE INTO statistics (method_link_species_set_id, genome_db_id, dnafrag_id, matches, mis_matches, ref_insertions, non_ref_insertions, uncovered, coding_exon_length) VALUES (?,?,?,?,?,?,?,?,?)";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute($mlss_id, $self->param('genome_db')->dbID, $self->param('dnafrag_id'), $totals->{'matches'},  $totals->{'mis_matches'}, $totals->{'ref_insertions'}, $totals->{'non_ref_insertions'},$totals->{'uncovered'}, $totals->{'coding_exon_length'});
   $sth->finish;

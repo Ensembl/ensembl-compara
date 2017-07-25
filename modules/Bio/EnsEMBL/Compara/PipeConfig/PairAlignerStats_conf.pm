@@ -96,7 +96,8 @@ sub pipeline_create_commands {
         ref_insertions              INT(10) DEFAULT 0,
         non_ref_insertions          INT(10) DEFAULT 0,
         uncovered                   INT(10) DEFAULT 0,
-        coding_exon_length          INT(10) DEFAULT 0
+        coding_exon_length          INT(10) DEFAULT 0,
+        PRIMARY KEY (method_link_species_set_id,dnafrag_id)
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
