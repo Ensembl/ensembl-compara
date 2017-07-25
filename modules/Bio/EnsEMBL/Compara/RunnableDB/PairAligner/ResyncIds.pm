@@ -87,7 +87,7 @@ sub run {
 
         ## 1. Use the correct MLSS
         # Copy new MLSS
-        copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'method_link_species_set', 'method_link_species_set_id', $self->param('master_mlss')->dbID);
+        copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'method_link_species_set', 'method_link_species_set_id', $self->param('master_mlss')->dbID, undef, 1);
         # Change mlss_id
         for my $table_name (qw(genomic_align genomic_align_block method_link_species_set_tag)) {
             $dbc->do("UPDATE $table_name SET method_link_species_set_id = ? WHERE method_link_species_set_id = ?", undef, $self->param('master_mlss')->dbID, $self->param('out_of_sync_mlss_id'));
