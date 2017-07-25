@@ -997,18 +997,19 @@ sub otherspecies {
   return $self->param('otherspecies') if $self->param('otherspecies');
   return $self->param('species') if $self->param('species');
 
-  my $species_defs = $self->species_defs;
-  my $species      = $self->species;
-  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
-  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my $species_defs  = $self->species_defs;
+  my $map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
+  my $species       = $species_defs->get_config($self->species, 'SPECIES_PRODUCTION_NAME');
+  my $primary_sp    = $species_defs->get_config($species_defs->ENSEMBL_PRIMARY_SPECIES, 'SPECIES_PRODUCTION_NAME');
+  my $secondary_sp  = $species_defs->get_config($species_defs->ENSEMBL_SECONDARY_SPECIES, 'SPECIES_PRODUCTION_NAME');
+  my %synteny       = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
 
-  return $primary_sp if  ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
+  return $map->{$primary_sp} if ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
 
-  return $secondary_sp if  ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
+  return $map->{$secondary_sp} if ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
 
   my @has_synteny  = grep { $_ ne $species } sort keys %{$synteny{$species}};
-  return $has_synteny[0];
+  return $map->{$has_synteny[0]};
 }
 
 sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Compara::GeneTrees

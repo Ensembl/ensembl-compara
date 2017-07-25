@@ -1213,13 +1213,8 @@ sub _summarise_compara_db {
   push @$res_aref, $_ for @$res_aref_2;
   
   foreach my $row (@$res_aref) {
-    my ($species1, $species2) = (ucfirst $row->[1], ucfirst $row->[2]);
-    
-    $species1 =~ tr/ /_/;
-    $species2 =~ tr/ /_/;
-    
     my $key = $sections{uc $row->[0]} || uc $row->[0];
-    
+    my ($species1, $species2) = ($row->[1], $row->[2]);
     $self->db_tree->{$db_name}{$key}{$species1}{$species2} = $valid_species{$species2};
   }             
   

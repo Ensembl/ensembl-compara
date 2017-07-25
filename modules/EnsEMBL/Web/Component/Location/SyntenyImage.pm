@@ -39,11 +39,12 @@ sub content {
   my $species = $hub->species;
   my %synteny = $hub->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   my $other   = $self->hub->otherspecies; 
+  my $other_prodname = $hub->species_defs->get_config($other, 'SPECIES_PRODUCTION_NAME');
   my $chr     = $object->seq_region_name;
   my %chr_1   = map { $_, 1 } @{$hub->species_defs->ENSEMBL_CHROMOSOMES || []};
-  my $chr_2   = scalar @{$hub->species_defs->get_config($other, 'ENSEMBL_CHROMOSOMES')};
+  my $chr_2   = scalar @{$hub->species_defs->get_config($other, 'ENSEMBL_CHROMOSOMES')||[]};
   
-  unless ($synteny{$other}) {
+  unless ($synteny{$other_prodname}) {
     $hub->problem('fatal', "Can't display synteny",  "There is no synteny data for these two species ($species and $other)");
     return undef;
   }
@@ -120,16 +121,18 @@ sub content {
 }
 
 sub species_form {
-  my $self             = shift;
-  my $hub              = $self->hub;
-  my $species_defs     = $hub->species_defs;
-  my $url              = $hub->url({ otherspecies => undef }, 1);
-  my $image_config     = $hub->get_imageconfig('Vsynteny');
-  my $vwidth           = $image_config->image_height;
-  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'autocenter', style => $vwidth ? "width:${vwidth}px" : undef });
-  my %synteny_hash     = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-  my %synteny          = %{$synteny_hash{$hub->species} || {}};
-  my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $_, common => $species_defs->get_config($_, 'SPECIES_COMMON_NAME') }} keys %synteny;
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $species_defs      = $hub->species_defs;
+  my $url               = $hub->url({ otherspecies => undef }, 1);
+  my $image_config      = $hub->get_imageconfig('Vsynteny');
+  my $vwidth            = $image_config->image_height;
+  my $form              = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'autocenter', style => $vwidth ? "width:${vwidth}px" : undef });
+  my %synteny_hash      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my $prod_name         = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
+  my %synteny           = %{$synteny_hash{$prod_name} || {}};
+  my $url_map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
+  my @sorted_by_common  = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $url_map->{$_}, common => $species_defs->get_config($url_map->{$_}, 'SPECIES_COMMON_NAME') }} keys %synteny;
   my @values;
 
   foreach my $next (@sorted_by_common) {
