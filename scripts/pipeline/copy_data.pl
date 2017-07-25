@@ -181,6 +181,8 @@ my @mlss_id = ();
     # by another execution of copy_data scipt that will disable them first anyway.
 my $re_enable = 1;
 
+my $disable_keys;
+
 #If true, then trust the TO database tables and update the FROM tables if 
 #necessary. Currently only applies to differences in the dnafrag table and 
 #will only update the genomic_align table.
@@ -206,6 +208,7 @@ GetOptions(
 
            'method_link_type=s@'            => \@method_link_types,
            'mlss_id=i@'                     => \@mlss_id,
+           'disable_keys=i'                 => \$disable_keys,
            're_enable=i'                    => \$re_enable,
            'dry_run|dry-run!'               => \$dry_run,
 
@@ -249,6 +252,8 @@ my %type_to_adaptor = (
 
 my %all_mlss_objects = ();
 
+# By default, $disable_keys depends on $merge
+$disable_keys //= !$merge;
 # This is used to tell copy_data() that dbIDs are not necessarily contiguous
 $patch_merge //= scalar(grep {$type_to_adaptor{$_->method->type}} @{$from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()});
 
@@ -663,9 +668,9 @@ sub copy_genomic_align_blocks {
   return if $dry_run;
 
   # 1. $step is undef -> default value
-  # 2/3. In merge mode we don't disable/reenable (ignoring $re_enable). In not merge mode, we always disable but only reenable if asked
+  # 2/3. Whether the keys are disabled and reenabled
   # 4. "holes" are only present on the patch-alignments
-  my @copy_data_args = (undef, !$merge, !$merge && $re_enable, $patch_merge);
+  my @copy_data_args = (undef, $disable_keys, $disable_keys && $re_enable, $patch_merge);
 
   #copy genomic_align_block table
    copy_data($from_dbc, $to_dbc,
