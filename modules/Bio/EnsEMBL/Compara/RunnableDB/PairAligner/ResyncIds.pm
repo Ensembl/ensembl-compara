@@ -80,7 +80,6 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $dnafrag_offset          = 1_000_000_000;
     my $genome_db_id_mapping    = $self->param('genome_db_id_mapping');
 
     $self->call_within_transaction(sub {
