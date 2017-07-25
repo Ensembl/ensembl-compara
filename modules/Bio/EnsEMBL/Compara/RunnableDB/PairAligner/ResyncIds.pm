@@ -94,11 +94,17 @@ sub run {
         }
         # Delete old MLSS
         $dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('out_of_sync_mlss_id'));
+        # Change species_set_id
+        $dbc->do('UPDATE method_link_species_set SET species_set_id = ? WHERE species_set_id = ?', undef, $self->param('master_mlss')->species_set->dbID, $self->param('out_of_sync_mlss')->species_set->dbID);
+        $dbc->do('DELETE FROM species_set WHERE species_set_id = ?', undef, $self->param('out_of_sync_mlss')->species_set->dbID);
+        $dbc->do('DELETE FROM species_set_header WHERE species_set_id = ?', undef, $self->param('out_of_sync_mlss')->species_set->dbID);
 
         ## 2. Use the correct DnaFrags
         $self->_update_dnafrags($dbc, @{$genome_db_id_mapping->[0]});
         $self->_update_dnafrags($dbc, @{$genome_db_id_mapping->[1]});
 
+        ## 3. Delete the old genome_db_ids
+        $dbc->do(sprintf('DELETE FROM genome_db WHERE genome_db_id IN (%s) AND genome_db_id NOT IN (%s)', join(',', map {$_->dbID} @{$self->param('out_of_sync_mlss')->species_set->genome_dbs}), join(',', map {$_->dbID} @{$self->param('master_mlss')->species_set->genome_dbs})));
     } );
 }
 
