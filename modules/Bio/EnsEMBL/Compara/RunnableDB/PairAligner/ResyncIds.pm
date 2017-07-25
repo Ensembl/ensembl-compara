@@ -120,7 +120,7 @@ sub _update_dnafrags {
 
     ## 2. Bring the new DnaFrags in
     # Copy new DnaFrags
-    copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'dnafrag', 'dnafrag_id', $new_genome_db_id);
+    copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $dbc, 'dnafrag', 'genome_db_id', $new_genome_db_id);
     # Link to new DnaFrags
     $dbc->do('UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.genome_db_id = ? AND d2.genome_db_id = ?', undef, $old_genome_db_id+$offset, $new_genome_db_id);
 
