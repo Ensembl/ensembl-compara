@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	89
+1	\N	schema_version	90
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -221,3 +221,5 @@
 1777	\N	patch	patch_87_88_b.sql|seq_region_name_255
 1778	\N	patch	patch_87_88_c.sql|protein_featue_uniqueness
 1779	\N	patch	patch_88_89_a.sql|schema_version
+1780	\N	patch	patch_89_90_a.sql|schema_version
+1781	\N	patch	patch_89_90_b.sql|remove_status

@@ -37,7 +37,7 @@ my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
 # Test pair of species sharing an EPO aln #
-my $exp_dataflow = {
+my $exp_br1_dataflow = {
 	species => '112 - 142',
 	accu_dataflow => {
 		'aln_mlss_ids' => [647, 634],
@@ -52,6 +52,7 @@ standaloneJob(
 		'species1_id' => '112',
 		'species2_id' => '142',
 		'compara_db'  => $compara_db,
+		'master_db'   => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[
@@ -66,21 +67,26 @@ standaloneJob(
 			'WARNING',
 			"Found 2 alignments between meleagris_gallopavo and gallus_gallus"
 		],
-		# [
-		# 	'DATAFLOW',
-		# 	{ mlss => [647, 634] },
-		# 	1
-		# ],
+		[
+			'DATAFLOW',
+			$exp_br1_dataflow,
+			1
+		],
 		[ # start event
-			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			'DATAFLOW',
+          { 'mlss_id' => '634', 'mlss_db' => $compara_db },
+          2
+		], # end event
+		[ # start event
+		  'DATAFLOW',
+          { 'mlss_id' => '647', 'mlss_db' => $compara_db },
+          2
 		], # end event
 	]
 );
 
 # Test pair of species sharing an LASTZ aln #
-$exp_dataflow = {
+$exp_br1_dataflow = {
 	species => '150 - 142',
 	accu_dataflow => {
 		'aln_mlss_ids' => [719],
@@ -95,6 +101,7 @@ standaloneJob(
 		'species1_id' => '150',
 		'species2_id' => '142',
 		'compara_db'  => $compara_db,
+		'master_db'   => $compara_db,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[
@@ -105,21 +112,21 @@ standaloneJob(
 			'WARNING',
 			"Found 1 alignments between homo_sapiens and gallus_gallus"
 		],
-		# [
-		# 	'DATAFLOW',
-		# 	{ mlss => [719] },
-		# 	1
-		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			$exp_br1_dataflow, # expected data flowed out
+			1 # dataflow branch
 		], # end event
+		[
+          'DATAFLOW',
+          { 'mlss_id' => '719', 'mlss_db' => $compara_db },
+          2
+        ]
 	]
 );
 
-# Test species set with EPO aln #
-$exp_dataflow = {
+# # Test species set with EPO aln #
+$exp_br1_dataflow = {
 	species => '112 - 142',
 	accu_dataflow => {
 		'aln_mlss_ids' => [647],
@@ -133,19 +140,24 @@ standaloneJob(
 	{ # input param hash
 		'species1_id'    => '112',
 		'species2_id'    => '142',
-                'aln_mlss_ids'   => ['647'],
+        'aln_mlss_ids'   => ['647'],
 		'compara_db'     => $compara_db,
+		'master_db'      => $compara_db,
 	},
-	[ # list of events to test for (just 1 event in this case)
+	[
 		# [
-		# 	'DATAFLOW',
-		# 	{ mlss => [647] },
-		# 	1
+		# 	'WARNING',
+		# 	"Found 1 alignments between gallus_gallus and meleagris_gallopavo"
 		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow, # expected data flowed out
-			2 # dataflow branch
+			$exp_br1_dataflow, # expected data flowed out
+			1 # dataflow branch
+		], # end event
+		[ # start event
+		  'DATAFLOW',
+          { 'mlss_id' => '647', 'mlss_db' => $compara_db },
+          2
 		], # end event
 	]
 );

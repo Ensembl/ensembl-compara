@@ -67,7 +67,7 @@ sub fetch_input {
 
 	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
 	# else { $dba = $self->compara_dba }
-	$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('master_db'));
+	$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db'));
 
 	# find GenomeDBs for each species
 	my $gdb_adaptor = $dba->get_GenomeDBAdaptor;
@@ -147,14 +147,15 @@ sub write_output {
 
 	my ( $species1_id, $species2_id ) = ( $self->param( 'species1_id' ), $self->param( 'species2_id' ) );
 
-	my $dataflow = {
+	my $accu_dataflow = {
 		'species1_id'  => $species1_id,
 		'species2_id'  => $species2_id,
 		'aln_mlss_ids' => $self->param( 'aln_mlss_ids' ),
 	};
-	$self->param('accu_dataflow', $dataflow);
+	$self->param('accu_dataflow', $accu_dataflow);
 
-	$self->dataflow_output_id( { species => "$species1_id - $species2_id", accu_dataflow => $dataflow }, 1 ); # to accu
+	my $br1_dataflow = { species => "$species1_id - $species2_id", accu_dataflow => $accu_dataflow };
+	$self->dataflow_output_id( $br1_dataflow, 1 ); # to accu
 	
 	my $mlss_db_map = $self->_map_mlss_to_db( $self->param('aln_mlss_ids') );
 	foreach my $mlss_id ( keys %$mlss_db_map ) {
