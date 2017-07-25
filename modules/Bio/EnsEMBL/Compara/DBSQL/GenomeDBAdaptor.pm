@@ -522,7 +522,7 @@ sub _find_missing_DBAdaptors {
         push @missing, $genome_db;
     }
     warn("Cannot find all the core databases in the Registry. Be aware that getting Core objects from Compara is not possible for the following species/assembly: ".
-        join(", ", map {sprintf('%s/%s', $_->name, $_->assembly)} @missing)."\n");
+        join(", ", map {sprintf('%s/%s', $_->name, $_->assembly)} @missing)."\n") if @missing;
 }
 
 
