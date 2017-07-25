@@ -124,6 +124,9 @@ sub _update_dnafrags {
     # Link to new DnaFrags
     $dbc->do('UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.genome_db_id = ? AND d2.genome_db_id = ?', undef, $old_genome_db_id+$offset, $new_genome_db_id);
 
+    ## 3. Should be able to delete the shifted old DnaFrags and the fake genome_db_id
+    $dbc->do("DELETE FROM dnafrag WHERE genome_db_id = ?", undef, $old_genome_db_id+$offset);
+    $dbc->do("DELETE FROM genome_db WHERE genome_db_id = ?", undef, $old_genome_db_id+$offset);
 }
 
 
