@@ -148,6 +148,7 @@ sub render_align_bar {
     my $s2st      = $s2->{'strand'};
     my $s2t       = $s2->{'seq_region_name'};
     my $s2sp      = $s2->adaptor->db->species if($s2->adaptor);
+    next unless $s2sp;
     my $box_start = $ss;
     my $box_end   = $se;
     my $filled    = $sst;
@@ -196,8 +197,13 @@ sub render_align_bar {
     
     $self->push($glyph);
 
-    my $ref_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $species, 'SPECIES_COMMON_NAME') || lc $species;
-    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp || '';
+    my $species_defs  = $config->{'hub'}->species_defs;
+    my $map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
+    my $ref_species   = $map->{$species};
+    my $other_species = $map->{$s2sp}; 
+
+    my $ref_species_common_name = lc $species_defs->get_config($ref_species, 'SPECIES_COMMON_NAME');
+    my $other_species_common_name = lc $species_defs->get_config($other_species, 'SPECIES_COMMON_NAME') || '';
     
     # This happens when we have two slices following each other
     if (defined $last_end and ($last_end <= $ss - 1)) {
