@@ -389,7 +389,6 @@ sub update_track_axes {
   if ($key =~ /^(upload|url)_/) {
     my ($type, $code, $record_id) = split('_', $key);
     $record = $self->hub->session->get_record_data({'type' => $type, 'code' => sprintf '%s_%s', $code, $record_id});
-    warn $record;
     if ($record) {
       $record->{'y_min'} = $y_min if defined $y_min;
       $record->{'y_max'} = $y_max if defined $y_max;
