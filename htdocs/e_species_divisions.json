@@ -133,14 +133,20 @@
               "is_leaf":"true"
           },
           {
-              "scientific_name":"Cricetulus griseus",
-              "key":"Cricetulus_griseus_crigri",
-              "is_leaf":"true"
-          },
-          {
-              "scientific_name":"Cricetulus griseus",
-              "key":"Cricetulus_griseus_chok1gshd",
-              "is_leaf":"true"
+            "key":"chinese_hamster",
+            "display_name":"Chinese Hamster",
+            "child_nodes":[
+              {
+                  "scientific_name":"Cricetulus griseus",
+                  "key":"Cricetulus_griseus_crigri",
+                  "is_leaf":"true"
+              },
+              {
+                  "scientific_name":"Cricetulus griseus",
+                  "key":"Cricetulus_griseus_chok1gshd",
+                  "is_leaf":"true"
+              }
+            ]
           },
           {
               "scientific_name":"Fukomys damarensis",
@@ -180,7 +186,6 @@
           {
             "key":"Naked_mole_rat",
             "display_name":"Naked mole rat",
-            "is_internal_node":"true",
             "child_nodes":[
               {
                   "scientific_name":"Heterocephalus glaber",

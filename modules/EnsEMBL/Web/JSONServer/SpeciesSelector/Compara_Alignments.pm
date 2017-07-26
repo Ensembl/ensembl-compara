@@ -58,7 +58,8 @@ sub json_fetch_species {
     $t->{isFolder}   = 1;
     $t->{expand}     = 0;
     $t->{children}   = [];
-
+    my @children;
+    # foreach (sort {$a->{}})
     foreach (sort keys %{$row->{'species'}}) {
       my $url_name  = $hub->species_defs->production_name_mapping($_);
       my $prod_name = $hub->species_defs->get_config($url_name, 'SPECIES_PRODUCTION_NAME');
@@ -71,8 +72,10 @@ sub json_fetch_species {
       $t_child->{value}      = $row->{id};
       $t_child->{icon}       = '/i/species/16/' . $url_name . '.png'; 
       $t_child->{searchable} = 0;
-      push @{$t->{children}}, $t_child;
+      push @children, $t_child;
     }
+
+    push @{$t->{children}}, sort { $a->{title} cmp $b->{title} } @children;
     push @{$species_hash_multiple}, $t;
   }
 
