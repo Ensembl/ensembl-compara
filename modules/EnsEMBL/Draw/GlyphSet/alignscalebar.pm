@@ -148,7 +148,6 @@ sub render_align_bar {
     my $s2st      = $s2->{'strand'};
     my $s2t       = $s2->{'seq_region_name'};
     my $s2sp      = $s2->adaptor->db->species if($s2->adaptor);
-    next unless $s2sp;
     my $box_start = $ss;
     my $box_end   = $se;
     my $filled    = $sst;
