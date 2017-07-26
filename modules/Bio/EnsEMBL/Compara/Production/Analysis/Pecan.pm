@@ -50,7 +50,7 @@ The output (multiple alignment) is parsed and return as a Bio::EnsEMBL::Compara:
 =cut
 
 
-package Bio::EnsEMBL::Analysis::Runnable::Pecan;
+package Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
 
 use strict;
 use warnings;

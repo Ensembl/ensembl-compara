@@ -50,7 +50,7 @@ are temporaly stored and parsed.
 =cut
 
 
-package Bio::EnsEMBL::Analysis::Runnable::Mercator;
+package Bio::EnsEMBL::Compara::Production::Analysis::Mercator;
 
 use strict;
 use warnings;

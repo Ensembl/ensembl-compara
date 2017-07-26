@@ -57,7 +57,7 @@ the evolution of both substitutions, insertions and deletions.
 =cut
 
 
-package Bio::EnsEMBL::Analysis::Runnable::Ortheus;
+package Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 
 use strict;
 use warnings;
