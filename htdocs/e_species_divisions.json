@@ -97,6 +97,11 @@
             "scientific_name":"Mus pahari",
             "key":"Mus_pahari",
             "is_leaf":"true"
+          },
+          {
+            "scientific_name":"Mus spretus",
+            "key":"Mus_spretus",
+            "is_leaf":"true"
           }
         ]
       },
