@@ -195,7 +195,7 @@ sub output_link {
     }
   }
   else {
-    $string = sprintf('<li><strong><a href="http://%s.ensembl.org">Ensembl %s</a></strong>: %s', lc($date), $date, $archives->{$release}{'description'});
+    $string = sprintf('<li><strong><a href="http://%s.ensembl.org/%s">Ensembl %s</a></strong>: %s', lc($date), $url, $date, $archives->{$release}{'description'});
   }
  
   $string .= '</li>';
