@@ -158,7 +158,8 @@ sub write_output {
 	$self->dataflow_output_id( $br1_dataflow, 1 ); # to accu
 	
 	my $mlss_db_map = $self->_map_mlss_to_db( $self->param('aln_mlss_ids') );
-	foreach my $mlss_id ( keys %$mlss_db_map ) {
+	my @mlss_ids_sorted = sort keys(%$mlss_db_map); # important for testing
+	foreach my $mlss_id ( @mlss_ids_sorted ) {
 		my $this_dataflow = { mlss_id => $mlss_id, mlss_db => $mlss_db_map->{$mlss_id} };
 		$self->dataflow_output_id( $this_dataflow, 2 ); # to accu
 	}
