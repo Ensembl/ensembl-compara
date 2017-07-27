@@ -39,9 +39,9 @@ sub import {
 
   # get valid paths from ENSEMBL_LIB_DIRS
   my @plugable_lib_dirs;
-  for (map s/\/+$//r, @SiteDefs::ENSEMBL_LIB_DIRS) {
-    warn "WARNING: LoadPlugins could not add $_ to INC: Directory doesn't exist\n" and next unless -d $_;
-    unshift @plugable_lib_dirs, [ [ grep $_ && $_ ne 'modules', split /\//, $_ ]->[-1], $_ ];
+  foreach my $path (map s/\/+$//r, @SiteDefs::ENSEMBL_LIB_DIRS) {
+    warn "WARNING: LoadPlugins could not add $path to INC: Directory doesn't exist\n" and next unless -d $path;
+    unshift @plugable_lib_dirs, [ [ grep $_ && $_ ne 'modules', split /\//, $path ]->[-1], $path ]; # first element in the array is 'ensembl-webcode', 'ensembl-funcgen' etc
   }
 
   # get list of plugins from SiteDefs
@@ -72,9 +72,9 @@ sub import {
   @INC = grep { -e && abs_path(sprintf '%s/%s.pm', $_, __PACKAGE__) ne abs_path(__FILE__) } @INC;
 
   # push ENSEMBL_EXTRA_INC to INC
-  for (reverse @{$SiteDefs::ENSEMBL_EXTRA_INC}) {
-    warn "WARNING: LoadPlugins could not add $_ to INC: Directory doesn't exist\n" and next unless -d $_;
-    unshift @INC, $_;
+  foreach my $path (reverse @{$SiteDefs::ENSEMBL_EXTRA_INC}) {
+    warn "WARNING: LoadPlugins could not add $path to INC: Directory doesn't exist\n" and next unless -d $path;
+    unshift @INC, $path;
   }
 
   # Add the subroutine to @INC to use packages from INC_INDEX and implement plugin mechanism
