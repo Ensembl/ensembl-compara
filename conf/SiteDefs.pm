@@ -496,10 +496,14 @@ sub _update_conf {
     }
   }
 
-  for ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS, $BIOPERL_DIR, $VCFTOOLS_PERL_LIB) {
+  # Add API libs to ENSEMBL_LIB_DIRS
+  for ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS) {
     warn "WARNING: Could not add $_ to ENSEMBL_LIB_DIRS: Directory doesn't exist\n" and next unless -d $_;
-    push @ENSEMBL_LIB_DIRS, $_;
+    unshift @ENSEMBL_LIB_DIRS, $_;
   }
+
+  # Add extra libs to ENSEMBL_EXTRA_INC
+  unshift @$ENSEMBL_EXTRA_INC, $BIOPERL_DIR, $VCFTOOLS_PERL_LIB;
 }
 
 sub _set_dedicated_mart {
