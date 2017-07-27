@@ -2362,7 +2362,7 @@ sub dumpGene {
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
              g.stable_id as gsid, g.version as gversion, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
-             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype, a.logic_name
+             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.biotype, a.logic_name
         FROM (( $dbname.gene as g,
              $dbname.analysis as a,
              $dbname.analysis_description as ad,
@@ -2379,9 +2379,9 @@ sub dumpGene {
 
     my $old;
     my $c;
-    my ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
@@ -2425,7 +2425,6 @@ sub dumpGene {
           'xrefs'     => [],
           'synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
-          'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
         };
@@ -2738,7 +2737,7 @@ sub dumpTranscript {
     $trans_locations->{'has_patches'} = $has_patches;
     $sql = qq(
       SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
-             t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
+             t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.biotype, a.logic_name
         FROM (( $dbname.analysis_description as ad,
              $dbname.analysis as a,
              $dbname.transcript as t) left join
@@ -2753,9 +2752,9 @@ sub dumpTranscript {
 
     my $old;
     my $c = 0;
-    my ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln) = @$r;
       $desc = $desc ? $desc : $gene_desc->{$tid}{'description'} ? $gene_desc->{$tid}{'description'} : '';
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
@@ -2799,7 +2798,6 @@ sub dumpTranscript {
           'xrefs'     => [],
           'synonyms'  => $trans_syns{$tsid} || [],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
-          'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
           'domains'   => $protein_domains->{$tid},
