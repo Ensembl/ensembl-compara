@@ -22,6 +22,8 @@ package LoadPlugins;
 use strict;
 use warnings;
 
+use Cwd qw(abs_path);
+
 my $IMPORTED;
 my %LOADING;
 my %INC_INDEX;
@@ -58,6 +60,9 @@ sub import {
 
   # add previous psudo-pragma package to INC_INDEX to allow 'use previous'
   $INC_INDEX{'previous.pm'} = [[ 'core', sprintf('%s/conf/previous.pm', $SiteDefs::ENSEMBL_WEBROOT) ]];
+
+  # remove inexistent dirs and conf dir from the INC (code shouldn't require any perl packages under conf dir after this stage)
+  @INC = grep { -e && abs_path(sprintf '%s/%s.pm', $_, __PACKAGE__) ne abs_path(__FILE__) } @INC;
 
   unshift @INC, sub {
     ## This subroutine gets called the first thing when we 'require' any package
