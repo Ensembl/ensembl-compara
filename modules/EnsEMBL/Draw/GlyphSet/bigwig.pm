@@ -35,6 +35,7 @@ sub can_json { return 1; }
 
 sub init {
   my $self = shift;
+  $self->{'my_config'}->set('scaleable', 1);
   $self->{'data'} = $self->get_data;
 }
 

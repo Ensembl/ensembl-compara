@@ -805,6 +805,8 @@ sub _add_bigwig_track {
     style           => 'wiggle',
     colour          => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
     longLabel       => $args{'source'}{'longLabel'},
+    y_min           => $args{'source'}{'y_min'},
+    y_max           => $args{'source'}{'y_max'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
   };

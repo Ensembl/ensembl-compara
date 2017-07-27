@@ -125,14 +125,6 @@ sub _fetch_data {
   return [] unless $url;
 
   my $check;
-=pod
-  if ($url =~ /^http|ftp/) {
-    $check = EnsEMBL::Web::File::Utils::URL::file_exists($url, {'nice' => 1});
-  }
-  else {
-    $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
-  }
-=cut
 
   if ($check->{'error'}) {
     my $error = $self->{'my_config'}->get('on_error');
@@ -157,6 +149,12 @@ sub _fetch_data {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour') || 'slategray';
     $self->{'my_config'}->set('axis_colour', $colour);
+
+    my ($y_min, $y_max);
+    if ($self->{'my_config'}{'data'}) {
+      $y_min  = $self->{'my_config'}{'data'}{'y_min'};
+      $y_max  = $self->{'my_config'}{'data'}{'y_max'};
+    }
   
     my ($slice, $whole_chromosome);
     if (ref($self->{'container'}) eq 'Bio::EnsEMBL::Slice') {
@@ -180,6 +178,8 @@ sub _fetch_data {
                     'unit'            => $length / $bins,
                     'length'          => $length,
                     'bins'            => $bins,
+                    'y_min'           => $y_min,
+                    'y_max'           => $y_max,
                     'display'         => $self->{'display'},
                     'no_titles'       => $self->my_config('no_titles'),
                     'default_strand'  => 1,
