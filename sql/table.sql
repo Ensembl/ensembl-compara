@@ -1721,7 +1721,7 @@ CREATE TABLE gene_member_qc (
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  key (gene_member_stable_id)
+  KEY (gene_member_stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
