@@ -37,11 +37,18 @@ sub import {
     return;
   }
 
-  my @lib_dirs    = reverse map [ [ grep $_ && $_ ne 'modules', split /\//, $_ ]->[-1], $_ ], map s/\/+$//r, @SiteDefs::ENSEMBL_LIB_DIRS;
+  # get valid paths from ENSEMBL_LIB_DIRS
+  my @plugable_lib_dirs;
+  for (map s/\/+$//r, @SiteDefs::ENSEMBL_LIB_DIRS) {
+    warn "WARNING: LoadPlugins could not add $_ to INC: Directory doesn't exist\n" and next unless -d $_;
+    unshift @plugable_lib_dirs, [ [ grep $_ && $_ ne 'modules', split /\//, $_ ]->[-1], $_ ];
+  }
+
+  # get list of plugins from SiteDefs
   my @all_plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
-  my @plugins;
 
   # Only need to plugin in the perl files inside the 'module' folders
+  my @plugins;
   while (my ($dir, $plugin_name) = splice @all_plugins, 0, 2) {
     push @plugins, [ $plugin_name, "$dir/modules" ] if -e "$dir/modules";
   }
@@ -52,7 +59,7 @@ sub import {
   }
 
   # create an index of all the packages found in all the ensembl lib dirs and plugins
-  for (@lib_dirs, @plugins) {
+  for (@plugable_lib_dirs, @plugins) {
     foreach my $path (@{_get_all_packages($_->[1])}) {
       push @{$INC_INDEX{$path}}, [ $_->[0], "$_->[1]/$path" =~ s/\/+/\//gr ];
     }

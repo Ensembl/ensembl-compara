@@ -499,10 +499,7 @@ sub _update_conf {
   }
 
   # Add API libs to ENSEMBL_LIB_DIRS
-  for ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS) {
-    warn "WARNING: Could not add $_ to ENSEMBL_LIB_DIRS: Directory doesn't exist\n" and next unless -d $_;
-    unshift @ENSEMBL_LIB_DIRS, $_;
-  }
+  @ENSEMBL_LIB_DIRS = ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS);
 
   # Add extra libs to ENSEMBL_EXTRA_INC
   unshift @$ENSEMBL_EXTRA_INC, $BIOPERL_DIR, $VCFTOOLS_PERL_LIB;
