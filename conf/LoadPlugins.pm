@@ -71,6 +71,13 @@ sub import {
   # remove inexistent dirs and conf dir from the INC (code shouldn't require any perl packages under conf dir after this stage)
   @INC = grep { -e && abs_path(sprintf '%s/%s.pm', $_, __PACKAGE__) ne abs_path(__FILE__) } @INC;
 
+  # push ENSEMBL_EXTRA_INC to INC
+  for (reverse @{$SiteDefs::ENSEMBL_EXTRA_INC}) {
+    warn "WARNING: LoadPlugins could not add $_ to INC: Directory doesn't exist\n" and next unless -d $_;
+    unshift @INC, $_;
+  }
+
+  # Add the subroutine to @INC to use packages from INC_INDEX and implement plugin mechanism
   unshift @INC, sub {
     ## This subroutine gets called the first thing when we 'require' any package
     ## If a package can have plugins, it loads the core one first, and then loads any plugins if found
