@@ -42,6 +42,8 @@ CREATE TABLE seq_member_projection_stable_id (
   target_seq_member_id      int(10) unsigned NOT NULL,
   source_stable_id          VARCHAR(128) NOT NULL,
 
+  FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
+
   PRIMARY KEY (target_seq_member_id),
   INDEX (source_stable_id)
 

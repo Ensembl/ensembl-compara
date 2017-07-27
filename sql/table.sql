@@ -1103,6 +1103,10 @@ CREATE TABLE exon_boundaries (
 	dnafrag_end      INT NOT NULL,
 	sequence_length  INT(10) UNSIGNED NOT NULL,
 	left_over        TINYINT(1) DEFAULT 0 NOT NULL,
+
+	FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+	FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
+
 	INDEX (seq_member_id),
 	INDEX (gene_member_id)
 ) ENGINE=MyISAM;
@@ -1126,6 +1130,8 @@ CREATE TABLE exon_boundaries (
 CREATE TABLE seq_member_projection_stable_id (
   target_seq_member_id      int(10) unsigned NOT NULL,
   source_stable_id          VARCHAR(128) NOT NULL,
+
+  FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
 
   PRIMARY KEY (target_seq_member_id),
   INDEX (source_stable_id)
@@ -1711,6 +1717,8 @@ CREATE TABLE gene_member_qc (
   avg_cov                     FLOAT,
   status                      varchar(50) NOT NULL,
 
+  FOREIGN KEY (gene_member_stable_id) REFERENCES gene_member(stable_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
   key (gene_member_stable_id)
