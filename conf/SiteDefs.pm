@@ -182,11 +182,9 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 
 ###############################################################################
 ## Content dirs
-our @ENSEMBL_LIB_DIRS;                                                                      # locates perl library modules. Array order is maintained in @INC
 our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates <species>.ini files
 our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                                      # locates mod-perl scripts
 our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
-our $ENSEMBL_EXTRA_INC    = [];                                                             # Any extra perl paths needed for the site
 ###############################################################################
 
 
@@ -236,6 +234,7 @@ our $ENSEMBL_MART_PLUGIN_ENABLED  = 0;  # Is set true by the mart plugin itself.
 our $ENSEMBL_MART_SERVER          = ''; # Server address if mart server is running on another server (biomart requests get proxied to ENSEMBL_MART_SERVER)
 ###############################################################################
 
+
 ###############################################################################
 ## Memcached specific configs
 our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|1] and 'default_exptime'. See EnsEMBL::Web::Cache in public-plugins for details.
@@ -248,6 +247,7 @@ our $FLANK5_PERC                  = 0.02; # % 5' flanking region for images (use
 our $FLANK3_PERC                  = 0.02; # % 3' flanking region for images (used for region comparison and location view)
 our $ENSEMBL_ALIGNMENTS_HIERARCHY = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
 ###############################################################################
+
 
 ###############################################################################
 # Variables exported for ENV for apache processes
@@ -298,6 +298,20 @@ our $OBJECT_PARAMS = [
 ###############################################################################
 
 
+###############################################################################
+## Dirs for the @INC
+our $ENSEMBL_API_LIBS = [   # Main ensembl API libraries needed for the site (packages in these locations are pluggable) - mainly used for internal modules
+  "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-io/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
+  "$ENSEMBL_SERVERROOT/ensembl/modules"
+];
+our $ENSEMBL_EXTRA_INC = []; # Any extra perl paths needed for the site (packages in these locations are NOT pluggable) - mainly used for external modules
+###############################################################################
+
+
 #### END OF VARIABLE DEFINITION ####
 
 
@@ -308,6 +322,7 @@ our $OBJECT_PARAMS = [
 our $ENSEMBL_PLUGINS      = []; # List of all plugins enabled - populated by _populate_plugins_list()
 our $ENSEMBL_IDS_USED     = {}; # All plugins with extra info for perl.startup output - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGINS_USED = {}; # Identities being used for plugins - needed by perl.startup - populated by _populate_plugins_list()
+our @ENSEMBL_LIB_DIRS     = (); # List to locate perl library modules - populated by _update_conf()
 our $ENSEMBL_PLUGIN_ROOTS = []; # Populated by _update_conf()
 our $ENSEMBL_BASE_URL;          # Populated by import
 our $ENSEMBL_SITE_URL;          # Populated by import
@@ -481,19 +496,10 @@ sub _update_conf {
     }
   }
 
-  push @ENSEMBL_LIB_DIRS, (
-    "$ENSEMBL_WEBROOT/modules",
-    $BIOPERL_DIR,
-    $VCFTOOLS_PERL_LIB,
-    "$ENSEMBL_SERVERROOT/biomart-perl/lib",
-    "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-io/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
-    "$ENSEMBL_SERVERROOT/ensembl/modules",
-    @{$ENSEMBL_EXTRA_INC || []}
-  );
+  for ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS, $BIOPERL_DIR, $VCFTOOLS_PERL_LIB) {
+    warn "WARNING: Could not add $_ to ENSEMBL_LIB_DIRS: Directory doesn't exist\n" and next unless -d $_;
+    push @ENSEMBL_LIB_DIRS, $_;
+  }
 }
 
 sub _set_dedicated_mart {
