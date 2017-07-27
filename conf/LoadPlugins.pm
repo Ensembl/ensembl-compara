@@ -56,15 +56,18 @@ sub import {
     }
   }
 
+  # add previous psudo-pragma package to INC_INDEX to allow 'use previous'
+  $INC_INDEX{'previous.pm'} = [[ 'core', sprintf('%s/conf/previous.pm', $SiteDefs::ENSEMBL_WEBROOT) ]];
+
   unshift @INC, sub {
     ## This subroutine gets called the first thing when we 'require' any package
     ## If a package can have plugins, it loads the core one first, and then loads any plugins if found
     my ($coderef, $filename) = @_;
 
-    my @inc;
-
-    # We don't want to plugin any of the packages that don't exist in the pregenerated INC_INDEX
+    # We don't want to this subroutine to load any packages that don't exist in the pregenerated INC_INDEX (let perl find it in the rest of the INC)
     my $files = $INC_INDEX{$filename} or return;
+
+    my @inc;
 
     # If the file being plugged in (file A) has circular dependency with
     # another file (B) in the core code or any of the plugins, then while
