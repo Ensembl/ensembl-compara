@@ -182,8 +182,7 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 
 ###############################################################################
 ## Content dirs
-our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates <species>.ini files
-our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                                      # locates mod-perl scripts
+our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
 our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
 ###############################################################################
 
@@ -447,7 +446,6 @@ sub _update_conf {
 
     $order_validation{$name}{'order'} = ++$count;
 
-    unshift @ENSEMBL_PERL_DIRS,     "$dir/perl";
     unshift @ENSEMBL_HTDOCS_DIRS,   "$dir/htdocs";
     unshift @$ENSEMBL_PLUGIN_ROOTS, $name;
     push    @ENSEMBL_CONF_DIRS,     "$dir/conf";
