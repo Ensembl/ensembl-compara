@@ -161,8 +161,10 @@ sub consensus_features {
   my $colours = $self->species_defs->colour('variation');
    
   foreach my $f (@$raw_features) {
+    my $type         = undef;
     my $unknown_type = 1;
-    my $vs           = $f->{'POS'} - $start;
+    ## Compensate for VCF start including the bp before the variant
+    my $vs           = $f->{'POS'} - $start + 2;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
     my $info_string;
@@ -172,6 +174,7 @@ sub consensus_features {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
+        $type = 'deletion';
         my $svlen = $f->{'INFO'}{'SVLEN'} || 0;
         $ve       = $vs + abs $svlen;
 
@@ -182,11 +185,19 @@ sub consensus_features {
         $ve       = $vs + $svlen + 1;
       } 
       elsif ($sv eq 'INS') {
+        $type = 'insertion';
         $ve = $vs -1;
       }
     } 
     else {
       my ($reflen, $altlen) = (length $f->{'REF'}, length $f->{'ALT'}[0]);
+
+      if ($altlen > $reflen) {
+        $type = 'insertion';
+      }
+      elsif ($altlen < $reflen) {
+        $type = 'deletion';
+      }
 
       if ($reflen > 1) {
         $ve = $vs + $reflen - 1;
@@ -224,6 +235,8 @@ sub consensus_features {
       }
     }
 
+    my $colour  = $colours->{'default'}->{'default'};
+=pod
     ## Get consequence type
     my $consequence;
     if (defined($f->{'INFO'}->{'VE'})) {
@@ -251,10 +264,10 @@ sub consensus_features {
     }
       
     ## Set colour by consequence
-    my $colour  = $colours->{'default'}->{'default'};
     if ($consequence && defined($overlap_cons{$consequence})) {
       $colour = $colours->{lc $consequence}->{'default'};
     }
+=cut
 
     my $fhash = {
                   start   => $vs,
@@ -263,6 +276,7 @@ sub consensus_features {
                   colour  => $colour,       
                   label   => $vf_name, 
                   title   => $title,
+                  type    => $type,
                 };
 
     push @$features, $fhash;
