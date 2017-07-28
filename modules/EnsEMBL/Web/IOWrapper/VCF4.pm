@@ -48,6 +48,20 @@ sub create_hash {
   my $seqname       = $self->parser->get_seqname;
   my @feature_ids   = @{$self->parser->get_IDs};
 
+  ## Work out what kind of variant we have
+  my $type;
+  my $ref = $self->parser->get_raw_reference;
+  foreach my $alt (@{$self->parser->get_alternatives}) {
+    if (length($alt) > length($ref)) {
+      $type = 'insertion';
+      last;
+    }
+    elsif (length($alt) < length($ref)) {
+      $type = 'deletion';
+      last;
+    }
+  }
+
   $metadata ||= {};
 
   my $href = $self->href({
@@ -88,6 +102,7 @@ sub create_hash {
     $feature->{'start'} = $start;
     $feature->{'end'}   = $end;
     $feature->{'href'}  = $href;
+    $feature->{'type'}  = $type;
   }
   return $feature;
 }
