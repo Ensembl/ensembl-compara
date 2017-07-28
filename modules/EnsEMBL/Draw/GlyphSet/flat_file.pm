@@ -24,6 +24,7 @@ package EnsEMBL::Draw::GlyphSet::flat_file;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
@@ -77,11 +78,14 @@ sub get_data {
     $y_max  = $self->{'my_config'}{'data'}{'y_max'};
   }
 
-  my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
-                                            'hub'         => $hub, 
-                                            'config_type' => $self->{'config'}{'type'},
-                                            'track'       => $self->{'my_config'}{'id'},
-                                            );
+  ## Create adaptor, so we can look up consequence in db
+  my $adaptor = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($hub->species);
+  my $iow     = EnsEMBL::Web::IOWrapper::open($file, 
+                                              'hub'         => $hub, 
+                                              'adaptor'     => $adaptor,
+                                              'config_type' => $self->{'config'}{'type'},
+                                              'track'       => $self->{'my_config'}{'id'},
+                                              );
   if ($iow) {
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';
@@ -96,6 +100,7 @@ sub get_data {
                         'display'         => $self->{'display'},
                         'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         'colour'          => $colour,
+                        'colours'         => $colours,
                         'y_min'           => $y_min, 
                         'y_max'           => $y_max, 
                         };
