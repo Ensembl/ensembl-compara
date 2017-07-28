@@ -69,7 +69,7 @@ sub render_simple {
       ## Convert raw features into correct data format 
       $self->{'my_config'}->set('height', 12);
       $self->{'my_config'}->set('default_strand', 1);
-      $self->{'my_config'}->set('drawing_style', ['Feature']);
+      $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
       $self->{'data'}[0]{'features'} = $self->consensus_features;
       $self->draw_features;
     }

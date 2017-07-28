@@ -63,6 +63,9 @@ sub get_data {
   my $file  = EnsEMBL::Web::File::User->new(%args);
   return [] unless $file->exists;
   
+  ## Set style for VCF here, as other formats define it in different ways
+  $self->{'my_config'}->set('drawing_style', ['Feature::Variant']) if $format =~ /vcf/i;
+
   ## Get settings from user interface
   my ($colour, $y_min, $y_max);
   if ($self->{'my_config'}{'data'}) {
@@ -77,6 +80,14 @@ sub get_data {
                                             'track'       => $self->{'my_config'}{'id'},
                                             );
   if ($iow) {
+    ## Override colourset based on format here, because we only want to have to do this in one place
+    my $colourset   = $iow->colourset || 'userdata';
+    my $colours     = $hub->species_defs->colour($colourset);
+    $self->{'my_config'}->set('colours', $colours);
+
+    $colour       ||= $self->my_colour('default');
+    $self->{'my_config'}->set('colour', $colour);
+
     my $extra_config = {
                         'strand_to_omit'  => $strand_to_omit,
                         'display'         => $self->{'display'},
@@ -89,11 +100,6 @@ sub get_data {
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $extra_config);
     #use Data::Dumper; warn '>>> TRACKS '.Dumper($data);
-
-    ## Override colourset based on format here, because we only want to have to do this in one place
-    my $colourset   = $iow->colourset || 'userdata';
-    $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('colour', $self->my_colour('default'));
   } else {
     $self->{'data'} = [];
     return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
