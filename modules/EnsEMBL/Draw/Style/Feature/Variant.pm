@@ -140,7 +140,7 @@ sub draw_deletion {
   my $params = {
                   x         => $x-1,
                   y         => $position->{'y'},
-                  width     => $position->{'width'},
+                  width     => $position->{'width'} + 1,
                   height    => $position->{'height'},
                   colour    => $feature->{'colour'},
                   href      => $feature->{'href'},
