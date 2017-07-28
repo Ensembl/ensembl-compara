@@ -163,19 +163,20 @@ sub consensus_features {
   foreach my $f (@$raw_features) {
     my $type         = undef;
     my $unknown_type = 1;
-    ## Compensate for VCF start including the bp before the variant
-    my $vs           = $f->{'POS'} - $start + 2;
+    my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
     my $info_string;
     $info_string .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
 
+    ## N.B. Compensate for VCF indel start including the bp before the variant
     if ($sv) {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
         $type = 'deletion';
         my $svlen = $f->{'INFO'}{'SVLEN'} || 0;
+        $vs++;
         $ve       = $vs + abs $svlen;
 
         $f->{'REF'} = substr($f->{'REF'}, 0, 30) . ' ...' if length $f->{'REF'} > 30;
@@ -186,6 +187,7 @@ sub consensus_features {
       } 
       elsif ($sv eq 'INS') {
         $type = 'insertion';
+        $vs++;
         $ve = $vs -1;
       }
     } 
@@ -193,9 +195,11 @@ sub consensus_features {
       my ($reflen, $altlen) = (length $f->{'REF'}, length $f->{'ALT'}[0]);
 
       if ($altlen > $reflen) {
+        $vs++;
         $type = 'insertion';
       }
       elsif ($altlen < $reflen) {
+        $vs++;
         $type = 'deletion';
       }
 
