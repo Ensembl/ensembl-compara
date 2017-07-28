@@ -240,7 +240,7 @@ sub consensus_features {
     }
 
     my $colour  = $colours->{'default'}->{'default'};
-=pod
+
     ## Get consequence type
     my $consequence;
     if (defined($f->{'INFO'}->{'VE'})) {
@@ -271,7 +271,6 @@ sub consensus_features {
     if ($consequence && defined($overlap_cons{$consequence})) {
       $colour = $colours->{lc $consequence}->{'default'};
     }
-=cut
 
     my $fhash = {
                   start   => $vs,
