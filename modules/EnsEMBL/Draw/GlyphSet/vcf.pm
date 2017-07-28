@@ -223,8 +223,8 @@ sub consensus_features {
                   'DEL'   => 'Deletion',
                   'TDUP'  => 'Duplication',
                   );
-    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
-    $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
+    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start - 1);
+    $location   .= '-'.($ve + $slice->start - 2) if ($ve && $ve != $vs);
 
     my $title = "$vf_name; Location: $location; Allele: $allele_string";
     $title .= 'Type: '.$lookup{$sv}.'; ' if $lookup{$sv};
