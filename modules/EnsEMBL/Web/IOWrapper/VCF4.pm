@@ -68,7 +68,8 @@ sub create_hash {
     };
   if ($metadata->{'display'} eq 'text') {
     $feature->{'start'} = $feature_start;
-    $feature->{'end'}   = $feature_end;
+    ## Indels include the base pair before the actual variant
+    $feature->{'end'}   = $feature_end == $feature_start ? $feature_end : $feature_end - 1;
 
     $feature->{'extra'} = [
                         {'name' => 'Alleles', 'value' => join('/', @alleles)},
