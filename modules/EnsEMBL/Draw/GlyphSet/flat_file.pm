@@ -64,7 +64,10 @@ sub get_data {
   return [] unless $file->exists;
   
   ## Set style for VCF here, as other formats define it in different ways
-  $self->{'my_config'}->set('drawing_style', ['Feature::Variant']) if $format =~ /vcf/i;
+  if ($format =~ /vcf/i) {
+    $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
+    $self->{'my_config'}->set('height', 12);
+  }
 
   ## Get settings from user interface
   my ($colour, $y_min, $y_max);
