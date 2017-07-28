@@ -375,10 +375,6 @@ sub import {
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
-
-  # Populate INC with dirs and plugin mechanism
-  require LoadPlugins;
-  LoadPlugins->import($ENSEMBL_STARTUP_VERBOSE);
 }
 
 sub verbose_params {
