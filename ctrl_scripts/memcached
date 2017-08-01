@@ -1,41 +1,29 @@
 #!/usr/bin/env perl
 
 use strict;
-use File::Basename qw(dirname);
+use warnings;
+
 use FindBin qw($Bin);
 use Pod::Usage;
 use Data::Dumper;
 
-my $serverroot;
-
 BEGIN {
-  $serverroot = dirname($Bin);
-  
-  unshift @INC, "$serverroot/conf";
-  unshift @INC, "$serverroot/modules";
+  require "$Bin/helper.pl";
+}
 
-  eval { require SiteDefs; SiteDefs->import };
-  
-  die "Can't use SiteDefs.pm - $@\n" if $@;
-  
-  require LoadPlugins;
-  LoadPlugins->import;
-  
-  eval { require EnsEMBL::Web::Cache; };
-  
-  if ($@) {
-    if ($@ =~ /Base class package "Cache::Memcached" is empty/) {
-      $@ = undef;
-      exit;
-    } else {
-      die "Can't use EnsEMBL::Web::Cache - $@\n";
-    }
-  }
+eval { require Cache::Memcached; };
+if ($@) {
+  exit;
+}
+
+eval { require EnsEMBL::Web::Cache; };
+if ($@) {
+  die "Can't use EnsEMBL::Web::Cache - $@\n";
 }
 
 pod2usage if !@ARGV || $ARGV[0] =~ /help/i;
 
-my $MEMD = new EnsEMBL::Web::Cache;
+my $MEMD = EnsEMBL::Web::Cache->new;
 
 if ($MEMD) {
   if ($ARGV[0] =~ /(version|check)/i) {
@@ -50,18 +38,10 @@ if ($MEMD) {
   } elsif ($ARGV[0] =~ /delete/i) {
     shift @ARGV;
     if ($MEMD->delete(@ARGV)) { print "1 item deleted \n"; } else { print "item not found \n"};
-  } elsif ($ARGV[0] =~ /flush[_ ]all/i) {
+  } elsif ($ARGV[0] =~ /flush/i) {
     print " Flushing ALL cache:\n";
     $MEMD->flush_all;
     print " done\n";
-  } elsif ($ARGV[0] =~ /flush/i) {
-    print " Flushing cache:\n";
-    shift @ARGV;
-    if (@ARGV) {
-      print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
-    } else {
-      $MEMD->flush_all; print " done\n";
-    }
   } elsif ($ARGV[0] =~ /stats/i) {
     shift @ARGV;
     print " Stats:\n";
@@ -80,17 +60,13 @@ memcached -
 
 =head1 SYNOPSIS
 
-memcached [options] [tags or key]
+memcached [options] [key]
 
  Options:
    check                - checks whether all of your memcached servers alive and compatible
    version              - same as above
 
-   flush [TAG1 [TAG2]]  - deletes items by tags
-                          use without tags to delete everything for your namespace 
-                          this is useful when memcached servers used by other sites or users
-
-   flush_all            - flushed EVERYTHING from your servers
+   flush                - flushed EVERYTHING from your servers
                           use this option when you really really want to make sure you cleaned the cache
                           and when you dont care about other sites or users that might use these memcached servers
 
