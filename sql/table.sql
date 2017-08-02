@@ -23,7 +23,7 @@
 
 
 /**
-@header   General Tables
+@header Dataset description
 @desc     These are general tables used in the Compara schema
 @colour   #3CB371
 */
@@ -57,9 +57,15 @@ CREATE TABLE IF NOT EXISTS meta (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Taxonomy and species-tree
+@colour   #24DA06
+@desc   Species-tree used in the Compara analyses (incl. new annotations generated in-house), and the NCBI taxonomy (which often used as a template for species-trees)
+*/
+
+/**
 @table ncbi_taxa_node
 @desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
-@colour   #3CB371
+@colour   #24DA06
 
 @example    This examples shows how to get the lineage for Homo sapiens:
     @sql    SELECT n2.taxon_id, n2.parent_id, na.name, n2.rank, n2.left_index, n2.right_index FROM ncbi_taxa_node n1 JOIN (ncbi_taxa_node n2 LEFT JOIN ncbi_taxa_name na ON n2.taxon_id = na.taxon_id AND na.name_class = "scientific name")  ON n2.left_index <= n1.left_index AND n2.right_index >= n1.right_index WHERE n1.taxon_id = 9606 ORDER BY left_index;
@@ -97,7 +103,7 @@ CREATE TABLE ncbi_taxa_node (
 /**
 @table ncbi_taxa_name
 @desc This table contains different names, aliases and meta data for the taxa used in Ensembl.
-@colour   #3CB371
+@colour   #24DA06
 
 @example    Here is an example on how to get the taxonomic ID for a species:
     @sql                          SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name" AND name = "Homo sapiens";
@@ -125,9 +131,15 @@ CREATE TABLE ncbi_taxa_name (
 
 
 /**
+@header Genomes
+@colour   #808000
+@desc   Description of the genomes (assembly, sequences, genes, etc)
+*/
+
+/**
 @table genome_db
 @desc  This table contains information about the version of the genome assemblies used in this database
-@colour   #3CB371
+@colour   #808000
 
 @example   This query shows the entries for human and chicken
    @sql                      SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "Gallus_gallus");
@@ -172,6 +184,7 @@ CREATE TABLE genome_db (
 
 
 /**
+@header Dataset description
 @table species_set_header
 @desc  Header for the @link species_set table which groups or sets of species which are used in the @link method_link_species_set table.
 @colour   #3CB371
@@ -350,7 +363,7 @@ CREATE TABLE method_link_species_set_tag (
 /**
 @table method_link_species_set_attr
 @desc This table contains the distribution of the gene order conservation scores 
-@colour   #1E90FF
+@colour   #3CB371
 @column method_link_species_set_id          internal unique ID for the orthologs
 @column n_goc_null                            the number of orthologs for with no neighbors
 @column n_goc_0                               the number of orthologs with no gene order conservation among their neighbours
@@ -391,9 +404,10 @@ CREATE TABLE method_link_species_set_attr (
 
 
 /**
+@header Taxonomy and species-tree
 @table species_tree_node
 @desc  This table contains the nodes of the species tree used in the gene gain/loss analysis
-@colour   #1E90FF
+@colour   #24DA06
 
 @column node_id                 Internal unique ID
 @column parent_id               Link to the parent node
@@ -433,7 +447,7 @@ CREATE TABLE `species_tree_node` (
 /**
 @table species_tree_root
 @desc  This table stores species trees used in compara. Each tree is made of species_tree_node's
-@colour   #1E90FF
+@colour   #24DA06
 
 @column root_id                       Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -461,7 +475,7 @@ CREATE TABLE `species_tree_root` (
 /**
 @table species_tree_node_tag
 @desc  This table contains tag/value data for species_tree_nodes
-@colour   #1E90FF
+@colour   #24DA06
 
 @column node_id           Internal unique ID
 @column tag               Tag name for the tag/value pair
@@ -485,6 +499,9 @@ CREATE TABLE `species_tree_node_tag` (
 
 /**
 @table species_tree_node_attr               this table contains the attribute calculated for each species tree node
+@desc  This table contains tag/value data for species_tree_nodes
+@colour   #24DA06
+
 @column node_id                             Internal unique ID
 @column nb_long_genes                       the number of genes longer than the avg length of their orthologs
 @column nb_short_genes                      the number of genes shorter than the avg length of their orthologs
@@ -555,15 +572,15 @@ CREATE TABLE `species_tree_node_attr` (
 
 
 /**
-@header Genomic alignments tables
+@header Synteny
 @desc   These tables store information about genomic alignments in the Compara schema
-@colour #FF8500
+@colour #FF6666
 */
 
 /**
 @table synteny_region
 @desc  Contains all the syntenic relationships found and the relative orientation of both syntenic regions.
-@colour #FF8500
+@colour #FF6666
 
 @example    This query shows the 4 first syntenic regions between the Human and Opossum genomes by linking with the @link method_link_species_set table 
     @sql    SELECT synteny_region.* FROM synteny_region JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE species_set_header.name = "H.sap-M.dom" LIMIT 4;
@@ -587,9 +604,10 @@ CREATE TABLE synteny_region (
 
 
 /**
+@header Genomes
 @table dnafrag
 @desc  This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the @link genomic_align_block table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index &lt;name&gt; has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key &lt;name&gt; is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
-@colour #FF8500
+@colour #808000
 
 @example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 150 refers to Human genome in this example) which is 107349540 nucleotides long.
     @sql                   SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "homo_sapiens";
@@ -625,9 +643,10 @@ CREATE TABLE dnafrag (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Synteny
 @table dnafrag_region
 @desc  This table contains the genomic regions corresponding to every synteny relationship found. There are two genomic regions for every synteny relationship.
-@colour #FF8500
+@colour #FF6666
 
 @example    Return two top dnafrag regions
     @sql    SELECT * FROM dnafrag_region ORDER BY synteny_region_id LIMIT 2;
@@ -661,6 +680,12 @@ CREATE TABLE dnafrag_region (
   KEY synteny_reversed (dnafrag_id,synteny_region_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+/**
+@header Genomic alignments
+@colour #FF8500
+@desc   Whole-genome alignments (as blocks and trees)
+*/
 
 /**
 @table genomic_align_block
@@ -824,9 +849,15 @@ CREATE TABLE genomic_align (
 
 
 /**
+@header Conservation
+@colour #C70C09
+@desc   Evolutionary conservation (scores and regions)
+*/
+
+/**
 @table conservation_score
 @desc  This table contains conservation scores calculated from the whole-genome multiple alignments stored in the @link genomic_align_block table. Several scores are stored per row. expected_score and diff_score are binary columns and you need to use the Perl API to access these data.
-@colour #FF8500
+@colour #C70C09
 
 @column genomic_align_block_id   External reference to genomic_align_block_id in the @link genomic_align_block table
 @column window_size              The scores are stored at different resolution levels. This column defines the window size used to calculate the average score
@@ -853,7 +884,7 @@ CREATE TABLE conservation_score (
 /**
 @table constrained_element
 @desc  This table contains constrained elements calculated from the whole-genome multiple alignments stored in the @link genomic_align_block table
-@colour #FF8500
+@colour #C70C09
 
 @example    Example entry for a constrained_element:
     @sql    SELECT * FROM constrained_element ORDER BY constrained_element_id LIMIT 1;
@@ -900,15 +931,16 @@ CREATE TABLE constrained_element (
 # --------------------------------- Protein part of the schema ------------------------------------
 
 /**
-@header   Gene trees and homologies tables
+@header   Gene trees and homologies
 @desc     These tables store information about gene alignments, trees and homologies
 @colour   #1E90FF
 */
 
 /**
+@header Genomes
 @table sequence
 @desc  This table contains the sequences of the seq_member entries
-@colour   #1E90FF
+@colour   #808000
 
 @column sequence_id     Internal unique ID
 @column length          Length of the sequence
@@ -930,7 +962,7 @@ CREATE TABLE sequence (
 /**
 @table gene_member
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
-@colour   #1E90FF
+@colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000176105
       @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000176105";
@@ -983,9 +1015,15 @@ CREATE TABLE gene_member (
 
 
 /**
+@header Extra annotations on members
+@colour   #FFCC66
+@desc   Various member (gene and proteins) related information stored in the database, either loaded from Core databases or aggregated from Compara analyses
+*/
+
+/**
 @table gene_member_hom_stats
 @desc  This table contains for each gene_member some statistics about the homology pipelines we've run
-@colour   #3CB371
+@colour   #FFCC66
 
 @column gene_member_id        External reference to gene_member_id in the @link gene_member table
 @column collection            Name of the collection this row of statistics refers to (usual values are "ensembl", "mouse", etc)
@@ -1017,9 +1055,10 @@ CREATE TABLE gene_member_hom_stats (
 
 
 /**
+@header Genomes
 @table seq_member
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
-@colour   #1E90FF
+@colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000324740
       @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000324740";
@@ -1082,7 +1121,7 @@ CREATE TABLE seq_member (
 /**
 @table exon_boundaries
 @desc  This table stores the exon coordinates of a seq_member. Coordinates are assumed to be on the dnafrag of the seq_member
-@colour   #1E90FF
+@colour   #808000
 
 @column gene_member_id          External reference to gene_member_id in the @link gene_member table to allow querying all the exons of all the translations of a gene
 @column seq_member_id           External reference to seq_member_id in the @link seq_member table to indicate which translation the exons refer to
@@ -1113,15 +1152,16 @@ CREATE TABLE exon_boundaries (
 
 
 /**
+@header Extra annotations on members
 @table seq_member_projection_stable_id
 @desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table links to the source stable_id and is used until the source members are loaded
-@colour   #1E90FF
+@colour   #FFCC66
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
 @sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.stable_id = source_stable_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
 
 @column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_stable_id
-@column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+@column source_stable_id            The stable ID of the source of the projection
 
 @see seq_member
 @see seq_member_projection
@@ -1143,7 +1183,7 @@ CREATE TABLE seq_member_projection_stable_id (
 @table seq_member_projection
 @desc  This table stores data about projected transcripts (in the gene-annotation process), which is used to help the clustering. This table can only be used when both genomes have been loaded. Thus we first
        populate @link seq_member_projection_stable_id and then copy the data whilst transforming the stable_id into a seq_member_id
-@colour   #1E90FF
+@colour   #FFCC66
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
 @sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
@@ -1172,7 +1212,7 @@ CREATE TABLE seq_member_projection (
 /**
 @table external_db
 @desc  This table stores data about the external databases in which the objects described in the @link member_xref table are stored.
-@colour   #1E90FF
+@colour   #FFCC66
 
 @column external_db_id          Internal unique ID
 @column db_name                 External database name
@@ -1212,7 +1252,7 @@ CREATE TABLE `external_db` (
 /**
 @table member_xref
 @desc  This table stores cross-references for gene members derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" 
-@colour   #1E90FF
+@colour   #FFCC66
 
 @column gene_member_id   External reference to gene_member_id in the @link gene_member table. Indicates the gene to which the xref applies.
 @column dbprimary_acc    Accession of xref (e.g. GO term, InterPro accession)
@@ -1232,9 +1272,10 @@ CREATE TABLE `member_xref` (
 
 
 /**
+@header Genomes
 @table other_member_sequence
 @desc  This table includes alternative sequences for Member, like sequences with flanking regions
-@colour   #1E90FF
+@colour   #808000
 
 @column seq_member_id           External reference to seq_member_id in the @link seq_member table
 @column seq_type                A short description of this alternative sequence
@@ -1258,6 +1299,7 @@ CREATE TABLE other_member_sequence (
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header   Gene trees and homologies
 @table peptide_align_feature
 @desc: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 150, and all the hits that have a human gene as a query are stored in peptide_align_feature_150
 @colour   #1E90FF
@@ -1327,9 +1369,15 @@ CREATE TABLE peptide_align_feature (
 ) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Protein families
+@colour   #BC5CEC
+@desc   Protein families (sets of homologous protein sequences)
+*/
+
+/**
 @table family
 @desc  This table contains all the group homologies found. There are several family_member entries for each family entry.
-@colour   #1E90FF
+@colour   #BC5CEC
 
 @example   The following query retrieves families with "DEGRADATION" in the description and a description_score of 100
     @sql                                SELECT * FROM family WHERE description like '%DEGRADATION%' AND description_score = 100;
@@ -1364,7 +1412,7 @@ CREATE TABLE family (
 /**
 @table family_member
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
-@colour   #1E90FF
+@colour   #BC5CEC
 
 @example    The following query refers to the members of the protein family PTHR12675. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
     @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR12675";
@@ -1394,6 +1442,7 @@ CREATE TABLE family_member (
 
 
 /**
+@header Gene trees and homologies
 @table gene_align
 @desc  This table stores information about alignments for members
 @colour   #1E90FF
@@ -1695,9 +1744,10 @@ CREATE TABLE gene_tree_node_attr (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Extra annotations on members
 @table gene_member_qc
 @desc  This table contains gene quality information from the geneset_QC pipeline
-@colour   #1E90FF
+@colour   #FFCC66
 
 @column gene_member_stable_id    EnsEMBL stable ID
 @column genome_db_id             Internal unique ID for this table
@@ -1726,6 +1776,7 @@ CREATE TABLE gene_member_qc (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Gene trees and homologies
 @table gene_tree_object_store
 @desc  This table contains arbitrary data related to gene-trees. Commonly used for precomputed tracks / layers
 @colour   #1E90FF
@@ -1750,9 +1801,15 @@ CREATE TABLE `gene_tree_object_store` (
 
 
 /**
+@header Profile HMMs
+@desc   The profile HMMs and their hits
+@colour   #66CCFF
+*/
+
+/**
 @table hmm_profile
 @desc  This table stores different HMM-based profiles used and produced by gene trees
-@colour   #1E90FF
+@colour   #66CCFF
 
 @column model_id              Model ID of the profile. This is the stable_id of the gene-tree, or the external ID in case of imported models (such as RF00001)
 @column name                  Name of the model, if available (such as 5S_rRNA for RF00001)
@@ -1783,7 +1840,7 @@ CREATE TABLE hmm_profile (
 /**
 @table hmm_annot
 @desc  This table stores the HMM annotation of the seq_members
-@colour   #1E90FF
+@colour   #66CCFF
 
 @column seq_member_id         External reference to a seq_member_id in the @link seq_member table
 @column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
@@ -1815,7 +1872,7 @@ CREATE TABLE hmm_annot (
 /**
 @table hmm_curated_annot
 @desc  This table stores the curated / forced HMM annotation of the seq_members
-@colour   #1E90FF
+@colour   #66CCFF
 
 @column seq_member_stable_id  External reference to a seq_member_id in the @link seq_member table
 @column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
@@ -1839,6 +1896,7 @@ CREATE TABLE hmm_curated_annot (
 
 
 /**
+@header Gene trees and homologies
 @table homology
 @desc  This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.
 @colour   #1E90FF
@@ -2066,9 +2124,15 @@ CREATE TABLE homology_member (
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
+@header Stable-ID mapping
+@colour   #AAAAAA
+@desc   History of the gene-tree and family IDs across different versions of Ensembl
+*/
+
+/**
 @table mapping_session
 @desc  This table contains one entry per stable_id mapping session (either for Families or for Protein Trees), which contains the type, the date of the mapping, and which releases were linked together. A single mapping_session is the event when mapping between two given releases for a particular class type ('family' or 'tree') is loaded. The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).
-@colour   #1E90FF
+@colour   #AAAAAA
 
 @column mapping_session_id    Internal unique ID
 @column type                  Type of stable_ids that were mapped during this session
@@ -2093,7 +2157,7 @@ CREATE TABLE mapping_session (
 /**
 @table stable_id_history
 @desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
-@colour   #1E90FF
+@colour   #AAAAAA
 
 @column mapping_session_id    Reference to mapping_session.mapping_session_id. All the stable_ids of a given mapping should have the same session_id
 @column stable_id_from        The previous stable ID
@@ -2119,9 +2183,15 @@ CREATE TABLE stable_id_history (
 
 
 /**
+@header   Gene gain/loss trees
+@colour   #01D4F7
+@desc     Analysis of gain and loss across gene-families
+*/
+
+/**
 @table CAFE_gene_family
 @desc  This table holds information about each CAFE gene family
-@colour   #1E90FF
+@colour   #01D4F7
 
 @column cafe_gene_family_id     Internal unique ID
 @column root_id                 External reference to root_id in the @link species_tree_root table
@@ -2155,7 +2225,7 @@ CREATE TABLE `CAFE_gene_family` (
 /**
 @table CAFE_species_gene
 @desc  This table stores per @link species_tree_node information about expansions/contractions of each @link CAFE_gene_family
-@colour   #1E90FF
+@colour   #01D4F7
 
 @column cafe_gene_family_id      External reference to cafe_gene_family_id in the @link CAFE_gene_family table.
 @column node_id                  External reference to node_id in the @link species_tree_node table
