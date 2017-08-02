@@ -60,5 +60,23 @@ sub before_after_hooks {
   return (\@before, \@after);
 }
 
+sub run_script {
+  ## It's like running a perl script with system but as a part of the same script, with INC maintained
+  my ($script, $argv, $err_ref) = @_;
+
+  local @ARGV = @{$argv || []};
+  local $@    = undef;
+
+  my $return;
+
+  if (-f $script && -r $script) {
+    eval 'require subs;subs->import(q(exit));sub exit(;$) { $return = $_[0] << 8; }';
+    do $script;
+    $$err_ref = $@ if $@;
+  } else {
+    $$err_ref = "Not a script: $script\n";
+  }
+  return $return || 0;
+}
 
 1;
