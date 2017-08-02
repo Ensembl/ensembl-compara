@@ -68,6 +68,7 @@ sub render {
       if ($section->{'subsections'}) {
         $toc .= '<ul>';
         foreach my $subsection (@{$section->{'subsections'}}) {
+          next unless ref($subsection) eq 'HASH';
           $toc .= sprintf '<li><a href="#%s">%s</a>', 
                   $subsection->{'header'}{'id'}, $subsection->{'header'}{'text'};
           $full .= sprintf '<h3 id="%s" class="news-subcategory">%s</h3>', 
