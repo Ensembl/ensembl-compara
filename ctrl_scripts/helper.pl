@@ -70,9 +70,22 @@ sub run_script {
   my $return;
 
   if (-f $script && -r $script) {
-    eval 'require subs;subs->import(q(exit));sub exit(;$) { $return = $_[0] << 8; }';
+    eval '
+      no warnings qw(redefine);
+      require subs;
+      subs->import(qw(exit));
+      sub exit(;$) {
+        die("EXIT:".($_[0] << 8));
+      }
+    ';
     do $script;
-    $$err_ref = $@ if $@;
+    if ($@) {
+      if ($@ =~ /^EXIT:(\d+)\s/) {
+        $return = $1;
+      } else {
+        $$err_ref = $@;
+      }
+    }
   } else {
     $$err_ref = "Not a script: $script\n";
   }
