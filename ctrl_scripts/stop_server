@@ -27,7 +27,7 @@ use Getopt::Long;
 
 BEGIN {
   require "$Bin/helper.pl";
-};
+}
 
 my $PID = $SiteDefs::ENSEMBL_PIDFILE;
 
@@ -36,7 +36,7 @@ my ($help, $delay,$bounce);
 &GetOptions(
   "d|delay=i" => \$delay,
   "h|help"    => \$help,
-  "b|bounce"    => \$bounce,
+  "b|bounce"  => \$bounce,
 );
 
 if ($help) {
