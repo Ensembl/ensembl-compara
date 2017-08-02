@@ -703,6 +703,17 @@ sub species_stats {
       'name' => '<b>Assembly</b>',
       'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
   });
+  my $prov_name = $sd->PROVIDER_NAME;
+  unless ($prov_name eq 'Ensembl') {
+    $prov_name =~ s/_/ /;
+    my $prov_url  = $sd->PROVIDER_URL;
+    $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
+    my $provider = $prov_url ? sprintf('<a href="%s">%s</a>', $prov_url, $prov_name) : $prov_name;
+    $summary->add_row({
+      'name' => '<b>Provider</b>',
+      'stat' => $provider, 
+    });
+  }
   $summary->add_row({
       'name' => '<b>Database version</b>',
       'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
