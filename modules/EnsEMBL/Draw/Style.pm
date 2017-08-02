@@ -194,6 +194,7 @@ sub draw_graph_base {
     } else {
       ## ... just create some sky
       $max_score = 0.1;
+      $metadata->{'y_max'} = $max_score;
     }
   }
   $min_score = 0 if $min_score >= 0 && $baseline_zero;
