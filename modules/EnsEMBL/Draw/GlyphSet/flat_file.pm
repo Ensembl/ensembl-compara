@@ -65,9 +65,13 @@ sub get_data {
   return [] unless $file->exists;
   
   ## Set style for VCF here, as other formats define it in different ways
+  my $adaptor;
   if ($format =~ /vcf/i) {
     $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
     $self->{'my_config'}->set('height', 12);
+    $self->{'my_config'}->set('show_overlay', 1);
+    ## Also create adaptor, so we can look up consequence in db
+    $adaptor = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($hub->species);
   }
 
   ## Get settings from user interface
@@ -78,8 +82,6 @@ sub get_data {
     $y_max  = $self->{'my_config'}{'data'}{'y_max'};
   }
 
-  ## Create adaptor, so we can look up consequence in db
-  my $adaptor = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($hub->species);
   my $iow     = EnsEMBL::Web::IOWrapper::open($file, 
                                               'hub'         => $hub, 
                                               'adaptor'     => $adaptor,

@@ -68,6 +68,7 @@ sub render_simple {
     else {
       ## Convert raw features into correct data format 
       $self->{'my_config'}->set('height', 12);
+      $self->{'my_config'}->set('show_overlay', 1);
       $self->{'my_config'}->set('default_strand', 1);
       $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
       $self->{'data'}[0]{'features'} = $self->consensus_features;
@@ -242,7 +243,7 @@ sub consensus_features {
     my $colour  = $colours->{'default'}->{'default'};
 
     ## Get consequence type
-    my $consequence;
+    my ($consequence, $ambig_code);
     if (defined($f->{'INFO'}->{'VE'})) {
       $consequence = (split /\|/, $f->{'INFO'}->{'VE'})[0];
     }
@@ -265,6 +266,7 @@ sub consensus_features {
       $snp->get_all_TranscriptVariations;
 
       $consequence = $snp->display_consequence;
+      $ambig_code  = $snp->ambig_code;
     }
       
     ## Set colour by consequence
@@ -273,13 +275,14 @@ sub consensus_features {
     }
 
     my $fhash = {
-                  start   => $vs,
-                  end     => $ve,
-                  strand  => 1,
-                  colour  => $colour,       
-                  label   => $vf_name, 
-                  title   => $title,
-                  type    => $type,
+                  start         => $vs,
+                  end           => $ve,
+                  strand        => 1,
+                  colour        => $colour,       
+                  label         => $vf_name, 
+                  text_overlay  => $ambig_code,
+                  title         => $title,
+                  type          => $type,
                 };
 
     push @$features, $fhash;

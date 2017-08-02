@@ -105,7 +105,7 @@ sub create_hash {
     my $colours = $metadata->{'colours'};
     my $colour  = $colours->{'default'}->{'default'} || $metadata->{'colour'};
     my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-    my $consequence;
+    my ($consequence, $ambig_code);
     if (defined($parsed_info->{'VE'})) {
       $consequence = (split /\|/, $parsed_info->{'VE'})[0];
     }
@@ -129,7 +129,8 @@ sub create_hash {
 
       $snp->get_all_TranscriptVariations;
 
-      $consequence = $snp->display_consequence;
+      $consequence  = $snp->display_consequence;
+      $ambig_code   = $snp->ambig_code;
     }
 
     ## Set colour by consequence
@@ -143,6 +144,7 @@ sub create_hash {
     $feature->{'type'}          = $type;
     $feature->{'colour'}        = $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
+    $feature->{'text_overlay'}  = $ambig_code;
   }
   return $feature;
 }
