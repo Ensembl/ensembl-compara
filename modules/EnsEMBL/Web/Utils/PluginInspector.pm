@@ -31,7 +31,7 @@ sub get_all_plugins {
   ## Gets a list of all active plugins
   ## @return Ref to an ordered array of hashes (Each hash corresponds to individual plugin and contains 'path' and 'package' key)
   my @plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS};
-  my $plugins = [{ 'path' => $SiteDefs::ENSEMBL_WEBROOT, 'package' => 'core' }];
+  my $plugins = [{ 'path' => $SiteDefs::ENSEMBL_WEBROOT, 'package' => 'ensembl-webcode' }];
 
   for (my $i = 0; $plugins[$i]; $i += 2) {
     push @$plugins, { 'path' => $plugins[$i], 'package' => $plugins[$i+1] };

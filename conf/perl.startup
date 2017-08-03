@@ -50,8 +50,6 @@ use Storable qw(nfreeze freeze thaw);
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-use LoadPlugins;
-
 use EnsEMBL::Web::Tools::DHTMLmerge;
 use EnsEMBL::Web::SpeciesDefs;
 
