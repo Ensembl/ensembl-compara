@@ -937,7 +937,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.positionAreas(-heightChange);
     this.positionLayers();
     this.removeShare();
-    this.highlightImage(this.imageNumber, 0);
+    Ensembl.EventManager.trigger('removeShare')
+
+    Object.keys(this.highlightRegions) > 0 && this.highlightImage(this.imageNumber, 0);
     this.markLocation(Ensembl.markedLocation);
 
     return true;
