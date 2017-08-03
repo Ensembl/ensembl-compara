@@ -52,6 +52,9 @@ Ensembl.Share = {
   share: function (url, link) {
     var panel = this;
     
+    if (!this.elLk.share) {
+      return;
+    }
     this.shareOptions.positionPopup.call(this, this.elLk.share, link);
     
     this.shareTimeout = setTimeout(function () {
