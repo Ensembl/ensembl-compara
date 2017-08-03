@@ -61,7 +61,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version 2.5;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
