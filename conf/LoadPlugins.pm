@@ -30,6 +30,9 @@ my %INC_INDEX;
 
 sub import {
 
+  # verbose mode?
+  my $verbose = grep $_ eq 'verbose', @_;
+
   # Importing LoadPlugins more than once will pollute the @INC
   if ($IMPORTED) {
     my @caller = caller;
@@ -38,10 +41,10 @@ sub import {
   }
 
   # get valid paths from ENSEMBL_LIB_DIRS
-  my @plugable_lib_dirs;
+  my @pluggable_lib_dirs;
   foreach my $path (map s/\/+$//r, @SiteDefs::ENSEMBL_LIB_DIRS) {
     warn "WARNING: LoadPlugins could not add $path to INC: Directory doesn't exist\n" and next unless -d $path;
-    unshift @plugable_lib_dirs, [ [ grep $_ && $_ ne 'modules', split /\//, $path ]->[-1], $path ]; # first element in the array is 'ensembl-webcode', 'ensembl-funcgen' etc
+    unshift @pluggable_lib_dirs, [ [ grep $_ && $_ ne 'modules', split /\//, $path ]->[-1], $path ]; # first element in the array is 'ensembl-webcode', 'ensembl-funcgen' etc
   }
 
   # get list of plugins from SiteDefs
@@ -59,10 +62,18 @@ sub import {
   }
 
   # create an index of all the packages found in all the ensembl lib dirs and plugins
-  for (@plugable_lib_dirs, @plugins) {
+  for (@pluggable_lib_dirs, @plugins) {
     foreach my $path (@{_get_all_packages($_->[1])}) {
       push @{$INC_INDEX{$path}}, [ $_->[0], "$_->[1]/$path" =~ s/\/+/\//gr ];
     }
+  }
+
+  # verbose info
+  if ($verbose) {
+    warn sprintf "LoadPlugins: INC_INDEX generated with %d files and %d packages (%d plugged-in packages)\n",
+      scalar(map { @$_ } values %INC_INDEX),
+      scalar(keys %INC_INDEX),
+      scalar(grep { @$_ > 1 } values %INC_INDEX);
   }
 
   # add previous psudo-pragma package to INC_INDEX to allow 'use previous'
@@ -75,6 +86,15 @@ sub import {
   foreach my $path (reverse @{$SiteDefs::ENSEMBL_EXTRA_INC}) {
     warn "WARNING: LoadPlugins could not add $path to INC: Directory doesn't exist\n" and next unless -d $path;
     unshift @INC, $path;
+  }
+
+  # print @INC for verbose mode
+  if ($verbose) {
+    warn "LoadPlugins: \@INC populated with pluggable and non-pluggable paths:\n";
+    warn "  Pluggable (ordered according to precedence):\n";
+    warn sprintf("%23s: %s\n", @$_) for reverse(@pluggable_lib_dirs, @plugins);
+    warn "  Non-pluggable (ordered according to precedence):\n";
+    warn sprintf("%s%s\n", ' ' x 25, $_) for @INC;
   }
 
   # Add the subroutine to @INC to use packages from INC_INDEX and implement plugin mechanism
