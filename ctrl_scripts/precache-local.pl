@@ -3,18 +3,9 @@
 use strict;
 use warnings;
 
-my $ENSEMBL_ROOT;
+use FindBin qw($Bin);
 
-BEGIN {
-  use FindBin qw($Bin);
-  use File::Basename qw( dirname );
-  $ENSEMBL_ROOT = dirname( $Bin );
-  $ENSEMBL_ROOT =~ s/\/utils$//;
-  unshift @INC, "$ENSEMBL_ROOT/conf";
-  eval{ require SiteDefs; SiteDefs->import; };
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
-}
+BEGIN { require "$Bin/../conf/includeSiteDefs.pl" }
 
 use Getopt::Long;
 use JSON;
