@@ -19,7 +19,7 @@ use warnings;
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 use lib dirname(abs_path(__FILE__));
-use SiteDefs;
-use LoadPlugins;
+use SiteDefs($ENV{'STARTUP_VERBOSE'} ? 'verbose' : ());
+use LoadPlugins($ENV{'STARTUP_VERBOSE'} ? 'verbose' : ());
 
 !!'SiteDefs and @INC loaded';
