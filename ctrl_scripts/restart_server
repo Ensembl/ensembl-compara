@@ -88,9 +88,8 @@ if ($species) {
   }
 }
 
-my $defines     = join(" ",map { "-D $_ " } @defines);
-my $stop_args   = $delay ? "-d $delay" : '';
-my $start_args  = join ' ', $rmconfig ? '-r' : '', $flush ? '-f' : '', $verbose ? '-v' : '', $defines;
+my @stop_args   = $delay ? ('-d', $delay) : ();
+my @start_args  = ($rmconfig ? '-r' : (), $flush ? '-f' : (), $verbose ? '-v' : (), map { ('-D', $_) } @defines);
 
 my ($before_restart, $after_restart) = before_after_hooks('restart');
 
@@ -100,8 +99,8 @@ for (@$before_restart) {
 }
 
 # stop and start the server
-run_script("$Bin/stop_server", ["-b", $stop_args, @ARGV]) == 0 or exit;
-run_script("$Bin/start_server", [$start_args, @ARGV])     == 0 or exit;
+run_script("$Bin/stop_server", ["-b", @stop_args, @ARGV]) == 0 or exit;
+run_script("$Bin/start_server", [@start_args, @ARGV])     == 0 or exit;
 
 warn "Restart OK.\n";
 
