@@ -704,7 +704,7 @@ sub species_stats {
       'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
   });
   my $prov_name = $sd->PROVIDER_NAME;
-  unless ($prov_name eq 'Ensembl') {
+  if ($prov_name) {
     $prov_name =~ s/_/ /;
     my $prov_url  = $sd->PROVIDER_URL;
     $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
