@@ -1073,6 +1073,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee_short',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'mafft_home'            => $self->o('mafft_home'),
@@ -1090,6 +1091,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'mafft_home'            => $self->o('mafft_home'),
@@ -1119,6 +1121,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'mafft_home'            => $self->o('mafft_home'),
