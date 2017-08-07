@@ -43,17 +43,10 @@ no warnings 'uninitialized';
 
 use Getopt::Long;
 use FindBin qw($Bin);
-use File::Basename qw( dirname );
-
-my $serverroot;
 
 BEGIN {
-  $serverroot = dirname($Bin);
-  unshift @INC, "$serverroot/conf";
-};
-
-use SiteDefs;
-
+  require "$Bin/helper.pl";
+}
 
 my ($help, $do_access, $both, $do_nginx);
 &GetOptions(

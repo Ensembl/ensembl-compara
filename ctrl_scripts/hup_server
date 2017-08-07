@@ -29,8 +29,6 @@ BEGIN {
   require "$Bin/helper.pl";
 };
 
-use SiteDefs;
-
 open(PIDFILE,'<',$SiteDefs::ENSEMBL_PIDFILE) || die "Cannot open pidfile '$SiteDefs::ENSEMBL_PIDFILE': $!";
 my $pid=<PIDFILE>;
 chomp $pid;

@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -17,32 +19,29 @@ limitations under the License.
 
 =cut
 
+### Only builds the packed file if they are missing.
+
+use strict;
+use warnings;
+
+use FindBin qw($Bin);
+
 BEGIN {
-  package vars;
-  my $sitedefs_dir = $0;
-  $sitedefs_dir =~ s/build//;
-  unshift @INC, $sitedefs_dir;
-  eval{ require SiteDefs };
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  SiteDefs->import(qw(:WEB));
-  $ServerRoot         = $vars::ENSEMBL_SERVERROOT;
-  warn $ServerRoot;
-  my %X = map { $_, 1 } @INC;
-  foreach my $dir( @vars::ENSEMBL_LIB_DIRS ){
-    next if $X{$dir};
-    if( -d $dir ){
-      if( -r $dir ){
-        unshift @INC, $dir
-      } else {
-        warn "ENSEMBL_LIB_DIR $dir is not readable\n";
-      }
+  require "$Bin/helper.pl";
+
+  my $config_file = sprintf '%s/conf/%s', $SiteDefs::ENSEMBL_SYS_DIR, $SiteDefs::ENSEMBL_CONFIG_FILENAME;
+
+  if (-e $config_file) {
+    if (unlink $config_file) {
+      warn "Removed $config_file\n";
     } else {
-      warn "ENSEMBL_LIB_DIR $dir does not exist\n";
+      die("Could not remove conf file: $config_file\n");
     }
   }
-  warn join "\n", @INC;
-};
+}
+
 use EnsEMBL::Web::SpeciesDefs;
 
-my $conf = EnsEMBL::Web::SpeciesDefs->new();
-$conf->store;
+EnsEMBL::Web::SpeciesDefs->new();
+
+1;
