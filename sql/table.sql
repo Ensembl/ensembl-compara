@@ -1158,7 +1158,7 @@ CREATE TABLE exon_boundaries (
 @colour   #FFCC66
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
-@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.stable_id = source_stable_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+@sql       SELECT ss.stable_id, gs.name, source_stable_id FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection_stable_id ON seq_member_id = target_seq_member_id WHERE source_stable_id = "ENSMUSG00000035232"
 
 @column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_stable_id
 @column source_stable_id            The stable ID of the source of the projection
@@ -1186,7 +1186,7 @@ CREATE TABLE seq_member_projection_stable_id (
 @colour   #FFCC66
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
-@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM (seq_member ss JOIN genome_db gs USING (genome_db_id)) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member_projection st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id = target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id=target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
 
 @column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
 @column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
