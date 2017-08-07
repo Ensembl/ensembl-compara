@@ -83,9 +83,8 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Analysis::Runnable::Pecan;
-use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
+use Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
+use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -150,20 +149,23 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+#  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   $self->require_executable('exonerate');
 
   $self->compara_dba->dbc->disconnect_if_idle;
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(
+  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Pecan(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       -tree_string => $self->param('pecan_tree_string'),
-      -analysis => $fake_analysis,
+#      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -exonerate => $self->param('exonerate'),
-      -jar_file => $self->param('jar_file'),
+      -pecan_jar_file => $self->param('pecan_jar_file'),
+      -pecan_java_class => $self->param('default_java_class'),
+      -estimate_tree => $self->param('estimate_tree'),
+      -java_exe =>  $self->param('java'),
       );
   $self->param('runnable', $runnable);
 
@@ -794,7 +796,7 @@ sub _run_ortheus {
     my ($self) = @_;
 
     $self->compara_dba->dbc->disconnect_if_idle;
-    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+#    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     my $options = " -y";
@@ -804,8 +806,14 @@ sub _run_ortheus {
       #-tree_string => $self->tree_string,
       -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
       -species_order => $self->param('species_order'),
-      -analysis => $fake_analysis,
+#      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
+      -pecan_jar_file => $self->param('jar_file'),
+      -pecan_java_class => $self->param('default_java_class'),
+      -exonerate => $self->param('exonerate'),
+      -java_exe =>  $self->param('java'),
+      -ortheus_exe =>  $self->param('ortheus_exe'),
+      -semphy =>  $self->param('semphy'),
       -options => $options,
       );
 

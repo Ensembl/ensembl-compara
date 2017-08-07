@@ -56,9 +56,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::Mercator;
+use Bio::EnsEMBL::Compara::Production::Analysis::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
-use Bio::EnsEMBL::Analysis;
+use Data::Dumper;
+#use Bio::EnsEMBL::Analysis;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -73,7 +74,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+#  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   unless (defined $self->param('output_dir')) {
     my $output_dir = $self->worker_temp_directory . "/output_dir";
@@ -82,11 +83,11 @@ sub run
   if (! -e $self->param('output_dir')) {
     mkdir($self->param('output_dir'));
   }
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mercator
+  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Mercator
     (-input_dir => $self->param('input_dir'),
      -output_dir => $self->param('output_dir'),
      -genome_names => $self->param('genome_db_ids'),
-     -analysis => $fake_analysis,
+#     -analysis => $fake_analysis,
      -program => $self->param('mercator_exe'));
   $self->param('runnable', $runnable);
   $runnable->run_analysis;
@@ -97,12 +98,11 @@ sub write_output {
 
   my $synteny_region_ids = $self->store_synteny();
   foreach my $sr_id (@{$synteny_region_ids}) {
-
+    my ($dnafrag_count, $total_residues) = $self->calculator($sr_id);
     #Flow into pecan
-    my $dataflow_output_id = { synteny_region_id => $sr_id };
+    my $dataflow_output_id = { synteny_region_id => $sr_id , dnafrag_count => $dnafrag_count, total_residues_count => $total_residues};
     $self->dataflow_output_id($dataflow_output_id,2);
   }
-
   return 1;
 }
 
@@ -170,6 +170,29 @@ sub store_synteny {
   }
 
   return $synteny_region_ids;
+}
+
+#returns the total dnafrag count and residue count for a given syntenic region id
+sub calculator {
+  my $self = shift;
+
+  my $synteny_region_id = shift;
+  my $query = "select synteny_region_id, sum(dnafrag_end) - sum(dnafrag_start) as total_residues from dnafrag_region group by synteny_region_id having synteny_region_id = $synteny_region_id";
+  my $sth = $self->compara_dba->dbc->db_handle->prepare($query);
+  $sth->execute();
+  my $synteny_residue_map = $sth->fetchall_hashref('synteny_region_id');
+  print "\n this is the hash of the synteny total residue \n" if ($self->debug > 6);
+  print Dumper($synteny_residue_map) if ($self->debug > 6);
+  my $total_residues = $synteny_residue_map->{$synteny_region_id}->{'total_residues'};
+  my $query2 = "select synteny_region_id, count(*) as no_dnafrag from dnafrag_region where synteny_region_id = $synteny_region_id";
+  my $sth2 = $self->compara_dba->dbc->db_handle->prepare($query2);
+  $sth2->execute();
+  my $synteny_dnafrag_count = $sth2->fetchall_hashref('synteny_region_id');
+  print "\n this is the hash of the synteny total dnafrag \n" if ($self->debug > 6);
+  print Dumper($synteny_dnafrag_count) if ($self->debug > 6);
+  my $dnafrag_count = $synteny_dnafrag_count->{$synteny_region_id}->{'no_dnafrag'};
+  
+  return ($dnafrag_count, $total_residues);
 }
 
 1;

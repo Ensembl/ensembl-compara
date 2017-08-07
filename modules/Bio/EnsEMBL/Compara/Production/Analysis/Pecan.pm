@@ -59,18 +59,16 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Analysis::Config::Compara;
 
-use Bio::EnsEMBL::Analysis::Runnable;
-our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
+#my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
-my $default_exonerate = $EXONERATE;
-my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
-my $default_java_class = "bp.pecan.Pecan";
-my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
+#my $default_exonerate = $EXONERATE;
+#my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
+#my $default_java_class = "bp.pecan.Pecan";
+#my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
 
 =head2 new
 
@@ -91,12 +89,16 @@ my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/li
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $parameters,
-      $jar_file, $java_class, $exonerate) =
-        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS',
-            'JAR_FILE', 'JAVA_CLASS', 'EXONERATE'], @args);
+  my ($workdir, $fasta_files, $tree_string, $parameters, $exonerate,
+      $pecan_jar_file, $pecan_java_class,  $estimate_tree, $java_exe) =
+        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS', 'EXONERATE',
+            'PECAN_JAR_FILE', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE', 'JAVA_EXE'], @args);
 
+
+  $self->workdir($workdir) if (defined $workdir);      
   chdir $self->workdir;
+  unless (defined $estimate_tree) { die 'estimate_tree is not given'; }
+
   $self->fasta_files($fasta_files) if (defined $fasta_files);
   if (defined $tree_string) {
     $self->tree_string($tree_string)
@@ -128,31 +130,34 @@ sub new {
   }
   $self->parameters($parameters) if (defined $parameters);
   unless (defined $self->program) {
-    if (defined($self->analysis) and defined($self->analysis->program)) {
-      $self->program($self->analysis->program);
-    } else {
+    if (defined $java_exe) {
       $self->program($java_exe);
+    } else {
+      die  "\n java executable needed \n";
     }
   }
-  if (defined $jar_file) {
-    $self->jar_file($jar_file);
+  if (defined $pecan_jar_file) {
+    $self->jar_file($pecan_jar_file);
   } else {
-    $self->jar_file($default_jar_file);
+    die "\n pecan jar_file  needed \n";
+#    $self->jar_file($default_jar_file);
   }
-  if (defined $java_class) {
-    $self->java_class($java_class);
+  if (defined $pecan_java_class) {
+    $self->java_class($pecan_java_class);
   } else {
-    $self->java_class($default_java_class);
+    die "\n pecan java_class  needed \n";
+#    $self->java_class($default_java_class);
   }
   if (defined $exonerate) {
     $self->exonerate($exonerate);
   } else {
-    $self->exonerate($default_exonerate);
+#    $self->exonerate($default_exonerate);
+    die "\n exonerate executable needed \n";
   }
 
   # Try to locate jar file in usual places...
   if (!-e $self->jar_file) {
-    $default_jar_file = $self->jar_file;
+    my $default_jar_file = $self->jar_file;
     if (-e "/usr/local/pecan/$default_jar_file") {
       $self->jar_file("/usr/local/pecan/$default_jar_file");
     } elsif (-e "/usr/local/ensembl/pecan/$default_jar_file") {
@@ -175,6 +180,12 @@ sub new {
   return $self;
 }
 
+sub workdir {
+  my $self = shift;
+  $self->{'_workdir'} = shift if(@_);
+  return $self->{'_workdir'};
+}
+
 sub fasta_files {
   my $self = shift;
   $self->{'_fasta_files'} = shift if(@_);
@@ -195,20 +206,44 @@ sub parameters {
 
 sub jar_file {
   my $self = shift;
-  $self->{'_jar_file'} = shift if(@_);
-  return $self->{'_jar_file'};
+  $self->{'_pecan_jar_file'} = shift if(@_);
+  return $self->{'_pecan_jar_file'};
 }
 
 sub java_class {
   my $self = shift;
-  $self->{'_java_class'} = shift if(@_);
-  return $self->{'_java_class'};
+  $self->{'_pecan_java_class'} = shift if(@_);
+  return $self->{'_pecan_java_class'};
 }
 
 sub exonerate {
   my $self = shift;
   $self->{'_exonerate'} = shift if(@_);
   return $self->{'_exonerate'};
+}
+
+sub options {
+  my $self = shift;
+  $self->{'_options'} = shift if(@_);
+  return $self->{'_options'};
+}
+
+#sub estimate_tree {
+#  my $self = shift;
+#  $self->{'_estimate_tree'} = shift if(@_);
+#  return $self->{'_estimate_tree'};
+#}
+
+sub program {
+  my $self = shift;
+  $self->{'_program'} = shift if(@_);
+  return $self->{'_program'};
+}
+
+sub output {
+  my $self = shift;
+  $self->{'_output'} = shift if(@_);
+  return $self->{'_output'};
 }
 
 =head2 run_analysis

@@ -75,6 +75,7 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'pipeline_name'         => 'pecan_27way',
         'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
         'species_set'           => '27amniotes',
         'do_not_reuse_list'     => [ ],
@@ -91,21 +92,34 @@ sub default_options {
     'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
 
-    'pecan_jar'         => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
-
     'gerp_version'      => 2.1,
 	    
+
     #Location of executables (or paths to executables)
     'gerp_exe_dir'              => $self->o('ensembl_cellar').'/gerp/20080211/bin',
     'mercator_exe'              => $self->o('ensembl_cellar').'/cndsrc/2013.01.11/bin/mercator',
     'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
     'exonerate_exe'             => $self->o('ensembl_cellar').'/exonerate22/2.2.0/bin/exonerate',
+    'java_exe'                  => "/nfs/software/ensembl/RHEL7/jenv/shims/java",
+    'estimate_tree'             => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
 
-    'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+    'semphy'                    => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy',
+    'ortheus_exe'               => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/ortheus_core',
+    'pecan_jar_file'            => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
+    'default_java_class'        => "bp.pecan.Pecan",
+
+    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
 
         'host'        => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'        => 4522,
+        'pipeline_db' => {                      # the production database itself (will be created)
+            -host   => $self->o('host'),
+            -port   => 4522,
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),                    
+            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
+        -driver => 'mysql',
+        },
 
         'staging_loc' => {                     # general location of half of the current release core databases
             -host   => 'mysql-ens-sta-1',
@@ -156,7 +170,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => '88'
+            -db_version => '90'
         },
 #        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
 #        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],

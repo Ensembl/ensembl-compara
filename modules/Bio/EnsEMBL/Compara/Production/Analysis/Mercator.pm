@@ -55,11 +55,12 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Mercator;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Analysis::Runnable;
+#use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+#our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 
 =head2 new
@@ -79,19 +80,21 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-   my ($input_dir, $output_dir, $genome_names, $pre_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'PRE_MAP'], @args);
+   my ($input_dir, $output_dir, $genome_names, $program, $pre_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'PROGRAM','PRE_MAP'], @args);
 #  my ($input_dir, $output_dir, $genome_names, $strict_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'STRICT_MAP'], @args);
 
-  unless (defined $self->program) {
-    $self->program('/software/ensembl/compara/mercator');
+  if (defined $program) {
+    $self->program($program);
+    }else{ 
+    die "\n mercator exe location is needed \n";
   }
   $self->input_dir($input_dir) if (defined $input_dir);
   $self->output_dir($output_dir) if (defined $output_dir);
   $self->genome_names($genome_names) if (defined $genome_names);
   if (ref($genome_names) eq "ARRAY") {
-    print "GENOME_NAMES: ", join(", ", @{$genome_names}), "\n";
+    print "GENOME_NAMES: ", join(", ", @{$genome_names}), "\n" if ($self->debug);
   } else {
-    print "GENOME_NAMES: $genome_names\n";
+    print "GENOME_NAMES: $genome_names\n" if ($self->debug);
   }
    if (defined $pre_map){
      $self->pre_map($pre_map);
@@ -124,11 +127,23 @@ sub genome_names {
     return $self->{'_genome_names'};
 }
 
+sub program {
+  my $self = shift;
+  $self->{'_program'} = shift if(@_);
+  return $self->{'_program'};
+}
+
 sub pre_map {
     my ($self, $arg) = @_;
 
     $self->{'_pre_map'} = $arg if defined $arg;
     return $self->{'_pre_map'};
+}
+
+sub output {
+  my $self = shift;
+  $self->{'_output'} = shift if(@_);
+  return $self->{'_output'};
 }
 =head2 run_analysis
 
@@ -149,16 +164,15 @@ sub run_analysis{
   if(!$program){
     $program = $self->program;
   }
-
   throw($program." is not executable Mercator::run_analysis ") 
     unless($program && -x $program);
 
   my $command = "$program -i " . $self->input_dir . " -o " . $self->output_dir;
-  print "genome_names: ".join(", ", @{$self->genome_names})."\n";
+  print "genome_names: ".join(", ", @{$self->genome_names})."\n" if ($self->debug);
   foreach my $species (@{$self->genome_names}) {
     $command .= " $species";
   }
-  print "Running analysis ".$command."\n";
+  print "Running analysis ".$command."\n" if ($self->debug);
   unless (system($command) == 0) {
     throw("mercator execution failed\n");
   }
@@ -212,7 +226,7 @@ sub parse_results{
   }
   close F;
   my $output = [ values %hash ];
-  print "scalar output", scalar @{$output},"\n";
+  print "scalar output", scalar @{$output},"\n"  if($self->debug);
   print "No synteny regions found" if (scalar @{$output} == 0);
   $self->output($output);
 }

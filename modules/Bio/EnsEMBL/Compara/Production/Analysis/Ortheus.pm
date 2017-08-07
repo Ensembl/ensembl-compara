@@ -64,29 +64,29 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Analysis::Config::Compara;
+#use Bio::EnsEMBL::Analysis::Config::Compara;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Data::Dumper;
-
-use Bio::EnsEMBL::Analysis::Runnable;
-our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+#use Bio::EnsEMBL::Analysis::Runnable;
+#our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
-my $default_exonerate = $EXONERATE;
+#my $default_exonerate = $EXONERATE;
 
 # my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 # my $default_jar_file = "pecan.0.8.jar";
 # my $default_java_class = "bp.pecan.Pecan";
 # my $estimate_tree = "~/pecan/EstimateTree.py";
 
-my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
-my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
-my $default_java_class = "bp.pecan.Pecan";
-my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
+#my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
+#my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
+#my $default_java_class = "bp.pecan.Pecan";
+#my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
 $ENV{'PYTHONPATH'} = '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/ortheus/0.5.0/';
 $ENV{'CLASSPATH'}  = '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/';
 
@@ -109,10 +109,12 @@ $ENV{'CLASSPATH'}  = '/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/l
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $analysis, $parameters, $jar_file, $java_class, $exonerate, $options,) =
+  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $pecan_jar_file, 
+    $pecan_java_class, $exonerate, $java_exe, $ortheus_exe, $semphy, $options,) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'ANALYSIS', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'OPTIONS'], @args);
+            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'JAVA_EXE', 'ORTHEUS_EXE' , 'SEMPHY', 'OPTIONS'], @args);
 
+  $self->workdir($workdir) if (defined $workdir);
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
   if (defined $tree_string) {
@@ -123,11 +125,19 @@ sub new {
   }
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
+  $self->java($java_exe) if (defined $java_exe);
 
+  $self->semphy($semphy) if (defined $semphy);
   #overwrite default $ORTHEUS location if defined.
-  if (defined $analysis->program_file) {
-      $ORTHEUS = $analysis->program_file;
-  }
+#  if (defined $analysis->program_file) {
+#      $ORTHEUS = $analysis->program_file;
+#  }
+
+ if (defined $ortheus_exe) {
+    $self->ortheus($ortheus_exe);
+ } else {
+  die "\northeus_exe is not defined\n";
+ }
 
 # #   $self->jar_file($jar_file) if (defined $jar_file);
 # #   $self->java_class($java_class) if (defined $java_class);
@@ -145,7 +155,7 @@ sub new {
 # #     $self->java_class($default_java_class);
 # #   }
   unless (defined $self->exonerate) {
-    $self->exonerate($default_exonerate);
+    die "\nexonerate exe is not defined\n";
   }
 # # 
 # #   # Try to locate jar file in usual places...
@@ -169,6 +179,12 @@ sub new {
 # #   }
 
   return $self;
+}
+
+sub workdir {
+  my $self = shift;
+  $self->{'_workdir'} = shift if(@_);
+  return $self->{'_workdir'};
 }
 
 sub fasta_files {
@@ -203,14 +219,14 @@ sub parameters {
 
 sub jar_file {
   my $self = shift;
-  $self->{'_jar_file'} = shift if(@_);
-  return $self->{'_jar_file'};
+  $self->{'_pecan_jar_file'} = shift if(@_);
+  return $self->{'_pecan_jar_file'};
 }
 
 sub java_class {
   my $self = shift;
-  $self->{'_java_class'} = shift if(@_);
-  return $self->{'_java_class'};
+  $self->{'_pecan_java_class'} = shift if(@_);
+  return $self->{'_pecan_java_class'};
 }
 
 sub exonerate {
@@ -219,10 +235,34 @@ sub exonerate {
   return $self->{'_exonerate'};
 }
 
+sub java_exe {
+  my $self = shift;
+  $self->{'_java_exe'} = shift if(@_);
+  return $self->{'_java_exe'};
+}
+
+sub ortheus_exe {
+  my $self = shift;
+  $self->{'_ortheus_exe'} = shift if(@_);
+  return $self->{'_ortheus_exe'};
+}
+
+sub semphy {
+  my $self = shift;
+  $self->{'_semphy'} = shift if(@_);
+  return $self->{'_semphy'};
+}
+
 sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
   return $self->{'_options'};
+}
+
+sub output {
+  my $self = shift;
+  $self->{'_output'} = shift if(@_);
+  return $self->{'_output'};
 }
 
 =head2 run_analysis
@@ -251,14 +291,15 @@ sub run_analysis {
 
 sub run_ortheus {
   my $self = shift;
-
+  my $ORTHEUS = $self->ortheus_exe;
+  my $JAVA = $self->java_exe;
   chdir $self->workdir;
   #my $debug = " -a -b";
 
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
-  my $command = "$PYTHON $ORTHEUS";
+  my $command = "python $ORTHEUS";
 #   $command .= " -cp ".$self->jar_file." ".$self->java_class;
 
   #add debugging
@@ -290,9 +331,9 @@ sub run_ortheus {
 #     $command .= " -s $SEMPHY -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
 
   } elsif ($self->species_tree and $self->species_order and @{$self->species_order}) {
-    $command .= " -s $SEMPHY -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
+    $command .= " -s ". $self->semphy." -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
   } else {
-    $command .= " -s $SEMPHY";
+    $command .= " -s ".$self->semphy;
   }
   $command .= " -f output.$$.mfa -g output.$$.tree ";
 
@@ -487,6 +528,7 @@ print "Reading $alignment_file...\n";
   print $tree->newick_format("simple"), "\n";
   print join(" -- ", map {$_->node_id."+".$_->genomic_align->dnafrag_id} (@{$tree->get_all_nodes()})), "\n";
   $self->output([$tree]);
+
 }
 
 

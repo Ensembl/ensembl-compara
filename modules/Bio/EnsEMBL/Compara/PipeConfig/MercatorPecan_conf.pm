@@ -58,7 +58,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -80,7 +80,7 @@ sub default_options {
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
     # Automatically set using the above
-        'pipeline_name'         => $self->o('species_set_name').'_pecan_'.$self->o('rel_with_suffix'),
+        'pipeline_name'         => 'pecan_27way',
 
     # dependent parameters:
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
@@ -156,6 +156,22 @@ sub pipeline_create_commands {
      ];
 }
 
+# Syntax for LSF farm 3
+#sub resource_classes {
+#    my ($self) = @_;
+#    return {
+#         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+#         '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+#         '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+#         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
+#         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+#         '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
+#         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
+#         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
+#         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11]"' },
+#         'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11]"' },
+#    };
+#}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -486,30 +502,32 @@ sub pipeline_analyses {
              -hive_capacity => 1,
 	     -rc_name => '3.6Gb',
              -flow_into => {
-                 '2->A' => [ 'pecan_job_delegator' ],
-                 'A->1' => [ 'update_max_alignment_length' ],
+                 "2->A" => WHEN (
+                    "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
+                    "(#total_residues_count# > 3000000) && (#total_residues_count# <= 30000000) && (#dnafrag_count# > 10)&&(#dnafrag_count# <= 25)"  => "pecan_mem1",
+                    "(#total_residues_count# > 30000000) && (#total_residues_count# <= 60000000) && (#dnafrag_count# > 10)&&(#dnafrag_count# <= 25)" => "pecan_mem2",
+                    "(#total_residues_count# > 3000000) && (#total_residues_count# <= 60000000) && (#dnafrag_count# > 25)"      => "pecan_mem2",
+                    "(#total_residues_count# > 60000000) && (#dnafrag_count# > 10)"      => "pecan_mem3",
+                    ),
+
+                 "A->1" => [ "update_max_alignment_length" ],
              },
          },
 
 # ---------------------------------------------[pecan]---------------------------------------------------------------------
-         {  -logic_name => 'pecan_job_delegator',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan_mem_decision',
-            -flow_into  => {
-                2 => ['pecan'],
-                3 => ['pecan_mem1'],
-                4 => ['pecan_mem2'],
-                5 => ['pecan_mem3'],
-            },
-        },
-
 
          {   -logic_name => 'pecan',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options'),
-		 'jar_file'                   => $self->o('pecan_jar'),
+                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
+                 'java'                    => $self->o('java_exe'),
+                 'default_java_class'                    => $self->o('default_java_class'),
+                 'estimate_tree'                    => $self->o('estimate_tree'),
+                 'ortheus_exe'                    => $self->o('ortheus_exe'),
+                 'semphy'                    => $self->o('semphy'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -528,8 +546,13 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem1'),
-		 'jar_file'                   => $self->o('pecan_jar'),
+                 'pecan_jar_file'             => $self->o('pecan_jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
+                 'java'                    => $self->o('java_exe'),
+                 'default_java_class'                    => $self->o('default_java_class'),
+                 'estimate_tree'                    => $self->o('estimate_tree'),
+                 'ortheus_exe'                    => $self->o('ortheus_exe'),
+                 'semphy'                    => $self->o('semphy'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -547,8 +570,13 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem2'),
-                 'jar_file'                   => $self->o('pecan_jar'),
+                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
+                 'java'                    => $self->o('java_exe'),
+                 'default_java_class'                    => $self->o('default_java_class'),
+                 'estimate_tree'                    => $self->o('estimate_tree'),
+                 'ortheus_exe'                    => $self->o('ortheus_exe'),
+                 'semphy'                    => $self->o('semphy'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -566,8 +594,13 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem3'),
-                 'jar_file'                   => $self->o('pecan_jar'),
+                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
                  'exonerate'                  => $self->o('exonerate_exe'),
+                 'java'                    => $self->o('java_exe'),
+                 'default_java_class'                    => $self->o('default_java_class'),
+                 'estimate_tree'                    => $self->o('estimate_tree'),
+                 'ortheus_exe'                    => $self->o('ortheus_exe'),
+                 'semphy'                    => $self->o('semphy'),
              },
              -max_retry_count => 1,
              -priority => 1,
