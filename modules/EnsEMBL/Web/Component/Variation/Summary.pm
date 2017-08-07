@@ -24,6 +24,7 @@ use strict;
 
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
 use Encode qw(encode decode);
+use HTML::Entities;
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -532,6 +533,21 @@ sub alleles {
   return [ 'Alleles', qq(<div class="twocol-cell">$html</div>) ];
 }
 
+sub to_VCF {
+  my $self = shift;
+
+  my $vf_id = $self->hub->param('vf');
+  my @vfs = @{$self->object->Obj->get_all_VariationFeatures};
+  my ($vf) = grep {$_->dbID eq $vf_id} @vfs;
+
+  return () unless $vf;
+
+  my $vcf_rep = $vf->to_VCF_record();
+  return unless $vcf_rep && @$vcf_rep;
+  
+  return '<span style="font-family: Courier, monospace; whitespace: nowrap;">&nbsp;&nbsp;'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
+}
+
 sub location {
   my $self     = shift;
   my $object   = $self->object;
@@ -563,8 +579,7 @@ sub location {
     $location = ucfirst(lc $type).' <b>'.$coord . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
-      '%s<a href="%s" class="constant">View in location tab</a>',
-      $self->text_separator,
+      '<a href="%s" class="constant">%s</a>',
       $hub->url({
         type             => 'Location',
         action           => 'View',
@@ -573,14 +588,22 @@ sub location {
         vf               => $vf,
         source           => $object->source,
         contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '') . ',seq=normal'
-      })
+      }),
+      $location
     );
   }
   else {
     $location = "This variant maps to $count genomic locations; <b>None selected</b>";
   }
+
+  my $vcf = $self->to_VCF;
+  my $vcf_text = $vcf ? sprintf(
+    '%s<span class="_ht ht" title="Variant in VCF representation (CHROM, POS, ID, REF, ALT columns only)">VCF:</span>%s',
+    $self->text_separator,
+    $vcf
+  ) : '';
   
-  return [ 'Location', "$location$location_link" ];
+  return [ 'Location', "$location_link$vcf_text" ];
 }
 
 sub evidence_status {
